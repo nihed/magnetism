@@ -2,6 +2,7 @@
 	<property name="src" value="src" />
 	<property name="src.tests" value="${src}/tests" />
 	<property name="build" value="bin" />
+	<property name="reports.tests" value="reports"/>
 
 	<path id="project.class.path">
 		<pathelement path="${classpath}"/>
@@ -10,6 +11,7 @@
 
 	<target name="init">
 		<mkdir dir="${build}" />
+		<mkdir dir="${reports.tests}" />
 	</target>
 
 	<target name="compile" depends="init">
@@ -29,7 +31,8 @@
 	<target name="test" depends="compile">
 		<junit printsummary="yes" haltonfailure="yes">
 			<formatter type="plain" usefile="false" />
-			<batchtest fork="no">
+			<formatter type="xml"/>
+			<batchtest fork="no" todir="${reports.tests}">
 				<fileset dir="${src.tests}">
 					<include name="**/*Test*.java" />
 				</fileset>
