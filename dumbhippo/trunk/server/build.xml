@@ -2,11 +2,12 @@
 	<property name="src" value="src" />
 	<property name="src.tests" value="${src}/tests" />
 	<property name="build" value="bin" />
-	<property name="reports.tests" value="reports"/>
+	<property name="reports.tests" value="reports" />
 
 	<path id="project.class.path">
-		<pathelement path="${classpath}"/> <!-- just so people can override? -->
-		<pathelement location="/usr/share/java/servletapi5.jar"/>
+		<pathelement path="${classpath}" />
+		<!-- just so people can override? -->
+		<pathelement location="/usr/share/java/servletapi5.jar" />
 		<!-- without this ant won't find the .class files -->
 		<pathelement location="${build}" />
 		<!-- a little hard-coded, but ... -->
@@ -21,20 +22,21 @@
 	<target name="compile" depends="init">
 		<!-- Compile the java code -->
 		<javac srcdir="${src}" destdir="${build}">
-			<classpath refid="project.class.path"/>
+			<classpath refid="project.class.path" />
 		</javac>
 	</target>
 
 	<target name="test" depends="compile">
 		<junit printsummary="yes" haltonfailure="yes">
 			<formatter type="plain" usefile="false" />
-			<formatter type="xml"/>
+			<formatter type="xml" />
 			<batchtest fork="no" todir="${reports.tests}">
 				<fileset dir="${src.tests}">
 					<include name="**/*Test*.java" />
 				</fileset>
 			</batchtest>
 		</junit>
+		<classpath refid="project.class.path" />
 	</target>
 
 	<target name="build" depends="test" />
