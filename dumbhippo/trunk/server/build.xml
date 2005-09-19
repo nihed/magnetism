@@ -1,5 +1,6 @@
-<project name="dumbhippo-server" default="compile" basedir=".">
-	<property name="src" value="src" />
+<project name="dumbhippo-server" default="build" basedir=".">
+	<property name="src" value="src"/>
+	<property name="src.tests" value="${src}/tests"/>
 	<property name="build" value="bin" />
 
 	<target name="init">
@@ -10,5 +11,26 @@
 		<!-- Compile the java code -->
 		<javac srcdir="${src}" destdir="${build}" />
 	</target>
+
+	<path id="test.classpath">
+		<!-- without this ant won't find the .class files -->
+	  <pathelement location="${build}"/>
+		<!-- a little hard-coded, but ... -->
+	  <pathelement location="/usr/share/java/ant/ant-junit.jar" />
+	</path>
+	
+	<target name="test" depends="compile">
+		<junit printsummary="yes" haltonfailure="yes">
+			<formatter type="plain" usefile="false" />
+			<batchtest fork="no">
+				<fileset dir="${src.tests}">
+					<include name="**/*Test*.java"/>
+				</fileset>
+			</batchtest>
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<target name="build" depends="test"/>
 
 </project>
