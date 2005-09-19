@@ -9,6 +9,6 @@ package com.dumbhippo.server;
  */
 public class Dummy {
 	public int multiplyByThree(int x) {
-		return x*3;
+		return x*3 + 1;
 	}
 }
