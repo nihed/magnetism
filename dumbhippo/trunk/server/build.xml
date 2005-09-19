@@ -5,8 +5,12 @@
 	<property name="reports.tests" value="reports"/>
 
 	<path id="project.class.path">
-		<pathelement path="${classpath}"/>
+		<pathelement path="${classpath}"/> <!-- just so people can override? -->
 		<pathelement location="/usr/share/java/servletapi5.jar"/>
+		<!-- without this ant won't find the .class files -->
+		<pathelement location="${build}" />
+		<!-- a little hard-coded, but ... -->
+		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
 	</path>
 
 	<target name="init">
@@ -21,13 +25,6 @@
 		</javac>
 	</target>
 
-	<path id="test.classpath">
-		<!-- without this ant won't find the .class files -->
-		<pathelement location="${build}" />
-		<!-- a little hard-coded, but ... -->
-		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
-	</path>
-
 	<target name="test" depends="compile">
 		<junit printsummary="yes" haltonfailure="yes">
 			<formatter type="plain" usefile="false" />
@@ -37,7 +34,6 @@
 					<include name="**/*Test*.java" />
 				</fileset>
 			</batchtest>
-			<classpath refid="test.classpath" />
 		</junit>
 	</target>
 
