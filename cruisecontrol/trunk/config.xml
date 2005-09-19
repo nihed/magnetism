@@ -18,7 +18,7 @@
 
     <!-- Configures the actual build loop, how often and which
          build file/target -->
-    <schedule interval="60">
+    <schedule interval="20">
       <ant antscript="ant"
            buildfile="checkout/testhippo/build-cruisecontrol.xml"
            target="build"
