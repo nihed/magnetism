@@ -3,10 +3,10 @@
 	<property name="src.tests" value="${src}/tests" />
 	<property name="build" value="bin" />
 
-	<classpath>
+	<path id="project.class.path">
 		<pathelement path="${classpath}" />
 		<pathelement location="/usr/share/java/servletapi5.jar" />
-	</classpath>
+	</path>
 
 	<target name="init">
 		<mkdir dir="${build}" />
@@ -14,7 +14,9 @@
 
 	<target name="compile" depends="init">
 		<!-- Compile the java code -->
-		<javac srcdir="${src}" destdir="${build}" />
+		<javac srcdir="${src}" destdir="${build}">
+			<classpath refid="project.class.path"/>
+		</javac>
 	</target>
 
 	<path id="test.classpath">
