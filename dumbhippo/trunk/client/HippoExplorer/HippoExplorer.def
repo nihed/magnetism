@@ -1,0 +1,8 @@
+LIBRARY     HippoExplorer
+
+DESCRIPTION "Hippo Explorer Objects"
+
+EXPORTS
+   DllCanUnloadNow   PRIVATE
+   DllGetClassObject PRIVATE
+   DllRegisterServer PRIVATE
