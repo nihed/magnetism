@@ -68,7 +68,7 @@ perl -pi -e "s@>artifacts<@>$ARTIFACTS_DIR<@g" $SERVLET_CONFIG || die "failed to
 grep "cruise" "$SERVLET_CONFIG" || true
 
 ## the .war file doesn't include xalan for some reason
-cp "$INSTALL_DIR"/main/lib/xalan.jar "$WAR_UNPACKED_DIR"/WEB-INF/lib
+cp "$INSTALL_DIR"/main/lib/xalan-2.6.0.jar "$WAR_UNPACKED_DIR"/WEB-INF/lib || die "failed to copy over xalan.jar"
 
 echo "creating $CACHE_DIR"
 mkdir -p "$CACHE_DIR" || die "could not create cache dir"
@@ -90,3 +90,4 @@ service tomcat5 restart
 
 echo "Now (cd $WORK_DIR ; bash $INSTALL_DIR/main/bin/cruisecontrol.sh)"
 
+echo "To make it a daemon add '2>&1 >/dev/null </dev/null ; disown' for example"
