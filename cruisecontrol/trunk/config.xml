@@ -1,4 +1,54 @@
 <cruisecontrol>
+  <project name="dumbhippo-server" buildafterfailed="true">
+    <listeners>
+      <currentbuildstatuslistener
+          file="logs/dumbhippo-server/buildstatus.txt"/>
+    </listeners>
+
+    <!-- Bootstrappers are run every time the build runs,
+        *before* the modification checks -->
+    <bootstrappers>
+    </bootstrappers>
+
+    <!-- Defines where cruise looks for changes, to decide
+         whether to run the build -->
+    <modificationset quietperiod="10">
+      <svn localworkingcopy="checkout/dumbhippo-server"/>
+    </modificationset>
+
+    <!-- Configures the actual build loop, how often and which
+         build file/target -->
+    <schedule interval="20">
+      <ant antscript="ant"
+           buildfile="checkout/dumbhippo-server/build-cruisecontrol.xml"
+           target="build"
+           uselogger="true"
+           usedebug="false"/>
+    </schedule>
+
+    <!-- directory to write build logs to -->
+    <log logdir="logs/dumbhippo-server"/>
+
+    <!-- Publishers are run *after* a build completes -->
+    <publishers>
+       <htmlemail mailhost="localhost"
+        returnaddress="root@dumbhippo.com"
+        buildresultsurl="http://dumbhippo.com:8080/cruisecontrol/index.jsp"
+        skipusers="false"
+        spamwhilebroken="false"
+        reportsuccess="fixes"
+        subjectprefix="[dumbhippo build results] "
+        logdir="logs/dumbhippo-server">
+          <map alias="hp" address="hp@redhat.com"/>
+          <map alias="otaylor" address="otaylor@redhat.com"/>
+          <map alias="walters" address="walters@redhat.com"/>
+          <failure address="hp@redhat.com"/>
+          <failure address="otaylor@redhat.com"/>
+          <failure address="walters@redhat.com"/>
+    </htmlemail>
+    </publishers>
+  </project>
+
   <project name="testhippo" buildafterfailed="true">
     <listeners>
       <currentbuildstatuslistener
@@ -33,7 +83,7 @@
     <publishers>
        <htmlemail mailhost="localhost"
         returnaddress="root@dumbhippo.com"
-        buildresultsurl="http://notomcatyet"
+        buildresultsurl="http://dumbhippo.com:8080/cruisecontrol/index.jsp"
         skipusers="false"
         spamwhilebroken="false"
         reportsuccess="fixes"
@@ -48,4 +98,5 @@
     </htmlemail>
     </publishers>
   </project>
+
 </cruisecontrol>

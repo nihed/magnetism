@@ -45,7 +45,8 @@ for D in "$CHECKOUT_DIR" "$LOG_DIR" "$ARTIFACTS_DIR" ; do
   mkdir -p "$D" || die "could not create $D"
 done
 
-(cd $CHECKOUT_DIR && svn co http://dumbhippo.com/svn/testhippo/trunk testhippo || die "could not check out project")
+(cd $CHECKOUT_DIR && svn co http://dumbhippo.com/svn/testhippo/trunk testhippo || die "could not check out testhippo")
+(cd $CHECKOUT_DIR && svn co http://dumbhippo.com/svn/dumbhippo/trunk/server dumbhippo-server || die "could not check out dumbhippo-server")
 
 cp -f "$CRUISE_CHECKOUT"/config.xml "$WORK_DIR" || die "could not copy in config.xml"
 
@@ -65,6 +66,9 @@ perl -pi -e "s@>artifacts<@>$ARTIFACTS_DIR<@g" $SERVLET_CONFIG || die "failed to
 (export CACHE_DIR; "$SCRIPT_DIR"/addcacheroot.pl "$SERVLET_CONFIG" || die "failed to munge in cache root to $SERVLET_CONFIG")
 
 grep "cruise" "$SERVLET_CONFIG" || true
+
+## the .war file doesn't include xalan for some reason
+cp "$INSTALL_DIR"/main/lib/xalan.jar "$WAR_UNPACKED_DIR"/WEB-INF/lib
 
 echo "creating $CACHE_DIR"
 mkdir -p "$CACHE_DIR" || die "could not create cache dir"
