@@ -5,7 +5,7 @@
 
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
-		<pathelement location="/usr/share/java/servletapi5.jar" />
+		<pathelement location="/usr/share/java/servletapi5.jar"/>
 	</path>
 
 	<target name="init">
