@@ -1,0 +1,9 @@
+<project name="build-testhippo" default="build" basedir=".">
+    <target name="build">
+        <!-- Get the latest from Subversion -->
+        <exec executable="svn">
+        	<arg line="update"/>
+        </exec>
+        <ant antfile="build.xml" target="compile"/>
+    </target>
+</project>
