@@ -1,0 +1,14 @@
+<project name="dumbhippo-server" default="compile" basedir=".">
+	<property name="src" value="src" />
+	<property name="build" value="bin" />
+
+	<target name="init">
+		<mkdir dir="${build}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<!-- Compile the java code -->
+		<javac srcdir="${src}" destdir="${build}" />
+	</target>
+
+</project>
