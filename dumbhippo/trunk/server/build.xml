@@ -4,7 +4,7 @@
 	<property name="build" value="bin" />
 
 	<path id="project.class.path">
-		<pathelement path="${classpath}" />
+		<pathelement path="${classpath}"/>
 		<pathelement location="/usr/share/java/servletapi5.jar"/>
 	</path>
 
