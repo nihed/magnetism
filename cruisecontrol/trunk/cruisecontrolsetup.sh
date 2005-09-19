@@ -4,6 +4,11 @@
 ## The idea of this script is to automate those instructions so we 
 ## don't have to figure it all out again if we have to re-setup
 
+## What you want to do is:
+##   - change config.xml or cruisecontrolsetup.sh in subversion
+##   - svn checkout to $CRUISE_CHECKOUT below
+##   - run cruisecontrolsetup.sh from the checkout
+
 VERSION=2.3.0.1
 CRUISE_CHECKOUT=/root/cruisecontrol
 INSTALL_ROOT="$CRUISE_CHECKOUT"/install_root
