@@ -27,7 +27,9 @@
     </schedule>
 
     <!-- directory to write build logs to -->
-    <log logdir="logs/dumbhippo-server"/>
+    <log logdir="logs/dumbhippo-server">
+       <merge dir="checkout/dumbhippo-server/reports"/>
+    </log>
 
     <!-- Publishers are run *after* a build completes -->
     <publishers>
@@ -46,8 +48,23 @@
           <failure address="otaylor@redhat.com"/>
           <failure address="walters@redhat.com"/>
     </htmlemail>
+
+    <artifactspublisher
+    dir="checkout/dumbhippo-server/reports"
+    dest="artifacts/dumbhippo-server/reports"/>
+    <artifactspublisher
+    dir="checkout/dumbhippo-server/bin"
+    dest="artifacts/dumbhippo-server/bin"/>
+
     </publishers>
   </project>
+
+
+
+  <!-- Test Hippo -->
+
+
+
 
   <project name="testhippo" buildafterfailed="true">
     <listeners>
