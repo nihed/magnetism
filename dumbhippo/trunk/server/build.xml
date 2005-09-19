@@ -35,8 +35,8 @@
 					<include name="**/*Test*.java" />
 				</fileset>
 			</batchtest>
+			<classpath refid="project.class.path" />
 		</junit>
-		<classpath refid="project.class.path" />
 	</target>
 
 	<target name="build" depends="test" />
