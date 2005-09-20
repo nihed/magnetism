@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>com.dumbhippo.jive.LinkReflector</class>
+
+    <!-- Plugin meta-data -->
+    <name>Link Reflector/name>
+    <description>Plugin for sharing links</description>
+    <author>Dumb Hippo Software</author>
+    <version>0.1</version>
+    <date>09/20/2005</date>
+    <url></url>
+    <minServerVersion>2.2.0</minServerVersion>
+</plugin>
