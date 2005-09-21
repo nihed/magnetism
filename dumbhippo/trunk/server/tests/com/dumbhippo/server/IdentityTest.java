@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dumbhippo.server.Identity;
+import com.dumbhippo.server.Identity.Guid;
 
 import junit.framework.TestCase;
 
@@ -42,6 +43,12 @@ public class IdentityTest extends TestCase {
 		List<Identity> tests = createTestIdentities();
 		
 		TestUtils.testEqualsImplementation(tests);
+		
+		List<Identity.Guid> guids = new ArrayList<Identity.Guid>();
+		for (Identity id : tests) {
+			guids.add((Guid) id.getProperty(Identity.Property.GUID));
+		}
+		TestUtils.testEqualsImplementation(guids);
 	}
 
 	public void testCreateFromProperties() {
