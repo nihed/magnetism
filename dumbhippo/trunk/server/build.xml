@@ -1,6 +1,6 @@
 <project name="dumbhippo-server" default="build" basedir=".">
 	<property name="src" value="src" />
-	<property name="src.tests" value="${src}/tests" />
+	<property name="src.tests" value="tests" />
 	<property name="build" value="bin" />
 	<property name="reports.tests" value="reports" />
 
