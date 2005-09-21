@@ -32,6 +32,22 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // remains consistent on all systems.
 IDI_DUMBHIPPO           ICON                    "DumbHippo.ico"
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_NOTIFY MENU 
+BEGIN
+    POPUP "Dummy"
+    BEGIN
+        MENUITEM "&Share link...",              IDM_SHARE
+        MENUITEM "&Recent links...",            IDM_RECENT
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+END
+
+
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -67,8 +83,8 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_APP_TITLE           "HippoExplorer"
-    IDC_HIPPOEXPLORER       "HIPPOEXPLORER"
+    IDS_APP_TITLE           "HippoUI"
+    IDC_HIPPOUI             "HIPPOUI"
 END
 
 #endif    // English (U.S.) resources

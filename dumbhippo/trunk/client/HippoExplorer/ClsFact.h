@@ -11,6 +11,7 @@
 
 #include "Globals.h"
 #include "HippoExplorerBar.h"
+#include "HippoTracker.h"
 
 class CClassFactory : public IClassFactory
 {

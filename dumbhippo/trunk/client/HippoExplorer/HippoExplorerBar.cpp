@@ -123,12 +123,6 @@ STDMETHODIMP_(DWORD) CHippoExplorerBar::Release()
 
 /* IOleWindow Implementation */
 
-/**************************************************************************
-
-   CHippoExplorerBar::GetWindow()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::GetWindow(HWND *phWnd)
 {
     *phWnd = m_hWnd;
@@ -136,27 +130,12 @@ STDMETHODIMP CHippoExplorerBar::GetWindow(HWND *phWnd)
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::ContextSensitiveHelp()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::ContextSensitiveHelp(BOOL fEnterMode)
 {
     return E_NOTIMPL;
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-// IDockingWindow Implementation
-//
-
-/**************************************************************************
-
-   CHippoExplorerBar::ShowDW()
-   
-**************************************************************************/
+/* IDockingWindow Implementation */
 
 STDMETHODIMP CHippoExplorerBar::ShowDW(BOOL fShow)
 {
@@ -177,12 +156,6 @@ STDMETHODIMP CHippoExplorerBar::ShowDW(BOOL fShow)
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::CloseDW()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::CloseDW(DWORD dwReserved)
 {
     ShowDW(FALSE);
@@ -195,12 +168,6 @@ STDMETHODIMP CHippoExplorerBar::CloseDW(DWORD dwReserved)
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::ResizeBorderDW()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::ResizeBorderDW(LPCRECT prcBorder, 
                                        IUnknown* punkSite, 
                                        BOOL fReserved)
@@ -209,16 +176,7 @@ STDMETHODIMP CHippoExplorerBar::ResizeBorderDW(LPCRECT prcBorder,
     return E_NOTIMPL;
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-// IInputObject Implementation
-//
-
-/**************************************************************************
-
-   CHippoExplorerBar::UIActivateIO()
-   
-**************************************************************************/
+/* IInputObject Implementation */
 
 STDMETHODIMP CHippoExplorerBar::UIActivateIO(BOOL fActivate, LPMSG pMsg)
 {
@@ -258,16 +216,7 @@ STDMETHODIMP CHippoExplorerBar::TranslateAcceleratorIO(LPMSG pMsg)
     return S_FALSE;
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-// IObjectWithSite implementations
-//
-
-/**************************************************************************
-
-   CHippoExplorerBar::SetSite()
-   
-**************************************************************************/
+/* IObjectWithSite implementations */
 
 STDMETHODIMP CHippoExplorerBar::SetSite(IUnknown* punkSite)
 {
@@ -312,12 +261,6 @@ STDMETHODIMP CHippoExplorerBar::SetSite(IUnknown* punkSite)
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::GetSite()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::GetSite(REFIID riid, LPVOID *ppvReturn)
 {
     *ppvReturn = NULL;
@@ -328,16 +271,7 @@ STDMETHODIMP CHippoExplorerBar::GetSite(REFIID riid, LPVOID *ppvReturn)
     return E_FAIL;
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-// IDeskBand implementation
-//
-
-/**************************************************************************
-
-   CHippoExplorerBar::GetBandInfo()
-   
-**************************************************************************/
+/* IDeskBand implementation */
 
 STDMETHODIMP CHippoExplorerBar::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDINFO* pdbi)
 {
@@ -401,12 +335,6 @@ STDMETHODIMP CHippoExplorerBar::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DE
 // up in the shortcut menu. This desk band doesn't actually persist any data.
 //
 
-/**************************************************************************
-
-   CHippoExplorerBar::GetClassID()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::GetClassID(LPCLSID pClassID)
 {
     *pClassID = CLSID_HippoExplorerBar;
@@ -414,44 +342,20 @@ STDMETHODIMP CHippoExplorerBar::GetClassID(LPCLSID pClassID)
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::IsDirty()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::IsDirty(void)
 {
     return S_FALSE;
 }
-
-/**************************************************************************
-
-   CHippoExplorerBar::Load()
-   
-**************************************************************************/
 
 STDMETHODIMP CHippoExplorerBar::Load(LPSTREAM pStream)
 {
     return S_OK;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::Save()
-   
-**************************************************************************/
-
 STDMETHODIMP CHippoExplorerBar::Save(LPSTREAM pStream, BOOL fClearDirty)
 {
     return S_OK;
 }
-
-/**************************************************************************
-
-   CHippoExplorerBar::GetSizeMax()
-   
-**************************************************************************/
 
 STDMETHODIMP CHippoExplorerBar::GetSizeMax(ULARGE_INTEGER *pul)
 {
@@ -462,12 +366,6 @@ STDMETHODIMP CHippoExplorerBar::GetSizeMax(ULARGE_INTEGER *pul)
 //
 // private method implementations
 //
-
-/**************************************************************************
-
-   CHippoExplorerBar::WndProc()
-   
-**************************************************************************/
 
 LRESULT CALLBACK CHippoExplorerBar::WndProc(HWND hWnd, 
                                     UINT uMessage, 
@@ -505,12 +403,6 @@ LRESULT CALLBACK CHippoExplorerBar::WndProc(HWND hWnd,
     return DefWindowProc(hWnd, uMessage, wParam, lParam);
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::OnPaint()
-   
-**************************************************************************/
-
 LRESULT CHippoExplorerBar::OnPaint(void)
 {
     PAINTSTRUCT ps;
@@ -532,22 +424,10 @@ LRESULT CHippoExplorerBar::OnPaint(void)
     return 0;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::OnCommand()
-   
-**************************************************************************/
-
 LRESULT CHippoExplorerBar::OnCommand(WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
-
-/**************************************************************************
-
-   CHippoExplorerBar::FocusChange()
-   
-**************************************************************************/
 
 void CHippoExplorerBar::FocusChange(BOOL bFocus)
 {
@@ -560,12 +440,6 @@ void CHippoExplorerBar::FocusChange(BOOL bFocus)
     }
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::OnSetFocus()
-   
-**************************************************************************/
-
 LRESULT CHippoExplorerBar::OnSetFocus(void)
 {
     FocusChange(TRUE);
@@ -573,24 +447,12 @@ LRESULT CHippoExplorerBar::OnSetFocus(void)
     return 0;
 }
 
-/**************************************************************************
-
-   CHippoExplorerBar::OnKillFocus()
-   
-**************************************************************************/
-
 LRESULT CHippoExplorerBar::OnKillFocus(void)
 {
     FocusChange(FALSE);
     
     return 0;
 }
-
-/**************************************************************************
-
-   CHippoExplorerBar::RegisterAndCreateWindow()
-   
-**************************************************************************/
 
 BOOL CHippoExplorerBar::RegisterAndCreateWindow(void)
 {

@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="HippoExplorer"
-	ProjectGUID="{5EE19538-0578-4199-93DD-E77F11A060E4}"
+	Name="HippoUtil"
+	ProjectGUID="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,12 +19,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderFile="$(IntDir)/$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -33,11 +33,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				RegisterOutput="TRUE"
-				OutputFile="$(OutDir)/HippoExplorer.dll"
+				OutputFile="$(OutDir)/HippoUtil.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="HippoExplorer.def"
+				ModuleDefinitionFile="HippoUtil.def"
+				TypeLibraryFile=""
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/HippoExplorer.pdb"
+				ProgramDatabaseFile="$(OutDir)/HippoUtil.pdb"
 				SubSystem="2"
 				TargetMachine="1"/>
 			<Tool
@@ -49,7 +50,8 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="$(IntDir)"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -79,8 +81,9 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/HippoExplorer.exe"
+				OutputFile="$(OutDir)/HippoUtil.exe"
 				LinkIncremental="1"
+				ModuleDefinitionFile="HippoUI.def"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -116,30 +119,18 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\ClsFact.cpp">
+				RelativePath=".\HippoUtil.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoExplorer.cpp">
+				RelativePath=".\HippoUtil.def">
 			</File>
 			<File
-				RelativePath=".\HippoExplorer.def">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerBar.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoTracker.cpp">
+				RelativePath=".\HippoUtil.idl">
 			</File>
 			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
@@ -151,36 +142,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\ClsFact.h">
-			</File>
-			<File
-				RelativePath=".\Globals.h">
-			</File>
-			<File
-				RelativePath=".\Guid.h">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerBar.h">
-			</File>
-			<File
-				RelativePath=".\HippoTracker.h">
-			</File>
-			<File
-				RelativePath=".\Resource.h">
+				RelativePath=".\HippoUtil.h">
 			</File>
 			<File
 				RelativePath=".\stdafx.h">
-			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
-			<File
-				RelativePath=".\DumbHippo.ico">
-			</File>
-			<File
-				RelativePath=".\HippoExplorer.rc">
 			</File>
 		</Filter>
 	</Files>

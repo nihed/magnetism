@@ -1,0 +1,24 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+    uuid(BC81C530-2099-4121-9B66-969D89B22E3C), // LIBID_HippoUtil
+    helpstring("DumbHippo Utilities"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoUtil {
+    [
+	uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
+	helpstring("DumbHippo User Interface"),
+	helpcontext(0x0000),
+	hidden,
+	dual,
+	oleautomation
+    ]
+    interface IHippoUI : IDispatch
+    {
+	[id(100), helpstring("Log a message"), helpcontext(0x0000)]
+	HRESULT Log([in] BSTR message);
+    }
+}

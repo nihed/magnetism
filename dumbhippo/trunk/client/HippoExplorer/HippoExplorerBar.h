@@ -1,4 +1,4 @@
-/* HippoExplorerBar.cpp: Horizontal explorer bar
+/* HippoExplorerBar.g: Horizontal explorer bar
  *
  * Copyright Red Hat, Inc. 2005
  *
@@ -13,7 +13,7 @@
 #ifndef HIPPO_EXPLORER_BAR_H
 #define HIPPO_EXPLORER_BAR_H
 
-#define CB_CLASS_NAME (TEXT("HippoExplorerBarSampleClass"))
+#define CB_CLASS_NAME (TEXT("HippoExplorerBarClass"))
 
 /**************************************************************************
 

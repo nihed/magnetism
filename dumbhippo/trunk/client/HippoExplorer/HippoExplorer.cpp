@@ -12,6 +12,7 @@
 #include <olectl.h>
 #include <strsafe.h>
 #include "ClsFact.h"
+#include <HippoUtil_i.c>
 
 /**************************************************************************
    GUID stuff
@@ -67,7 +68,8 @@ DllGetClassObject(REFCLSID rclsid,
     *ppReturn = NULL;
     
     // If this classid is not supported, return the proper error code.
-    if(!IsEqualCLSID(rclsid, CLSID_HippoExplorerBar))
+    if (!IsEqualCLSID(rclsid, CLSID_HippoExplorerBar) &&
+	!IsEqualCLSID(rclsid, CLSID_HippoTracker))
        return CLASS_E_CLASSNOTAVAILABLE;
        
     // Create a CClassFactory object and check it for validity.
@@ -96,6 +98,10 @@ DllRegisterServer(void)
        return SELFREG_E_CLASS;
     
     if(!RegisterComCat(CLSID_HippoExplorerBar, CATID_CommBand))
+       return SELFREG_E_CLASS;
+
+    if(!RegisterServer(CLSID_HippoTracker, 
+                       TEXT("Hippo Tracker")))
        return SELFREG_E_CLASS;
     
     return S_OK;
