@@ -27,6 +27,9 @@
 	</target>
 
 	<target name="test" depends="compile">
+		<javac srcdir="${src.tests}" destdir="${build}">
+			<classpath refid="project.class.path" />
+		</javac>
 		<junit printsummary="yes" haltonfailure="yes">
 			<formatter type="plain" usefile="false" />
 			<formatter type="xml" />
