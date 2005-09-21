@@ -145,9 +145,15 @@
 				RelativePath=".\HippoUtil.h">
 			</File>
 			<File
+				RelativePath=".\resource.h">
+			</File>
+			<File
 				RelativePath=".\stdafx.h">
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\HippoUtil.rc">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
