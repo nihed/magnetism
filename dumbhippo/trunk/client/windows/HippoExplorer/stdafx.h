@@ -16,4 +16,10 @@
 #include <memory.h>
 #include <tchar.h>
 
-// TODO: reference additional headers your program requires here
+/* We want to use __uuidof() for type-safe QueryInterface, but a bunch
+ * of __declspec(uuid) declarations are only found in the PlatformSDK
+ * ComDef.h rather than the compiler ComDef.h. So force that to be 
+ * included first.
+ */
+#include <../PlatformSDK/Include/ComDef.h>
+#include <ole2.h>
