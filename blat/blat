@@ -1,0 +1,97 @@
+#!/usr/bin/python -tt
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+import os, sys
+import shutil, tempfile
+import getopt
+import xml.dom.minidom
+import logging
+
+import blat
+
+def usage(ecode):
+    print """blat, a tool for installing combined product images
+Usage:
+    blat install --srcdir=SRCDIR --smudgefile=FILENAME [--repository=http://intranet.example.com/blat]
+    blat check-updates --srcdir=SRCDIR
+
+    blat prime-cache --srcdir=SRCDIR --smudgefile=FILENAME
+    blat cache-insert ID VERSION FILENAME
+"""
+    sys.exit(ecode)
+
+try:
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "hd", ["help", "debug", "srcdir=", "smudgefile=", 'repository=', 'proxy=', 'root='])
+except getopt.GetoptError:
+    usage(2)
+
+srcdir = None
+smudgefilename = None
+repository = None
+proxy = None
+mode = None
+debug = False
+sources = []
+root = None
+
+for o, a in opts:
+    if o in ("-h", "--help"):
+        usage(0)
+    elif o in ("-d", "--debug"):
+        debug=True
+    elif o == "--srcdir":
+        srcdir = a
+    elif o == "--smudgefile":
+        smudgefilename = a
+    elif o == "--repository":
+        repository = a
+    elif o == "--proxy":
+        proxy = a
+    elif o == "--root":
+        root = a        
+    
+if len(args) < 1:
+    usage(2)
+
+if debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+logging.debug('Creating blat with mode %s' % (args[0]))
+if not (root is None):
+    logging.info("Using install root %s" % (root,))
+b = blat.blat.Blat(srcdir=srcdir, repodir=repository, repoproxy=proxy, rootdir=root)
+    
+if args[0] == 'install':
+    if smudgefilename is None:
+        usage(2)
+    b.install(smudgefilename)
+elif args[0] == 'check-updates':
+    for update in b.check_updates():
+        print update
+elif args[0] == 'prime-cache':
+    if smudgefilename is None:
+        usage(2)
+    logging.debug('priming cache')
+    b.prime_cache(smudgefilename)
+elif args[0] == 'cache-insert':
+    print args
+    if len(args) != 4:
+        usage(2)
+    b.cache(args[1], args[2], args[3])
+else:
+    usage(2)

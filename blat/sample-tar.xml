@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<blat>
+  <source id="http://jivesoftware.org/messenger/" type="tar">
+    <arch>indep</arch>
+    <url>http://jivesoftware.org/builds/messenger/jive_messenger_${VERSION}.tar.gz</url>
+  </source>
+</blat>

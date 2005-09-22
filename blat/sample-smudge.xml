@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<smudge>
+  <deploy id="http://jpackage.org/rpm.php?id=2663" version="1.5.0.04-1">
+  </deploy>
+  <deploy id="http://jivesoftware.org/messenger/" version="2_2_2">
+    <dir>/opt</dir>
+   	<file path="jive_messenger/conf/jive-messenger.xml"><![CDATA[
+<jive>
+  <adminConsole>
+    <port>9090</port>
+    <securePort>9091</securePort>
+  </adminConsole>
+  <locale>en</locale>
+   <connectionProvider>
+    <className>org.jivesoftware.database.DefaultConnectionProvider</className>
+  </connectionProvider>
+  <database>
+    <defaultProvider>
+      <driver>com.mysql.jdbc.Driver</driver>
+      <serverURL>jdbc:mysql://localhost:3306/jive</serverURL>
+      <username>root</username>
+      <password/>
+      <minConnections>5</minConnections>
+      <maxConnections>15</maxConnections>
+      <connectionTimeout>1.0</connectionTimeout>
+    </defaultProvider>
+  </database>
+  <setup>true</setup>
+</jive>
+]]>
+    </varfile>
+  </deploy>
+</smudge>
+    
