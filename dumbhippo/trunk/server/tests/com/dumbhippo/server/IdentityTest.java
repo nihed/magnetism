@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.dumbhippo.server.Identity;
-import com.dumbhippo.server.Identity.Guid;
 
 import junit.framework.TestCase;
 
@@ -43,12 +42,6 @@ public class IdentityTest extends TestCase {
 		List<Identity> tests = createTestIdentities();
 		
 		TestUtils.testEqualsImplementation(tests);
-		
-		List<Identity.Guid> guids = new ArrayList<Identity.Guid>();
-		for (Identity id : tests) {
-			guids.add((Guid) id.getProperty(Identity.Property.GUID));
-		}
-		TestUtils.testEqualsImplementation(guids);
 	}
 
 	public void testCreateFromProperties() {
@@ -63,7 +56,7 @@ public class IdentityTest extends TestCase {
 			assertTrue (complainedAboutNoGuid);
 		}
 		
-		Identity.Guid guid = Identity.Guid.createNew();
+		Guid guid = Guid.createNew();
 		
 		props.put(Identity.Property.GUID, guid);
 		
@@ -78,7 +71,7 @@ public class IdentityTest extends TestCase {
 		assertTrue(gotEmails.equals(emails));
 		assertTrue(((String)gotEmails.get(0)).equals("hippo@dumbness.com"));
 		
-		Identity.Guid storedGuid = (Identity.Guid) id.getProperty(Identity.Property.GUID);
+		Guid storedGuid = (Guid) id.getProperty(Identity.Property.GUID);
 		assertTrue(storedGuid.equals(guid));
 	}
 

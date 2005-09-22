@@ -4,7 +4,6 @@
  */
 package com.dumbhippo.server;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,120 +17,6 @@ import java.util.Map;
  * organization on the internet
  */
 final class Identity {
-
-	/**
-	 * Guid is a globally-unique identifier for the Identity, designed to not
-	 * require coordination (i.e. you can make up the GUID without asking the
-	 * server for the next counter value or something)
-	 * 
-	 * This class is immutable with the advantages that entails.
-	 * 
-	 * @author hp
-	 * 
-	 */
-	public static class Guid {
-
-		private static java.util.Random rng1;
-		private static java.util.Random rng2;
-
-		private static final int NUM_COMPONENTS = 3;
-
-		public static Guid createNew() {
-			long random1, random2;
-			synchronized (Guid.class) {
-				if (rng1 == null) {
-					rng1 = new SecureRandom();
-					assert(rng2 == null);
-					rng2 = new SecureRandom();
-				}
-				random1 = rng1.nextLong();
-				if (random1 < 0)
-					random1 = -random1;
-				random2 = rng2.nextLong();
-				if (random2 < 0)
-					random2 = -random2;
-			}
-			long time = System.currentTimeMillis();
-
-			return new Guid(time, random1, random2);
-		}
-
-		/**
-		 * Internal constructor for copying/creating by component
-		 * 
-		 */
-		private Guid(long first, long second, long third) {
-			assert (first >= 0);
-			assert (second >= 0);
-			assert (third >= 0);
-			components = new long[NUM_COMPONENTS];
-			components[0] = first;
-			components[1] = second;
-			components[2] = third;
-		}
-
-		public Guid(Guid source) {
-			assert (source.components[0] >= 0);
-			assert (source.components[1] >= 0);
-			assert (source.components[2] >= 0);
-			components = source.components.clone();
-		}
-
-		public Guid(String string) throws IllegalArgumentException {
-			String[] elements = string.split("-");
-			if (elements.length != NUM_COMPONENTS)
-				throw new IllegalArgumentException(
-						"String form of GUID must be three tokens separated by hyphen");
-
-			components = new long[NUM_COMPONENTS];
-			for (int i = 0; i < NUM_COMPONENTS; ++i) {
-				try {
-					components[i] = Long.parseLong(elements[i], 16);
-				} catch (NumberFormatException e) {
-					throw new IllegalArgumentException(
-							"Could not parse one of the numbers in the GUID", e);
-				}
-				if (components[i] < 0)
-					throw new IllegalArgumentException(
-							"Negative numbers in GUID");
-			}
-		}
-
-		public String toString() {
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < NUM_COMPONENTS; ++i) {
-				builder.append(Long.toHexString(components[i]));
-				builder.append("-");
-			}
-			// kill extra hyphen
-			builder.deleteCharAt(builder.length() - 1);
-			return builder.toString();
-		}
-
-		public int hashCode() {
-			int result = 17;
-			for (int i = 0; i < NUM_COMPONENTS; ++i) {
-				int c = (int) (components[i] ^ (components[i] >>> 32));
-				result = 37 * result + c;
-			}
-			return result;
-		}
-
-		public boolean equals(Object other) {
-			if (this == other)
-				return true;
-			if (!(other instanceof Guid))
-				return false;
-			Guid otherGuid = (Guid) other;
-			for (int i = 0; i < NUM_COMPONENTS; ++i) {
-				if (components[i] != otherGuid.components[i])
-					return false;
-			}
-			return true;
-		}
-
-		private long[] components;
-	}
 
 	/**
 	 * @author hp
