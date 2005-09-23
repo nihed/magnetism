@@ -4,20 +4,7 @@
 #include "stdafx.h"
 #include <ole2.h>
 #include "HippoUtil.h"
-
-/**************************************************************************
-   GUID stuff
-**************************************************************************/
-
-// This part is only done once.
-// If you need to use the GUID in another file, just include Guid.h.
-#if 0
-#pragma data_seg(".text")
-#define INITGUID
-#include <initguid.h>
-#include "Guid.h"
-#pragma data_seg()
-#endif
+#include "HippoRegistrar.h"
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID);
 
@@ -50,26 +37,6 @@ DllRegisterServer(void)
      * the case, so do it manually. It may be that the documentation is
      * referring to the ATL-generated standard DllRegisterServer.
      */
-    WCHAR    szModule[MAX_PATH];
-    HRESULT hr;
-    ITypeLib *pTypeLib = NULL;
-    
-    g_hInst = GetModuleHandle(TEXT("HippoUtil.DLL"));
-
-    hr = GetModuleFileNameW(g_hInst, szModule, MAX_PATH);
-    if (!SUCCEEDED (hr))
-	return hr;
-
-    if (sizeof(WCHAR) != sizeof(OLECHAR))
-	return -1;
-   
-    hr = LoadTypeLib(szModule, &pTypeLib);
-    if (!SUCCEEDED (hr)) 
-	return hr;
-
-    hr = RegisterTypeLib(pTypeLib, (OLECHAR *)szModule, NULL);
-
-    pTypeLib->Release();
-
-    return hr;
+    HippoRegistrar registrar(L"HippoUtil.dll");
+    return registrar.registerTypeLib();
 }

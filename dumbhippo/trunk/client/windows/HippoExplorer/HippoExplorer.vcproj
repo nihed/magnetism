@@ -109,6 +109,9 @@
 		</Configuration>
 	</Configurations>
 	<References>
+		<ProjectReference
+			ReferencedProjectIdentifier="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
+			Name="HippoUtil"/>
 	</References>
 	<Files>
 		<Filter
@@ -116,7 +119,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\ClsFact.cpp">
+				RelativePath=".\ClassFactory.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoExplorer.cpp">
@@ -151,7 +154,7 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\ClsFact.h">
+				RelativePath=".\ClassFactory.h">
 			</File>
 			<File
 				RelativePath=".\Globals.h">

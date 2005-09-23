@@ -1,511 +1,388 @@
 /* HippoExplorerBar.cpp: Horizontal explorer bar
  *
  * Copyright Red Hat, Inc. 2005
- *
- * Partially based on MSDN BandObjs sample:
- *  Copyright 1997 Microsoft Corporation.  All Rights Reserved.
  **/
 
 #include "stdafx.h"
 #include "HippoExplorerBar.h"
 #include "Guid.h"
+#include "Globals.h"
+#include "Resource.h"
 #include <strsafe.h>
 
-CHippoExplorerBar::CHippoExplorerBar()
+static const int MIN_HEIGHT = 10;
+static const int DEFAULT_HEIGHT = 50; // The registry value will be used instead, I think
+static const WCHAR *TITLE = L"Hippo Explorer Bar";
+static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
+
+HippoExplorerBar::HippoExplorerBar()
 {
-    m_pSite = NULL;
-    
-    m_hWnd = NULL;
-    m_hwndParent = NULL;
-    
-    m_bFocus = FALSE;
-    
-    m_dwViewMode = 0;
-    m_dwBandID = 0;
-    
-    m_ObjRefCount = 1;
-    g_DllRefCount++;
+    hasFocus_ = false;
+    window_ = 0;
+
+    refCount_ = 1;
+    dllRefCount++;
 }
 
-CHippoExplorerBar::~CHippoExplorerBar()
+HippoExplorerBar::~HippoExplorerBar()
 {
-    // This should have been freed in a call to SetSite(NULL), but 
-    // it is defined here to be safe.
-    if(m_pSite)
-    {
-        m_pSite->Release();
-        m_pSite = NULL;
-    }
-    
-    g_DllRefCount--;
+    dllRefCount--;
 }
 
-/* IUnknown Implementation */
+/////////////////////// IUnknown implementation ///////////////////////
 
 STDMETHODIMP 
-CHippoExplorerBar::QueryInterface(REFIID riid, LPVOID *ppReturn)
+HippoExplorerBar::QueryInterface(const IID &ifaceID, 
+    			         void     **result)
 {
-    *ppReturn = NULL;
-    
-    //IUnknown
-    if(IsEqualIID(riid, IID_IUnknown))
-    {
-        *ppReturn = this;
+    if (IsEqualIID(ifaceID, IID_IUnknown))
+	*result = static_cast<IUnknown *>(static_cast<IDeskBand *>(this));
+    else if (IsEqualIID(ifaceID, IID_IOleWindow)) 
+	*result = static_cast<IOleWindow *>(this);
+    else if (IsEqualIID(ifaceID, IID_IDockingWindow)) 
+	*result = static_cast<IDockingWindow *>(this);
+    else if (IsEqualIID(ifaceID, IID_IDeskBand))
+	*result = static_cast<IDeskBand *>(this);
+    else if (IsEqualIID(ifaceID, IID_IInputObject))
+	*result = static_cast<IInputObject *>(this);
+    else if (IsEqualIID(ifaceID, IID_IObjectWithSite))
+	*result = static_cast<IObjectWithSite *>(this);
+    else if (IsEqualIID(ifaceID, IID_IPersistStream))
+	*result = static_cast<IPersistStream *>(this);
+    else {
+	*result = NULL;
+	return E_NOINTERFACE;
     }
-    
-    //IOleWindow
-    else if(IsEqualIID(riid, IID_IOleWindow))
-    {
-        *ppReturn = (IOleWindow*)this;
-    }
-    
-    //IDockingWindow
-    else if(IsEqualIID(riid, IID_IDockingWindow))
-    {
-        *ppReturn = (IDockingWindow*)this;
-    }   
-    
-    //IInputObject
-    else if(IsEqualIID(riid, IID_IInputObject))
-    {
-        *ppReturn = (IInputObject*)this;
-    }   
-    
-    //IObjectWithSite
-    else if(IsEqualIID(riid, IID_IObjectWithSite))
-    {
-        *ppReturn = (IObjectWithSite*)this;
-    }   
-    
-    //IDeskBand
-    else if(IsEqualIID(riid, IID_IDeskBand))
-    {
-        *ppReturn = (IDeskBand*)this;
-    }   
-    
-    //IPersist
-    else if(IsEqualIID(riid, IID_IPersist))
-    {
-        *ppReturn = (IPersist*)this;
-    }   
-    
-    //IPersistStream
-    else if(IsEqualIID(riid, IID_IPersistStream))
-    {
-        *ppReturn = (IPersistStream*)this;
-    }   
-    
-    if(*ppReturn)
-    {
-        (*(LPUNKNOWN*)ppReturn)->AddRef();
-        return S_OK;
-    }
-    
-    return E_NOINTERFACE;
-}                                             
 
-STDMETHODIMP_(DWORD) CHippoExplorerBar::AddRef()
-{
-    return ++m_ObjRefCount;
+    this->AddRef();
+    return S_OK;    
 }
 
+HIPPO_DEFINE_REFCOUNTING(HippoExplorerBar)
 
-STDMETHODIMP_(DWORD) CHippoExplorerBar::Release()
+/////////////////////// IOleWindow implementation /////////////////////
+
+STDMETHODIMP 
+HippoExplorerBar::GetWindow(HWND *pWindow)
 {
-    if(--m_ObjRefCount == 0)
-    {
-        delete this;
-        return 0;
-    }
-   
-    return m_ObjRefCount;
-}
-
-/* IOleWindow Implementation */
-
-STDMETHODIMP CHippoExplorerBar::GetWindow(HWND *phWnd)
-{
-    *phWnd = m_hWnd;
+    if (!pWindow)
+	return E_INVALIDARG;
     
+    *pWindow = window_;
+
     return S_OK;
 }
 
-STDMETHODIMP CHippoExplorerBar::ContextSensitiveHelp(BOOL fEnterMode)
+STDMETHODIMP 
+HippoExplorerBar::ContextSensitiveHelp(BOOL enterMode)
 {
+    return S_OK;
+}
+
+////////////////////// IDockingWindow Implementation ////////////////
+
+STDMETHODIMP 
+HippoExplorerBar::ShowDW(BOOL show)
+{
+    if (!window_)
+	return S_OK;
+
+    ShowWindow(window_, show ? SW_SHOW : SW_HIDE);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoExplorerBar::CloseDW(DWORD reserved)
+{
+    if (!window_)
+	return S_OK;
+
+    DestroyWindow(window_);
+    window_ = NULL;
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoExplorerBar::ResizeBorderDW(const RECT *border, 
+                                 IUnknown   *site, 
+                                 BOOL        reserved)
+{
+    // Will never be called for an explorer bar
     return E_NOTIMPL;
 }
 
-/* IDockingWindow Implementation */
+/////////////////////// IInputObject Implementation ////////////////////////
 
-STDMETHODIMP CHippoExplorerBar::ShowDW(BOOL fShow)
+STDMETHODIMP
+HippoExplorerBar::UIActivateIO(BOOL  activate, 
+			       MSG  *message)
 {
-    if(m_hWnd)
-    {
-        if(fShow)
-        {
-            //show our window
-            ShowWindow(m_hWnd, SW_SHOW);
-        }
-        else
-        {
-            //hide our window
-            ShowWindow(m_hWnd, SW_HIDE);
-        }
-    }
+    if (!window_)
+	return E_FAIL;
+
+    if (!SetFocus(window_))
+	return E_FAIL;
 
     return S_OK;
 }
 
-STDMETHODIMP CHippoExplorerBar::CloseDW(DWORD dwReserved)
+STDMETHODIMP
+HippoExplorerBar::HasFocusIO(void)
 {
-    ShowDW(FALSE);
-    
-    if(IsWindow(m_hWnd))
-        DestroyWindow(m_hWnd);
-    
-    m_hWnd = NULL;
-       
-    return S_OK;
+    return hasFocus_ ? S_OK : S_FALSE;
 }
 
-STDMETHODIMP CHippoExplorerBar::ResizeBorderDW(LPCRECT prcBorder, 
-                                       IUnknown* punkSite, 
-                                       BOOL fReserved)
+STDMETHODIMP
+HippoExplorerBar::TranslateAcceleratorIO(LPMSG pMsg)
 {
-    // This method is never called for Band Objects.
-    return E_NOTIMPL;
-}
-
-/* IInputObject Implementation */
-
-STDMETHODIMP CHippoExplorerBar::UIActivateIO(BOOL fActivate, LPMSG pMsg)
-{
-    if(fActivate)
-        SetFocus(m_hWnd);
-    
-    return S_OK;
-}
-
-/**************************************************************************
-
-   CHippoExplorerBar::HasFocusIO()
-   
-   If this window or one of its decendants has the focus, return S_OK. Return 
-   S_FALSE if neither has the focus.
-
-**************************************************************************/
-
-STDMETHODIMP CHippoExplorerBar::HasFocusIO(void)
-{
-    if(m_bFocus)
-        return S_OK;
-    
+    // No accelerators
     return S_FALSE;
 }
 
-/**************************************************************************
+/////////////////// IObjectWithSite implementation ///////////////////
 
-   CHippoExplorerBar::TranslateAcceleratorIO()
-   
-   If the accelerator is translated, return S_OK or S_FALSE otherwise.
-
-**************************************************************************/
-
-STDMETHODIMP CHippoExplorerBar::TranslateAcceleratorIO(LPMSG pMsg)
+STDMETHODIMP 
+HippoExplorerBar::SetSite(IUnknown *site)
 {
-    return S_FALSE;
-}
-
-/* IObjectWithSite implementations */
-
-STDMETHODIMP CHippoExplorerBar::SetSite(IUnknown* punkSite)
-{
-    // If a site is being held, release it.
-    if(m_pSite)
+    site_ = NULL;
+    
+    if (site) 
     {
-        m_pSite->Release();
-        m_pSite = NULL;
-    }
-    
-    // If punkSite is not NULL, a new site is being set.
-    if(punkSite)
-    {
-        //Get the parent window.
-        IOleWindow  *pOleWindow;
-    
-        m_hwndParent = NULL;
-       
-        if(SUCCEEDED(punkSite->QueryInterface(IID_IOleWindow, 
-                                              (LPVOID*)&pOleWindow)))
-        {
-            pOleWindow->GetWindow(&m_hwndParent);
-            pOleWindow->Release();
-        }
-    
-        if(!m_hwndParent)
-            return E_FAIL;
-    
-        if(!RegisterAndCreateWindow())
-            return E_FAIL;
-    
-        //Get and keep the IInputObjectSite pointer.
-        if(SUCCEEDED(punkSite->QueryInterface(IID_IInputObjectSite,
-                                              (LPVOID*)&m_pSite)))
-        {
-            return S_OK;
-        }
-       
-        return E_FAIL;
+	// Get the window from the parent
+	HippoQIPtr<IOleWindow> oleWindow(site);
+	if (!oleWindow)
+	    return E_FAIL;
+
+	HWND parentWindow = NULL;
+	HRESULT hr = oleWindow->GetWindow(&parentWindow);
+	if (FAILED (hr))
+	    return hr;
+	 if (!parentWindow)
+	    return E_FAIL;
+
+	if (FAILED(site->QueryInterface<IInputObjectSite>(&site_)))
+	    return E_FAIL;
+
+	if (!createWindow(parentWindow)) {
+	    site_ = NULL;
+	    return E_FAIL;
+	}
     }
     
     return S_OK;
 }
 
-STDMETHODIMP CHippoExplorerBar::GetSite(REFIID riid, LPVOID *ppvReturn)
+STDMETHODIMP 
+HippoExplorerBar::GetSite(const IID &iid, 
+		          void     **result)
 {
-    *ppvReturn = NULL;
-    
-    if(m_pSite)
-        return m_pSite->QueryInterface(riid, ppvReturn);
-    
-    return E_FAIL;
+    if (!site_) {
+        *result = NULL;
+	return E_FAIL;
+    }
+
+    return site_->QueryInterface(iid, result);
 }
 
-/* IDeskBand implementation */
+///////////////////// IDeskBand implementation ////////////////////////
 
-STDMETHODIMP CHippoExplorerBar::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDINFO* pdbi)
+STDMETHODIMP
+HippoExplorerBar::GetBandInfo(DWORD          bandID, 
+			       DWORD         viewMode, 
+			       DESKBANDINFO *deskBandInfo)
 {
-    if(pdbi)
-    {
-        m_dwBandID = dwBandID;
-        m_dwViewMode = dwViewMode;
-    
-        if(pdbi->dwMask & DBIM_MINSIZE)
-        {
-            pdbi->ptMinSize.x = 0;
-            pdbi->ptMinSize.y = 30;
-        }
-    
-        if(pdbi->dwMask & DBIM_MAXSIZE)
-        {
-            pdbi->ptMaxSize.x = -1;
-            pdbi->ptMaxSize.y = 30;
-        }
-    
-        if(pdbi->dwMask & DBIM_INTEGRAL)
-        {
-            pdbi->ptIntegral.x = 1;
-            pdbi->ptIntegral.y = 1;
-        }
-    
-        if(pdbi->dwMask & DBIM_ACTUAL)
-        {
-            pdbi->ptActual.x = 0;
-            pdbi->ptActual.y = 0;
-        }
-    
-        if(pdbi->dwMask & DBIM_TITLE)
-        {
-            StringCchCopyW(pdbi->wszTitle, 256, L"");
-        }
-    
-        if(pdbi->dwMask & DBIM_MODEFLAGS)
-        {
-            pdbi->dwModeFlags = DBIMF_NORMAL;
-        }
-       
-        if(pdbi->dwMask & DBIM_BKCOLOR)
-        {
-            //Use the default background color by removing this flag.
-            pdbi->dwMask &= ~DBIM_BKCOLOR;
-        }
-    
-        return S_OK;
+    if (deskBandInfo->dwMask & DBIM_MINSIZE) {
+	deskBandInfo->ptMinSize.x = 0;
+	deskBandInfo->ptMinSize.y = MIN_HEIGHT;
     }
-    
-    return E_INVALIDARG;
+
+    if (deskBandInfo->dwMask & DBIM_MAXSIZE) {
+	deskBandInfo->ptMaxSize.x = (LONG)-1;
+	deskBandInfo->ptMaxSize.y = (LONG)-1;
+    }
+
+    if (deskBandInfo->dwMask & DBIM_INTEGRAL) {
+	deskBandInfo->ptIntegral.x = 1;
+	deskBandInfo->ptIntegral.y = 1;
+    }
+
+    if (deskBandInfo->dwMask & DBIM_ACTUAL) {
+	deskBandInfo->ptActual.x = 0;              // Not clear what to use here
+	deskBandInfo->ptActual.y = DEFAULT_HEIGHT;
+    }
+
+    if (deskBandInfo->dwMask & DBIM_TITLE) {
+	StringCchCopyW(deskBandInfo->wszTitle, sizeof(deskBandInfo->wszTitle) / sizeof(WCHAR), TITLE);
+    }
+
+    if (deskBandInfo->dwMask & DBIM_MODEFLAGS) {
+	deskBandInfo->dwModeFlags = DBIMF_VARIABLEHEIGHT | DBIMF_BKCOLOR;
+    }
+
+    if (deskBandInfo->dwMask & DBIM_BKCOLOR) {
+	deskBandInfo->crBkgnd = RGB(255, 255, 255); // White. Does this matter, since we create a window?
+    }
+
+    return S_OK;
+}
+
+//////////////////// IPersistStream implementation ////////////////////////////////
+
+/* It's somewhat unclear whether we need to implement this and what it means. 
+ * The available docs seem to indicate that returning the class ID is important to
+ * prevent duplicate entries, even if we don't implement any of the rest of it.
+ */
+
+STDMETHODIMP 
+HippoExplorerBar::GetClassID(CLSID *classID)
+{
+    if (!classID)
+	return E_INVALIDARG;
+
+    *classID = CLSID_HippoExplorerBar;
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoExplorerBar::IsDirty()
+{
+    return S_FALSE;
+}
+
+STDMETHODIMP 
+HippoExplorerBar::Load(IStream *stream)
+{
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoExplorerBar::Save(IStream *stream, 
+		       BOOL     clearDirty)
+{
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoExplorerBar::GetSizeMax(ULARGE_INTEGER *pul)
+{
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////
-//
-// IPersistStream implementations
-// 
-// This is only supported to allow the desk band to be dropped on the 
-// desktop and to prevent multiple instances of the desk band from showing 
-// up in the shortcut menu. This desk band doesn't actually persist any data.
-//
 
-STDMETHODIMP CHippoExplorerBar::GetClassID(LPCLSID pClassID)
+bool
+HippoExplorerBar::createWindow(HWND parentWindow)
 {
-    *pClassID = CLSID_HippoExplorerBar;
-    
-    return S_OK;
+    RECT parentRect;
+
+    if (!GetClientRect(parentWindow, &parentRect))
+	return false;
+
+    if (!registerWindowClass())
+	return false;
+
+    window_ = CreateWindow(CLASS_NAME, 
+		           NULL, // No title
+			   WS_CHILD | WS_CLIPSIBLINGS,
+			   0,                0,
+			   parentRect.right, parentRect.bottom,
+			   parentWindow,
+			   NULL, // No menu
+			   dllInstance,
+			   NULL); // lpParam
+    if (!window_)
+	return false;
+
+    SetWindowLongPtr(window_, GWLP_USERDATA, (LONG_PTR)this);
+
+    return true;
 }
 
-STDMETHODIMP CHippoExplorerBar::IsDirty(void)
+bool 
+HippoExplorerBar::registerWindowClass()
 {
-    return S_FALSE;
+    WNDCLASS windowClass;
+
+    if (GetClassInfo(dllInstance, CLASS_NAME, &windowClass))
+	return true;  // Already registered
+
+    windowClass.style = CS_HREDRAW | CS_VREDRAW;
+    windowClass.lpfnWndProc = windowProc;
+    windowClass.cbClsExtra = 0;
+    windowClass.cbWndExtra = 0;
+    windowClass.hInstance = dllInstance;
+    windowClass.hIcon = (HICON)LoadImage(dllInstance, MAKEINTRESOURCE(IDI_DUMBHIPPO),
+	                                 IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    windowClass.lpszMenuName = NULL;
+    windowClass.lpszClassName = CLASS_NAME;    
+
+    return RegisterClass(&windowClass) != 0;
 }
 
-STDMETHODIMP CHippoExplorerBar::Load(LPSTREAM pStream)
+bool
+HippoExplorerBar::processMessage(UINT   message,
+				 WPARAM wParam,
+				 LPARAM lParam)
 {
-    return S_OK;
-}
-
-STDMETHODIMP CHippoExplorerBar::Save(LPSTREAM pStream, BOOL fClearDirty)
-{
-    return S_OK;
-}
-
-STDMETHODIMP CHippoExplorerBar::GetSizeMax(ULARGE_INTEGER *pul)
-{
-    return E_NOTIMPL;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-// private method implementations
-//
-
-LRESULT CALLBACK CHippoExplorerBar::WndProc(HWND hWnd, 
-                                    UINT uMessage, 
-                                    WPARAM wParam, 
-                                    LPARAM lParam)
-{
-    CHippoExplorerBar *pThis = (CHippoExplorerBar*)GetWindowLong(hWnd, GWL_USERDATA);
-    
-    switch(uMessage)
-    {
-        case WM_NCCREATE:
-        {
-            LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
-            pThis = (CHippoExplorerBar*)(lpcs->lpCreateParams);
-            SetWindowLong(hWnd, GWL_USERDATA, (LONG)pThis);
-    
-            //set the window handle
-            pThis->m_hWnd = hWnd;
-        }
-        break;
-       
-        case WM_PAINT:
-            return pThis->OnPaint();
-       
-        case WM_COMMAND:
-            return pThis->OnCommand(wParam, lParam);
-       
-        case WM_SETFOCUS:
-            return pThis->OnSetFocus();
-    
-        case WM_KILLFOCUS:
-            return pThis->OnKillFocus();
+    switch (message) {
+	case WM_SETFOCUS:
+	    setHasFocus(true);
+	    return true;
+	case WM_KILLFOCUS:
+	    setHasFocus(false);
+	    return true;
+	case WM_PAINT:
+	    onPaint();
+	    return true;
+	default:
+	    return false;
     }
-    
-    return DefWindowProc(hWnd, uMessage, wParam, lParam);
 }
 
-LRESULT CHippoExplorerBar::OnPaint(void)
+void
+HippoExplorerBar::setHasFocus(bool hasFocus)
 {
+    if (hasFocus != hasFocus_) {
+	hasFocus_ = hasFocus;
+    }
+
+    site_->OnFocusChangeIS(static_cast<IInputObject *>(this), hasFocus);
+
+    InvalidateRect(window_, NULL, FALSE);
+}
+
+void
+HippoExplorerBar::onPaint()
+{
+    HDC dc;
     PAINTSTRUCT ps;
-    RECT        rc;
+
+    dc = BeginPaint(window_, &ps);
+
+    if (hasFocus_) 
+	FillRect(dc, &ps.rcPaint, (HBRUSH)GetStockObject(BLACK_BRUSH));
+    else
+	FillRect(dc, &ps.rcPaint, (HBRUSH)GetStockObject(WHITE_BRUSH));
     
-    BeginPaint(m_hWnd, &ps);
-    
-    GetClientRect(m_hWnd, &rc);
-    SetTextColor(ps.hdc, RGB(0, 0, 0));
-    SetBkMode(ps.hdc, TRANSPARENT);
-    DrawText(ps.hdc, 
-             TEXT("Hippo Explorer Band"), 
-             -1, 
-             &rc, 
-             DT_SINGLELINE | DT_CENTER | DT_VCENTER);
-    
-    EndPaint(m_hWnd, &ps);
-    
-    return 0;
+    EndPaint(window_, &ps);
 }
 
-LRESULT CHippoExplorerBar::OnCommand(WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK 
+HippoExplorerBar::windowProc(HWND   window,
+			     UINT   message,
+			     WPARAM wParam,
+			     LPARAM lParam)
 {
-    return 0;
-}
-
-void CHippoExplorerBar::FocusChange(BOOL bFocus)
-{
-    m_bFocus = bFocus;
-    
-    //inform the input object site that the focus has changed
-    if(m_pSite)
-    {
-        m_pSite->OnFocusChangeIS((IDockingWindow*)this, bFocus);
+    HippoExplorerBar *explorerBar = (HippoExplorerBar *)GetWindowLongPtr(window, GWLP_USERDATA);
+    if (explorerBar) {
+	if (explorerBar->processMessage(message, wParam, lParam))
+	    return 0;
     }
-}
 
-LRESULT CHippoExplorerBar::OnSetFocus(void)
-{
-    FocusChange(TRUE);
-    
-    return 0;
-}
-
-LRESULT CHippoExplorerBar::OnKillFocus(void)
-{
-    FocusChange(FALSE);
-    
-    return 0;
-}
-
-BOOL CHippoExplorerBar::RegisterAndCreateWindow(void)
-{
-    //If the window doesn't exist yet, create it now.
-    if(!m_hWnd)
-    {
-        //Can't create a child window without a parent.
-        if(!m_hwndParent)
-        {
-            return FALSE;
-        }
-    
-        //If the window class has not been registered, then do so.
-        WNDCLASS wc;
-        if(!GetClassInfo(g_hInst, CB_CLASS_NAME, &wc))
-        {
-            ZeroMemory(&wc, sizeof(wc));
-            wc.style          = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
-            wc.lpfnWndProc    = (WNDPROC)WndProc;
-            wc.cbClsExtra     = 0;
-            wc.cbWndExtra     = 0;
-            wc.hInstance      = g_hInst;
-            wc.hIcon          = NULL;
-            wc.hCursor        = LoadCursor(NULL, IDC_ARROW);
-            wc.hbrBackground  = (HBRUSH)CreateSolidBrush(RGB(0, 192, 0));
-            wc.lpszMenuName   = NULL;
-            wc.lpszClassName  = CB_CLASS_NAME;
-          
-            if(!RegisterClass(&wc))
-            {
-                //If RegisterClass fails, CreateWindow below will fail.
-            }
-        }
-    
-        RECT  rc;
-    
-        GetClientRect(m_hwndParent, &rc);
-    
-        //Create the window. The WndProc will set m_hWnd.
-        CreateWindowEx(0,
-                       CB_CLASS_NAME,
-                       NULL,
-                       WS_CHILD | WS_CLIPSIBLINGS | WS_BORDER,
-                       rc.left,
-                       rc.top,
-                       rc.right - rc.left,
-                       rc.bottom - rc.top,
-                       m_hwndParent,
-                       NULL,
-                       g_hInst,
-                       (LPVOID)this);
-          
-    }
-    
-    return (NULL != m_hWnd);
+    return DefWindowProc(window, message, wParam, lParam);
 }

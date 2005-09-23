@@ -1,87 +1,73 @@
-/* HippoExplorerBar.g: Horizontal explorer bar
+/* HippoExplorerBar.h: Horizontal explorer bar
  *
  * Copyright Red Hat, Inc. 2005
- *
- * Partially based on MSDN BandObjs sample:
- *  Copyright 1997 Microsoft Corporation.  All Rights Reserved.
  **/
 
+#pragma once
+
 #include <shlobj.h>
+#include <HippoUtil.h>
 
-#include "Globals.h"
-
-#ifndef HIPPO_EXPLORER_BAR_H
-#define HIPPO_EXPLORER_BAR_H
-
-#define CB_CLASS_NAME (TEXT("HippoExplorerBarClass"))
-
-/**************************************************************************
-
-   CHippoExplorerBar class definition
-
-**************************************************************************/
-
-class CHippoExplorerBar : public IDeskBand, 
-                  public IInputObject, 
-                  public IObjectWithSite,
-                  public IPersistStream
+class HippoExplorerBar : public IDeskBand, 
+                         public IInputObject, 
+                         public IObjectWithSite,
+                         public IPersistStream
 {
-protected:
-   DWORD m_ObjRefCount;
-
 public:
-   CHippoExplorerBar();
-   ~CHippoExplorerBar();
+   HippoExplorerBar();
+   ~HippoExplorerBar();
 
    //IUnknown methods
-   STDMETHODIMP QueryInterface(REFIID, LPVOID*);
+   STDMETHODIMP QueryInterface(REFIID, void **);
    STDMETHODIMP_(DWORD) AddRef();
    STDMETHODIMP_(DWORD) Release();
 
    //IOleWindow methods
-   STDMETHOD (GetWindow) (HWND*);
-   STDMETHOD (ContextSensitiveHelp) (BOOL);
+   STDMETHODIMP GetWindow(HWND *);
+   STDMETHODIMP ContextSensitiveHelp(BOOL);
 
    //IDockingWindow methods
-   STDMETHOD (ShowDW) (BOOL fShow);
-   STDMETHOD (CloseDW) (DWORD dwReserved);
-   STDMETHOD (ResizeBorderDW) (LPCRECT prcBorder, IUnknown* punkToolbarSite, BOOL fReserved);
+   STDMETHODIMP ShowDW(BOOL);
+   STDMETHODIMP CloseDW(DWORD);
+   STDMETHODIMP ResizeBorderDW(const RECT *, IUnknown *, BOOL);
 
    //IDeskBand methods
-   STDMETHOD (GetBandInfo) (DWORD, DWORD, DESKBANDINFO*);
+   STDMETHODIMP GetBandInfo(DWORD, DWORD, DESKBANDINFO*);
 
    //IInputObject methods
-   STDMETHOD (UIActivateIO) (BOOL, LPMSG);
-   STDMETHOD (HasFocusIO) (void);
-   STDMETHOD (TranslateAcceleratorIO) (LPMSG);
+   STDMETHODIMP UIActivateIO(BOOL, MSG *);
+   STDMETHODIMP HasFocusIO();
+   STDMETHODIMP TranslateAcceleratorIO(MSG *);
 
    //IObjectWithSite methods
-   STDMETHOD (SetSite) (IUnknown*);
-   STDMETHOD (GetSite) (REFIID, LPVOID*);
+   STDMETHODIMP SetSite(IUnknown *);
+   STDMETHODIMP GetSite(const IID &, void **);
 
    //IPersistStream methods
-   STDMETHOD (GetClassID) (LPCLSID);
-   STDMETHOD (IsDirty) (void);
-   STDMETHOD (Load) (LPSTREAM);
-   STDMETHOD (Save) (LPSTREAM, BOOL);
-   STDMETHOD (GetSizeMax) (ULARGE_INTEGER*);
+   STDMETHODIMP GetClassID(CLSID *);
+   STDMETHODIMP IsDirty();
+   STDMETHODIMP Load(IStream *);
+   STDMETHODIMP Save(IStream *, BOOL);
+   STDMETHODIMP GetSizeMax(ULARGE_INTEGER *);
+
+protected:
+    DWORD refCount_;
 
 private:
-    BOOL m_bFocus;
-    HWND m_hwndParent;
-    HWND m_hWnd;
-    DWORD m_dwViewMode;
-    DWORD m_dwBandID;
-    IInputObjectSite *m_pSite;
+    HippoPtr<IInputObjectSite> site_;
+    HWND window_;
+    bool hasFocus_;
 
 private:
-    void FocusChange(BOOL);
-    LRESULT OnKillFocus(void);
-    LRESULT OnSetFocus(void);
-    static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
-    LRESULT OnPaint(void);
-    LRESULT OnCommand(WPARAM wParam, LPARAM lParam);
-    BOOL RegisterAndCreateWindow(void);
+    bool createWindow(HWND parentWindow);
+    bool registerWindowClass();
+    bool processMessage(UINT   message, 
+	                WPARAM wParam,
+		        LPARAM lParam);
+    void setHasFocus(bool hasFocus);
+    void onPaint();
+    static LRESULT CALLBACK windowProc(HWND   window,
+		  	               UINT   message,
+			               WPARAM wParam,
+			               LPARAM lParam);
 };
-
-#endif   // HIPPO_EXPLORER_BAR_H
