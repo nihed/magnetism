@@ -202,6 +202,16 @@ final class Storage {
 			throw new Error("Can only call Storage.initGlobalInstance() once");
 		globalInstance = new Storage(storagePath);
 	}
+	
+	/**
+	 * Shut down the well-known global instance; this method should generally
+	 * only be used by the test suite
+	 */
+	public static void destroyGlobalInstance() {
+		assert (globalInstance != null);
+		globalInstance.shutdown();
+		globalInstance = null;
+	}
 
 	public static Storage getGlobalInstance() {
 		if (globalInstance == null)
@@ -288,7 +298,7 @@ final class Storage {
 		logger.debug("dbExists = " + dbExists);
 		
 		String dbURL;
-		if (dbExists)
+		if (!dbExists)
 			dbURL = getJDBCUrl(DBOption.CREATE);
 		else
 			dbURL = getJDBCUrl(DBOption.NONE);

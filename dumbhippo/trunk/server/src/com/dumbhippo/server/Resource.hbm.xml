@@ -6,7 +6,7 @@
         package="com.dumbhippo.server">
 <class name="Resource" table="RESOURCE">
     <id name="id" type="string">
-        <column name="RESOURCE_ID" type="string" length=48 not-null="true"/>
+        <column name="RESOURCE_ID" length="48" not-null="true"/>
         <!-- We will always invent the GUID ourselves -->
         <generator class="assigned"/>
     </id>

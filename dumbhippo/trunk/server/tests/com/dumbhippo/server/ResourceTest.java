@@ -1,22 +1,6 @@
 package com.dumbhippo.server;
 
-import junit.framework.TestCase;
-
-public class ResourceTest extends TestCase {
-
-	protected void setUp() throws Exception {
-		super.setUp();
-		
-		GlobalSetup.initialize();
-		
-		Storage.initGlobalInstance(null);
-	}
-
-	protected void tearDown() throws Exception {
-		super.tearDown();
-		
-		Storage.getGlobalInstance().shutdown();
-	}
+public class ResourceTest extends StorageUsingTest {
 
 	/*
 	 * Class under test for void Resource()
