@@ -9,6 +9,7 @@
 
 HippoIcon::HippoIcon()
 {
+    ignoreNextClick_ = false;
 }
 
 HippoIcon::~HippoIcon()
@@ -70,16 +71,27 @@ HippoIcon::processMessage(WPARAM wParam,
     switch (lParam) {
     case WM_LBUTTONDOWN:
     case NIN_SELECT:
+	if (ignoreNextClick_) {
+	    ignoreNextClick_ = false;
+	    return;
+	}
         showMenu(TPM_LEFTBUTTON);
         break;
     case WM_RBUTTONDOWN:
     case WM_CONTEXTMENU:
         showMenu(TPM_RIGHTBUTTON);
         break;
+    case NIN_BALLOONSHOW:
+	break;
     case NIN_BALLOONUSERCLICK:
+        ignoreNextClick_ = true;
         MessageBox(NULL, TEXT("View it, baby!"), TEXT("View It!"), MB_OK);
         break;
+    case NIN_BALLOONHIDE:
+    case NIN_BALLOONTIMEOUT:
+	break;
     }
+    
 }
 
 // XP SP2 addition
