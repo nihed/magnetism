@@ -2,7 +2,7 @@ package com.dumbhippo.server;
 
 import java.io.File;
 
-import com.dumbhippo.server.util.Filesystem;
+import com.dumbhippo.Filesystem;
 
 public class StorageUsingTest extends junit.framework.TestCase {
 	private File storageDir;

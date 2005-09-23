@@ -9,6 +9,7 @@ public class GuidTest extends TestCase {
 
 	public void testCreateNew() {
 		Guid guid = Guid.createNew();
+		assertNotNull(guid);
 	}
 
 	/*

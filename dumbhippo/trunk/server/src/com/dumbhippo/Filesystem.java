@@ -1,7 +1,8 @@
-package com.dumbhippo.server.util;
+package com.dumbhippo;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Random;
 
 /*
@@ -19,7 +20,7 @@ public class Filesystem {
 	     * @throws IOException if too many attempts fail
 	     */
 	    public static File createTempDirectory(File dir, String prefix, String suffix) throws IOException {
-	    	Random random = new Random();	    	
+	    	Random random = new SecureRandom();	    	
 	    	for (int attempts = 0; attempts < 1000; attempts++) {
 	    		String name = prefix + random.nextLong() + suffix;
 	    		File newtempd = new File(dir, name);
