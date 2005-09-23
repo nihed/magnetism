@@ -4,18 +4,15 @@
  **/
 #pragma once
 
-#include "resource.h"
 #include <HippoUtil.h>
+#include "HippoIcon.h"
 
-class CHippoUI 
+class HippoUI 
     : public IHippoUI 
 {
 public:
-    CHippoUI();
-    ~CHippoUI();
-
-    bool registerActive();
-    void revokeActive();
+    HippoUI();
+    ~HippoUI();
 
     //IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -31,10 +28,34 @@ public:
     //IHippoUI methods
     STDMETHODIMP Log(BSTR message);
 
-protected:
-    DWORD objRefCount_;
+    bool create(HINSTANCE instance);
+    void destroy();
 
-private:    
-    ITypeInfo *uiTypeInfo_;     // Type information blob for IHippoUI, used for IDispatch
-    ULONG registerHandle_;      // Handle from RegisterActiveObject
+private:
+    bool registerActive();
+    bool registerClass();
+    bool createWindow();
+
+    bool processMessage(UINT   message,
+	                WPARAM wParam,
+			LPARAM lParam);
+
+    void revokeActive();
+
+    static LRESULT CALLBACK windowProc(HWND   window,
+    		                       UINT   message,
+		                       WPARAM wParam,
+		                       LPARAM lParam);
+
+private:
+    DWORD refCount_;
+    HINSTANCE instance_;
+    HWND window_;
+    HICON bigIcon_;
+    HICON smallIcon_;
+
+    HippoIcon notificationIcon_;
+
+    HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
+    ULONG registerHandle_;            // Handle from RegisterActiveObject
 };

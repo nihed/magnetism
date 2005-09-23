@@ -6,7 +6,9 @@
 #include "HippoUI.h"
 #include <stdio.h>
 #include <strsafe.h>
+#include <HippoUtil.h>
 #include <HippoUtil_i.c>
+#include "Resource.h"
 
 // GUID definition
 #pragma data_seg(".text")
@@ -15,99 +17,52 @@
 #include "Guid.h"
 #pragma data_seg()
 
-// Global Variables:
-#define MAX_LOADSTRING 100
+static const int MAX_LOADSTRING = 100;
+static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
-HINSTANCE hInst;					// current instance
-TCHAR szTitle[MAX_LOADSTRING];				// The title bar text
-TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-HICON bigIcon;
-HICON smallIcon;
-HWND hWnd;
-UINT notifyMessage;
-HMENU notifyMenu;
-
-ATOM		 MyRegisterClass(HINSTANCE hInstance);
-BOOL		 InitInstance(HINSTANCE, int);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void             RemoveNotificationIcon(void);
-void             NotifyBalloonURL(LPTSTR str);
-void             ShowNotificationMenu(UINT buttonFlag);
-
-CHippoUI::CHippoUI()
+HippoUI::HippoUI()
 {
-    objRefCount_ = 1;
+    refCount_ = 1;
 
-    uiTypeInfo_ = NULL;
-
-    ITypeLib *pTypeLib;
-    if (SUCCEEDED (LoadRegTypeLib(LIBID_HippoUtil, 1, 1, 0, &pTypeLib))) {
-	pTypeLib->GetTypeInfoOfGuid(IID_IHippoUI, &uiTypeInfo_);
-	pTypeLib->Release();
-    }
+    HippoPtr<ITypeLib> typeLib;
+    if (SUCCEEDED (LoadRegTypeLib(LIBID_HippoUtil, 1, 1, 0, &typeLib)))
+	typeLib->GetTypeInfoOfGuid(IID_IHippoUI, &uiTypeInfo_);
 }
 
 
-CHippoUI::~CHippoUI()
+HippoUI::~HippoUI()
 {
-    if (uiTypeInfo_) {
-	uiTypeInfo_->Release();
-	uiTypeInfo_ = NULL;
-    }
 }
 
-/* IUnknown Implementation */
+/////////////////////// IUnknown implementation ///////////////////////
 
 STDMETHODIMP 
-CHippoUI::QueryInterface(REFIID riid, LPVOID *ppReturn)
+HippoUI::QueryInterface(const IID &ifaceID, 
+    			         void     **result)
 {
-    *ppReturn = NULL;
-
-    //IUnknown
-    if(IsEqualIID(riid, IID_IUnknown))
-    {
-        *ppReturn = this;
+    if (IsEqualIID(ifaceID, IID_IUnknown))
+	*result = static_cast<IUnknown *>(this);
+    else if (IsEqualIID(ifaceID, IID_IDispatch)) 
+	*result = static_cast<IDispatch *>(this);
+    else if (IsEqualIID(ifaceID, IID_IHippoUI)) 
+	*result = static_cast<IHippoUI *>(this);
+    else {
+	*result = NULL;
+	return E_NOINTERFACE;
     }
-    
-    //IHippoUI
-    else if(IsEqualIID(riid, IID_IHippoUI))
-    {
-        *ppReturn = (IHippoUI*)this;
-    }   
 
-    if(*ppReturn)
-    {
-        (*(LPUNKNOWN*)ppReturn)->AddRef();
-        return S_OK;
-    }
-    
-    return E_NOINTERFACE;
-}                                             
-
-STDMETHODIMP_(DWORD) 
-CHippoUI::AddRef()
-{
-    return ++objRefCount_;
+    this->AddRef();
+    return S_OK;    
 }
 
+HIPPO_DEFINE_REFCOUNTING(HippoUI)
 
-STDMETHODIMP_(DWORD) 
-CHippoUI::Release()
-{
-    if(--objRefCount_ == 0)
-    {
-        delete this;
-        return 0;
-    }
-   
-    return objRefCount_;
-}
+////////////////////////// IDispatch implementation ///////////////////////
 
-// IDispatch implementations. We just delegate IDispatch to the 
-// standard Typelib-based version.
+// We just delegate IDispatch to the standard Typelib-based version.
 
 STDMETHODIMP
-CHippoUI::GetTypeInfoCount(UINT *pctinfo)
+HippoUI::GetTypeInfoCount(UINT *pctinfo)
 {
     if (pctinfo == NULL)
 	return E_INVALIDARG;
@@ -118,9 +73,9 @@ CHippoUI::GetTypeInfoCount(UINT *pctinfo)
 }
 
 STDMETHODIMP 
-CHippoUI::GetTypeInfo(UINT        iTInfo,
-       		      LCID        lcid,
-    		      ITypeInfo **ppTInfo)
+HippoUI::GetTypeInfo(UINT        iTInfo,
+       		     LCID        lcid,
+    		     ITypeInfo **ppTInfo)
 {
     if (ppTInfo == NULL)
 	return E_INVALIDARG;
@@ -136,11 +91,11 @@ CHippoUI::GetTypeInfo(UINT        iTInfo,
 }
         
 STDMETHODIMP 
-CHippoUI::GetIDsOfNames (REFIID    riid,
-		         LPOLESTR *rgszNames,
-			 UINT      cNames,
-			 LCID	   lcid,
-			 DISPID   *rgDispId)
+HippoUI::GetIDsOfNames (REFIID    riid,
+		        LPOLESTR *rgszNames,
+			UINT      cNames,
+			LCID	   lcid,
+			DISPID   *rgDispId)
  {
      if (!uiTypeInfo_) 
 	 return E_OUTOFMEMORY;
@@ -149,95 +104,76 @@ CHippoUI::GetIDsOfNames (REFIID    riid,
  }
         
 STDMETHODIMP 
-CHippoUI::Invoke (DISPID      dispIdMember,
-		  REFIID      riid,
-		  LCID        lcid,
-		  WORD        wFlags,
-		  DISPPARAMS *pDispParams,
-                  VARIANT    *pVarResult,
-                  EXCEPINFO  *pExcepInfo,
-                  UINT       *puArgErr)
+HippoUI::Invoke (DISPID      dispIdMember,
+		 REFIID      riid,
+		 LCID        lcid,
+		 WORD        wFlags,
+		 DISPPARAMS *pDispParams,
+                 VARIANT    *pVarResult,
+                 EXCEPINFO  *pExcepInfo,
+                 UINT       *puArgErr)
 {
-    HRESULT hr;
-    IHippoUI *pHippoUI;
-
     if (!uiTypeInfo_) 
 	 return E_OUTOFMEMORY;
 
-    this->QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
-
-    hr = DispInvoke(pHippoUI, uiTypeInfo_, dispIdMember, wFlags, 
-	            pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    pHippoUI->Release();
-
-    return hr;
+    HippoQIPtr<IHippoUI> hippoUI(this);
+    return DispInvoke(hippoUI, uiTypeInfo_, dispIdMember, wFlags, 
+	              pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-// IHippoTracker implementations
+//////////////////////// IHippoTracker implementation //////////////////////
 
 STDMETHODIMP 
-CHippoUI::Log(BSTR message)
+HippoUI::Log(BSTR message)
 {
-    NotifyBalloonURL(message);
+    notificationIcon_.showURL(message);
     return S_OK;
 }
 
-int APIENTRY 
-WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR     lpCmdLine,
-	int       nCmdShow)
+/////////////////////////////////////////////////////////////////////////////
+
+bool
+HippoUI::create(HINSTANCE instance)
 {
-    MSG msg;
-    CHippoUI *ui;
+    instance_ = instance;
 
-    // Load global resources
-    LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadString(hInstance, IDC_HIPPOUI, szWindowClass, MAX_LOADSTRING);
+    smallIcon_ = (HICON)LoadImage(instance_, MAKEINTRESOURCE(IDI_DUMBHIPPO),
+	                          IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    bigIcon_ = (HICON)LoadImage(instance_, MAKEINTRESOURCE(IDI_DUMBHIPPO),
+	                        IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
 
-    smallIcon = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_DUMBHIPPO),
-	IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-    bigIcon = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_DUMBHIPPO),
-	IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
-    notifyMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_NOTIFY));
-    notifyMessage = RegisterWindowMessage(TEXT("HippoNotifyMessage"));
+    if (!registerClass())
+	return false;
 
-    // Register window class
-    MyRegisterClass(hInstance);
+    if (!registerActive())
+	return false;
 
-    // Initialize COM
-    CoInitialize(NULL);
 
-    // Create the Singleton HippoUI object and try to register it
-    ui = new CHippoUI();
-    if (!ui->registerActive()) {
-	ui->Release();
-	return 0;
+    if (!createWindow()) {
+	revokeActive();
+	return false;
     }
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow)) 
-	return 0;
-
-    // Main message loop:
-    while (GetMessage(&msg, NULL, 0, 0)) 
-    {
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
+    notificationIcon_.setIcon(smallIcon_);
+    if (!notificationIcon_.create(window_)) {
+	revokeActive();
+	return false;
     }
 
-    RemoveNotificationIcon();
-
-    ui->revokeActive();
-    ui->Release();
-
-    return (int) msg.wParam;
+    return true;
 }
 
-// Tries to register as the singleton CHippoUI, returns true on success
+void
+HippoUI::destroy()
+{
+    notificationIcon_.destroy();
+    
+    revokeActive();
+}
+
+// Tries to register as the singleton HippoUI, returns true on success
 bool 
-CHippoUI::registerActive()
+HippoUI::registerActive()
 {
     IHippoUI *pHippoUI;
  
@@ -260,152 +196,62 @@ CHippoUI::registerActive()
 
 // Removes previous registration via registerActive()
 void
-CHippoUI::revokeActive()
+HippoUI::revokeActive()
 {
     RevokeActiveObject(registerHandle_, NULL);
 }
 
-ATOM 
-MyRegisterClass(HINSTANCE hInstance)
+bool
+HippoUI::registerClass()
 {
     WNDCLASSEX wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX); 
 
     wcex.style		= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= (WNDPROC)WndProc;
+    wcex.lpfnWndProc	= windowProc;
     wcex.cbClsExtra	= 0;
     wcex.cbWndExtra	= 0;
-    wcex.hInstance	= hInstance;
-    wcex.hIcon		= bigIcon;
+    wcex.hInstance	= instance_;
+    wcex.hIcon		= bigIcon_;
     wcex.hCursor	= LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= szWindowClass;
-    wcex.hIconSm	= smallIcon;
+    wcex.lpszClassName	= CLASS_NAME;
+    wcex.hIconSm	= smallIcon_;
 
-    return RegisterClassEx(&wcex);
+    return RegisterClassEx(&wcex) != 0;
 }
 
-BOOL 
-InitInstance(HINSTANCE hInstance, int nCmdShow)
+bool
+HippoUI::createWindow(void)
 {
-   NOTIFYICONDATA notifyIconData = { 0 };
+    WCHAR title[MAX_LOADSTRING];
+    LoadString(instance_, IDS_APP_TITLE, title, MAX_LOADSTRING);
 
-   hInst = hInstance; // Store instance handle in our global variable
+    window_ = CreateWindow(CLASS_NAME, title, WS_OVERLAPPEDWINDOW,
+                           CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, instance_, NULL);
+    
+    if (!window_)
+	return false;
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+    SetWindowLongPtr(window_, GWLP_USERDATA, (LONG_PTR)this);
 
-   if (!hWnd)
-      return FALSE;
-   
-   // We don't actually show the window; it's just there for communication
-   // with our Notification icon
-
-   notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-   notifyIconData.hWnd = hWnd;
-   notifyIconData.uID = 0;
-   notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE;
-   notifyIconData.uCallbackMessage = notifyMessage;
-   notifyIconData.hIcon = smallIcon;
-
-   Shell_NotifyIcon(NIM_ADD, &notifyIconData);
-
-   return TRUE;
+    return true;
 }
 
-void
-RemoveNotificationIcon(void)
-{
-   NOTIFYICONDATA notifyIconData = { 0 };
-
-   notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-   notifyIconData.hWnd = hWnd;
-   notifyIconData.uID = 0;
-   
-   Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
-}
-
-// XP SP2 addition
-#ifndef NIIF_USER
-#define NIIF_USER 4
-#endif
-
-void
-NotifyBalloonURL(LPTSTR str)
-{
-    TCHAR menubuf[64];
-
-    StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Share "));
-    StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, str);
-    StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, TEXT("..."));
-    StringCchCopy(menubuf + sizeof(menubuf) / sizeof(TCHAR) - 6, 6, TEXT("[...]"));
-
-    ModifyMenu(notifyMenu, IDM_SHARE, MF_BYCOMMAND | MF_STRING, 
-	       IDM_SHARE, menubuf);
-
-    NOTIFYICONDATA notifyIconData = { 0 };
-
-    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-    notifyIconData.hWnd = hWnd;
-    notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_INFO;
-    StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo) / sizeof(TCHAR), str);
-    StringCchCat(notifyIconData.szInfo, sizeof(notifyIconData.szInfo) / sizeof(TCHAR),
-                 TEXT("\n(click to view)"));
-    notifyIconData.szInfo[sizeof(notifyIconData.szInfo) - 1] = '\0';
-    notifyIconData.uTimeout = 10 * 1000; // 10 seconds
-    StringCchCopy(notifyIconData.szInfoTitle, sizeof(notifyIconData.szInfoTitle) / sizeof(TCHAR), TEXT("New Link"));
-    notifyIconData.dwInfoFlags = NIIF_USER;
-   
-    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
-}
-
-void
-ShowNotificationMenu(UINT buttonFlag)
-{
-    POINT pt;
-    HMENU popupMenu;
-
-    // We:
-    //  - Set the foreground window to our (non-shown) window so that clicking
-    //    away elsewhere works
-    //  - Send the dummy event to force a context switch to our app
-    // See Microsoft knowledgebase Q135788
-
-    GetCursorPos(&pt);
-    popupMenu = GetSubMenu(notifyMenu, 0);
-
-    SetForegroundWindow(hWnd);
-    TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, hWnd, NULL);
-
-    PostMessage(hWnd, WM_NULL, 0, 0);
-}
-
-LRESULT CALLBACK 
-WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+bool
+HippoUI::processMessage(UINT   message,
+			WPARAM wParam,
+			LPARAM lParam)
 {
     int wmId, wmEvent;
 
     // Messages sent from the notification icon
-    if (message == notifyMessage) 
+    if (message == notificationIcon_.getMessage())
     {
-	switch (lParam) {
-	    case WM_LBUTTONDOWN:
-	    case NIN_SELECT:
-	        ShowNotificationMenu(TPM_LEFTBUTTON);
-	        break;
-	    case WM_RBUTTONDOWN:
-	    case WM_CONTEXTMENU:
-	        ShowNotificationMenu(TPM_RIGHTBUTTON);
-	        break;
-	    case NIN_BALLOONUSERCLICK:
-	        MessageBox(NULL, TEXT("View it, baby!"), TEXT("View It!"), MB_OK);
-	        break;
-	}
-
-	return 0;
+	notificationIcon_.processMessage(wParam, lParam);
+	return true;
     }
 
     switch (message) 
@@ -413,21 +259,64 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
 	wmId    = LOWORD(wParam); 
 	wmEvent = HIWORD(wParam);
-	// Parse the menu selections:
 	switch (wmId)
 	{
 	case IDM_EXIT:
-	    DestroyWindow(hWnd);
-	    break;
-	default:
-	    return DefWindowProc(hWnd, message, wParam, lParam);
+	    DestroyWindow(window_);
+	    return true;
 	}
 	break;
     case WM_DESTROY:
 	PostQuitMessage(0);
-	break;
-    default:
-	return DefWindowProc(hWnd, message, wParam, lParam);
+	return true;
     }
-    return 0;
+
+    return false;
 }
+
+LRESULT CALLBACK 
+HippoUI::windowProc(HWND   window,
+		    UINT   message,
+		    WPARAM wParam,
+		    LPARAM lParam)
+{
+    HippoUI *ui = (HippoUI *)GetWindowLongPtr(window, GWLP_USERDATA);
+    if (ui) {
+	if (ui->processMessage(message, wParam, lParam))
+	    return 0;
+    }
+
+    return DefWindowProc(window, message, wParam, lParam);
+}
+
+int APIENTRY 
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR     lpCmdLine,
+	int       nCmdShow)
+{
+    MSG msg;
+    HippoUI *ui;
+
+    // Initialize COM
+    CoInitialize(NULL);
+
+    ui = new HippoUI();
+    if (!ui->create(hInstance))
+	return 0;
+ 
+    // Main message loop:
+    while (GetMessage(&msg, NULL, 0, 0)) 
+    {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+    }
+
+    ui->destroy();
+    ui->Release();
+
+    CoUninitialize();
+
+    return (int)msg.wParam;
+}
+
