@@ -23,6 +23,25 @@
 HINSTANCE dllInstance;
 UINT dllRefCount;
 
+static bool
+isExplorer(void)
+{
+    static const WCHAR *suffix = L"\\explorer.exe";
+
+    HMODULE process = GetModuleHandle(NULL);
+
+    WCHAR modulePath[MAX_PATH];
+    HRESULT hr = GetModuleFileName(process, modulePath, MAX_PATH);
+    if (FAILED(hr))
+	return false;
+
+    _wcslwr(modulePath);
+    size_t len = wcslen(modulePath);
+
+    return (len >= wcslen(suffix) &&
+	    wcscmp(modulePath + len - wcslen(suffix), suffix) == 0);
+}
+
 extern "C" BOOL WINAPI
 DllMain(HINSTANCE hInstance, 
         DWORD     dwReason, 
@@ -30,9 +49,17 @@ DllMain(HINSTANCE hInstance,
 {
     switch(dwReason)
     {
-       case DLL_PROCESS_ATTACH:
-          dllInstance = hInstance;
-          break;
+    case DLL_PROCESS_ATTACH:
+       /* For efficiency reasons (and to make it easier to load new versions
+        * when debugging), we want to avoid being loaded into Windows Explorer;
+	* browser helper objects will normally be loaded there, but we are
+	* only interested in web browsing.
+        */
+       if (isExplorer())
+	   return FALSE;
+
+       dllInstance = hInstance;
+       break;
     }
        
     return TRUE;
