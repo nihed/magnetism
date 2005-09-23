@@ -14,11 +14,11 @@ package com.dumbhippo.server;
 class HippoResource extends Resource {
 	private String hippoHandle;
 
-	String getHippoHandle() {
+	public String getHippoHandle() {
 		return hippoHandle;
 	}
 
-	void setHippoHandle(String hippoHandle) {
+	public void setHippoHandle(String hippoHandle) {
 		this.hippoHandle = hippoHandle;
 	}
 	

@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 
 /**
@@ -13,6 +14,8 @@ import java.security.SecureRandom;
  * 
  */
 final class Guid {
+	
+	private static final long serialVersionUID = 0;  
 
 	private static java.util.Random rng1;
 
@@ -24,13 +27,28 @@ final class Guid {
 			'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 	// e.g. "ff" or "3c" or whatever
-	private static final int CHARS_PER_LONG = Long.SIZE * 2;
+	private static final int CHARS_PER_LONG = 2 * Long.SIZE / 8;
 
 	// 2 hex digits per byte, 3 longs * 8 bytes
 	public static final int STRING_LENGTH = CHARS_PER_LONG * NUM_COMPONENTS;
 
-	private long[] components;
+	transient private long[] components;
 
+	private void writeObject(java.io.ObjectOutputStream out)
+    	throws IOException {
+		out.defaultWriteObject();
+		
+		out.writeUTF(toString());
+	}
+	
+	private void readObject(java.io.ObjectInputStream in)
+    	throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		
+		String s = in.readUTF();
+		initFromString(s);
+	}
+	
 	public static Guid createNew() {
 		long random1, random2;
 		synchronized (Guid.class) {
@@ -56,6 +74,10 @@ final class Guid {
 		return new Guid(random1, time, random2);
 	}
 
+	private Guid() {
+		components = null;
+	}
+	
 	/**
 	 * Internal constructor for copying/creating by component
 	 * 
@@ -71,13 +93,17 @@ final class Guid {
 		components = source.components.clone();
 	}
 
-	public Guid(String string) throws IllegalArgumentException {
+	private void initFromString(String string) throws IllegalArgumentException {
 		if (string.length() != STRING_LENGTH)
 			throw new IllegalArgumentException(String.format(
 					"String form of GUID must have %d characters",
 					STRING_LENGTH));
 
 		components = hexDecode(string);
+	}
+	
+	public Guid(String string) throws IllegalArgumentException {
+		initFromString(string);
 	}
 
 	public String toString() {
@@ -109,7 +135,7 @@ final class Guid {
 	}
 
 	static private void hexEncode(long value, char[] hex, int start) {
-		for (int count = 0; count < Long.SIZE; ++count) {
+		for (int count = 0; count < Long.SIZE / 8; ++count) {
 			int b = (int) (value >>> count * 8) & 0xff;
 
 			hex[start] = hexdigits[(b >>> 4)];
@@ -130,6 +156,7 @@ final class Guid {
 			next += CHARS_PER_LONG;
 		}
 		assert (next == hex.length);
+		assert (next == STRING_LENGTH);
 
 		return new String(hex);
 	}
@@ -145,7 +172,7 @@ final class Guid {
 
 		for (int i = 0; i < components.length; ++i) {
 			long value = 0;
-			for (int j = 0; j < Long.SIZE; ++j) {
+			for (int j = 0; j < Long.SIZE / 8; ++j) {
 				long b;
 				try {
 					b = Integer.parseInt(s.substring(next + j * 2, next + j * 2

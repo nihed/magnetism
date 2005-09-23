@@ -2,12 +2,18 @@
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
 	<property name="build" value="bin" />
+	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
-		<!-- just so people can override? -->
+		<fileset dir="${lib}" >
+			<include name="**/*.jar"/>
+		</fileset>
+		<!-- these two are here instead of in ${lib} since we want
+		     to use the same ones as tomcat, etc. -->
 		<pathelement location="/usr/share/java/servletapi5.jar" />
+		<pathelement location="/usr/share/java/log4j.jar" />
 		<!-- without this ant won't find the .class files -->
 		<pathelement location="${build}" />
 		<!-- a little hard-coded, but ... -->
@@ -21,16 +27,45 @@
 
 	<target name="compile" depends="init">
 		<!-- Compile the java code -->
-		<javac srcdir="${src}" destdir="${build}">
+		<javac srcdir="${src}" destdir="${build}" source="1.5">
 			<classpath refid="project.class.path" />
 		</javac>
+
 	</target>
 
-	<target name="test" depends="compile">
-		<javac srcdir="${src.tests}" destdir="${build}">
+
+	<!-- Move over other files -->
+
+	<patternset id="metadata">
+		<include name="**/*.hbm.xml" />
+		<include name="**/*.properties" />
+	</patternset>
+
+	<target name="setupmetadata" depends="copymappings,copyproperties">
+	</target>
+
+	<target name="copymappings" depends="init">
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<patternset refid="metadata" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="copyproperties" depends="init">
+		<copy todir="${build}" file="hibernate.properties" />
+		<copy todir="${build}" file="ehcache.xml" />
+	</target>
+
+	<target name="test" depends="compile,setupmetadata">
+		<javac srcdir="${src.tests}" destdir="${build}" source="1.5">
 			<classpath refid="project.class.path" />
 		</javac>
-		<junit printsummary="yes" haltonfailure="yes">
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes" fork="yes">
+			<assertions>
+				<enable/>
+			</assertions>
 			<formatter type="plain" usefile="false" />
 			<formatter type="xml" />
 			<batchtest fork="no" todir="${reports.tests}">
@@ -42,6 +77,6 @@
 		</junit>
 	</target>
 
-	<target name="build" depends="test" />
+	<target name="build" depends="test,setupmetadata" />
 
 </project>

@@ -9,27 +9,54 @@ package com.dumbhippo.server;
  * @author hp
  *
  */
-abstract class Resource {
+abstract class Resource implements GuidPersistable {
 	private Guid guid;
+	private boolean newlyCreated;
 
-	Resource() {
+	public Resource() {
 		guid = Guid.createNew();
+		newlyCreated = true;
 	}
 	
-	Resource(Guid guid) {
+	public Resource(Guid guid) {
 		this.guid = guid;
+		// probably false in this case, but paranoia
+		newlyCreated = true;
 	}
 	
-	Guid getGuid() {
+	public Guid getGuid() {
+		assert guid != null;
 		return guid;
 	}
 	
-	/**
-	 * This is private so only Hibernate can change the GUID
-	 * 
-	 * @param g the new guid
+	/** 
+	 * For hibernate
+	 * @return the hex string form of the GUID
 	 */
-	private void setGuid(Guid guid) {
-		this.guid = guid;
+	public String getId() {
+		String s = guid.toString();
+		assert s.length() == Guid.STRING_LENGTH;
+		return s;
+	}
+	
+	public void setId(String hexGuid) {
+		guid = new Guid(hexGuid);
+	}
+	
+	/** 
+	 * Whether the object was loaded from the database
+	 * (or in general, whether we believe it already exists).
+	 * If we believe it's newly created and it exists, 
+	 * we need to throw an error as we have a guid collision
+	 * that could be a security issue.
+	 * 
+	 * @return true if newly created
+	 */
+	public boolean getNewlyCreated() {
+		return newlyCreated;
+	}
+	
+	public void setNewlyCreated(boolean newlyCreated) {
+		this.newlyCreated = newlyCreated;
 	}
 }

@@ -59,6 +59,7 @@ public class GuidTest extends TestCase {
 		List<Guid> guids = new ArrayList<Guid>();
 		for (int i = 0; i < 20; ++i) {
 			Guid g = Guid.createNew();
+			System.err.println(g.toString());
 			assertEquals(g.toString().length(), Guid.STRING_LENGTH);
 			guids.add(g);
 		}

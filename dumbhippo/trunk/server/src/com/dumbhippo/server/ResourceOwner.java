@@ -35,10 +35,13 @@ final class ResourceOwner {
 	}
 	
 	/** 
-	 * Private because only Hibernate should change this.
-	 * @param guid
+	 * For Hibernate to get hex string form of guid
+	 * @return the hex string form of the guid
 	 */
-	private void setGuid(Guid guid) {
-		this.guid = guid;
+	String getID() {
+		return guid.toString();
 	}
+	
+	// FIXME sync up with how we had to alter Resource when 
+	// making that work with hibernate; implement GuidPersistable
 }

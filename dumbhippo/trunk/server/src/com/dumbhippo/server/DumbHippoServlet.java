@@ -11,5 +11,5 @@ import javax.servlet.http.HttpServlet;
  *
  */
 public class DumbHippoServlet extends HttpServlet {
-
+	private static final long serialVersionUID = 0; 
 }

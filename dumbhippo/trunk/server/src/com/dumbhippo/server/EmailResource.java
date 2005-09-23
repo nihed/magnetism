@@ -7,14 +7,14 @@ package com.dumbhippo.server;
  * @author hp
  *
  */
-final class EmailResource extends Resource {
+class EmailResource extends Resource {
 	private String email;
 
-	String getEmail() {
+	public String getEmail() {
 		return email;
 	}
 	
-	void setEmail(String email) {
+	public void setEmail(String email) {
 		this.email = email;
 	}
 	
