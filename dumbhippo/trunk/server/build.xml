@@ -62,15 +62,15 @@
 			<classpath refid="project.class.path" />
 		</javac>
 		<!-- fork=yes required for assertions to be enabled -->
-		<junit printsummary="yes" haltonfailure="yes" fork="yes">
-			<assertions>
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
 				<enable/>
 			</assertions>
 			<formatter type="plain" usefile="false" />
 			<formatter type="xml" />
-			<batchtest fork="no" todir="${reports.tests}">
+			<batchtest fork="yes" todir="${reports.tests}">
 				<fileset dir="${src.tests}">
-					<include name="**/*Test*.java" />
+					<include name="**/AllTests.java" />
 				</fileset>
 			</batchtest>
 			<classpath refid="project.class.path" />
