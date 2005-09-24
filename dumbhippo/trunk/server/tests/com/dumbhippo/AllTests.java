@@ -5,7 +5,7 @@ import junit.framework.TestSuite;
 
 public class AllTests {
     public static Test suite() {
-        TestSuite suite = new TestSuite("All tests");
+        TestSuite suite = new TestSuite("General DumbHippo tests");
         suite.addTest(new TestSuite(FilesystemTests.class));
         return suite;
     }

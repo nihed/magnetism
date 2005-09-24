@@ -3,6 +3,9 @@
  */
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.GuidPersistable;
+
+
 /**
  * 
  * The ResourceOwner is just an arbitrary ID that can own resources.
@@ -19,29 +22,6 @@ package com.dumbhippo.server;
  * @author hp
  *
  */
-final class ResourceOwner {
-	private Guid guid;
+interface ResourceOwner extends GuidPersistable {
 
-	ResourceOwner() {
-		guid = Guid.createNew();
-	}
-	
-	ResourceOwner(Guid guid) {
-		this.guid = guid;
-	}
-
-	Guid getGuid() {
-		return guid;
-	}
-	
-	/** 
-	 * For Hibernate to get hex string form of guid
-	 * @return the hex string form of the guid
-	 */
-	String getID() {
-		return guid.toString();
-	}
-	
-	// FIXME sync up with how we had to alter Resource when 
-	// making that work with hibernate; implement GuidPersistable
 }

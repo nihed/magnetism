@@ -3,6 +3,8 @@ package com.dumbhippo.server;
 import java.io.File;
 
 import com.dumbhippo.Filesystem;
+import com.dumbhippo.persistence.Storage;
+import com.dumbhippo.persistence.Storage.SessionWrapper;
 
 public class StorageUsingTest extends junit.framework.TestCase {
 	private File storageDir;
@@ -18,6 +20,10 @@ public class StorageUsingTest extends junit.framework.TestCase {
 		assertFalse(storageDir.exists());
 		
 		Storage.initGlobalInstance(storageDir.toString());
+	}
+	
+	protected SessionWrapper getSession() {
+		return Storage.getGlobalPerThreadSession();
 	}
 	
 	public void testDBExists() {

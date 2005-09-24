@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +18,8 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
+import com.dumbhippo.identity20.Guid;
+
 /**
  * 
  * Storage connection. Based on Yarrr.java by Colin. Contains per-thread
@@ -27,7 +29,7 @@ import org.hibernate.cfg.Environment;
  * @author walters
  * 
  */
-final class Storage {
+public final class Storage {
 
 	/**
 	 * Wraps the Hibernate session object, adding some convenience functions.
@@ -35,7 +37,7 @@ final class Storage {
 	 * @author hp
 	 * 
 	 */
-	class SessionWrapper {
+	public class SessionWrapper {
 		private Session session;
 
 		private Transaction transaction;
@@ -59,17 +61,25 @@ final class Storage {
 			GuidPersistable object = (GuidPersistable) getSession().load(klass,
 					guid.toString());
 
-			// not newly-created anymore...
-			if (object != null)
-				object.setNewlyCreated(false);
-
 			return object;
 		}
-
+		
+		/**
+		 * Returns whether or not a GUID is currently known to exist
+		 * in the database.
+		 * 
+		 * @param guid a potentially used guid
+		 * @return true iff guid already exists
+		 */
+		public boolean guidExists(Guid guid) {
+			return loadFromGuid(GuidPersistable.class, guid) == null;
+		}
+		
 		public Session getSession() throws HibernateException {
 			assert sessionFactory != null;
 			if (session == null)
 				session = sessionFactory.openSession();
+			assert session != null;
 			return session;
 		}
 
@@ -361,7 +371,7 @@ final class Storage {
 
 		// Resource class .hbm.xml includes all Resource subclasses
 		logger.debug("adding Resource class def to hibernate configuration");
-		cfg.addClass(Resource.class);
+		cfg.addResource("com/dumbhippo/server/Hibernate.hbm.xml");		
 		
 		cfg.setProperty(Environment.HBM2DDL_AUTO, "update");
 

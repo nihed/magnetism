@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping package="com.dumbhippo.server">
+	<class name="com.dumbhippo.persistence.Resource">
+		<id name="id" type="string">
+			<column name="GUID" length="48" not-null="true" />
+			<!-- We will always invent the GUID ourselves -->
+			<generator class="assigned" />
+		</id>
+		<joined-subclass name="Person">
+			<key column="GUID" />
+		</joined-subclass>
+		<joined-subclass name="EmailResource">
+			<key column="GUID" />
+			<property name="email" column="EMAIL" />
+		</joined-subclass>
+		<joined-subclass name="HippoResource">
+			<key column="GUID" />
+		</joined-subclass>
+	</class>
+	<class name="PersonOwnershipClaim">
+		<id name="id" />
+		<many-to-one name="claimedOwner" access="field"></many-to-one>
+		<many-to-one name="resource" access="field"></many-to-one>
+		<many-to-one name="assertedBy" access="field"></many-to-one>
+	</class>
+</hibernate-mapping>

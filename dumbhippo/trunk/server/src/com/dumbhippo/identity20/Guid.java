@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.identity20;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -13,7 +13,7 @@ import java.security.SecureRandom;
  * @author hp
  * 
  */
-final class Guid {
+final public class Guid {
 	
 	private static final long serialVersionUID = 0;  
 

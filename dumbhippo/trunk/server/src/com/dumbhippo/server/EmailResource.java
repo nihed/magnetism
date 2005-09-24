@@ -3,12 +3,21 @@
  */
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.Resource;
+
 /**
  * @author hp
  *
  */
 class EmailResource extends Resource {
 	private String email;
+	
+	protected EmailResource() {}
+
+	public EmailResource(String string) {
+		super();
+		setEmail(string);
+	}
 
 	public String getEmail() {
 		return email;

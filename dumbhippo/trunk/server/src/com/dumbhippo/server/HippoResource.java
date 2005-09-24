@@ -3,6 +3,8 @@
  */
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.Resource;
+
 /**
  * Resource representing a Hippo account, probably 
  * a combination email address and Jive Messenger JID?
