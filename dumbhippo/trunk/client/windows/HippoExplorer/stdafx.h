@@ -22,4 +22,6 @@
  * included first.
  */
 #include <../PlatformSDK/Include/ComDef.h>
+#import <mshtml.tlb>
 #include <ole2.h>
+

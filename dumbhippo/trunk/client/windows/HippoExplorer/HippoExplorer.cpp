@@ -11,6 +11,8 @@
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include <HippoRegistrar.h>
+#include "HippoExplorer_h.h"
+#include "HippoExplorer_i.c"
 
 // Definitions of GUIDs
 #pragma data_seg(".text")
@@ -79,7 +81,8 @@ DllGetClassObject(const CLSID &classID,
 {
     HRESULT hr;
 
-    if (!IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
+    if (!IsEqualCLSID(classID, CLSID_HippoEmbed) &&
+	!IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
 	!IsEqualCLSID(classID, CLSID_HippoTracker)) {
 	return CLASS_E_CLASSNOTAVAILABLE;
     }
@@ -103,6 +106,10 @@ DllRegisterServer(void)
     HRESULT hr;
     CATID catids[1];
 
+    hr  = registrar.registerTypeLib();
+    if (FAILED(hr))
+	return hr;
+
     hr = registrar.registerInprocServer(CLSID_HippoExplorerBar,
 			                TEXT("Hi&ppo Bar"));
     if (FAILED(hr))
@@ -119,5 +126,10 @@ DllRegisterServer(void)
     if (FAILED(hr))
 	return hr;
     
+    hr = registrar.registerInprocServer(CLSID_HippoEmbed,
+			                TEXT("Hippo Embed"));
+    if (FAILED(hr))
+	return hr;
+
     return S_OK;
 }

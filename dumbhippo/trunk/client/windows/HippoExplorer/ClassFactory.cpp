@@ -8,6 +8,7 @@
 #include "Guid.h"
 #include "HippoExplorerBar.h"
 #include "HippoTracker.h"
+#include "HippoEmbed.h"
 
 ClassFactory::ClassFactory(const CLSID &classID)
 {
@@ -70,6 +71,8 @@ ClassFactory::CreateInstance (IUnknown  *outer,
 	return createInstance<HippoExplorerBar>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoTracker)) {
 	return createInstance<HippoTracker>(ifaceID, result);
+    } else if (IsEqualCLSID(classID_, CLSID_HippoEmbed)) {
+	return createInstance<HippoEmbed>(ifaceID, result);
     } else {
 	return E_UNEXPECTED;
     }

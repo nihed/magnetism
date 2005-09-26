@@ -153,7 +153,7 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
 		       DISPPARAMS   *dispParams,
 		       VARIANT      *result,
 		       EXCEPINFO    *excepInfo,  
-		       unsigned int *pArgErr)
+		       unsigned int *argErr)
  {
       switch (member) {
 	case DISPID_DOCUMENTCOMPLETE:
