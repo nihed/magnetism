@@ -25,8 +25,14 @@ HippoUI::HippoUI()
     refCount_ = 1;
 
     HippoPtr<ITypeLib> typeLib;
-    if (SUCCEEDED (LoadRegTypeLib(LIBID_HippoUtil, 1, 1, 0, &typeLib)))
+    HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
+				0, 1, /* Version */
+				0,    /* LCID */
+				&typeLib);
+    if (SUCCEEDED (hr))
 	typeLib->GetTypeInfoOfGuid(IID_IHippoUI, &uiTypeInfo_);
+    else
+	hippoDebug(L"Failed to load type lib: %x\n", hr);
 }
 
 
