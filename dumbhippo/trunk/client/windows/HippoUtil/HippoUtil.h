@@ -2,6 +2,7 @@
 
 #include <ole2.h>
 #include <assert.h>
+#include <strsafe.h>
 #include "HippoUtil_h.h"
 
 #define HIPPO_DEFINE_REFCOUNTING(C) \
@@ -73,3 +74,38 @@ public:
 	unknown->QueryInterface(*piid, (LPVOID *)&raw_);
     }
 };
+
+// Very simple version of CComBSTR
+
+class HippoBSTR
+{
+public:
+    HippoBSTR() : m_str(0) {
+    }
+
+    ~HippoBSTR() {
+	if (m_str)
+	    ::SysFreeString(m_str);
+    }
+
+    operator BSTR () {
+	return m_str;
+    }
+
+    BSTR *operator&() {
+	assert(m_str == NULL);
+	return &m_str;
+    }
+    
+    BSTR m_str;
+};
+
+inline void hippoDebug(WCHAR *format, ...)
+{
+    WCHAR buf[1024];
+    va_list vap;
+    va_start (vap, format);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
+    va_end (vap);
+    MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
+}
