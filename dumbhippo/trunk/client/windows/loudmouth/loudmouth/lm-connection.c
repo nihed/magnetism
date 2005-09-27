@@ -21,17 +21,19 @@
 #include <config.h>
 
 #include <string.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
 #ifndef __WIN32__
-  #include <netdb.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <sys/time.h>
+#  include <unistd.h>
+#  include <netdb.h>
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <sys/time.h>
 #else
-  #include <winsock2.h>
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#  define EINPROGRESS WSAEINPROGRESS
 #endif
 
 #include "lm-debug.h"
@@ -331,8 +333,13 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 		if (!_lm_ssl_begin (connection->ssl, connection->fd,
 				    connection->server,
 				    NULL)) {
+#ifdef __WIN32__
+			shutdown (connection->fd, SD_BOTH);
+			closesocket (connection->fd);
+#else
 			shutdown (connection->fd, SHUT_RDWR);
 			close (connection->fd);
+#endif
 		
 			connection_do_close (connection);
 			return FALSE;
@@ -473,13 +480,26 @@ connection_connect_cb (GIOChannel   *source,
 }
 
 static void
+set_socket_nonblocking (int fd)
+{
+#ifdef __WIN32__
+    ULONG arg = 1;
+    ioctlsocket (fd, FIONBIO, &arg);
+#else
+    int              flags;
+
+    flags = fcntl (fd, F_GETFL, 0);
+    fcntl (fd, F_SETFL, flags | O_NONBLOCK);
+#endif
+}
+
+static void
 connection_do_connect (LmConnectData *connect_data) 
 {
 	LmConnection    *connection;
 	int              fd;
 	int              res;
 	int              port;
-	int              flags;
 	char             name[NI_MAXHOST];
 	char             portname[NI_MAXSERV];
 	struct addrinfo *addr;
@@ -513,14 +533,18 @@ connection_do_connect (LmConnectData *connect_data)
 		return;
 	}
 
-	flags = fcntl (fd, F_GETFL, 0);
-	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
+	set_socket_nonblocking (fd);
 	
 	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
 	connect_data->fd = fd;
-	
+
 	if (res < 0 && errno != EINPROGRESS) {
+#ifdef __WIN32__
+		closesocket (fd);
+#else
 		close (fd);
+#endif
+
 		_lm_connection_failed (connect_data);
 		return;
 	}
@@ -1276,7 +1300,7 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 		if (g_main_context_pending (connection->context)) {
 			g_main_context_iteration (connection->context, TRUE);
 		} else {
-			usleep (10);
+			g_usleep (10);
 		}
 	}
 

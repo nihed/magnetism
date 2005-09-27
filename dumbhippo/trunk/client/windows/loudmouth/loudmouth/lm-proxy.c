@@ -23,11 +23,11 @@
 
 #include <glib.h>
 #include <string.h>
-#include <unistd.h>
 #ifndef __WIN32__
-  #include <sys/socket.h>
+#  include <unistd.h> */
+#  include <sys/socket.h>
 #else 
-  #include <winsock2.h>
+#  include <winsock2.h>
 #endif
 
 #include "lm-internals.h"
@@ -197,7 +197,7 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 
 	if (condition == G_IO_ERR) {
 		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR,
-		            &error, &len);
+		            (char *)&error, &len);
 		_lm_connection_failed_with_error (connect_data, error);
 		return FALSE;
 	} else if (condition == G_IO_OUT) {
