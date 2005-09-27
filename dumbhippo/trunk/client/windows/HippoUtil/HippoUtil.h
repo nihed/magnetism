@@ -37,7 +37,8 @@ public:
     HippoPtr() : raw_(0) {
     }
     HippoPtr(T *t) : raw_(t) {
-	raw_->AddRef();
+	if (raw_)
+	    raw_->AddRef();
     }
     ~HippoPtr() {
 	if (raw_) {
@@ -71,7 +72,8 @@ class HippoQIPtr : public HippoPtr<T>
 {
 public:
     HippoQIPtr(IUnknown *unknown) : HippoPtr<T>() {
-	unknown->QueryInterface(*piid, (LPVOID *)&raw_);
+	if (unknown)
+	    unknown->QueryInterface(*piid, (LPVOID *)&raw_);
     }
 };
 
@@ -83,9 +85,26 @@ public:
     HippoBSTR() : m_str(0) {
     }
 
+    HippoBSTR(const OLECHAR *str) 
+	: m_str(::SysAllocString(str)) {
+    }
+    
     ~HippoBSTR() {
 	if (m_str)
 	    ::SysFreeString(m_str);
+    }
+
+    HRESULT Append(const OLECHAR *str) {
+	UINT oldlen = SysStringLen(m_str);
+	UINT appendlen = wcslen(str);
+	
+	if (oldlen + appendlen >= oldlen && // check for overflow
+	    ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen)) {
+	    memcpy(m_str + oldlen, str, sizeof(OLECHAR) * (appendlen + 1));
+	    return S_OK;
+	} else {
+	    return E_OUTOFMEMORY;
+	}
     }
 
     operator BSTR () {
@@ -95,6 +114,15 @@ public:
     BSTR *operator&() {
 	assert(m_str == NULL);
 	return &m_str;
+    }
+
+    HippoBSTR & operator=(const OLECHAR *str) {
+	// On memory failure, leaves NULL in the result
+	if (m_str)
+	    ::SysFreeString(m_str);
+	m_str = ::SysAllocString(str);
+
+	return *this;
     }
     
     BSTR m_str;
