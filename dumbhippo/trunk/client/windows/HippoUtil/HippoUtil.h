@@ -88,7 +88,12 @@ public:
     HippoBSTR(const OLECHAR *str) 
 	: m_str(::SysAllocString(str)) {
     }
-    
+
+    HippoBSTR(unsigned int   len,
+	      const OLECHAR *str) 
+	: m_str(::SysAllocStringLen(str, len)) {
+    }
+
     ~HippoBSTR() {
 	if (m_str)
 	    ::SysFreeString(m_str);
@@ -96,7 +101,7 @@ public:
 
     HRESULT Append(const OLECHAR *str) {
 	UINT oldlen = SysStringLen(m_str);
-	UINT appendlen = wcslen(str);
+	size_t appendlen = wcslen(str);
 	
 	if (oldlen + appendlen >= oldlen && // check for overflow
 	    ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen)) {
@@ -105,6 +110,11 @@ public:
 	} else {
 	    return E_OUTOFMEMORY;
 	}
+    }
+
+    HRESULT CopyTo(BSTR *str) {
+	*str = ::SysAllocString(m_str);
+	return *str ? S_OK : E_OUTOFMEMORY;
     }
 
     operator BSTR () {
