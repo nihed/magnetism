@@ -14,6 +14,7 @@
 		     to use the same ones as tomcat, etc. -->
 		<pathelement location="/usr/share/java/servletapi5.jar" />
 		<pathelement location="/usr/share/java/log4j.jar" />
+		<pathelement location="/usr/share/java/javamail/mailapi.jar" />		
 		<!-- without this ant won't find the .class files -->
 		<pathelement location="${build}" />
 		<!-- a little hard-coded, but ... -->

@@ -5,12 +5,12 @@
 <hibernate-mapping package="com.dumbhippo.server">
 	<class name="com.dumbhippo.persistence.Resource">
 		<id name="id" type="string">
-			<column name="GUID" length="48" not-null="true" />
+			<column name="GUID" length="48" not-null="true"/>
 			<!-- We will always invent the GUID ourselves -->
 			<generator class="assigned" />
 		</id>
 		<joined-subclass name="Person">
-			<key column="GUID" />
+			<key column="GUID"/>
 		</joined-subclass>
 		<joined-subclass name="EmailResource">
 			<key column="GUID" />
@@ -21,9 +21,22 @@
 		</joined-subclass>
 	</class>
 	<class name="PersonOwnershipClaim">
-		<id name="id" />
+		<id name="id">
+			<generator class="native"/>
+		</id>
 		<many-to-one name="claimedOwner" access="field"></many-to-one>
 		<many-to-one name="resource" access="field"></many-to-one>
 		<many-to-one name="assertedBy" access="field"></many-to-one>
+	</class>
+	<class name="Invitation">
+		<id name="id">
+			<generator class="native"/>
+		</id>
+		<many-to-one name="invitee" access="field"></many-to-one>
+		<property name="authKey" access="field"></property>
+	    <set name="inviters" access="field">
+    	    <key column="INVITATION_GUID"/>
+	        <one-to-many class="Person"/>
+	    </set>		
 	</class>
 </hibernate-mapping>

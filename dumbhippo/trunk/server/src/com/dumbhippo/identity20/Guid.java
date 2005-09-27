@@ -1,6 +1,7 @@
 package com.dumbhippo.identity20;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.SecureRandom;
 
 /**
@@ -13,9 +14,9 @@ import java.security.SecureRandom;
  * @author hp
  * 
  */
-final public class Guid {
+final public class Guid implements Serializable {
 	
-	private static final long serialVersionUID = 0;  
+	private static final long serialVersionUID = 1L;  
 
 	private static java.util.Random rng1;
 

@@ -18,5 +18,8 @@
 	<classpathentry kind="lib" path="lib/dom4j-1.6.jar"/>
 	<classpathentry kind="lib" path="lib/jta.jar"/>
 	<classpathentry kind="lib" path="lib/cglib-2.1.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/javamail/mailapi.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/javamail/providers.jar"/>
+	<classpathentry kind="lib" path="lib/antlr-2.7.5H3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

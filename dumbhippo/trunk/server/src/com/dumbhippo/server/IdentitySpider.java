@@ -39,5 +39,17 @@ public interface IdentitySpider {
 	public Person lookupPersonByEmail(Person viewpoint, String email);
 	
 	public Person lookupPersonByAim(String email);
-	public Person lookupPersonByAim(Person viewpoint, String email);	
+	public Person lookupPersonByAim(Person viewpoint, String email);
+
+	/**
+	 * Return the best currently known human-readable identifier for a person.
+	 * If a full name is known, return that.  Secondary possibilities include
+	 * email addresses and AIM screen names.
+	 * @param inviter
+	 * @return
+	 */
+	public String getHumanReadableId(Person inviter);
+	
+	public String getEmailAddress(Person viewpoint, Person p);
+	public String getEmailAddress(Person p);
 }

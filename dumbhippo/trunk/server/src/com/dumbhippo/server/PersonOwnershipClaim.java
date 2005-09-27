@@ -21,7 +21,7 @@ class PersonOwnershipClaim extends DBUnique {
 	private Resource resource;
 	private Person assertedBy;
 	
-	protected PersonOwnershipClaim() {}
+	protected PersonOwnershipClaim() {super();}
 	
 	public PersonOwnershipClaim(Person claimedOwner, Resource resource) {
 		this(claimedOwner, resource, null);

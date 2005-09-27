@@ -14,7 +14,7 @@ public abstract class Resource implements GuidPersistable {
 	protected Guid guid;
 	
 	public Resource() {
-		guid = Guid.createNew();		
+		guid = Guid.createNew();
 	}
 	
 	public Resource(Guid guid) {
@@ -46,5 +46,13 @@ public abstract class Resource implements GuidPersistable {
 	 */
 	public void setId(String hexId) {
 		guid = new Guid(hexId);
-	}	
+	}
+
+	@Override
+	public boolean equals(Object arg0) {
+		if (!(arg0 instanceof Resource))
+			return false;
+		return ((Resource) arg0).guid.equals(guid);
+	}
+	
 }
