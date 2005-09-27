@@ -143,6 +143,7 @@ main (int argc, char **argv)
 	LmMessageHandler *handler;
 	gboolean          result;
 	UserInfo         *info;
+	GError           *error = NULL;
 #ifdef __WIN32__
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -223,10 +224,11 @@ main (int argc, char **argv)
 
 	result = lm_connection_open (connection,
 				     (LmResultFunction) connection_open_cb,
-				     info, NULL, NULL);
+				     info, NULL, &error);
 
 	if (!result) {
-		g_print ("Opening connection failed: %d\n", result);
+		g_print ("Opening connection failed: %s\n", error->message);
+		g_error_free (error);
 	} else {
 		g_print ("Returned from the connection_open\n");
 	}
