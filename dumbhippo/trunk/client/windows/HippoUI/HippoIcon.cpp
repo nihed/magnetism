@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include <strsafe.h>
 #include "HippoIcon.h"
+#include "HippoUI.h"
 #include "Resource.h"
 
 HippoIcon::HippoIcon()
@@ -14,6 +15,12 @@ HippoIcon::HippoIcon()
 
 HippoIcon::~HippoIcon()
 {
+}
+
+void
+HippoIcon::setUI(HippoUI *ui)
+{
+    ui_ = ui;
 }
 
 bool
@@ -85,7 +92,6 @@ HippoIcon::processMessage(WPARAM wParam,
 	break;
     case NIN_BALLOONUSERCLICK:
         ignoreNextClick_ = true;
-        MessageBox(NULL, TEXT("View it, baby!"), TEXT("View It!"), MB_OK);
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
@@ -102,6 +108,8 @@ HippoIcon::processMessage(WPARAM wParam,
 void
 HippoIcon::showURL(const WCHAR *url)
 {
+    currentURL_ = url;
+
     WCHAR menubuf[64];
 
     StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Share "));

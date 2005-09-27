@@ -31,6 +31,8 @@ public:
     bool create(HINSTANCE instance);
     void destroy();
 
+    void showShareWindow(BSTR url);
+
 private:
     bool registerActive();
     bool registerClass();
@@ -41,6 +43,8 @@ private:
 			LPARAM lParam);
 
     void revokeActive();
+
+    HRESULT getAppletURL(BSTR filename, BSTR *url);
 
     static LRESULT CALLBACK windowProc(HWND   window,
     		                       UINT   message,
@@ -53,6 +57,8 @@ private:
     HWND window_;
     HICON bigIcon_;
     HICON smallIcon_;
+
+    HippoBSTR currentURL_;
 
     HippoIcon notificationIcon_;
 

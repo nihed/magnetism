@@ -4,12 +4,17 @@
  **/
 #pragma once
 
+#include <HippoUtil.h>
+
+class HippoUI;
+
 class HippoIcon
 {
 public:
     HippoIcon();
     ~HippoIcon();
 
+    void setUI(HippoUI *ui);
     void setIcon(HICON icon);
     bool create(HWND window);
     void destroy();
@@ -23,11 +28,12 @@ public:
 private:
     void showMenu(UINT buttonFlag);
 
-    
-    HWND window_;
+    HippoUI *ui_;
+    HWND window_; // XXX should eliminate in favor of getter on HippoUI
     UINT message_;
     HMENU menu_;
     HICON icon_;
+    HippoBSTR currentURL_;
 
     // When the user clicks on us with a ballon tip, we get *first* a NIN_BALLOONUSERCLICK
     // then a WM_[LR]BUTTONDOWN. We want to ignore the second to avoid going to the

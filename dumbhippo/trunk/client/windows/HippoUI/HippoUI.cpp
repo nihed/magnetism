@@ -6,6 +6,7 @@
 #include "HippoUI.h"
 #include <stdio.h>
 #include <strsafe.h>
+#include <exdisp.h>
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include "Resource.h"
@@ -16,6 +17,8 @@
 #include <initguid.h>
 #include "Guid.h"
 #pragma data_seg()
+
+using namespace MSHTML;
 
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
@@ -33,6 +36,8 @@ HippoUI::HippoUI()
 	typeLib->GetTypeInfoOfGuid(IID_IHippoUI, &uiTypeInfo_);
     else
 	hippoDebug(L"Failed to load type lib: %x\n", hr);
+
+    notificationIcon_.setUI(this);
 }
 
 
@@ -132,6 +137,7 @@ HippoUI::Invoke (DISPID      dispIdMember,
 STDMETHODIMP 
 HippoUI::Log(BSTR message)
 {
+    currentURL_ = message;
     notificationIcon_.showURL(message);
     return S_OK;
 }
@@ -175,6 +181,62 @@ HippoUI::destroy()
     notificationIcon_.destroy();
     
     revokeActive();
+}
+
+// Show a window offering to share the given URL
+void 
+HippoUI::showShareWindow(BSTR url)
+{
+    HippoBSTR shareURL;
+    
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"shareURL.htm"), &shareURL)))
+	return;
+
+    if (!SUCCEEDED (shareURL.Append(L"?url=")))
+	return;
+
+    if (!SUCCEEDED (shareURL.Append(url)))
+	return;
+
+    HippoPtr<IWebBrowser2> webBrowser;
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+	             IID_IWebBrowser2, (void **)&webBrowser);
+
+    if (!webBrowser)
+	return;
+
+    VARIANT missing;
+    missing.vt = VT_NULL;
+
+    webBrowser->Navigate(shareURL,
+   		         &missing, &missing, &missing, &missing);
+    webBrowser->put_AddressBar(VARIANT_FALSE);
+    webBrowser->put_MenuBar(VARIANT_FALSE);
+    webBrowser->put_StatusBar(VARIANT_FALSE);
+    webBrowser->put_ToolBar(VARIANT_FALSE);
+    webBrowser->put_Width(500);
+    webBrowser->put_Height(500);
+
+    RECT workArea;
+    if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
+	webBrowser->put_Left((workArea.left + workArea.right - 500) / 2);
+	webBrowser->put_Top((workArea.bottom + workArea.top - 500) / 2);
+    }
+
+    HippoPtr<IDispatch> dispDocument;	
+    webBrowser->get_Document(&dispDocument);
+    HippoQIPtr<IHTMLDocument2> document(dispDocument);
+
+    if (document) {
+	HippoPtr<IHTMLElement> bodyElement;
+	document->get_body(&bodyElement);
+	HippoQIPtr<IHTMLBodyElement> body(bodyElement);
+
+	if (body)
+	    body->put_scroll(HippoBSTR(L"no"));
+    }
+
+    webBrowser->put_Visible(VARIANT_TRUE);
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
@@ -241,9 +303,51 @@ HippoUI::createWindow(void)
     if (!window_)
 	return false;
 
-    SetWindowLongPtr(window_, GWLP_USERDATA, (LONG_PTR)this);
+    SetWindowLongPtr(window_, GWLP_USERDATA, (::LONG_PTR)this);
 
     return true;
+}
+
+// Find the pathname for a HTML file, based on the location of the .exe
+// We could alternatively use res: URIs and embed the HTML files in the
+// executable, but this is probably more flexible
+HRESULT
+HippoUI::getAppletURL(BSTR filename, BSTR *url)
+{
+    HRESULT hr;
+
+    // XXX can theoretically truncate if we have a \?\\foo\bar\...
+    // path which isn't limited to the short Windows MAX_PATH
+    // Could use dynamic allocation here
+    WCHAR baseBuf[MAX_PATH];
+
+    if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
+	return E_FAIL;
+
+    for (size_t i = wcslen(baseBuf); i > 0; i--)
+	if (baseBuf[i - 1] == '\\')
+	    break;
+
+    if (i == 0)  // No \ in path?
+	return E_FAIL;
+
+    HippoBSTR path((UINT)i, baseBuf);
+    hr = path.Append(L"applets\\");
+    if (!SUCCEEDED (hr))
+	return hr;
+
+    hr = path.Append(filename);
+    if (!SUCCEEDED (hr))
+	return hr;
+
+    WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
+    DWORD urlLength = INTERNET_MAX_URL_LENGTH;
+    hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
+    if (!SUCCEEDED (hr))
+	return hr;
+
+    *url = SysAllocString(urlBuf);
+    return *url ? S_OK : E_OUTOFMEMORY;
 }
 
 bool
@@ -267,6 +371,9 @@ HippoUI::processMessage(UINT   message,
 	wmEvent = HIWORD(wParam);
 	switch (wmId)
 	{
+	case IDM_SHARE:
+	    showShareWindow(currentURL_);
+	    break;
 	case IDM_EXIT:
 	    DestroyWindow(window_);
 	    return true;
@@ -295,6 +402,45 @@ HippoUI::windowProc(HWND   window,
     return DefWindowProc(window, message, wParam, lParam);
 }
 
+/* Finds all IE and Explorer windows on the system. Needs some refinement
+ * to distinguish the two.
+ */
+#if 0
+static void
+findExplorerWindows()
+{
+    HippoPtr<IShellWindows> shellWindows;
+    HRESULT hr = CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL, IID_IShellWindows, (void **)&shellWindows);
+    if (FAILED(hr)) {
+	hippoDebug(L"Couldn't create: %x", hr);
+	return;
+    }
+
+    LONG count;
+    shellWindows->get_Count(&count);
+    hippoDebug(L"%d", count);
+    for (LONG i = 0; i < count; i++) {
+	HippoPtr<IDispatch> dispatch;
+	VARIANT item;
+	item.vt = VT_I4;
+	item.intVal = i;
+	hr = shellWindows->Item(item, &dispatch);
+	if (SUCCEEDED(hr)) {
+	    HippoQIPtr<IWebBrowser2> browser(dispatch);
+
+	    if (browser) {
+		HippoBSTR browserURL;
+	    	browser->get_LocationURL(&browserURL);
+
+		if (browserURL)
+		    hippoDebug(L"URL: %ls\n", (WCHAR *)browserURL);
+	    }
+	}
+    }
+
+}
+#endif
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -310,7 +456,7 @@ WinMain(HINSTANCE hInstance,
     ui = new HippoUI();
     if (!ui->create(hInstance))
 	return 0;
- 
+
     // Main message loop:
     while (GetMessage(&msg, NULL, 0, 0)) 
     {
