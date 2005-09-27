@@ -661,7 +661,7 @@ connection_do_open (LmConnection *connection, GError **error)
 
 	memset (&req, 0, sizeof(req));
 
-	req.ai_family   = AF_UNSPEC;
+	req.ai_family   = PF_UNSPEC;
 	req.ai_socktype = SOCK_STREAM;
 	req.ai_protocol = IPPROTO_TCP;
 	
@@ -670,30 +670,35 @@ connection_do_open (LmConnection *connection, GError **error)
 	
 	if (connection->proxy) {
 		const gchar *proxy_server;
+		int result;
 
 		proxy_server = lm_proxy_get_server (connection->proxy);
 		/* connect through proxy */
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n", proxy_server);
 
-		if (getaddrinfo (proxy_server, NULL, &req, &ans) != 0) {
+		result = getaddrinfo (proxy_server, NULL, &req, &ans);
+		if (result != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_OPEN,   
-				     "getaddrinfo() failed");
+				     "getaddrinfo() failed: %s",
+				     gai_strerror(result));
 			return FALSE;
 		}
 	} else { /* connect directly */
+	        int result;
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n", 
 		       connection->server);
 
-		if (getaddrinfo (connection->server,
-				 NULL, &req, &ans) != 0) {
+		result = getaddrinfo (connection->server, NULL, &req, &ans);
+		if (result != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_OPEN,   
-				     "getaddrinfo() failed");
+				     "getaddrinfo() failed: %s",
+				     gai_strerror(result));
 			return FALSE;
 		}
 	}
