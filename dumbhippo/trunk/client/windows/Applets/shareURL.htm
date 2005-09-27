@@ -10,13 +10,14 @@
 function start() {
    search = document.location.search.substr(1); 
    queries = search.split("&");
-   shareurl="<none>";
+   shareurl = "<none>";
    for (i in queries) {
       query = queries[i];
-      tmp = query.split("=", 2);
-      if (tmp.length == 2 && tmp[0] == "url") {
-         shareurl=tmp[1];
-         break;
+      equalIndex = query.indexOf("=");
+      if (equalIndex >= 0 &&
+          query.substr(0, equalIndex) == "url") {
+          shareurl = query.substr(equalIndex + 1);
+          break;
       } 
    }
    urlspan = document.getElementById("url");
