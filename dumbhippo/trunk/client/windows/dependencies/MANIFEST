@@ -1,0 +1,52 @@
+# This file is theoritically machine-parseable for the purposes
+# of auto-updating, though currently everything is manually
+# maintained.
+#
+# The format is:
+#
+# URL: URL to binary tarball
+# MD5Sum: MD5 sum of downloaded tarballs
+# Source: URL to corresponding source tarball
+# Directory: Directory to change into before unpacking
+# Strip: Number of leading /'s to remove when unpacking (like patch -p<n>)
+# 
+# Followed by a set of shell globs specifying the files to include
+# everything not explicitly included is excluded.
+#
+URL: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.bin.woe32.zip
+MD5sum: a18e9420d6a354b585a77230996b4171
+Source: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.tar.gz
+Directory: libiconv
+Strip: 0
+bin/charset.dll
+bin/iconv.dll
+
+URL: http://www.gimp.org/~tml/gimp/win32/gettext-runtime-0.13.1.zip
+MD5sum: 8399b91d23824e88173177f2b340d4ae
+Source: http://www.gimp.org/~tml/gimp/win32/gettext-0.13.1.tar.gz
+Directory: gettext
+Strip: 0
+bin/asprintf.dll
+bin/intl.dll
+lib/intl.lib
+include/libintl.h
+
+URL: ftp://ftp.gtk.org/pub/gtk/v2.6/win32/glib-2.6.6.zip
+MD5sum: 57d484f6f589bde7e68177b82abcf43b
+Source: ftp://ftp.gtk.org/pub/gtk/v2.6/glib-2.6.6.tar.bz2
+Directory: glib
+Strip: 0
+bin/libglib-2.0.0
+
+URL: ftp://ftp.gtk.org/pub/gtk/v2.6/win32/glib-dev-2.6.6.zip
+MD5sum: 706c38cfaab70322f991ef31583cec8a
+Source: ftp://ftp.gtk.org/pub/gtk/v2.6/glib-2.6.6.tar.bz2
+Directory: glib
+Strip: 0
+bin/libglib-2.0-0.dll
+bin/libthread-2.0-0.dll
+include/glib-2.0/glib.h
+include/glib-2.0/glib/*.h
+lib/glib-2.0/include/glibconfig.h
+lib/glib-2.0.lib
+lib/gthread-2.0.lib
