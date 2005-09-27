@@ -27,6 +27,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Applets", "Applets\Applets.
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestLoudmouth", "TestLoudmouth\TestLoudmouth.vcproj", "{7C7F5015-5C40-4D37-81DD-DA8260FBB242}"
+	ProjectSection(ProjectDependencies) = postProject
+		{923DC368-46A9-4977-B827-75797CC259E3} = {923DC368-46A9-4977-B827-75797CC259E3}
+		{E02F6EA7-65C3-4D2A-919F-D022D6C26DFA} = {E02F6EA7-65C3-4D2A-919F-D022D6C26DFA}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -57,6 +63,10 @@ Global
 		{A0F265E0-4510-4178-B365-A4581C74EA51}.Debug.Build.0 = Debug|Win32
 		{A0F265E0-4510-4178-B365-A4581C74EA51}.Release.ActiveCfg = Release|Win32
 		{A0F265E0-4510-4178-B365-A4581C74EA51}.Release.Build.0 = Release|Win32
+		{7C7F5015-5C40-4D37-81DD-DA8260FBB242}.Debug.ActiveCfg = Debug|Win32
+		{7C7F5015-5C40-4D37-81DD-DA8260FBB242}.Debug.Build.0 = Debug|Win32
+		{7C7F5015-5C40-4D37-81DD-DA8260FBB242}.Release.ActiveCfg = Release|Win32
+		{7C7F5015-5C40-4D37-81DD-DA8260FBB242}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
