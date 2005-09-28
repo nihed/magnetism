@@ -23,7 +23,7 @@
 			</joined-subclass>
 		</joined-subclass>
 	</class>
-	<class name="PersonOwnershipClaim">
+	<class name="ResourceOwnershipClaim">
 		<id name="id">
 			<generator class="native"/>
 		</id>
