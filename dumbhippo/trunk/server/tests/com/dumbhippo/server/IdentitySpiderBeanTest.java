@@ -10,7 +10,7 @@ public class IdentitySpiderBeanTest extends SpiderUsingTest {
 		SessionWrapper sess = Storage.getGlobalPerThreadSession();
 		sess.beginTransaction();
 		
-		Person p = spider.lookupPersonByEmail(testPerson1Email);
+		Person p = spider.lookupPersonByEmail(getTestPerson1Email());
 		assertNull(p);
 		
 		p = getTestPerson1();
@@ -18,7 +18,7 @@ public class IdentitySpiderBeanTest extends SpiderUsingTest {
 		
 		sess.commitCloseBeginTransaction();
 		
-		p = spider.lookupPersonByEmail(testPerson1Email);
+		p = spider.lookupPersonByEmail(getTestPerson1Email());
 		assertNotNull(p);
 		assertEquals(p.getGuid(), guid);
 		
@@ -33,12 +33,13 @@ public class IdentitySpiderBeanTest extends SpiderUsingTest {
 		
 		sess.commitCloseBeginTransaction();
 		
-		String email = spider.getEmailAddress(p);
+		EmailResource email = spider.getEmailAddress(p);
 		assertNotNull(email);
-		assertEquals(email, testPerson1Email);
+		assertEquals(email.getEmail(), testPerson1EmailString);
 		email = spider.getEmailAddress(p, p);
 		assertNotNull(email);
-		assertEquals(email, testPerson1Email);
+		assertEquals(email.getEmail(), testPerson1EmailString);
+		assertEquals(email, getTestPerson1Email());
 		
 		sess.commitTransaction();
 	}	

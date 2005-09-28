@@ -3,7 +3,7 @@
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
         "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="com.dumbhippo.server">
-	<class name="com.dumbhippo.persistence.Resource">
+	<class name="com.dumbhippo.persistence.GuidPersistable">
 		<id name="id" type="string">
 			<column name="GUID" length="48" not-null="true"/>
 			<!-- We will always invent the GUID ourselves -->
@@ -12,12 +12,15 @@
 		<joined-subclass name="Person">
 			<key column="GUID"/>
 		</joined-subclass>
-		<joined-subclass name="EmailResource">
+		<joined-subclass name="Resource">
 			<key column="GUID" />
-			<property name="email" column="EMAIL" />
-		</joined-subclass>
-		<joined-subclass name="HippoResource">
-			<key column="GUID" />
+			<joined-subclass name="EmailResource">
+				<key column="GUID" />
+				<property name="email" column="EMAIL" />
+			</joined-subclass>
+			<joined-subclass name="HippoResource">
+				<key column="GUID" />
+			</joined-subclass>
 		</joined-subclass>
 	</class>
 	<class name="PersonOwnershipClaim">

@@ -27,14 +27,14 @@ public class InvitationSystemBeanTest extends SpiderUsingTest {
 		sess.beginTransaction();
 		
 		Person p1 = getTestPerson1();
-		Person p2 = getTestPerson2();
+		Resource invitee = getNoPersonEmail();
 		
-		Invitation i = invite.createGetInvitation(p1, p2);
+		Invitation i = invite.createGetInvitation(p1, invitee);
 		assertNotNull(i);
 		
 		sess.commitCloseBeginTransaction();
 		
-		assertEquals(i.getInvitee().getGuid(), p2.getGuid());
+		assertEquals(i.getInvitee().getGuid(), invitee.getGuid());
 		assertEquals(i.getInviters().size(), 1);
 		assertTrue(i.getInviters().contains(p1));
 

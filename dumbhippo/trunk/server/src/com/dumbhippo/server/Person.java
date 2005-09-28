@@ -1,7 +1,8 @@
 package com.dumbhippo.server;
 
-import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.GuidPersistable;
 
-public class Person extends Resource {
+
+public class Person extends GuidPersistable {
 	public Person() { super(); }
 }

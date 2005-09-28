@@ -4,7 +4,6 @@
 package com.dumbhippo.server;
 
 import com.dumbhippo.persistence.DBUnique;
-import com.dumbhippo.persistence.Resource;
 
 /**
  * PersonOwnershipClaim represents a claim asserted by some Person that some other

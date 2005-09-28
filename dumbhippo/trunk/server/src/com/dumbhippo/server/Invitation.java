@@ -9,13 +9,15 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.DBUnique;
 
 public class Invitation extends DBUnique {
-	private Person invitee;
+	public static final String invitationLandingURLPrefix = "http://dumbhippo.com/newuser?auth=";
+	
+	private Resource invitee;
 	private Set<Person> inviters;
 	private String authKey;
 	
 	protected Invitation() {}
 	
-	public Invitation(Person invitee, Person inviter) {
+	public Invitation(Resource invitee, Person inviter) {
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
 		this.inviters.add(inviter);
@@ -25,7 +27,7 @@ public class Invitation extends DBUnique {
 		this.authKey = StringUtils.hexEncode(keyBytes);
 	}
 
-	public Person getInvitee() {
+	public Resource getInvitee() {
 		return invitee;
 	}
 
@@ -39,5 +41,9 @@ public class Invitation extends DBUnique {
 
 	public void addInviter(Person inviter) {
 		this.inviters.add(inviter);
+	}
+	
+	public String generateAuthURL() {
+		return invitationLandingURLPrefix + getAuthKey();
 	}
 }

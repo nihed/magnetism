@@ -11,79 +11,38 @@ import com.dumbhippo.persistence.Storage.SessionWrapper;
  */
 public class IdentitySpiderBean implements IdentitySpider {
 	
-	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, PersonOwnershipClaim c where p.id = c.claimedOwner ";
+	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, PersonOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
-	public Person lookupPersonByEmail(String email) {
+	public Person lookupPersonByEmail(EmailResource email) {
 		Session hsession = Storage.getGlobalPerThreadSession().getSession();		
-		return (Person) hsession.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").uniqueResult();
+		return (Person) hsession.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).uniqueResult();
 	}
 	
-	public Person lookupPersonByEmail(Person viewpoint, String email) {
+	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
 		Session hsession = Storage.getGlobalPerThreadSession().getSession();		
 		return (Person) hsession.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
-		.setString("viewpointguid", viewpoint.getId());
+		.setString("viewpointguid", viewpoint.getId()).setParameter("email", email).uniqueResult();
 	}
 	
-	/**
-	 * Look up the resource corresponding to an email address, from
-	 * the perspective of a particular person. 
-	 * 
-	 * FIXME - should this really be uniqueResult()?  If so we need
-	 * to enforce that somehow.
-	 * 
-	 * @param perspective the viewpoint
-	 * @param email the email address to look up
-	 * @return the corresponding resource, or null if none
-	 */
-	protected EmailResource lookupEmail(Person perspective, String email) {
-		Session hsession = Storage.getGlobalPerThreadSession().getSession();		
-		return (EmailResource) hsession.createQuery("from EmailResource e where e.email = :addr")
-		.setString("addr", email).uniqueResult();
-	}
-	
-	protected EmailResource lookupCreateEmail(String email) {
-		SessionWrapper sess = Storage.getGlobalPerThreadSession();
-		Session hsession = sess.getSession();
-		
-		EmailResource res = lookupEmail(null, email);
-		if (res == null) {
-			res = new EmailResource(email);
-			hsession.save(res);
-		}
-		
-		return res;
-	}
-	
-	public Person addPersonWithEmail(String email) {
+	public Person addPersonWithEmail(EmailResource email) {
 		SessionWrapper sess = Storage.getGlobalPerThreadSession();
 		Session hsession = sess.getSession();		
 		Person p = new Person();
 		hsession.save(p);
-		EmailResource res = lookupCreateEmail(email);
-		PersonOwnershipClaim claim = new PersonOwnershipClaim(p, res);
+		PersonOwnershipClaim claim = new PersonOwnershipClaim(p, email);
 		hsession.save(claim);
 		return p;
-	}	
+	}
 	
-	public Person lookupPersonByAim(String email) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public Person lookupPersonByAim(Person viewpoint, String email) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	public String getHumanReadableId(Person inviter) {
 		// TODO look up full name too
-		return getEmailAddress(inviter);
+		return getEmailAddress(inviter).getEmail();
 	}
 	
 	private static final String BASE_LOOKUP_EMAIL_QUERY 
 		= "select e from EmailResource e, PersonOwnershipClaim c where e.id = c.resource and c.claimedOwner = :personid and (c.assertedBy.id is null ";	
 
-	public String getEmailAddress(Person viewpoint, Person p) {
+	public EmailResource getEmailAddress(Person viewpoint, Person p) {
 		EmailResource res;
 		Session hsession = Storage.getGlobalPerThreadSession().getSession();
 		Query q;
@@ -95,16 +54,29 @@ public class IdentitySpiderBean implements IdentitySpider {
 		q.setParameter("personid", p.getId());
 		res = (EmailResource) q.uniqueResult();
 
-		if (res == null)
-			return null;
-		else
-			return res.getEmail();
+		return res;
 	}
 
-	public String getEmailAddress(Person p) {
+	public EmailResource getEmailAddress(Person p) {
 		return getEmailAddress(null, p);
 	}
 
-
+	public EmailResource getEmail(String email) {
+		SessionWrapper sess = Storage.getGlobalPerThreadSession();
+		Session hsession = sess.getSession();
+		
+		Query q;
+		
+		q = hsession.createQuery("from EmailResource e where e.email = :email");
+		q.setParameter("email", email);
+		
+		EmailResource res = (EmailResource) q.uniqueResult();
+		if (res == null) {
+			res = new EmailResource(email);
+			hsession.save(res);
+		}
+		
+		return res;	
+	}
 }
 
