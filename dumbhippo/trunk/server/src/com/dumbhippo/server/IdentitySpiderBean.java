@@ -11,7 +11,7 @@ import com.dumbhippo.persistence.Storage.SessionWrapper;
  */
 public class IdentitySpiderBean implements IdentitySpider {
 	
-	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, PersonOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
+	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
 	public Person lookupPersonByEmail(EmailResource email) {
 		Session hsession = Storage.getGlobalPerThreadSession().getSession();		
@@ -29,7 +29,7 @@ public class IdentitySpiderBean implements IdentitySpider {
 		Session hsession = sess.getSession();		
 		Person p = new Person();
 		hsession.save(p);
-		PersonOwnershipClaim claim = new PersonOwnershipClaim(p, email);
+		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(p, email);
 		hsession.save(claim);
 		return p;
 	}
@@ -40,7 +40,7 @@ public class IdentitySpiderBean implements IdentitySpider {
 	}
 	
 	private static final String BASE_LOOKUP_EMAIL_QUERY 
-		= "select e from EmailResource e, PersonOwnershipClaim c where e.id = c.resource and c.claimedOwner = :personid and (c.assertedBy.id is null ";	
+		= "select e from EmailResource e, ResourceOwnershipClaim c where e.id = c.resource and c.claimedOwner = :personid and (c.assertedBy.id is null ";	
 
 	public EmailResource getEmailAddress(Person viewpoint, Person p) {
 		EmailResource res;
