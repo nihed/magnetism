@@ -64,6 +64,14 @@ public final class Storage {
 			return object;
 		}
 		
+		public DBUnique loadFromId(Class klass, long id) 
+			throws HibernateException {
+			DBUnique object = (DBUnique) getSession().load(klass, id);
+			
+			return object;
+		}
+		
+		
 		/**
 		 * Returns whether or not a GUID is currently known to exist
 		 * in the database.
@@ -147,7 +155,6 @@ public final class Storage {
 				closeSession();
 			}
 		}
-
 	}
 
 	private static class DefaultProperties {
