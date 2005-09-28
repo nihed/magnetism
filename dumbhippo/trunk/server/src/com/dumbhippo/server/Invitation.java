@@ -1,11 +1,8 @@
 package com.dumbhippo.server;
 
-import java.security.SecureRandom;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
-import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.DBUnique;
 
 public class Invitation extends DBUnique {
@@ -21,10 +18,7 @@ public class Invitation extends DBUnique {
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
 		this.inviters.add(inviter);
-		Random r = new SecureRandom();
-		byte[] keyBytes = new byte[10];
-		r.nextBytes(keyBytes);
-		this.authKey = StringUtils.hexEncode(keyBytes);
+		authKey = AuthKey.createNew().toString();
 	}
 
 	public Resource getInvitee() {

@@ -3,6 +3,14 @@
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
         "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="com.dumbhippo.server">
+	<class name="Client">
+		<id name="id">
+			<generator class="native"/>
+		</id>
+		<property name="authKey"/>
+		<property name="name"/>
+		<property name="lastUsed"/>
+	</class>
 	<class name="com.dumbhippo.persistence.GuidPersistable">
 		<id name="id" type="string">
 			<column name="GUID" length="48" not-null="true"/>
@@ -20,6 +28,10 @@
 			</joined-subclass>
 			<joined-subclass name="HippoResource">
 				<key column="GUID" />
+				<set name="clients" access="field">
+			    	<key column="CLIENT_ID"/>
+				    <one-to-many class="Client"/>
+	    		</set>
 			</joined-subclass>
 		</joined-subclass>
 	</class>
@@ -40,6 +52,6 @@
 	    <set name="inviters" access="field">
     	    <key column="INVITATION_GUID"/>
 	        <one-to-many class="Person"/>
-	    </set>		
+	    </set>
 	</class>
 </hibernate-mapping>
