@@ -6,7 +6,7 @@ public abstract class DBUnique {
 	protected DBUnique() {
 	}
 	
-	protected long getId() {
+	public long getId() {
 		return this.id;
 	}
 	

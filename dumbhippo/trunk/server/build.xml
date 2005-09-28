@@ -1,6 +1,7 @@
 <project name="dumbhippo-server" default="build" basedir=".">
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
+	<property name="web" value="web"/>	
 	<property name="build" value="bin" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
@@ -78,6 +79,37 @@
 		</junit>
 	</target>
 
+	<target name="package-servlet" depends="init, copyproperties, copymappings">
+		<war destfile="${build}/dumbhippo.war" webxml="web/servlet-info.xml">
+			<fileset dir="${web}" includes="**/*" excludes="**/*.js"/>
+			<fileset dir="${web}" includes="tests/*.js"/>
+			
+			<lib dir="/usr/share/java">
+		    		<include name="xerces-j2.jar"/>
+				<include name="commons-collections.jar"/>
+				<include name="commons-logging.jar"/>
+				<include name="commons-fileupload.jar"/>
+				<include name="log4j.jar"/>
+				<include name="taglibs-core.jar"/>
+				<include name="taglibs-standard.jar"/>			
+			</lib>
+			<lib dir="lib">
+				<include name="antlr-2.7.5H3.jar"/>					
+				<include name="c3p0-0.8.5.2.jar"/>				
+				<include name="hibernate-3.0.5.jar"/>
+				<include name="dom4j-1.6.jar"/>
+				<include name="ehcache-1.1.jar"/>
+				<include name="cglib-2.1.jar"/>
+				<include name="asm.jar"/>
+				<include name="asm-util.jar"/>				
+				<include name="asm-attrs.jar"/>
+			</lib>
+			<classes dir="${build}">
+		  		<exclude name="*.war"/>
+			</classes>
+		</war>
+	</target>	
+	
 	<target name="build" depends="test,setupmetadata" />
 
 </project>

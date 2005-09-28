@@ -33,4 +33,11 @@ public class InvitationSystemBean implements InvitationSystem {
 		InvitableResource invitee = (InvitableResource) invite.getInvitee();
 		invitee.sendInvite(spider, invite, inviter);
 	}
+
+	public Invitation lookupInvitationByKey(String authKey) {
+		Session hsession = Storage.getGlobalPerThreadSession().getSession();
+		return (Invitation) hsession.createQuery(
+				"from Invitation as iv where iv.authKey = :key")
+				.setParameter("key", authKey).uniqueResult();		
+	}
 }
