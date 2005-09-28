@@ -33,7 +33,6 @@
 #else
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
-#  define EINPROGRESS WSAEINPROGRESS
 #endif
 
 #include "lm-debug.h"
@@ -351,7 +350,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	
 	g_io_channel_set_buffered (connection->io_channel, FALSE);
 	g_io_channel_set_flags (connection->io_channel,
-				flags & G_IO_FLAG_NONBLOCK, NULL);
+				flags, NULL);
 	
 	connection->io_watch_in = 
 		connection_add_watch (connection,
@@ -503,6 +502,7 @@ connection_do_connect (LmConnectData *connect_data)
 	char             name[NI_MAXHOST];
 	char             portname[NI_MAXSERV];
 	struct addrinfo *addr;
+       	gboolean         in_progress = FALSE;
 	
 	connection = connect_data->connection;
 	addr = connect_data->current_addr;
@@ -533,37 +533,58 @@ connection_do_connect (LmConnectData *connect_data)
 		return;
 	}
 
-	set_socket_nonblocking (fd);
+	/* There is a bug in older versions of GLib where removing an IO watch from
+	 * a Win32 channel causes it to be closed; this causes the non-blocking
+	 * connect code not to work.
+	 */
+#ifdef __WIN32__
+	if (!glib_check_version (2, 8, 0))
+#endif
+		set_socket_nonblocking (fd);
 	
 	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
 	connect_data->fd = fd;
 
-	if (res < 0 && errno != EINPROGRESS) {
+	if (res < 0) {
 #ifdef __WIN32__
-		closesocket (fd);
+		in_progress = WSAGetLastError() == WSAEWOULDBLOCK;
 #else
-		close (fd);
+		in_progress = errno == EINPROGRESS;
+#endif
+		if (!in_progress) {		
+#ifdef __WIN32
+			closesocket (fd);
+#else
+			close (fd);
 #endif
 
-		_lm_connection_failed (connect_data);
-		return;
+			_lm_connection_failed (connect_data);
+			return;
+		}
 	}
 	
 	connect_data->io_channel = g_io_channel_unix_new (fd);
-	if (connection->proxy) {
-		connection->io_watch_connect =
-		connection_add_watch (connection,
-				      connect_data->io_channel,
-				      G_IO_OUT|G_IO_ERR,
-				      (GIOFunc) _lm_proxy_connect_cb, 
-				      connect_data);
+	if (in_progress) {
+		if (connection->proxy) {
+			connection->io_watch_connect =
+			connection_add_watch (connection,
+				    	      connect_data->io_channel,
+					      G_IO_OUT|G_IO_ERR,
+					      (GIOFunc) _lm_proxy_connect_cb, 
+					      connect_data);
+		} else {
+			connection->io_watch_connect =
+			connection_add_watch (connection,
+					      connect_data->io_channel,
+					      G_IO_OUT|G_IO_ERR,
+					      (GIOFunc) connection_connect_cb,
+	    				      connect_data);
+		}
 	} else {
-		connection->io_watch_connect =
-		connection_add_watch (connection,
-				      connect_data->io_channel,
-				      G_IO_OUT|G_IO_ERR,
-				      (GIOFunc) connection_connect_cb,
-				      connect_data);
+		    if (connection->proxy)
+			    _lm_proxy_connect_cb (connect_data->io_channel, G_IO_OUT, connect_data);
+		    else 
+			    connection_connect_cb (connect_data->io_channel, G_IO_OUT, connect_data);
 	}
 
 	return;
