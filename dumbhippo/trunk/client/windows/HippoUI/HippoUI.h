@@ -31,6 +31,7 @@ public:
     bool create(HINSTANCE instance);
     void destroy();
 
+    void showURL(BSTR url);
     void showShareWindow(BSTR url);
 
 private:

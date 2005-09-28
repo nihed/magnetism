@@ -239,6 +239,48 @@ HippoUI::showShareWindow(BSTR url)
     webBrowser->put_Visible(VARIANT_TRUE);
 }
 
+// Show a window when the user clicks on a shared link
+void 
+HippoUI::showURL(BSTR url)
+{
+    HRESULT hr;
+
+    HippoBSTR shareURL;
+
+    HippoPtr<IWebBrowser2> webBrowser;
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+	             IID_IWebBrowser2, (void **)&webBrowser);
+
+    if (!webBrowser)
+	return;
+
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+
+    webBrowser->Navigate(url,
+   		         &missing, &missing, &missing, &missing);
+
+    /* Something like the following should activate a explorer bar,
+     * (see Q255920) but doesn't seem to work.
+     */
+#if 0
+    HippoBSTR barIDString(L"{A65AC703-C186-4e93-9022-AF8B92C726C8}");
+    VARIANT barID;
+    barID.vt = VT_BSTR;
+    barID.bstrVal = barIDString;
+
+    VARIANT show;
+    barID.vt = VT_BOOL;
+    barID.boolVal = VARIANT_TRUE;
+
+    hr = webBrowser->ShowBrowserBar(&barID, &show, 0);
+    if (!SUCCEEDED (hr)) 
+	hippoDebug(L"Couldn't show browser bar: %X", hr);
+#endif
+
+    webBrowser->put_Visible(VARIANT_TRUE);
+}
+
 // Tries to register as the singleton HippoUI, returns true on success
 bool 
 HippoUI::registerActive()

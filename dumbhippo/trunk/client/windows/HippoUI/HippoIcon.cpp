@@ -92,6 +92,7 @@ HippoIcon::processMessage(WPARAM wParam,
 	break;
     case NIN_BALLOONUSERCLICK:
         ignoreNextClick_ = true;
+	ui_->showURL(currentURL_);
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
