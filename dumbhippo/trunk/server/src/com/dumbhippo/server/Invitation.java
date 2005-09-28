@@ -7,7 +7,6 @@ import java.util.Set;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.DBUnique;
-import com.dumbhippo.persistence.Resource;
 
 public class Invitation extends DBUnique {
 	private Person invitee;
