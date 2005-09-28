@@ -116,11 +116,15 @@ authentication_cb (LmConnection *connection, gboolean result, gpointer ud)
 static void
 connection_open_cb (LmConnection *connection, gboolean result, UserInfo *info)
 {
-	g_print ("Connected callback\n");
-	lm_connection_authenticate (connection,
-				    info->name, info->passwd, "TestLM",
-				    authentication_cb, NULL,FALSE,  NULL);
-	g_print ("Sent auth message\n");
+    g_print ("Connected callback:  result=%s\n", result ? "TRUE" : "FALSE");
+    if (result) {
+	    lm_connection_authenticate (connection,
+	 			        info->name, info->passwd, "TestLM",
+				        authentication_cb, NULL,FALSE,  NULL);
+	    g_print ("Sent auth message\n");
+    } else {
+	    exit(1);
+    }
 }
 
 static LmHandlerResult
