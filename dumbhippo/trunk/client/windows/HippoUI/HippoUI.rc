@@ -69,10 +69,54 @@ END
 
 3 TEXTINCLUDE 
 BEGIN
-    "\r\n"
+    "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""HippoUI.exe.manifest""\r\n"
     "\0"
 END
 
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_LOGIN DIALOGEX 0, 0, 200, 131
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "dumbhippo.com login"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Please enter your dumbhippo.com login information. If you don't know your username or password, please visit the dumbhippo.com web page.",
+                    IDC_STATIC,7,7,186,37
+    LTEXT           "Username:",IDC_STATIC,7,48,36,8
+    EDITTEXT        IDC_USERNAME,85,46,108,12,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,7,67,34,8
+    EDITTEXT        IDC_PASSWORD,85,65,108,12,ES_PASSWORD | ES_AUTOHSCROLL
+    CONTROL         "Remember password",IDC_REMEMBERPASS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,87,186,13
+    DEFPUSHBUTTON   "Login",IDOK,85,110,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,143,110,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_LOGIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 193
+        VERTGUIDE, 85
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 124
+    END
+END
 #endif    // APSTUDIO_INVOKED
 
 
@@ -97,7 +141,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "HippoUI.exe.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
