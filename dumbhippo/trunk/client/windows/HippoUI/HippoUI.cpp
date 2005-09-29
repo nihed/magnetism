@@ -530,13 +530,21 @@ HippoUI::onMessage (LmMessageHandler *handler,
 {
     HippoUI *ui = (HippoUI *)userData;
 
-    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_CHAT) {
-	LmMessageNode *node = lm_message_node_find_child(message->node, "body");
-	if (node && node->value) {
-	    WCHAR *ls = g_utf8_to_utf16(node->value, -1, NULL, NULL, NULL);
-	    if (ls)
-		ui->Log(HippoBSTR(ls));
-	    g_free (ls);
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
+	for (LmMessageNode *child = message->node->children; child; child = child->next) {
+	    const char *ns = lm_message_node_get_attribute(child, "xmlns");
+	    // We really should allow xmlns="foo:http://...", but lazy for now
+	    if ((ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0) &&
+		(child->name && strcmp (child->name, "link") == 0)) 
+	    {
+	        const char *url = lm_message_node_get_attribute(child, "href");
+	        if (url) {
+		    const WCHAR *urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
+		    if (urlW)
+		        ui->Log(HippoBSTR(urlW));
+		    g_free((gpointer)urlW);
+		}
+	    }   
 	}
     }
 
