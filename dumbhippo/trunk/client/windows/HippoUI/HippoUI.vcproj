@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include"
+				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -32,10 +32,10 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib glib-2.0.lib"
+				AdditionalDependencies="shlwapi.lib glib-2.0.lib loudmouth.lib ws2_32.lib"
 				OutputFile="$(OutDir)/HippoUI.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../dependencies/glib/lib"
+				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
 				SubSystem="2"

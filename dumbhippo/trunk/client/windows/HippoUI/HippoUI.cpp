@@ -9,7 +9,9 @@
 #include <exdisp.h>
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
+#include <Winsock2.h>
 #include "Resource.h"
+
 #include <glib.h>
 
 // GUID definition
@@ -41,9 +43,12 @@ HippoUI::HippoUI()
     notificationIcon_.setUI(this);
 }
 
-
 HippoUI::~HippoUI()
 {
+    if (username_)
+	g_free(username_);
+    if (password_)
+	g_free(password_);
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -173,8 +178,32 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
-    DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
-		   window_, loginProc, (::LONG_PTR)this);
+    bool result = DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
+		                  window_, loginProc, (::LONG_PTR)this) != false;
+
+    if (!result) // user cancelled
+	return false;
+
+    lmConnection_ = lm_connection_new("dumbhippo.com");
+    LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
+    lm_connection_register_message_handler(lmConnection_, handler, 
+	                                   LM_MESSAGE_TYPE_MESSAGE, 
+	                                   LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
+    GError *error = NULL;
+    if (!lm_connection_open(lmConnection_, 
+	                    onConnectionOpen, (gpointer)this, NULL, 
+			    &error)) {
+	hippoDebug(L"Couldn't open connection to dumbhippo.com: %s",
+		    error->message); // XXX encoding needs fixage
+
+	lm_connection_close(lmConnection_, NULL);
+	lm_connection_unref(lmConnection_);
+	lmConnection_ = NULL;
+
+	return false;
+    }
 
     return true;
 }
@@ -182,6 +211,10 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
+    lm_connection_close(lmConnection_, NULL);
+    lm_connection_unref(lmConnection_);
+    lmConnection_ = NULL;
+
     notificationIcon_.destroy();
     
     revokeActive();
@@ -357,6 +390,75 @@ HippoUI::onPasswordDialogLogin(const WCHAR *username,
 	                       const WCHAR *password,
 			       bool         rememberPassword)
 {
+    username_ = g_utf16_to_utf8(username, -1, NULL, NULL, NULL);
+    password_ = g_utf16_to_utf8(password, -1, NULL, NULL, NULL);
+}
+
+void 
+HippoUI::onConnectionOpen (LmConnection *connection,
+			   gboolean      success,
+			   gpointer      userData)
+{
+    HippoUI *ui = (HippoUI *)userData;
+
+    if (success) {
+	if (ui->username_ && ui->password_) {
+	    GError *error = NULL;
+	    if (!lm_connection_authenticate(connection, 
+	                                    ui->username_, ui->password_, "DumbHippo",
+					    onConnectionAuthenticate, userData, NULL, &error)) {
+		hippoDebug(L"Failed to authenticate: %s", error->message);
+		g_error_free(error);
+	    }
+	}
+    } else {
+	hippoDebug(L"Failed to connect to server");
+    }
+}
+
+void 
+HippoUI::onConnectionAuthenticate (LmConnection *connection,
+			           gboolean      success,
+	    			   gpointer      userData)
+{
+    HippoUI *ui = (HippoUI *)userData;
+
+    if (success) {
+	LmMessage *message;
+	message = lm_message_new_with_sub_type(NULL, 
+	                                       LM_MESSAGE_TYPE_PRESENCE, 
+					       LM_MESSAGE_SUB_TYPE_AVAILABLE);
+
+	GError *error = NULL;
+	lm_connection_send(connection, message, &error);
+	if (error) {
+		hippoDebug(L"Failed to send presence: %s", error->message);
+		g_error_free(error);
+	}
+    } else {
+	hippoDebug(L"Couldn't authenticate");
+    }
+}
+
+LmHandlerResult 
+HippoUI::onMessage (LmMessageHandler *handler,
+                    LmConnection     *connection,
+	            LmMessage        *message,
+	            gpointer          userData)
+{
+    HippoUI *ui = (HippoUI *)userData;
+
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_CHAT) {
+	LmMessageNode *node = lm_message_node_find_child(message->node, "body");
+	if (node && node->value) {
+	    WCHAR *ls = g_utf8_to_utf16(node->value, -1, NULL, NULL, NULL);
+	    if (ls)
+		ui->Log(HippoBSTR(ls));
+	    g_free (ls);
+	}
+    }
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 // Find the pathname for a HTML file, based on the location of the .exe
@@ -620,6 +722,25 @@ win32SourceNew(GMainLoop *loop)
     return source;
 }
 
+static bool
+initializeWinSock(void)
+{
+    WSADATA wsData;
+
+    // We can support WinSock 2.2
+    int result = WSAStartup(MAKEWORD(2,2), &wsData);
+    // Fail to initialize if the system doesn't at least of WinSock 2.0
+    // Both of these versions are pretty much arbitrary. No testing across
+    // a range of versions has been done.
+    if (result || LOBYTE(wsData.wVersion) < 2) {
+	if (!result)
+	    WSACleanup();
+	MessageBox(NULL, L"Couldn't initialize WinSock", NULL, MB_OK);
+	return false;
+    }
+
+    return true;
+}
 
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
@@ -627,7 +748,6 @@ WinMain(HINSTANCE hInstance,
 	LPSTR     lpCmdLine,
 	int       nCmdShow)
 {
-    MSG msg;
     HippoUI *ui;
     GMainLoop *loop;
     GSource *source;
@@ -635,6 +755,9 @@ WinMain(HINSTANCE hInstance,
 
     // Initialize COM
     CoInitialize(NULL);
+
+    if (!initializeWinSock())
+	return 0;
 
     ui = new HippoUI();
     if (!ui->create(hInstance))
@@ -653,6 +776,7 @@ WinMain(HINSTANCE hInstance,
     ui->destroy();
     ui->Release();
 
+    WSACleanup();
     CoUninitialize();
 
     return result;

@@ -6,6 +6,7 @@
 
 #include <HippoUtil.h>
 #include "HippoIcon.h"
+#include <loudmouth/loudmouth.h>
 
 class HippoUI 
     : public IHippoUI 
@@ -58,6 +59,18 @@ private:
     		                      UINT   message,
 		                      WPARAM wParam,
 		                      LPARAM lParam);
+    static void onConnectionOpen (LmConnection *connection,
+				  gboolean      success,
+				  gpointer      userData);
+    static void onConnectionAuthenticate (LmConnection *connection,
+				          gboolean      success,
+				          gpointer      userData);
+
+    static LmHandlerResult onMessage (LmMessageHandler *handler,
+				      LmConnection     *connection,
+				      LmMessage        *message,
+				      gpointer          userData);
+
 
 private:
     DWORD refCount_;
@@ -72,4 +85,9 @@ private:
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject
+
+    LmConnection *lmConnection_;
+
+    char *username_; // UTF-8
+    char *password_; // UTF-8
 };
