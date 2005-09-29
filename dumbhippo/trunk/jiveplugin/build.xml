@@ -5,7 +5,9 @@
 	<property name="build" value="classes" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
-	<property name="pluginjar" value="jive-plugin-hippo.jar" />
+	<property name="plugin-jar" value="jive-hippo-plugin.jar" />
+	<property name="plugin-class-jar" value="jive-hippo-plugin-classes.jar" />
+	<property name="plugin-temp-jar-dir" value="plugin-temp-jar-dir" />
 
 	<target name="init">
 		<mkdir dir="${build}" />
@@ -20,10 +22,23 @@
 
 	</target>
 	
-	<target name="plugins">
-		<jar destfile="${pluginjar}">
+	<target name="plugin-class-jar">
+		<jar destfile="${plugin-class-jar}">
 			<fileset dir="${build}"/>
-			<fileset dir="." includes="plugin.xml" />
+		</jar>
+	</target>
+	
+	<target name="plugin-temp-jar-dir" depends="plugin-class-jar">
+		<delete dir="${plugin-temp-jar-dir}"/>
+		<mkdir dir="${plugin-temp-jar-dir}"/>
+		<mkdir dir="${plugin-temp-jar-dir}/lib"/>
+		<copy file="${plugin-class-jar}" todir="${plugin-temp-jar-dir}/lib"/>
+		<copy file="plugin.xml" todir="${plugin-temp-jar-dir}"/>
+	</target>
+	
+	<target name="plugins" depends="plugin-temp-jar-dir">
+		<jar destfile="${plugin-jar}">
+			<fileset dir="${plugin-temp-jar-dir}" />
 		</jar>
 	</target>
 	
