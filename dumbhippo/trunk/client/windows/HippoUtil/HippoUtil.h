@@ -147,3 +147,22 @@ inline void hippoDebug(WCHAR *format, ...)
     va_end (vap);
     MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
 }
+
+/* Avoid (incorrect) warnings that you get because SetWindowLongPtr()
+ * is #defined to SetWindowLong() on win32
+ */
+#pragma warning(push)
+#pragma warning(disable : 4244 4312)
+template <class T>
+inline void hippoSetWindowData(HWND window, T *data)
+{
+    // Could do SetLastError(0) ... GetLastError() to detect error here
+    SetWindowLongPtr(window, GWLP_USERDATA, (::LONG_PTR)data);
+}
+
+template <class T>
+inline T *hippoGetWindowData(HWND window)
+{
+    return (T *)GetWindowLongPtr(window, GWLP_USERDATA);
+}
+#pragma warning(pop)
