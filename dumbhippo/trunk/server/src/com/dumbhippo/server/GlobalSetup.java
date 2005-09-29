@@ -17,7 +17,7 @@ import org.apache.log4j.PropertyConfigurator;
  * @author hp
  * 
  */
-final class GlobalSetup {
+public final class GlobalSetup {
 	private static boolean initialized = false;
 
 	private GlobalSetup() {

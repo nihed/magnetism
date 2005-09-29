@@ -65,4 +65,11 @@ public interface IdentitySpider {
 	
 	public EmailResource getEmailAddress(Person viewpoint, Person p);
 	public EmailResource getEmailAddress(Person p);
+	
+	/**
+	 * The Man is an internal person who we use for various nefarious purposes.
+	 * 
+	 * @return The Man
+	 */
+	public Person getTheMan();
 }

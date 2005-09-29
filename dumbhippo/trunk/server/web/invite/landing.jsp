@@ -1,4 +1,4 @@
-<%@ include file="prelude.jspf" %>
+<%@ include file="../prelude.jspf" %>
 <html>
   <head>
     <title>Dumb Hippo Invitation for ${invitation.invitee.humanReadableName}</title>

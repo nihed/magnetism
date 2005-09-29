@@ -11,11 +11,16 @@
     
     <servlet>
         <servlet-name>DumbHippoServlet</servlet-name>
-        <servlet-class>com.dumbhippo.server.DumbHippoServlet</servlet-class>
+        <servlet-class>com.dumbhippo.web.DumbHippoServlet</servlet-class>
     </servlet>
     
     <servlet-mapping>
-        <url-pattern>/invite</url-pattern>
+        <url-pattern>/web/*</url-pattern>
         <servlet-name>DumbHippoServlet</servlet-name>
     </servlet-mapping>
+    
+    <servlet-mapping>
+        <url-pattern>/actions/*</url-pattern>
+        <servlet-name>DumbHippoServlet</servlet-name>
+    </servlet-mapping>       
 </web-app>

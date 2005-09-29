@@ -13,7 +13,7 @@ import javax.mail.internet.MimeMessage;
  * @author hp
  *
  */
-class EmailResource extends Resource implements InvitableResource {
+public class EmailResource extends Resource implements InvitableResource {
 	private String email;
 	
 	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
@@ -64,7 +64,7 @@ class EmailResource extends Resource implements InvitableResource {
 			msg.setText("Moo!\n\nYou've been invited by " + inviterName
 					+ " to join Dumb Hippo!\n\n"
 					+ "Follow this link to see what the mooing's about:\n"
-					+ invitation.generateAuthURL());
+					+ invitation.getAuthURL());
 			mailsess.getTransport().sendMessage(msg, invitationToList);
 		} catch (AddressException e) {
 			throw new RuntimeException(e);

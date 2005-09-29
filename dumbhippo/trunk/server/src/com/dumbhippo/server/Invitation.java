@@ -37,7 +37,7 @@ public class Invitation extends DBUnique {
 		this.inviters.add(inviter);
 	}
 	
-	public String generateAuthURL() {
+	public String getAuthURL() {
 		return invitationLandingURLPrefix + getAuthKey();
 	}
 }

@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 /*
@@ -29,9 +30,13 @@ public class IdentitySpiderBean implements IdentitySpider {
 		Session hsession = sess.getSession();		
 		Person p = new Person();
 		hsession.save(p);
+		addOwnershipClaim(hsession, email, p);
+		return p;
+	}
+
+	private void addOwnershipClaim(Session hsession, EmailResource email, Person p) {
 		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(p, email);
 		hsession.save(claim);
-		return p;
 	}
 	
 	public String getHumanReadableId(Person inviter) {
@@ -77,6 +82,21 @@ public class IdentitySpiderBean implements IdentitySpider {
 		}
 		
 		return res;	
+	}
+	
+	private static final String theManGuid = "8716baa63bef600797fbc59e06010000a35ad1637e6a7f87";
+	private static final String theManEmail = "theman@dumbhippo.com";
+
+	public Person getTheMan() {
+		SessionWrapper sess = Storage.getGlobalPerThreadSession();
+		Session hsession = sess.getSession();
+		Person ret = (Person) hsession.createQuery("from Person p where p.id = :id").setParameter("id", theManGuid).uniqueResult();
+		if (ret == null) {
+			EmailResource res = getEmail(theManEmail);
+			ret = new Person(new Guid(theManGuid));
+			addOwnershipClaim(hsession, res, ret);
+		}
+		return ret;
 	}
 }
 
