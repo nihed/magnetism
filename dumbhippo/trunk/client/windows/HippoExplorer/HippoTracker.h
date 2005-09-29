@@ -36,10 +36,20 @@ protected:
 
 private:
     void clearSite();
+    bool createWindow();
+    bool registerWindowClass();
+    void onUIStarted();
+    static LRESULT CALLBACK windowProc(HWND   window,
+		  	               UINT   message,
+			               WPARAM wParam,
+			               LPARAM lParam);
 
     HippoPtr<IWebBrowser2> site_;
     HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2
     DWORD connectionCookie_; // cookie for DWebBrowserEvents2 connection
     HippoPtr<ITypeInfo> eventsTypeInfo_;
     HippoPtr<IHippoUI> ui_;
+
+    HWND window_;
+    UINT uiStartedMessage_;
 };

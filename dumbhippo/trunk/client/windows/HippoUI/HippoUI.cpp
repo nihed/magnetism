@@ -345,6 +345,11 @@ HippoUI::registerActive()
 	return false;
     }
     
+    // There might already be explorer windows open, so broadcast a message
+    // that causes HippoTracker to recheck the active object table
+    UINT uiStartedMessage = RegisterWindowMessage(TEXT("HippoUIStarted"));
+    SendNotifyMessage(HWND_BROADCAST, uiStartedMessage, 0, 0);
+
     return true;
 }
 
@@ -458,7 +463,7 @@ HippoUI::createWindow(void)
     if (!window_)
 	return false;
 
-    SetWindowLongPtr(window_, GWLP_USERDATA, (::LONG_PTR)this);
+    hippoSetWindowData<HippoUI>(window_, this);
 
     return true;
 }
@@ -636,7 +641,7 @@ HippoUI::windowProc(HWND   window,
 		    WPARAM wParam,
 		    LPARAM lParam)
 {
-    HippoUI *ui = (HippoUI *)GetWindowLongPtr(window, GWLP_USERDATA);
+    HippoUI *ui = hippoGetWindowData<HippoUI>(window);
     if (ui) {
 	if (ui->processMessage(message, wParam, lParam))
 	    return 0;
@@ -653,12 +658,12 @@ HippoUI::loginProc(HWND   dialog,
 {
     if (message == WM_INITDIALOG) {
 	HippoUI *ui = (HippoUI *)lParam;
-	SetWindowLongPtr(dialog, GWLP_USERDATA, (::LONG_PTR)ui);
+	hippoSetWindowData<HippoUI>(dialog, ui);
 
 	return TRUE;
     }
 
-    HippoUI *ui = (HippoUI *)GetWindowLongPtr(dialog, GWLP_USERDATA);
+    HippoUI *ui = hippoGetWindowData<HippoUI>(dialog);
     if (!ui)
 	return FALSE;
 

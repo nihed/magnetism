@@ -296,7 +296,7 @@ HippoExplorerBar::createWindow(HWND parentWindow)
     if (!window_)
 	return false;
 
-    SetWindowLongPtr(window_, GWLP_USERDATA, (LONG_PTR)this);
+    hippoSetWindowData<HippoExplorerBar>(window_, this);
 
     return true;
 }
@@ -378,7 +378,7 @@ HippoExplorerBar::windowProc(HWND   window,
 			     WPARAM wParam,
 			     LPARAM lParam)
 {
-    HippoExplorerBar *explorerBar = (HippoExplorerBar *)GetWindowLongPtr(window, GWLP_USERDATA);
+    HippoExplorerBar *explorerBar = hippoGetWindowData<HippoExplorerBar>(window);
     if (explorerBar) {
 	if (explorerBar->processMessage(message, wParam, lParam))
 	    return 0;

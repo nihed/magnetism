@@ -15,6 +15,9 @@ static const CLSID CLSID_HippoUI = {
     0xfd2d3bee, 0x477e, 0x4625, 0xb3, 0x5f, 0xbf, 0x49, 0x7f, 0xf6, 0x1, 0xd9
 };
 
+// Window class for our notification window
+static const TCHAR *CLASS_NAME = TEXT("HippoTrackerClass");
+
 HippoTracker::HippoTracker(void)
 {
     refCount_ = 1;
@@ -24,13 +27,16 @@ HippoTracker::HippoTracker(void)
     if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
 	typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
 
-    HippoPtr<IUnknown> unknown;
-    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
-	unknown->QueryInterface<IHippoUI>(&ui_);
+    uiStartedMessage_ = RegisterWindowMessage(TEXT("HippoUIStarted"));
+
+    createWindow();
+    onUIStarted();
 }
 
 HippoTracker::~HippoTracker(void)
 {
+    DestroyWindow(window_);
+
     // In case setSite(NULL) wasn't called
     clearSite();
         
@@ -188,4 +194,73 @@ HippoTracker::clearSite()
 	   
 	connectionPoint_ = NULL;
     }
+}
+
+bool 
+HippoTracker::registerWindowClass()
+{
+    WNDCLASS windowClass;
+
+    if (GetClassInfo(dllInstance, CLASS_NAME, &windowClass))
+	return true;  // Already registered
+
+    windowClass.style = 0;
+    windowClass.lpfnWndProc = windowProc;
+    windowClass.cbClsExtra = 0;
+    windowClass.cbWndExtra = 0;
+    windowClass.hInstance = dllInstance;
+    windowClass.hIcon = NULL;
+    windowClass.hCursor = NULL;
+    windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    windowClass.lpszMenuName = NULL;
+    windowClass.lpszClassName = CLASS_NAME;    
+
+    return RegisterClass(&windowClass) != 0;
+}
+
+bool
+HippoTracker::createWindow()
+{
+    if (!registerWindowClass())
+	return false;
+
+    window_ = CreateWindow(CLASS_NAME, 
+		           NULL, // No title
+			   0,    // Window style doesn't matter
+			   0, 0, 10, 10,
+			   NULL, // No parent
+			   NULL, // No menu
+			   dllInstance,
+			   NULL); // lpParam
+    if (!window_)
+	return false;
+
+    hippoSetWindowData<HippoTracker>(window_, this);
+
+    return true;
+}
+
+void
+HippoTracker::onUIStarted(void)
+{
+    HippoPtr<IUnknown> unknown;
+    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
+	unknown->QueryInterface<IHippoUI>(&ui_);
+}
+
+LRESULT CALLBACK 
+HippoTracker::windowProc(HWND   window,
+			 UINT   message,
+			 WPARAM wParam,
+			 LPARAM lParam)
+{
+    HippoTracker *tracker = hippoGetWindowData<HippoTracker>(window);
+    if (tracker) {
+	if (message == tracker->uiStartedMessage_) {
+	    tracker->onUIStarted();
+	    return 0;
+	}
+    }
+
+    return DefWindowProc(window, message, wParam, lParam);
 }
