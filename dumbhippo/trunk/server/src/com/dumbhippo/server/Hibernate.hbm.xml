@@ -39,15 +39,15 @@
 		<id name="id">
 			<generator class="native"/>
 		</id>
-		<many-to-one name="claimedOwner" access="field"></many-to-one>
-		<many-to-one name="resource" access="field"></many-to-one>
+		<many-to-one name="claimedOwner" access="field" not-null="true"></many-to-one>
+		<many-to-one name="resource" access="field" not-null="true"></many-to-one>
 		<many-to-one name="assertedBy" access="field"></many-to-one>
 	</class>
 	<class name="Invitation">
 		<id name="id">
 			<generator class="native"/>
 		</id>
-		<many-to-one name="invitee" access="field"></many-to-one>
+		<many-to-one name="invitee" access="field" not-null="true"></many-to-one>
 		<property name="authKey" access="field"></property>
 	    <set name="inviters" access="field">
     	    <key column="INVITATION_GUID"/>

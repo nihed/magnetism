@@ -5,7 +5,7 @@ import com.dumbhippo.persistence.Storage;
 public class ClientTest extends StorageUsingTest {
 
 	public void testClient() {
-		Storage.SessionWrapper session = Storage.getGlobalPerThreadSession(); 
+		Storage.SessionWrapper session = getSession();
 		
 		Client client = new Client();
 		

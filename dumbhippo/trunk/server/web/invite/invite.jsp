@@ -12,7 +12,7 @@
     <tr>
       <td>Email</td>
       <td>
-        <input id="emailaddr" name="emailaddr"></input>
+        <input id="emailaddr" type="text" name="emailaddr"></input>
       </td>
     </tr>
     <tr>

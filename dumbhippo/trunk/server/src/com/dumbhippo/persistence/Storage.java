@@ -215,9 +215,8 @@ public final class Storage {
 	 *            location for database.
 	 */
 	public static void initGlobalInstance(String storagePath) {
-		if (globalInstance != null)
-			throw new Error("Can only call Storage.initGlobalInstance() once");
-		globalInstance = new Storage(storagePath);
+		if (globalInstance == null)
+			globalInstance = new Storage(storagePath);
 	}
 	
 	/**

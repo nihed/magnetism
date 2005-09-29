@@ -3,6 +3,8 @@
  */
 package com.dumbhippo.server;
 
+import java.net.URL;
+
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -33,18 +35,11 @@ public class EmailResource extends Resource implements InvitableResource {
 		this.email = email;
 	}
 
-	@Override
-	public boolean equals(Object arg0) {
-		if (arg0 instanceof EmailResource) {
-			return ((EmailResource) arg0).email.equals(this.email);
-		}
-		return false;
-	}
-	
-	public void sendInvite(IdentitySpider spider, Invitation invitation, Person inviter) {
+	public void sendInvite(IdentitySpider spider, URL prefix, Invitation invitation, Person inviter) {
 		try {
 			javax.mail.Session mailsess;
 			MimeMessage msg;
+			PersonView viewedInviter = spider.getViewpoint(null, inviter);
 			
 			String inviteeEmail = getEmail();
 			InternetAddress invitationTo = new InternetAddress(inviteeEmail);
@@ -58,13 +53,13 @@ public class EmailResource extends Resource implements InvitableResource {
 					.getProperties());
 			msg = new MimeMessage(mailsess);
 			msg.addFrom(invitationFromList);
-			String inviterName = spider.getHumanReadableId(inviter);
+			String inviterName = viewedInviter.getHumanReadableName();
 			msg.setSubject("Invitation from " + inviterName
 					+ " to join Dumb Hippo");
 			msg.setText("Moo!\n\nYou've been invited by " + inviterName
 					+ " to join Dumb Hippo!\n\n"
 					+ "Follow this link to see what the mooing's about:\n"
-					+ invitation.getAuthURL());
+					+ invitation.getAuthURL(prefix));
 			mailsess.getTransport().sendMessage(msg, invitationToList);
 		} catch (AddressException e) {
 			throw new RuntimeException(e);
@@ -73,6 +68,9 @@ public class EmailResource extends Resource implements InvitableResource {
 		}
 
 	}
-	
-	
+
+	@Override
+	public String getHumanReadableString() {
+		return getEmail();
+	}
 }

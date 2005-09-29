@@ -54,17 +54,6 @@ public interface IdentitySpider {
 	//public Person lookupPersonByAim(EmailResource email);
 	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
 
-	/**
-	 * Return the best currently known human-readable identifier for a person.
-	 * If a full name is known, return that.  Secondary possibilities include
-	 * email addresses and AIM screen names.
-	 * @param inviter
-	 * @return
-	 */
-	public String getHumanReadableId(Person inviter);
-	
-	public EmailResource getEmailAddress(Person viewpoint, Person p);
-	public EmailResource getEmailAddress(Person p);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
@@ -72,4 +61,13 @@ public interface IdentitySpider {
 	 * @return The Man
 	 */
 	public Person getTheMan();
+	
+	/**
+	 * Returns an object describing a person from the viewpoint of another person.
+	 * 
+	 * @param viewpoint the person who is viewing
+	 * @param p the person being viewed
+	 * @return a new PersonView object
+	 */
+	public PersonView getViewpoint(Person viewpoint, Person p);	
 }

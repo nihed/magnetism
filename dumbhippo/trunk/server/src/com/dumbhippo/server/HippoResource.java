@@ -34,6 +34,10 @@ class HippoResource extends Resource {
 		
 	}
 	
+	public String getHumanReadableString() {
+		return null;
+	}	
+	
 	public String createClientCookie(String name) {
 		Client client = new Client(name);
 		clients.add(client);

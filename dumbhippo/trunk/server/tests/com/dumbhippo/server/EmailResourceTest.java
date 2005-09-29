@@ -9,8 +9,7 @@ public class EmailResourceTest extends StorageUsingTest {
 	 * Class under test for void Resource()
 	 */
 	public void testResource() {
-		Storage.SessionWrapper session = Storage.getGlobalPerThreadSession(); 
-		
+		Storage.SessionWrapper session = getSession();
 		EmailResource email = new EmailResource("foo@bar.com");
 		
 		Guid guid = email.getGuid();

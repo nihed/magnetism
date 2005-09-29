@@ -77,6 +77,8 @@ public class DumbHippoServlet extends HttpServlet {
 				if (authKey != null) {
 					doInviteLanding(request, response, authKey);
 					return;
+				} else {
+					logger.info("No auth parameter given!");
 				}
 			} else if (pathinfo.equals("/invite/invite")) {
 				doInvite(request, response);
@@ -118,6 +120,7 @@ public class DumbHippoServlet extends HttpServlet {
 		// FIXME we should get the person from the auth data
 		Person inviter = spider.getTheMan();
 		Invitation invite = invitesystem.createGetInvitation(inviter, res);
+		logger.debug("Created invitation with auth " + invite.getAuthKey());
 		request.setAttribute("invitation", invite);
 		forward(request, response, "/invite/submitted.jsp");
 	}
@@ -131,12 +134,14 @@ public class DumbHippoServlet extends HttpServlet {
 		logger.debug("Request path=" + path + " pathinfo=" + request.getPathInfo() + " contextpath="
 				+ request.getContextPath());
 
-		if (path.equals("/actions/")) {
+		if (path.equals("/actions")) {
 			if (pathinfo.equals("/invite")) {
 				String email = request.getParameter("emailaddr");
 				if (email != null) {
 					doActionInvite(request, response, email);
 					return;
+				} else {
+					logger.info("No emailaddr parameter given!");
 				}
 			}
 		}
@@ -162,9 +167,6 @@ public class DumbHippoServlet extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		GlobalSetup.initialize();
-		logger.info("Booting");
-		// FIXME shouldn't be hardcoded
-		Storage.initGlobalInstance("/tmp/dumbhippo-storage");
+		GlobalSetup.initialize();	
 	}
 }

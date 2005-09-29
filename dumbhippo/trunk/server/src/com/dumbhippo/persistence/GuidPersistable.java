@@ -23,6 +23,20 @@ public abstract class GuidPersistable {
 		return guid;
 	}
 
+	/* Should be final, except this makes Hibernate CGLIB enhancement barf */
+	@Override
+	public boolean equals(Object arg0) {
+		if (!(arg0 instanceof GuidPersistable))
+			return false;
+		return ((GuidPersistable) arg0).getGuid().equals(guid);
+	}
+
+	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
+	@Override
+	public int hashCode() {
+		return guid.hashCode();
+	}
+
 	/** 
 	 * For hibernate to use as the ID column. 
 	 * Should return guid.toString() generally.

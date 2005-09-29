@@ -31,7 +31,7 @@ public class InvitationSystemBean implements InvitationSystem {
 
 	public void sendEmailNotification(IdentitySpider spider, Invitation invite, Person inviter) {
 		InvitableResource invitee = (InvitableResource) invite.getInvitee();
-		invitee.sendInvite(spider, invite, inviter);
+		invitee.sendInvite(spider, null, invite, inviter);
 	}
 
 	public Invitation lookupInvitationByKey(String authKey) {

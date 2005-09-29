@@ -9,12 +9,11 @@ public class HippoResourceTest extends StorageUsingTest {
 	 * Class under test for void Resource()
 	 */
 	public void testResource() {
-		Storage.SessionWrapper session = Storage.getGlobalPerThreadSession(); 
+		Storage.SessionWrapper session = getSession();
 		
 		HippoResource account = new HippoResource();
 		
 		Guid guid = account.getGuid();
-		String guidStr = account.getId();
 
 		session.beginTransaction();
 		

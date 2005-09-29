@@ -10,4 +10,8 @@ public class Person extends GuidPersistable {
 	public Person(Guid guid) {
 		super(guid);
 	}
+	
+	public PersonView getSystemView() {
+		return new PersonView(null, this);
+	}
 }

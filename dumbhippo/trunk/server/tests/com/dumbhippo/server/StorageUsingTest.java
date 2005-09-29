@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.io.File;
+import java.io.IOException;
 
 import com.dumbhippo.Filesystem;
 import com.dumbhippo.persistence.Storage;
@@ -9,25 +10,32 @@ import com.dumbhippo.persistence.Storage.SessionWrapper;
 public class StorageUsingTest extends junit.framework.TestCase {
 	private File storageDir;
 	
-	static {
-		GlobalSetup.initialize();
+	protected StorageUsingTest() {
+		GlobalSetup.initializeBase();
+
 	}
 	
+	private void initTempStorage() throws IOException {
+		File tempdir = Filesystem.createTempDirectory("dumbhippo-test-storage");
+		assertTrue(tempdir.exists());
+		storageDir = new File(tempdir, "db");
+		assertFalse(storageDir.exists());
+		Storage.initGlobalInstance(storageDir.toString());		
+	}
+
 	protected void setUp() throws Exception {
 		super.setUp();
-
-		storageDir = new File(Filesystem.createTempDirectory("dumbhippo-test-storage"), "db");
-		assertFalse(storageDir.exists());
 		
-		Storage.initGlobalInstance(storageDir.toString());
+		initTempStorage();
+		GlobalSetup.initializeStorage();		
 	}
 	
 	protected SessionWrapper getSession() {
-		return Storage.getGlobalPerThreadSession();
+		return getStorage().getPerThreadSession();
 	}
 	
-	public void testDBExists() {
-		assertTrue(storageDir.exists());
+	protected Storage getStorage() {
+		return Storage.getGlobalInstance();
 	}
 
 	protected void tearDown() throws Exception {

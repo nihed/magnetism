@@ -1,13 +1,13 @@
 package com.dumbhippo.server;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.dumbhippo.persistence.DBUnique;
 
 public class Invitation extends DBUnique {
-	public static final String invitationLandingURLPrefix = "http://dumbhippo.com/newuser?auth=";
-	
 	private Resource invitee;
 	private Set<Person> inviters;
 	private String authKey;
@@ -37,7 +37,17 @@ public class Invitation extends DBUnique {
 		this.inviters.add(inviter);
 	}
 	
-	public String getAuthURL() {
-		return invitationLandingURLPrefix + getAuthKey();
+	public String getPartialAuthURL() {
+		return "invite/landing?auth=" + getAuthKey();
+	}
+	
+	public String getAuthURL(URL prefix) {
+		URL authURL;
+		try {
+			authURL = new URL(prefix, getPartialAuthURL());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		return authURL.toString();
 	}
 }
