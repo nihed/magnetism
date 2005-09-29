@@ -10,6 +10,7 @@
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include "Resource.h"
+#include <glib.h>
 
 // GUID definition
 #pragma data_seg(".text")
@@ -537,6 +538,89 @@ findExplorerWindows()
 }
 #endif
 
+/* Define a custom main loop source for integrating the Glib main loop with Win32
+ * message handling; this isn't very generalized, since we hardcode the handling
+ * of a FALSE return from GetMessage() to call g_main_loop_quit() on a particular
+ * loop. If we were being more general, we'd probably want a Win32SourceQuitFunc.
+ */
+struct Win32Source {
+    GSource source;
+    GPollFD pollFD;
+    int result;
+    GMainLoop *loop;
+};
+
+static gboolean 
+win32SourcePrepare(GSource *source,
+		   int     *timeout)
+{
+    MSG msg;
+
+    *timeout = -1;
+
+    return PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
+}
+
+static gboolean
+win32SourceCheck(GSource *source)
+{
+    MSG msg;
+
+    return PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
+}
+
+static gboolean
+win32SourceDispatch(GSource     *source,
+		    GSourceFunc  callback,
+		    gpointer     userData)
+{
+    MSG msg;
+
+    if (!GetMessage(&msg, NULL, 0, 0)) {
+	Win32Source *win32Source = (Win32Source *)(source);
+
+	win32Source->result = (int)msg.wParam;
+
+	g_main_context_remove_poll (NULL, &win32Source->pollFD);
+	g_main_loop_quit(win32Source->loop);
+	return FALSE;
+    }
+
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+
+    return TRUE;
+}
+
+static void
+win32SourceFinalize(GSource *source)
+{
+}
+
+static const GSourceFuncs win32SourceFuncs = {
+    win32SourcePrepare,
+    win32SourceCheck,
+    win32SourceDispatch,
+    win32SourceFinalize
+};
+
+GSource *
+win32SourceNew(GMainLoop *loop)
+{
+    GSource *source = g_source_new((GSourceFuncs *)&win32SourceFuncs, sizeof(Win32Source));
+    Win32Source *win32Source = (Win32Source *)source;
+
+    win32Source->pollFD.fd = G_WIN32_MSG_HANDLE;
+    win32Source->pollFD.events = G_IO_IN;
+    win32Source->result = 0;
+    win32Source->loop = loop;
+
+    g_main_context_add_poll(NULL, &win32Source->pollFD, G_PRIORITY_DEFAULT);
+
+    return source;
+}
+
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -545,6 +629,9 @@ WinMain(HINSTANCE hInstance,
 {
     MSG msg;
     HippoUI *ui;
+    GMainLoop *loop;
+    GSource *source;
+    int result;
 
     // Initialize COM
     CoInitialize(NULL);
@@ -553,18 +640,21 @@ WinMain(HINSTANCE hInstance,
     if (!ui->create(hInstance))
 	return 0;
 
-    // Main message loop:
-    while (GetMessage(&msg, NULL, 0, 0)) 
-    {
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
-    }
+    loop = g_main_loop_new(NULL, FALSE);
+
+    source = win32SourceNew(loop);
+    g_source_attach(source, NULL);
+
+    g_main_loop_run(loop);
+
+    result = ((Win32Source *)source)->result;
+    g_source_unref(source);
 
     ui->destroy();
     ui->Release();
 
     CoUninitialize();
 
-    return (int)msg.wParam;
+    return result;
 }
 
