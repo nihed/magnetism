@@ -10,6 +10,7 @@
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
+#include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
 
 #include <glib.h>
@@ -41,6 +42,10 @@ HippoUI::HippoUI()
 	hippoDebug(L"Failed to load type lib: %x\n", hr);
 
     notificationIcon_.setUI(this);
+
+    username_ = NULL;
+    password_ = NULL;
+    rememberPassword_ = FALSE;
 }
 
 HippoUI::~HippoUI()
@@ -178,11 +183,15 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
-    bool result = DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
-		                  window_, loginProc, (::LONG_PTR)this) != false;
+    loadUserInfo();
 
-    if (!result) // user cancelled
-	return false;
+    if (!username_ || !password_) {
+	bool result = DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
+    		                     window_, loginProc, (::LONG_PTR)this) != false;
+    
+	if (!result) // user cancelled
+	    return false;
+    }
 
     lmConnection_ = lm_connection_new("dumbhippo.com");
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
@@ -339,6 +348,75 @@ HippoUI::registerActive()
     return true;
 }
 
+// Loads username, password from saved cookies
+void
+HippoUI::loadUserInfo()
+{
+    WCHAR staticBuffer[1024];
+    WCHAR *allocBuffer = NULL;
+    WCHAR *cookieBuffer = staticBuffer;
+    DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
+    char *cookie = NULL;
+
+retry:
+    if (!InternetGetCookieEx(L"http://messages.dumbhippo.com", 
+			     L"userinfo",
+	                     cookieBuffer, &cookieSize,
+			     0,
+			     NULL)) 
+    {
+	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+	    cookieBuffer = allocBuffer = new WCHAR[cookieSize];
+	    if (!cookieBuffer)
+		goto out;
+	    goto retry;
+	}
+    }
+
+    cookie = g_utf16_to_utf8(cookieBuffer, cookieSize, NULL, NULL, NULL);
+    if (!cookie)
+	goto out;
+
+    if (!strncmp(cookie, "username=", 9))
+	goto out;
+
+    for (char *p = cookie + 9; *p;) {
+	char *next = strchr(p, '&');
+	if (!next)
+	    next = p + strlen(p);
+	if (strncmp(p, "name=", 5) == 0)
+	    username_ = g_strndup(p + 5, next - (p + 5));
+	else if (strncmp(p, "password=", 9) == 0)
+	    password_ = g_strndup(p + 9, next - (p + 9));
+
+	p = next;
+	if (*p) // Skip &
+	    p++;
+    }
+
+out:
+    g_free (cookie);
+    delete[] allocBuffer;
+}
+
+void
+HippoUI::saveUserInfo()
+{
+    if (!rememberPassword_ || !username_ || !password_)
+	return;
+	
+    char *cookieString = g_strdup_printf("userinfo=name=%s&password=%s;"
+	                                 "expires=Sun 01-Jan-2006 00:00:00 GMT;"
+                                         "domain=.dumbhippo.com",
+				         username_, password_);
+    WCHAR *cookieStringW = g_utf8_to_utf16(cookieString, -1, NULL, NULL, NULL);
+
+    InternetSetCookie(L"http://dumbhippo.com", NULL, cookieStringW);
+
+    g_free (cookieStringW);
+    g_free(cookieString);
+}
+
 // Removes previous registration via registerActive()
 void
 HippoUI::revokeActive()
@@ -392,6 +470,7 @@ HippoUI::onPasswordDialogLogin(const WCHAR *username,
 {
     username_ = g_utf16_to_utf8(username, -1, NULL, NULL, NULL);
     password_ = g_utf16_to_utf8(password, -1, NULL, NULL, NULL);
+    rememberPassword_ = rememberPassword;
 }
 
 void 
@@ -424,6 +503,8 @@ HippoUI::onConnectionAuthenticate (LmConnection *connection,
     HippoUI *ui = (HippoUI *)userData;
 
     if (success) {
+	ui->saveUserInfo();
+
 	LmMessage *message;
 	message = lm_message_new_with_sub_type(NULL, 
 	                                       LM_MESSAGE_TYPE_PRESENCE, 
@@ -435,6 +516,7 @@ HippoUI::onConnectionAuthenticate (LmConnection *connection,
 		hippoDebug(L"Failed to send presence: %s", error->message);
 		g_error_free(error);
 	}
+	lm_message_unref(message);
     } else {
 	hippoDebug(L"Couldn't authenticate");
     }

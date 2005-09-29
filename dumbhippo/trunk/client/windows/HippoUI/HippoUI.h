@@ -48,6 +48,8 @@ private:
 			LPARAM lParam);
 
     void revokeActive();
+    void loadUserInfo();
+    void saveUserInfo();
 
     HRESULT getAppletURL(BSTR filename, BSTR *url);
 
@@ -90,4 +92,5 @@ private:
 
     char *username_; // UTF-8
     char *password_; // UTF-8
+    bool rememberPassword_;
 };
