@@ -12,6 +12,11 @@
 #define IDR_MAINFRAME                   128
 #define IDR_NOTIFY                      134
 #define IDI_HIPPOUI                     136
+#define IDD_LOGIN                       137
+#define IDC_EDIT1                       1000
+#define IDC_USERNAME                    1000
+#define IDC_PASSWORD                    1001
+#define IDC_REMEMBERPASS                1003
 #define ID_SHARELINK_PREFERENCES        32771
 #define ID_SHARELINK_EXIT               32772
 #define IDM_RECENT                      32773
@@ -23,9 +28,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        137
+#define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_CONTROL_VALUE         1005
 #define _APS_NEXT_SYMED_VALUE           111
 #endif
 #endif

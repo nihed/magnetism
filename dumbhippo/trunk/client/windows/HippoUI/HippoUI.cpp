@@ -172,6 +172,9 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
+    DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
+		   window_, loginProc, (::LONG_PTR)this);
+
     return true;
 }
 
@@ -243,8 +246,6 @@ HippoUI::showShareWindow(BSTR url)
 void 
 HippoUI::showURL(BSTR url)
 {
-    HRESULT hr;
-
     HippoBSTR shareURL;
 
     HippoPtr<IWebBrowser2> webBrowser;
@@ -350,6 +351,13 @@ HippoUI::createWindow(void)
     return true;
 }
 
+void 
+HippoUI::onPasswordDialogLogin(const WCHAR *username,
+	                       const WCHAR *password,
+			       bool         rememberPassword)
+{
+}
+
 // Find the pathname for a HTML file, based on the location of the .exe
 // We could alternatively use res: URIs and embed the HTML files in the
 // executable, but this is probably more flexible
@@ -442,6 +450,52 @@ HippoUI::windowProc(HWND   window,
     }
 
     return DefWindowProc(window, message, wParam, lParam);
+}
+
+INT_PTR CALLBACK 
+HippoUI::loginProc(HWND   dialog,
+      	           UINT   message,
+		   WPARAM wParam,
+		   LPARAM lParam)
+{
+    if (message == WM_INITDIALOG) {
+	HippoUI *ui = (HippoUI *)lParam;
+	SetWindowLongPtr(dialog, GWLP_USERDATA, (::LONG_PTR)ui);
+
+	return TRUE;
+    }
+
+    HippoUI *ui = (HippoUI *)GetWindowLongPtr(dialog, GWLP_USERDATA);
+    if (!ui)
+	return FALSE;
+
+    switch (message) {
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDOK:
+	    {
+	    WCHAR username[128];
+	    username[0] = '\0';
+	    GetDlgItemText(dialog, IDC_USERNAME, username, sizeof(username) / sizeof(username[0]));
+
+	    WCHAR password[128];
+	    password[0] = '\0';
+	    GetDlgItemText(dialog, IDC_PASSWORD, password, sizeof(password) / sizeof(password[0]));
+
+	    bool rememberPass = (IsDlgButtonChecked(dialog, IDC_REMEMBERPASS) == BST_CHECKED);
+
+	    ui->onPasswordDialogLogin(username, password, rememberPass);
+
+	    EndDialog(dialog, TRUE);
+	    return TRUE;
+	    }
+	case IDCANCEL:
+	    EndDialog(dialog, FALSE);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
 }
 
 /* Finds all IE and Explorer windows on the system. Needs some refinement

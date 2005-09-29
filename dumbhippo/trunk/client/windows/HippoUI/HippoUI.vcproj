@@ -168,6 +168,9 @@
 				RelativePath=".\DumbHippo.ico">
 			</File>
 			<File
+				RelativePath=".\HippoUI.exe.manifest">
+			</File>
+			<File
 				RelativePath=".\HippoUI.rc">
 			</File>
 		</Filter>

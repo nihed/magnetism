@@ -38,6 +38,9 @@ private:
     bool registerActive();
     bool registerClass();
     bool createWindow();
+    void onPasswordDialogLogin(const WCHAR *username,
+	                       const WCHAR *password,
+			       bool         rememberPassword);
 
     bool processMessage(UINT   message,
 	                WPARAM wParam,
@@ -51,6 +54,10 @@ private:
     		                       UINT   message,
 		                       WPARAM wParam,
 		                       LPARAM lParam);
+    static INT_PTR CALLBACK loginProc(HWND   window,
+    		                      UINT   message,
+		                      WPARAM wParam,
+		                      LPARAM lParam);
 
 private:
     DWORD refCount_;
