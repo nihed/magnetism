@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.identity20;
 
 import java.security.SecureRandom;
 import java.util.Random;
@@ -16,19 +16,23 @@ import com.dumbhippo.StringUtils;
  * @author hp
  *
  */
-final class AuthKey {
+public final class RandomToken {
 	private byte[] data;
 	
-	public static final AuthKey createNew() {
+	public static final RandomToken createNew() {
 		Random r = new SecureRandom();
 		byte[] data = new byte[10];
 		r.nextBytes(data);
 		
-		return new AuthKey(data);
+		return new RandomToken(data);
 	}
 	
-	private AuthKey(byte[] data) {
+	private RandomToken(byte[] data) {
 		this.data = data; 
+	}
+	
+	public byte[] getBytes() {
+		return data;
 	}
 	
 	public String toString() {
@@ -47,9 +51,9 @@ final class AuthKey {
 	public boolean equals(Object other) {
 		if (this == other)
 			return true;
-		if (!(other instanceof AuthKey))
+		if (!(other instanceof RandomToken))
 			return false;
-		AuthKey otherAuthKey = (AuthKey) other;
+		RandomToken otherAuthKey = (RandomToken) other;
 		if (data.length != otherAuthKey.data.length)
 			return false;
 		for (int i = 0; i < data.length; ++i)

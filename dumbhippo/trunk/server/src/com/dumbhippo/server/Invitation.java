@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.DBUnique;
 
 public class Invitation extends DBUnique {
@@ -18,7 +19,7 @@ public class Invitation extends DBUnique {
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
 		this.inviters.add(inviter);
-		authKey = AuthKey.createNew().toString();
+		authKey = RandomToken.createNew().toString();
 	}
 
 	public Resource getInvitee() {

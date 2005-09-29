@@ -2,14 +2,17 @@ package com.dumbhippo.server;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.dumbhippo.identity20.RandomToken;
+
 import junit.framework.TestCase;
 
-public class AuthKeyTest extends TestCase {
+public class RandomTokenTest extends TestCase {
 
 	public void testAuthKey() {
-		List<AuthKey> keys = new ArrayList<AuthKey>();
+		List<RandomToken> keys = new ArrayList<RandomToken>();
 		for (int i = 0; i < 20; ++i) {
-			AuthKey k = AuthKey.createNew();
+			RandomToken k = RandomToken.createNew();
 			keys.add(k);
 		}
 		TestUtils.testEqualsImplementation(keys);

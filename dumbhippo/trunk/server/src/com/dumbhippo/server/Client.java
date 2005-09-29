@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.server;
 
+import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.DBUnique;
 
 /**
@@ -27,7 +28,7 @@ class Client extends DBUnique {
 	private void init(String authKey, String name, long lastUsed) {
 		this.authKey = authKey;
 		if (this.authKey == null)
-			this.authKey = AuthKey.createNew().toString();
+			this.authKey = RandomToken.createNew().toString();
 		this.name = name;
 		this.lastUsed = lastUsed;
 	}

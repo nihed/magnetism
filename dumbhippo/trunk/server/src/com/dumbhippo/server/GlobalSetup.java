@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
 
 import com.dumbhippo.persistence.Storage;
+import com.dumbhippo.persistence.Storage.SessionWrapper;
 
 /**
  * 
@@ -45,12 +46,14 @@ public final class GlobalSetup {
 			return;		
 		initializeLogging();
 	}
-	
+
 	public static void initializeStorage() {
-		Storage.getGlobalPerThreadSession().beginTransaction();
-		IdentitySpider spider = new IdentitySpiderBean();
-		spider.getTheMan();
-		Storage.getGlobalPerThreadSession().commitTransaction();		
+		SessionWrapper wrapper = Storage.getGlobalPerThreadSession();		
+		wrapper.beginTransaction();
+		// Initialize global singletons
+		new IdentitySpiderBean().getTheMan();
+		new AuthenticationSystemBean().getServerSecret();
+		wrapper.commitTransaction();		
 	}
 	
 	public static void initialize(File storageDir) {
