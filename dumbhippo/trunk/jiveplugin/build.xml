@@ -1,0 +1,33 @@
+<project name="dumbhippo-jiveplugin" default="build" basedir=".">
+	<property name="src" value="src/java" />
+	<property name="src.tests" value="tests" />
+	<property name="web" value="web" />
+	<property name="build" value="classes" />
+	<property name="lib" value="lib" />
+	<property name="reports.tests" value="reports" />
+	<property name="pluginjar" value="jive-plugin-hippo.jar" />
+
+	<target name="init">
+		<mkdir dir="${build}" />
+		<mkdir dir="${reports.tests}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<!-- Compile the java code -->
+		<javac srcdir="${src}" destdir="${build}" source="1.5">
+			<classpath refid="project.class.path" />
+		</javac>
+
+	</target>
+	
+	<target name="plugins">
+		<jar destfile="${pluginjar}">
+			<fileset dir="${build}"/>
+			<fileset dir="." includes="plugin.xml" />
+		</jar>
+	</target>
+	
+	<target name="build" depends="compile,plugins">
+		
+	</target>
+</project>
