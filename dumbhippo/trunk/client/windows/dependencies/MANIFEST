@@ -11,23 +11,25 @@
 # Strip: Number of leading /'s to remove when unpacking (like patch -p<n>)
 # 
 # Followed by a set of shell globs specifying the files to include
-# everything not explicitly included is excluded.
+# everything not explicitly included is excluded. A shell glob can
+# be followed by a regular expression to do on the original (after
+# Strip:) filename to get the final filename.
 #
 URL: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.bin.woe32.zip
 MD5sum: a18e9420d6a354b585a77230996b4171
 Source: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.tar.gz
 Directory: libiconv
 Strip: 0
-bin/charset.dll
-bin/iconv.dll
+bin/charset.dll	s@.*/@@
+bin/iconv.dll s@*./@@
 
 URL: http://www.gimp.org/~tml/gimp/win32/gettext-runtime-0.13.1.zip
 MD5sum: 8399b91d23824e88173177f2b340d4ae
 Source: http://www.gimp.org/~tml/gimp/win32/gettext-0.13.1.tar.gz
 Directory: gettext
 Strip: 0
-bin/asprintf.dll
-bin/intl.dll
+bin/asprintf.dll s@.*/@@
+bin/intl.dll s@.*/@@
 lib/intl.lib
 include/libintl.h
 
@@ -43,8 +45,8 @@ MD5sum: 706c38cfaab70322f991ef31583cec8a
 Source: ftp://ftp.gtk.org/pub/gtk/v2.6/glib-2.6.6.tar.bz2
 Directory: glib
 Strip: 0
-bin/libglib-2.0-0.dll
-bin/libthread-2.0-0.dll
+bin/libglib-2.0-0.dll s@.*/@@
+bin/libthread-2.0-0.dll s@.*/@@
 include/glib-2.0/glib.h
 include/glib-2.0/glib/*.h
 lib/glib-2.0/include/glibconfig.h
