@@ -10,6 +10,7 @@
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
+#include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
 
@@ -618,30 +619,46 @@ HippoUI::onMessage (LmMessageHandler *handler,
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static bool
+urlIsLocal(const WCHAR *url)
+{
+    WCHAR schemaBuf[64];
+    DWORD schemaSize;
+
+    if (CoInternetParseUrl(url, PARSE_SCHEMA, 0,
+  		           schemaBuf, sizeof(schemaBuf) / sizeof(schemaBuf[0]), 
+			   &schemaSize, 0) != S_OK)
+	return false;
+
+    return wcscmp(schemaBuf, L"file") == 0;
+}
+
 void
 HippoUI::updateMenu()
 {
     HMENU popupMenu = GetSubMenu(menu_, 0);
 
-    // Delete previous "Share..." menuitems
+    // Delete previous "Share..." menuitem
     while (TRUE) {
     	int id = GetMenuItemID(popupMenu, 0);
-	if (id >= IDM_SHARE0 && id <= IDM_SHARE9)
+	if (id >= IDM_SHARE0 && id <= IDM_SHARESEPARATOR)
 	    RemoveMenu(popupMenu, 0, MF_BYPOSITION);
 	else
 	    break;
     }
 
     // Now insert new ones for the current URLs
-    UINT nItems = browsers_.length() < 10 ? browsers_.length() : 10;
     UINT pos = 0;
-    for (ULONG i = 0; i < nItems; i++) {
+    for (ULONG i = 0; i < browsers_.length() && i < 10; i++) {
 	MENUITEMINFO info;
         WCHAR menubuf[64];
 
 	if (!browsers_[i].title)
 	    continue;
     
+	if (urlIsLocal(browsers_[i].url))
+	    continue;
+
 	StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Share "));
 	StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, browsers_[i].title);
 	StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, TEXT("..."));
@@ -655,7 +672,21 @@ HippoUI::updateMenu()
 	info.wID = IDM_SHARE0 + i;
 	info.dwTypeData = menubuf;
 	    
-	InsertMenuItem(popupMenu, 0, TRUE, &info);
+	InsertMenuItem(popupMenu, pos++, TRUE, &info);
+    }
+
+    // Insert a separator if necessary
+    if (pos != 0) {
+	MENUITEMINFO info;
+    
+	memset((void *)&info, 0, sizeof(MENUITEMINFO));
+	info.cbSize = sizeof(MENUITEMINFO);
+
+	info.fMask = MIIM_ID | MIIM_FTYPE;
+	info.fType = MFT_SEPARATOR;
+	info.wID = IDM_SHARESEPARATOR;
+
+	InsertMenuItem(popupMenu, pos, TRUE, &info);
     }
 }
 

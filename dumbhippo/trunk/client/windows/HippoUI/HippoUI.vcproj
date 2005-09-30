@@ -32,7 +32,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib glib-2.0.lib loudmouth.lib ws2_32.lib wininet.lib"
+				AdditionalDependencies="shlwapi.lib glib-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib"
 				OutputFile="$(OutDir)/HippoUI.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"

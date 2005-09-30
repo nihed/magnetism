@@ -9,18 +9,27 @@
 #define IDI_DUMBHIPPO                   104
 #define IDM_EXIT                        105
 #define IDC_HIPPOUI                     109
+#define IDM_SHARE0                      110
+#define IDM_SHARE1                      111
+#define IDM_SHARE2                      112
+#define IDM_SHARE3                      113
+#define IDM_SHARE4                      114
+#define IDM_SHARE5                      115
+#define IDM_SHARE6                      116
+#define IDM_SHARE7                      117
+#define IDM_SHARE8                      118
+#define IDM_SHARE9                      119
+#define IDM_SHARESEPARATOR              120
 #define IDR_MAINFRAME                   128
 #define IDR_NOTIFY                      134
 #define IDI_HIPPOUI                     136
 #define IDD_LOGIN                       137
-#define IDC_EDIT1                       1000
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
 #define IDC_REMEMBERPASS                1003
 #define ID_SHARELINK_PREFERENCES        32771
 #define ID_SHARELINK_EXIT               32772
 #define IDM_RECENT                      32773
-#define IDM_SHARE                       32774
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -31,6 +40,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32778
 #define _APS_NEXT_CONTROL_VALUE         1005
-#define _APS_NEXT_SYMED_VALUE           111
+#define _APS_NEXT_SYMED_VALUE           122
 #endif
 #endif
