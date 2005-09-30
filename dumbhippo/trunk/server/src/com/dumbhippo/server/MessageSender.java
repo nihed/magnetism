@@ -49,16 +49,27 @@ public class MessageSender {
 		return connection;
 	}
 	
-	public void sendShareLink(String url, String title) {
+	public void sendShareLink(String recipient, String url, String title) {
 		XMPPConnection connection = getConnection();
 		
 		if (connection == null)
 			return;
 		
-		Message message = new Message("nobody@link-reflector.dumbhippo.com",
+		if (!recipient.endsWith("@dumbhippo.com")) {
+			logger.error("Currently can only send link sharing to @dumbhippo.com domain, not " + recipient);
+			return;
+		}
+		
+		StringBuilder newRecipient = new StringBuilder();
+		newRecipient.append(recipient.substring(0,recipient.indexOf("@")));
+		newRecipient.append("@link-reflector.dumbhippo.com");
+		
+		Message message = new Message(newRecipient.toString(),
 				Message.Type.HEADLINE);
 		
 		message.addExtension(new LinkExtension(url, title));
+
+		message.setBody(String.format("%s\n%s", title, url));
 		
 		connection.sendPacket(message);
 	}
@@ -66,8 +77,9 @@ public class MessageSender {
 	public static void main(String[] args) {
 		MessageSender sender = MessageSender.getInstance();
 		
-		sender.sendShareLink("http://badgerbadgerbadger.com",
-				"Badger Badger Badger");
+		sender.sendShareLink("hp@dumbhippo.com",
+				"http://badgerbadgerbadger.com",
+				"Badger Badger Badger (Escaping check: &<>'\")");
 	}
 	
 	public static class LinkExtension implements PacketExtension {
