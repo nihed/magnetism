@@ -1,10 +1,10 @@
 all:
 	-mkdir $(OUTDIR)
-	copy libiconv\bin\charset.dll $(OUTDIR)
-	copy libiconv\bin\iconv.dll $(OUTDIR)
-	copy gettext\bin\asprintf.dll $(OUTDIR)
-	copy gettext\bin\intl.dll $(OUTDIR)
-	copy glib\bin\libglib-2.0-0.dll $(OUTDIR)
+	copy charset.dll $(OUTDIR)
+	copy iconv.dll $(OUTDIR)
+	copy asprintf.dll $(OUTDIR)
+	copy intl.dll $(OUTDIR)
+	copy libglib-2.0-0.dll $(OUTDIR)
 
 clean:
 	del $(OUTDIR)\charset.dll
