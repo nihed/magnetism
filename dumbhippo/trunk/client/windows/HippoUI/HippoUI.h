@@ -56,6 +56,9 @@ private:
 	                       const WCHAR *password,
 			       bool         rememberPassword);
 
+    void showPreferences();
+    void updateForgetPassword();
+
     bool processMessage(UINT   message,
 	                WPARAM wParam,
 			LPARAM lParam);
@@ -74,6 +77,10 @@ private:
     		                      UINT   message,
 		                      WPARAM wParam,
 		                      LPARAM lParam);
+    static INT_PTR CALLBACK preferencesProc(HWND   window,
+    		                            UINT   message,
+		                            WPARAM wParam,
+		                            LPARAM lParam);
     static void onConnectionOpen (LmConnection *connection,
 				  gboolean      success,
 				  gpointer      userData);
@@ -94,6 +101,7 @@ private:
     HICON bigIcon_;
     HICON smallIcon_;
     HMENU menu_;
+    HWND preferencesDialog_;
 
     HippoBSTR currentURL_;
 
@@ -110,4 +118,5 @@ private:
     char *username_; // UTF-8
     char *password_; // UTF-8
     bool rememberPassword_;
+    bool passwordRemembered_;
 };

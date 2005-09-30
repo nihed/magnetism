@@ -44,11 +44,14 @@ HippoUI::HippoUI()
 
     notificationIcon_.setUI(this);
 
+    preferencesDialog_ = NULL;
+
     nextBrowserCookie_ = 0;
 
     username_ = NULL;
     password_ = NULL;
     rememberPassword_ = FALSE;
+    passwordRemembered_ = FALSE;
 }
 
 HippoUI::~HippoUI()
@@ -460,6 +463,11 @@ retry:
 	    p++;
     }
 
+    if (password_) {
+	passwordRemembered_ = TRUE;
+	updateForgetPassword();
+    }
+
 out:
     g_free (cookie);
     delete[] allocBuffer;
@@ -468,16 +476,27 @@ out:
 void
 HippoUI::saveUserInfo()
 {
-    if (!rememberPassword_ || !username_ || !password_)
-	return;
-	
-    char *cookieString = g_strdup_printf("userinfo=name=%s&password=%s;"
-	                                 "expires=Sun 01-Jan-2006 00:00:00 GMT;"
+    char *expires;
+
+    if (!username_ && !password_) 
+	expires="Sun 10-Jun-1974 00:00:00 GMT"; // delete with expires in the past
+    else
+	expires="Sun 01-Jan-2006 00:00:00 GMT";
+
+    char *cookieString = g_strdup_printf("userinfo=%s%s%s%s%s"
+	                                 "expires=%s;"
                                          "domain=.dumbhippo.com",
-				         username_, password_);
+					 username_ ? "name=" : "", 
+					 username_ ? username_ : "",
+					 (username_ && password_) ? "&" : "",
+					 password_ ? "password=" : "",
+					 password_ ? password_ : "",
+					 expires);
     WCHAR *cookieStringW = g_utf8_to_utf16(cookieString, -1, NULL, NULL, NULL);
 
     InternetSetCookie(L"http://dumbhippo.com", NULL, cookieStringW);
+    passwordRemembered_ = TRUE;
+    updateForgetPassword();
 
     g_free (cookieStringW);
     g_free(cookieString);
@@ -540,6 +559,31 @@ HippoUI::onPasswordDialogLogin(const WCHAR *username,
 }
 
 void 
+HippoUI::showPreferences()
+{
+    if (!preferencesDialog_) {
+	preferencesDialog_ = CreateDialogParam(instance_, MAKEINTRESOURCE(IDD_PREFERENCES),
+	                                       window_, preferencesProc, (::LONG_PTR)this);
+	if (!preferencesDialog_)
+	    return;
+    }
+
+    updateForgetPassword();
+    ShowWindow(preferencesDialog_, SW_SHOW);
+}
+
+void 
+HippoUI::updateForgetPassword()
+{
+    if (!preferencesDialog_)
+	return;
+
+    HWND forgetPassButton = GetDlgItem(preferencesDialog_, IDC_FORGETPASSWORD);
+    if (forgetPassButton)
+	EnableWindow(forgetPassButton, passwordRemembered_);
+}
+
+void 
 HippoUI::onConnectionOpen (LmConnection *connection,
 			   gboolean      success,
 			   gpointer      userData)
@@ -569,7 +613,8 @@ HippoUI::onConnectionAuthenticate (LmConnection *connection,
     HippoUI *ui = (HippoUI *)userData;
 
     if (success) {
-	ui->saveUserInfo();
+	if (ui->rememberPassword_)
+	    ui->saveUserInfo();
 
 	LmMessage *message;
 	message = lm_message_new_with_sub_type(NULL, 
@@ -772,6 +817,9 @@ HippoUI::processMessage(UINT   message,
 
 	switch (wmId)
 	{
+	case IDM_PREFERENCES:
+	    showPreferences();
+	    return true;
 	case IDM_EXIT:
 	    DestroyWindow(window_);
 	    return true;
@@ -837,6 +885,44 @@ HippoUI::loginProc(HWND   dialog,
 	    EndDialog(dialog, TRUE);
 	    return TRUE;
 	    }
+	case IDCANCEL:
+	    EndDialog(dialog, FALSE);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+INT_PTR CALLBACK 
+HippoUI::preferencesProc(HWND   dialog,
+      	                 UINT   message,
+		         WPARAM wParam,
+		         LPARAM lParam)
+{
+    if (message == WM_INITDIALOG) {
+	HippoUI *ui = (HippoUI *)lParam;
+	hippoSetWindowData<HippoUI>(dialog, ui);
+
+	return TRUE;
+    }
+
+    HippoUI *ui = hippoGetWindowData<HippoUI>(dialog);
+    if (!ui)
+	return FALSE;
+
+    switch (message) {
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDC_FORGETPASSWORD:
+	    ui->passwordRemembered_ = FALSE;
+	    ui->password_ = NULL;
+	    ui->saveUserInfo();
+	    ui->updateForgetPassword();
+	    return TRUE;
+        case IDOK:
+	    EndDialog(dialog, TRUE);
+	    return TRUE;
 	case IDCANCEL:
 	    EndDialog(dialog, FALSE);
 	    return TRUE;
