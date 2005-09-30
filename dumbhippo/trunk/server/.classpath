@@ -21,5 +21,7 @@
 	<classpathentry kind="lib" path="/usr/share/java/javamail/mailapi.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/javamail/providers.jar"/>
 	<classpathentry kind="lib" path="lib/antlr-2.7.5H3.jar"/>
+	<classpathentry kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
