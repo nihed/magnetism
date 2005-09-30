@@ -23,7 +23,9 @@ public:
     void processMessage(WPARAM wParam,
 		        LPARAM lParam);
 	                
-    void showURL(const WCHAR *url);
+    void showURL(const WCHAR *url,
+	         const WCHAR *title,
+		 const WCHAR *description);
 
 private:
     void showMenu(UINT buttonFlag);

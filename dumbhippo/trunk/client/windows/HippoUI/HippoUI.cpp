@@ -603,15 +603,27 @@ HippoUI::onMessage (LmMessageHandler *handler,
 	    if ((ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0) &&
 		(child->name && strcmp (child->name, "link") == 0)) 
 	    {
+		const WCHAR *urlW = NULL;
+		const WCHAR *titleW = NULL;
+		const WCHAR *descriptionW = NULL;
+
 	        const char *url = lm_message_node_get_attribute(child, "href");
 	        if (url) {
-		    const WCHAR *urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
-		    if (urlW) {
-			/* XXX bubble it */
-		    }
-
-		    g_free((gpointer)urlW);
+		    urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
 		}
+		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
+		if (titleNode && titleNode->value)
+		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
+
+		LmMessageNode *descriptionNode = lm_message_node_get_child(child, "description");
+		if (descriptionNode && descriptionNode->value)
+		    descriptionW = g_utf8_to_utf16(descriptionNode->value, -1, NULL, NULL, NULL);
+
+		ui->notificationIcon_.showURL(urlW, titleW, descriptionW);
+
+		g_free((void *)urlW);
+		g_free((void *)titleW);
+		g_free((void *)descriptionW);
 	    }   
 	}
     }
