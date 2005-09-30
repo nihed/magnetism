@@ -17,7 +17,6 @@
 	<target name="compile" depends="init">
 		<!-- Compile the java code -->
 		<javac srcdir="${src}" destdir="${build}" source="1.5">
-			<classpath refid="project.class.path" />
 		</javac>
 
 	</target>
