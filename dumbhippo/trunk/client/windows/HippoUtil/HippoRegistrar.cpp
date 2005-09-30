@@ -97,7 +97,7 @@ setValuePrintf(HKEY         key,
     StringCchVPrintf(subkey, MAX_PATH, subkeyFormat, vap);
     va_end(vap);
 
-    result = RegCreateKeyEx(HKEY_CLASSES_ROOT, subkey, NULL, NULL, 
+    result = RegCreateKeyEx(key, subkey, NULL, NULL, 
 			    REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
 			    &newKey, NULL);
     if (result != ERROR_SUCCESS)
@@ -153,6 +153,29 @@ HippoRegistrar::registerInprocServer(const CLSID &classID,
 		        classStr); 
 
 failed:
+    CoTaskMemFree(classStr);
+
+    return hr;
+}
+
+HRESULT 
+HippoRegistrar::registerBrowserHelperObject(const CLSID &classID,
+					    const WCHAR *title)
+{
+    WCHAR *classStr;
+    HRESULT hr;
+
+    hr = StringFromIID(classID, &classStr);
+    if (FAILED(hr))
+	return hr;
+
+    // The value we set here isn't used, but it's useful for debugging
+    // to identify our GUID among other BHO's.
+    hr = setValuePrintf(HKEY_LOCAL_MACHINE,
+		        L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects\\%ls", 
+		        NULL, title,
+		        classStr); 
+
     CoTaskMemFree(classStr);
 
     return hr;

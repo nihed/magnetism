@@ -25,6 +25,8 @@ public:
 					CATID        categories[]);
     HRESULT registerInprocServer(const CLSID &classID,
 				 const WCHAR *title);
+    HRESULT registerBrowserHelperObject(const CLSID &classID,
+	                                const WCHAR *title);
 
 private:
     WCHAR *modulePath_;

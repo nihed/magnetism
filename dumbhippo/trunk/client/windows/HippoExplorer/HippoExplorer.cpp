@@ -125,6 +125,11 @@ DllRegisterServer(void)
 			                TEXT("Hippo Tracker"));
     if (FAILED(hr))
 	return hr;
+
+    hr = registrar.registerBrowserHelperObject(CLSID_HippoTracker,
+			                       TEXT("Hippo Tracker"));
+    if (FAILED(hr))
+	return hr;
     
     hr = registrar.registerInprocServer(CLSID_HippoEmbed,
 			                TEXT("Hippo Embed"));
