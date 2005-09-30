@@ -31,7 +31,6 @@ HippoIcon::create(HWND window)
    
     window_ = window;
     
-    menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
     message_ = RegisterWindowMessage(TEXT("HippoNotifyMessage"));
 
     notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
@@ -82,11 +81,11 @@ HippoIcon::processMessage(WPARAM wParam,
 	    ignoreNextClick_ = false;
 	    return;
 	}
-        showMenu(TPM_LEFTBUTTON);
+        ui_->showMenu(TPM_LEFTBUTTON);
         break;
     case WM_RBUTTONDOWN:
     case WM_CONTEXTMENU:
-        showMenu(TPM_RIGHTBUTTON);
+        ui_->showMenu(TPM_RIGHTBUTTON);
         break;
     case NIN_BALLOONSHOW:
 	break;
@@ -111,16 +110,6 @@ HippoIcon::showURL(const WCHAR *url)
 {
     currentURL_ = url;
 
-    WCHAR menubuf[64];
-
-    StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Share "));
-    StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, url);
-    StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, TEXT("..."));
-    StringCchCopy(menubuf + sizeof(menubuf) / sizeof(TCHAR) - 6, 6, TEXT("[...]"));
-
-    ModifyMenu(menu_, IDM_SHARE, MF_BYCOMMAND | MF_STRING, 
-	       IDM_SHARE, menubuf);
-
     NOTIFYICONDATA notifyIconData = { 0 };
 
     notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
@@ -136,25 +125,4 @@ HippoIcon::showURL(const WCHAR *url)
     notifyIconData.dwInfoFlags = NIIF_USER;
    
     Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
-}
-
-void
-HippoIcon::showMenu(UINT buttonFlag)
-{
-    POINT pt;
-    HMENU popupMenu;
-
-    // We:
-    //  - Set the foreground window to our (non-shown) window so that clicking
-    //    away elsewhere works
-    //  - Send the dummy event to force a context switch to our app
-    // See Microsoft knowledgebase Q135788
-
-    GetCursorPos(&pt);
-    popupMenu = GetSubMenu(menu_, 0);
-
-    SetForegroundWindow(window_);
-    TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, window_, NULL);
-
-    PostMessage(window_, WM_NULL, 0, 0);
 }

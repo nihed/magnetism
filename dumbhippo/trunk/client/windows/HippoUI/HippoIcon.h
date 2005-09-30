@@ -31,7 +31,6 @@ private:
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
     UINT message_;
-    HMENU menu_;
     HICON icon_;
     HippoBSTR currentURL_;
 

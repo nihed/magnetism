@@ -43,6 +43,8 @@ HippoUI::HippoUI()
 
     notificationIcon_.setUI(this);
 
+    nextBrowserCookie_ = 0;
+
     username_ = NULL;
     password_ = NULL;
     rememberPassword_ = FALSE;
@@ -146,14 +148,47 @@ HippoUI::Invoke (DISPID      dispIdMember,
 //////////////////////// IHippoTracker implementation //////////////////////
 
 STDMETHODIMP 
-HippoUI::Log(BSTR message)
+HippoUI::RegisterBrowser(IWebBrowser2 *browser,
+	                 DWORD        *cookie)
 {
-    currentURL_ = message;
-    notificationIcon_.showURL(message);
+    HippoBrowserInfo info;
+
+    info.browser = browser;
+    *cookie = info.cookie = ++nextBrowserCookie_;
+
+    browsers_.append(info);
+
     return S_OK;
 }
 
-/////////////////////////////////////////////////////////////////////////////
+STDMETHODIMP 
+HippoUI::UnregisterBrowser(DWORD cookie)
+{
+    for (ULONG i = 0; i < browsers_.length(); i++) {
+	if (browsers_[i].cookie == cookie) {
+	    browsers_.remove(i);
+	    return S_OK;
+	}
+    }
+
+    return E_FAIL;
+}
+
+STDMETHODIMP 
+HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
+{
+    for (ULONG i = 0; i < browsers_.length(); i++) {
+ 	if (browsers_[i].cookie == cookie) {
+	    browsers_[i].url = url;
+	    browsers_[i].title = title;
+	    return S_OK;
+	}
+    }
+
+    return E_FAIL;
+}
+
+////////////////////////////////////////////////////////////////////////////
 
 bool
 HippoUI::create(HINSTANCE instance)
@@ -164,6 +199,8 @@ HippoUI::create(HINSTANCE instance)
 	                          IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
     bigIcon_ = (HICON)LoadImage(instance_, MAKEINTRESOURCE(IDI_DUMBHIPPO),
 	                        IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+
+    menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
 
     if (!registerClass())
 	return false;
@@ -285,6 +322,29 @@ HippoUI::showShareWindow(BSTR url)
     webBrowser->put_Visible(VARIANT_TRUE);
 }
 
+void
+HippoUI::showMenu(UINT buttonFlag)
+{
+    POINT pt;
+    HMENU popupMenu;
+
+    updateMenu();
+
+    // We:
+    //  - Set the foreground window to our (non-shown) window so that clicking
+    //    away elsewhere works
+    //  - Send the dummy event to force a context switch to our app
+    // See Microsoft knowledgebase Q135788
+
+    GetCursorPos(&pt);
+    popupMenu = GetSubMenu(menu_, 0);
+
+    SetForegroundWindow(window_);
+    TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, window_, NULL);
+
+    PostMessage(window_, WM_NULL, 0, 0);
+}
+
 // Show a window when the user clicks on a shared link
 void 
 HippoUI::showURL(BSTR url)
@@ -332,7 +392,7 @@ HippoUI::registerActive()
     IHippoUI *pHippoUI;
  
     QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
-    HRESULT hr = RegisterActiveObject(pHippoUI, CLSID_HippoUI, ACTIVEOBJECT_WEAK, &registerHandle_);
+    HRESULT hr = RegisterActiveObject(pHippoUI, CLSID_HippoUI, ACTIVEOBJECT_STRONG, &registerHandle_);
     pHippoUI->Release();
 
     if (FAILED(hr)) {
@@ -545,8 +605,10 @@ HippoUI::onMessage (LmMessageHandler *handler,
 	        const char *url = lm_message_node_get_attribute(child, "href");
 	        if (url) {
 		    const WCHAR *urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
-		    if (urlW)
-		        ui->Log(HippoBSTR(urlW));
+		    if (urlW) {
+			/* XXX bubble it */
+		    }
+
 		    g_free((gpointer)urlW);
 		}
 	    }   
@@ -554,6 +616,47 @@ HippoUI::onMessage (LmMessageHandler *handler,
     }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+void
+HippoUI::updateMenu()
+{
+    HMENU popupMenu = GetSubMenu(menu_, 0);
+
+    // Delete previous "Share..." menuitems
+    while (TRUE) {
+    	int id = GetMenuItemID(popupMenu, 0);
+	if (id >= IDM_SHARE0 && id <= IDM_SHARE9)
+	    RemoveMenu(popupMenu, 0, MF_BYPOSITION);
+	else
+	    break;
+    }
+
+    // Now insert new ones for the current URLs
+    UINT nItems = browsers_.length() < 10 ? browsers_.length() : 10;
+    UINT pos = 0;
+    for (ULONG i = 0; i < nItems; i++) {
+	MENUITEMINFO info;
+        WCHAR menubuf[64];
+
+	if (!browsers_[i].title)
+	    continue;
+    
+	StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Share "));
+	StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, browsers_[i].title);
+	StringCchCat(menubuf, sizeof(menubuf) / sizeof(TCHAR) - 5, TEXT("..."));
+	StringCchCopy(menubuf + sizeof(menubuf) / sizeof(TCHAR) - 6, 6, TEXT("[...]"));
+
+	memset((void *)&info, 0, sizeof(MENUITEMINFO));
+	info.cbSize = sizeof(MENUITEMINFO);
+
+	info.fMask = MIIM_ID | MIIM_DATA | MIIM_STRING;
+	info.fType = MFT_STRING;
+	info.wID = IDM_SHARE0 + i;
+	info.dwTypeData = menubuf;
+	    
+	InsertMenuItem(popupMenu, 0, TRUE, &info);
+    }
 }
 
 // Find the pathname for a HTML file, based on the location of the .exe
@@ -617,11 +720,15 @@ HippoUI::processMessage(UINT   message,
     case WM_COMMAND:
 	wmId    = LOWORD(wParam); 
 	wmEvent = HIWORD(wParam);
+	if (wmId >= IDM_SHARE0 && wmId <= IDM_SHARE9) {
+	    UINT i = wmId - IDM_SHARE0;
+	    if (i < browsers_.length() && browsers_[i].url)
+		showShareWindow(browsers_[i].url);
+	    return true;
+	}
+
 	switch (wmId)
 	{
-	case IDM_SHARE:
-	    showShareWindow(currentURL_);
-	    break;
 	case IDM_EXIT:
 	    DestroyWindow(window_);
 	    return true;

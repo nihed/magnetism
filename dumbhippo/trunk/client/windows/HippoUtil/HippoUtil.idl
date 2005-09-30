@@ -1,5 +1,6 @@
 import "oaidl.idl";
 import "ocidl.idl";
+import "exdisp.idl";
 
 [
     uuid(BC81C530-2099-4121-9B66-969D89B22E3C), // LIBID_HippoUtil
@@ -11,14 +12,16 @@ library HippoUtil {
     [
 	uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
 	helpstring("DumbHippo User Interface"),
-	helpcontext(0x0000),
-	hidden,
 	dual,
 	oleautomation
     ]
     interface IHippoUI : IDispatch
     {
-	[id(100), helpstring("Log a message"), helpcontext(0x0000)]
-	HRESULT Log([in] BSTR message);
+	[id(100), helpstring("Register a browser")]
+	HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+	[id(101), helpstring("Unregister a previously registered browser")]
+	HRESULT UnregisterBrowser([in] DWORD cookie);
+	[id(102), helpstring("Update information about a browser")]
+	HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
     }
 }

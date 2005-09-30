@@ -41,7 +41,6 @@ IDR_NOTIFY MENU
 BEGIN
     POPUP "Dummy"
     BEGIN
-        MENUITEM "&Share link...",              IDM_SHARE
         MENUITEM "&Recent links...",            IDM_RECENT
         MENUITEM "E&xit",                       IDM_EXIT
     END

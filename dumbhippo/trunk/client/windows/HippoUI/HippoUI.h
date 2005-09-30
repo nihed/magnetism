@@ -5,8 +5,17 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include <HippoArray.h>
 #include "HippoIcon.h"
 #include <loudmouth/loudmouth.h>
+
+struct HippoBrowserInfo
+{
+    HippoPtr<IWebBrowser2> browser;
+    HippoBSTR url;
+    HippoBSTR title;
+    DWORD cookie;
+};
 
 class HippoUI 
     : public IHippoUI 
@@ -27,11 +36,14 @@ public:
     STDMETHODIMP Invoke(DISPID, REFIID, LCID, WORD, DISPPARAMS *, VARIANT *, EXCEPINFO *, UINT *);
 
     //IHippoUI methods
-    STDMETHODIMP Log(BSTR message);
+    STDMETHODIMP RegisterBrowser(IWebBrowser2 *, DWORD *);
+    STDMETHODIMP UnregisterBrowser(DWORD);
+    STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
 
     bool create(HINSTANCE instance);
     void destroy();
 
+    void showMenu(UINT buttonFlag);
     void showURL(BSTR url);
     void showShareWindow(BSTR url);
 
@@ -39,6 +51,7 @@ private:
     bool registerActive();
     bool registerClass();
     bool createWindow();
+    void updateMenu();
     void onPasswordDialogLogin(const WCHAR *username,
 	                       const WCHAR *password,
 			       bool         rememberPassword);
@@ -80,6 +93,7 @@ private:
     HWND window_;
     HICON bigIcon_;
     HICON smallIcon_;
+    HMENU menu_;
 
     HippoBSTR currentURL_;
 
@@ -89,6 +103,9 @@ private:
     ULONG registerHandle_;            // Handle from RegisterActiveObject
 
     LmConnection *lmConnection_;
+
+    HippoArray<HippoBrowserInfo> browsers_;
+    DWORD nextBrowserCookie_;
 
     char *username_; // UTF-8
     char *password_; // UTF-8

@@ -22,10 +22,12 @@ HippoTracker::HippoTracker(void)
 {
     refCount_ = 1;
     dllRefCount++;
- 
+
     HippoPtr<ITypeLib> typeLib;
     if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
 	typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
+
+    registered_ = false;
 
     uiStartedMessage_ = RegisterWindowMessage(TEXT("HippoUIStarted"));
 
@@ -36,6 +38,8 @@ HippoTracker::HippoTracker(void)
 HippoTracker::~HippoTracker(void)
 {
     DestroyWindow(window_);
+
+    clearUI();
 
     // In case setSite(NULL) wasn't called
     clearSite();
@@ -78,8 +82,12 @@ HippoTracker::SetSite(IUnknown *site)
     if (site) 
     {
 	if (FAILED(site->QueryInterface<IWebBrowser2>(&site_)))
-            return E_FAIL;
-
+	    return E_FAIL;
+	
+	/* We'd like to call registerBrowser() here, but it turns out IE gets
+	 * extremely unhappy if we make a possibly reentrant call out at this
+	 * point, so we wait until we get DocumentComplete()
+	 */
 	HippoQIPtr<IConnectionPointContainer> container(site);
         if (container)
 	{
@@ -165,10 +173,12 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
 	case DISPID_DOCUMENTCOMPLETE:
 	     if (dispParams->cArgs == 2 &&
 		 dispParams->rgvarg[1].vt == VT_DISPATCH &&
-		 dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) {
-		  if (dispParams->rgvarg[0].pvarVal->vt == VT_BSTR && ui_)
-		      ui_->Log(dispParams->rgvarg[0].pvarVal->bstrVal);
-		  return S_OK;
+		 dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
+	     {
+		 registerBrowser();
+		 updateBrowser();
+
+		 return S_OK;
 	     } else {
 		 return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
 	     }
@@ -180,9 +190,47 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
 
 /////////////////////////////////////////////////////////////////////
 
- void
+void
+HippoTracker::registerBrowser()
+{
+    if (!registered_ && ui_ && site_) {
+        registered_ = true;
+	HRESULT hr = ui_->RegisterBrowser(site_, &registerCookie_); // may reenter
+	if (FAILED (hr))
+	    registered_ = false;
+    }
+}
+
+void
+HippoTracker::unregisterBrowser()
+{
+    if (registered_) {
+	registered_ = false;
+	ui_->UnregisterBrowser(registerCookie_); // May recurse
+    }
+}
+
+void
+HippoTracker::updateBrowser()
+{
+    if (registered_) {
+	HippoBSTR url;
+	HippoBSTR name;
+		     
+	if (SUCCEEDED(site_->get_LocationURL(&url)) &&
+	    SUCCEEDED(site_->get_LocationName(&name)) &&
+	    url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
+	{
+    	    ui_->UpdateBrowser(registerCookie_, url, name);
+	}
+    }
+}
+
+void
 HippoTracker::clearSite()
 {
+    unregisterBrowser();
+
     if (site_)
 	site_ = NULL;
   
@@ -194,6 +242,15 @@ HippoTracker::clearSite()
 	   
 	connectionPoint_ = NULL;
     }
+}
+
+void
+HippoTracker::clearUI()
+{
+    unregisterBrowser();
+ 
+    if (ui_)
+	ui_ = NULL;
 }
 
 bool 
@@ -243,9 +300,14 @@ HippoTracker::createWindow()
 void
 HippoTracker::onUIStarted(void)
 {
+    clearUI();
+
     HippoPtr<IUnknown> unknown;
     if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
 	unknown->QueryInterface<IHippoUI>(&ui_);
+    
+    registerBrowser();
+    updateBrowser();
 }
 
 LRESULT CALLBACK 
