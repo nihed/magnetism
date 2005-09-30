@@ -102,11 +102,9 @@ template <class T>
 void 
 HippoArray<T>::remove(ULONG element) 
 {
-    if (element >= length_)
-	return;
-
     for (ULONG i = element; i + 1 < length_; i++)
-	elements_[i] = elements_[i + 1];
+        elements_[i] = elements_[i + 1];
+    elements_[length_ - 1] = T();
    
     length_--;
 }
