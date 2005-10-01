@@ -477,25 +477,31 @@ void
 HippoUI::saveUserInfo()
 {
     char *expires;
+    char *password;
 
-    if (!username_ && !password_) 
+    if (rememberPassword_)
+	password = password_;
+    else
+	password = NULL;
+
+    if (!username_ && !password) 
 	expires="Sun 10-Jun-1974 00:00:00 GMT"; // delete with expires in the past
     else
 	expires="Sun 01-Jan-2006 00:00:00 GMT";
 
-    char *cookieString = g_strdup_printf("userinfo=%s%s%s%s%s"
+    char *cookieString = g_strdup_printf("userinfo=%s%s%s%s%s;"
 	                                 "expires=%s;"
                                          "domain=.dumbhippo.com",
 					 username_ ? "name=" : "", 
 					 username_ ? username_ : "",
-					 (username_ && password_) ? "&" : "",
-					 password_ ? "password=" : "",
-					 password_ ? password_ : "",
+					 (username_ && password) ? "&" : "",
+					 password ? "password=" : "",
+					 password ? password : "",
 					 expires);
     WCHAR *cookieStringW = g_utf8_to_utf16(cookieString, -1, NULL, NULL, NULL);
 
     InternetSetCookie(L"http://dumbhippo.com", NULL, cookieStringW);
-    passwordRemembered_ = TRUE;
+    passwordRemembered_ = password != NULL;
     updateForgetPassword();
 
     g_free (cookieStringW);
@@ -613,8 +619,7 @@ HippoUI::onConnectionAuthenticate (LmConnection *connection,
     HippoUI *ui = (HippoUI *)userData;
 
     if (success) {
-	if (ui->rememberPassword_)
-	    ui->saveUserInfo();
+        ui->saveUserInfo();
 
 	LmMessage *message;
 	message = lm_message_new_with_sub_type(NULL, 
@@ -858,6 +863,13 @@ HippoUI::loginProc(HWND   dialog,
 	HippoUI *ui = (HippoUI *)lParam;
 	hippoSetWindowData<HippoUI>(dialog, ui);
 
+	if (ui->username_) {
+	    WCHAR *usernameW = g_utf8_to_utf16(ui->username_, -1, NULL, NULL, NULL);
+	    if (usernameW)
+		SetDlgItemText(dialog, IDC_USERNAME, usernameW);
+	    g_free(usernameW);
+	}
+
 	return TRUE;
     }
 
@@ -918,7 +930,6 @@ HippoUI::preferencesProc(HWND   dialog,
 	    ui->passwordRemembered_ = FALSE;
 	    ui->password_ = NULL;
 	    ui->saveUserInfo();
-	    ui->updateForgetPassword();
 	    return TRUE;
         case IDOK:
 	    EndDialog(dialog, TRUE);
