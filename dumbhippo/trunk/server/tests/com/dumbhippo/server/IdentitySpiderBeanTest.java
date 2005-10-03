@@ -1,6 +1,8 @@
 package com.dumbhippo.server;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonView;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 
 public class IdentitySpiderBeanTest extends SpiderUsingTest {

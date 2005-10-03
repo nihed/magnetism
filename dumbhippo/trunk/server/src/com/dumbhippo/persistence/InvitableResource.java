@@ -1,9 +1,11 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.net.URL;
+
+import com.dumbhippo.server.IdentitySpider;
 
 /**
  * @author hp

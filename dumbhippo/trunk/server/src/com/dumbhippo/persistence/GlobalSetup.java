@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.io.File;
 import java.net.URL;
@@ -10,8 +10,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
 
-import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
+import com.dumbhippo.server.AuthenticationSystemBean;
+import com.dumbhippo.server.IdentitySpiderBean;
 
 /**
  * 

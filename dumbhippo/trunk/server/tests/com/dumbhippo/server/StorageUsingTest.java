@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.dumbhippo.Filesystem;
+import com.dumbhippo.persistence.GlobalSetup;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 

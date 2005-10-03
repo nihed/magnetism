@@ -17,16 +17,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.NDC;
 
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.GlobalSetup;
+import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
-import com.dumbhippo.server.EmailResource;
-import com.dumbhippo.server.GlobalSetup;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderBean;
-import com.dumbhippo.server.Invitation;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemBean;
-import com.dumbhippo.server.Person;
 
 /**
  * DumbHippo servlet that does some stuff we don't know yet

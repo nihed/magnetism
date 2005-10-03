@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import com.dumbhippo.identity20.RandomToken;
 

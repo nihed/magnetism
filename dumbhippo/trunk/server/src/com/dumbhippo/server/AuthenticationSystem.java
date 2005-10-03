@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.ServerSecret;
+
 public interface AuthenticationSystem {
 
 	/**

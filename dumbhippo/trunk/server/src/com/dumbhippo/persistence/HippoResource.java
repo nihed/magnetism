@@ -1,9 +1,10 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.util.Set;
+
 
 /**
  * Resource representing a Hippo account. Lots of things you might expect to be
@@ -21,7 +22,7 @@ import java.util.Set;
  * @author hp
  * 
  */
-class HippoResource extends Resource {
+public class HippoResource extends Resource {
 
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"

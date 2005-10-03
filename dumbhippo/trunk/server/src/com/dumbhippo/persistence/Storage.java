@@ -377,7 +377,7 @@ public final class Storage {
 
 		// Resource class .hbm.xml includes all Resource subclasses
 		logger.debug("adding Resource class def to hibernate configuration");
-		cfg.addResource("com/dumbhippo/server/Hibernate.hbm.xml");		
+		cfg.addResource("com/dumbhippo/persistence/Hibernate.hbm.xml");		
 		
 		cfg.setProperty(Environment.HBM2DDL_AUTO, "update");
 

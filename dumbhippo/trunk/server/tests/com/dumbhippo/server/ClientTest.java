@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Storage;
 
 public class ClientTest extends StorageUsingTest {

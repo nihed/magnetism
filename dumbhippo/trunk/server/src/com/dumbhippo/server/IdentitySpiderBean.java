@@ -4,6 +4,10 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonView;
+import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 /*

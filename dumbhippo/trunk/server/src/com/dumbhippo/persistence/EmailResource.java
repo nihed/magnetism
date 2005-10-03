@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.net.URL;
 
@@ -9,6 +9,8 @@ import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+
+import com.dumbhippo.server.IdentitySpider;
 
 
 /**

@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Storage;
 
 public class EmailResourceTest extends StorageUsingTest {

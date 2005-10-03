@@ -1,9 +1,8 @@
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
 
-import com.dumbhippo.persistence.Storage;
 
 public class PersonView {
 	private Person viewpoint;

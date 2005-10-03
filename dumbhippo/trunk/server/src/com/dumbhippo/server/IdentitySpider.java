@@ -1,5 +1,9 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonView;
+
 /*
  * This class represents the interface to the "Identity Spider",
  * an aggregation of user/group relations to resources like

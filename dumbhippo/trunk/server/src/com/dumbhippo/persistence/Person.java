@@ -1,7 +1,6 @@
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.GuidPersistable;
 
 
 public class Person extends GuidPersistable {

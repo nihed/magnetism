@@ -1,10 +1,9 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import com.dumbhippo.identity20.RandomToken;
-import com.dumbhippo.persistence.DBUnique;
 
 /**
  * 
@@ -17,7 +16,7 @@ import com.dumbhippo.persistence.DBUnique;
  * @author hp
  * 
  */
-class Client extends DBUnique {
+public class Client extends DBUnique {
 
 	private String authKey;
 

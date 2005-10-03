@@ -2,8 +2,6 @@ package com.dumbhippo.persistence;
 
 import junit.framework.TestCase;
 
-import com.dumbhippo.server.EmailResource;
-import com.dumbhippo.server.Person;
 import com.dumbhippo.server.TestUtils;
 
 public class GuidPersistableTest extends TestCase {

@@ -1,10 +1,9 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.GuidPersistable;
 
 /**
  * A Resource is some object that has an associated GUID.

@@ -1,9 +1,8 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
-import com.dumbhippo.persistence.DBUnique;
 
 /**
  * ResourceOwnershipClaim represents a claim asserted by some Person that some other
@@ -15,7 +14,7 @@ import com.dumbhippo.persistence.DBUnique;
  * @author hp
  *
  */
-class ResourceOwnershipClaim extends DBUnique {
+public class ResourceOwnershipClaim extends DBUnique {
 	private Person claimedOwner;
 	private Resource resource;
 	private Person assertedBy;

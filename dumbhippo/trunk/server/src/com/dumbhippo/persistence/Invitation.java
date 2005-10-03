@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.persistence;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.dumbhippo.identity20.RandomToken;
-import com.dumbhippo.persistence.DBUnique;
 
 public class Invitation extends DBUnique {
 	private Resource invitee;

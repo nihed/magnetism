@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.ServerSecret;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 

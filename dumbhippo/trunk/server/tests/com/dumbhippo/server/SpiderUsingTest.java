@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Person;
+
 public class SpiderUsingTest extends StorageUsingTest {
 	protected final String testPerson1EmailString = "test@example.com";
 	protected final String testPerson2EmailString = "test2@example.net";	

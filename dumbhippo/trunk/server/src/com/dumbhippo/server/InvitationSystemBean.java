@@ -2,6 +2,10 @@ package com.dumbhippo.server;
 
 import org.hibernate.Session;
 
+import com.dumbhippo.persistence.InvitableResource;
+import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Storage;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 

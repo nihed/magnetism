@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Storage.SessionWrapper;
 
 public class InvitationSystemBeanTest extends SpiderUsingTest {
