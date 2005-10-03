@@ -1,4 +1,6 @@
-package com.dumbhippo.server;
+package com.dumbhippo;
+
+import com.dumbhippo.XMLBuilder;
 
 import junit.framework.TestCase;
 

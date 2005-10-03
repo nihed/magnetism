@@ -1,9 +1,10 @@
-package com.dumbhippo.server;
+package com.dumbhippo.identity20;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.identity20.RandomToken;
+import com.dumbhippo.server.TestUtils;
 
 import junit.framework.TestCase;
 

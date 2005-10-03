@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo;
 
 /**
  * 
@@ -11,7 +11,7 @@ package com.dumbhippo.server;
  * @author hp
  *
  */
-class XMLBuilder {
+public class XMLBuilder {
 
 	private StringBuilder builder;
 	

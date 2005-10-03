@@ -10,6 +10,8 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 
+import com.dumbhippo.XMLBuilder;
+
 /**
  * This is probably a temporary hack until JiveMessenger monitors the server.
  * 
