@@ -1,18 +1,13 @@
 /**
  * 
  */
-package com.dumbhippo.persistence;
+package com.dumbhippo.server;
 
-import java.io.File;
 import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
-
-import com.dumbhippo.persistence.Storage.SessionWrapper;
-import com.dumbhippo.server.AuthenticationSystemBean;
-import com.dumbhippo.server.IdentitySpiderBean;
 
 /**
  * 
@@ -47,32 +42,16 @@ public final class GlobalSetup {
 			return;		
 		initializeLogging();
 	}
-
-	public static void initializeStorage() {
-		SessionWrapper wrapper = Storage.getGlobalPerThreadSession();		
-		wrapper.beginTransaction();
-		// Initialize global singletons
-		new IdentitySpiderBean().getTheMan();
-		new AuthenticationSystemBean().getServerSecret();
-		wrapper.commitTransaction();		
-	}
 	
-	public static void initialize(File storageDir) {
+	public static void initialize() {
 		if (initialized)
 			return;
 
 		initializeLogging();
 		logger.info("Booting");		
 		
-		Storage.initGlobalInstance(storageDir.toString());
-		initializeStorage();
-		
 		logger.info("successfully initialized");
 		
 		initialized = true;
-	}
-
-	public static void initialize() {
-		initialize(new File(System.getProperty("java.io.tmpdir"), "dumbhippo-storage"));
 	}
 }

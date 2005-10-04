@@ -9,6 +9,8 @@ import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 import com.dumbhippo.server.IdentitySpider;
 
@@ -17,6 +19,7 @@ import com.dumbhippo.server.IdentitySpider;
  * @author hp
  *
  */
+@Entity
 public class EmailResource extends Resource implements InvitableResource {
 	private String email;
 	
@@ -72,6 +75,7 @@ public class EmailResource extends Resource implements InvitableResource {
 	}
 
 	@Override
+	@Transient
 	public String getHumanReadableString() {
 		return getEmail();
 	}

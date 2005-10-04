@@ -18,11 +18,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.NDC;
 
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.GlobalSetup;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.Storage;
-import com.dumbhippo.persistence.Storage.SessionWrapper;
+import com.dumbhippo.server.GlobalSetup;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderBean;
 import com.dumbhippo.server.InvitationSystem;
@@ -93,13 +91,9 @@ public class DumbHippoServlet extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		NDC.push("[GET/" + request.getRemoteAddr() + "]");
-		SessionWrapper wrapper = Storage.getGlobalPerThreadSession();
 		try {
-			wrapper.beginTransaction();
 			doGetInternal(request, response);
-			wrapper.commitTransaction();
 		} finally {
-			wrapper.closeSession();
 			NDC.pop();
 		}
 	}
@@ -153,13 +147,9 @@ public class DumbHippoServlet extends HttpServlet {
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		NDC.push("[POST/" + request.getRemoteAddr() + "]");
-		SessionWrapper wrapper = Storage.getGlobalPerThreadSession();
 		try {
-			wrapper.beginTransaction();
 			doPostInternal(request, response);
-			wrapper.commitTransaction();
 		} finally {
-			wrapper.closeSession();
 			NDC.pop();
 		}
 	}

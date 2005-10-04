@@ -5,23 +5,19 @@
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/servletapi5.jar"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="lib" path="lib/asm.jar"/>
-	<classpathentry kind="lib" path="lib/asm-attrs.jar"/>
-	<classpathentry kind="lib" path="lib/c3p0-0.8.5.2.jar"/>
-	<classpathentry kind="lib" path="lib/derby-10.1.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/ehcache-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/hibernate-3.0.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-api-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/log4j.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-2.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dom4j-1.6.jar"/>
-	<classpathentry kind="lib" path="lib/jta.jar"/>
-	<classpathentry kind="lib" path="lib/cglib-2.1.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/javamail/mailapi.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/javamail/providers.jar"/>
-	<classpathentry kind="lib" path="lib/antlr-2.7.5H3.jar"/>
 	<classpathentry kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
+	<classpathentry kind="lib" path="lib/jstl.jar"/>
+	<classpathentry kind="lib" path="lib/standard.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

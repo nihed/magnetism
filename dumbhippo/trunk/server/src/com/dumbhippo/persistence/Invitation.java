@@ -5,8 +5,15 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Transient;
+
 import com.dumbhippo.identity20.RandomToken;
 
+@Entity
 public class Invitation extends DBUnique {
 	private Resource invitee;
 	private Set<Person> inviters;
@@ -21,10 +28,12 @@ public class Invitation extends DBUnique {
 		authKey = RandomToken.createNew().toString();
 	}
 
+	@OneToOne
 	public Resource getInvitee() {
 		return invitee;
 	}
 
+	@OneToMany
 	public Set<Person> getInviters() {
 		return inviters;
 	}
@@ -36,11 +45,25 @@ public class Invitation extends DBUnique {
 	public void addInviter(Person inviter) {
 		this.inviters.add(inviter);
 	}
+
+	protected void setAuthKey(String authKey) {
+		this.authKey = authKey;
+	}
+
+	protected void setInvitee(Resource invitee) {
+		this.invitee = invitee;
+	}
+
+	protected void setInviters(Set<Person> inviters) {
+		this.inviters = inviters;
+	}
 	
+	@Transient
 	public String getPartialAuthURL() {
 		return "invite/landing?auth=" + getAuthKey();
 	}
 	
+	@Transient
 	public String getAuthURL(URL prefix) {
 		URL authURL;
 		try {

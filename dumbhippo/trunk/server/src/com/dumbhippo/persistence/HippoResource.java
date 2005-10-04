@@ -5,6 +5,10 @@ package com.dumbhippo.persistence;
 
 import java.util.Set;
 
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+
 
 /**
  * Resource representing a Hippo account. Lots of things you might expect to be
@@ -22,6 +26,7 @@ import java.util.Set;
  * @author hp
  * 
  */
+@Entity
 public class HippoResource extends Resource {
 
 	/*
@@ -35,6 +40,8 @@ public class HippoResource extends Resource {
 		
 	}
 	
+	@Override
+	@Transient
 	public String getHumanReadableString() {
 		return null;
 	}	
@@ -58,5 +65,14 @@ public class HippoResource extends Resource {
 				return true;
 		}
 		return false;
+	}
+
+	@OneToMany
+	protected Set<Client> getClients() {
+		return clients;
+	}
+
+	protected void setClients(Set<Client> clients) {
+		this.clients = clients;
 	}
 }

@@ -1,21 +1,26 @@
 <project name="dumbhippo-server" default="build" basedir=".">
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
-	<property name="web" value="web"/>	
+	<property name="web" value="web" />
 	<property name="build" value="bin" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
-
+	<property name="buildjar.dir" location="${build}/jars" />
+	<property name="bundled-deps.common" value="dumbhippo-base.jar" />
+	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
+	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
+	<property name="bundled-deps.all" value="${bundled-deps.common} ${bundled-deps.persistence} ${bundled-deps.web}" />
+	
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
-		<fileset dir="${lib}" >
-			<include name="**/*.jar"/>
+		<fileset dir="${lib}">
+			<include name="**/*.jar" />
 		</fileset>
 		<!-- these two are here instead of in ${lib} since we want
 		     to use the same ones as tomcat, etc. -->
 		<pathelement location="/usr/share/java/servletapi5.jar" />
 		<pathelement location="/usr/share/java/log4j.jar" />
-		<pathelement location="/usr/share/java/javamail/mailapi.jar" />		
+		<pathelement location="/usr/share/java/javamail/mailapi.jar" />
 		<!-- without this ant won't find the .class files -->
 		<pathelement location="${build}" />
 		<!-- a little hard-coded, but ... -->
@@ -26,6 +31,8 @@
 	<target name="init">
 		<mkdir dir="${build}" />
 		<mkdir dir="${reports.tests}" />
+		<delete dir="${buildjar.dir}" />
+		<mkdir dir="${buildjar.dir}" />
 	</target>
 
 	<target name="compile" depends="init">
@@ -40,24 +47,18 @@
 	<!-- Move over other files -->
 
 	<patternset id="metadata">
-		<include name="**/*.hbm.xml" />
 		<include name="**/*.properties" />
 	</patternset>
 
-	<target name="setupmetadata" depends="copymappings,copyproperties">
+	<target name="setupmetadata" depends="copyproperties">
 	</target>
 
-	<target name="copymappings" depends="init">
+	<target name="copyproperties" depends="init">
 		<copy todir="${build}">
 			<fileset dir="${src}">
 				<patternset refid="metadata" />
 			</fileset>
 		</copy>
-	</target>
-
-	<target name="copyproperties" depends="init">
-		<copy todir="${build}" file="hibernate.properties" />
-		<copy todir="${build}" file="ehcache.xml" />
 	</target>
 
 	<target name="test" depends="compile,setupmetadata">
@@ -67,7 +68,7 @@
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
 			<assertions enableSystemAssertions="true">
-				<enable/>
+				<enable />
 			</assertions>
 			<formatter type="plain" usefile="false" />
 			<formatter type="xml" />
@@ -80,37 +81,63 @@
 		</junit>
 	</target>
 
-	<target name="package-servlet" depends="init, copyproperties, copymappings">
-		<war destfile="${build}/dumbhippo.war" webxml="web/servlet-info.xml">
-			<fileset dir="${web}" includes="**/*" excludes="**/*.js"/>
-			<fileset dir="${web}" includes="tests/*.js"/>
-			
-			<lib dir="/usr/share/java">
-		    		<include name="xerces-j2.jar"/>
-				<include name="commons-collections.jar"/>
-				<include name="commons-logging.jar"/>
-				<include name="commons-fileupload.jar"/>
-				<include name="log4j.jar"/>
-				<include name="taglibs-core.jar"/>
-				<include name="taglibs-standard.jar"/>			
-			</lib>
-			<lib dir="lib">
-				<include name="antlr-2.7.5H3.jar"/>					
-				<include name="c3p0-0.8.5.2.jar"/>				
-				<include name="hibernate-3.0.5.jar"/>
-				<include name="dom4j-1.6.jar"/>
-				<include name="ehcache-1.1.jar"/>
-				<include name="cglib-2.1.jar"/>
-				<include name="asm.jar"/>
-				<include name="asm-util.jar"/>				
-				<include name="asm-attrs.jar"/>
-			</lib>
-			<classes dir="${build}">
-		  		<exclude name="*.war"/>
-			</classes>
+	<target name="basejar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-base.jar">
+			<fileset dir="${build}">
+				<include name="**/dumbhippo/*.class" />
+				<include name="**/identity20/**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="war" depends="compile, setupmetadata">
+		<war destfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
+			<fileset dir="${web}" includes="**/*.jsp" />
+			<fileset dir="${web}" includes="**/*.jspf" />
+
+			<fileset dir="${build}">
+				<include name="**/web/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-deps.common}" />
+			</manifest>
+			<lib dir="${lib}" includes="${bundled-deps.web}"/>
 		</war>
-	</target>	
-	
-	<target name="build" depends="test,setupmetadata" />
+	</target>
+
+	<target name="ejb3jar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
+			<fileset dir="${build}">
+				<include name="**/server/**/*.class" />
+				<include name="**/server/**/*.properties" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-deps.common}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="par" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.par">
+			<metainf dir=".">
+				<include name="persistence.xml" />
+			</metainf>
+			<fileset dir="${build}">
+				<include name="**/persistence/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-deps.common} ${bundled-deps.persistence}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="ear" depends="war,ejb3jar,par,basejar">
+		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="application.xml">
+			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
+			<fileset dir="/usr/share/java/javamail" includes="mailapi.jar,providers.jar" />
+		</ear>
+	</target>
+
+	<target name="build" depends="test,ear" />
 
 </project>

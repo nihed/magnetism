@@ -3,6 +3,8 @@
  */
 package com.dumbhippo.persistence;
 
+import javax.persistence.Entity;
+
 import com.dumbhippo.identity20.RandomToken;
 
 /**
@@ -16,6 +18,7 @@ import com.dumbhippo.identity20.RandomToken;
  * @author hp
  * 
  */
+@Entity
 public class Client extends DBUnique {
 
 	private String authKey;

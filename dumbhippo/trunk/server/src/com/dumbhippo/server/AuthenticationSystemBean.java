@@ -1,16 +1,22 @@
 package com.dumbhippo.server;
 
-import com.dumbhippo.persistence.ServerSecret;
-import com.dumbhippo.persistence.Storage;
-import com.dumbhippo.persistence.Storage.SessionWrapper;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
+import com.dumbhippo.persistence.ServerSecret;
+
+@Stateless
 public class AuthenticationSystemBean implements AuthenticationSystem {
+	
+	@PersistenceContext(unitName = "dumbhippo")
+	private transient EntityManager em;
+	
 	public ServerSecret getServerSecret() {
-		SessionWrapper wrapper = Storage.getGlobalPerThreadSession();		
-		ServerSecret secret = (ServerSecret) wrapper.getSession().createQuery("from ServerSecret").uniqueResult();
+		ServerSecret secret = (ServerSecret) em.createQuery("from ServerSecret").getSingleResult();
 		if (secret == null) {
 			secret = new ServerSecret();
-			wrapper.getSession().save(secret);
+			em.persist(secret);
 		}
 		return secret;
 	}

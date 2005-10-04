@@ -3,6 +3,9 @@
  */
 package com.dumbhippo.persistence;
 
+import javax.persistence.Entity;
+import javax.persistence.Transient;
+
 import com.dumbhippo.identity20.Guid;
 
 /**
@@ -10,6 +13,7 @@ import com.dumbhippo.identity20.Guid;
  * @author hp
  *
  */
+@Entity
 public abstract class Resource extends GuidPersistable {
 	
 	public Resource() {
@@ -19,10 +23,10 @@ public abstract class Resource extends GuidPersistable {
 		super(guid);
 	}
 
-	/* TODO EJB - Should be @Synthetic or whatever */
 	/**
 	 * Return a human-readable string form of this object.
 	 * @return a readable string, or null if none
 	 */
+	@Transient
 	public abstract String getHumanReadableString();
 }

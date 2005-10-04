@@ -1,5 +1,9 @@
 package com.dumbhippo.persistence;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratorType;
+import javax.persistence.Id;
+
 import com.dumbhippo.identity20.RandomToken;
 
 /**
@@ -11,6 +15,7 @@ import com.dumbhippo.identity20.RandomToken;
  * @author walters
  *
  */
+@Entity
 public class ServerSecret {
 	private byte[] secret;
 	
@@ -18,7 +23,12 @@ public class ServerSecret {
 		secret = RandomToken.createNew().getBytes();
 	}
 	
+	@Id(generate = GeneratorType.NONE)
 	public byte[] getSecret() {
 		return secret;
+	}
+
+	protected void setSecret(byte[] secret) {
+		this.secret = secret;
 	}
 }

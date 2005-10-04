@@ -1,12 +1,21 @@
 package com.dumbhippo.persistence;
 
-import org.hibernate.Query;
-import org.hibernate.Session;
+import java.io.Serializable;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
-public class PersonView {
+public class PersonView 
+	implements Serializable {
+	
+	private static final long serialVersionUID = 0L;
+	
 	private Person viewpoint;
 	private Person person;
+	
+	@PersistenceContext(unitName = "dumbhippo")
+	private transient EntityManager em;
 	
 	public PersonView (Person viewpoint, Person person) {
 		this.viewpoint = viewpoint;
@@ -18,15 +27,15 @@ public class PersonView {
 	
 	public EmailResource getEmail() {
 		EmailResource res;
-		Session hsession = Storage.getGlobalPerThreadSession().getSession();
+		
 		Query q;
 		if (viewpoint == null) {
-			q = hsession.createQuery(BASE_LOOKUP_EMAIL_QUERY + ")");
+			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + ")");
 		} else {
-			q = hsession.createQuery(BASE_LOOKUP_EMAIL_QUERY + "or c.assertedBy.id = :viewpointguid)").setString("viewpointguid", viewpoint.getId());
+			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + "or c.assertedBy.id = :viewpointguid)").setParameter("viewpointguid", viewpoint.getId());
 		}
 		q.setParameter("personid", person.getId());
-		res = (EmailResource) q.uniqueResult();
+		res = (EmailResource) q.getSingleResult();
 
 		return res;		
 	}

@@ -3,6 +3,10 @@
  */
 package com.dumbhippo.persistence;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+
 
 /**
  * ResourceOwnershipClaim represents a claim asserted by some Person that some other
@@ -14,6 +18,7 @@ package com.dumbhippo.persistence;
  * @author hp
  *
  */
+@Entity
 public class ResourceOwnershipClaim extends DBUnique {
 	private Person claimedOwner;
 	private Resource resource;
@@ -31,15 +36,30 @@ public class ResourceOwnershipClaim extends DBUnique {
 		this.assertedBy = assertedBy;	
 	}
 
+	@ManyToOne
 	Person getAssertedBy() {
 		return assertedBy;
 	}
 
+	@ManyToOne
 	Person getClaimedOwner() {
 		return claimedOwner;
 	}
 	
+	@ManyToOne
 	Resource getResource() {
 		return resource;
+	}
+
+	protected void setAssertedBy(Person assertedBy) {
+		this.assertedBy = assertedBy;
+	}
+
+	protected void setClaimedOwner(Person claimedOwner) {
+		this.claimedOwner = claimedOwner;
+	}
+
+	protected void setResource(Resource resource) {
+		this.resource = resource;
 	}
 }

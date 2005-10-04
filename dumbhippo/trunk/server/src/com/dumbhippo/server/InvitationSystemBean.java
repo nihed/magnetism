@@ -1,35 +1,33 @@
 package com.dumbhippo.server;
 
-import org.hibernate.Session;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.InvitableResource;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Storage;
-import com.dumbhippo.persistence.Storage.SessionWrapper;
 
 public class InvitationSystemBean implements InvitationSystem {
 
+	@PersistenceContext(unitName = "dumbhippo")
+	private transient EntityManager em;
+	
 	protected Invitation lookupInvitationFor(Resource invitee) {
-		Session hsession = Storage.getGlobalPerThreadSession().getSession();
-		return (Invitation) hsession.createQuery(
+		return (Invitation) em.createQuery(
 				"from Invitation as iv where iv.invitee = :resource")
-				.setParameter("resource", invitee).uniqueResult();
+				.setParameter("resource", invitee).getSingleResult();
 	}
 
 	public Invitation createGetInvitation(Person inviter, Resource invitee) {
-		SessionWrapper session = Storage.getGlobalPerThreadSession();
-		session.beginTransaction();
 		Invitation iv = lookupInvitationFor(invitee);
 		if (iv == null) {
 			iv = new Invitation(invitee, inviter);
-			session.getSession().save(iv);
+			em.persist(iv);
 		} else {
 			iv.addInviter(inviter);
 		}
 
-		session.commitTransaction();
 		return iv;
 	}
 
@@ -39,9 +37,8 @@ public class InvitationSystemBean implements InvitationSystem {
 	}
 
 	public Invitation lookupInvitationByKey(String authKey) {
-		Session hsession = Storage.getGlobalPerThreadSession().getSession();
-		return (Invitation) hsession.createQuery(
+		return (Invitation) em.createQuery(
 				"from Invitation as iv where iv.authKey = :key")
-				.setParameter("key", authKey).uniqueResult();		
+				.setParameter("key", authKey).getSingleResult();		
 	}
 }
