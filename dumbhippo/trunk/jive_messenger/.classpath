@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="src" path="target/jspc/classes"/>
 	<classpathentry kind="src" path="src/plugins/hippo/src/java"/>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry excluding="dist/|merge/|ant/jar/|ant-contrib/jar/|ant-subdirtask/jar/|commons-el/jar/|jasper-compiler/jar/|jasper-runtime/jar/|junit/jar/|xmltask/jar/" kind="src" path="build/lib"/>
