@@ -6,7 +6,7 @@
   </head> 
   <body>
     <h2>invite a friend to become one with the hippo!</h2>
-    <c:url var="emailResult" value="/actions/invite"/>        
+    <c:url var="emailResult" value="/web/invite/submit"/>
     <form method="POST" action="${emailResult}">    
     <table>
     <tr>

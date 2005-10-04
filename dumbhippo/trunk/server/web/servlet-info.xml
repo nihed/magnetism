@@ -9,6 +9,11 @@
 	Blah.
     </description>
     
+    <!-- FIXME jboss specific? -->
+	<listener>
+	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
+	</listener>    
+    
     <servlet>
         <servlet-name>DumbHippoServlet</servlet-name>
         <servlet-class>com.dumbhippo.web.DumbHippoServlet</servlet-class>
@@ -17,10 +22,5 @@
     <servlet-mapping>
         <url-pattern>/web/*</url-pattern>
         <servlet-name>DumbHippoServlet</servlet-name>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <url-pattern>/actions/*</url-pattern>
-        <servlet-name>DumbHippoServlet</servlet-name>
-    </servlet-mapping>       
+    </servlet-mapping>    
 </web-app>

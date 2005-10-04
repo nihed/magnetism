@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -8,10 +9,11 @@ import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
+@Stateless
 public class InvitationSystemBean implements InvitationSystem {
 
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	protected EntityManager em;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
 		return (Invitation) em.createQuery(

@@ -91,7 +91,7 @@
 	</target>
 
 	<target name="war" depends="compile, setupmetadata">
-		<war destfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
+		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
 			<fileset dir="${web}" includes="**/*.jsp" />
 			<fileset dir="${web}" includes="**/*.jspf" />
 
@@ -119,7 +119,7 @@
 
 	<target name="par" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo.par">
-			<metainf dir=".">
+			<metainf dir="dd">
 				<include name="persistence.xml" />
 			</metainf>
 			<fileset dir="${build}">
@@ -132,7 +132,7 @@
 	</target>
 
 	<target name="ear" depends="war,ejb3jar,par,basejar">
-		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="application.xml">
+		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
 			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
 			<fileset dir="/usr/share/java/javamail" includes="mailapi.jar,providers.jar" />
 		</ear>

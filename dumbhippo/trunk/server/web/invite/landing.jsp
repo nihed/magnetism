@@ -1,4 +1,13 @@
 <%@ include file="../prelude.jspf" %>
+
+<%@ include file="../beaninit.jspf" %>
+
+%<
+  Invitation invite;
+  invite = invitationSystem.lookupInvitationByKey(request.getParameter("authkey"));
+  pageContext.setAttribute("invitation", invite);
+%>
+
 <html>
   <head>
     <title>Dumb Hippo Invitation for ${invitation.invitee.humanReadableString}</title>

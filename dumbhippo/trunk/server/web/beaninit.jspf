@@ -1,0 +1,14 @@
+<!-- This is here because jsp:useBean is apparently busted or insufficient or something -->
+<%!
+  private InvitationSystem invitationSystem;
+  private IdentitySpider identitySpider;
+  public void jspInit() {
+    try {
+      InitialContext ctx = new InitialContext();
+      invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystemBean.class.getName());
+      identitySpider = (IdentitySpider) ctx.lookup(IdentitySpiderBean.class.getName());      
+    } catch (Exception e) {
+      e.printStackTrace ();
+    }
+  }
+%>

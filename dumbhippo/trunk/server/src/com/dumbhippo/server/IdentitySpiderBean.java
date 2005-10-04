@@ -22,7 +22,7 @@ public class IdentitySpiderBean implements IdentitySpider {
 	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	protected EntityManager em;
 	
 	public Person lookupPersonByEmail(EmailResource email) {		
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
