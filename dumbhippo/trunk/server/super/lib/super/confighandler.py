@@ -55,9 +55,9 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = SERVICE_PARAMETER
                 return
             elif (name == 'merge'):
-                (src, target, exclude, expand, symlink, hot) = \
+                (src, dest, exclude, expand, symlink, hot) = \
                      self.parse_attributes(name, attrs, 'src', True,
-                                                        'target', True,
+                                                        'dest', False,
                                                         'exclude', False,
                                                         'expand', False,
                                                         'symlink', False,
@@ -77,7 +77,7 @@ class ConfigHandler (xml.sax.ContentHandler):
                 hot = do_bool('hot', hot)
                 
                 merge = Merge(self.service,
-                              src, target, exclude, expand, symlink, hot)
+                              src, dest, exclude, expand, symlink, hot)
                 self.service.add_merge(merge)
 
                 self.state = SERVICE_MERGE

@@ -1,5 +1,7 @@
-import os;
-import sys;
+import os
+import sys
+
+from super.dirtree import DirTree
 
 class Service:
     def __init__(self, name, config):
@@ -38,9 +40,15 @@ class Service:
 
     def init(self):
         pass
+
     def build(self):
+        target = self.expand_parameter('targetdir')
+        os.spawnl(os.P_WAIT, '/bin/rm', 'rm', '-rf', target)
+        dirtree = DirTree(target, self)
         for merge in self.merges:
-            merge.run()
+            merge.add_to_tree(dirtree)
+        dirtree.write()
+
     def start(self):
         if not self.has_parameter('startCommand'):
             return
