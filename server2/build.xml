@@ -1,0 +1,146 @@
+<project name="dumbhippo" default="package-ear" basedir=".">
+
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="web" value="web" />  	
+  <property name="lib" value="lib" />
+  <property name="src.tests" value="${basedir}/tests"/>  	
+  <property name="build.dir"   value="${basedir}/build"/>	
+  <property name="bundled.smack.tag" value="svn-local-build-2005-09-30"/>
+  <property name="bundled.deps" value="${basedir}/smack-${bundled.smack.tag}.jar ${basedir}/smackx-${bundled.smack.tag}.jar"/>
+  <property name="bundled-deps.web" value="standard.jar jstl.jar"/>
+  <property name="jboss.root" value="/opt/jboss/"/>
+  <property name="jboss.serverdir" value="${jboss.root}/server/default/"/>
+
+  <!-- The build classpath -->
+  <path id="build.classpath">
+	<pathelement path="${classpath}" />	
+    <fileset dir="${basedir}/lib/">
+      <include name="*.jar"/>
+    </fileset>
+  	<fileset dir="${jboss.serverdir}/deploy/ejb3.deployer">
+  	  <include name="ejb3-persistence.jar"/>
+      <include name="jboss-ejb3.jar"/>
+      <include name="jboss-ejb3x.jar"/>   		
+    </fileset>
+  	<fileset dir="${jboss.serverdir}/lib">
+  	  <include name="mail.jar"/>
+  	  <include name="log4j.jar"/>
+  	  <include name="commons-logging.jar"/>
+  	  <include name="javax.servlet.jar"/>
+    </fileset>
+  </path>
+
+  <target name="prepare">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.dir}/classes"/>
+    <mkdir dir="${build.dir}/jar"/>
+    <mkdir dir="${build.dir}/dumbhippo"/>
+    <mkdir dir="${build.dir}/zip"/>
+  </target>
+
+  <!-- MUST use JDK 1.5 compiler -->
+  <target name="compile" depends="prepare">
+    <javac destdir="${build.dir}/classes"
+      classpathref="build.classpath"
+      debug="on">
+      <src path="${src.dir}"/>
+    </javac>
+
+    <copy todir="${build.dir}/classes">
+      <fileset dir="dd">
+        <include name="*.properties"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <!-- Package util libraries -->
+  <target name="package-core" depends="compile">
+	<jar destfile="${build.dir}/jar/dumbhippo-core.jar">
+		<fileset dir="${build.dir}/classes">
+			<include name="**/dumbhippo/*.class" />
+			<include name="**/identity20/**/*.class" />
+		</fileset>
+	</jar>
+  </target>	
+	
+
+		  <!-- Package the persistence module -->
+  <target name="package-par" depends="compile,package-core">
+		    <jar jarfile="${build.dir}/jar/dumbhippo.par">
+		    	<fileset dir="${build.dir}/classes">
+				<include name="**/persistence/**/*.class" />
+				</fileset>
+		      <metainf dir="dd/persistence">
+		        <include name="persistence.xml"/>
+		      </metainf>
+		    </jar>
+		  </target>
+		
+		
+  <!-- Package all the non-persistence EJB classes -->
+  <target name="package-ejb" depends="compile,package-par">
+    <jar jarfile="${build.dir}/jar/dumbhippo.ejb3">
+    <fileset dir="${build.dir}/classes">	
+   	  <include name="**/server/**/*.class" />
+    </fileset>
+	<fileset dir="${src.dir}">
+  	  <include name="**/server/**/*.properties" />
+  	</fileset>
+    </jar>
+  </target>
+
+
+  <!-- Package the web module -->
+  <target name="package-web" depends="compile,package-ejb">
+    <war warfile="${build.dir}/jar/dumbhippo.war"
+      webxml="dd/web/web.xml">     	
+	  <fileset dir="${web}" includes="**/*.jsp" />
+      <fileset dir="${web}" includes="**/*.jspf" />
+	  <lib dir="${lib}" includes="${bundled-deps.web}"/>
+	  <classes dir="${build.dir}/classes">
+        <include name="**/web/**/*.class"/>
+      </classes>
+      <webinf dir="dd/web">
+        <include name="jboss-web.xml"/>
+      </webinf>
+    </war>
+  </target>
+
+  <!-- Creates an ear file containing all
+       the modules as well as application.xml. -->
+  <target name="package-ear" depends="package-web">
+    <jar jarfile="${build.dir}/jar/dumbhippo.ear">
+
+      <metainf dir="dd">
+        <include name="application.xml"/>
+      </metainf>
+
+      <fileset dir="${build.dir}/jar"
+        includes="*.ejb3,*.jar,*.war,*.par"/>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.dir}" />
+  </target>
+
+  <target name="test" depends="compile">
+		<javac srcdir="${src.tests}" destdir="${build.dir}" source="1.5">
+			<classpath refid="build.classpath" />
+		</javac>
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${build.dir}/tests">
+				<fileset dir="${src.tests}">
+					<include name="AllTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="build.classpath" />
+		</junit>
+	</target>	
+</project>
