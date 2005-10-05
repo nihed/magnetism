@@ -32,3 +32,15 @@ class Service:
     def expand(self, str):
         return self.config.expand(str, self)
 
+
+    def init(self):
+        pass
+    def build(self):
+        for merge in self.merges:
+            merge.run()
+    def start(self):
+        pass
+    def stop(self):
+        pass
+    def status(self):
+        pass

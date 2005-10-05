@@ -35,7 +35,7 @@ def main():
         print >>sys.stderr, "Known actions are: %s" % ' '.join(known_actions)
         sys.exit(1)
 
-    available_services = config.get_services()
+    available_services = config.list_services()
     services = remaining[1:]
     for service in services:
         if service == 'all':
