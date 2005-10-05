@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.ServerSecret;
@@ -13,8 +14,10 @@ public class AuthenticationSystemBean implements AuthenticationSystem {
 	private transient EntityManager em;
 	
 	public ServerSecret getServerSecret() {
-		ServerSecret secret = (ServerSecret) em.createQuery("from ServerSecret").getSingleResult();
-		if (secret == null) {
+		ServerSecret secret;
+		try {
+			secret = (ServerSecret) em.createQuery("from ServerSecret").getSingleResult();
+		} catch (EntityNotFoundException e) {
 			secret = new ServerSecret();
 			em.persist(secret);
 		}

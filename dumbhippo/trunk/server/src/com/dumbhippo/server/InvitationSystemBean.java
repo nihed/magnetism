@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.InvitableResource;
@@ -13,12 +14,18 @@ import com.dumbhippo.persistence.Resource;
 public class InvitationSystemBean implements InvitationSystem {
 
 	@PersistenceContext(unitName = "dumbhippo")
-	protected EntityManager em;
+	private transient EntityManager em;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
-		return (Invitation) em.createQuery(
+		Invitation ret;
+		try {
+			ret = (Invitation) em.createQuery(
 				"from Invitation as iv where iv.invitee = :resource")
 				.setParameter("resource", invitee).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			ret = null;
+		}
+		return ret;
 	}
 
 	public Invitation createGetInvitation(Person inviter, Resource invitee) {
@@ -39,8 +46,14 @@ public class InvitationSystemBean implements InvitationSystem {
 	}
 
 	public Invitation lookupInvitationByKey(String authKey) {
-		return (Invitation) em.createQuery(
+		Invitation ret;
+		try {
+			ret = (Invitation) em.createQuery(
 				"from Invitation as iv where iv.authKey = :key")
-				.setParameter("key", authKey).getSingleResult();		
+				.setParameter("key", authKey).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			ret = null;
+		}
+		return ret;
 	}
 }

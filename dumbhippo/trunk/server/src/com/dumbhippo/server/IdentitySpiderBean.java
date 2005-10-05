@@ -1,9 +1,10 @@
 package com.dumbhippo.server;
 
+import javax.ejb.EJBNoSuchObjectException;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.PersistenceContextType;
 import javax.persistence.Query;
 
 import com.dumbhippo.identity20.Guid;
@@ -22,7 +23,7 @@ public class IdentitySpiderBean implements IdentitySpider {
 	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
 	@PersistenceContext(unitName = "dumbhippo")
-	protected EntityManager em;
+	private transient EntityManager em;
 	
 	public Person lookupPersonByEmail(EmailResource email) {		
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
@@ -51,8 +52,10 @@ public class IdentitySpiderBean implements IdentitySpider {
 		q = em.createQuery("from EmailResource e where e.email = :email");
 		q.setParameter("email", email);
 		
-		EmailResource res = (EmailResource) q.getSingleResult();
-		if (res == null) {
+		EmailResource res;
+		try {
+			res = (EmailResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
 			res = new EmailResource(email);
 			em.persist(res);
 		}
@@ -64,8 +67,11 @@ public class IdentitySpiderBean implements IdentitySpider {
 	private static final String theManEmail = "theman@dumbhippo.com";
 
 	public Person getTheMan() {
-		Person ret = (Person) em.createQuery("from Person p where p.id = :id").setParameter("id", theManGuid).getSingleResult();
-		if (ret == null) {
+		Person ret;
+		
+		try {
+			ret = (Person) em.createQuery("from Person p where p.id = :id").setParameter("id", theManGuid).getSingleResult();
+		} catch (EntityNotFoundException e) {
 			EmailResource res = getEmail(theManEmail);
 			ret = new Person(new Guid(theManGuid));
 			em.persist(ret);

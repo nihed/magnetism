@@ -26,6 +26,9 @@
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
+		<fileset dir="/opt/jboss/server/default/deploy/ejb3.deployer">
+			<include name="*ejb3*.jar"/>
+		</fileset>
 	</path>
 
 	<target name="init">

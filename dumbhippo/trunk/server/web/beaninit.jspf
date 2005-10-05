@@ -5,8 +5,11 @@
   public void jspInit() {
     try {
       InitialContext ctx = new InitialContext();
-      invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystemBean.class.getName());
-      identitySpider = (IdentitySpider) ctx.lookup(IdentitySpiderBean.class.getName());      
+      // This is handy if you want to see what jboss is naming things
+      // NamingEnumeration ne = ctx.list("");
+      // while (ne.hasMore()) { NameClassPair p = ne.next(); }
+      invitationSystem = (InvitationSystem) ctx.lookup("com.dumbhippo.server.InvitationSystem");
+      identitySpider = (IdentitySpider) ctx.lookup("com.dumbhippo.server.IdentitySpider");
     } catch (Exception e) {
       e.printStackTrace ();
     }
