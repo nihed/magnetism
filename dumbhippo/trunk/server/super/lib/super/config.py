@@ -11,7 +11,7 @@ class Config:
         self.params= { 'superdir' : superdir }
         self.services={}
 
-        self.load_config(os.path.join(superdir, 'conf', 'base.conf'), True)
+        self.load_config(os.path.join(superdir, 'base.conf'), True)
         if conffile != None:
             self.load_config(conffile, True)
         elif (os.environ['HOME']):
