@@ -13,6 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PersonView;
 
 
 /**

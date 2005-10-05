@@ -2,7 +2,6 @@ package com.dumbhippo.server;
 
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.PersonView;
 
 /*
  * This class represents the interface to the "Identity Spider",
@@ -71,7 +70,7 @@ public interface IdentitySpider {
 	 * 
 	 * @param viewpoint the person who is viewing
 	 * @param p the person being viewed
-	 * @return a new PersonView object
+	 * @return a new PersonViewBean object
 	 */
 	public PersonView getViewpoint(Person viewpoint, Person p);	
 }

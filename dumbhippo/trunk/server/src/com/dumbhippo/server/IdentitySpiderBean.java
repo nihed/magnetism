@@ -10,7 +10,6 @@ import javax.persistence.Query;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.PersonView;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;
 
 /*
@@ -81,7 +80,7 @@ public class IdentitySpiderBean implements IdentitySpider {
 	}
 
 	public PersonView getViewpoint(Person viewpoint, Person p) {
-		return new PersonView(viewpoint, p);
+		return new PersonViewBean(viewpoint, p);
 	}
 }
 
