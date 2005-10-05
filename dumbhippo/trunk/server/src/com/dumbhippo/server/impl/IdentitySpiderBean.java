@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.impl;
 
 import javax.ejb.EJBNoSuchObjectException;
 import javax.ejb.Stateless;
@@ -11,6 +11,8 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PersonView;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -81,6 +83,10 @@ public class IdentitySpiderBean implements IdentitySpider {
 
 	public PersonView getViewpoint(Person viewpoint, Person p) {
 		return new PersonViewBean(viewpoint, p);
+	}
+
+	public PersonView getSystemViewpoint(Person p) {
+		return new PersonViewBean(null, p);
 	}
 }
 

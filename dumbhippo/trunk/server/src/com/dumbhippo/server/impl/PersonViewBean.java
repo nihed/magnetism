@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.impl;
 
 import java.io.Serializable;
 
@@ -9,6 +9,7 @@ import javax.persistence.Query;
 
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.PersonView;
 
 @Stateful
 public class PersonViewBean

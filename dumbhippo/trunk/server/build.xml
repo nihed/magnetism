@@ -10,6 +10,7 @@
 	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.all" value="${bundled-deps.common} ${bundled-deps.persistence} ${bundled-deps.web}" />
+	<property name="jboss.root" value="/opt/jboss" />
 	
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
@@ -26,7 +27,7 @@
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
-		<fileset dir="/opt/jboss/server/default/deploy/ejb3.deployer">
+		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
 		</fileset>
 	</path>
@@ -141,6 +142,17 @@
 		</ear>
 	</target>
 
-	<target name="build" depends="test,ear" />
+	<target name="clientjar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-client.jar">
+			<fileset dir="${build}">
+				<include name="**/dumbhippo/*.class" />
+				<include name="**/identity20/**/*.class" />
+				<!-- server/* but not server/impl -->
+				<include name="**/server/*.class" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="build" depends="test,ear,clientjar" />
 
 </project>

@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.impl;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -9,6 +9,8 @@ import com.dumbhippo.persistence.InvitableResource;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem {

@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.impl;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -6,6 +6,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.ServerSecret;
+import com.dumbhippo.server.AuthenticationSystem;
 
 @Stateless
 public class AuthenticationSystemBean implements AuthenticationSystem {

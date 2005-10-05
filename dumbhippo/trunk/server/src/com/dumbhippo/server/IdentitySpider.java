@@ -12,6 +12,14 @@ import com.dumbhippo.persistence.Person;
  * 
  * @author walters
  */
+/**
+ * @author hp
+ *
+ */
+/**
+ * @author hp
+ *
+ */
 public interface IdentitySpider {
 	
 	
@@ -70,7 +78,17 @@ public interface IdentitySpider {
 	 * 
 	 * @param viewpoint the person who is viewing
 	 * @param p the person being viewed
-	 * @return a new PersonViewBean object
+	 * @return a new PersonView object
 	 */
-	public PersonView getViewpoint(Person viewpoint, Person p);	
+	public PersonView getViewpoint(Person viewpoint, Person p);
+	
+	
+	/**
+	 * 
+	 * Returns an object describing a person from the global viewpoint.
+	 * 
+	 * @param p the person being viewed
+	 * @return new PersonView object
+	 */
+	public PersonView getSystemViewpoint(Person p);
 }

@@ -15,7 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.NDC;
 
-import com.dumbhippo.server.GlobalSetup;
+import com.dumbhippo.server.impl.GlobalSetup;
 
 /**
  * DumbHippo servlet that does some stuff we don't know yet
