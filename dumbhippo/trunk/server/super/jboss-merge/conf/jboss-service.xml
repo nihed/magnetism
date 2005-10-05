@@ -191,7 +191,7 @@
       <!-- The listening port for the bootstrap JNP service. Set this to -1
         to run the NamingService without the JNP invoker listening port.
       -->
-      <attribute name="Port">1099</attribute>
+      <attribute name="Port">@@jnpPort@@</attribute>
       <!-- The bootstrap JNP server bind address. This also sets the default
       RMI service bind address. Empty == all addresses
        -->

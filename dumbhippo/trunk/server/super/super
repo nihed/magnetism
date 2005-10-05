@@ -42,7 +42,7 @@ def main():
             services = available_services
             break
         elif not service in available_services:
-            print "Unknown service: %s\n", service
+            print >>sys.stderr, "Unknown service: %s" % service
             sys.exit(1)
 
     config.run_action(remaining[0], services)

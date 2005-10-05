@@ -1,3 +1,6 @@
+import os;
+import sys;
+
 class Service:
     def __init__(self, name, config):
         self.name = name
@@ -39,8 +42,18 @@ class Service:
         for merge in self.merges:
             merge.run()
     def start(self):
-        pass
+        if not self.has_parameter('startCommand'):
+            return
+
+        startCommand = self.expand_parameter('startCommand')
+        print >>sys.stderr, "Command line: %s" % startCommand
+        os.system(startCommand)
     def stop(self):
-        pass
+        if not self.has_parameter('stopCommand'):
+            return
+
+        stopCommand = self.expand_parameter('stopCommand')
+        print >>sys.stderr, "Command line: %s" % stopCommand
+        os.system(stopCommand)
     def status(self):
         pass

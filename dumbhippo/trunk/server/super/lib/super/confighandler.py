@@ -36,6 +36,7 @@ class ConfigHandler (xml.sax.ContentHandler):
         elif (self.state == SUPERCONF):
             if (name == 'parameter'):
                 (self.param_name,) = self.parse_attributes(name, attrs, 'name', True)
+                self.param_value = ""
                 self.state = PARAMETER
                 return
             elif (name == 'service'):
@@ -50,6 +51,7 @@ class ConfigHandler (xml.sax.ContentHandler):
         elif (self.state == SERVICE):
             if (name == 'parameter'):
                 (self.param_name,) = self.parse_attributes(name, attrs, 'name', True)
+                self.param_value = ""
                 self.state = SERVICE_PARAMETER
                 return
             elif (name == 'merge'):
@@ -92,12 +94,13 @@ class ConfigHandler (xml.sax.ContentHandler):
         elif (self.state == SUPERCONF):
             self.state = OUTSIDE
         elif (self.state == PARAMETER):
-            self.param_name = None
+            self.config.set_parameter(self.param_name, self.param_value.strip())
             self.state = SUPERCONF
         elif (self.state == SERVICE):
             self.service = None
             self.state = SUPERCONF
         elif (self.state == SERVICE_PARAMETER):
+            self.service.set_parameter(self.param_name, self.param_value.strip())
             self.state = SERVICE
         elif (self.state == SERVICE_MERGE):
             self.state = SERVICE
@@ -105,18 +108,14 @@ class ConfigHandler (xml.sax.ContentHandler):
             self.state = SERVICE
 
     def characters(self, content):
-        content = content.strip()
-        if (content == ""):
-            return
-        
-        if (self.state == PARAMETER):
-            self.config.set_parameter(self.param_name, content)
-            return
-        elif (self.state == SERVICE_PARAMETER):
-            self.service.set_parameter(self.param_name, content)
+        if (self.state == PARAMETER or
+            self.state == SERVICE_PARAMETER):
+            self.param_value = self.param_value + content
             return
 
-        self.report("Unexpected characters: '%s'" % content)
+        stripped = content.strip()
+        if (stripped != ""):
+            self.report("Unexpected characters: '%s'" % content)
 
     def report(self, message):
         raise xml.sax.SAXParseException(message, None, self.locator)

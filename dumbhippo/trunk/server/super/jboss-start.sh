@@ -1,0 +1,33 @@
+#!/bin/sh
+
+jbossdir=$1
+targetdir=$2
+jnpPort=$3
+
+echo "Starting jboss..."
+$jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null &
+pid=$!
+started=false
+for i in `seq 1 30` ; do
+    if ps -p $pid > /dev/null ; then : ; else
+	break
+    fi
+    sleep 2
+    result="`$jbossdir/bin/twiddle.sh -s jnp://localhost:$jnpPort get jboss.system:type=Server Started --noprefix`"
+    if [ $? == 0 -a x"$result" == x"true" ] ; then
+	started=true
+	break
+    fi
+done
+
+if $started ; then
+    echo "...sucessfully started"
+    exit 0
+elif test i = 30 ; then
+    echo "...timed out"
+    exit 1
+else
+    echo "...failed to start"
+    exit 1
+fi
+
