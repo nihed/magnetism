@@ -19,5 +19,8 @@
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
 	<classpathentry kind="lib" path="lib/jstl.jar"/>
 	<classpathentry kind="lib" path="lib/standard.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/client/activation.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/client/jbossall-client.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

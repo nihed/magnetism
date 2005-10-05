@@ -1,6 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import javax.ejb.EJBNoSuchObjectException;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;

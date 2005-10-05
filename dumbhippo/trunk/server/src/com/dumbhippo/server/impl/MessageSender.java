@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server;
+package com.dumbhippo.server.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

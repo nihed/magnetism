@@ -145,10 +145,13 @@
 	<target name="clientjar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo-client.jar">
 			<fileset dir="${build}">
+				<include name="*.properties" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/identity20/**/*.class" />
 				<!-- server/* but not server/impl -->
 				<include name="**/server/*.class" />
+				<include name="**/server/client/*.class" />
+				<include name="**/server/client/*.properties" />
 			</fileset>
 		</jar>
 	</target>
