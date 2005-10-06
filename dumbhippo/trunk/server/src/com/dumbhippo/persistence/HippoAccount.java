@@ -14,8 +14,8 @@ import javax.persistence.Transient;
 /**
  * Object representing a Hippo account. Lots of things you might expect to be
  * here are not, because they're instead handled by saying that the Person in
- * question has a ResourceOwnershipClaim on a Resource. So e.g. you own your
- * full name, your email address, and other kinds of profile information.
+ * question has a ResourceOwnershipClaim on a Resource. So e.g. you your email address, home page, 
+ * and other kinds of profile information.
  * If something can be in someone's contacts/buddy list without corresponding
  * to a registered Hippo user, then it can't be in the HippoAccount.
  * 
