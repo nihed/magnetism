@@ -1,10 +1,48 @@
 package com.dumbhippo.server;
 
+import java.io.Serializable;
+
 import javax.ejb.Remote;
 
 @Remote
 public interface MessengerGlueRemote {
 
+	/** 
+	 * Simple immutable data blob
+	 * @author hp
+	 *
+	 */
+	public class JabberUser implements Serializable {
+	
+		private static final long serialVersionUID = 0L;
+		private String username;
+		private String name;
+		private String email;
+		
+		/**
+		 * @param username
+		 * @param name
+		 * @param email
+		 */
+		public JabberUser(String username, String name, String email) {
+			this.username = username;
+			this.name = name;
+			this.email = email;
+		}
+
+		public String getEmail() {
+			return email;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getUsername() {
+			return username;
+		}
+	}
+	
 	/** 
 	 * Do Jabber digest authentication
 	 * @param username Jabber username (domain is not included, just username)
@@ -38,5 +76,8 @@ public interface MessengerGlueRemote {
 	 * @param email email address the user says they have
 	 */
 	public void setEmail(String username, String email)
+		throws JabberUserNotFoundException;
+	
+	public JabberUser loadUser(String username)
 		throws JabberUserNotFoundException;
 }

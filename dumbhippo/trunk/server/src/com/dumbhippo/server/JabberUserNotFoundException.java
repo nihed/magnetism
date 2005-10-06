@@ -7,6 +7,10 @@ public class JabberUserNotFoundException extends Exception {
 
 	private static final long serialVersionUID = 0L;
 
+	public JabberUserNotFoundException() {
+		super();
+	}
+	
 	public JabberUserNotFoundException(String message) {
 		super(message);
 	}
