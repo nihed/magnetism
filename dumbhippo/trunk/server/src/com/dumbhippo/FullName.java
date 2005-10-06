@@ -19,6 +19,10 @@ import java.util.List;
  * This doesn't define a database table, it's just an implementation
  * field in other classes.
  * 
+ * The object is immutable; no post-construct setters please.
+ * If you added those you'd have to go through the code adding
+ * defensive copies all over the place.
+ * 
  * @author hp
  *
  */

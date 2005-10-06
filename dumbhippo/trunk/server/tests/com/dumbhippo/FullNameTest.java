@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.server.TestUtils;

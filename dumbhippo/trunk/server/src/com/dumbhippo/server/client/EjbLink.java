@@ -7,6 +7,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.server.AuthenticationSystemRemote;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystemRemote;
+import com.dumbhippo.server.MessengerGlueRemote;
 
 /**
  * 
@@ -20,19 +21,7 @@ public class EjbLink {
 	private IdentitySpiderRemote identitySpider;
 	private AuthenticationSystemRemote authenticationSystem;
 	private InvitationSystemRemote invitationSystem;
-	
-	static private EjbLink instance = null;
-	
-	static public synchronized EjbLink getInstance() { 
-		if (instance == null) {
-			try {
-				instance = new EjbLink();
-			} catch (NamingException e) {
-				e.printStackTrace();
-			}
-		}
-		return instance;
-	}
+	private MessengerGlueRemote messengerGlue;
 	
 	private Object nameLookup(Class clazz) throws NamingException {
 		String name = clazz.getPackage().getName() + "." + clazz.getSimpleName();
@@ -42,9 +31,12 @@ public class EjbLink {
 	
 	public EjbLink() throws NamingException {
 		namingContext = new InitialContext();
+		
+		// we construct these up front so the getters are threadsafe and don't throw NamingException
 		identitySpider = (IdentitySpiderRemote) nameLookup(IdentitySpiderRemote.class);
 		authenticationSystem = (AuthenticationSystemRemote) nameLookup(AuthenticationSystemRemote.class);
 		invitationSystem = (InvitationSystemRemote) nameLookup(InvitationSystemRemote.class);
+		messengerGlue = (MessengerGlueRemote) nameLookup(MessengerGlueRemote.class);
 	}
 	
 	public IdentitySpiderRemote getIdentitySpider() {
@@ -57,6 +49,10 @@ public class EjbLink {
 	
 	public InvitationSystemRemote getInvitationSystem() {
 		return invitationSystem;
+	}
+	
+	public MessengerGlueRemote getMessengerGlue() {
+		return messengerGlue;
 	}
 	
 	public static void main(String[] args) {

@@ -12,6 +12,5 @@ import javax.ejb.Remote;
 @Remote
 public interface AuthenticationSystemRemote {
 
-	public boolean authenticateJiveUser(String username, String token, String digest);
 
 }

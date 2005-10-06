@@ -95,17 +95,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	public long getActiveAccountCount() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
+	
 	public void setName(Person person, FullName name) {
 		person.setName(name);
 		em.persist(person);
 	}
-
 	
 	/* FIXME this is fucked up. Basically you need to be able to only 
 	 * do assertedBy == current authorized user. This whole interface

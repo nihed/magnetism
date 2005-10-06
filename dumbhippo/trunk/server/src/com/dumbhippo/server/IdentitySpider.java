@@ -93,15 +93,7 @@ public interface IdentitySpider {
 	 * @return account for this username, or null
 	 */
 	public HippoAccount lookupAccountByUsername(String username);
-	
-	/**
-	 * Get the number of active accounts in the system. Obviously 
-	 * this has to be represented by a 64-bit integer.
-	 * 
-	 * @return number of active accounts
-	 */
-	public long getActiveAccountCount();
-	
+		
 	/** 
 	 * Add a claim by assertedBy that owner is the owner of the resource.
 	 * For this call, the assertedBy can't be null or TheMan, we only 
