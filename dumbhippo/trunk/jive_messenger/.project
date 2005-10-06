@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>dumbhippo-messenger</name>
+	<name>jive_messenger</name>
 	<comment></comment>
 	<projects>
 		<project>dumbhippo-server</project>

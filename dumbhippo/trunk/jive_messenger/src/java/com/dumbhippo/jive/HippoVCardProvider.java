@@ -15,25 +15,25 @@ import org.jivesoftware.util.NotFoundException;
 public class HippoVCardProvider implements VCardProvider {
 
 	public Element loadVCard(String username) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void createVCard(String username, Element vCardElement)
 			throws AlreadyExistsException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void updateVCard(String username, Element vCardElement)
 			throws NotFoundException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void deleteVCard(String username) {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public boolean isReadOnly() {

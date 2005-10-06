@@ -126,5 +126,4 @@ public class HippoUserProvider implements UserProvider {
 		// set this to true. But we do support a couple of them, so...
 		return false;
 	}
-
 }

@@ -12,73 +12,71 @@ public class HippoGroupProvider implements GroupProvider {
 
 	public Group createGroup(String name) throws UnsupportedOperationException,
 			GroupAlreadyExistsException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void deleteGroup(String name) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public Group getGroup(String name) throws GroupNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new GroupNotFoundException();		
+		// TODO FIXME
 	}
 
 	public void setName(String oldName, String newName)
 			throws UnsupportedOperationException, GroupAlreadyExistsException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void setDescription(String name, String description)
 			throws GroupNotFoundException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public int getGroupCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public Collection<Group> getGroups() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public Collection<Group> getGroups(int startIndex, int numResults) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public Collection<Group> getGroups(User user) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void addMember(String groupName, String username,
 			boolean administrator) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void updateMember(String groupName, String username,
 			boolean administrator) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public void deleteMember(String groupName, String username)
 			throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();		
+		// TODO FIXME
 	}
 
 	public boolean isReadOnly() {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
 }
