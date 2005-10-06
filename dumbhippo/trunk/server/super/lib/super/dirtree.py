@@ -98,6 +98,7 @@ class DirTree:
         result = []
         
         for line in f.readlines():
+            line = re.sub('(^|[^\\\\]*)(#.*)', '\\1', line)
             line = line.strip()
             if line == "":
                 continue
@@ -108,12 +109,12 @@ class DirTree:
         return result
 
     def standard_excludes(self):
-        return [ self.compile_one(".svn") ]
+        return [
+            self.compile_one(".svn"),
+            self.compile_one("*~"),
+          ]
             
-    def add_tree(self, path, src, symlink=False, expand=False, excludes=[]):
-        if path == None:
-            path = ''
-        
+    def add_tree_recurse(self, path, src, symlink, expand, excludes):
         src_stat = os.stat(src)
         src_is_dir = stat.S_ISDIR(src_stat.st_mode)
 
@@ -134,9 +135,9 @@ class DirTree:
                 
             result = True
             for f in os.listdir(src):
-                if not self.add_tree(os.path.join(path, f),
-                                     os.path.join(src, f),
-                                     symlink, expand, excludes):
+                if not self.add_tree_recurse(os.path.join(path, f),
+                                             os.path.join(src, f),
+                                             symlink, expand, excludes):
                     result = False
 
             # We can't symlink if we didn't add the entire directory
@@ -148,6 +149,21 @@ class DirTree:
             self.add_file(path, src, expand, symlink)
             return True
 
+    def add_tree(self, path, src, symlink=False, expand=False, excludes=[]):
+        if path == None:
+            path = ''
+
+        # When merging into the middle of the tree, we need to clear the
+        # symlink attribute on all ancestors, since we have to merge into
+        # a real directory, not a symlinked shadow
+        parent = path
+        while parent != '':
+            parent = os.path.dirname(parent)
+            self.clear_flag(parent, SYMLINK)
+
+        self.add_tree_recurse(path, src, symlink, expand, excludes)
+        
+        
     def symlink(self, path):
         src = self.items[path].src
         dest = os.path.join(self.target, path)

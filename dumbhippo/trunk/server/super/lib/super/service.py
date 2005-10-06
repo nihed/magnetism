@@ -54,14 +54,12 @@ class Service:
             return
 
         startCommand = self.expand_parameter('startCommand')
-        print >>sys.stderr, "Command line: %s" % startCommand
         os.system(startCommand)
     def stop(self):
         if not self.has_parameter('stopCommand'):
             return
 
         stopCommand = self.expand_parameter('stopCommand')
-        print >>sys.stderr, "Command line: %s" % stopCommand
         os.system(stopCommand)
     def status(self):
         pass

@@ -1,5 +1,45 @@
-/deploy/jms
+# This is the set (extracted from the JBoss config files) that is
+# needed to slim 'all' down to 'default'
+/conf/axis-config.xml
+/conf/jacorb.properties
+/deploy-hasingleton
+/farm
+/lib/avalon-framework.jar
+/lib/axis.jar
+/lib/castor*.jar
+/lib/jgroups.jar
+/lib/jacorb.jar
+/lib/jaxr-client.jar
+/lib/jboss-iiop.jar
+/lib/jboss-cache.jar
+/lib/jbossha.jar
+/lib/jbossmqha.jar
+/lib/xmlsec.jar
+/deploy/cluster-service.xml
+/deploy/deploy-hasingleton-service.xml
+/deploy/ejb3-entity-cache-service.xml
+/deploy/ejb3-clustered-sfsbcache-service.xml
+/deploy/iiop-service.xml
+/deploy/httpha-invoker.sar
+/deploy/jbossweb-ejb.jar
+/deploy/jms/hajndi-jms-ds.xml
+/deploy/deploy.last
+/deploy/snmp-adaptor.sar
+/deploy/juddi-service.sar
+/deploy/juddiws.war
+/deploy/tc5-cluster-service.xml
 
+# Then we exclude more stuff we don't need
+/deploy/bsh-deployer.xml                        # BeanShell? No thanks.
+/deploy/deploy/cache-invalidation-service.xml   # All commented out anyways
+/deploy/client-deployer-service.xml             # Download .jar to clients
+/deploy/http-invoker.sar                        # JMX over HTTP
+/deploy/jboss-ws4ee.sar                         # Web Service framework
+/deploy/jms                                     # Java Messaging
+/deploy/management                              # JSR-177 (???)
+/deploy/scheduler-service.xml                   # An example
 
-
+# Alerts via email, etc, for MBean changes
+/deploy/monitoring-service.xml
+/lib/jboss-monitoring.jar
 
