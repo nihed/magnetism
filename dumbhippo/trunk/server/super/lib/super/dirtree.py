@@ -90,7 +90,6 @@ class DirTree:
             pattern = "(^|/)" + pattern + '$'
 
         return (re.compile(pattern), flags)
-        
 
     def compile_excludes(self, filename):
         f = open(filename)
@@ -118,17 +117,18 @@ class DirTree:
         src_stat = os.stat(src)
         src_is_dir = stat.S_ISDIR(src_stat.st_mode)
 
-        for (pattern, flags) in excludes:
-            if (flags & DIRECTORY_ONLY) != 0:
-                if not src_is_dir:
-                    continue
-            if pattern.search(path):
-                if (flags & NEGATE) != 0:
-                    verbose("Including %s" % path)
-                    break
-                else:
-                    verbose("Excluding %s" % path)
-                    return False
+        if path != '':
+            for (pattern, flags) in excludes:
+                if (flags & DIRECTORY_ONLY) != 0:
+                    if not src_is_dir:
+                        continue
+                if pattern.search(path):
+                    if (flags & NEGATE) != 0:
+                        verbose("Including %s" % path)
+                        break
+                    else:
+                        verbose("Excluding %s" % path)
+                        return False
 
         if src_is_dir:
             self.add_dir(path, src, symlink)
@@ -172,7 +172,7 @@ class DirTree:
     def copy_file(self, path):
         src = self.items[path].src
         dest = os.path.join(self.target, path)
-        os.spawnl(os.P_WAIT, '/bin/cp', 'cp', src, dest)
+        os.spawnl(os.P_WAIT, '/bin/cp', 'cp', '-a', src, dest)
 
     def expand_file(self, path):
         src = self.items[path].src
@@ -194,6 +194,9 @@ class DirTree:
 
         f_src.close()
         f_dest.close()
+
+        src_stat = os.stat(src)
+        os.chmod(dest, stat.S_IMODE(src_stat.st_mode))
 
     def write_dir(self, path):
         if (path != ''):
