@@ -5,7 +5,7 @@ targetdir=$1
 echo "Stopping MySQL..."
 
 if [ \! -f $targetdir/run/mysqld.pid ] ; then 
-    echo"... not running"
+    echo "... not running"
     exit 0
 fi
 

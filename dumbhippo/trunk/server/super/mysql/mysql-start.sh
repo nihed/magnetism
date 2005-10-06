@@ -39,7 +39,8 @@ done
 if $started ; then
     if $need_set_password ; then
 	eval `grep 'password=' $targetdir/conf/my.cnf`
-	/usr/bin/mysqladmin -u root password $password
+	/usr/bin/mysqladmin -S $targetdir/run/mysql.sock -u root password $password
+	echo "grant all on *.* to root@'127.0.0.1' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
     fi
     echo "...sucessfully started"
     exit 0
