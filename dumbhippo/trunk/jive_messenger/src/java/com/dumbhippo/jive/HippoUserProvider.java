@@ -1,6 +1,5 @@
 package com.dumbhippo.jive;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -12,12 +11,25 @@ import org.jivesoftware.messenger.user.UserProvider;
 
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlueRemote.JabberUser;
 
 public class HippoUserProvider implements UserProvider {
 
+	private UserNotFoundException createUserNotFound(String username, Exception root) {
+		return new UserNotFoundException ("No account has username '" + username + "'", root);
+	}
+	
 	public User loadUser(String username) throws UserNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		MessengerGlueRemote glue = Server.getMessengerGlue();
+		
+		JabberUser remote = null;
+		try {
+			remote = glue.loadUser(username);
+		} catch (JabberUserNotFoundException e) {
+			throw createUserNotFound(username, e);
+		}
+		
+		return new User(username, remote.getName(), remote.getEmail(), null, null);
 	}
 
 	public User createUser(String username, String password, String name,
@@ -66,7 +78,7 @@ public class HippoUserProvider implements UserProvider {
 		try {
 			glue.setName(username, name);
 		} catch (JabberUserNotFoundException e) {
-			throw new UserNotFoundException("No account has username '" + username + "'", e);
+			throw createUserNotFound(username, e);
 		}
 	}
 
@@ -76,42 +88,42 @@ public class HippoUserProvider implements UserProvider {
 		try {
 			glue.setEmail(username, email);
 		} catch (JabberUserNotFoundException e) {
-			throw new UserNotFoundException("No account has username '" + username + "'", e);
+			throw createUserNotFound(username, e);
 		}
 	}
 
 	public void setCreationDate(String username, Date creationDate)
 			throws UserNotFoundException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();
 	}
 
 	public void setModificationDate(String username, Date modificationDate)
 			throws UserNotFoundException {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 
 	}
 
 	public Set<String> getSearchFields() throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO should probably implement this sometime
+		throw new UnsupportedOperationException();
 	}
 
 	public Collection<User> findUsers(Set<String> fields, String query)
 			throws UnsupportedOperationException {
-		// TODO should probably implement this sometime
-		return new ArrayList<User>();
+		//		 TODO should probably implement this sometime
+		throw new UnsupportedOperationException();
 	}
 
 	public Collection<User> findUsers(Set<String> fields, String query,
 			int startIndex, int numResults)
 			throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
+		//		 TODO should probably implement this sometime
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean isReadOnly() {
-		// TODO Auto-generated method stub
+		// We don't support a lot of the modification operations, so maybe we should 
+		// set this to true. But we do support a couple of them, so...
 		return false;
 	}
 
