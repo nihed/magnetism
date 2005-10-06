@@ -83,6 +83,13 @@ public interface IdentitySpider {
 	 */
 	public HippoAccount lookupAccountByPerson(Person person);
 	
+	/** 
+	 * Gets the number of active accounts.
+	 * 
+	 * @return number of active accounts
+	 */
+	public long getNumberOfActiveAccounts();
+	
 	/**
 	 * Note that usernames change over time! i.e. the user can 
 	 * modify their username. The persistent identity is the GUID 

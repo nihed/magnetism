@@ -30,15 +30,14 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public boolean authenticateJabberUser(String username, String token, String digest) {
 		
-		// TODO do some stuff here and maybe return true
+		// TODO do some stuff here and maybe return false sometimes!
 		
-		return false;
+		return true;
 	}
 	
 
 	public long getJabberUserCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return identitySpider.getNumberOfActiveAccounts();
 	}
 
 

@@ -101,6 +101,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return ret;
 	}
+
+	public long getNumberOfActiveAccounts() {
+		long count = (Long) em.createQuery("SELECT SIZE(*) FROM HippoAccount a").getSingleResult();
+		return count;
+	}
 	
 	public void setName(Person person, FullName name) {
 		person.setName(name);
