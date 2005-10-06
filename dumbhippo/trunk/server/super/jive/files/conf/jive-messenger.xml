@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jive> 
+  <adminConsole> 
+    <!-- Disable either port by setting the value to -1 -->  
+    <port>@@jiveAdminPort@@</port>  
+    <securePort>@@jiveAdminSecurePort@@</securePort>  
+    <!-- By default, only the user with the username "admin" can login
+         to the admin console. Alternatively, you can specify a comma-delimitted
+         list usernames that should be authorized to login by setting the
+         <authorizedUsernames> field below. -->  
+    <!-- <authorizedUsernames></authorizedUsernames> --> 
+  </adminConsole>  
+  <locale>en</locale>  
+  <connectionProvider>
+    <className>org.jivesoftware.database.DefaultConnectionProvider</className>
+  </connectionProvider>
+  <database>
+    <defaultProvider>
+      <driver>com.mysql.jdbc.Driver</driver>
+      <serverURL>jdbc:mysql://localhost:@@mysqlPort@@/jive</serverURL>
+      <username>root</username>
+      <password>@@mysqlPassword@@</password>
+      <minConnections>5</minConnections>
+      <maxConnections>15</maxConnections>
+      <connectionTimeout>1.0</connectionTimeout>
+    </defaultProvider>
+  </database>
+  <setup>true</setup>
+</jive>
