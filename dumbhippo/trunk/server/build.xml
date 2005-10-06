@@ -2,11 +2,12 @@
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
 	<property name="web" value="web" />
-	<property name="build" value="bin" />
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
-	<property name="buildjar.dir" location="${build}/jars" />
+	<property name="buildjar.dir" location="${target}/classes" />
 	<property name="bundled-deps.common" value="dumbhippo-base.jar" />
 	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
@@ -34,10 +35,10 @@
 	</path>
 
 	<target name="init">
+		<delete dir="${target}" />
 		<mkdir dir="${build}" />
-		<mkdir dir="${reports.tests}" />
-		<delete dir="${buildjar.dir}" />
 		<mkdir dir="${buildjar.dir}" />
+		<mkdir dir="${reports.tests}" />
 	</target>
 
 	<target name="compile" depends="init">

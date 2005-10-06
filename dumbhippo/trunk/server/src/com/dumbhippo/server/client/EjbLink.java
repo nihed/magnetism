@@ -15,11 +15,24 @@ import com.dumbhippo.server.InvitationSystemRemote;
  * @author hp
  *
  */
-class EjbLink {
+public class EjbLink {
 	private InitialContext namingContext;
 	private IdentitySpiderRemote identitySpider;
 	private AuthenticationSystemRemote authenticationSystem;
 	private InvitationSystemRemote invitationSystem;
+	
+	static private EjbLink instance = null;
+	
+	static public synchronized EjbLink getInstance() { 
+		if (instance == null) {
+			try {
+				instance = new EjbLink();
+			} catch (NamingException e) {
+				e.printStackTrace();
+			}
+		}
+		return instance;
+	}
 	
 	private Object nameLookup(Class clazz) throws NamingException {
 		String name = clazz.getPackage().getName() + "." + clazz.getSimpleName();

@@ -25,4 +25,13 @@ public class AuthenticationSystemBean implements AuthenticationSystem, Authentic
 		}
 		return secret;
 	}
+
+	public boolean authenticateJiveUser(String username, String token, String digest) {
+		
+		ServerSecret secret = getServerSecret();
+		
+		// TODO do some stuff here and maybe return true
+		
+		return false;
+	}
 }
