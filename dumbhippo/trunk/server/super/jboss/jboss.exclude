@@ -43,3 +43,8 @@
 /deploy/monitoring-service.xml
 /lib/jboss-monitoring.jar
 
+# Files created by server
+/data
+/log
+/tmp
+/work
