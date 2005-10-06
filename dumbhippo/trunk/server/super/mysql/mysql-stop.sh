@@ -12,7 +12,7 @@ fi
 pid=`cat $targetdir/run/mysqld.pid`
 
 if kill $pid ; then : ; else
-    echo"... not running"
+    echo "... not running"
     exit 0
 fi
 
