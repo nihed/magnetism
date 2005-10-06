@@ -87,13 +87,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public HippoAccount lookupAccountByPerson(Person person) {
-		// TODO Auto-generated method stub
-		return null;
+		HippoAccount account = em.find(HippoAccount.class, person);
+		
+		return account;
 	}
 
 	public HippoAccount lookupAccountByUsername(String username) {
-		// TODO Auto-generated method stub
-		return null;
+		HippoAccount ret;
+		try {
+			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.username = :username").setParameter("username", username).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			ret = null;
+		}
+		return ret;
 	}
 	
 	public void setName(Person person, FullName name) {
