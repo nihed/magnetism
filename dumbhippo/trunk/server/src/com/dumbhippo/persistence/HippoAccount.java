@@ -30,7 +30,7 @@ import javax.persistence.Transient;
  * 
  */
 @Entity
-public class HippoAccount extends Resource {
+public class HippoAccount {
 
 	private static final long serialVersionUID = 0L;
 	
@@ -76,12 +76,6 @@ public class HippoAccount extends Resource {
 		setUsername(username);
 		setClients(clients);
 	}
-	
-	@Override
-	@Transient
-	public String getHumanReadableString() {
-		return null;
-	}	
 	
 	public String createClientCookie(String name) {
 		Client client = new Client(name);
