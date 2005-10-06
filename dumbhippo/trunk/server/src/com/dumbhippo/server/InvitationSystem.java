@@ -1,9 +1,12 @@
 package com.dumbhippo.server;
 
+import javax.ejb.Local;
+
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
+@Local
 public interface InvitationSystem {
 	
 	/**

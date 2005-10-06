@@ -22,6 +22,9 @@ import com.dumbhippo.server.PersonView;
  */
 @Entity
 public class EmailResource extends Resource implements InvitableResource {
+	
+	private static final long serialVersionUID = 0L;
+
 	private String email;
 	
 	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";

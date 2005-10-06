@@ -5,12 +5,13 @@
 	<property name="build" value="bin" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
+	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${build}/jars" />
 	<property name="bundled-deps.common" value="dumbhippo-base.jar" />
 	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
+	<property name="bundled-deps.client" value="" />
 	<property name="bundled-deps.all" value="${bundled-deps.common} ${bundled-deps.persistence} ${bundled-deps.web}" />
-	<property name="jboss.root" value="/opt/jboss" />
 	
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />

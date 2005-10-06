@@ -11,9 +11,10 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.InvitationSystemRemote;
 
 @Stateless
-public class InvitationSystemBean implements InvitationSystem {
+public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;

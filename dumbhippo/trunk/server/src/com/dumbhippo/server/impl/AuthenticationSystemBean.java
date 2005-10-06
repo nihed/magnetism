@@ -7,9 +7,10 @@ import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.ServerSecret;
 import com.dumbhippo.server.AuthenticationSystem;
+import com.dumbhippo.server.AuthenticationSystemRemote;
 
 @Stateless
-public class AuthenticationSystemBean implements AuthenticationSystem {
+public class AuthenticationSystemBean implements AuthenticationSystem, AuthenticationSystemRemote {
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;

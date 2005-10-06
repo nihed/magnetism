@@ -1,16 +1,12 @@
 package com.dumbhippo.server.client;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URL;
-
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import com.dumbhippo.server.AuthenticationSystem;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.server.AuthenticationSystemRemote;
+import com.dumbhippo.server.IdentitySpiderRemote;
+import com.dumbhippo.server.InvitationSystemRemote;
 
 /**
  * 
@@ -21,30 +17,32 @@ import com.dumbhippo.server.InvitationSystem;
  */
 class EjbLink {
 	private InitialContext namingContext;
-	private IdentitySpider identitySpider;
-	private AuthenticationSystem authenticationSystem;
-	private InvitationSystem invitationSystem;
+	private IdentitySpiderRemote identitySpider;
+	private AuthenticationSystemRemote authenticationSystem;
+	private InvitationSystemRemote invitationSystem;
 	
 	private Object nameLookup(Class clazz) throws NamingException {
-		return namingContext.lookup(clazz.getPackage().getName() + "." + clazz.getSimpleName());
+		String name = clazz.getPackage().getName() + "." + clazz.getSimpleName();
+		System.out.println("Looking up '" + name + "'");
+		return namingContext.lookup(name);
 	}
 	
 	public EjbLink() throws NamingException {
 		namingContext = new InitialContext();
-		identitySpider = (IdentitySpider) nameLookup(IdentitySpider.class);
-		authenticationSystem = (AuthenticationSystem) nameLookup(AuthenticationSystem.class);
-		invitationSystem = (InvitationSystem) nameLookup(InvitationSystem.class);
+		identitySpider = (IdentitySpiderRemote) nameLookup(IdentitySpiderRemote.class);
+		authenticationSystem = (AuthenticationSystemRemote) nameLookup(AuthenticationSystemRemote.class);
+		invitationSystem = (InvitationSystemRemote) nameLookup(InvitationSystemRemote.class);
 	}
 	
-	public IdentitySpider getIdentitySpider() {
+	public IdentitySpiderRemote getIdentitySpider() {
 		return identitySpider;
 	}
 	
-	public AuthenticationSystem getAuthenticationSystem() {
+	public AuthenticationSystemRemote getAuthenticationSystem() {
 		return authenticationSystem;
 	}
 	
-	public InvitationSystem getInvitationSystem() {
+	public InvitationSystemRemote getInvitationSystem() {
 		return invitationSystem;
 	}
 	
@@ -53,13 +51,14 @@ class EjbLink {
 		
 		try {
 			link = new EjbLink();
-		} catch (NamingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+			System.err.println("Some JNDI lookup error... ouch");
 			System.exit(1);
 		}
 		
-		AuthenticationSystem auth = link.getAuthenticationSystem();
-	
-		assert auth != null;
+		IdentitySpiderRemote spider = link.getIdentitySpider();
+		EmailResource email = spider.getEmail("foo@example.com");
+		System.out.println("Email email = " + email.getEmail() + " guid = " + email.getGuid());
 	}
 }

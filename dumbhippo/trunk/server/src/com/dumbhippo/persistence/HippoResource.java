@@ -29,6 +29,7 @@ import javax.persistence.Transient;
 @Entity
 public class HippoResource extends Resource {
 
+	private static final long serialVersionUID = 0L;
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever

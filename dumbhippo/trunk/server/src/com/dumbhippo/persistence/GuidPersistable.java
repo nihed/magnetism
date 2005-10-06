@@ -1,6 +1,8 @@
 
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratorType;
@@ -13,7 +15,7 @@ import com.dumbhippo.identity20.Guid;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class GuidPersistable {
+public abstract class GuidPersistable implements Serializable {
 	private Guid guid;
 	
 	protected GuidPersistable() {

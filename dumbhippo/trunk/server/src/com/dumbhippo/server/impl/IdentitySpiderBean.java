@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
 
 /*
@@ -18,7 +19,7 @@ import com.dumbhippo.server.PersonView;
  * @author walters
  */
 @Stateless
-public class IdentitySpiderBean implements IdentitySpider {
+public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
 	
 	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 

@@ -10,10 +10,14 @@ import javax.persistence.Query;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewRemote;
+
+// TODO this may need an @Remove method since it's Stateful, or it 
+// might never be removed? or does it get removed if the client gc's it?
 
 @Stateful
 public class PersonViewBean
-	implements Serializable, PersonView {
+	implements Serializable, PersonView, PersonViewRemote {
 	
 	private static final long serialVersionUID = 0L;
 	

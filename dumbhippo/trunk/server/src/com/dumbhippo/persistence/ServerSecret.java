@@ -1,5 +1,7 @@
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratorType;
 import javax.persistence.Id;
@@ -16,7 +18,9 @@ import com.dumbhippo.identity20.RandomToken;
  *
  */
 @Entity
-public class ServerSecret {
+public class ServerSecret implements Serializable {
+	
+	private static final long serialVersionUID = 0L;
 	private byte[] secret;
 	
 	public ServerSecret() {

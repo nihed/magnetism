@@ -15,12 +15,14 @@
 	<classpathentry kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
+	<classpathentry sourcepath="/home/hp/Desktop/Downloads/jboss-4.0.3RC2-src/ejb3/src/main" kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
 	<classpathentry kind="lib" path="lib/jstl.jar"/>
 	<classpathentry kind="lib" path="lib/standard.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/client/activation.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/client/jbossall-client.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
+	<classpathentry kind="lib" path="lib/jboss-remoting.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

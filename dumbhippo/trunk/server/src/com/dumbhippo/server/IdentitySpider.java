@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import javax.ejb.Local;
+
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 
@@ -12,14 +14,7 @@ import com.dumbhippo.persistence.Person;
  * 
  * @author walters
  */
-/**
- * @author hp
- *
- */
-/**
- * @author hp
- *
- */
+@Local
 public interface IdentitySpider {
 	
 	
