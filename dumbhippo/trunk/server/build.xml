@@ -4,6 +4,7 @@
 	<property name="web" value="web" />
 	<property name="target" value="target" />
 	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
@@ -34,11 +35,17 @@
 		</fileset>
 	</path>
 
+	<path id="tests.class.path">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.class.path" />
+	</path>
+		
 	<target name="init">
 		<delete dir="${target}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${buildjar.dir}" />
 		<mkdir dir="${reports.tests}" />
+		<mkdir dir="${build.tests}" />
 	</target>
 
 	<target name="compile" depends="init">
@@ -68,8 +75,8 @@
 	</target>
 
 	<target name="test" depends="compile,setupmetadata">
-		<javac srcdir="${src.tests}" destdir="${build}" source="1.5">
-			<classpath refid="project.class.path" />
+		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.class.path" />
 		</javac>
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
@@ -83,7 +90,7 @@
 					<include name="AllTests.java" />
 				</fileset>
 			</batchtest>
-			<classpath refid="project.class.path" />
+			<classpath refid="tests.class.path"/>
 		</junit>
 	</target>
 
@@ -150,6 +157,7 @@
 				<include name="*.properties" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/identity20/**/*.class" />
+				<include name="**/persistence/**/*.class" />
 				<!-- server/* but not server/impl -->
 				<include name="**/server/*.class" />
 				<include name="**/server/client/*.class" />

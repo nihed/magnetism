@@ -12,9 +12,17 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewRemote;
 
-// TODO this may need an @Remove method since it's Stateful, or it 
-// might never be removed? or does it get removed if the client gc's it?
 
+
+/**
+ * 
+ * Stateful beans have a lifecycle equal to the life of 
+ * the session, unless we add an @Remove-annotated method in which 
+ * case that method kills the bean.
+ * 
+ * @author hp
+ *
+ */
 @Stateful
 public class PersonViewBean
 	implements Serializable, PersonView, PersonViewRemote {

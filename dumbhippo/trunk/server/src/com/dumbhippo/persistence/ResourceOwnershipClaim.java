@@ -25,10 +25,6 @@ public class ResourceOwnershipClaim extends DBUnique {
 	
 	protected ResourceOwnershipClaim() {super();}
 	
-	public ResourceOwnershipClaim(Person claimedOwner, Resource resource) {
-		this(claimedOwner, resource, null);
-	}
-	
 	public ResourceOwnershipClaim(Person claimedOwner, Resource resource, Person assertedBy) {
 		this.claimedOwner = claimedOwner;
 		this.resource = resource;

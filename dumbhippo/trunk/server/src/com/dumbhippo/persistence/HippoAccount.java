@@ -7,14 +7,17 @@ import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
 
 /**
- * Resource representing a Hippo account. Lots of things you might expect to be
+ * Object representing a Hippo account. Lots of things you might expect to be
  * here are not, because they're instead handled by saying that the Person in
  * question has a ResourceOwnershipClaim on a Resource. So e.g. you own your
  * full name, your email address, and other kinds of profile information.
+ * If something can be in someone's contacts/buddy list without corresponding
+ * to a registered Hippo user, then it can't be in the HippoAccount.
  * 
  * Putting things in the hippo account is a little subjective, but roughly we
  * store things here if nobody but the account holder would have an opinion on
@@ -27,18 +30,51 @@ import javax.persistence.Transient;
  * 
  */
 @Entity
-public class HippoResource extends Resource {
+public class HippoAccount extends Resource {
 
 	private static final long serialVersionUID = 0L;
+	
+	private Person owner;
+	private String username;
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
 	 * you need to do.
 	 */
 	private Set<Client> clients;
+	
+	/**
+	 * @return Returns the username.
+	 */
+	public String getUsername() {
+		return username;
+	}
+	
+	/**
+	 * Warning! Warning! The username can change over
+	 * time (users can set it). The never-changing ID 
+	 * for an account is the guid of the owner from 
+	 * getOwner().
+	 * 
+	 * TODO the validation should be better (more permissive), and probably
+	 * throw a checked exception. But just put something safe there for 
+	 * now so we don't confuse Jabber; this has to be a valid JID.
+	 * 
+	 * @param username The username to set.
+	 */
+	public void setUsername(String username) {
+		for (char c : username.toCharArray()) {
+			if (!(Character.isLetter(c) || Character.isDigit(c))) {
+				throw new IllegalArgumentException("Invalid username");
+			}
+		}
+		this.username = username;
+	}
+	
 
-	public HippoResource() {
-		
+	public HippoAccount(String username, Set<Client> clients) {
+		setUsername(username);
+		setClients(clients);
 	}
 	
 	@Override
@@ -68,6 +104,12 @@ public class HippoResource extends Resource {
 		return false;
 	}
 
+	/**
+	 * This is protected on purpose, so only the persistence 
+	 * stuff can get at it and not you. Stay away.
+	 * 
+	 * @return the clients (programs/machines) used with this account
+	 */
 	@OneToMany
 	protected Set<Client> getClients() {
 		return clients;
@@ -75,5 +117,26 @@ public class HippoResource extends Resource {
 
 	protected void setClients(Set<Client> clients) {
 		this.clients = clients;
+	}
+
+	/**
+	 * The Person who owns this account. This is the 
+	 * unique ID for the account.
+	 * 
+	 * @return Returns the owner.
+	 */
+	@OneToOne
+	public Person getOwner() {
+		return owner;
+	}
+
+	/**
+	 * This is protected because calling it is probably 
+	 * a bad idea. (Give someone else your account?)
+	 * 
+	 * @param owner The owner to set.
+	 */
+	protected void setOwner(Person owner) {
+		this.owner = owner;
 	}
 }
