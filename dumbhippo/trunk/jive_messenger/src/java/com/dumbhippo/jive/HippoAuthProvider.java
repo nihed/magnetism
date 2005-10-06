@@ -5,9 +5,6 @@ package com.dumbhippo.jive;
 
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 
-import com.dumbhippo.server.AuthenticationSystemRemote;
-import com.dumbhippo.server.client.EjbLink;
-
 /**
  * @author hp
  *
@@ -42,11 +39,7 @@ public class HippoAuthProvider implements
 	 */
 	public void authenticate(String username, String token, String digest)
 			throws UnauthorizedException {
-		EjbLink ejb = EjbLink.getInstance();
-		
-		AuthenticationSystemRemote auth = ejb.getAuthenticationSystem();
-		
-		if (!auth.authenticateJiveUser(username, token, digest))
+		if (!Server.getMessengerGlue().authenticateJabberUser(username, token, digest))
 			throw new UnauthorizedException("Not authorized");
 	}
 

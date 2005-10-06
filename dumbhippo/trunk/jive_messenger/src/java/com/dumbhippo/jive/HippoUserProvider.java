@@ -1,5 +1,6 @@
 package com.dumbhippo.jive;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -9,11 +10,8 @@ import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProvider;
 
-import com.dumbhippo.FullName;
-import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.IdentitySpiderRemote;
-import com.dumbhippo.server.client.EjbLink;
+import com.dumbhippo.server.JabberUserNotFoundException;
+import com.dumbhippo.server.MessengerGlueRemote;
 
 public class HippoUserProvider implements UserProvider {
 
@@ -32,8 +30,9 @@ public class HippoUserProvider implements UserProvider {
 	}
 
 	public int getUserCount() {
-		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
-		long result = spider.getActiveAccountCount();
+		MessengerGlueRemote glue = Server.getMessengerGlue();
+	
+		long result = glue.getJabberUserCount();
 		// Is there such a thing as optimistic paranoia?
 		if (result > Integer.MAX_VALUE)
 			throw new Error("Too many users for JiveMessenger's mind!");
@@ -63,25 +62,22 @@ public class HippoUserProvider implements UserProvider {
 
 	public void setName(String username, String name)
 			throws UserNotFoundException {
-		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
-		HippoAccount account = spider.lookupAccountByUsername(username);
-		if (account == null)
-			throw new UserNotFoundException("No account has username '" + username + "'");
-		
-		spider.setName(account.getOwner(), new FullName(name));
+		MessengerGlueRemote glue = Server.getMessengerGlue();
+		try {
+			glue.setName(username, name);
+		} catch (JabberUserNotFoundException e) {
+			throw new UserNotFoundException("No account has username '" + username + "'", e);
+		}
 	}
 
 	public void setEmail(String username, String email)
 			throws UserNotFoundException {
-		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
-		HippoAccount account = spider.lookupAccountByUsername(username);
-		if (account == null)
-			throw new UserNotFoundException("No account has username '" + username + "'");
-
-		EmailResource emailResource = spider.getEmail(email);
-		
-		spider.addOwnershipClaim(account.getOwner(),
-				emailResource, account.getOwner());
+		MessengerGlueRemote glue = Server.getMessengerGlue();
+		try {
+			glue.setEmail(username, email);
+		} catch (JabberUserNotFoundException e) {
+			throw new UserNotFoundException("No account has username '" + username + "'", e);
+		}
 	}
 
 	public void setCreationDate(String username, Date creationDate)
@@ -103,8 +99,8 @@ public class HippoUserProvider implements UserProvider {
 
 	public Collection<User> findUsers(Set<String> fields, String query)
 			throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO should probably implement this sometime
+		return new ArrayList<User>();
 	}
 
 	public Collection<User> findUsers(Set<String> fields, String query,
