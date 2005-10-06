@@ -123,6 +123,9 @@
 
     <property name="license.file.path" value="${docs.dir}/dist"/>
 
+	<property name="hippo.server.path" value="${basedir}/../server"/>
+	<property name="jboss.path" value="/opt/jboss"/>
+	
     <!-- For auto-running and debugging -->
     <property name="debug" value="false" />
 
@@ -136,8 +139,15 @@
         <fileset dir="${lib.dist.dir}" includes="servlet.jar, mail.jar, activation.jar"/>
     </path>
 
+	<path id="hippoclient.dependencies">
+		<fileset dir="${jboss.path}/client" includes="jbossall-client.jar" />
+		<fileset dir="${jboss.path}/server/default/deploy/ejb3.deployer" includes="*ejb3*.jar" />
+    	<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
+	</path>
+	
     <path id="compile.dependencies">
         <path refid="javadoc.dependencies"/>
+		<path refid="hippoclient.dependencies"/>
     </path>
 
     <path id="jspc.dependencies">
