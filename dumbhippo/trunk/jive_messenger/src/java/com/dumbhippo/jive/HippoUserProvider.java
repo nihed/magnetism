@@ -9,6 +9,12 @@ import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProvider;
 
+import com.dumbhippo.FullName;
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.IdentitySpiderRemote;
+import com.dumbhippo.server.client.EjbLink;
+
 public class HippoUserProvider implements UserProvider {
 
 	public User loadUser(String username) throws UserNotFoundException {
@@ -22,47 +28,60 @@ public class HippoUserProvider implements UserProvider {
 	}
 
 	public void deleteUser(String username) {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException("Users must be deleted on the web site");
 	}
 
 	public int getUserCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
+		long result = spider.getActiveAccountCount();
+		// Is there such a thing as optimistic paranoia?
+		if (result > Integer.MAX_VALUE)
+			throw new Error("Too many users for JiveMessenger's mind!");
+		return (int) result;
 	}
 
 	public Collection<User> getUsers() {
-		// TODO Auto-generated method stub
-		return null;
+		// Whatever is calling this should be replaced by a call to 
+		// our server which does a database query or something instead...
+		throw new UnsupportedOperationException("Bug! getUsers() was called; we can't implement this, there are too many, so the caller will need to be changed");
 	}
 
 	public Collection<User> getUsers(int startIndex, int numResults) {
-		// TODO Auto-generated method stub
-		return null;
+		// At the moment, this function is never used in the JiveMessenger source.
+		throw new UnsupportedOperationException("Bug! Incremental getUsers() called; but it's not implemented yet");
 	}
 
 	public String getPassword(String username) throws UserNotFoundException,
 			UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Can't get password, have to use digest");
 	}
 
 	public void setPassword(String username, String password)
 			throws UserNotFoundException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException("You have to set your password on the web site");
 	}
 
 	public void setName(String username, String name)
 			throws UserNotFoundException {
-		// TODO Auto-generated method stub
-
+		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
+		HippoAccount account = spider.lookupAccountByUsername(username);
+		if (account == null)
+			throw new UserNotFoundException("No account has username '" + username + "'");
+		
+		spider.setName(account.getOwner(), new FullName(name));
 	}
 
 	public void setEmail(String username, String email)
 			throws UserNotFoundException {
-		// TODO Auto-generated method stub
+		IdentitySpiderRemote spider = EjbLink.getInstance().getIdentitySpider();
+		HippoAccount account = spider.lookupAccountByUsername(username);
+		if (account == null)
+			throw new UserNotFoundException("No account has username '" + username + "'");
 
+		EmailResource emailResource = spider.getEmail(email);
+		
+		spider.addOwnershipClaim(account.getOwner(),
+				emailResource, account.getOwner());
 	}
 
 	public void setCreationDate(String username, Date creationDate)
