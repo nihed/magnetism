@@ -3,6 +3,7 @@
 	<name>dumbhippo-messenger</name>
 	<comment></comment>
 	<projects>
+		<project>dumbhippo-server</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

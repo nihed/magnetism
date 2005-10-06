@@ -89,8 +89,9 @@ public class Roster implements Cacheable {
             sharedGroups = new ArrayList<Group>();
         }
 
+        rosterItemProvider = rosterManager.getRosterItemProvider();
+        
         // Add RosterItems that belong to the personal roster
-        rosterItemProvider =  RosterItemProvider.getInstance();
         Iterator items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = (RosterItem)items.next();
