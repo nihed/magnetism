@@ -15,6 +15,14 @@
   <connectionProvider>
     <className>org.jivesoftware.database.DefaultConnectionProvider</className>
   </connectionProvider>
+  <provider>
+     <user>
+        <className>com.dumbhippo.jive.HippoUserProvider</className>
+     </user>
+     <auth>
+        <className>com.dumbhippo.jive.HippoAuthProvider</className>
+     </auth>
+    </provider>
   <database>
     <defaultProvider>
       <driver>com.mysql.jdbc.Driver</driver>
