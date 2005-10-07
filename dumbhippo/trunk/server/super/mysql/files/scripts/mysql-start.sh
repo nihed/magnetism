@@ -1,6 +1,6 @@
 #!/bin/sh
 
-targetdir=$1
+targetdir=@@targetdir@@
 
 echo "Starting MySQL..."
 /usr/bin/mysqld_safe --defaults-file=$targetdir/conf/my.cnf > /dev/null &

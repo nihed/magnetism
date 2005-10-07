@@ -1,15 +1,17 @@
 #!/bin/sh
 
-targetdir=$1
+targetdir=@@targetdir@@
+
+pidfile=$targetdir/run/mysqld.pid
 
 echo "Stopping MySQL..."
 
-if [ \! -f $targetdir/run/mysqld.pid ] ; then 
+if [ \! -f $pidfile ] ; then 
     echo "... not running"
     exit 0
 fi
 
-pid=`cat $targetdir/run/mysqld.pid`
+pid=`cat $pidfile`
 
 if kill $pid ; then : ; else
     echo "... not running"
