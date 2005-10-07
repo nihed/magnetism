@@ -6,6 +6,13 @@
 
 <faces-config>
    <navigation-rule>
+      <!-- this rule applies to all from-view-ids -->
+      <navigation-case>
+         <from-outcome>mainpage</from-outcome>
+         <to-view-id>/jsf/main.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+   <navigation-rule>
       <from-view-id>/jsf/main.jsp</from-view-id>
       <navigation-case>
          <from-outcome>invite</from-outcome>
@@ -19,7 +26,14 @@
    <navigation-rule>
       <from-view-id>/jsf/invite.jsp</from-view-id>
       <navigation-case>
-         <from-outcome>submitinvite</from-outcome>
+         <from-outcome>invitesent</from-outcome>
+         <to-view-id>/jsf/invitesent.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+    <navigation-rule>
+      <from-view-id>/jsf/invitesent.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>verify</from-outcome>
          <to-view-id>/jsf/verify.jsp</to-view-id>
       </navigation-case>
    </navigation-rule>
@@ -27,13 +41,6 @@
       <from-view-id>/jsf/verify.jsp</from-view-id>
       <navigation-case>
          <from-outcome>submitverify</from-outcome>
-         <to-view-id>/jsf/main.jsp</to-view-id>
-      </navigation-case>
-   </navigation-rule>
-   <navigation-rule>
-      <from-view-id>/jsf/addlink.jsp</from-view-id>
-      <navigation-case>
-         <from-outcome>submitlink</from-outcome>
          <to-view-id>/jsf/main.jsp</to-view-id>
       </navigation-case>
    </navigation-rule>
