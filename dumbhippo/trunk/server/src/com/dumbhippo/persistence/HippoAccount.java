@@ -56,7 +56,12 @@ public class HippoAccount extends DBUnique {
 
 	public HippoAccount(Person person) {
 		owner = person;
-		setClients((Set<Client>) Collections.emptySet());
+		
+		// the intermediate variable is needed
+		// by sun javac but not ecj https://bugs.eclipse.org/bugs/show_bug.cgi?id=86898
+		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6302214
+		Set<Client> emptySet = Collections.emptySet();
+		setClients(emptySet);
 	}
 	
 	public String createClientCookie(String name) {
