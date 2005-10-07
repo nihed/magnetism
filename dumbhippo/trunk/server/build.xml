@@ -115,6 +115,7 @@
 				<attribute name="Class-Path" value="${bundled-deps.common}" />
 			</manifest>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
+			<webinf dir="${web}" includes="**/faces-config.xml" />
 		</war>
 	</target>
 
