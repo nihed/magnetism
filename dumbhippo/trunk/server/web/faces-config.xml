@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE faces-config PUBLIC
+  "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.0//EN"
+  "http://java.sun.com/dtd/web-facesconfig_1_0.dtd">
+
+<faces-config>
+   <navigation-rule>
+      <from-view-id>/jsf/main.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>invite</from-outcome>
+         <to-view-id>/jsf/invite.jsp</to-view-id>
+      </navigation-case>
+      <navigation-case>
+         <from-outcome>addlink</from-outcome>
+         <to-view-id>/jsf/addlink.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+   <navigation-rule>
+      <from-view-id>/jsf/invite.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>submitinvite</from-outcome>
+         <to-view-id>/jsf/verify.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+   <navigation-rule>
+      <from-view-id>/jsf/verify.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>submitverify</from-outcome>
+         <to-view-id>/jsf/main.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+   <navigation-rule>
+      <from-view-id>/jsf/addlink.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>submitlink</from-outcome>
+         <to-view-id>/jsf/main.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+   
+   <managed-bean> 
+      <managed-bean-name>usersession</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.UserSessionBean</managed-bean-class> 
+      <managed-bean-scope>session</managed-bean-scope> 
+   </managed-bean>
+   
+   <managed-bean> 
+      <managed-bean-name>login</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.LoginBean</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope> 
+   </managed-bean>
+   
+   <managed-bean> 
+      <managed-bean-name>invite</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.InviteBean</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope> 
+   </managed-bean>
+   
+   <managed-bean> 
+      <managed-bean-name>verify</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.VerifyBean</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope> 
+   </managed-bean>
+   
+   <managed-bean> 
+      <managed-bean-name>addlink</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.AddLinkBean</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope> 
+   </managed-bean>
+</faces-config>
