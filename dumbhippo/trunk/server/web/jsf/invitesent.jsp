@@ -8,10 +8,14 @@
 	</head>
 	<body>
 	<h:form>
-		<h3>Congratulations, the invitation to "${invite.fullName}" (${invite.email}) was sent.</h3>
+		<h3>Congratulations, the invitation to 
+		    <h:outputText value="#{invite.fullName}"/>
+		    (<h:outputText value="#{invite.email}"/>) was sent.</h3>
 		<!--  print the link now -->
 		<p>Invite url:
-			<a href="/dumbhippo/jsf/verify.faces?auth=${invite.authKey}">/dumbhippo/jsf/verify.faces?auth=${invite.authKey}</a>
+		    <h:outputLink value="/dumbhippo/jsf/verify.faces?authKey=#{invite.authKey}">
+		      <h:outputText value="/dumbhippo/jsf/verify.faces?authKey=#{invite.authKey}"/>
+		    </h:outputLink>
         </p>
 		<p><h:commandLink action="mainpage">
 			<h:outputText value="Go back to the main page" />

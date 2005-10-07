@@ -9,7 +9,7 @@
 	<body>
 	<h:form>
 		<h3>verify page</h3>
-		<p>This is the verify page.</p>
+		<p>This is the verify page for <h:outputText value="#{verify.authKey}"/></p>
 		<p>This should parse out the authKey from the request parameters and
 		mark the user verified or not in the database as appropriate, then
 		tell them how it went.</p>
