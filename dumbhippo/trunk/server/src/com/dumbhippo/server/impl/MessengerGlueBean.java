@@ -19,16 +19,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
 	
-	private transient IdentitySpider identitySpider;
-	
-	/** 
-	 * Used by the app server to provide us with an IdentitySpider
-	 * @param identitySpider the spider
-	 */
 	@EJB
-	protected void setIdentitySpider(IdentitySpider identitySpider) {
-		this.identitySpider = identitySpider;
-	}
+	private transient IdentitySpider identitySpider;
 	
 	public boolean authenticateJabberUser(String username, String token, String digest) {
 		

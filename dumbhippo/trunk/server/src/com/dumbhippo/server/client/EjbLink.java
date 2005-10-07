@@ -8,6 +8,7 @@ import com.dumbhippo.server.AuthenticationSystemRemote;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.TestGlueRemote;
 
 /**
  * 
@@ -22,10 +23,11 @@ public class EjbLink {
 	private AuthenticationSystemRemote authenticationSystem;
 	private InvitationSystemRemote invitationSystem;
 	private MessengerGlueRemote messengerGlue;
+	private TestGlueRemote testGlue;
 	
 	private Object nameLookup(Class clazz) throws NamingException {
 		String name = clazz.getPackage().getName() + "." + clazz.getSimpleName();
-		System.out.println("Looking up '" + name + "'");
+		// System.out.println("Looking up '" + name + "'");
 		return namingContext.lookup(name);
 	}
 	
@@ -37,6 +39,7 @@ public class EjbLink {
 		authenticationSystem = (AuthenticationSystemRemote) nameLookup(AuthenticationSystemRemote.class);
 		invitationSystem = (InvitationSystemRemote) nameLookup(InvitationSystemRemote.class);
 		messengerGlue = (MessengerGlueRemote) nameLookup(MessengerGlueRemote.class);
+		testGlue = (TestGlueRemote) nameLookup(TestGlueRemote.class);
 	}
 	
 	public IdentitySpiderRemote getIdentitySpider() {
@@ -53,6 +56,10 @@ public class EjbLink {
 	
 	public MessengerGlueRemote getMessengerGlue() {
 		return messengerGlue;
+	}
+	
+	public TestGlueRemote getTestGlue() {
+		return testGlue;
 	}
 	
 	public static void main(String[] args) {

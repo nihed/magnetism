@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entity-manager>
     <name>dumbhippo</name>
-    <jta-data-source>java:/DefaultDS</jta-data-source>
+    <!-- Remember to also look at the definition of this data source 
+    	for settings -->
+    <jta-data-source>java:/DumbHippoDS</jta-data-source>
 	<properties>
-    	<property name="hibernate.hbm2ddl.auto"
+    	<property name="hibernate.show_sql"
+              value="true"/>
+        <!-- This means to blow away tables when our app is 
+        	removed ... there is no "magic right thing" setting
+        	apparently, "update" means "don't blow away tables,
+            unless the schema changed, then blow them away" -->
+        <property name="hibernate.hbm2ddl.auto"
               value="create-drop"/>
+              
+        <!-- Without this, hbm2ddl will create hosed-up sql 
+             for creating the tables and you'll get bizarre
+             hibernate failures -->
+        <property name="hibernate.dialect"
+              value="org.hibernate.dialect.MySQLDialect" />
   	</properties>
 </entity-manager>

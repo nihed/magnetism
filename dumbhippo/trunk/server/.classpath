@@ -24,5 +24,6 @@
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
 	<classpathentry kind="lib" path="lib/jboss-remoting.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
