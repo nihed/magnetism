@@ -1,11 +1,11 @@
 package com.dumbhippo.server;
 
-import javax.ejb.Stateless;
+import javax.ejb.Local;
 
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Resource;
 
-@Stateless
+@Local
 public interface AccountSystem {
 	/**
 	 * Adds a new HippoAccount (and Person) with verified ownership

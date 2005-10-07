@@ -31,7 +31,7 @@ import javax.persistence.Transient;
  * 
  */
 @Entity
-public class HippoAccount {
+public class HippoAccount extends DBUnique {
 
 	private static final long serialVersionUID = 0L;
 	

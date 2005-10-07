@@ -10,6 +10,12 @@
     <form method="POST" action="${emailResult}">    
     <table>
     <tr>
+      <td>Your email</td>
+      <td>
+        <input id="inviterEmail" type="text" name="inviterEmail"></input>
+      </td>
+    </tr>    
+    <tr>
       <td>Email</td>
       <td>
         <input id="emailaddr" type="text" name="emailaddr"></input>

@@ -5,7 +5,7 @@
 <%
   // FIXME this is temporary until we get account from cookie
   Resource inviterEmail = identitySpider.getEmail(request.getParameter("inviterEmail"));
-  AccountSystem accounts = (AccountSystem) ctx.lookup("com.dumbhippo.server.AccountSystem");
+  AccountSystem accounts = (AccountSystem) new InitialContext().lookup("com.dumbhippo.server.AccountSystem");
   HippoAccount acct = accounts.createAccountFromResource(inviterEmail);
   Person inviter = acct.getOwner();
 %>
