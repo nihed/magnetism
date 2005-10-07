@@ -27,4 +27,9 @@ public class AccountSystemBean implements AccountSystem {
 		em.persist(account);
 		return account;
 	}
+
+	public HippoAccount createAccountFromEmail(String email) {
+		Resource res = spider.getEmail(email);
+		return createAccountFromResource(res);
+	}
 }

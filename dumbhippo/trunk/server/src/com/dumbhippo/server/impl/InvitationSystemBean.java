@@ -58,6 +58,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 
+	public Invitation createEmailInvitation(Person inviter, String email) {
+		Resource emailRes = spider.getEmail(email);
+		return createGetInvitation(inviter, emailRes);
+	}	
+	
 	public void sendEmailNotification(Invitation invite, Person inviter) {
 		InvitableResource invitee = (InvitableResource) invite.getInvitee();
 		invitee.sendInvite(null, invite, inviter);

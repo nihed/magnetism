@@ -7,6 +7,16 @@ import com.dumbhippo.persistence.Resource;
 
 @Local
 public interface AccountSystem {
+	
+	/**
+	 * Create a new HippoAccount owning the specified email
+	 * address.  @see createAccountFromResource
+	 * 
+	 * @param email
+	 * @return
+	 */
+	public HippoAccount createAccountFromEmail(String email);
+	
 	/**
 	 * Adds a new HippoAccount (and Person) with verified ownership
 	 * of the specified resource.  This relationship

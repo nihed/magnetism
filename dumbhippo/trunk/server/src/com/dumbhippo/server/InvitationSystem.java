@@ -20,6 +20,16 @@ public interface InvitationSystem {
 	public Invitation lookupInvitationByKey(String authKey);
 	
 	/**
+	 * Add inviter as a person wanting to invite the owner
+	 * of an email address.  @see createGetInvitation
+	 * 
+	 * @param inviter
+	 * @param email
+	 * @return
+	 */
+	public Invitation createEmailInvitation(Person inviter, String email);
+	
+	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
 	 * @param inviter the person doing the inviting
 	 * @param invitee the person being invited

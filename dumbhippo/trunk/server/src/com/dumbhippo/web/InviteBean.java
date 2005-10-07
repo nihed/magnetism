@@ -1,66 +1,97 @@
 package com.dumbhippo.web;
 
-import com.dumbhippo.server.*;
-import com.dumbhippo.*;
-import java.util.*;
-import javax.naming.*;
-	
+import javax.ejb.EJBException;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
+
 /**
  * InviteBean corresponds to the invite JSF page.
  * 
  * @author dff
- *
+ * 
  */
 
 public class InviteBean {
-   private String fullName;
-   private String email;
+	private String fullName;
 
-   // PROPERTY: fullName
-   public String getFullName() { return fullName; }
-   public void setFullName(String newValue) { fullName = newValue; }
+	private String email;
 
-   // PROPERTY: email
-   public String getEmail() { return email; }
-   public void setEmail(String newValue) { email = newValue; }
-   
-   // action handler for form submit
-   public String doInvite() throws NamingException {
-		   // TODO: create an invitation in database and get an authkey
-		   // TODO: send out the email, etc
+	// FIXME should go away and be replaced by cookie
+	private String inviterEmail;
 	
-		   InitialContext ctx = new InitialContext();
+	private String authKey;
 
-		   // This is handy if you want to see what jboss is naming things
-		   NamingEnumeration ne = ctx.list("");
-		   System.out.println("naming information");
-		   while (ne.hasMore()) { 
-			   	NameClassPair p = (NameClassPair)ne.next();
-			   	System.out.println(p);
-		   }
-		   
+	private transient InvitationSystem invitationSystem;
 
-		   /*
-		   // TODO: colin stuff to adapt / hook up
-		  
-		   InvitationSystem invitationSystem = 
-			   	(InvitationSystem) ctx.lookup("com.dumbhippo.server.InvitationSystem");
-		   IdentitySpider identitySpider = 
-			   	(IdentitySpider) ctx.lookup("com.dumbhippo.server.IdentitySpider");
-
-		   AccountSystem accounts = (AccountSystem) new InitialContext().lookup("com.dumbhippo.server.AccountSystem");
-		   Resource inviterEmail = identitySpider.getEmail(request.getParameter("inviterEmail"));
-		   HippoAccount acct = accounts.createAccountFromResource(inviterEmail);
-		   Person inviter = acct.getOwner();
+	private transient IdentitySpider identitySpider;
 	
-		   String email = request.getParameter("emailaddr");
-		     
-		   // FIXME need to validate email param != null and that it is valid rfc822
-		   EmailResource res = identitySpider.getEmail(email);
-		   Invitation invite = invitationSystem.createGetInvitation(inviter, res);
-		   	   
-		   */
-		   
-		   return "invitesent";
-   }
+	public InviteBean() throws NamingException {
+		InitialContext ctx = new InitialContext();
+		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());
+		identitySpider = (IdentitySpider) ctx.lookup(IdentitySpider.class.getName());		
+	}
+	
+	private Person temporaryHackCreateAccount(String email) throws NamingException {
+		EmailResource inviterEmail = identitySpider.getEmail(getInviterEmail());
+		Person inviter;
+		try {
+			inviter = identitySpider.lookupPersonByEmail(inviterEmail);
+		} catch (EJBException e) { // FIXME should be EntityNotFoundException according to spec
+			AccountSystem accounts = (AccountSystem) (new InitialContext()).lookup(AccountSystem.class.getName());
+			HippoAccount acct = accounts.createAccountFromEmail(email);
+			inviter = acct.getOwner();
+		}
+		return inviter;
+	}
+
+	// action handler for form submit
+	public String doInvite() throws NamingException {
+		Person inviter = temporaryHackCreateAccount(getInviterEmail());
+		Invitation invitation = invitationSystem.createEmailInvitation(inviter, getEmail());
+
+		this.authKey = invitation.getAuthKey();
+		return "invitesent";
+	}
+	
+	// PROPERTY: fullName
+	public String getFullName() {
+		return fullName;
+	}
+
+	public void setFullName(String newValue) {
+		fullName = newValue;
+	}
+
+	// PROPERTY: email
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String newValue) {
+		email = newValue;
+	}
+
+	public String getInviterEmail() {
+		return inviterEmail;
+	}
+
+	public void setInviterEmail(String inviterEmail) {
+		this.inviterEmail = inviterEmail;
+	}
+
+	public String getAuthKey() {
+		return authKey;
+	}
+
+	public void setAuthKey(String authKey) {
+		this.authKey = authKey;
+	}
 }

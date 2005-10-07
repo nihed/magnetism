@@ -33,7 +33,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
 	}
 	
-	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {		
+	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
 		.setParameter("viewpointguid", viewpoint.getId()).setParameter("email", email).getSingleResult();
 	}
