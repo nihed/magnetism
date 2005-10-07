@@ -24,4 +24,15 @@ public class AddLinkBean {
    // PROPERTY: recipients
    public String getRecipients() { return recipients; }
    public void setRecipients(String newValue) { recipients = newValue; }
+   
+   // action handler for form submit
+   public String doAddLink() {
+	   try {
+		   // add the link to the database
+		   return "mainpage";
+	   } catch (Exception e) {
+		   // didn't work for some reason
+		   return null;
+	   }	
+   }
 }
