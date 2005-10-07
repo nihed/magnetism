@@ -3,65 +3,117 @@ import re
 import stat
 import sys
 
-NEGATE = 1
-DIRECTORY_ONLY = 2
-
 def verbose(msg):
 #    print >>sys.stderr, msg
     pass
 
-DIR = 1
-SYMLINK = 2
-EXPAND = 4
+# Flags for directory tree nodes
+DIR = 1      # Node is a directory (and thus has children)
 
-class Item:
+SYMLINK = 2  # Node can be directly symlinked to the source tree.
+             # for a directory, this means that all of the
+             # children are the same as for the source tree; nothing
+             # is excluded or modified
+
+EXPAND = 4   # When copying from the source tree, expand parameters
+
+class Node:
+
+    """Record used when storing the tree of objects
+
+    src -- source location for a file or directory. May be None
+    flags -- a bitfield holding one or more of the flags:
+             DIR/SYMLINK/EXPAND that represents attributes of a
+             node of the directory tree.
+    children -- children of the node. Only true if the DIR flag is set
+    """
+    
     def __init__(self, src, flags):
         self.src = src
         self.flags = flags
         if (flags & DIR) != 0:
             self.children = []
 
+# Flags used for compiled 'exclude' patterns
+NEGATE = 1           # Pattern started with + - include and stop processing
+DIRECTORY_ONLY = 2   # Pattern ended with / ... matches only directories
+
 class DirTree:
+
+    """The DirTree class represents the tree of files build up from
+    the <merge/> statements in a service definition. After a tree
+    is built we can compare it to the current contents of the
+    target location or write it out, replacing the target location
+    """
+    
     def __init__(self, target, scope):
+        """Create a new DirTree object
+
+        scope -- scope for parameter lookups for <merge expand="yes"/>.
+                 Typically a Service object.
+        target -- target directory where output will be written by write()
+        """
         self.target = target
-        self.items = { '' : Item(None, DIR) }
+        self.nodes = { '' : Node(None, DIR) }
         self.scope = scope
 
-    def add_as_child(self, path):
-        dirname = os.path.dirname(path)
-        self.items[dirname].children.append(path)
+    def standard_excludes(self):
+        """Return a list of standard files to always exclude, in a
+        compiled form suitable for add_tree()"""
+        return [
+            self._compile_one(".svn"),
+            self._compile_one("*~"),
+          ]
+            
+    def compile_excludes(self, filename):
+        """Compile exclude patterns from a file into a list suitable
+        for add_tree()"""
+        
+        f = open(filename)
 
-    def add_file(self, path, src, expand, symlink):
-        if not self.items.has_key(path):
-            self.add_as_child(path)
-        flags = 0
-        if symlink:
-            flags = flags | SYMLINK
-        if expand:
-            flags = flags | EXPAND
-        self.items[path] = Item(src, flags)
+        result = []
+        
+        for line in f.readlines():
+            line = re.sub('(^|[^\\\\]*)(#.*)', '\\1', line)
+            line = line.strip()
+            if line == "":
+                continue
+            
+            result.append(self._compile_one(line))
 
-    def test_flag(self, path, flag):
-        return (self.items[path].flags & flag) != 0
+        f.close()
+        return result
 
-    def clear_flag(self, path, flag):
-        self.items[path].flags = self.items[path].flags & ~flag
+    def add_tree(self, path, src, symlink=False, expand=False, excludes=[]):
+        """Add a source tree into the output.
+        
+        path -- path at which to add the file, relative to the
+            top of the target directory
+        src -- source directory or file
+        symlink, expand -- options from <merge/>
+        excludes -- compiled list of patterns to exclude (see
+            standard_excludes(), compile_excludes())
+        """
+        if path is None:
+            path = ''
 
-    def add_dir(self, path, src, symlink):
-        if not self.items.has_key(path):
-            self.add_as_child(path)
-        # We never want to symlink if a directory is shared
-        # by multiple sources
-        if self.items.has_key(path) and self.test_flag(path, DIR):
-            self.clear_flag(path, SYMLINK)
-            self.items[path].src = None
-        else:
-            flags = DIR
-            if symlink:
-                flags = flags | SYMLINK
-            self.items[path] = Item(src, flags)
+        # When merging into the middle of the tree, we need to clear the
+        # symlink attribute on all ancestors, since we have to merge into
+        # a real directory, not a symlinked shadow
+        parent = path
+        while parent != '':
+            parent = os.path.dirname(parent)
+            self._clear_flag(parent, SYMLINK)
 
-    def compile_one(self, line):
+        self._add_tree_recurse(path, src, symlink, expand, excludes)
+        
+    def write(self):
+        """Write the tree out into the output location. Any cleanup
+        of existing content must be done beforehand. """
+        self._write_path('')
+        
+    def _compile_one(self, line):
+        """Compile a single pattern."""
         anchored=False
         flags = 0
         
@@ -78,7 +130,7 @@ class DirTree:
             line = line[1:]
 
         def repl(m):
-            if m.group(1) != None:
+            if m.group(1) is not None:
                 return '.*'
             else:
                 return '[^/]*'
@@ -91,32 +143,47 @@ class DirTree:
 
         return (re.compile(pattern), flags)
 
-    def compile_excludes(self, filename):
-        f = open(filename)
+    def _add_as_child(self, path):
+        """Add the node given by path to the parent's list of children.
+        Must be called only once per node."""
+        dirname = os.path.dirname(path)
+        self.nodes[dirname].children.append(path)
 
-        result = []
-        
-        for line in f.readlines():
-            line = re.sub('(^|[^\\\\]*)(#.*)', '\\1', line)
-            line = line.strip()
-            if line == "":
-                continue
-            
-            result.append(self.compile_one(line))
+    def _add_file(self, path, src, expand, symlink):
+        """Add a file (non-directory) to the tree. If a file or
+        directory was already at the path, it will be replaced."""
+        if not self.nodes.has_key(path):
+            self._add_as_child(path)
+        flags = 0
+        if symlink:
+            flags = flags | SYMLINK
+        if expand:
+            flags = flags | EXPAND
+        self.nodes[path] = Node(src, flags)
 
-        f.close()
-        return result
+    def _add_dir(self, path, src, symlink):
+        """Add a directory to the tree. Will replace any existing
+        file and be merged with an existing directory."""
+        if not self.nodes.has_key(path):
+            self._add_as_child(path)
+        # We never want to symlink if a directory is shared
+        # by multiple sources
+        if self.nodes.has_key(path) and self._test_flag(path, DIR):
+            self._clear_flag(path, SYMLINK)
+            self.nodes[path].src = None
+        else:
+            flags = DIR
+            if symlink:
+                flags = flags | SYMLINK
+            self.nodes[path] = Node(src, flags)
 
-    def standard_excludes(self):
-        return [
-            self.compile_one(".svn"),
-            self.compile_one("*~"),
-          ]
-            
-    def add_tree_recurse(self, path, src, symlink, expand, excludes):
+    def _add_tree_recurse(self, path, src, symlink, expand, excludes):
+        """Add a source directory and children to the tree. The
+        worker function for add_tree()."""
         src_stat = os.stat(src)
         src_is_dir = stat.S_ISDIR(src_stat.st_mode)
 
+        # Check for excludes; if path is excluded, skip it and children
         if path != '':
             for (pattern, flags) in excludes:
                 if (flags & DIRECTORY_ONLY) != 0:
@@ -124,6 +191,8 @@ class DirTree:
                         continue
                 if pattern.search(path):
                     if (flags & NEGATE) != 0:
+                        # When we hit a '+ /foo/bar' pattern, we
+                        # ignore subsequent patterns
                         verbose("Including %s" % path)
                         break
                     else:
@@ -131,51 +200,39 @@ class DirTree:
                         return False
 
         if src_is_dir:
-            self.add_dir(path, src, symlink)
+            self._add_dir(path, src, symlink)
                 
             result = True
             for f in os.listdir(src):
-                if not self.add_tree_recurse(os.path.join(path, f),
-                                             os.path.join(src, f),
-                                             symlink, expand, excludes):
+                if not self._add_tree_recurse(os.path.join(path, f),
+                                              os.path.join(src, f),
+                                              symlink, expand, excludes):
                     result = False
 
             # We can't symlink if we didn't add the entire directory
             if not result:
-                self.clear_flag(path, SYMLINK)
+                self._clear_flag(path, SYMLINK)
 
             return result
         else:
-            self.add_file(path, src, expand, symlink)
+            self._add_file(path, src, expand, symlink)
             return True
 
-    def add_tree(self, path, src, symlink=False, expand=False, excludes=[]):
-        if path == None:
-            path = ''
-
-        # When merging into the middle of the tree, we need to clear the
-        # symlink attribute on all ancestors, since we have to merge into
-        # a real directory, not a symlinked shadow
-        parent = path
-        while parent != '':
-            parent = os.path.dirname(parent)
-            self.clear_flag(parent, SYMLINK)
-
-        self.add_tree_recurse(path, src, symlink, expand, excludes)
-        
-        
-    def symlink(self, path):
-        src = self.items[path].src
+    def _symlink(self, path):
+        """When writing, create a symlink."""
+        src = self.nodes[path].src
         dest = os.path.join(self.target, path)
         os.symlink(src, dest)
 
-    def copy_file(self, path):
-        src = self.items[path].src
+    def _copy_file(self, path):
+        """When writing, copy a file without expansion."""
+        src = self.nodes[path].src
         dest = os.path.join(self.target, path)
         os.spawnl(os.P_WAIT, '/bin/cp', 'cp', '-a', src, dest)
 
-    def expand_file(self, path):
-        src = self.items[path].src
+    def _expand_file(self, path):
+        """When writing, copy a file with expansion."""
+        src = self.nodes[path].src
         dest = os.path.join(self.target, path)
         
         f_src = open(src, "r")
@@ -195,10 +252,12 @@ class DirTree:
         f_src.close()
         f_dest.close()
 
+        # preserve permissions to the extent possible
         src_stat = os.stat(src)
         os.chmod(dest, stat.S_IMODE(src_stat.st_mode))
 
     def write_dir(self, path):
+        """Write out a directory node with its children."""
         if (path != ''):
             dest = os.path.join(self.target, path)
         else:
@@ -210,22 +269,28 @@ class DirTree:
         except OSError:
             pass
 
-        if dest_stat == None or not stat.S_ISDIR(dest_stat.st_mode):
+        if dest_stat is None or not stat.S_ISDIR(dest_stat.st_mode):
             os.mkdir(dest)
         
-        for f in self.items[path].children:
-            self.write_path(f)
+        for f in self.nodes[path].children:
+            self._write_path(f)
         
-    def write_path(self, path):
-        if self.test_flag(path, SYMLINK):
-            self.symlink(path)
-        elif self.test_flag(path, DIR):
+    def _write_path(self, path):
+        """Write out a node, including children, if any."""
+        if self._test_flag(path, SYMLINK):
+            self._symlink(path)
+        elif self._test_flag(path, DIR):
             self.write_dir(path)
-        elif self.test_flag(path, EXPAND):
-            self.expand_file(path)
+        elif self._test_flag(path, EXPAND):
+            self._expand_file(path)
         else:
-            self.copy_file(path)
-        
-    def write(self):
-        self.write_path('')
+            self._copy_file(path)
        
+    def _test_flag(self, path, flag):
+        """Check if the given node has the flag set."""
+        return (self.nodes[path].flags & flag) != 0
+
+    def _clear_flag(self, path, flag):
+        """Clear the flag from the given node."""
+        self.nodes[path].flags = self.nodes[path].flags & ~flag
+

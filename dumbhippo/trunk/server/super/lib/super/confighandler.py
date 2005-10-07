@@ -8,6 +8,9 @@ import xml.sax.handler
 from super.service import Service
 from super.merge import Merge
 
+# Parsing states; they correspond to permissable nestings. So,
+# for example, SERVICE_PARAMETER means that we are in
+# <superconf><service><parameter>...</parameter></service></superconf>
 OUTSIDE = 0
 SUPERCONF = 1
 PARAMETER = 2
@@ -18,7 +21,13 @@ SERVICE_DIRECTORY = 6
 SERVICE_REQUIREDSERVICE = 6
     
 class ConfigHandler (xml.sax.ContentHandler):
+
+    """A ContentHandler that does the bulk of the work for parsing
+    our configuration files.
+    """
+    
     def __init__(self, config):
+        """Create a new ConfigHandler which stores results in config"""
         self.config = config
         self.state = OUTSIDE
         self.locator = None
@@ -33,15 +42,15 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = SUPERCONF
                 return
             else:
-                self.report("Root element must be 'superconf'")
+                self._report("Root element must be 'superconf'")
         elif (self.state == SUPERCONF):
             if (name == 'parameter'):
-                (self.param_name,) = self.parse_attributes(name, attrs, 'name', True)
+                (self.param_name,) = self._parse_attributes(name, attrs, 'name', True)
                 self.param_value = ""
                 self.state = PARAMETER
                 return
             elif (name == 'service'):
-                (name, cls) = self.parse_attributes(name, attrs, 'name', True, 'class', False)
+                (name, cls) = self._parse_attributes(name, attrs, 'name', True, 'class', False)
                 if (self.config.has_service(name)):
                     self.service = self.config.get_service(name)
                 else:
@@ -51,27 +60,27 @@ class ConfigHandler (xml.sax.ContentHandler):
                 return
         elif (self.state == SERVICE):
             if (name == 'parameter'):
-                (self.param_name,) = self.parse_attributes(name, attrs, 'name', True)
+                (self.param_name,) = self._parse_attributes(name, attrs, 'name', True)
                 self.param_value = ""
                 self.state = SERVICE_PARAMETER
                 return
             elif (name == 'merge'):
                 (src, dest, exclude, expand, symlink, hot) = \
-                     self.parse_attributes(name, attrs, 'src', True,
-                                                        'dest', False,
-                                                        'exclude', False,
-                                                        'expand', False,
-                                                        'symlink', False,
-                                                        'hot', False)
+                     self._parse_attributes(name, attrs, 'src', True,
+                                                         'dest', False,
+                                                         'exclude', False,
+                                                         'expand', False,
+                                                         'symlink', False,
+                                                         'hot', False)
                 def do_bool(attr, val):
-                    if (val == None):
+                    if (val is None):
                         return False
                     elif (val == 'yes'):
                         return True
                     elif (val == 'no'):
                         return False
                     else:
-                        self.report("'%s' must be either 'yes' or 'no'", attr)
+                        self._report("'%s' must be either 'yes' or 'no'", attr)
 
                 expand = do_bool('expand', expand)
                 symlink = do_bool('symlink', symlink)
@@ -84,7 +93,7 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = SERVICE_MERGE
                 return
             elif (name == 'requiredService'):
-                (service_name,) = self.parse_attributes(name, attrs, 'service', True)
+                (service_name,) = self._parse_attributes(name, attrs, 'service', True)
                 self.service.add_required_service(service_name)
                 self.state = SERVICE_REQUIREDSERVICE
                 return
@@ -92,7 +101,7 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = SERVICE_DIRECTORY
                 return
 
-        self.report("Invalid element <%s/>" % name)
+        self._report("Invalid element <%s/>" % name)
 
     def endElement(self, name):
         if (self.state == OUTSIDE):
@@ -123,12 +132,22 @@ class ConfigHandler (xml.sax.ContentHandler):
 
         stripped = content.strip()
         if (stripped != ""):
-            self.report("Unexpected characters: '%s'" % content)
+            self._report("Unexpected characters: '%s'" % content)
 
-    def report(self, message):
+    def _report(self, message):
+        """Raise a properly located parse exception"""
         raise xml.sax.SAXParseException(message, None, self.locator)
 
-    def parse_attributes(self, element, attrs, *specs):
+    def _parse_attributes(self, element, attrs, *specs):
+        """Take the attributes object from startElement, and check
+        that it has all elements we require, and no elements that
+        we don't understand.
+
+        specs -- a list of attribute_name, required pairs
+
+        returns: list of attributes, in the same order as specs,
+        attributes that aren't present are returned as None
+        """
         result = []
         listed = {}
         for i in range(0, len(specs)-1, 2):
@@ -139,12 +158,12 @@ class ConfigHandler (xml.sax.ContentHandler):
                 result.append(attrs[name])
             else:
                 if required:
-                    self.report("Attribute '%s' is required for <%s/>" % (name, element))
+                    self._report("Attribute '%s' is required for <%s/>" % (name, element))
                 else:
                     result.append(None)
             
         for key in attrs.keys():
             if not listed.has_key(key):
-                self.report("Unknown attribute '%s' for <%s/>" % (key, element))
+                self._report("Unknown attribute '%s' for <%s/>" % (key, element))
 
         return result
