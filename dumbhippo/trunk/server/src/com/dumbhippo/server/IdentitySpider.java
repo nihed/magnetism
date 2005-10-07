@@ -41,24 +41,6 @@ public interface IdentitySpider {
 	public Person lookupPersonByEmail(EmailResource email);
 
 	/**
-	 * Adds a new person to the identity spider, associated
-	 * with the specified email address.  This relationship
-	 * will be globally visible, and should have been weakly-verified
-	 * by some means (e.g. the person clicked a link in an
-	 * email address sent to them)
-	 * 
-	 * TODO I don't think anything that adds globally-visible stuff
-	 * should be in these exported session interfaces; the exported
-	 * session interface might be more like authLinkClicked(cookie),
-	 * or something like that. Then we do the validation and 
-	 * so forth and decide to set a globally-proven value.
-	 * 
-	 * @param email
-	 * @return a new Person
-	 */
-//	public Person addPersonWithEmail(EmailResource email);
-	
-	/**
 	 * Finds the person which owns an email address from a
 	 * particular person's viewpoint.  
 	 * 
@@ -114,11 +96,22 @@ public interface IdentitySpider {
 	 */
 	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy);
 	
+	/** 
+	 * Record an assertion that we have (at least weakly) verified the person has control of
+	 * a particular resource.  An example might be clicking on a link in an email 
+	 * sent to an email address resource, or conversing with the person via IM.
+	 * 
+	 * @param owner claimed owner
+	 * @param resource thing to be owned
+	 */	
+	public void addVerifiedOwnershipClaim(Person owner, Resource res);
+	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
 	 *
 	 * (More helpfully: The Man is the system user; his opinions 
 	 * are taken as true for everyone, e.g. in ResourceOwnershipClaim)
+	 * ((Well, that isn't actually true right now, we use null for that))
 	 * 
 	 * @return The Man
 	 */

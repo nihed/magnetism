@@ -5,6 +5,7 @@ package com.dumbhippo.persistence;
 
 import java.net.URL;
 
+import javax.annotation.EJB;
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -24,6 +25,9 @@ import com.dumbhippo.server.PersonView;
 public class EmailResource extends Resource implements InvitableResource {
 	
 	private static final long serialVersionUID = 0L;
+	
+	@EJB
+	private transient IdentitySpider spider;
 
 	private String email;
 	
@@ -55,7 +59,7 @@ public class EmailResource extends Resource implements InvitableResource {
 		this.email = email;
 	}
 
-	public void sendInvite(IdentitySpider spider, URL prefix, Invitation invitation, Person inviter) {
+	public void sendInvite(URL prefix, Invitation invitation, Person inviter) {
 		try {
 			javax.mail.Session mailsess;
 			MimeMessage msg;

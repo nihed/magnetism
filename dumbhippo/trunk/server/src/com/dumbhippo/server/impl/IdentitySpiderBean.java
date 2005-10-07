@@ -38,11 +38,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		.setParameter("viewpointguid", viewpoint.getId()).setParameter("email", email).getSingleResult();
 	}
 
-	private void addProvenOwnershipClaim(Person claimedOwner, EmailResource email) {
-		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(claimedOwner, email, getTheMan());
-		em.persist(claim);
-	}
-	
 	public EmailResource getEmail(String email) {
 		Query q;
 	
@@ -112,19 +107,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.persist(person);
 	}
 	
-	/* FIXME this is fucked up. Basically you need to be able to only 
+	private void internalAddOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
+		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(owner, resource, assertedBy);
+		em.persist(claim);		
+	}
+	
+	/* FIXME You need to be able to only 
 	 * do assertedBy == current authorized user. This whole interface
 	 * is screwy.
-	 * 
-	 * (non-Javadoc)
-	 * @see com.dumbhippo.server.IdentitySpider#addOwnershipClaim(com.dumbhippo.persistence.Person, com.dumbhippo.persistence.Resource, com.dumbhippo.persistence.Person)
 	 */
 	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
-		if (assertedBy == null || assertedBy.equals(getTheMan())) {
+		if (assertedBy == null) {
 			throw new IllegalArgumentException("Can't add this ownership claim");
 		}
-		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(owner, resource, assertedBy);
-		em.persist(claim);
+		internalAddOwnershipClaim(owner, resource, assertedBy);
 	}
+	
+	public void addVerifiedOwnershipClaim(Person claimedOwner, Resource res) {
+		internalAddOwnershipClaim(claimedOwner, res, null);
+	}	
 }
 

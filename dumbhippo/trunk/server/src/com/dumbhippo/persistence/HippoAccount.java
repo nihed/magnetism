@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.persistence;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -77,12 +78,32 @@ public class HippoAccount {
 		setClients(clients);
 	}
 	
+	public HippoAccount(String username, Client initialClient) {
+		setUsername(username);
+		HashSet<Client> clients = new HashSet<Client>();
+		clients.add(initialClient);		
+		setClients(clients);
+	}
+
 	public String createClientCookie(String name) {
 		Client client = new Client(name);
 		clients.add(client);
 		return client.getAuthKey();
 	}
 	
+	/**
+	 * Get the "primary" authentication key associated with this account.
+	 * This method should be called only after a new HippoAccount has
+	 * been created.  The results are undefined after multiple clients
+	 * are associated.
+	 * 
+	 * @return an authentication key
+	 */
+	@Transient
+	public String getInitialAuthKey() {
+		return clients.iterator().next().getAuthKey();
+	}
+
 	/**
 	 * Checks whether a given authorization key exists and 
 	 * has not expired.

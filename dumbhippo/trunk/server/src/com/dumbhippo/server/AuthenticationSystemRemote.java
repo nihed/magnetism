@@ -11,6 +11,6 @@ import javax.ejb.Remote;
  */
 @Remote
 public interface AuthenticationSystemRemote {
-
+	
 
 }

@@ -43,4 +43,10 @@ public class XMLBuilder {
 	public String toString() {
 		return builder.toString();
 	}
+	
+	public static String escape(String text) {
+		XMLBuilder builder = new XMLBuilder();
+		builder.appendEscaped(text);
+		return builder.toString();
+	}
 }

@@ -17,9 +17,10 @@ public class Invitation extends DBUnique {
 	private Resource invitee;
 	private Set<Person> inviters;
 	private String authKey;
+	private boolean viewed;
 	
 	protected Invitation() {}
-	
+
 	public Invitation(Resource invitee, Person inviter) {
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
@@ -56,6 +57,14 @@ public class Invitation extends DBUnique {
 	protected void setInviters(Set<Person> inviters) {
 		this.inviters = inviters;
 	}
+
+	public boolean isViewed() {
+		return viewed;
+	}
+
+	public void setViewed(boolean viewed) {
+		this.viewed = viewed;
+	}	
 	
 	@Transient
 	public String getPartialAuthURL() {

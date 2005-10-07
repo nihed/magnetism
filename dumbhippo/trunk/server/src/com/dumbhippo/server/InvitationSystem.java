@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -24,6 +25,15 @@ public interface InvitationSystem {
 	 */
 	public Invitation createGetInvitation(Person inviter, Resource invitee);
 	
+	/**
+	 * Mark an invitation as viewed; this creates an initial HippoAccount
+	 * for the user and such, and grants the client access to the account
+	 * via a shared secret.
+	 * 
+	 * @param invite
+	 * @return an shared secret usable for authentication
+	 */
+	public HippoAccount viewInvitation(Invitation invite);
 	
 	/**
 	 * Send an email to the invitee that inviter has requested them
@@ -32,5 +42,5 @@ public interface InvitationSystem {
 	 * @param invite
 	 * @param inviter
 	 */
-	public void sendEmailNotification(IdentitySpider spider, Invitation invite, Person inviter);
+	public void sendEmailNotification(Invitation invite, Person inviter);
 }
