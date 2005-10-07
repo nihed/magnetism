@@ -140,9 +140,7 @@
     </path>
 
 	<path id="hippoclient.dependencies">
-		<fileset dir="${jboss.path}/client" includes="jbossall-client.jar" />
-		<fileset dir="${jboss.path}/server/default/deploy/ejb3.deployer" includes="*ejb3*.jar" />
-    	<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
+		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar *ejb3*.jar dumbhippo-client.jar" />
 	</path>
 	
     <path id="compile.dependencies">
@@ -238,6 +236,13 @@
         <unjar src="${lib.merge.dir}/whack.jar" dest="${whack.src}">
             <patternset includes="org/xmpp/**/*.java"/>
         </unjar>
+    	
+    	<!-- copy in hippo deps; lib.dist.dir is jars to bundle, lib.merge.dir jars to unpack and merge their classes -->
+    	<copy todir="${lib.dist.dir}">
+			<fileset dir="${jboss.path}/client" includes="jbossall-client.jar" />
+			<fileset dir="${jboss.path}/server/default/deploy/ejb3.deployer" includes="*ejb3*.jar" />
+    		<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
+    	</copy>
     </target>
 
     <!-- compile =============================================================================== -->
