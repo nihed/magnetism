@@ -21,7 +21,7 @@ EOF
 
 cd $targetdir/bin
 
-if x"$JAVA_HOME" != x ; then
+if [ x"$JAVA_HOME" != x ] ; then
     JAVA="$JAVA_HOME/bin/java"
 else
     JAVA=java
