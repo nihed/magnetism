@@ -37,6 +37,7 @@ def main():
 
     available_services = config.list_services()
     services = remaining[1:]
+
     for service in services:
         if service == 'all':
             services = available_services

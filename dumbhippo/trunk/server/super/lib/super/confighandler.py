@@ -15,6 +15,7 @@ SERVICE = 3
 SERVICE_PARAMETER = 4
 SERVICE_MERGE = 5
 SERVICE_DIRECTORY = 6
+SERVICE_REQUIREDSERVICE = 6
     
 class ConfigHandler (xml.sax.ContentHandler):
     def __init__(self, config):
@@ -82,6 +83,11 @@ class ConfigHandler (xml.sax.ContentHandler):
 
                 self.state = SERVICE_MERGE
                 return
+            elif (name == 'requiredService'):
+                (service_name,) = self.parse_attributes(name, attrs, 'service', True)
+                self.service.add_required_service(service_name)
+                self.state = SERVICE_REQUIREDSERVICE
+                return
             elif (name == 'directory'):
                 self.state = SERVICE_DIRECTORY
                 return
@@ -103,6 +109,8 @@ class ConfigHandler (xml.sax.ContentHandler):
             self.service.set_parameter(self.param_name, self.param_value.strip())
             self.state = SERVICE
         elif (self.state == SERVICE_MERGE):
+            self.state = SERVICE
+        elif (self.state == SERVICE_REQUIREDSERVICE):
             self.state = SERVICE
         elif (self.state == SERVICE_DIRECTORY):
             self.state = SERVICE

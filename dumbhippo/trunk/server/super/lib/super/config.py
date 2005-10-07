@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 import string
@@ -5,6 +6,7 @@ import sys
 import xml.sax
 
 from super.confighandler import ConfigHandler;
+import super.service
 
 class Config:
     def __init__(self, superdir, conffile):
@@ -19,6 +21,9 @@ class Config:
             self.load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
 
     def run_action(self, action, services):
+        # Sort services in dependncy order
+        services = self.sort_services(services)
+        
         if action == 'init':
             for service_name in services:
                 print >>sys.stderr, "Initializing", service_name
@@ -32,7 +37,10 @@ class Config:
                 print >>sys.stderr, "Starting", service_name
                 self.services[service_name].start()
         elif action == 'stop':
-            for service_name in services:
+            # Stop services before their dependencies
+            reversed = copy.copy(services)
+            reversed.reverse()
+            for service_name in reversed:
                 print >>sys.stderr, "Stopping", service_name
                 self.services[service_name].stop()
         elif action == 'restart':
@@ -73,6 +81,11 @@ class Config:
 
     def list_services(self):
         return self.services.keys()
+
+    def sort_services(self, service_names):
+        services = map(lambda x: self.services[x], service_names)
+        super.service.sort(services)
+        return map(lambda x: x.name, services)
     
     def set_parameter(self, name, value):
         self.params[name] = value
