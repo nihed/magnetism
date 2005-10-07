@@ -2,18 +2,22 @@
 
 <%@ include file="../beaninit.jspf" %>
 
-%<
-  String auth = request.getParameter("authkey");
+<%
+  String auth = request.getParameter("auth");
   Invitation invite = invitationSystem.lookupInvitationByKey(auth);
+  if (invite == null) {
+     out.println("<h1>invalid invitation</h1>");
+  } else {
   // TODO create this page
   if (invite.isViewed()) {
-    request.redirect("web/invite/viewedalready.jsp");
+    out.println("<h1>invitation already viewed</h1>");
   }
   HippoAccount account = invitationSystem.viewInvitation(invite);
   Person invitee = account.getOwner();
-  PersonView viewedInvitee = spider.getSystemViewpoint(invitee);
+  PersonView viewedInvitee = identitySpider.getSystemViewpoint(invitee);
   pageContext.setAttribute("viewedInvitee", viewedInvitee);
   pageContext.setAttribute("invitation", invite);
+  }
 %>
 
 <html>
@@ -29,11 +33,17 @@
     </p>
     <ul>
         <%
-          Iterator it = invite.getInviters();
+          if (invite != null) {
+          Iterator it = invite.getInviters().iterator();
           while (it.hasNext()) {
-            Person inviter = it.next();
-            PersonView view = spider.getSystemViewpoint(inviter);
-            out.println("<li>" + XMLBuilder.escape(view.getHumanReadableName()) + "</li>");
+            Person inviter = (Person) it.next();
+            PersonView view = identitySpider.getSystemViewpoint(inviter);
+            String readable = view.getHumanReadableName();
+            if (readable == null) {
+              readable = "(unknown)";
+            }
+            out.println("<li>" + XMLBuilder.escape(readable) + "</li>");
+          }
           }
         %>
      </ul>

@@ -22,6 +22,7 @@ public class Invitation extends DBUnique {
 	protected Invitation() {}
 
 	public Invitation(Resource invitee, Person inviter) {
+		this.viewed = false;
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
 		this.inviters.add(inviter);
