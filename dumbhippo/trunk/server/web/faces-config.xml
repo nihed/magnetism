@@ -10,6 +10,7 @@
       <navigation-case>
          <from-outcome>mainpage</from-outcome>
          <to-view-id>/jsf/main.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
    <navigation-rule>
@@ -17,10 +18,12 @@
       <navigation-case>
          <from-outcome>invite</from-outcome>
          <to-view-id>/jsf/invite.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
       <navigation-case>
          <from-outcome>addlink</from-outcome>
          <to-view-id>/jsf/addlink.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
    <navigation-rule>
@@ -28,6 +31,7 @@
       <navigation-case>
          <from-outcome>invitesent</from-outcome>
          <to-view-id>/jsf/invitesent.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
     <navigation-rule>
@@ -35,6 +39,7 @@
       <navigation-case>
          <from-outcome>verify</from-outcome>
          <to-view-id>/jsf/verify.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
    <navigation-rule>
@@ -42,6 +47,7 @@
       <navigation-case>
          <from-outcome>submitverify</from-outcome>
          <to-view-id>/jsf/main.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
    
