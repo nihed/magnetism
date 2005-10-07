@@ -21,7 +21,13 @@ EOF
 
 cd $targetdir/bin
 
-java -server \
+if x"$JAVA_HOME" != x ; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA=java
+fi
+
+"$JAVA" -server \
      -DmessengerHome=$targetdir \
      -Dmessenger.lib.dir=$targetdir/lib \
      -classpath $targetdir/lib/startup.jar \
