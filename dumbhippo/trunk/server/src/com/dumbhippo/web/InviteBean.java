@@ -59,9 +59,6 @@ public class InviteBean {
 		   EmailResource res = identitySpider.getEmail(email);
 		   Invitation invite = invitationSystem.createGetInvitation(inviter, res);
 		   	   
-		   // TODO: for now, stick the authkey in the UserSessionBean so that
-		   //  we can refer to it from the next page (for testing only)
-		   // do something with invitation.partialAuthURL()
 		   */
 		   
 		   return "invitesent";

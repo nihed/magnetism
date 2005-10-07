@@ -12,7 +12,6 @@ import com.dumbhippo.persistence.*;
 
 public class UserSessionBean {
    private Person loggedInUser;
-   private String lastSentAuthKey; // TODO: move this elsewhere
 
    // PROPERTY: userName
    /**
@@ -22,8 +21,5 @@ public class UserSessionBean {
     */
    public Person getLoggedInUser() { return loggedInUser; }
    public void setLoggedInUser(Person newValue) { loggedInUser = newValue; }
-   
-   public String getLastSentAuthKey() { return lastSentAuthKey; }
-   public void setLastSentAuthKey(String newValue) { lastSentAuthKey = newValue; }
 
 }
