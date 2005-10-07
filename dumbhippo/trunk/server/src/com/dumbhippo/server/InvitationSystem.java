@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import java.util.Collection;
+
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.HippoAccount;
@@ -34,6 +36,15 @@ public interface InvitationSystem {
 	 * @return an shared secret usable for authentication
 	 */
 	public HippoAccount viewInvitation(Invitation invite);
+	
+	/**
+	 * Return the names (from the system viewpoint) of the inviting
+	 * people for an invitation.
+	 * 
+	 * @param invite an invitation
+	 * @return a collection of names
+	 */
+	public Collection<String> getInviterNames(Invitation invite);
 	
 	/**
 	 * Send an email to the invitee that inviter has requested them

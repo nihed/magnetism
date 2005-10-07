@@ -32,20 +32,9 @@
       You were invited by:
     </p>
     <ul>
-        <%
-          if (invite != null) {
-          Iterator it = invite.getInviters().iterator();
-          while (it.hasNext()) {
-            Person inviter = (Person) it.next();
-            PersonView view = identitySpider.getSystemViewpoint(inviter);
-            String readable = view.getHumanReadableName();
-            if (readable == null) {
-              readable = "(unknown)";
-            }
-            out.println("<li>" + XMLBuilder.escape(readable) + "</li>");
-          }
-          }
-        %>
+      <c:forEach var="name" items="${invitationSystem.inviterNames}">
+        <li>${name}</li>
+      </c:forEach>
      </ul>
   </body>
  </html>

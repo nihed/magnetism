@@ -8,7 +8,7 @@
 	</head>
 	<body>
 	<h:form>
-		<h3>Congratulations, the invite was sent.</h3>
+		<h3>Congratulations, the invitation to "${invite.fullName}" (${invite.email}) was sent.</h3>
 		<!--  print the link now -->
 		<p>Invite url: <h:commandLink action="verify">
 			<h:outputText value="verify url would go here" />

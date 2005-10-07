@@ -1,5 +1,10 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -12,8 +17,10 @@ import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
+import com.dumbhippo.server.PersonView;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -23,6 +30,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 	@EJB
 	private transient AccountSystem accounts;
+	
+	@EJB
+	private transient IdentitySpider spider;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
 		Invitation ret;
@@ -80,5 +90,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		notifyInvitationViewed(invite);
 		Resource invitationResource = invite.getInvitee();
 		return accounts.createAccountFromResource(invitationResource);
+	}
+
+	public Collection<String> getInviterNames(Invitation invite) {
+		Set<String> names = new HashSet<String>();  
+		for (Person inviter : invite.getInviters()) {
+			PersonView view = spider.getSystemViewpoint(inviter);
+	        String readable = view.getHumanReadableName();
+	        if (readable != null) {    
+	        	names.add(readable);
+	        }
+		}
+		return Collections.unmodifiableCollection(names);
 	}
 }
