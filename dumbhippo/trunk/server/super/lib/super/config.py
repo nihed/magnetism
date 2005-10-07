@@ -48,24 +48,119 @@ class Config:
                 self.services[service_name].build()
         elif action == 'start':
             for service_name in services:
-                print >>sys.stderr, "Starting", service_name
+                print >>sys.stderr, "Checking tree for:", service_name
+                service = self.services[service_name]
+                dirtree = service.create_dirtree()
+                (result, hot_files) = dirtree.check(service.get_target_attributes())
+                if result == super.dirtree.UPDATE_NEEDED:
+                    print >>sys.stderr, "Was out-of-date; rebuilding"
+                    service.clean()
+                    dirtree.write()
+                elif result == super.dirtree.UPDATE_HOT:
+                    print >>sys.stderr, "Was out-of-date; hot updating (before starting)"
+                    dirtree.hot_update(hot_files)
+                else:
+                    print >>sys.stderr, "Was OK"
+                print >>sys.stderr, "Starting:", service_name
                 self.services[service_name].start()
         elif action == 'stop':
             # Stop services before their dependencies
-            reversed = copy.copy(services)
-            reversed.reverse()
-            for service_name in reversed:
+            stop_order = copy.copy(services)
+            stop_order.reverse()
+            for service_name in stop_order:
                 print >>sys.stderr, "Stopping", service_name
                 self.services[service_name].stop()
         elif action == 'restart':
             self.run_action('stop', services)
             self.run_action('start', services)
         elif action == 'reload':
-            self.run_action('stop', services)
-            self.run_action('start', services)
+            all_services = {}
+            running_services = {}
+            stop_services = {}
+            
+            for service_name in services:
+                all_services[service_name] = 1
+                if self.services[service_name].status():
+                    print >>sys.stderr, "%s is running" % service_name
+                    running_services[service_name] = 1
+            rebuild_services = []
+            rebuild_trees = []
+            hot_services = []
+            hot_trees = []
+            hot_file_lists = []
+
+            # Check for services that needs updates
+            for service_name in services:
+                service = self.services[service_name]
+                dirtree = service.create_dirtree()
+                (result, hot_files) = dirtree.check(service.get_target_attributes())
+                if result == super.dirtree.UPDATE_NEEDED:
+                    print >>sys.stderr, "%s needs rebuild" % service_name
+                    rebuild_services.append(service_name)
+                    rebuild_trees.append(dirtree)
+                    if running_services.has_key(service_name):
+                        stop_services[service_name] = 1
+                elif result == super.dirtree.UPDATE_HOT:
+                    print >>sys.stderr, "%s needs hot update for %s" % (service_name, ", ".join(hot_files))
+                    hot_services.append(service_name)
+                    hot_trees.append(dirtree)
+                    hot_file_lists.append(hot_files)
+
+            # Find out what additional services to stop for dependencies
+            # The sorting of services will make transitive dependencies
+            # work.
+            for service_name in services:
+                if running_services.has_key(service_name):
+                    for required in self.services[service_name].required_services.keys():
+                        if all_services.has_key(required) and (not running_services.has_key(required) or
+                                                               stop_services.has_key(required)):
+                            print >>sys.stderr, "Will restart %s because of dependency on %s" % (service_name, required)
+                            
+                            stop_services[service_name] = 1
+                            break
+
+            did_something = False
+                        
+            # Now stop all services that need to be stopped
+            stop_order = copy.copy(services)
+            stop_order.reverse()
+            for service_name in stop_order:
+                if stop_services.has_key(service_name):
+                    print >>sys.stderr, "Stopping %s" % service_name
+                    self.services[service_name].stop()
+                    del running_services[service_name]
+                    did_something = True
+
+            # Do updates
+            for i in range(0, len(rebuild_services)):
+                service = self.services[rebuild_services[i]]
+                print >>sys.stderr, "Rebuilding %s" % service.name
+                service.clean()
+                rebuild_trees[i].write()
+                did_something = True
+
+            for i in range(0, len(hot_services)):
+                service = self.services[hot_services[i]]
+                print >>sys.stderr, "Hot updating %s" % service.name
+                hot_trees[i].hot_update(hot_file_lists[i])
+                did_something = True
+
+            # And start everything that isn't running
+            for service_name in services:
+                if not running_services.has_key(service_name):
+                    print >>sys.stderr, "Starting %s" % service_name
+                    self.services[service_name].start()
+                    did_something = True
+
+            if not did_something:
+                print "Nothing to do"
+            
         elif action == 'status':
             for service_name in services:
-                self.services[service_name].status()
+                if self.services[service_name].status():
+                    print >>sys.stdout, "%s is running" % service_name
+                else:
+                    print >>sys.stdout, "%s is stopped" % service_name
 
     def add_service(self, service):
         """Add service to the list of services."""

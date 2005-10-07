@@ -1,7 +1,14 @@
+import errno
 import os
+import stat
 import sys
 
+import super.dirtree
 from super.dirtree import DirTree
+
+# Flags for <targetAttributes/> element
+IGNORE = 1               # Skip in target when checking for updateness
+PRESERVE = 2             # Don't erase for 'build', just fir 'init' 
 
 class Service:
 
@@ -13,6 +20,7 @@ class Service:
         self.params = {}
         self.required_services = {}
         self.merges = []
+        self.target_attributes = []
 
     def get_name(self):
         """Return the name of the service"""
@@ -25,6 +33,20 @@ class Service:
     def add_required_service(self, service_name):
         """Add a <requiredService/> element to the service."""
         self.required_services[service_name] = 1
+
+    def add_target_attributes(self, pattern, ignore, preserve):
+        flags = 0
+        if ignore:
+            flags |= IGNORE
+        if preserve:
+            flags |= PRESERVE
+
+        (pattern, pattern_flags) = super.dirtree.compile_pattern(pattern)
+            
+        self.target_attributes.append((pattern, pattern_flags, flags))
+
+    def get_target_attributes(self):
+        return self.target_attributes
 
     #### Parameter handling. The following methods make up a common
     #### interface with Config.
@@ -55,23 +77,35 @@ class Service:
         """Return the contents of str with embedded parameters expanded."""
         return self.config.expand(str, self)
 
+    def create_dirtree(self):
+        """Return a DirTree object built for the service"""
+        target = self.expand_parameter('targetdir')
+        dirtree = DirTree(target, self)
+
+        for merge in self.merges:
+            merge.add_to_tree(dirtree)
+
+        return dirtree
+
+    def clean(self):
+        """Remove files from the target tree not marked to preserve"""
+        
+        target = self.expand_parameter('targetdir')
+        self._clean_recurse('', target)
+
     #### Methods for different actions #####
 
     def init(self):
-        # Not yet implemented
-        pass
+        target = self.expand_parameter('targetdir')
+        os.spawnl(os.P_WAIT, '/bin/rm', 'rm', '-rf', target)
+
+        dirtree = self.create_dirtree()
+        dirtree.write()
 
     def build(self):
-        target = self.expand_parameter('targetdir')
+        self.clean()
 
-        # We really should pay attention to attributes set
-        # on <directory/> elements and preserve some parts
-        # of the tree, but for now, we just remove it all.
-        os.spawnl(os.P_WAIT, '/bin/rm', 'rm', '-rf', target)
-        
-        dirtree = DirTree(target, self)
-        for merge in self.merges:
-            merge.add_to_tree(dirtree)
+        dirtree = self.create_dirtree()
         dirtree.write()
 
     def start(self):
@@ -89,9 +123,45 @@ class Service:
         os.system(stopCommand)
         
     def status(self):
-        # Not yet implemented
-        pass
+        statusCommand = self.expand_parameter('statusCommand')
+        return os.system(statusCommand) == 0
 
+    def _clean_recurse(self, path, fullpath):
+        # Worker function for clean()
+        try:
+            s = os.lstat(fullpath)
+            isdir = stat.S_ISDIR(s.st_mode)
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                return True
+            raise
+        
+        if (path != ''):
+            for (pattern, flags, attributes) in self.target_attributes:
+                if (attributes & super.service.PRESERVE) == 0:
+                    continue
+                if (flags & super.dirtree.DIRECTORY_ONLY) != 0:
+                    if not isdir:
+                        continue
+                # NEGATE is meaningless here, ignore
+                if not pattern.match(path):
+                    continue
+                return False
+            
+        if isdir:
+            gotall = True
+            for f in os.listdir(fullpath):
+                if not self._clean_recurse(os.path.join(path, f),
+                                           os.path.join(fullpath, f)):
+                    gotall = False
+            if gotall:
+                os.rmdir(fullpath)
+                return True
+            else:
+                return False
+
+        os.remove(fullpath)
+        return True
    
 def sort(services):
     """Sort services (a list of Service objects) so that

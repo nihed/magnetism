@@ -19,6 +19,7 @@ SERVICE_PARAMETER = 4
 SERVICE_MERGE = 5
 SERVICE_DIRECTORY = 6
 SERVICE_REQUIREDSERVICE = 6
+SERVICE_TARGETATTRIBUTES = 6
     
 class ConfigHandler (xml.sax.ContentHandler):
 
@@ -72,30 +73,35 @@ class ConfigHandler (xml.sax.ContentHandler):
                                                          'expand', False,
                                                          'symlink', False,
                                                          'hot', False)
-                def do_bool(attr, val):
-                    if (val is None):
-                        return False
-                    elif (val == 'yes'):
-                        return True
-                    elif (val == 'no'):
-                        return False
-                    else:
-                        self._report("'%s' must be either 'yes' or 'no'", attr)
-
-                expand = do_bool('expand', expand)
-                symlink = do_bool('symlink', symlink)
-                hot = do_bool('hot', hot)
                 
                 merge = Merge(self.service,
-                              src, dest, exclude, expand, symlink, hot)
+                              src, dest,
+                              exclude,
+                              self._parse_bool('expand', expand),
+                              self._parse_bool('symlink', symlink),
+                              self._parse_bool('hot', hot))
+                                               
                 self.service.add_merge(merge)
 
                 self.state = SERVICE_MERGE
                 return
             elif (name == 'requiredService'):
-                (service_name,) = self._parse_attributes(name, attrs, 'service', True)
+                (service_name,) = self._parse_attributes(name, attrs,
+                                                         'service', True)
                 self.service.add_required_service(service_name)
                 self.state = SERVICE_REQUIREDSERVICE
+                return
+            elif (name == 'targetAttributes'):
+                (pattern, ignore, preserve) = \
+                    self._parse_attributes(name, attrs, 
+                                           'pattern',  True,
+                                           'ignore',   False,
+                                           'preserve', False)
+                
+                self.service.add_target_attributes(pattern,
+                                                   self._parse_bool('ignore', ignore),
+                                                   self._parse_bool('preserve', preserve))
+                self.state = SERVICE_TARGETATTRIBUTES
                 return
             elif (name == 'directory'):
                 self.state = SERVICE_DIRECTORY
@@ -120,6 +126,8 @@ class ConfigHandler (xml.sax.ContentHandler):
         elif (self.state == SERVICE_MERGE):
             self.state = SERVICE
         elif (self.state == SERVICE_REQUIREDSERVICE):
+            self.state = SERVICE
+        elif (self.state == SERVICE_TARGETATTRIBUTES):
             self.state = SERVICE
         elif (self.state == SERVICE_DIRECTORY):
             self.state = SERVICE
@@ -167,3 +175,16 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self._report("Unknown attribute '%s' for <%s/>" % (key, element))
 
         return result
+
+    def _parse_bool(self, attr, val):
+        """Parse a boolean attribute value. Default is False."""
+        if (val is None):
+            return False
+        elif (val == 'yes'):
+            return True
+        elif (val == 'no'):
+            return False
+        else:
+            self._report("'%s' must be either 'yes' or 'no'", attr)
+
+    

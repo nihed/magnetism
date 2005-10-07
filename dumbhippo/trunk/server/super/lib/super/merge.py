@@ -26,7 +26,7 @@ class Merge:
         else:
             dest = None
         tree.add_tree(dest, src,
-                      self.symlink, self.expand,
+                      self.symlink, self.expand, self.hot,
                       excludes)
 
         
