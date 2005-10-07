@@ -1,12 +1,20 @@
 <%@ include file="../prelude.jspf" %>
 
-<%@ include file="../beaninit.jspf" %>      
+<%@ include file="../beaninit.jspf" %>
+
+<%
+  // FIXME this is temporary until we get account from cookie
+  Resource inviterEmail = identitySpider.getEmail(request.getParameter("inviterEmail"));
+  AccountSystem accounts = (AccountSystem) ctx.lookup("com.dumbhippo.server.AccountSystem");
+  HippoAccount acct = accounts.createAccountFromResource(inviterEmail);
+  Person inviter = acct.getOwner();
+%>
            
 <html>
   <head>
     <title>Invitation Sent</title>
   </head>
-  <body>          
+  <body>
 <%
     out.write("<b>Sending...</b>\n");
 
@@ -14,8 +22,6 @@
     
     // FIXME need to validate email param != null and that it is valid rfc822
 	EmailResource res = identitySpider.getEmail(email);
-	// FIXME we should get the person from the auth data
-    Person inviter = identitySpider.getTheMan();
     Invitation invite = invitationSystem.createGetInvitation(inviter, res);
     pageContext.setAttribute("invitation", invite);
     out.write("<b>Invitation sent OK</b>\n");
