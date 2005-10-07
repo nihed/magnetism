@@ -26,7 +26,7 @@ public class AccountSystemBean implements AccountSystem {
 		em.persist(initialClient);
 		Person person = new Person();
 		spider.addVerifiedOwnershipClaim(person, res);
-		HippoAccount account = new HippoAccount(res.getHumanReadableString(), initialClient);
+		HippoAccount account = new HippoAccount("unknown", initialClient);
 		em.persist(account);
 		return account;
 	}
