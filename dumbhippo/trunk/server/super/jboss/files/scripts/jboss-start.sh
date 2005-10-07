@@ -1,10 +1,19 @@
 #!/bin/sh
 
-jbossdir=$1
-targetdir=$2
-jnpPort=$3
+jbossdir=@@jbossdir@@
+targetdir=@@targetdir@@
+jnpPort=@@jnpPort@@
+
+mysqlTargetdir=@@mysqlTargetdir@@
+mysqlOptions=@@mysqlOptions@@
 
 echo "Starting jboss..."
+
+if [ -d $mysqlTargetdir/data/dumbhippo ] ; then : ; else
+    echo "... dumbhippo database doesn't exist, creating ..."
+    /usr/bin/mysqladmin $mysqlOptions create dumbhippo
+fi
+
 $jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null &
 pid=$!
 started=false
