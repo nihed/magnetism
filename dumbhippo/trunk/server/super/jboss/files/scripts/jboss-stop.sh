@@ -1,10 +1,12 @@
 #!/bin/sh
 
 targetdir=@@targetdir@@
+jbossdir=@@jbossdir@@
+jnpPort=@@jnpPort@@
 
-pidfile=$targetdir/run/jive.pid
+pidfile=$targetdir/run/jboss.pid
 
-echo "Stopping Jive Messenger..."
+echo "Stopping JBoss..."
 
 if [ \! -f $pidfile ] ; then 
     echo "... not running"
@@ -13,10 +15,7 @@ fi
 
 pid=`cat $pidfile`
 
-if kill $pid ; then : ; else
-    echo "... not running"
-    exit 0
-fi
+$jbossdir/bin/shutdown.sh -s jnp://localhost:$jnpPort > /dev/null &
 
 timeout=30
 interval=1

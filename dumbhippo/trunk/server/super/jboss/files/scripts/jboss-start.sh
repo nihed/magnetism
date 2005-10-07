@@ -30,6 +30,7 @@ for i in `seq 1 30` ; do
 done
 
 if $started ; then
+    echo $pid > $targetdir/run/jboss.pid
     echo "...sucessfully started"
     exit 0
 elif test i = 30 ; then
