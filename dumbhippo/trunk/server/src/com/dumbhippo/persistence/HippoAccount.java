@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.persistence;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,7 +37,6 @@ public class HippoAccount extends DBUnique {
 	private static final long serialVersionUID = 0L;
 	
 	private Person owner;
-	private String username;
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -44,47 +44,21 @@ public class HippoAccount extends DBUnique {
 	 */
 	private Set<Client> clients;
 	
-	/**
-	 * @return Returns the username.
-	 */
-	public String getUsername() {
-		return username;
-	}
-	
-	/**
-	 * Warning! Warning! The username can change over
-	 * time (users can set it). The never-changing ID 
-	 * for an account is the guid of the owner from 
-	 * getOwner().
-	 * 
-	 * TODO the validation should be better (more permissive), and probably
-	 * throw a checked exception. But just put something safe there for 
-	 * now so we don't confuse Jabber; this has to be a valid JID.
-	 * 
-	 * @param username The username to set.
-	 */
-	public void setUsername(String username) {
-		for (char c : username.toCharArray()) {
-			if (!(Character.isLetter(c) || Character.isDigit(c))) {
-				throw new IllegalArgumentException("Invalid username");
-			}
-		}
-		this.username = username;
-	}
-	
-
-	public HippoAccount(String username, Set<Client> clients) {
-		setUsername(username);
+	public HippoAccount(Person person, Set<Client> clients) {
+		owner = person;
 		setClients(clients);
 	}
 	
-	public HippoAccount(String username, Client initialClient) {
-		setUsername(username);
-		HashSet<Client> clients = new HashSet<Client>();
-		clients.add(initialClient);		
-		setClients(clients);
+	public HippoAccount(Person person, Client initialClient) {
+		owner = person;
+		setClients(Collections.singleton(initialClient));
 	}
 
+	public HippoAccount(Person person) {
+		owner = person;
+		setClients((Set<Client>) Collections.emptySet());
+	}
+	
 	public String createClientCookie(String name) {
 		Client client = new Client(name);
 		clients.add(client);
@@ -127,11 +101,11 @@ public class HippoAccount extends DBUnique {
 	 */
 	@OneToMany
 	protected Set<Client> getClients() {
-		return clients;
+		return Collections.unmodifiableSet(clients);
 	}
 
 	protected void setClients(Set<Client> clients) {
-		this.clients = clients;
+		this.clients = new HashSet<Client>(clients);
 	}
 
 	/**

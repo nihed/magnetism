@@ -1,7 +1,5 @@
 package com.dumbhippo.persistence;
 
-import com.dumbhippo.FullNameTest;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
