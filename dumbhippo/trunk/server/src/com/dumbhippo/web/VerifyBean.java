@@ -21,6 +21,7 @@ public class VerifyBean {
 
 	private String invitedBy; // TODO: should be a collection of some sort\
 
+	private boolean valid;
 	private Collection<String> inviterNames;
 
 	// PROPERTY: authKey
@@ -30,6 +31,13 @@ public class VerifyBean {
 
 	public void setAuthKey(String newValue) {
 		authKey = newValue;
+		System.out.println("validating auth key");
+		Invitation invite = invitationSystem.lookupInvitationByKey(getAuthKey());
+		if (invite != null)
+			inviterNames = invitationSystem.getInviterNames(invite);
+		else
+			inviterNames = null;
+		valid = (inviterNames != null);
 	}
 
 	// PROPERTY: invitedBy
@@ -53,14 +61,15 @@ public class VerifyBean {
 
 	// called to verify user
 	public String doVerify() {
-		Invitation invite = invitationSystem.lookupInvitationByKey(getAuthKey());
-		if (invite == null)
-			return null;
-		inviterNames = invitationSystem.getInviterNames(invite);
+
 		return "mainpage";
 	}
 
 	public Collection<String> getInviterNames() {
 		return inviterNames;
+	}
+
+	public boolean isValid() {
+		return valid;
 	}
 }

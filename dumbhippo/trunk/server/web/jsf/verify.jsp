@@ -10,10 +10,12 @@
 	<h:form>
 		<h3>verify page</h3>
 		<p>This is the verify page for <h:outputText value="#{verify.authKey}"/></p>
-		<p>This should parse out the authKey from the request parameters and
-		mark the user verified or not in the database as appropriate, then
-		tell them how it went.</p>
-		<p>If successful, should print a list of users who invited them.</p>
+		<p>You were invited by:</p>
+		<h:dataTable value="#{verify.inviterNames}" var="name">
+		  <h:column>
+            <h:outputText value="#{name}" />
+          </h:column>
+        </h:dataTable>
 		<p><h:commandButton value="Go back to the main page" action="mainpage" /></p>
 	</h:form>
 	</body>
