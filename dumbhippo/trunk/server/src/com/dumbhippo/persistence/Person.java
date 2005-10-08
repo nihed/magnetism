@@ -14,10 +14,23 @@ public class Person extends GuidPersistable {
 
 	private FullName name;
 	
-	public Person() { super(); }
+	public Person() { 
+		super();
+		name = FullName.parseDatabaseString("");
+	}
 
 	public Person(Guid guid) {
 		super(guid);
+		name = FullName.parseDatabaseString("");
+	}
+	
+	public Person(Person person) {
+		super(person.getGuid());
+		name = person.name; // no copy since FullName is an immutable class
+	}
+
+	public String toString() {
+		return "{Person " + "guid = " + getId() + " name = " + name.getFullName() + "}";
 	}
 	
 	/**

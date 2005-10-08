@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import java.util.List;
+import java.util.Set;
+
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.EmailResource;
@@ -72,6 +75,13 @@ public interface IdentitySpider {
 	 */
 	public long getNumberOfActiveAccounts();
 	
+	/** 
+	 * Gets a list of all active accounts. NOT EFFICIENT. Test suite 
+	 * usage only...
+	 * @return all active accounts in the system
+	 */
+	public Set<HippoAccount> getActiveAccounts();
+	
 	/**
 	 * Note that usernames change over time! i.e. the user can 
 	 * modify their username. The persistent identity is the GUID 
@@ -134,5 +144,5 @@ public interface IdentitySpider {
 	 * @param p the person being viewed
 	 * @return new PersonView object
 	 */
-	public PersonView getSystemViewpoint(Person p);
+	public PersonView getSystemViewpoint(Person p); 
 }

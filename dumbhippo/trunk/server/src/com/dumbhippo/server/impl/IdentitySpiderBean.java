@@ -1,5 +1,10 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -101,6 +106,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		long count = (Long) em.createQuery("SELECT SIZE(*) FROM HippoAccount a").getSingleResult();
 		return count;
 	}
+
+	@SuppressWarnings("unchecked")
+	public Set<HippoAccount> getActiveAccounts() {
+		Query q = em.createQuery("FROM HippoAccount");
+		return new HashSet<HippoAccount>(q.getResultList());
+	}
 	
 	public void setName(Person person, FullName name) {
 		person.setName(name);
@@ -125,6 +136,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void addVerifiedOwnershipClaim(Person claimedOwner, Resource res) {
 		internalAddOwnershipClaim(claimedOwner, res, null);
-	}	
+	}
 }
 

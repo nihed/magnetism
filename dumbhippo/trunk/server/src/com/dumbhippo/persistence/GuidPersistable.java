@@ -27,6 +27,7 @@ public abstract class GuidPersistable implements Serializable {
 	}
 	
 	protected void setGuid(Guid guid) {
+		// no copy since Guid is immutable
 		this.guid = guid;
 	}
 	

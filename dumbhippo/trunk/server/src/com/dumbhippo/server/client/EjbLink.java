@@ -1,6 +1,8 @@
 package com.dumbhippo.server.client;
 
 import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.EmailResource;
@@ -31,8 +33,17 @@ public class EjbLink {
 		return namingContext.lookup(name);
 	}
 	
-	public EjbLink() throws NamingException {
-		namingContext = new InitialContext();
+	private void loadBeans(boolean verbose) throws NamingException {
+		
+		if (verbose) {
+			NamingEnumeration names = namingContext.list("");
+			while (names.hasMore()) {
+				NameClassPair pair = (NameClassPair) names.next();
+				
+				System.err.println(String.format("Name '%s' bound to class '%s'",
+						pair.getName(), pair.getClassName()));
+			}
+		}
 		
 		// we construct these up front so the getters are threadsafe and don't throw NamingException
 		identitySpider = (IdentitySpiderRemote) nameLookup(IdentitySpiderRemote.class);
@@ -41,6 +52,16 @@ public class EjbLink {
 		messengerGlue = (MessengerGlueRemote) nameLookup(MessengerGlueRemote.class);
 		testGlue = (TestGlueRemote) nameLookup(TestGlueRemote.class);
 	}
+	
+	public EjbLink() throws NamingException {
+		namingContext = new InitialContext();
+		loadBeans(false);
+	}
+	
+	public EjbLink(boolean verbose) throws NamingException {
+		namingContext = new InitialContext();
+		loadBeans(verbose);
+	}	
 	
 	public IdentitySpiderRemote getIdentitySpider() {
 		return identitySpider;

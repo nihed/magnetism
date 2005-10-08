@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,7 +33,7 @@ import javax.persistence.Transient;
  * 
  */
 @Entity
-public class HippoAccount extends DBUnique {
+public class HippoAccount extends DBUnique implements Serializable {
 
 	private static final long serialVersionUID = 0L;
 	
@@ -43,6 +44,15 @@ public class HippoAccount extends DBUnique {
 	 * you need to do.
 	 */
 	private Set<Client> clients;
+	
+	
+	/**
+	 * Used only for Hibernate 
+	 */
+	protected HippoAccount() {
+		owner = null;
+		clients = null;
+	}
 	
 	public HippoAccount(Person person, Set<Client> clients) {
 		owner = person;
@@ -62,6 +72,33 @@ public class HippoAccount extends DBUnique {
 		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6302214
 		Set<Client> emptySet = Collections.emptySet();
 		setClients(emptySet);
+	}
+	
+	public HippoAccount(HippoAccount account) {
+		//owner = account.owner;
+		//setClients(account.clients);
+		owner = new Person(account.owner);
+		this.clients = new HashSet<Client>();
+		for (Client c : account.clients) {
+			this.clients.add(new Client(c));
+		}
+	}
+	
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("foo {Account owner = ");
+		if (owner != null)
+			builder.append(owner.toString());
+		else 
+			builder.append("null");
+		builder.append(" clients = { ");
+		for (Client c : clients) {
+			builder.append(c.toString());
+			builder.append(" ");
+		}
+		builder.append("} }");
+		
+		return builder.toString();
 	}
 	
 	public String createClientCookie(String name) {

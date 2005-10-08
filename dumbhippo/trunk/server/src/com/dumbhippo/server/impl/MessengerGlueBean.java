@@ -22,9 +22,37 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private transient IdentitySpider identitySpider;
 	
-	public boolean authenticateJabberUser(String username, String token, String digest) {
+	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
+		Guid guid;
+		try {
+			guid = new Guid(username);
+		} catch (IllegalArgumentException e) {
+			throw new JabberUserNotFoundException("username was not a valid GUID", e);
+		}
 		
-		// TODO do some stuff here and maybe return false sometimes!
+		// note that this person isn't persisted, it's just a temporary token
+		Person person = new Person(guid);
+		
+		HippoAccount account = identitySpider.lookupAccountByPerson(person);
+		if (account == null)
+			throw new JabberUserNotFoundException();
+		
+		assert account.getOwner().getId().equals(username);
+		
+		return account;
+	}
+	
+	public boolean authenticateJabberUser(String username, String token, String digest) {
+		HippoAccount account;
+		
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			// FIXME temporary hack
+			return "admin".equals(username);
+		}
+
+		assert account != null;
 		
 		return true;
 	}
@@ -50,21 +78,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	public JabberUser loadUser(String username) throws JabberUserNotFoundException {
 		
-		Guid guid;
-		try {
-			guid = new Guid(username);
-		} catch (IllegalArgumentException e) {
-			throw new JabberUserNotFoundException("username was not a valid GUID", e);
-		}
-		
-		// note that this person isn't persisted, it's just a temporary token
-		Person person = new Person(guid);
-		
-		HippoAccount account = identitySpider.lookupAccountByPerson(person);
-		if (account == null)
-			throw new JabberUserNotFoundException();
-		
-		assert account.getOwner().getId().equals(username);
+		HippoAccount account = accountFromUsername(username);
 		
 		PersonView view = identitySpider.getSystemViewpoint(account.getOwner());
 		

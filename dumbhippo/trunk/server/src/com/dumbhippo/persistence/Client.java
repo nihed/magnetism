@@ -3,6 +3,8 @@
  */
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 
 import com.dumbhippo.identity20.RandomToken;
@@ -19,7 +21,9 @@ import com.dumbhippo.identity20.RandomToken;
  * 
  */
 @Entity
-public class Client extends DBUnique {
+public class Client extends DBUnique implements Serializable {
+
+	private static final long serialVersionUID = 0L;
 
 	private String authKey;
 
@@ -42,6 +46,16 @@ public class Client extends DBUnique {
 
 	public Client(String name) {
 		init(null, name, System.currentTimeMillis());
+	}
+	
+	public Client(Client client) {
+		init(client.authKey, client.name, client.lastUsed);
+	}
+	
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{Client name = " + name + " authKey " + authKey + " lastUsed " + lastUsed + "}");
+		return builder.toString();
 	}
 	
 	public String getAuthKey() {

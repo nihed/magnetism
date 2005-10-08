@@ -20,7 +20,7 @@ import org.apache.log4j.PropertyConfigurator;
  * 
  */
 public final class GlobalSetup {
-	private static boolean initialized = false;
+	private volatile static boolean initialized = false;
 	
 	static Log logger = LogFactory.getLog(GlobalSetup.class);	
 

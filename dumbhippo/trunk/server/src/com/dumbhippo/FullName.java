@@ -26,7 +26,7 @@ import java.util.List;
  * @author hp
  *
  */
-public class FullName implements Serializable {
+final public class FullName implements Serializable {
 	
 
 	private static final long serialVersionUID = 0L;
@@ -117,6 +117,12 @@ public class FullName implements Serializable {
 		return new FullName(Arrays.asList(split));
 	}
 	
+	public static FullName parseHumanString(String humanEnteredName) {
+		// FIXME we could try to be intelligent or something
+		String[] split = humanEnteredName.split(" ");
+		return new FullName(Arrays.asList(split));
+	}
+	
 	private String concatNames(int start, int end, boolean dbEncoding) {
 		StringBuilder builder = new StringBuilder();
 		for (int i = start; i < end; ++i) {
@@ -147,8 +153,7 @@ public class FullName implements Serializable {
 		
 		return names.equals(otherName.names);
 	}
-
-	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
+	
 	@Override
 	public int hashCode() {
 		if (names == null)
