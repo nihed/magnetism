@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="lib/dom4j-1.6.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/javamail/mailapi.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/javamail/providers.jar"/>
-	<classpathentry kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
+	<classpathentry sourcepath="/smack/source" kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
 	<classpathentry sourcepath="/home/hp/Desktop/Downloads/jboss-4.0.3RC2-src/ejb3/src/main" kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>

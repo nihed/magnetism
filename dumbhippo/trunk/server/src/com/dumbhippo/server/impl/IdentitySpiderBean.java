@@ -1,8 +1,6 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Stateless;
@@ -34,7 +32,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
 	
-	public Person lookupPersonByEmail(EmailResource email) {		
+	public Person lookupPersonByEmail(EmailResource email) {	
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
 	}
 	
@@ -107,7 +105,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return count;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Set<HippoAccount> getActiveAccounts() {
 		Query q = em.createQuery("FROM HippoAccount");
 		return new HashSet<HippoAccount>(q.getResultList());

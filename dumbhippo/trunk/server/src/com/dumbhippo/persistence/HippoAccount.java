@@ -86,7 +86,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("foo {Account owner = ");
+		builder.append("{Account owner = ");
 		if (owner != null)
 			builder.append(owner.toString());
 		else 
