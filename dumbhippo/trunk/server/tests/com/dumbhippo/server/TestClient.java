@@ -27,7 +27,9 @@ public class TestClient {
 	private EjbLink ejb;
 	private TestGlueRemote test;
 	
-	public TestClient() {	
+	public TestClient() {
+		XMPPConnection.DEBUG_ENABLED = true;
+		
 		try {
 			ejb = new EjbLink(true);
 		} catch (NamingException e) {
@@ -64,6 +66,9 @@ public class TestClient {
 			tester = new AccountTester(second, first);
 			thread = new Thread(tester);
 			thread.start();
+			
+			if (XMPPConnection.DEBUG_ENABLED)
+				break;
 		}
 	}
 	
@@ -95,7 +100,7 @@ public class TestClient {
 		private XMPPConnection loginToJabber() {
 			XMPPConnection connection;
 			try {
-				connection = new XMPPConnection("127.0.0.1", 21022);
+				connection = new XMPPConnection("127.0.0.1", 21020);
 				connection.login(account.getOwner().getId(), "");
 			} catch (XMPPException e) {
 				e.printStackTrace();
