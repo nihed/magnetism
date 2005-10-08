@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.persistence.EntityManager;
 
 import com.dumbhippo.persistence.*;
 import com.dumbhippo.server.IdentitySpider;

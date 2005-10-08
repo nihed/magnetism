@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
@@ -34,7 +35,7 @@ public class Invitation extends DBUnique {
 		return invitee;
 	}
 
-	@OneToMany
+	@OneToMany(fetch=FetchType.EAGER)
 	public Set<Person> getInviters() {
 		return inviters;
 	}

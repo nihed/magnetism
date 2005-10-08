@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.EJB;
+import javax.ejb.EJBException;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -75,6 +76,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				"from Invitation as iv where iv.authKey = :key")
 				.setParameter("key", authKey).getSingleResult();
 		} catch (EntityNotFoundException e) {
+			ret = null;
+		} catch (Exception e) { // FIXME !  needed because an org.hibernate. exception gets thrown
+			                    // probably a jboss bug
 			ret = null;
 		}
 		return ret;
