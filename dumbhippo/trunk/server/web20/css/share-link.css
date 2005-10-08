@@ -1,0 +1,53 @@
+@CHARSET "ISO-8859-1";
+
+* {
+	font-family:					Verdana, sans;
+	font-size:						larger;
+	color:							#505050;
+	background-color:				white;
+}
+body {
+	color:							inherit;
+	background-color:				inherit;	
+	margin:							0;
+}
+div {
+
+}
+div.share-link {
+	margin:							1em;
+	color:							inherit;
+	background-color:				white;
+	padding:						1em;
+	width:							40em;
+}
+form {
+	margin:							0;
+}
+div.label {
+	font-size:						small;	
+}
+input.recipients, textarea.description {
+	border:							1px solid black;
+	width:							25em;
+	font-size:						small;
+	font-family:					Monospaced, mono;
+}
+div.url {
+	margin-top:						1em;
+	margin-bottom:					1em;
+	color:							blue;
+	text-decoration:				underline;
+}
+div.recipients {
+	
+}
+div.recipient-list {
+	margin:							2em;	
+}
+div.share {
+	text-align:						right;
+}
+input.share {
+	background-color:				#efefef;
+}
