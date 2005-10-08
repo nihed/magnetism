@@ -57,14 +57,13 @@ public class TestClient {
 			if (!i.hasNext())
 				break; // just ignore the odd one
 			HippoAccount second = i.next();
-
-
+			
 			Runnable tester = new AccountTester(first, second);
 			Thread thread = new Thread(tester);
-			thread.run();
+			thread.start();
 			tester = new AccountTester(second, first);
 			thread = new Thread(tester);
-			thread.run();
+			thread.start();
 		}
 	}
 	
