@@ -22,6 +22,7 @@ public class AccountSystemBean implements AccountSystem {
 
 	public HippoAccount createAccountFromResource(Resource res) {
 		Person person = new Person();
+		em.persist(person);
 		spider.addVerifiedOwnershipClaim(person, res);
 		HippoAccount account = new HippoAccount(person);
 		em.persist(account);

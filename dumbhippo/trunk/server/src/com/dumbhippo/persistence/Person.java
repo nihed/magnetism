@@ -41,7 +41,9 @@ public class Person extends GuidPersistable {
 	 * @return the database-encoded name.
 	 */
 	public String getEncodedName() {
-		return name.getDatabaseString();
+		if (name != null)
+			return name.getDatabaseString();
+		return null;
 	}
 	
 	public void setEncodedName(String text) {
