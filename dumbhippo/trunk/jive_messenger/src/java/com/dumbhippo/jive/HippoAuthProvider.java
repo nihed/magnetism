@@ -16,7 +16,8 @@ public class HippoAuthProvider implements
 	 * @see org.jivesoftware.messenger.auth.AuthProvider#isPlainSupported()
 	 */
 	public boolean isPlainSupported() {
-		return false;
+		// FIXME turn this off
+		return true;
 	}
 
 	/* (non-Javadoc)
@@ -31,7 +32,9 @@ public class HippoAuthProvider implements
 	 */
 	public void authenticate(String username, String password)
 			throws UnauthorizedException {
-		throw new UnsupportedOperationException("Plain text passwords are not supported");
+	
+		// throw new UnsupportedOperationException("Plain text passwords are not supported");
+		// FIXME
 	}
 
 	/* (non-Javadoc)
@@ -42,5 +45,4 @@ public class HippoAuthProvider implements
 		if (!Server.getMessengerGlue().authenticateJabberUser(username, token, digest))
 			throw new UnauthorizedException("Not authorized");
 	}
-
 }
