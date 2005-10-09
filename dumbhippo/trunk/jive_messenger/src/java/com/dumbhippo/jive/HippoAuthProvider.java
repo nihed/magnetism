@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.jive;
 
+import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 
@@ -20,8 +21,7 @@ public class HippoAuthProvider implements
 		
 		Log.debug("isPlainSupported()");
 		
-		// FIXME turn this off
-		return true;
+		return false;
 	}
 
 	/* (non-Javadoc)
@@ -31,7 +31,7 @@ public class HippoAuthProvider implements
 		
 		Log.debug("isDigestSupported()");
 		
-		return false;
+		return true;
 	}
 
 	/* (non-Javadoc)
@@ -42,8 +42,7 @@ public class HippoAuthProvider implements
 	
 		Log.debug("authenticate() username = " + username + " password = " + password);
 		
-		// throw new UnsupportedOperationException("Plain text passwords are not supported");
-		// FIXME
+		throw new UnsupportedOperationException("Plain text passwords are not supported");
 	}
 
 	/* (non-Javadoc)
@@ -56,8 +55,12 @@ public class HippoAuthProvider implements
 		
 		if (HippoUserProvider.ENABLE_ADMIN_USER) {
 			if (username.equals(HippoUserProvider.ADMIN_USERNAME)) {
-				// FIXME check a password
-				return;
+				// FIXME this is not a secure password; the idea is that 
+				// in a production build the admin user is disabled...
+	            String anticipatedDigest = AuthFactory.createDigest(token, "admin");
+	            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
+	                throw new UnauthorizedException("Bad admin password");
+	            }
 			}
 		}
 		
