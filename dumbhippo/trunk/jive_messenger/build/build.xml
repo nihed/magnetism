@@ -140,7 +140,7 @@
     </path>
 
 	<path id="hippoclient.dependencies">
-		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar *ejb3*.jar dumbhippo-client.jar" />
+		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar" />
 	</path>
 	
     <path id="compile.dependencies">
@@ -241,6 +241,7 @@
     	<copy todir="${lib.dist.dir}">
 			<fileset dir="${jboss.path}/client" includes="jbossall-client.jar" />
 			<fileset dir="${jboss.path}/server/default/deploy/ejb3.deployer" includes="*ejb3*.jar" />
+			<fileset dir="${jboss.path}/server/default/deploy/jboss-aop-jdk50.deployer" includes="*jdk50*.jar" />
     		<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
     	</copy>
     </target>
