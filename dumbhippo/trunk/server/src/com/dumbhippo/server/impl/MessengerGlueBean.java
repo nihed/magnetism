@@ -5,6 +5,9 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
@@ -16,12 +19,14 @@ import com.dumbhippo.server.PersonView;
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
 	
+	static Log logger = LogFactory.getLog(MessengerGlueBean.class);
+	
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
 	
 	@EJB
 	private transient IdentitySpider identitySpider;
-	
+		
 	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
 		try {
@@ -48,13 +53,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			account = accountFromUsername(username);
 		} catch (JabberUserNotFoundException e) {
-			// FIXME temporary hack
-			return "admin".equals(username);
+			return false;
 		}
-
+		
 		assert account != null;
 		
-		return true;
+		return account.checkClientCookie(token, digest);
 	}
 	
 

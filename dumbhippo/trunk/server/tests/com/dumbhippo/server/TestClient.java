@@ -14,9 +14,12 @@ import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.Authentication;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 
+import com.dumbhippo.Digest;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.client.EjbLink;
 
@@ -53,9 +56,6 @@ public class TestClient {
 	}
 	
 	public List<Thread> spawnAccountTesters() {
-		HippoAccount account = test.getAnAccount();
-		System.out.println("Got single account " + account.getOwner().getId());
-
 		Set<HippoAccount> accounts = test.getActiveAccounts();
 
 		List<Thread> threads = new ArrayList<Thread>();
@@ -76,7 +76,13 @@ public class TestClient {
 			threads.add(thread);
 			thread.start();
 			
+			// when we're running the GUI, let's not launch a ton 
+			// of connections
 			if (XMPPConnection.DEBUG_ENABLED)
+				break;
+			
+			// keep it sane
+			if (threads.size() > 10)
 				break;
 		}
 		
@@ -87,6 +93,7 @@ public class TestClient {
 		
 		private HippoAccount account;
 		private HippoAccount friend;
+		private String authCookie;
 		private XMPPConnection connection;
 		
 		public AccountTester(HippoAccount account, HippoAccount friend) {
@@ -96,6 +103,10 @@ public class TestClient {
 			System.out.println("Spawning tester for account " +
 					account.getOwner().getId() + " and friend "
 					+ friend.getOwner().getId());
+			
+			authCookie = test.authorizeNewClient(account, "TestClient");
+			
+			System.out.println("   got authCookie = " + authCookie);
 		}
 		
 		public void run() {
@@ -128,23 +139,46 @@ public class TestClient {
 			System.out.println("Smack login timeout " + SmackConfiguration.getPacketReplyTimeout());
 			
 			XMPPConnection connection;
-			try {
+			try {		
 				connection = new XMPPConnection("127.0.0.1", 21020);
 				
 				connection.addPacketListener(this, null);
 				
-				connection.login(account.getOwner().getId(), "foo");
+				// Hardcode use of digest auth; we only work with our own server
+				
+				Authentication auth = new Authentication();
+				auth.setUsername(account.getOwner().getId());
+				
+				Digest digest = new Digest();
+				auth.setDigest(digest.computeDigest(connection.getConnectionID(), authCookie));
+				
+				auth.setResource("Smack"); // not sure if we need to match the rest of smack on this
+				
+				connection.sendPacket(auth);
+				
 			} catch (XMPPException e) {
 				e.printStackTrace();
 				throw new Error("Could not login as " + account.getOwner().getName().getFullName(), e);
 			}
 		
-			System.out.println("Successfully logged in as " + account.getOwner().getName().getFullName());
+			System.out.println("Successfully sent login as " + account.getOwner().getName().getFullName());
 			return connection;
 		}
 
 		public void processPacket(Packet packet) {
 			System.out.println("Got a packet " + packet.toXML());
+			
+			if (packet instanceof IQ) {
+				IQ iq = (IQ) packet;
+				if (iq.getType() == IQ.Type.ERROR)
+					System.err.println(iq.getError());
+				
+				if (iq instanceof Authentication &&
+						iq.getType() == IQ.Type.RESULT) {
+					System.out.println("We're probably authorized now");
+				}
+			}
+			
 			if (connection != null && connection.isAuthenticated())
 				connection.close();
 			synchronized (this) {

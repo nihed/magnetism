@@ -13,5 +13,5 @@ public interface TestGlueRemote {
 
 	public Set<HippoAccount> getActiveAccounts();
 	
-	public HippoAccount getAnAccount();
+	public String authorizeNewClient(HippoAccount account, String name);
 }

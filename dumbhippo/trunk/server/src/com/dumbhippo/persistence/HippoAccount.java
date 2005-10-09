@@ -11,7 +11,8 @@ import java.util.Set;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Transient;
+
+import com.dumbhippo.Digest;
 
 
 /**
@@ -36,7 +37,7 @@ import javax.persistence.Transient;
 public class HippoAccount extends DBUnique implements Serializable {
 
 	private static final long serialVersionUID = 0L;
-	
+		
 	private Person owner;
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
@@ -44,7 +45,6 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * you need to do.
 	 */
 	private Set<Client> clients;
-	
 	
 	/**
 	 * Used only for Hibernate 
@@ -101,27 +101,27 @@ public class HippoAccount extends DBUnique implements Serializable {
 		return builder.toString();
 	}
 	
-	public String createClientCookie(String name) {
+	/** 
+	 * Creates a new client and returns the authorization cookie
+	 * for that client. Note, there is deliberately no API to 
+	 * retrieve an already-existing auth cookie. We can create
+	 * a new one only (though the new one is just as good for logging 
+	 * in as the old ones)
+	 * 
+	 * The "name" field might be the IP address of the client, 
+	 * or the name of the chat app, or "home" or whatever.
+	 *  
+	 * @param name a string that might give some hint about the sort of client
+	 * @return a new auth cookie
+	 */
+	public String authorizeNewClient(String name) {
 		Client client = new Client(name);
 		clients.add(client);
 		return client.getAuthKey();
 	}
 	
 	/**
-	 * Get the "primary" authentication key associated with this account.
-	 * This method should be called only after a new HippoAccount has
-	 * been created.  The results are undefined after multiple clients
-	 * are associated.
-	 * 
-	 * @return an authentication key
-	 */
-	@Transient
-	public String getInitialAuthKey() {
-		return clients.iterator().next().getAuthKey();
-	}
-
-	/**
-	 * Checks whether a given authorization key exists and 
+	 * Checks whether a per-client authorization cookie exists and 
 	 * has not expired.
 	 * 
 	 * @param authKey
@@ -134,7 +134,28 @@ public class HippoAccount extends DBUnique implements Serializable {
 		}
 		return false;
 	}
-
+	
+	/**
+	 * Checks whether a per-client auth cookie exists and 
+	 * has not expired, by prepending the given token 
+	 * to the auth key, doing a SHA-1 hash, converting it 
+	 * to an all-lowercase hex string, and seeing if it's 
+	 * equal to the given digest.
+	 * 
+	 * @param token bytes to prepend to the digest
+	 * @param digest the hex-encoded SHA-1 digest
+	 * @return true if the cookie is OK for authorization
+	 */
+	public boolean checkClientCookie(String token, String digest) {
+		Digest d = new Digest();
+		for (Client client : clients) {
+			String expectedDigest = d.computeDigest(token, client.getAuthKey());
+			if (expectedDigest.equals(digest))
+				return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * This is protected on purpose, so only the persistence 
 	 * stuff can get at it and not you. Stay away.

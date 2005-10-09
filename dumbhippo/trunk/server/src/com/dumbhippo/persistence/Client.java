@@ -12,10 +12,9 @@ import com.dumbhippo.identity20.RandomToken;
 /**
  * 
  * A client is a computer or other device or application that someone uses to
- * access their account. This class is mostly used for authentication and should
- * be kept internal probably; if exported, you'd want to copy into a value class
- * that didn't have the auth key. The auth key is basically a cookie that allows
- * a particular computer or application to log in without a password.
+ * access their account. The main purpose of this class is to store an auth cookie 
+ * for the client so the user doesn't have to log in again, but it 
+ * could also be used for random per-client state.
  * 
  * @author hp
  * 
@@ -54,7 +53,7 @@ public class Client extends DBUnique implements Serializable {
 	
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("{Client name = " + name + " authKey " + authKey + " lastUsed " + lastUsed + "}");
+		builder.append("{Client name = " + name + " authKey " + "???" + " lastUsed " + lastUsed + "}");
 		return builder.toString();
 	}
 	

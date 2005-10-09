@@ -86,24 +86,17 @@ public class TestGlueBean implements TestGlueRemote {
 	}
 
 	public Set<HippoAccount> getActiveAccounts() {
+		// the returned data here includes all the auth cookies...
+		// so you probably shouldn't do this outside of test glue
 		logger.info("getting active accounts spider = " + identitySpider);
 		return identitySpider.getActiveAccounts();
 	}
-
-	public HippoAccount getAnAccount() {
-		logger.info("getting a single account <--");
-		
-		Set<HippoAccount> accounts = getActiveAccounts();
-		
-		logger.info("here <--");
-		
-		HippoAccount copy = new HippoAccount(accounts.iterator().next());
-		
-		logger.info("copy = " + copy.toString() + "orig = " + accounts.iterator().next().toString());
-		
-		/* HippoAccount copy = new HippoAccount(new Person());
-		logger.info("copy = " + copy.toString()); */
-		
-		return copy;
+	
+	public String authorizeNewClient(HippoAccount account, String name) {
+		logger.info("authorizing new client for account " + account + " name = " + name);
+		// Replace account with one attached to persistence context
+		HippoAccount persistedAccount = em.find(HippoAccount.class, account.getId());
+		logger.info("persistedAccount = " + persistedAccount);
+		return persistedAccount.authorizeNewClient(name);
 	}
 }
