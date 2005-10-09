@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -31,6 +32,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
+	
+	@javax.annotation.Resource
+	private transient EJBContext ejbContext;
 	
 	public Person lookupPersonByEmail(EmailResource email) {	
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
@@ -76,18 +80,28 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ret;
 	}
 
+	private PersonView constructPersonView(Person viewpoint, Person p) {
+		PersonView view = (PersonView) ejbContext.lookup(PersonView.class.getCanonicalName());
+		view.init(viewpoint, p);
+		return view;
+	}
+	
 	public PersonView getViewpoint(Person viewpoint, Person p) {
-		return new PersonViewBean(viewpoint, p);
+		return constructPersonView(viewpoint, p);
 	}
 
 	public PersonView getSystemViewpoint(Person p) {
-		return new PersonViewBean(null, p);
+		return constructPersonView(null, p);
 	}
 
 	public HippoAccount lookupAccountByPerson(Person person) {
-		HippoAccount account = em.find(HippoAccount.class, person);
-		
-		return account;
+		HippoAccount ret;
+		try {
+			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.owner = :person").setParameter("person", person).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			ret = null;
+		}
+		return ret;
 	}
 
 	public HippoAccount lookupAccountByUsername(String username) {

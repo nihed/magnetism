@@ -35,4 +35,9 @@
     </defaultProvider>
   </database>
   <setup>true</setup>
+  <log>
+    <debug>
+      <enabled>true</enabled>
+    </debug>
+  </log>
 </jive>

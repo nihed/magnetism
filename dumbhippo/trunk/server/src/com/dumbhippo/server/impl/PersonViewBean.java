@@ -35,7 +35,7 @@ public class PersonViewBean
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
 	
-	public PersonViewBean (Person viewpoint, Person person) {
+	public void init(Person viewpoint, Person person) {
 		this.viewpoint = viewpoint;
 		this.person = person;
 	}
