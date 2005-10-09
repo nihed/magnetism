@@ -58,6 +58,12 @@ public class TestClient {
 	public List<Thread> spawnAccountTesters() {
 		Set<HippoAccount> accounts = test.getActiveAccounts();
 
+		System.out.print("Account IDs: ");
+		for (HippoAccount a : accounts) {
+			System.out.print(a.getId() + " ");
+		}
+		System.out.print("\n");
+		
 		List<Thread> threads = new ArrayList<Thread>();
 		
 		Iterator<HippoAccount> i = accounts.iterator();
@@ -95,6 +101,7 @@ public class TestClient {
 		private HippoAccount friend;
 		private String authCookie;
 		private XMPPConnection connection;
+		private boolean authorized = false;
 		
 		public AccountTester(HippoAccount account, HippoAccount friend) {
 			this.account = account;
@@ -104,7 +111,7 @@ public class TestClient {
 					account.getOwner().getId() + " and friend "
 					+ friend.getOwner().getId());
 			
-			authCookie = test.authorizeNewClient(account, "TestClient");
+			authCookie = test.authorizeNewClient(account.getId(), "TestClient");
 			
 			System.out.println("   got authCookie = " + authCookie);
 		}
@@ -142,7 +149,24 @@ public class TestClient {
 			try {		
 				connection = new XMPPConnection("127.0.0.1", 21020);
 				
+				// FIXME change this whole mess to use PacketCollector
+				
 				connection.addPacketListener(this, null);
+			
+				// Ask what is supported, though we don't care, 
+				// the server seems to like it
+		        Authentication askAuth = new Authentication();
+		        askAuth.setType(IQ.Type.GET);
+		        askAuth.setUsername(account.getOwner().getId());
+				
+				connection.sendPacket(askAuth);
+				
+				// FIXME wait for reply here...
+				
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+				}
 				
 				// Hardcode use of digest auth; we only work with our own server
 				
@@ -155,6 +179,16 @@ public class TestClient {
 				auth.setResource("Smack"); // not sure if we need to match the rest of smack on this
 				
 				connection.sendPacket(auth);
+		
+				while (!authorized && connection.isConnected()) {
+					try {
+						synchronized (this) {
+							wait();
+						}
+					} catch (InterruptedException e) {
+						// ignore
+					}
+				}				
 				
 			} catch (XMPPException e) {
 				e.printStackTrace();
@@ -176,6 +210,7 @@ public class TestClient {
 				if (iq instanceof Authentication &&
 						iq.getType() == IQ.Type.RESULT) {
 					System.out.println("We're probably authorized now");
+					authorized = true;
 				}
 			}
 			

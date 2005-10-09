@@ -1,12 +1,14 @@
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
+
 import javax.persistence.EmbeddableSuperclass;
 import javax.persistence.GeneratorType;
 import javax.persistence.Id;
 
 @EmbeddableSuperclass
-public abstract class DBUnique {
-	protected long id;
+public abstract class DBUnique implements Serializable {
+	private long id;
 	
 	protected DBUnique() {
 	}

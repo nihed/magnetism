@@ -86,7 +86,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("{Account owner = ");
+		builder.append("{Account " + getId() + " owner = ");
 		if (owner != null)
 			builder.append(owner.toString());
 		else 
@@ -102,22 +102,17 @@ public class HippoAccount extends DBUnique implements Serializable {
 	}
 	
 	/** 
-	 * Creates a new client and returns the authorization cookie
-	 * for that client. Note, there is deliberately no API to 
-	 * retrieve an already-existing auth cookie. We can create
+	 * Adds a new client as authorized to login to the 
+	 * account without any other password, etc. 
+	 * Note, there is deliberately no API to 
+	 * retrieve an already-existing client. We can create
 	 * a new one only (though the new one is just as good for logging 
 	 * in as the old ones)
-	 * 
-	 * The "name" field might be the IP address of the client, 
-	 * or the name of the chat app, or "home" or whatever.
-	 *  
-	 * @param name a string that might give some hint about the sort of client
-	 * @return a new auth cookie
+	 *   
+	 * @param client the new client to auth
 	 */
-	public String authorizeNewClient(String name) {
-		Client client = new Client(name);
+	public void authorizeNewClient(Client client) {
 		clients.add(client);
-		return client.getAuthKey();
 	}
 	
 	/**

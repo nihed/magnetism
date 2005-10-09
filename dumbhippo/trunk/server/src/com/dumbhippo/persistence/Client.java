@@ -73,6 +73,13 @@ public class Client extends DBUnique implements Serializable {
 		this.lastUsed = lastUsed;
 	}
 
+	/**
+	 * A string that might give some hint about the sort of client.
+	 * Might be the IP address of the client, 
+	 * or the name of the chat app, or "home" or whatever.
+	 * 
+	 * @return the name
+	 */
 	public String getName() {
 		return name;
 	}

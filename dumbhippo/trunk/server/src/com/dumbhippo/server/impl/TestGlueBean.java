@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.dumbhippo.FullName;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
@@ -92,11 +93,14 @@ public class TestGlueBean implements TestGlueRemote {
 		return identitySpider.getActiveAccounts();
 	}
 	
-	public String authorizeNewClient(HippoAccount account, String name) {
-		logger.info("authorizing new client for account " + account + " name = " + name);
+	public String authorizeNewClient(long accountId, String name) {
+		logger.info("authorizing new client for account " + accountId + " name = " + name);
 		// Replace account with one attached to persistence context
-		HippoAccount persistedAccount = em.find(HippoAccount.class, account.getId());
+		HippoAccount persistedAccount = em.find(HippoAccount.class, accountId);
 		logger.info("persistedAccount = " + persistedAccount);
-		return persistedAccount.authorizeNewClient(name);
+		Client client = new Client(name);
+		em.persist(client);
+		persistedAccount.authorizeNewClient(client);
+		return client.getAuthKey();
 	}
 }
