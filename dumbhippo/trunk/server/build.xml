@@ -10,8 +10,7 @@
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
-	<property name="bundled-classpath" value="dumbhippo-base.jar"/>
-	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
+	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.client" value="" />
 	
@@ -23,17 +22,14 @@
 		<fileset dir="${build.lib}">
 			<include name="**/*.jar" />
 		</fileset>
-		<!-- these two are here instead of in ${lib} since we want
-		     to use the same ones as tomcat, etc. -->
-		<pathelement location="/usr/share/java/servletapi5.jar" />
-		<pathelement location="/usr/share/java/log4j.jar" />
-		<pathelement location="/usr/share/java/javamail/mailapi.jar" />
 		<!-- without this ant won't find the .class files -->
 		<pathelement location="${build}" />
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
 		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
+		<pathelement location="${jboss.root}/client/mail.jar"/>
+		<pathelement location="${jboss.root}/client/log4j.jar"/>			
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
 		</fileset>
@@ -151,7 +147,7 @@
 				<include name="**/persistence/**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath} ${bundled-deps.persistence}" />
+				<attribute name="Class-Path" value="${bundled-classpath}" />
 			</manifest>
 		</jar>
 	</target>
@@ -159,7 +155,6 @@
 	<target name="ear" depends="war,ejb3jar,par,basejar">
 		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
 			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
-			<fileset dir="/usr/share/java/javamail" includes="mailapi.jar,providers.jar" />
 		</ear>
 	</target>
 

@@ -1,6 +1,5 @@
 package com.dumbhippo.web;
 
-import com.dumbhippo.persistence.*;
 
 /** 
  * LoginBean allows a user to login with a username/password, until we decide

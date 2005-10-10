@@ -2,8 +2,6 @@ package com.dumbhippo.server.impl;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,8 +19,10 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	static Log logger = LogFactory.getLog(MessengerGlueBean.class);
 	
+	/*
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
+	*/
 	
 	@EJB
 	private transient IdentitySpider identitySpider;

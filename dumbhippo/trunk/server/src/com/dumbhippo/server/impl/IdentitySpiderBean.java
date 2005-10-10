@@ -121,7 +121,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public Set<HippoAccount> getActiveAccounts() {
 		Query q = em.createQuery("FROM HippoAccount");
-		Set<HippoAccount> accounts = new HashSet<HippoAccount>(q.getResultList());
+		Set<HippoAccount> accounts = new HashSet<HippoAccount>((Set<HippoAccount>) q.getResultList());
 		
 		return accounts;
 	}

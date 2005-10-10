@@ -15,6 +15,7 @@ import com.dumbhippo.identity20.RandomToken;
 
 @Entity
 public class Invitation extends DBUnique {
+	private static final long serialVersionUID = 1L;
 	private Resource invitee;
 	private Set<Person> inviters;
 	private String authKey;

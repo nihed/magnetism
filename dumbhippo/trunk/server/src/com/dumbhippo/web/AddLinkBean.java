@@ -1,6 +1,5 @@
 package com.dumbhippo.web;
 
-import com.dumbhippo.persistence.*;
 
 /**
  * AddLinkBean corresponds to the "add a link" JSF page.

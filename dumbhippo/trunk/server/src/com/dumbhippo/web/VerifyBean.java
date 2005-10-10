@@ -4,10 +4,8 @@ import java.util.Collection;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.persistence.EntityManager;
 
-import com.dumbhippo.persistence.*;
-import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -52,12 +50,9 @@ public class VerifyBean {
 
 	private transient InvitationSystem invitationSystem;
 
-	private transient IdentitySpider identitySpider;
-
 	public VerifyBean() throws NamingException {
 		InitialContext ctx = new InitialContext();
 		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());
-		identitySpider = (IdentitySpider) ctx.lookup(IdentitySpider.class.getName());
 	}
 
 	// called to verify user

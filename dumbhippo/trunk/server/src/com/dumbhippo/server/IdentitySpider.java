@@ -1,6 +1,5 @@
 package com.dumbhippo.server;
 
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;

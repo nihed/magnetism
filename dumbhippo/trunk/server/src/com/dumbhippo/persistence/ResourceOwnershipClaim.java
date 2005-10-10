@@ -19,6 +19,7 @@ import javax.persistence.ManyToOne;
  */
 @Entity
 public class ResourceOwnershipClaim extends DBUnique {
+	private static final long serialVersionUID = 1L;
 	private Person claimedOwner;
 	private Resource resource;
 	private Person assertedBy;
