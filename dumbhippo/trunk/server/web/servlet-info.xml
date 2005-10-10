@@ -9,6 +9,17 @@
 	Blah.
     </description>
     
+    <servlet>
+      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.XmlRpcServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>   
+
+   <servlet-mapping>
+      <servlet-name>XmlRpc Servlet</servlet-name>
+      <url-pattern>/xmlrpc</url-pattern>
+   </servlet-mapping>
+    
     <!-- FIXME jboss specific? -->
 	<listener>
 	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>

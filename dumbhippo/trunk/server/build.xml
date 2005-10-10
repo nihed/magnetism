@@ -5,10 +5,12 @@
 	<property name="target" value="target" />
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
+	<property name="build.lib" value="${target}/lib" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
+	<property name="bundled-classpath" value="dumbhippo-base.jar"/>
 	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.client" value="" />
@@ -16,6 +18,9 @@
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
 		<fileset dir="${lib}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${build.lib}">
 			<include name="**/*.jar" />
 		</fileset>
 		<!-- these two are here instead of in ${lib} since we want
@@ -49,7 +54,7 @@
 
 	<target name="subprojects">
 		<ant dir="xmlrpc" inheritAll="false"/>
-		<copy todir="${buildjar.dir}">
+		<copy todir="${build.lib}">
 			<fileset dir="xmlrpc/target" includes="*.jar"/>
 		</copy>
 	</target>
@@ -117,9 +122,9 @@
 				<include name="**/web/**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-deps.common}" />
+				<attribute name="Class-Path" value="${bundled-classpath}" />
 			</manifest>
-			<lib dir="${buildjar.dir}" includes="xmlrpc-2.0.jar"/>
+			<lib dir="${build.lib}" includes="xmlrpc-2.0.jar"/>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
 			<webinf dir="${web}" includes="**/faces-config.xml" />
 		</war>
@@ -132,7 +137,7 @@
 				<include name="**/server/**/*.properties" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-deps.common}" />
+				<attribute name="Class-Path" value="${bundled-classpath}" />
 			</manifest>
 		</jar>
 	</target>
@@ -146,7 +151,7 @@
 				<include name="**/persistence/**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-deps.common} ${bundled-deps.persistence}" />
+				<attribute name="Class-Path" value="${bundled-classpath} ${bundled-deps.persistence}" />
 			</manifest>
 		</jar>
 	</target>
