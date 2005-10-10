@@ -8,6 +8,11 @@
 	</head>
 	<body>
 	<h:form>
+	    <h3>Your email address</h3>
+		<tr>
+			<td>Name:</td>
+			<td><h:inputText value="#{invite.inviterEmail}" /></td>
+		</tr>	
 		<h3>Please enter the name and email of the user to invite:</h3>
 		<table>
 			<tr>
