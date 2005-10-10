@@ -9,11 +9,9 @@
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
-	<property name="bundled-deps.common" value="dumbhippo-base.jar" />
 	<property name="bundled-deps.persistence" value="mailapi.jar providers.jar" />
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.client" value="" />
-	<property name="bundled-deps.all" value="${bundled-deps.common} ${bundled-deps.persistence} ${bundled-deps.web}" />
 	
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
@@ -49,12 +47,18 @@
 		<mkdir dir="${build.tests}" />
 	</target>
 
-	<target name="compile" depends="init">
+	<target name="subprojects">
+		<ant dir="xmlrpc" inheritAll="false"/>
+		<copy todir="${buildjar.dir}">
+			<fileset dir="xmlrpc/target" includes="*.jar"/>
+		</copy>
+	</target>
+	
+	<target name="compile" depends="init,subprojects">
 		<!-- Compile the java code -->
 		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5">
 			<classpath refid="project.class.path" />
 		</javac>
-
 	</target>
 
 
@@ -115,6 +119,7 @@
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-deps.common}" />
 			</manifest>
+			<lib dir="${buildjar.dir}" includes="xmlrpc-2.0.jar"/>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
 			<webinf dir="${web}" includes="**/faces-config.xml" />
 		</war>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="tests/" kind="src" path="src"/>
+	<classpathentry kind="src" path="xmlrpc/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/servletapi5.jar"/>
@@ -25,5 +26,7 @@
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
 	<classpathentry kind="lib" path="lib/jboss-remoting.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-httpclient-2.0.2.jar"/>
+	<classpathentry kind="output" path="xmlrpc/target/classes"/>
 </classpath>
