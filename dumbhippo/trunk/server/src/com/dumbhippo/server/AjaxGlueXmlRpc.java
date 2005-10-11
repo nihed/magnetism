@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import java.util.List;
+
 
 
 /**
@@ -15,4 +17,5 @@ public interface AjaxGlueXmlRpc {
 
 	public String getStuff();
 
+	List<String> getFriendCompletions(String entryContents);
 }

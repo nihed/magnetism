@@ -2,6 +2,8 @@ package com.dumbhippo.web;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.List;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -10,6 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.persistence.HippoAccount;
@@ -17,9 +21,12 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.AjaxGlue;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
+import com.dumbhippo.web.LoginCookie.NotLoggedInException;
 
 public class XmlRpcServlet extends HttpServlet {
 
+	static Log logger = LogFactory.getLog(XmlRpcServlet.class);
+	
 	private static final long serialVersionUID = 0L;
 
 	private AjaxGlue glue;
@@ -57,6 +64,12 @@ public class XmlRpcServlet extends HttpServlet {
 			
 			e.printStackTrace();
 			throw new ServletException("Authorization failed, please log in again", e);
+		} catch (NotLoggedInException e) {
+			// In an HTML servlet, we would redirect to a login page; but in this
+			// servlet we can't do much, we have no UI
+			
+			e.printStackTrace();
+			throw new ServletException("Authorization failed, please log in again", e);
 		}
 		
 		// glueProxy ONLY Implements AjaxGlueXmlRpc, not anything in AjaxGlue
@@ -71,10 +84,28 @@ public class XmlRpcServlet extends HttpServlet {
 		xmlrpc.addHandler("dumbhippo", glueProxy);
 	}
 
+	private void logRequest(HttpServletRequest request, String type) {
+		logger.info(type + " uri=" + request.getRequestURI());
+		Enumeration names = request.getAttributeNames(); 
+		while (names.hasMoreElements()) {
+			String name = (String) names.nextElement();
+			
+			logger.info("attr " + name + " = " + request.getAttribute(name));
+		}
+		
+		names = request.getParameterNames();		
+		while (names.hasMoreElements()) {
+			String name = (String) names.nextElement();
+			
+			logger.info("param " + name + " = " + request.getAttribute(name));
+		}
+	}
+	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
-
+		logRequest(request, "POST");
+		
 		setup(request);
 
 		byte[] result = xmlrpc.execute(request.getInputStream());
@@ -87,9 +118,30 @@ public class XmlRpcServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setContentType("text/html");
-		OutputStream out = response.getOutputStream();
-		out.write("<h1>XML-RPC Servlet</h1><p>(insert docs for XML-RPC stuff here?)</p>".getBytes());
-		out.flush();
+		logRequest(request, "GET");
+		
+		try {
+			setup(request);
+		} catch (ServletException e) {
+			// FIXME ignoring for now for testing
+		}
+		
+		if (request.getRequestURI().equals("/dumbhippo/xml/people")) {
+			
+			response.setContentType("text/xml");
+			OutputStream out = response.getOutputStream();
+			
+			out.write("<ul>\n".getBytes());
+			List<String> completions = glue.getFriendCompletions("FIXME - contents of entry box");
+			for (String c : completions) {
+				out.write("<li>".getBytes());
+				out.write(c.getBytes());
+				out.write("</li>\n".getBytes());
+			}
+			out.write("<li>Bogus Extra Person Not In Database</li>".getBytes());
+			out.write("<li>Yet Another Bogus Extra Person</li>".getBytes());
+			out.write("</ul>".getBytes());
+			out.flush();
+		}
 	}
 }

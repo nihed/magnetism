@@ -118,6 +118,7 @@
 
 	<target name="war" depends="compile, setupmetadata">
 		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
+			<fileset dir="${web}" includes="**/*.html" />
 			<fileset dir="${web}" includes="**/*.jsp" />
 			<fileset dir="${web}" includes="**/*.jspf" />
 

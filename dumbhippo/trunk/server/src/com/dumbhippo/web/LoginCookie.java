@@ -32,12 +32,19 @@ public class LoginCookie {
 	 * 
 	 */
 	@SuppressWarnings("serial")
-	public class BadTastingException extends Exception {
+	static public class BadTastingException extends Exception {
 		public BadTastingException(String string) {
 			super(string);
 		}
 	};
 
+	@SuppressWarnings("serial")
+	static public class NotLoggedInException extends Exception {
+		public NotLoggedInException(String string) {
+			super(string);
+		}
+	}
+	
 	private void validateHex(String hexStr) throws BadTastingException {
 		if (hexStr.length() % 2 != 0)
 			throw new BadTastingException("invalid hex string length");
@@ -132,8 +139,9 @@ public class LoginCookie {
 	 * @param request the http request
 	 * @return account or null
 	 * @throws BadTastingException 
+	 * @throws NotLoggedInException 
 	 */
-	static public HippoAccount attemptLogin(AccountSystem accountSystem, HttpServletRequest request) throws BadTastingException {
+	static public HippoAccount attemptLogin(AccountSystem accountSystem, HttpServletRequest request) throws BadTastingException, NotLoggedInException {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
 		for (Cookie c : cookies) {
@@ -143,14 +151,20 @@ public class LoginCookie {
 			}
 		}
 		
-		if (loginCookie == null)
-			return null;
+		if (loginCookie == null) {
+			throw new NotLoggedInException("No login cookie set");
+		}
 		
 		HippoAccount account = accountSystem.lookupAccountByPersonId(loginCookie.getPersonId());
+
+		if (account == null) {
+			throw new BadTastingException("Cookie had invalid person ID in it");
+		}
 		
-		if (account.checkClientCookie(loginCookie.getAuthKey()))
+		if (account.checkClientCookie(loginCookie.getAuthKey())) {
 			return account;
-		
-		return null;
+		} else {
+			throw new BadTastingException("Cookie had invalid or expired auth key in it");
+		}
 	}
 }
