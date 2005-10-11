@@ -1,8 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -13,7 +10,6 @@ import javax.persistence.Query;
 import com.dumbhippo.FullName;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;

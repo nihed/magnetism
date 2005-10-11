@@ -6,9 +6,7 @@ import javax.ejb.Stateless;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
