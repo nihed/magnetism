@@ -118,9 +118,8 @@
 				<include name="**/web/**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath}" />
+				<attribute name="Class-Path" value="${bundled-classpath} xmlrpc-2.0.jar" />
 			</manifest>
-			<lib dir="${build.lib}" includes="xmlrpc-2.0.jar"/>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
 			<webinf dir="${web}" includes="**/faces-config.xml" />
 		</war>
@@ -155,6 +154,7 @@
 	<target name="ear" depends="war,ejb3jar,par,basejar">
 		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
 			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
+			<fileset dir="${build.lib}" includes="xmlrpc-2.0.jar" />
 		</ear>
 	</target>
 
