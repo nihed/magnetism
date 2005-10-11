@@ -29,7 +29,7 @@ public class XmlRpcServlet extends HttpServlet {
 		if (xmlrpc != null)
 			return;
 
-		XmlRpcServer xmlrpc = new XmlRpcServer();
+		xmlrpc = new XmlRpcServer();
 
 		try {
 			InitialContext initialContext = new InitialContext();
