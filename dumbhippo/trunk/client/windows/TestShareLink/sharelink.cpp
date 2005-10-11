@@ -109,6 +109,7 @@ main (int argc, char **argv)
 {
     static char *link;
     static char *password;
+    static char *server;
     static char *title;
     static char *username;
     static char **recipients;
@@ -116,6 +117,7 @@ main (int argc, char **argv)
     static const GOptionEntry entries[] = {
 	{ "link",      'l', 0, G_OPTION_ARG_STRING, (gpointer)&link,     "URL of link to share", "URL" },
 	{ "password",  'p', 0, G_OPTION_ARG_STRING, (gpointer)&password, "Login password", "USERNAME" },
+	{ "server",    's', 0, G_OPTION_ARG_STRING, (gpointer)&title,    "Message server", "SERVER" },
 	{ "title",     't', 0, G_OPTION_ARG_STRING, (gpointer)&title,    "Title of URL", "TITLE" },
 	{ "username",  'u', 0, G_OPTION_ARG_STRING, (gpointer)&username, "Login username", "PASSWORD" },
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, (gpointer)&recipients, NULL, NULL },
@@ -128,7 +130,7 @@ main (int argc, char **argv)
     GError *error = NULL;
     g_option_context_parse(context, &argc, &argv, &error);
     if (error) {
-	g_printerr("%s\n", error);
+	g_printerr("%s\n", error->message);
 	return 1;
     }
 
@@ -137,14 +139,21 @@ main (int argc, char **argv)
 	return 1;
     }
 
+    if (!server)
+	server = "messages.dumbhippo.com";
+
     if (!initializeWinSock()) {
 	return 1;  
     }
 
-    //LmConnection *connection = lm_connection_new("messages.dumbhippo.com");
-    LmConnection *connection = lm_connection_new("192.168.1.10");
+    LmConnection *connection = lm_connection_new(server);
     if (!lm_connection_open_and_block(connection, &error)) {
-	g_printerr("Couldn't connect to server: %s\n", error->message);
+	if (error) {
+	    g_printerr("Couldn't connect to server: %s\n", error->message);
+	    g_error_free (error);
+	} else {
+	    g_printerr("Couldn't connect to server\n");
+	}
 	return 1;
     }
     if (!lm_connection_authenticate_and_block(connection, username, password, "sharelink", &error)) {
