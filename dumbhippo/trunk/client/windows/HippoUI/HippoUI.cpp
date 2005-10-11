@@ -429,7 +429,7 @@ HippoUI::loadUserInfo()
 
 retry:
     if (!InternetGetCookieEx(L"http://messages.dumbhippo.com", 
-			     L"userinfo",
+			     L"auth",
 	                     cookieBuffer, &cookieSize,
 			     0,
 			     NULL)) 
@@ -446,7 +446,7 @@ retry:
     if (!cookie)
 	goto out;
 
-    if (!strncmp(cookie, "username=", 9))
+    if (!strncmp(cookie, "auth=", 9))
 	goto out;
 
     for (char *p = cookie + 9; *p;) {
@@ -489,7 +489,7 @@ HippoUI::saveUserInfo()
     else
 	expires="Sun 01-Jan-2006 00:00:00 GMT";
 
-    char *cookieString = g_strdup_printf("userinfo=%s%s%s%s%s;"
+    char *cookieString = g_strdup_printf("auth=%s%s%s%s%s;"
 	                                 "expires=%s;"
                                          "domain=.dumbhippo.com",
 					 username_ ? "name=" : "", 
