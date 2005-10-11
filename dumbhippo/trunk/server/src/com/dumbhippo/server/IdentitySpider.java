@@ -1,11 +1,8 @@
 package com.dumbhippo.server;
 
-import java.util.Set;
-
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
