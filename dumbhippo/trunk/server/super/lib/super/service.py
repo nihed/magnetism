@@ -9,6 +9,8 @@ from super.dirtree import DirTree
 # Flags for <targetAttributes/> element
 IGNORE = 1               # Skip in target when checking for updateness
 PRESERVE = 2             # Don't erase for 'build', just fir 'init' 
+FUZZY = 4                # Do approximate comparisons ... right now,
+                         # defined as "ignore trailing whitespace"
 
 class Service:
 
@@ -34,12 +36,14 @@ class Service:
         """Add a <requiredService/> element to the service."""
         self.required_services[service_name] = 1
 
-    def add_target_attributes(self, pattern, ignore, preserve):
+    def add_target_attributes(self, pattern, ignore, preserve, fuzzy):
         flags = 0
         if ignore:
             flags |= IGNORE
         if preserve:
             flags |= PRESERVE
+        if fuzzy:
+            flags |= FUZZY
 
         (pattern, pattern_flags) = super.dirtree.compile_pattern(pattern)
             

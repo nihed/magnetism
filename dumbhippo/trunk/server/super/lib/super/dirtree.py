@@ -304,6 +304,24 @@ class DirTree:
         else:
             self._copy_file(path)
 
+    def _has_target_attribute(self, path, target_attributes, attribute):
+        """See if path has the given target attribute."""
+
+        for (pattern, flags, attributes) in target_attributes:
+            if (attributes & attribute) == 0:
+                continue
+            if (flags & DIRECTORY_ONLY) != 0:
+                child_dest = os.path.join(self.target, path)
+                child_dest_stat = os.stat(child_dest)
+                if notstat.S_ISDIR(src_stat.st_mode):
+                    continue
+            # NEGATE is meaningless here, ignore
+            if not pattern.match(path):
+                continue
+            return True
+        
+        return False
+
     def _check_symlink(self, path):
         """Check a symlink node"""
         src = self.nodes[path].src
@@ -351,7 +369,7 @@ class DirTree:
 
         return PERMS_OK
         
-    def _check_expand(self, path):
+    def _check_expand(self, path, target_attributes):
         """Check a node that is copied with expansion"""
         src = self.nodes[path].src
         dest = os.path.join(self.target, path)
@@ -371,6 +389,8 @@ class DirTree:
 
         expand_line = self._compile_expand_line()
 
+        fuzzy = self._has_target_attribute(path, target_attributes, super.service.FUZZY)
+            
         ok = True
         while True:
             src_line = f_src.readline()
@@ -379,10 +399,17 @@ class DirTree:
                 # everything ended in the same place
                 break
             
+            if (fuzzy):
+                src_line = src_line.strip()
+                dest_line = dest_line.strip()
+                
             src_line = expand_line(src_line)
             if src_line != dest_line:
                 verbose("%s doesn't match expanded source" % path)
+                print "'%s'" % src_line
+                print "'%s'" % dest_line
                 ok = False
+                break
 
         f_src.close()
         f_dest.close()
@@ -443,23 +470,8 @@ class DirTree:
         
         for f in os.listdir(dest):
             child_path = os.path.join(path, f)
-            if not children.has_key(child_path):
-                ignore = False
-                for (pattern, flags, attributes) in target_attributes:
-                    if (attributes & super.service.IGNORE) == 0:
-                        continue
-                    if (flags & DIRECTORY_ONLY) != 0:
-                        child_dest = os.path.join(self.target, child_path)
-                        child_dest_stat = os.stat(child_dest)
-                        if notstat.S_ISDIR(src_stat.st_mode):
-                            continue
-                    # NEGATE is meaningless here, ignore
-                    if not pattern.match(child_path):
-                        continue
-                    ignore = True
-                    break
-                    
-                if not ignore:
+            if (not children.has_key(child_path) and
+                not self._has_target_attribute (child_path, target_attributes, super.service.IGNORE)):
                     verbose("Extra file in target dir: %s" % child_path)
                     return (UPDATE_NEEDED, None)
         
@@ -487,7 +499,7 @@ class DirTree:
         elif self._test_flag(path, DIR):
             return self._check_dir(path, target_attributes)
         elif self._test_flag(path, EXPAND):
-            return self._check_expand(path)
+            return self._check_expand(path, target_attributes)
         else:
             return self._check_copy(path)
             
