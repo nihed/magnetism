@@ -4,5 +4,5 @@ import javax.ejb.Local;
 
 @Local
 public interface AjaxGlue extends AjaxGlueXmlRpc {
-	public void init(String personId, String authCookie);
+	public void init(String personId);
 }

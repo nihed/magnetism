@@ -1,9 +1,11 @@
 package com.dumbhippo.web;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.AccountSystem;
 
 /**
  * Represents the persistent login information stored on a client for a
@@ -13,8 +15,11 @@ import com.dumbhippo.persistence.HippoAccount;
  * 
  */
 public class LoginCookie {
-	private Cookie cookie;
-
+	
+	static private final String COOKIE_NAME = "auth";
+	
+	private transient Cookie cachedCookie = null;
+	
 	private String personId;
 
 	private String authKey;
@@ -45,34 +50,37 @@ public class LoginCookie {
 		}
 	}
 
-	private void computeCookie(HippoAccount acct, Client client) {
+	private Cookie computeCookie() {
 		StringBuilder val;
 		val = new StringBuilder();
-		String ownerId = acct.getOwner().getId();
-		val.append(ownerId);
 		try {
-			validateHex(ownerId);
+			validateHex(personId);
 		} catch (BadTastingException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Bug! ID of account owner is invalid hex?", e);
 		}
+		val.append(personId);
 		val.append('/');
-		String authKey = client.getAuthKey();
 		try {
 			validateHex(authKey);
 		} catch (BadTastingException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Bug! auth key is invalid hex?", e);
 		}
 		val.append(authKey);
-		cookie = new Cookie("auth", val.toString());
+		Cookie cookie = new Cookie(COOKIE_NAME, val.toString());
 		cookie.setMaxAge(5 * 365 * 24 * 60 * 60);
+		return cookie;
 	}
 
 	public LoginCookie(HippoAccount acct, Client client) {
-		computeCookie(acct, client);
+		personId = acct.getOwner().getId();
+		authKey = client.getAuthKey();
 	}
 
 	public Cookie getCookie() {
-		return cookie;
+		if (cachedCookie == null) {
+			cachedCookie = computeCookie();
+		}
+		return cachedCookie;
 	}
 
 	public LoginCookie(Cookie cookie) throws BadTastingException {
@@ -96,5 +104,53 @@ public class LoginCookie {
 
 	public String getPersonId() {
 		return personId;
+	}
+	
+	public boolean equals(Object other) {
+		if (this == other)
+			return true;
+		if (!(other instanceof LoginCookie))
+			return false;
+		LoginCookie otherCookie = (LoginCookie) other;
+		if (!authKey.equals(otherCookie.authKey))
+			return false;
+		if (!personId.equals(otherCookie.personId))
+			return false;
+		return true;
+	}
+	
+	public int hashCode() {
+		int result = authKey.hashCode();
+		result = 37 * result + personId.hashCode();
+		return result;
+	}
+	
+	/**
+	 * Look for login cookie and find corresponding account; return null 
+	 * if none is found.
+	 * 
+	 * @param request the http request
+	 * @return account or null
+	 * @throws BadTastingException 
+	 */
+	static public HippoAccount attemptLogin(AccountSystem accountSystem, HttpServletRequest request) throws BadTastingException {
+		LoginCookie loginCookie = null;
+		Cookie[] cookies = request.getCookies();
+		for (Cookie c : cookies) {
+			if (c.getName().equals(COOKIE_NAME)) {
+				loginCookie = new LoginCookie(c);
+				break;
+			}
+		}
+		
+		if (loginCookie == null)
+			return null;
+		
+		HippoAccount account = accountSystem.lookupAccountByPersonId(loginCookie.getPersonId());
+		
+		if (account.checkClientCookie(loginCookie.getAuthKey()))
+			return account;
+		
+		return null;
 	}
 }

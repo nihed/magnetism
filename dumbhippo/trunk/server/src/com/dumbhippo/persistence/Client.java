@@ -78,6 +78,8 @@ public class Client extends DBUnique implements Serializable {
 	 * Might be the IP address of the client, 
 	 * or the name of the chat app, or "home" or whatever.
 	 * 
+	 * Probably users can set this, similar to a jabber resource?
+	 * 
 	 * @return the name
 	 */
 	public String getName() {

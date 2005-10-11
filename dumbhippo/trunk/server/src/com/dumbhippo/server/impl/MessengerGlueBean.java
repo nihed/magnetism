@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
@@ -27,20 +28,13 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private transient IdentitySpider identitySpider;
 		
+	@EJB
+	private transient AccountSystem accountSystem;
+	
 	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
-		Guid guid;
-		try {
-			guid = new Guid(username);
-		} catch (IllegalArgumentException e) {
-			throw new JabberUserNotFoundException("username was not a valid GUID", e);
-		}
-		
-		// note that this person isn't persisted, it's just a temporary token
-		Person person = new Person(guid);
-		
-		HippoAccount account = identitySpider.lookupAccountByPerson(person);
+		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
 		if (account == null)
-			throw new JabberUserNotFoundException();
+			throw new JabberUserNotFoundException("username does not exist");
 		
 		assert account.getOwner().getId().equals(username);
 		
@@ -63,7 +57,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 
 	public long getJabberUserCount() {
-		return identitySpider.getNumberOfActiveAccounts();
+		return accountSystem.getNumberOfActiveAccounts();
 	}
 
 

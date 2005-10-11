@@ -93,38 +93,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public PersonView getSystemViewpoint(Person p) {
 		return constructPersonView(null, p);
 	}
-
-	public HippoAccount lookupAccountByPerson(Person person) {
-		HippoAccount ret;
-		try {
-			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.owner = :person").setParameter("person", person).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			ret = null;
-		}
-		return ret;
-	}
-
-	public HippoAccount lookupAccountByUsername(String username) {
-		HippoAccount ret;
-		try {
-			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.username = :username").setParameter("username", username).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			ret = null;
-		}
-		return ret;
-	}
-
-	public long getNumberOfActiveAccounts() {
-		long count = (Long) em.createQuery("SELECT SIZE(*) FROM HippoAccount a").getSingleResult();
-		return count;
-	}
-
-	public Set<HippoAccount> getActiveAccounts() {
-		Query q = em.createQuery("FROM HippoAccount");
-		Set<HippoAccount> accounts = new HashSet<HippoAccount>((Set<HippoAccount>) q.getResultList());
-		
-		return accounts;
-	}
 	
 	public void setName(Person person, FullName name) {
 		person.setName(name);

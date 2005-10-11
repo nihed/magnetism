@@ -55,43 +55,6 @@ public interface IdentitySpider {
 	//public Person lookupPersonByAim(EmailResource email);
 	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
 
-	/**
-	 * Looks up an account by the Person it's associated with. 
-	 * If this function returns non-null, then a Person is 
-	 * registered with our system. If it returns null, then 
-	 * a person is an implicit person we think is out there,
-	 * but hasn't signed up.
-	 * 
-	 * @param person the person
-	 * @return their account or null if they don't have one
-	 */
-	public HippoAccount lookupAccountByPerson(Person person);
-	
-	/** 
-	 * Gets the number of active accounts.
-	 * 
-	 * @return number of active accounts
-	 */
-	public long getNumberOfActiveAccounts();
-	
-	/** 
-	 * Gets a list of all active accounts. NOT EFFICIENT. Test suite 
-	 * usage only...
-	 * @return all active accounts in the system
-	 */
-	public Set<HippoAccount> getActiveAccounts();
-	
-	/**
-	 * Note that usernames change over time! i.e. the user can 
-	 * modify their username. The persistent identity is the GUID 
-	 * of the Person associated with an account. If you need a never-changing
-	 * handle to someone, use their GUID, not their username.
-	 * 
-	 * @param username the username
-	 * @return account for this username, or null
-	 */
-	public HippoAccount lookupAccountByUsername(String username);
-		
 	/** 
 	 * Add a claim by assertedBy that owner is the owner of the resource.
 	 * For this call, the assertedBy can't be null or TheMan, we only 

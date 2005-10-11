@@ -75,7 +75,7 @@ public class VerifyBean {
 		if (valid) {
 			newAccount = accountSystem.createAccountFromResource(invite.getInvitee());
 			
-			Client newClient = accountSystem.addClient(newAccount, computeClientIdentifier());
+			Client newClient = accountSystem.authorizeNewClient(newAccount, computeClientIdentifier());
 			
 			ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 			HttpServletResponse response = (HttpServletResponse) ctx.getResponse();

@@ -90,7 +90,7 @@ public class TestGlueBean implements TestGlueRemote {
 		// the returned data here includes all the auth cookies...
 		// so you probably shouldn't do this outside of test glue
 		logger.info("getting active accounts spider = " + identitySpider);
-		return identitySpider.getActiveAccounts();
+		return accountSystem.getActiveAccounts();
 	}
 	
 	public String authorizeNewClient(long accountId, String name) {
@@ -98,9 +98,7 @@ public class TestGlueBean implements TestGlueRemote {
 		// Replace account with one attached to persistence context
 		HippoAccount persistedAccount = em.find(HippoAccount.class, accountId);
 		logger.info("persistedAccount = " + persistedAccount);
-		Client client = new Client(name);
-		em.persist(client);
-		persistedAccount.authorizeNewClient(client);
+		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
 		return client.getAuthKey();
 	}
 }

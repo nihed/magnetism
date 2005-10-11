@@ -12,8 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.xmlrpc.XmlRpcServer;
 
+import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.AjaxGlue;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
+import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class XmlRpcServlet extends HttpServlet {
 
@@ -25,20 +28,37 @@ public class XmlRpcServlet extends HttpServlet {
 
 	private XmlRpcServer xmlrpc;
 
-	private void setup() throws ServletException {
+	private void setup(HttpServletRequest request) throws ServletException {
 		if (xmlrpc != null)
 			return;
 
-		xmlrpc = new XmlRpcServer();
-
+		AccountSystem accountSystem;
+		
 		try {
 			InitialContext initialContext = new InitialContext();
 			glue = (AjaxGlue) initialContext.lookup(AjaxGlue.class.getCanonicalName());
+			accountSystem = (AccountSystem) initialContext.lookup(AccountSystem.class.getCanonicalName());
 		} catch (NamingException e) {
 			e.printStackTrace();
 			throw new ServletException("Failed to lookup AjaxGlue", e);
 		}
-
+		
+		if (glue == null || accountSystem == null) {
+			throw new IllegalStateException("Failed to get session beans from JNDI");
+		}
+		
+		try {
+			HippoAccount account = LoginCookie.attemptLogin(accountSystem, request);
+			glue.init(account.getOwner().getId());
+		} catch (BadTastingException e) {
+			
+			// In an HTML servlet, we would redirect to a login page; but in this
+			// servlet we can't do much, we have no UI
+			
+			e.printStackTrace();
+			throw new ServletException("Authorization failed, please log in again", e);
+		}
+		
 		// glueProxy ONLY Implements AjaxGlueXmlRpc, not anything in AjaxGlue
 		glueProxy = (AjaxGlueXmlRpc) InterfaceFilterProxyFactory.newProxyInstance(glue,
 				new Class[] { AjaxGlueXmlRpc.class });
@@ -46,6 +66,8 @@ public class XmlRpcServlet extends HttpServlet {
 		if (glueProxy instanceof AjaxGlue)
 			throw new IllegalStateException("Bug! glueProxy implements AjaxGlue");
 
+		// init "xmlrpc" last since it indicates whether we are done setting up
+		xmlrpc = new XmlRpcServer();
 		xmlrpc.addHandler("dumbhippo", glueProxy);
 	}
 
@@ -53,7 +75,7 @@ public class XmlRpcServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
 
-		setup();
+		setup(request);
 
 		byte[] result = xmlrpc.execute(request.getInputStream());
 		response.setContentType("text/xml");
