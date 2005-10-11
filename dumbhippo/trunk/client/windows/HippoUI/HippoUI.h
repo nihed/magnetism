@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoIcon.h"
+#include "HippoPreferences.h"
 #include <loudmouth/loudmouth.h>
 
 struct HippoBrowserInfo
@@ -105,6 +106,7 @@ private:
 
     HippoBSTR currentURL_;
 
+    HippoPreferences preferences_;
     HippoIcon notificationIcon_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch

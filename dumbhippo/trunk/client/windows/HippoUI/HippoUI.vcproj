@@ -122,6 +122,9 @@
 				RelativePath=".\HippoIcon.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoPreferences.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoUI.cpp">
 			</File>
 			<File
@@ -149,6 +152,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoIcon.h">
+			</File>
+			<File
+				RelativePath=".\HippoPreferences.h">
 			</File>
 			<File
 				RelativePath=".\HippoUI.h">

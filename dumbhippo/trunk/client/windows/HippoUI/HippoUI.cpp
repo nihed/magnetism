@@ -234,7 +234,14 @@ HippoUI::create(HINSTANCE instance)
 	    return false;
     }
 
-    lmConnection_ = lm_connection_new("dumbhippo.com");
+    char *messageServer;
+    unsigned int port;
+
+    preferences_.parseMessageServer(&messageServer, &port);
+
+    lmConnection_ = lm_connection_new(messageServer);
+    lm_connection_set_port(lmConnection_, port);
+
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 
 	                                   LM_MESSAGE_TYPE_MESSAGE, 
@@ -244,9 +251,16 @@ HippoUI::create(HINSTANCE instance)
     GError *error = NULL;
     if (!lm_connection_open(lmConnection_, 
 	                    onConnectionOpen, (gpointer)this, NULL, 
-			    &error)) {
-	hippoDebug(L"Couldn't open connection to dumbhippo.com: %s",
-		    error->message); // XXX encoding needs fixage
+			    &error)) 
+    {
+        char *tmp = g_strdup_printf("Couldn't open connection %s:%d%s%s\n",
+    		                    messageServer, port, 
+				    error ? ": " : "",
+				    error ? error->message : "");
+	WCHAR *tmpW = g_utf8_to_utf16(tmp, -1, NULL, NULL, NULL);
+	hippoDebug (tmpW);
+	g_free (tmp);
+	g_free (tmpW);
 
 	lm_connection_close(lmConnection_, NULL);
 	lm_connection_unref(lmConnection_);
@@ -572,8 +586,16 @@ HippoUI::showPreferences()
 	                                       window_, preferencesProc, (::LONG_PTR)this);
 	if (!preferencesDialog_)
 	    return;
-    }
 
+	HippoBSTR messageServer;
+	if (SUCCEEDED (preferences_.getMessageServer(&messageServer)))
+	    SetDlgItemText(preferencesDialog_, IDC_MESSAGE_SERVER, messageServer);
+
+	HippoBSTR webServer;
+	if (SUCCEEDED (preferences_.getWebServer(&webServer)))
+	    SetDlgItemText(preferencesDialog_, IDC_WEB_SERVER, webServer);
+    }
+    
     updateForgetPassword();
     ShowWindow(preferencesDialog_, SW_SHOW);
 }
@@ -932,7 +954,22 @@ HippoUI::preferencesProc(HWND   dialog,
 	    ui->saveUserInfo();
 	    return TRUE;
         case IDOK:
+	    {
+	    WCHAR messageServer[128];
+	    messageServer[0] = '\0';
+	    GetDlgItemText(dialog, IDC_MESSAGE_SERVER, 
+		           messageServer, sizeof(messageServer) / sizeof(messageServer[0]));
+	    ui->preferences_.setMessageServer(HippoBSTR(messageServer));
+
+	    WCHAR webServer[128];
+	    webServer[0] = '\0';
+	    GetDlgItemText(dialog, IDC_WEB_SERVER, 
+		           webServer, sizeof(webServer) / sizeof(webServer[0]));
+	    ui->preferences_.setWebServer(HippoBSTR(webServer));
+
 	    EndDialog(dialog, TRUE);
+	    }
+	    
 	    return TRUE;
 	case IDCANCEL:
 	    EndDialog(dialog, FALSE);
