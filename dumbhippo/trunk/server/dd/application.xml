@@ -17,7 +17,8 @@
     <module>
         <web>
             <web-uri>dumbhippo.war</web-uri>
-            <context-root>dumbhippo</context-root>
+            <!-- empty context-root means to deploy at / -->
+            <context-root></context-root>
         </web>
     </module>
 </application>

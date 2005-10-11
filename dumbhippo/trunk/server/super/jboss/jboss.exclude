@@ -22,6 +22,7 @@
 /deploy/iiop-service.xml
 /deploy/httpha-invoker.sar
 /deploy/jbossweb-ejb.jar
+/deploy/jbossweb-tomcat55.sar/ROOT.war
 /deploy/jms/hajndi-jms-ds.xml
 /deploy/deploy.last
 /deploy/snmp-adaptor.sar
