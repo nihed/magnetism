@@ -17,6 +17,8 @@ import com.dumbhippo.server.AccountSystem;
 public class LoginCookie {
 	
 	static private final String COOKIE_NAME = "auth";
+	static private final String COOKIE_NAME_HEADER = "name=";
+	static private final String COOKIE_PASSWORD_HEADER = "password=";
 	
 	private transient Cookie cachedCookie = null;
 	
@@ -65,15 +67,26 @@ public class LoginCookie {
 		} catch (BadTastingException e) {
 			throw new RuntimeException("Bug! ID of account owner is invalid hex?", e);
 		}
+		val.append(COOKIE_NAME_HEADER);
 		val.append(personId);
-		val.append('/');
+		
+		val.append('&');
+		
 		try {
 			validateHex(authKey);
 		} catch (BadTastingException e) {
 			throw new RuntimeException("Bug! auth key is invalid hex?", e);
 		}
+		val.append(COOKIE_PASSWORD_HEADER);
 		val.append(authKey);
-		Cookie cookie = new Cookie(COOKIE_NAME, val.toString());
+		
+		// Empty value, we set it later
+		Cookie cookie = new Cookie(COOKIE_NAME, "");
+		// This should be supported by sane browsers, and we put things
+		// like = and & in cookie value
+		cookie.setVersion(1);
+		cookie.setValue(val.toString());
+		// 5 years
 		cookie.setMaxAge(5 * 365 * 24 * 60 * 60);
 		return cookie;
 	}
@@ -96,12 +109,22 @@ public class LoginCookie {
 
 	private void computePersonIdLogin(Cookie cookie) throws BadTastingException {
 		String val = cookie.getValue();
-		int slashIdx = val.indexOf('/');
-		if (slashIdx < 0)
-			throw new IllegalArgumentException("invalid cookie value");
-		personId = val.substring(0, slashIdx);
+		if (!cookie.getName().equals(COOKIE_NAME)) {
+			throw new BadTastingException("invalid cookie name \"" + cookie.getName() 
+					+ "\", expected \"" + COOKIE_NAME + "\"");
+		}
+		int ampIdx = val.indexOf('&');
+		if (ampIdx < 0)
+			throw new BadTastingException("invalid cookie value, missing '&'");
+		String personIdStr = val.substring(0, ampIdx);
+		if (!personIdStr.startsWith(COOKIE_NAME_HEADER))
+			throw new BadTastingException("invalid cookie value, missing " + COOKIE_NAME_HEADER);
+		personId = personIdStr.substring(COOKIE_NAME_HEADER.length());
 		validateHex(personId);
-		authKey = val.substring(slashIdx + 1);
+		String authKeyStr = val.substring(ampIdx + 1);
+		if (!authKeyStr.startsWith(COOKIE_PASSWORD_HEADER))
+			throw new BadTastingException("invalid cookie value, missing " + COOKIE_PASSWORD_HEADER);		
+		authKey = authKeyStr.substring(COOKIE_PASSWORD_HEADER.length());
 		validateHex(authKey);
 	}
 
