@@ -122,6 +122,10 @@ public:
 	}
     }
 
+    unsigned int Length() {
+	return ::SysStringLen(m_str);
+    }
+
     operator BSTR () {
 	return m_str;
     }
