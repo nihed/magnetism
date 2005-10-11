@@ -121,6 +121,7 @@
 			<fileset dir="${web}" includes="**/*.html" />
 			<fileset dir="${web}" includes="**/*.jsp" />
 			<fileset dir="${web}" includes="**/*.jspf" />
+			<fileset dir="${web}" includes="**/*.css" />
 
 			<fileset dir="${target}" includes="javascripts/*.js" />
 			

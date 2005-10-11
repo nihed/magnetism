@@ -126,7 +126,7 @@ public class XmlRpcServlet extends HttpServlet {
 			// FIXME ignoring for now for testing
 		}
 		
-		if (request.getRequestURI().equals("/dumbhippo/xml/people")) {
+		if (request.getRequestURI().equals("/xml/people")) {
 			
 			response.setContentType("text/xml");
 			OutputStream out = response.getOutputStream();
