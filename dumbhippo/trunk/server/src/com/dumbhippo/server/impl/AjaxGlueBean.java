@@ -1,15 +1,12 @@
 package com.dumbhippo.server.impl;
 
 import java.io.Serializable;
-import java.util.List;
 
 import javax.ejb.Stateful;
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.server.AjaxGlue;
-import com.dumbhippo.server.InvitationSystem;
 
 @Stateful
 public class AjaxGlueBean implements AjaxGlue, Serializable {
