@@ -6,6 +6,7 @@
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="build.lib" value="${target}/lib" />
+	<property name="build.javascripts" value="${target}/javascripts" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
@@ -47,12 +48,17 @@
 		<mkdir dir="${buildjar.dir}" />
 		<mkdir dir="${reports.tests}" />
 		<mkdir dir="${build.tests}" />
+		<mkdir dir="${build.javascripts}" />
 	</target>
 
 	<target name="subprojects">
 		<ant dir="xmlrpc" inheritAll="false"/>
 		<copy todir="${build.lib}">
 			<fileset dir="xmlrpc/target" includes="*.jar"/>
+		</copy>
+		<copy todir="${build.javascripts}">
+			<fileset dir="scriptaculous/lib" includes="*.js"/>
+			<fileset dir="scriptaculous/src" includes="*.js"/>
 		</copy>
 	</target>
 	
@@ -115,6 +121,8 @@
 			<fileset dir="${web}" includes="**/*.jsp" />
 			<fileset dir="${web}" includes="**/*.jspf" />
 
+			<fileset dir="${target}" includes="javascripts/*.js" />
+			
 			<fileset dir="${build}">
 				<include name="**/web/**/*.class" />
 			</fileset>
