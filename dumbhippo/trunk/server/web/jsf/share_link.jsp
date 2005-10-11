@@ -68,11 +68,6 @@ new Ajax.Autocompleter("friendentry", "friendentry-choices", "${xmlfriendcomplet
 </h:form>
 
 </div>
-<br/>
-
-<h:form>
-
-</h:form>
 
       </body>
   </html>

@@ -33,6 +33,12 @@ input.autocomplete, textarea {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 }
+
+textarea {
+    /* IE extension that avoids text area scrollbar (dynamically expands it) */
+	overflow:                       visible;
+}
+
 div.url {
 	margin-top:						1em;
 	margin-bottom:					1em;
