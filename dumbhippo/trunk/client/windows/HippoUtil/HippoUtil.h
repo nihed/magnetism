@@ -113,8 +113,13 @@ public:
     }
 
     HRESULT CopyTo(BSTR *str) {
-	*str = ::SysAllocString(m_str);
-	return *str ? S_OK : E_OUTOFMEMORY;
+	if (m_str) {
+	    *str = ::SysAllocString(m_str);
+	    return *str ? S_OK : E_OUTOFMEMORY;
+	} else {
+	    *str = NULL;
+	    return S_OK;
+	}
     }
 
     operator BSTR () {
