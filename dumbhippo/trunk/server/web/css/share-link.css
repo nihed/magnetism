@@ -1,8 +1,8 @@
-@CHARSET "ISO-8859-1";
+@CHARSET "UTF-8";
 
 * {
 	font-family:					Verdana, sans;
-	font-size:						larger;
+/*  	font-size:						larger; */
 	color:							#505050;
 	background-color:				white;
 }
@@ -27,9 +27,9 @@ form {
 div.label {
 	font-size:						small;	
 }
-input.recipients, textarea.description {
+input.autocomplete, textarea {
 	border:							1px solid black;
-	width:							25em;
+ 	width:							25em;
 	font-size:						small;
 	font-family:					Monospaced, mono;
 }
@@ -43,7 +43,7 @@ div.recipients {
 	
 }
 div.recipient-list {
-	margin:							2em;	
+	margin:							2em;
 }
 div.share {
 	text-align:						right;
