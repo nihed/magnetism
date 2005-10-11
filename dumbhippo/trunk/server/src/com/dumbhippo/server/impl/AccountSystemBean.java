@@ -5,6 +5,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -32,5 +33,11 @@ public class AccountSystemBean implements AccountSystem {
 	public HippoAccount createAccountFromEmail(String email) {
 		Resource res = spider.getEmail(email);
 		return createAccountFromResource(res);
+	}
+
+	public Client addClient(HippoAccount acct, String identifier) {
+		Client c = new Client(identifier);
+		acct.authorizeNewClient(c);
+		return c;
 	}
 }

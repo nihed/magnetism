@@ -13,7 +13,6 @@ import com.dumbhippo.persistence.*;
 public class UserSessionBean {
    private Person loggedInUser;
 
-   // PROPERTY: userName
    /**
     * Get the currently logged in user.
     * 
@@ -21,5 +20,9 @@ public class UserSessionBean {
     */
    public Person getLoggedInUser() { return loggedInUser; }
    public void setLoggedInUser(Person newValue) { loggedInUser = newValue; }
+   
+   public UserSessionBean() {
+	   
+   }
 
 }

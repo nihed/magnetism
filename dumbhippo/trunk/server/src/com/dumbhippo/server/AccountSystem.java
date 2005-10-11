@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Resource;
 
@@ -28,4 +29,14 @@ public interface AccountSystem {
 	 * @return a new Person
 	 */
 	public HippoAccount createAccountFromResource(Resource res);
+	
+	/**
+	 * Associate a new client with an account, with its own 
+	 * authentication key.
+	 * 
+	 * @param acct account
+	 * @param identifier a "name" for the client, @see Client
+	 * @return a new client object
+	 */
+	public Client addClient(HippoAccount acct, String identifier);
 }
