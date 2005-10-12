@@ -18,6 +18,9 @@ public:
     HRESULT getWebServer(BSTR *server);
     void setWebServer(BSTR server);
 
+    bool getSignIn();
+    void setSignIn(bool signIn);
+
 private:
     void load();
     void save();
@@ -25,10 +28,17 @@ private:
     void loadString(HKEY         key,
 	            const WCHAR *valueName,
 		    BSTR        *str);
+    void loadBool(HKEY         key,
+	          const WCHAR *valueName,
+	          bool        *result);
     void saveString(HKEY         key,
 	            const WCHAR *valueName, 
 	            BSTR         str);
+    void saveBool(HKEY         key,
+	          const WCHAR *valueName, 
+		  bool         value);
 
     HippoBSTR messageServer_;
     HippoBSTR webServer_;
+    bool signIn_;
 };

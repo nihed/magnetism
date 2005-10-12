@@ -21,6 +21,8 @@
 #define IDM_SHARE8                      118
 #define IDM_SHARE9                      119
 #define IDM_SHARESEPARATOR              120
+#define IDM_SIGN_IN                     121
+#define IDM_SIGN_OUT                    122
 #define IDR_MAINFRAME                   128
 #define IDR_NOTIFY                      134
 #define IDI_HIPPOUI                     136
@@ -31,6 +33,8 @@
 #define IDC_SHOWICON                    1005
 #define IDC_FORGETPASSWORD              1006
 #define IDC_LOGOICON                    1007
+#define IDC_MESSAGE_SERVER              1009
+#define IDC_WEB_SERVER                  1010
 #define ID_SHARELINK_PREFERENCES        32771
 #define ID_SHARELINK_EXIT               32772
 #define IDM_RECENT                      32773
@@ -44,7 +48,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        139
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1009
-#define _APS_NEXT_SYMED_VALUE           122
+#define _APS_NEXT_CONTROL_VALUE         1011
+#define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

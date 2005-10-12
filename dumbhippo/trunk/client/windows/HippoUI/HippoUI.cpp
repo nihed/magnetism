@@ -48,18 +48,12 @@ HippoUI::HippoUI()
 
     nextBrowserCookie_ = 0;
 
-    username_ = NULL;
-    password_ = NULL;
     rememberPassword_ = FALSE;
     passwordRemembered_ = FALSE;
 }
 
 HippoUI::~HippoUI()
 {
-    if (username_)
-	g_free(username_);
-    if (password_)
-	g_free(password_);
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -224,49 +218,10 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
-    loadUserInfo();
-
-    if (!username_ || !password_) {
-	bool result = DialogBoxParam(instance_, MAKEINTRESOURCE(IDD_LOGIN), 
-    		                     window_, loginProc, (::LONG_PTR)this) != false;
-    
-	if (!result) // user cancelled
-	    return false;
-    }
-
-    char *messageServer;
-    unsigned int port;
-
-    preferences_.parseMessageServer(&messageServer, &port);
-
-    lmConnection_ = lm_connection_new(messageServer);
-    lm_connection_set_port(lmConnection_, port);
-
-    LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
-    lm_connection_register_message_handler(lmConnection_, handler, 
-	                                   LM_MESSAGE_TYPE_MESSAGE, 
-	                                   LM_HANDLER_PRIORITY_NORMAL);
-    lm_message_handler_unref(handler);
-
-    GError *error = NULL;
-    if (!lm_connection_open(lmConnection_, 
-	                    onConnectionOpen, (gpointer)this, NULL, 
-			    &error)) 
-    {
-        char *tmp = g_strdup_printf("Couldn't open connection %s:%d%s%s\n",
-    		                    messageServer, port, 
-				    error ? ": " : "",
-				    error ? error->message : "");
-	WCHAR *tmpW = g_utf8_to_utf16(tmp, -1, NULL, NULL, NULL);
-	hippoDebug (tmpW);
-	g_free (tmp);
-	g_free (tmpW);
-
-	lm_connection_close(lmConnection_, NULL);
-	lm_connection_unref(lmConnection_);
-	lmConnection_ = NULL;
-
-	return false;
+    im_.setUI(this);
+    if (preferences_.getSignIn()) {
+	if (im_.signIn())
+	    showSignInWindow();
     }
 
     return true;
@@ -275,30 +230,20 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
-    lm_connection_close(lmConnection_, NULL);
-    lm_connection_unref(lmConnection_);
-    lmConnection_ = NULL;
-
     notificationIcon_.destroy();
     
     revokeActive();
 }
 
-// Show a window offering to share the given URL
-void 
-HippoUI::showShareWindow(BSTR url)
+HippoPreferences *
+HippoUI::getPreferences()
 {
-    HippoBSTR shareURL;
-    
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"shareURL.htm"), &shareURL)))
-	return;
+    return &preferences_;
+}
 
-    if (!SUCCEEDED (shareURL.Append(L"?url=")))
-	return;
-
-    if (!SUCCEEDED (shareURL.Append(url)))
-	return;
-
+void
+HippoUI::showAppletWindow(BSTR url)
+{
     HippoPtr<IWebBrowser2> webBrowser;
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
 	             IID_IWebBrowser2, (void **)&webBrowser);
@@ -309,7 +254,7 @@ HippoUI::showShareWindow(BSTR url)
     VARIANT missing;
     missing.vt = VT_NULL;
 
-    webBrowser->Navigate(shareURL,
+    webBrowser->Navigate(url,
    		         &missing, &missing, &missing, &missing);
     webBrowser->put_AddressBar(VARIANT_FALSE);
     webBrowser->put_MenuBar(VARIANT_FALSE);
@@ -338,6 +283,35 @@ HippoUI::showShareWindow(BSTR url)
     }
 
     webBrowser->put_Visible(VARIANT_TRUE);
+}
+
+// Show a window offering to share the given URL
+void 
+HippoUI::showShareWindow(BSTR url)
+{
+    HippoBSTR shareURL;
+    
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/addlink.faces"), &shareURL)))
+	return;
+
+    if (!SUCCEEDED (shareURL.Append(L"?url=")))
+	return;
+
+    if (!SUCCEEDED (shareURL.Append(url)))
+	return;
+
+    showAppletWindow(shareURL);
+}
+
+void
+HippoUI::showSignInWindow()
+{
+    HippoBSTR signInURL;
+    
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/addclient.faces"), &signInURL)))
+	return;
+
+    showAppletWindow(signInURL);
 }
 
 void
@@ -403,6 +377,25 @@ HippoUI::showURL(BSTR url)
     webBrowser->put_Visible(VARIANT_TRUE);
 }
 
+void 
+HippoUI::onAuthFailure()
+{
+    showSignInWindow();
+}
+
+void
+HippoUI::onAuthSuccess()
+{
+}
+
+void 
+HippoUI::onLinkMessage(const WCHAR *url,
+	               const WCHAR *title,
+		       const WCHAR *description)
+{
+    notificationIcon_.showURL(url, title, description);
+}
+
 // Tries to register as the singleton HippoUI, returns true on success
 bool 
 HippoUI::registerActive()
@@ -429,97 +422,6 @@ HippoUI::registerActive()
     SendNotifyMessage(HWND_BROADCAST, uiStartedMessage, 0, 0);
 
     return true;
-}
-
-// Loads username, password from saved cookies
-void
-HippoUI::loadUserInfo()
-{
-    WCHAR staticBuffer[1024];
-    WCHAR *allocBuffer = NULL;
-    WCHAR *cookieBuffer = staticBuffer;
-    DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
-    char *cookie = NULL;
-
-retry:
-    if (!InternetGetCookieEx(L"http://messages.dumbhippo.com", 
-			     L"auth",
-	                     cookieBuffer, &cookieSize,
-			     0,
-			     NULL)) 
-    {
-	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-	    cookieBuffer = allocBuffer = new WCHAR[cookieSize];
-	    if (!cookieBuffer)
-		goto out;
-	    goto retry;
-	}
-    }
-
-    cookie = g_utf16_to_utf8(cookieBuffer, cookieSize, NULL, NULL, NULL);
-    if (!cookie)
-	goto out;
-
-    if (!strncmp(cookie, "auth=", 9))
-	goto out;
-
-    for (char *p = cookie + 9; *p;) {
-	char *next = strchr(p, '&');
-	if (!next)
-	    next = p + strlen(p);
-	if (strncmp(p, "name=", 5) == 0)
-	    username_ = g_strndup(p + 5, next - (p + 5));
-	else if (strncmp(p, "password=", 9) == 0)
-	    password_ = g_strndup(p + 9, next - (p + 9));
-
-	p = next;
-	if (*p) // Skip &
-	    p++;
-    }
-
-    if (password_) {
-	passwordRemembered_ = TRUE;
-	updateForgetPassword();
-    }
-
-out:
-    g_free (cookie);
-    delete[] allocBuffer;
-}
-
-void
-HippoUI::saveUserInfo()
-{
-    char *expires;
-    char *password;
-
-    if (rememberPassword_)
-	password = password_;
-    else
-	password = NULL;
-
-    if (!username_ && !password) 
-	expires="Sun 10-Jun-1974 00:00:00 GMT"; // delete with expires in the past
-    else
-	expires="Sun 01-Jan-2006 00:00:00 GMT";
-
-    char *cookieString = g_strdup_printf("auth=%s%s%s%s%s;"
-	                                 "expires=%s;"
-                                         "domain=.dumbhippo.com",
-					 username_ ? "name=" : "", 
-					 username_ ? username_ : "",
-					 (username_ && password) ? "&" : "",
-					 password ? "password=" : "",
-					 password ? password : "",
-					 expires);
-    WCHAR *cookieStringW = g_utf8_to_utf16(cookieString, -1, NULL, NULL, NULL);
-
-    InternetSetCookie(L"http://dumbhippo.com", NULL, cookieStringW);
-    passwordRemembered_ = password != NULL;
-    updateForgetPassword();
-
-    g_free (cookieStringW);
-    g_free(cookieString);
 }
 
 // Removes previous registration via registerActive()
@@ -569,16 +471,6 @@ HippoUI::createWindow(void)
 }
 
 void 
-HippoUI::onPasswordDialogLogin(const WCHAR *username,
-	                       const WCHAR *password,
-			       bool         rememberPassword)
-{
-    username_ = g_utf16_to_utf8(username, -1, NULL, NULL, NULL);
-    password_ = g_utf16_to_utf8(password, -1, NULL, NULL, NULL);
-    rememberPassword_ = rememberPassword;
-}
-
-void 
 HippoUI::showPreferences()
 {
     if (!preferencesDialog_) {
@@ -611,98 +503,6 @@ HippoUI::updateForgetPassword()
 	EnableWindow(forgetPassButton, passwordRemembered_);
 }
 
-void 
-HippoUI::onConnectionOpen (LmConnection *connection,
-			   gboolean      success,
-			   gpointer      userData)
-{
-    HippoUI *ui = (HippoUI *)userData;
-
-    if (success) {
-	if (ui->username_ && ui->password_) {
-	    GError *error = NULL;
-	    if (!lm_connection_authenticate(connection, 
-	                                    ui->username_, ui->password_, "DumbHippo",
-					    onConnectionAuthenticate, userData, NULL, &error)) {
-		hippoDebug(L"Failed to authenticate: %s", error->message);
-		g_error_free(error);
-	    }
-	}
-    } else {
-	hippoDebug(L"Failed to connect to server");
-    }
-}
-
-void 
-HippoUI::onConnectionAuthenticate (LmConnection *connection,
-			           gboolean      success,
-	    			   gpointer      userData)
-{
-    HippoUI *ui = (HippoUI *)userData;
-
-    if (success) {
-        ui->saveUserInfo();
-
-	LmMessage *message;
-	message = lm_message_new_with_sub_type(NULL, 
-	                                       LM_MESSAGE_TYPE_PRESENCE, 
-					       LM_MESSAGE_SUB_TYPE_AVAILABLE);
-
-	GError *error = NULL;
-	lm_connection_send(connection, message, &error);
-	if (error) {
-		hippoDebug(L"Failed to send presence: %s", error->message);
-		g_error_free(error);
-	}
-	lm_message_unref(message);
-    } else {
-	hippoDebug(L"Couldn't authenticate");
-    }
-}
-
-LmHandlerResult 
-HippoUI::onMessage (LmMessageHandler *handler,
-                    LmConnection     *connection,
-	            LmMessage        *message,
-	            gpointer          userData)
-{
-    HippoUI *ui = (HippoUI *)userData;
-
-    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-	for (LmMessageNode *child = message->node->children; child; child = child->next) {
-	    const char *ns = lm_message_node_get_attribute(child, "xmlns");
-	    // We really should allow xmlns="foo:http://...", but lazy for now
-	    if ((ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0) &&
-		(child->name && strcmp (child->name, "link") == 0)) 
-	    {
-		const WCHAR *urlW = NULL;
-		const WCHAR *titleW = NULL;
-		const WCHAR *descriptionW = NULL;
-
-	        const char *url = lm_message_node_get_attribute(child, "href");
-	        if (url) {
-		    urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
-		}
-		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
-		if (titleNode && titleNode->value)
-		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
-
-		LmMessageNode *descriptionNode = lm_message_node_get_child(child, "description");
-		if (descriptionNode && descriptionNode->value)
-		    descriptionW = g_utf8_to_utf16(descriptionNode->value, -1, NULL, NULL, NULL);
-
-		ui->notificationIcon_.showURL(urlW, titleW, descriptionW);
-
-		g_free((void *)urlW);
-		g_free((void *)titleW);
-		g_free((void *)descriptionW);
-	    }   
-	}
-    }
-
-    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-}
-
 static bool
 urlIsLocal(const WCHAR *url)
 {
@@ -722,10 +522,10 @@ HippoUI::updateMenu()
 {
     HMENU popupMenu = GetSubMenu(menu_, 0);
 
-    // Delete previous "Share..." menuitem
+    // Delete previous dynamic menuitems
     while (TRUE) {
     	int id = GetMenuItemID(popupMenu, 0);
-	if (id >= IDM_SHARE0 && id <= IDM_SHARESEPARATOR)
+        if (id >= IDM_SHARE0 && id <= IDM_SIGN_OUT)
 	    RemoveMenu(popupMenu, 0, MF_BYPOSITION);
 	else
 	    break;
@@ -770,7 +570,33 @@ HippoUI::updateMenu()
 	info.fType = MFT_SEPARATOR;
 	info.wID = IDM_SHARESEPARATOR;
 
-	InsertMenuItem(popupMenu, pos, TRUE, &info);
+	InsertMenuItem(popupMenu, pos++, TRUE, &info);
+    }
+
+    // Insert the sign in / sign out menu item
+    {
+	MENUITEMINFO info;
+        WCHAR menubuf[64];
+
+	memset((void *)&info, 0, sizeof(MENUITEMINFO));
+	info.cbSize = sizeof(MENUITEMINFO);
+
+	info.fMask = MIIM_ID | MIIM_DATA | MIIM_STRING;
+	info.fType = MFT_STRING;
+	info.wID = IDM_SIGN_IN;
+
+	HippoIM::State state = im_.getState();
+	if (state == HippoIM::SIGNED_OUT || state == HippoIM::SIGN_IN_WAIT) {
+	    info.wID = IDM_SIGN_IN;
+	    StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Sign In..."));
+	} else {
+	    info.wID = IDM_SIGN_OUT;
+	    StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Sign Out"));
+	}
+
+	info.dwTypeData = menubuf;
+	    
+	InsertMenuItem(popupMenu, pos++, TRUE, &info);
     }
 }
 
@@ -778,42 +604,32 @@ HippoUI::updateMenu()
 // We could alternatively use res: URIs and embed the HTML files in the
 // executable, but this is probably more flexible
 HRESULT
-HippoUI::getAppletURL(BSTR filename, BSTR *url)
+HippoUI::getAppletURL(BSTR appletName, BSTR *result)
 {
     HRESULT hr;
+    HippoBSTR webServer;
+    HippoBSTR url(L"http://");
 
-    // XXX can theoretically truncate if we have a \?\\foo\bar\...
-    // path which isn't limited to the short Windows MAX_PATH
-    // Could use dynamic allocation here
-    WCHAR baseBuf[MAX_PATH];
+    if (!url)
+	return E_OUTOFMEMORY;
 
-    if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
-	return E_FAIL;
-
-    for (size_t i = wcslen(baseBuf); i > 0; i--)
-	if (baseBuf[i - 1] == '\\')
-	    break;
-
-    if (i == 0)  // No \ in path?
-	return E_FAIL;
-
-    HippoBSTR path((UINT)i, baseBuf);
-    hr = path.Append(L"applets\\");
-    if (!SUCCEEDED (hr))
+    hr = preferences_.getWebServer(&webServer);
+    if (FAILED (hr))
 	return hr;
 
-    hr = path.Append(filename);
-    if (!SUCCEEDED (hr))
+    hr = url.Append(webServer);
+    if (FAILED (hr))
 	return hr;
 
-    WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
-    DWORD urlLength = INTERNET_MAX_URL_LENGTH;
-    hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
-    if (!SUCCEEDED (hr))
+    hr = url.Append(L"/");
+    if (FAILED (hr))
 	return hr;
 
-    *url = SysAllocString(urlBuf);
-    return *url ? S_OK : E_OUTOFMEMORY;
+    hr = url.Append(appletName);
+    if (FAILED (hr))
+	return hr;
+
+    return url.CopyTo(result);
 }
 
 bool
@@ -844,6 +660,13 @@ HippoUI::processMessage(UINT   message,
 
 	switch (wmId)
 	{
+	case IDM_SIGN_IN:
+	    if (im_.signIn())
+		showSignInWindow();
+	    return true;
+	case IDM_SIGN_OUT:
+	    im_.signOut();
+	    return true;
 	case IDM_PREFERENCES:
 	    showPreferences();
 	    return true;
@@ -876,59 +699,6 @@ HippoUI::windowProc(HWND   window,
 }
 
 INT_PTR CALLBACK 
-HippoUI::loginProc(HWND   dialog,
-      	           UINT   message,
-		   WPARAM wParam,
-		   LPARAM lParam)
-{
-    if (message == WM_INITDIALOG) {
-	HippoUI *ui = (HippoUI *)lParam;
-	hippoSetWindowData<HippoUI>(dialog, ui);
-
-	if (ui->username_) {
-	    WCHAR *usernameW = g_utf8_to_utf16(ui->username_, -1, NULL, NULL, NULL);
-	    if (usernameW)
-		SetDlgItemText(dialog, IDC_USERNAME, usernameW);
-	    g_free(usernameW);
-	}
-
-	return TRUE;
-    }
-
-    HippoUI *ui = hippoGetWindowData<HippoUI>(dialog);
-    if (!ui)
-	return FALSE;
-
-    switch (message) {
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
-        case IDOK:
-	    {
-	    WCHAR username[128];
-	    username[0] = '\0';
-	    GetDlgItemText(dialog, IDC_USERNAME, username, sizeof(username) / sizeof(username[0]));
-
-	    WCHAR password[128];
-	    password[0] = '\0';
-	    GetDlgItemText(dialog, IDC_PASSWORD, password, sizeof(password) / sizeof(password[0]));
-
-	    bool rememberPass = (IsDlgButtonChecked(dialog, IDC_REMEMBERPASS) == BST_CHECKED);
-
-	    ui->onPasswordDialogLogin(username, password, rememberPass);
-
-	    EndDialog(dialog, TRUE);
-	    return TRUE;
-	    }
-	case IDCANCEL:
-	    EndDialog(dialog, FALSE);
-	    return TRUE;
-	}
-    }
-
-    return FALSE;
-}
-
-INT_PTR CALLBACK 
 HippoUI::preferencesProc(HWND   dialog,
       	                 UINT   message,
 		         WPARAM wParam,
@@ -949,9 +719,7 @@ HippoUI::preferencesProc(HWND   dialog,
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_FORGETPASSWORD:
-	    ui->passwordRemembered_ = FALSE;
-	    ui->password_ = NULL;
-	    ui->saveUserInfo();
+	    hippoDebug(L"Forget the password");
 	    return TRUE;
         case IDOK:
 	    {

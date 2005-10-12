@@ -12,6 +12,8 @@ static const WCHAR *DUMBHIPPO_SUBKEY = L"Software\\DumbHippo\\Client";
 
 HippoPreferences::HippoPreferences()
 {
+    signIn_ = true;
+
     load();
 }
 
@@ -86,6 +88,23 @@ HippoPreferences::setWebServer(BSTR server)
     save();
 }
 
+
+bool 
+HippoPreferences::getSignIn()
+{
+    return signIn_;
+}
+
+void
+HippoPreferences::setSignIn(bool signIn)
+{
+    signIn = signIn != false;
+    if (signIn != signIn_) {
+	signIn_ = signIn;
+	save();
+    }
+}
+
 void
 HippoPreferences::loadString(HKEY         key,
 			     const WCHAR *valueName,
@@ -103,13 +122,26 @@ HippoPreferences::loadString(HKEY         key,
 }
 
 void
+HippoPreferences::loadBool(HKEY         key,
+			   const WCHAR *valueName,
+			   bool        *value)
+{
+    long result;
+    DWORD tmp;
+    DWORD bufSize = sizeof(DWORD);
+    DWORD type;
+
+    result = RegQueryValueEx(key, valueName, NULL, 
+			     &type, (BYTE *)&tmp, &bufSize);
+    if (result == ERROR_SUCCESS && type == REG_DWORD)
+	*value = tmp != 0;
+}
+
+void
 HippoPreferences::load()
 {
     LONG result;
     HKEY key;
-
-
-
 
     result = RegOpenKeyEx(HKEY_CURRENT_USER, DUMBHIPPO_SUBKEY,
 	                  0, KEY_READ, 
@@ -121,6 +153,8 @@ HippoPreferences::load()
     loadString(key, L"MessageServer", &messageServer_);
     webServer_ = NULL;
     loadString(key, L"WebServer", &webServer_);
+    signIn_ = true;
+    loadBool(key, L"SignIn", &signIn_);
 
     RegCloseKey(key);
 }
@@ -143,6 +177,17 @@ HippoPreferences::saveString(HKEY         key,
 }
 
 void
+HippoPreferences::saveBool(HKEY         key,
+			   const WCHAR *valueName, 
+			   bool         value)
+{
+    DWORD tmp = value;
+
+    RegSetValueEx(key, valueName, NULL, REG_SZ,
+	          (const BYTE *)&tmp, sizeof(DWORD));
+}
+
+void
 HippoPreferences::save(void)
 {
     LONG result;
@@ -156,6 +201,7 @@ HippoPreferences::save(void)
 
     saveString(key, L"MessageServer", messageServer_);
     saveString(key, L"WebServer", webServer_);
+    saveBool(key, L"SignIn", signIn_);
 
     RegCloseKey(key);
 }

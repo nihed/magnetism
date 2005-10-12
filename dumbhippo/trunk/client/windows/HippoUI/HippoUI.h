@@ -8,7 +8,7 @@
 #include <HippoArray.h>
 #include "HippoIcon.h"
 #include "HippoPreferences.h"
-#include <loudmouth/loudmouth.h>
+#include "HippoIM.h"
 
 struct HippoBrowserInfo
 {
@@ -44,19 +44,25 @@ public:
     bool create(HINSTANCE instance);
     void destroy();
 
+    HippoPreferences *getPreferences();
+
     void showMenu(UINT buttonFlag);
     void showURL(BSTR url);
     void showShareWindow(BSTR url);
+
+    void onAuthFailure();
+    void onAuthSuccess();
+    void onLinkMessage(const WCHAR *url,
+	               const WCHAR *title,
+		       const WCHAR *description);
 
 private:
     bool registerActive();
     bool registerClass();
     bool createWindow();
     void updateMenu();
-    void onPasswordDialogLogin(const WCHAR *username,
-	                       const WCHAR *password,
-			       bool         rememberPassword);
 
+    void showSignInWindow();
     void showPreferences();
     void updateForgetPassword();
 
@@ -65,10 +71,9 @@ private:
 			LPARAM lParam);
 
     void revokeActive();
-    void loadUserInfo();
-    void saveUserInfo();
 
-    HRESULT getAppletURL(BSTR filename, BSTR *url);
+    HRESULT getAppletURL(BSTR appletName, BSTR *result);
+    void showAppletWindow(BSTR url);
 
     static LRESULT CALLBACK windowProc(HWND   window,
     		                       UINT   message,
@@ -82,17 +87,6 @@ private:
     		                            UINT   message,
 		                            WPARAM wParam,
 		                            LPARAM lParam);
-    static void onConnectionOpen (LmConnection *connection,
-				  gboolean      success,
-				  gpointer      userData);
-    static void onConnectionAuthenticate (LmConnection *connection,
-				          gboolean      success,
-				          gpointer      userData);
-
-    static LmHandlerResult onMessage (LmMessageHandler *handler,
-				      LmConnection     *connection,
-				      LmMessage        *message,
-				      gpointer          userData);
 
 
 private:
@@ -108,17 +102,14 @@ private:
 
     HippoPreferences preferences_;
     HippoIcon notificationIcon_;
+    HippoIM im_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject
 
-    LmConnection *lmConnection_;
-
     HippoArray<HippoBrowserInfo> browsers_;
     DWORD nextBrowserCookie_;
 
-    char *username_; // UTF-8
-    char *password_; // UTF-8
     bool rememberPassword_;
     bool passwordRemembered_;
 };
