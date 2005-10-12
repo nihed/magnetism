@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+
+/* This file contains or imports css that applies to 
+ * general categories of page element we use on 
+ * multiple pages.
+ */
+
+@import "autocomplete.css";
+
+* {
+	font-family:					Verdana, sans;
+/*  	font-size:						larger; */
+	color:							#505050;
+	background-color:				white;
+}
+body {
+	color:							inherit;
+	background-color:				inherit;	
+	margin:							0;
+}
+div {
+
+}
+form {
+	margin:							0;
+}
+div.label {
+	font-size:						small;	
+}
+
+input.autocomplete, textarea {
+	border:							1px solid black;
+ 	width:							25em;
+	font-size:						small;
+	font-family:					Monospaced, mono;
+}
+
+textarea {
+    /* IE extension that avoids text area scrollbar (dynamically expands it) */
+	overflow:                       visible;
+}
+
+div.url {
+	margin-top:						1em;
+	margin-bottom:					1em;
+	color:							blue;
+	text-decoration:				underline;
+}

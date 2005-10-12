@@ -1,4 +1,9 @@
  @CHARSET "UTF-8";
+
+/* This file is included in sitewide.css, and contains
+ * styles for the autocompleting text entry box and 
+ * its dropdown completion list.
+ */
  
 div.autocomplete-choices {
       position:absolute;

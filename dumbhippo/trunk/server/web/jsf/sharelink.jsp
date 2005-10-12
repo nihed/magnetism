@@ -15,8 +15,7 @@
   <c:url value="/javascripts/dragdrop.js" var="dragdrop"/>
   <c:url value="/javascripts/controls.js" var="controls"/>
   <c:url value="/javascripts/slider.js" var="slider"/>
-  <c:url value="/css/share-link.css" var="pagestyle"/>
-  <c:url value="/css/autocomplete.css" var="autocompletestyle"/>
+  <c:url value="/css/sharelink.css" var="pagestyle"/>
   <c:url value="/xml/friendcompletions" var="xmlfriendcompletions"/>
   <html>
 	  <head>

@@ -1,0 +1,26 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "share a link" page 
+ */
+
+@import "sitewide.css";
+
+div.share-link {
+	margin:							1em;
+	color:							inherit;
+	background-color:				white;
+	padding:						1em;
+	width:							40em;
+}
+div.recipients {
+	
+}
+div.recipient-list {
+	margin:							2em;
+}
+div.share {
+	text-align:						right;
+}
+input.share {
+	background-color:				#efefef;
+}
