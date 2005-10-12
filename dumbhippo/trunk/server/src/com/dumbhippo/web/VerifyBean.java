@@ -24,8 +24,6 @@ public class VerifyBean {
 	private HippoAccount newAccount;
 	
 	private InvitationSystem invitationSystem;
-	
-	private SigninBean signIn;
 
 	public VerifyBean() throws NamingException {
 		InitialContext ctx = new InitialContext();
@@ -53,7 +51,8 @@ public class VerifyBean {
 			inviterNames = null;
 		valid = (inviterNames != null);
 		if (valid) {
-			signIn.initNewAccountFromResource(invite.getInvitee());
+			HippoAccount account = invitationSystem.viewInvitation(invite);
+			SigninBean.initNewClient(account);
 		}
 	}
 
@@ -71,9 +70,5 @@ public class VerifyBean {
 
 	public void setNewAccount(HippoAccount newAccount) {
 		this.newAccount = newAccount;
-	}
-
-	public void setSignIn(SigninBean signIn) {
-		this.signIn = signIn;
 	}
 }

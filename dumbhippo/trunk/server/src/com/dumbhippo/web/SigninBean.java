@@ -41,7 +41,7 @@ public class SigninBean {
 		initAccountFromCookie();
 	}
 	
-	private String computeClientIdentifier() {
+	private static String computeClientIdentifier() {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
 		
@@ -57,17 +57,22 @@ public class SigninBean {
 	}
 	
 	public void initNewAccountFromEmail(String email) {
-		account = accountSystem.createAccountFromEmail(email);
+		setAccount(accountSystem.createAccountFromEmail(email));
 		initNewClient(account);
 	}
 	
-	public void initNewAccountFromResource(Resource res) {
-		account = accountSystem.createAccountFromResource(res);
-		initNewClient(account);
+	public static Client initNewClient(HippoAccount account) {
+		AccountSystem accounts;
+		try {
+			accounts = (AccountSystem) (new InitialContext()).lookup(AccountSystem.class.getName());
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		}
+		return initNewClient(accounts, account);
 	}
 
-	public Client initNewClient(HippoAccount account) {
-		Client client = accountSystem.authorizeNewClient(account, computeClientIdentifier());
+	public static Client initNewClient(AccountSystem accounts, HippoAccount account) {
+		Client client = accounts.authorizeNewClient(account, computeClientIdentifier());
 		
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletResponse response = (HttpServletResponse) ctx.getResponse();

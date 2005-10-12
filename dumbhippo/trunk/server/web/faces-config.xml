@@ -93,15 +93,11 @@
    <managed-bean> 
       <managed-bean-name>verify</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.VerifyBean</managed-bean-class> 
-      <managed-bean-scope>session</managed-bean-scope>
+      <managed-bean-scope>request</managed-bean-scope>
       <managed-property>
         <property-name>authKey</property-name>
         <value>#{param.authKey}</value>
       </managed-property>
-      <managed-property>
-      	<property-name>signin</property-name>
-      	<value>#{signin}</value>
-      </managed-property>  
    </managed-bean>
    
    <managed-bean> 
