@@ -500,7 +500,7 @@ HippoUI::updateForgetPassword()
 
     HWND forgetPassButton = GetDlgItem(preferencesDialog_, IDC_FORGETPASSWORD);
     if (forgetPassButton)
-	EnableWindow(forgetPassButton, passwordRemembered_);
+	EnableWindow(forgetPassButton, im_.hasAuth());
 }
 
 static bool
@@ -719,7 +719,8 @@ HippoUI::preferencesProc(HWND   dialog,
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_FORGETPASSWORD:
-	    hippoDebug(L"Forget the password");
+	    ui->im_.forgetAuth();
+	    ui->updateForgetPassword();
 	    return TRUE;
         case IDOK:
 	    {

@@ -48,6 +48,48 @@ HippoIM::getState()
 }
 
 bool
+HippoIM::hasAuth()
+{
+    if (username_ && password_)
+	return true;
+    else
+	return loadAuth();
+}
+
+HRESULT
+HippoIM::getAuthURL(BSTR *result)
+{
+    HippoBSTR url(L"http://");
+    HippoBSTR webServer;
+    HRESULT hr;
+
+    hr = ui_->getPreferences()->getWebServer(&webServer);
+    if (FAILED(hr))
+	return hr;
+    hr = url.Append(webServer);
+    if (FAILED(hr))
+	return hr;
+    hr = url.Append(L"/jsf/");
+    if (FAILED(hr))
+	return hr;
+
+    return url.CopyTo(result);
+}
+
+void
+HippoIM::forgetAuth()
+{
+    HippoBSTR url;
+
+    if (FAILED(getAuthURL(&url)))
+	return;
+
+    InternetSetCookie(url, NULL,  L"auth=; Path=/");
+    username_ = NULL;
+    password_ = NULL;
+}
+
+bool
 HippoIM::loadAuth()
 {
     WCHAR staticBuffer[1024];
@@ -55,17 +97,12 @@ HippoIM::loadAuth()
     WCHAR *cookieBuffer = staticBuffer;
     DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
     char *cookie = NULL;
-    HippoBSTR webServer;
-    HippoBSTR url(L"http://");
+    HippoBSTR url;
 
     username_ = NULL;
     password_ = NULL;
 
-    if (FAILED (ui_->getPreferences()->getWebServer(&webServer)))
-	goto out;
-    if (FAILED (url.Append(webServer)))
-	goto out;
-    if (FAILED (url.Append(L"/jsf/")))
+    if (FAILED(getAuthURL(&url)))
 	goto out;
 
 retry:

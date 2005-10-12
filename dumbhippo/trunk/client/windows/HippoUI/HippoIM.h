@@ -34,10 +34,17 @@ public:
     // Sign out from the server
     void signOut();
 
+    // Check if we have authentication information stored
+    bool hasAuth();
+
+    // Forget any remembered authentication information
+    void forgetAuth();
+
     // Get the current state
     State getState();
 
 private:
+    HRESULT getAuthURL(BSTR *result);
     bool loadAuth();
     void connect();
     void disconnect();
