@@ -82,9 +82,14 @@ public class LoginCookie {
 		
 		// Empty value, we set it later
 		Cookie cookie = new Cookie(COOKIE_NAME, "");
-		// This should be supported by sane browsers, and we put things
-		// like = and & in cookie value
-		cookie.setVersion(1);
+		// We have some characters in our cookie like '=' that are
+		// theoretically only allowed in Version 1 cookies, but 
+                // experimentally IE can't (???) handle the Version 1 Max-Age, 
+		// parameter so we stick to Version 0 cookies with Expires and 
+                // assume that all the clients we care about will parse them
+                // correctly even with the suspicious characters.
+		//
+		// cookie.setVersion(1);
 		cookie.setValue(val.toString());
 		cookie.setPath("/");
 		// 5 years
