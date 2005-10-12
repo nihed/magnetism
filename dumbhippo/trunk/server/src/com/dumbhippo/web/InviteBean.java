@@ -1,15 +1,9 @@
 package com.dumbhippo.web;
 
-import javax.ejb.EJBException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Invitation;
-import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -29,33 +23,28 @@ public class InviteBean {
 	
 	private String authKey;
 
-	private transient InvitationSystem invitationSystem;
+	private InvitationSystem invitationSystem;
 
-	private transient IdentitySpider identitySpider;
+	private SigninBean signin;
 	
 	public InviteBean() throws NamingException {
 		InitialContext ctx = new InitialContext();
-		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());
-		identitySpider = (IdentitySpider) ctx.lookup(IdentitySpider.class.getName());		
+		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());		
 	}
-	
-	private Person temporaryHackCreateAccount(String email) throws NamingException {
-		EmailResource inviterEmail = identitySpider.getEmail(getInviterEmail());
-		Person inviter;
-		try {
-			inviter = identitySpider.lookupPersonByEmail(inviterEmail);
-		} catch (EJBException e) { // FIXME should be EntityNotFoundException according to spec
-			AccountSystem accounts = (AccountSystem) (new InitialContext()).lookup(AccountSystem.class.getName());
-			HippoAccount acct = accounts.createAccountFromEmail(email);
-			inviter = acct.getOwner();
-		}
-		return inviter;
+
+	// Injected
+	public void setSignin(SigninBean signin) {
+		this.signin = signin;
 	}
 
 	// action handler for form submit
 	public String doInvite() throws NamingException {
-		Person inviter = temporaryHackCreateAccount(getInviterEmail());
-		Invitation invitation = invitationSystem.createEmailInvitation(inviter, getEmail());
+		if (!signin.isValid()) {
+			throw new RuntimeException("not signed in");
+		}
+		
+		Invitation invitation 
+			= invitationSystem.createEmailInvitation(signin.getAccount().getOwner(), getEmail());
 
 		this.authKey = invitation.getAuthKey();
 		return "invitesent";

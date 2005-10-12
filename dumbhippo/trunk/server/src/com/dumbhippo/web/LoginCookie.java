@@ -46,7 +46,7 @@ public class LoginCookie {
 			super(string);
 		}
 	}
-	
+
 	private void validateHex(String hexStr) throws BadTastingException {
 		if (hexStr.length() % 2 != 0)
 			throw new BadTastingException("invalid hex string length");

@@ -12,6 +12,8 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import org.apache.log4j.Logger;
+
 import com.dumbhippo.Digest;
 
 
@@ -36,6 +38,8 @@ import com.dumbhippo.Digest;
 @Entity
 public class HippoAccount extends DBUnique implements Serializable {
 
+	private static Logger logger = Logger.getLogger(HippoAccount.class);	
+	
 	private static final long serialVersionUID = 0L;
 		
 	private Person owner;
@@ -124,7 +128,9 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	public boolean checkClientCookie(String authKey) {
 		for (Client client : clients) {
-			if (client.getAuthKey().equals(authKey))
+			String validKey = client.getAuthKey();
+			logger.debug("comparing provided key \"" + authKey + "\" to valid key \"" + validKey + "\"");
+			if (validKey.equals(authKey))
 				return true;
 		}
 		return false;

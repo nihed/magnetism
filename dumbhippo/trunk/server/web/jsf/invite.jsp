@@ -1,6 +1,7 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <f:view>
 	<head>
@@ -8,11 +9,6 @@
 	</head>
 	<body>
 	<h:form>
-	    <h3>Your email address</h3>
-		<tr>
-			<td>Name:</td>
-			<td><h:inputText value="#{invite.inviterEmail}" /></td>
-		</tr>	
 		<h3>Please enter the name and email of the user to invite:</h3>
 		<table>
 			<tr>
