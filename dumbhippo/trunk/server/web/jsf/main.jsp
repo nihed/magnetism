@@ -24,7 +24,7 @@
 			<h:outputText value="Invite a user" />
 		</h:commandLink></p>
 
-		<p><h:commandLink action="addlink">
+		<p><h:commandLink action="sharelink">
 			<h:outputText value="Share a link" />
 		</h:commandLink></p>
 		</h3>

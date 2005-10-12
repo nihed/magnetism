@@ -1,8 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
-    
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" >
-
+<html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
@@ -17,7 +13,7 @@
   <c:url value="/javascripts/slider.js" var="slider"/>
   <c:url value="/css/sharelink.css" var="pagestyle"/>
   <c:url value="/xml/friendcompletions" var="xmlfriendcompletions"/>
-  <html>
+  
 	  <head>
  	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   		<title>Share a Link</title>
@@ -39,10 +35,8 @@
 
 <strong>Share Link</strong>
 
-<div class="url">#{ url }</div>
+<div class="url">#{ sharelink.url }</div>
 <h:form>
-
-<input type="hidden" name="url" value="#{ url }" />
 
 <div class="recipients"><div class="label">Share <u>W</u>ith:</div>
 <input accesskey="w" type="text" id="friendentry" class="autocomplete" value="#{ recipients }"/>
@@ -58,17 +52,16 @@ new Ajax.Autocompleter("friendentry", "friendentry-choices", "${xmlfriendcomplet
 </div>
 
 <div class="description"><div class="label"><u>D</u>escription:</div>
-	<!-- mimick google talk ui and expand as they type more -->
-	<textarea accesskey="d" rows="1" class="description">#{ description }</textarea>
+	<!-- FIXME mimick google talk ui and expand as they type more -->
+	<h:inputTextarea accesskey="d" rows="2" styleClass="description" value="#{ sharelink.description }"/>
 </div>
 
-<div class="share"><input accesskey="s" class="share" type="submit" value="Share"/></div>
-
+<div class="share"><h:commandButton accesskey="s" styleClass="share" value="Share" action="#{ sharelink.doShareLink }"/></div>
 </h:form>
 
-</div>
+</div><!-- class=share-link -->
 
       </body>
-  </html>
 </f:view>
+</html>
 
