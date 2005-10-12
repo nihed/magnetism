@@ -86,6 +86,7 @@ public class LoginCookie {
 		// like = and & in cookie value
 		cookie.setVersion(1);
 		cookie.setValue(val.toString());
+		cookie.setPath("/");
 		// 5 years
 		cookie.setMaxAge(5 * 365 * 24 * 60 * 60);
 		return cookie;

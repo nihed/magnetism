@@ -127,6 +127,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * @return true if the cookie is OK for authorization
 	 */
 	public boolean checkClientCookie(String authKey) {
+		logger.debug("comparing auth key");		
 		for (Client client : clients) {
 			String validKey = client.getAuthKey();
 			logger.debug("comparing provided key \"" + authKey + "\" to valid key \"" + validKey + "\"");

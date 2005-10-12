@@ -1,17 +1,20 @@
 package com.dumbhippo.web;
 
+import javax.annotation.Resource;
+import javax.ejb.EJBException;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import org.apache.log4j.Logger;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 import com.dumbhippo.web.LoginCookie.NotLoggedInException;
@@ -23,6 +26,8 @@ public class SigninBean {
 	private HippoAccount account;
 
 	private transient AccountSystem accountSystem;
+	
+	private UserTransaction tx;	
 	
 	private void initAccountFromCookie() {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
@@ -57,8 +62,26 @@ public class SigninBean {
 	}
 	
 	public void initNewAccountFromEmail(String email) {
-		setAccount(accountSystem.createAccountFromEmail(email));
-		initNewClient(account);
+		UserTransaction tx = null;
+		try {
+			tx = (UserTransaction) new InitialContext().lookup("UserTransaction");			
+			tx.begin();
+			HippoAccount acct = accountSystem.createAccountFromEmail(email);
+			initNewClient(accountSystem, acct);
+			tx.commit();
+			setAccount(acct);
+		} catch (Exception e) {
+			logger.error(e);
+			try {
+				if (tx != null)
+					tx.rollback();
+			} catch (SystemException e2) {
+				// Ignore
+			} catch (Exception e3) {
+				throw new RuntimeException(e3);
+			}
+			throw new EJBException(e);
+		}
 	}
 	
 	public static Client initNewClient(HippoAccount account) {
