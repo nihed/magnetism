@@ -144,6 +144,15 @@ public:
 	return *this;
     }
     
+    HippoBSTR & operator=(const HippoBSTR &other) {
+        // On memory failure, leaves NULL in the result
+        if (m_str)
+            ::SysFreeString(m_str);
+         m_str = ::SysAllocString(other.m_str);
+
+         return *this;
+    }
+
     BSTR m_str;
 };
 
