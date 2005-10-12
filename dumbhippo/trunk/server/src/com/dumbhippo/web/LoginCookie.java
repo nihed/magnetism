@@ -167,10 +167,12 @@ public class LoginCookie {
 	static public HippoAccount attemptLogin(AccountSystem accountSystem, HttpServletRequest request) throws BadTastingException, NotLoggedInException {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
-		for (Cookie c : cookies) {
-			if (c.getName().equals(COOKIE_NAME)) {
-				loginCookie = new LoginCookie(c);
-				break;
+		if (cookies != null) {
+			for (Cookie c : cookies) {
+				if (c.getName().equals(COOKIE_NAME)) {
+					loginCookie = new LoginCookie(c);
+					break;
+				}
 			}
 		}
 		
