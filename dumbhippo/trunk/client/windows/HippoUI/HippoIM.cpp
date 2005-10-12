@@ -7,8 +7,19 @@
 #include "HippoIM.h"
 #include "HippoUI.h"
 
+static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
+static const int SIGN_IN_INITIAL_COUNT = 60;     /* 5 minutes */
+static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000; /* 30 seconds */
+
 HippoIM::HippoIM()
 {
+    signInTimeoutID_ = 0;
+    signInTimeoutCount_ = 0;
+}
+
+HippoIM::~HippoIM()
+{
+    stopSignInTimeout();
 }
 
 void
@@ -27,6 +38,7 @@ HippoIM::signIn()
         return FALSE;
     } else {
         state_ = SIGN_IN_WAIT;
+	startSignInTimeout();
         return TRUE;
     }
 }
@@ -194,6 +206,27 @@ HippoIM::disconnect()
     lmConnection_ = NULL;
 }
 
+
+void 
+HippoIM::startSignInTimeout()
+{
+    if (!signInTimeoutID_) {
+	signInTimeoutID_ = g_timeout_add(SIGN_IN_INITIAL_TIMEOUT, 
+	                                 onSignInTimeout, (gpointer)this);
+	signInTimeoutCount_ = 0;
+    }
+}
+
+void 
+HippoIM::stopSignInTimeout()
+{
+    if (signInTimeoutID_) {
+	g_source_remove (signInTimeoutID_);
+	signInTimeoutID_ = 0;
+	signInTimeoutCount_ = 0;
+    }
+}
+
 void
 HippoIM::authFailure(char *message)
 {
@@ -206,8 +239,33 @@ HippoIM::authFailure(char *message)
     g_free (strW);
 
     disconnect();
+    forgetAuth();
+    startSignInTimeout();
     state_ = SIGN_IN_WAIT;
     ui_->onAuthFailure();
+}
+
+gboolean 
+HippoIM::onSignInTimeout(gpointer data)
+{
+    HippoIM *im = (HippoIM *)data;
+
+    if (im->loadAuth()) {
+        im->connect();
+	im->stopSignInTimeout();
+        return FALSE;
+    }
+
+    im->signInTimeoutCount_++;
+    if (im->signInTimeoutCount_ == SIGN_IN_INITIAL_COUNT) {
+	// Try more slowly
+	g_source_remove (im->signInTimeoutID_);
+	im->signInTimeoutID_ = g_timeout_add (SIGN_IN_SUBSEQUENT_TIMEOUT, onSignInTimeout, 
+	                                      (gpointer)im);
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 void 

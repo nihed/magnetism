@@ -380,12 +380,14 @@ HippoUI::showURL(BSTR url)
 void 
 HippoUI::onAuthFailure()
 {
+    updateForgetPassword();
     showSignInWindow();
 }
 
 void
 HippoUI::onAuthSuccess()
 {
+    updateForgetPassword();
 }
 
 void 

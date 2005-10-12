@@ -23,6 +23,7 @@ public:
     };
 
     HippoIM();
+    ~HippoIM();
 
     // Set the main UI object. Must be called before use
     void setUI(HippoUI *ui);
@@ -48,20 +49,25 @@ private:
     bool loadAuth();
     void connect();
     void disconnect();
+    void startSignInTimeout();
+    void stopSignInTimeout();
     void authFailure(char *message);
 
-    static void onConnectionOpen (LmConnection *connection,
-				  gboolean      success,
-				  gpointer      userData);
+    static gboolean onSignInTimeout(gpointer data);
 
-    static void onConnectionAuthenticate (LmConnection *connection,
-				          gboolean      success,
-				          gpointer      userData);
+    static void onConnectionOpen(LmConnection *connection,
+				 gboolean      success,
+				 gpointer      userData);
 
-    static LmHandlerResult onMessage (LmMessageHandler *handler,
-				      LmConnection     *connection,
-				      LmMessage        *message,
-				      gpointer          userData);
+    static void onConnectionAuthenticate(LmConnection *connection,
+				         gboolean      success,
+				         gpointer      userData);
+
+    static LmHandlerResult onMessage(LmMessageHandler *handler,
+				     LmConnection     *connection,
+				     LmMessage        *message,
+				     gpointer          userData);
+
 private:
     State state_;
 
@@ -69,4 +75,7 @@ private:
     LmConnection *lmConnection_;
     HippoBSTR username_;
     HippoBSTR password_;
+
+    guint signInTimeoutID_;   // GSource ID for timeout waiting for the user to sign in
+    int signInTimeoutCount_;  // Number of times we've checked
 };
