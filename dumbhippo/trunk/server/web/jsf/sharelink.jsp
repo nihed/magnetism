@@ -146,10 +146,6 @@ function onRecipientsChanged() {
 <h:inputText id="url" styleClass="url" value="#{sharelink.url}" onkeypress="return onEnterFalse(event);" onchange="validateAll();"/>
 <div id="url-error"></div>
 
-<!-- this is not in a form because we want it to update the hidden input, but
-     we don't want hitting enter in this widget to post the page. maybe 
-     there's a better way to disconnect a text input from form submit??? -->
-     
 <div class="recipients"><div class="label">Share <u>W</u>ith:</div>
 <input autocomplete="off" accesskey="w" type="text" id="friendentry" class="autocomplete" onchange="onRecipientsChanged()" onkeypress="return onEnterFalse(event)"/>
 <h:message for="recipients" styleClass="validity-error"/>
