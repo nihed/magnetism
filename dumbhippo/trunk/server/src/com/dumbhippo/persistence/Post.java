@@ -3,6 +3,7 @@ package com.dumbhippo.persistence;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
@@ -41,7 +42,7 @@ public class Post extends GuidPersistable {
 		this.poster = poster;
 	}
 	
-	@OneToMany
+	@ManyToMany
 	public Set<Person> getRecipients() {
 		return recipients;
 	}

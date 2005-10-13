@@ -39,7 +39,7 @@ public class MessageSenderBean implements MessageSender {
 				String port = config.getProperty("dumbhippo.server.xmpp.port");
 				String user = config.getProperty("dumbhippo.server.xmpp.adminuser");
 				String password = config.getProperty("dumbhippo.server.xmpp.password");				
-				connection = new XMPPConnection(addr, Integer.parseInt(port));
+				connection = new XMPPConnection(addr, Integer.parseInt(port.trim()));
 				connection.login(user, password);
 				logger.debug("logged in OK");
 			} catch (XMPPException e) {
@@ -69,7 +69,7 @@ public class MessageSenderBean implements MessageSender {
 		
 		StringBuilder newRecipient = new StringBuilder();
 		newRecipient.append(recipient.substring(0,recipient.indexOf("@")));
-		newRecipient.append("@link-reflector.dumbhippo.com");
+		newRecipient.append("@dumbhippo.com");
 		
 		Message message = new Message(newRecipient.toString(),
 				Message.Type.HEADLINE);
