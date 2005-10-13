@@ -62,9 +62,9 @@ public class HippoAuthProvider implements
 	                throw new UnauthorizedException("Bad admin password");
 	            }
 			}
+		} else {
+			if (!Server.getMessengerGlue().authenticateJabberUser(username, token, digest))
+				throw new UnauthorizedException("Not authorized");
 		}
-		
-		if (!Server.getMessengerGlue().authenticateJabberUser(username, token, digest))
-			throw new UnauthorizedException("Not authorized");
 	}
 }
