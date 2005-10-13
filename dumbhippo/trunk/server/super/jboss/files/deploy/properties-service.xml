@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE server>
+<!-- $Id: properties-service.xml,v 1.5 2003/08/27 04:34:12 patriot1burke Exp $ -->
+<!-- Modified for use with dumbhippo, since I can't figure out a simpler way
+     to do external configuration -->
+
+<server>
+
+  <mbean code="org.jboss.varia.property.PropertyEditorManagerService"
+         name="jboss:type=Service,name=PropertyEditorManager">
+
+  </mbean>
+
+  <mbean code="org.jboss.varia.property.SystemPropertiesService"
+         name="jboss:type=Service,name=SystemProperties">
+
+    <attribute name="Properties">
+		dumbhippo.server.xmpp.address=@@jiveHost@@
+		dumbhippo.server.xmpp.port=@@jivePlainPort@@		
+		dumbhippo.server.xmpp.adminuser=admin
+		dumbhippo.server.xmpp.password=@@jivePassword@@    
+    </attribute>
+  </mbean>
+  
+</server>

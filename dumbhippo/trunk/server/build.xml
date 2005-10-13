@@ -11,6 +11,7 @@
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
+	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar"/>
 	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.client" value="" />
@@ -168,6 +169,7 @@
 	<target name="ear" depends="war,ejb3jar,par,basejar">
 		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
 			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
+			<fileset dir="${lib}" includes="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar"/>
 			<fileset dir="${build.lib}" includes="xmlrpc-2.0.jar" />
 		</ear>
 	</target>

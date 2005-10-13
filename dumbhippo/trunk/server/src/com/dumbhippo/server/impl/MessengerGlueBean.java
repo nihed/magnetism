@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
@@ -28,7 +29,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 	@EJB
 	private transient AccountSystem accountSystem;
-	
+
 	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
 		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
 		if (account == null)

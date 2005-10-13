@@ -44,6 +44,8 @@ public class SigninBean {
 			account = null;
 			logger.info("failed to login: ", e);
 		}
+		if (account != null)
+			logger.info("logged in person \"" + account.getOwner() + "\" OK");			
 	}
 
 	public SigninBean() {

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<jive> 
+<jive>
+  <dumbhippo>
+    <adminuser>admin</adminuser>
+    <adminpassword>@@jivePassword@@</adminpassword>
+  </dumbhippo>
   <adminConsole> 
     <!-- Disable either port by setting the value to -1 -->  
     <port>@@jiveAdminPort@@</port>  

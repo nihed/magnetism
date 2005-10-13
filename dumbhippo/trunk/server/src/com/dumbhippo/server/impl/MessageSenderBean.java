@@ -3,6 +3,11 @@
  */
 package com.dumbhippo.server.impl;
 
+import javax.annotation.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.smack.XMPPConnection;
@@ -11,6 +16,9 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 
 import com.dumbhippo.XMLBuilder;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 /**
  * This is probably a temporary hack until JiveMessenger monitors the server.
@@ -18,34 +26,33 @@ import com.dumbhippo.XMLBuilder;
  * @author hp
  *
  */
-public class MessageSender {
-	static private MessageSender instance;
-	private Log logger;
+@Stateless
+public class MessageSenderBean implements MessageSender {
+	private Log logger = LogFactory.getLog(MessageSenderBean.class);
 	private XMPPConnection connection;
-	
-	static public MessageSender getInstance() {
-		synchronized (MessageSender.class) {
-			if (instance == null) {
-				instance = new MessageSender();
-			}
-		}
-		
-		return instance;
-	}
-	
-	private MessageSender() {
-		logger = LogFactory.getLog(MessageSender.class);
-	}
-	
+
+	@EJB
+	private transient Configuration config;
+
 	private synchronized XMPPConnection getConnection() {
 		if (connection == null) {
 			try {
-				connection = new XMPPConnection("192.168.1.10");
-				connection.loginAnonymously();
+				String addr = config.getProperty("dumbhippo.server.xmpp.address");
+				String port = config.getProperty("dumbhippo.server.xmpp.port");
+				String user = config.getProperty("dumbhippo.server.xmpp.adminuser");
+				String password = config.getProperty("dumbhippo.server.xmpp.password");				
+				connection = new XMPPConnection(addr, Integer.parseInt(port));
+				connection.login(user, password);
+				logger.debug("logged in OK");
 			} catch (XMPPException e) {
+				e.printStackTrace(System.out);
 				logger.error(e);
 				connection = null;
-			}
+			} catch (PropertyNotFoundException e) {
+				e.printStackTrace(System.out);				
+				logger.error(e);
+				connection = null;
+			} 
 		}
 		
 		return connection;
@@ -74,14 +81,6 @@ public class MessageSender {
 		message.setBody(String.format("%s\n%s", title, url));
 		
 		connection.sendPacket(message);
-	}
-	
-	public static void main(String[] args) {
-		MessageSender sender = MessageSender.getInstance();
-		
-		sender.sendShareLink("hp@dumbhippo.com",
-				"http://badgerbadgerbadger.com",
-				"Badger Badger Badger (Escaping check: &<>'\")");
 	}
 	
 	public static class LinkExtension implements PacketExtension {

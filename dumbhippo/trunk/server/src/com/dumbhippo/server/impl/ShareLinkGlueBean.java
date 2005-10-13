@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.ShareLinkGlue;
 import com.dumbhippo.server.UnknownPersonException;
@@ -31,6 +32,9 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 	
 	@EJB
 	private transient IdentitySpider identitySpider;
+	
+	@EJB
+	private transient MessageSender xmpp;
 	
 	private transient Person cachedLoggedInUser;
 	
@@ -69,12 +73,8 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 		Post post = new Post(poster, null, description, recipients, shared);
 		em.persist(post);
 		
-		MessageSender sender = MessageSender.getInstance();
-		if (sender == null)
-			throw new IllegalStateException("We don't have a connection to the messaging server");
-		
 		for (Person r : recipients) {
-			sender.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
+			xmpp.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
 		}
 	}
 

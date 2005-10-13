@@ -6,6 +6,12 @@
     <display-name>DumbHippo</display-name>
     <description>DumbHippo Server</description>
     <module>
+    	<java>smack-svn-local-build-2005-09-30.jar</java>
+    </module>
+    <module>
+    	<java>smackx-svn-local-build-2005-09-30.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>
