@@ -12,6 +12,9 @@ import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -25,6 +28,8 @@ import com.dumbhippo.server.UnknownPersonException;
 @Stateful
 public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLinkGlue, Serializable {
 
+	private static final Log logger = LogFactory.getLog(ShareLinkGlueBean.class);
+	
 	private static final long serialVersionUID = 0L;
 	
 	@PersistenceContext(unitName = "dumbhippo")
@@ -52,11 +57,18 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 	public List<String> freeformRecipientsToIds(List<String> userEnteredRecipients) throws UnknownPersonException {
 		Person person = getLoggedInUser(); // double-checks that we're logged in as side effect
 		
-		// FIXME for now we can only parse email addresses
+		// FIXME for now we can only parse IDs and email addresses
 		List<String> recipients = new ArrayList<String>();
 		PersonView personView = identitySpider.getViewpoint(null, person);
 		for (String freeform : userEnteredRecipients) {
-			Person recipient = identitySpider.lookupPersonByEmail(identitySpider.getEmail(freeform));
+			Person recipient;
+			
+			recipient = identitySpider.lookupPersonById(freeform);
+			
+			if (recipient == null) {
+				recipient = identitySpider.lookupPersonByEmail(identitySpider.getEmail(freeform));
+			}
+			
 			if (recipient == null)
 				throw new UnknownPersonException("Person '" + freeform + "' not known to " + personView.getHumanReadableName(), freeform);
 			recipients.add(recipient.getId());
@@ -70,9 +82,21 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 		Set<Person> recipients = new HashSet<Person>();
 		Set<Resource> shared = Collections.singleton((Resource)identitySpider.getLink(url));
 		
+		for (String personId : recipientIds) {
+			Person r = identitySpider.lookupPersonById(personId);
+			if (r != null) {
+				recipients.add(r);
+			} else {
+				// should not happen really...
+				logger.error("Recipient " + personId + " is not known");
+			}
+		}
+		
+		logger.debug("saving new Post");
 		Post post = new Post(poster, null, description, recipients, shared);
 		em.persist(post);
 		
+		logger.debug("Sending out jabber notifications...");
 		for (Person r : recipients) {
 			messageSender.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
 		}

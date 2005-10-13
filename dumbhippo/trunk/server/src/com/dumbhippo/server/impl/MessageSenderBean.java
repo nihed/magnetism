@@ -78,6 +78,7 @@ public class MessageSenderBean implements MessageSender {
 
 		message.setBody(String.format("%s\n%s", title, url));
 		
+		logger.info("Sending jabber message to " + message.getTo());
 		connection.sendPacket(message);
 	}
 	

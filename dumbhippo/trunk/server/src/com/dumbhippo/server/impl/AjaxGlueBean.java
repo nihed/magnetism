@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.AccountSystem;
@@ -37,17 +39,34 @@ public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRp
 
 	public List<String> getFriendCompletions(String entryContents) {
 		List<String> completions = new ArrayList<String>();
-		if (entryContents != null)
-			completions.add(entryContents);
+		
 		Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
 		for (HippoAccount a : accounts) {
 			// FIXME get from viewpoint of personId
+			
+			String completion = null;
+			
 			PersonView view = identitySpider.getSystemViewpoint(a.getOwner());
-			completions.add(view.getHumanReadableName());
+			String humanReadable = view.getHumanReadableName();
+			EmailResource email = view.getEmail();
+			if (humanReadable.startsWith(entryContents)) {
+				completion = humanReadable;
+			} else if (email.getEmail().startsWith(entryContents)) {
+				completion = email.getEmail();
+			} else if (a.getOwner().getId().startsWith(entryContents)) {
+				completion = a.getOwner().getId();
+			}
+			
+			if (completion != null) {
+				completions.add(completion);
+			}
 		}
 		
-		completions.add("Test Person 1");
-		completions.add("Test Person 2");
+		Collections.sort(completions);
+		
+		// we want the currently-typed string at the top
+		if (entryContents != null)
+			completions.add(0, entryContents);
 		
 		return completions;
 	}
