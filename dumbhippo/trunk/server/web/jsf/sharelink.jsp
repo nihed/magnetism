@@ -41,9 +41,7 @@ function fromCommaString(commaString) {
    var split = commaString.split(",");
    for (var i = 0; i < split.length; ++i) {
        var r = split[i];
-       // I suck at regexp, don't laugh; this trims the string
-       r = r.replace(/^\s+/, "");
-       r = r.replace(/\s+$/, "");
+	   r = trimWhitespace(r);
        if (r.length > 0) {
            vals.push(r);
        }
@@ -73,11 +71,8 @@ function mergeArraysRemovingDups(array1, array2) {
 
 function buildRecipientList() {
    var recipientList = document.getElementById("recipient-list");
-   
-   // blow away current children
-   while (recipientList.firstChild) {
-       recipientList.removeChild(recipientList.firstChild);
-   }
+
+   deleteChildren(recipientList);   
 
    // add new ones
    var inputRecipients = document.getElementById("main:recipients");
@@ -98,6 +93,28 @@ function buildRecipientList() {
    }
 }
 
+function validateAll() {
+   var valid = true;
+   var inputUrl = document.getElementById("main:url");
+   var inputRecipients = document.getElementById("main:recipients");
+   
+   if (isJustWhitespace(inputUrl.value)) {
+	  setError("url-error", "Give us a link to share!");
+	  valid = false;
+   } else {
+      unsetError("url-error");
+   }
+   
+   if (isJustWhitespace(inputRecipients.value)) {
+      setError("recipients-error", "Who do you want to share this link with?");
+      valid = false;
+   } else {
+      unsetError("recipients-error");
+   }
+   
+   return valid;
+}
+
 function onRecipientsChanged() {
    var friendentry = document.getElementById("friendentry");
    var inputRecipients = document.getElementById("main:recipients");
@@ -109,7 +126,9 @@ function onRecipientsChanged() {
    
    inputRecipients.value = toCommaString(mergedRecipients);
    buildRecipientList();
+   validateAll();
 }
+
 // ]]>
 </script>
 		
@@ -121,12 +140,11 @@ function onRecipientsChanged() {
 
 <strong>Share Link</strong>
 
-<h:form id="main">
+<h:form id="main" onsubmit="return validateAll();">
 
-<div class="url">
 <!-- FIXME use Scriptaculous in-place edit widget, http://wiki.script.aculo.us/scriptaculous/show/Ajax.InPlaceEditor -->
-<h:inputText id="url" styleClass="url" value="#{sharelink.url}" onkeypress="return onEnterFalse(event)"/>
-</div>
+<h:inputText id="url" styleClass="url" value="#{sharelink.url}" onkeypress="return onEnterFalse(event);" onchange="validateAll();"/>
+<div id="url-error"></div>
 
 <!-- this is not in a form because we want it to update the hidden input, but
      we don't want hitting enter in this widget to post the page. maybe 
@@ -134,6 +152,8 @@ function onRecipientsChanged() {
      
 <div class="recipients"><div class="label">Share <u>W</u>ith:</div>
 <input autocomplete="off" accesskey="w" type="text" id="friendentry" class="autocomplete" onchange="onRecipientsChanged()" onkeypress="return onEnterFalse(event)"/>
+<h:message for="recipients" styleClass="validity-error"/>
+<div id="recipients-error"></div>
 <div id="friendentry-choices" class="autocomplete-choices"></div>
 
 <script type="text/javascript" language="javascript">
@@ -146,7 +166,7 @@ new Ajax.Autocompleter("friendentry", "friendentry-choices", "${xmlfriendcomplet
 <br/>
 
 <!-- change to inputText to debug -->
-<h:inputHidden id="recipients" value="#{sharelink.recipients}"/>
+<h:inputHidden id="recipients" value="#{sharelink.recipients}" converter="#{sharelink.recipientsConverter}"/>
 
 <div id="recipient-list" class="recipient-list">
 
@@ -160,7 +180,8 @@ new Ajax.Autocompleter("friendentry", "friendentry-choices", "${xmlfriendcomplet
 </div>
 
 <div class="share">
-<h:commandButton accesskey="s" styleClass="share" value="Share" action="#{sharelink.doShareLink}" onclick="enableSubmitMainForm();"/></div>
+<h:commandButton accesskey="s" styleClass="share" value="Share" action="#{sharelink.doShareLink}"/></div>
+
 </h:form>
 
 </div><!-- class=share-link -->

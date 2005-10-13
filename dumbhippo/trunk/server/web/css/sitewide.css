@@ -40,9 +40,14 @@ textarea {
 	overflow:                       visible;
 }
 
-div.url {
+.url {
 	margin-top:						1em;
 	margin-bottom:					1em;
 	color:							blue;
 	text-decoration:				underline;
+}
+
+/* Used for "this field needs fixing" messages */
+.validity-error {
+    color: red;
 }
