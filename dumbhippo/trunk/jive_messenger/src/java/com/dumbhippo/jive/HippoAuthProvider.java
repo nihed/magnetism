@@ -54,10 +54,10 @@ public class HippoAuthProvider implements
 		Log.debug("authenticate() username = " + username + " token = " + token + " digest = " + digest);
 		
 		if (HippoUserProvider.ENABLE_ADMIN_USER) {
-			if (username.equals(HippoUserProvider.ADMIN_USERNAME)) {
+			if (username.equals(HippoUserProvider.getAdminUsername())) {
 				// FIXME this is not a secure password; the idea is that 
 				// in a production build the admin user is disabled...
-	            String anticipatedDigest = AuthFactory.createDigest(token, "admin");
+	            String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
 	            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
 	                throw new UnauthorizedException("Bad admin password");
 	            }

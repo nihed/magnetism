@@ -8,6 +8,7 @@ import org.jivesoftware.messenger.user.User;
 import org.jivesoftware.messenger.user.UserAlreadyExistsException;
 import org.jivesoftware.messenger.user.UserNotFoundException;
 import org.jivesoftware.messenger.user.UserProvider;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.JabberUserNotFoundException;
@@ -17,7 +18,7 @@ import com.dumbhippo.server.MessengerGlueRemote.JabberUser;
 public class HippoUserProvider implements UserProvider {
 
 	static final public boolean ENABLE_ADMIN_USER = true;
-	static final public String ADMIN_USERNAME = "admin";
+	private static String adminUsername;
 	
 	private UserNotFoundException createUserNotFound(String username, Exception root) {
 		return new UserNotFoundException ("No account has username '" + username + "'", root);
@@ -30,8 +31,8 @@ public class HippoUserProvider implements UserProvider {
 		MessengerGlueRemote glue = Server.getMessengerGlue();
 	
 		if (ENABLE_ADMIN_USER) {
-			if (username.equals(ADMIN_USERNAME)) {
-				return new User(ADMIN_USERNAME, "Administrator", null, null, null);
+			if (username.equals(getAdminUsername())) {
+				return new User(getAdminUsername(), "Administrator", null, null, null);
 			}
 		}
 		
@@ -120,7 +121,7 @@ public class HippoUserProvider implements UserProvider {
 		Log.debug("setName() username = " + username + " name = " + name);
 		
 		if (ENABLE_ADMIN_USER) {
-			if (username.equals(ADMIN_USERNAME))
+			if (username.equals(getAdminUsername()))
 				return;
 		}
 		
@@ -138,7 +139,7 @@ public class HippoUserProvider implements UserProvider {
 		Log.debug("setEmail() username = " + username + " email = " + email);
 		
 		if (ENABLE_ADMIN_USER) {
-			if (username.equals(ADMIN_USERNAME))
+			if (username.equals(getAdminUsername()))
 				return;
 		}
 		
@@ -201,5 +202,15 @@ public class HippoUserProvider implements UserProvider {
 		// We don't support a lot of the modification operations, so maybe we should 
 		// set this to true. But we do support a couple of them, so...
 		return false;
+	}
+
+	public static synchronized String getAdminUsername() {
+		if (adminUsername == null)
+			adminUsername = JiveGlobals.getXMLProperty("dumbhippo.adminuser");			
+		return adminUsername;
+	}
+
+	public static synchronized String getAdminPassword() {
+		return JiveGlobals.getXMLProperty("dumbhippo.adminpassword");			
 	}
 }
