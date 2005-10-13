@@ -12,12 +12,25 @@ div.share-link {
 	padding:						1em;
 	width:							40em;
 }
+/* "choose recipients" portion of the page */
 div.recipients {
 	
 }
+/* list of people who will receive the link */
 div.recipient-list {
 	margin:							2em;
 }
+/* text inside recipient-list if nobody is chosen */
+div.no-recipients {
+ 	font-style: italic;
+}
+/* each item in the list */
+div.recipient-list-item {
+ 	font-style: bold;
+ 	color: purple;
+}
+
+/* the share button */
 div.share {
 	text-align:						right;
 }

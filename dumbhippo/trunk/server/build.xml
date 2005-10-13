@@ -60,6 +60,9 @@
 			<fileset dir="scriptaculous/lib" includes="*.js"/>
 			<fileset dir="scriptaculous/src" includes="*.js"/>
 		</copy>
+		<copy todir="${build.javascripts}">
+			<fileset dir="${web}/javascript" includes="*.js"/>
+		</copy>
 	</target>
 	
 	<target name="compile" depends="init,subprojects">

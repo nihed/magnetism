@@ -28,7 +28,7 @@ div.label {
 	font-size:						small;	
 }
 
-input.autocomplete, textarea {
+input.autocomplete, input.url, textarea {
 	border:							1px solid black;
  	width:							25em;
 	font-size:						small;

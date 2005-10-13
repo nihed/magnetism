@@ -16,6 +16,17 @@ public class ShareLinkBean {
 
 	private String description;
 
+	private String recipients;
+	
+	public String getRecipients() {
+		return recipients;
+	}
+
+	public void setRecipients(String recipients) {
+		logger.info("Set recipients = " + recipients);
+		this.recipients = recipients;
+	}
+
 	public String getUrl() {
 		return url;
 	}
@@ -38,7 +49,10 @@ public class ShareLinkBean {
 	public String doShareLink() {
 		try {
 			logger.info("Sharing link!");
-			// add the link to the database
+			// add the link to the database...
+			
+			
+			
 			return "main";
 		} catch (Exception e) {
 			logger.debug(e);

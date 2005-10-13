@@ -42,12 +42,18 @@ public class AjaxGlueBean implements AjaxGlue, Serializable {
 
 	public List<String> getFriendCompletions(String entryContents) {
 		List<String> completions = new ArrayList<String>();
+		if (entryContents != null)
+			completions.add(entryContents);
 		Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
 		for (HippoAccount a : accounts) {
 			// FIXME get from viewpoint of personId
 			PersonView view = identitySpider.getSystemViewpoint(a.getOwner());
 			completions.add(view.getHumanReadableName());
 		}
+		
+		completions.add("Test Person 1");
+		completions.add("Test Person 2");
+		
 		return completions;
 	}
 }

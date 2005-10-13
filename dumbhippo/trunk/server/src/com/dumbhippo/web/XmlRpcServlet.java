@@ -96,8 +96,14 @@ public class XmlRpcServlet extends HttpServlet {
 		names = request.getParameterNames();		
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
+			String[] values = request.getParameterValues(name);
+			StringBuilder builder = new StringBuilder();
+			for (String v : values) {
+				builder.append("'" + v + "',");
+			}
+			builder.deleteCharAt(builder.length() - 1); // drop comma
 			
-			logger.info("param " + name + " = " + request.getAttribute(name));
+			logger.info("param " + name + " = " + builder.toString());
 		}
 	}
 	
@@ -108,12 +114,14 @@ public class XmlRpcServlet extends HttpServlet {
 		
 		setup(request);
 
-		byte[] result = xmlrpc.execute(request.getInputStream());
-		response.setContentType("text/xml");
-		response.setContentLength(result.length);
-		OutputStream out = response.getOutputStream();
-		out.write(result);
-		out.flush();
+		if (request.getRequestURI().startsWith("/xmlrpc/")) {
+			byte[] result = xmlrpc.execute(request.getInputStream());
+			response.setContentType("text/xml");
+			response.setContentLength(result.length);
+			OutputStream out = response.getOutputStream();
+			out.write(result);
+			out.flush();
+		}
 	}
 
 	@Override
@@ -128,18 +136,18 @@ public class XmlRpcServlet extends HttpServlet {
 		
 		if (request.getRequestURI().equals("/xml/friendcompletions")) {
 			
+			String entryContents = request.getParameter("entryContents");
+			
 			response.setContentType("text/xml");
 			OutputStream out = response.getOutputStream();
 			
 			out.write("<ul>\n".getBytes());
-			List<String> completions = glue.getFriendCompletions("FIXME - contents of entry box");
+			List<String> completions = glue.getFriendCompletions(entryContents);
 			for (String c : completions) {
 				out.write("<li>".getBytes());
 				out.write(c.getBytes());
 				out.write("</li>\n".getBytes());
 			}
-			out.write("<li>Bogus Extra Person Not In Database</li>".getBytes());
-			out.write("<li>Yet Another Bogus Extra Person</li>".getBytes());
 			out.write("</ul>".getBytes());
 			out.flush();
 		}
