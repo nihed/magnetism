@@ -10,6 +10,7 @@ import javax.persistence.Query;
 import com.dumbhippo.FullName;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;
@@ -32,15 +33,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@javax.annotation.Resource
 	private transient EJBContext ejbContext;
 	
-	public Person lookupPersonByEmail(EmailResource email) {	
+	public Person lookupPersonByEmail(EmailResource email) {
+		// FIXME catch EntityNotFoundException
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
 	}
 	
 	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
+		// FIXME catch EntityNotFoundException
 		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
 		.setParameter("viewpointguid", viewpoint.getId()).setParameter("email", email).getSingleResult();
 	}
 
+	public Person lookupPersonById(String personId) {
+		Person person;
+		try {
+			person = em.find(Person.class, personId);
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+		return person;
+	}
+	
 	public EmailResource getEmail(String email) {
 		Query q;
 	
@@ -52,6 +65,23 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			res = (EmailResource) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			res = new EmailResource(email);
+			em.persist(res);
+		}
+		
+		return res;	
+	}
+
+	public LinkResource getLink(String url) {
+		Query q;
+	
+		q = em.createQuery("from LinkResource l where l.url = :url");
+		q.setParameter("url", url);
+		
+		LinkResource res;
+		try {
+			res = (LinkResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			res = new LinkResource(url);
 			em.persist(res);
 		}
 		

@@ -13,7 +13,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.ShareLinkGlue;
+import com.dumbhippo.server.UnknownPersonException;
+import com.dumbhippo.web.EjbLink.NotLoggedInException;
+import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 /**
  * ShareLinkBean corresponds to the "share a link" JSF page.
@@ -31,34 +34,39 @@ public class ShareLinkBean {
 	// list of Person.getId()
 	private List<String> recipients;
 	
-	private transient IdentitySpider identitySpider;
+	private transient ShareLinkGlue cachedGlue;
 	
 	public class RecipientsConverter implements Converter {
 
-		private void throwError(String problem) {
+		private void throwError(String problem) throws ConverterException {
 			// FacesMessage has a "summary" and "detail" which 
 			// is just useless basically
 			FacesMessage message = new FacesMessage(problem, problem);
 			message.setSeverity(FacesMessage.SEVERITY_ERROR);
 			throw new ConverterException(message);
 		}
-		/*
-		private Person attemptPersonFromString(String s) {
-			
-		}
-		*/
 		
 		public Object getAsObject(FacesContext context, UIComponent component, String newValue) throws ConverterException {
 			
-			//		throwError("Sample error");
+			ShareLinkGlue glue = getGlue();
+			
+			// FIXME this is currently throwing because the converter isn't run in the context of being logged in (apparently?)
+			// or something else, need to debug.
 			
 			// FIXME build list of person ID, not of unchanged strings
-			List<String> object = new ArrayList<String>();
+			List<String> freeforms = new ArrayList<String>();
 			String[] split = newValue.split(",");
 			for (String s : split) {
-				object.add(s.trim());
+				freeforms.add(s.trim());
 			}
-			return object;
+			
+			try {
+				return glue.freeformRecipientsToIds(freeforms);
+			} catch (UnknownPersonException e) {
+				e.printStackTrace();
+				throwError(e.getMessage());
+				return null; // quiet warnings
+			}
 		}
 
 		@SuppressWarnings("unchecked")
@@ -72,7 +80,31 @@ public class ShareLinkBean {
 			return StringUtils.join(list, ",");
 		}
 	}
+
+	private ShareLinkGlue getGlue() {
+		if (cachedGlue == null) {
+			EjbLink ejb = new EjbLink();
+			try {
+				ejb.attemptLoginFromFacesContext();
+				cachedGlue = ejb.nameLookup(ShareLinkGlue.class);
+			} catch (BadTastingException e) {
+				e.printStackTrace();
+				logger.error("Failed to login (bad cookie)", e);
+			} catch (NotLoggedInException e) {
+				e.printStackTrace();
+				logger.error("Failed to login (not logged in)", e);
+			}
+		}
+		if (cachedGlue == null) {
+			throw new IllegalStateException("Need to be logged in to share a link");
+		}
+		return cachedGlue;
+	}
+	
+	public ShareLinkBean() {
 		
+	}
+	
 	public Converter getRecipientsConverter() {
 		return new RecipientsConverter();
 	}
@@ -108,9 +140,15 @@ public class ShareLinkBean {
 	public String doShareLink() {
 		try {
 			
+			if (url == null || description == null || recipients == null) {
+				throw new IllegalStateException("Not all fields provided for link share");
+			}
+			
 			logger.info("Sharing link!");
-			// add the link to the database...
-					
+			
+			ShareLinkGlue glue = getGlue();
+			
+			glue.shareLink(url, recipients, description);
 			
 			return "main";
 		} catch (Exception e) {

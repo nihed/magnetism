@@ -1,5 +1,7 @@
 package com.dumbhippo.web;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -87,6 +89,19 @@ public class EjbLink extends AbstractEjbLink {
 		return proxy;
 	}
 
+	/**
+	 * Look for login cookie and find corresponding account; throw exception if
+	 * login fails.
+	 * @throws BadTastingException
+	 * @throws NotLoggedInException
+	 */
+	public void attemptLoginFromFacesContext() throws BadTastingException, NotLoggedInException {
+		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
+		HttpServletRequest request = (HttpServletRequest) ctx.getRequest();
+
+		attemptLogin(request);
+	}
+	
 	/**
 	 * Look for login cookie and find corresponding account; throw exception if
 	 * login fails.

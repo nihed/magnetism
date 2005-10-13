@@ -29,15 +29,12 @@ public class SigninBean {
 	
 	private EjbLink ejb;
 	
-	private void initAccountFromCookie() {
-		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
-		HttpServletRequest request = (HttpServletRequest) ctx.getRequest();
-				
+	private void initAccountFromCookie() {				
 		try {
 			accountSystem = ejb.nameLookup(AccountSystem.class);
 			
 			// this may well fail ... the whole point of this class is that it does really
-			ejb.attemptLogin(request);
+			ejb.attemptLoginFromFacesContext();
 			
 			account = accountSystem.lookupAccountByPersonId(ejb.getLoggedInUser());
 			

@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
@@ -30,6 +31,15 @@ public interface IdentitySpider {
 	public EmailResource getEmail(String email);
 	
 	/**
+	 * Gets a Resource object for the given URL, creating
+	 * it if necessary.
+	 * 
+	 * @param url the url
+	 * @return a resource for the url
+	 */
+	public LinkResource getLink(String url);
+	
+	/**
 	 * Finds the unique person which owns an email address
 	 * according to our system. i.e. this person has proved
 	 * they own it.
@@ -48,6 +58,13 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */	
 	public Person lookupPersonByEmail(Person viewpoint, EmailResource email);
+	
+	/** 
+	 * Finds a person by their database ID
+	 * @param personId the id
+	 * @return person or null if none
+	 */
+	public Person lookupPersonById(String personId);
 	
 	//public Person lookupPersonByAim(EmailResource email);
 	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
