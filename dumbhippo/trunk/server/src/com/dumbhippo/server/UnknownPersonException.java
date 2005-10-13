@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import javax.ejb.ApplicationException;
+
+@ApplicationException
 public class UnknownPersonException extends Exception {
 	private static final long serialVersionUID = 0L;
 

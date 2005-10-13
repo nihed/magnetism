@@ -34,14 +34,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private transient EJBContext ejbContext;
 	
 	public Person lookupPersonByEmail(EmailResource email) {
-		// FIXME catch EntityNotFoundException
-		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
+		Person person;
+		try {
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+		return person;
 	}
 	
 	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
-		// FIXME catch EntityNotFoundException
-		return (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
+		Person person;
+		try {
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
 		.setParameter("viewpointguid", viewpoint.getId()).setParameter("email", email).getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+		return person;
 	}
 
 	public Person lookupPersonById(String personId) {

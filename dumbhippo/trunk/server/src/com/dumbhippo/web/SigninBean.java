@@ -25,8 +25,6 @@ public class SigninBean {
 
 	private transient AccountSystem accountSystem;
 	
-	private UserTransaction tx;
-	
 	private EjbLink ejb;
 	
 	private void initAccountFromCookie() {				

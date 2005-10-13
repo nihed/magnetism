@@ -38,20 +38,17 @@ public class ShareLinkBean {
 	
 	public class RecipientsConverter implements Converter {
 
-		private void throwError(String problem) throws ConverterException {
+		private ConverterException postError(String problem) {
 			// FacesMessage has a "summary" and "detail" which 
 			// is just useless basically
 			FacesMessage message = new FacesMessage(problem, problem);
 			message.setSeverity(FacesMessage.SEVERITY_ERROR);
-			throw new ConverterException(message);
+			return new ConverterException(message);
 		}
 		
 		public Object getAsObject(FacesContext context, UIComponent component, String newValue) throws ConverterException {
 			
 			ShareLinkGlue glue = getGlue();
-			
-			// FIXME this is currently throwing because the converter isn't run in the context of being logged in (apparently?)
-			// or something else, need to debug.
 			
 			// FIXME build list of person ID, not of unchanged strings
 			List<String> freeforms = new ArrayList<String>();
@@ -64,8 +61,7 @@ public class ShareLinkBean {
 				return glue.freeformRecipientsToIds(freeforms);
 			} catch (UnknownPersonException e) {
 				e.printStackTrace();
-				throwError(e.getMessage());
-				return null; // quiet warnings
+				throw postError(e.getMessage());
 			}
 		}
 

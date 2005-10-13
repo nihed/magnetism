@@ -11,8 +11,10 @@ import javax.ejb.Local;
  */
 @Local
 public interface LoginRequired {
-	
+
+	@BanFromWebTier
 	public void setLoggedInUserId(String personId);
+	@BanFromWebTier
 	public String getLoggedInUserId();
 }
 

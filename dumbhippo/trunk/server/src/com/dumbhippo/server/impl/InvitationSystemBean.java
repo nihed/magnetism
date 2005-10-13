@@ -20,7 +20,6 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
-import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 
 @Stateless
@@ -34,9 +33,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private transient IdentitySpider spider;
-	
-	@EJB
-	private transient MessageSender xmpp;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
 		Invitation ret;

@@ -12,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AbstractEjbLink;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.LoginRequired;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
@@ -34,7 +35,7 @@ public class EjbLink extends AbstractEjbLink {
 		}
 	}
 
-	static Log logger = LogFactory.getLog(EjbLink.class);
+	static private Log logger = LogFactory.getLog(EjbLink.class);
 
 	// if non-null, we are logged in
 	private String personId;
@@ -65,12 +66,27 @@ public class EjbLink extends AbstractEjbLink {
 	@Override
 	public <T> T nameLookup(Class<T> clazz) {
 		
+		if (clazz.isAnnotationPresent(BanFromWebTier.class)) {
+			throw new IllegalArgumentException("Class " + clazz.getCanonicalName() + " is banned from the web tier");
+		}
+		
 		T obj = uncheckedNameLookup(clazz);
 
 		if (obj == null)
 			return null;
 		
+		/*
+		 for (Class i : obj.getClass().getInterfaces()) {
+			 logger.info("  implements " + i.getCanonicalName());
+			 for (Annotation a : i.getAnnotations()) {
+				 logger.info("     with annotation " + a.getClass().getCanonicalName());
+			 }
+		 }
+		 */
+		 
 		if (obj instanceof LoginRequired) {
+			logger.info("  logging this object in");
+			
 			LoginRequired loginRequired = (LoginRequired) obj;
 			
 			if (personId == null) {
@@ -78,13 +94,14 @@ public class EjbLink extends AbstractEjbLink {
 			} else {
 				loginRequired.setLoggedInUserId(personId);
 			}
+		} else {
+			logger.info("  object does not need login");
 		}
 
-		// Filter out any interfaces that weren't asked for, especially LoginRequired
+		// create our own proxy, though since JBoss does this anyway it may be kind of 
+		// pointless. For now it just checks the @BanFromWebTier annotation on methods
+		// and removes the JBossProxy interface in effect.
 		T proxy = (T) InterfaceFilterProxyFactory.newProxyInstance(obj, clazz);
-
-		if (proxy instanceof LoginRequired)
-			throw new IllegalStateException("Bug! proxy implements LoginRequired");
 		
 		return proxy;
 	}
@@ -99,6 +116,10 @@ public class EjbLink extends AbstractEjbLink {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletRequest request = (HttpServletRequest) ctx.getRequest();
 
+		if (request == null) {
+			throw new IllegalStateException("No current HTTP request to get login cookie from");
+		}
+		
 		attemptLogin(request);
 	}
 	

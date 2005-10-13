@@ -2,7 +2,6 @@ package com.dumbhippo.server;
 
 import java.io.Serializable;
 
-
 public class AbstractLoginRequired implements LoginRequired, Serializable {
 
 	private static final long serialVersionUID = 0L;

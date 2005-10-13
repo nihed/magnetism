@@ -34,14 +34,14 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 	private transient IdentitySpider identitySpider;
 	
 	@EJB
-	private transient MessageSender xmpp;
+	private transient MessageSender messageSender;
 	
 	private transient Person cachedLoggedInUser;
 	
 	private Person getLoggedInUser() {
 		if (cachedLoggedInUser == null && getLoggedInUserId() != null) {
-			identitySpider.lookupPersonById(getLoggedInUserId());
-		}	
+			cachedLoggedInUser = identitySpider.lookupPersonById(getLoggedInUserId());
+		}
 		
 		if (cachedLoggedInUser == null)
 			throw new IllegalStateException("Trying to use ShareLinkGlueBean when not logged in");
@@ -74,7 +74,7 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 		em.persist(post);
 		
 		for (Person r : recipients) {
-			xmpp.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
+			messageSender.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
 		}
 	}
 
