@@ -2,12 +2,10 @@ package com.dumbhippo.web;
 
 import java.util.Collection;
 
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Invitation;
-import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -26,8 +24,7 @@ public class VerifyBean {
 	private InvitationSystem invitationSystem;
 
 	public VerifyBean() throws NamingException {
-		InitialContext ctx = new InitialContext();
-		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());
+		invitationSystem = (new EjbLink()).nameLookup(InvitationSystem.class);
 	}	
 	
 	public String getAuthKey() {

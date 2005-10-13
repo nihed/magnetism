@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.IdentitySpider;
 
 /**
  * ShareLinkBean corresponds to the "share a link" JSF page.
@@ -30,6 +31,8 @@ public class ShareLinkBean {
 	// list of Person.getId()
 	private List<String> recipients;
 	
+	private transient IdentitySpider identitySpider;
+	
 	public class RecipientsConverter implements Converter {
 
 		private void throwError(String problem) {
@@ -39,6 +42,11 @@ public class ShareLinkBean {
 			message.setSeverity(FacesMessage.SEVERITY_ERROR);
 			throw new ConverterException(message);
 		}
+		/*
+		private Person attemptPersonFromString(String s) {
+			
+		}
+		*/
 		
 		public Object getAsObject(FacesContext context, UIComponent component, String newValue) throws ConverterException {
 			
@@ -64,7 +72,7 @@ public class ShareLinkBean {
 			return StringUtils.join(list, ",");
 		}
 	}
-	
+		
 	public Converter getRecipientsConverter() {
 		return new RecipientsConverter();
 	}

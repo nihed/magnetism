@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-
 /**
  * 
  * This class just delegates to another class, but implements only the specified interfaces.
@@ -28,9 +27,14 @@ public class InterfaceFilterProxyFactory {
 		}
 	}
 	
-	static public Object newProxyInstance(Object delegate, Class<?>[] interfaces) {
+	static public Object newProxyInstanceArray(Object delegate, Class<?>[] interfaces) {
 		Handler h = new Handler(delegate);
 		
 		return Proxy.newProxyInstance(delegate.getClass().getClassLoader(), interfaces, h);
+	}
+	
+	@SuppressWarnings("unchecked")
+	static public <T> T newProxyInstance(T delegate, Class<T> iface) {
+		return (T) newProxyInstanceArray(delegate, new Class[] { iface });
 	}
 }

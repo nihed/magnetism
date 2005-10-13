@@ -1,11 +1,9 @@
 package com.dumbhippo.web;
 
-import javax.annotation.Resource;
 import javax.ejb.EJBException;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.SystemException;
@@ -16,8 +14,8 @@ import org.apache.log4j.Logger;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.web.EjbLink.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
-import com.dumbhippo.web.LoginCookie.NotLoggedInException;
 
 public class SigninBean {
 
@@ -27,22 +25,36 @@ public class SigninBean {
 
 	private transient AccountSystem accountSystem;
 	
-	private UserTransaction tx;	
+	private UserTransaction tx;
+	
+	private EjbLink ejb;
 	
 	private void initAccountFromCookie() {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletRequest request = (HttpServletRequest) ctx.getRequest();
+				
 		try {
-			account = LoginCookie.attemptLogin(accountSystem, request);
+			accountSystem = ejb.nameLookup(AccountSystem.class);
+			
+			// this may well fail ... the whole point of this class is that it does really
+			ejb.attemptLogin(request);
+			
+			account = accountSystem.lookupAccountByPersonId(ejb.getLoggedInUser());
+			
 		} catch (BadTastingException e) {
 			logger.info("invalid login: ", e);
 		} catch (NotLoggedInException e) {
 			account = null;
+			logger.info("failed to login: ", e);
 		}
 	}
 
-	public SigninBean() throws NamingException {
-		accountSystem = (AccountSystem) (new InitialContext()).lookup(AccountSystem.class.getName());
+	public SigninBean() {
+		ejb = new EjbLink();
+
+		if (ejb == null)
+			throw new RuntimeException("SigninBean could not create EjbLink");
+		
 		initAccountFromCookie();
 	}
 	
@@ -86,11 +98,7 @@ public class SigninBean {
 	
 	public static Client initNewClient(HippoAccount account) {
 		AccountSystem accounts;
-		try {
-			accounts = (AccountSystem) (new InitialContext()).lookup(AccountSystem.class.getName());
-		} catch (NamingException e) {
-			throw new RuntimeException(e);
-		}
+		accounts = (new EjbLink()).nameLookup(AccountSystem.class);
 		return initNewClient(accounts, account);
 	}
 
@@ -99,7 +107,7 @@ public class SigninBean {
 		
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
-		LoginCookie loginCookie = new LoginCookie(account, client);
+		LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), client.getAuthKey());
 		response.addCookie(loginCookie.getCookie());
 		return client;
 	}

@@ -11,17 +11,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AjaxGlue;
+import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 
 @Stateful
-public class AjaxGlueBean implements AjaxGlue, Serializable {
+public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRpc, Serializable {
 	
 	private static final long serialVersionUID = 0L;
-	
-	private String personId = null;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
@@ -31,10 +30,6 @@ public class AjaxGlueBean implements AjaxGlue, Serializable {
 	
 	@EJB
 	private transient IdentitySpider identitySpider;
-	
-	public void init(String personId) {
-		this.personId = personId;
-	}
 	
 	public String getStuff() {
 		return "This is some stuff!";

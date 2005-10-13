@@ -1,6 +1,5 @@
 package com.dumbhippo.web;
 
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.Invitation;
@@ -27,9 +26,8 @@ public class InviteBean {
 
 	private SigninBean signin;
 	
-	public InviteBean() throws NamingException {
-		InitialContext ctx = new InitialContext();
-		invitationSystem = (InvitationSystem) ctx.lookup(InvitationSystem.class.getName());		
+	public InviteBean() {
+		invitationSystem = (new EjbLink()).nameLookup(InvitationSystem.class);		
 	}
 
 	// Injected

@@ -16,7 +16,7 @@ public class LoginCookieTest extends TestCase {
 		HippoAccount acct = new HippoAccount(p, c);
 		String personId = p.getId();
 		String authKey = c.getAuthKey();
-		LoginCookie loginCookie = new LoginCookie(acct, c);
+		LoginCookie loginCookie = new LoginCookie(personId, authKey);
 		assertEquals(personId, loginCookie.getPersonId());
 		assertEquals(authKey, loginCookie.getAuthKey());
 		

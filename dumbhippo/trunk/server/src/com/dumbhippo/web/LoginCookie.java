@@ -1,11 +1,6 @@
 package com.dumbhippo.web;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-
-import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.AccountSystem;
 
 /**
  * Represents the persistent login information stored on a client for a
@@ -16,7 +11,7 @@ import com.dumbhippo.server.AccountSystem;
  */
 public class LoginCookie {
 	
-	static private final String COOKIE_NAME = "auth";
+	static final String COOKIE_NAME = "auth";
 	static private final String COOKIE_NAME_HEADER = "name=";
 	static private final String COOKIE_PASSWORD_HEADER = "password=";
 	
@@ -39,13 +34,6 @@ public class LoginCookie {
 			super(string);
 		}
 	};
-
-	@SuppressWarnings("serial")
-	static public class NotLoggedInException extends Exception {
-		public NotLoggedInException(String string) {
-			super(string);
-		}
-	}
 
 	private void validateHex(String hexStr) throws BadTastingException {
 		if (hexStr.length() % 2 != 0)
@@ -97,11 +85,6 @@ public class LoginCookie {
 		return cookie;
 	}
 
-	public LoginCookie(HippoAccount acct, Client client) {
-		personId = acct.getOwner().getId();
-		authKey = client.getAuthKey();
-	}
-
 	public Cookie getCookie() {
 		if (cachedCookie == null) {
 			cachedCookie = computeCookie();
@@ -113,6 +96,11 @@ public class LoginCookie {
 		computePersonIdLogin(cookie);
 	}
 
+	public LoginCookie(String personId, String authKey) {
+		this.personId = personId;
+		this.authKey = authKey;
+	}
+	
 	private void computePersonIdLogin(Cookie cookie) throws BadTastingException {
 		String val = cookie.getValue();
 		if (!cookie.getName().equals(COOKIE_NAME)) {
@@ -159,43 +147,5 @@ public class LoginCookie {
 		int result = authKey.hashCode();
 		result = 37 * result + personId.hashCode();
 		return result;
-	}
-	
-	/**
-	 * Look for login cookie and find corresponding account; return null 
-	 * if none is found.
-	 * 
-	 * @param request the http request
-	 * @return account or null
-	 * @throws BadTastingException 
-	 * @throws NotLoggedInException 
-	 */
-	static public HippoAccount attemptLogin(AccountSystem accountSystem, HttpServletRequest request) throws BadTastingException, NotLoggedInException {
-		LoginCookie loginCookie = null;
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie c : cookies) {
-				if (c.getName().equals(COOKIE_NAME)) {
-					loginCookie = new LoginCookie(c);
-					break;
-				}
-			}
-		}
-		
-		if (loginCookie == null) {
-			throw new NotLoggedInException("No login cookie set");
-		}
-		
-		HippoAccount account = accountSystem.lookupAccountByPersonId(loginCookie.getPersonId());
-
-		if (account == null) {
-			throw new BadTastingException("Cookie had invalid person ID in it");
-		}
-		
-		if (account.checkClientCookie(loginCookie.getAuthKey())) {
-			return account;
-		} else {
-			throw new BadTastingException("Cookie had invalid or expired auth key in it");
-		}
 	}
 }

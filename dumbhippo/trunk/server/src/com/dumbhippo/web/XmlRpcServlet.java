@@ -5,8 +5,6 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.List;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,12 +14,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcServer;
 
-import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AjaxGlue;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
+import com.dumbhippo.web.EjbLink.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
-import com.dumbhippo.web.LoginCookie.NotLoggedInException;
 
 public class XmlRpcServlet extends HttpServlet {
 
@@ -29,9 +24,7 @@ public class XmlRpcServlet extends HttpServlet {
 	
 	private static final long serialVersionUID = 0L;
 
-	private AjaxGlue glue;
-
-	private AjaxGlueXmlRpc glueProxy;
+	private AjaxGlueXmlRpc glue;
 
 	private XmlRpcServer xmlrpc;
 
@@ -39,49 +32,32 @@ public class XmlRpcServlet extends HttpServlet {
 		if (xmlrpc != null)
 			return;
 
-		AccountSystem accountSystem;
-		
+		EjbLink ejb = new EjbLink();
+
 		try {
-			InitialContext initialContext = new InitialContext();
-			glue = (AjaxGlue) initialContext.lookup(AjaxGlue.class.getCanonicalName());
-			accountSystem = (AccountSystem) initialContext.lookup(AccountSystem.class.getCanonicalName());
-		} catch (NamingException e) {
-			e.printStackTrace();
-			throw new ServletException("Failed to lookup AjaxGlue", e);
-		}
-		
-		if (glue == null || accountSystem == null) {
-			throw new IllegalStateException("Failed to get session beans from JNDI");
-		}
-		
-		try {
-			HippoAccount account = LoginCookie.attemptLogin(accountSystem, request);
-			glue.init(account.getOwner().getId());
+			ejb.attemptLogin(request);
 		} catch (BadTastingException e) {
-			
 			// In an HTML servlet, we would redirect to a login page; but in this
 			// servlet we can't do much, we have no UI
-			
+
 			e.printStackTrace();
-			throw new ServletException("Authorization failed, please log in again", e);
+			throw new ServletException("Authorization failed (bad cookie), please log in again", e);
 		} catch (NotLoggedInException e) {
 			// In an HTML servlet, we would redirect to a login page; but in this
 			// servlet we can't do much, we have no UI
 			
 			e.printStackTrace();
-			throw new ServletException("Authorization failed, please log in again", e);
+			throw new ServletException("Authorization failed (not logged in), please log in again", e);
 		}
-		
-		// glueProxy ONLY Implements AjaxGlueXmlRpc, not anything in AjaxGlue
-		glueProxy = (AjaxGlueXmlRpc) InterfaceFilterProxyFactory.newProxyInstance(glue,
-				new Class[] { AjaxGlueXmlRpc.class });
 
-		if (glueProxy instanceof AjaxGlue)
-			throw new IllegalStateException("Bug! glueProxy implements AjaxGlue");
-
+		glue = ejb.nameLookup(AjaxGlueXmlRpc.class);
+				
 		// init "xmlrpc" last since it indicates whether we are done setting up
 		xmlrpc = new XmlRpcServer();
-		xmlrpc.addHandler("dumbhippo", glueProxy);
+		
+		// This is only safe because EjbLink.nameLookup() creates a proxy with ONLY 
+		// our requested interface, so we aren't exporting random crap remotely.
+		xmlrpc.addHandler("dumbhippo", glue);
 	}
 
 	private void logRequest(HttpServletRequest request, String type) {
@@ -131,7 +107,8 @@ public class XmlRpcServlet extends HttpServlet {
 		try {
 			setup(request);
 		} catch (ServletException e) {
-			// FIXME ignoring for now for testing
+			logger.error(e);
+			throw e;
 		}
 		
 		if (request.getRequestURI().equals("/xml/friendcompletions")) {

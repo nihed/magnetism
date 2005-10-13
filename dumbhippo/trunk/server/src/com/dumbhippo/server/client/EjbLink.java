@@ -1,11 +1,9 @@
 package com.dumbhippo.server.client;
 
-import javax.naming.InitialContext;
-import javax.naming.NameClassPair;
-import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.server.AbstractEjbLink;
 import com.dumbhippo.server.AuthenticationSystemRemote;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystemRemote;
@@ -19,48 +17,31 @@ import com.dumbhippo.server.TestGlueRemote;
  * @author hp
  *
  */
-public class EjbLink {
-	private InitialContext namingContext;
+public class EjbLink extends AbstractEjbLink {
+
 	private IdentitySpiderRemote identitySpider;
 	private AuthenticationSystemRemote authenticationSystem;
 	private InvitationSystemRemote invitationSystem;
 	private MessengerGlueRemote messengerGlue;
 	private TestGlueRemote testGlue;
-	
-	private Object nameLookup(Class clazz) throws NamingException {
-		String name = clazz.getPackage().getName() + "." + clazz.getSimpleName();
-		// System.out.println("Looking up '" + name + "'");
-		return namingContext.lookup(name);
-	}
-	
-	private void loadBeans(boolean verbose) throws NamingException {
 		
-		if (verbose) {
-			NamingEnumeration names = namingContext.list("");
-			while (names.hasMore()) {
-				NameClassPair pair = (NameClassPair) names.next();
-				
-				System.err.println(String.format("Name '%s' bound to class '%s'",
-						pair.getName(), pair.getClassName()));
-			}
-		}
-		
+	private void loadBeans() throws NamingException {			
 		// we construct these up front so the getters are threadsafe and don't throw NamingException
-		identitySpider = (IdentitySpiderRemote) nameLookup(IdentitySpiderRemote.class);
-		authenticationSystem = (AuthenticationSystemRemote) nameLookup(AuthenticationSystemRemote.class);
-		invitationSystem = (InvitationSystemRemote) nameLookup(InvitationSystemRemote.class);
-		messengerGlue = (MessengerGlueRemote) nameLookup(MessengerGlueRemote.class);
-		testGlue = (TestGlueRemote) nameLookup(TestGlueRemote.class);
+		identitySpider = nameLookup(IdentitySpiderRemote.class);
+		authenticationSystem = nameLookup(AuthenticationSystemRemote.class);
+		invitationSystem = nameLookup(InvitationSystemRemote.class);
+		messengerGlue = nameLookup(MessengerGlueRemote.class);
+		testGlue = nameLookup(TestGlueRemote.class);
 	}
 	
 	public EjbLink() throws NamingException {
-		namingContext = new InitialContext();
-		loadBeans(false);
+		super();
+		loadBeans();
 	}
 	
 	public EjbLink(boolean verbose) throws NamingException {
-		namingContext = new InitialContext();
-		loadBeans(verbose);
+		super(verbose);
+		loadBeans();
 	}	
 	
 	public IdentitySpiderRemote getIdentitySpider() {
