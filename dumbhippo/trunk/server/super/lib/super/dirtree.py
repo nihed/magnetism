@@ -406,8 +406,6 @@ class DirTree:
             src_line = expand_line(src_line)
             if src_line != dest_line:
                 verbose("%s doesn't match expanded source" % path)
-                print "'%s'" % src_line
-                print "'%s'" % dest_line
                 ok = False
                 break
 
