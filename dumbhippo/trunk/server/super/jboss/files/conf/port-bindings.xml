@@ -15,7 +15,7 @@
          delegateClass="org.jboss.services.binding.AttributeMappingDelegate"
          >
          <delegate-config portName="Port" hostName="BindAddress">
-            <attribute name="RmiPort">1098</attribute>
+            <attribute name="RmiPort">@@jrmiPort@@</attribute>
          </delegate-config>
          <binding port="@@jnpPort@@" host="${jboss.bind.address}"/>
       </service-config>
@@ -25,14 +25,13 @@
          delegateClass="org.jboss.services.binding.AttributeMappingDelegate"
          >
          <delegate-config portName="RMIObjectPort"/>
-         <binding port="4444"/>
+         <binding port="@@jrmiObjectPort@@"/>
       </service-config>
 
       <service-config name="jboss:service=invoker,type=pooled"
-         delegateClass="org.jboss.services.binding.AttributeMappingDelegate"
-         >
+         delegateClass="org.jboss.services.binding.AttributeMappingDelegate">
          <delegate-config portName="ServerBindPort"/>
-         <binding port="4445"/>
+         <binding port="@@jinvokerPort@@"/>
       </service-config>
 
 
@@ -90,7 +89,7 @@
    ]]>
             </xslt-config>
          </delegate-config>
-         <binding port="8080"/>
+         <binding port="@@tomcatHttpPort@@"/>
       </service-config>
 
    </server>
