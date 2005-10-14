@@ -3,8 +3,6 @@
 targetdir=@@targetdir@@
 
 echo "Starting MySQL..."
-/usr/bin/mysqld_safe --defaults-file=$targetdir/conf/my.cnf > /dev/null &
-pid=$!
 
 need_set_password=false
 if [ ! -d $targetdir/data/mysql ] ; then
@@ -13,6 +11,9 @@ if [ ! -d $targetdir/data/mysql ] ; then
 
     need_set_password=true
 fi
+
+/usr/bin/mysqld_safe --defaults-file=$targetdir/conf/my.cnf > /dev/null &
+pid=$!
 
 started=false
 failed=false
@@ -38,8 +39,12 @@ done
 
 if $started ; then
     if $need_set_password ; then
+	hostname=`hostname`
 	eval `grep 'password=' $targetdir/conf/my.cnf`
 	/usr/bin/mysqladmin -S $targetdir/run/mysql.sock -u root password $password
+	# Belt-and-suspenders; only one of these is needed on a particular host, but it all depends on what 
+	# reverse lookup on 127.0.0.1 gives.
+	echo "grant all on *.* to root@'$hostname' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
 	echo "grant all on *.* to root@'127.0.0.1' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
 	echo "grant all on *.* to root@'localhost.localdomain' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
     fi
