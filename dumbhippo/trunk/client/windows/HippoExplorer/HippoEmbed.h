@@ -46,6 +46,7 @@ public:
    // IHippoEmbed methods
    STDMETHODIMP DisplayMessage (BSTR message);
    STDMETHODIMP DebugDump (IDispatch *element);
+   STDMETHODIMP CloseWindow (void);
 
 private:
     void clearSite();

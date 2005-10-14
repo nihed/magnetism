@@ -313,6 +313,15 @@ HippoEmbed::DebugDump (IDispatch *dispatch)
     return S_OK;
 }
 
+STDMETHODIMP
+HippoEmbed::CloseWindow()
+{
+    if (browser_)
+	browser_->Quit();
+
+    return S_OK;
+}
+
 /////////////////////////////////////////////////////////////////////
 
  void

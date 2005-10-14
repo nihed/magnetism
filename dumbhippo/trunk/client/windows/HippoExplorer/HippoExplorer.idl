@@ -22,6 +22,8 @@ library HippoExplorer {
 	HRESULT DisplayMessage([in] BSTR message);
 	[helpstring("Insert debugging information into the element")]
 	HRESULT DebugDump([in] IDispatch *element);
+	[helpstring("Close the browser window; usually used for server side dialogs")]
+	HRESULT CloseWindow(void);
     }
     [
 	uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents
