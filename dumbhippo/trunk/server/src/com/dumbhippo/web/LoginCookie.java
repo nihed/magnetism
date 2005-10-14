@@ -30,6 +30,8 @@ public class LoginCookie {
 	 */
 	@SuppressWarnings("serial")
 	static public class BadTastingException extends Exception {
+		private static final long serialVersionUID = 0L;
+
 		public BadTastingException(String string) {
 			super(string);
 		}

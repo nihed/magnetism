@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javax.naming.NamingException;
 
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.server.InvitationSystem;
 
@@ -19,12 +19,12 @@ public class VerifyBean {
 	private String authKey;
 	private boolean valid;
 	private Collection<String> inviterNames;
-	private HippoAccount newAccount;
-	
+
+	@Inject
 	private InvitationSystem invitationSystem;
 
 	public VerifyBean() throws NamingException {
-		invitationSystem = (new EjbLink()).nameLookup(InvitationSystem.class);
+		EjbLink.injectFromFacesContext(this, Scope.NONE);
 	}	
 	
 	public String getAuthKey() {
@@ -48,8 +48,9 @@ public class VerifyBean {
 			inviterNames = null;
 		valid = (inviterNames != null);
 		if (valid) {
-			HippoAccount account = invitationSystem.viewInvitation(invite);
-			SigninBean.initNewClient(account);
+			Client client = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier());
+			SigninBean.setCookie(invite.getResultingPerson().getId(),
+					client.getAuthKey());
 		}
 	}
 
@@ -59,13 +60,5 @@ public class VerifyBean {
 
 	public boolean isValid() {
 		return valid;
-	}
-
-	public HippoAccount getNewAccount() {
-		return newAccount;
-	}
-
-	public void setNewAccount(HippoAccount newAccount) {
-		this.newAccount = newAccount;
 	}
 }

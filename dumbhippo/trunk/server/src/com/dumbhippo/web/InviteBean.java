@@ -3,6 +3,8 @@ package com.dumbhippo.web;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -22,27 +24,29 @@ public class InviteBean {
 	
 	private String authKey;
 
+	@Inject
+	private IdentitySpider identitySpider;
+	
+	@Inject
 	private InvitationSystem invitationSystem;
 
-	private SigninBean signin;
+	@Inject
+	private EjbLink ejb;
 	
 	public InviteBean() {
-		invitationSystem = (new EjbLink()).getEjb(InvitationSystem.class);		
-	}
-
-	// Injected
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
+		EjbLink.injectFromFacesContext(this, Scope.NONE);		
 	}
 
 	// action handler for form submit
 	public String doInvite() throws NamingException {
-		if (!signin.isValid()) {
+		if (!ejb.checkLoginFromFacesContext(this)) {
 			throw new RuntimeException("not signed in");
 		}
+	
+		Person person = identitySpider.lookupPersonById(ejb.getLoggedInUser());
 		
 		Invitation invitation 
-			= invitationSystem.createEmailInvitation(signin.getAccount().getOwner(), getEmail());
+			= invitationSystem.createEmailInvitation(person, getEmail());
 
 		this.authKey = invitation.getAuthKey();
 		return "invitesent";

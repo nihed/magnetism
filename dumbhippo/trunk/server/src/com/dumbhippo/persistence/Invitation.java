@@ -8,7 +8,6 @@ import java.util.Set;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
@@ -21,7 +20,21 @@ public class Invitation extends DBUnique {
 	private Set<Person> inviters;
 	private String authKey;
 	private boolean viewed;
+	private Person resultingPerson;
 	
+	/**
+	 * When an invitation goes through, a person is created.
+	 */
+	// FIXME is OneToOne correct?
+	@OneToOne
+	public Person getResultingPerson() {
+		return resultingPerson;
+	}
+
+	public void setResultingPerson(Person resultingPerson) {
+		this.resultingPerson = resultingPerson;
+	}
+
 	protected Invitation() {}
 
 	public Invitation(Resource invitee, Person inviter) {

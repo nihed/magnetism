@@ -50,12 +50,16 @@ public class ShareLinkBean {
 		
 		public Object getAsObject(FacesContext context, UIComponent component, String newValue) throws ConverterException {
 			
-			// FIXME build list of person ID, not of unchanged strings
 			List<String> freeforms = new ArrayList<String>();
 			String[] split = newValue.split(",");
 			for (String s : split) {
 				freeforms.add(s.trim());
 			}
+			
+			// if we aren't logged in yet, I don't think we have a FacesContext
+			// here so we're hosed...
+			if (!ejb.checkLoginFromFacesContext(this))
+				return null;
 			
 			try {
 				return shareLinkGlue.freeformRecipientsToIds(freeforms);
@@ -115,6 +119,9 @@ public class ShareLinkBean {
 	// action handler for form submit
 	public String doShareLink() {
 		try {
+			if (!ejb.checkLoginFromFacesContext(this)) {
+				throw new IllegalStateException("Not logged in");
+			}
 			
 			if (url == null || description == null || recipients == null) {
 				throw new IllegalStateException("Not all fields provided for link share");

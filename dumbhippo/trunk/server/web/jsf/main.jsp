@@ -32,8 +32,8 @@
 	<!-- valid signin: <h:outputText value="#{signin.valid}"/> -->
 	<c:if test="${signin.valid}">
 	  <div style="font-size: small; color: gray;">
-	    Logged in as <b><h:outputText value="#{signin.account.owner.name}"/></b>
-	    (<h:outputText value="#{signin.account.owner.id}"/>)
+	    Logged in as <b><h:outputText value="#{signin.loggedInAs}"/></b>
+	    (<h:outputText value="#{signin.loggedInAs}"/>)
 	  </div>
 	</c:if>
 	</body>

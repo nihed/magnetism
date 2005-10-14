@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.TestGlueRemote;
 
 /**
@@ -26,7 +27,7 @@ import com.dumbhippo.server.TestGlueRemote;
  * 
  */
 @Stateless
-public class TestGlueBean implements TestGlueRemote {
+public class TestGlueBean implements TestGlue, TestGlueRemote {
 
 	static Log logger = LogFactory.getLog(TestGlueBean.class);
 	
@@ -100,5 +101,9 @@ public class TestGlueBean implements TestGlueRemote {
 		logger.info("persistedAccount = " + persistedAccount);
 		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
 		return client.getAuthKey();
+	}
+
+	public HippoAccount createAccountFromEmail(String email) {
+		return accountSystem.createAccountFromEmail(email);
 	}
 }

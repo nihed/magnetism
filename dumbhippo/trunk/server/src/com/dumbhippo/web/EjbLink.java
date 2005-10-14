@@ -1,5 +1,6 @@
 package com.dumbhippo.web;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -33,7 +34,9 @@ import com.dumbhippo.web.LoginCookie.BadTastingException;
  * @author hp
  * 
  */
-public class EjbLink extends AbstractEjbLink {
+public class EjbLink extends AbstractEjbLink implements Serializable {
+
+	private static final long serialVersionUID = 0L;
 
 	static public class NotLoggedInException extends Exception {
 		private static final long serialVersionUID = 0L;
@@ -150,6 +153,16 @@ public class EjbLink extends AbstractEjbLink {
 		return proxy;
 	}
 
+	private void attemptLoginFromFacesContextLoggingErrors() {
+		try {
+			attemptLoginFromFacesContext();
+		} catch (BadTastingException e) {
+			logger.error("Failed to login (bad cookie)", e);
+		} catch (NotLoggedInException e) {
+			logger.error("Failed to login (not logged in)", e);
+		}
+	}
+	
 	/**
 	 * Look for login cookie and find corresponding account; throw exception if
 	 * login fails.
@@ -262,6 +275,19 @@ public class EjbLink extends AbstractEjbLink {
 	public boolean isLoggedIn() {
 		return personId != null;
 	}
+
+	public boolean checkLoginFromFacesContext(Object object) {
+		if (personId == null) {
+			attemptLoginFromFacesContextLoggingErrors();
+			
+			// inject previously-missed objects, since we transitioned to logged in state
+			if (personId != null) {
+				inject(object);
+			}
+		}
+		
+		return personId != null;
+	}
 	
 	static private void setField(Object object, Field field, Object value) {
 		field.setAccessible(true);
@@ -285,10 +311,10 @@ public class EjbLink extends AbstractEjbLink {
 	 * EJB interface or an EjbLink.
 	 * 
 	 * @param object object to be injected
-	 * @returns true if anything was injected
+	 * @returns true if anything was injectable
 	 */
 	public boolean inject(Object object) {
-		boolean didSomething = false;
+		boolean sawSomething = false;
 		
 		Field[] fields = object.getClass().getDeclaredFields();
 		logger.debug("Injecting " + object.getClass().getCanonicalName() + 
@@ -300,19 +326,38 @@ public class EjbLink extends AbstractEjbLink {
 					throw new RuntimeException("Inject annotation on static fields is not going to work");
 				}
 				
-				if (f.getType() == EjbLink.class) {
-					setField(object, f, this);
-					didSomething = true;
-				} else {
-					Object value = getEjb(f.getType());
-					setField(object, f, value);
-					didSomething = true;
+				sawSomething = true;
+				
+				Object oldValue;
+				try {
+					f.setAccessible(true);
+					oldValue = f.get(object);
+				} catch (IllegalArgumentException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
+				}
+				
+				// if we already injected, don't replace it
+				if (oldValue == null) {
+					if (f.getType() == EjbLink.class) {
+						setField(object, f, this);
+					} else {
+						Class c = f.getType();
+						if (personId == null &&
+								LoginRequired.class.isAssignableFrom(c)) {
+							logger.debug("  not injecting field " + f.toGenericString() + " since not logged in yet");
+						} else {
+							Object value = getEjb(c);
+							setField(object, f, value);
+						}
+					}
 				}
 			} else {
 				logger.debug("  Field " + f.toGenericString() + " does not need injecting");
 			}
 		}
-		return didSomething;
+		return sawSomething;
 	}
 	
 	static private String getKey() {
@@ -372,13 +417,7 @@ public class EjbLink extends AbstractEjbLink {
 				throw new RuntimeException("We created the wrong scope of EjbLink");
 		
 			if (ejb.scope != Scope.APPLICATION) {
-				try {
-					ejb.attemptLoginFromFacesContext();
-				} catch (BadTastingException e) {
-					logger.error("Failed to login (bad cookie)", e);
-				} catch (NotLoggedInException e) {
-					logger.error("Failed to login (not logged in)", e);
-				}
+				ejb.attemptLoginFromFacesContextLoggingErrors();
 			}
 			
 			if (!ejb.inject(object)) {

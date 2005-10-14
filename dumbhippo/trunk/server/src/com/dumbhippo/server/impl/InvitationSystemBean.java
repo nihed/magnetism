@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.InvitableResource;
 import com.dumbhippo.persistence.Invitation;
@@ -90,16 +91,31 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 	
-	public HippoAccount viewInvitation(Invitation invite) {
+	public Client viewInvitation(Invitation invite, String firstClientName) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("Invitation " + invite + "has already been viewed");
 		}
-		invite.setViewed(true);
-		notifyInvitationViewed(invite);
+		
 		Resource invitationResource = invite.getInvitee();
 		HippoAccount acct = accounts.createAccountFromResource(invitationResource);
 		
-		return acct;
+		Client client = null;
+		if (firstClientName != null) {
+			client = accounts.authorizeNewClient(acct, firstClientName);
+		}
+
+		invite.setViewed(true);
+		invite.setResultingPerson(acct.getOwner());
+		if (!em.contains (invite)) {
+			// we have to modify a persisted copy also...
+			Invitation persisted = em.find(Invitation.class, invite.getId());
+			persisted.setViewed(true);
+			persisted.setResultingPerson(acct.getOwner());
+		}
+
+		notifyInvitationViewed(invite);
+		
+		return client;
 	}
 
 	public Collection<String> getInviterNames(Invitation invite) {

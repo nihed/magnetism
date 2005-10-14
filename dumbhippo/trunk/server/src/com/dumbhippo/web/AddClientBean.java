@@ -1,14 +1,19 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.TestGlue;
+
 
 public class AddClientBean {
 	private String email;
-	private SigninBean signin;
+		
+	@Inject
+	private transient TestGlue testGlue;
 
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
+	public AddClientBean() {
+		EjbLink.injectFromFacesContext(this, Scope.NONE);
 	}
-
+	
 	public String getEmail() {
 		return email;
 	}
@@ -18,7 +23,16 @@ public class AddClientBean {
 	}
 	
 	public String doAddClient() {
-		signin.initNewAccountFromEmail(getEmail());
+		
+		if (email == null) {
+			/* FIXME need to complain on the form */
+			return null;
+		}
+			
+		HippoAccount account = testGlue.createAccountFromEmail(email);
+		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier());
+		SigninBean.setCookie(account.getOwner().getId(), authKey);
+
 		return "main";
 	}
 }

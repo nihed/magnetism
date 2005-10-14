@@ -76,27 +76,20 @@
    <managed-bean> 
       <managed-bean-name>signin</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.SigninBean</managed-bean-class> 
-      <managed-bean-scope>session</managed-bean-scope> 
-   </managed-bean>
+      <!-- request scope so we re-check on each page load for login -->
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>   
  
    <managed-bean> 
       <managed-bean-name>invite</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.InviteBean</managed-bean-class> 
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-      	<property-name>signin</property-name>
-      	<value>#{signin}</value>
-      </managed-property>
    </managed-bean>
    
    <managed-bean> 
       <managed-bean-name>addclient</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.AddClientBean</managed-bean-class> 
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-      	<property-name>signin</property-name>
-      	<value>#{signin}</value>
-      </managed-property>
    </managed-bean>   
    
    <managed-bean> 

@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -40,12 +40,14 @@ public interface InvitationSystem {
 	/**
 	 * Mark an invitation as viewed; this creates an initial HippoAccount
 	 * for the user and such, and grants the client access to the account
-	 * via a shared secret.
+	 * by adding a Client object. If firstClientName is null no client 
+	 * is added.
 	 * 
-	 * @param invite
-	 * @return an shared secret usable for authentication
+	 * @param invite the invitation
+	 * @param firstClientName name of the first client to create
+	 * @return initial client authorized to access the account
 	 */
-	public HippoAccount viewInvitation(Invitation invite);
+	public Client viewInvitation(Invitation invite, String firstClientName);
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
