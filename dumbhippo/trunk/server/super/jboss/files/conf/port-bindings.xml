@@ -33,8 +33,19 @@
          <delegate-config portName="ServerBindPort"/>
          <binding port="@@jinvokerPort@@"/>
       </service-config>
-
-
+      
+      <!-- custom code to remap the EJB3 remoting stuff.  Note that this is used
+           by the Jive component.  I can't believe I
+           figured out this crazy XML/MBean mapping goo.  I deserve a medal.
+        -->
+      <service-config name="jboss.remoting:type=Connector,name=DefaultEjb3Connector,handler=ejb3"
+        delgateClass="org.jboss.services.binding.AttributeMappingDelegate">
+        <delegate-config>
+          <attribute name="InvokerLocator">socket://0.0.0.0:${port}</attribute>
+        </delegate-config>
+        <binding port="@@jbossInvokerLocatorPort@@"/>
+      </service-config>
+      
       <!-- ********************* tomcat ********************** -->
 
       <service-config name="jboss.web:service=WebServer"
