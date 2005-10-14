@@ -51,11 +51,19 @@ private:
     void connect();
     void disconnect();
     void authenticate();
+
     void startSignInTimeout();
     void stopSignInTimeout();
+
+    void startRetryTimeout();
+    void stopRetryTimeout();
+
+
+    void connectFailure(char *message);
     void authFailure(char *message);
 
     static gboolean onSignInTimeout(gpointer data);
+    static gboolean onRetryTimeout(gpointer data);
 
     static void onConnectionOpen(LmConnection *connection,
 				 gboolean      success,
@@ -64,6 +72,10 @@ private:
     static void onConnectionAuthenticate(LmConnection *connection,
 				         gboolean      success,
 				         gpointer      userData);
+
+    static void onDisconnect(LmConnection       *connection,
+			     LmDisconnectReason  reason,
+			     gpointer            userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
 				     LmConnection     *connection,
@@ -87,4 +99,7 @@ private:
     //
     guint signInTimeoutID_;   // GSource ID for timeout
     int signInTimeoutCount_;  // Number of times we've checked
+
+    // Timeout waiting for the server to appear; state is RETRYING
+    guint retryTimeoutID_;    // GSource ID for timeout
 };

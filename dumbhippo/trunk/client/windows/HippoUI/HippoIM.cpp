@@ -11,15 +11,19 @@ static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
 static const int SIGN_IN_INITIAL_COUNT = 60;     /* 5 minutes */
 static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000; /* 30 seconds */
 
+static const int RETRY_TIMEOUT = 60000; /* 1 minute */
+
 HippoIM::HippoIM()
 {
     signInTimeoutID_ = 0;
     signInTimeoutCount_ = 0;
+    retryTimeoutID_ = 0;
 }
 
 HippoIM::~HippoIM()
 {
     stopSignInTimeout();
+    stopRetryTimeout();
 }
 
 void
@@ -185,23 +189,16 @@ HippoIM::connect()
 	                                   LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
+    lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
+
     GError *error = NULL;
     if (!lm_connection_open(lmConnection_, 
 	                    onConnectionOpen, (gpointer)this, NULL, 
 			    &error)) 
     {
-        char *tmp = g_strdup_printf("Couldn't open connection %s:%d%s%s\n",
-    		                    messageServer, port, 
-				    error ? ": " : "",
-				    error ? error->message : "");
-	WCHAR *tmpW = g_utf8_to_utf16(tmp, -1, NULL, NULL, NULL);
-	hippoDebug (tmpW);
-	g_free (tmp);
-	g_free (tmpW);
-
-	lm_connection_close(lmConnection_, NULL);
-	lm_connection_unref(lmConnection_);
-	lmConnection_ = NULL;
+	connectFailure(error ? error->message : "");
+	if (error)
+	    g_error_free(error);
     } else {
 	state_ = CONNECTING;
     }
@@ -210,21 +207,13 @@ HippoIM::connect()
 void
 HippoIM::disconnect()
 {
-    lm_connection_close(lmConnection_, NULL);
-    lm_connection_unref(lmConnection_);
-    lmConnection_ = NULL;
-}
-
-
-void 
-HippoIM::startSignInTimeout()
-{
-    if (!signInTimeoutID_) {
-	signInTimeoutID_ = g_timeout_add(SIGN_IN_INITIAL_TIMEOUT, 
-	                                 onSignInTimeout, (gpointer)this);
-	signInTimeoutCount_ = 0;
+    if (lmConnection_) {
+	lm_connection_close(lmConnection_, NULL);
+	lm_connection_unref(lmConnection_);
+	lmConnection_ = NULL;
     }
 }
+
 
 void
 HippoIM::authenticate()
@@ -251,6 +240,16 @@ HippoIM::authenticate()
 }
 
 void 
+HippoIM::startSignInTimeout()
+{
+    if (!signInTimeoutID_) {
+	signInTimeoutID_ = g_timeout_add(SIGN_IN_INITIAL_TIMEOUT, 
+	                                 onSignInTimeout, (gpointer)this);
+	signInTimeoutCount_ = 0;
+    }
+}
+
+void 
 HippoIM::stopSignInTimeout()
 {
     if (signInTimeoutID_) {
@@ -258,6 +257,40 @@ HippoIM::stopSignInTimeout()
 	signInTimeoutID_ = 0;
 	signInTimeoutCount_ = 0;
     }
+}
+
+void 
+HippoIM::startRetryTimeout()
+{
+    if (!retryTimeoutID_)
+	retryTimeoutID_ = g_timeout_add(RETRY_TIMEOUT, 
+	                                onRetryTimeout, (gpointer)this);
+}
+
+void 
+HippoIM::stopRetryTimeout()
+{
+    if (retryTimeoutID_) {
+	g_source_remove (retryTimeoutID_);
+	retryTimeoutID_ = 0;
+    }
+}
+
+void
+HippoIM::connectFailure(char *message)
+{
+    char *str = g_strdup_printf("Failed to connect%s%s", 
+	                        message ? ": " : "",
+	                        message ? message : "");
+    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
+    hippoDebug(L"%ls", strW);
+    g_free (str);
+    g_free (strW);
+
+    lm_connection_unref(lmConnection_);
+    lmConnection_ = NULL;
+    startRetryTimeout();
+    state_ = RETRYING;
 }
 
 void
@@ -272,7 +305,7 @@ HippoIM::authFailure(char *message)
     g_free (strW);
 
     forgetAuth();
-    startSignInTimeout();
+    startRetryTimeout();
     state_ = AUTH_WAIT;
     ui_->onAuthFailure();
 }
@@ -305,6 +338,18 @@ HippoIM::onSignInTimeout(gpointer data)
     return TRUE;
 }
 
+gboolean 
+HippoIM::onRetryTimeout(gpointer data)
+{
+    HippoIM *im = (HippoIM *)data;
+
+    im->stopRetryTimeout();
+
+    im->connect();
+
+    return FALSE;
+}
+
 void 
 HippoIM::onConnectionOpen (LmConnection *connection,
 			   gboolean      success,
@@ -315,9 +360,7 @@ HippoIM::onConnectionOpen (LmConnection *connection,
     if (success) {
 	im->authenticate();
     } else {
-	hippoDebug(L"Failed to connect to server");
-	im->disconnect();
-	im->state_ = RETRYING;
+	im->connectFailure(NULL);
     }
 }
 
@@ -348,6 +391,18 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
     }
 }
 
+
+void 
+HippoIM::onDisconnect(LmConnection       *connection,
+	      	      LmDisconnectReason  reason,
+		      gpointer            userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    im->connectFailure("Lost connection to server");
+}
+
+    
 LmHandlerResult 
 HippoIM::onMessage (LmMessageHandler *handler,
                     LmConnection     *connection,
