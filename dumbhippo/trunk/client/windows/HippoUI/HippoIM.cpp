@@ -191,7 +191,14 @@ HippoIM::connect()
 
     lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
 
+    state_ = CONNECTING;
     GError *error = NULL;
+
+    /* If lm_connection returns false, then onConnectionOpen won't be called
+     * at all. On a true return it will be called exactly once, but that 
+     * call might occur before or after lm_connection_open() returns, and
+     * may occur for success or for failure.
+     */
     if (!lm_connection_open(lmConnection_, 
 	                    onConnectionOpen, (gpointer)this, NULL, 
 			    &error)) 
@@ -199,8 +206,6 @@ HippoIM::connect()
 	connectFailure(error ? error->message : "");
 	if (error)
 	    g_error_free(error);
-    } else {
-	state_ = CONNECTING;
     }
 }
 
@@ -279,6 +284,7 @@ HippoIM::stopRetryTimeout()
 void
 HippoIM::connectFailure(char *message)
 {
+#if 0    
     char *str = g_strdup_printf("Failed to connect%s%s", 
 	                        message ? ": " : "",
 	                        message ? message : "");
@@ -286,6 +292,7 @@ HippoIM::connectFailure(char *message)
     hippoDebug(L"%ls", strW);
     g_free (str);
     g_free (strW);
+#endif
 
     lm_connection_unref(lmConnection_);
     lmConnection_ = NULL;
@@ -296,6 +303,7 @@ HippoIM::connectFailure(char *message)
 void
 HippoIM::authFailure(char *message)
 {
+#if 0
     char *str = g_strdup_printf("Failed to authenticate%s%s", 
 	                        message ? ": " : "",
 	                        message ? message : "");
@@ -303,9 +311,10 @@ HippoIM::authFailure(char *message)
     hippoDebug(L"%ls", strW);
     g_free (str);
     g_free (strW);
+#endif
 
     forgetAuth();
-    startRetryTimeout();
+    startSignInTimeout();
     state_ = AUTH_WAIT;
     ui_->onAuthFailure();
 }
