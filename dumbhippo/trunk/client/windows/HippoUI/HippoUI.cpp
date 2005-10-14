@@ -291,7 +291,7 @@ HippoUI::showShareWindow(BSTR url)
 {
     HippoBSTR shareURL;
     
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/addlink.faces"), &shareURL)))
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/sharelink.faces"), &shareURL)))
 	return;
 
     if (!SUCCEEDED (shareURL.Append(L"?url=")))
