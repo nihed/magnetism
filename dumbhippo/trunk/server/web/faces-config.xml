@@ -6,13 +6,19 @@
 
 <faces-config>
    <navigation-rule>
-      <!-- this rule applies to all from-view-ids -->
+      <!-- these global rules apply to all from-view-ids -->
       <navigation-case>
-         <from-outcome>mainpage</from-outcome>
+         <from-outcome>main</from-outcome>
          <to-view-id>/jsf/main.jsp</to-view-id>
          <redirect/>
       </navigation-case>
+      <navigation-case>
+         <from-outcome>sharelink</from-outcome>
+         <to-view-id>/jsf/sharelink.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>
    </navigation-rule>
+   <!-- these rules with from-view-id apply only to the given page -->
    <navigation-rule>
       <from-view-id>/jsf/main.jsp</from-view-id>
       <navigation-case>
@@ -23,11 +29,6 @@
       <navigation-case>
          <from-outcome>invite</from-outcome>
          <to-view-id>/jsf/invite.jsp</to-view-id>
-         <redirect/>
-      </navigation-case>
-      <navigation-case>
-         <from-outcome>sharelink</from-outcome>
-         <to-view-id>/jsf/sharelink.jsp</to-view-id>
          <redirect/>
       </navigation-case>
    </navigation-rule>
@@ -63,7 +64,15 @@
          <redirect/>
       </navigation-case>
    </navigation-rule>
-        
+   <navigation-rule>
+      <from-view-id>/jsf/sharelink.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>sharelinkcomplete</from-outcome>
+         <to-view-id>/jsf/sharelinkcomplete.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
    <managed-bean> 
       <managed-bean-name>signin</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.SigninBean</managed-bean-class> 

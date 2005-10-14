@@ -146,7 +146,7 @@ public class ShareLinkBean {
 			
 			glue.shareLink(url, recipients, description);
 			
-			return "main";
+			return "sharelinkcomplete";
 		} catch (Exception e) {
 			logger.debug(e);
 			// didn't work for some reason, just reload the page

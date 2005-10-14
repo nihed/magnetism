@@ -115,6 +115,7 @@ function validateAll() {
    return valid;
 }
 
+// called when there's a change to the user-visible recipients input
 function onRecipientsChanged() {
    var friendentry = document.getElementById("friendentry");
    var inputRecipients = document.getElementById("main:recipients");

@@ -16,7 +16,7 @@
 		<c:url value="verify.faces?authKey=${invite.authKey}" var="authurl"/>
 		<p>Invite url: <a href="${authurl}">${authurl}</a>
         </p>
-		<p><h:commandLink action="mainpage">
+		<p><h:commandLink action="main">
 			<h:outputText value="Go back to the main page" />
 		</h:commandLink></p>
 	</h:form>

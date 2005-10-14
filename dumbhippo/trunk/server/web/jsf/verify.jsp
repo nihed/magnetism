@@ -20,7 +20,7 @@
           </h:column>
         </h:dataTable>
         <!-- end table -->
-		<p><h:commandButton value="Go back to the main page" action="mainpage" /></p>
+		<p><h:commandButton value="Go back to the main page" action="main" /></p>
 	</h:form>
 	</body>
 </f:view>
