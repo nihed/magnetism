@@ -17,6 +17,11 @@
          <to-view-id>/jsf/sharelink.jsp</to-view-id>
          <redirect/>
       </navigation-case>
+      <navigation-case>
+         <from-outcome>login</from-outcome>
+         <to-view-id>/jsf/addclient.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>
    </navigation-rule>
    <!-- these rules with from-view-id apply only to the given page -->
    <navigation-rule>

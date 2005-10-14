@@ -32,3 +32,8 @@ function unsetError(nodeName) {
    var node = document.getElementById(nodeName);
    deleteChildren(node);
 }
+
+function loginRedirect(loginPage) {
+    // FIXME redirect to currentPage (location.href)
+	var w = window.open(loginPage, "Log In", "scrollbars=no,menubar=no,height=400,width=300,resizable=yes,toolbar=no,location=no,status=no");
+}

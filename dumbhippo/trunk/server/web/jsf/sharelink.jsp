@@ -14,6 +14,7 @@
   <c:url value="/javascripts/sitewide.js" var="sitewide"/>
   <c:url value="/css/sharelink.css" var="pagestyle"/>
   <c:url value="/xml/friendcompletions" var="xmlfriendcompletions"/>
+  <c:url value="/jsf/addclient.jsp" var="login"/>
   
 	  <head>
  	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -136,6 +137,14 @@ function onRecipientsChanged() {
       </head>
 
 <body onload="buildRecipientList()">
+
+<c:if test="!${signin.valid}">
+<script type="text/javascript" language="javascript">
+// <![CDATA[
+  loginRedirect(${login});
+// ]]>
+</script>
+</c:if>
 
 <div class="share-link">
 

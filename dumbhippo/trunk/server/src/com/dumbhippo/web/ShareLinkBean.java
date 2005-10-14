@@ -120,7 +120,7 @@ public class ShareLinkBean {
 	public String doShareLink() {
 		try {
 			if (!ejb.checkLoginFromFacesContext(this)) {
-				throw new IllegalStateException("Not logged in");
+				return "login";
 			}
 			
 			if (url == null || description == null || recipients == null) {
