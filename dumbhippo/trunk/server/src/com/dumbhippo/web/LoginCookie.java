@@ -74,10 +74,10 @@ public class LoginCookie {
 		Cookie cookie = new Cookie(COOKIE_NAME, "");
 		// We have some characters in our cookie like '=' that are
 		// theoretically only allowed in Version 1 cookies, but 
-                // experimentally IE can't (???) handle the Version 1 Max-Age, 
+        // experimentally IE can't (???) handle the Version 1 Max-Age, 
 		// parameter so we stick to Version 0 cookies with Expires and 
-                // assume that all the clients we care about will parse them
-                // correctly even with the suspicious characters.
+        // assume that all the clients we care about will parse them
+        // correctly even with the suspicious characters.
 		//
 		// cookie.setVersion(1);
 		cookie.setValue(val.toString());
@@ -94,6 +94,14 @@ public class LoginCookie {
 		return cachedCookie;
 	}
 
+	static public Cookie newDeleteCookie() {
+		Cookie cookie = new Cookie(COOKIE_NAME, "deleted");
+		// 0 max age means nuke the cookie
+		cookie.setMaxAge(0);
+		cookie.setPath("/");
+		return cookie;
+	}
+	
 	public LoginCookie(Cookie cookie) throws BadTastingException {
 		computePersonIdLogin(cookie);
 	}

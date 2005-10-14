@@ -27,6 +27,10 @@
 		<p><h:commandLink action="sharelink">
 			<h:outputText value="Share a link" />
 		</h:commandLink></p>
+		
+		<p><h:commandLink action="#{signin.doLogout}">
+			<h:outputText value="Log out" />
+		</h:commandLink></p>
 		</h3>
 	</h:form>
 	<!-- valid signin: <h:outputText value="#{signin.valid}"/> -->

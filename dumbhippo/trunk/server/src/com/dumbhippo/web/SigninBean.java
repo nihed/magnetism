@@ -7,9 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.dumbhippo.web.EjbLink.NotLoggedInException;
-import com.dumbhippo.web.LoginCookie.BadTastingException;
-
 public class SigninBean {
 
 	private static Logger logger = Logger.getLogger(SigninBean.class);
@@ -39,6 +36,12 @@ public class SigninBean {
 		response.addCookie(loginCookie.getCookie());
 	}
 
+	public static void unsetCookie() {
+		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
+		HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
+		response.addCookie(LoginCookie.newDeleteCookie());
+	}
+	
 	public SigninBean() {
 		EjbLink.injectFromFacesContext(this, Scope.NONE);
 	}
@@ -51,5 +54,10 @@ public class SigninBean {
 		if (!ejb.checkLoginFromFacesContext(this))
 			return null;
 		return ejb.getLoggedInUser();
+	}
+	
+	public String doLogout() {
+		unsetCookie();
+		return "main";
 	}
 }
