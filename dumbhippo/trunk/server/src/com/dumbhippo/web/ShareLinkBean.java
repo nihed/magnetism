@@ -15,8 +15,6 @@ import org.apache.commons.logging.LogFactory;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.server.ShareLinkGlue;
 import com.dumbhippo.server.UnknownPersonException;
-import com.dumbhippo.web.EjbLink.NotLoggedInException;
-import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 /**
  * ShareLinkBean corresponds to the "share a link" JSF page.
@@ -34,7 +32,11 @@ public class ShareLinkBean {
 	// list of Person.getId()
 	private List<String> recipients;
 	
-	private transient ShareLinkGlue cachedGlue;
+	@Inject
+	private transient EjbLink ejb;
+	
+	@Inject
+	private transient ShareLinkGlue shareLinkGlue;
 	
 	public class RecipientsConverter implements Converter {
 
@@ -48,8 +50,6 @@ public class ShareLinkBean {
 		
 		public Object getAsObject(FacesContext context, UIComponent component, String newValue) throws ConverterException {
 			
-			ShareLinkGlue glue = getGlue();
-			
 			// FIXME build list of person ID, not of unchanged strings
 			List<String> freeforms = new ArrayList<String>();
 			String[] split = newValue.split(",");
@@ -58,7 +58,7 @@ public class ShareLinkBean {
 			}
 			
 			try {
-				return glue.freeformRecipientsToIds(freeforms);
+				return shareLinkGlue.freeformRecipientsToIds(freeforms);
 			} catch (UnknownPersonException e) {
 				e.printStackTrace();
 				throw postError(e.getMessage());
@@ -76,29 +76,9 @@ public class ShareLinkBean {
 			return StringUtils.join(list, ",");
 		}
 	}
-
-	private ShareLinkGlue getGlue() {
-		if (cachedGlue == null) {
-			EjbLink ejb = new EjbLink();
-			try {
-				ejb.attemptLoginFromFacesContext();
-				cachedGlue = ejb.nameLookup(ShareLinkGlue.class);
-			} catch (BadTastingException e) {
-				e.printStackTrace();
-				logger.error("Failed to login (bad cookie)", e);
-			} catch (NotLoggedInException e) {
-				e.printStackTrace();
-				logger.error("Failed to login (not logged in)", e);
-			}
-		}
-		if (cachedGlue == null) {
-			throw new IllegalStateException("Need to be logged in to share a link");
-		}
-		return cachedGlue;
-	}
 	
 	public ShareLinkBean() {
-		
+		EjbLink.injectFromFacesContext(this, Scope.NONE);
 	}
 	
 	public Converter getRecipientsConverter() {
@@ -142,9 +122,7 @@ public class ShareLinkBean {
 			
 			logger.info("Sharing link!");
 			
-			ShareLinkGlue glue = getGlue();
-			
-			glue.shareLink(url, recipients, description);
+			shareLinkGlue.shareLink(url, recipients, description);
 			
 			return "sharelinkcomplete";
 		} catch (Exception e) {

@@ -27,7 +27,7 @@ public class InviteBean {
 	private SigninBean signin;
 	
 	public InviteBean() {
-		invitationSystem = (new EjbLink()).nameLookup(InvitationSystem.class);		
+		invitationSystem = (new EjbLink()).getEjb(InvitationSystem.class);		
 	}
 
 	// Injected

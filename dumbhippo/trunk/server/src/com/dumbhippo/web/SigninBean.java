@@ -29,7 +29,7 @@ public class SigninBean {
 	
 	private void initAccountFromCookie() {				
 		try {
-			accountSystem = ejb.nameLookup(AccountSystem.class);
+			accountSystem = ejb.getEjb(AccountSystem.class);
 			
 			// this may well fail ... the whole point of this class is that it does really
 			ejb.attemptLoginFromFacesContext();
@@ -95,7 +95,7 @@ public class SigninBean {
 	
 	public static Client initNewClient(HippoAccount account) {
 		AccountSystem accounts;
-		accounts = (new EjbLink()).nameLookup(AccountSystem.class);
+		accounts = (new EjbLink()).getEjb(AccountSystem.class);
 		return initNewClient(accounts, account);
 	}
 

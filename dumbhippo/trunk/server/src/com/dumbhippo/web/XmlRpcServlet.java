@@ -50,7 +50,7 @@ public class XmlRpcServlet extends HttpServlet {
 			throw new ServletException("Authorization failed (not logged in), please log in again", e);
 		}
 
-		glue = ejb.nameLookup(AjaxGlueXmlRpc.class);
+		glue = ejb.getEjb(AjaxGlueXmlRpc.class);
 				
 		// init "xmlrpc" last since it indicates whether we are done setting up
 		xmlrpc = new XmlRpcServer();
