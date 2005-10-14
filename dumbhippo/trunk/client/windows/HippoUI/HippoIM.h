@@ -19,6 +19,7 @@ public:
 	CONNECTING,     // Waiting for connecting to server
 	RETRYING,       // Connection to server failed, retrying
 	AUTHENTICATING, // Waiting for authentication
+	AUTH_WAIT,      // Authentication failed, waiting for new creds
 	AUTHENTICATED   // Authenticated to server
     };
 
@@ -49,6 +50,7 @@ private:
     bool loadAuth();
     void connect();
     void disconnect();
+    void authenticate();
     void startSignInTimeout();
     void stopSignInTimeout();
     void authFailure(char *message);
@@ -76,6 +78,13 @@ private:
     HippoBSTR username_;
     HippoBSTR password_;
 
-    guint signInTimeoutID_;   // GSource ID for timeout waiting for the user to sign in
+    // Timeout waiting for user info. We can be in one of two states
+    //
+    // SIGN_IN_WAIT: We haven't tried to connect yet
+    // AUTH_WAIT: We connected, and then authentication failed
+    //
+    // (We could always connect immediately to eliminate the first case)
+    //
+    guint signInTimeoutID_;   // GSource ID for timeout
     int signInTimeoutCount_;  // Number of times we've checked
 };

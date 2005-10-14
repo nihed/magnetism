@@ -32,13 +32,20 @@ bool
 HippoIM::signIn()
 {
     ui_->getPreferences()->setSignIn(true);
+
+    stopSignInTimeout();
 	
     if (loadAuth()) {
-        connect();
+	if (state_ == AUTH_WAIT)
+	    authenticate();
+	else
+	    connect();
         return FALSE;
     } else {
-        state_ = SIGN_IN_WAIT;
-	startSignInTimeout();
+	if (state_ != SIGN_IN_WAIT && state_ != AUTH_WAIT) {
+	    state_ = SIGN_IN_WAIT;
+	    startSignInTimeout();
+	}
         return TRUE;
     }
 }
@@ -195,6 +202,8 @@ HippoIM::connect()
 	lm_connection_close(lmConnection_, NULL);
 	lm_connection_unref(lmConnection_);
 	lmConnection_ = NULL;
+    } else {
+	state_ = CONNECTING;
     }
 }
 
@@ -214,6 +223,30 @@ HippoIM::startSignInTimeout()
 	signInTimeoutID_ = g_timeout_add(SIGN_IN_INITIAL_TIMEOUT, 
 	                                 onSignInTimeout, (gpointer)this);
 	signInTimeoutCount_ = 0;
+    }
+}
+
+void
+HippoIM::authenticate()
+{
+    if (username_ && password_) {
+        char *usernameUTF = g_utf16_to_utf8(username_, -1, NULL, NULL, NULL);
+        char *passwordUTF = g_utf16_to_utf8(password_, -1, NULL, NULL, NULL);
+
+        GError *error = NULL;
+
+        if (!lm_connection_authenticate(lmConnection_, 
+                                        usernameUTF, passwordUTF, "DumbHippo",
+					onConnectionAuthenticate, (gpointer)this, NULL, &error)) 
+        {
+	    authFailure(error ? error->message : NULL);
+	    if (error)
+	        g_error_free(error);
+	} else {
+	    state_ = AUTHENTICATING;
+	}
+    } else {
+        authFailure("Not signed in");
     }
 }
 
@@ -238,10 +271,9 @@ HippoIM::authFailure(char *message)
     g_free (str);
     g_free (strW);
 
-    disconnect();
     forgetAuth();
     startSignInTimeout();
-    state_ = SIGN_IN_WAIT;
+    state_ = AUTH_WAIT;
     ui_->onAuthFailure();
 }
 
@@ -251,8 +283,13 @@ HippoIM::onSignInTimeout(gpointer data)
     HippoIM *im = (HippoIM *)data;
 
     if (im->loadAuth()) {
-        im->connect();
 	im->stopSignInTimeout();
+
+	if (im->state_ == AUTH_WAIT)
+	    im->authenticate();
+	else
+	    im->connect();
+
         return FALSE;
     }
 
@@ -276,23 +313,7 @@ HippoIM::onConnectionOpen (LmConnection *connection,
     HippoIM *im = (HippoIM *)userData;
 
     if (success) {
-	if (im->username_ && im->password_) {
-	    char *usernameUTF = g_utf16_to_utf8(im->username_, -1, NULL, NULL, NULL);
-	    char *passwordUTF = g_utf16_to_utf8(im->password_, -1, NULL, NULL, NULL);
-
-	    GError *error = NULL;
-
-	    if (!lm_connection_authenticate(connection, 
-	                                    usernameUTF, passwordUTF, "DumbHippo",
-					    onConnectionAuthenticate, userData, NULL, &error)) 
-	    {
-		im->authFailure(error ? error->message : NULL);
-		if (error)
-		    g_error_free(error);
-	    }
-	} else {
-	    im->authFailure("Not signed in");
-	}
+	im->authenticate();
     } else {
 	hippoDebug(L"Failed to connect to server");
 	im->disconnect();
