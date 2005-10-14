@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,19 +21,38 @@ import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class XmlRpcServlet extends HttpServlet {
 
-	static Log logger = LogFactory.getLog(XmlRpcServlet.class);
+	private static Log logger = LogFactory.getLog(XmlRpcServlet.class);
 	
 	private static final long serialVersionUID = 0L;
 
-	private AjaxGlueXmlRpc glue;
+	private static final String XMLRPC_KEY = "org.dumbhippo.web.XmlRpcServlet.XmlRpcServer";
+	
+	private XmlRpcServer getSessionXmlRpc(HttpServletRequest request) throws ServletException {
+		HttpSession session = request.getSession();
+		XmlRpcServer xmlrpc;
+	
+		synchronized (session) {
+			xmlrpc = (XmlRpcServer) session.getAttribute(XMLRPC_KEY);
+			if (xmlrpc == null) {
+				xmlrpc = new XmlRpcServer();
+				
+				// Java thread locks are recursive so this is OK...
+				AjaxGlueXmlRpc glue = getSessionGlue(request);		
+				
+				// glue is a proxy that only exports the one interface, 
+				// so safe to export it all
+				xmlrpc.addHandler("dumbhippo", glue);
+				
+				session.setAttribute(XMLRPC_KEY, xmlrpc);
+			}
+		}
+		
+		return xmlrpc;
+	}
+	
+	private AjaxGlueXmlRpc getSessionGlue(HttpServletRequest request) throws ServletException {
 
-	private XmlRpcServer xmlrpc;
-
-	private void setup(HttpServletRequest request) throws ServletException {
-		if (xmlrpc != null)
-			return;
-
-		EjbLink ejb = new EjbLink();
+		EjbLink ejb = EjbLink.getForSession(request.getSession());
 
 		try {
 			ejb.attemptLogin(request);
@@ -50,14 +70,7 @@ public class XmlRpcServlet extends HttpServlet {
 			throw new ServletException("Authorization failed (not logged in), please log in again", e);
 		}
 
-		glue = ejb.getEjb(AjaxGlueXmlRpc.class);
-				
-		// init "xmlrpc" last since it indicates whether we are done setting up
-		xmlrpc = new XmlRpcServer();
-		
-		// This is only safe because EjbLink.nameLookup() creates a proxy with ONLY 
-		// our requested interface, so we aren't exporting random crap remotely.
-		xmlrpc.addHandler("dumbhippo", glue);
+		return ejb.getEjb(AjaxGlueXmlRpc.class);
 	}
 
 	private void logRequest(HttpServletRequest request, String type) {
@@ -88,9 +101,16 @@ public class XmlRpcServlet extends HttpServlet {
 			IOException {
 		logRequest(request, "POST");
 		
-		setup(request);
+		if (!request.getRequestURI().startsWith("/xmlrpc/")) {
+			return;
+		}
+		
+		XmlRpcServer xmlrpc = getSessionXmlRpc(request);
 
-		if (request.getRequestURI().startsWith("/xmlrpc/")) {
+		// no idea if xmlrpc is in fact thread-safe, but 
+		// let's serialize all our uses of it... it's per-session
+		// so should be no thread contention kind of issues
+		synchronized (xmlrpc) {
 			byte[] result = xmlrpc.execute(request.getInputStream());
 			response.setContentType("text/xml");
 			response.setContentLength(result.length);
@@ -103,9 +123,15 @@ public class XmlRpcServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		logRequest(request, "GET");
+
+		if (!request.getRequestURI().startsWith("/xml/")) {
+			return;
+		}
+	
+		AjaxGlueXmlRpc glue;
 		
 		try {
-			setup(request);
+			glue = getSessionGlue(request);
 		} catch (ServletException e) {
 			logger.error(e);
 			throw e;

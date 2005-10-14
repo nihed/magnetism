@@ -183,6 +183,12 @@ public class EjbLink extends AbstractEjbLink {
 	 * @throws NotLoggedInException
 	 */
 	public void attemptLogin(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
+		
+		// this is checked down in the lowest-level attemptLogin(), but 
+		// doing it here also to save all that work
+		if (this.personId != null)
+			return;
+		
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
