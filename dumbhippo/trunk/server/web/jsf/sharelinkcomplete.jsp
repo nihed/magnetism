@@ -12,11 +12,14 @@
 
 		<link rel="stylesheet" href="${pagestyle}" type="text/css"></style>
 	
+	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="hippoembed"></object>
 	<script type="text/javascript" language="javascript">
 // <![CDATA[
 
 function closeWindow() {
-	alert("Close window!");
+    var hippoembed = document.getElementById("hippoembed");
+	if (hippoembed && hippoembed.readyState && hippoembed.readyState >= 3)
+		hippoembed.CloseWindow();
 }
 	
 // ]]>
