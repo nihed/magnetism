@@ -12,9 +12,10 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
 
 import com.dumbhippo.Digest;
+import com.dumbhippo.GlobalSetup;
 
 
 /**
@@ -38,7 +39,7 @@ import com.dumbhippo.Digest;
 @Entity
 public class HippoAccount extends DBUnique implements Serializable {
 
-	private static Logger logger = Logger.getLogger(HippoAccount.class);	
+	private static final Log logger = GlobalSetup.getLog(HippoAccount.class);	
 	
 	private static final long serialVersionUID = 0L;
 		

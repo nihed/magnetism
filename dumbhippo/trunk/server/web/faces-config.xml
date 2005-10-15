@@ -83,7 +83,7 @@
       <managed-bean-class>com.dumbhippo.web.SigninBean</managed-bean-class> 
       <!-- request scope so we re-check on each page load for login -->
       <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>   
+   </managed-bean>
  
    <managed-bean> 
       <managed-bean-name>invite</managed-bean-name>
@@ -94,7 +94,12 @@
    <managed-bean> 
       <managed-bean-name>addclient</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.AddClientBean</managed-bean-class> 
-      <managed-bean-scope>session</managed-bean-scope>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+        <!-- faces action to go to afterword -->
+        <property-name>goBackTo</property-name>
+        <value>#{param.goBackTo}</value>
+      </managed-property>
    </managed-bean>   
    
    <managed-bean> 

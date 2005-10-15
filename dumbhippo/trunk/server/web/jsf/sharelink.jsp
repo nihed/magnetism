@@ -14,7 +14,7 @@
   <c:url value="/javascripts/sitewide.js" var="sitewide"/>
   <c:url value="/css/sharelink.css" var="pagestyle"/>
   <c:url value="/xml/friendcompletions" var="xmlfriendcompletions"/>
-  <c:url value="/jsf/addclient.jsp" var="login"/>
+  <c:url value="/jsf/addclient.faces" var="login"/>
   
 	  <head>
  	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -73,7 +73,7 @@ function mergeArraysRemovingDups(array1, array2) {
 function buildRecipientList() {
    var recipientList = document.getElementById("recipient-list");
 
-   deleteChildren(recipientList);   
+   deleteChildren(recipientList);
 
    // add new ones
    var inputRecipients = document.getElementById("main:recipients");
@@ -138,13 +138,13 @@ function onRecipientsChanged() {
 
 <body onload="buildRecipientList()">
 
-<c:if test="!${signin.valid}">
 <script type="text/javascript" language="javascript">
+  if (<h:outputText value="#{!signin.valid}"/>) {
 // <![CDATA[
-  loginRedirect(${login});
+      loginRedirect("${login}", "sharelink");
+  }
 // ]]>
 </script>
-</c:if>
 
 <div class="share-link">
 
@@ -155,6 +155,9 @@ function onRecipientsChanged() {
 <!-- FIXME use Scriptaculous in-place edit widget, http://wiki.script.aculo.us/scriptaculous/show/Ajax.InPlaceEditor -->
 <h:inputText id="url" styleClass="url" value="#{sharelink.url}" onkeypress="return onEnterFalse(event);" onchange="validateAll();"/>
 <div id="url-error"></div>
+
+<!-- change to inputText to debug -->
+<h:inputHidden id="recipients" value="#{sharelink.recipients}" converter="#{sharelink.recipientsConverter}"/>
 
 <div class="recipients"><div class="label">Share <u>W</u>ith:</div>
 <input autocomplete="off" accesskey="w" type="text" id="friendentry" class="autocomplete" onchange="onRecipientsChanged()" onkeypress="return onEnterFalse(event)"/>
@@ -170,9 +173,6 @@ new Ajax.Autocompleter("friendentry", "friendentry-choices", "${xmlfriendcomplet
 // ]]>
 </script>
 <br/>
-
-<!-- change to inputText to debug -->
-<h:inputHidden id="recipients" value="#{sharelink.recipients}" converter="#{sharelink.recipientsConverter}"/>
 
 <div id="recipient-list" class="recipient-list">
 

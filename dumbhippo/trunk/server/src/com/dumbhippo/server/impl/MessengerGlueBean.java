@@ -3,12 +3,8 @@ package com.dumbhippo.server.impl;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
@@ -16,13 +12,6 @@ import com.dumbhippo.server.PersonView;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
-	
-	static Log logger = LogFactory.getLog(MessengerGlueBean.class);
-	
-	/*
-	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
-	*/
 	
 	@EJB
 	private transient IdentitySpider identitySpider;

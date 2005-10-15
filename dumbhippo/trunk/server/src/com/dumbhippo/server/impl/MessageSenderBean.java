@@ -7,12 +7,12 @@ import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XMLBuilder;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.MessageSender;
@@ -26,7 +26,7 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
  */
 @Stateless
 public class MessageSenderBean implements MessageSender {
-	private Log logger = LogFactory.getLog(MessageSenderBean.class);
+	static private final Log logger = GlobalSetup.getLog(MessageSenderBean.class);
 	private XMPPConnection connection;
 
 	@EJB

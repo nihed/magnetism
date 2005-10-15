@@ -8,8 +8,8 @@ import javax.ejb.PostConstruct;
 import javax.ejb.Stateless;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 
 /*
@@ -19,7 +19,7 @@ import com.dumbhippo.server.Configuration;
 @Stateless
 public class ConfigurationBean implements Configuration {
 	
-	static Log logger = LogFactory.getLog(ConfigurationBean.class);		
+	static private final Log logger = GlobalSetup.getLog(ConfigurationBean.class);		
 	
 	Properties props;
 	

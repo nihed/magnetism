@@ -2,10 +2,6 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.Resource;
-
 /*
  * Represents the configuration of the Dumbhippo server; just
  * a quick hack, later we'll replace it with UniConf of course.

@@ -12,16 +12,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcServer;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.web.EjbLink.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class XmlRpcServlet extends HttpServlet {
 
-	private static Log logger = LogFactory.getLog(XmlRpcServlet.class);
+	private static final Log logger = GlobalSetup.getLog(XmlRpcServlet.class);
 	
 	private static final long serialVersionUID = 0L;
 

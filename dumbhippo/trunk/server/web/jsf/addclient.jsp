@@ -13,7 +13,9 @@
 		<tr>
 			<td>Name:</td>
 			<td><h:inputText value="#{addclient.email}" /></td>
-		</tr>	
+		</tr>
+		<!-- without an input field we lose this when we post -->
+		<h:inputHidden value="#{addclient.goBackTo}"/>
 		<p><h:commandButton value="Sign in" action="#{addclient.doAddClient}" /></p>
 	</h:form>
 	</body>

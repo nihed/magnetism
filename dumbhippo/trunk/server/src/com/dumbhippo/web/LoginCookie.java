@@ -39,7 +39,7 @@ public class LoginCookie {
 
 	private void validateHex(String hexStr) throws BadTastingException {
 		if (hexStr.length() % 2 != 0)
-			throw new BadTastingException("invalid hex string length");
+			throw new BadTastingException("invalid hex string length " + hexStr.length());
 		for (int i = 0; i < hexStr.length(); i++) {
 			char c = hexStr.charAt(i);
 			int codepoint = (int) c;

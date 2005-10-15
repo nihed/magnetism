@@ -11,9 +11,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.dumbhippo.FullName;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
@@ -29,7 +29,7 @@ import com.dumbhippo.server.TestGlueRemote;
 @Stateless
 public class TestGlueBean implements TestGlue, TestGlueRemote {
 
-	static Log logger = LogFactory.getLog(TestGlueBean.class);
+	static private final Log logger = GlobalSetup.getLog(TestGlueBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private transient EntityManager em;
@@ -41,7 +41,6 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 	private transient AccountSystem accountSystem;
 
 	public TestGlueBean() {
-		GlobalSetup.initialize();
 	}
 	
 	/*
@@ -90,16 +89,17 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 	public Set<HippoAccount> getActiveAccounts() {
 		// the returned data here includes all the auth cookies...
 		// so you probably shouldn't do this outside of test glue
-		logger.info("getting active accounts spider = " + identitySpider);
+		logger.debug("getting active accounts spider = " + identitySpider);
 		return accountSystem.getActiveAccounts();
 	}
 	
 	public String authorizeNewClient(long accountId, String name) {
-		logger.info("authorizing new client for account " + accountId + " name = " + name);
+		logger.debug("authorizing new client for account " + accountId + " name = " + name);
 		// Replace account with one attached to persistence context
 		HippoAccount persistedAccount = em.find(HippoAccount.class, accountId);
-		logger.info("persistedAccount = " + persistedAccount);
+		logger.debug("persistedAccount = " + persistedAccount);
 		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
+		logger.debug("added client authKey = " + client.getAuthKey() + " client works = " + persistedAccount.checkClientCookie(client.getAuthKey()));
 		return client.getAuthKey();
 	}
 

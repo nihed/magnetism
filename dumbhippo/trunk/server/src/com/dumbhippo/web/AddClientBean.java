@@ -1,12 +1,20 @@
 package com.dumbhippo.web;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.TestGlue;
 
 
 public class AddClientBean {
+	
+	static private final Log logger = GlobalSetup.getLog(AddClientBean.class);
+	
 	private String email;
-		
+	
+	private String goBackTo;
+	
 	@Inject
 	private transient TestGlue testGlue;
 
@@ -22,10 +30,21 @@ public class AddClientBean {
 		this.email = email;
 	}
 	
+	public String getGoBackTo() {
+		return goBackTo;
+	}
+
+	public void setGoBackTo(String goBackTo) {
+		logger.debug("goBackTo = " + goBackTo);
+		this.goBackTo = goBackTo;
+	}
+	
 	public String doAddClient() {
+
+		logger.debug("doAddClient()");
 		
 		if (email == null) {
-			/* FIXME need to complain on the form */
+			logger.debug("no email filled in");
 			return null;
 		}
 			
@@ -33,6 +52,12 @@ public class AddClientBean {
 		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier());
 		SigninBean.setCookie(account.getOwner().getId(), authKey);
 
-		return "main";
+		if (goBackTo != null) {
+			logger.debug("sending back to " + goBackTo);
+			return goBackTo;
+		} else {
+			logger.debug("sending to main");
+			return "main";
+		}
 	}
 }

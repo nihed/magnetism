@@ -114,6 +114,7 @@
 	<target name="basejar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo-base.jar">
 			<fileset dir="${build}">
+				<include name="**/dumbhippo/*.properties" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/identity20/**/*.class" />
 			</fileset>

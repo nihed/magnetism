@@ -10,8 +10,8 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.server.ShareLinkGlue;
 import com.dumbhippo.server.UnknownPersonException;
@@ -23,7 +23,7 @@ import com.dumbhippo.server.UnknownPersonException;
  */
 
 public class ShareLinkBean {
-	static Log logger = LogFactory.getLog(ShareLinkBean.class);
+	static private final Log logger = GlobalSetup.getLog(ShareLinkBean.class);
 
 	private String url;
 

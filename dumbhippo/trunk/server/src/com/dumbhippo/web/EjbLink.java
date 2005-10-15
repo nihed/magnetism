@@ -15,8 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AbstractEjbLink;
 import com.dumbhippo.server.AccountSystem;
@@ -46,7 +46,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		}
 	}
 
-	static private Log logger = LogFactory.getLog(EjbLink.class);
+	static private final Log logger = GlobalSetup.getLog(EjbLink.class);
 
 	// if non-null, we are logged in
 	private String personId;
@@ -131,7 +131,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		 */
 		 
 		if (obj instanceof LoginRequired) {
-			logger.info("  logging this object in");
+			logger.info("  logging in object " + clazz.getCanonicalName());
 			
 			LoginRequired loginRequired = (LoginRequired) obj;
 			
@@ -141,7 +141,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 				loginRequired.setLoggedInUserId(personId);
 			}
 		} else {
-			logger.info("  object does not need login");
+			logger.info("  object does not need login " + clazz.getCanonicalName());
 		}
 
 		// create our own proxy, though since JBoss does this anyway it may be kind of 
@@ -157,9 +157,9 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		try {
 			attemptLoginFromFacesContext();
 		} catch (BadTastingException e) {
-			logger.error("Failed to login (bad cookie)", e);
+			logger.debug("Failed to login (bad cookie)", e);
 		} catch (NotLoggedInException e) {
-			logger.error("Failed to login (not logged in)", e);
+			logger.debug("Failed to login (not logged in)", e);
 		}
 	}
 	
@@ -257,11 +257,11 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		HippoAccount account = accountSystem.lookupAccountByPersonId(personId);
 
 		if (account == null) {
-			throw new BadTastingException("Cookie had invalid person ID in it");
+			throw new BadTastingException("Cookie had invalid person ID '" + personId + "'");
 		}
 
 		if (!account.checkClientCookie(authKey)) {
-			throw new BadTastingException("Cookie had invalid or expired auth key in it");
+			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
 
 		// OK !
@@ -318,7 +318,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		
 		Field[] fields = object.getClass().getDeclaredFields();
 		logger.debug("Injecting " + object.getClass().getCanonicalName() + 
-				"with " + fields.length + " fields and EjbLink of scope " + scope);
+				" with " + fields.length + " fields and EjbLink of scope " + scope);
 		for (Field f : fields) {
 			Inject inject = f.getAnnotation(Inject.class);
 			if (inject != null && inject.value() == scope) {

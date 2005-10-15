@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.dumbhippo.server.impl;
+package com.dumbhippo;
 
 import java.net.URL;
 
@@ -35,23 +35,22 @@ public final class GlobalSetup {
 		//System.out.println("log4j properties url: " + url.toString());
 		PropertyConfigurator.configure(url);
 		//BasicConfigurator.configure();
+		
+		logger.info("Initialized logging, config = " + url);
 	}
 	
-	public static void initializeBase() {
-		if (initialized)
-			return;		
-		initializeLogging();
-	}
-	
-	public static void initialize() {
+	private static void initialize() {
 		if (initialized)
 			return;
 
 		initializeLogging();
-		logger.info("Booting");		
-		
-		logger.info("successfully initialized");
 		
 		initialized = true;
 	}
+	
+	public static Log getLog(Class klass) {
+		initialize();
+		return LogFactory.getLog(klass);
+	}
 }
+

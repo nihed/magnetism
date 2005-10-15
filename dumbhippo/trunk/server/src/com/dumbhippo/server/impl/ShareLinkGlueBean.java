@@ -13,8 +13,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -28,7 +28,7 @@ import com.dumbhippo.server.UnknownPersonException;
 @Stateful
 public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLinkGlue, Serializable {
 
-	private static final Log logger = LogFactory.getLog(ShareLinkGlueBean.class);
+	private static final Log logger = GlobalSetup.getLog(ShareLinkGlueBean.class);
 	
 	private static final long serialVersionUID = 0L;
 	

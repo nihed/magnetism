@@ -30,6 +30,11 @@
 /deploy/juddiws.war
 /deploy/tc5-cluster-service.xml
 
+# this is an extra copy of commons-logging that throws
+# an exception since it can't find log4j.jar
+/deploy/ejb3.deployer/commons-logging.jar
+
+
 # Then we exclude more stuff we don't need
 /deploy/bsh-deployer.xml                        # BeanShell? No thanks.
 /deploy/deploy/cache-invalidation-service.xml   # All commented out anyways

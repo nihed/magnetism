@@ -16,10 +16,6 @@
         <!-- TODO: dump a JSF data table here with people connected to the 
                		current viewuser -->
 
-		<p><h:commandLink action="addclient">
-			<h:outputText value="Sign in current client" />
-		</h:commandLink></p>
-
 		<p><h:commandLink action="invite">
 			<h:outputText value="Invite a user" />
 		</h:commandLink></p>
@@ -28,18 +24,25 @@
 			<h:outputText value="Share a link" />
 		</h:commandLink></p>
 		
-		<p><h:commandLink action="#{signin.doLogout}">
-			<h:outputText value="Log out" />
-		</h:commandLink></p>
+ 		<p>
+  		<h:panelGroup rendered="#{signin.valid}">
+		    <h:commandLink action="#{signin.doLogout}">
+			     <h:outputText value="Log out #{signin.loggedInAs}"/>
+		       </h:commandLink>
+   		</h:panelGroup>
+        </p>
+   
+        <p>
+   		<h:panelGroup rendered="#{!signin.valid}">
+			<h:commandLink action="addclient">
+				  <h:outputText value="Sign in current client" />
+			   </h:commandLink>
+   		</h:panelGroup>
+   		</p>
+
 		</h3>
+   
 	</h:form>
-	<!-- valid signin: <h:outputText value="#{signin.valid}"/> -->
-	<c:if test="${signin.valid}">
-	  <div style="font-size: small; color: gray;">
-	    Logged in as <b><h:outputText value="#{signin.loggedInAs}"/></b>
-	    (<h:outputText value="#{signin.loggedInAs}"/>)
-	  </div>
-	</c:if>
 	</body>
 </f:view>
 </html>

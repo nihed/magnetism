@@ -20,7 +20,7 @@ public class InterfaceFilterProxyFactory {
 
 	static class Handler implements InvocationHandler {
 
-		//static private Log logger = LogFactory.getLog(Handler.class);
+		//static private final Log logger = GlobalSetup.getLog(Handler.class);
 		
 		private Object delegate;
 
