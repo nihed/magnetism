@@ -14,10 +14,10 @@ import com.dumbhippo.server.PersonView;
 public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
-	private transient IdentitySpider identitySpider;
+	private IdentitySpider identitySpider;
 		
 	@EJB
-	private transient AccountSystem accountSystem;
+	private AccountSystem accountSystem;
 
 	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
 		HippoAccount account = accountSystem.lookupAccountByPersonId(username);

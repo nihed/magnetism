@@ -21,10 +21,10 @@ import com.dumbhippo.server.IdentitySpider;
 public class AccountSystemBean implements AccountSystem {
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 	
 	@EJB
-	private transient IdentitySpider spider;
+	private IdentitySpider spider;
 
 	public HippoAccount createAccountFromResource(Resource res) {
 		

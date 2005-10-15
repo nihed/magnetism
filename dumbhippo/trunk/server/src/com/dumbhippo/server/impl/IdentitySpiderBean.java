@@ -28,10 +28,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 	
 	@javax.annotation.Resource
-	private transient EJBContext ejbContext;
+	private EJBContext ejbContext;
 	
 	public Person lookupPersonByEmail(EmailResource email) {
 		Person person;

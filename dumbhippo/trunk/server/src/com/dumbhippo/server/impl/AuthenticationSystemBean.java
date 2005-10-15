@@ -13,7 +13,7 @@ import com.dumbhippo.server.AuthenticationSystemRemote;
 public class AuthenticationSystemBean implements AuthenticationSystem, AuthenticationSystemRemote {
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 	
 	public ServerSecret getServerSecret() {
 		ServerSecret secret;

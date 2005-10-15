@@ -27,7 +27,7 @@ public class EmailResource extends Resource implements InvitableResource {
 	private static final long serialVersionUID = 0L;
 	
 	@EJB
-	private transient IdentitySpider spider;
+	private IdentitySpider spider;
 
 	private String email;
 	

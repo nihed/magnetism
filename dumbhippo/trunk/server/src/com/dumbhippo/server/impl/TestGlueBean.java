@@ -32,13 +32,13 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 	static private final Log logger = GlobalSetup.getLog(TestGlueBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 
 	@EJB
-	private transient IdentitySpider identitySpider;
+	private IdentitySpider identitySpider;
 
 	@EJB
-	private transient AccountSystem accountSystem;
+	private AccountSystem accountSystem;
 
 	public TestGlueBean() {
 	}

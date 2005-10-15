@@ -27,13 +27,13 @@ import com.dumbhippo.server.PersonView;
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
 
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 
 	@EJB
-	private transient AccountSystem accounts;
+	private AccountSystem accounts;
 	
 	@EJB
-	private transient IdentitySpider spider;
+	private IdentitySpider spider;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
 		Invitation ret;

@@ -33,13 +33,13 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 	private static final long serialVersionUID = 0L;
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 	
 	@EJB
-	private transient IdentitySpider identitySpider;
+	private IdentitySpider identitySpider;
 	
 	@EJB
-	private transient MessageSender messageSender;
+	private MessageSender messageSender;
 	
 	private transient Person cachedLoggedInUser;
 	

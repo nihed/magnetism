@@ -33,10 +33,10 @@ public class ShareLinkBean {
 	private List<String> recipients;
 	
 	@Inject
-	private transient EjbLink ejb;
+	private EjbLink ejb;
 	
 	@Inject
-	private transient ShareLinkGlue shareLinkGlue;
+	private ShareLinkGlue shareLinkGlue;
 	
 	public class RecipientsConverter implements Converter {
 

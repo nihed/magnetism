@@ -16,7 +16,7 @@ public class AddClientBean {
 	private String goBackTo;
 	
 	@Inject
-	private transient TestGlue testGlue;
+	private TestGlue testGlue;
 
 	public AddClientBean() {
 		EjbLink.injectFromFacesContext(this, Scope.NONE);

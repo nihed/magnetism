@@ -30,7 +30,7 @@ public class MessageSenderBean implements MessageSender {
 	private XMPPConnection connection;
 
 	@EJB
-	private transient Configuration config;
+	private Configuration config;
 
 	private synchronized XMPPConnection getConnection() {
 		if (connection == null) {

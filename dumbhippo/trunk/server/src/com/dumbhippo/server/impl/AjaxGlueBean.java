@@ -25,13 +25,13 @@ public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRp
 	private static final long serialVersionUID = 0L;
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private transient EntityManager em;
+	private EntityManager em;
 	
 	@EJB
-	private transient AccountSystem accountSystem;
+	private AccountSystem accountSystem;
 	
 	@EJB
-	private transient IdentitySpider identitySpider;
+	private IdentitySpider identitySpider;
 	
 	public String getStuff() {
 		return "This is some stuff!";
