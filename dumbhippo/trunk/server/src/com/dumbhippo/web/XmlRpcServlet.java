@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionActivationListener;
+import javax.servlet.http.HttpSessionEvent;
 
 import org.apache.commons.logging.Log;
 import org.apache.xmlrpc.XmlRpcServer;
@@ -26,15 +28,29 @@ public class XmlRpcServlet extends HttpServlet {
 	private static final long serialVersionUID = 0L;
 
 	private static final String XMLRPC_KEY = "org.dumbhippo.web.XmlRpcServlet.XmlRpcServer";
+
+	static class SessionBoundXmlRpcServer extends XmlRpcServer implements HttpSessionActivationListener {
+		public void sessionWillPassivate(HttpSessionEvent event) {
+			// Remove ourselves, since we're just a transient cache
+			HttpSession session = event.getSession();
+			synchronized(session) {
+				session.setAttribute(XMLRPC_KEY, null);
+			}
+		}
+
+		public void sessionDidActivate(HttpSessionEvent event) {
+			// nothing to do, servlet will re-create us on demand
+		}
+	}
 	
 	private XmlRpcServer getSessionXmlRpc(HttpServletRequest request) throws ServletException {
 		HttpSession session = request.getSession();
 		XmlRpcServer xmlrpc;
 	
-		synchronized (session) {
+		synchronized(session) {
 			xmlrpc = (XmlRpcServer) session.getAttribute(XMLRPC_KEY);
 			if (xmlrpc == null) {
-				xmlrpc = new XmlRpcServer();
+				xmlrpc = new SessionBoundXmlRpcServer();
 				
 				// Java thread locks are recursive so this is OK...
 				AjaxGlueXmlRpc glue = getSessionGlue(request);		
