@@ -343,7 +343,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 					if (f.getType() == EjbLink.class) {
 						setField(object, f, this);
 					} else {
-						Class c = f.getType();
+						Class<?> c = f.getType();
 						if (personId == null &&
 								LoginRequired.class.isAssignableFrom(c)) {
 							logger.debug("  not injecting field " + f.toGenericString() + " since not logged in yet");
