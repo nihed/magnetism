@@ -43,17 +43,31 @@
 		<path refid="project.class.path" />
 	</path>
 		
-	<target name="init">
+	<target name="clean">
 		<delete dir="${target}" />
+	</target>
+			
+	<target name="init">
 		<mkdir dir="${build}" />
 		<mkdir dir="${buildjar.dir}" />
 		<mkdir dir="${reports.tests}" />
 		<mkdir dir="${build.tests}" />
 		<mkdir dir="${build.javascripts}" />
+		
+		<!-- See what needs rebuilding -->
+		<uptodate property="uptodate.xmlrpc" targetfile="xmlrpc/target/xmlrpc-2.0.jar">
+		    <srcfiles dir= "xmlrpc/src/java" includes="**/*.java"/>
+		    <srcfiles dir= "xmlrpc" includes="*.xml" />
+		    <srcfiles dir= "xmlrpc" includes="*.properties" />
+		</uptodate>
 	</target>
-
-	<target name="subprojects">
-		<ant dir="xmlrpc" inheritAll="false"/>
+	
+	<target name="buildxmlrpc" depends="init" unless="uptodate.xmlrpc">
+		<echo message="have to rebuild xmlrpc" />
+		<ant dir="xmlrpc" inheritAll="false" />
+	</target>
+		
+	<target name="subprojects" depends="buildxmlrpc">
 		<copy todir="${build.lib}">
 			<fileset dir="xmlrpc/target" includes="*.jar"/>
 		</copy>
