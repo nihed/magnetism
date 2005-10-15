@@ -109,7 +109,7 @@ public class EjbLink extends AbstractEjbLink implements Serializable {
 		
 		Object cached = ejbCache.get(clazz);
 		if (cached != null) {
-			return (T) cached;
+			return clazz.cast(cached);
 		}
 		
 		if (clazz.isAnnotationPresent(BanFromWebTier.class)) {

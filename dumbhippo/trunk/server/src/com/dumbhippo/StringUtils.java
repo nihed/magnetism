@@ -19,11 +19,15 @@ public class StringUtils {
 	}
 	
 	public static String join(List<String> strings, String separator) {
+		return joinUngenericList(strings, separator);
+	}
+	
+	public static String joinUngenericList(List strings, String separator) {
 		StringBuilder builder = new StringBuilder();
-		Iterator<String> iterator = strings.iterator();
+		Iterator iterator = strings.iterator();
 		while (iterator.hasNext()) {
 			boolean hasNext = true;
-			String s = iterator.next();
+			String s = (String) iterator.next();
 			builder.append(s);
 			if (hasNext)
 				builder.append(separator);

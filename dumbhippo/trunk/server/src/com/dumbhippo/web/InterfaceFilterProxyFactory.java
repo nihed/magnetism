@@ -59,6 +59,6 @@ public class InterfaceFilterProxyFactory {
 
 	@SuppressWarnings("unchecked")
 	static public <T> T newProxyInstance(T delegate, Class<T> iface) {
-		return (T) newProxyInstanceArray(delegate, new Class[] { iface });
+		return iface.cast(newProxyInstanceArray(delegate, new Class[] { iface }));
 	}
 }

@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -76,12 +77,15 @@ public class AccountSystemBean implements AccountSystem {
 		return count;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Set<HippoAccount> getActiveAccounts() {
 		Query q = em.createQuery("FROM HippoAccount");
 		
-		// List is not a Set
-		Set<HippoAccount> accounts = new HashSet<HippoAccount>(q.getResultList());
+		Set<HippoAccount> accounts = new HashSet<HippoAccount>();
+		List list = q.getResultList();
+		
+		for (Object o : list) {
+			accounts.add((HippoAccount) o);
+		}
 		
 		return accounts;
 	}

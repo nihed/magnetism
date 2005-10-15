@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import javax.ejb.ApplicationException;
 import javax.ejb.Local;
 
 /*
@@ -10,8 +11,11 @@ import javax.ejb.Local;
  */
 @Local
 public interface Configuration {
-	@SuppressWarnings("serial")
+
+	@ApplicationException
 	public class PropertyNotFoundException extends Exception {
+		private static final long serialVersionUID = 0L;
+
 		public PropertyNotFoundException(String name) {
 			super(name);
 		}

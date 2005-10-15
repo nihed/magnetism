@@ -75,9 +75,9 @@ public class ShareLinkBean {
 			if (value == null)
 				return null;
 			
-			List<String> list = (List<String>) value;
+			List list = (List) value;
 			
-			return StringUtils.join(list, ",");
+			return StringUtils.joinUngenericList(list, ",");
 		}
 	}
 	

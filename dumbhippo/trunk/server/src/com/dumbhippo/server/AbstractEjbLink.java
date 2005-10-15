@@ -45,6 +45,7 @@ public class AbstractEjbLink {
 		// System.out.println("Looking up '" + name + "'");
 		if (!clazz.isInterface())
 			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
-		return (T) namingContext.lookup(name);
+
+		return clazz.cast(namingContext.lookup(name));
 	}
 }
