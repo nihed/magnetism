@@ -24,7 +24,7 @@
 #include <glib.h>
 #include <string.h>
 #ifndef __WIN32__
-#  include <unistd.h> */
+#  include <unistd.h>
 #  include <sys/socket.h>
 #else 
 #  include <winsock2.h>
