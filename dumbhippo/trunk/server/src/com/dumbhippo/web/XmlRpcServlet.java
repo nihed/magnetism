@@ -90,12 +90,12 @@ public class XmlRpcServlet extends HttpServlet {
 	}
 
 	private void logRequest(HttpServletRequest request, String type) {
-		logger.info(type + " uri=" + request.getRequestURI());
+		logger.debug(type + " uri=" + request.getRequestURI());
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			
-			logger.info("attr " + name + " = " + request.getAttribute(name));
+			logger.debug("attr " + name + " = " + request.getAttribute(name));
 		}
 		
 		names = request.getParameterNames();		
@@ -108,7 +108,7 @@ public class XmlRpcServlet extends HttpServlet {
 			}
 			builder.deleteCharAt(builder.length() - 1); // drop comma
 			
-			logger.info("param " + name + " = " + builder.toString());
+			logger.debug("param " + name + " = " + builder.toString());
 		}
 	}
 	

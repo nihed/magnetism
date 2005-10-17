@@ -40,6 +40,9 @@ public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRp
 	public List<String> getFriendCompletions(String entryContents) {
 		List<String> completions = new ArrayList<String>();
 		
+		if (entryContents == null)
+			entryContents = "";
+		
 		Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
 		for (HippoAccount a : accounts) {
 			// FIXME get from viewpoint of personId
