@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<script src="javascript/config.js" type="text/javascript"></script>
+<script src="javascript/dojo/dojo.js" type="text/javascript"></script>
+<script src="javascript/common.js" type="text/javascript"></script>
+<script type="text/javascript">
+	dojo.require("dh.sharelink");
+</script>
+<link rel="stylesheet" href="css/sharelink.css" type="text/css"></style>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Sharing a Link</title>
+</head>
+<body>
+<div class="dhShareLinkForm">
+
+<div dojoType="InlineEditBox" class="dhUrl">
+http://foobar</div>
+<div id="url-error" class="dhValidityError"></div>
+
+<div class="recipients">
+<div class="dhLabel">Share <u>W</u>ith:</div>
+
+<input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
+	type="text" dataUrl="/home/hp/workspace/web/javascript/dojo/tests/widget/comboBoxData.js" />
+<div id="recipients-error" class="dhValidityError" /><br />
+
+<div id="recipient-list" class="dhShareLinkRecipientList"></div>
+
+</div>
+<!-- class="recipients" -->
+
+<div class="dhLabel"><u>D</u>escription:</div>
+<div dojoType="RichText"
+	class="dhTextArea" />Edit text</div>
+
+<input type="button" value="Share" accesskey="s"
+	class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>
+
+</div><!-- end dhShareLinkForm -->
+</body>
+</html>

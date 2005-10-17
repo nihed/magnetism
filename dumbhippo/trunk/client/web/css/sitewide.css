@@ -1,0 +1,81 @@
+@CHARSET "UTF-8";
+
+/* This file contains or imports css that applies to 
+ * general categories of page element we use on 
+ * multiple pages. Classes like "dhFooBar" are specific 
+ * to our site.
+ * 
+ * Dojo widgets have classes of their own, one approach is 
+ * to set dh* classes on them in JavaScript, the other approach
+ * is to just DOM inspector the page and find the classes
+ * and css them from here.
+ */
+
+* {
+	font-family:					Verdana, sans;
+	/* Don't use a relative size like "larger" in a global 
+     * style, since it means "larger with respect to parent" 
+     * i.e. each nested tag gets bigger
+     */
+  	font-size:						large;
+	color:							#505050;
+	background-color:				white;
+}
+
+body {
+	color:							inherit;
+	background-color:				inherit;	
+	margin:							0;
+}
+
+div {
+
+}
+
+form {
+	margin:							0;
+}
+
+.dhLabel, .dhLabel u {
+	font-size:						small;	
+}
+
+/* Style of text being input */
+textarea, .dhTextArea, .dojoComboBox * {
+	font-size:						small;
+	font-family:					Monospaced, mono;
+	/* IE extension that avoids text area scrollbar (dynamically expands it) */
+	overflow:                       visible;
+}
+
+/* Style of the border around the text being input, which 
+ * may be part of the <input> or of another tag around that
+ * e.g. in Dojo combo box it's for a table
+ */
+textarea, .dhTextArea, .dojoComboBox {
+	border:							1px solid #afafaf;
+	margin-top: 					1em;
+	margin-bottom:					1em;
+}
+
+/* Styles for text areas only, not one-line text input */
+textarea, .dhTextArea {
+	width:							25em;
+}
+	
+.dhUrl {
+	margin-top:						1em;
+	margin-bottom:					1em;
+	color:							blue;
+	text-decoration:				underline;
+}
+
+/* Used for "this field needs fixing" messages */
+.dhValidityError {
+    color: red;
+}
+
+.dhButton, .dojoButton {
+	/* text-align:						right; */
+	background-color:				#efefef;
+}
