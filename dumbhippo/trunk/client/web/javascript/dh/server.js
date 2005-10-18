@@ -33,6 +33,10 @@ dh.server.getTextGET = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "GET", "text/plain");
 }
 
+dh.server.getTextPOST = function(name, params, loadFunc, errorFunc) {
+	dh.server.get(name, params, loadFunc, errorFunc, "POST", "text/plain");
+}
+
 dh.server.getXmlGET = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "GET", "text/xml");
 }

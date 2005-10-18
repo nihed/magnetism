@@ -22,10 +22,19 @@ dh.sharelink.submitButtonClicked = function() {
 	dh.server.getXmlGET("friendcompletions",
 						{ "entryContents" : "p" },
 						function(type, data, event) {
-							dj_debug("got back data " + data);
+							dj_debug("friendcompletions got back data " + dhAllPropsAsString(data));
 						},
 						function(type, error) {
-							dj_debug("got back error " + error);
+							dj_debug("friendcompletions got back error " + dhAllPropsAsString(error));
+						});
+						
+	dh.server.getTextPOST("checklogin",
+						  {  },
+						function(type, data, event) {
+							dj_debug("checklogin got back data " + dhAllPropsAsString(data));
+						},
+						function(type, error) {
+							dj_debug("checklogin got back error " + dhAllPropsAsString(error));
 						});
 }
 
@@ -113,25 +122,7 @@ dh.sharelink.HtmlFriendComboBox = function(){
 	dojo.widget.HtmlComboBox.call(this);
 	
 	this.widgetType = "FriendComboBox";
-	
-	//dojo.event.connect(this, "startSearch", this.dataProvider, "startSearch");
-	//dojo.event.connect(this.dataProvider, "provideSearchResults", this, "openResultList");
-	
-	// remove the data provider from HtmlComboBox constructor
-	//dojo.event.disconnect(this, "startSearch", this.dataProvider, "startSearch");
-	//dojo.event.disconnect(this.dataProvider, "provideSearchResults", this, "openResultList");
-	
-	// install ours instead
-	//this.realDataProvider = new dh.sharelink.FriendListProvider();
-	//this.dataProvider.startSearch = this.realDataProvider.startSearch;
-	//this.dataProvider.provideSearchResults = this.realDataProvider.provideSearchResults;
-	
-	//dojo.event.connect(this, "startSearch", this.datProvider, "startSearch");
-	//dojo.event.connect(this.datProvider, "provideSearchResults", this, "openResultList");
-
-	//dj_debug(dhAllPropsAsString(this.dataProvider));
-	//this.dataProvider.setData(this.datProvider.fakeResults);
-	//this.dataProvider.provideSearchResults(this.datProvider.fakeResults);
+	this.dataProvider = new dh.sharelink.FriendListProvider();
 }
 
 dojo.inherits(dh.sharelink.HtmlFriendComboBox, dojo.widget.HtmlComboBox);
