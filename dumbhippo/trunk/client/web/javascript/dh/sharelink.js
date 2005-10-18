@@ -12,12 +12,29 @@ if (dojo.version.revision <= 1321) {
 }
 dojo.require("dojo.widget.HtmlComboBox");
 dojo.require("dojo.widget.HtmlInlineEditBox");
+dojo.require("dojo.widget.Dialog");
 dojo.require("dh.server");
 
 // dj_debug("in sharelink.js");
 
 dh.sharelink.submitButtonClicked = function() {
 	dj_debug("clicked share link button");
+						
+	dh.server.getTextPOST("checklogin",
+						  {  },
+						function(type, data, event) {
+							dj_debug("checklogin got back data " + dhAllPropsAsString(data));
+							if (data == "false") {
+								dojo.debug("showing login dialog");
+								//dojo.debug(dhAllPropsAsString(dh.sharelink.loginDialog));
+								dh.sharelink.loginDialog.show();
+							}
+						},
+						function(type, error) {
+							dj_debug("checklogin got back error " + dhAllPropsAsString(error));
+						});
+
+	return;
 
 	dh.server.getXmlGET("friendcompletions",
 						{ "entryContents" : "p" },
@@ -28,14 +45,6 @@ dh.sharelink.submitButtonClicked = function() {
 							dj_debug("friendcompletions got back error " + dhAllPropsAsString(error));
 						});
 						
-	dh.server.getTextPOST("checklogin",
-						  {  },
-						function(type, data, event) {
-							dj_debug("checklogin got back data " + dhAllPropsAsString(data));
-						},
-						function(type, error) {
-							dj_debug("checklogin got back error " + dhAllPropsAsString(error));
-						});
 }
 
 dh.sharelink.FriendListProvider = function() {
@@ -129,3 +138,13 @@ dojo.inherits(dh.sharelink.HtmlFriendComboBox, dojo.widget.HtmlComboBox);
 
 dojo.widget.manager.registerWidgetPackage("dh.sharelink");
 dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
+
+dh.sharelink.init = function() {
+	// dojo.debug("dh.sharelink.init()");
+	dh.sharelink.loginDialog = dojo.widget.manager.getWidgetById("dhLoginDialog");
+	var btn = document.getElementById("dhLoginDialogButton");
+	dh.sharelink.loginDialog.setCloseControl(btn);
+}
+
+dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
+dojo.event.connect(dojo, "loaded", dj_global, "dhShareLinkInit");

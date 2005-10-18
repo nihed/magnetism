@@ -38,5 +38,37 @@ http://foobar</div>
 	class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>
 
 </div><!-- end dhShareLinkForm -->
+
+<style type="text/css">
+body { font-family : sans-serif; }
+.dojo-dialog {
+	background : #eee;
+	border : 1px solid #999;
+	-moz-border-radius : 5px;
+	padding : 4px;
+}
+
+form {
+	margin-bottom : 0;
+}
+</style>
+
+<div dojoType="dialog" id="dhLoginDialog">
+	<form onsubmit="return false">
+		<table>
+			<tr>
+				<td>Email:</td>
+				<td><input type="text"/></td>
+			</tr>
+			<tr>
+				<td colspan="2" align="right">
+				<input type="button" id="dhLoginDialogButton" value="Create account">
+				</td>
+				<td></td>
+			</tr>
+		</table>
+	</form>
+</div>
+
 </body>
 </html>
