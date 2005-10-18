@@ -29,6 +29,10 @@ dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 	dj_debug("...launched, waiting");
 }
 
+// note that none of these is like a <form> post which is type
+// "application/x-www-form-urlencoded" or something and has 
+// special response stuff maybe, I don't know
+
 dh.server.getTextGET = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "GET", "text/plain");
 }
@@ -39,4 +43,8 @@ dh.server.getTextPOST = function(name, params, loadFunc, errorFunc) {
 
 dh.server.getXmlGET = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "GET", "text/xml");
+}
+
+dh.server.getXmlPOST = function(name, params, loadFunc, errorFunc) {
+	dh.server.get(name, params, loadFunc, errorFunc, "POST", "text/xml");
 }

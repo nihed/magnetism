@@ -12,39 +12,25 @@ if (dojo.version.revision <= 1321) {
 }
 dojo.require("dojo.widget.HtmlComboBox");
 dojo.require("dojo.widget.HtmlInlineEditBox");
-dojo.require("dojo.widget.Dialog");
 dojo.require("dh.server");
+dojo.require("dh.login");
 
 // dj_debug("in sharelink.js");
 
 dh.sharelink.submitButtonClicked = function() {
 	dj_debug("clicked share link button");
-						
-	dh.server.getTextPOST("checklogin",
-						  {  },
-						function(type, data, event) {
-							dj_debug("checklogin got back data " + dhAllPropsAsString(data));
-							if (true) {
-								dojo.debug("showing login dialog");
-								//dojo.debug(dhAllPropsAsString(dh.sharelink.loginDialog));
-								dh.sharelink.loginDialog.show();
-							}
-						},
-						function(type, error) {
-							dj_debug("checklogin got back error " + dhAllPropsAsString(error));
-						});
-
-	return;
-
-	dh.server.getXmlGET("friendcompletions",
-						{ "entryContents" : "p" },
-						function(type, data, event) {
-							dj_debug("friendcompletions got back data " + dhAllPropsAsString(data));
-						},
-						function(type, error) {
-							dj_debug("friendcompletions got back error " + dhAllPropsAsString(error));
-						});
-						
+	
+	// double-check that we're logged in
+	dh.login.requireLogin(function() {					
+		dh.server.getXmlGET("friendcompletions",
+							{ "entryContents" : "p" },
+							function(type, data, event) {
+								dj_debug("friendcompletions got back data " + dhAllPropsAsString(data));
+							},
+							function(type, error) {
+								dj_debug("friendcompletions got back error " + dhAllPropsAsString(error));
+							});
+	});
 }
 
 dh.sharelink.FriendListProvider = function() {
@@ -140,17 +126,12 @@ dojo.widget.manager.registerWidgetPackage("dh.sharelink");
 dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
 
 dh.sharelink.init = function() {
-	// dojo.debug("dh.sharelink.init()");
-	dh.sharelink.loginDialog = dojo.widget.manager.getWidgetById("dhLoginDialog");
-	var btn = document.getElementById("dhLoginDialogButton");
-	dh.sharelink.loginDialog.setCloseControl(btn);
-	dh.sharelink.loginDialog.setBackgroundColor("#ccc");
+	dojo.debug("dh.sharelink.init");
 	
-	// the transparency thing is crazy slow on Linux
-	if (dojo.render.html.mozilla && !dojo.render.os.win) {
-		dh.sharelink.loginDialog.effect = "";
-		dh.sharelink.loginDialog.setBackgroundOpacity(1.0);
-	}
+	dh.login.requireLogin(function() {
+		dojo.debug("dh.sharelink logged in!");
+		// nothing to do, but we can now get friend completions and stuff
+	});
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
