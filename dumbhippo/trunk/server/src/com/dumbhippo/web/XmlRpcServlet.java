@@ -19,10 +19,12 @@ import org.apache.commons.logging.Log;
 import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AjaxGlueHttp;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpParams;
+import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.web.EjbLink.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
@@ -46,6 +48,8 @@ public class XmlRpcServlet extends HttpServlet {
 		
 		// This means the form submitted OK but there's no reply data
 		NO_CONTENT(HttpServletResponse.SC_NO_CONTENT),
+		
+		BAD_REQUEST(HttpServletResponse.SC_BAD_REQUEST),
 		
 		MOVED_PERMANENTLY(HttpServletResponse.SC_MOVED_PERMANENTLY),
 		
@@ -181,8 +185,13 @@ public class XmlRpcServlet extends HttpServlet {
 			for (String pname : paramsAnnotation.value()) {
 				if(!String.class.isAssignableFrom(args[i].getClass()))
 					throw new RuntimeException("Only args of type String supported for now");
-				  
-				toPassIn[i] = request.getParameter(pname);
+				
+				Object o = request.getParameter(pname);
+				
+				if (o == null) {
+					throw new HttpException(HttpResponseCode.BAD_REQUEST,
+							"Parameter " + pname + " not provided to URI " + requestUri);
+				}
 				
 				++i;
 			}
@@ -299,11 +308,47 @@ public class XmlRpcServlet extends HttpServlet {
 		}
 	}
 	
-	private boolean tryCheckLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
 		// special method that magically causes us to look at your cookie and log you 
 		// in if it's set, then return person you're logged in as or "false"
-		if (!request.getRequestURI().equals("/text/checklogin")) {
+		// if you use /text/dologin instead of /text/checklogin, and are using
+		// POST, then it will also add the account (insecure temporary test feature)
+		
+		boolean addAccount = request.getRequestURI().equals("/text/dologin") &&
+					request.getMethod().toUpperCase().equals("POST");
+		
+		if (!addAccount && !request.getRequestURI().equals("/text/checklogin")) {
 			return false;
+		}
+		
+		if (addAccount) {
+			logger.debug("Adding account");
+			
+			String email = request.getParameter("email");
+			if (email == null) {
+				throw new HttpException(HttpResponseCode.BAD_REQUEST, "No email address provided");
+			}
+			
+			EjbLink ejb = EjbLink.getForSession(request.getSession());
+			TestGlue testGlue = ejb.getEjb(TestGlue.class);
+			HippoAccount account = testGlue.createAccountFromEmail(email);
+			String authKey = testGlue.authorizeNewClient(account.getId(), "FIXME USE user-agent");
+			LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
+			response.addCookie(loginCookie.getCookie());
+			
+			try {
+				ejb.attemptLogin(loginCookie);
+			} catch (BadTastingException e) {
+				logger.error("Cookie we just added failed to log in ", e);
+				throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR,
+						"Login failed because our system did not work correctly. Apologies.");
+			} catch (NotLoggedInException e) {
+				logger.error("Cookie we just added failed to log in ", e);
+				throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR,
+						"Login failed because our system did not work correctly. Apologies.");
+			}
+			
+			logger.debug("account added");
 		}
 		
 		logger.debug("sending checklogin reply");
@@ -340,49 +385,45 @@ public class XmlRpcServlet extends HttpServlet {
 			IOException {
 		logRequest(request, "POST");
 		
-		if (tryCheckLogin(request, response)) {
-			return;
-		} else if (request.getRequestURI().startsWith("/xml") || request.getRequestURI().startsWith("/text")) {
-			AjaxGlueHttp glue;
-		
-			try {
-				glue = getSessionGlueHttp(request);
-			} catch (HttpException e) {
-				logger.debug(e);
-				e.send(response);
+		try {
+			if (tryLoginRequests(request, response)) {
 				return;
-			}
-			if (glue == null)
-				throw new RuntimeException("Could not create EJB");
-		
-			try {
-				invokeHttpRequest(glue, request, response);
-			} catch (HttpException e) {
-				e.send(response);
-				return;
-			}
-		} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
-			XmlRpcServer xmlrpc;
-			try {
+			} else if (request.getRequestURI().startsWith("/xml") || request.getRequestURI().startsWith("/text")) {
+				AjaxGlueHttp glue;
+			
+				try {
+					glue = getSessionGlueHttp(request);
+				} catch (HttpException e) {
+					logger.debug(e);
+					e.send(response);
+					return;
+				}
+				if (glue == null)
+					throw new RuntimeException("Could not create EJB");
+			
+					invokeHttpRequest(glue, request, response);
+			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
+				XmlRpcServer xmlrpc;
 				xmlrpc = getSessionXmlRpc(request);
-			} catch (HttpException e) {
-				e.send(response);
-				return;
-			}
 
-			// no idea if xmlrpc is in fact thread-safe, but 
-			// let's serialize all our uses of it... it's per-session
-			// so should be no thread contention kind of issues
-			synchronized (xmlrpc) {
-				byte[] result = xmlrpc.execute(request.getInputStream());
-				response.setContentType("text/xml");
-				response.setContentLength(result.length);
-				OutputStream out = response.getOutputStream();
-				out.write(result);
-				out.flush();
+				// no idea if xmlrpc is in fact thread-safe, but 
+				// let's serialize all our uses of it... it's per-session
+				// so should be no thread contention kind of issues
+				synchronized (xmlrpc) {
+					byte[] result = xmlrpc.execute(request.getInputStream());
+					response.setContentType("text/xml");
+					response.setContentLength(result.length);
+					OutputStream out = response.getOutputStream();
+					out.write(result);
+					out.flush();
+				}
+			} else {
+				HttpResponseCode.NOT_FOUND.send(response, "no such uri: " + request.getRequestURI());
 			}
-		} else {
-			HttpResponseCode.NOT_FOUND.send(response, "no such uri: " + request.getRequestURI());
+		} catch (HttpException e) {
+			logger.debug(e);
+			e.send(response);
+			return;
 		}
 	}
 	
@@ -390,26 +431,23 @@ public class XmlRpcServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		logRequest(request, "GET");
 		
-		if (tryCheckLogin(request, response)) {
-			return;
-		}
-		
-		AjaxGlueHttp glue;
-		
 		try {
+			if (tryLoginRequests(request, response)) {
+				return;
+			}
+		
+			AjaxGlueHttp glue;
+		
 			glue = getSessionGlueHttp(request);
+		
+			if (glue == null)
+				throw new RuntimeException("Could not create EJB");
+		
+			invokeHttpRequest(glue, request, response);
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);
 			return;
-		}
-		if (glue == null)
-			throw new RuntimeException("Could not create EJB");
-		
-		try {
-			invokeHttpRequest(glue, request, response);
-		} catch (HttpException e) {
-			e.send(response);
 		}
 	}
 }
