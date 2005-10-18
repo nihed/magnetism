@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,12 +17,12 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AjaxGlueXmlRpc;
+import com.dumbhippo.server.AjaxGlueHttp;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 
 @Stateful
-public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRpc, Serializable {
+public class AjaxGlueHttpBean extends AbstractLoginRequired implements AjaxGlueHttp, Serializable {
 	
 	private static final long serialVersionUID = 0L;
 	
@@ -33,11 +35,7 @@ public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRp
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public String getStuff() {
-		return "This is some stuff!";
-	}
-
-	public List<String> getFriendCompletions(String entryContents) {
+	public void getFriendCompletions(OutputStream out, String contentType, String entryContents) throws IOException {
 		List<String> completions = new ArrayList<String>();
 		
 		if (entryContents == null)
@@ -71,6 +69,12 @@ public class AjaxGlueBean extends AbstractLoginRequired implements AjaxGlueXmlRp
 		if (entryContents != null)
 			completions.add(0, entryContents);
 		
-		return completions;
+		out.write("<ul>\n".getBytes());
+		for (String c : completions) {
+			out.write("<li>".getBytes());
+			out.write(c.getBytes());
+			out.write("</li>\n".getBytes());
+		}
+		out.write("</ul>".getBytes());
 	}
 }

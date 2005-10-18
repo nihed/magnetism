@@ -25,6 +25,11 @@
       <url-pattern>/xml/*</url-pattern>
    </servlet-mapping>
    
+   <servlet-mapping>
+      <servlet-name>XmlRpc Servlet</servlet-name>
+      <url-pattern>/text/*</url-pattern>
+   </servlet-mapping>
+   
     <!-- FIXME jboss specific? -->
 	<listener>
 	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>

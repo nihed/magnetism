@@ -14,5 +14,9 @@ public class AbstractLoginRequired implements LoginRequired, Serializable {
 	public void setLoggedInUserId(String loggedInUserId) {
 		this.loggedInUserId = loggedInUserId;
 	}
+	
+	public boolean isLoggedIn() {
+		return loggedInUserId != null;
+	}
 }
 
