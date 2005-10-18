@@ -24,7 +24,7 @@ dh.sharelink.submitButtonClicked = function() {
 						  {  },
 						function(type, data, event) {
 							dj_debug("checklogin got back data " + dhAllPropsAsString(data));
-							if (data == "false") {
+							if (true) {
 								dojo.debug("showing login dialog");
 								//dojo.debug(dhAllPropsAsString(dh.sharelink.loginDialog));
 								dh.sharelink.loginDialog.show();
@@ -144,6 +144,13 @@ dh.sharelink.init = function() {
 	dh.sharelink.loginDialog = dojo.widget.manager.getWidgetById("dhLoginDialog");
 	var btn = document.getElementById("dhLoginDialogButton");
 	dh.sharelink.loginDialog.setCloseControl(btn);
+	dh.sharelink.loginDialog.setBackgroundColor("#ccc");
+	
+	// the transparency thing is crazy slow on Linux
+	if (dojo.render.html.mozilla && !dojo.render.os.win) {
+		dh.sharelink.loginDialog.effect = "";
+		dh.sharelink.loginDialog.setBackgroundOpacity(1.0);
+	}
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things

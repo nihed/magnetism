@@ -79,3 +79,23 @@ textarea, .dhTextArea {
 	/* text-align:						right; */
 	background-color:				#efefef;
 }
+
+
+/* dojo-dialog is the outermost <div> of the dialog widget. Inside 
+ * it is the dialog content class=dhDialogContent, and also inside
+ * it is the background class=dialogUnderlay. Color of the underlay
+ * seems to get set in code though so be careful...
+ */
+.dojo-dialog {
+	background : #eee;
+	border : 1px solid #999;
+	-moz-border-radius : 5px;
+	padding : 4px;
+}
+
+/* FIXME this is currently centered on the entire page, not the 
+ * browser window
+ */
+.dhDialogContent {
+
+}
