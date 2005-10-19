@@ -18,7 +18,6 @@
 Click here to enter a link to share</div>
 <div id="url-error" class="dhValidityError"></div>
 
-<div class="recipients">
 <div class="dhLabel">Share <u>W</u>ith:</div>
 
 <input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
@@ -27,12 +26,9 @@ Click here to enter a link to share</div>
 
 <div id="recipient-list" class="dhShareLinkRecipientList"></div>
 
-</div>
-<!-- class="recipients" -->
-
 <div class="dhLabel"><u>D</u>escription:</div>
 <div dojoType="RichText"
-	class="dhTextArea" />Edit text</div>
+	class="dhTextArea" id="dhShareLinkDescription" />Edit text</div>
 
 <input type="button" value="Share" accesskey="s"
 	class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>

@@ -22,13 +22,30 @@ dh.sharelink.allKnownPersons = {}
 // currently selected recipients
 dh.sharelink.selectedRecipients = []
 
+dh.sharelink.urlToShareEditBox = null;
+dh.sharelink.descriptionRichText = null;
+
 dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
+	
+	var urlHtml = dh.sharelink.urlToShareEditBox.textValue;
+	var descriptionHtml = dh.sharelink.descriptionRichText.getEditorContent();
+	
+	dojo.debug("url = " + urlHtml);
+	dojo.debug("desc = " + descriptionHtml);
+	
+	// FIXME we don't really want to send HTML to the server... at least not 
+	// without "simplification" to tags we understand which would be easy on 
+	// client side...
 	
 	// double-check that we're logged in
 	dh.login.requireLogin(function() {					
 		dh.server.doPOST("sharelink",
-						{ },
+						{ 
+							"url" : urlHtml, 
+						  	"description" : descriptionHtml,
+						  	"recipients" : "" // FIXME
+						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
 						},
@@ -102,21 +119,6 @@ dh.sharelink.stateNames = [
 	["Wyoming","WY"]
 ];
 
-dh.sharelink.stateGetResults = function(searchStr, type, ignoreLimit) {
-	var copy = [];
-	for (var i = 0; i < dh.sharelink.stateNames.length; ++i) {
-		if (dh.sharelink.stateNames[i][0].length >= searchStr.length &&
-			dh.sharelink.stateNames[i][0].substring(0, searchStr.length).toLowerCase() == searchStr) {
-			var subcopy = [];
-			for (var j = 0; j < 2; ++j) {
-				subcopy.push(dh.sharelink.stateNames[i][j]);
-			}
-			copy.push(subcopy);
-		}
-	}
-	return copy;
-}
-
 dh.sharelink.FriendListProvider = function() {
 
 	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD"
@@ -170,6 +172,9 @@ dh.sharelink.HtmlFriendComboBox = function(){
 	this.fillInTemplate = function(args, frag){
 		// override the default provider
 		this.dataProvider = new dh.sharelink.FriendListProvider();
+		// DEBUG - put data in the default provider
+		//this.dataProvider = new dojo.widget.ComboBoxDataProvider();
+		//this.dataProvider.setData(dh.sharelink.stateNames);
     }
 }
 
@@ -178,10 +183,11 @@ dojo.inherits(dh.sharelink.HtmlFriendComboBox, dojo.widget.HtmlComboBox);
 dojo.widget.manager.registerWidgetPackage("dh.sharelink");
 dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
 
-dh.sharelink.urlToShareEditBox = null;
-
 dh.sharelink.init = function() {
 	dojo.debug("dh.sharelink.init");
+	
+	// all the dojo is set up now, so show the body; this is to reduce flicker
+	dojo.html.removeClass(document.body, "dhInvisible");
 	
 	dh.login.requireLogin(function() {
 		dojo.debug("dh.sharelink logged in!");
@@ -191,6 +197,7 @@ dh.sharelink.init = function() {
 			// FIXME InlineEditBox takes HTML, even though it's called setText, need to escape
 			dh.sharelink.urlToShareEditBox.setText(params["url"]);
 		}
+		dh.sharelink.descriptionRichText = dojo.widget.manager.getWidgetById("dhShareLinkDescription");
 	});
 }
 

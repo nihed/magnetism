@@ -13,3 +13,4 @@ var dhServerUri = "http://127.0.0.1:8080/"
 var dhXmlRoot = dhServerUri + "xml/";
 var dhXmlRpcRoot = dhServerUri + "xmlrpc/";
 var dhTextRoot = dhServerUri + "text/";
+var dhPostRoot = dhServerUri + "action/";

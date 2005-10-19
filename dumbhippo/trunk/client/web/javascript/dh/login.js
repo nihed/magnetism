@@ -6,7 +6,7 @@ dojo.require("dojo.widget.Dialog");
 dojo.require("dh.server");
 
 dh.login.dialogContentHtml =
-  '<div dojoType="dialog" id="dhLoginDialog">'
+  '<div dojoType="dialog" id="dhLoginDialog" class="dhInvisible">'
 + '	<form onsubmit="return false" class="dhDialogContent">'
 + '		<table>'
 + '			<tr>'
@@ -222,4 +222,7 @@ dh.login.createDialog = function() {
 	var btn = document.getElementById("dhLoginDialogButton");
 	dojo.event.connect(btn, "onclick", dj_global, "dhLoginSubmitLogin");
 	dojo.event.connect(dh.login.emailEntry, "onkeypress", dj_global, "dhLoginOnKeyPress");
+	
+	// now display our content nodes
+	dojo.html.removeClass(node, "dhInvisible");
 }

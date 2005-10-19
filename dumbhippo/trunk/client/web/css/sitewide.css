@@ -40,12 +40,13 @@ form {
 	font-size:						small;	
 }
 
-/* Style of text being input */
-textarea, .dhTextArea, .dojoComboBox * {
+/* Style of the text being typed by the user */
+textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
 	overflow:                       visible;
+	width: 							25em;
 }
 
 /* Style of the border around the text being input, which 
@@ -62,7 +63,7 @@ textarea, .dhTextArea, .dojoComboBox {
 textarea, .dhTextArea {
 	width:							25em;
 }
-	
+
 .dhUrl {
 	margin-top:						1em;
 	margin-bottom:					1em;
@@ -98,4 +99,9 @@ textarea, .dhTextArea {
  */
 .dhDialogContent {
 
+}
+
+/* Used to hide elements */
+.dhInvisible {
+	display:	none;
 }

@@ -10,6 +10,8 @@ dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 		root = dhTextRoot;
 	else if (what == "text/xml")
 		root = dhXmlRoot;
+	else if (how == "POST" && what == null)
+		root = dhPostRoot;
 	else {
 		dojo.debug("don't know how to get that: " + what);
 		return;
