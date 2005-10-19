@@ -16,6 +16,9 @@
 	<property name="bundled-deps.web" value="jstl.jar standard.jar" />
 	<property name="bundled-deps.client" value="" />
 	
+	<!-- trivial change for testing 
+	-->
+	
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
 		<fileset dir="${lib}">
