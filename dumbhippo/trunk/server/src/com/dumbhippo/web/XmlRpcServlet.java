@@ -69,6 +69,7 @@ public class XmlRpcServlet extends HttpServlet {
 		}
 		
 		void send(HttpServletResponse response, String message) throws IOException {
+			logger.debug("Sending HTTP response code " + this + ": " + message);
 			response.sendError(code, message);
 		}
 	}
@@ -112,107 +113,131 @@ public class XmlRpcServlet extends HttpServlet {
 		return new String[] { ret[1], ret[2] };
 	}
 	
-	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
-		String requestedContentType = request.getContentType();
-		String requestUri = request.getRequestURI();
-		Method[] methods = object.getClass().getMethods();
+	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out, String replyContentType, HttpParams paramsAnnotation, Method m) throws HttpException {
+		Class<?> args[] = m.getParameterTypes();
+		if (args.length != 2 + paramsAnnotation.value().length) {
+			throw new RuntimeException("HTTP method " + m.getName() + " should have params OutputStream,String then " + paramsAnnotation.value());
+		}
+		if (!OutputStream.class.isAssignableFrom(args[0])) {
+			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg 0");
+		}
+		if (!String.class.isAssignableFrom(args[1])) {
+			throw new RuntimeException("HTTP method " + m.getName() + " must have String contentType as arg 1");
+		}
+		Object[] toPassIn = new Object[args.length];
 		
+		toPassIn[0] = out;
+		toPassIn[1] = replyContentType;
+		
+		int i = 2;
+		for (String pname : paramsAnnotation.value()) {
+			if(!String.class.isAssignableFrom(args[i]))
+				throw new RuntimeException("Only args of type String supported for now, arg " + i + " is type " + args[i].getCanonicalName());
+			
+			Object o = request.getParameter(pname);
+			
+			if (o == null) {
+				throw new HttpException(HttpResponseCode.BAD_REQUEST,
+						"Parameter " + pname + " not provided to method " + m.getName());
+			}
+			
+			toPassIn[i] = o;
+			
+			++i;
+		}
+		
+		return toPassIn;
+	}
+	
+	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
+			throws IOException, HttpException {
+		String requestUri = request.getRequestURI();
+		Class<?>[] interfaces = object.getClass().getInterfaces();
+
 		String[] uriComponents = parseUri(requestUri);
 		String typeDir = uriComponents[0];
 		String requestedMethod = uriComponents[1];
-		
-		boolean ok = false;
+		String getRequestedMethod = "get" + requestedMethod;
+		String doRequestedMethod = null;
+		if (request.getMethod().toLowerCase().equals("POST")) {
+			doRequestedMethod = "do" + requestedMethod;
+		}
+
+		String requestedContentType = null;
 		for (String[] pair : TYPE_DIR_MAPPINGS) {
-			if (requestedContentType == null) {
-				if (typeDir.equals(pair[1])) {
-					requestedContentType = pair[0];
-					ok = true;
-					break;
-				}        
-			} else if (requestedContentType.equals(pair[0]) && typeDir.equals(pair[1])) {
-				ok = true;
+			if (typeDir.equals(pair[1])) {
+				requestedContentType = pair[0];
 				break;
 			}
 		}
-		if (!ok) {
-			throw new HttpException(HttpResponseCode.NOT_FOUND, "Must have content type matching directory path, allowed are "+ TYPE_DIR_MAPPINGS);
+		if (requestedContentType == null) {
+			throw new HttpException(HttpResponseCode.NOT_FOUND,
+					"Must have content type matching directory path, allowed are " + TYPE_DIR_MAPPINGS);
 		}
-		
-		for (Method m : methods) {
-			HttpContentTypes contentAnnotation = m.getAnnotation(HttpContentTypes.class);
-			HttpParams paramsAnnotation = m.getAnnotation(HttpParams.class);
-			
-			if (contentAnnotation == null)
-				continue;
 
-			if (!m.getName().toLowerCase().equals(requestedMethod))
-				continue;
-			
-			if (m.getReturnType() != null)
-				throw new RuntimeException("HTTP method " + m.getName() + " must return void not " + m.getReturnType().getCanonicalName());
-			
-			String replyContentType = null;
-			for (String t : contentAnnotation.value()) {
-				if (t.equals(requestedContentType)) {
-					replyContentType = t;
-					break;
+		for (Class<?> iface : interfaces) {
+			logger.debug("Looking for method " + requestedMethod + " on " + iface.getCanonicalName());
+			for (Method m : iface.getMethods()) {
+				HttpContentTypes contentAnnotation = m.getAnnotation(HttpContentTypes.class);
+				HttpParams paramsAnnotation = m.getAnnotation(HttpParams.class);
+
+				if (contentAnnotation == null) {
+					logger.debug("Method " + m.getName() + " has no content type annotation, skipping");
+					continue;
 				}
-			} 
-			
-			if (replyContentType == null) {
-				throw new HttpException(HttpResponseCode.NOT_FOUND,
-						"Wrong content type requested " + requestedContentType + " valid types for method are " + contentAnnotation.value());
-			}
-			
-			Class<?> args[] = m.getParameterTypes();
-			if (args.length != 2 + paramsAnnotation.value().length) {
-				throw new RuntimeException("HTTP method " + m.getName() + " should have params OutputStream,String then " + paramsAnnotation.value());
-			}
-			if (!OutputStream.class.isAssignableFrom(args[0])) {
-				throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg 0");
-			}
-			if (!String.class.isAssignableFrom(args[1])) {
-				throw new RuntimeException("HTTP method " + m.getName() + " must have String contentType as arg 1");
-			}
-			Object[] toPassIn = new Object[args.length];
-			
-			OutputStream out = response.getOutputStream();
-			
-			toPassIn[0] = out;
-			toPassIn[1] = replyContentType;
-			
-			int i = 2;
-			for (String pname : paramsAnnotation.value()) {
-				if(!String.class.isAssignableFrom(args[i].getClass()))
-					throw new RuntimeException("Only args of type String supported for now");
-				
-				Object o = request.getParameter(pname);
-				
-				if (o == null) {
-					throw new HttpException(HttpResponseCode.BAD_REQUEST,
-							"Parameter " + pname + " not provided to URI " + requestUri);
+
+				String lowercase = m.getName().toLowerCase();
+				if (!(lowercase.equals(getRequestedMethod) || lowercase.equals(doRequestedMethod))) {
+					logger.debug("Method " + m.getName() + " does not match " + getRequestedMethod + " or "
+							+ doRequestedMethod + ", skipping");
+					continue;
 				}
+
+				logger.debug("found method " + m.getName());
+
+				if (m.getReturnType() != void.class)
+					throw new RuntimeException("HTTP method " + m.getName() + " must return void not "
+							+ m.getReturnType().getCanonicalName());
+
+				String replyContentType = null;
+				for (String t : contentAnnotation.value()) {
+					if (t.equals(requestedContentType)) {
+						replyContentType = t;
+						break;
+					}
+				}
+
+				if (replyContentType == null) {
+					throw new HttpException(HttpResponseCode.NOT_FOUND, "Wrong content type requested "
+							+ requestedContentType + " valid types for method are " + contentAnnotation.value());
+				}
+
+				OutputStream out = response.getOutputStream();
+				Object[] methodArgs = marshalHttpRequestParams(request, out, replyContentType, paramsAnnotation, m);
+
+				response.setContentType(replyContentType);
+
+				try {
+					logger.debug("Invoking method " + m.getName() + " with args " + Arrays.toString(methodArgs));
+					m.invoke(object, methodArgs);
+				} catch (IllegalArgumentException e) {
+					logger.error(e);
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
+					logger.error(e);
+					throw new RuntimeException(e);
+				} catch (InvocationTargetException e) {
+					logger.debug("Exception thrown by invoked method: " + e.getCause());
+					logger.error(e.getCause());
+					throw new RuntimeException(e);
+				}
+
+				out.flush();
+
+				logger.debug("Reply for " + m.getName() + " sent");
 				
-				++i;
+				break; // don't call two different methods!
 			}
-			
-			response.setContentType(replyContentType);
-			
-			try {
-				logger.debug("Invoking method " + m.getName() + " with args " + Arrays.toString(toPassIn));
-				m.invoke(object, toPassIn);
-			} catch (IllegalArgumentException e) {
-				logger.error(e);
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				logger.error(e);
-				throw new RuntimeException(e);
-			} catch (InvocationTargetException e) {
-				logger.error(e);
-				throw new RuntimeException(e);
-			}
-			
-			out.flush();
 		}
 	}
 	

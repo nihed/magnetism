@@ -13,7 +13,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XMLBuilder;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -99,7 +99,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 
 		public String toXML() {
-			XMLBuilder builder = new XMLBuilder();
+			XmlBuilder builder = new XmlBuilder();
 			
 	        builder.getStringBuilder().append(String.format("<link xmlns=\"%s\" href=\"%s\"><title>",
 					NAMESPACE, getUrl()));

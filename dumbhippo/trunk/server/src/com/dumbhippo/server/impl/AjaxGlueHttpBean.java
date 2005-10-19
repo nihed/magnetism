@@ -13,6 +13,7 @@ import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AbstractLoginRequired;
@@ -36,45 +37,38 @@ public class AjaxGlueHttpBean extends AbstractLoginRequired implements AjaxGlueH
 	private IdentitySpider identitySpider;
 	
 	public void getFriendCompletions(OutputStream out, String contentType, String entryContents) throws IOException {
-		List<String> completions = new ArrayList<String>();
+		XmlBuilder xml = new XmlBuilder();
+
+		xml.appendStandaloneFragmentHeader();
 		
-		if (entryContents == null)
-			entryContents = "";
+		xml.append("<people>");
 		
-		Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
-		for (HippoAccount a : accounts) {
-			// FIXME get from viewpoint of personId
-			
-			String completion = null;
-			
-			PersonView view = identitySpider.getSystemViewpoint(a.getOwner());
-			String humanReadable = view.getHumanReadableName();
-			EmailResource email = view.getEmail();
-			if (humanReadable.startsWith(entryContents)) {
-				completion = humanReadable;
-			} else if (email.getEmail().startsWith(entryContents)) {
-				completion = email.getEmail();
-			} else if (a.getOwner().getId().startsWith(entryContents)) {
-				completion = a.getOwner().getId();
-			}
-			
-			if (completion != null) {
-				completions.add(completion);
+		if (entryContents != null && entryContents.length() > 0) {
+			Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
+			for (HippoAccount a : accounts) {
+				// FIXME get from viewpoint of personId
+
+				String completion = null;
+
+				PersonView view = identitySpider.getSystemViewpoint(a.getOwner());
+				String humanReadable = view.getHumanReadableName();
+				EmailResource email = view.getEmail();
+				if (humanReadable.startsWith(entryContents)) {
+					completion = humanReadable;
+				} else if (email.getEmail().startsWith(entryContents)) {
+					completion = email.getEmail();
+				} else if (a.getOwner().getId().startsWith(entryContents)) {
+					completion = a.getOwner().getId();
+				}
+
+				if (completion != null) {
+					xml.appendElement("person", null, "id", a.getOwner().getId(), "display", humanReadable, "completion", completion);
+				}
 			}
 		}
+
+		xml.append("</people>");
 		
-		Collections.sort(completions);
-		
-		// we want the currently-typed string at the top
-		if (entryContents != null)
-			completions.add(0, entryContents);
-		
-		out.write("<ul>\n".getBytes());
-		for (String c : completions) {
-			out.write("<li>".getBytes());
-			out.write(c.getBytes());
-			out.write("</li>\n".getBytes());
-		}
-		out.write("</ul>".getBytes());
+		out.write(xml.toString().getBytes());
 	}
 }

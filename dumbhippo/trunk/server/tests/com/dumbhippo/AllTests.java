@@ -9,7 +9,7 @@ public class AllTests {
         suite.addTest(new TestSuite(FilesystemTests.class));
         suite.addTest(new TestSuite(FullNameTest.class));
         suite.addTest(new TestSuite(StringUtilsTest.class));
-        suite.addTest(new TestSuite(XMLBuilderTest.class));
+        suite.addTest(new TestSuite(XmlBuilderTest.class));
         return suite;
     }
 }
