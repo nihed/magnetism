@@ -4,6 +4,7 @@ dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.widget.Dialog");
 dojo.require("dh.server");
+dojo.require("dh.util");
 
 dh.login.dialogContentHtml =
   '<div dojoType="dialog" id="dhLoginDialog" class="dhInvisible">'
@@ -224,5 +225,5 @@ dh.login.createDialog = function() {
 	dojo.event.connect(dh.login.emailEntry, "onkeypress", dj_global, "dhLoginOnKeyPress");
 	
 	// now display our content nodes
-	dojo.html.removeClass(node, "dhInvisible");
+	dh.util.show(node);
 }

@@ -24,3 +24,25 @@ dh.util.getParamsFromLocation = function() {
     }
     return map;
 }
+
+dh.util.showId = function(nodeId) {
+	var node = document.getElementById(nodeId);
+	if (!node)
+		dojo.raise("can't find node " + nodeId);
+	dh.util.show(node);
+}
+
+dh.util.hideId = function(nodeId) {
+	var node = document.getElementById(nodeId);
+	if (!node)
+		dojo.raise("can't find node " + nodeId);
+	dh.util.hide(node);
+}
+
+dh.util.hide = function(node) {
+	dojo.html.addClass(node, "dhInvisible");
+}
+
+dh.util.show = function(node) {
+	dojo.html.removeClass(node, "dhInvisible");
+}

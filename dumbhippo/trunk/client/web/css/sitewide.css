@@ -102,6 +102,12 @@ textarea, .dhTextArea {
 }
 
 /* Used to hide elements */
-.dhInvisible {
+.dhInvisible, .dhInvisible * {
 	display:	none;
+}
+
+/* Dojo debug spew goes in element with id=dojoDebug */
+#dojoDebug {
+	font-size:	small;
+	font-style: italic;
 }

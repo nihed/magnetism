@@ -23,7 +23,85 @@ dh.sharelink.allKnownPersons = {}
 dh.sharelink.selectedRecipients = []
 
 dh.sharelink.urlToShareEditBox = null;
+dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
+
+dh.sharelink.findPerson = function(obj, id) {
+	// obj can be an array or a hash
+	for (var prop in obj) {
+		//dojo.debug("looking for " + id + " on prop " + prop + " in obj " + obj);
+		if (dojo.lang.has(obj[prop], "id")) {
+			if (id == obj[prop]["id"]) {
+				return prop;
+			}
+		}
+	}
+	return null;
+}
+
+dhRemoveRecipientClicked = function(event) {
+	dojo.debug("remove recipient");
+	
+	// scan up for the dhPersonId node which is the outermost
+	// node of the html representing this person, and also 
+	// has the person ID in question
+	
+	var idToRemove = null;
+	var node = event.target;
+	while (node != null) {
+		idToRemove = node.getAttribute("dhPersonId");
+		if (idToRemove)
+			break;
+		node = node.parentNode;
+	}
+	
+	var personIndex = dh.sharelink.findPerson(dh.sharelink.selectedRecipients, idToRemove);
+	dh.sharelink.selectedRecipients.splice(personIndex, 1);
+	
+	// remove the HTML representing this recipient
+	node.parentNode.removeChild(node);
+}
+
+dh.sharelink.doAddRecipient = function() {
+	//alert(dh.sharelink.recipientComboBox.comboBoxValue + ", value=" + dh.sharelink.recipientComboBox.comboBoxSelectionValue);
+	var selectedId = dh.sharelink.recipientComboBox.comboBoxSelectionValue;
+	var personKey = dh.sharelink.findPerson(dh.sharelink.allKnownPersons, selectedId);
+	if (!personKey) {
+		// FIXME display something, this is the validation step
+		alert("dunno who that is...");
+		return;
+	}
+	
+	var person = dh.sharelink.allKnownPersons[personKey];
+	
+	if (!dh.sharelink.findPerson(dh.sharelink.selectedRecipients, person.id)) {
+		
+		dh.sharelink.selectedRecipients.push(person);
+		
+		var personNode = document.createElement("div");
+		personNode.setAttribute("dhPersonId", person.id);
+		var labelNode = document.createElement("p");
+		labelNode.appendChild(document.createTextNode(person.displayName));
+		var removeButtonNode = document.createElement("input");
+		removeButtonNode.setAttribute("type", "button");
+		removeButtonNode.setAttribute("value", "Don't send to this loser");
+		removeButtonNode.setAttribute("class", "dhButton");
+		dojo.event.connect(removeButtonNode, "onclick", dj_global, "dhRemoveRecipientClicked");
+		personNode.appendChild(labelNode);
+		personNode.appendChild(removeButtonNode);
+		var recipientsListNode = document.getElementById("dhRecipientList");
+		recipientsListNode.appendChild(personNode);
+	}
+	
+	// clear the combo again
+	dh.sharelink.recipientComboBox.textInputNode.value = "";
+}
+
+dhDoAddRecipientKeyPress = function(event) {
+	if (event.keyCode == 13) {
+		dh.sharelink.doAddRecipient();
+	}
+}
 
 dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
@@ -31,8 +109,17 @@ dh.sharelink.submitButtonClicked = function() {
 	var urlHtml = dh.sharelink.urlToShareEditBox.textValue;
 	var descriptionHtml = dh.sharelink.descriptionRichText.getEditorContent();
 	
+	var commaRecipients = "";
+	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
+		if (i != 0) {
+			commaRecipients = commaRecipients + ",";
+		}
+		commaRecipients = commaRecipients + dh.sharelink.selectedRecipients[i].id;
+	}
+	
 	dojo.debug("url = " + urlHtml);
 	dojo.debug("desc = " + descriptionHtml);
+	dojo.debug("rcpts = " + commaRecipients);
 	
 	// FIXME we don't really want to send HTML to the server... at least not 
 	// without "simplification" to tags we understand which would be easy on 
@@ -44,7 +131,7 @@ dh.sharelink.submitButtonClicked = function() {
 						{ 
 							"url" : urlHtml, 
 						  	"description" : descriptionHtml,
-						  	"recipients" : "" // FIXME
+						  	"recipients" : commaRecipients
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
@@ -143,7 +230,10 @@ dh.sharelink.FriendListProvider = function() {
 									
 									completions.push([completion, person.id]);
 									
-									// merge in a new person we know about
+									if (!dojo.lang.has(dh.sharelink.allKnownPersons, person.id))
+										dojo.debug("new person displayName=" + person.displayName + " id=" + person.id);									
+
+									// merge in a new person we know about, overwriting any older data
 									dh.sharelink.allKnownPersons[person.id] = person;
 								}
 								
@@ -185,10 +275,7 @@ dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
 
 dh.sharelink.init = function() {
 	dojo.debug("dh.sharelink.init");
-	
-	// all the dojo is set up now, so show the body; this is to reduce flicker
-	dojo.html.removeClass(document.body, "dhInvisible");
-	
+		
 	dh.login.requireLogin(function() {
 		dojo.debug("dh.sharelink logged in!");
 		var params = dh.util.getParamsFromLocation();
@@ -197,7 +284,18 @@ dh.sharelink.init = function() {
 			// FIXME InlineEditBox takes HTML, even though it's called setText, need to escape
 			dh.sharelink.urlToShareEditBox.setText(params["url"]);
 		}
-		dh.sharelink.descriptionRichText = dojo.widget.manager.getWidgetById("dhShareLinkDescription");
+	
+		dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
+		dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyPress");
+		
+		// most of the dojo is set up now, so show the widgets
+		dh.util.showId("dhShareLinkForm");
+		
+		// rich text areas can't exist when display:none, so we have to create it after showing
+		dh.sharelink.descriptionRichText = dojo.widget.fromScript("richtext", 
+																 {}, // props,
+																 document.getElementById("dhShareLinkDescription"));
+																 
 	});
 }
 

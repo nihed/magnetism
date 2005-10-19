@@ -12,27 +12,39 @@
 <title>Sharing a Link</title>
 </head>
 <body>
-<div class="dhShareLinkForm">
+<!--  invisible at first to avoid flicker while we set up dojo widgets -->
+<div id="dhShareLinkForm" class="dhInvisible">
 
 <div dojoType="InlineEditBox" class="dhUrl" id="dhUrlToShare">
 Click here to enter a link to share</div>
-<div id="url-error" class="dhValidityError"></div>
+<div id="dhUrlError" class="dhValidityError"></div>
 
 <div class="dhLabel">Share <u>W</u>ith:</div>
 
-<input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
-	type="text" />
-<div id="recipients-error" class="dhValidityError" /><br />
+<table>
+<tr>
+	<td>
+		<input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
+		type="text" id="dhRecipientComboBox" />
+	</td>
+	<td>
+		<input type="button" value="Add" accesskey="a"
+		class="dhButton" onclick="dh.sharelink.doAddRecipient();"/>
+	</td>
+</tr>
+</table>
+<div id="dhRecipientsError" class="dhValidityError" /><br />
 
-<div id="recipient-list" class="dhShareLinkRecipientList"></div>
+<div id="dhRecipientList">
+</div>
 
 <div class="dhLabel"><u>D</u>escription:</div>
-<div dojoType="RichText"
-	class="dhTextArea" id="dhShareLinkDescription" />Edit text</div>
+<div class="dhTextArea" id="dhShareLinkDescription" /></div>
 
 <input type="button" value="Share" accesskey="s"
 	class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>
 
+<div id="dojoDebug"/> <!-- where to put dojo debug spew -->
 </div><!-- end dhShareLinkForm -->
 
 </body>
