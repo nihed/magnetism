@@ -25,6 +25,12 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.ShareLinkGlue;
 import com.dumbhippo.server.UnknownPersonException;
 
+/**
+ * This class is scheduled to be blown away once we drop sharelink.jsp
+ * 
+ * @author hp
+ *
+ */
 @Stateful
 public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLinkGlue, Serializable {
 
@@ -41,17 +47,8 @@ public class ShareLinkGlueBean extends AbstractLoginRequired implements ShareLin
 	@EJB
 	private MessageSender messageSender;
 	
-	private transient Person cachedLoggedInUser;
-	
 	private Person getLoggedInUser() {
-		if (cachedLoggedInUser == null && getLoggedInUserId() != null) {
-			cachedLoggedInUser = identitySpider.lookupPersonById(getLoggedInUserId());
-		}
-		
-		if (cachedLoggedInUser == null)
-			throw new IllegalStateException("Trying to use ShareLinkGlueBean when not logged in");
-		
-		return cachedLoggedInUser; 
+		return super.getLoggedInUser(identitySpider);
 	}
 	
 	public List<String> freeformRecipientsToIds(List<String> userEnteredRecipients) throws UnknownPersonException {

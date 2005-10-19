@@ -29,6 +29,11 @@
       <servlet-name>XmlRpc Servlet</servlet-name>
       <url-pattern>/text/*</url-pattern>
    </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>XmlRpc Servlet</servlet-name>
+      <url-pattern>/action/*</url-pattern>
+   </servlet-mapping>
    
     <!-- FIXME jboss specific? -->
 	<listener>

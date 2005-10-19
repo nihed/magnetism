@@ -24,6 +24,7 @@ import com.dumbhippo.server.AjaxGlueHttp;
 import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpParams;
+import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.web.EjbLink.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -33,10 +34,6 @@ public class XmlRpcServlet extends HttpServlet {
 	private static final Log logger = GlobalSetup.getLog(XmlRpcServlet.class);
 	
 	private static final long serialVersionUID = 0L;
-
-	// mappings from content type to url, like "/xml/foobar", "/text/baz" lets us do the same 
-	// "API" in different formats
-	private static final String[][] TYPE_DIR_MAPPINGS = { { "text/xml", "xml" }, {"text/plain", "text" } };
 	
 	private static final String XMLRPC_KEY = "org.dumbhippo.web.XmlRpcServlet.XmlRpcServer";
 
@@ -113,23 +110,33 @@ public class XmlRpcServlet extends HttpServlet {
 		return new String[] { ret[1], ret[2] };
 	}
 	
-	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out, String replyContentType, HttpParams paramsAnnotation, Method m) throws HttpException {
+	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out, HttpResponseData replyContentType, HttpParams paramsAnnotation, Method m) throws HttpException {
 		Class<?> args[] = m.getParameterTypes();
-		if (args.length != 2 + paramsAnnotation.value().length) {
-			throw new RuntimeException("HTTP method " + m.getName() + " should have params OutputStream,String then " + paramsAnnotation.value());
+
+		boolean methodCanReturnContent = OutputStream.class.isAssignableFrom(args[0]);
+		
+		if (replyContentType != HttpResponseData.NONE) {
+			if (!methodCanReturnContent)
+				throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg 0 to return type " + replyContentType);
+			if (!HttpResponseData.class.isAssignableFrom(args[1])) {
+				throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg 1");
+			}
 		}
-		if (!OutputStream.class.isAssignableFrom(args[0])) {
-			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg 0");
-		}
-		if (!String.class.isAssignableFrom(args[1])) {
-			throw new RuntimeException("HTTP method " + m.getName() + " must have String contentType as arg 1");
-		}
+		
 		Object[] toPassIn = new Object[args.length];
 		
-		toPassIn[0] = out;
-		toPassIn[1] = replyContentType;
+		int i = 0;
 		
-		int i = 2;
+		if (methodCanReturnContent) {
+			toPassIn[0] = out;
+			toPassIn[1] = replyContentType;
+			i = 2;
+		}
+
+		if (args.length != i + paramsAnnotation.value().length) {
+			throw new RuntimeException("HTTP method " + m.getName() + " should have params " + paramsAnnotation.value());
+		}
+		
 		for (String pname : paramsAnnotation.value()) {
 			if(!String.class.isAssignableFrom(args[i]))
 				throw new RuntimeException("Only args of type String supported for now, arg " + i + " is type " + args[i].getCanonicalName());
@@ -151,28 +158,32 @@ public class XmlRpcServlet extends HttpServlet {
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, HttpException {
+		
 		String requestUri = request.getRequestURI();
 		Class<?>[] interfaces = object.getClass().getInterfaces();
-
+		boolean isPost = request.getMethod().toUpperCase().equals("POST"); 
 		String[] uriComponents = parseUri(requestUri);
 		String typeDir = uriComponents[0];
 		String requestedMethod = uriComponents[1];
 		String getRequestedMethod = "get" + requestedMethod;
 		String doRequestedMethod = null;
-		if (request.getMethod().toLowerCase().equals("POST")) {
+		if (isPost) {
 			doRequestedMethod = "do" + requestedMethod;
+			logger.debug("is a post, will also look for " + doRequestedMethod);
 		}
 
-		String requestedContentType = null;
-		for (String[] pair : TYPE_DIR_MAPPINGS) {
-			if (typeDir.equals(pair[1])) {
-				requestedContentType = pair[0];
-				break;
-			}
-		}
-		if (requestedContentType == null) {
+		logger.debug("trying to invoke http request at " + requestUri);
+		
+		HttpResponseData requestedContentType;
+		if (typeDir.equals("xml"))
+			requestedContentType = HttpResponseData.XML;
+		else if (typeDir.equals("text"))
+			requestedContentType = HttpResponseData.TEXT;
+		else if (isPost && typeDir.equals("action"))
+			requestedContentType = HttpResponseData.NONE;
+		else {
 			throw new HttpException(HttpResponseCode.NOT_FOUND,
-					"Must have content type matching directory path, allowed are " + TYPE_DIR_MAPPINGS);
+					"Don't know about URI path /" + typeDir + " , only /xml, /text for GET plus /action for POST only)");
 		}
 
 		for (Class<?> iface : interfaces) {
@@ -199,23 +210,24 @@ public class XmlRpcServlet extends HttpServlet {
 					throw new RuntimeException("HTTP method " + m.getName() + " must return void not "
 							+ m.getReturnType().getCanonicalName());
 
-				String replyContentType = null;
-				for (String t : contentAnnotation.value()) {
-					if (t.equals(requestedContentType)) {
-						replyContentType = t;
+				boolean requestedContentTypeSupported = false;
+				for (HttpResponseData t : contentAnnotation.value()) {
+					if (t == requestedContentType) {
+						requestedContentTypeSupported = true;
 						break;
 					}
 				}
 
-				if (replyContentType == null) {
+				if (!requestedContentTypeSupported) {
 					throw new HttpException(HttpResponseCode.NOT_FOUND, "Wrong content type requested "
 							+ requestedContentType + " valid types for method are " + contentAnnotation.value());
 				}
 
 				OutputStream out = response.getOutputStream();
-				Object[] methodArgs = marshalHttpRequestParams(request, out, replyContentType, paramsAnnotation, m);
+				Object[] methodArgs = marshalHttpRequestParams(request, out, requestedContentType, paramsAnnotation, m);
 
-				response.setContentType(replyContentType);
+				if (requestedContentType != HttpResponseData.NONE)
+					response.setContentType(requestedContentType.getMimeType());
 
 				try {
 					logger.debug("Invoking method " + m.getName() + " with args " + Arrays.toString(methodArgs));
@@ -413,20 +425,6 @@ public class XmlRpcServlet extends HttpServlet {
 		try {
 			if (tryLoginRequests(request, response)) {
 				return;
-			} else if (request.getRequestURI().startsWith("/xml") || request.getRequestURI().startsWith("/text")) {
-				AjaxGlueHttp glue;
-			
-				try {
-					glue = getSessionGlueHttp(request);
-				} catch (HttpException e) {
-					logger.debug(e);
-					e.send(response);
-					return;
-				}
-				if (glue == null)
-					throw new RuntimeException("Could not create EJB");
-			
-					invokeHttpRequest(glue, request, response);
 			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
 				XmlRpcServer xmlrpc;
 				xmlrpc = getSessionXmlRpc(request);
@@ -443,7 +441,19 @@ public class XmlRpcServlet extends HttpServlet {
 					out.flush();
 				}
 			} else {
-				HttpResponseCode.NOT_FOUND.send(response, "no such uri: " + request.getRequestURI());
+				AjaxGlueHttp glue;
+			
+				try {
+					glue = getSessionGlueHttp(request);
+				} catch (HttpException e) {
+					logger.debug(e);
+					e.send(response);
+					return;
+				}
+				if (glue == null)
+					throw new RuntimeException("Could not create EJB");
+			
+					invokeHttpRequest(glue, request, response);
 			}
 		} catch (HttpException e) {
 			logger.debug(e);

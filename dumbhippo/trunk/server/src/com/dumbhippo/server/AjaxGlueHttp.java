@@ -12,9 +12,13 @@ import javax.ejb.Local;
  *
  */
 @Local
-public interface AjaxGlueHttp {
+public interface AjaxGlueHttp extends LoginRequired {
 	
-	@HttpContentTypes("text/xml")
+	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams({"entryContents"})
-	public void getFriendCompletions(OutputStream out, String contentType, String entryContents) throws IOException;
+	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, String entryContents) throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams({"url", "recipients", "description"})
+	public void doShareLink(String url, String recipients, String description);
 }
