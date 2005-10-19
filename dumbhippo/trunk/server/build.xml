@@ -6,7 +6,7 @@
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="build.lib" value="${target}/lib" />
-	<property name="build.javascripts" value="${target}/javascripts" />
+	<property name="build.javascript" value="${target}/javascript" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
@@ -55,7 +55,7 @@
 		<mkdir dir="${buildjar.dir}" />
 		<mkdir dir="${reports.tests}" />
 		<mkdir dir="${build.tests}" />
-		<mkdir dir="${build.javascripts}" />
+		<mkdir dir="${build.javascript}" />
 		
 		<!-- See what needs rebuilding -->
 		<uptodate property="uptodate.xmlrpc" targetfile="xmlrpc/target/xmlrpc-2.0.jar">
@@ -74,12 +74,13 @@
 		<copy todir="${build.lib}">
 			<fileset dir="xmlrpc/target" includes="*.jar"/>
 		</copy>
-		<copy todir="${build.javascripts}">
-			<fileset dir="scriptaculous/lib" includes="*.js"/>
-			<fileset dir="scriptaculous/src" includes="*.js"/>
-		</copy>
-		<copy todir="${build.javascripts}">
+		<copy todir="${build.javascript}">
 			<fileset dir="${web}/javascript" includes="*.js"/>
+			<fileset dir="${web}/javascript" includes="dh/*.js"/>
+			<fileset dir="${web}/javascript" includes="dojo/*.js"/>
+			<fileset dir="${web}/javascript" includes="dojo/src/*.js"/>
+			<fileset dir="${web}/javascript" includes="dojo/src/**/*.js"/>
+			<fileset dir="${web}/javascript" includes="dojo/iframe_history.html"/>
 		</copy>
 	</target>
 	
@@ -140,12 +141,12 @@
 
 	<target name="war" depends="compile, setupmetadata">
 		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
-			<fileset dir="${web}" includes="**/*.html" />
+			<fileset dir="${web}" includes="*.html" />
 			<fileset dir="${web}" includes="**/*.jsp" />
 			<fileset dir="${web}" includes="**/*.jspf" />
 			<fileset dir="${web}" includes="**/*.css" />
 
-			<fileset dir="${target}" includes="javascripts/*.js" />
+			<fileset dir="${target}" includes="javascript/*" />
 			
 			<fileset dir="${build}">
 				<include name="**/web/**/*.class" />
