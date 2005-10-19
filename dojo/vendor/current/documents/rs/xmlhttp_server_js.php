@@ -1,0 +1,1 @@
+showTime("<?= time('r') ?>");

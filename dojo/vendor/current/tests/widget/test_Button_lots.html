@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+
+<script type="text/javascript">
+	var djConfig = {
+		isDebug: true,
+		debugAtAllCosts: false
+	};
+</script>
+<script type="text/javascript" src="../../dojo.js"></script>
+<script type="text/javascript">
+	dojo.require("dojo.math");
+	dojo.require("dojo.widget.*");
+	dojo.require("dojo.widget.Button");
+</script>
+<script type="text/javascript">
+	function foo(){
+		dojo.debug("foo");
+	}
+
+	function init(){
+		var start = new Date();
+		var tdb = dojo.widget.getWidgetById("testDojoButton");
+		for(var x = 0; x<100; x++){
+			var tcn = tdb.domNode.cloneNode(true)
+			document.body.appendChild(tcn);
+			tcn.innerHTML = "clone "+x;
+			dojo.event.connect(tcn, "onclick", "foo");
+		}
+		var copyTime = (new Date())-start;
+		dojo.debug("copying ", x, " nodes took ", copyTime, "ms");
+
+		start = new Date();
+		for(var x = 0; x<100; x++){
+			var button = dojo.widget.fromScript("Button", {label: "button "+x });
+			document.body.appendChild(button.domNode);
+		}
+		var buildTime = (new Date())-start;
+		dojo.debug("constructing ", x, " items took ", buildTime, "ms");
+
+		dojo.debug("widgets are", dojo.math.round(buildTime/copyTime, 2), "times slower than raw DOM");
+	}
+
+	dojo.event.connect(dojo, "loaded", "init");
+</script>
+
+<button id="testDojoButton" dojoType="button" label="this is a test button!" 
+	onClick="alert(this.domNode.innerHTML);" onFoo="dojo.hostenv.println('onFoo');">
+	you shouldn't be seeing this
+</button>
