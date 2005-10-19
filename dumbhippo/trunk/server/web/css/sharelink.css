@@ -1,0 +1,15 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "share a link" page 
+ */
+
+@import "sitewide.css";
+
+.dhShareLinkForm {
+	margin: 						1em;	
+}
+
+/* list of people who will receive the link */
+.dhShareLinkRecipientList {
+	margin:							2em;
+}
