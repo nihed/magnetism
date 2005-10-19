@@ -24,8 +24,6 @@ import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.LoginRequired;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
-just adding this to break the build as a test 
-
 /**
  * All usage of InitialContext() and all logging in / authentication should go
  * through here. We don't want potentially misusable EJB interfaces all over the
