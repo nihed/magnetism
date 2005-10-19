@@ -1,9 +1,0 @@
-<project name="build-dumbhippo-server" default="build" basedir=".">
-    <target name="build">
-        <!-- Get the latest from Subversion -->
-        <exec executable="svn">
-        	<arg line="update"/>
-        </exec>
-        <ant antfile="build.xml" target="build"/>
-    </target>
-</project>
