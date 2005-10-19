@@ -1,0 +1,96 @@
+.. title:: Getting Started With a Dojo Download
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+So I've Got This Zip File...
+----------------------------
+
+When you download an "Edition" of Dojo, what you're getting is:
+
+- a pre-built "profile" which includes multiple files rolled into a single
+  `dojo.js` file. This is the only file you need to get started.
+- the source for all of Dojo, including what was built into the profile
+- some brief documentation on what functions are available
+
+The file `dojo.js` is the only thing you'll need to include into your
+application or page in order to use the capabilities built into the profile of
+Dojo that you downloaded.
+
+If you downloaded the Ajax profile, this means that you will be able to start
+using Dojo's IO, event, and animation systems without doing anything but
+including `dojo.js` in your page. It could hardly be simpler.
+
+What Can I Do With It?
+----------------------
+
+Everything you can do with Dojo!
+
+While a certain subset of Dojo functionality is baked into each profile build,
+all of Dojo's capabilities are reachable using `dojo.require()` statements or
+by including source files manually.
+
+For instance, if you've downloaded the IO Edition, but want to start using the
+`event system`_, you can include it in your pages either by including it's
+package file::
+
+    <script src="/path/to/dojo/src/event/__package__.js"></script>
+
+Or use the package system directly to include it::
+
+    <script type="text/javascript">
+        dojo.require("dojo.event.*");
+    </script>
+
+In both cases, Dojo's package system takes care of loading all the dependencies
+that the system you are loading might have. It Just Works.
+
+It will be slightly slower to include the event system this way than if it were
+built into `dojo.js` that came with the package you downloaded, but unless you
+are including many large packages, the difference is hardly noticeable. Even
+better, when you decide that you really do want a package with that capability
+rolled in, Dojo makes it easy to build one for yourself and just drop it in,
+without changing any of your code!
+
+Where To Look For Help
+----------------------
+
+
+We think Dojo is the most capable, easiest to use Ajax and DHTML toolkit
+around, but when you get stuck, we're here to help.  The first places to look
+for help are the website (http://dojotoolkit.org) and wiki
+(http://dojo.jot.com). The website contains articles detailing usage of some
+major portions of the system as well as blogs and links to other resources. The
+wiki contains such useful information as how to get a Subversion checkout of
+Dojo's source code.
+
+If those aren't enough help, here are a couple more ways to reach us:
+
+Mailing Lists
+    You can sign up for the `dojo-interest mailing list`_ or `view the archives`_.
+
+IRC
+    The Dojo developers and many heavy users of the toolkit are available to
+    answer questions in IRC on irc.freenode.net at #dojo.
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+Getting Started With a Dojo Download
+====================================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/08/28
+
+.. contents::
+	
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. _`event system`: http://www.dojotoolkit.org/docs/dojo_event_system.html
+.. _`dojo-interest mailing list`: http://dojotoolkit.org/mailman/listinfo/dojo-interest 
+.. _`view the archives`: http://news.gmane.org/gmane.comp.web.dojo.user
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

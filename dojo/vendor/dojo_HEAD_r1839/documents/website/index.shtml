@@ -1,0 +1,189 @@
+<html>
+<head>
+<title>Dojo - DojoToolkit.org</title>
+<script type="text/javascript" src="/dojo/dojo.js"></script>
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/screen.css" media="screen" />
+<style type="text/css" media="screen">
+#splash {
+	position : relative;
+	margin : 15px auto 20px;
+	height : 200px;
+	background : url(img/splash-bg.gif) no-repeat;
+}
+
+#splash h1 {
+	position : absolute;
+	top : 0px;
+	right : 0px;
+	_right : -1px;
+	width : 300px;
+	height : 200px;
+	margin : 0;
+	text-indent : -999em;
+	background : url(img/splash-intro.gif) no-repeat top right;
+}
+
+#splash h1 a {
+	position : relative;
+	top : 30px;
+	display : block;
+	width : 100%;
+	height : 75px;
+}
+
+#splash p {
+	position : absolute;
+	right : 20px;
+	top : 105px;
+	width : 45%;
+	font-family : Lucida Grande, Tahoma, sans-serif;
+	text-align : justify;
+}
+
+#btn-top {
+	position : absolute;
+	left : 40px;
+	top : 40px;
+	width : 270px;
+	height : 92px;
+	background : url(img/btn-ajax.gif) no-repeat;
+	text-indent : -999em;
+}
+
+#btn-bottom {
+	position : absolute;
+	left : 40px;
+	top : 137px;
+	width : 270px;
+	height : 46px;
+	background : url(img/btn-more.gif) no-repeat;
+	text-indent : -999em;
+}
+
+#col1 {
+	margin-right : 430px;
+}
+
+#col2 {
+	width : 200px;
+	float : right;
+}
+
+#col2 h2 {
+	margin : 0;
+	width : 200px;
+	height : 61px;
+	background : url(img/col-status.gif) no-repeat;
+	text-indent : -999em;
+}
+
+#col3 {
+	width : 200px;
+	float : right;
+	margin-right : 10px;
+}
+
+#col3 h2 {
+	margin : 0;
+	width : 200px;
+	height : 61px;
+	background : url(img/col-planet.gif) no-repeat;
+	text-indent : -999em;
+}
+
+</style>
+<style type="text/css">
+.col dl {
+	margin-top : 5px;
+	font-size : 0.9em;
+}
+
+.col dt {
+	font-weight : bold;
+	font-family : Lucida Grande, Tahoma, sans-serif;
+}
+
+.col dd {
+	margin : 0 5px 15px;
+	line-height : 1.4;
+}
+
+.col dd.date {
+	margin : 0 0 2px 5px;
+	color : #666;
+}
+
+a.more {
+	color : #666;
+	font-style : italic;
+	text-decoration : none;
+}
+
+a.more:hover {
+	text-decoration : underline;
+}
+</style>
+</head>
+
+<body>
+	<div id="header">
+
+		<div id="dojo-top">
+			<h1><a href="http://dojotoolkit.org" title="Dojo">Dojo Toolkit</a></h1>
+			<div id="dojo-top-nav">
+				<a id="dojo-downloads" href="http://dojotoolkit.org/download/" title="Get the source">Download</a>
+				<span>|</span>
+				<a id="dojo-news" href="http://dojotoolkit.org/blog" title="planet::dojo">News</a>
+				<span>|</span>
+
+				<a id="dojo-docs" href="http://dojotoolkit.org/docs/" title="Help, How-tos, and more">Documentation</a>
+				<span>|</span>
+				<a id="dojo-trac" href="http://dojotoolkit.org/trac/" title="Source Browser, Bug Tracker">Bug Tracker</a>
+				<span>|</span>
+				<a id="dojo-community" href="http://dojotoolkit.org/community/" title="Join the fray">Community</a>
+				<span>|</span>
+				<a id="dojo-examples" href="http://dojotoolkit.org/examples/" title="Dojo in action">Examples</a>
+			</div>
+
+		</div>
+	</div>
+	<div id="splash">
+		<h1>Introducing Dojo</h1>
+		<p>The Dojo Foundation is proud to announce our first official public
+		release &ndash; version 0.1. It is packed full of JavaScript goodness
+		to help you create powerful web applications.</p>
+		<a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-ajax.zip" id="btn-top">Download AJAX edition</a>
+		<a href="/download" id="btn-bottom">Download other dojo profiles</a>
+	</div>
+
+	<div id="col2" class="col">
+		<!--#include virtual="/index_data/status.html"-->
+	</div>
+
+	<div id="col3" class="col">
+		<!--#include virtual="/index_data/blog.html"-->
+	</div>
+
+	<div id="col1" class="content">
+<h2>What is Dojo?</h2>
+<p>Dojo is an Open Source toolkit that allows you to easily build dynamic
+capabilities into web pages and any other environment that supports JavaScript.
+Dojo provides components that let you make your sites more useable, responsive,
+and functional. With Dojo you can build degradeable user interfaces more
+easily, prototype interactive widgets quickly, animate transitions, and build
+AJAX-based requests simply. Dojo layers these capabilities onto a lightweight
+packaging system which forms the core of Dojo.  When you write scripts with
+Dojo, you can include as few or as many of the available APIs as you need, and
+your app will only include what it uses.</p>
+<p>Dojo also provides application authors with a simple way of declaring and
+using responsive DHTML interface components. Prototype to deployment, Dojo is
+markup all the way, allowing you to work faster without having to learn new
+tools or APIs for things you already know how to do. Better yet, Dojo lets your
+widgets be portable between HTML, SVG, and whatever else comes down the pike.
+When your application is built on Dojo, you don't have to choose a technology
+before you choose what's best for your users.
+</p>
+	</div>
+</body>
+</html>
+

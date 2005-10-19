@@ -1,0 +1,78 @@
+.. title:: The Dojo Way
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+Understanding Your Own Footprint
+--------------------------------
+
+Every useful system carries the imprint of its designers. From bridges to
+spoons, the expression of a builder's skill, philosophies, and production
+constraints are exposed in the final product. Software is no different, except
+in its propensity to change. Software mutates in response to users needs, and
+in that change, a continual re-impriting of a designer's skill and sense of
+taste takes place. 
+
+This has the potential to cause continuity problems for others, be they end
+users or other developers. Reducing these confusing aspects (cognitive load)
+allows software consumers of every type to feel better about a block of code.
+With every interaction, their pre-conceived notions of how the thing will
+behave serve them instead of forming an obstacle for them to overcome. Their
+instincts are turned into a valuable tool by elegantly and consistently
+designed software.
+
+Dojo, as a project, should meet expectations in this way. This doesn't mean
+that you have to agree with every design decision that's been made in the
+project (dissent is healthy) or that the guiding principles outlined here are
+written in stone. They should, however,  capture the way design choices have
+been made to date and serve as a guide for making future decisions.
+
+Dojo Guiding Principles
+-----------------------
+
+Reduce barriers to adoption. 
+    Simply put, do not give users reasons not to choose your code. This affects
+    everything from design to licensing to packaging.
+
+Simple first, fast later
+    Make it simple to use first, make it fast when it's approprite. Simple here
+    means simple for users, not for us. We should work as hard as necessary to
+    make things simple for end users. This principle goes to reducing barriers
+    to adoption. Things should be as easy as possible for the common case but
+    transparently "upgradeable" to a faster code path if the end user is
+    willing to learn about the performance dials and knobs.
+
+Bend to the constraints of your environment
+    Do not bludgeon a problem to death with code. If the environment can do
+    most of something, let it. Fill in as necessary, but do not re-invent.
+    Make the path smooth for users, but do not introduce your own idioms where
+    they aren't required.
+
+Improving From Here
+-------------------
+
+Dojo may not yet completely embody the principles outlined here, but it is
+their purpose to serve as a guide for the project when making determinations
+how things should change.
+
+If you think that Dojo has not yet met one or more of these goals in a
+particular way, please raise the issue on one of the project mailing lists or
+file a bug.
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+The Dojo Way
+============
+
+:Author: Alex Russell
+:Version: 0.2
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/08/11
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

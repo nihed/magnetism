@@ -1,0 +1,11 @@
+body {
+	margin: 0 2.5in 0 0;
+	padding :0;
+	font-family: Cambria, Georgia, Times, serif;
+	font-size : 85%;
+}
+
+div#header,
+div#sidebar{
+	display:none;
+}

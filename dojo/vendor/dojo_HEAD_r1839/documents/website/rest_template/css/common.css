@@ -1,0 +1,176 @@
+body {
+	font-family: Georgia, Times, serif;
+	font-size : 85%;
+	padding : 0 50px;
+	margin : 0;
+	margin-top : 1.25em;
+}
+
+div.clear {
+	clear:both;
+}
+
+/*  Page heading  */
+div#header {
+	width : 100%;
+}
+#dojo-top {
+	height : 34px;
+	overflow : hidden;
+	margin-bottom : 10px;
+	background : url(../img/top-bg.gif) repeat-x top right;
+}
+#dojo-top h1 {
+	margin : 0;
+	padding : 0;
+	float : left;
+}
+#dojo-top h1 a {
+	display : block;
+	width : 155px;
+	height : 34px;
+	background : url(../img/top-logo.gif) no-repeat;
+	text-indent : -99em;
+}
+#dojo-top-nav {
+	margin-right : 15px;
+	float : right;
+	height : 34px;
+}
+#dojo-top-nav a {
+	display:block;
+	float : left;
+	color : #eee;
+	font : 11px Lucida Grande, Tahoma, sans-serif;
+	line-height : 34px;
+	text-transform : lowercase;
+	text-decoration : none;
+}
+#dojo-top-nav a:hover {
+	line-height : 24px;
+}
+#dojo-top-nav a#dojo-downloads:hover {
+	border-top: 5px solid #1e0e71;
+}
+#dojo-top-nav a#dojo-news:hover {
+	border-top: 5px solid #940a0a;
+}
+#dojo-top-nav a#dojo-docs:hover {
+	border-top: 5px solid #12770f;
+}
+#dojo-top-nav a#dojo-community:hover {
+	border-top: 5px solid #e0942f;
+}
+#dojo-top-nav a#dojo-examples:hover {
+	border-top: 5px solid #a6238f;
+}
+
+#dojo-top-nav span {
+	display : block;
+	float : left;
+	width : 1px;
+	height : 34px;
+	overflow : hidden;
+	margin : 0 6px;
+	background : url(../img/top-sep.gif) no-repeat top center;
+	text-indent : -5em;
+	cursor : default;
+}
+
+/*  Page content  */
+div#content-body {
+	position:relative;
+	width : 100%;
+	margin-top: 20px;
+	clear : both;
+}
+div#content {
+	padding-left : 6px;
+	margin-right : 440px;
+}
+
+/* Content tag definitions */
+div#content h1,
+div#content h2,
+div#content h3,
+div#content h4,
+div#content h5,
+div#content h6 {
+	font-family : lucida grande, arial, helvetica, sans-serif;
+	margin : 0;
+}
+div#content h1 {
+	font-size : 1.1em;
+	border-bottom: 1px dotted #8b8b8b;
+}
+div#content h2 {
+	margin-top:0.5em;
+	font-size : 0.9em;
+}
+div#content p {
+	margin:0;
+	margin-bottom : 1em;
+	line-height:140%;
+}
+div#content code,
+div#content pre {
+	padding : 4px;
+	background-color:#ededde;
+	font-family: consolas, courier, courier new;
+	font-size : 0.9em;
+}
+
+div#sidebar {
+	position:absolute;
+	top:-6px;
+	right:0;
+	width : 423px;
+/*  Make the following a default image */
+/*	background-image:url(../img/header-news.png);  */
+	font-size : 0.85em;
+	clear : both;
+}
+div#sidebar h1 {
+	width : 423px;
+	height : 128px;
+	background-repeat : no-repeat;
+	text-indent : -5000px;
+	margin:0;
+	padding:0;
+}
+div#section-sidebar {
+	padding : 6px;
+	width : 194px;
+	float : left;
+}
+div#site-sidebar {
+	width : 194px;
+	padding : 6px;
+	float : right;
+}
+div#footer {
+	margin-top:12px;
+	border-top : 1px solid #999;
+	padding-top: 2px;
+	text-align : right;
+	font-family: Lucida Grande, Tahoma, sans-serif;
+	font-size : 0.8em;
+}
+
+/*   section specific things  */
+body.news div#sidebar h1{
+	background-image:url(../img/header-news.png);
+}
+body.downloads div#sidebar h1{
+	background-image:url(../img/header-downloads.png);
+}
+body.examples div#sidebar h1{
+	background-image:url(../img/header-examples.png);
+}
+body.docs div#sidebar h1{
+	background-image:url(../img/header-docs.png);
+}
+
+body.community div#sidebar h1{
+	background-image:url(../img/header-community.png);
+}
