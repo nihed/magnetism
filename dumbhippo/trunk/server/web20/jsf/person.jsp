@@ -16,7 +16,7 @@
 	<!--  list most relvant public link objects here -->
 	<!--  ability to share any of these links [D] -->
 	</div>
-	
+	<br/>
 	<div class="groups">
 	<!--  list group objects here -->
 	<!--  ability to join/share groups [D] -->
