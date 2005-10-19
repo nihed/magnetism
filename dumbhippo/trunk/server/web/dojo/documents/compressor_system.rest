@@ -1,0 +1,185 @@
+.. title: Making Code Smaller Safely: Dojo's Compressor
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+Overview
+--------
+
+The last optional step in Dojo's build process is compression. Like many
+non-trivial JavaScript tools, Dojo uses a tool to reduce the size, and
+therefore latency, of JavaScript by browsers. This article covers *only* the
+compression system. While the rest of the Dojo package and build system are
+interesting in their own rights, there is a lot of pent-up demand for a stable,
+reliable, and non-destructive JavaScript compressor.
+
+While many compression tools exist, several factors together make the Dojo
+compressor unique. We'll get to those, but first, how to make it work for you.
+
+Example
+-------
+
+To run this example, you'll need a working install of Java (at least 1.4 is
+recommended). The latest version of the tool itself can be downloaded from Dojo
+Subversion at:
+
+http://dojotoolkit.org/svn/dojo/trunk/buildscripts/lib/custom_rhino.jar
+
+To demo our compression system, let's build an example that we want to
+compress. Here's the listing for ``infile.js``::
+
+    function MyClass(){
+        this.foo = function(argument1, argument2){
+            var addedArgs = parseInt(argument1)+parseInt(argument2);
+            return addedArgs;
+        }
+
+        var anonymousInnerFunction = function(){
+            // do stuff here!
+        }
+    }
+
+    function MyFunc(){
+        // this is a top-level function
+    }
+
+
+
+
+
+    // we've got multiple lines of whitespace here
+
+We run it through the compressor with this command to generate ``outfile.js``::
+
+    java -jar custom_rhino.jar -c infile.js > outfile.js 2>&1
+
+And the contents of ``outfile.js`` should now look something like::
+
+    function MyClass(){
+    this.foo=function(_1,_2){
+    var _3=parseInt(_1)+parseInt(_2);
+    return _3;
+    };
+    var _4=function(){
+    };
+    }
+    function MyFunc(){
+    }
+
+So that *looks* smaller, but by how much?::
+
+    obelisk:/tmp/compress alex$ ls -lah
+    ...
+    -rw-r--r--    1 alex  users  321B Aug 12 09:21 infile.js
+    -rw-r--r--    1 alex  users  140B Aug 12 09:21 outfile.js
+
+321 bytes to 140 bytes, a 56% reduction. Not bad!
+
+Riding a Rhino
+--------------
+
+So how does this all work? And why should anyone choose this tool over the
+other ones that are available. The answer to both of those questions is in the
+design of the the Dojo compressor. Instead of brittle regular expressions, the
+Dojo compressor is based on Rhino, a JavaScript engine from the Mozilla
+project.
+
+Being based on a real parse stream, the Dojo compressor can get a better idea
+for the context of a token (variable name, etc.) than the regular-expression
+based tools. This allows us to achieve the over-riding goal of a compressor
+that would be acceptable to the Dojo project: it must never mangle a public
+API.
+
+API Safety
+----------
+
+There are many "obfuscators" available in addition to size reduction tools.
+Over the years, many people have attempted to "encrypt" or otherwise obfuscate
+JavaScript sent over the wire to browsers, and it never pans out. Why not? For
+starters, JavaScript (as implemented in browsers) is completely interpreted.
+This means that any further compilation beyond source transformations will not
+work everywhere, and the tool provides a "decryption" tool along with the
+"encrypted" or obfuscated source, the unencrypted version will be available at
+runtime for anyone with a debugger to see. For those tools that just transform
+source code by mangling variable names, it's even easier to revert their
+changes. Therefore, obfuscation and encryption aren't useful goals. Size
+reduction, on the other hand, *is* a useful goal.
+
+But not if your size-reduction tool breaks things. There are, of course, many
+increments available for the "compression" process. Potential choices available
+to a tool author include:
+
+- removing comments
+- collapsing line-beginning whitespace
+- removing line-ending whitespace
+- collapsing multiple blank lines
+- removing all new-line characters
+- removing whitespace around operators
+- removing whitespace near/around curly braces
+- replacing symbols with shorter names (this is how most "obfuscation" is done)
+
+And the list goes on and gets ever-more esoteric as one tries to squeeze every
+last K out of a JavaScript file. But at some point, you can go too far. The Dojo
+compressor attempts to strike a balance between debuggability (not replacing
+all symbols and not removing all newlines) and size reduction.
+
+Getting The Source
+------------------
+
+The source code for Rhino is available from Mozilla anonymous CVS. Instructions
+for Mozilla CVS are at:
+
+http://www.mozilla.org/cvs.html
+
+And the Rhino code lives in their repository at:
+
+/cvsroot/mozilla/js/rhino
+
+Our patches should apply cleanly against Rhino HEAD and are available in
+unified diff format from:
+
+http://dojotoolkit.org/svn/dojo/trunk/buildscripts/lib/custom_rhino.diff
+
+Unlike the rest of Dojo, the Dojo Foundation does not control the copyright of
+the original work, and we therefore cannot license this code under there AFL.
+It is made available under the tri-licensing terms of the Mozilla project.
+
+The Future
+----------
+
+The Dojo compression tool is by no means the last word in file-size or
+on-the-wire reduction. Gzipping content on the wire is the next obvious
+improvement for those deploying applications. 
+
+The Dojo package system and JSAN allow developers to include just those
+packages from a library that they require, and future work on real JS linkers
+will further strip down capable libraries like Dojo to only absolutely what is
+needed by application authors.
+
+The Dojo project intends to continue to produce the best Open Source tools for
+JS and webapp developers, and we will make these transparently available in the
+Dojo build system, as we do today with the compression and package systems.
+
+About The Author
+#########################
+
+Alex Russell is the project lead for Dojo and  can be reached at
+<alex@dojotoolkit.org>. His blog is at: http://alex.dojotoolkit.org
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+Dojo's Compressor
+=================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/08/12
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

@@ -1,0 +1,497 @@
+Event System Requirements
+=========================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Alex Russell, 2004
+:Date: $Date:$
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and usage scenarios for the Dojo event
+system.
+
+Requirements
+------------
+
+DOM Events
+**********
+
+In a browser or SVG rendering environment, notification of user-driven
+interaction will be received by the system from DOM nodes, whose event model
+is outlined in the  `W3C DOM Event specification`_. Unfortunantly, the level of
+standards compliance among Dojo-supported rendering contexts is something of a
+crap-shoot, with some browsers and engines supporting all of the DOM 2 Events
+spec, with others supporting some mix of DOM 0 and DOM 1 eventing. Even when
+DOM 1 or DOM 2 Event support is implemented, it tends to be partial, with
+proprietary interfaces filling in the gaps. Additionally, standard methods of
+programmatic attachment to event handlers can induce memory leaks which are
+difficult or impossible to track down.
+
+This state of affairs cries out for abstraction.
+
+In order to understand what we should build, we should explore the common usage
+idioms for DOM event handling and come to a more complete picture of what the
+developer _wants_ to do and contrast that with developers today are forced to
+do. Out of this exercise, an idealized API for abstracing DOM Events should be
+determined.
+
+DOM Event Usage
+###############
+
+It is a common scenario that a user will want to attach an event handler (a
+function that is called when an event fires) to a DOM node. For instance, to be
+notified when a user clicks on a node, this is how assignment is typically done::
+
+    function alertMe(){
+        alert("item clicked");
+    }
+
+    var node = document.getElementById("testNode");
+    node.onclick = alertMe;
+
+This method of attachment allows the programmer to be informed when the user
+interacts with the system, and this method of attachment works universally. The
+obvious drawback to this method is that it does not allow multiple functions to
+be informed of the action. Additionally, DOM events follow a bubbling model
+which allows many events to be "cancelled" after being intercepted by an event
+handler assigned to a node. Being able to support cancellation is a large
+requirement for any acceptable DOM event handling abstraction (if one is used).
+Several approaches are available:
+
+- create a callback system where one event handler can create multiple calls::
+    
+    // callbackHandler class
+    function callbackHandler(node, eventname){
+        this.callbackList = [];
+
+        this.addCallback = function(object, functionPointer){
+            this.callbackList.push([object, functionPointer]);
+        }
+
+        // this.rmCallback is not implemented here for simplicity
+
+        this.call = function(){
+            var args = [];
+            for(var x=0; x<arguments.length; x++){
+                args.push(arguments[x]);
+            }
+
+            for(var y=0; y<this.callbackList; y++){
+                this.callbackList[y][1].apply(this.callbackList[y][0], args);
+            }
+        }
+
+        this.wrapNodeCaller = function(node, eventname){
+            node[eventname] = function(evt){ this.call(evt); }
+        }
+
+        if((node)&&(eventname)){
+            this.wrapNodeCaller(node, eventname);
+        }
+    }
+
+    var node = document.getElementById("testNode");
+    var cbh = new callbackHandler(node, "onclick");
+
+    function alertMe(){
+        alert("item clicked");
+    }
+    cbh.addCallback(null, alertMe);
+    cbh.addCallback(null, alertMe);
+    // now when node.onclick is fired, we'll get alerted twice
+
+- use or abstract away the differing methods used to do multiple-listener attachment::
+
+    var node = document.getElementById("testNode");
+
+    function alertMe(){
+        alert("item clicked");
+    }
+
+    if(node.attachEvent){
+        node.attachEvent("onclick", alertMe);
+    }else if(node.addEventListener){
+        node.attachEvent("click", alertMe, false);
+    }
+
+- determine a new, more abstract method for handling DOM Events. This API
+  should be able to capture the semantics of what DOM events _should_ support
+  as well as a method for synthesizing higher-order event types from
+  lower-level events where this is required (e.g.: drag-and-drop on browsers
+  which do not natively support this). 
+  
+  Breifly, the features that need to be supported by any such API would have to
+  include:
+    
+    + allow multiple listeners for any event
+
+    + allow listeners to "cancel" the bubbling of any event
+
+    + handle keystroke events in a uniform way
+
+    + provide higher-order event types to listen for (e.g., drag-and-drop)
+
+    + allow for simple debugging and logging of events and their
+      listeners/targets
+
+    + provide the ability to modify the arguments passed to the listener, or
+      "chain" listeners in a way that allows it
+
+    + must not require that listener functions/methods conform to a particular
+      call signature
+
+    + must be able to make available to a listener all of the relevant
+      information relating to an event (either in the calling context, or as an
+      argument to the method/function)
+
+  Ideally, all of the above functionality should be made available in such a
+  way as to require a minimum of syntax until such time as an option is set to
+  something other than its default value. Default values should be determined
+  by what a developer does most often.
+
+  Antecedent event handling systems in `nWidgets`_ and `f(m)`_ have provided
+  methods for dealing with most of the of the above requirements, however each
+  falls down in at least one way. The event system in `nWidgets`_ provides
+  the ability to mangle function arguments, set defaults, and otherwise adapt
+  the call from the event handler to match the expected call signature of the
+  listener. Unfortunantly, the keystroke handling and bubbling handling in the
+  `nWidgets`_ event system leave much to be desired. Likewise, keystroke event
+  handling and drag-and-drop are not unifieid with the general event system,
+  and instead rely on synthetic event types to be "thrown" from a global
+  environment object. Since the event system in `nWidgets`_ is a hybrid between
+  "normal" DOM event methods and a generic non-DOM event interface, some pieces
+  of necessaray plubming for DOM-specific attributes is unwisely re-created in
+  differing ways in differing places.
+
+  The event system in `f(m)`_, on the other hand, does a wonderful job of
+  unifying the handling idiom for keystroke and other types of events.
+  Likewise, it solves problems with bubbling and cancelation and allows
+  multiple listeners but does impose a particular function signature onto
+  listeners. Here's how the listener we've been attaching would be hooked to
+  the event using the `f(m)`_ event system::
+    
+    var node = document.getElementById("testNode");
+
+    function alertMe(){
+        alert("item clicked");
+    }
+
+    node.onclick = new Events.Listener().Invoke;
+    // automatically wraps alertMe in an Events.EventHandler object
+    node.onclick.Add(alertMe); 
+
+  As a downside to this approach, the author loses the ability to directly
+  pass scoping for the intended handling function. For instance, if we wanted
+  our handler to be a member of an object, we would need to do the following
+  with the `f(m)`_ event system to make it happen::
+    
+    var node = document.getElementById("testNode");
+
+    foo = {
+        alertMe: function(){
+            alert("item clicked");
+        }
+    }
+
+    node.onclick = new Events.Listener().Invoke;
+    node.onclick.Add(
+        function(listenerScope, argsObj){
+            foo.alertMe();
+        }
+    ); 
+
+  The requirement that we manually create closure scope for the handler isn't
+  tremendously onerous, but the syntax is clunky. As a bonus, though, it is
+  possible to mangle arguments for the enclosed method in this closure scope
+  without the need to introduce a new concept or terminology (which is what
+  `nWidgets`_ does).
+
+  `nWidgets`_ takes a similar approach of creating a single abstract system
+  through which events are routed and listeners are registered. Going back to
+  our tired example, we see how `nWidgets`_ handles it::
+
+    var node = document.getElementById("testNode");
+
+    function alertMe(){
+        alert("item clicked");
+    }
+
+    __sig__.connect(node, "onclick", null, "alertMe");
+
+  For the case where the arguments are either the same for onclick() and
+  alertMe() or alertMe() ignores what it is passed, this syntax is a
+  significant advance in the simplicitly of making connections between
+  functions, but where some permutation of the arguments passed to onclick()
+  are required or desired when calling alertMe(), this syntax becomes
+  significantly more convoluted and either an explicit closure or a "mutator"
+  is required to handle the permutation or arguments. Additionally, there is
+  no set of guaranteed properties that will be available in the DOM event
+  context, which makes applying this generic system to DOM problems something
+  of a kludge when one needs to cancel bubbling and the like.
+
+  The `burst`_ toolkit, on the other hand, avoids the creation of a unified or
+  abstract event handling system, preferring to provide a standards-like API
+  for setting up event listener registration in conjunction with a more generic
+  "advice" facility. An advantage of this approach is that the idiom is
+  familiar to those who know how to use the standard DOM.  Similarly, it
+  manages cross-frame context (which neither `f(m)`_ nor `nWidgets`_ explicitly
+  handle). Where known problems with a particular browser environment are
+  known, `burst`_ attempts to provide a uniform interface, spending some effort
+  to correctly assign properties on DOM event objects which may not be present
+  due to proprietary stopgaps extant in some browsers (*cough* IE *cough*).
+
+  So what are the fundamental differences between all of these systems? I think
+  they can be summed up like this:
+
+    + `burst`_ makes no imposition on your calling/handling style, but
+      provides toolkit authors with multiple systems, one for DOM and one for
+      non-DOM event types.
+
+    + `nWidgets`_ likewise makes no imposition on calling or handling style,
+      but does not succeed in making it simple for users to handle
+      permutations of arguments for listeners.
+    
+    + `f(m)`_ imposes structure onto all of the aspects of the event processing
+      system, forcing all portions of the system save the caller to implement
+      the interfaces it provides. This makes for a logically simple place to
+      handle event argument permeutations, but still leaves scope enclosing to
+      the end user.
+
+  Another comparison that we can draw between them is the way in which they
+  handle arguments to listeners:
+
+    + `burst`_ doesn't handle listener arguments. It is up to the app developer
+      to munge if necessaray.
+
+    + `f(m)`_ forces listeners to expect certain arguments, and ties handlers
+      to types of "argument" object.
+
+    + `nWidgets`_ by default optimizes for the situation where the notifier and
+      listener both accept the same arguments, and allows for permeutations
+      with additional syntax. This idiom is only beneficial when argument
+      sameness is the common case.
+
+  From the given examples, we can consider that the very minimum required will
+  be a system which smoothes over the vagaries of event types and native
+  browser handling issues, provides the "event" in some context (either through
+  argument or namespace attachment), and allows the user to most simply set up
+  a connection or calling dependency.
+  
+  Consider then the following API for registering DOM event listeners::
+
+    namespace.addListener({
+        node: nodeReference,         // required
+        eventName: "onclick",        // required
+        functionPointer: function(){ // required
+            alert("called onclick()"); 
+        }
+    });
+
+  The same API used to supress bubbling of the event while handling it with a
+  function call::
+
+    namespace.addListener({
+        node: nodeReference,         // required
+        eventName: "onclick",        // required
+        functionPointer: function(){ // required (or use functionName)
+            alert("called onclick()"); 
+        },
+        cancel: true
+    });
+
+  Or in the case that our handler function is a method of an object::
+
+    foo = {
+        alertMe: function(){
+            alert("item clicked");
+        }
+    }
+
+
+    namespace.addListener({
+        node: nodeReference,         // required
+        eventName: "onclick",        // required
+        object: foo,                 // optional
+        functionName: "alertMe",     // required (or functionPointer)
+        cancel: true
+    });
+
+  The execution environment should be able to access the (normalized)
+  properties of the DOM event. While the DOM traditionally hands an event object
+  as the only argument to the assigned handler, this system will necessarialy
+  need to intercept the event and dispatch to listeners the massaged event
+  object. One method of handling this would be to provide access to the event
+  object as a globally available object at a known location (for instance,
+  "namespace.events.currentEvent"). This has several advantages, and while not
+  a strong requirement, should probably be provided by the resultant toolkit.
+  Users should be adequately warned about interactions with delayed exectution
+  code (setTimeout(), etc.).
+
+  The above API will *always* pass the event object as the single argument to
+  the listener method.
+
+  Given that normalization of event properties is a goal, the properties that
+  should be normalized for all DOM events are:
+
+    + type
+    + target
+    + currentTarget
+    + relatedTarget
+
+  Methods that must be globally available on the event object include:
+
+    + preventDefault()
+    + stopPropagation()
+
+.. _W3C DOM Event specification: http://www.w3.org/TR/2000/REC-DOM-Level-2-Events-20001113/
+.. _nWidgets: http://nwidgets.org
+.. _f(m): http://fm.dept-z.com
+.. _burst: http://burstproject.org
+
+Non-DOM Events
+**************
+
+Many types of "events" happen within a modern application. Very often, these
+events (sometimes called "messages") happen as a second- or third-order
+consequence of some user action. Loosely coupled system components should
+therefore attempt to define only interfaces for these events or messages and
+then allow the application author to stich them togeather in whatever manner is
+most efficient.
+
+In the antecendent systems, a varying degree of flexiblity with regards to
+number and type of arguments to receivers of function calls has been visible in
+the design of the varying event systems. `burst`_ has avoided all attempts at
+an "event system" as such, and has instead focused on implementing (optional)
+Meta Object Protocol primitives such as 'AddMethodAdvice()'. After studying
+each of these, several defects emerge from each.
+
+Firstly, it's helpful to think of the `nWidgets`_ signals and slots system as
+"after-advice" with optional limited capabilities found in "around-advice". The
+event system from `f(m)`_ exhibits some of the properties of a strict
+interpretation of AOP found in AspectJ.
+
+"Advice types" that must be supported by the Dojo event system are:
+
+  - before (receives same args as caller, with caller obj and func name)
+  - before-around (receives around-style args, with caller obj and func name)
+  - around (around-style arguments, no other target)
+  - after (same args as caller, with caller obj and func name)
+  - after-around (receives around-style args, with caller obj and func name)
+
+Examples of each follow:
+
+*before*::
+    
+    obj1 = {
+        func1: function(){
+            // do something here
+        },
+
+        func2: function(){
+            // do something here
+        }
+    };
+    
+    namespace.addAdvice("before", obj1, "func1", obj1, "func2");
+
+*before-around*::
+    
+    obj1 = {
+        func1: function(arg1, arg2){
+            alert("func1, arg1: "+arg1+", arg2: "+arg2);
+        },
+
+        func2: function(arg2, arg1){
+            alert("func2, arg1: "+arg1+", arg2: "+arg2);
+        },
+
+        adviceFromFunc1ToFunc2: function(obj, funcName, argsArr){
+           var tmp = argsArr[1];
+           argsArr[1] = argsArr[0];
+           argsArr[0] = tmp;
+
+           return obj[funcName].apply(obj, argsArr);
+        }
+    };
+    
+    namespace.addAdvice("before-around", obj1, "func1", obj1, "func2", obj1, "adviceFromFunc1ToFunc2");
+
+    obj1.func1("1", "2");
+    // will alert:
+    //  "func2, arg1: 1, arg2: 2"
+    //  "func1, arg1: 1, arg2: 2"
+    // in that order.
+
+*around*::
+    
+    obj1 = {
+        counter: 0,
+        
+        func1: function(){
+            return counter++;
+        },
+
+        adviceAroundFunc1: function(obj, funcName, argsArr){
+            // alert(argsArr.length);
+            var ret = obj[funcName].apply(obj, argsArr);
+            alert("return is: "+ret);
+            return ret;
+        }
+    };
+    
+    namespace.addAdvice("around", obj1, "func1", obj1, "adviceAroundFunc1");
+
+    obj1.func1();
+    // alerts:
+    //  "return is: 1"
+    obj1.func1();
+    //  "return is: 2"
+
+
+*after*::
+    
+    obj1 = {
+        func1: function(){
+            // do something here
+        },
+
+        func2: function(){
+            // do something here
+        }
+    };
+    
+    namespace.addAdvice("after", obj1, "func1", obj1, "func2");
+
+*after-around*::
+    
+    obj1 = {
+        func1: function(arg1, arg2){
+            alert("func1, arg1: "+arg1+", arg2: "+arg2);
+        },
+
+        func2: function(arg2, arg1){
+            alert("func2, arg1: "+arg1+", arg2: "+arg2);
+        },
+
+        adviceFromFunc1ToFunc2: function(obj, funcName, argsArr){
+           var tmp = argsArr[1];
+           argsArr[1] = argsArr[0];
+           argsArr[0] = tmp;
+
+           return obj[funcName].apply(obj, argsArr);
+        }
+    };
+    
+    namespace.addAdvice("after-around", obj1, "func1", obj1, "func2", obj1, "adviceFromFunc1ToFunc2");
+
+    obj1.func1("1", "2");
+    // will alert:
+    //  "func1, arg1: 1, arg2: 2"
+    //  "func2, arg1: 1, arg2: 2"
+    // in that order.
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:
