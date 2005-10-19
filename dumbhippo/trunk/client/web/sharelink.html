@@ -14,15 +14,15 @@
 <body>
 <div class="dhShareLinkForm">
 
-<div dojoType="InlineEditBox" class="dhUrl">
-http://foobar</div>
+<div dojoType="InlineEditBox" class="dhUrl" id="dhUrlToShare">
+Click here to enter a link to share</div>
 <div id="url-error" class="dhValidityError"></div>
 
 <div class="recipients">
 <div class="dhLabel">Share <u>W</u>ith:</div>
 
 <input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
-	type="text" dataUrl="/home/hp/workspace/web/javascript/dojo/tests/widget/comboBoxData.js" />
+	type="text" />
 <div id="recipients-error" class="dhValidityError" /><br />
 
 <div id="recipient-list" class="dhShareLinkRecipientList"></div>

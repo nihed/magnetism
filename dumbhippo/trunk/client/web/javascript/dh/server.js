@@ -48,3 +48,8 @@ dh.server.getXmlGET = function(name, params, loadFunc, errorFunc) {
 dh.server.getXmlPOST = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "POST", "text/xml");
 }
+
+// a POST with no expected data back, it just does some operation
+dh.server.doPOST = function(name, params, loadFunc, errorFunc) {
+	dh.server.get(name, params, loadFunc, errorFunc, "POST", null);
+}

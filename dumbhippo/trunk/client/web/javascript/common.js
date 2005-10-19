@@ -6,6 +6,9 @@
 // set location of "dh" relative to location of "dojo.js"
 dojo.hostenv.setModulePrefix("dh", "../dh");
 
+// these two functions are here instead of a module since they are 
+// debug-oriented and useful to have "fewer dependencies" for
+
 function dhAddScriptToHead(url) {
 	var script = document.createElement('script');
 	script.type = 'text/javascript';

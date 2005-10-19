@@ -57,8 +57,8 @@ dh.login.doNowLoggedIn = function(personId) {
 	}
 	var q = dh.login.postLoginQueue;
 	dh.login.postLoginQueue = [];
-	for (f in q) {
-		f();
+	for (var i in q) {
+		q[i]();
 	}
 }
 
@@ -73,7 +73,7 @@ dh.login.displayStatus = function(message, error) {
 	dojo.dom.textContent(node, message);
 }
 
-dh.login.handleLoadLogin = function(type, data, event) {
+dh.login.handleLoadLogin = function(type, data, http) {
 	dj_debug("checklogin/dologin got back data " + dhAllPropsAsString(data));
 	
 	var wasSubmitLogin = false;
@@ -108,9 +108,9 @@ dh.login.handleLoadLogin = function(type, data, event) {
 	}
 }
 
-dh.login.handleErrorLogin = function(type, error) {
+dh.login.handleErrorLogin = function(type, error, http) {
 	dojo.debug("checklogin/dologin got back an error " + dhAllPropsAsString(error));
-	dh.login.displayStatus(error, true);
+	dh.login.displayStatus(http.statusText, true);
 	dh.login.showDialog();
 }
 
@@ -166,6 +166,7 @@ dh.login.requireLogin = function(doAfterLoginFunc) {
 		return;
 	}
 
+	dojo.debug("adding " + doAfterLoginFunc + " to queue for post-login execution");
 	dh.login.postLoginQueue.push(doAfterLoginFunc);
 
 	// only start the process if it isn't already in process
@@ -181,6 +182,14 @@ dh.login.requireLogin = function(doAfterLoginFunc) {
 	}
 }
 
+dh.login.onKeyPress = function(event) {
+	//dojo.debug("onKeyPress " + dhAllPropsAsString(event));
+	if (event.keyCode == 13) {
+		dh.login.submitLogin();
+	} 
+}
+dhLoginOnKeyPress = dh.login.onKeyPress; // so it can be event handler
+
 dh.login.createDialog = function() {
 
 	if (dh.login.dialog != null)
@@ -190,6 +199,9 @@ dh.login.createDialog = function() {
 
 	var nodes = dojo.html.createNodesFromText(dh.login.dialogContentHtml);
 	var node = nodes[0];
+	// dojo gets confused with the unparented node, but this causes flicker. we'll 
+	// do a "hide all nodes at first" hack later.
+	document.body.appendChild(node);
 	
 	//dojo.debug("created nodes " + dhAllPropsAsString(node));
 
@@ -204,9 +216,10 @@ dh.login.createDialog = function() {
 	// the transparency thing is crazy slow on Linux prior to ff 1.5
 	if (dojo.render.html.mozilla && !dojo.render.os.win) {
 		dh.login.dialog.effect = "";
-		//dh.login.dialog.setBackgroundOpacity(1.0);
+		dh.login.dialog.setBackgroundOpacity(1.0);
 	}
 	
 	var btn = document.getElementById("dhLoginDialogButton");
 	dojo.event.connect(btn, "onclick", dj_global, "dhLoginSubmitLogin");
+	dojo.event.connect(dh.login.emailEntry, "onkeypress", dj_global, "dhLoginOnKeyPress");
 }
