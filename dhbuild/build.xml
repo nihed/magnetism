@@ -1,0 +1,7 @@
+<project name="build-dumbhippo" default="build">
+    <target name="build">
+        <ant dir="../server"/>
+    	<!-- jive has a weird ant file -->
+        <ant dir="../jive_messenger/" antfile="build/build.xml"/>    	
+    </target>
+</project>
