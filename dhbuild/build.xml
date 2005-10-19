@@ -1,6 +1,7 @@
 <project name="build-dumbhippo" default="build">
 	
-	<!-- typical usage is: ant update build -->
+	<!-- after doing "ant checkout", typical usage is:
+	ant update build -->
 	
 	<property name="svnroot" value="svn+ssh://devel.dumbhippo.com/svn"/>
 	
