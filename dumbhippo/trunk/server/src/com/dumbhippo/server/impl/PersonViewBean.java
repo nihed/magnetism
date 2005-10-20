@@ -59,7 +59,7 @@ public class PersonViewBean
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + ")");
 		} else {
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + "or c.assertedBy = :viewpoint)")
-			.setParameter("viewpointguid", viewpoint.getId());
+			.setParameter("viewpoint", viewpoint);
 		}
 		q.setParameter("theman", spider.getTheMan());
 		q.setParameter("personid", person.getId());
