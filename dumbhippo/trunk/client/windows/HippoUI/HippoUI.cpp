@@ -291,7 +291,7 @@ HippoUI::showShareWindow(BSTR url)
 {
     HippoBSTR shareURL;
     
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/sharelink.faces"), &shareURL)))
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"sharelink.html"), &shareURL)))
 	return;
 
     if (!SUCCEEDED (shareURL.Append(L"?url=")))
@@ -308,7 +308,7 @@ HippoUI::showSignInWindow()
 {
     HippoBSTR signInURL;
     
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/addclient.faces"), &signInURL)))
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"signin.html"), &signInURL)))
 	return;
 
     showAppletWindow(signInURL);
