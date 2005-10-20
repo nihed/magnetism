@@ -53,7 +53,7 @@ public class Post extends GuidPersistable {
 		this.recipients.addAll(newRecipients);
 	}
 	
-	@OneToMany
+	@ManyToMany
 	public Set<Resource> getResources() {
 		return resources;
 	}
