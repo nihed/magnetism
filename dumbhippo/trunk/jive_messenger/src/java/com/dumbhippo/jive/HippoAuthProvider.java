@@ -7,6 +7,9 @@ import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 
+import com.dumbhippo.server.EJBUtil;
+import com.dumbhippo.server.MessengerGlueRemote;
+
 /**
  * @author hp
  *
@@ -63,7 +66,8 @@ public class HippoAuthProvider implements
 	            }
 			}
 		} else {
-			if (!Server.getMessengerGlue().authenticateJabberUser(username, token, digest))
+			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);			
+			if (glue.authenticateJabberUser(username, token, digest))
 				throw new UnauthorizedException("Not authorized");
 		}
 	}
