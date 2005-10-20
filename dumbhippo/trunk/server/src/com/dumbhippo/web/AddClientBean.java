@@ -48,7 +48,7 @@ public class AddClientBean {
 			return null;
 		}
 			
-		HippoAccount account = testGlue.createAccountFromEmail(email);
+		HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
 		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier());
 		SigninBean.setCookie(account.getOwner().getId(), authKey);
 

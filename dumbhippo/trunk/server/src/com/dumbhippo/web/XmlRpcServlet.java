@@ -368,7 +368,7 @@ public class XmlRpcServlet extends HttpServlet {
 			
 			EjbLink ejb = EjbLink.getForSession(request.getSession());
 			TestGlue testGlue = ejb.getEjb(TestGlue.class);
-			HippoAccount account = testGlue.createAccountFromEmail(email);
+			HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
 			String authKey = testGlue.authorizeNewClient(account.getId(), "FIXME USE user-agent");
 			LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
 			response.addCookie(loginCookie.getCookie());

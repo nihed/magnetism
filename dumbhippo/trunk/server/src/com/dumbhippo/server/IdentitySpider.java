@@ -23,7 +23,7 @@ public interface IdentitySpider {
 	
 	/**
 	 * Gets a Resource object for the given email address, creating
-	 * it if necessary.
+	 * it if necessary. Note that the result is a detached entity.
 	 * 
 	 * @param email the address
 	 * @return a resource for the email
@@ -31,13 +31,31 @@ public interface IdentitySpider {
 	public EmailResource getEmail(String email);
 	
 	/**
+	 * This is an internal detail used in implementing getEmail(); getEmail
+	 * adds retry. 
+	 * 
+	 * @param email the address
+	 * @return a resource for the email
+	 */
+	public EmailResource findOrCreateEmail(String email);
+	
+	/**
 	 * Gets a Resource object for the given URL, creating
-	 * it if necessary.
+	 * it if necessary. Note that the result is a detached entity.
 	 * 
 	 * @param url the url
 	 * @return a resource for the url
 	 */
 	public LinkResource getLink(String url);
+	
+	/**
+	 * This is an internal detail used in implementing getLink(); getLink
+	 * adds retry. 
+	 * 
+	 * @param url the rl
+	 * @return a resource for the url
+	 */
+	public LinkResource findOrCreateLink(String url);
 	
 	/**
 	 * Finds the unique person which owns an email address
@@ -48,7 +66,7 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */
 	public Person lookupPersonByEmail(EmailResource email);
-
+	
 	/**
 	 * Finds the person which owns an email address from a
 	 * particular person's viewpoint.  
@@ -97,11 +115,20 @@ public interface IdentitySpider {
 	 *
 	 * (More helpfully: The Man is the system user; his opinions 
 	 * are taken as true for everyone, e.g. in ResourceOwnershipClaim)
-	 * ((Well, that isn't actually true right now, we use null for that))
 	 * 
+	 * Note that the result is a detached entity.
+	 *
 	 * @return The Man
 	 */
 	public Person getTheMan();
+	
+	/**
+	 * This is an internal detail used in implementing getTheMan(); getTheMan
+	 * adds caching and retry. 
+	 * 
+	 * @return The Man
+	 */
+	public Person findOrCreateTheMan();
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person.

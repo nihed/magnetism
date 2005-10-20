@@ -28,9 +28,6 @@ public class AccountSystemBean implements AccountSystem {
 	private IdentitySpider spider;
 
 	public HippoAccount createAccountFromResource(Resource res) {
-		
-		// FIXME check whether resource already exists!
-		
 		Person person = new Person();
 		em.persist(person);
 		spider.addVerifiedOwnershipClaim(person, res);

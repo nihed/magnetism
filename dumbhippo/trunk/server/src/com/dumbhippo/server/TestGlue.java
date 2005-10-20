@@ -22,5 +22,5 @@ public interface TestGlue {
 	
 	public String authorizeNewClient(long accountId, String name);
 	
-	public HippoAccount createAccountFromEmail(String email);
+	public HippoAccount findOrCreateAccountFromEmail(String email);
 }

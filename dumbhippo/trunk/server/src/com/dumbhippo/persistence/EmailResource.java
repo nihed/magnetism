@@ -10,6 +10,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
@@ -40,6 +41,7 @@ public class EmailResource extends Resource implements InvitableResource {
 		setEmail(string);
 	}
 
+	@Column(unique=true, nullable=false)
 	public String getEmail() {
 		return email;
 	}

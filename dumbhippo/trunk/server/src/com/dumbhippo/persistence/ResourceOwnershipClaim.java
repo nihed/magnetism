@@ -3,8 +3,11 @@
  */
 package com.dumbhippo.persistence;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 
 /**
@@ -12,12 +15,17 @@ import javax.persistence.ManyToOne;
  * Person is the owner of a particular resource. "Owner" in this context
  * means the user of the account/address, or the publisher of a web site.
  * The owner might be a person or a group or just an ID we made up that has
- * no information associated with it other than its ID-ness.
+ * no information associated with it other than its ID-ness. Each owner can
+ * make only one assertion about a particular resource.
  * 
  * @author hp
  *
  */
 @Entity
+@Table(name="ResourceOwnershipClaim", 
+	   uniqueConstraints = 
+	      {@UniqueConstraint(columnNames={"resource_id", "assertedBy_id"})}
+      )
 public class ResourceOwnershipClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Person claimedOwner;
@@ -33,6 +41,7 @@ public class ResourceOwnershipClaim extends DBUnique {
 	}
 
 	@ManyToOne
+	@Column(nullable=false)
 	Person getAssertedBy() {
 		return assertedBy;
 	}

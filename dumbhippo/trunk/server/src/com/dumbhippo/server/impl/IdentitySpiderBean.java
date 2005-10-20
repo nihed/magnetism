@@ -1,13 +1,21 @@
 package com.dumbhippo.server.impl;
 
 import javax.ejb.EJBContext;
+import javax.ejb.EJBException;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.hibernate.NonUniqueObjectException;
+import org.hibernate.exception.ConstraintViolationException;
+
 import com.dumbhippo.FullName;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LinkResource;
@@ -24,6 +32,7 @@ import com.dumbhippo.server.PersonView;
  */
 @Stateless
 public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
+	static private final Log logger = GlobalSetup.getLog(IdentitySpider.class);
 	
 	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
 
@@ -36,7 +45,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Person lookupPersonByEmail(EmailResource email) {
 		Person person;
 		try {
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy is null").setParameter("email", email).getSingleResult();
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy = :theman")
+			.setParameter("email", email)
+			.setParameter("theman", getTheMan())
+			.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
@@ -46,8 +58,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
 		Person person;
 		try {
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy.id = :viewpointguid or c.assertedBy.id is null)")
-		.setParameter("viewpointguid", viewpoint.getId()).setParameter("email", email).getSingleResult();
+			// FIXME: this query could return multiple results if there is both a 
+			//   personal ownership assertion and a system-wide ownership assertion.
+			//   It might be better to just do two queries.
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy = :viewpoint or c.assertedBy = :theman)")
+			.setParameter("email", email)
+			.setParameter("viewpoint", viewpoint)
+			.setParameter("theman", getTheMan())
+			.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
@@ -55,18 +73,39 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public Person lookupPersonById(String personId) {
-		Person person;
-		try {
-			person = em.find(Person.class, personId);
-		} catch (EntityNotFoundException e) {
-			return null;
-		}
-		return person;
+		return em.find(Person.class, personId);
+	}
+
+	// Returns true if this is an exception we would get with a race condition
+	// between two people trying to create the same object at once
+	private boolean isDuplicateException(Exception e) {
+		return ((e instanceof EJBException &&
+				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
+	            e instanceof NonUniqueObjectException);
 	}
 	
 	public EmailResource getEmail(String email) {
+		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
+		int retries = 1;
+		
+		while (true) {
+			try {
+				return proxy.findOrCreateEmail(email);
+			} catch (Exception e) {
+				if (retries > 0 && isDuplicateException(e)) {
+					logger.debug("Race condition creating email resource, retrying");
+					retries--;
+				} else {
+					throw new RuntimeException("Unexpected error creating email resource", e);
+				}
+			}
+		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public EmailResource findOrCreateEmail(String email) {
 		Query q;
-	
+		
 		q = em.createQuery("from EmailResource e where e.email = :email");
 		q.setParameter("email", email);
 		
@@ -80,8 +119,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		return res;	
 	}
+	
+	public LinkResource getLink(String link) {
+		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
+		int retries = 1;
+		
+		while (true) {
+			try {
+				return proxy.findOrCreateLink(link);
+			} catch (Exception e) {
+				if (retries > 0 && isDuplicateException(e)) {
+					logger.debug("Race condition creating link resource, retrying");
+					retries--;
+				} else {
+					throw new RuntimeException("Unexpected error creating link resource", e);
+				}
+			}
+		}
+	}
 
-	public LinkResource getLink(String url) {
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public LinkResource findOrCreateLink(String url) {
 		Query q;
 	
 		q = em.createQuery("from LinkResource l where l.url = :url");
@@ -98,24 +156,47 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return res;	
 	}
 	
+	private transient Person theMan;
+	
 	private static final String theManGuid = "8716baa63bef600797fbc59e06010000a35ad1637e6a7f87";
 	private static final String theManEmail = "theman@dumbhippo.com";
 
-	public Person getTheMan() {
-		Person ret;
+	// This needs to be synchronized since the stateless session bean might be shared
+	// between threads.
+	public synchronized Person getTheMan() {
+		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
+		int retries = 1;
 		
-		try {
-			ret = (Person) em.createQuery("from Person p where p.id = :id").setParameter("id", theManGuid).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			EmailResource res = getEmail(theManEmail);
-			ret = new Person(new Guid(theManGuid));
-			em.persist(ret);
-			ResourceOwnershipClaim claim = new ResourceOwnershipClaim(ret, res, ret);
+		while (theMan == null) {
+			try {
+				theMan = proxy.findOrCreateTheMan();
+			} catch (Exception e) {
+				if (retries > 0 && isDuplicateException(e)) {
+					logger.debug("Race condition creating theMan, retrying");
+					retries--;
+				} else {
+					throw new RuntimeException("Unexpected error looking up theMan", e);
+				}
+			}
+		}
+		return theMan;
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public Person findOrCreateTheMan() {
+		Person result = lookupPersonById(theManGuid);
+		if (result == null) {
+			logger.debug("Creating theman@dumbhippo.com");
+			EmailResource resource = getEmail(theManEmail);
+			result = new Person(new Guid(theManGuid));
+			em.persist(result);
+			ResourceOwnershipClaim claim = new ResourceOwnershipClaim(result, resource, result);
 			em.persist(claim);
 		}
-		return ret;
+		
+		return result;
 	}
-
+	
 	private PersonView constructPersonView(Person viewpoint, Person p) {
 		PersonView view = (PersonView) ejbContext.lookup(PersonView.class.getCanonicalName());
 		view.init(viewpoint, p);
@@ -127,7 +208,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public PersonView getSystemViewpoint(Person p) {
-		return constructPersonView(null, p);
+		return constructPersonView(getTheMan(), p);
 	}
 	
 	public void setName(Person person, FullName name) {
@@ -145,14 +226,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	 * is screwy.
 	 */
 	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
-		if (assertedBy == null) {
+		if (assertedBy.getId() == getTheMan().getId()) {
 			throw new IllegalArgumentException("Can't add this ownership claim");
 		}
 		internalAddOwnershipClaim(owner, resource, assertedBy);
 	}
 	
 	public void addVerifiedOwnershipClaim(Person claimedOwner, Resource res) {
-		internalAddOwnershipClaim(claimedOwner, res, null);
+		internalAddOwnershipClaim(claimedOwner, res, getTheMan());
 	}
 }
 

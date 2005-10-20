@@ -17,6 +17,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TestGlue;
@@ -103,7 +104,16 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 		return client.getAuthKey();
 	}
 
-	public HippoAccount createAccountFromEmail(String email) {
+	public HippoAccount findOrCreateAccountFromEmail(String email) {
+		EmailResource resource = identitySpider.getEmail(email);
+		Person person = identitySpider.lookupPersonByEmail(resource);
+		if (person != null) {
+			HippoAccount account = accountSystem.lookupAccountByPerson(person); 
+			if (account != null) {
+				return account;
+			}
+		}
+			
 		return accountSystem.createAccountFromEmail(email);
 	}
 }

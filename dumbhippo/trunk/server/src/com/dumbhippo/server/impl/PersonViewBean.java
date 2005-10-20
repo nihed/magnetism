@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.io.Serializable;
 
+import javax.annotation.EJB;
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -9,6 +10,7 @@ import javax.persistence.Query;
 
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewRemote;
 
@@ -35,13 +37,16 @@ public class PersonViewBean
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
+	@EJB
+	private IdentitySpider spider;
+	
 	public void init(Person viewpoint, Person person) {
 		this.viewpoint = viewpoint;
 		this.person = person;
 	}
 	
 	private static final String BASE_LOOKUP_EMAIL_QUERY 
-		= "select e from EmailResource e, ResourceOwnershipClaim c where e.id = c.resource and c.claimedOwner = :personid and (c.assertedBy.id is null ";
+		= "select e from EmailResource e, ResourceOwnershipClaim c where e.id = c.resource and c.claimedOwner = :personid and (c.assertedBy = :theman ";
 	
 	/* (non-Javadoc)
 	 * @see com.dumbhippo.persistence.PersonView#getEmail()
@@ -53,8 +58,10 @@ public class PersonViewBean
 		if (viewpoint == null) {
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + ")");
 		} else {
-			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + "or c.assertedBy.id = :viewpointguid)").setParameter("viewpointguid", viewpoint.getId());
+			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + "or c.assertedBy = :viewpoint)")
+			.setParameter("viewpointguid", viewpoint.getId());
 		}
+		q.setParameter("theman", spider.getTheMan());
 		q.setParameter("personid", person.getId());
 		res = (EmailResource) q.getSingleResult();
 
