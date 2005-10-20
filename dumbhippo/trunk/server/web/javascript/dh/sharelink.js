@@ -135,9 +135,11 @@ dh.sharelink.submitButtonClicked = function() {
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
+							dh.util.closeWindow();
 						},
 						function(type, error, http) {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
+
 						});
 	});
 }

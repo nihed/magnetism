@@ -46,3 +46,12 @@ dh.util.hide = function(node) {
 dh.util.show = function(node) {
 	dojo.html.removeClass(node, "dhInvisible");
 }
+
+dh.util.closeWindow = function() {
+	// Use our ActiveX control to close this dialog; the reason
+	// for checking the readyState is to see if the object was 
+	// actually loaded.
+	var embed = document.getElementById("dhEmbedObject");
+	if (embed && embed.readyState && embed.readyState >= 3)
+		embed.CloseWindow();
+}
