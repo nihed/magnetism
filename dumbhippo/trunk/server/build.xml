@@ -74,14 +74,6 @@
 		<copy todir="${build.lib}">
 			<fileset dir="xmlrpc/target" includes="*.jar"/>
 		</copy>
-		<copy todir="${build.javascript}">
-			<fileset dir="${web}/javascript" includes="*.js"/>
-			<fileset dir="${web}/javascript" includes="dh/*.js"/>
-			<fileset dir="${web}/javascript" includes="dojo/*.js"/>
-			<fileset dir="${web}/javascript" includes="dojo/src/*.js"/>
-			<fileset dir="${web}/javascript" includes="dojo/src/**/*.js"/>
-			<fileset dir="${web}/javascript" includes="dojo/iframe_history.html"/>
-		</copy>
 	</target>
 	
 	<target name="compile" depends="init,subprojects">
@@ -141,13 +133,32 @@
 
 	<target name="war" depends="compile, setupmetadata">
 		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
-			<fileset dir="${web}" includes="*.html" />
-			<fileset dir="${web}" includes="**/*.jsp" />
-			<fileset dir="${web}" includes="**/*.jspf" />
-			<fileset dir="${web}" includes="**/*.css" />
-
-			<fileset dir="${target}" includes="javascript/*" />
 			
+			<!-- "**" in here is pretty risky since there's a bunch of random junk in
+				javascript/dojo that we don't want, like documentation .html and test .js -->
+			
+			<!-- our javascript code -->
+			<fileset dir="${web}" includes="javascript/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/*.js"/>
+			
+			<!-- get dojo/ toplevel stuff and dojo/src; this is for now, 
+			 	later we'll want probably a single .js file built 
+			 	by dojo build.xml -->
+			<fileset dir="${web}" includes="javascript/dojo/*.js"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/*.js"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.js"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
+			
+			<!-- our static pages, css, etc. -->
+			<fileset dir="${web}" includes="*.html" />
+			<fileset dir="${web}" includes="jsf/*.jsp" />
+			<fileset dir="${web}" includes="jsf/*.jspf" />
+			<fileset dir="${web}" includes="css/*.css" />
+
 			<fileset dir="${build}">
 				<include name="**/web/**/*.class" />
 			</fileset>
