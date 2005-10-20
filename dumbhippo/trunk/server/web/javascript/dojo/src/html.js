@@ -89,7 +89,7 @@ dojo.html.getDocumentWidth = function() {
 	} else if(body) {
 		w = body.clientWidth;
 	}
-	if(!h) {
+	if(!w) {
 		w = window.innerWidth;
 	}
 	return w || 0;
