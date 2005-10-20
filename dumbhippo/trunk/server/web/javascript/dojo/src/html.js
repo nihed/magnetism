@@ -79,37 +79,41 @@ dojo.html.getScrollLeft = function () {
 }
 
 dojo.html.getDocumentWidth = function() {
-	var w = 0;
 	var docElm = document.documentElement;
+	var docElmWidth = docElm ? docElm.clientWidth : 0;
 	var body = dojo.html.body();
-	if(docElm && body) {
-		w = Math.min(docElm.clientWidth, body.clientWidth);
-	} else if(docElm) {
-		w = docElm.clientWidth;
-	} else if(body) {
-		w = body.clientWidth;
+	var bodyWidth = body ? body.clientWidth : 0;
+
+	if(docElmWidth && bodyWidth) {
+		return Math.min(docElmWidth, bodyWidth);
+	} else if(docElmWidth) {
+		return docElmWidth;
+	} else if(bodyWidth) {
+		return bodyWidth;
+	} else if(window.innerWidth) {
+		return window.innerWidth;
+	} else {
+		return 0;
 	}
-	if(!w) {
-		w = window.innerWidth;
-	}
-	return w || 0;
 }
 
 dojo.html.getDocumentHeight = function() {
-	var h = 0;
 	var docElm = document.documentElement;
+	var docElmHeight = docElm ? docElm.clientHeight : 0;
 	var body = dojo.html.body();
-	if(docElm && body) {
-		h = Math.min(docElm.clientHeight, body.clientHeight);
-	} else if(docElm) {
-		h = docElm.clientHeight;
-	} else if(body) {
-		h = body.clientHeight;
+	var bodyHeight = body ? body.clientHeight : 0;
+
+	if(docElmHeight && bodyHeight) {
+		return Math.min(docElmHeight, bodyHeight);
+	} else if(docElmHeight) {
+		return docElmHeight;
+	} else if(bodyHeight) {
+		return bodyHeight;
+	} else if(window.innerHeight) {
+		return window.innerHeight;
+	} else {
+		return 0;
 	}
-	if(!h) {
-		h = window.innerHeight;
-	}
-	return h || 0;
 }
 
 dojo.html.getDocumentSize = function() {
