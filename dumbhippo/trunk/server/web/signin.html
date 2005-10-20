@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="css/sharelink.css" type="text/css"></style>
+<title>Sign In</title>
+<script src="javascript/config.js" type="text/javascript"></script>
+<script src="javascript/dojo/dojo.js" type="text/javascript"></script>
+<script src="javascript/common.js" type="text/javascript"></script>
+<script type="text/javascript">
+	dojo.require("dh.login");
+	dojo.require("dojo.event.*");
+	
+	function dhDoSignIn() {
+	    dh.login.requireLogin(function() {
+	        // Use our ActiveX control to close this dialog; the reason
+	        // for checking the readyState is to see if the object was 
+	        // actually loaded.
+	  	    var hippoembed = document.getElementById("hippoembed");
+			if (hippoembed && hippoembed.readyState && hippoembed.readyState >= 3)
+				hippoembed.CloseWindow();
+	    });
+	}
+	
+    dojo.event.connect(dojo, "loaded", dj_global, "dhDoSignIn");
+</script>
+<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="hippoembed"></object>
+</head>
+<body>
+<div id="dojoDebug"> <!-- where to put dojo debug spew --> </div>
+</body>
+</html>
