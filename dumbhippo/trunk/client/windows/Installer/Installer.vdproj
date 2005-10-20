@@ -224,7 +224,7 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DumbHippo"
-        "ProductCode" = "8:{7BAA142F-A4A8-495B-9D56-2F4B0B7E76EB}"
+        "ProductCode" = "8:{E991AC9A-E546-423B-AA74-30E74F423A13}"
         "PackageCode" = "8:{4746B265-6E13-4B93-B132-C7EED6A61B71}"
         "UpgradeCode" = "8:{7119C547-0FC8-4EA3-AACF-1DF01AC6E9E5}"
         "RestartWWWService" = "11:FALSE"
