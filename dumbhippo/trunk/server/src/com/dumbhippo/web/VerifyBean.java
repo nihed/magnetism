@@ -6,6 +6,7 @@ import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -20,11 +21,10 @@ public class VerifyBean {
 	private boolean valid;
 	private Collection<String> inviterNames;
 
-	@Inject
 	private InvitationSystem invitationSystem;
 
 	public VerifyBean() throws NamingException {
-		EjbLink.injectFromFacesContext(this, Scope.NONE);
+		invitationSystem = EJBUtil.defaultLookup(InvitationSystem.class);
 	}	
 	
 	public String getAuthKey() {

@@ -7,13 +7,12 @@ import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AjaxGlueXmlRpc;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.XmlRpcMethods;
 
 @Stateful
-public class AjaxGlueXmlRpcBean extends AbstractLoginRequired implements AjaxGlueXmlRpc, Serializable {
+public class XmlRpcMethodsBean implements XmlRpcMethods, Serializable {
 	
 	private static final long serialVersionUID = 0L;
 	

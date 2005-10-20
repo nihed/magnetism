@@ -46,15 +46,18 @@ public class Post extends GuidPersistable {
 	public Set<Person> getRecipients() {
 		return recipients;
 	}
-	public void setRecipients(Set<Person> recipients) {
+	protected void setRecipients(Set<Person> recipients) {
 		this.recipients = recipients;
+	}
+	public void addRecipients(Set<Person> newRecipients) {
+		this.recipients.addAll(newRecipients);
 	}
 	
 	@OneToMany
 	public Set<Resource> getResources() {
 		return resources;
 	}
-	public void setResources(Set<Resource> resources) {
+	protected void setResources(Set<Resource> resources) {
 		this.resources = resources;
 	}
 	public String getText() {

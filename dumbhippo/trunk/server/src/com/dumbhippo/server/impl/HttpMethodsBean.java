@@ -3,14 +3,12 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.EJB;
-import javax.ejb.Stateful;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.ejb.Stateless;
 
 import org.apache.commons.logging.Log;
 
@@ -19,26 +17,21 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.server.AbstractLoginRequired;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AjaxGlueHttp;
+import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostingBoard;
 
-@Stateful
-public class AjaxGlueHttpBean extends AbstractLoginRequired implements AjaxGlueHttp, Serializable {
+@Stateless
+public class HttpMethodsBean implements HttpMethods, Serializable {
 	
-	private static final Log logger = GlobalSetup.getLog(AjaxGlueHttpBean.class);
+	@SuppressWarnings("unused")
+	private static final Log logger = GlobalSetup.getLog(HttpMethodsBean.class);
 	
 	private static final long serialVersionUID = 0L;
-	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
-	
+
 	@EJB
 	private AccountSystem accountSystem;
 	
@@ -46,8 +39,8 @@ public class AjaxGlueHttpBean extends AbstractLoginRequired implements AjaxGlueH
 	private IdentitySpider identitySpider;
 	
 	@EJB
-	private MessageSender messageSender;
-		
+	private PostingBoard postingBoard;
+
 	/* (non-Javadoc)
 	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream, java.lang.String, java.lang.String)
 	 */
@@ -94,31 +87,8 @@ public class AjaxGlueHttpBean extends AbstractLoginRequired implements AjaxGlueH
 		out.write(xml.toString().getBytes());
 	}
 	
-	public void doShareLink(String url, String recipientIds, String description) {
-		Person poster = getLoggedInUser(identitySpider); // double-checks that we're logged in as side effect
-		
-		Set<Person> recipients = new HashSet<Person>();
-		Set<Resource> shared = Collections.singleton((Resource)identitySpider.getLink(url));
-		
-		String[] splitIds = recipientIds.split(","); 
-		
-		for (String personId : splitIds) {
-			Person r = identitySpider.lookupPersonById(personId);
-			if (r != null) {
-				recipients.add(r);
-			} else {
-				// should not happen really...
-				logger.error("Recipient " + personId + " is not known, trimming from recipient list");
-			}
-		}
-		
-		logger.debug("saving new Post");
-		Post post = new Post(poster, null, description, recipients, shared);
-		em.persist(post);
-		
-		logger.debug("Sending out jabber notifications...");
-		for (Person r : recipients) {
-			messageSender.sendShareLink(r.getId() + "@dumbhippo.com", url, description);
-		}
+	public void doShareLink(Person user, String url, String recipientIds, String description) {
+		Set<String> recipientGuids = new HashSet<String>(Arrays.asList(recipientIds.split(",")));
+		postingBoard.createURLPost(user, null, description, url, recipientGuids);			
 	}
 }

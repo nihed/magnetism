@@ -3,7 +3,6 @@ package com.dumbhippo.persistence;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 
 public class Group extends GuidPersistable {

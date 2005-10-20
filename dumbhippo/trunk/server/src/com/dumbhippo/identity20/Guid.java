@@ -3,6 +3,8 @@ package com.dumbhippo.identity20;
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.SecureRandom;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Guid is a globally-unique identifier, designed to not
@@ -135,6 +137,14 @@ final public class Guid implements Serializable {
 		return true;
 	}
 
+	public static Set<Guid> parseStrings(Set<String> strs) {
+		Set<Guid> guids = new HashSet<Guid>(strs.size());	
+		for (String str : strs) {
+			guids.add(new Guid(str));
+		}
+		return guids;
+	}	
+	
 	static private void hexEncode(long value, char[] hex, int start) {
 		for (int count = 0; count < Long.SIZE / 8; ++count) {
 			int b = (int) (value >>> count * 8) & 0xff;

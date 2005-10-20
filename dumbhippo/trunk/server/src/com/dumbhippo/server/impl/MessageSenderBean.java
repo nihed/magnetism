@@ -14,6 +14,7 @@ import org.jivesoftware.smack.packet.PacketExtension;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -56,22 +57,17 @@ public class MessageSenderBean implements MessageSender {
 		return connection;
 	}
 	
-	public void sendShareLink(String recipient, String url, String title) {
+	public void sendShareLink(Person recipient, String url, String title) {
 		XMPPConnection connection = getConnection();
 		
 		if (connection == null)
 			return;
+
+		StringBuilder recipientJid = new StringBuilder();
+		recipientJid.append(recipient.getId().toString());
+		recipientJid.append("@dumbhippo.com");
 		
-		if (!recipient.endsWith("@dumbhippo.com")) {
-			logger.error("Currently can only send link sharing to @dumbhippo.com domain, not " + recipient);
-			return;
-		}
-		
-		StringBuilder newRecipient = new StringBuilder();
-		newRecipient.append(recipient.substring(0,recipient.indexOf("@")));
-		newRecipient.append("@dumbhippo.com");
-		
-		Message message = new Message(newRecipient.toString(),
+		Message message = new Message(recipientJid.toString(),
 				Message.Type.HEADLINE);
 		
 		message.addExtension(new LinkExtension(url, title));

@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -20,13 +22,16 @@ import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.AjaxGlueHttp;
-import com.dumbhippo.server.AjaxGlueXmlRpc;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.HttpContentTypes;
+import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.TestGlue;
-import com.dumbhippo.web.EjbLink.NotLoggedInException;
+import com.dumbhippo.server.XmlRpcMethods;
+import com.dumbhippo.server.impl.HttpMethodsBean;
+import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class XmlRpcServlet extends HttpServlet {
@@ -123,16 +128,22 @@ public class XmlRpcServlet extends HttpServlet {
 			}
 		}
 		
-		Object[] toPassIn = new Object[args.length];
+		ArrayList<Object> toPassIn = new ArrayList<Object>();
 		
 		int i = 0;
 		
-		if (methodCanReturnContent) {
-			toPassIn[0] = out;
-			toPassIn[1] = replyContentType;
-			i = 2;
+		if (args.length > 0 && Person.class.isAssignableFrom(args[0])) {
+			Person loggedIn = getLoggedInPerson(request);
+			toPassIn.add(loggedIn);
+			i += 1;
 		}
-
+		
+		if (methodCanReturnContent) {
+			toPassIn.add(out);
+			toPassIn.add(replyContentType);
+			i += 2;
+		}
+		
 		if (args.length != i + paramsAnnotation.value().length) {
 			throw new RuntimeException("HTTP method " + m.getName() + " should have params " + paramsAnnotation.value());
 		}
@@ -148,12 +159,12 @@ public class XmlRpcServlet extends HttpServlet {
 						"Parameter " + pname + " not provided to method " + m.getName());
 			}
 			
-			toPassIn[i] = o;
+			toPassIn.add(o);
 			
 			++i;
 		}
 		
-		return toPassIn;
+		return toPassIn.toArray();
 	}
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
@@ -225,6 +236,7 @@ public class XmlRpcServlet extends HttpServlet {
 
 				OutputStream out = response.getOutputStream();
 				Object[] methodArgs = marshalHttpRequestParams(request, out, requestedContentType, paramsAnnotation, m);
+				
 
 				if (requestedContentType != HttpResponseData.NONE)
 					response.setContentType(requestedContentType.getMimeType());
@@ -253,73 +265,21 @@ public class XmlRpcServlet extends HttpServlet {
 		}
 	}
 	
-	static class SessionBoundXmlRpcServer extends XmlRpcServer implements HttpSessionActivationListener {
-		public void sessionWillPassivate(HttpSessionEvent event) {
-			// Remove ourselves, since we're just a transient cache
-			HttpSession session = event.getSession();
-			synchronized(session) {
-				session.setAttribute(XMLRPC_KEY, null);
-			}
-		}
-
-		public void sessionDidActivate(HttpSessionEvent event) {
-			// nothing to do, servlet will re-create us on demand
-		}
-	}
-	
-	private XmlRpcServer getSessionXmlRpc(HttpServletRequest request) throws HttpException {
-		HttpSession session = request.getSession();
-		XmlRpcServer xmlrpc;
-	
-		synchronized(session) {
-			xmlrpc = (XmlRpcServer) session.getAttribute(XMLRPC_KEY);
-			if (xmlrpc == null) {
-				xmlrpc = new SessionBoundXmlRpcServer();
-				
-				// Java thread locks are recursive so this is OK...
-				AjaxGlueXmlRpc glue = getSessionGlueXmlRpc(request);		
-				
-				// glue is a proxy that only exports the one interface, 
-				// so safe to export it all
-				xmlrpc.addHandler("dumbhippo", glue);
-				
-				session.setAttribute(XMLRPC_KEY, xmlrpc);
-			}
-		}
-		
-		return xmlrpc;
-	}
-	
-	private EjbLink getLoggedInEjb(HttpServletRequest request) throws HttpException {
-		EjbLink ejb = EjbLink.getForSession(request.getSession());
-
+	private Person getLoggedInPerson(HttpServletRequest request) throws HttpException {
 		try {
-			ejb.attemptLogin(request);
+			return CookieAuthentication.authenticate(request);
 		} catch (BadTastingException e) {
 			// In an HTML servlet, we would redirect to a login page; but in this
 			// servlet we can't do much, we have no UI
 
 			logger.debug(e);
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "Authorization failed, please log in again (bad cookie)", e);
-		} catch (NotLoggedInException e) {
+		} catch (NotLoggedInException e1) {
 			// In an HTML servlet, we would redirect to a login page; but in this
 			// servlet we can't do much, we have no UI
-			logger.debug(e);
-			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in", e);
+			logger.debug(e1);
+			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in", e1);
 		}
-		return ejb;
-	}
-	
-	private AjaxGlueXmlRpc getSessionGlueXmlRpc(HttpServletRequest request) throws HttpException {
-		EjbLink ejb = getLoggedInEjb(request);
-
-		return ejb.getEjb(AjaxGlueXmlRpc.class);
-	}
-
-	private AjaxGlueHttp getSessionGlueHttp(HttpServletRequest request) throws HttpException {
-		EjbLink ejb = getLoggedInEjb(request);
-
-		return ejb.getEjb(AjaxGlueHttp.class);
 	}
 	
 	private void logRequest(HttpServletRequest request, String type) {
@@ -345,6 +305,22 @@ public class XmlRpcServlet extends HttpServlet {
 		}
 	}
 	
+	private Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
+		Person user;
+		try {
+			user = CookieAuthentication.authenticate(request);
+		} catch (BadTastingException e) {
+			if (log)
+				logger.error("failed to log in", e);
+			user = null;
+		} catch (NotLoggedInException e2) {
+			if (log)
+				logger.error("authentication failed", e2);
+			user = null;
+		}
+		return user;
+	}
+	
 	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
 		// special method that magically causes us to look at your cookie and log you 
 		// in if it's set, then return person you're logged in as or "false"
@@ -358,6 +334,7 @@ public class XmlRpcServlet extends HttpServlet {
 			return false;
 		}
 		
+		Person user;	
 		if (addAccount) {
 			logger.debug("Adding account");
 			
@@ -366,15 +343,14 @@ public class XmlRpcServlet extends HttpServlet {
 				throw new HttpException(HttpResponseCode.BAD_REQUEST, "No email address provided");
 			}
 			
-			EjbLink ejb = EjbLink.getForSession(request.getSession());
-			TestGlue testGlue = ejb.getEjb(TestGlue.class);
+			TestGlue testGlue = EJBUtil.defaultLookup(TestGlue.class);
 			HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
 			String authKey = testGlue.authorizeNewClient(account.getId(), "FIXME USE user-agent");
 			LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
 			response.addCookie(loginCookie.getCookie());
 			
 			try {
-				ejb.attemptLogin(loginCookie);
+				user = CookieAuthentication.authenticate(loginCookie);
 			} catch (BadTastingException e) {
 				logger.error("Cookie we just added failed to log in ", e);
 				throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR,
@@ -386,26 +362,16 @@ public class XmlRpcServlet extends HttpServlet {
 			}
 			
 			logger.debug("account added");
+		} else {
+			user = doLogin(request, response, false);
 		}
 		
 		logger.debug("sending checklogin reply");
-		
-		boolean loggedIn = true;
-		EjbLink ejb = null;
-		try {
-			ejb = getLoggedInEjb(request);
-			if (!ejb.isLoggedIn()) // I think it always throws in this case, but
-				loggedIn = false;
-		} catch (HttpException e) {
-			// for this call it isn't an error if we aren't logged in ...
-			logger.debug(e);
-			loggedIn = false;
-		}
 			
 		response.setContentType("text/plain");
 		OutputStream out = response.getOutputStream();
-		if (loggedIn)
-			out.write(ejb.getLoggedInUser().getBytes());
+		if (user != null)
+			out.write(user.toString().getBytes());
 		else
 			out.write("false".getBytes());
 		out.flush();
@@ -426,34 +392,23 @@ public class XmlRpcServlet extends HttpServlet {
 			if (tryLoginRequests(request, response)) {
 				return;
 			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
-				XmlRpcServer xmlrpc;
-				xmlrpc = getSessionXmlRpc(request);
-
-				// no idea if xmlrpc is in fact thread-safe, but 
-				// let's serialize all our uses of it... it's per-session
-				// so should be no thread contention kind of issues
-				synchronized (xmlrpc) {
-					byte[] result = xmlrpc.execute(request.getInputStream());
-					response.setContentType("text/xml");
-					response.setContentLength(result.length);
-					OutputStream out = response.getOutputStream();
-					out.write(result);
-					out.flush();
-				}
+				XmlRpcServer xmlrpc = new XmlRpcServer();
+				// Java thread locks are recursive so this is OK...
+				XmlRpcMethods glue = EJBUtil.defaultLookup(XmlRpcMethods.class);
+				
+				// glue is a proxy that only exports the one interface, 
+				// so safe to export it all
+				xmlrpc.addHandler("dumbhippo", glue);				
+				byte[] result = xmlrpc.execute(request.getInputStream());
+				response.setContentType("text/xml");
+				response.setContentLength(result.length);
+				OutputStream out = response.getOutputStream();
+				out.write(result);
+				out.flush();
 			} else {
-				AjaxGlueHttp glue;
+				HttpMethods glue = EJBUtil.defaultLookup(HttpMethods.class);
 			
-				try {
-					glue = getSessionGlueHttp(request);
-				} catch (HttpException e) {
-					logger.debug(e);
-					e.send(response);
-					return;
-				}
-				if (glue == null)
-					throw new RuntimeException("Could not create EJB");
-			
-					invokeHttpRequest(glue, request, response);
+				invokeHttpRequest(glue, request, response);
 			}
 		} catch (HttpException e) {
 			logger.debug(e);
@@ -467,17 +422,7 @@ public class XmlRpcServlet extends HttpServlet {
 		logRequest(request, "GET");
 		
 		try {
-			if (tryLoginRequests(request, response)) {
-				return;
-			}
-		
-			AjaxGlueHttp glue;
-		
-			glue = getSessionGlueHttp(request);
-		
-			if (glue == null)
-				throw new RuntimeException("Could not create EJB");
-		
+			HttpMethods glue = EJBUtil.defaultLookup(HttpMethods.class);
 			invokeHttpRequest(glue, request, response);
 		} catch (HttpException e) {
 			logger.debug(e);

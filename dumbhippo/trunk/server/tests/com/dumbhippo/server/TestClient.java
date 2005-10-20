@@ -8,8 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.naming.NamingException;
-
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
@@ -21,7 +19,6 @@ import org.jivesoftware.smack.packet.Packet;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.client.EjbLink;
 
 /**
  * App that hammers a server with remote session bean calls.
@@ -32,20 +29,12 @@ import com.dumbhippo.server.client.EjbLink;
  */
 public class TestClient {
 
-	private EjbLink ejb;
 	private TestGlueRemote test;
 	
 	public TestClient() {
 		XMPPConnection.DEBUG_ENABLED = true;
-		
-		try {
-			ejb = new EjbLink(true);
-		} catch (NamingException e) {
-			e.printStackTrace();
-			throw new Error("Could not connect to server", e);
-		}
 
-		test = ejb.getTestGlue();
+		test = EJBUtil.defaultLookup(TestGlueRemote.class);
 		
 		if (test == null)
 			System.err.println("TestGlueRemote is null");

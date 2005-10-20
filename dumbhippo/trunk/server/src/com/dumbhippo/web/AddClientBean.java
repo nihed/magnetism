@@ -1,9 +1,12 @@
 package com.dumbhippo.web;
 
+import javax.annotation.EJB;
+
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.TestGlue;
 
 
@@ -15,13 +18,12 @@ public class AddClientBean {
 	
 	private String goBackTo;
 	
-	@Inject
 	private TestGlue testGlue;
-
-	public AddClientBean() {
-		EjbLink.injectFromFacesContext(this, Scope.NONE);
-	}
 	
+	public AddClientBean() {
+		testGlue = EJBUtil.defaultLookup(TestGlue.class);
+	}
+
 	public String getEmail() {
 		return email;
 	}

@@ -8,14 +8,28 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
+import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class SigninBean {
 
 	private static final Log logger = GlobalSetup.getLog(SigninBean.class);
 	
-	@Inject
-	private EjbLink ejb;
+	private Person user;
 	
+	public SigninBean() {
+		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
+		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
+		try {
+			user = CookieAuthentication.authenticate(req);
+		} catch (BadTastingException e) {
+			user = null;
+		} catch (NotLoggedInException e) {
+			user = null;
+		}
+	}
+		
 	public static String computeClientIdentifier() {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
@@ -45,26 +59,13 @@ public class SigninBean {
 		response.addCookie(LoginCookie.newDeleteCookie());
 		logger.debug("Unset auth cookie");
 	}
-	
-	public SigninBean() {
-		logger.debug("Constructing " + getClass().getCanonicalName());
-		EjbLink.injectFromFacesContext(this, Scope.NONE);
-	}
-	
+
 	public boolean isValid() {
-		logger.debug("isValid() logged in user = " + ejb.getLoggedInUser());
-		
-		boolean loggedIn = ejb.checkLoginFromFacesContext(this);
-		
-		logger.debug("isValid() = " + loggedIn);
-		
-		return loggedIn;
+		return user != null;
 	}
 	
-	public String getLoggedInAs() {
-		if (!ejb.checkLoginFromFacesContext(this))
-			return null;
-		return ejb.getLoggedInUser();
+	public Person getUser() {
+		return user;
 	}
 	
 	public String doLogout() {

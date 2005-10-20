@@ -14,7 +14,7 @@ import javax.ejb.Local;
  *
  */
 @Local
-public interface AjaxGlueXmlRpc {
+public interface XmlRpcMethods {
 
 	public String getStuff();
 }

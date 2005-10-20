@@ -2,7 +2,9 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.Person;
+
 @Local
 public interface MessageSender {
-	public void sendShareLink(String recipient, String url, String title);
+	public void sendShareLink(Person recipient, String url, String title);
 }

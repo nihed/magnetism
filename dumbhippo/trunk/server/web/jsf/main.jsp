@@ -27,7 +27,7 @@
  		<p>
   		<h:panelGroup rendered="#{signin.valid}">
 		    <h:commandLink action="#{signin.doLogout}">
-			     <h:outputText value="Log out #{signin.loggedInAs}"/>
+			     <h:outputText value="Log out #{signin.user}"/>
 		       </h:commandLink>
    		</h:panelGroup>
         </p>

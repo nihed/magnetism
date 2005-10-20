@@ -75,6 +75,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Person lookupPersonById(String personId) {
 		return em.find(Person.class, personId);
 	}
+	
+	public Person lookupPersonById(Guid personId) {
+		return lookupPersonById(personId.toString());
+	}	
 
 	// Returns true if this is an exception we would get with a race condition
 	// between two people trying to create the same object at once

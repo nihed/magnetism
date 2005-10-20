@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -83,6 +84,13 @@ public interface IdentitySpider {
 	 * @return person or null if none
 	 */
 	public Person lookupPersonById(String personId);
+	
+	/** 
+	 * Finds a person by their GUID
+	 * @param personId the id
+	 * @return person or null if none
+	 */
+	public Person lookupPersonById(Guid personId);	
 	
 	//public Person lookupPersonByAim(EmailResource email);
 	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
