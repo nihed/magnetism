@@ -37,6 +37,7 @@
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
+			<include name="hibernate3.jar"/>
 		</fileset>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/myfaces-api.jar"/>		
 	</path>
