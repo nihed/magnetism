@@ -19,7 +19,7 @@ dh.login.dialogContentHtml =
 + '			</tr>'
 + '			<tr>'
 + '				<td colspan="2" align="right">'
-+ '				<input type="button" id="dhLoginDialogButton" value="Create account">'
++ '				<input type="button" id="dhLoginDialogButton" value="Sign In">'
 + '				</td>'
 + '			</tr>'
 + '		</table>'
@@ -27,6 +27,7 @@ dh.login.dialogContentHtml =
 + '</div>';
 
 
+dh.login.useDialog = true;
 dh.login.loggedInUserId = null;
 dh.login.postLoginQueue = [];
 
@@ -154,9 +155,13 @@ dh.login.showDialog = function() {
 
 	dh.login.loginState = dh.login.SHOWING_DIALOG;
 
-	dh.login.createDialog();
+	if (dh.login.useDialog) {
+		dh.login.createDialog();
 	
-	dh.login.dialog.show();
+		dh.login.dialog.show();
+	} else {
+		dh.login.connectForm();
+	}
 }
 
 dh.login.requireLogin = function(doAfterLoginFunc) {
@@ -210,8 +215,6 @@ dh.login.createDialog = function() {
 											{}, // props,
 											node);
 
-	dh.login.emailEntry = document.getElementById("dhLoginDialogEmail");
-	
 	dh.login.dialog.setBackgroundColor("#ccc");
 	
 	// the transparency thing is crazy slow on Linux prior to ff 1.5
@@ -220,10 +223,16 @@ dh.login.createDialog = function() {
 		dh.login.dialog.setBackgroundOpacity(1.0);
 	}
 	
-	var btn = document.getElementById("dhLoginDialogButton");
-	dojo.event.connect(btn, "onclick", dj_global, "dhLoginSubmitLogin");
-	dojo.event.connect(dh.login.emailEntry, "onkeypress", dj_global, "dhLoginOnKeyPress");
+	dh.login.connectForm();
 	
 	// now display our content nodes
 	dh.util.show(node);
+}
+
+dh.login.connectForm = function() {
+	dh.login.emailEntry = document.getElementById("dhLoginDialogEmail");
+	
+	var btn = document.getElementById("dhLoginDialogButton");
+	dojo.event.connect(btn, "onclick", dj_global, "dhLoginSubmitLogin");
+	dojo.event.connect(dh.login.emailEntry, "onkeypress", dj_global, "dhLoginOnKeyPress");
 }
