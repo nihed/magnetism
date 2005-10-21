@@ -1,9 +1,6 @@
 package com.dumbhippo.web;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.naming.NamingException;
 
@@ -12,10 +9,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
 
