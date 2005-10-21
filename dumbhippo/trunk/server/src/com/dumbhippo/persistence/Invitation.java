@@ -85,7 +85,7 @@ public class Invitation extends DBUnique {
 	
 	@Transient
 	public String getPartialAuthURL() {
-		return "invite/landing?auth=" + getAuthKey();
+		return "jsf/verify.faces?authKey=" + getAuthKey();
 	}
 	
 	@Transient

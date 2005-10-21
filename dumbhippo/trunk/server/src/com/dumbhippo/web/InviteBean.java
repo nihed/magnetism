@@ -42,6 +42,8 @@ public class InviteBean {
 		
 		Invitation invitation 
 			= invitationSystem.createEmailInvitation(user, getEmail());
+		
+		invitationSystem.sendEmailNotification(invitation, user);
 
 		this.authKey = invitation.getAuthKey();
 		return "invitesent";

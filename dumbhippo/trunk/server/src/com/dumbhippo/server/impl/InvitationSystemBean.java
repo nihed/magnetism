@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,13 +9,20 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
 import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.persistence.InvitableResource;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -34,6 +43,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private IdentitySpider spider;
+	
+	@javax.annotation.Resource(name="java:/Mail")
+	private Session mailSession;
 	
 	protected Invitation lookupInvitationFor(Resource invitee) {
 		Invitation ret;
@@ -64,9 +76,46 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return createGetInvitation(inviter, emailRes);
 	}	
 	
+	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
+	
 	public void sendEmailNotification(Invitation invite, Person inviter) {
-		InvitableResource invitee = (InvitableResource) invite.getInvitee();
-		invitee.sendInvite(null, invite, inviter);
+		EmailResource invitee = (EmailResource) invite.getInvitee();
+
+		try {
+			MimeMessage msg;
+			PersonView viewedInviter = spider.getViewpoint(null, inviter);
+			
+			String inviteeEmail = invitee.getEmail();
+			InternetAddress invitationTo = new InternetAddress(inviteeEmail);
+
+			InternetAddress invitationFrom;
+			invitationFrom = new InternetAddress(invitationFromAddress, true);
+						
+			msg = new MimeMessage(mailSession);
+			
+			msg.setFrom(invitationFrom);
+			msg.setRecipient(Message.RecipientType.TO, invitationTo);
+			
+			String inviterName = viewedInviter.getHumanReadableName();
+			msg.setSubject("Invitation from " + inviterName
+					+ " to join Dumb Hippo");
+			URL url;
+			try {
+				String baseurl = System.getProperty("dumbhippo.server.baseurl", "http://dumbhippo.com");
+				url = new URL(baseurl); 
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+			msg.setText("Moo!\n\nYou've been invited by " + inviterName
+					+ " to join Dumb Hippo!\n\n"
+					+ "Follow this link to see what the mooing's about:\n"
+					+ invite.getAuthURL(url));
+			Transport.send(msg);
+		} catch (AddressException e) {
+			throw new RuntimeException(e);
+		} catch (MessagingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public Invitation lookupInvitationByKey(String authKey) {
