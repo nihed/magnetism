@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.List;
 
 import javax.annotation.EJB;
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -10,10 +11,12 @@ import javax.persistence.Query;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.IdentitySpider;
 
 @SuppressWarnings("serial")
-public class GroupSystemBean implements GroupSystem {
+@Stateless
+public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
