@@ -19,6 +19,7 @@
 		dumbhippo.server.xmpp.port=@@jivePlainPort@@		
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@    
+		dumbhippo.server.baseurl=@@baseurl@@
     </attribute>
   </mbean>
   
