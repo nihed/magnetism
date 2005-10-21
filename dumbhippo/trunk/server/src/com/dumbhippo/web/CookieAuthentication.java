@@ -20,7 +20,7 @@ public class CookieAuthentication {
 			super(string);
 		}
 	}
-
+	
 	public static Person authFromFacesContext() throws BadTastingException, NotLoggedInException {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();		
@@ -79,7 +79,7 @@ public class CookieAuthentication {
 	 * @throws NotLoggedInException
 	 */
 	public static Person authenticate(String personId, String authKey) throws BadTastingException, NotLoggedInException {
-		AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
+		AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		
 		HippoAccount account = accountSystem.lookupAccountByPersonId(personId);
 

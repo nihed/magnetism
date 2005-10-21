@@ -11,6 +11,8 @@ import com.dumbhippo.persistence.Resource;
 @Local
 public interface PostingBoard {
 	
+	public Set<Post> getPostedURLsFor(Person poster);
+	
 	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids);
 	
 	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> recipients);

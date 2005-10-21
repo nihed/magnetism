@@ -1,6 +1,7 @@
 package com.dumbhippo.web;
 
 import javax.annotation.EJB;
+import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import com.dumbhippo.persistence.HippoAccount;
@@ -31,9 +32,8 @@ public class InviteBean {
 
 	private InvitationSystem invitationSystem;
 	
-	public InviteBean() {
-		signin = EJBUtil.defaultLookup(SigninBean.class);
-		invitationSystem = EJBUtil.defaultLookup(InvitationSystem.class);
+	public InviteBean() throws NamingException {
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}
 
 	// action handler for form submit
@@ -79,5 +79,13 @@ public class InviteBean {
 
 	public void setAuthKey(String authKey) {
 		this.authKey = authKey;
+	}
+
+	public SigninBean getSignin() {
+		return signin;
+	}
+
+	public void setSignin(SigninBean signin) {
+		this.signin = signin;
 	}
 }

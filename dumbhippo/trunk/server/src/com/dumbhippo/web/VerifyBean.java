@@ -2,7 +2,11 @@ package com.dumbhippo.web;
 
 import java.util.Collection;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
@@ -24,7 +28,7 @@ public class VerifyBean {
 	private InvitationSystem invitationSystem;
 
 	public VerifyBean() throws NamingException {
-		invitationSystem = EJBUtil.defaultLookup(InvitationSystem.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}	
 	
 	public String getAuthKey() {
@@ -48,8 +52,11 @@ public class VerifyBean {
 			inviterNames = null;
 		valid = (inviterNames != null);
 		if (valid) {
-			Client client = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier());
-			SigninBean.setCookie(invite.getResultingPerson().getId(),
+			ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
+			HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
+			HttpServletResponse resp = (HttpServletResponse) ctx.getResponse();
+			Client client = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(req));
+			SigninBean.setCookie(resp, invite.getResultingPerson().getId(),
 					client.getAuthKey());
 		}
 	}

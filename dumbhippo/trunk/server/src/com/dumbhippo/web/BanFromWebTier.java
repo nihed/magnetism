@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.web;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

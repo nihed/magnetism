@@ -73,4 +73,9 @@ public class PostingBoardBean implements PostingBoard {
 		return null;
 	}
 
+	public Set<Post> getPostedURLsFor(Person poster) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

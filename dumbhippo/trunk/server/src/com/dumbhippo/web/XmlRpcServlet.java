@@ -306,17 +306,35 @@ public class XmlRpcServlet extends HttpServlet {
 	}
 	
 	private Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
-		Person user;
-		try {
-			user = CookieAuthentication.authenticate(request);
-		} catch (BadTastingException e) {
-			if (log)
-				logger.error("failed to log in", e);
-			user = null;
-		} catch (NotLoggedInException e2) {
-			if (log)
-				logger.error("authentication failed", e2);
-			user = null;
+		Person user = null;
+		HttpSession sess = request.getSession(false);
+		// Right now this will only be created if a JSF page is visited
+		if (sess != null) {
+			SigninBean signin = SigninBean.getFromHttpSession(sess);
+			if (signin != null) {
+				logger.debug("retrieved signin from session");
+				user = signin.getUser();
+				if (user != null) {
+					logger.info("cached authentication from session for: " + user);					
+				}
+			}
+		} else {
+			logger.debug("no http session available");			
+		}
+		if (user == null) {
+			logger.debug("no user in session, trying cookie");					
+			try {
+				user = CookieAuthentication.authenticate(request);
+				logger.info("successfully authenticated: " + user);
+			} catch (BadTastingException e) {
+				if (log)
+					logger.error("failed to log in", e);
+				user = null;
+			} catch (NotLoggedInException e2) {
+				if (log)
+					logger.error("authentication failed", e2);
+				user = null;
+			}
 		}
 		return user;
 	}
@@ -342,12 +360,8 @@ public class XmlRpcServlet extends HttpServlet {
 			if (email == null) {
 				throw new HttpException(HttpResponseCode.BAD_REQUEST, "No email address provided");
 			}
-			
-			TestGlue testGlue = EJBUtil.defaultLookup(TestGlue.class);
-			HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
-			String authKey = testGlue.authorizeNewClient(account.getId(), "FIXME USE user-agent");
-			LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
-			response.addCookie(loginCookie.getCookie());
+
+			LoginCookie loginCookie = AddClientBean.addNewClientForEmail(email, request, response);
 			
 			try {
 				user = CookieAuthentication.authenticate(loginCookie);
@@ -394,7 +408,7 @@ public class XmlRpcServlet extends HttpServlet {
 			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
 				XmlRpcServer xmlrpc = new XmlRpcServer();
 				// Java thread locks are recursive so this is OK...
-				XmlRpcMethods glue = EJBUtil.defaultLookup(XmlRpcMethods.class);
+				XmlRpcMethods glue = WebEJBUtil.defaultLookup(XmlRpcMethods.class);
 				
 				// glue is a proxy that only exports the one interface, 
 				// so safe to export it all
@@ -406,7 +420,7 @@ public class XmlRpcServlet extends HttpServlet {
 				out.write(result);
 				out.flush();
 			} else {
-				HttpMethods glue = EJBUtil.defaultLookup(HttpMethods.class);
+				HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
 			
 				invokeHttpRequest(glue, request, response);
 			}
@@ -422,7 +436,7 @@ public class XmlRpcServlet extends HttpServlet {
 		logRequest(request, "GET");
 		
 		try {
-			HttpMethods glue = EJBUtil.defaultLookup(HttpMethods.class);
+			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
 			invokeHttpRequest(glue, request, response);
 		} catch (HttpException e) {
 			logger.debug(e);

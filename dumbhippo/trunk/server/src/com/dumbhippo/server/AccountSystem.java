@@ -9,7 +9,6 @@ import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
-@BanFromWebTier
 @Local
 public interface AccountSystem {
 	

@@ -1,6 +1,11 @@
 package com.dumbhippo.web;
 
 import javax.annotation.EJB;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 
@@ -21,7 +26,7 @@ public class AddClientBean {
 	private TestGlue testGlue;
 	
 	public AddClientBean() {
-		testGlue = EJBUtil.defaultLookup(TestGlue.class);
+		testGlue = WebEJBUtil.defaultLookup(TestGlue.class);
 	}
 
 	public String getEmail() {
@@ -40,6 +45,19 @@ public class AddClientBean {
 		logger.debug("goBackTo = " + goBackTo);
 		this.goBackTo = goBackTo;
 	}
+
+	// FIXME this should go away
+	public static LoginCookie addNewClientForEmail(String email, HttpServletRequest request, HttpServletResponse response) {
+		TestGlue testGlue = WebEJBUtil.defaultLookup(TestGlue.class);
+		HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
+		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier(request));
+		LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
+		response.addCookie(loginCookie.getCookie());
+		HttpSession sess = request.getSession(false);
+		if (sess != null)
+			sess.invalidate();
+		return loginCookie;
+	}	
 	
 	public String doAddClient() {
 
@@ -49,10 +67,12 @@ public class AddClientBean {
 			logger.debug("no email filled in");
 			return null;
 		}
-			
-		HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
-		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier());
-		SigninBean.setCookie(account.getOwner().getId(), authKey);
+		
+		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
+		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
+		HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
+				
+		addNewClientForEmail(email, req, response);
 
 		if (goBackTo != null) {
 			logger.debug("sending back to " + goBackTo);
