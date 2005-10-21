@@ -61,6 +61,7 @@ public class HippoAuthProvider implements
 				// FIXME this is not a secure password; the idea is that 
 				// in a production build the admin user is disabled...
 	            String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
+				Log.debug("trying to auth admin, expected " + anticipatedDigest);	            
 	            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
 	                throw new UnauthorizedException("Bad admin password");
 	            }
@@ -70,5 +71,7 @@ public class HippoAuthProvider implements
 			if (glue.authenticateJabberUser(username, token, digest))
 				throw new UnauthorizedException("Not authorized");
 		}
-	}
+		Log.debug("auth succeeded for user " + username);
+	}		
 }
+	
