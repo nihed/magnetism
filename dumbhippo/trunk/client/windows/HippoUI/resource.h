@@ -8,6 +8,7 @@
 #define IDS_APP_TITLE                   103
 #define IDM_ABOUT                       104
 #define IDI_DUMBHIPPO                   104
+#define IDI_DUMBHIPPO_DEBUG             204
 #define IDM_EXIT                        105
 #define IDC_HIPPOUI                     109
 #define IDM_SHARE0                      110

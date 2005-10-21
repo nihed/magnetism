@@ -9,9 +9,11 @@
 #include <glib.h>
 
 static const WCHAR *DUMBHIPPO_SUBKEY = L"Software\\DumbHippo\\Client";
+static const WCHAR *DUMBHIPPO_SUBKEY_DEBUG = L"Software\\DumbHippo\\DebugClient";
 
-HippoPreferences::HippoPreferences()
+HippoPreferences::HippoPreferences(bool debug)
 {
+    debug_ = debug;
     signIn_ = true;
 
     load();
@@ -143,7 +145,8 @@ HippoPreferences::load()
     LONG result;
     HKEY key;
 
-    result = RegOpenKeyEx(HKEY_CURRENT_USER, DUMBHIPPO_SUBKEY,
+    result = RegOpenKeyEx(HKEY_CURRENT_USER, 
+	                  debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY,
 	                  0, KEY_READ, 
 	    	          &key);
     if (result != ERROR_SUCCESS)
@@ -193,7 +196,9 @@ HippoPreferences::save(void)
     LONG result;
     HKEY key;
 
-    result = RegCreateKeyEx(HKEY_CURRENT_USER, DUMBHIPPO_SUBKEY, NULL, NULL, 
+    result = RegCreateKeyEx(HKEY_CURRENT_USER, 
+	                    debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY, 
+	                    NULL, NULL, 
 			    REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
 			    &key, NULL);
     if (result != ERROR_SUCCESS)

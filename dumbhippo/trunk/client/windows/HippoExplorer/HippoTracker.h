@@ -55,9 +55,14 @@ private:
     HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2
     DWORD connectionCookie_; // cookie for DWebBrowserEvents2 connection
     HippoPtr<ITypeInfo> eventsTypeInfo_;
+
     HippoPtr<IHippoUI> ui_;
     DWORD registerCookie_;
     bool registered_;
+
+    HippoPtr<IHippoUI> debugUi_;
+    DWORD debugRegisterCookie_;
+    bool debugRegistered_;
 
     HWND window_;
     UINT uiStartedMessage_;

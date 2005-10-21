@@ -10,9 +10,13 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 
-// We redefine this here to avoid a dependency on the HippoUI project
+// We redefine these here to avoid a dependency on the HippoUI project
 static const CLSID CLSID_HippoUI = {
     0xfd2d3bee, 0x477e, 0x4625, 0xb3, 0x5f, 0xbf, 0x49, 0x7f, 0xf6, 0x1, 0xd9
+};
+
+static const CLSID CLSID_HippoUI_Debug = {
+    0xee8e46eb, 0xcdc7, 0x4f89, 0xa8, 0xae, 0xaf, 0x9, 0x94, 0x6c, 0x96, 0x85
 };
 
 // Window class for our notification window
@@ -28,6 +32,7 @@ HippoTracker::HippoTracker(void)
 	typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
 
     registered_ = false;
+    debugRegistered_ = false;
 
     uiStartedMessage_ = RegisterWindowMessage(TEXT("HippoUIStarted"));
 
@@ -199,6 +204,14 @@ HippoTracker::registerBrowser()
 	if (FAILED (hr))
 	    registered_ = false;
     }
+
+
+    if (!debugRegistered_ && debugUi_ && site_) {
+        debugRegistered_ = true;
+	HRESULT hr = debugUi_->RegisterBrowser(site_, &debugRegisterCookie_); // may reenter
+	if (FAILED (hr))
+	    debugRegistered_ = false;
+    }
 }
 
 void
@@ -208,21 +221,28 @@ HippoTracker::unregisterBrowser()
 	registered_ = false;
 	ui_->UnregisterBrowser(registerCookie_); // May recurse
     }
+
+    if (debugRegistered_) {
+	debugRegistered_ = false;
+	debugUi_->UnregisterBrowser(debugRegisterCookie_); // May recurse
+    }
 }
 
 void
 HippoTracker::updateBrowser()
 {
-    if (registered_) {
-	HippoBSTR url;
-	HippoBSTR name;
-		     
-	if (SUCCEEDED(site_->get_LocationURL(&url)) &&
-	    SUCCEEDED(site_->get_LocationName(&name)) &&
-	    url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
-	{
+    HippoBSTR url;
+    HippoBSTR name;
+
+    if (site_ &&
+	SUCCEEDED(site_->get_LocationURL(&url)) &&
+        SUCCEEDED(site_->get_LocationName(&name)) &&
+        url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
+    {
+	if (registered_)
     	    ui_->UpdateBrowser(registerCookie_, url, name);
-	}
+	if (debugRegistered_)
+	    debugUi_->UpdateBrowser(debugRegisterCookie_, url, name);
     }
 }
 
@@ -251,6 +271,9 @@ HippoTracker::clearUI()
  
     if (ui_)
 	ui_ = NULL;
+    if (debugUi_)
+	debugUi_ = NULL;
+
 }
 
 bool 
@@ -305,7 +328,11 @@ HippoTracker::onUIStarted(void)
     HippoPtr<IUnknown> unknown;
     if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
 	unknown->QueryInterface<IHippoUI>(&ui_);
-    
+
+    unknown = NULL;
+    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)))
+	unknown->QueryInterface<IHippoUI>(&debugUi_);
+
     registerBrowser();
     updateBrowser();
 }

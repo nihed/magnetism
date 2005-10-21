@@ -22,7 +22,7 @@ class HippoUI
     : public IHippoUI 
 {
 public:
-    HippoUI();
+    HippoUI(bool debug);
     ~HippoUI();
 
     //IUnknown methods
@@ -90,6 +90,10 @@ private:
 
 
 private:
+    // If true, this is a debug instance, acts as a separate global
+    // singleton and has a separate registry namespace
+    bool debug_;
+
     DWORD refCount_;
     HINSTANCE instance_;
     HWND window_;

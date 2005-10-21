@@ -8,7 +8,7 @@
 class HippoPreferences
 {
 public:
-    HippoPreferences();
+    HippoPreferences(bool debug);
 
     HRESULT getMessageServer(BSTR *server);
     void setMessageServer(BSTR server);
@@ -37,6 +37,9 @@ private:
     void saveBool(HKEY         key,
 	          const WCHAR *valueName, 
 		  bool         value);
+
+    // Whether to use a separate debug registry section
+    bool debug_;
 
     HippoBSTR messageServer_;
     HippoBSTR webServer_;

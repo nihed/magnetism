@@ -28,7 +28,7 @@ using namespace MSHTML;
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
-HippoUI::HippoUI()
+HippoUI::HippoUI(bool debug) : preferences_(debug)
 {
     refCount_ = 1;
 
@@ -192,11 +192,12 @@ bool
 HippoUI::create(HINSTANCE instance)
 {
     instance_ = instance;
-
-    smallIcon_ = (HICON)LoadImage(instance_, MAKEINTRESOURCE(IDI_DUMBHIPPO),
+    
+    TCHAR *icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG : IDI_DUMBHIPPO);
+    smallIcon_ = (HICON)LoadImage(instance_, icon,
 	                          IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-    bigIcon_ = (HICON)LoadImage(instance_, MAKEINTRESOURCE(IDI_DUMBHIPPO),
-	                        IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+    bigIcon_ = (HICON)LoadImage(instance_, icon,
+			        IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
 
     menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
 
@@ -403,9 +404,12 @@ bool
 HippoUI::registerActive()
 {
     IHippoUI *pHippoUI;
+
  
     QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
-    HRESULT hr = RegisterActiveObject(pHippoUI, CLSID_HippoUI, ACTIVEOBJECT_STRONG, &registerHandle_);
+    HRESULT hr = RegisterActiveObject(pHippoUI, 
+	                              debug_ ? CLSID_HippoUI_Debug : CLSID_HippoUI,
+				      ACTIVEOBJECT_STRONG, &registerHandle_);
     pHippoUI->Release();
 
     if (FAILED(hr)) {
@@ -902,6 +906,32 @@ WinMain(HINSTANCE hInstance,
     GMainLoop *loop;
     GSource *source;
     int result;
+    int argc;
+    char **argv;
+
+    static gboolean debug = FALSE;
+
+    char *command_line = GetCommandLineA();
+    GError *error = NULL;
+
+    if (!g_shell_parse_argv(command_line, &argc, &argv, &error)) {
+	g_printerr("%s\n", error->message);
+	return 1;
+    }
+
+    static const GOptionEntry entries[] = {
+	{ "debug", 'd', 0, G_OPTION_ARG_NONE,(gpointer)&debug, "Run in debug mode" },
+	{ NULL }
+    };
+
+    GOptionContext *context = g_option_context_new("The dumbhippo.com notification icon");
+    g_option_context_add_main_entries(context, entries, NULL);
+
+    g_option_context_parse(context, &argc, &argv, &error);
+    if (error) {
+	g_printerr("%s\n", error->message);
+	return 1;
+    }
 
     // Initialize COM
     CoInitialize(NULL);
@@ -909,7 +939,7 @@ WinMain(HINSTANCE hInstance,
     if (!initializeWinSock())
 	return 0;
 
-    ui = new HippoUI();
+    ui = new HippoUI(debug != FALSE);
     if (!ui->create(hInstance))
 	return 0;
 
