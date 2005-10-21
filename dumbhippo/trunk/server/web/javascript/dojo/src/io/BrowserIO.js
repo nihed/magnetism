@@ -170,7 +170,14 @@ dojo.io.XMLHTTPTransport = new function(){
 				ret = http.responseXML;
 				if(!ret || typeof ret == "string") {
 					ret = dojo.dom.createDocumentFromText(http.responseText);
+				} else {
+					try {
+						var ignored = ret.doctype; // throws on firefox when not same origin
+					} catch (e) {
+						ret = dojo.dom.createDocumentFromText(http.responseText);
+					}
 				}
+						
 			}else{
 				ret = http.responseText;
 			}

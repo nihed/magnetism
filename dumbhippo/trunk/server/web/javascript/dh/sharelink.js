@@ -18,20 +18,20 @@ dojo.require("dh.util");
 dojo.require("dh.model");
 
 // hash of all persons we have ever loaded up, keyed by personId
-dh.sharelink.allKnownPersons = {}
+dh.sharelink.allKnownPersons = {};
 // currently selected recipients
-dh.sharelink.selectedRecipients = []
+dh.sharelink.selectedRecipients = [];
 
 dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
 
-dh.sharelink.findPerson = function(obj, id) {
+dh.sharelink.findPerson = function(persons, id) {
 	// obj can be an array or a hash
-	for (var prop in obj) {
-		//dojo.debug("looking for " + id + " on prop " + prop + " in obj " + obj);
-		if (dojo.lang.has(obj[prop], "id")) {
-			if (id == obj[prop]["id"]) {
+	for (var prop in persons) {
+		//dojo.debug("looking for " + id + " on prop " + prop + " in persons obj " + persons);
+		if (dojo.lang.has(persons[prop], "id")) {
+			if (id == persons[prop]["id"]) {
 				return prop;
 			}
 		}
@@ -62,9 +62,56 @@ dhRemoveRecipientClicked = function(event) {
 	node.parentNode.removeChild(node);
 }
 
-dh.sharelink.doAddRecipient = function() {
-	//alert(dh.sharelink.recipientComboBox.comboBoxValue + ", value=" + dh.sharelink.recipientComboBox.comboBoxSelectionValue);
-	var selectedId = dh.sharelink.recipientComboBox.comboBoxSelectionValue;
+dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
+	var cb = dh.sharelink.recipientComboBox;
+	var previousValue = cb.textInputNode.value;
+			
+	cb.dataProvider.getResults(previousValue,	
+							function(completions) {
+								if (previousValue != cb.textInputNode.value) {
+									// the user typed or deleted or something since we 
+									// sent the request; so abort and do nothing
+									return;
+								}
+							
+								if (completions.length == 0) {
+									alert("Don't know who " + previousValue + " is...");
+									return;
+								} 
+								
+								var filtered = dh.sharelink.copyCompletions(completions, true);
+								
+								if (filtered.length > 1) {
+									// ambiguous, pop up combo completer ... better thing to do?
+									if (!fromKeyPress) {
+										cb.dataProvider.emitProvideSearchResults(filtered, previousValue);
+									} else {
+										// Dojo calls hideResultList() in its key handler, we need 
+										// a better plan here...
+										var all = "";
+										for (var i = 0; i < filtered.length; ++i) {
+											if (i != 0) {
+												all = all + ", ";
+											}
+											all = all + filtered[i][0];
+										}
+										alert("Not sure which of these you mean: " + all);
+									}
+								} else if (filtered.length == 1) {
+									var recipientId = filtered[0][1];
+									dojo.debug("got single completion back, " + recipientId);
+									dh.sharelink.doAddRecipient(recipientId);
+								} else {
+									// filtered.length == 0 and completions.length > 0
+									alert("already added them");
+								}
+							});
+}
+
+dh.sharelink.doAddRecipient = function(selectedId) {	
+	
+	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
+	
 	var personKey = dh.sharelink.findPerson(dh.sharelink.allKnownPersons, selectedId);
 	if (!personKey) {
 		// FIXME display something, this is the validation step
@@ -91,15 +138,18 @@ dh.sharelink.doAddRecipient = function() {
 		personNode.appendChild(removeButtonNode);
 		var recipientsListNode = document.getElementById("dhRecipientList");
 		recipientsListNode.appendChild(personNode);
+	} else {
+		alert("already added them");
 	}
 	
 	// clear the combo again
 	dh.sharelink.recipientComboBox.textInputNode.value = "";
+	dh.sharelink.recipientComboBox.dataProvider.lastSearchProvided = null;
 }
 
-dhDoAddRecipientKeyPress = function(event) {
+dhDoAddRecipientKeyUp = function(event) {
 	if (event.keyCode == 13) {
-		dh.sharelink.doAddRecipient();
+		dh.sharelink.doAddRecipientFromCombo(true);
 	}
 }
 
@@ -208,19 +258,70 @@ dh.sharelink.stateNames = [
 	["Wyoming","WY"]
 ];
 
+dh.sharelink.copyCompletions = function(completions, filterSelected) {
+	// second arg is optional
+	if (arguments.length < 2) {
+		arguments.push(false);
+	}
+
+	var copy = [];
+	for (var i = 0; i < completions.length; ++i) {
+		if (filterSelected && dh.sharelink.findPerson(dh.sharelink.selectedRecipients,
+							                           completions[i][1])) {
+			continue;
+		}
+		
+		copy.push([ completions[i][0], completions[i][1] ]);
+	}
+	return copy;
+}
+
 dh.sharelink.FriendListProvider = function() {
 
-	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD"
-	this.startSearch = function(searchStr, type, ignoreLimit) {
-		//dojo.debug("friend startSearch");
-		var _this = this;
+	// completions we are working on, hash from search string to array of resultsFunc
+	this.pendingCompletions = {};
+
+	// all completions we have done, hash from the search string to the provideSearchResults arg
+	this.allKnownCompletions = {};
+
+	this.lastSearchProvided = null;
+
+	this.notifyPending = function(searchStr, completions) {
+		dojo.debug("notifying of completion to " + searchStr);
+		var pending = this.pendingCompletions[searchStr];
+		delete this.pendingCompletions[searchStr];
+		for (var i = 0; i < pending.length; ++i) {
+			pending[i](completions);
+		}
+	}
+
+	// resultsFunc should NOT mutate the returned results, unlike the Dojo signal 
+	// handler on provideSearchResults()
+	this.getResults = function(searchStr, resultsFunc) {
+
+		if (dojo.lang.has(this.allKnownCompletions, searchStr)) {
+			dojo.debug("using cached result for " + searchStr);
+			resultsFunc(this.allKnownCompletions[searchStr]);
+			return;
+		}
+
+		if (dojo.lang.has(this.pendingCompletions, searchStr)) {
+			dojo.debug("adding another resultsFunc for " + searchStr);
+			this.pendingCompletions[searchStr].push(resultsFunc);
+			return;
+		}
+
+		dojo.debug("creating first results query for " + searchStr);
+		this.pendingCompletions[searchStr] = [resultsFunc];
 		
+		var _this = this;
+				
 		dh.server.getXmlGET("friendcompletions",
 							{ "entryContents" : searchStr },
 							function(type, data, http) {
 								dojo.debug("friendcompletions got back data " + data);
 								//dojo.debug("text is : " + http.responseText);
-								dojo.debug(data.doctype);
+								//dojo.debug(data.doctype);
 								
 								var completions = [];
 								
@@ -237,20 +338,55 @@ dh.sharelink.FriendListProvider = function() {
 
 									// merge in a new person we know about, overwriting any older data
 									dh.sharelink.allKnownPersons[person.id] = person;
+									
+									// save cached completions
+									_this.allKnownCompletions[searchStr] = completions;
 								}
-								
-								_this.provideSearchResults(completions);
+
+								_this.notifyPending(searchStr, completions);
 							},
 							function(type, error, http) {
 								dojo.debug("friendcompletions got back error " + dhAllPropsAsString(error));
+								_this.notifyPending(searchStr, []);
+								
+								// note that we don't cache an empty result set, we will retry instead...
 							});
 	}
 
+	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD"
+	this.startSearch = function(searchStr, type, ignoreLimit) {
+		//dojo.debug("friend startSearch");
+		
+		var _this = this;
+
+		this.getResults(searchStr, function(completions) {
+			// dojo "eats" the completions so we have to copy them (we need to filter anyhow)
+			dh.sharelink.lastSearchProvidedToComboBox = searchStr;
+			_this.emitProvideSearchResults(dh.sharelink.copyCompletions(completions, true), searchStr);
+		});
+	}
+
 	// a "signal", pass it an array of 2-item arrays, where the pairs
-	// are ???? ; BEWARE dojo destroys this array so pass it a copy
+	// are usercompletion+ourselectionid ; BEWARE dojo destroys this array so pass it a copy
 	// if you are also keeping a reference
 	this.provideSearchResults = function(resultsDataPairs) {
-		//dojo.debug("friend provideSearchResults results = " + resultsDataPairs);
+		dojo.debug("friend provideSearchResults results = " + resultsDataPairs);
+	}
+	
+	this.emitProvideSearchResults = function(resultsDataPairs, forSearchStr) {
+	
+		// HtmlComboBox should probably do this itself... working around it
+	
+		dojo.debug("lastSearchProvided -" + this.lastSearchProvided + "- forSearchStr -" + forSearchStr + "-");
+	
+		if (this.lastSearchProvided == forSearchStr) {
+			// just show the list.
+			dh.sharelink.recipientComboBox.showResultList(); // is a no-op if already showing
+		} else {
+			dojo.debug("providing search results to the combo for '" + forSearchStr + "' results are " + resultsDataPairs);
+			this.lastSearchProvided = forSearchStr;
+			this.provideSearchResults(resultsDataPairs);
+		}
 	}
 }
 dojo.inherits(dh.sharelink.FriendListProvider, Object);
@@ -288,7 +424,7 @@ dh.sharelink.init = function() {
 		}
 	
 		dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
-		dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyPress");
+		dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
 		
 		// most of the dojo is set up now, so show the widgets
 		dh.util.showId("dhShareLinkForm");
