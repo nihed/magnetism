@@ -18,8 +18,8 @@ import com.dumbhippo.server.PostingBoard;
  * 
  */
 
-public class PersonPostView {
-	static private final Log logger = GlobalSetup.getLog(PersonPostView.class);	
+public class ViewPersonPage {
+	static private final Log logger = GlobalSetup.getLog(ViewPersonPage.class);	
 	
 	private Person viewedPerson;
 	private String viewedPersonId;
@@ -29,7 +29,7 @@ public class PersonPostView {
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;	
 	
-	public PersonPostView() throws NamingException {
+	public ViewPersonPage() throws NamingException {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
@@ -55,6 +55,10 @@ public class PersonPostView {
 		this.viewedPerson = person;
 		this.viewedPersonId = person.getId();
 		logger.debug("viewing person: " + this.viewedPersonId);
+	}
+	
+	public String getName() {
+		return viewedPerson.getName().toString();
 	}
 
 	public void setViewedPersonId(String viewedPersonId) throws ParseException {

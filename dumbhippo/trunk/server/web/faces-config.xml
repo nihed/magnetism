@@ -37,8 +37,8 @@
          <redirect/>
       </navigation-case>
       <navigation-case>
-         <from-outcome>blog</from-outcome>
-         <to-view-id>/jsf/blog.jsp</to-view-id>
+         <from-outcome>viewperson</from-outcome>
+         <to-view-id>/jsf/viewperson.jsp</to-view-id>
          <redirect/>
       </navigation-case>      
    </navigation-rule>
@@ -100,8 +100,8 @@
    </managed-bean>
    
    <managed-bean> 
-      <managed-bean-name>personpostview</managed-bean-name>
-      <managed-bean-class>com.dumbhippo.web.PersonPostView</managed-bean-class> 
+      <managed-bean-name>viewperson</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.ViewPersonPage</managed-bean-class> 
       <managed-bean-scope>request</managed-bean-scope>
       <managed-property>
         <property-name>signin</property-name>

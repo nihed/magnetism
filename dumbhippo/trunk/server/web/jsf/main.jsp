@@ -41,10 +41,9 @@
    		
         <p>
    		<h:panelGroup rendered="#{signin.valid}">
-			<h:commandLink action="blog">
-				<f:param name="personId" value="#{signin.user.id}"/>
-				  <h:outputText value="View your blog" />
-			   </h:commandLink>
+			<h:commandLink action="viewperson">
+				<h:outputText value="Overview page for #{signin.user.name}" />
+			</h:commandLink>
    		</h:panelGroup>
    		</p>   		
 
