@@ -12,7 +12,7 @@
         	apparently, "update" means "don't blow away tables,
             unless the schema changed, then blow them away" -->
         <property name="hibernate.hbm2ddl.auto"
-              value="create-drop"/>
+              value="update"/>
               
         <!-- Without this, hbm2ddl will create hosed-up sql 
              for creating the tables and you'll get bizarre
