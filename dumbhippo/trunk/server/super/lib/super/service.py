@@ -139,7 +139,18 @@ class Service:
         
     def console(self):
         consoleCommand = self.expand_parameter('consoleCommand')
-        return os.system(consoleCommand) == 0	
+        return os.system(consoleCommand) == 0
+
+    def has_nuke(self):
+        try:
+            self.expand_parameter('nukeCommand')
+            return True
+        except KeyError, e:
+            return False
+        
+    def nuke(self):
+        nukeCommand = self.expand_parameter('nukeCommand')
+        return os.system(nukeCommand) == 0	
 
     def _clean_recurse(self, path, fullpath):
         # Worker function for clean()

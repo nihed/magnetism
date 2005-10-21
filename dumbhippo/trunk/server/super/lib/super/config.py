@@ -166,22 +166,38 @@ class Config:
             print >>sys.stderr, "Welcome to the Dumb Hippo Nostril"
             choice = ''
             console_svcs = []
+            nuke_svcs = []
             for svc_name in self.services:
                 service = self.services[svc_name]
                 if service.has_console():
                     console_svcs.append(service)
+                if service.has_nuke():
+                    nuke_svcs.append(service)
             while choice != 'q':
                 print >>sys.stderr, "Available actions:"
                 cmdidx = 1
+                actions={}
                 for svc in console_svcs:
                     print >>sys.stderr, " [%d] Launch %s console" %(cmdidx, svc.get_name())
+                    actions[cmdidx] = ('console', svc)
                     cmdidx = cmdidx + 1
-                    print >>sys.stderr, " [q] Quit"
-                    choice = sys.stdin.readline()
-                    choice = choice.strip()
+                for svc in nuke_svcs:
+                    print >>sys.stderr, " [%d] Nuke state for %s" %(cmdidx, svc.get_name())
+                    actions[cmdidx] = ('nuke', svc)                    
+                    cmdidx = cmdidx + 1                    
+                print >>sys.stderr, " [q] Quit"
+                choice = sys.stdin.readline()
+                choice = choice.strip()
                 if choice != 'q':
-                    svc = console_svcs[int(choice)-1]
-                    svc.console()
+                    (action, svc) = actions[int(choice)]
+                    if action == 'console':
+                        svc.console()
+                    elif action == 'nuke':
+                        print >>sys.stderr, "Really nuke state for %s? [N/y]" %(svc.get_name())
+                        ans = sys.stdin.readline()
+                        ans = ans.strip()
+                        if ans == 'y':
+                            svc.nuke()
 
     def add_service(self, service):
         """Add service to the list of services."""
