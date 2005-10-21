@@ -1,5 +1,6 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.EJBUtil;
 
 public class WebEJBUtil {
@@ -7,6 +8,10 @@ public class WebEJBUtil {
 		if (clazz.isAnnotationPresent(BanFromWebTier.class)) {
 			throw new RuntimeException("Class " + clazz.getCanonicalName() + " has BanFromWebTier annotation");
 		}
+		return uncheckedDefaultLookup(clazz);
+	}
+	
+	public static <T> T uncheckedDefaultLookup(Class<T> clazz) {
 		return EJBUtil.defaultLookup(clazz);
 	}
 }

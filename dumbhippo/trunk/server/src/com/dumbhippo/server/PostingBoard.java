@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -12,7 +13,9 @@ import com.dumbhippo.persistence.Resource;
 @Local
 public interface PostingBoard {
 	
-	public Set<Post> getPostedURLsFor(Person poster);
+	public List<Post> getPostsFor(Person poster, int max);
+	
+	public List<String> getPostedUrlsFor(Person poster, int max);
 	
 	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids) throws ParseException;
 	

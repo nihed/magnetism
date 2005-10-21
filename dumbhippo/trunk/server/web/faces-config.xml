@@ -36,6 +36,11 @@
          <to-view-id>/jsf/invite.jsp</to-view-id>
          <redirect/>
       </navigation-case>
+      <navigation-case>
+         <from-outcome>blog</from-outcome>
+         <to-view-id>/jsf/blog.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>      
    </navigation-rule>
    <navigation-rule>
       <from-view-id>/jsf/invite.jsp</from-view-id>
@@ -95,6 +100,20 @@
    </managed-bean>
    
    <managed-bean> 
+      <managed-bean-name>personpostview</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.PersonPostView</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+        <property-name>signin</property-name>
+        <value>#{signin}</value>
+      </managed-property>
+      <managed-property>
+        <property-name>viewedPersonId</property-name>
+        <value>#{param.viewedPersonId}</value>
+      </managed-property>      
+   </managed-bean>   
+   
+   <managed-bean> 
       <managed-bean-name>addclient</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.AddClientBean</managed-bean-class> 
       <managed-bean-scope>request</managed-bean-scope>
@@ -102,7 +121,7 @@
         <!-- faces action to go to afterword -->
         <property-name>goBackTo</property-name>
         <value>#{param.goBackTo}</value>
-      </managed-property>
+      </managed-property>      
    </managed-bean>   
    
    <managed-bean> 

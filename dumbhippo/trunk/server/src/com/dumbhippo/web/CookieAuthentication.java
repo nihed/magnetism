@@ -79,7 +79,9 @@ public class CookieAuthentication {
 	 * @throws NotLoggedInException
 	 */
 	public static Person authenticate(String personId, String authKey) throws BadTastingException, NotLoggedInException {
-		AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
+		// This should be one of the only classes in web tier 
+		// using account system
+		AccountSystem accountSystem = WebEJBUtil.uncheckedDefaultLookup(AccountSystem.class);
 		
 		HippoAccount account = accountSystem.lookupAccountByPersonId(personId);
 

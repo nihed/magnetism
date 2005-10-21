@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -16,9 +17,12 @@ public class Post extends GuidPersistable {
 	private Person poster;
 	private String explicitTitle;
 	private String text;
+	private Date postDate;
 	private Set<Person> recipients;
 	private Set<Resource> resources;
 
+	protected Post() {}
+	
 	/**
 	 * @param poster
 	 * @param explicitTitle
@@ -32,6 +36,7 @@ public class Post extends GuidPersistable {
 		this.text = text;
 		this.recipients = recipients;
 		this.resources = resources;
+		this.postDate = new Date();
 	}
 	
 	@ManyToOne
@@ -84,6 +89,14 @@ public class Post extends GuidPersistable {
 		} else {
 			return "";
 		}
+	}
+
+	protected Date getPostDate() {
+		return postDate;
+	}
+
+	protected void setPostDate(Date postDate) {
+		this.postDate = postDate;
 	}
 
 }

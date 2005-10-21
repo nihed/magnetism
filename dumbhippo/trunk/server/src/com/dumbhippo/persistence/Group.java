@@ -11,6 +11,8 @@ public class Group extends GuidPersistable {
 	private Set<Person> members;
 	private boolean markedForDelete;
 	
+	protected Group() {}
+	
 	public Group(String name) {
 		this.name = name;
 	}

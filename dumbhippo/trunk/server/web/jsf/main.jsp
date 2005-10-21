@@ -20,9 +20,8 @@
 			<h:outputText value="Invite a user" />
 		</h:commandLink></p>
 
-		<p><h:commandLink action="sharelink">
-			<h:outputText value="Share a link" />
-		</h:commandLink></p>
+		<c:url value="/sharelink.html" var="sharelinkurl"/>
+		<p><a href="${sharelinkurl}"><h:outputText value="Share a link" /></a></p>
 		
  		<p>
   		<h:panelGroup rendered="#{signin.valid}">
@@ -39,6 +38,15 @@
 			   </h:commandLink>
    		</h:panelGroup>
    		</p>
+   		
+        <p>
+   		<h:panelGroup rendered="#{signin.valid}">
+			<h:commandLink action="blog">
+				<f:param name="personId" value="#{signin.user.id}"/>
+				  <h:outputText value="View your blog" />
+			   </h:commandLink>
+   		</h:panelGroup>
+   		</p>   		
 
 		</h3>
    
