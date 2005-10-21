@@ -15,6 +15,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -50,9 +51,12 @@ public class PostingBoardBean implements PostingBoard {
 		return recipients;
 	}
 	
-	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids) {
+	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids) throws ParseException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
+		
+		// this is what can throw ParseException
 		Set<Person> recipients = guidSetToPerson(Guid.parseStrings(recipientGuids));
+
 		// if this throws we shouldn't send out notifications
 		Post post = createPost(poster, title, text, shared, recipients);
 		

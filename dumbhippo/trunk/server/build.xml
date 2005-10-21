@@ -153,6 +153,7 @@
 			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
 			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
 			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
 			
 			<!-- our static pages, css, etc. -->
 			<fileset dir="${web}" includes="*.html" />

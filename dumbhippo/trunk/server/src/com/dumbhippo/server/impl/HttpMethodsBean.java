@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
@@ -87,8 +89,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(xml.toString().getBytes());
 	}
 	
-	public void doShareLink(Person user, String url, String recipientIds, String description) {
-		Set<String> recipientGuids = new HashSet<String>(Arrays.asList(recipientIds.split(",")));
-		postingBoard.createURLPost(user, null, description, url, recipientGuids);			
+	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException {
+		Set<String> recipientGuids;
+		
+		// string.split returns a single empty string if the string we split is length 0, unfortunately
+		if (recipientIds.length() > 0) {
+			recipientGuids = new HashSet<String>(Arrays.asList(recipientIds.split(",")));
+		} else {
+			recipientGuids = Collections.emptySet();
+		}
+		postingBoard.createURLPost(user, null, description, url, recipientGuids);
 	}
 }

@@ -37,6 +37,16 @@ final public class Guid implements Serializable {
 
 	transient private long[] components;
 
+	public static class ParseException extends Exception {
+		private static final long serialVersionUID = 0L;
+		public ParseException(String message, Throwable cause) {
+			super(message, cause);
+		}
+		public ParseException(String message) {
+			super(message);
+		}
+	}
+	
 	private void writeObject(java.io.ObjectOutputStream out)
     	throws IOException {
 		out.defaultWriteObject();
@@ -49,7 +59,11 @@ final public class Guid implements Serializable {
 		in.defaultReadObject();
 		
 		String s = in.readUTF();
-		initFromString(s);
+		try {
+			initFromString(s);
+		} catch (ParseException e) {
+			throw new IOException("invalid GUID value: " + s);
+		}
 	}
 	
 	public static Guid createNew() {
@@ -96,16 +110,16 @@ final public class Guid implements Serializable {
 		components = source.components.clone();
 	}
 
-	private void initFromString(String string) throws IllegalArgumentException {
+	private void initFromString(String string) throws ParseException {
 		if (string.length() != STRING_LENGTH)
-			throw new IllegalArgumentException(String.format(
-					"String form of GUID must have %d characters",
-					STRING_LENGTH));
+			throw new ParseException(String.format(
+					"String form of GUID must have %d characters but this string has %d",
+					STRING_LENGTH, string.length()));
 
 		components = hexDecode(string);
 	}
 	
-	public Guid(String string) throws IllegalArgumentException {
+	public Guid(String string) throws ParseException {
 		initFromString(string);
 	}
 
@@ -137,7 +151,7 @@ final public class Guid implements Serializable {
 		return true;
 	}
 
-	public static Set<Guid> parseStrings(Set<String> strs) {
+	public static Set<Guid> parseStrings(Set<String> strs) throws ParseException {
 		Set<Guid> guids = new HashSet<Guid>(strs.size());	
 		for (String str : strs) {
 			guids.add(new Guid(str));
@@ -172,9 +186,9 @@ final public class Guid implements Serializable {
 		return new String(hex);
 	}
 
-	static private long[] hexDecode(String s) throws IllegalArgumentException {
+	static private long[] hexDecode(String s) throws ParseException {
 		if ((s.length() % CHARS_PER_LONG) != 0)
-			throw new IllegalArgumentException(
+			throw new ParseException(
 					"Bad string length passed to hexDecode");
 
 		// two hex chars per byte, e.g. "ff"
@@ -191,7 +205,7 @@ final public class Guid implements Serializable {
 					assert (b <= 0xff); // shouldn't be possible to put more in
 										// 2 chars
 				} catch (NumberFormatException e) {
-					throw new IllegalArgumentException(
+					throw new ParseException(
 							"Could not parse byte in GUID", e);
 				}
 				value = value | (b << (j * 8));

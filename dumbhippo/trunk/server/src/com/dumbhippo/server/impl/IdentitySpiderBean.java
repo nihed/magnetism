@@ -17,6 +17,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -192,7 +193,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (result == null) {
 			logger.debug("Creating theman@dumbhippo.com");
 			EmailResource resource = getEmail(theManEmail);
-			result = new Person(new Guid(theManGuid));
+			try {
+				result = new Person(new Guid(theManGuid));
+			} catch (ParseException e) {
+				throw new RuntimeException("Guid could not parse theManGuid, should never happen");
+			}
 			em.persist(result);
 			ResourceOwnershipClaim claim = new ResourceOwnershipClaim(result, resource, result);
 			em.persist(claim);

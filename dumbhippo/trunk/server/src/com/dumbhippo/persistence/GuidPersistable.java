@@ -12,6 +12,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.Transient;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -72,7 +73,13 @@ public abstract class GuidPersistable implements Serializable {
 	 * @param hexId the hex GUID to set
 	 */
 	public void setId(String hexId) {
-		setGuid(new Guid(hexId));
+		try {
+			setGuid(new Guid(hexId));
+		} catch (ParseException e) {
+			// this really, really should not happen; because 
+			// setId should only be called by hibernate and we should not 
+			// have an invalid Guid in the database
+			throw new IllegalStateException("Invalid Guid " + hexId + " in the database????", e);
+		}
 	}
-
 }

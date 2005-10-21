@@ -118,30 +118,28 @@ public class XmlRpcServlet extends HttpServlet {
 	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out, HttpResponseData replyContentType, HttpParams paramsAnnotation, Method m) throws HttpException {
 		Class<?> args[] = m.getParameterTypes();
 
-		boolean methodCanReturnContent = OutputStream.class.isAssignableFrom(args[0]);
-		
-		if (replyContentType != HttpResponseData.NONE) {
-			if (!methodCanReturnContent)
-				throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg 0 to return type " + replyContentType);
-			if (!HttpResponseData.class.isAssignableFrom(args[1])) {
-				throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg 1");
-			}
-		}
-		
 		ArrayList<Object> toPassIn = new ArrayList<Object>();
 		
 		int i = 0;
-		
-		if (args.length > 0 && Person.class.isAssignableFrom(args[0])) {
-			Person loggedIn = getLoggedInPerson(request);
-			toPassIn.add(loggedIn);
-			i += 1;
-		}
+				
+		boolean methodCanReturnContent = args.length > i && OutputStream.class.isAssignableFrom(args[i]);
 		
 		if (methodCanReturnContent) {
 			toPassIn.add(out);
+			i += 1;
+			if (!(args.length > i && HttpResponseData.class.isAssignableFrom(args[i]))) {
+				throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg " + i);
+			}
 			toPassIn.add(replyContentType);
-			i += 2;
+			i += 1;
+		} else if (replyContentType != HttpResponseData.NONE) {
+			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg " + i + " to return type " + replyContentType);
+		}
+		
+		if (args.length > i && Person.class.isAssignableFrom(args[i])) {
+			Person loggedIn = getLoggedInPerson(request);
+			toPassIn.add(loggedIn);
+			i += 1;
 		}
 		
 		if (args.length != i + paramsAnnotation.value().length) {

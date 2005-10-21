@@ -2,28 +2,19 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
-import javax.annotation.EJB;
 import javax.ejb.Local;
-import javax.ejb.Stateless;
 
-import org.apache.commons.logging.Log;
-
-import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.HttpResponseData;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PostingBoard;
 
+/** 
+ * - Methods must be named getFoo or doFoo
+ * - the args to a method are: OutputStream,HttpResponseData pair; Person logged in user; http params
+ * - the OutputStream,HttpResponseData can be omitted if you only return content type NONE
+ * - if you have the Person arg then you require login for the method to work
+ * 
+ */
 @Local
 public interface HttpMethods {
 	
@@ -33,5 +24,5 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams({"url", "recipients", "description"})	
-	public void doShareLink(Person user, String url, String recipientIds, String description);
+	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException;
 }

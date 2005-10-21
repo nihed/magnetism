@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.server.TestUtils;
 
 import junit.framework.TestCase;
@@ -32,14 +33,19 @@ public class GuidTest extends TestCase {
 	public void testGuidString() {
 		Guid guid = Guid.createNew();
 		String s = guid.toString();
-		Guid fromString = new Guid(s);
+		Guid fromString = null;
+		try {
+			fromString = new Guid(s);
+		} catch (ParseException e) {
+			// we'll fail below if this happens
+		}
 
 		assertTrue(guid.equals(fromString));
 
 		boolean gotException = false;
 		try {
 			fromString = new Guid("Not a valid guid");
-		} catch (IllegalArgumentException e) {
+		} catch (ParseException e) {
 			gotException = true;
 		} finally {
 			assertTrue(gotException);
@@ -51,7 +57,12 @@ public class GuidTest extends TestCase {
 	 */
 	public void testToString() {
 		Guid guid = Guid.createNew();
-		Guid copy = new Guid(guid.toString());
+		Guid copy = null;
+		try {
+			copy = new Guid(guid.toString());
+		} catch (ParseException e) {
+			// copy will be null and the below will fail
+		}
 		assertTrue(guid.equals(copy));
 		assertEquals(guid.toString().length(), Guid.STRING_LENGTH);
 	}
