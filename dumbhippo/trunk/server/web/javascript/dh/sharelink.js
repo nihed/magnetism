@@ -127,15 +127,37 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		
 		var personNode = document.createElement("div");
 		personNode.setAttribute("dhPersonId", person.id);
-		var labelNode = document.createElement("p");
-		labelNode.appendChild(document.createTextNode(person.displayName));
-		var removeButtonNode = document.createElement("input");
-		removeButtonNode.setAttribute("type", "button");
-		removeButtonNode.setAttribute("value", "Don't send to this loser");
-		removeButtonNode.setAttribute("class", "dhButton");
-		dojo.event.connect(removeButtonNode, "onclick", dj_global, "dhRemoveRecipientClicked");
-		personNode.appendChild(labelNode);
-		personNode.appendChild(removeButtonNode);
+		personNode.setAttribute("class", "person");
+		var table = document.createElement("table");
+		personNode.appendChild(table);
+		var tbody = document.createElement("tbody");
+		table.appendChild(tbody);
+		var tr1 = document.createElement("tr");
+		tbody.appendChild(tr1);
+		var td = document.createElement("td");
+		td.setAttribute("class", "headShot");
+		tr1.appendChild(td);
+		var img = document.createElement("img");
+		img.setAttribute("src", "http://planet.gnome.org/heads/nobody.png");
+		td.appendChild(img);
+		var td = document.createElement("td");
+		td.setAttribute("class", "removePerson");
+		tr1.appendChild(td);
+		var removeLink = document.createElement("a");
+		removeLink.appendChild(document.createTextNode("[X]"));
+		removeLink.setAttribute("href", "javascript:void(0);");
+		removeLink.setAttribute("class", "removePerson");
+		removeLink.setAttribute("rowSpan", "2");
+		dojo.event.connect(removeLink, "onclick", dj_global, "dhRemoveRecipientClicked");
+		td.appendChild(removeLink);
+		var tr2  = document.createElement("tr");
+		tbody.appendChild(tr2);
+		var td = document.createElement("td");
+		td.setAttribute("class","personName");
+		td.setAttribute("colSpan","2");
+		tr2.appendChild(td);
+		td.appendChild(document.createTextNode(person.displayName));
+
 		var recipientsListNode = document.getElementById("dhRecipientList");
 		recipientsListNode.appendChild(personNode);
 	} else {

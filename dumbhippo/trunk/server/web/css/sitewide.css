@@ -17,7 +17,6 @@
      * style, since it means "larger with respect to parent" 
      * i.e. each nested tag gets bigger
      */
-  	font-size:						large;
 	color:							#505050;
 	background-color:				white;
 }
@@ -29,15 +28,22 @@ body {
 }
 
 div {
-
+	margin:							0;
+	padding:						0;
 }
 
 form {
 	margin:							0;
 }
 
+table, tbody, tr, td {
+	margin:							0;
+	padding:						0;
+	vertical-align:						top;
+}
+
 .dhLabel, .dhLabel u {
-	font-size:						small;	
+	font-size:						smaller;
 }
 
 /* Style of the text being typed by the user */
@@ -45,7 +51,7 @@ textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
-	overflow:                       visible;
+	overflow:                       			visible;
 	width: 							25em;
 }
 
@@ -65,10 +71,22 @@ textarea, .dhTextArea {
 }
 
 .dhUrl {
-	margin-top:						1em;
+	margin-top:					1em;
 	margin-bottom:					1em;
-	color:							blue;
 	text-decoration:				underline;
+	text-overflow:					elipsis;
+}
+
+div.dhUrl * {
+	color:						blue;
+}
+
+a.editLabel {
+	color:						blue;	
+}
+
+form.inlineEditBox input[type=text] {
+	color:						blue;
 }
 
 /* Used for "this field needs fixing" messages */

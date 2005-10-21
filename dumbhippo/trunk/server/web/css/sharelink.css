@@ -10,6 +10,37 @@
 }
 
 /* list of people who will receive the link */
-.dhShareLinkRecipientList {
+#dhShareLinkRecipientList {
 	margin:							2em;
+}
+
+#dhRecipientList div {
+	width:						150px;
+	text-align:					center;
+	margin:						0.5em;
+	display:					inline;
+}
+#dhRecipientList div table {
+	border:						1px solid black;
+	width:						150px;
+	-moz-border-radius:				5px;
+}
+td.headShot {
+	text-align:					center;
+}
+td.removePerson {
+	text-align:					right;
+}
+a.removePerson {
+	color:						red;
+	font-weight:					bold;
+	text-decoration:				none;
+}
+a.removePerson:link {
+	color:						red;
+	font-weight:					bold;
+	text-decoration:				none;
+}
+td.personName {
+	font-size:					9pt;
 }
