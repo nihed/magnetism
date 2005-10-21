@@ -129,6 +129,17 @@ class Service:
     def status(self):
         statusCommand = self.expand_parameter('statusCommand')
         return os.system(statusCommand) == 0
+        
+    def has_console(self):
+        try:
+            self.expand_parameter('consoleCommand')
+            return True
+        except KeyError, e:
+            return False
+        
+    def console(self):
+        consoleCommand = self.expand_parameter('consoleCommand')
+        return os.system(consoleCommand) == 0	
 
     def _clean_recurse(self, path, fullpath):
         # Worker function for clean()

@@ -161,6 +161,27 @@ class Config:
                     print >>sys.stdout, "%s is running" % service_name
                 else:
                     print >>sys.stdout, "%s is stopped" % service_name
+                    
+        elif action == 'console':
+            print >>sys.stderr, "Welcome to the Dumb Hippo Nostril"
+            choice = ''
+            console_svcs = []
+            for svc_name in self.services:
+                service = self.services[svc_name]
+                if service.has_console():
+                    console_svcs.append(service)
+            while choice != 'q':
+                print >>sys.stderr, "Available actions:"
+                cmdidx = 1
+                for svc in console_svcs:
+                    print >>sys.stderr, " [%d] Launch %s console" %(cmdidx, svc.get_name())
+                    cmdidx = cmdidx + 1
+                    print >>sys.stderr, " [q] Quit"
+                    choice = sys.stdin.readline()
+                    choice = choice.strip()
+                if choice != 'q':
+                    svc = console_svcs[int(choice)-1]
+                    svc.console()
 
     def add_service(self, service):
         """Add service to the list of services."""
