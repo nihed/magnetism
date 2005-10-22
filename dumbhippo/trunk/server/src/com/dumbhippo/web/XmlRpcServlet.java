@@ -7,30 +7,23 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionActivationListener;
-import javax.servlet.http.HttpSessionEvent;
 
 import org.apache.commons.logging.Log;
 import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
-import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.XmlRpcMethods;
-import com.dumbhippo.server.impl.HttpMethodsBean;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 

@@ -11,9 +11,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 

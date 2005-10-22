@@ -1,6 +1,5 @@
 package com.dumbhippo.web;
 
-import javax.annotation.EJB;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
@@ -11,7 +10,6 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.TestGlue;
 
 

@@ -3,10 +3,13 @@
  */
 package com.dumbhippo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 
- * Basic utility function that is inexplicably not
- * in any library.
+ * Basic braindead simple XML utility class, since Java doesn't come
+ * with one.
  * 
  * @author hp
  *
@@ -14,9 +17,13 @@ package com.dumbhippo;
 public class XmlBuilder {
 
 	private StringBuilder builder;
+	private List<String> elementStack;
+	private boolean currentOpenFinished;
 	
 	public XmlBuilder() {
 		builder = new StringBuilder();
+		elementStack = new ArrayList<String>();
+		currentOpenFinished = true;
 	}
 	
 	public StringBuilder getStringBuilder() {
@@ -26,21 +33,62 @@ public class XmlBuilder {
 	public void appendStandaloneFragmentHeader() {
 		builder.append("<?xml version=\"1.0\" ?>");
 	}
-	
+
 	public void appendEscaped(String text) {
 		for (char c : text.toCharArray()){
 			if (c == '&')
-				builder.append("&amp;");
+				append("&amp;");
 			else if (c == '<')
-				builder.append("&lt;");
+				append("&lt;");
 			else if (c == '>')
-				builder.append("&gt;");
+				append("&gt;");
 			else if (c == '\'')
-				builder.append("&apos;");
+				append("&apos;");
 			else if (c == '"')
-				builder.append("&quot;");
+				append("&quot;");
 			else
-				builder.append(c);
+				append(c);
+		}
+	}
+	
+	/**
+	 * Add new open element to stream; must be paired with a closeElement()
+	 * 
+	 * @param elementName name of element to append
+	 * @param attributes list of key value pair
+	 */
+	public void openElement(String elementName, String... attributes) {
+		append("<");
+		append(elementName);
+		elementStack.add(0, elementName);
+		
+		if ((attributes.length % 2) != 0) {
+			throw new IllegalArgumentException("attributes argument must have even number of elements, since it's name-value pairs");
+		}
+		
+		for (int i = 0; i < attributes.length; i += 2) {
+			append(" ");
+			append(attributes[i]);
+			append("=\"");
+			appendEscaped(attributes[i+1]);
+			append("\"");	
+		}
+		currentOpenFinished = false;
+	}
+	
+	/**
+	 * Close out most recently created element.
+	 */
+	public void closeElement() {
+		assert elementStack.size() > 0;
+		String current = elementStack.remove(0);		
+		if (!currentOpenFinished) {
+			builder.append("/>");
+			currentOpenFinished = true;
+		} else {
+			append("</");
+			append(current);
+			append(">");
 		}
 	}
 	
@@ -49,45 +97,37 @@ public class XmlBuilder {
 	 * 
 	 * @param elementName name of element
 	 * @param content content inside element or null
-	 * @param attributes alternating args name,value,name,value
+	 * @param attributes list of key value pair of attributes
 	 */
-	public void appendElement(String elementName, String content, String... attributes) {
-		builder.append("<");
-		builder.append(elementName);
-		
-		if ((attributes.length % 2) != 0) {
-			throw new IllegalArgumentException("attributes argument must have even number of elements, since it's name-value pairs");
-		}
-		
-		for (int i = 0; i < attributes.length; i += 2) {
-			builder.append(" ");
-			builder.append(attributes[i]);
-			builder.append("=\"");
-			appendEscaped(attributes[i+1]);
-			builder.append("\"");	
-		}
-		
-		if (content == null || content.length() == 0) {
-			builder.append("/>");
-		} else {
-			builder.append(">");
+	public void appendTextNode(String elementName, String content, String... attributes) {
+		openElement(elementName, attributes);
+		if (content != null)
 			appendEscaped(content);
-			builder.append("</");
-			builder.append(elementName);
+		closeElement();
+	}
+	
+	private void preAppend() {
+		if (!currentOpenFinished) {
 			builder.append(">");
-		}
+			currentOpenFinished = true;
+		}		
 	}
 	
 	public void append(String s) {
+		preAppend();
 		builder.append(s);
 	}
 	
-	public String toString() {
-		return builder.toString();
+	public void append(char c) {
+		preAppend();
+		builder.append(c);
 	}
 	
-	public void setLength(int length) {
-		builder.setLength(length);
+	public String toString() {
+		for (int i = 0; i < elementStack.size(); i++) {
+			closeElement();
+		}
+		return builder.toString();
 	}
 	
 	public static String escape(String text) {

@@ -22,13 +22,23 @@ public class XmlBuilderTest extends TestCase {
 	public void testAppendElement() {
 		XmlBuilder builder = new XmlBuilder();
 		
-		builder.appendElement("elemname", "some > content", "attr1", "val1&<", "attr2", "val2");
+		builder.appendTextNode("elemname", "some > content", "attr1", "val1&<", "attr2", "val2");
 		
 		assertEquals(builder.toString(), "<elemname attr1=\"val1&amp;&lt;\" attr2=\"val2\">some &gt; content</elemname>");
 
-		builder.setLength(0);
-		
-		builder.appendElement("elemname", null);
+		builder = new XmlBuilder();
+		builder.appendTextNode("elemname", null);
 		assertEquals(builder.toString(), "<elemname/>");
+	}
+	
+	public void testAppendNested() {
+		XmlBuilder builder = new XmlBuilder();
+		
+		builder.openElement("foo", "baz", "\"=whee");
+		builder.appendEscaped("moo");
+		builder.openElement("bar", "attr", "&cow");
+		builder.closeElement();
+		builder.closeElement();
+		assertEquals(builder.toString(), "<foo baz=\"&quot;=whee\">moo<bar attr=\"&amp;cow\"/></foo>");		
 	}
 }

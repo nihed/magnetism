@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.InvitationSystem;
 
 /**

@@ -67,7 +67,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		logger.debug("Sending out jabber notifications...");
 		for (Person r : recipients) {
-			messageSender.sendShareLink(r, url, text);
+			messageSender.sendShareLink(r, post.getGuid(), url, text);
 		}
 		return post;
 	}	

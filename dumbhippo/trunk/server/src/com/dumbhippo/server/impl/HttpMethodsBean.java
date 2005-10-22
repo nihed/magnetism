@@ -79,7 +79,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				}
 
 				if (completion != null) {
-					xml.appendElement("person", null, "id", a.getOwner().getId(), "display", humanReadable, "completion", completion);
+					xml.appendTextNode("person", null, "id", a.getOwner().getId(), "display", humanReadable, "completion", completion);
 				}
 			}
 		}

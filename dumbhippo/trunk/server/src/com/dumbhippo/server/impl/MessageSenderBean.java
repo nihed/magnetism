@@ -14,6 +14,7 @@ import org.jivesoftware.smack.packet.PacketExtension;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.MessageSender;
@@ -57,7 +58,7 @@ public class MessageSenderBean implements MessageSender {
 		return connection;
 	}
 	
-	public void sendShareLink(Person recipient, String url, String title) {
+	public void sendShareLink(Person recipient, Guid postGuid, String url, String title) {
 		XMPPConnection connection = getConnection();
 		
 		if (connection == null)
@@ -70,7 +71,7 @@ public class MessageSenderBean implements MessageSender {
 		Message message = new Message(recipientJid.toString(),
 				Message.Type.HEADLINE);
 		
-		message.addExtension(new LinkExtension(url, title));
+		message.addExtension(new LinkExtension(postGuid, url, title));
 
 		message.setBody(String.format("%s\n%s", title, url));
 		
@@ -84,8 +85,23 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
 		
 		private String url;
+		private Guid guid;
 		private String title;
-		
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
+			builder.appendTextNode("title", title);
+			builder.closeElement();
+	        return builder.toString();
+		}
+
+		public LinkExtension(Guid postId, String url, String title) {
+			this.guid = postId;
+			this.url = url;
+			this.title = title;
+		}
+
 		public String getElementName() {
 			return ELEMENT_NAME;
 		}
@@ -93,41 +109,5 @@ public class MessageSenderBean implements MessageSender {
 		public String getNamespace() {
 			return NAMESPACE;
 		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			
-	        builder.getStringBuilder().append(String.format("<link xmlns=\"%s\" href=\"%s\"><title>",
-					NAMESPACE, getUrl()));
-			builder.appendEscaped(getTitle());
-			builder.getStringBuilder().append("</title></link>");
-	        return builder.toString();
-		}
-
-		public LinkExtension(String url, String title) {
-			this.url = url;
-			this.title = title;
-		}
-		
-		public String getTitle() {
-			return title;
-		}
-		
-
-		public void setTitle(String title) {
-			this.title = title;
-		}
-		
-
-		public String getUrl() {
-			return url;
-		}
-		
-
-		public void setUrl(String url) {
-			this.url = url;
-		}
-		
-		
 	}
 }

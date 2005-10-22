@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import javax.servlet.http.HttpSession;
 
-import com.dumbhippo.server.EJBUtil;
-
 public class SessionUtil {
 	
 	/**

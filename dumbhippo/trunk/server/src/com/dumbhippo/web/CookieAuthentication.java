@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {

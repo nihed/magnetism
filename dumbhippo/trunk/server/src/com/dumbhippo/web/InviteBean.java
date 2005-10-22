@@ -1,14 +1,9 @@
 package com.dumbhippo.web;
 
-import javax.annotation.EJB;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.EJBUtil;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
