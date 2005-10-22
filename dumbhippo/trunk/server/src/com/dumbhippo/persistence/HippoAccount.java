@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
@@ -23,14 +24,15 @@ import com.dumbhippo.GlobalSetup;
  * here are not, because they're instead handled by saying that the Person in
  * question has a ResourceOwnershipClaim on a Resource. So e.g. you your email address, home page, 
  * and other kinds of profile information.
- * If something can be in someone's contacts/buddy list without corresponding
+ * If something can be in someone's contacts list without corresponding
  * to a registered Hippo user, then it can't be in the HippoAccount.
  * 
  * Putting things in the hippo account is a little subjective, but roughly we
  * store things here if nobody but the account holder would have an opinion on
- * them (i.e. if the field is not relevant to the "buddy list"). Another way to
+ * them. Fields in Person, on the other hand, may be shared among multiple 
+ * account holders since the Person is a common object. Another way to
  * put it is that things in the Hippo account require registration with our
- * system, while you can have an item in your "buddy list" with full name,
+ * system, while you can have a Person in your contacts list with full name,
  * email, aim ID, etc. all without having that person registered.
  * 
  * @author hp
@@ -44,6 +46,9 @@ public class HippoAccount extends DBUnique implements Serializable {
 	private static final long serialVersionUID = 0L;
 		
 	private Person owner;
+	
+	private Set<Person> contacts;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -193,5 +198,37 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	protected void setOwner(Person owner) {
 		this.owner = owner;
+	}
+
+	@ManyToMany
+	public Set<Person> getContacts() {
+		return Collections.unmodifiableSet(contacts);
+	}
+
+	/**
+	 * This is protected because only Hibernate probably 
+	 * needs to call it. Use addContact/removeContact 
+	 * instead...
+	 * 
+	 * @param contacts your contacts
+	 */
+	protected void setContacts(Set<Person> contacts) {
+		this.contacts = contacts;
+	}
+	
+	public void addContact(Person person) {
+		contacts.add(person);
+	}
+	
+	public void addContacts(Set<Person> persons) {
+		contacts.addAll(persons);
+	}
+	
+	public void removeContact(Person person) {
+		contacts.remove(person);
+	}
+	
+	public void removeContacts(Set<Person> persons) {
+		contacts.removeAll(persons);
 	}
 }

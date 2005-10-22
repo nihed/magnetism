@@ -55,7 +55,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		xml.appendStandaloneFragmentHeader();
 		
-		xml.append("<people>");
+		xml.append("<objects>");
 		
 		if (entryContents != null) {
 			Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
@@ -84,7 +84,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 
-		xml.append("</people>");
+		xml.append("</objects>");
 		
 		out.write(xml.toString().getBytes());
 	}
