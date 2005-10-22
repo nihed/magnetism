@@ -25,22 +25,23 @@
 	width:						150px;
 	-moz-border-radius:				5px;
 }
-td.headShot {
+td.dhHeadShot {
 	text-align:					center;
 }
-td.removePerson {
+td.dhRemovePerson {
 	text-align:					right;
 }
-a.removePerson {
+a.dhRemovePerson {
 	color:						red;
 	font-weight:					bold;
 	text-decoration:				none;
 }
-a.removePerson:link {
+a.dhRemovePerson:link {
 	color:						red;
 	font-weight:					bold;
 	text-decoration:				none;
 }
-td.personName {
+td.dhPersonName {
 	font-size:					9pt;
 }
+

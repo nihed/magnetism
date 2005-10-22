@@ -42,7 +42,11 @@ table, tbody, tr, td {
 	vertical-align:						top;
 }
 
-.dhLabel, .dhLabel u {
+.dhLabel {
+	/* be careful with this relative size; it is relative 
+	 * to the parent, so if you apply it to two nested 
+	 * nodes the inner node will be smaller than outer
+	 */
 	font-size:						smaller;
 }
 

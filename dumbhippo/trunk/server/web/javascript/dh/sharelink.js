@@ -3,13 +3,7 @@ dojo.provide("dh.sharelink");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.widget.RichText");
-if (dojo.version.revision <= 1321) {
-	dojo.require("dojo.widget.HtmlButton");
-	dojo.require("dojo.xml.*");
-	dojo.inherits = dj_inherits;
-} else {
-	dojo.require("dojo.widget.html.Button");
-}
+dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
 dojo.require("dojo.widget.HtmlInlineEditBox");
 dojo.require("dh.server");
@@ -127,7 +121,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		
 		var personNode = document.createElement("div");
 		personNode.setAttribute("dhPersonId", person.id);
-		personNode.setAttribute("class", "person");
+		dojo.html.addClass(personNode, "dhPerson");
 		var table = document.createElement("table");
 		personNode.appendChild(table);
 		var tbody = document.createElement("tbody");
@@ -135,25 +129,25 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");
-		td.setAttribute("class", "headShot");
+		dojo.html.addClass(td, "dhHeadShot");
 		tr1.appendChild(td);
 		var img = document.createElement("img");
 		img.setAttribute("src", "http://planet.gnome.org/heads/nobody.png");
 		td.appendChild(img);
 		var td = document.createElement("td");
-		td.setAttribute("class", "removePerson");
+		dojo.html.addClass(td, "dhRemovePerson");
 		tr1.appendChild(td);
 		var removeLink = document.createElement("a");
 		removeLink.appendChild(document.createTextNode("[X]"));
 		removeLink.setAttribute("href", "javascript:void(0);");
-		removeLink.setAttribute("class", "removePerson");
+		dojo.html.addClass(removeLink, "dhRemovePerson");
 		removeLink.setAttribute("rowSpan", "2");
 		dojo.event.connect(removeLink, "onclick", dj_global, "dhRemoveRecipientClicked");
 		td.appendChild(removeLink);
 		var tr2  = document.createElement("tr");
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
-		td.setAttribute("class","personName");
+		dojo.html.addClass(td, "dhPersonName");
 		td.setAttribute("colSpan","2");
 		tr2.appendChild(td);
 		td.appendChild(document.createTextNode(person.displayName));
