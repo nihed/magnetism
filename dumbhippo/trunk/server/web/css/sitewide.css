@@ -39,7 +39,7 @@ form {
 table, tbody, tr, td {
 	margin:							0;
 	padding:						0;
-	vertical-align:						top;
+	vertical-align:					top;
 }
 
 .dhLabel {
@@ -48,6 +48,7 @@ table, tbody, tr, td {
 	 * nodes the inner node will be smaller than outer
 	 */
 	font-size:						smaller;
+	margin-bottom:					0.5em;
 }
 
 /* Style of the text being typed by the user */
@@ -55,7 +56,7 @@ textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
-	overflow:                       			visible;
+	overflow:                       visible;
 	width: 							25em;
 }
 
@@ -65,8 +66,6 @@ textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
  */
 textarea, .dhTextArea, .dojoComboBox {
 	border:							1px solid #afafaf;
-	margin-top: 					1em;
-	margin-bottom:					1em;
 }
 
 /* Styles for text areas only, not one-line text input */
@@ -75,8 +74,6 @@ textarea, .dhTextArea {
 }
 
 .dhUrl {
-	margin-top:					1em;
-	margin-bottom:					1em;
 	text-decoration:				underline;
 	text-overflow:					elipsis;
 }
@@ -126,6 +123,11 @@ form.inlineEditBox input[type=text] {
 /* Used to hide elements */
 .dhInvisible, .dhInvisible * {
 	display:	none;
+}
+
+/* Insert a stock amount of vertical whitespace */
+.dhVerticalPadding {
+	margin-top: 	1em;
 }
 
 /* Dojo debug spew goes in element with id=dojoDebug */

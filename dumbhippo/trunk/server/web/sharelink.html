@@ -16,9 +16,13 @@
 <!--  invisible at first to avoid flicker while we set up dojo widgets -->
 <div id="dhShareLinkForm" class="dhInvisible">
 
+<div class="dhVerticalPadding"/>
+
 <div dojoType="InlineEditBox" class="dhUrl" id="dhUrlToShare">
 Click here to enter a link to share</div>
 <div id="dhUrlError" class="dhValidityError"></div>
+
+<div class="dhVerticalPadding"/>
 
 <div class="dhLabel">Share <u>W</u>ith:</div>
 
@@ -36,14 +40,22 @@ Click here to enter a link to share</div>
 </table>
 <div id="dhRecipientsError" class="dhValidityError" /><br />
 
+<div class="dhVerticalPadding"/>
+
 <div id="dhRecipientList">
 </div>
+
+<div class="dhVerticalPadding"/>
 
 <div class="dhLabel"><u>D</u>escription:</div>
 <div class="dhTextArea" id="dhShareLinkDescription" /></div>
 
+<div class="dhVerticalPadding"/>
+
 <input type="button" value="Share" accesskey="s"
 	class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>
+
+<div class="dhVerticalPadding"/>
 
 <div id="dojoDebug"/> <!-- where to put dojo debug spew -->
 </div><!-- end dhShareLinkForm -->
