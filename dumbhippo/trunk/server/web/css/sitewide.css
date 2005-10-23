@@ -11,19 +11,28 @@
  * and css them from here.
  */
 
+/* If you put anything in this "*" style, then it will not 
+ * have "inherit" semantics anymore. i.e. if you put 
+ * in background-color "white", then you change the color
+ * of a node, its children will not be affected since this
+ * style is explicitly forcing their color.
+ *
+ * In short, defaults in this "*" style must be overridden on a per-node
+ * basis. Defaults in the "body" style must be overridden on a per-subtree
+ * basis.
+ */
 * {
-	font-family:					Verdana, sans;
-	/* Don't use a relative size like "larger" in a global 
-     * style, since it means "larger with respect to parent" 
-     * i.e. each nested tag gets bigger
-     */
-	color:							#505050;
-	background-color:				white;
+	font-family:					inherit;
+	background-color:				inherit;
+	color:							inherit;
+	opacity:						inherit;
 }
 
+/* Defaults for the page go here */
 body {
-	color:							inherit;
-	background-color:				inherit;	
+	font-family:					Verdana, sans;
+	color:							#505050;
+	background-color: 				"white";
 	margin:							0;
 }
 
