@@ -80,4 +80,21 @@ public class GuidTest extends TestCase {
 		TestUtils.testEqualsImplementation(guids);
 	}
 
+	public void testValidate() {
+		for (int i = 0; i < 20; ++i) {
+			Guid g = Guid.createNew();
+			try {
+				Guid.validate(g.toString());
+			} catch (ParseException e) {
+				throw new Error("just-created Guid did not validate", e);
+			}
+		}
+		boolean gotException = false;
+		try {
+			Guid.validate("notvalid");
+		} catch (ParseException e) {
+			gotException = true;
+		}
+		assertTrue(gotException);
+	}
 }
