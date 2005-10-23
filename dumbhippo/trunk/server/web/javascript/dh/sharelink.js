@@ -33,6 +33,20 @@ dh.sharelink.findPerson = function(persons, id) {
 	return null;
 }
 
+dh.sharelink.findPersonNode = function(personId) {
+	var list = document.getElementById("dhRecipientList");
+	for (var i = 0; i < list.childNodes.length; ++i) {
+		var child = list.childNodes.item(i);
+		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+			continue;
+		var childId = child.getAttribute("dhPersonId");
+		if (childId && personId == childId) {
+			return child;
+		}
+	}
+	return null;
+}
+
 dhRemoveRecipientClicked = function(event) {
 	dojo.debug("remove recipient");
 	
@@ -53,7 +67,9 @@ dhRemoveRecipientClicked = function(event) {
 	dh.sharelink.selectedRecipients.splice(personIndex, 1);
 	
 	// remove the HTML representing this recipient
-	node.parentNode.removeChild(node);
+	var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
+		node.parentNode.removeChild(node);
+	});
 }
 
 dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
@@ -97,7 +113,9 @@ dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
 									dh.sharelink.doAddRecipient(recipientId);
 								} else {
 									// filtered.length == 0 and completions.length > 0
-									alert("already added them");
+									//alert("already added them");
+									var node = dh.sharelink.findPersonNode(completions[0][1]);
+									dh.util.flash(node);
 								}
 							});
 }
@@ -152,10 +170,14 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		tr2.appendChild(td);
 		td.appendChild(document.createTextNode(person.displayName));
 
+		dojo.html.setOpacity(personNode, 0);
+		
 		var recipientsListNode = document.getElementById("dhRecipientList");
 		recipientsListNode.appendChild(personNode);
+		
+		var anim = dojo.fx.html.fadeIn(personNode, 800);
 	} else {
-		alert("already added them");
+		dh.util.flash();
 	}
 	
 	// clear the combo again

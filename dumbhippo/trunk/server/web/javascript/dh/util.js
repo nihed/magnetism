@@ -55,3 +55,15 @@ dh.util.closeWindow = function() {
 	if (embed && embed.readyState && embed.readyState >= 3)
 		embed.CloseWindow();
 }
+
+// could probably choose a better color ;-)
+dh.util.flash = function(node) {
+	var origColor = dojo.html.getBackgroundColor(node);
+	var flashColor = [0,200,0];
+	dojo.debug("fading from " + origColor + " to " + flashColor);
+	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
+						function(node, anim) {
+							dojo.debug("fading from " + flashColor + " to " + origColor);
+							dojo.fx.html.colorFade(node, flashColor, origColor, 400);
+						});
+}

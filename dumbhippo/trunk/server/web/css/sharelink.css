@@ -25,6 +25,15 @@
 	width:						150px;
 	-moz-border-radius:				5px;
 }
+
+.dhPerson * { 
+	/* These two make the whole widget work as a whole 
+	 * for fade/flash effects
+	 */
+	background-color: 			inherit;
+	opacity:					inherit;
+}
+
 td.dhHeadShot {
 	text-align:					center;
 }
@@ -33,15 +42,14 @@ td.dhRemovePerson {
 }
 a.dhRemovePerson {
 	color:						red;
-	font-weight:					bold;
-	text-decoration:				none;
+	font-weight:				bold;
+	text-decoration:			none;
 }
 a.dhRemovePerson:link {
 	color:						red;
-	font-weight:					bold;
-	text-decoration:				none;
+	font-weight:				bold;
+	text-decoration:			none;
 }
 td.dhPersonName {
 	font-size:					9pt;
 }
-
