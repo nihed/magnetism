@@ -15,20 +15,26 @@
 	padding:						0.5em;
 	/* designed to avoid resize on adding first recipient */
 	min-height:						7em;
+	/* we have to float so we expand to hold the floated 
+	 * recipients
+	 */
+	float:							left;
 }
 
 /* list of people who will receive the link */
 #dhRecipientList {
-	margin:							1em;
-	/* border: 1px solid black; */  /* debug */
+	margin:							.5em;
+	/* we have to float so we expand to hold the floated 
+	 * recipients
+	 */
+	float:							left;
 }
 
 /* Don't set this style by id or it will bind too tightly and the 
  * .dhCouldBeInGroup style below can't override it.
  */
 .dhPerson {
-	/* I can't get display:inline to work without breaking something else... */
-	/* display:					inline; */
+	float:						left;
 	background-color:			#fff;
 	border:						1px solid black;
 	margin:						0.5em;
