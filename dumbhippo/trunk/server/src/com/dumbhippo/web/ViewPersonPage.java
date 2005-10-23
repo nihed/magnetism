@@ -11,6 +11,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PostInfo;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
@@ -34,9 +35,9 @@ public class ViewPersonPage {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 	
-	public List<String> getPostUrls() {
+	public List<PostInfo> getPostInfos() {
 		assert viewedPerson != null;
-		return postBoard.getPostedUrlsFor(viewedPerson, 0);
+		return postBoard.getPostInfosFor(viewedPerson, signin.getUser(), 0);
 	}
 	
 	public SigninBean getSignin() {

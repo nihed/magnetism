@@ -16,7 +16,7 @@ public interface PostingBoard {
 	
 	public List<Post> getPostsFor(Person poster, int max);
 	
-	public List<String> getPostedUrlsFor(Person poster, int max);
+	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max);
 	
 	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids) throws ParseException, GuidNotFoundException;
 	

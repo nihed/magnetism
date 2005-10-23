@@ -90,7 +90,7 @@ public class Post extends GuidPersistable {
 		}
 	}
 
-	protected Date getPostDate() {
+	public Date getPostDate() {
 		return postDate;
 	}
 

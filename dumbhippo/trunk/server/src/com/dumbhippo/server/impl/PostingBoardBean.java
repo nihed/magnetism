@@ -24,6 +24,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.PostInfo;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -65,7 +66,7 @@ public class PostingBoardBean implements PostingBoard {
 		Post post = new Post(poster, title, text, recipients, resources);
 		em.persist(post);
 	
-		return null;
+		return post;
 	}
 
 	public List<Post> getPostsFor(Person poster, int max) {
@@ -80,18 +81,14 @@ public class PostingBoardBean implements PostingBoard {
 		return ret;
 	}
 
-	public List<String> getPostedUrlsFor(Person poster, int max) {
+	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max) {
+		List<PostInfo> result = new ArrayList<PostInfo>();
+		
 		List<Post> posts = getPostsFor(poster, max);
-		List<String> ret = new ArrayList<String>();
-		for (Post p : posts) {			
-			// Yes this is a nasty hack
-			Iterator<Resource> it = p.getResources().iterator();
-			assert it.hasNext();
-			Resource res = it.next();
-			logger.debug("got resource for post: " + res);
-			LinkResource link = (LinkResource) res;
-			ret.add(link.getUrl());
+		for (Post p : posts) {
+			result.add(new PostInfo(identitySpider, viewer, p));
 		}
-		return ret;
+		
+		return result;
 	}
 }
