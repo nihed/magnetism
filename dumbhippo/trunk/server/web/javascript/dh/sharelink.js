@@ -19,6 +19,8 @@ dh.sharelink.selectedRecipients = [];
 dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
+dh.sharelink.createGroupPopup = null;
+dh.sharelink.createGroupNameEntry = null;
 
 dh.sharelink.findPerson = function(persons, id) {
 	// obj can be an array or a hash
@@ -59,16 +61,42 @@ dh.sharelink.forEachPossibleGroupMember = function(func) {
 	return null;
 }
 
-dh.sharelink.highlightPossibleGroup = function(event) {
+dh.sharelink.highlightPossibleGroup = function() {
 	dh.sharelink.forEachPossibleGroupMember(function(node) {
 		dojo.html.addClass(node, "dhCouldBeInGroup");
 	});
 }
 
-dh.sharelink.unhighlightPossibleGroup = function(event) {
+dh.sharelink.unhighlightPossibleGroup = function() {
+	// keep highlighted if the popup is showing
+	var popup = dh.sharelink.createGroupPopup;
+	if (dh.util.isShowing(popup))
+		return;
+	
 	dh.sharelink.forEachPossibleGroupMember(function(node) {
 		dojo.html.removeClass(node, "dhCouldBeInGroup");
 	});
+}
+
+dh.sharelink.toggleCreateGroup = function() {
+	dh.sharelink.highlightPossibleGroup();
+	var popup = dh.sharelink.createGroupPopup;
+	dh.util.toggleShowing(popup);
+	
+	if (!dh.util.isShowing(popup))
+		dh.sharelink.unhighlightPossibleGroup();
+}
+
+dh.sharelink.doCreateGroup = function() {
+	var name = dh.sharelink.createGroupNameEntry.value;
+	alert("name = " + name);
+	dh.sharelink.createGroupNameEntry.value = "";
+}
+
+dhDoCreateGroupKeyUp = function(event) {
+	if (event.keyCode == 13) {
+		dh.sharelink.doCreateGroup();
+	}
 }
 
 dhRemoveRecipientClicked = function(event) {
@@ -165,6 +193,8 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		personNode.setAttribute("dhPersonId", person.id);
 		dojo.html.addClass(personNode, "dhPerson");
 		dojo.html.addClass(personNode, "dhItemBox");
+		if (dh.util.isShowing(dh.sharelink.createGroupPopup))
+			dojo.html.addClass(personNode, "dhCouldBeInGroup");
 		
 		// don't think tbody is used anymore?
 		//var tbody = document.createElement("tbody");
@@ -498,6 +528,10 @@ dh.sharelink.init = function() {
 																 {}, // props,
 																 document.getElementById("dhShareLinkDescription"));
 																 
+		dh.sharelink.createGroupPopup = document.getElementById("dhCreateGroupPopup");					 
+		dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
+		dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
+							dj_global, "dhDoCreateGroupKeyUp");
 	});
 }
 

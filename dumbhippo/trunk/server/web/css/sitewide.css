@@ -176,3 +176,10 @@ form.inlineEditBox input[type=text] {
 	font-size:	small;
 	font-style: italic;
 }
+
+/* This is a dojo workaround; without it, combo box dropdown gets underneath our 
+ * relative/absolute elements.
+ */
+div.comboBoxOptions {
+	z-index: 1;
+}

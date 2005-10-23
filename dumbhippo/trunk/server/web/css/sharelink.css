@@ -16,6 +16,10 @@
 	 * recipients
 	 */
 	float:							left;
+	
+	/* we have to be positioned so sub-elements can be positioned relative to us
+	 */
+	position:						relative;
 }
 
 /* list of people who will receive the link */
@@ -54,10 +58,8 @@
 	background-color:			#fff;
 	padding:					0.5em;
 	position:					absolute;
-	/* this is kind of a bad hack that relies on the 
-	 * current details of the rest of the page 
-	 */
-	right:						15%;
+	right:						2em;
+	top:						2em;
 }
 
 /* have to do this since type=text doesn't work if 

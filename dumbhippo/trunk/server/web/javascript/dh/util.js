@@ -40,11 +40,22 @@ dh.util.hideId = function(nodeId) {
 }
 
 dh.util.hide = function(node) {
-	dojo.html.addClass(node, "dhInvisible");
+	dojo.html.prependClass(node, "dhInvisible");
 }
 
 dh.util.show = function(node) {
 	dojo.html.removeClass(node, "dhInvisible");
+}
+
+dh.util.toggleShowing = function(node) {
+	if (dh.util.isShowing(node))
+		dh.util.hide(node);
+	else 
+		dh.util.show(node);
+}
+
+dh.util.isShowing = function(node) {
+	return !dojo.html.hasClass(node, "dhInvisible");
 }
 
 dh.util.closeWindow = function() {
