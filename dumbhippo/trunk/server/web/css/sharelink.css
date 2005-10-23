@@ -31,11 +31,15 @@
 	/* display:					inline; */
 	background-color:			#fff;
 	border:						1px solid black;
-	text-align:					center;
 	margin:						0.5em;
 	width:						150px;
 	-moz-border-radius:			5px;
 }
+
+.dhPerson td {
+	 text-align:					center;
+}
+
 
 /* The highlight when a recipient would be put in a group */
 .dhCouldBeInGroup {

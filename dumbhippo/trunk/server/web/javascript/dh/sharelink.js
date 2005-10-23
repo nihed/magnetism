@@ -165,8 +165,10 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		personNode.setAttribute("dhPersonId", person.id);
 		dojo.html.addClass(personNode, "dhPerson");
 		
-		var tbody = document.createElement("tbody");
-		personNode.appendChild(tbody);
+		// don't think tbody is used anymore?
+		//var tbody = document.createElement("tbody");
+		//personNode.appendChild(tbody);
+		var tbody = personNode;
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");
