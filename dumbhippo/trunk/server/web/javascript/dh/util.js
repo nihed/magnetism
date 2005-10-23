@@ -64,6 +64,9 @@ dh.util.flash = function(node) {
 	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
 						function(node, anim) {
 							dojo.debug("fading from " + flashColor + " to " + origColor);
-							dojo.fx.html.colorFade(node, flashColor, origColor, 400);
+							dojo.fx.html.colorFade(node, flashColor, origColor, 400, function(node, anim) {
+								/* go back to our CSS color */
+								node.removeAttribute("style");
+							});
 						});
 }

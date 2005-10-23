@@ -164,6 +164,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		var personNode = document.createElement("table");
 		personNode.setAttribute("dhPersonId", person.id);
 		dojo.html.addClass(personNode, "dhPerson");
+		dojo.html.addClass(personNode, "dhItemBox");
 		
 		// don't think tbody is used anymore?
 		//var tbody = document.createElement("tbody");

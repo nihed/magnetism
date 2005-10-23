@@ -9,10 +9,7 @@
 	margin: 						1em;	
 }
 
-.dhRecipientListArea {
-	-moz-border-radius:				5px;
-	background-color:				#ddd;
-	padding:						0.5em;
+#dhRecipientListArea {
 	/* designed to avoid resize on adding first recipient */
 	min-height:						7em;
 	/* we have to float so we expand to hold the floated 
@@ -35,15 +32,12 @@
  */
 .dhPerson {
 	float:						left;
-	background-color:			#fff;
-	border:						1px solid black;
 	margin:						0.5em;
 	width:						150px;
-	-moz-border-radius:			5px;
 }
 
 .dhPerson td {
-	 text-align:					center;
+	text-align:					center;
 }
 
 
@@ -54,6 +48,26 @@
 
 #dhCreateGroupLink {
 	float:						right;
+}
+
+#dhCreateGroupPopup {
+	background-color:			#fff;
+	padding:					0.5em;
+	position:					absolute;
+	/* this is kind of a bad hack that relies on the 
+	 * current details of the rest of the page 
+	 */
+	right:						15%;
+}
+
+/* have to do this since type=text doesn't work if 
+ * the type=text is implicit in the html
+ */
+#dhCreateGroupPopup input[type="button"] {
+	width:						auto;
+}
+#dhCreateGroupPopup input {
+	width:						20em;
 }
 
 td.dhHeadShot {

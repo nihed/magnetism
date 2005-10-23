@@ -22,10 +22,16 @@
  * basis.
  */
 * {
+	/* Conceptually the "inherit" here is usually what's going
+	 * on, but if you actually specify these it overrides some
+	 * elements that shouldn't default to inherit like <input>
+	 */
+	/*
 	font-family:					inherit;
 	background-color:				inherit;
 	color:							inherit;
 	opacity:						inherit;
+	*/
 }
 
 body {
@@ -98,6 +104,9 @@ a.editLabel {
 	color:						blue;	
 }
 
+/* note that input[type=text] won't always work if the "type=text" was left 
+ * implicit on the <input>
+ */
 form.inlineEditBox input[type=text] {
 	color:						blue;
 }
@@ -146,6 +155,20 @@ form.inlineEditBox input[type=text] {
 /* Insert a stock amount of vertical whitespace */
 .dhVerticalPadding {
 	margin-top: 	1em;
+}
+
+/* Right now, white background with round corners and black outline */
+.dhItemBox {
+	background-color:			#fff;
+	border:						1px solid black;
+	-moz-border-radius:			5px;
+}
+
+/* Right now, gray background box */
+.dhBackgroundBox {
+	-moz-border-radius:				5px;
+	background-color:				#ddd;	
+	padding:						0.5em;
 }
 
 /* Dojo debug spew goes in element with id=dojoDebug */

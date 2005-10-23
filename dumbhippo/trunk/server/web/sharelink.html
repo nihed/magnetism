@@ -42,11 +42,16 @@ Click here to enter a link to share</div>
 
 <div class="dhVerticalPadding"></div>
 
-<div class="dhRecipientListArea">
-<a id="dhCreateGroupLink" class="dhActionLink"
- onmouseover="dh.sharelink.highlightPossibleGroup();"
- onmouseout="dh.sharelink.unhighlightPossibleGroup();"
- href="javascript:alert('create group, woot');">Create Group from These</a>
+<div id="dhRecipientListArea" class="dhBackgroundBox">
+	<div id="dhCreateGroupPopup" class="dhItemBox">
+		<div class="dhLabel">New Group Name</div>
+		<input id="dhCreateGroupName"/>
+		<input type="button" value="Create"/>
+	</div>
+	<a id="dhCreateGroupLink" class="dhActionLink"
+ 	onmouseover="dh.sharelink.highlightPossibleGroup();"
+ 	onmouseout="dh.sharelink.unhighlightPossibleGroup();"
+ 	href="javascript:alert('create group, woot');">Create Group from These</a>
 <div id="dhRecipientList">
 
 
