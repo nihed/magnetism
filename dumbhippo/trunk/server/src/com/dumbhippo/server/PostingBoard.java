@@ -9,6 +9,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Local
 public interface PostingBoard {
@@ -17,7 +18,7 @@ public interface PostingBoard {
 	
 	public List<String> getPostedUrlsFor(Person poster, int max);
 	
-	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids) throws ParseException;
+	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids) throws ParseException, GuidNotFoundException;
 	
 	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> recipients);
 }

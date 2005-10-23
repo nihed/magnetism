@@ -2,7 +2,6 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +17,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -27,6 +25,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @SuppressWarnings("serial")
 @Stateless
@@ -42,25 +41,12 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private MessageSender messageSender;
-	
-	private Set<Person> guidSetToPerson(Set<Guid> guids) {
-		Set<Person> recipients = new HashSet<Person>(guids.size());	
-		for (Guid personId : guids) {
-			Person r = identitySpider.lookupPersonById(personId);
-			if (r != null) {
-				recipients.add(r);
-			} else {
-				throw new IllegalArgumentException("Person " + personId + " is not known");
-			}
-		}
-		return recipients;
-	}
-	
-	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids) throws ParseException {
+		
+	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids) throws ParseException, GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// this is what can throw ParseException
-		Set<Person> recipients = guidSetToPerson(Guid.parseStrings(recipientGuids));
+		Set<Person> recipients = identitySpider.lookupGuidStrings(Person.class, recipientGuids);
 
 		// if this throws we shouldn't send out notifications
 		Post post = createPost(poster, title, text, shared, recipients);

@@ -7,11 +7,11 @@ import javax.naming.NamingException;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
  * Displays a list of posts from a person
@@ -61,14 +61,14 @@ public class ViewPersonPage {
 		return viewedPerson.getName().toString();
 	}
 
-	public void setViewedPersonId(String viewedPersonId) throws ParseException {
+	public void setViewedPersonId(String viewedPersonId) throws ParseException, GuidNotFoundException {
 		if (viewedPersonId == null && this.signin != null && this.signin.isValid()) {
 			setViewedPerson(this.signin.getUser());
 		} else if (viewedPersonId == null) {
 			logger.debug("no viewed person");
 			return;
 		} else {
-			setViewedPerson(identitySpider.lookupPersonById(new Guid(viewedPersonId)));
+			setViewedPerson(identitySpider.lookupGuidString(Person.class, viewedPersonId));
 		}
 	}
 }

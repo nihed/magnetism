@@ -110,13 +110,22 @@ final public class Guid implements Serializable {
 		components = source.components.clone();
 	}
 
-	private void initFromString(String string) throws ParseException {
+	static private long[] parseFromString(long[] components, String string) throws ParseException {
 		if (string.length() != STRING_LENGTH)
 			throw new ParseException(String.format(
 					"String form of GUID must have %d characters but this string has %d",
 					STRING_LENGTH, string.length()));
 
-		components = hexDecode(string);
+		return hexDecode(components, string);
+	}
+	
+	public static void validate(String string) throws ParseException {
+		parseFromString(null, string);
+	}
+	
+	private void initFromString(String string) throws ParseException {
+		components = parseFromString(new long[STRING_LENGTH/CHARS_PER_LONG],
+				string);
 	}
 	
 	public Guid(String string) throws ParseException {
@@ -186,16 +195,19 @@ final public class Guid implements Serializable {
 		return new String(hex);
 	}
 
-	static private long[] hexDecode(String s) throws ParseException {
+	static private long[] hexDecode(long[] components, String s) throws ParseException {
 		if ((s.length() % CHARS_PER_LONG) != 0)
 			throw new ParseException(
 					"Bad string length passed to hexDecode");
 
-		// two hex chars per byte, e.g. "ff"
-		long[] components = new long[s.length() / CHARS_PER_LONG];
+		//		 two hex chars per byte, e.g. "ff"
+		int nLongs = s.length() / CHARS_PER_LONG;
+		if (components != null && components.length < nLongs)
+			throw new IllegalArgumentException("Buffer too short");
+		
 		int next = 0;
 
-		for (int i = 0; i < components.length; ++i) {
+		for (int i = 0; i < nLongs; ++i) {
 			long value = 0;
 			for (int j = 0; j < Long.SIZE / 8; ++j) {
 				long b;
@@ -213,7 +225,8 @@ final public class Guid implements Serializable {
 
 			next += CHARS_PER_LONG;
 
-			components[i] = value;
+			if (components != null)
+				components[i] = value;
 		}
 
 		return components;

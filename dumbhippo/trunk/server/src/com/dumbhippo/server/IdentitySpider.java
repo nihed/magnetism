@@ -1,9 +1,13 @@
 package com.dumbhippo.server;
 
+import java.util.Set;
+
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -21,6 +25,21 @@ import com.dumbhippo.persistence.Resource;
 @Local
 public interface IdentitySpider {
 	
+	static class GuidNotFoundException extends Exception {
+		private static final long serialVersionUID = 0L;
+		private String guid;
+		public GuidNotFoundException(Guid guid) {
+			super("Guid " + guid + " was not in the database");
+			this.guid = guid.toString();
+		}
+		public GuidNotFoundException(String guidString) {
+			super("Guid " + guidString + " was not in the database");
+			this.guid = guidString;
+		}
+		public String getGuid() {
+			return guid;
+		}
+	}
 	
 	/**
 	 * Gets a Resource object for the given email address, creating
@@ -77,24 +96,16 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */	
 	public Person lookupPersonByEmail(Person viewpoint, EmailResource email);
-	
-	/** 
-	 * Finds a person by their database ID
-	 * @param personId the id
-	 * @return person or null if none
-	 */
-	public Person lookupPersonById(String personId);
-	
-	/** 
-	 * Finds a person by their GUID
-	 * @param personId the id
-	 * @return person or null if none
-	 */
-	public Person lookupPersonById(Guid personId);	
-	
+		
 	//public Person lookupPersonByAim(EmailResource email);
 	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
 
+	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException;
+	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException;
+	
+	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, GuidNotFoundException;
+	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws GuidNotFoundException;
+	
 	/** 
 	 * Add a claim by assertedBy that owner is the owner of the resource.
 	 * For this call, the assertedBy can't be null or TheMan, we only 

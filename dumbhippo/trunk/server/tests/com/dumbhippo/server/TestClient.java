@@ -41,7 +41,7 @@ public class TestClient {
 	}
 	
 	public void loadData() {
-		test.loadTestData();	
+		test.loadTestData();
 	}
 	
 	public List<Thread> spawnAccountTesters() {

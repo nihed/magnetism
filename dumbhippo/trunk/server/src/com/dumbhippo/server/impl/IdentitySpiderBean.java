@@ -1,5 +1,8 @@
 package com.dumbhippo.server.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
@@ -19,6 +22,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -73,14 +77,39 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return person;
 	}
 
-	public Person lookupPersonById(String personId) {
-		return em.find(Person.class, personId);
+	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException {
+		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid
+		T obj = em.find(klass, id);
+		if (obj == null)
+			throw new GuidNotFoundException(id);
+		return obj;
+	}
+
+	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException {
+		T obj = em.find(klass, id.toString());
+		if (obj == null)
+			throw new GuidNotFoundException(id);
+		return obj;
+	}
+
+	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, GuidNotFoundException {
+		Set<T> ret = new HashSet<T>();
+		for (String s : ids) {
+			T obj = lookupGuidString(klass, s);
+			ret.add(obj);
+		}
+		return ret;
+	}
+
+	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws GuidNotFoundException {
+		Set<T> ret = new HashSet<T>();
+		for (Guid id : ids) {
+			T obj = lookupGuid(klass, id);
+			ret.add(obj);
+		}
+		return ret;
 	}
 	
-	public Person lookupPersonById(Guid personId) {
-		return lookupPersonById(personId.toString());
-	}	
-
 	// Returns true if this is an exception we would get with a race condition
 	// between two people trying to create the same object at once
 	private boolean isDuplicateException(Exception e) {
@@ -189,15 +218,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Person findOrCreateTheMan() {
-		Person result = lookupPersonById(theManGuid);
-		if (result == null) {
+		Person result;
+		Guid guid;
+		try {
+			guid = new Guid(theManGuid);
+		} catch (ParseException e1) {
+			throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
+		}
+		try {
+			result = lookupGuid(Person.class, guid);
+		} catch (GuidNotFoundException e) {
 			logger.debug("Creating theman@dumbhippo.com");
 			EmailResource resource = getEmail(theManEmail);
-			try {
-				result = new Person(new Guid(theManGuid));
-			} catch (ParseException e) {
-				throw new RuntimeException("Guid could not parse theManGuid, should never happen");
-			}
+			result = new Person(guid);		
 			em.persist(result);
 			ResourceOwnershipClaim claim = new ResourceOwnershipClaim(result, resource, result);
 			em.persist(claim);

@@ -17,14 +17,17 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -43,20 +46,55 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private PostingBoard postingBoard;
 
-	/* (non-Javadoc)
-	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream, java.lang.String, java.lang.String)
-	 */
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, String entryContents) throws IOException {
+	@EJB
+	private GroupSystem groupSystem;
 
+	static private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
-		
-		XmlBuilder xml = new XmlBuilder();
 
 		xml.appendStandaloneFragmentHeader();
 		
 		xml.append("<objects>");
+	}
+	
+	static private void endReturnObjectsXml(OutputStream out, XmlBuilder xml) throws IOException {
+		xml.append("</objects>");
 		
+		out.write(xml.toString().getBytes());
+	}
+		
+	static private void returnObjects(OutputStream out, HttpResponseData contentType, Set<Person> persons, Set<Group> groups) throws IOException {
+		XmlBuilder xml = new XmlBuilder();		
+
+		startReturnObjectsXml(contentType, xml);
+		
+		if (persons != null) {
+			for (Person p : persons) {
+				xml.appendTextNode("person", null, "id", p.getId(), "display", p.getName().getFullName());
+			}
+		}
+		if (groups != null) {
+			for (Group g : groups) {
+				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName());
+			}
+		}
+		
+		endReturnObjectsXml(out, xml);
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream, java.lang.String, java.lang.String)
+	 */
+	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, String entryContents) throws IOException {
+	
+		XmlBuilder xml = new XmlBuilder();
+
+		startReturnObjectsXml(contentType, xml);
+			
+		// FIXME this is written out custom for now, but what we should do
+		// is change it to return separate <completion> elements and keep
+		// the <person> elements stock
 		if (entryContents != null) {
 			Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
 			for (HippoAccount a : accounts) {
@@ -84,20 +122,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 
-		xml.append("</objects>");
-		
-		out.write(xml.toString().getBytes());
+		endReturnObjectsXml(out, xml);
 	}
 	
-	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException {
-		Set<String> recipientGuids;
+	static private Set<String> splitIdList(String list) {
+		Set<String> ret;
 		
 		// string.split returns a single empty string if the string we split is length 0, unfortunately
-		if (recipientIds.length() > 0) {
-			recipientGuids = new HashSet<String>(Arrays.asList(recipientIds.split(",")));
+		if (list.length() > 0) {
+			ret = new HashSet<String>(Arrays.asList(list.split(",")));
 		} else {
-			recipientGuids = Collections.emptySet();
+			ret = Collections.emptySet();
 		}
+		
+		return ret;
+	}
+	
+	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+		Set<String> recipientGuids = splitIdList(recipientIds);
+
 		postingBoard.createURLPost(user, null, description, url, recipientGuids);
+	}
+
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String members) throws IOException, ParseException, GuidNotFoundException {
+				
+		Set<String> memberGuids = splitIdList(members);
+		
+		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
+		
+		Group group = groupSystem.createGroup(user, name);
+		group.addMember(user);
+		group.addMembers(memberPeople);
+		
+		returnObjects(out, contentType, null, Collections.singleton(group));
 	}
 }

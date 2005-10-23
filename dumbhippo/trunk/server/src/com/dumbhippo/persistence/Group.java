@@ -30,6 +30,11 @@ public class Group extends GuidPersistable {
 		return Collections.unmodifiableSet(members);
 	}
 	
+	/**
+	 * Only hibernate should call this probably, use 
+	 * addMember()
+	 * @param members
+	 */
 	protected void setMembers(Set<Person> members) {
 		this.members = members;
 	}
@@ -38,11 +43,15 @@ public class Group extends GuidPersistable {
 		members.add(person);
 	}
 	
+	public void addMembers(Set<Person> persons) {
+		members.addAll(persons);
+	}
+	
 	public String getName() {
 		return name;
 	}
 	
-	protected void setName(String name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 }
