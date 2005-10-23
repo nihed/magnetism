@@ -156,4 +156,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		returnObjects(out, contentType, null, Collections.singleton(group));
 	}
+
+	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
+		EmailResource emailResource = identitySpider.getEmail(email);
+		Person contact = identitySpider.lookupPersonByEmail(user, emailResource);
+		if (contact == null) {
+			HippoAccount account = accountSystem.lookupAccountByPerson(user);
+			contact = identitySpider.createContact(account, emailResource);
+		}
+		returnObjects(out, contentType, Collections.singleton(contact), null);
+	}
 }

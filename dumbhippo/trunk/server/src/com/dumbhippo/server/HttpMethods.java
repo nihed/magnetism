@@ -10,14 +10,11 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
- *  - Methods must be named getFoo or doFoo
- *  
+ * - Methods must be named getFoo or doFoo
  *  - the args to a method are: OutputStream,HttpResponseData pair; Person
  * logged in user; http params
- * 
  *  - the OutputStream,HttpResponseData can be omitted if you only return
  * content type NONE
- * 
  *  - if you have the Person arg then you require login for the method to work
  * 
  */
@@ -36,5 +33,10 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "url", "recipients", "description" })
-	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException, GuidNotFoundException;
+	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException,
+			GuidNotFoundException;
+
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "email" })
+	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException;
 }

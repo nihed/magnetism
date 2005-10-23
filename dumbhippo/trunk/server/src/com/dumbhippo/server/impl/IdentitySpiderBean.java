@@ -23,6 +23,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -30,6 +31,7 @@ import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -276,6 +278,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void addVerifiedOwnershipClaim(Person claimedOwner, Resource res) {
 		internalAddOwnershipClaim(claimedOwner, res, getTheMan());
+	}
+
+	public Person createContact(HippoAccount owner, Resource contact) {
+		Person ret;
+		
+		ret = new Person();
+		em.persist(ret);
+		addOwnershipClaim(ret, contact, owner.getOwner());
+		owner.addContact(ret);
+		return ret;
 	}
 }
 

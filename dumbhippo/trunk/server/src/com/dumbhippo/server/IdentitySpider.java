@@ -8,6 +8,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -128,6 +129,16 @@ public interface IdentitySpider {
 	 * @param resource thing to be owned
 	 */	
 	public void addVerifiedOwnershipClaim(Person owner, Resource res);
+	
+	/**
+	 * Creates a new Person, makes it own the given resource, and 
+	 * adds the Person to the owner's contact list.
+	 * 
+	 * @param owner account whose contact it is (logged in user usually)
+	 * @param contact the contact address
+	 * @return the new person in the contact list
+	 */
+	public Person createContact(HippoAccount owner, Resource contact);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
