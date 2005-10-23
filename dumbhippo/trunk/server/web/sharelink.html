@@ -16,7 +16,7 @@
 <!--  invisible at first to avoid flicker while we set up dojo widgets -->
 <div id="dhShareLinkForm" class="dhInvisible">
 
-<div class="dhVerticalPadding"/>
+<div class="dhVerticalPadding"></div>
 
 <div dojoType="InlineEditBox" class="dhUrl" id="dhUrlToShare">
 Click here to enter a link to share</div>
@@ -42,12 +42,16 @@ Click here to enter a link to share</div>
 
 <div class="dhVerticalPadding"></div>
 
+<div class="dhRecipientListArea">
 <a id="dhCreateGroupLink" class="dhActionLink"
  onmouseover="dh.sharelink.highlightPossibleGroup();"
  onmouseout="dh.sharelink.unhighlightPossibleGroup();"
  href="javascript:alert('create group, woot');">Create Group from These</a>
 <div id="dhRecipientList">
-</div>
+
+
+</div><!-- end of recipient list div -->
+</div><!-- end of div containing create group link and recipient list -->
 
 <div class="dhVerticalPadding"></div>
 

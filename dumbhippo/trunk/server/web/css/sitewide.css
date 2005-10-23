@@ -28,12 +28,15 @@
 	opacity:						inherit;
 }
 
-/* Defaults for the page go here */
 body {
+	/* Properties of body */
+	margin:							0;
+	max-width:						90%;
+
+	/* Page-wide defaults to be inherited by child nodes */
 	font-family:					Verdana, sans;
 	color:							#505050;
-	background-color: 				"white";
-	margin:							0;
+	background-color: 				#fff;
 }
 
 div {

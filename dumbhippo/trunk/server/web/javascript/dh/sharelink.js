@@ -161,13 +161,12 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		
 		dh.sharelink.selectedRecipients.push(person);
 		
-		var personNode = document.createElement("div");
+		var personNode = document.createElement("table");
 		personNode.setAttribute("dhPersonId", person.id);
 		dojo.html.addClass(personNode, "dhPerson");
-		var table = document.createElement("table");
-		personNode.appendChild(table);
+		
 		var tbody = document.createElement("tbody");
-		table.appendChild(tbody);
+		personNode.appendChild(tbody);
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");

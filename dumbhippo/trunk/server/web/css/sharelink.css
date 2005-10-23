@@ -9,21 +9,32 @@
 	margin: 						1em;	
 }
 
-/* list of people who will receive the link */
-#dhShareLinkRecipientList {
-	margin:							2em;
+.dhRecipientListArea {
+	-moz-border-radius:				5px;
+	background-color:				#ddd;
+	padding:						0.5em;
+	/* designed to avoid resize on adding first recipient */
+	min-height:						7em;
 }
 
-#dhRecipientList div {
-	width:						150px;
+/* list of people who will receive the link */
+#dhRecipientList {
+	margin:							1em;
+	/* border: 1px solid black; */  /* debug */
+}
+
+/* Don't set this style by id or it will bind too tightly and the 
+ * .dhCouldBeInGroup style below can't override it.
+ */
+.dhPerson {
+	/* I can't get display:inline to work without breaking something else... */
+	/* display:					inline; */
+	background-color:			#fff;
+	border:						1px solid black;
 	text-align:					center;
 	margin:						0.5em;
-	display:					inline;
-}
-#dhRecipientList div table {
-	border:						1px solid black;
 	width:						150px;
-	-moz-border-radius:				5px;
+	-moz-border-radius:			5px;
 }
 
 /* The highlight when a recipient would be put in a group */
@@ -31,12 +42,8 @@
 	background-color:			#0f0;
 }
 
-.dhPerson * { 
-	/* These two make the whole widget work as a whole 
-	 * for fade/flash effects
-	 */
-	background-color: 			inherit;
-	opacity:					inherit;
+#dhCreateGroupLink {
+	float:						right;
 }
 
 td.dhHeadShot {
