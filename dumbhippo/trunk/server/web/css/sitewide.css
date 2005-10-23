@@ -75,7 +75,7 @@ textarea, .dhTextArea {
 
 .dhUrl {
 	text-decoration:				underline;
-	text-overflow:					elipsis;
+	text-overflow:					ellipsis;
 }
 
 div.dhUrl * {
@@ -88,6 +88,12 @@ a.editLabel {
 
 form.inlineEditBox input[type=text] {
 	color:						blue;
+}
+
+/* A link that's basically a button (does something on click) */
+.dhActionLink, .dhActionLink * {
+	text-decoration:				underline;
+	color:							blue;
 }
 
 /* Used for "this field needs fixing" messages */

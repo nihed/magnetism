@@ -47,6 +47,30 @@ dh.sharelink.findPersonNode = function(personId) {
 	return null;
 }
 
+dh.sharelink.forEachPossibleGroupMember = function(func) {
+	var list = document.getElementById("dhRecipientList");
+	for (var i = 0; i < list.childNodes.length; ++i) {
+		var child = list.childNodes.item(i);
+		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+			continue;
+
+		func(child);
+	}
+	return null;
+}
+
+dh.sharelink.highlightPossibleGroup = function(event) {
+	dh.sharelink.forEachPossibleGroupMember(function(node) {
+		dojo.html.addClass(node, "dhCouldBeInGroup");
+	});
+}
+
+dh.sharelink.unhighlightPossibleGroup = function(event) {
+	dh.sharelink.forEachPossibleGroupMember(function(node) {
+		dojo.html.removeClass(node, "dhCouldBeInGroup");
+	});
+}
+
 dhRemoveRecipientClicked = function(event) {
 	dojo.debug("remove recipient");
 	

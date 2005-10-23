@@ -26,6 +26,11 @@
 	-moz-border-radius:				5px;
 }
 
+/* The highlight when a recipient would be put in a group */
+.dhCouldBeInGroup {
+	background-color:			#0f0;
+}
+
 .dhPerson * { 
 	/* These two make the whole widget work as a whole 
 	 * for fade/flash effects
