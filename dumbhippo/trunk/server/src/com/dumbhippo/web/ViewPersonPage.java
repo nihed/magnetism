@@ -64,14 +64,12 @@ public class ViewPersonPage {
 		return viewedPerson.getName().toString();
 	}
 
-	public void setViewedPersonId(String viewedPersonId) throws ParseException, GuidNotFoundException {
-		if (viewedPersonId == null && this.signin != null && this.signin.isValid()) {
-			setViewedPerson(this.signin.getUser());
-		} else if (viewedPersonId == null) {
+	public void setViewedPersonId(String personId) throws ParseException, GuidNotFoundException {
+		if (personId == null) {
 			logger.debug("no viewed person");
 			return;
 		} else {
-			setViewedPerson(identitySpider.lookupGuidString(Person.class, viewedPersonId));
+			setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
 		}
 	}
 	

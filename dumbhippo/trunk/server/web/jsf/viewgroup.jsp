@@ -6,18 +6,16 @@
 
 <f:view>
 	<head>
-	<title><h:outputText value="#{home.personInfo.humanReadableName}"/></title>
+	<title>Group: <h:outputText value="#{viewgroup.name}"/></title>
 	</head>
 	<body>
 	<div class="person">
-		<p>
-	    <c:url value="viewperson.faces?personId=${home.signin.user.id}" var="publicurl"/>
-		<strong><h:outputText value="#{home.personInfo.humanReadableName}"/></strong>
-		(<a href="${publicurl}">public page</a>)</p>
+		<strong>Group: <h:outputText value="#{viewgroup.name}"/></strong>
+    	<br/>
 		<div class="shared-links">	
-		<p>Recently seen links:</p>	
+		<p>Links recently posted to the group:</p>	
 		<table>
-		<c:forEach items="${home.receivedPostInfos}" var="info">
+		<c:forEach items="${viewgroup.postInfos}" var="info">
 		    <tr>
 			    <td colspan="2"><strong><a href="${info.url}">${info.title}</a></strong></td>
 			</tr>
@@ -32,19 +30,6 @@
 		    </tr>
 		</c:forEach>
 		</table>
-		</div>
-		<br/>
-		<div class="groups">
-		<p>
-		<strong>Groups:</strong>
-		<c:set var="notfirst" value="false"/>
-		<c:forEach items="${home.groups}" var="group">
-		<c:url value="viewgroup.faces?groupId=${group.id}" var="groupurl"/>
-		<c:if test="${notfirst}">, </c:if><a href="${groupurl}">${group.name}</a>
-		<c:set var="notfirst" value="true"/>
-		</c:forEach>
-		</p>
-		<!--  ability to join/share groups [D] -->
 		</div>
 	</div>	
 	</body>

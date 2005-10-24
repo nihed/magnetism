@@ -1,12 +1,19 @@
 package com.dumbhippo.web;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.Collections;
 
 import javax.naming.NamingException;
 
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Group;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostingBoard;
@@ -26,10 +33,12 @@ public class HomePage {
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private PersonInfo personInfo;
+	private GroupSystem groupSystem;
 	
 	public HomePage() throws NamingException {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
 	public List<PostInfo> getReceivedPostInfos() {
@@ -50,5 +59,22 @@ public class HomePage {
 			personInfo = new PersonInfo(identitySpider, signin.getUser(), signin.getUser());
 		
 		return personInfo;
+	}
+	
+	public List<Group> getGroups() {
+		// Sort the return of groupSystem.findGroups(), so we don't
+		// display things to the user in hash-table order.
+		
+		ArrayList<Group> groups = new ArrayList<Group>();
+		groups.addAll(groupSystem.findGroups(signin.getUser()));
+		
+		final Collator collator = Collator.getInstance();
+		Collections.sort(groups, new Comparator<Group>() {
+			public int compare (Group g1, Group g2) {
+				return collator.compare(g1.getName(), g2.getName());
+			}
+		});
+
+		return groups;
 	}
 }

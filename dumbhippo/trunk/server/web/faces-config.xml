@@ -91,7 +91,21 @@
       </managed-property>
       <managed-property>
         <property-name>viewedPersonId</property-name>
-        <value>#{param.viewedPersonId}</value>
+        <value>#{param.personId}</value>
+      </managed-property>      
+   </managed-bean>   
+   
+   <managed-bean> 
+      <managed-bean-name>viewgroup</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.ViewGroupPage</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+        <property-name>signin</property-name>
+        <value>#{signin}</value>
+      </managed-property>
+      <managed-property>
+        <property-name>viewedGroupId</property-name>
+        <value>#{param.groupId}</value>
       </managed-property>      
    </managed-bean>   
    
