@@ -77,7 +77,6 @@ public class PersonViewBean
 		if (name != null && !name.isEmpty()) {
 			return name.toString();
 		}
-		
 		EmailResource email = getEmail();
 		if (email != null) {
 			return email.getEmail();

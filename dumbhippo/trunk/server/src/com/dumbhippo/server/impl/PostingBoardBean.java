@@ -84,7 +84,7 @@ public class PostingBoardBean implements PostingBoard {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber notifications... (to Person only)");
 		for (Person r : expandedRecipients) {
-			messageSender.sendShareLink(r, post.getGuid(), url, text);
+			messageSender.sendShareLink(r, poster, post.getGuid(), url, title, text);
 		}
 		return post;
 	}

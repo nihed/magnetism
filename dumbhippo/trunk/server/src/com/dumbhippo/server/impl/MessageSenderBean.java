@@ -17,7 +17,9 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 /**
@@ -31,6 +33,9 @@ public class MessageSenderBean implements MessageSender {
 	static private final Log logger = GlobalSetup.getLog(MessageSenderBean.class);
 	private XMPPConnection connection;
 
+	@EJB
+	private IdentitySpider identitySpider;
+	
 	@EJB
 	private Configuration config;
 
@@ -58,8 +63,9 @@ public class MessageSenderBean implements MessageSender {
 		return connection;
 	}
 	
-	public void sendShareLink(Person recipient, Guid postGuid, String url, String title) {
+	public void sendShareLink(Person recipient, Person sender, Guid postGuid, String url, String title, String description) {
 		XMPPConnection connection = getConnection();
+		PersonView recipientView;
 		
 		if (connection == null)
 			return;
@@ -74,7 +80,9 @@ public class MessageSenderBean implements MessageSender {
 		Message message = new Message(recipientJid.toString(),
 				Message.Type.HEADLINE);
 		
-		message.addExtension(new LinkExtension(postGuid, url, title));
+		recipientView = identitySpider.getViewpoint(recipient, sender);
+		String senderName = recipientView.getHumanReadableName();
+		message.addExtension(new LinkExtension(senderName, postGuid, url, title, description));
 
 		message.setBody(String.format("%s\n%s", title, url));
 		
@@ -87,22 +95,28 @@ public class MessageSenderBean implements MessageSender {
 		private static final String ELEMENT_NAME = "link";
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
 		
+		private String senderName; 
 		private String url;
 		private Guid guid;
 		private String title;
+		private String description;
 
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
+			builder.appendTextNode("senderName", senderName, "isCache", "true");			
 			builder.appendTextNode("title", title);
+			builder.appendTextNode("description", description);
 			builder.closeElement();
 	        return builder.toString();
 		}
 
-		public LinkExtension(Guid postId, String url, String title) {
+		public LinkExtension(String senderName, Guid postId, String url, String title, String description) {
+			this.senderName = senderName;
 			this.guid = postId;
 			this.url = url;
 			this.title = title;
+			this.description = description;
 		}
 
 		public String getElementName() {

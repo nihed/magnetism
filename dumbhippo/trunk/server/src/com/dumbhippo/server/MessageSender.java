@@ -7,5 +7,5 @@ import com.dumbhippo.persistence.Person;
 
 @Local
 public interface MessageSender {
-	public void sendShareLink(Person recipient, Guid postGuid, String url, String title);
+	public void sendShareLink(Person recipient, Person sender, Guid postGuid, String url, String title, String description);
 }
