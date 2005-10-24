@@ -10,6 +10,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PostInfo;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
@@ -28,7 +29,8 @@ public class ViewPersonPage {
 	private SigninBean signin;
 	
 	private IdentitySpider identitySpider;
-	private PostingBoard postBoard;	
+	private PostingBoard postBoard;
+	private PersonInfo personInfo;
 	
 	public ViewPersonPage() throws NamingException {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
@@ -71,5 +73,12 @@ public class ViewPersonPage {
 		} else {
 			setViewedPerson(identitySpider.lookupGuidString(Person.class, viewedPersonId));
 		}
+	}
+	
+	public PersonInfo getPersonInfo() {
+		if (personInfo == null)
+			personInfo = new PersonInfo(identitySpider, signin.getUser(), viewedPerson);
+		
+		return personInfo;
 	}
 }

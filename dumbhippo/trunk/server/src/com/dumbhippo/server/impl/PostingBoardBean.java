@@ -99,7 +99,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	public List<Post> getPostsFor(Person poster, int max) {
 		Query q;
-		q = em.createQuery("select p from Post p, LinkResource link where p.poster = :personid and link.id in elements(p.resources) order by p.postDate");
+		q = em.createQuery("select p from Post p, LinkResource link where p.poster = :personid and link.id in elements(p.resources) order by p.postDate desc");
 		q.setParameter("personid", poster);
 		if (max > 0) {
 			q.setMaxResults(max);
@@ -113,10 +113,32 @@ public class PostingBoardBean implements PostingBoard {
 		List<PostInfo> result = new ArrayList<PostInfo>();
 		
 		List<Post> posts = getPostsFor(poster, max);
-		for (Post p : posts) {
+		for (Post p : posts)
 			result.add(new PostInfo(identitySpider, viewer, p));
-		}
 		
 		return result;
+	}
+	
+	public List<PostInfo> getReceivedPostInfos(Person recipient, int max) {
+		try {
+		Query q;
+		q = em.createQuery("select p from Post p where :recipient in elements(p.recipients) order by p.postDate desc");
+		q.setParameter("recipient", recipient);
+		if (max > 0) {
+			q.setMaxResults(max);
+		}
+		@SuppressWarnings("unchecked")		
+		List<Post> posts = q.getResultList();
+		
+		List<PostInfo> results = new ArrayList<PostInfo>();
+		
+		for (Post p : posts) 
+			results.add(new PostInfo(identitySpider, recipient, p));;
+		
+		return results;
+		} catch (Exception e) {
+			logger.debug("The error was ", e);
+			throw new RuntimeException(e);
+		}
 	}
 }

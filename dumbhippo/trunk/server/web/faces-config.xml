@@ -25,24 +25,6 @@
    </navigation-rule>
    <!-- these rules with from-view-id apply only to the given page -->
    <navigation-rule>
-      <from-view-id>/jsf/main.jsp</from-view-id>
-      <navigation-case>
-         <from-outcome>addclient</from-outcome>
-         <to-view-id>/jsf/addclient.jsp</to-view-id>
-         <redirect/>
-      </navigation-case>      
-      <navigation-case>
-         <from-outcome>invite</from-outcome>
-         <to-view-id>/jsf/invite.jsp</to-view-id>
-         <redirect/>
-      </navigation-case>
-      <navigation-case>
-         <from-outcome>viewperson</from-outcome>
-         <to-view-id>/jsf/viewperson.jsp</to-view-id>
-         <redirect/>
-      </navigation-case>      
-   </navigation-rule>
-   <navigation-rule>
       <from-view-id>/jsf/invite.jsp</from-view-id>
       <navigation-case>
          <from-outcome>invitesent</from-outcome>
@@ -113,6 +95,16 @@
       </managed-property>      
    </managed-bean>   
    
+   <managed-bean> 
+      <managed-bean-name>home</managed-bean-name>
+      <managed-bean-class>com.dumbhippo.web.HomePage</managed-bean-class> 
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+        <property-name>signin</property-name>
+        <value>#{signin}</value>
+      </managed-property>
+   </managed-bean>   
+
    <managed-bean> 
       <managed-bean-name>addclient</managed-bean-name>
       <managed-bean-class>com.dumbhippo.web.AddClientBean</managed-bean-class> 

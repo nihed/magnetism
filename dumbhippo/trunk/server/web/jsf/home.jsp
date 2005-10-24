@@ -6,18 +6,23 @@
 
 <f:view>
 	<head>
-	<title><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></title>
+	<title><h:outputText value="#{home.personInfo.humanReadableName}"/></title>
 	</head>
 	<body>
 	<div class="person">
-		<strong><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></strong>
-    	<br/>
+		<p>
+	    <c:url value="viewperson.faces?personId=${home.signin.user.id}" var="publicurl"/>
+		<strong><h:outputText value="#{home.personInfo.humanReadableName}"/></strong>
+		(<a href="${publicurl}">public page</a>)</p>
 		<div class="shared-links">	
-		<p>Recently posted links:</p>	
+		<p>Recently seen links:</p>	
 		<table>
-		<c:forEach items="${viewperson.postInfos}" var="info">
+		<c:forEach items="${home.receivedPostInfos}" var="info">
 		    <tr>
-			    <td colspan="2"><strong><a href="${info.url}">${info.title}</a></strong> (<fmt:formatDate value="${info.post.postDate}" type="both"/>)</td>
+			    <td colspan="2"><strong><a href="${info.url}">${info.title}</a></strong></td>
+			</tr>
+			<tr>
+				<th align="right">From:</th><td>${info.posterName} (<fmt:formatDate value="${info.post.postDate}" type="both"/>)</td>
 			</tr>
 			<tr>
 			    <th align="right">To:</th><td>${info.recipientSummary}</td>

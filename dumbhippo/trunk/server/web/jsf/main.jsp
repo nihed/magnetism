@@ -16,12 +16,14 @@
         <!-- TODO: dump a JSF data table here with people connected to the 
                		current viewuser -->
 
-		<p><h:commandLink action="invite">
-			<h:outputText value="Invite a user" />
-		</h:commandLink></p>
+	    <c:url value="home.faces" var="homeurl"/>
+		<p><a href="${homeurl}">Home page</a></p>
+
+		<c:url value="invite.faces" var="inviteurl"/>
+		<p><a href="${inviteurl}">Invite a user</p>
 
 		<c:url value="/sharelink.html" var="sharelinkurl"/>
-		<p><a href="${sharelinkurl}"><h:outputText value="Share a link" /></a></p>
+		<p><a href="${sharelinkurl}">Share a link</a></p>
 		
  		<p>
   		<h:panelGroup rendered="#{signin.valid}">
@@ -38,14 +40,6 @@
 			   </h:commandLink>
    		</h:panelGroup>
    		</p>
-   		
-        <p>
-   		<h:panelGroup rendered="#{signin.valid}">
-			<h:commandLink action="viewperson">
-				<h:outputText value="Overview page for #{signin.user.name}" />
-			</h:commandLink>
-   		</h:panelGroup>
-   		</p>   		
 
 		</h3>
    
