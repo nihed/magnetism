@@ -69,6 +69,11 @@ table, tbody, tr, td {
 	margin-bottom:					0.5em;
 }
 
+.dhStatusLabel {
+	font-size:						smaller;
+	font-style:						italic;	
+}
+
 /* Style of the text being typed by the user */
 textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
 	font-size:						small;

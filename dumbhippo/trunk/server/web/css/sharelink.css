@@ -71,6 +71,9 @@
 #dhCreateGroupPopup input {
 	width:						20em;
 }
+#dhCreateGroupStatus {
+	text-align:					right;	
+}
 
 td.dhHeadShot {
 	text-align:					center;

@@ -81,3 +81,17 @@ dh.util.flash = function(node) {
 							});
 						});
 }
+
+dh.util.join = function(array, separator, elemProp) {
+	var joined = "";
+	for (var i = 0; i < array.length; ++i) {
+		if (i != 0) {
+			joined = joined + separator;
+		}
+		if (arguments.length > 2)
+			joined = joined + array[i][elemProp];
+		else
+			joined = joined + array[i];
+	}
+	return joined;
+}

@@ -54,8 +54,12 @@ dh.sharelink.forEachPossibleGroupMember = function(func) {
 		var child = list.childNodes.item(i);
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
+			
+		var id = child.getAttribute("dhId");
+		var obj = dh.sharelink.allKnownIds[id];
 
-		func(child);
+		if (obj.isPerson())
+			func(child);
 	}
 	return null;
 }
@@ -86,16 +90,88 @@ dh.sharelink.toggleCreateGroup = function() {
 		dh.sharelink.unhighlightPossibleGroup();
 }
 
+dh.sharelink.creatingGroup = false;
 dh.sharelink.doCreateGroup = function() {
 	var name = dh.sharelink.createGroupNameEntry.value;
-	alert("name = " + name);
-	dh.sharelink.createGroupNameEntry.value = "";
+
+	// don't get two of these in flight at once
+	if (dh.sharelink.creatingGroup)
+		return;
+	dh.sharelink.creatingGroup = true;
+		
+	var statusNode = document.getElementById("dhCreateGroupStatus");
+	dojo.dom.textContent(statusNode, "Please wait...");
+	dh.util.show(statusNode);
+	
+	var groupMembers = [];
+	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
+		var r = dh.sharelink.selectedRecipients[i];
+		if (r.isPerson()) {
+			groupMembers.push(r);
+		}
+	}
+	var commaMembers = dh.util.join(groupMembers, ",", "id");
+		
+	dh.server.getXmlPOST("creategroup",
+					{ 
+						"name" : name, 
+						"members" : commaMembers
+					},
+					function(type, data, http) {
+						//dojo.debug("creategroup got back data " + dhAllPropsAsString(data));
+						
+						var objectsElement = data.getElementsByTagName("objects").item(0);
+						var nodeList = objectsElement.childNodes;
+						for (var i = 0; i < nodeList.length; ++i) {
+							var element = nodeList.item(i);
+							if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+								continue;
+							} else {
+								var obj = dh.model.objectFromXmlNode(element);
+						    	dh.sharelink.allKnownIds[obj.id] = obj;
+						    	dojo.debug(" saved new group type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
+						    	
+						    	// add the group as a recipient
+						    	dh.sharelink.doAddRecipient(obj.id);
+							}
+						}
+						
+						// remove the individual members
+						for (var i = 0; i < groupMembers.length; ++i) {
+							dh.sharelink.removeRecipient(groupMembers[i].id);
+						}
+						
+						dh.util.hide(dh.sharelink.createGroupPopup);
+						dh.sharelink.createGroupNameEntry.value = "";
+						dh.util.hide(statusNode);
+						dh.sharelink.creatingGroup = false;
+					},
+					function(type, error, http) {
+						//dojo.debug("creategroup got back error " + dhAllPropsAsString(error));
+						// FIXME display the error, don't hide status
+						dh.util.hide(statusNode);
+						dh.sharelink.creatingGroup = false;						
+					});
 }
 
 dhDoCreateGroupKeyUp = function(event) {
 	if (event.keyCode == 13) {
 		dh.sharelink.doCreateGroup();
 	}
+}
+
+dh.sharelink.removeRecipient = function(recipientId, node) {
+	if (arguments.length < 2) {
+		node = dh.sharelink.findIdNode(recipientId);
+	}
+
+	var objIndex = dh.sharelink.findGuid(dh.sharelink.selectedRecipients, recipientId);
+	dh.sharelink.selectedRecipients.splice(objIndex, 1);
+	
+	// remove the HTML representing this recipient
+	var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
+		node.parentNode.removeChild(node);
+	});
 }
 
 dhRemoveRecipientClicked = function(event) {
@@ -114,13 +190,7 @@ dhRemoveRecipientClicked = function(event) {
 		node = node.parentNode;
 	}
 	
-	var objIndex = dh.sharelink.findGuid(dh.sharelink.selectedRecipients, idToRemove);
-	dh.sharelink.selectedRecipients.splice(objIndex, 1);
-	
-	// remove the HTML representing this recipient
-	var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
-		node.parentNode.removeChild(node);
-	});
+	dh.sharelink.removeRecipient(idToRemove, node);
 }
 
 dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
@@ -253,13 +323,7 @@ dh.sharelink.submitButtonClicked = function() {
 	var urlHtml = dh.sharelink.urlToShareEditBox.textValue;
 	var descriptionHtml = dh.sharelink.descriptionRichText.getEditorContent();
 	
-	var commaRecipients = "";
-	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
-		if (i != 0) {
-			commaRecipients = commaRecipients + ",";
-		}
-		commaRecipients = commaRecipients + dh.sharelink.selectedRecipients[i].id;
-	}
+	var commaRecipients = dh.util.join(dh.sharelink.selectedRecipients, ",", "id");
 	
 	dojo.debug("url = " + urlHtml);
 	dojo.debug("desc = " + descriptionHtml);

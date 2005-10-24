@@ -15,7 +15,7 @@ dh.login.dialogContentHtml =
 + '				<td><input id="dhLoginDialogEmail" type="text"/></td>'
 + '			</tr>'
 + '			<tr>'
-+ '				<td colspan="2" align="right"><p id="dhLoginStatus"></p></td>'
++ '				<td colspan="2" align="right"><p id="dhLoginStatus" class="dhStatusLabel"></p></td>'
 + '			</tr>'
 + '			<tr>'
 + '				<td colspan="2" align="right">'
