@@ -122,7 +122,7 @@ public class PostingBoardBean implements PostingBoard {
 	public List<PostInfo> getReceivedPostInfos(Person recipient, int max) {
 		try {
 		Query q;
-		q = em.createQuery("select p from Post p where :recipient in elements(p.recipients) order by p.postDate desc");
+		q = em.createQuery("select p from Post p where :recipient in elements(p.personRecipients) order by p.postDate desc");
 		q.setParameter("recipient", recipient);
 		if (max > 0) {
 			q.setMaxResults(max);
