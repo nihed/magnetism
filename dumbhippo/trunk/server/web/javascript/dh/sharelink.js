@@ -267,9 +267,8 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 			dojo.html.addClass(idNode, "dhCouldBeInGroup");
 		
 		// don't think tbody is used anymore?
-		//var tbody = document.createElement("tbody");
-		//idNode.appendChild(tbody);
-		var tbody = idNode;
+		var tbody = document.createElement("tbody");
+		idNode.appendChild(tbody);
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");
