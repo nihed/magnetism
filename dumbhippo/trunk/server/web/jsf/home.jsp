@@ -51,7 +51,12 @@
 			    <td colspan="2"><strong><a href="${info.url}"><c:out value="${info.title}"/></a></strong></td>
 			</tr>
 			<tr>
-				<th align="right">From:</th><td><c:out value="${info.posterName}"/> (<fmt:formatDate value="${info.post.postDate}" type="both"/>)</td>
+			    <c:url value="viewperson.faces?personId=${info.post.poster.id}" var="posterurl"/>
+				<th align="right">From:</th>
+				<td>
+				<a href="${posterurl}"><c:out value="${info.posterName}"/></a>
+				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
+				</td>
 			</tr>
 			<tr>
 			    <th align="right">To:</th><td><c:out value="${info.recipientSummary}"/></td>

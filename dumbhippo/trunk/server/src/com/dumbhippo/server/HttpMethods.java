@@ -49,6 +49,10 @@ public interface HttpMethods {
 	@HttpOptions(invalidatesSession = true)
 	public void doRenamePerson(Person user, String name);
 	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "contactId" })
+	public void doAddContactPerson(Person user, String contactId);
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException;

@@ -8,6 +8,23 @@
 	<head>
 	<title><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></title>
 	</head>
+	<script src="/javascript/config.js" type="text/javascript"></script>
+    <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
+    <script src="/javascript/common.js" type="text/javascript"></script>
+    <script type="text/javascript">
+	    dojo.require("dh.server");
+	    
+	    function addContact() {
+	    	dh.server.doPOST("addcontactperson",
+						     { "contactId" : "${viewperson.personInfo.person.id}" },
+				  	    	 function(type, data, http) {
+				  	    	 	 document.location.reload();
+				  	    	 },
+				  	    	 function(type, error, http) {
+				  	    	     alert("Couldn't add user to contact list");
+				  	    	 });
+	    }
+    </script>
 	<body>
 	<div class="person">
 		<strong><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></strong>
@@ -37,6 +54,9 @@
 		<!--  list group objects here -->
 		<!--  ability to join/share groups [D] -->
 		</div>
+		<c:if test="${!viewperson.isContact}">
+		<p><a href="javascript:addContact()">Add <c:out value="${viewperson.personInfo.humanReadableName}"/> to my contact list</a></p>
+		</c:if>
 	</div>	
 	</body>
 </f:view>

@@ -163,12 +163,28 @@ public interface IdentitySpider {
 	 */
 	public Person createContact(Person person, Resource contact);
 	
+	/**
+	 * Adds a contact to a person's account. 
+	 * 
+	 * @param person whose contact it is (must have an account)
+	 * @param the new person to add to the contact list
+	 */
+	public void addContactPerson(Person person, Person contact);
+	
 	/** 
 	 * Get the contacts of the given person
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
 	public Set<Person> getContacts(Person user);
+	
+	
+	/**
+	 * Checks whethera  person has another other as a contact
+	 * @param user who to look in the contacts of
+	 * @param contact person to look for in the contacts
+	 */
+	public boolean isContact(Person user, Person contact);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.

@@ -79,4 +79,13 @@ public class ViewPersonPage {
 		
 		return personInfo;
 	}
+	
+	public boolean getIsContact() {
+		try {
+		return identitySpider.isContact(signin.getUser(), viewedPerson);
+		} catch (Exception e) {
+			logger.debug("The exception was", e);
+			throw new RuntimeException(e);
+		}
+	}
 }

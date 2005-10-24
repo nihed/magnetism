@@ -314,19 +314,34 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			addOwnershipClaim(ret, contact, person);
 		}
 		
+		addContactPerson(person, ret);
+
+		return ret;
+	}
+	
+	public void addContactPerson(Person person, Person contact) {
 		HippoAccount account = accountSystem.lookupAccountByPerson(person);
 		if (account == null)
 			throw new RuntimeException("trying to add contact to someone without an account");
 		if (!em.contains(account))
 			throw new RuntimeException("account to add contact to somehow detached");
-		logger.debug("adding contact " + ret + " to account " + account);
-		account.addContact(ret);
-		return ret;
+		logger.debug("adding contact " + contact + " to account " + account);
+		account.addContact(contact);		
 	}
 
 	public Set<Person> getContacts(Person user) {
 		HippoAccount account = accountSystem.lookupAccountByPerson(user);
 		return account.getContacts();
+	}
+	
+	public boolean isContact(Person user, Person contact) {
+		Query query = em.createQuery("select count(a) from HippoAccount a where a.owner = :user and :contact in elements(a.contacts)");
+		query.setParameter("user", user);
+		query.setParameter("contact", contact);
+		
+		// This is a bug in the Hibernate EJB3 implementation; a count query shoudl
+		// return Long not Integer according to the spec.
+		return (Integer)query.getSingleResult() > 0;
 	}
 }
 

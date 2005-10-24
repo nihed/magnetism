@@ -22,9 +22,10 @@
 			    </td>
 			</tr>
 			<tr>
+				<c:url value="viewperson.faces?personId=${info.post.poster.id}" var="posterurl"/>
 				<th align="right">From:</th>
 				<td>
-				<c:out value="${info.posterName}"/> 
+				<a href="${posterurl}"><c:out value="${info.posterName}"/></a>
 				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
 				</td>
 			</tr>
