@@ -57,7 +57,7 @@
 			    <th align="right">To:</th><td><c:out value="${info.recipientSummary}"/></td>
 		    </tr>
 		    <tr>
-		    	<th></th><td>${info.post.text}</td>
+		    	<th></th><td><c:out value="${info.post.text}"/></td>
 		    </tr>
 		</c:forEach>
 		</table>

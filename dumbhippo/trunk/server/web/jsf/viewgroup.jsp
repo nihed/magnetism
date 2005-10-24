@@ -17,16 +17,24 @@
 		<table>
 		<c:forEach items="${viewgroup.postInfos}" var="info">
 		    <tr>
-			    <td colspan="2"><strong><a href="${info.url}">${info.title}</a></strong></td>
+			    <td colspan="2">
+			    <strong><a href="${info.url}"><c:out value="${info.title}"/></a></strong>
+			    </td>
 			</tr>
 			<tr>
-				<th align="right">From:</th><td>${info.posterName} (<fmt:formatDate value="${info.post.postDate}" type="both"/>)</td>
+				<th align="right">From:</th>
+				<td>
+				<c:out value="${info.posterName}"/> 
+				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
+				</td>
 			</tr>
 			<tr>
-			    <th align="right">To:</th><td>${info.recipientSummary}</td>
+			    <th align="right">To:</th>
+			    <td><c:out value="${info.recipientSummary}"/></td>
 		    </tr>
 		    <tr>
-		    	<th></th><td>${info.post.text}</td>
+		    	<th></th>
+		    	<td><c:out value="${info.post.text}"/></td>
 		    </tr>
 		</c:forEach>
 		</table>
