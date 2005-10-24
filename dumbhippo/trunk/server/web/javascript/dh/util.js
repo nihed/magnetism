@@ -95,3 +95,5 @@ dh.util.join = function(array, separator, elemProp) {
 	}
 	return joined;
 }
+
+dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.geckoVersion < 20051001;

@@ -299,22 +299,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		internalAddOwnershipClaim(claimedOwner, res, getTheMan());
 	}
 
-	public Person createContact(Person owner, Resource contact) {
+	public Person createContact(Person person, Resource contact) {
 		Person ret;
 	
-		if (owner == null)
+		if (person == null)
 			throw new IllegalArgumentException("null contact owner");
 		if (contact == null)
 			throw new IllegalArgumentException("null contact resource");
 		
-		ret = lookupPersonByResource(owner, contact);
+		ret = lookupPersonByResource(person, contact);
 		if (ret == null) {
 			ret = new Person();
 			em.persist(ret);
-			addOwnershipClaim(ret, contact, owner);
+			addOwnershipClaim(ret, contact, person);
 		}
 		
-		HippoAccount account = accountSystem.lookupAccountByPerson(owner);
+		HippoAccount account = accountSystem.lookupAccountByPerson(person);
 		if (account == null)
 			throw new RuntimeException("trying to add contact to someone without an account");
 		if (!em.contains(account))

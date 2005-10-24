@@ -1,6 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,18 +16,24 @@ public class Group extends GuidPersistable {
 	private Set<Person> members;
 	private boolean markedForDelete;
 		
+	private void initMissing() {
+		if (members == null)
+			members = new HashSet<Person>();
+	}
+	
 	public Group() {
-		members = new HashSet<Person>();
+		initMissing();
 	}
 	
 	public Group(String name) {
 		this.name = name;
-		members = new HashSet<Person>();
+		initMissing();
 	}
 	
 	public Group(String name, Set<Person> members) {
 		this.name = name;
 		setMembers(members);
+		initMissing();
 	}
 	
 	protected boolean isMarkedForDelete() {

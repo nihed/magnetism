@@ -168,10 +168,14 @@ dh.sharelink.removeRecipient = function(recipientId, node) {
 	var objIndex = dh.sharelink.findGuid(dh.sharelink.selectedRecipients, recipientId);
 	dh.sharelink.selectedRecipients.splice(objIndex, 1);
 	
-	// remove the HTML representing this recipient
-	var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
+	if (dh.util.disableOpacityEffects) {
 		node.parentNode.removeChild(node);
-	});
+	} else {
+		// remove the HTML representing this recipient
+		var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
+			node.parentNode.removeChild(node);
+		});
+	}
 }
 
 dhRemoveRecipientClicked = function(event) {
@@ -295,12 +299,14 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		tr2.appendChild(td);
 		td.appendChild(document.createTextNode(obj.displayName));
 
-		dojo.html.setOpacity(idNode, 0);
+		if (!dh.util.disableOpacityEffects)
+			dojo.html.setOpacity(idNode, 0);
 		
 		var recipientsListNode = document.getElementById("dhRecipientList");
 		recipientsListNode.appendChild(idNode);
-		
-		var anim = dojo.fx.html.fadeIn(idNode, 800);
+	
+		if (!dh.util.disableOpacityEffects)	
+			var anim = dojo.fx.html.fadeIn(idNode, 800);
 	} else {
 		dh.util.flash();
 	}

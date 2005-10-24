@@ -1,13 +1,14 @@
 package com.dumbhippo.persistence;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 
 @Entity
@@ -22,6 +23,7 @@ public class Post extends GuidPersistable {
 	private Set<Person> personRecipients;
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
+	private Set<Person> expandedRecipients;
 	
 	private void initMissing() {
 		if (personRecipients == null)
@@ -30,6 +32,8 @@ public class Post extends GuidPersistable {
 			groupRecipients = new HashSet<Group>();
 		if (resources == null)
 			resources = new HashSet<Resource>();
+		if (expandedRecipients == null)
+			expandedRecipients = new HashSet<Person>();
 	}
 	
 	protected Post() {
@@ -41,19 +45,18 @@ public class Post extends GuidPersistable {
 	 * @param explicitTitle
 	 * @param text
 	 * @param personRecipients
-	 * @param groupRecipients 
+	 * @param groupRecipients
+	 * @param expandedRecipients 
 	 * @param resources
 	 */
-	public Post(Person poster, String explicitTitle, String text, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Resource> resources) {
+	public Post(Person poster, String explicitTitle, String text, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.explicitTitle = explicitTitle;
 		this.text = text;
-		if (personRecipients != null)
-			this.personRecipients = new HashSet<Person>(personRecipients);
-		if (groupRecipients != null)
-			this.groupRecipients = new HashSet<Group>(groupRecipients);
-		if (resources != null)
-			this.resources = new HashSet<Resource>(resources);
+		this.personRecipients = personRecipients;
+		this.groupRecipients = groupRecipients;
+		this.expandedRecipients = expandedRecipients;
+		this.resources = resources;
 		this.postDate = new Date();
 		initMissing();
 	}
@@ -112,6 +115,18 @@ public class Post extends GuidPersistable {
 	}
 	public void setExplicitTitle(String title) {
 		this.explicitTitle = title;
+	}
+
+	@ManyToMany
+	@JoinTable(table=@Table(name="Post_Person_Expanded")) // otherwise conflicts with getRecipients
+	public Set<Person> getExpandedRecipients() {
+		return expandedRecipients;
+	}
+
+	public void setExpandedRecipients(Set<Person> expandedRecipients) {
+		if (expandedRecipients == null)
+			throw new IllegalArgumentException("null");
+		this.expandedRecipients = expandedRecipients;
 	}
 	
 	@Transient

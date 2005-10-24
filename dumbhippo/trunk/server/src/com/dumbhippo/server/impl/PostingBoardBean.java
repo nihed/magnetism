@@ -57,7 +57,8 @@ public class PostingBoardBean implements PostingBoard {
 		
 		Set<Person> personRecipients = new HashSet<Person>();
 		Set<Group> groupRecipients = new HashSet<Group>();
-
+		Set<Person> expandedRecipients = new HashSet<Person>();
+		
 		// sort into persons and groups
 		for (GuidPersistable r : recipients) {
 			if (r instanceof Person) {
@@ -70,28 +71,29 @@ public class PostingBoardBean implements PostingBoard {
 			}
 		}
 		
-		// explode groups, merging into persons
+		// build expanded recipients
+		expandedRecipients.addAll(personRecipients);
 		for (Group g : groupRecipients) {
 			Set<Person> members = g.getMembers();
-			personRecipients.addAll(members);
+			expandedRecipients.addAll(members);
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPost(poster, title, text, shared, personRecipients, groupRecipients);
+		Post post = createPost(poster, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber notifications... (to Person only)");
-		for (Person r : personRecipients) {
+		for (Person r : expandedRecipients) {
 			messageSender.sendShareLink(r, post.getGuid(), url, text);
 		}
 		return post;
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients) {
+	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		
 		logger.debug("saving new Post");
-		Post post = new Post(poster, title, text, personRecipients, groupRecipients, resources);
+		Post post = new Post(poster, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 		em.persist(post);
 	
 		return post;

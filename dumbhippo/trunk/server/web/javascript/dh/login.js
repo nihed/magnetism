@@ -218,7 +218,7 @@ dh.login.createDialog = function() {
 	dh.login.dialog.setBackgroundColor("#ccc");
 	
 	// the transparency thing is crazy slow on Linux prior to ff 1.5
-	if (dojo.render.html.mozilla && !dojo.render.os.win) {
+	if (dh.util.disableOpacityEffects) {
 		dh.login.dialog.effect = "";
 		dh.login.dialog.setBackgroundOpacity(1.0);
 	}

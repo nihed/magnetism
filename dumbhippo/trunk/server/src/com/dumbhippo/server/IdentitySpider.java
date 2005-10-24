@@ -157,11 +157,11 @@ public interface IdentitySpider {
 	 * Otherwise, creates a new Person, makes it own the given resource, and 
 	 * adds the Person to the owner's contact list.
 	 * 
-	 * @param owner person whose contact it is (logged in user usually)
+	 * @param person person whose contact it is (logged in user usually)
 	 * @param contact the contact address
 	 * @return the new person in the contact list
 	 */
-	public Person createContact(Person owner, Resource contact);
+	public Person createContact(Person person, Resource contact);
 	
 	/** 
 	 * Get the contacts of the given person

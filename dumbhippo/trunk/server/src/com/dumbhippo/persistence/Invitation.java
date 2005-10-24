@@ -2,7 +2,6 @@ package com.dumbhippo.persistence;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 

@@ -4,7 +4,6 @@
 package com.dumbhippo.persistence;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,7 +66,6 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * Used only for Hibernate 
 	 */
 	protected HippoAccount() {
-		owner = null;
 		initMissing();
 	}
 	

@@ -23,5 +23,5 @@ public interface PostingBoard {
 	
 	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids) throws ParseException, GuidNotFoundException;
 	
-	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients);
+	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients);
 }
