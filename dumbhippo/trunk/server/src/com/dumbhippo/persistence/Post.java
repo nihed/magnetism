@@ -68,7 +68,7 @@ public class Post extends GuidPersistable {
 	
 	@ManyToMany
 	public Set<Person> getPersonRecipients() {
-		return Collections.unmodifiableSet(personRecipients);
+		return personRecipients;
 	}
 	protected void setPersonRecipients(Set<Person> recipients) {
 		if (recipients == null)
@@ -81,7 +81,7 @@ public class Post extends GuidPersistable {
 	
 	@ManyToMany
 	public Set<Group> getGroupRecipients() {
-		return Collections.unmodifiableSet(groupRecipients);
+		return groupRecipients;
 	}
 	protected void setGroupRecipients(Set<Group> recipients) {
 		if (recipients == null)
@@ -94,7 +94,7 @@ public class Post extends GuidPersistable {
 	
 	@ManyToMany
 	public Set<Resource> getResources() {
-		return Collections.unmodifiableSet(resources);
+		return resources;
 	}
 	protected void setResources(Set<Resource> resources) {
 		if (resources == null)

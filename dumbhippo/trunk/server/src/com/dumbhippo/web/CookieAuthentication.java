@@ -5,9 +5,11 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {
@@ -81,16 +83,18 @@ public class CookieAuthentication {
 		// This should be one of the only classes in web tier 
 		// using account system
 		AccountSystem accountSystem = WebEJBUtil.uncheckedDefaultLookup(AccountSystem.class);
-		
-		HippoAccount account = accountSystem.lookupAccountByPersonId(personId);
-
-		if (account == null) {
-			throw new BadTastingException("Cookie had invalid person ID '" + personId + "'");
+		IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		Person person;		
+		try {
+			person = identitySpider.lookupGuidString(Person.class, personId);
+		} catch (GuidNotFoundException e) {
+			throw new BadTastingException("Cookie had unknown person ID '" + personId + "'");
+		} catch (ParseException e) {
+			throw new BadTastingException("Cookie had malformded person ID '" + personId + "'");
 		}
-
-		if (!account.checkClientCookie(authKey)) {
+		if (!accountSystem.checkClientCookie(person, authKey)) {
 			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
-		return account.getOwner();
-	}	
+		return person;
+	}
 }

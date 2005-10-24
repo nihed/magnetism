@@ -33,7 +33,6 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -276,6 +275,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	private void internalAddOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
+		
+		if (owner == null || resource == null || assertedBy == null) {
+			throw new IllegalArgumentException("null argument");
+		}
+		
 		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(owner, resource, assertedBy);
 		em.persist(claim);		
 	}
@@ -298,6 +302,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Person createContact(Person owner, Resource contact) {
 		Person ret;
 	
+		if (owner == null)
+			throw new IllegalArgumentException("null contact owner");
+		if (contact == null)
+			throw new IllegalArgumentException("null contact resource");
+		
 		ret = lookupPersonByResource(owner, contact);
 		if (ret == null) {
 			ret = new Person();
@@ -306,6 +315,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		
 		HippoAccount account = accountSystem.lookupAccountByPerson(owner);
+		if (account == null)
+			throw new RuntimeException("trying to add contact to someone without an account");
+		if (!em.contains(account))
+			throw new RuntimeException("account to add contact to somehow detached");
+		logger.debug("adding contact " + ret + " to account " + account);
 		account.addContact(ret);
 		return ret;
 	}

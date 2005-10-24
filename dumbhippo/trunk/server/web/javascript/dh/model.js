@@ -17,13 +17,15 @@ dh.model.GuidPersistable = function(id, displayName) {
 dojo.inherits(dh.model.GuidPersistable, Object);
 
 dh.model.Person = function(id, displayName) {
-	dh.model.GuidPersistable.call(id, displayName);
+	this.id = id;
+	this.displayName = displayName;
 	this.kind = "person";
 }
 dojo.inherits(dh.model.Person, dh.model.GuidPersistable);
 
 dh.model.Group = function(id, displayName) {
-	dh.model.GuidPersistable.call(id, displayName);
+	this.id = id;
+	this.displayName = displayName;
 	this.kind = "group";
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);

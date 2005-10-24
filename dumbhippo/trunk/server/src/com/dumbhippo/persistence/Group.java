@@ -41,7 +41,7 @@ public class Group extends GuidPersistable {
 
 	@ManyToMany
 	public Set<Person> getMembers() {
-		return Collections.unmodifiableSet(members);
+		return members;
 	}
 	
 	/**

@@ -1,8 +1,5 @@
 package com.dumbhippo.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;

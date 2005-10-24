@@ -44,6 +44,15 @@ public interface AccountSystem {
 	 */
 	public Client authorizeNewClient(HippoAccount acct, String name);
 	
+	/**
+	 * Checks whether the user can authenticate with this auth key
+	 * 
+	 * @param user the user
+	 * @param authKey their auth cookie
+	 * @return true if authenticated
+	 */
+	public boolean checkClientCookie(Person user, String authKey);
+	
 	/** 
 	 * Gets the number of active accounts.
 	 * 

@@ -26,6 +26,14 @@ public interface HttpMethods {
 	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
 			throws IOException;
 
+	// FIXME this API looks lame to clients; suggest:
+	// 1) the URL use studlyCaps instead of all-lowercase
+	// 2) we add support for optional and boolean params and then have createContact=true
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "entryContents" })
+	public void doFriendCompletionsOrCreateContact(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
+			throws IOException;
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "name", "members" })
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String memberIds)

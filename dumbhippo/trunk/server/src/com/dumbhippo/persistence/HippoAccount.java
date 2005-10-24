@@ -97,12 +97,26 @@ public class HippoAccount extends DBUnique implements Serializable {
 			builder.append(owner.toString());
 		else 
 			builder.append("null");
-		builder.append(" clients = { ");
-		for (Client c : clients) {
-			builder.append(c.toString());
-			builder.append(" ");
+		if (clients != null) {
+			builder.append(" clients = { ");
+			for (Client c : clients) {
+				builder.append(c.toString());
+				builder.append(" ");
+			}
+			builder.append("} }");
+		} else {
+			builder.append(" clients = null ");
 		}
-		builder.append("} }");
+		if (contacts != null) {
+			builder.append(" contacts = { ");
+			for (Person p : contacts) {
+				builder.append(p.toString());
+				builder.append(" ");
+			}
+			builder.append("} }");
+		} else {
+			builder.append(" contacts = null ");
+		}
 		
 		return builder.toString();
 	}
@@ -168,7 +182,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	@OneToMany
 	protected Set<Client> getClients() {
-		return Collections.unmodifiableSet(clients);
+		return clients;
 	}
 
 	protected void setClients(Set<Client> clients) {
@@ -200,7 +214,9 @@ public class HippoAccount extends DBUnique implements Serializable {
 
 	@ManyToMany
 	public Set<Person> getContacts() {
-		return Collections.unmodifiableSet(contacts);
+		if (contacts == null)
+			throw new RuntimeException("no contacts set???");
+		return contacts;
 	}
 
 	/**
@@ -212,15 +228,21 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	protected void setContacts(Set<Person> contacts) {
 		if (contacts == null)
-			throw new IllegalArgumentException("null");
+			throw new IllegalArgumentException("null contacts");
 		this.contacts = contacts;
 	}
 	
 	public void addContact(Person person) {
+		if (person == null)
+			throw new IllegalArgumentException("null person");
+		if (contacts == null)
+			throw new RuntimeException("no contacts set???");
 		contacts.add(person);
 	}
 	
 	public void addContacts(Set<Person> persons) {
+		if (persons == null)
+			throw new IllegalArgumentException("null persons");
 		contacts.addAll(persons);
 	}
 	

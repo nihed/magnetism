@@ -45,7 +45,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private GroupSystem groupSystem;
 
-	static private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
+	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 
@@ -54,21 +54,24 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.append("<objects>");
 	}
 	
-	static private void endReturnObjectsXml(OutputStream out, XmlBuilder xml) throws IOException {
+	private void endReturnObjectsXml(OutputStream out, XmlBuilder xml) throws IOException {
 		xml.append("</objects>");
 		
 		out.write(xml.toString().getBytes());
 	}
 	
-	static private void returnPersonsXml(XmlBuilder xml, Set<Person> persons) {
+	private void returnPersonsXml(XmlBuilder xml, Person user, Set<Person> persons) {
 		if (persons != null) {
 			for (Person p : persons) {
-				xml.appendTextNode("person", null, "id", p.getId(), "display", p.getName().getFullName());
+				// FIXME this is mind-blowingly inefficient
+				PersonView view = identitySpider.getViewpoint(user, p);
+				String humanReadable = view.getHumanReadableName();
+				xml.appendTextNode("person", null, "id", p.getId(), "display", humanReadable);
 			}
 		}		
 	}
 	
-	static private void returnGroupsXml(XmlBuilder xml, Set<Group> groups) {
+	private void returnGroupsXml(XmlBuilder xml, Person user, Set<Group> groups) {
 		if (groups != null) {
 			for (Group g : groups) {
 				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName());
@@ -76,37 +79,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	static private void returnCompletionXml(XmlBuilder xml, GuidPersistable object, String completes) {
+	private void returnCompletionXml(XmlBuilder xml, GuidPersistable object, String completes) {
 		xml.appendTextNode("completion", null, "id", object.getId(), "text", completes);
 	}
 	
-	static private void returnObjects(OutputStream out, HttpResponseData contentType, Set<Person> persons, Set<Group> groups) throws IOException {
+	private void returnObjects(OutputStream out, HttpResponseData contentType, Person user, Set<Person> persons, Set<Group> groups) throws IOException {
 		XmlBuilder xml = new XmlBuilder();		
 
 		startReturnObjectsXml(contentType, xml);
 		
-		returnPersonsXml(xml, persons);
-		returnGroupsXml(xml, groups);
+		returnPersonsXml(xml, user, persons);
+		returnGroupsXml(xml, user, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
-	
-	/* (non-Javadoc)
-	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream, java.lang.String, java.lang.String)
-	 */
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
-	
+
+	private void implementCompletions(OutputStream out, HttpResponseData contentType, Person user,
+			String entryContents, boolean createContact) throws IOException {
+
 		XmlBuilder xml = new XmlBuilder();
 
 		startReturnObjectsXml(contentType, xml);
-			
+
+		boolean hadCompletion = false;
 		if (entryContents != null) {
 			Set<Person> contacts = identitySpider.getContacts(user);
 			Set<Group> groups = groupSystem.findGroups(user);
 
-			// it's important that empty string returns all completions, otherwise
-			// the arrow on the combobox doesn't drop down anything when it's empty
-			
+			// it's important that empty string returns all completions,
+			// otherwise
+			// the arrow on the combobox doesn't drop down anything when it's
+			// empty
+
 			for (Person c : contacts) {
 				String completion = null;
 
@@ -120,9 +124,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else if (c.getId().startsWith(entryContents)) {
 					completion = c.getId();
 				}
-				
+
 				if (completion != null) {
-					returnPersonsXml(xml, Collections.singleton(c));
+					hadCompletion = true;
+					returnPersonsXml(xml, user, Collections.singleton(c));
 					returnCompletionXml(xml, c, completion);
 				}
 			}
@@ -135,15 +140,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else if (g.getId().startsWith(entryContents)) {
 					completion = g.getId();
 				}
-				
+
 				if (completion != null) {
-					returnGroupsXml(xml, Collections.singleton(g));
+					hadCompletion = true;
+					returnGroupsXml(xml, user, Collections.singleton(g));
 					returnCompletionXml(xml, g, completion);
 				}
 			}
 		}
 
+		if (createContact && !hadCompletion) {
+			// Create a new contact to be the completion
+			EmailResource email = identitySpider.getEmail(entryContents);
+			Person contact = identitySpider.createContact(user, email);
+			returnPersonsXml(xml, user, Collections.singleton(contact));
+			returnCompletionXml(xml, contact, entryContents);
+		}
+		
 		endReturnObjectsXml(out, xml);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream,
+	 *      java.lang.String, java.lang.String)
+	 */
+	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
+		implementCompletions(out, contentType, user, entryContents, false);
+	}
+
+	public void doFriendCompletionsOrCreateContact(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
+		implementCompletions(out, contentType, user, entryContents, true);
 	}
 	
 	static private Set<String> splitIdList(String list) {
@@ -175,13 +203,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		group.addMember(user);
 		group.addMembers(memberPeople);
 		
-		returnObjects(out, contentType, null, Collections.singleton(group));
+		returnObjects(out, contentType, user, null, Collections.singleton(group));
 	}
 
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
 		Person contact = identitySpider.createContact(user, emailResource);
 
-		returnObjects(out, contentType, Collections.singleton(contact), null);
+		returnObjects(out, contentType, user, Collections.singleton(contact), null);
 	}
 }

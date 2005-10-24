@@ -30,7 +30,7 @@ public class Person extends GuidPersistable {
 	}
 
 	public String toString() {
-		return "{Person " + "guid = " + getId() + " name = " + name.getFullName() + "}";
+		return "{Person " + "guid = " + getId() + " name = " + name + "}";
 	}
 	
 	/**

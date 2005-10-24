@@ -127,7 +127,8 @@ dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
 	var cb = dh.sharelink.recipientComboBox;
 	var previousValue = cb.textInputNode.value;
 			
-	cb.dataProvider.getResults(previousValue,	
+	cb.dataProvider.getResults(previousValue,
+							true,
 							function(completions) {
 								if (previousValue != cb.textInputNode.value) {
 									// the user typed or deleted or something since we 
@@ -178,7 +179,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 	var objKey = dh.sharelink.findGuid(dh.sharelink.allKnownIds, selectedId);
 	if (!objKey) {
 		// FIXME display something, this is the validation step
-		alert("dunno who that is...");
+		alert("dunno who that is... (" + selectedId + ")");
 		return;
 	}
 	
@@ -307,7 +308,7 @@ dh.sharelink.copyCompletions = function(completions, filterSelected) {
 
 dh.sharelink.FriendListProvider = function() {
 
-	// completions we are working on, hash from search string to array of resultsFunc
+	// completions we are working on, hash from search string + ":" + args to array of resultsFunc
 	this.pendingCompletions = {};
 
 	// all completions we have done, hash from the search string to the provideSearchResults arg
@@ -315,10 +316,10 @@ dh.sharelink.FriendListProvider = function() {
 
 	this.lastSearchProvided = null;
 
-	this.notifyPending = function(searchStr, completions) {
-		dojo.debug("notifying of completion to " + searchStr);
-		var pending = this.pendingCompletions[searchStr];
-		delete this.pendingCompletions[searchStr];
+	this.notifyPending = function(cacheKey, completions) {
+		dojo.debug("notifying of completion to " + cacheKey);
+		var pending = this.pendingCompletions[cacheKey];
+		delete this.pendingCompletions[cacheKey];
 		for (var i = 0; i < pending.length; ++i) {
 			pending[i](completions);
 		}
@@ -326,60 +327,73 @@ dh.sharelink.FriendListProvider = function() {
 
 	// resultsFunc should NOT mutate the returned results, unlike the Dojo signal 
 	// handler on provideSearchResults()
-	this.getResults = function(searchStr, resultsFunc) {
+	this.getResults = function(searchStr, createContactIfNotFound, resultsFunc) {
 
-		if (dojo.lang.has(this.allKnownCompletions, searchStr)) {
-			dojo.debug("using cached result for " + searchStr);
-			resultsFunc(this.allKnownCompletions[searchStr]);
+		var cacheKey = searchStr + ":" + createContactIfNotFound;
+
+		if (dojo.lang.has(this.allKnownCompletions, cacheKey)) {
+			dojo.debug("using cached result for " + cacheKey);
+			resultsFunc(this.allKnownCompletions[cacheKey]);
 			return;
 		}
 
-		if (dojo.lang.has(this.pendingCompletions, searchStr)) {
-			dojo.debug("adding another resultsFunc for " + searchStr);
-			this.pendingCompletions[searchStr].push(resultsFunc);
+		if (dojo.lang.has(this.pendingCompletions, cacheKey)) {
+			dojo.debug("adding another resultsFunc for " + cacheKey);
+			this.pendingCompletions[cacheKey].push(resultsFunc);
 			return;
 		}
 
-		dojo.debug("creating first results query for " + searchStr);
-		this.pendingCompletions[searchStr] = [resultsFunc];
+		dojo.debug("creating first results query for " + cacheKey);
+		this.pendingCompletions[cacheKey] = [resultsFunc];
 		
 		var _this = this;
-				
-		dh.server.getXmlGET("friendcompletions",
-							{ "entryContents" : searchStr },
-							function(type, data, http) {
-								dojo.debug("friendcompletions got back data " + data);
-								dojo.debug("text is : " + http.responseText);
-								//dojo.debug(data.doctype);
+		
+		var method;
+		var func;
+		if (createContactIfNotFound) {
+			method = "friendcompletionsorcreatecontact";
+			func = dh.server.getXmlPOST;
+		} else {
+			method = "friendcompletions";
+			func = dh.server.getXmlGET;
+		}
+		
+		func(method,
+			{ "entryContents" : searchStr },
+			function(type, data, http) {
+					dojo.debug(method + " got back data " + data);
+					dojo.debug("text is : " + http.responseText);
+					//dojo.debug(data.doctype);
 								
-								var completions = [];
+					var completions = [];
 								
-								var objectsElement = data.getElementsByTagName("objects").item(0);
-								var nodeList = objectsElement.childNodes;
-								for (var i = 0; i < nodeList.length; ++i) {
-									var element = nodeList.item(i);
-									if (element.nodeType != dojo.dom.ELEMENT_NODE) {
-										continue;
-									} else if (element.nodeName == "completion") {
-										completions.push([element.getAttribute("text"), element.getAttribute("id")]);
-									} else {
-										var obj = dh.model.objectFromXmlNode(element);
-									    // merge in a new person/group we know about, overwriting any older data
-									    dh.sharelink.allKnownIds[obj.id] = obj;
-									}
-								}
-								
-								// save cached completions
-								_this.allKnownCompletions[searchStr] = completions;
+					var objectsElement = data.getElementsByTagName("objects").item(0);
+					var nodeList = objectsElement.childNodes;
+					for (var i = 0; i < nodeList.length; ++i) {
+						var element = nodeList.item(i);
+						if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+							continue;
+						} else if (element.nodeName == "completion") {
+							completions.push([element.getAttribute("text"), element.getAttribute("id")]);
+						} else {
+							var obj = dh.model.objectFromXmlNode(element);
+						    // merge in a new person/group we know about, overwriting any older data
+						    dh.sharelink.allKnownIds[obj.id] = obj;
+						    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
+						}
+					}
+					
+					// save cached completions
+					_this.allKnownCompletions[searchStr] = completions;
 
-								_this.notifyPending(searchStr, completions);
-							},
-							function(type, error, http) {
-								dojo.debug("friendcompletions got back error " + dhAllPropsAsString(error));
-								_this.notifyPending(searchStr, []);
-								
-								// note that we don't cache an empty result set, we will retry instead...
-							});
+					_this.notifyPending(cacheKey, completions);
+				},
+				function(type, error, http) {
+					dojo.debug(method + " got back error " + dhAllPropsAsString(error));
+					_this.notifyPending(cacheKey, []);
+					
+					// note that we don't cache an empty result set, we will retry instead...
+				});
 	}
 
 	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD"
@@ -388,7 +402,7 @@ dh.sharelink.FriendListProvider = function() {
 		
 		var _this = this;
 
-		this.getResults(searchStr, function(completions) {
+		this.getResults(searchStr, false, function(completions) {
 			// dojo "eats" the completions so we have to copy them (we need to filter anyhow)
 			dh.sharelink.lastSearchProvidedToComboBox = searchStr;
 			_this.emitProvideSearchResults(dh.sharelink.copyCompletions(completions, true), searchStr);

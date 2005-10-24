@@ -8,7 +8,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;

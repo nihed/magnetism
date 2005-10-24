@@ -48,6 +48,10 @@ public class AccountSystemBean implements AccountSystem {
 		return c;
 	}
 	
+	public boolean checkClientCookie(Person user, String authKey) {
+		HippoAccount account = lookupAccountByPerson(user);
+		return account.checkClientCookie(authKey);
+	}
 
 	public HippoAccount lookupAccountByPerson(Person person) {
 		HippoAccount ret;

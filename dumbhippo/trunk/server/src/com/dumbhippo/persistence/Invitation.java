@@ -60,7 +60,7 @@ public class Invitation extends DBUnique {
 
 	@ManyToMany(fetch=FetchType.EAGER)
 	public Set<Person> getInviters() {
-		return Collections.unmodifiableSet(inviters);
+		return inviters;
 	}
 
 	public String getAuthKey() {
