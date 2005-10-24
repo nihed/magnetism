@@ -59,7 +59,7 @@ public abstract class GuidPersistable implements Serializable {
 	 * @return the hex string form of the GUID
 	 */
 	@Id(generate = GeneratorType.NONE)
-	@Column(length = 48, nullable = false)
+	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {
 		String s = getGuid().toString();
 		assert s.length() == Guid.STRING_LENGTH;

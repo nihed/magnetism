@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
@@ -28,6 +29,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceOwnershipClaim;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
@@ -41,7 +43,7 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
 	static private final Log logger = GlobalSetup.getLog(IdentitySpider.class);
 	
-	private static final String BASE_LOOKUP_PERSON_EMAIL_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :email ";
+	private static final String BASE_LOOKUP_PERSON_RESOURCE_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :resource ";
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -49,11 +51,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
-	public Person lookupPersonByEmail(EmailResource email) {
+	@EJB
+	private AccountSystem accountSystem;
+	
+	public Person lookupPersonByEmail(String email) {
+		EmailResource res = getEmail(email);
+		return lookupPersonByResource(res);
+	}
+
+	public Person lookupPersonByEmail(Person viewpoint, String email) {
+		EmailResource res = getEmail(email);
+		return lookupPersonByResource(viewpoint, res);
+	}
+	
+	public Person lookupPersonByResource(Resource resource) {
 		Person person;
 		try {
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and c.assertedBy = :theman")
-			.setParameter("email", email)
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and c.assertedBy = :theman")
+			.setParameter("resource", resource)
 			.setParameter("theman", getTheMan())
 			.getSingleResult();
 		} catch (EntityNotFoundException e) {
@@ -61,15 +76,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return person;
 	}
-	
-	public Person lookupPersonByEmail(Person viewpoint, EmailResource email) {
+
+	public Person lookupPersonByResource(Person viewpoint, Resource resource) {
 		Person person;
 		try {
 			// FIXME: this query could return multiple results if there is both a 
 			//   personal ownership assertion and a system-wide ownership assertion.
 			//   It might be better to just do two queries.
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_EMAIL_QUERY + "and (c.assertedBy = :viewpoint or c.assertedBy = :theman)")
-			.setParameter("email", email)
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and (c.assertedBy = :viewpoint or c.assertedBy = :theman)")
+			.setParameter("resource", resource)
 			.setParameter("viewpoint", viewpoint)
 			.setParameter("theman", getTheMan())
 			.getSingleResult();
@@ -78,7 +93,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return person;
 	}
-
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException {
 		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid
 		T obj = em.find(klass, id);
@@ -280,14 +295,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		internalAddOwnershipClaim(claimedOwner, res, getTheMan());
 	}
 
-	public Person createContact(HippoAccount owner, Resource contact) {
+	public Person createContact(Person owner, Resource contact) {
 		Person ret;
+	
+		ret = lookupPersonByResource(owner, contact);
+		if (ret == null) {
+			ret = new Person();
+			em.persist(ret);
+			addOwnershipClaim(ret, contact, owner);
+		}
 		
-		ret = new Person();
-		em.persist(ret);
-		addOwnershipClaim(ret, contact, owner.getOwner());
-		owner.addContact(ret);
+		HippoAccount account = accountSystem.lookupAccountByPerson(owner);
+		account.addContact(ret);
 		return ret;
+	}
+
+	public Set<Person> getContacts(Person user) {
+		HippoAccount account = accountSystem.lookupAccountByPerson(user);
+		return account.getContacts();
 	}
 }
 

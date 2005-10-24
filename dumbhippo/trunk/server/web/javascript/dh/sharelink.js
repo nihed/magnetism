@@ -11,9 +11,9 @@ dojo.require("dh.login");
 dojo.require("dh.util");
 dojo.require("dh.model");
 
-// hash of all persons we have ever loaded up, keyed by personId
-dh.sharelink.allKnownPersons = {};
-// currently selected recipients
+// hash of all persons/groups we have ever loaded up, keyed by guid
+dh.sharelink.allKnownIds = {};
+// currently selected recipients, may be group or person objects
 dh.sharelink.selectedRecipients = [];
 
 dh.sharelink.urlToShareEditBox = null;
@@ -22,12 +22,11 @@ dh.sharelink.descriptionRichText = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
 
-dh.sharelink.findPerson = function(persons, id) {
-	// obj can be an array or a hash
-	for (var prop in persons) {
-		//dojo.debug("looking for " + id + " on prop " + prop + " in persons obj " + persons);
-		if (dojo.lang.has(persons[prop], "id")) {
-			if (id == persons[prop]["id"]) {
+dh.sharelink.findGuid = function(set, id) {
+	// set can be an array or a hash
+	for (var prop in set) {
+		if (dojo.lang.has(set[prop], "id")) {
+			if (id == set[prop]["id"]) {
 				return prop;
 			}
 		}
@@ -35,14 +34,14 @@ dh.sharelink.findPerson = function(persons, id) {
 	return null;
 }
 
-dh.sharelink.findPersonNode = function(personId) {
+dh.sharelink.findIdNode = function(id) {
 	var list = document.getElementById("dhRecipientList");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
-		var childId = child.getAttribute("dhPersonId");
-		if (childId && personId == childId) {
+		var childId = child.getAttribute("dhId");
+		if (childId && id == childId) {
 			return child;
 		}
 	}
@@ -102,21 +101,21 @@ dhDoCreateGroupKeyUp = function(event) {
 dhRemoveRecipientClicked = function(event) {
 	dojo.debug("remove recipient");
 	
-	// scan up for the dhPersonId node which is the outermost
-	// node of the html representing this person, and also 
-	// has the person ID in question
+	// scan up for the dhId node which is the outermost
+	// node of the html representing this person/group, and also 
+	// has the person/group ID in question
 	
 	var idToRemove = null;
 	var node = event.target;
 	while (node != null) {
-		idToRemove = node.getAttribute("dhPersonId");
+		idToRemove = node.getAttribute("dhId");
 		if (idToRemove)
 			break;
 		node = node.parentNode;
 	}
 	
-	var personIndex = dh.sharelink.findPerson(dh.sharelink.selectedRecipients, idToRemove);
-	dh.sharelink.selectedRecipients.splice(personIndex, 1);
+	var objIndex = dh.sharelink.findGuid(dh.sharelink.selectedRecipients, idToRemove);
+	dh.sharelink.selectedRecipients.splice(objIndex, 1);
 	
 	// remove the HTML representing this recipient
 	var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
@@ -166,7 +165,7 @@ dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
 								} else {
 									// filtered.length == 0 and completions.length > 0
 									//alert("already added them");
-									var node = dh.sharelink.findPersonNode(completions[0][1]);
+									var node = dh.sharelink.findIdNode(completions[0][1]);
 									dh.util.flash(node);
 								}
 							});
@@ -176,30 +175,30 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 	
 	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
 	
-	var personKey = dh.sharelink.findPerson(dh.sharelink.allKnownPersons, selectedId);
-	if (!personKey) {
+	var objKey = dh.sharelink.findGuid(dh.sharelink.allKnownIds, selectedId);
+	if (!objKey) {
 		// FIXME display something, this is the validation step
 		alert("dunno who that is...");
 		return;
 	}
 	
-	var person = dh.sharelink.allKnownPersons[personKey];
+	var obj = dh.sharelink.allKnownIds[objKey];
 	
-	if (!dh.sharelink.findPerson(dh.sharelink.selectedRecipients, person.id)) {
+	if (!dh.sharelink.findGuid(dh.sharelink.selectedRecipients, obj.id)) {
 		
-		dh.sharelink.selectedRecipients.push(person);
+		dh.sharelink.selectedRecipients.push(obj);
 		
-		var personNode = document.createElement("table");
-		personNode.setAttribute("dhPersonId", person.id);
-		dojo.html.addClass(personNode, "dhPerson");
-		dojo.html.addClass(personNode, "dhItemBox");
+		var idNode = document.createElement("table");
+		idNode.setAttribute("dhId", obj.id);
+		dojo.html.addClass(idNode, "dhRecipient");
+		dojo.html.addClass(idNode, "dhItemBox");
 		if (dh.util.isShowing(dh.sharelink.createGroupPopup))
-			dojo.html.addClass(personNode, "dhCouldBeInGroup");
+			dojo.html.addClass(idNode, "dhCouldBeInGroup");
 		
 		// don't think tbody is used anymore?
 		//var tbody = document.createElement("tbody");
-		//personNode.appendChild(tbody);
-		var tbody = personNode;
+		//idNode.appendChild(tbody);
+		var tbody = idNode;
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");
@@ -209,29 +208,29 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		img.setAttribute("src", "http://planet.gnome.org/heads/nobody.png");
 		td.appendChild(img);
 		var td = document.createElement("td");
-		dojo.html.addClass(td, "dhRemovePerson");
+		dojo.html.addClass(td, "dhRemoveRecipient");
 		tr1.appendChild(td);
 		var removeLink = document.createElement("a");
 		removeLink.appendChild(document.createTextNode("[X]"));
 		removeLink.setAttribute("href", "javascript:void(0);");
-		dojo.html.addClass(removeLink, "dhRemovePerson");
+		dojo.html.addClass(removeLink, "dhRemoveRecipient");
 		removeLink.setAttribute("rowSpan", "2");
 		dojo.event.connect(removeLink, "onclick", dj_global, "dhRemoveRecipientClicked");
 		td.appendChild(removeLink);
 		var tr2  = document.createElement("tr");
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
-		dojo.html.addClass(td, "dhPersonName");
+		dojo.html.addClass(td, "dhRecipientName");
 		td.setAttribute("colSpan","2");
 		tr2.appendChild(td);
-		td.appendChild(document.createTextNode(person.displayName));
+		td.appendChild(document.createTextNode(obj.displayName));
 
-		dojo.html.setOpacity(personNode, 0);
+		dojo.html.setOpacity(idNode, 0);
 		
 		var recipientsListNode = document.getElementById("dhRecipientList");
-		recipientsListNode.appendChild(personNode);
+		recipientsListNode.appendChild(idNode);
 		
-		var anim = dojo.fx.html.fadeIn(personNode, 800);
+		var anim = dojo.fx.html.fadeIn(idNode, 800);
 	} else {
 		dh.util.flash();
 	}
@@ -288,70 +287,6 @@ dh.sharelink.submitButtonClicked = function() {
 	});
 }
 
-dh.sharelink.stateNames = [
-	["Alabama","AL"],
-	["Alaska","AK"],
-	["American Samoa","AS"],
-	["Arizona","AZ"],
-	["Arkansas","AR"],
-	["Armed Forces Europe","AE"],
-	["Armed Forces Pacific","AP"],
-	["Armed Forces the Americas","AA"],
-	["California","CA"],
-	["Colorado","CO"],
-	["Connecticut","CT"],
-	["Delaware","DE"],
-	["District of Columbia","DC"],
-	["Federated States of Micronesia","FM"],
-	["Florida","FL"],
-	["Georgia","GA"],
-	["Guam","GU"],
-	["Hawaii","HI"],
-	["Idaho","ID"],
-	["Illinois","IL"],
-	["Indiana","IN"],
-	["Iowa","IA"],
-	["Kansas","KS"],
-	["Kentucky","KY"],
-	["Louisiana","LA"],
-	["Maine","ME"],
-	["Marshall Islands","MH"],
-	["Maryland","MD"],
-	["Massachusetts","MA"],
-	["Michigan","MI"],
-	["Minnesota","MN"],
-	["Mississippi","MS"],
-	["Missouri","MO"],
-	["Montana","MT"],
-	["Nebraska","NE"],
-	["Nevada","NV"],
-	["New Hampshire","NH"],
-	["New Jersey","NJ"],
-	["New Mexico","NM"],
-	["New York","NY"],
-	["North Carolina","NC"],
-	["North Dakota","ND"],
-	["Northern Mariana Islands","MP"],
-	["Ohio","OH"],
-	["Oklahoma","OK"],
-	["Oregon","OR"],
-	["Pennsylvania","PA"],
-	["Puerto Rico","PR"],
-	["Rhode Island","RI"],
-	["South Carolina","SC"],
-	["South Dakota","SD"],
-	["Tennessee","TN"],
-	["Texas","TX"],
-	["Utah","UT"],
-	["Vermont","VT"],
-	["Virgin Islands, U.S.","VI"],
-	["Virginia","VA"],
-	["Washington","WA"],
-	["West Virginia","WV"],
-	["Wisconsin","WI"],
-	["Wyoming","WY"]
-];
-
 dh.sharelink.copyCompletions = function(completions, filterSelected) {
 	// second arg is optional
 	if (arguments.length < 2) {
@@ -360,8 +295,8 @@ dh.sharelink.copyCompletions = function(completions, filterSelected) {
 
 	var copy = [];
 	for (var i = 0; i < completions.length; ++i) {
-		if (filterSelected && dh.sharelink.findPerson(dh.sharelink.selectedRecipients,
-							                           completions[i][1])) {
+		if (filterSelected && dh.sharelink.findGuid(dh.sharelink.selectedRecipients,
+							                         completions[i][1])) {
 			continue;
 		}
 		
@@ -414,28 +349,28 @@ dh.sharelink.FriendListProvider = function() {
 							{ "entryContents" : searchStr },
 							function(type, data, http) {
 								dojo.debug("friendcompletions got back data " + data);
-								//dojo.debug("text is : " + http.responseText);
+								dojo.debug("text is : " + http.responseText);
 								//dojo.debug(data.doctype);
 								
 								var completions = [];
 								
-								var personNodeList = data.getElementsByTagName("person");
-								for (var i = 0; i < personNodeList.length; ++i) {
-									var pelement = personNodeList.item(i);
-									var person = dh.model.personFromXmlNode(pelement);
-									var completion = pelement.getAttribute("completion");
-									
-									completions.push([completion, person.id]);
-									
-									if (!dojo.lang.has(dh.sharelink.allKnownPersons, person.id))
-										dojo.debug("new person displayName=" + person.displayName + " id=" + person.id);									
-
-									// merge in a new person we know about, overwriting any older data
-									dh.sharelink.allKnownPersons[person.id] = person;
-									
-									// save cached completions
-									_this.allKnownCompletions[searchStr] = completions;
+								var objectsElement = data.getElementsByTagName("objects").item(0);
+								var nodeList = objectsElement.childNodes;
+								for (var i = 0; i < nodeList.length; ++i) {
+									var element = nodeList.item(i);
+									if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+										continue;
+									} else if (element.nodeName == "completion") {
+										completions.push([element.getAttribute("text"), element.getAttribute("id")]);
+									} else {
+										var obj = dh.model.objectFromXmlNode(element);
+									    // merge in a new person/group we know about, overwriting any older data
+									    dh.sharelink.allKnownIds[obj.id] = obj;
+									}
 								}
+								
+								// save cached completions
+								_this.allKnownCompletions[searchStr] = completions;
 
 								_this.notifyPending(searchStr, completions);
 							},

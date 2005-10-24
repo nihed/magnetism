@@ -18,9 +18,8 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
@@ -36,9 +35,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private static final Log logger = GlobalSetup.getLog(HttpMethodsBean.class);
 	
 	private static final long serialVersionUID = 0L;
-
-	@EJB
-	private AccountSystem accountSystem;
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -63,22 +59,34 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		out.write(xml.toString().getBytes());
 	}
-		
-	static private void returnObjects(OutputStream out, HttpResponseData contentType, Set<Person> persons, Set<Group> groups) throws IOException {
-		XmlBuilder xml = new XmlBuilder();		
-
-		startReturnObjectsXml(contentType, xml);
-		
+	
+	static private void returnPersonsXml(XmlBuilder xml, Set<Person> persons) {
 		if (persons != null) {
 			for (Person p : persons) {
 				xml.appendTextNode("person", null, "id", p.getId(), "display", p.getName().getFullName());
 			}
-		}
+		}		
+	}
+	
+	static private void returnGroupsXml(XmlBuilder xml, Set<Group> groups) {
 		if (groups != null) {
 			for (Group g : groups) {
 				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName());
 			}
 		}
+	}
+	
+	static private void returnCompletionXml(XmlBuilder xml, GuidPersistable object, String completes) {
+		xml.appendTextNode("completion", null, "id", object.getId(), "text", completes);
+	}
+	
+	static private void returnObjects(OutputStream out, HttpResponseData contentType, Set<Person> persons, Set<Group> groups) throws IOException {
+		XmlBuilder xml = new XmlBuilder();		
+
+		startReturnObjectsXml(contentType, xml);
+		
+		returnPersonsXml(xml, persons);
+		returnGroupsXml(xml, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
@@ -86,38 +94,51 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	/* (non-Javadoc)
 	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream, java.lang.String, java.lang.String)
 	 */
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, String entryContents) throws IOException {
+	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
 	
 		XmlBuilder xml = new XmlBuilder();
 
 		startReturnObjectsXml(contentType, xml);
 			
-		// FIXME this is written out custom for now, but what we should do
-		// is change it to return separate <completion> elements and keep
-		// the <person> elements stock
 		if (entryContents != null) {
-			Set<HippoAccount> accounts = accountSystem.getActiveAccounts();
-			for (HippoAccount a : accounts) {
-				// FIXME get from viewpoint of personId
+			Set<Person> contacts = identitySpider.getContacts(user);
+			Set<Group> groups = groupSystem.findGroups(user);
 
-				// it's important that empty string returns all completions, otherwise
-				// the arrow on the combobox doesn't drop down anything when it's empty
-				
+			// it's important that empty string returns all completions, otherwise
+			// the arrow on the combobox doesn't drop down anything when it's empty
+			
+			for (Person c : contacts) {
 				String completion = null;
 
-				PersonView view = identitySpider.getSystemViewpoint(a.getOwner());
+				PersonView view = identitySpider.getViewpoint(user, c);
 				String humanReadable = view.getHumanReadableName();
 				EmailResource email = view.getEmail();
 				if (humanReadable.startsWith(entryContents)) {
 					completion = humanReadable;
 				} else if (email.getEmail().startsWith(entryContents)) {
 					completion = email.getEmail();
-				} else if (a.getOwner().getId().startsWith(entryContents)) {
-					completion = a.getOwner().getId();
+				} else if (c.getId().startsWith(entryContents)) {
+					completion = c.getId();
 				}
-
+				
 				if (completion != null) {
-					xml.appendTextNode("person", null, "id", a.getOwner().getId(), "display", humanReadable, "completion", completion);
+					returnPersonsXml(xml, Collections.singleton(c));
+					returnCompletionXml(xml, c, completion);
+				}
+			}
+
+			for (Group g : groups) {
+				String completion = null;
+
+				if (g.getName().startsWith(entryContents)) {
+					completion = g.getName();
+				} else if (g.getId().startsWith(entryContents)) {
+					completion = g.getId();
+				}
+				
+				if (completion != null) {
+					returnGroupsXml(xml, Collections.singleton(g));
+					returnCompletionXml(xml, g, completion);
 				}
 			}
 		}
@@ -159,11 +180,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
-		Person contact = identitySpider.lookupPersonByEmail(user, emailResource);
-		if (contact == null) {
-			HippoAccount account = accountSystem.lookupAccountByPerson(user);
-			contact = identitySpider.createContact(account, emailResource);
-		}
+		Person contact = identitySpider.createContact(user, emailResource);
+
 		returnObjects(out, contentType, Collections.singleton(contact), null);
 	}
 }

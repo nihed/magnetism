@@ -34,13 +34,13 @@
 /* Don't set this style by id or it will bind too tightly and the 
  * .dhCouldBeInGroup style below can't override it.
  */
-.dhPerson {
+.dhRecipient {
 	float:						left;
 	margin:						0.5em;
 	width:						150px;
 }
 
-.dhPerson td {
+.dhRecipient td {
 	text-align:					center;
 }
 
@@ -75,19 +75,19 @@
 td.dhHeadShot {
 	text-align:					center;
 }
-td.dhRemovePerson {
+td.dhRemoveRecipient {
 	text-align:					right;
 }
-a.dhRemovePerson {
+a.dhRemoveRecipient {
 	color:						red;
 	font-weight:				bold;
 	text-decoration:			none;
 }
-a.dhRemovePerson:link {
+a.dhRemoveRecipient:link {
 	color:						red;
 	font-weight:				bold;
 	text-decoration:			none;
 }
-td.dhPersonName {
+td.dhRecipientName {
 	font-size:					9pt;
 }

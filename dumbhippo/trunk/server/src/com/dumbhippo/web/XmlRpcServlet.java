@@ -376,7 +376,7 @@ public class XmlRpcServlet extends HttpServlet {
 		response.setContentType("text/plain");
 		OutputStream out = response.getOutputStream();
 		if (user != null)
-			out.write(user.toString().getBytes());
+			out.write(user.getId().getBytes());
 		else
 			out.write("false".getBytes());
 		out.flush();

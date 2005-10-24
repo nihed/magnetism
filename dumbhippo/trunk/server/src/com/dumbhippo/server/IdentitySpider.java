@@ -86,7 +86,7 @@ public interface IdentitySpider {
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
 	 */
-	public Person lookupPersonByEmail(EmailResource email);
+	public Person lookupPersonByEmail(String email);
 	
 	/**
 	 * Finds the person which owns an email address from a
@@ -96,11 +96,31 @@ public interface IdentitySpider {
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
 	 */	
-	public Person lookupPersonByEmail(Person viewpoint, EmailResource email);
+	public Person lookupPersonByEmail(Person viewpoint, String email);
 		
-	//public Person lookupPersonByAim(EmailResource email);
-	//public Person lookupPersonByAim(Person viewpoint, EmailResource email);
+	//public Person lookupPersonByAim(String aim);
+	//public Person lookupPersonByAim(Person viewpoint, String aim);
 
+	/**
+	 * Finds the unique person which owns a resource
+	 * according to our system. i.e. this person has proved
+	 * they own it.
+	 * 
+	 * @param resource the possibly-owned resource
+	 * @return the owning person, or null if none
+	 */
+	public Person lookupPersonByResource(Resource resource);
+	
+	/**
+	 * Finds the person who owns a resource from a
+	 * particular person's viewpoint. 
+	 * 
+	 * @param viewpoint
+	 * @param resource the possibly-owned resource
+	 * @return the owning person, or null if none
+	 */	
+	public Person lookupPersonByResource(Person viewpoint, Resource resource);
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException;
 	
@@ -131,14 +151,25 @@ public interface IdentitySpider {
 	public void addVerifiedOwnershipClaim(Person owner, Resource res);
 	
 	/**
-	 * Creates a new Person, makes it own the given resource, and 
+	 * If the resource already has an account holder who has a verified
+	 * claim on it, returns the Person who owns the resource and adds them
+	 * to the contacts of the passed-in person.
+	 *
+	 * Otherwise, creates a new Person, makes it own the given resource, and 
 	 * adds the Person to the owner's contact list.
 	 * 
-	 * @param owner account whose contact it is (logged in user usually)
+	 * @param owner person whose contact it is (logged in user usually)
 	 * @param contact the contact address
 	 * @return the new person in the contact list
 	 */
-	public Person createContact(HippoAccount owner, Resource contact);
+	public Person createContact(Person owner, Resource contact);
+	
+	/** 
+	 * Get the contacts of the given person
+	 * @param user who to get contacts of
+	 * @return their contacts
+	 */
+	public Set<Person> getContacts(Person user);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.

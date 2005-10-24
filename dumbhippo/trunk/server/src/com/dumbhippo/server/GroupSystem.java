@@ -1,6 +1,6 @@
 package com.dumbhippo.server;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -15,5 +15,5 @@ public interface GroupSystem {
 	
 	public void addMember(Person adder, Group group, Person person);
 	
-	public List<Group> findGroups(Person viewpoint);	
+	public Set<Group> findGroups(Person viewpoint);	
 }

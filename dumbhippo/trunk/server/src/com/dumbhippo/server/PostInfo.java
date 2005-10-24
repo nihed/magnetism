@@ -38,7 +38,7 @@ public class PostInfo {
 		
 		StringBuffer summary = new StringBuffer();
 		int count = 0;
-		for (Person recipient : post.getRecipients()) {
+		for (Person recipient : post.getPersonRecipients()) {
 			PersonView recipientView = spider.getViewpoint(viewer, recipient);
 			
 			if (count > 0)

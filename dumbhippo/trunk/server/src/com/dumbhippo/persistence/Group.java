@@ -1,22 +1,36 @@
 package com.dumbhippo.persistence;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 
+@Entity
+@Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
 public class Group extends GuidPersistable {
 	private static final long serialVersionUID = 1L;
+	
 	private String name;
 	private Set<Person> members;
 	private boolean markedForDelete;
-	
-	protected Group() {}
+		
+	public Group() {
+		members = new HashSet<Person>();
+	}
 	
 	public Group(String name) {
 		this.name = name;
+		members = new HashSet<Person>();
 	}
-		
+	
+	public Group(String name, Set<Person> members) {
+		this.name = name;
+		setMembers(members);
+	}
+	
 	protected boolean isMarkedForDelete() {
 		return markedForDelete;
 	}
@@ -36,6 +50,8 @@ public class Group extends GuidPersistable {
 	 * @param members
 	 */
 	protected void setMembers(Set<Person> members) {
+		if (members == null)
+			throw new IllegalArgumentException("null");
 		this.members = members;
 	}
 	

@@ -56,42 +56,38 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	private Set<Client> clients;
 	
+	private void initMissing() {
+		if (clients == null)
+			clients = new HashSet<Client>();
+		if (contacts == null)
+			contacts = new HashSet<Person>();
+	}
+	
 	/**
 	 * Used only for Hibernate 
 	 */
 	protected HippoAccount() {
 		owner = null;
-		clients = null;
+		initMissing();
 	}
 	
 	public HippoAccount(Person person, Set<Client> clients) {
 		owner = person;
 		setClients(clients);
+		initMissing();
 	}
 	
-	public HippoAccount(Person person, Client initialClient) {
+	public HippoAccount(Person person, Client initialClient) {		
 		owner = person;
-		setClients(Collections.singleton(initialClient));
+		Set<Client> c = new HashSet<Client>();
+		c.add(initialClient);
+		setClients(c);
+		initMissing();
 	}
 
-	public HippoAccount(Person person) {
+	public HippoAccount(Person person) {	
 		owner = person;
-		
-		// the intermediate variable is needed
-		// by sun javac but not ecj https://bugs.eclipse.org/bugs/show_bug.cgi?id=86898
-		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6302214
-		Set<Client> emptySet = Collections.emptySet();
-		setClients(emptySet);
-	}
-	
-	public HippoAccount(HippoAccount account) {
-		//owner = account.owner;
-		//setClients(account.clients);
-		owner = new Person(account.owner);
-		this.clients = new HashSet<Client>();
-		for (Client c : account.clients) {
-			this.clients.add(new Client(c));
-		}
+		initMissing();
 	}
 	
 	public String toString() {
@@ -176,7 +172,9 @@ public class HippoAccount extends DBUnique implements Serializable {
 	}
 
 	protected void setClients(Set<Client> clients) {
-		this.clients = new HashSet<Client>(clients);
+		if (clients == null)
+			throw new IllegalArgumentException("null");
+		this.clients = clients;
 	}
 
 	/**
@@ -213,6 +211,8 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * @param contacts your contacts
 	 */
 	protected void setContacts(Set<Person> contacts) {
+		if (contacts == null)
+			throw new IllegalArgumentException("null");
 		this.contacts = contacts;
 	}
 	

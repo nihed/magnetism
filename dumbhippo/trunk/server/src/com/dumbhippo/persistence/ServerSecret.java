@@ -2,6 +2,7 @@ package com.dumbhippo.persistence;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratorType;
 import javax.persistence.Id;
@@ -28,6 +29,7 @@ public class ServerSecret implements Serializable {
 	}
 	
 	@Id(generate = GeneratorType.NONE)
+	@Column(length = RandomToken.LENGTH, nullable = false)
 	public byte[] getSecret() {
 		return secret;
 	}

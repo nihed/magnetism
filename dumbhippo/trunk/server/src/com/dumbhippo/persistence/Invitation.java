@@ -2,6 +2,7 @@ package com.dumbhippo.persistence;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +36,14 @@ public class Invitation extends DBUnique {
 		this.resultingPerson = resultingPerson;
 	}
 
-	protected Invitation() {}
+	private void initMissing() {
+		if (inviters == null)
+			inviters = new HashSet<Person>();
+	}
+	
+	protected Invitation() {
+		initMissing();
+	}
 
 	public Invitation(Resource invitee, Person inviter) {
 		this.viewed = false;
@@ -52,7 +60,7 @@ public class Invitation extends DBUnique {
 
 	@ManyToMany(fetch=FetchType.EAGER)
 	public Set<Person> getInviters() {
-		return inviters;
+		return Collections.unmodifiableSet(inviters);
 	}
 
 	public String getAuthKey() {
@@ -72,6 +80,8 @@ public class Invitation extends DBUnique {
 	}
 
 	protected void setInviters(Set<Person> inviters) {
+		if (inviters == null)
+			throw new IllegalArgumentException("null");
 		this.inviters = inviters;
 	}
 

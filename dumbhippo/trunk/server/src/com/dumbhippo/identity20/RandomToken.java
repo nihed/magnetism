@@ -19,9 +19,11 @@ import com.dumbhippo.StringUtils;
 public final class RandomToken {
 	private byte[] data;
 	
+	static public final int LENGTH = 10;
+	
 	public static final RandomToken createNew() {
 		Random r = new SecureRandom();
-		byte[] data = new byte[10];
+		byte[] data = new byte[LENGTH];
 		r.nextBytes(data);
 		
 		return new RandomToken(data);

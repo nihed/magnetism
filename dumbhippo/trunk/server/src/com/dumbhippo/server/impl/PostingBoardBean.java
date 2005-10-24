@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,8 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -47,23 +50,48 @@ public class PostingBoardBean implements PostingBoard {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// this is what can throw ParseException
-		Set<Person> recipients = identitySpider.lookupGuidStrings(Person.class, recipientGuids);
+		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
 
-		// if this throws we shouldn't send out notifications
-		Post post = createPost(poster, title, text, shared, recipients);
+		// for each recipient, if it's a group we want to explode it into persons
+		// (but also keep the group itself), if it's a person we just add it
 		
-		logger.debug("Sending out jabber notifications...");
-		for (Person r : recipients) {
+		Set<Person> personRecipients = new HashSet<Person>();
+		Set<Group> groupRecipients = new HashSet<Group>();
+
+		// sort into persons and groups
+		for (GuidPersistable r : recipients) {
+			if (r instanceof Person) {
+				personRecipients.add((Person) r);
+			} else if (r instanceof Group) {
+				groupRecipients.add((Group) r);
+			} else {
+				// wtf
+				throw new GuidNotFoundException(r.getId());
+			}
+		}
+		
+		// explode groups, merging into persons
+		for (Group g : groupRecipients) {
+			Set<Person> members = g.getMembers();
+			personRecipients.addAll(members);
+		}
+		
+		// if this throws we shouldn't send out notifications, so do it first
+		Post post = createPost(poster, title, text, shared, personRecipients, groupRecipients);
+		
+		// FIXME I suspect this should be outside the transaction and asynchronous
+		logger.debug("Sending out jabber notifications... (to Person only)");
+		for (Person r : personRecipients) {
 			messageSender.sendShareLink(r, post.getGuid(), url, text);
 		}
 		return post;
-	}	
+	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> recipients) {
+	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients) {
 		
 		logger.debug("saving new Post");
-		Post post = new Post(poster, title, text, recipients, resources);
+		Post post = new Post(poster, title, text, personRecipients, groupRecipients, resources);
 		em.persist(post);
 	
 		return post;

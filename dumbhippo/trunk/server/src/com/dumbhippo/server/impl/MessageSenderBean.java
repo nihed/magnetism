@@ -64,6 +64,9 @@ public class MessageSenderBean implements MessageSender {
 		if (connection == null)
 			return;
 
+		// FIXME if a recipient has no Account then there's no point sending 
+		// to them...
+		
 		StringBuilder recipientJid = new StringBuilder();
 		recipientJid.append(recipient.getId().toString());
 		recipientJid.append("@dumbhippo.com");

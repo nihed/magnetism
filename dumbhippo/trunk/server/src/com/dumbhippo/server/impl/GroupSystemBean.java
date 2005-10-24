@@ -1,8 +1,8 @@
 package com.dumbhippo.server.impl;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -12,17 +12,12 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
-import com.dumbhippo.server.IdentitySpider;
 
-@SuppressWarnings("serial")
 @Stateless
 public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
-	
-	@EJB
-	private IdentitySpider identitySpider;
 	
 	public Group createGroup(Person creator, String name) {	
 		Group g = new Group(name);
@@ -44,12 +39,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		group.addMember(person);
 	}
 
-	public List<Group> findGroups(Person viewpoint) {
+	public Set<Group> findGroups(Person viewpoint) {
 		Query q;
 		q = em.createQuery("from Group g where :personid in elements(g.members)");
-		q.setParameter("personid", viewpoint);
-		@SuppressWarnings("unchecked")		
-		List<Group> ret = q.getResultList();
+		q.setParameter("personid", viewpoint);		
+		Set<Group> ret = new HashSet<Group>();
+		for (Object o : q.getResultList()) {
+			ret.add((Group) o);
+		}
 		return ret;
 	}
 }

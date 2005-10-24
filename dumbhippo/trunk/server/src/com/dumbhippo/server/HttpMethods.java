@@ -23,7 +23,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "entryContents" })
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, String entryContents)
+	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)

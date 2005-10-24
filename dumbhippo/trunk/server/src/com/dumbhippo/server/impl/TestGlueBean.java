@@ -105,8 +105,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 	}
 
 	public HippoAccount findOrCreateAccountFromEmail(String email) {
-		EmailResource resource = identitySpider.getEmail(email);
-		Person person = identitySpider.lookupPersonByEmail(resource);
+		Person person = identitySpider.lookupPersonByEmail(email);
 		if (person != null) {
 			HippoAccount account = accountSystem.lookupAccountByPerson(person); 
 			if (account != null) {

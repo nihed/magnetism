@@ -1,6 +1,8 @@
 package com.dumbhippo.persistence;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -17,25 +19,43 @@ public class Post extends GuidPersistable {
 	private String explicitTitle;
 	private String text;
 	private Date postDate;
-	private Set<Person> recipients;
+	private Set<Person> personRecipients;
+	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
-
-	protected Post() {}
+	
+	private void initMissing() {
+		if (personRecipients == null)
+			personRecipients = new HashSet<Person>();
+		if (groupRecipients == null)
+			groupRecipients = new HashSet<Group>();
+		if (resources == null)
+			resources = new HashSet<Resource>();
+	}
+	
+	protected Post() {
+		initMissing();
+	}
 	
 	/**
 	 * @param poster
 	 * @param explicitTitle
 	 * @param text
-	 * @param recipients
+	 * @param personRecipients
+	 * @param groupRecipients 
 	 * @param resources
 	 */
-	public Post(Person poster, String explicitTitle, String text, Set<Person> recipients, Set<Resource> resources) {
+	public Post(Person poster, String explicitTitle, String text, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.explicitTitle = explicitTitle;
 		this.text = text;
-		this.recipients = recipients;
-		this.resources = resources;
+		if (personRecipients != null)
+			this.personRecipients = new HashSet<Person>(personRecipients);
+		if (groupRecipients != null)
+			this.groupRecipients = new HashSet<Group>(groupRecipients);
+		if (resources != null)
+			this.resources = new HashSet<Resource>(resources);
 		this.postDate = new Date();
+		initMissing();
 	}
 	
 	@ManyToOne
@@ -47,21 +67,38 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
-	public Set<Person> getRecipients() {
-		return recipients;
+	public Set<Person> getPersonRecipients() {
+		return Collections.unmodifiableSet(personRecipients);
 	}
-	protected void setRecipients(Set<Person> recipients) {
-		this.recipients = recipients;
+	protected void setPersonRecipients(Set<Person> recipients) {
+		if (recipients == null)
+			throw new IllegalArgumentException("null");
+		this.personRecipients = recipients;
 	}
-	public void addRecipients(Set<Person> newRecipients) {
-		this.recipients.addAll(newRecipients);
+	public void addPersonRecipients(Set<Person> newRecipients) {
+		this.personRecipients.addAll(newRecipients);
+	}
+	
+	@ManyToMany
+	public Set<Group> getGroupRecipients() {
+		return Collections.unmodifiableSet(groupRecipients);
+	}
+	protected void setGroupRecipients(Set<Group> recipients) {
+		if (recipients == null)
+			throw new IllegalArgumentException("null");
+		this.groupRecipients = recipients;
+	}
+	public void addGroupRecipients(Set<Group> newRecipients) {
+		this.groupRecipients.addAll(newRecipients);
 	}
 	
 	@ManyToMany
 	public Set<Resource> getResources() {
-		return resources;
+		return Collections.unmodifiableSet(resources);
 	}
 	protected void setResources(Set<Resource> resources) {
+		if (resources == null)
+			throw new IllegalArgumentException("null");
 		this.resources = resources;
 	}
 	public String getText() {
@@ -97,5 +134,4 @@ public class Post extends GuidPersistable {
 	protected void setPostDate(Date postDate) {
 		this.postDate = postDate;
 	}
-
 }
