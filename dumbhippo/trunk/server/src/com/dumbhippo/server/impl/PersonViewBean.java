@@ -8,6 +8,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.dumbhippo.FullName;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
@@ -72,6 +73,11 @@ public class PersonViewBean
 	 * @see com.dumbhippo.persistence.PersonView#getHumanReadableName()
 	 */
 	public String getHumanReadableName() {
+		FullName name = person.getName();
+		if (name != null && !name.isEmpty()) {
+			return name.toString();
+		}
+		
 		EmailResource email = getEmail();
 		if (email != null) {
 			return email.getEmail();

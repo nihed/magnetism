@@ -21,6 +21,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
+import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.XmlRpcMethods;
@@ -193,6 +194,7 @@ public class XmlRpcServlet extends HttpServlet {
 			for (Method m : iface.getMethods()) {
 				HttpContentTypes contentAnnotation = m.getAnnotation(HttpContentTypes.class);
 				HttpParams paramsAnnotation = m.getAnnotation(HttpParams.class);
+				HttpOptions optionsAnnotation = m.getAnnotation(HttpOptions.class);
 
 				if (contentAnnotation == null) {
 					logger.debug("Method " + m.getName() + " has no content type annotation, skipping");
@@ -245,6 +247,12 @@ public class XmlRpcServlet extends HttpServlet {
 					logger.debug("Exception thrown by invoked method: " + e.getCause());
 					logger.error(e.getCause());
 					throw new RuntimeException(e);
+				}
+				
+				if (optionsAnnotation != null && optionsAnnotation.invalidatesSession()) {
+					HttpSession sess = request.getSession(false);
+					if (sess != null)
+						sess.invalidate();	
 				}
 
 				out.flush();

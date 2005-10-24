@@ -10,9 +10,12 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -36,6 +39,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private static final long serialVersionUID = 0L;
 	
+	@PersistenceContext(unitName = "dumbhippo")
+	private EntityManager em;
+
 	@EJB
 	private IdentitySpider identitySpider;
 	
@@ -44,7 +50,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private GroupSystem groupSystem;
-
+	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
@@ -193,6 +199,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		postingBoard.createURLPost(user, null, description, url, recipientGuids);
 	}
 
+	
+	public void doRenamePerson(Person user, String name) {
+		FullName fullname = FullName.parseHumanString(name);
+		user.setName(fullname);
+		em.merge(user);
+	}
+	
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String members) throws IOException, ParseException, GuidNotFoundException {
 				
 		Set<String> memberGuids = splitIdList(members);

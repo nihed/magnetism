@@ -95,6 +95,15 @@ final public class FullName implements Serializable {
 	}
 	
 	/**
+	 * Check whether a name is empty
+	 * 
+	 * @return true if the name has no components, or only one empty component.
+	 */
+	public boolean isEmpty() {
+		return names.size() == 0 || (names.size() == 1 && names.get(0).equals(""));
+	}
+	
+	/**
 	 * Convert the name into an encoded string for storing
 	 * in the database as a single string.
 	 * 

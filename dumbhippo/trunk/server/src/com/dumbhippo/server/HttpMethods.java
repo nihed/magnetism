@@ -44,6 +44,11 @@ public interface HttpMethods {
 	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException,
 			GuidNotFoundException;
 
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "name" })
+	@HttpOptions(invalidatesSession = true)
+	public void doRenamePerson(Person user, String name);
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException;
