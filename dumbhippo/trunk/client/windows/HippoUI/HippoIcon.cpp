@@ -63,6 +63,19 @@ HippoIcon::setIcon(HICON icon)
     icon_ = icon;
 }
 
+void
+HippoIcon::updateIcon(HICON icon)
+{	
+	setIcon(icon);
+    NOTIFYICONDATA notifyIconData = { 0 };
+    notifyIconData.uID = 0;
+	notifyIconData.hWnd = window_;
+    notifyIconData.uFlags = NIF_ICON;
+    notifyIconData.hIcon = icon_;
+
+    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+}
+
 UINT
 HippoIcon::getMessage()
 {

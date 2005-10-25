@@ -47,6 +47,9 @@ public:
 
 private:
     HRESULT getAuthURL(BSTR *result);
+
+	void stateChange(State state);
+
     bool loadAuth();
     void connect();
     void disconnect();

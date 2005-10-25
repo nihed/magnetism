@@ -186,7 +186,13 @@
 				RelativePath=".\DumbHippo.ico">
 			</File>
 			<File
+				RelativePath=".\DumbHippo_Disconnected.ico">
+			</File>
+			<File
 				RelativePath=".\DumbHippoDebug.ico">
+			</File>
+			<File
+				RelativePath=".\DumbHippoDebug_Disconnected.ico">
 			</File>
 			<File
 				RelativePath=".\HippoUI.exe.manifest">

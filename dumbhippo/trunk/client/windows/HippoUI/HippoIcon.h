@@ -16,6 +16,7 @@ public:
 
     void setUI(HippoUI *ui);
     void setIcon(HICON icon);
+	void updateIcon(HICON icon);
     bool create(HWND window);
     void destroy();
 

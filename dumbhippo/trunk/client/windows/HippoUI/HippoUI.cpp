@@ -47,14 +47,21 @@ HippoUI::HippoUI(bool debug) : preferences_(debug)
 
     preferencesDialog_ = NULL;
 
+	connected_ = false;
+
     nextBrowserCookie_ = 0;
 
     rememberPassword_ = FALSE;
     passwordRemembered_ = FALSE;
+
+	smallIcon_ = NULL;
+	bigIcon_ = NULL;
 }
 
 HippoUI::~HippoUI()
 {
+	DestroyIcon(smallIcon_);
+	DestroyIcon(bigIcon_);
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -189,17 +196,45 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
 
 ////////////////////////////////////////////////////////////////////////////
 
-bool
-HippoUI::create(HINSTANCE instance)
+
+void
+HippoUI::updateIcons(void)
 {
-    instance_ = instance;
-    
-    TCHAR *icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG : IDI_DUMBHIPPO);
+	TCHAR *icon;
+
+	if (connected_) {
+		icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG : IDI_DUMBHIPPO);
+	} else {
+		icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG_DISCONNECTED : IDI_DUMBHIPPO_DISCONNECTED);
+	}
+	if (smallIcon_ != NULL)
+		DestroyIcon(smallIcon_);
+	if (bigIcon_ != NULL)
+		DestroyIcon(bigIcon_);
+
     smallIcon_ = (HICON)LoadImage(instance_, icon,
 	                          IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
     bigIcon_ = (HICON)LoadImage(instance_, icon,
 			        IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+}
 
+void
+HippoUI::onConnectionChange(bool connected)
+{
+	if (connected_ == connected)
+		return;
+	connected_ = connected;
+	updateIcons();
+
+	notificationIcon_.updateIcon(smallIcon_);
+}
+
+bool
+HippoUI::create(HINSTANCE instance)
+{
+    instance_ = instance;
+   
+	updateIcons();
     menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
 
     if (!registerClass())
@@ -214,7 +249,7 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
-    notificationIcon_.setIcon(smallIcon_);
+	notificationIcon_.setIcon(smallIcon_);
     if (!notificationIcon_.create(window_)) {
 	revokeActive();
 	return false;

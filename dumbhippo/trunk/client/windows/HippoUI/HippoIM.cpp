@@ -47,7 +47,7 @@ HippoIM::signIn()
         return FALSE;
     } else {
 	if (state_ != SIGN_IN_WAIT && state_ != AUTH_WAIT) {
-	    state_ = SIGN_IN_WAIT;
+	    stateChange(SIGN_IN_WAIT);
 	    startSignInTimeout();
 	}
         return TRUE;
@@ -61,13 +61,20 @@ HippoIM::signOut()
 
     disconnect();
 
-    state_ = SIGNED_OUT;
+    stateChange(SIGNED_OUT);
 }
 
 HippoIM::State
 HippoIM::getState()
 {
     return state_;
+}
+
+void 
+HippoIM::stateChange(State state)
+{
+	state_ = state;
+	ui_->onConnectionChange(state == AUTHENTICATED);
 }
 
 bool
@@ -193,7 +200,7 @@ HippoIM::connect()
 
     lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
 
-    state_ = CONNECTING;
+	stateChange(CONNECTING);
     GError *error = NULL;
 
     /* If lm_connection returns false, then onConnectionOpen won't be called
@@ -239,7 +246,7 @@ HippoIM::authenticate()
 	    if (error)
 	        g_error_free(error);
 	} else {
-	    state_ = AUTHENTICATING;
+		stateChange(AUTHENTICATING);
 	}
     } else {
         authFailure("Not signed in");
@@ -294,7 +301,7 @@ HippoIM::connectFailure(char *message)
     lm_connection_unref(lmConnection_);
     lmConnection_ = NULL;
     startRetryTimeout();
-    state_ = RETRYING;
+	stateChange(RETRYING);
 }
 
 void
@@ -306,7 +313,7 @@ HippoIM::authFailure(char *message)
 
     forgetAuth();
     startSignInTimeout();
-    state_ = AUTH_WAIT;
+	stateChange(AUTH_WAIT);
     ui_->onAuthFailure();
 }
 
@@ -387,7 +394,7 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
 		g_error_free(error);
 	}
 	lm_message_unref(message);
-	im->state_ = AUTHENTICATED;
+	im->stateChange(AUTHENTICATED);
 	im->ui_->onAuthSuccess();
     } else {
 	im->authFailure(NULL);
