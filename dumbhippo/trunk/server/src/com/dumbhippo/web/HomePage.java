@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
@@ -75,5 +76,19 @@ public class HomePage {
 		});
 
 		return groups;
+	}
+	
+	public List<PersonInfo> getContacts() {
+		ArrayList<PersonInfo> contacts = new ArrayList<PersonInfo>();
+		contacts.addAll(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
+		
+		final Collator collator = Collator.getInstance();
+		Collections.sort(contacts, new Comparator<PersonInfo>() {
+			public int compare (PersonInfo i1, PersonInfo i2) {
+				return collator.compare(i1.getHumanReadableName(), i2.getHumanReadableName());
+			}
+		});
+
+		return contacts;
 	}
 }
