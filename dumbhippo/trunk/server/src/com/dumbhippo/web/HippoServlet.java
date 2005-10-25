@@ -28,9 +28,9 @@ import com.dumbhippo.server.XmlRpcMethods;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
-public class XmlRpcServlet extends HttpServlet {
+public class HippoServlet extends HttpServlet {
 
-	private static final Log logger = GlobalSetup.getLog(XmlRpcServlet.class);
+	private static final Log logger = GlobalSetup.getLog(HippoServlet.class);
 	
 	private static final long serialVersionUID = 0L;
 	

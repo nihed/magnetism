@@ -11,7 +11,7 @@
     
     <servlet>
       <servlet-name>XmlRpc Servlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.XmlRpcServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.HippoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
    </servlet>   
 
