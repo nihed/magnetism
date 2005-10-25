@@ -11,6 +11,8 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 /*
  * Implementation of Configuration
@@ -21,11 +23,23 @@ public class ConfigurationBean implements Configuration {
 	
 	static private final Log logger = GlobalSetup.getLog(ConfigurationBean.class);		
 	
+	static Properties defaults;
+	
+	static {		
+		defaults = new Properties();
+		
+		for (HippoProperty prop : HippoProperty.values()) {
+			if (prop.getDefault() != null) {
+				defaults.put(prop.getKey(), prop.getDefault());
+			}
+		}
+	}
+	
 	Properties props;
 	
 	@PostConstruct
 	public void init() {
-		props = new Properties();
+		props = new Properties(defaults);
 		try {
 			InputStream str = ConfigurationBean.class.getResourceAsStream("dumbhippo.properties");
 			props.load(str);
@@ -43,12 +57,19 @@ public class ConfigurationBean implements Configuration {
 		return ret;
 	}
 
-	public String getProperty(String name, String defaultValue) {
-		try {
-			return getProperty(name);
-		} catch (PropertyNotFoundException e) {
-			return defaultValue;
+	public String getProperty(HippoProperty name) {
+		if (name.getDefault() == null) {
+			throw new IllegalArgumentException("Need to use getPropertyNoDefault() for property " + name.getKey());
 		}
+		try {
+			return getProperty(name.getKey());
+		} catch (PropertyNotFoundException e) {
+			throw new RuntimeException("impossible! built-in property " + name.getKey() + " default vanished");
+		}
+	}
+
+	public String getPropertyNoDefault(HippoProperty name) throws PropertyNotFoundException {
+		return getProperty(name.getKey());
 	}
 }
 

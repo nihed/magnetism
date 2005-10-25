@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +20,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -31,7 +29,6 @@ import com.dumbhippo.server.PostInfo;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
-@SuppressWarnings("serial")
 @Stateless
 public class PostingBoardBean implements PostingBoard {
 
@@ -82,9 +79,9 @@ public class PostingBoardBean implements PostingBoard {
 		Post post = createPost(poster, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
 		// FIXME I suspect this should be outside the transaction and asynchronous
-		logger.debug("Sending out jabber notifications... (to Person only)");
+		logger.debug("Sending out jabber/email notifications... (to Person only)");
 		for (Person r : expandedRecipients) {
-			messageSender.sendShareLink(r, poster, post.getGuid(), url, title, text);
+			messageSender.sendPostNotification(r, post);
 		}
 		return post;
 	}

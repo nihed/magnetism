@@ -1,10 +1,11 @@
-/**
- * 
- */
 package com.dumbhippo.server.impl;
+
+import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.logging.Log;
 import org.jivesoftware.smack.XMPPConnection;
@@ -15,90 +16,71 @@ import org.jivesoftware.smack.packet.PacketExtension;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.Mailer.NoAddressKnownException;
 
 /**
- * This is probably a temporary hack until JiveMessenger monitors the server.
+ * Send out messages when events happen (for now, when a link is shared).
+ * 
+ * Can use Jabber for account holders and email etc. in other situations.
+ * 
+ * The way this class works is that it has inner classes that work as delegates.
+ * The outer class just picks the right delegate to send a particular thing
+ * in a particular context.
  * 
  * @author hp
- *
+ * 
  */
 @Stateless
 public class MessageSenderBean implements MessageSender {
 	static private final Log logger = GlobalSetup.getLog(MessageSenderBean.class);
-	private XMPPConnection connection;
 
-	@EJB
-	private IdentitySpider identitySpider;
+	// Injected beans, some are logically used by delegates but we can't 
+	// inject into the delegate objects.
 	
 	@EJB
 	private Configuration config;
 
-	private synchronized XMPPConnection getConnection() {
-		if (connection == null) {
-			try {
-				String addr = config.getProperty("dumbhippo.server.xmpp.address");
-				String port = config.getProperty("dumbhippo.server.xmpp.port");
-				String user = config.getProperty("dumbhippo.server.xmpp.adminuser");
-				String password = config.getProperty("dumbhippo.server.xmpp.password");				
-				connection = new XMPPConnection(addr, Integer.parseInt(port.trim()));
-				connection.login(user, password);
-				logger.debug("logged in OK");
-			} catch (XMPPException e) {
-				e.printStackTrace(System.out);
-				logger.error(e);
-				connection = null;
-			} catch (PropertyNotFoundException e) {
-				e.printStackTrace(System.out);				
-				logger.error(e);
-				connection = null;
-			} 
-		}
-		
-		return connection;
-	}
-	
-	public void sendShareLink(Person recipient, Person sender, Guid postGuid, String url, String title, String description) {
-		XMPPConnection connection = getConnection();
-		PersonView recipientView;
-		
-		if (connection == null)
-			return;
+	@EJB
+	private AccountSystem accountSystem;
 
-		// FIXME if a recipient has no Account then there's no point sending 
-		// to them...
-		
-		StringBuilder recipientJid = new StringBuilder();
-		recipientJid.append(recipient.getId().toString());
-		recipientJid.append("@dumbhippo.com");
-		
-		Message message = new Message(recipientJid.toString(),
-				Message.Type.HEADLINE);
-		
-		recipientView = identitySpider.getViewpoint(recipient, sender);
-		String senderName = recipientView.getHumanReadableName();
-		message.addExtension(new LinkExtension(senderName, postGuid, url, title, description));
+	@EJB
+	private Mailer mailer;
 
-		message.setBody(String.format("%s\n%s", title, url));
-		
-		logger.info("Sending jabber message to " + message.getTo());
-		connection.sendPacket(message);
-	}
+	@EJB
+	private IdentitySpider identitySpider;
 	
-	public static class LinkExtension implements PacketExtension {
+	// Our delegates
+	
+	private XMPPSender xmppSender;
+	private EmailSender emailSender;
+	
+	private static class LinkExtension implements PacketExtension {
 
 		private static final String ELEMENT_NAME = "link";
+
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
 		
-		private String senderName; 
+		private String senderName;
+		
 		private String url;
+
 		private Guid guid;
+
 		private String title;
+		
 		private String description;
 
 		public String toXML() {
@@ -108,9 +90,8 @@ public class MessageSenderBean implements MessageSender {
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
 			builder.closeElement();
-	        return builder.toString();
+			return builder.toString();
 		}
-
 		public LinkExtension(String senderName, Guid postId, String url, String title, String description) {
 			this.senderName = senderName;
 			this.guid = postId;
@@ -125,6 +106,149 @@ public class MessageSenderBean implements MessageSender {
 
 		public String getNamespace() {
 			return NAMESPACE;
+		}
+	}
+	
+	private class XMPPSender {
+
+		private XMPPConnection connection;
+		
+		private synchronized XMPPConnection getConnection() {
+			if (connection == null) {
+				try {
+					String addr = config.getPropertyNoDefault(HippoProperty.XMPP_ADDRESS);
+					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
+					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
+					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);
+					connection = new XMPPConnection(addr, Integer.parseInt(port.trim()));
+					connection.login(user, password);
+					logger.debug("logged in OK");
+				} catch (XMPPException e) {
+					e.printStackTrace(System.out);
+					logger.error(e);
+					connection = null;
+				} catch (PropertyNotFoundException e) {
+					e.printStackTrace(System.out);
+					logger.error(e);
+					connection = null;
+				}
+			}
+
+			return connection;
+		}
+
+		public void sendPostNotification(Person recipient, Post post) {
+			XMPPConnection connection = getConnection();
+			PersonView recipientView;
+			
+			if (connection == null)
+				return;
+
+			StringBuilder recipientJid = new StringBuilder();
+			recipientJid.append(recipient.getId().toString());
+			recipientJid.append("@dumbhippo.com");
+
+			Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
+
+			String title = post.getTitle();
+			Set<Resource> resources = post.getResources();
+			
+			// for now, hardcode to "find the first url we see"
+			
+			String url = null;
+			if (!resources.isEmpty()) {
+				for (Resource r : resources) {
+					if (r instanceof LinkResource) {
+						url = ((LinkResource)r).getUrl();
+						break;
+					}
+				}
+			}
+			
+			if (url == null) {
+				// this particular jabber message protocol has no point without an url
+				logger.debug("no url found on post");
+				return;
+			}
+
+			recipientView = identitySpider.getViewpoint(recipient, post.getPoster());
+			String senderName = recipientView.getHumanReadableName();
+			message.addExtension(new LinkExtension(senderName, post.getGuid(), url, title, post.getText()));
+
+			message.setBody(String.format("%s\n%s", title, url));
+
+			logger.info("Sending jabber message to " + message.getTo());
+			connection.sendPacket(message);
+		}
+	}
+
+	private class EmailSender {
+
+		public void sendPostNotification(Person recipient, Post post) throws NoAddressKnownException {
+			String baseurl = config.getProperty(HippoProperty.BASEURL);
+			PersonView posterViewedByRecipient = identitySpider.getViewpoint(recipient, post.getPoster());
+			
+			StringBuilder messageBody = new StringBuilder();
+			
+			Set<Resource> resources = post.getResources();
+			
+			String title = post.getTitle();
+			if (title.length() == 0) {
+				title = null;
+			}
+			
+			for (Resource r : resources) {
+				if (r instanceof LinkResource) {
+					String url = ((LinkResource)r).getUrl();
+					
+					if (title == null)
+						title = url;
+					
+					messageBody.append(url);
+					messageBody.append("\n");
+				}
+			}
+			messageBody.append("\n");
+			
+			messageBody.append(post.getText());
+			
+			messageBody.append("\n\n");
+			messageBody.append("                    (Message sent by " + posterViewedByRecipient.getHumanReadableName() + " using " + baseurl + ")\n");
+			
+			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
+
+			if (title == null) {
+				title = "Check out this link!";
+			}
+			
+			try {
+				msg.setSubject(title);
+				msg.setText(messageBody.toString());
+			} catch (MessagingException e) {
+				throw new RuntimeException(e);
+			}
+			
+			mailer.sendMessage(msg);
+		}
+	}
+	
+	public MessageSenderBean() {
+		this.emailSender = new EmailSender();
+		this.xmppSender = new XMPPSender();
+	}
+	
+	public void sendPostNotification(Person recipient, Post post) {
+		HippoAccount account = accountSystem.lookupAccountByPerson(recipient);
+		
+		// in the future the test could be "account != null && logged on to jabber recently" or something
+		if (account != null) {
+			xmppSender.sendPostNotification(recipient, post);
+		} else {
+			try {
+				emailSender.sendPostNotification(recipient, post);
+			} catch (NoAddressKnownException e) {
+				logger.debug("no clue how to send notification to " + recipient + " (we have no email address)");
+			}
 		}
 	}
 }

@@ -20,6 +20,8 @@ public interface Configuration {
 			super(name);
 		}
 	}
+
 	public String getProperty(String name) throws PropertyNotFoundException;
-	public String getProperty(String name, String defaultValue);
+	public String getProperty(HippoProperty name);
+	public String getPropertyNoDefault(HippoProperty name) throws PropertyNotFoundException;
 }
