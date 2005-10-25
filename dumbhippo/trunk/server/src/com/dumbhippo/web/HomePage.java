@@ -2,10 +2,9 @@ package com.dumbhippo.web;
 
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.Collections;
 
 import javax.naming.NamingException;
 
@@ -16,8 +15,8 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PostingBoard;
 
 /**
  * @author otaylor
