@@ -14,8 +14,10 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -52,9 +54,9 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	private Configuration config;
-
+	
 	@EJB
-	private AccountSystem accountSystem;
+	private AccountSystem accountSystem;	
 
 	@EJB
 	private Mailer mailer;
@@ -114,14 +116,20 @@ public class MessageSenderBean implements MessageSender {
 		private XMPPConnection connection;
 		
 		private synchronized XMPPConnection getConnection() {
-			if (connection == null) {
+			if (connection != null && !connection.isConnected()) {
+				logger.debug("got disconnected from XMPP server");
+			}
+			if (connection == null || !connection.isConnected()) {			
 				try {
 					String addr = config.getPropertyNoDefault(HippoProperty.XMPP_ADDRESS);
 					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
 					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
 					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);
 					connection = new XMPPConnection(addr, Integer.parseInt(port.trim()));
-					connection.login(user, password);
+					// We need to use a separate resource ID for each connection
+					// TODO create an overoptimized XMPP connection pool 
+					RandomToken token = RandomToken.createNew();
+					connection.login(user, password, StringUtils.hexEncode(token.getBytes()));
 					logger.debug("logged in OK");
 				} catch (XMPPException e) {
 					e.printStackTrace(System.out);
@@ -137,7 +145,7 @@ public class MessageSenderBean implements MessageSender {
 			return connection;
 		}
 
-		public void sendPostNotification(Person recipient, Post post) {
+		public synchronized void sendPostNotification(Person recipient, Post post) {
 			XMPPConnection connection = getConnection();
 			PersonView recipientView;
 			
