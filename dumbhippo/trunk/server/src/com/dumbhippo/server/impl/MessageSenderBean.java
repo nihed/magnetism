@@ -206,8 +206,8 @@ public class MessageSenderBean implements MessageSender {
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();
 			
-			messageHtml.appendHtmlHead();
-			messageHtml.append("<body>");
+			messageHtml.appendHtmlHead("");
+			messageHtml.append("<body>\n");
 			
 			Set<Resource> resources = post.getResources();
 			
@@ -239,9 +239,9 @@ public class MessageSenderBean implements MessageSender {
 					messageText.append(url);
 					messageText.append("\n");
 					
-					messageHtml.append("<a href=\"");
+					messageHtml.append("<p><a href=\"");
 					messageHtml.appendEscaped(redirectUrl.toString());
-					messageHtml.append("\">" + title + "</a> (link goes via DumbHippo)");
+					messageHtml.append("\">" + title + "</a> (link goes via DumbHippo)</p>\n");
 				}
 			}
 
@@ -251,40 +251,44 @@ public class MessageSenderBean implements MessageSender {
 			}
 			
 			messageText.append("\n");
-			messageHtml.append("<br/>");
+			messageHtml.append("<br/>\n");
 			
 			// TEXT: append post text
 			messageText.append(post.getText());
 
 			// HTML: append post text
-			messageHtml.append("<p>");
+			messageHtml.append("<p>\n");
 			// I suppose this is a wasteful way to be able to use getLine()
 			BufferedReader reader = new BufferedReader(new StringReader(post.getText()));
 			try {
+				boolean lastLineEmpty = false;
 				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 					if (line.matches("^\\s*$")) {
-						messageHtml.append("</p><p>");
+						if (!lastLineEmpty) {
+							messageHtml.append("\n</p>\n<p>");
+						}
+						lastLineEmpty = true;
 					} else {
 						messageHtml.appendEscaped(line);
+						lastLineEmpty = false;
 					}
 				}
 			} catch (IOException e) {
 				throw new RuntimeException("should not get IOException on a StringReader", e);
 			}
-			messageHtml.append("</p>");
+			messageHtml.append("</p>\n");
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
 			messageText.append("                    (Message sent by " + posterViewedByRecipient.getHumanReadableName() + " using " + baseurl + ")\n");
 			
 			// HTML: append footer
-			messageHtml.append("<br/><br/>");
-			messageHtml.append("<p style=\"font-size: smaller; font-style: italic;\">(Message sent by ");
+			messageHtml.append("<p style=\"font-size: smaller; font-style: italic; text-align: center;\">(Message sent by ");
 			messageHtml.appendEscaped(posterViewedByRecipient.getHumanReadableName());
 			messageHtml.append(" using <a href=\"");
 			messageHtml.appendEscaped(baseurl);
-			messageHtml.append("\">DumbHippo</a>)</p>");
-			messageHtml.append("</body>");
+			messageHtml.append("\">DumbHippo</a>)</p>\n");
+			messageHtml.append("</body>\n</html>\n");
 					
 			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
 			

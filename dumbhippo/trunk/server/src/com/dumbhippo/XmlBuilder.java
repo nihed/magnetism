@@ -31,16 +31,18 @@ public class XmlBuilder {
 	}
 	
 	public void appendStandaloneFragmentHeader() {
-		builder.append("<?xml version=\"1.0\" ?>");
+		append("<?xml version=\"1.0\" ?>");
 	}
 
-	public void appendHtmlHead() {
+	public void appendHtmlHead(String title) {
 		// this isn't actually "xml" but whatever
-		builder.append("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
-		+ "<html>"
-		+ "<head>"
-		+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
-		+ "</head>");
+		append("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
+		+ "<html>\n"
+		+ "<head>\n"
+		+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
+		+ "<title>");
+		appendEscaped(title);
+		append("</title>\n</head>\n");
 	}
 	
 	public void appendEscaped(String text) {
