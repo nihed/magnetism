@@ -54,6 +54,10 @@ public interface HttpMethods {
 	public void doAddContactPerson(Person user, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "contactId" })
+	public void doRemoveContactPerson(Person user, String contactId);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
 	public void doJoinGroup(Person user, String groupId);
 	

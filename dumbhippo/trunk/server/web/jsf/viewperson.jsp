@@ -25,6 +25,16 @@
 				  	    	     alert("Couldn't add user to contact list");
 				  	    	 });
 	    }
+	    function removeContact() {
+	    	dh.server.doPOST("removecontactperson",
+						     { "contactId" : "${viewperson.personInfo.person.id}" },
+				  	    	 function(type, data, http) {
+				  	    	 	 document.location.reload();
+				  	    	 },
+				  	    	 function(type, error, http) {
+				  	    	     alert("Couldn't add user to contact list");
+				  	    	 });
+	    }
     </script>
 	<body>
 	<div class="person">
@@ -54,6 +64,9 @@
 		<div class="groups">
 		<p><strong>Groups:</strong> <dh:entityList value="${viewperson.groups}"/></p>
 		</div>
+		<c:if test="${viewperson.isContact}">
+		<p><a href="javascript:removeContact()">Remove <c:out value="${viewperson.personInfo.humanReadableName}"/> from my contact list</a></p>
+		</c:if>
 		<c:if test="${!viewperson.isContact}">
 		<p><a href="javascript:addContact()">Add <c:out value="${viewperson.personInfo.humanReadableName}"/> to my contact list</a></p>
 		</c:if>

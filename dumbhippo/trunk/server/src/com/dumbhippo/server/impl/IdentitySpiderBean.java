@@ -330,6 +330,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		account.addContact(contact);		
 	}
 
+	public void removeContactPerson(Person person, Person contact) {
+		HippoAccount account = accountSystem.lookupAccountByPerson(person);
+		if (account == null)
+			throw new RuntimeException("trying to remove contact to someone without an account");
+		logger.debug("removing contact " + contact + " from account " + account);
+		account.removeContact(contact);		
+	}
+
 	public Set<Person> getContacts(Person user) {
 		HippoAccount account = accountSystem.lookupAccountByPerson(user);
 		return account.getContacts();

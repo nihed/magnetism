@@ -164,13 +164,21 @@ public interface IdentitySpider {
 	public Person createContact(Person person, Resource contact);
 	
 	/**
-	 * Adds a contact to a person's account. 
+	 * Add a contact to a person's account. 
 	 * 
 	 * @param person whose contact it is (must have an account)
 	 * @param the new person to add to the contact list
 	 */
 	public void addContactPerson(Person person, Person contact);
 	
+	/**
+	 * Remove a contact from a person's account. 
+	 * 
+	 * @param person whose contact it is (must have an account)
+	 * @param the person to remove from the contact list
+	 */
+	public void removeContactPerson(Person person, Person contact);
+
 	/** 
 	 * Get the contacts of the given person
 	 * @param user who to get contacts of

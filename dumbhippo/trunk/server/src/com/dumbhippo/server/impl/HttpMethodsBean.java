@@ -260,4 +260,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Guid not found");
 		}
 	}
+
+	public void doRemoveContactPerson(Person user, String contactId) {
+		try {
+			Person contact = identitySpider.lookupGuidString(Person.class, contactId);
+			identitySpider.removeContactPerson(user, contact);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid");
+		} catch (IdentitySpider.GuidNotFoundException e) {
+			throw new RuntimeException("Guid not found");
+		}
+	}
 }
