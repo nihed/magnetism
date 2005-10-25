@@ -15,5 +15,11 @@ public interface GroupSystem {
 	
 	public void addMember(Person adder, Group group, Person person);
 	
+	public void removeMember(Person remover, Group group, Person person);
+	
+	public Set<PersonInfo> getMemberInfos(Person viewpoint, String groupId);
+	
+	public boolean isMember(Group group, Person member);
+	
 	public Set<Group> findGroups(Person viewpoint);	
 }

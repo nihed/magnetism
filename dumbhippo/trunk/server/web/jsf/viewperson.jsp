@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 
 <f:view>
 	<head>
@@ -51,8 +52,7 @@
 		</div>
 		<br/>
 		<div class="groups">
-		<!--  list group objects here -->
-		<!--  ability to join/share groups [D] -->
+		<p><strong>Groups:</strong> <dh:entityList value="${viewperson.groups}"/></p>
 		</div>
 		<c:if test="${!viewperson.isContact}">
 		<p><a href="javascript:addContact()">Add <c:out value="${viewperson.personInfo.humanReadableName}"/> to my contact list</a></p>

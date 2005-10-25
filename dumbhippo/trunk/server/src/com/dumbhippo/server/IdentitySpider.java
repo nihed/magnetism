@@ -178,6 +178,12 @@ public interface IdentitySpider {
 	 */
 	public Set<Person> getContacts(Person user);
 	
+	/** 
+	 * Get the contacts of the given person as a list of PersonInfo
+	 * @param user who to get contacts of
+	 * @return their contacts
+	 */
+	public Set<PersonInfo> getContactInfos(Person viewer, Person user);
 	
 	/**
 	 * Checks whethera  person has another other as a contact

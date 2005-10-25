@@ -1,6 +1,11 @@
 package com.dumbhippo.persistence;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -68,11 +73,39 @@ public class Group extends GuidPersistable {
 		members.addAll(persons);
 	}
 	
+	public void removeMember(Person person) {
+		// Silently do nothing if already not a member
+		members.remove(person);
+	}
+	
 	public String getName() {
 		return name;
 	}
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	/**
+	 * Convert an (unordered) set of groups into a a list and
+	 * sort alphabetically with the default collator. You generally
+	 * want to do this before displaying things to user, since
+	 * iteration through Set will be in hash table order.
+	 * 
+	 * @param groups a set of Group objects
+	 * @return a newly created List containing the sorted groups
+	 */
+	static public List<Group> sortedList(Set<Group> groups) {
+		ArrayList<Group> list = new ArrayList<Group>();
+		list.addAll(groups);
+
+		final Collator collator = Collator.getInstance();
+		Collections.sort(list, new Comparator<Group>() {
+			public int compare (Group g1, Group g2) {
+				return collator.compare(g1.getName(), g2.getName());
+			}
+		});
+		
+		return list;
 	}
 }

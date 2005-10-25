@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
+import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PersonView;
 
 /*
@@ -332,6 +333,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Set<Person> getContacts(Person user) {
 		HippoAccount account = accountSystem.lookupAccountByPerson(user);
 		return account.getContacts();
+	}
+	
+	public Set<PersonInfo> getContactInfos(Person viewer, Person user) {
+		Set<PersonInfo> result = new HashSet<PersonInfo>();
+		for (Person p : getContacts(user)) 
+			result.add(new PersonInfo(this, viewer, p));
+		
+		return result;
 	}
 	
 	public boolean isContact(Person user, Person contact) {

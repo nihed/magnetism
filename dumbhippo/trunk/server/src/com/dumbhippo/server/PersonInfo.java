@@ -1,5 +1,12 @@
 package com.dumbhippo.server;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.PersonView;
 
@@ -32,4 +39,28 @@ public class PersonInfo {
 	public String getHumanReadableName() {
 		return humanReadableName;
 	}
+	
+	/**
+	 * Convert an (unordered) set of PersonInfo into a a list and
+	 * sort alphabetically with the default collator. You generally
+	 * want to do this before displaying things to user, since
+	 * iteration through Set will be in hash table order.
+	 * 
+	 * @param groups a set of Person objects
+	 * @return a newly created List containing the sorted groups
+	 */
+	static public List<PersonInfo> sortedList(Set<PersonInfo> infos) {
+		ArrayList<PersonInfo> list = new ArrayList<PersonInfo>();
+		list.addAll(infos);
+
+		final Collator collator = Collator.getInstance();
+		Collections.sort(list, new Comparator<PersonInfo>() {
+			public int compare (PersonInfo i1, PersonInfo i2) {
+				return collator.compare(i1.getHumanReadableName(), i2.getHumanReadableName());
+			}
+		});
+		
+		return list;
+	}
+
 }

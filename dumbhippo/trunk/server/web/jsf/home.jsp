@@ -71,6 +71,7 @@
 		<div class="groups">
 		<p><strong>Groups:</strong> <dh:entityList value="${home.groups}"/></p>
 		<!--  ability to join/share groups [D] -->
+		<p><strong>Contacts:</strong> <dh:entityList value="${home.contacts}"/></p>
 		</div>
 	</div>	
 	</body>

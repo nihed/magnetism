@@ -24,7 +24,9 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
+import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
@@ -224,6 +226,28 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Person contact = identitySpider.createContact(user, emailResource);
 
 		returnObjects(out, contentType, user, Collections.singleton(contact), null);
+	}
+	
+	public void doJoinGroup(Person user, String groupId) {
+		try {
+			Group group = identitySpider.lookupGuidString(Group.class, groupId);
+			groupSystem.addMember(user, group, user);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid");
+		} catch (IdentitySpider.GuidNotFoundException e) {
+			throw new RuntimeException("Guid not found");
+		}
+	}
+	
+	public void doLeaveGroup(Person user, String groupId) {
+		try {
+			Group group = identitySpider.lookupGuidString(Group.class, groupId);
+			groupSystem.removeMember(user, group, user);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid");
+		} catch (IdentitySpider.GuidNotFoundException e) {
+			throw new RuntimeException("Guid not found");
+		}
 	}
 	
 	public void doAddContactPerson(Person user, String contactId) {

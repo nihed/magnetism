@@ -53,6 +53,14 @@ public interface HttpMethods {
 	@HttpParams( { "contactId" })
 	public void doAddContactPerson(Person user, String contactId);
 	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId" })
+	public void doJoinGroup(Person user, String groupId);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId" })
+	public void doLeaveGroup(Person user, String groupId);
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException;

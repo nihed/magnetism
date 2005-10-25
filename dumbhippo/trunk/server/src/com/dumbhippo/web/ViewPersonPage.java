@@ -8,7 +8,9 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostingBoard;
@@ -29,12 +31,14 @@ public class ViewPersonPage {
 	private SigninBean signin;
 	
 	private IdentitySpider identitySpider;
+	private GroupSystem groupSystem;
 	private PostingBoard postBoard;
 	private PersonInfo personInfo;
 	
 	public ViewPersonPage() throws NamingException {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
 	public List<PostInfo> getPostInfos() {
@@ -87,5 +91,11 @@ public class ViewPersonPage {
 			logger.debug("The exception was", e);
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public List<Group> getGroups() {
+		// FIXME: We want to lock this down more and only show a subset of groups.
+		
+		return Group.sortedList(groupSystem.findGroups(viewedPerson));
 	}
 }

@@ -5,11 +5,13 @@ import java.io.Serializable;
 import javax.annotation.EJB;
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
@@ -52,9 +54,7 @@ public class PersonViewBean
 	/* (non-Javadoc)
 	 * @see com.dumbhippo.persistence.PersonView#getEmail()
 	 */
-	public EmailResource getEmail() {
-		EmailResource res;
-		
+	public EmailResource getEmail() {	
 		Query q;
 		if (viewpoint == null) {
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + ")");
@@ -64,9 +64,12 @@ public class PersonViewBean
 		}
 		q.setParameter("theman", spider.getTheMan());
 		q.setParameter("personid", person.getId());
-		res = (EmailResource) q.getSingleResult();
-
-		return res;		
+		
+		try {
+			return (EmailResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -78,10 +81,10 @@ public class PersonViewBean
 			return name.toString();
 		}
 		EmailResource email = getEmail();
-		if (email != null) {
+		if (email != null) 
 			return email.getEmail();
-		}
-		return null;
+		
+		return "<Unknown>";
 	}
 	
 	/* (non-Javadoc)
