@@ -54,6 +54,7 @@ public:
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
 
+	void onConnectionChange(bool connected);
     void onAuthFailure();
     void onAuthSuccess();
     void onLinkMessage(const WCHAR *senderName,
@@ -66,6 +67,7 @@ private:
     bool registerClass();
     bool createWindow();
     void updateMenu();
+	void updateIcons();
 
     void showSignInWindow();
     void showPreferences();
@@ -98,6 +100,7 @@ private:
     // If true, this is a debug instance, acts as a separate global
     // singleton and has a separate registry namespace
     bool debug_;
+	bool connected_;
 
     DWORD refCount_;
     HINSTANCE instance_;
