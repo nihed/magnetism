@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoIcon.h"
+#include "HippoLogWindow.h"
 #include "HippoPreferences.h"
 #include "HippoIM.h"
 
@@ -49,6 +50,9 @@ public:
     void showMenu(UINT buttonFlag);
     void showURL(BSTR url);
     void showShareWindow(BSTR url);
+
+    void debugLogW(const WCHAR *format, ...); // UTF-16
+    void debugLogU(const char *format, ...);  // UTF-8
 
     void onAuthFailure();
     void onAuthSuccess();
@@ -106,6 +110,7 @@ private:
     HippoBSTR currentURL_;
 
     HippoPreferences preferences_;
+    HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
     HippoIM im_;
 

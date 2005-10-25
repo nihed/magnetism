@@ -125,6 +125,9 @@
 				RelativePath=".\HippoIM.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoLogWindow.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoPreferences.cpp">
 			</File>
 			<File
@@ -158,6 +161,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoIM.h">
+			</File>
+			<File
+				RelativePath=".\HippoLogWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoPreferences.h">

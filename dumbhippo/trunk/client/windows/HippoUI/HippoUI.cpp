@@ -220,6 +220,14 @@ HippoUI::create(HINSTANCE instance)
 	return false;
     }
 
+    logWindow_.setBigIcon(bigIcon_);
+    logWindow_.setSmallIcon(smallIcon_);
+    if (!logWindow_.create()) {
+	revokeActive();
+	notificationIcon_.destroy();
+	return false;
+    }
+
     im_.setUI(this);
     if (preferences_.getSignIn()) {
 	if (im_.signIn())
@@ -377,6 +385,34 @@ HippoUI::showURL(BSTR url)
 #endif
 
     webBrowser->put_Visible(VARIANT_TRUE);
+}
+
+void
+HippoUI::debugLogW(const WCHAR *format, ...)
+{
+    WCHAR buf[1024];
+    va_list vap;
+    va_start (vap, format);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
+    va_end (vap);
+
+    logWindow_.logString(buf);
+}
+
+void
+HippoUI::debugLogU(const char *format, ...)
+{
+    va_list vap;
+    va_start (vap, format);
+    char *str = g_strdup_vprintf(format, vap);
+    va_end (vap);
+
+    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
+    if (strW) 
+	logWindow_.logString(strW);
+    
+    g_free(str);
+    g_free(strW);
 }
 
 void 
@@ -677,6 +713,9 @@ HippoUI::processMessage(UINT   message,
 	    return true;
 	case IDM_PREFERENCES:
 	    showPreferences();
+	    return true;
+	case IDM_DEBUGLOG:
+	    logWindow_.show();
 	    return true;
 	case IDM_EXIT:
 	    DestroyWindow(window_);

@@ -8,7 +8,6 @@
 #define IDS_APP_TITLE                   103
 #define IDM_ABOUT                       104
 #define IDI_DUMBHIPPO                   104
-#define IDI_DUMBHIPPO_DEBUG             204
 #define IDM_EXIT                        105
 #define IDC_HIPPOUI                     109
 #define IDM_SHARE0                      110
@@ -28,6 +27,7 @@
 #define IDR_NOTIFY                      134
 #define IDI_HIPPOUI                     136
 #define IDD_LOGIN                       137
+#define IDI_DUMBHIPPO_DEBUG             204
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
 #define IDC_REMEMBERPASS                1003
@@ -36,10 +36,11 @@
 #define IDC_LOGOICON                    1007
 #define IDC_MESSAGE_SERVER              1009
 #define IDC_WEB_SERVER                  1010
+#define IDC_EDIT1                       1011
 #define ID_SHARELINK_PREFERENCES        32771
-#define ID_SHARELINK_EXIT               32772
 #define IDM_RECENT                      32773
 #define IDM_PREFERENCES                 32779
+#define IDM_DEBUGLOG                    32781
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -48,8 +49,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        139
-#define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1011
+#define _APS_NEXT_COMMAND_VALUE         32782
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

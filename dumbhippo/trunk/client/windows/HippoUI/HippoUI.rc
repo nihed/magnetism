@@ -33,7 +33,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDI_DUMBHIPPO           ICON                    "DumbHippo.ico"
 IDI_DUMBHIPPO_DEBUG     ICON                    "DumbHippoDebug.ico"
 
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
@@ -45,6 +44,7 @@ BEGIN
     BEGIN
         MENUITEM "&Recent links...",            IDM_RECENT
         MENUITEM "Preferences...",              IDM_PREFERENCES
+        MENUITEM "Debug Log...",                IDM_DEBUGLOG
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT
     END
@@ -100,6 +100,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,87,186,13
     DEFPUSHBUTTON   "Login",IDOK,85,110,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,143,110,50,14
+    EDITTEXT        IDC_EDIT1,89,1,40,14,ES_AUTOHSCROLL
 END
 
 IDD_PREFERENCES DIALOGEX 0, 0, 242, 102

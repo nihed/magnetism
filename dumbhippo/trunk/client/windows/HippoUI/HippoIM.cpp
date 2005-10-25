@@ -183,6 +183,8 @@ HippoIM::connect()
     lmConnection_ = lm_connection_new(messageServer);
     lm_connection_set_port(lmConnection_, port);
 
+    ui_->debugLogU("Connecting to %s:%d", messageServer, port);
+
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 
 	                                   LM_MESSAGE_TYPE_MESSAGE, 
@@ -284,15 +286,10 @@ HippoIM::stopRetryTimeout()
 void
 HippoIM::connectFailure(char *message)
 {
-#if 0    
-    char *str = g_strdup_printf("Failed to connect%s%s", 
-	                        message ? ": " : "",
-	                        message ? message : "");
-    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
-    hippoDebug(L"%ls", strW);
-    g_free (str);
-    g_free (strW);
-#endif
+    if (message)
+	ui_->debugLogU("Disconnected: %s", message);
+    else
+	ui_->debugLogU("Disconnected from server");
 
     lm_connection_unref(lmConnection_);
     lmConnection_ = NULL;
@@ -303,15 +300,9 @@ HippoIM::connectFailure(char *message)
 void
 HippoIM::authFailure(char *message)
 {
-#if 0
-    char *str = g_strdup_printf("Failed to authenticate%s%s", 
-	                        message ? ": " : "",
-	                        message ? message : "");
-    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
-    hippoDebug(L"%ls", strW);
-    g_free (str);
-    g_free (strW);
-#endif
+    ui_->debugLogU("Failed to authenticate%s%s", 
+	           message ? ": " : "",
+	           message ? message : "");
 
     forgetAuth();
     startSignInTimeout();
@@ -367,6 +358,7 @@ HippoIM::onConnectionOpen (LmConnection *connection,
     HippoIM *im = (HippoIM *)userData;
 
     if (success) {
+	im->ui_->debugLogU("Connected successfully");
 	im->authenticate();
     } else {
 	im->connectFailure(NULL);
@@ -381,6 +373,8 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
     HippoIM *im = (HippoIM *)userData;
 
     if (success) {
+	im->ui_->debugLogU("Authenticated successfully");
+
 	LmMessage *message;
 	message = lm_message_new_with_sub_type(NULL, 
 	                                       LM_MESSAGE_TYPE_PRESENCE, 
