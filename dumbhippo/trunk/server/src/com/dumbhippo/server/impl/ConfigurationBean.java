@@ -22,28 +22,28 @@ public class ConfigurationBean implements Configuration {
 	
 	static private final Log logger = GlobalSetup.getLog(ConfigurationBean.class);		
 	
-	static Properties defaults;
-	
-	static {		
-		defaults = new Properties();
-		
-		for (HippoProperty prop : HippoProperty.values()) {
-			if (prop.getDefault() != null) {
-				defaults.put(prop.getKey(), prop.getDefault());
-			}
-		}
-	}
-	
 	Properties props;
 	
 	@PostConstruct
 	public void init() {
-		props = new Properties(defaults);
+		logger.debug("Loading dumbhippo configuration...");
+		
+		props = new Properties(System.getProperties());
 		try {
 			InputStream str = ConfigurationBean.class.getResourceAsStream("dumbhippo.properties");
-			props.load(str);
+			props.load(str);			
 		} catch (IOException e) {
 			logger.warn("Exception reading dumbhippo.properties", e);
+		}
+		// put in our hardcoded defaults if no other defaults were found
+		for (HippoProperty prop : HippoProperty.values()) {
+			logger.debug("--system property was " + prop.getKey() + "=" + System.getProperties().getProperty(prop.getKey()));
+			if (prop.getDefault() != null && props.getProperty(prop.getKey()) == null) {
+				logger.debug("--loading hardcoded default " + prop.getKey() + "=" + prop.getDefault());
+				props.put(prop.getKey(), prop.getDefault());
+			} else {
+				logger.debug("--using property " + prop.getKey() + "=" + props.getProperty(prop.getKey()));
+			}
 		}
 	}
 
