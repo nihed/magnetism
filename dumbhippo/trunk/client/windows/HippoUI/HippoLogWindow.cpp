@@ -76,7 +76,7 @@ HippoLogWindow::logString(WCHAR *str)
 
     GetLocalTime(&localtime);
     StringCchPrintfW(timebuf, sizeof(timebuf) / sizeof(timebuf[0]), 
-	             L"%2d:%2d:%2d ", localtime.wHour, localtime.wMinute, localtime.wSecond);
+	             L"%02d:%02d:%02d ", localtime.wHour, localtime.wMinute, localtime.wSecond);
 
     SendMessage(editWindow_, EM_SCROLLCARET, (WPARAM)-1, (LPARAM)-1);
     SendMessage(editWindow_, EM_REPLACESEL, (WPARAM)FALSE /* not undoable */, (LPARAM)timebuf);
