@@ -31,6 +31,7 @@ static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 HippoUI::HippoUI(bool debug) : preferences_(debug)
 {
     refCount_ = 1;
+    debug_ = debug;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
