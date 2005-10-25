@@ -40,6 +40,7 @@
 			<include name="hibernate3.jar"/>
 		</fileset>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/myfaces-api.jar"/>		
+		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 	</path>
 
 	<path id="tests.class.path">
@@ -159,6 +160,7 @@
 			<fileset dir="${web}" includes="*.html" />
 			<fileset dir="${web}" includes="jsf/*.jsp" />
 			<fileset dir="${web}" includes="jsf/*.jspf" />
+			<fileset dir="${web}" includes="jsf/*.tld" />
 			<fileset dir="${web}" includes="css/*.css" />
 
 			<fileset dir="${build}">

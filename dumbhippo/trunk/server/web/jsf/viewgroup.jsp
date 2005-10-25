@@ -22,16 +22,15 @@
 			    </td>
 			</tr>
 			<tr>
-				<c:url value="viewperson.faces?personId=${info.post.poster.id}" var="posterurl"/>
 				<th align="right">From:</th>
 				<td>
-				<a href="${posterurl}"><c:out value="${info.posterName}"/></a>
+				<dh:entity value="${info}/>
 				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
 				</td>
 			</tr>
 			<tr>
 			    <th align="right">To:</th>
-			    <td><c:out value="${info.recipientSummary}"/></td>
+			    <td><dh:entityList value="${info.recipients}"/></td>
 		    </tr>
 		    <tr>
 		    	<th></th>

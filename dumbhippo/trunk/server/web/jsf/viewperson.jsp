@@ -41,7 +41,7 @@
 			</tr>
 			<tr>
 			    <th align="right">To:</th>
-			    <td><c:out value="${info.recipientSummary}"/></td>
+			    <td><dh:entityList value="${info.recipients}"/></td>
 		    </tr>
 		    <tr>
 		    	<th></th><td><c:out value="${info.post.text}"/></td>

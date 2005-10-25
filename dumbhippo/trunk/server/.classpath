@@ -27,5 +27,6 @@
 	<classpathentry kind="lib" path="/opt/jboss/client/log4j.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/client/mail.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/myfaces-api.jar"/>
+	<classpathentry kind="lib" path="/opt/jboss/server/default/lib/javax.servlet.jsp.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

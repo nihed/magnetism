@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 
 <f:view>
 	<head>
@@ -43,7 +44,7 @@
 	   	</span>
 	    <c:url value="viewperson.faces?personId=${home.signin.user.id}" var="publicurl"/>
 		(<a href="${publicurl}">public page</a>)</p>
-		<div class="shared-links">	
+		<div class="shared-links">
 		<p>Recently seen links:</p>	
 		<table>
 		<c:forEach items="${home.receivedPostInfos}" var="info">
@@ -51,15 +52,14 @@
 			    <td colspan="2"><strong><a href="${info.url}"><c:out value="${info.title}"/></a></strong></td>
 			</tr>
 			<tr>
-			    <c:url value="viewperson.faces?personId=${info.post.poster.id}" var="posterurl"/>
 				<th align="right">From:</th>
 				<td>
-				<a href="${posterurl}"><c:out value="${info.posterName}"/></a>
+				<dh:entity value="${info.posterInfo}"/>
 				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
 				</td>
 			</tr>
 			<tr>
-			    <th align="right">To:</th><td><c:out value="${info.recipientSummary}"/></td>
+			    <th align="right">To:</th><td><dh:entityList value="${info.recipients}"/></td>
 		    </tr>
 		    <tr>
 		    	<th></th><td><c:out value="${info.post.text}"/></td>
@@ -69,18 +69,11 @@
 		</div>
 		<br/>
 		<div class="groups">
-		<p>
-		<strong>Groups:</strong>
-		<c:set var="notfirst" value="false"/>
-		<c:forEach items="${home.groups}" var="group">
-		<c:url value="viewgroup.faces?groupId=${group.id}" var="groupurl"/>
-		<c:if test="${notfirst}">, </c:if><a href="${groupurl}"><c:out value="${group.name}"/></a>
-		<c:set var="notfirst" value="true"/>
-		</c:forEach>
-		</p>
+		<p><strong>Groups:</strong> <dh:entityList value="${home.groups}"/></p>
 		<!--  ability to join/share groups [D] -->
 		</div>
 	</div>	
 	</body>
+	
 </f:view>
 </html>

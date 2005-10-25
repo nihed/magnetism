@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -16,8 +19,8 @@ import com.dumbhippo.persistence.Resource;
 public class PostInfo {
 	private Post post;
 	private String url;
-	private String posterName;
-	private String recipientSummary;
+	private PersonInfo posterInfo;
+	private List<Object> recipients;
 	
 	public PostInfo(IdentitySpider spider, Person viewer, Post p) {
 		post = p;
@@ -30,27 +33,15 @@ public class PostInfo {
 			}
 		}
 		
-		PersonView posterView = spider.getViewpoint(viewer, post.getPoster());
-		posterName = posterView.getHumanReadableName();
+	    posterInfo = new PersonInfo(spider, viewer, post.getPoster());
 		
-		StringBuffer summary = new StringBuffer();
-		int count = 0;
+		recipients = new ArrayList<Object>();
+		
+		recipients.addAll(post.getGroupRecipients());
+		
 		for (Person recipient : post.getPersonRecipients()) {
-			PersonView recipientView = spider.getViewpoint(viewer, recipient);
-			
-			if (count > 0)
-				summary.append(", ");
-			
-			if (count == 5) {
-				summary.append("...");
-				break;
-			} else {
-				summary.append(recipientView.getHumanReadableName());
-				count++;
-			}
+			recipients.add(new PersonInfo(spider, viewer, recipient));
 		}
-		
-		recipientSummary = summary.toString();
 	}
 	
 	public String getTitle() {
@@ -65,12 +56,12 @@ public class PostInfo {
 		return url;	
 	}
 	
-	public String getPosterName() {
-		return posterName;
+	public PersonInfo getPosterInfo() {
+		return posterInfo;
 	}
 	
-	public String getRecipientSummary() {
-		return recipientSummary;
+	public List<Object> getRecipients() {
+		return recipients;
 	}
 	
 	public Post getPost() {
