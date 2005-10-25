@@ -23,6 +23,8 @@ public interface Mailer {
 	};
 	
 	public static class NoAddressKnownException extends Exception {
+		private static final long serialVersionUID = 0L;
+
 		public NoAddressKnownException(String message) {
 			super(message);
 		}

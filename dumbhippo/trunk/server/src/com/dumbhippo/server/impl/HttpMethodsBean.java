@@ -22,15 +22,18 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
-import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.RedirectException;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Stateless
@@ -52,6 +55,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private GroupSystem groupSystem;
+
+	@EJB
+	private InvitationSystem invitationSystem;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -233,9 +239,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Group group = identitySpider.lookupGuidString(Group.class, groupId);
 			groupSystem.addMember(user, group, user);
 		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid");
+			throw new RuntimeException("Bad Guid", e);
 		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found");
+			throw new RuntimeException("Guid not found", e);
 		}
 	}
 	
@@ -244,9 +250,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Group group = identitySpider.lookupGuidString(Group.class, groupId);
 			groupSystem.removeMember(user, group, user);
 		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid");
+			throw new RuntimeException("Bad Guid", e);
 		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found");
+			throw new RuntimeException("Guid not found", e);
 		}
 	}
 	
@@ -255,20 +261,46 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Person contact = identitySpider.lookupGuidString(Person.class, contactId);
 			identitySpider.addContactPerson(user, contact);
 		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid");
+			throw new RuntimeException("Bad Guid", e);
 		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found");
+			throw new RuntimeException("Guid not found", e);
 		}
 	}
-
+	
 	public void doRemoveContactPerson(Person user, String contactId) {
 		try {
 			Person contact = identitySpider.lookupGuidString(Person.class, contactId);
 			identitySpider.removeContactPerson(user, contact);
 		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid");
+			throw new RuntimeException("Bad Guid", e);
 		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found");
+			throw new RuntimeException("Guid not found", e);
 		}
+	}
+
+	public void handleRedirect(Person user, String url, String postId, String inviteKey) throws RedirectException {
+		
+		Invitation invitation = null;
+		
+		if (user == null && inviteKey != null) {
+			invitation = invitationSystem.lookupInvitationByKey(inviteKey);
+		}
+		
+		// FIXME obviously we should redirect you to login and then come back...
+		if (user == null && invitation == null) {
+			throw new RedirectException("Do you need to <a href=\"/jsf/addclient.faces\">log in</a>?");
+		}
+
+		Post post;
+		try {
+			post = identitySpider.lookupGuidString(Post.class, postId);
+		} catch (ParseException e) {
+			throw new RedirectException("Which post did you come from? (post's ID was \"" + XmlBuilder.escape(postId) + "\")");
+		} catch (GuidNotFoundException e) {
+			throw new RedirectException("Which post did you come from? (post's ID was \"" + XmlBuilder.escape(postId) + "\")");
+		}
+		LinkResource link = identitySpider.getLink(url);
+		
+		logger.debug("FIXME mark " + (user != null ? user : invitation) + " as having gone to " + post + " specifically link " + url);
 	}
 }

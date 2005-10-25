@@ -10,31 +10,36 @@
     </description>
     
     <servlet>
-      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-name>HippoServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.HippoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
    </servlet>   
 
    <servlet-mapping>
-      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/xmlrpc/*</url-pattern>
    </servlet-mapping>
     
    <servlet-mapping>
-      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/xml/*</url-pattern>
    </servlet-mapping>
    
    <servlet-mapping>
-      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/text/*</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>XmlRpc Servlet</servlet-name>
+      <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/action/*</url-pattern>
    </servlet-mapping>
    
+   <servlet-mapping>
+      <servlet-name>HippoServlet</servlet-name>
+      <url-pattern>/redirect</url-pattern>
+   </servlet-mapping>
+
     <!-- FIXME jboss specific? -->
 	<listener>
 	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>

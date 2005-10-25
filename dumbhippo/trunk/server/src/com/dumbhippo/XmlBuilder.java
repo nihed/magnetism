@@ -34,6 +34,15 @@ public class XmlBuilder {
 		builder.append("<?xml version=\"1.0\" ?>");
 	}
 
+	public void appendHtmlHead() {
+		// this isn't actually "xml" but whatever
+		builder.append("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+		+ "<html>"
+		+ "<head>"
+		+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
+		+ "</head>");
+	}
+	
 	public void appendEscaped(String text) {
 		for (char c : text.toCharArray()){
 			if (c == '&')

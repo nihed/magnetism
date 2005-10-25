@@ -1,11 +1,18 @@
 package com.dumbhippo.server.impl;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.mail.MessagingException;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.logging.Log;
 import org.jivesoftware.smack.XMPPConnection;
@@ -196,7 +203,11 @@ public class MessageSenderBean implements MessageSender {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			PersonView posterViewedByRecipient = identitySpider.getViewpoint(recipient, post.getPoster());
 			
-			StringBuilder messageBody = new StringBuilder();
+			StringBuilder messageText = new StringBuilder();
+			XmlBuilder messageHtml = new XmlBuilder();
+			
+			messageHtml.appendHtmlHead();
+			messageHtml.append("<body>");
 			
 			Set<Resource> resources = post.getResources();
 			
@@ -212,28 +223,93 @@ public class MessageSenderBean implements MessageSender {
 					if (title == null)
 						title = url;
 					
-					messageBody.append(url);
-					messageBody.append("\n");
+					StringBuilder redirectUrl = new StringBuilder();
+					redirectUrl.append(baseurl);
+					redirectUrl.append("/redirect?url=");
+					try {
+						redirectUrl.append(URLEncoder.encode(url, "UTF-8"));
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException("This should not be a checked exception, sheesh", e);
+					}
+					redirectUrl.append("&postId=");
+					redirectUrl.append(post.getId()); // no need to encode, we know it is OK
+
+					// FIXME we'll put in the inviteKey= param here also 
+					
+					messageText.append(url);
+					messageText.append("\n");
+					
+					messageHtml.append("<a href=\"");
+					messageHtml.appendEscaped(redirectUrl.toString());
+					messageHtml.append("\">" + title + "</a> (link goes via DumbHippo)");
 				}
 			}
-			messageBody.append("\n");
-			
-			messageBody.append(post.getText());
-			
-			messageBody.append("\n\n");
-			messageBody.append("                    (Message sent by " + posterViewedByRecipient.getHumanReadableName() + " using " + baseurl + ")\n");
-			
-			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
 
 			if (title == null) {
+				// if this doesn't sound like spam I'm not sure what does...
 				title = "Check out this link!";
 			}
 			
+			messageText.append("\n");
+			messageHtml.append("<br/>");
+			
+			// TEXT: append post text
+			messageText.append(post.getText());
+
+			// HTML: append post text
+			messageHtml.append("<p>");
+			// I suppose this is a wasteful way to be able to use getLine()
+			BufferedReader reader = new BufferedReader(new StringReader(post.getText()));
+			try {
+				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+					if (line.matches("^\\s*$")) {
+						messageHtml.append("</p><p>");
+					} else {
+						messageHtml.appendEscaped(line);
+					}
+				}
+			} catch (IOException e) {
+				throw new RuntimeException("should not get IOException on a StringReader", e);
+			}
+			messageHtml.append("</p>");
+			
+			// TEXT: append footer
+			messageText.append("\n\n");
+			messageText.append("                    (Message sent by " + posterViewedByRecipient.getHumanReadableName() + " using " + baseurl + ")\n");
+			
+			// HTML: append footer
+			messageHtml.append("<br/><br/>");
+			messageHtml.append("<p style=\"font-size: smaller; font-style: italic;\">(Message sent by ");
+			messageHtml.appendEscaped(posterViewedByRecipient.getHumanReadableName());
+			messageHtml.append(" using <a href=\"");
+			messageHtml.appendEscaped(baseurl);
+			messageHtml.append("\">DumbHippo</a>)</p>");
+			messageHtml.append("</body>");
+					
+			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
+			
 			try {
 				msg.setSubject(title);
-				msg.setText(messageBody.toString());
+				
+				MimeBodyPart textPart = new MimeBodyPart();
+				textPart.setText(messageText.toString(), "UTF-8");
+				
+				MimeBodyPart htmlPart = new MimeBodyPart();
+				htmlPart.setContent(messageHtml.toString(), "text/html; charset=UTF-8");
+				
+				MimeMultipart multiPart = new MimeMultipart();
+				// "alternative" means display only one or the other, "mixed" means both
+				multiPart.setSubType("alternative");
+				
+				// I read something on the internet saying to put the text part first
+				// so sucktastic mail clients see it first
+				multiPart.addBodyPart(textPart);
+				multiPart.addBodyPart(htmlPart);
+				
+				msg.setContent(multiPart);
+				
 			} catch (MessagingException e) {
-				throw new RuntimeException(e);
+				throw new RuntimeException("failed to put together MIME message", e);
 			}
 			
 			mailer.sendMessage(msg);

@@ -18,12 +18,14 @@ import org.apache.commons.logging.Log;
 import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
+import com.dumbhippo.server.RedirectException;
 import com.dumbhippo.server.XmlRpcMethods;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -338,6 +340,69 @@ public class HippoServlet extends HttpServlet {
 		return user;
 	}
 	
+	private void writeHtmlHeaderBoilerplate(OutputStream out) throws IOException {
+		out.write(("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+				+ "<html>"
+				+ "<head>"
+				+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
+				+ "</head><body>").getBytes());		
+	}
+	
+	private boolean tryRedirectRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
+		if (!request.getRequestURI().equals("/redirect")) {
+			return false;
+		}
+		
+		String url = request.getParameter("url");
+		String postId = request.getParameter("postId");
+		String inviteKey = request.getParameter("inviteKey");
+		
+		if (postId == null || url == null) {
+			// print a little message about this page
+			response.setContentType("text/plain");
+			OutputStream out = response.getOutputStream();
+			out.write("This page forwards you to a shared link, and tells the friend who shared the link that you're going to look at it.\n".getBytes());
+			out.write("It isn't doing that right now though, because it didn't receive the right parameters.\n".getBytes());
+			out.flush();
+		} else {
+			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
+			Person user;
+			try {
+				user = getLoggedInPerson(request);
+			} catch (HttpException e) {
+				user = null; // not fatal as it usually is
+			}
+			try { 
+				glue.handleRedirect(user, url, postId, inviteKey);
+				
+				// If "url" were on our own site, we would need to call encodeRedirectURL to be sure it had the jsessionid in it
+				response.sendRedirect(url);
+				response.setContentType("text/html");
+				OutputStream out = response.getOutputStream();
+				writeHtmlHeaderBoilerplate(out);
+				String escapedUrl = XmlBuilder.escape(url);
+				out.write(("<p>Go to <a href=\"" + escapedUrl + "\">" + escapedUrl + "</a></p>\n").getBytes());
+				out.write("</body>\n".getBytes());
+				out.flush();
+			} catch (RedirectException e) {
+				response.setContentType("text/html");
+				OutputStream out = response.getOutputStream();
+				writeHtmlHeaderBoilerplate(out);
+				
+				out.write("<p>Oops! Could not send you to your link automatically.</p>".getBytes());
+				out.write(("<p><i>" + e.getHtmlMessage() + "</i></p>").getBytes());
+				
+				String escapedUrl = XmlBuilder.escape(url);
+				out.write(("<p style=\"font-size: larger;\">Try <a href=\"" + escapedUrl + "\">clicking here</a></p>\n").getBytes());
+				
+				out.write("</body>\n".getBytes());
+				out.flush();
+			}
+		}
+		
+		return true;
+	}
+	
 	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
 		// special method that magically causes us to look at your cookie and log you 
 		// in if it's set, then return person you're logged in as or "false"
@@ -402,7 +467,9 @@ public class HippoServlet extends HttpServlet {
 		logRequest(request, "POST");
 		
 		try {
-			if (tryLoginRequests(request, response)) {
+			if (tryRedirectRequests(request, response)) {
+				
+			} else if (tryLoginRequests(request, response)) {
 				return;
 			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
 				XmlRpcServer xmlrpc = new XmlRpcServer();
@@ -435,8 +502,12 @@ public class HippoServlet extends HttpServlet {
 		logRequest(request, "GET");
 		
 		try {
-			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
-			invokeHttpRequest(glue, request, response);
+			if (tryRedirectRequests(request, response)) {
+				return;
+			} else {
+				HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
+				invokeHttpRequest(glue, request, response);
+			}
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);

@@ -12,7 +12,6 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 /*
  * Implementation of Configuration

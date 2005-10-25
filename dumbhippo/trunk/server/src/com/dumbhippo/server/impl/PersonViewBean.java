@@ -11,7 +11,6 @@ import javax.persistence.Query;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;

@@ -107,4 +107,8 @@ public class Invitation extends DBUnique {
 		}
 		return authURL.toString();
 	}
+	
+	public String toString() {
+		return "{Invitation invitee=" + invitee + "}";
+	}
 }

@@ -149,4 +149,8 @@ public class Post extends GuidPersistable {
 	protected void setPostDate(Date postDate) {
 		this.postDate = postDate;
 	}
+	
+	public String toString() {
+		return "{Post id=" + getId() + "}";
+	}
 }
