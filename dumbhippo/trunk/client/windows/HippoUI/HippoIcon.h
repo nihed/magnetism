@@ -23,7 +23,8 @@ public:
     void processMessage(WPARAM wParam,
 		        LPARAM lParam);
 	                
-    void showURL(const WCHAR *url,
+    void showURL(const WCHAR *senderName,
+		const WCHAR *url,
 	         const WCHAR *title,
 		 const WCHAR *description);
 

@@ -52,7 +52,8 @@ public:
 
     void onAuthFailure();
     void onAuthSuccess();
-    void onLinkMessage(const WCHAR *url,
+    void onLinkMessage(const WCHAR *senderName,
+					const WCHAR *url,
 	               const WCHAR *title,
 		       const WCHAR *description);
 

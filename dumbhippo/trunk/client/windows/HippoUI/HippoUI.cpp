@@ -392,11 +392,12 @@ HippoUI::onAuthSuccess()
 }
 
 void 
-HippoUI::onLinkMessage(const WCHAR *url,
+HippoUI::onLinkMessage(const WCHAR *sender,
+					   const WCHAR *url,
 	               const WCHAR *title,
 		       const WCHAR *description)
 {
-    notificationIcon_.showURL(url, title, description);
+    notificationIcon_.showURL(sender, url, title, description);
 }
 
 // Tries to register as the singleton HippoUI, returns true on success

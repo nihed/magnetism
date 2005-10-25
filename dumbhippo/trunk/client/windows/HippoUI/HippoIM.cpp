@@ -429,6 +429,7 @@ HippoIM::onMessage (LmMessageHandler *handler,
 	    {
 		const WCHAR *urlW = NULL;
 		const WCHAR *titleW = NULL;
+		const WCHAR *senderNameW = NULL;
 		const WCHAR *descriptionW = NULL;
 
 	        const char *url = lm_message_node_get_attribute(child, "href");
@@ -439,11 +440,15 @@ HippoIM::onMessage (LmMessageHandler *handler,
 		if (titleNode && titleNode->value)
 		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
 
+		LmMessageNode *senderName = lm_message_node_get_child(child, "senderName");
+		if (senderName && senderName->value)
+			senderNameW = g_utf8_to_utf16(senderName->value, -1, NULL, NULL, NULL);
+
 		LmMessageNode *descriptionNode = lm_message_node_get_child(child, "description");
 		if (descriptionNode && descriptionNode->value)
 		    descriptionW = g_utf8_to_utf16(descriptionNode->value, -1, NULL, NULL, NULL);
 
-		im->ui_->onLinkMessage(urlW, titleW, descriptionW);
+		im->ui_->onLinkMessage(senderNameW, urlW, titleW, descriptionW);
 
 		g_free((void *)urlW);
 		g_free((void *)titleW);

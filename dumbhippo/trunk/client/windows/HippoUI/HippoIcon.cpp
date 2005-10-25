@@ -106,7 +106,8 @@ HippoIcon::processMessage(WPARAM wParam,
 #endif
 
 void
-HippoIcon::showURL(const WCHAR *url,
+HippoIcon::showURL(const WCHAR *senderName,
+				   const WCHAR *url,
 		   const WCHAR *title,
 		   const WCHAR *description)
 {
@@ -120,17 +121,22 @@ HippoIcon::showURL(const WCHAR *url,
     notifyIconData.uFlags = NIF_INFO;
     const size_t infoLen = sizeof(notifyIconData.szInfo) / sizeof(notifyIconData.szInfo[0]);
 
-    StringCchCopy(notifyIconData.szInfo, infoLen, url);
+	StringCchCopy(notifyIconData.szInfo, infoLen, TEXT(""));
+	if (senderName) {
+	StringCchCat(notifyIconData.szInfo, infoLen, senderName);
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n"));
+    StringCchCat(notifyIconData.szInfo, infoLen, url);
+	}
     if (description) {
 	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n"));
 	StringCchCat(notifyIconData.szInfo, infoLen, description);
     }
-    if (StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to view)")) == STRSAFE_E_INSUFFICIENT_BUFFER)
+    if (StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to win)")) == STRSAFE_E_INSUFFICIENT_BUFFER)
 	StringCchCopy(notifyIconData.szInfo + infoLen - 4, 4, TEXT("..."));
 
     notifyIconData.uTimeout = 10 * 1000; // 10 seconds
     const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
-    StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("New Link"));
+	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("New link"));
     if (title) {
 	StringCchCat(notifyIconData.szInfoTitle, titleLen, TEXT(": "));
 	StringCchCat(notifyIconData.szInfoTitle, titleLen, title);
