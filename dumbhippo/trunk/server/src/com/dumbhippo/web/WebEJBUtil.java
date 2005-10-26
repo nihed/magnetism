@@ -1,7 +1,7 @@
 package com.dumbhippo.web;
 
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.EJBUtil;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class WebEJBUtil {
 	public static <T> T defaultLookup(Class<T> clazz) {

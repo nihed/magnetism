@@ -28,7 +28,8 @@ else
     JAVA=java
 fi
 
-"$JAVA" -server \
+"$JAVA" -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=@@jiveJdwpPort@@,suspend=n \
+     -server \
      -DmessengerHome=$targetdir \
      -Dmessenger.lib.dir=$targetdir/lib \
      -classpath $targetdir/lib/startup.jar \

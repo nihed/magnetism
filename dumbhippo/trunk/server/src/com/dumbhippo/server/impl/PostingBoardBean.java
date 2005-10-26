@@ -17,6 +17,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
@@ -150,5 +151,13 @@ public class PostingBoardBean implements PostingBoard {
 			results.add(new PostInfo(identitySpider, viewer, p));;
 		
 		return results;
+	}
+	
+	public Post loadPost(Guid guid) {
+		return em.find(Post.class, guid.toString());
+	}
+
+	public void postClickedBy(Post post, Person clicker) {
+		logger.debug("Post " + post + " clicked by " + clicker);
 	}
 }

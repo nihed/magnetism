@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.util;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;

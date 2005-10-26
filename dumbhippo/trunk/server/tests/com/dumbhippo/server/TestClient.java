@@ -19,6 +19,7 @@ import org.jivesoftware.smack.packet.Packet;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * App that hammers a server with remote session bean calls.
