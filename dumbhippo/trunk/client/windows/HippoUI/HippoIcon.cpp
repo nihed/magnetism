@@ -104,7 +104,7 @@ HippoIcon::processMessage(WPARAM wParam,
 	break;
     case NIN_BALLOONUSERCLICK:
         ignoreNextClick_ = true;
-	ui_->showURL(currentURL_);
+		ui_->showURL(currentPostId_, currentURL_);
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
@@ -119,12 +119,14 @@ HippoIcon::processMessage(WPARAM wParam,
 #endif
 
 void
-HippoIcon::showURL(const WCHAR *senderName,
+HippoIcon::showURL(const WCHAR *postId,
+				   const WCHAR *senderName,
 				   const WCHAR *url,
-		   const WCHAR *title,
-		   const WCHAR *description)
+		           const WCHAR *title,
+		           const WCHAR *description)
 {
     currentURL_ = url;
+	currentPostId_ = postId;
 
     NOTIFYICONDATA notifyIconData = { 0 };
 

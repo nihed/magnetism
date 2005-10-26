@@ -48,7 +48,7 @@ public:
     HippoPreferences *getPreferences();
 
     void showMenu(UINT buttonFlag);
-    void showURL(BSTR url);
+    void showURL(BSTR postId, BSTR url);
     void showShareWindow(BSTR url);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
@@ -57,10 +57,11 @@ public:
 	void onConnectionChange(bool connected);
     void onAuthFailure();
     void onAuthSuccess();
-    void onLinkMessage(const WCHAR *senderName,
-					const WCHAR *url,
-	               const WCHAR *title,
-		       const WCHAR *description);
+    void onLinkMessage(const WCHAR *postId,
+		               const WCHAR *senderName,
+					   const WCHAR *url,
+	                   const WCHAR *title,
+		               const WCHAR *description);
 
 private:
     bool registerActive();

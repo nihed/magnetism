@@ -86,6 +86,29 @@ HippoIM::hasAuth()
 	return loadAuth();
 }
 
+void 
+HippoIM::notifyPostClickedU(const char *postGuid)
+{
+    LmMessage *message;
+	message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+		                                   LM_MESSAGE_SUB_TYPE_SET);
+	LmMessageNode *node = lm_message_get_node(message);
+    lm_message_node_set_attribute(node, "xmlns", "http://dumbhippo.com/protocol/servermethod");
+
+    LmMessageNode *method = lm_message_node_add_child (node, "method", NULL);
+	lm_message_node_set_attribute(method, "name", "postClicked");
+	LmMessageNode *guidArg = lm_message_node_add_child (method, "arg", NULL);
+	lm_message_node_set_value (guidArg, postGuid);
+
+	GError *error = NULL;
+	lm_connection_send(lmConnection_, message, &error);
+	if (error) {
+		hippoDebug(L"Failed to send presence: %s", error->message);
+		g_error_free(error);
+	}
+	lm_message_unref(message);
+}
+
 HRESULT
 HippoIM::getAuthURL(BSTR *result)
 {
@@ -429,14 +452,24 @@ HippoIM::onMessage (LmMessageHandler *handler,
 		(child->name && strcmp (child->name, "link") == 0)) 
 	    {
 		const WCHAR *urlW = NULL;
+		const WCHAR *postIdW = NULL;
 		const WCHAR *titleW = NULL;
 		const WCHAR *senderNameW = NULL;
 		const WCHAR *descriptionW = NULL;
 
-	        const char *url = lm_message_node_get_attribute(child, "href");
-	        if (url) {
-		    urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
+	    const char *url = lm_message_node_get_attribute(child, "href");
+		if (!url) {
+			hippoDebug(L"Malformed link message, no URL");
+			continue;
 		}
+		urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
+		const char *postId = lm_message_node_get_attribute(child, "id");
+		if (!postId) {
+			hippoDebug(L"Malformed link message, no post ID");
+			continue;
+		}
+		postIdW = g_utf8_to_utf16(postId, -1, NULL, NULL, NULL);
+
 		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
 		if (titleNode && titleNode->value)
 		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
@@ -449,8 +482,9 @@ HippoIM::onMessage (LmMessageHandler *handler,
 		if (descriptionNode && descriptionNode->value)
 		    descriptionW = g_utf8_to_utf16(descriptionNode->value, -1, NULL, NULL, NULL);
 
-		im->ui_->onLinkMessage(senderNameW, urlW, titleW, descriptionW);
+		im->ui_->onLinkMessage(postIdW, senderNameW, urlW, titleW, descriptionW);
 
+		g_free((void *)postIdW);
 		g_free((void *)urlW);
 		g_free((void *)titleW);
 		g_free((void *)descriptionW);

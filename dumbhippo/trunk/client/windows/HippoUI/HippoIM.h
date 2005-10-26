@@ -29,6 +29,8 @@ public:
     // Set the main UI object. Must be called before use
     void setUI(HippoUI *ui);
 
+	void notifyPostClickedU(const char *postGuid);
+
     // Try to sign in. Returns TRUE if we need to show a web page where
     // the user can sign in
     bool signIn();

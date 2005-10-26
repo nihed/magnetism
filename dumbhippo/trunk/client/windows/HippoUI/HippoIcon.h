@@ -24,10 +24,11 @@ public:
     void processMessage(WPARAM wParam,
 		        LPARAM lParam);
 	                
-    void showURL(const WCHAR *senderName,
-		const WCHAR *url,
-	         const WCHAR *title,
-		 const WCHAR *description);
+    void showURL(const WCHAR *postId,
+		         const WCHAR *senderName,
+		         const WCHAR *url,
+	             const WCHAR *title,
+		         const WCHAR *description);
 
 private:
     void showMenu(UINT buttonFlag);
@@ -37,6 +38,7 @@ private:
     UINT message_;
     HICON icon_;
     HippoBSTR currentURL_;
+	HippoBSTR currentPostId_;
 
     // When the user clicks on us with a ballon tip, we get *first* a NIN_BALLOONUSERCLICK
     // then a WM_[LR]BUTTONDOWN. We want to ignore the second to avoid going to the

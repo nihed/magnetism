@@ -384,7 +384,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
 // Show a window when the user clicks on a shared link
 void 
-HippoUI::showURL(BSTR url)
+HippoUI::showURL(BSTR postId, BSTR url)
 {
     HippoBSTR shareURL;
 
@@ -392,8 +392,10 @@ HippoUI::showURL(BSTR url)
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
 	             IID_IWebBrowser2, (void **)&webBrowser);
 
-    if (!webBrowser)
-	return;
+	if (!webBrowser) {
+		hippoDebug(L"Couldn't create web browser, we lose");
+		return;
+	}
 
     VARIANT missing;
     missing.vt = VT_EMPTY;
@@ -420,6 +422,10 @@ HippoUI::showURL(BSTR url)
 #endif
 
     webBrowser->put_Visible(VARIANT_TRUE);
+	WCHAR *postIdW = postId;
+	char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);
+	im_.notifyPostClickedU(postIdU);
+	g_free (postIdU);
 }
 
 void
@@ -464,12 +470,13 @@ HippoUI::onAuthSuccess()
 }
 
 void 
-HippoUI::onLinkMessage(const WCHAR *sender,
+HippoUI::onLinkMessage(const WCHAR *postId,
+					   const WCHAR *sender,
 					   const WCHAR *url,
-	               const WCHAR *title,
-		       const WCHAR *description)
+	                   const WCHAR *title,
+		               const WCHAR *description)
 {
-    notificationIcon_.showURL(sender, url, title, description);
+    notificationIcon_.showURL(postId, sender, url, title, description);
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
