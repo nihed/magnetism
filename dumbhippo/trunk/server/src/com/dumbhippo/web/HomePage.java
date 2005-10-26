@@ -1,9 +1,5 @@
 package com.dumbhippo.web;
 
-import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import javax.naming.NamingException;
@@ -61,33 +57,10 @@ public class HomePage {
 	}
 	
 	public List<Group> getGroups() {
-		// Sort the return of groupSystem.findGroups(), so we don't
-		// display things to the user in hash-table order.
-		
-		ArrayList<Group> groups = new ArrayList<Group>();
-		groups.addAll(groupSystem.findGroups(signin.getUser()));
-		
-		final Collator collator = Collator.getInstance();
-		Collections.sort(groups, new Comparator<Group>() {
-			public int compare (Group g1, Group g2) {
-				return collator.compare(g1.getName(), g2.getName());
-			}
-		});
-
-		return groups;
+		return Group.sortedList(groupSystem.findGroups(signin.getUser()));
 	}
 	
 	public List<PersonInfo> getContacts() {
-		ArrayList<PersonInfo> contacts = new ArrayList<PersonInfo>();
-		contacts.addAll(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
-		
-		final Collator collator = Collator.getInstance();
-		Collections.sort(contacts, new Comparator<PersonInfo>() {
-			public int compare (PersonInfo i1, PersonInfo i2) {
-				return collator.compare(i1.getHumanReadableName(), i2.getHumanReadableName());
-			}
-		});
-
-		return contacts;
+		return PersonInfo.sortedList(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
 	}
 }
