@@ -7,8 +7,8 @@ import org.jivesoftware.messenger.auth.AuthFactory;
 import org.jivesoftware.messenger.auth.UnauthorizedException;
 import org.jivesoftware.util.Log;
 
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * @author hp

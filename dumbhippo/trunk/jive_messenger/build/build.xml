@@ -163,6 +163,7 @@
 
     <path id="plugin.dependencies">
         <path refid="javadoc.dependencies"/>
+        <path refid="hippoclient.dependencies"/>    	
         <fileset dir="${jar.dest.dir}" includes="messenger.jar"/>
     </path>
 

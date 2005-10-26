@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="src" path="src/plugins/hippo/src/java"/>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry excluding="dist/|merge/|ant/jar/|ant-contrib/jar/|ant-subdirtask/jar/|commons-el/jar/|jasper-compiler/jar/|jasper-runtime/jar/|junit/jar/|xmltask/jar/" kind="src" path="build/lib"/>
 	<classpathentry excluding="activation/jar/|hsqldb/jar/|mail/jar/|mysql/jar/|postgres/jar/|servlet/jar/" kind="src" path="build/lib/dist"/>
@@ -32,5 +31,6 @@
 	<classpathentry kind="lib" path="build/lib/junit.jar"/>
 	<classpathentry kind="lib" path="build/lib/xmltask.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/server"/>
+	<classpathentry kind="src" path="src/plugins/hippo/src/java"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

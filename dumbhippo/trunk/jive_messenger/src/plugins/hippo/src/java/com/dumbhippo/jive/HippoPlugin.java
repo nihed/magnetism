@@ -2,12 +2,12 @@ package com.dumbhippo.jive;
 
 import java.io.File;
 
+import org.jivesoftware.messenger.IQRouter;
+import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
+import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.Log;
-import org.xmpp.component.ComponentException;
-import org.xmpp.component.ComponentManager;
-import org.xmpp.component.ComponentManagerFactory;
 
 /**
  * Our plugin for Jive Messenger
@@ -16,30 +16,16 @@ public class HippoPlugin implements Plugin {
 	
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		Log.debug("Initializing Hippo plugin");
-		
-		
-		ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
-		
-		try {
-			componentManager.addComponent(LinkReflectorComponent.DOMAIN, new LinkReflectorComponent());
-		} catch (ComponentException e) {
-			Log.error(e);
-		}
+		IQHandler myHandler = new ClientMethodIQHandler();
+		IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+		iqRouter.addHandler(myHandler);		
 		
 		Log.debug("... done initializing Hippo plugin");
 	}
 
 	public void destroyPlugin() {
 		Log.debug("Unloading Hippo plugin");
-		
-		ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
-		
-		try {
-			componentManager.removeComponent(LinkReflectorComponent.DOMAIN);
-		} catch (ComponentException e) {
-			Log.error(e);
-		}
-		
+
 		Log.debug("... done unloading Hippo plugin");
 	}
 }

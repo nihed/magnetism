@@ -11,10 +11,10 @@ import org.jivesoftware.messenger.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import com.dumbhippo.server.EJBUtil;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.JabberUser;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class HippoUserProvider implements UserProvider {
 
