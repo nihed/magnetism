@@ -316,6 +316,7 @@ public class MessageSenderBean implements MessageSender {
 				throw new RuntimeException("failed to put together MIME message", e);
 			}
 			
+			logger.debug("Sending mail to " + recipient.toString());
 			mailer.sendMessage(msg);
 		}
 	}

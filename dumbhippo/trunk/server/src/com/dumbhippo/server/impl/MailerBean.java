@@ -11,6 +11,9 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
@@ -27,6 +30,7 @@ import com.dumbhippo.server.PersonView;
  */
 @Stateless
 public class MailerBean implements Mailer {
+	static private final Log logger = GlobalSetup.getLog(MailerBean.class);
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -40,7 +44,10 @@ public class MailerBean implements Mailer {
 			msg = new MimeMessage(mailSession);
 			
 			try {
+				// sender the recipient will see
 				msg.setFrom(fromAddress);
+				// sender the mail system will verify against etc.
+				msg.setSender(new InternetAddress(SpecialSender.NOBODY.toString()));
 				msg.setRecipient(Message.RecipientType.TO, toAddress);
 			} catch (MessagingException e) {
 				throw new RuntimeException(e);

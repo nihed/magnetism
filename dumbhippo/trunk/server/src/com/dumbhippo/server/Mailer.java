@@ -9,7 +9,8 @@ import com.dumbhippo.persistence.Person;
 public interface Mailer {
 
 	enum SpecialSender {
-		INVITATION("Dumb Hippo Invitation <invitations@dumbhippo.com>");
+		INVITATION("Dumb Hippo Invitation <invitations@dumbhippo.com>"),
+		NOBODY("nobody@dumbhippo.com");
 		
 		private String address;
 		
