@@ -13,7 +13,7 @@ echo "Starting jboss..."
 if [ -d $mysqlTargetdir/data/dumbhippo ] ; then : ; else
     echo "... dumbhippo database doesn't exist, creating ..."
     /usr/bin/mysql $mysqlOptions <<EOF
-create database dumbhippo character set utf8 collate utf8_bin
+create database dumbhippo character set utf8 collate utf8_bin ;
 EOF
 fi
 
