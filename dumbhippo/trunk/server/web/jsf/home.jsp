@@ -8,6 +8,7 @@
 <f:view>
 	<head>
 	<title><h:outputText value="#{home.personInfo.humanReadableName}"/></title>
+	<link rel="stylesheet" href="/css/home.css" type="text/css" />
 	<script src="/javascript/config.js" type="text/javascript"></script>
     <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
     <script src="/javascript/common.js" type="text/javascript"></script>
@@ -37,43 +38,83 @@
     </script>
 	</head>
 	<body>
+
+	<div class="header">
+	<table>
+		<tr>
+		<td><span class="first-letter dh">D</span><span class="dh">umb</span><span class="first-letter dh">H</span><span class="dh">ippo</span></td>
+		<td class="right">This is You!<br/>
+	    <c:url value="viewperson.faces?personId=${home.signin.user.id}" var="publicurl"/>
+		<a style="font-size:8pt"href="${publicurl}">(your public page)</a>
+		</td>
+		</tr>
+	</table>
+	</div>
+	<div class="toolbar">
+	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="javascript:alert('DOJO');">Your Famliy Page</a>
+	</div>
+
 	<div class="person">
-		<p>
 	   	<span dojoType="InlineEditBox" class="dhName" id="dhNameEntry">
 	   	<c:out value="${home.personInfo.humanReadableName}"/>
 	   	</span>
-	    <c:url value="viewperson.faces?personId=${home.signin.user.id}" var="publicurl"/>
-		(<a href="${publicurl}">public page</a>)</p>
-		<div class="shared-links">
-		<p>Recently seen links:</p>	
-		<table>
+	</div>
+
+	<div class="main">
+
+	<table>
+	<tr><td>
+
+	<div class="shared-links">	
+		<strong>Links You Shared</strong>
+
 		<c:forEach items="${home.receivedPostInfos}" var="info">
-		    <tr>
-			    <td colspan="2"><strong><a href="${info.url}"><c:out value="${info.title}"/></a></strong></td>
-			</tr>
-			<tr>
-				<th align="right">From:</th>
-				<td>
-				<dh:entity value="${info.posterInfo}"/>
+		<div class="cool-bubble-shadow">		
+		<table class="cool-bubble">
+		<tr>
+		    <td class="cool-link">
+			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+		    </td>
+		</tr>
+		<tr>
+		    <td class="cool-link-desc">
+			<c:out value="${info.post.text}"/>
+		    </td>
+		</tr>
+		<tr>
+		    <td class="cool-link-meta">
+			<div class="cool-link-date">
 				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
-				</td>
-			</tr>
-			<tr>
-			    <th align="right">To:</th><td><dh:entityList value="${info.recipients}"/></td>
-		    </tr>
-		    <tr>
-		    	<th></th><td><c:out value="${info.post.text}"/></td>
-		    </tr>
-		</c:forEach>
+			</div>
+			<div class="cool-link-to">
+				<dh:entityList value="${info.recipients}"/>
+			</div>
+		   </td>
+		</tr>
 		</table>
 		</div>
-		<br/>
+
+		</c:forEach>
+	</div>
+
+	</td>
+	<td>
 		<div class="groups">
-		<p><strong>Groups:</strong> <dh:entityList value="${home.groups}"/></p>
-		<!--  ability to join/share groups [D] -->
-		<p><strong>Contacts:</strong> <dh:entityList value="${home.contacts}"/></p>
+		<strong>Groups You're In</strong>
+		<br/>
+		<dh:entityList value="${home.groups}"/>
 		</div>
-	</div>	
+
+		<div class="friends">
+		<strong>People You Know</strong>
+		<br/>
+		<dh:entityList value="${home.contacts}"/>
+		</div>
+	</td>
+	</tr>
+	</table>
+	</div>
+
 	</body>
 	
 </f:view>

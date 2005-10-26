@@ -1,0 +1,11 @@
+@CHARSET "UTF-8";
+
+@import "sitewide.css";
+@import "bubbles.css";
+
+div.person {
+	margin-bottom:				1em;
+}
+div.groups {
+	margin-bottom:				1em;
+}

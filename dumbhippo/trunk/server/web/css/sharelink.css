@@ -5,6 +5,12 @@
 
 @import "sitewide.css";
 
+body {
+	margin:							0;
+	width:							100%;
+	padding:						0;
+}
+
 #dhShareLinkForm {
 	margin: 						1em;	
 }

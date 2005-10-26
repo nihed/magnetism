@@ -1,0 +1,61 @@
+@CHARSET "UTF-8";
+
+div.cool-bubble-shadow {
+	margin:					0.5em;
+	background-color:			black;
+	width:					30em;
+	position:				relative;
+}
+table.cool-bubble {
+	border:					1px solid black;
+	width:					30em;
+	background-color:			white;
+	position:				relative;
+	right:					1px;
+	bottom:					1px;
+}
+table.cool-bubble * {
+	margin:					0;
+	padding:				0;
+	font-size:				90%;
+	vertical-align:				top;
+}
+td.cool-person {
+	text-align:				center;
+	width:					8em;
+	text-overflow:				elipsis;
+	overflow:				hidden;
+}
+img.cool-person {
+	margin:					0.3em;
+	width:					7em;
+	max-height:				15em;
+	border:					0;
+}
+td.cool-link {
+	padding-top:				0.3em;
+	padding-bottom:				0.3em;
+	font-size:				100%;
+	font-weight:				bold;
+}
+a.cool-link {
+	text-decoration:			underline;
+	
+}
+a.cool-link:hover {
+
+}
+td.cool-link-desc {
+	padding-top:				0.3em;
+	padding-bottom:				0.3em;
+}
+td.cool-link-meta {
+	text-align:				right;
+	font-size:				8pt;
+}
+div.cool-link-date {
+
+}
+div.cool-link-to {
+
+}

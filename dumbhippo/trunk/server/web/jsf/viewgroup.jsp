@@ -7,7 +7,8 @@
 
 <f:view>
 	<head>
-	<title>Group: <h:outputText value="#{viewgroup.name}"/></title>
+	<title><h:outputText value="#{viewgroup.name}"/></title>
+	<link rel="stylesheet" href="/css/group.css" type="text/css" />
 	<script src="/javascript/config.js" type="text/javascript"></script>
     <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
     <script src="/javascript/common.js" type="text/javascript"></script>
@@ -38,44 +39,77 @@
     </script>
     </head>
 	<body>
-	<div class="person">
-		<strong>Group: <h:outputText value="#{viewgroup.name}"/></strong>
-    	<br/>
-		<div class="shared-links">	
-		<p>Links recently posted to the group:</p>	
-		<table>
+	<div class="header">
+	<table>
+		<tr>
+		<td><span class="first-letter dh">D</span><span class="dh">umb</span><span class="first-letter dh">H</span><span class="dh">ippo</span></td>
+		<td class="right"><a href=""><h:outputText value="#{viewgroup.name}"/></a></td>
+		</tr>
+	</table>
+	</div>
+	<div class="toolbar">
+	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="javascript:alert('DOJO');">Your Page</a> &#151;
+		<c:if test="${viewgroup.isMember}"><a href="javascript:leaveGroup()">Leave <c:out value="${viewgroup.name}"/></a></c:if>
+		<c:if test="${!viewgroup.isMember}"><a href="javascript:joinGroup()">Join <c:out value="${viewgroup.name}"/></a></c:if>
+	</div>
+
+	<div class="main">
+
+	<table>
+	<tr><td>
+
+	<div class="shared-links">	
+		<strong>Cool New Links</strong>
 		<c:forEach items="${viewgroup.postInfos}" var="info">
-		    <tr>
-			    <td colspan="2">
-			    <strong><a href="${info.url}"><c:out value="${info.title}"/></a></strong>
-			    </td>
-			</tr>
-			<tr>
-				<th align="right">From:</th>
-				<td>
-				<dh:entity value="${info.posterInfo}"/>
+
+		<div class="cool-bubble-shadow">		
+		<table class="cool-bubble">
+		<tr>
+		    <td class="cool-person" rowSpan="3">
+			<a class="cool-person" href="">
+			<img class="cool-person" src="" />
+			<br/>
+			<dh:entity value="${info.posterInfo}"/>
+			</a>
+		    </td>
+		    <td class="cool-link">
+			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+		    </td>
+		</tr>
+		<tr>
+		    <td class="cool-link-desc">
+			<c:out value="${info.post.text}"/>
+		    </td>
+		</tr>
+		<tr>
+		    <td class="cool-link-meta">
+			<div class="cool-link-date">
 				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
-				</td>
-			</tr>
-			<tr>
-			    <th align="right">To:</th>
-			    <td><dh:entityList value="${info.recipients}"/></td>
-		    </tr>
-		    <tr>
-		    	<th></th>
-		    	<td><c:out value="${info.post.text}"/></td>
-		    </tr>
-		</c:forEach>
+			</div>
+			<div class="cool-link-to">
+				<dh:entityList value="${info.recipients}"/>
+			</div>
+		   </td>
+		</tr>
 		</table>
 		</div>
-		<p><strong>Members:</strong> <dh:entityList value="${viewgroup.members}"/></p>
-		<c:if test="${viewgroup.isMember}">
-		<p><a href="javascript:leaveGroup()">Leave <c:out value="${viewgroup.name}"/></a></p>
-		</c:if>
-		<c:if test="${!viewgroup.isMember}">
-		<p><a href="javascript:joinGroup()">Join <c:out value="${viewgroup.name}"/></a></p>
-		</c:if>
-	</div>	
+		</c:forEach>
+
+	</div>
+	
+
+	</td>
+	<td>
+	<div class="group-members">
+	<strong>Members:</strong>
+	<br/>
+	<dh:entityList value="${viewgroup.members}"/>
+	</div>
+	</td>
+	</tr>
+	</table>
+	</div>
+
 	</body>
 </f:view>
 </html>
