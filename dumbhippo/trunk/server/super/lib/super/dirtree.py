@@ -7,7 +7,7 @@ import sys
 import super.service
 
 def verbose(msg):
-#    print >>sys.stderr, msg
+    print >>sys.stderr, msg
     pass
 
 # Return values for DirTree.check()
