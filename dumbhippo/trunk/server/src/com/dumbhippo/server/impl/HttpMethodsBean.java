@@ -23,7 +23,6 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Invitation;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.GroupSystem;
