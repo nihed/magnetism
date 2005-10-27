@@ -8,7 +8,9 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostInfo;
@@ -25,12 +27,14 @@ public class HomePage {
 	
 	private SigninBean signin;
 	
+	private Configuration configuration;
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private PersonInfo personInfo;
 	private GroupSystem groupSystem;
 	
 	public HomePage() throws NamingException {
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -62,5 +66,9 @@ public class HomePage {
 	
 	public List<PersonInfo> getContacts() {
 		return PersonInfo.sortedList(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
+	}
+	
+	public String getDownloadUrlWindows() {
+		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
 	}
 }
