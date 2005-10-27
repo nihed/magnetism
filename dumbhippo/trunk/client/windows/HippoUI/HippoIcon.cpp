@@ -8,6 +8,15 @@
 #include "HippoUI.h"
 #include "Resource.h"
 
+// Note that timeout values are clamped between 10 and 30 seconds
+// by current versions of Windows
+
+// Timeout for balloons for new posts (30 seconds)
+static const int NEW_POST_NOTIFY_TIMEOUT = 30 * 1000;
+
+// Timeout for ballons from someone clicking on an existing post (10 seconds)
+static const int CLICKED_ON_NOTIFY_TIMEOUT = 10 * 1000;
+
 HippoIcon::HippoIcon()
 {
     ignoreNextClick_ = false;
@@ -156,7 +165,7 @@ HippoIcon::showURL(const WCHAR *postId,
     if (StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to win)")) == STRSAFE_E_INSUFFICIENT_BUFFER)
 	StringCchCopy(notifyIconData.szInfo + infoLen - 4, 4, TEXT("..."));
 
-    notifyIconData.uTimeout = 10 * 1000; // 10 seconds
+    notifyIconData.uTimeout = NEW_POST_NOTIFY_TIMEOUT;
     const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
 	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("New link"));
     if (title) {
@@ -196,7 +205,7 @@ HippoIcon::showURLClicked(const WCHAR *postId,
     StringCchCat(notifyIconData.szInfo, infoLen, title);
 	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\""));
 
-    notifyIconData.uTimeout = 7 * 1000; // 7 seconds
+    notifyIconData.uTimeout = CLICKED_ON_NOTIFY_TIMEOUT;
     const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
 	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("XMPP Remoted Hardware Event 0x23A"));
     notifyIconData.dwInfoFlags = NIIF_USER;
