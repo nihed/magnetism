@@ -17,6 +17,8 @@
 	    dojo.require("dojo.event.*");
 	    dojo.require("dh.server");
 	    
+	    var dhNameEntry;
+	    
 	    function dhNameEntryOnSave(value, oldValue) {
 	    	dh.server.doPOST("renameperson",
 						     { "name" : value },
