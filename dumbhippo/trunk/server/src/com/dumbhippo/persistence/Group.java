@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
@@ -17,11 +18,14 @@ import javax.persistence.Table;
 public class Group extends GuidPersistable {
 	private static final long serialVersionUID = 1L;
 	
+	private GroupType type;
 	private String name;
 	private Set<Person> members;
 	private boolean markedForDelete;
 		
 	private void initMissing() {
+		if (type == null)
+			type = GroupType.MEMBERS_ONLY;
 		if (members == null)
 			members = new HashSet<Person>();
 	}
@@ -41,6 +45,15 @@ public class Group extends GuidPersistable {
 		initMissing();
 	}
 	
+	@Column(nullable=false)
+	public GroupType getType() {
+		return type;
+	}
+
+	public void setType(GroupType type) {
+		this.type = type;
+	}
+
 	protected boolean isMarkedForDelete() {
 		return markedForDelete;
 	}
@@ -78,6 +91,7 @@ public class Group extends GuidPersistable {
 		members.remove(person);
 	}
 	
+	@Column(nullable=false)
 	public String getName() {
 		return name;
 	}

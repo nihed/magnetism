@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
@@ -53,6 +54,7 @@ public class Invitation extends DBUnique {
 	}
 
 	@OneToOne
+	@Column(nullable=false)
 	public Resource getInvitee() {
 		return invitee;
 	}
@@ -62,6 +64,7 @@ public class Invitation extends DBUnique {
 		return inviters;
 	}
 
+	@Column(nullable=false)
 	public String getAuthKey() {
 		return authKey;
 	}

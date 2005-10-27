@@ -28,10 +28,13 @@ public class PersonPostData extends DBUnique {
 		this.clickedDate = seenDate;
 	}	
 
+	@Column(nullable=false)
 	@OneToMany
 	public Person getPerson() {
 		return person;
 	}
+	
+	@Column(nullable=false)
 	@OneToMany
 	public Post getPost() {
 		return post;

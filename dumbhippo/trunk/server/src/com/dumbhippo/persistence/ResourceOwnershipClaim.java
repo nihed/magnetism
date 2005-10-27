@@ -47,11 +47,13 @@ public class ResourceOwnershipClaim extends DBUnique {
 	}
 
 	@ManyToOne
+	@Column(nullable=false)
 	Person getClaimedOwner() {
 		return claimedOwner;
 	}
 	
 	@ManyToOne
+	@Column(nullable=false)
 	Resource getResource() {
 		return resource;
 	}

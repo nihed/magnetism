@@ -4,12 +4,18 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinTable;
+import javax.persistence.Lob;
+import javax.persistence.LobType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import org.jboss.annotation.ejb.Clustered;
 
 @Entity
 public class Post extends GuidPersistable {
@@ -17,15 +23,18 @@ public class Post extends GuidPersistable {
 	private static final long serialVersionUID = 0L;
 
 	private Person poster;
+	private PostVisibility visibility;
 	private String explicitTitle;
-	private String text;
 	private Date postDate;
+	private String text;
 	private Set<Person> personRecipients;
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
 	private Set<Person> expandedRecipients;
 	
 	private void initMissing() {
+		if (visibility == null)
+			visibility = PostVisibility.ANONYMOUSLY_PUBLIC;
 		if (personRecipients == null)
 			personRecipients = new HashSet<Person>();
 		if (groupRecipients == null)
@@ -62,6 +71,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToOne
+	@Column(nullable=false)
 	public Person getPoster() {
 		return poster;
 	}
@@ -69,6 +79,15 @@ public class Post extends GuidPersistable {
 		this.poster = poster;
 	}
 	
+	@Column(nullable=false)
+	public PostVisibility getVisibility() {
+		return visibility;
+	}
+
+	public void setVisibility(PostVisibility visibility) {
+		this.visibility = visibility;
+	}
+
 	@ManyToMany
 	public Set<Person> getPersonRecipients() {
 		return personRecipients;
@@ -104,6 +123,20 @@ public class Post extends GuidPersistable {
 			throw new IllegalArgumentException("null");
 		this.resources = resources;
 	}
+	
+	// This results in the "text" type on mysql. 
+	// The Postgresql docs I've read basically say 
+	// "varchar's fixed lengthness is stupid, text is always
+	// a better choice unless you have a real reason for a fixed length"
+	// on postgresql "text" is the same as "varchar" but doesn't run 
+	// the code to truncate to the fixed length.
+	// But some mysql stuff says mysql text type is screwy and it 
+	// involves some kind of out-of-band lookaside table.
+	// 
+	// Anyhow, Hibernate seems to be broken, it doesn't 
+	// properly convert the clob to a string, so we can't 
+	// use this anyway. 255 char limit it is.
+	//@Lob(type=LobType.CLOB, fetch=FetchType.EAGER)
 	public String getText() {
 		return text;
 	}
@@ -142,6 +175,7 @@ public class Post extends GuidPersistable {
 		}
 	}
 
+	@Column(nullable=false)
 	public Date getPostDate() {
 		return postDate;
 	}

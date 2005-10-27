@@ -5,6 +5,7 @@ package com.dumbhippo.persistence;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import com.dumbhippo.identity20.RandomToken;
@@ -57,6 +58,7 @@ public class Client extends DBUnique implements Serializable {
 		return builder.toString();
 	}
 	
+	@Column(nullable=false)
 	public String getAuthKey() {
 		return authKey;
 	}
@@ -65,6 +67,7 @@ public class Client extends DBUnique implements Serializable {
 		this.authKey = authKey;
 	}
 
+	@Column(nullable=false)
 	public long getLastUsed() {
 		return lastUsed;
 	}
@@ -82,6 +85,7 @@ public class Client extends DBUnique implements Serializable {
 	 * 
 	 * @return the name
 	 */
+	@Column(nullable=false)
 	public String getName() {
 		return name;
 	}

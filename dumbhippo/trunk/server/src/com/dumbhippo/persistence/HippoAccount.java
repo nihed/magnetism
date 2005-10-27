@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
@@ -196,6 +197,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * @return Returns the owner.
 	 */
 	@OneToOne
+	@Column(nullable=false)
 	public Person getOwner() {
 		return owner;
 	}
