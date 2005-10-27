@@ -22,6 +22,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
@@ -131,7 +132,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		List<PostInfo> results = new ArrayList<PostInfo>();
 		for (Post p : posts) 
-			results.add(new PostInfo(identitySpider, recipient, p));;
+			results.add(new PostInfo(identitySpider, recipient, p));
 		
 		return results;
 	}
@@ -159,5 +160,9 @@ public class PostingBoardBean implements PostingBoard {
 
 	public void postClickedBy(Post post, Person clicker) {
 		logger.debug("Post " + post + " clicked by " + clicker);
+		messageSender.sendPostClickedNotification(post, clicker);
+		// FIXME should be unique...
+	//	PersonPostData postData = new PersonPostData(clicker, post);
+	//	em.persist(postData);
 	}
 }

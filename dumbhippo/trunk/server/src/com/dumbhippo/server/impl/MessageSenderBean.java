@@ -118,6 +118,41 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 	
+	private static class LinkClickedExtension implements PacketExtension {
+
+		private static final String ELEMENT_NAME = "linkClicked";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
+		
+		private String clickerName;
+
+		private Guid guid;
+
+		private String title;
+		
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("linkClicked", "xmlns", NAMESPACE, "id", guid.toString());
+			builder.appendTextNode("clickerName", clickerName, "isCache", "true");			
+			builder.appendTextNode("title", title, "isCache", "true");
+			builder.closeElement();
+			return builder.toString();
+		}
+		public LinkClickedExtension(String clickerName, Guid postId, String title) {
+			this.clickerName = clickerName;
+			this.guid = postId;
+			this.title = title;
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+	}	
+	
 	private class XMPPSender {
 
 		private XMPPConnection connection;
@@ -155,9 +190,6 @@ public class MessageSenderBean implements MessageSender {
 		public synchronized void sendPostNotification(Person recipient, Post post) {
 			XMPPConnection connection = getConnection();
 			PersonView recipientView;
-			
-			if (connection == null)
-				return;
 
 			StringBuilder recipientJid = new StringBuilder();
 			recipientJid.append(recipient.getId().toString());
@@ -168,7 +200,7 @@ public class MessageSenderBean implements MessageSender {
 			String title = post.getTitle();
 			Set<Resource> resources = post.getResources();
 			
-			// for now, hardcode to "find the first url we see"
+			// FIXME - don't hardcode to "find the first url we see"
 			
 			String url = null;
 			if (!resources.isEmpty()) {
@@ -195,6 +227,42 @@ public class MessageSenderBean implements MessageSender {
 			logger.info("Sending jabber message to " + message.getTo());
 			connection.sendPacket(message);
 		}
+		
+		public synchronized void sendPostClickedNotification(Post post, Person clicker) {
+			XMPPConnection connection = getConnection();
+			
+			Person poster = post.getPoster();
+			
+			StringBuilder recipientJid = new StringBuilder();
+			recipientJid.append(poster.getId().toString());
+			recipientJid.append("@dumbhippo.com");
+
+			Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
+
+			Set<Resource> resources = post.getResources();
+	
+			PersonView senderView = identitySpider.getViewpoint(post.getPoster(), clicker);
+			String senderName = senderView.getHumanReadableName();
+			String title = post.getTitle();
+			if (title == null || title.equals("")) {
+				LinkResource link = null;
+				// FIXME don't assume link resources
+				for (Resource r : resources) {
+					if (r instanceof LinkResource) {
+						link = (LinkResource)r;
+						break;
+					}
+				}
+				if (link != null)
+					title = link.getHumanReadableString();
+				else
+					title = "(unknown)";
+			}
+			message.addExtension(new LinkClickedExtension(senderName, post.getGuid(), title));
+			message.setBody("");
+			logger.info("Sending jabber message to " + message.getTo());
+			connection.sendPacket(message);
+		}			
 	}
 
 	private class EmailSender {
@@ -336,8 +404,12 @@ public class MessageSenderBean implements MessageSender {
 			try {
 				emailSender.sendPostNotification(recipient, post);
 			} catch (NoAddressKnownException e) {
-				logger.debug("no clue how to send notification to " + recipient + " (we have no email address)");
+				logger.warn("no clue how to send notification to " + recipient + " (we have no email address)");
 			}
 		}
+	}
+
+	public void sendPostClickedNotification(Post post, Person clicker) {
+		xmppSender.sendPostClickedNotification(post, clicker);
 	}
 }
