@@ -187,6 +187,9 @@
 			<File
 				RelativePath=".\Resource.h">
 			</File>
+			<File
+				RelativePath=".\stdafx.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -203,9 +206,6 @@
 						Name="VCResourceCompilerTool"
 						AdditionalIncludeDirectories="$(IntDir)"/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\stdafx.h">
 			</File>
 		</Filter>
 	</Files>
