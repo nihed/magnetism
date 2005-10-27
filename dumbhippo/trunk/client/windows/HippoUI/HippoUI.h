@@ -50,6 +50,7 @@ public:
     void showMenu(UINT buttonFlag);
     void showURL(BSTR postId, BSTR url);
     void showShareWindow(BSTR url);
+	void HippoUI::showRecent();
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8

@@ -428,6 +428,33 @@ HippoUI::showURL(BSTR postId, BSTR url)
 	g_free (postIdU);
 }
 
+// Show a window when the user clicks on a shared link
+void 
+HippoUI::showRecent(void)
+{
+    HippoBSTR recentURL;
+
+    HippoPtr<IWebBrowser2> webBrowser;
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+	             IID_IWebBrowser2, (void **)&webBrowser);
+
+	if (!webBrowser) {
+		hippoDebug(L"Couldn't create web browser, we lose");
+		return;
+	}
+    
+    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"jsf/home.faces"), &recentURL)))
+	return;
+
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+
+    webBrowser->Navigate(recentURL,
+   		         &missing, &missing, &missing, &missing);
+
+    webBrowser->put_Visible(VARIANT_TRUE);
+}
+
 void
 HippoUI::debugLogW(const WCHAR *format, ...)
 {
@@ -764,6 +791,9 @@ HippoUI::processMessage(UINT   message,
 	case IDM_PREFERENCES:
 	    showPreferences();
 	    return true;
+	case IDM_RECENT:
+		showRecent();
+		return true;
 	case IDM_DEBUGLOG:
 	    logWindow_.show();
 	    return true;
