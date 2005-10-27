@@ -9,6 +9,7 @@ div.cool-bubble-shadow {
 table.cool-bubble {
 	border:					1px solid black;
 	width:					30em;
+	max-width:				30em;
 	background-color:			white;
 	position:				relative;
 	right:					1px;
@@ -23,7 +24,7 @@ table.cool-bubble * {
 td.cool-person {
 	text-align:				center;
 	width:					8em;
-	text-overflow:				elipsis;
+	text-overflow:				ellipsis;
 	overflow:				hidden;
 }
 img.cool-person {
@@ -37,6 +38,15 @@ td.cool-link {
 	padding-bottom:				0.3em;
 	font-size:				100%;
 	font-weight:				bold;
+	width:					22em;
+	max-width:				22em;
+}
+div.cool-link {
+	width:					22em;
+	text-overflow:				ellipsis;
+	overflow:				hidden;
+	padding:				0;
+	margin:					0;
 }
 a.cool-link {
 	text-decoration:			underline;

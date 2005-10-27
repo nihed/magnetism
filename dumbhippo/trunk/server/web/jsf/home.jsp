@@ -66,14 +66,16 @@
 	<tr><td>
 
 	<div class="shared-links">	
-		<strong>Links You Shared</strong>
+		<strong>Links Shared With You</strong>
 
 		<c:forEach items="${home.receivedPostInfos}" var="info">
 		<div class="cool-bubble-shadow">		
 		<table class="cool-bubble">
 		<tr>
 		    <td class="cool-link">
+			<div class="cool-link">
 			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+			</div>
 		    </td>
 		</tr>
 		<tr>

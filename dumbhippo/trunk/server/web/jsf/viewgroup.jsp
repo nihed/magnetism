@@ -73,7 +73,9 @@
 			</a>
 		    </td>
 		    <td class="cool-link">
+			<div class="cool-link">
 			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+			</div>
 		    </td>
 		</tr>
 		<tr>
