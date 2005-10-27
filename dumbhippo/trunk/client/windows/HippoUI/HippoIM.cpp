@@ -448,8 +448,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
 	for (LmMessageNode *child = message->node->children; child; child = child->next) {
 	    const char *ns = lm_message_node_get_attribute(child, "xmlns");
 	    // We really should allow xmlns="foo:http://...", but lazy for now
-	    if ((ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0) &&
-		(child->name && strcmp (child->name, "link") == 0)) 
+		if (!(ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0 && child->name))
+			continue;
+	   
+		if (strcmp (child->name, "link") == 0)
 	    {
 		const WCHAR *urlW = NULL;
 		const WCHAR *postIdW = NULL;
@@ -459,13 +461,13 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
 	    const char *url = lm_message_node_get_attribute(child, "href");
 		if (!url) {
-			hippoDebug(L"Malformed link message, no URL");
+			im->ui_->debugLogU("Malformed link message, no URL");
 			continue;
 		}
 		urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
 		const char *postId = lm_message_node_get_attribute(child, "id");
 		if (!postId) {
-			hippoDebug(L"Malformed link message, no post ID");
+			im->ui_->debugLogU("Malformed link message, no post ID");
 			continue;
 		}
 		postIdW = g_utf8_to_utf16(postId, -1, NULL, NULL, NULL);
@@ -484,11 +486,44 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
 		im->ui_->onLinkMessage(postIdW, senderNameW, urlW, titleW, descriptionW);
 
+		g_free((void *)senderNameW);
 		g_free((void *)postIdW);
 		g_free((void *)urlW);
 		g_free((void *)titleW);
 		g_free((void *)descriptionW);
-	    }   
+	    } 
+		else if (strcmp (child->name, "linkClicked") == 0)
+	    {
+		const WCHAR *urlW = NULL;
+		const WCHAR *postIdW = NULL;
+		const WCHAR *titleW = NULL;
+		const WCHAR *clickerNameW = NULL;
+
+		im->ui_->debugLogU("Got link clicked");
+
+		const char *postId = lm_message_node_get_attribute(child, "id");
+		if (!postId) {
+			im->ui_->debugLogU("Malformed link message, no post ID");
+			continue;
+		}
+		postIdW = g_utf8_to_utf16(postId, -1, NULL, NULL, NULL);
+
+		LmMessageNode *clickerName = lm_message_node_get_child(child, "clickerName");
+		if (clickerName && clickerName->value)
+			clickerNameW = g_utf8_to_utf16(clickerName->value, -1, NULL, NULL, NULL);
+
+		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
+		if (titleNode && titleNode->value)
+		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
+
+		im->ui_->onLinkClicked(postIdW, clickerNameW, titleW);
+
+		g_free((void *)clickerNameW);		
+		g_free((void *)postIdW);
+		g_free((void *)titleW);
+		} else {
+			im->ui_->debugLogU("Unknown message \"%s\", delegating to next handler", child->name ? child->name : "(null)");
+		}
 	}
     }
 

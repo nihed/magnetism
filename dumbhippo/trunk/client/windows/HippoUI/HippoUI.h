@@ -62,6 +62,9 @@ public:
 					   const WCHAR *url,
 	                   const WCHAR *title,
 		               const WCHAR *description);
+    void onLinkClicked(const WCHAR *postId,
+		               const WCHAR *clickerName,
+	                   const WCHAR *title);
 
 private:
     bool registerActive();

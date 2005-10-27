@@ -29,6 +29,9 @@ public:
 		         const WCHAR *url,
 	             const WCHAR *title,
 		         const WCHAR *description);
+	void showURLClicked(const WCHAR *postId,
+		  	            const WCHAR *clickerName,
+		                const WCHAR *title);
 
 private:
     void showMenu(UINT buttonFlag);
@@ -37,6 +40,12 @@ private:
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
     UINT message_;
     HICON icon_;
+
+	enum {
+		DISPLAYING_NONE,
+		DISPLAYING_LINK,
+		DISPLAYING_CLICK
+	} displayState_;
     HippoBSTR currentURL_;
 	HippoBSTR currentPostId_;
 

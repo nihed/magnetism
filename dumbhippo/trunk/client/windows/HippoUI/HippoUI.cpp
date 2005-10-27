@@ -479,6 +479,14 @@ HippoUI::onLinkMessage(const WCHAR *postId,
     notificationIcon_.showURL(postId, sender, url, title, description);
 }
 
+void 
+HippoUI::onLinkClicked(const WCHAR *postId,
+					   const WCHAR *clicker,
+	                   const WCHAR *title)
+{
+	notificationIcon_.showURLClicked(postId, clicker, title);
+}
+
 // Tries to register as the singleton HippoUI, returns true on success
 bool 
 HippoUI::registerActive()

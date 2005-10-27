@@ -42,6 +42,8 @@ HippoIcon::create(HWND window)
 
     Shell_NotifyIcon(NIM_ADD, &notifyIconData);
 
+	displayState_ = DISPLAYING_NONE;
+
     return true;
 }
 
@@ -103,11 +105,14 @@ HippoIcon::processMessage(WPARAM wParam,
     case NIN_BALLOONSHOW:
 	break;
     case NIN_BALLOONUSERCLICK:
-        ignoreNextClick_ = true;
-		ui_->showURL(currentPostId_, currentURL_);
+		if (displayState_ == DISPLAYING_LINK) {
+			ignoreNextClick_ = true;
+			ui_->showURL(currentPostId_, currentURL_);
+		}
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
+		displayState_ = DISPLAYING_NONE;
 	break;
     }
     
@@ -127,6 +132,8 @@ HippoIcon::showURL(const WCHAR *postId,
 {
     currentURL_ = url;
 	currentPostId_ = postId;
+
+	displayState_ = DISPLAYING_LINK;
 
     NOTIFYICONDATA notifyIconData = { 0 };
 
@@ -156,6 +163,42 @@ HippoIcon::showURL(const WCHAR *postId,
 	StringCchCat(notifyIconData.szInfoTitle, titleLen, TEXT(": "));
 	StringCchCat(notifyIconData.szInfoTitle, titleLen, title);
     }
+    notifyIconData.dwInfoFlags = NIIF_USER;
+   
+    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+}
+
+
+void
+HippoIcon::showURLClicked(const WCHAR *postId,
+				          const WCHAR *clickerName,
+		                  const WCHAR *title)
+{
+    currentURL_ = NULL;
+	currentPostId_ = postId;
+
+	displayState_ = DISPLAYING_CLICK;
+
+	ui_->debugLogU("Showing clicked bubble");
+
+    NOTIFYICONDATA notifyIconData = { 0 };
+
+    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+    notifyIconData.hWnd = window_;
+    notifyIconData.uID = 0;
+    notifyIconData.uFlags = NIF_INFO;
+    const size_t infoLen = sizeof(notifyIconData.szInfo) / sizeof(notifyIconData.szInfo[0]);
+
+	StringCchCopy(notifyIconData.szInfo, infoLen, TEXT(""));
+	StringCchCat(notifyIconData.szInfo, infoLen, clickerName);
+	// FIXME i18n
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT(" has viewed your share \""));
+    StringCchCat(notifyIconData.szInfo, infoLen, title);
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\""));
+
+    notifyIconData.uTimeout = 7 * 1000; // 7 seconds
+    const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
+	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("XMPP Remoted Hardware Event 0x23A"));
     notifyIconData.dwInfoFlags = NIIF_USER;
    
     Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
