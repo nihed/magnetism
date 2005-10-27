@@ -299,8 +299,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (GuidNotFoundException e) {
 			throw new RedirectException("Which post did you come from? (post's ID was \"" + XmlBuilder.escape(postId) + "\")");
 		}
-		LinkResource link = identitySpider.getLink(url);
 		
-		logger.debug("FIXME mark " + (user != null ? user : invitation) + " as having gone to " + post + " specifically link " + url);
+		if (user != null) {
+			
+		}
+		
+		if (user != null) {
+			postingBoard.postClickedBy(post, user);
+		} else {
+			logger.debug("not yet handling a merely-invited person hitting the redirect page");
+		}
 	}
 }
