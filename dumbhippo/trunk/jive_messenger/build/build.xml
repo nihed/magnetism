@@ -191,7 +191,7 @@
     <!-- ======================================================================================= -->
 
     <!-- all =================================================================================== -->
-    <target name="all" depends="jar, javadoc" description="Calls jar and javadoc targets"/>
+    <target name="all" depends="jar, plugins" description="Calls jar and plugins targets"/>
 
     <!-- init ================================================================================== -->
     <target name="init">
