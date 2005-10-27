@@ -7,7 +7,7 @@ import sys
 import super.service
 
 def verbose(msg):
-    print >>sys.stderr, msg
+#    print >>sys.stderr, msg
     pass
 
 # Return values for DirTree.check()
@@ -313,7 +313,7 @@ class DirTree:
             if (flags & DIRECTORY_ONLY) != 0:
                 child_dest = os.path.join(self.target, path)
                 child_dest_stat = os.stat(child_dest)
-                if notstat.S_ISDIR(src_stat.st_mode):
+                if not stat.S_ISDIR(child_dest_stat.st_mode):
                     continue
             # NEGATE is meaningless here, ignore
             if not pattern.match(path):
