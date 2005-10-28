@@ -232,41 +232,7 @@ public class HippoServlet extends AbstractServlet {
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in", e1);
 		}
 	}
-	
-	private Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
-		Person user = null;
-		HttpSession sess = request.getSession(false);
-		// Right now this will only be created if a JSF page is visited
-		if (sess != null) {
-			SigninBean signin = SigninBean.getFromHttpSession(sess);
-			if (signin != null) {
-				logger.debug("retrieved signin from session");
-				user = signin.getUser();
-				if (user != null) {
-					logger.info("cached authentication from session for: " + user);					
-				}
-			}
-		} else {
-			logger.debug("no http session available");			
-		}
-		if (user == null) {
-			logger.debug("no user in session, trying cookie");					
-			try {
-				user = CookieAuthentication.authenticate(request);
-				logger.info("successfully authenticated: " + user);
-			} catch (BadTastingException e) {
-				if (log)
-					logger.error("failed to log in", e);
-				user = null;
-			} catch (NotLoggedInException e2) {
-				if (log)
-					logger.error("authentication failed", e2);
-				user = null;
-			}
-		}
-		return user;
-	}
-	
+		
 	private void writeHtmlHeaderBoilerplate(OutputStream out) throws IOException {
 		out.write(("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
 				+ "<html>"

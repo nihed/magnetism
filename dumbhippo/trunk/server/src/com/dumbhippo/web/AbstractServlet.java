@@ -7,10 +7,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
+import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public abstract class AbstractServlet extends HttpServlet {
 
@@ -91,6 +95,40 @@ public abstract class AbstractServlet extends HttpServlet {
 			
 			logger.debug("--param " + name + " = " + builder.toString());
 		}
+	}
+	
+	protected Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
+		Person user = null;
+		HttpSession sess = request.getSession(false);
+		// Right now this will only be created if a JSF page is visited
+		if (sess != null) {
+			SigninBean signin = SigninBean.getFromHttpSession(sess);
+			if (signin != null) {
+				logger.debug("retrieved signin from session");
+				user = signin.getUser();
+				if (user != null) {
+					logger.info("cached authentication from session for: " + user);					
+				}
+			}
+		} else {
+			logger.debug("no http session available");			
+		}
+		if (user == null) {
+			logger.debug("no user in session, trying cookie");					
+			try {
+				user = CookieAuthentication.authenticate(request);
+				logger.info("successfully authenticated: " + user);
+			} catch (BadTastingException e) {
+				if (log)
+					logger.error("failed to log in", e);
+				user = null;
+			} catch (NotLoggedInException e2) {
+				if (log)
+					logger.error("authentication failed", e2);
+				user = null;
+			}
+		}
+		return user;
 	}
 	
 	protected abstract void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
