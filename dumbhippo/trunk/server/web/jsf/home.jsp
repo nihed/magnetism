@@ -53,10 +53,11 @@
 	</table>
 	</div>
 	<div class="toolbar">
-	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/family.faces">Your Famliy Page</a>
+	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/family.faces">Your Family Page</a>
 	</div>
 
 	<div class="person">
+		<img class="cool-person" src="/files/headshots/${home.personInfo.person.id}" />
 	   	<span dojoType="InlineEditBox" class="dhName" id="dhNameEntry">
 	   	<c:out value="${home.personInfo.humanReadableName}"/>
 	   	</span>
@@ -76,7 +77,7 @@
 		<tr>
 		    <td class="cool-person" rowSpan="3">
 			<a class="cool-person" href="">
-			<img class="cool-person" src="" />
+			<img class="cool-person" src="/files/headshots/${info.posterInfo.person.id}" />
 			<br/>
 			<dh:entity value="${info.posterInfo}"/>
 			</a>

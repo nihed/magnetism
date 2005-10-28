@@ -70,5 +70,13 @@ public class ConfigurationBean implements Configuration {
 	public String getPropertyNoDefault(HippoProperty name) throws PropertyNotFoundException {
 		return getProperty(name.getKey());
 	}
+
+	public String getPropertyFatalIfUnset(HippoProperty name) {
+		try {
+			return getPropertyNoDefault(name);
+		} catch (PropertyNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }
 

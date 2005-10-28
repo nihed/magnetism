@@ -15,7 +15,19 @@
       <servlet-name>HippoServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.HippoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
-   </servlet>   
+    </servlet>   
+
+    <servlet>
+      <servlet-name>HeadshotServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.HeadshotServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+    <servlet>
+      <servlet-name>FileServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.FileServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
 
    <servlet-mapping>
       <servlet-name>HippoServlet</servlet-name>
@@ -52,11 +64,21 @@
       <url-pattern>/sendinvite</url-pattern>
    </servlet-mapping>
 
-   <!-- JavaServer Faces; we'll look up the servlet by name, so we don't need any servlet-mapping -->
+   <servlet-mapping>
+      <servlet-name>HeadshotServlet</servlet-name>
+      <url-pattern>/upload/headshots</url-pattern>
+   </servlet-mapping>
 
+   <servlet-mapping>
+      <servlet-name>FileServlet</servlet-name>
+      <url-pattern>/files/*</url-pattern>
+   </servlet-mapping>
+
+
+   <!-- JavaServer Faces; we'll look up the servlet by name, so we don't need any servlet-mapping -->
    <!-- MyFaces specific, needed for parsing faces-config.xml  -->
    <listener>
-   <listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
+  	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
    </listener>    
 
    <servlet>
@@ -75,11 +97,11 @@
    <servlet>
       <servlet-name>RewriteServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
       <init-param>
           <param-name>requiresSignin</param-name>
           <param-value>home,welcome,invite,sharelink</param-value>
       </init-param>
+      <load-on-startup>1</load-on-startup>
    </servlet>   
 
    <servlet-mapping>

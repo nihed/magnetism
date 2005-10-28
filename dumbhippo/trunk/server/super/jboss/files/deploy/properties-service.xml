@@ -17,10 +17,11 @@
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
     <attribute name="Properties">
 		dumbhippo.server.xmpp.address=@@jiveHost@@
-		dumbhippo.server.xmpp.port=@@jivePlainPort@@	
+		dumbhippo.server.xmpp.port=@@jivePlainPort@@
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@
 		dumbhippo.server.baseurl=@@baseurl@@
+		dumbhippo.server.files.saveurl=file://@@filesavedir@@
     </attribute>
   </mbean>
   

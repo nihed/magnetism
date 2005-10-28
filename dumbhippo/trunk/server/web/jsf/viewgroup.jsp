@@ -68,7 +68,7 @@
 		<tr>
 		    <td class="cool-person" rowSpan="3">
 			<a class="cool-person" href="">
-			<img class="cool-person" src="" />
+			<img class="cool-person" src="/files/headshots/${info.posterInfo.person.id}" />
 			<br/>
 			<dh:entity value="${info.posterInfo}"/>
 			</a>
