@@ -17,13 +17,9 @@
 	
 	function dhDoSignIn() {
 	    dh.login.requireLogin(function() {
-			var params=dh.util.getParamsFromLocation();
-			if (params.next) {
-			    if (params.next.match(/^[a-zA-Z]+$/))
-					window.open(params.next, "_self");
-			} else {
-		    	dh.util.closeWindow();
-		    }
+	    	// default is home since if you just type in the url that is useful
+	    	// the windows client would specify next=close
+	    	dh.util.goToNextPage("home");
 	    });
 	}
 	

@@ -55,8 +55,12 @@ dh.util.closeWindow = function() {
 	// for checking the readyState is to see if the object was 
 	// actually loaded.
 	var embed = document.getElementById("dhEmbedObject");
-	if (embed && embed.readyState && embed.readyState >= 3)
-		embed.CloseWindow();
+	if (embed && embed.readyState && embed.readyState >= 3) {
+		embed.CloseWindow(); // this never returns though, I don't think
+		return true;
+	} else {
+		return false;
+	}
 }
 
 // could probably choose a better color ;-)
@@ -89,3 +93,40 @@ dh.util.join = function(array, separator, elemProp) {
 }
 
 dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.geckoVersion < 20051001;
+
+// arg is the default page to go to if none was specified
+// "close" and "here" are magic pseudo-pages for close the window
+// and stay on this page
+dh.util.goToNextPage = function(def) {
+	var params=dh.util.getParamsFromLocation();
+	var where = params.next;
+	
+	// We want to handle params.next="close" / def="main" and also
+	// params.next="main" / def="close", and in the first case 
+	// we want to fall back to "main" if the close fails
+	
+	if (where == "close") {
+		if (dh.util.closeWindow()) {
+			return; // never reached I think
+		} else {
+			dojo.debug("close window failed, trying default " + def);
+			delete where;
+		}
+	}
+	
+	if (!where)
+		where = def;
+		
+	if (!where) {
+		dojo.debug("no next page specified");	
+	} else if (where == "close") {
+		dh.util.closeWindow();
+	} else if (where == "here") {
+		dojo.debug("staying put");
+	} else if (where.match(/^[a-zA-Z]+$/)) {
+		dojo.debug("opening " + where);
+    	window.open(where, "_self");
+	} else {
+		dojo.debug("invalid next page target " + where);
+	}
+}
