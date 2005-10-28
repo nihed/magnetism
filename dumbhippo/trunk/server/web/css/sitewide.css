@@ -95,15 +95,6 @@ textarea, .dhTextArea {
 	width:							25em;
 }
 
-.dhUrl {
-	text-decoration:				underline;
-	text-overflow:					ellipsis;
-}
-
-div.dhUrl * {
-	color:						blue;
-}
-
 a.editLabel {
 	color:						blue;	
 }
@@ -221,7 +212,7 @@ span.first-letter {
 	color:					steelblue;
 	background-color:			inherit;
 }
-a {
+a, div.dhUrl *, dhUrl {
 	color:					blue;
 }
 a:hover {

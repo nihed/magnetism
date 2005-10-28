@@ -172,7 +172,7 @@ dh.login.requireLogin = function(doAfterLoginFunc) {
 		return;
 	}
 
-	dojo.debug("adding " + doAfterLoginFunc + " to queue for post-login execution");
+	// dojo.debug("adding " + doAfterLoginFunc + " to queue for post-login execution");
 	dh.login.postLoginQueue.push(doAfterLoginFunc);
 
 	// only start the process if it isn't already in process
