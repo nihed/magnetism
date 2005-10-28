@@ -25,8 +25,6 @@ import com.dumbhippo.server.util.SimpleAnnotatedInvoker.ArgumentInterceptor;
 
 public class ClientMethodIQHandler extends IQHandler {
 	private IQHandlerInfo info;
-	private SimpleAnnotatedInvoker xmppInvoker;
-	private XMPPMethods methods;
 	
 	private class PersonArgumentPrepender implements ArgumentInterceptor {
 		public List<Object> interceptArgs(Method method, List<String> args, Object context) throws InvocationTargetException {
@@ -55,8 +53,6 @@ public class ClientMethodIQHandler extends IQHandler {
 		super("Dumbhippo IQ Method Handler");
 		Log.debug("creating ClientMethodIQHandler");
 		info = new IQHandlerInfo("dhmethod", "http://dumbhippo.com/protocol/servermethod");
-		methods = EJBUtil.defaultLookup(XMPPMethods.class);
-		xmppInvoker = new SimpleAnnotatedInvoker(XMPPRemoted.class, methods, new PersonArgumentPrepender());
 	}
 
 	@Override
@@ -66,6 +62,14 @@ public class ClientMethodIQHandler extends IQHandler {
 		Element iq = packet.getChildElement();
         String method = iq.attributeValue("name");
         List<String> args = new ArrayList<String>();
+        
+        // TODO Don't look this up each time 
+        // We currently do this to avoid problems during development
+        // from reloading Jive - later we probably want to move this to
+        // constructor
+        XMPPMethods methods = EJBUtil.defaultLookup(XMPPMethods.class);
+        SimpleAnnotatedInvoker xmppInvoker 
+        	= new SimpleAnnotatedInvoker(XMPPRemoted.class, methods, new PersonArgumentPrepender());
         
         for (Object argObj: iq.elements()) {
         	Node arg = (Node) argObj;
