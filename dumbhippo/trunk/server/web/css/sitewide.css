@@ -74,7 +74,7 @@ table, tbody, tr, td {
 }
 
 /* Style of the text being typed by the user */
-textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
+textarea, .dhTextArea, .dojoComboBox .comboBoxInput, input[type=text] {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
@@ -86,7 +86,7 @@ textarea, .dhTextArea, .dojoComboBox .comboBoxInput {
  * may be part of the <input> or of another tag around that
  * e.g. in Dojo combo box it's for a table
  */
-textarea, .dhTextArea, .dojoComboBox {
+textarea, .dhTextArea, .dojoComboBox, .dhText {
 	border:							1px solid #afafaf;
 }
 
