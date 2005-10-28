@@ -35,8 +35,6 @@ public class HippoServlet extends HttpServlet {
 	private static final Log logger = GlobalSetup.getLog(HippoServlet.class);
 	
 	private static final long serialVersionUID = 0L;
-	
-	private static final String XMLRPC_KEY = "org.dumbhippo.web.XmlRpcServlet.XmlRpcServer";
 
 	enum HttpResponseCode {
 		
@@ -143,17 +141,26 @@ public class HippoServlet extends HttpServlet {
 		}
 		
 		for (String pname : paramsAnnotation.value()) {
-			if(!String.class.isAssignableFrom(args[i]))
-				throw new RuntimeException("Only args of type String supported for now, arg " + i + " is type " + args[i].getCanonicalName());
+			String s = request.getParameter(pname);
 			
-			Object o = request.getParameter(pname);
-			
-			if (o == null) {
+			if (s == null) {
 				throw new HttpException(HttpResponseCode.BAD_REQUEST,
 						"Parameter " + pname + " not provided to method " + m.getName());
 			}
 			
-			toPassIn.add(o);
+			if(String.class.isAssignableFrom(args[i])) {
+				toPassIn.add(s);
+			} else if (boolean.class.isAssignableFrom(args[i])) {
+				if (s.equals("true")) {
+					toPassIn.add(true);
+				} else if (s.equals("false")) {
+					toPassIn.add(false);
+				} else {
+					throw new HttpException(HttpResponseCode.BAD_REQUEST, "Parameter " + pname + " to method " + m.getName() + " must be 'true' or 'false'");
+				}
+			} else {
+				throw new RuntimeException("Arg " + i + " of type " + args[i].getCanonicalName() + " is not supported");
+			}
 			
 			++i;
 		}

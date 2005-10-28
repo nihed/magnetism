@@ -51,15 +51,18 @@ public class Post extends GuidPersistable {
 	
 	/**
 	 * @param poster
+	 * @param visibility 
 	 * @param explicitTitle
 	 * @param text
 	 * @param personRecipients
 	 * @param groupRecipients
-	 * @param expandedRecipients 
+	 * @param expandedRecipients
 	 * @param resources
 	 */
-	public Post(Person poster, String explicitTitle, String text, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients, Set<Resource> resources) {
+	public Post(Person poster, PostVisibility visibility, String explicitTitle, String text, Set<Person> personRecipients,
+			Set<Group> groupRecipients, Set<Person> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
+		this.visibility = visibility;
 		this.explicitTitle = explicitTitle;
 		this.text = text;
 		this.personRecipients = personRecipients;

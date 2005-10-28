@@ -23,6 +23,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
@@ -44,7 +45,7 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private MessageSender messageSender;
 		
-	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids) throws ParseException, GuidNotFoundException {
+	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids, PostVisibility visibility) throws ParseException, GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// this is what can throw ParseException
@@ -77,7 +78,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPost(poster, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
+		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications... (to Person only)");
@@ -88,10 +89,10 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(Person poster, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
+	public Post createPost(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		
 		logger.debug("saving new Post");
-		Post post = new Post(poster, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
+		Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 		em.persist(post);
 	
 		return post;

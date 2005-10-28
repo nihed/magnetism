@@ -18,6 +18,7 @@ dh.sharelink.selectedRecipients = [];
 
 dh.sharelink.urlToShare = null;
 dh.sharelink.urlTitleToShareEditBox = null;
+dh.sharelink.secretCheckbox = null;
 dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
 dh.sharelink.createGroupPopup = null;
@@ -331,10 +332,13 @@ dh.sharelink.submitButtonClicked = function() {
 	
 	var commaRecipients = dh.util.join(dh.sharelink.selectedRecipients, ",", "id");
 	
+	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
+	
 	dojo.debug("url = " + dh.sharelink.urlToShare);
 	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
 	dojo.debug("rcpts = " + commaRecipients);
+	dojo.debug("secret = " + secret);
 	
 	// FIXME we don't really want to send HTML to the server... at least not 
 	// without "simplification" to tags we understand which would be easy on 
@@ -347,7 +351,8 @@ dh.sharelink.submitButtonClicked = function() {
 							"url" : dh.sharelink.urlToShare,
 							"title" : title, 
 						  	"description" : descriptionHtml,
-						  	"recipients" : commaRecipients
+						  	"recipients" : commaRecipients,
+						  	"secret" : secret
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
@@ -542,6 +547,8 @@ dh.sharelink.init = function() {
 		if (dojo.lang.has(params, "title")) {
 			dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 		}
+	
+		dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
 	
 		dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
 		dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");

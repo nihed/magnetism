@@ -25,6 +25,7 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
@@ -200,10 +201,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(Person user, String title, String url, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		postingBoard.createURLPost(user, title, description, url, recipientGuids);
+		postingBoard.createURLPost(user, title, description, url, recipientGuids, secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC);
 	}
 
 	
