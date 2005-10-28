@@ -18,14 +18,14 @@ import javax.persistence.Table;
 public class Group extends GuidPersistable {
 	private static final long serialVersionUID = 1L;
 	
-	private GroupType type;
+	private GroupAccess access;
 	private String name;
 	private Set<Person> members;
 	private boolean markedForDelete;
 		
 	private void initMissing() {
-		if (type == null)
-			type = GroupType.MEMBERS_ONLY;
+		if (access == null)
+			access = GroupAccess.FRIENDS_ONLY;
 		if (members == null)
 			members = new HashSet<Person>();
 	}
@@ -46,12 +46,12 @@ public class Group extends GuidPersistable {
 	}
 	
 	@Column(nullable=false)
-	public GroupType getType() {
-		return type;
+	public GroupAccess getAccess() {
+		return access;
 	}
 
-	public void setType(GroupType type) {
-		this.type = type;
+	public void setAccess(GroupAccess type) {
+		this.access = type;
 	}
 
 	protected boolean isMarkedForDelete() {

@@ -5,8 +5,8 @@ package com.dumbhippo.persistence;
  * @author hp
  *
  */
-public enum GroupType {
-	MEMBERS_ONLY,
+public enum GroupAccess {
+	SECRET,
 	FRIENDS_ONLY,
 	PUBLIC;
 }
