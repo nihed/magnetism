@@ -549,7 +549,8 @@ dh.sharelink.init = function() {
 			dh.sharelink.urlToShareEditBox.textValue = urlParam;
 		} else {
 			dh.sharelink.urlToShareEditBox.textValue = "(enter link to share)";
-			dh.util.show(dh.sharelink.urlToShareEditBox);
+			var urlDiv = document.getElementById("dhUrlToShareDiv");
+			dh.util.show(urlDiv);
 		}
 		
 		dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
