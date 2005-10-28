@@ -93,15 +93,11 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 	}
 	
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-	IOException {
-		// implemented in subclass
-	}
+	protected abstract void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	IOException;
 	
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-	IOException {
-		// implemented in subclass
-	}
+	protected abstract void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	IOException;
 	
 	/*
 	 * In doPost/doGet if we throw ServletException it shows the user a
