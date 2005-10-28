@@ -18,6 +18,6 @@
     <target name="build">
         <ant dir="../server" target="build"/>
     	<!-- jive has a weird ant file -->
-        <ant dir="../jive_messenger/" antfile="build/build.xml" target="all"/>    	
+        <ant dir="../jive_messenger/" antfile="build/build.xml" target="plugins"/>    	
     </target>
 </project>
