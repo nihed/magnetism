@@ -16,7 +16,7 @@ dh.sharelink.allKnownIds = {};
 // currently selected recipients, may be group or person objects
 dh.sharelink.selectedRecipients = [];
 
-dh.sharelink.urlToShare = null;
+dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.urlTitleToShareEditBox = null;
 dh.sharelink.secretCheckbox = null;
 dh.sharelink.recipientComboBox = null;
@@ -328,13 +328,16 @@ dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
 	
 	var title = dh.sharelink.urlTitleToShareEditBox.textValue;
+	
+	var url = dh.sharelink.urlToShareEditBox.value;
+	
 	var descriptionHtml = dh.sharelink.descriptionRichText.getEditorContent();
 	
 	var commaRecipients = dh.util.join(dh.sharelink.selectedRecipients, ",", "id");
 	
 	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
 	
-	dojo.debug("url = " + dh.sharelink.urlToShare);
+	dojo.debug("url = " + url);
 	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
 	dojo.debug("rcpts = " + commaRecipients);
@@ -348,7 +351,7 @@ dh.sharelink.submitButtonClicked = function() {
 	dh.login.requireLogin(function() {					
 		dh.server.doPOST("sharelink",
 						{ 
-							"url" : dh.sharelink.urlToShare,
+							"url" : url,
 							"title" : title, 
 						  	"description" : descriptionHtml,
 						  	"recipients" : commaRecipients,
@@ -538,10 +541,17 @@ dh.sharelink.init = function() {
 		dojo.debug("dh.sharelink logged in!");
 	
 		var params = dh.util.getParamsFromLocation();
-		dh.sharelink.urlToShare = params["url"]
-		if (!dh.sharelink.urlToShare) {
-		  alert("you must specify a target url in the URL query string (if you're seeing this message you know what that means).");
-		}		
+		
+		dh.sharelink.urlToShareEditBox = document.getElementById("dhUrlToShare");
+		
+		var urlParam = params["url"]
+		if (urlParam) {
+			dh.sharelink.urlToShareEditBox.textValue = urlParam;
+		} else {
+			dh.sharelink.urlToShareEditBox.textValue = "(enter link to share)";
+			dh.util.show(dh.sharelink.urlToShareEditBox);
+		}
+		
 		dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
 		var params = dh.util.getParamsFromLocation();
 		if (dojo.lang.has(params, "title")) {

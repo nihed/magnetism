@@ -53,7 +53,8 @@
 	</table>
 	</div>
 	<div class="toolbar">
-	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/family.faces">Your Family Page</a>
+	<c:url value="sharelink?next=home" var="share"/>
+	Do It: <a href="${share}">&#187; Share</a> &#151; <a href="/jsf/family.faces">Your Family Page</a>
 	</div>
 
 	<div class="person">

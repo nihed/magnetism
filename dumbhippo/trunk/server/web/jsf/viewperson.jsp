@@ -48,7 +48,8 @@
 	</table>
 	</div>
 	<div class="toolbar">
-	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/home.faces">Your Page</a> &#151;
+	<c:url value="sharelink?next=viewperson" var="share"/>
+	Do It: <a href="${share}">&#187; Share</a> &#151; <a href="/jsf/home.faces">Your Page</a> &#151;
 		<c:if test="${viewperson.isContact}"><a href="javascript:removeContact()">Remove <c:out value="${viewperson.personInfo.humanReadableName}"/> from my contact list</a></c:if>
 		<c:if test="${!viewperson.isContact}"><a href="javascript:addContact()">I know <c:out value="${viewperson.personInfo.humanReadableName}"/></a></c:if>
 	</div>
