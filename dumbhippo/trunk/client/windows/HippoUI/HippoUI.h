@@ -49,7 +49,7 @@ public:
 
     void showMenu(UINT buttonFlag);
     void showURL(BSTR postId, BSTR url);
-    void showShareWindow(BSTR url);
+    void showShareWindow(BSTR title, BSTR url);
 	void HippoUI::showRecent();
 
     void debugLogW(const WCHAR *format, ...); // UTF-16

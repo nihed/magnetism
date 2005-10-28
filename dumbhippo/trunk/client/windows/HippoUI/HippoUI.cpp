@@ -332,19 +332,33 @@ HippoUI::showAppletWindow(BSTR url)
 
 // Show a window offering to share the given URL
 void 
-HippoUI::showShareWindow(BSTR url)
+HippoUI::showShareWindow(BSTR title, BSTR url)
 {
     HippoBSTR shareURL;
-    
+
     if (!SUCCEEDED (getAppletURL(HippoBSTR(L"sharelink.html"), &shareURL)))
 	return;
 
     if (!SUCCEEDED (shareURL.Append(L"?url=")))
 	return;
 
-    if (!SUCCEEDED (shareURL.Append(url)))
+	DWORD len = 1023; 
+	wchar_t encoded[1024] = {0}; 
+
+	if (!SUCCEEDED (UrlEscape(url, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
+	return;
+	if (!SUCCEEDED (shareURL.Append(encoded)))
 	return;
 
+    if (!SUCCEEDED (shareURL.Append(L"&title=")))
+	return;
+
+	if (!SUCCEEDED (UrlEscape(title, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
+	return;
+	if (!SUCCEEDED (shareURL.Append(encoded)))
+	return;
+
+	debugLogW(L"sharing URL %s", shareURL);
     showAppletWindow(shareURL);
 }
 
@@ -775,7 +789,7 @@ HippoUI::processMessage(UINT   message,
 	if (wmId >= IDM_SHARE0 && wmId <= IDM_SHARE9) {
 	    UINT i = wmId - IDM_SHARE0;
 	    if (i < browsers_.length() && browsers_[i].url)
-		showShareWindow(browsers_[i].url);
+			showShareWindow(browsers_[i].title, browsers_[i].url);
 	    return true;
 	}
 
