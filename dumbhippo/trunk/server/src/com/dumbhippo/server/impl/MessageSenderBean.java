@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -25,6 +26,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -84,6 +86,8 @@ public class MessageSenderBean implements MessageSender {
 		
 		private String senderName;
 		
+		private Set<String> recipientNames;
+		
 		private String url;
 
 		private Guid guid;
@@ -92,18 +96,32 @@ public class MessageSenderBean implements MessageSender {
 		
 		private String description;
 
+		private Set<String> groupRecipients;
+
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
-			builder.appendTextNode("senderName", senderName, "isCache", "true");			
+			builder.appendTextNode("senderName", senderName, "isCache", "true");
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
+			builder.openElement("recipients");
+			for (String recipient : recipientNames) {
+				builder.appendTextNode("recipient", recipient);
+			}
+			builder.closeElement();
+			builder.openElement("groupRecipients");
+			for (String recipient : groupRecipients) {
+				builder.appendTextNode("recipient", recipient);
+			}
+			builder.closeElement();					
 			builder.closeElement();
 			return builder.toString();
 		}
-		public LinkExtension(String senderName, Guid postId, String url, String title, String description) {
+		public LinkExtension(String senderName, Guid postId, Set<String> recipientNames, Set<String> groupRecipients, String url, String title, String description) {
 			this.senderName = senderName;
 			this.guid = postId;
+			this.recipientNames = recipientNames;
+			this.groupRecipients = groupRecipients;
 			this.url = url;
 			this.title = title;
 			this.description = description;
@@ -220,7 +238,18 @@ public class MessageSenderBean implements MessageSender {
 
 			recipientView = identitySpider.getViewpoint(recipient, post.getPoster());
 			String senderName = recipientView.getHumanReadableName();
-			message.addExtension(new LinkExtension(senderName, post.getGuid(), url, title, post.getText()));
+			Set<String> recipientNames = new HashSet<String>();
+			for (Person p : post.getPersonRecipients()) {
+				PersonView viewedP = identitySpider.getViewpoint(recipient, p);
+				recipientNames.add(viewedP.getHumanReadableName());
+			}
+			Set<String> groupRecipientNames = new HashSet<String>();
+			for (Group g : post.getGroupRecipients()) {
+				groupRecipientNames.add(g.getName());
+			}
+			
+			message.addExtension(new LinkExtension(senderName, post.getGuid(), recipientNames, groupRecipientNames, 
+					url, title, post.getText()));
 
 			message.setBody(String.format("%s\n%s", title, url));
 
