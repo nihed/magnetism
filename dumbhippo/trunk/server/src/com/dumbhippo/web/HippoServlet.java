@@ -6,10 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -30,65 +27,11 @@ import com.dumbhippo.server.XmlRpcMethods;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
-public class HippoServlet extends HttpServlet {
+public class HippoServlet extends AbstractServlet {
 
 	private static final Log logger = GlobalSetup.getLog(HippoServlet.class);
 	
 	private static final long serialVersionUID = 0L;
-
-	enum HttpResponseCode {
-		
-		// There are a lot more response codes we aren't wrapping here
-		
-		OK(HttpServletResponse.SC_OK),
-		
-		// This means the form submitted OK but there's no reply data
-		NO_CONTENT(HttpServletResponse.SC_NO_CONTENT),
-		
-		BAD_REQUEST(HttpServletResponse.SC_BAD_REQUEST),
-		
-		MOVED_PERMANENTLY(HttpServletResponse.SC_MOVED_PERMANENTLY),
-		
-		NOT_FOUND(HttpServletResponse.SC_NOT_FOUND),
-		
-		INTERNAL_SERVER_ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR),
-	
-		FORBIDDEN(HttpServletResponse.SC_FORBIDDEN),
-		
-		// this means "we are hosed for a minute, try back in a bit"
-		// There's a Retry-After header we could set...
-		SERVICE_UNAVAILABLE(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-		
-		private int code;
-		HttpResponseCode(int code) {
-			this.code = code;
-		}
-		
-		void send(HttpServletResponse response, String message) throws IOException {
-			logger.debug("Sending HTTP response code " + this + ": " + message);
-			response.sendError(code, message);
-		}
-	}
-	
-	private static class HttpException extends Exception {
-		
-		private static final long serialVersionUID = 0L;
-		private HttpResponseCode httpResponseCode;
-		
-		HttpException(HttpResponseCode httpResponseCode, String message, Throwable cause) {
-			super(message, cause);
-			this.httpResponseCode = httpResponseCode;
-		}
-		
-		HttpException(HttpResponseCode httpResponseCode, String message) {
-			super(message);
-			this.httpResponseCode = httpResponseCode;
-		}
-		
-		void send(HttpServletResponse response) throws IOException {
-			httpResponseCode.send(response, getMessage());
-		}	
-	}
 	
 	private String[] parseUri(String uri) throws HttpException {
 		
@@ -290,29 +233,6 @@ public class HippoServlet extends HttpServlet {
 		}
 	}
 	
-	private void logRequest(HttpServletRequest request, String type) {
-		logger.debug(type + " uri=" + request.getRequestURI() + " content-type=" + request.getContentType());
-		Enumeration names = request.getAttributeNames(); 
-		while (names.hasMoreElements()) {
-			String name = (String) names.nextElement();
-			
-			logger.debug("--attr " + name + " = " + request.getAttribute(name));
-		}
-		
-		names = request.getParameterNames();		
-		while (names.hasMoreElements()) {
-			String name = (String) names.nextElement();
-			String[] values = request.getParameterValues(name);
-			StringBuilder builder = new StringBuilder();
-			for (String v : values) {
-				builder.append("'" + v + "',");
-			}
-			builder.deleteCharAt(builder.length() - 1); // drop comma
-			
-			logger.debug("--param " + name + " = " + builder.toString());
-		}
-	}
-	
 	private Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
 		Person user = null;
 		HttpSession sess = request.getSession(false);
@@ -463,62 +383,42 @@ public class HippoServlet extends HttpServlet {
 		
 		return true;
 	}
-	
-	/* In doPost/doGet if we throw ServletException it shows the user a backtrace. We can also do 
-	 * UnavailableException which I think sends the "temporarily unavailable" status code 
-	 */
-	
+
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
-		logRequest(request, "POST");
-		
-		try {
-			if (tryRedirectRequests(request, response)) {
-				
-			} else if (tryLoginRequests(request, response)) {
-				return;
-			} else if (request.getRequestURI().startsWith("/xmlrpc/")) {		
-				XmlRpcServer xmlrpc = new XmlRpcServer();
-				// Java thread locks are recursive so this is OK...
-				XmlRpcMethods glue = WebEJBUtil.defaultLookup(XmlRpcMethods.class);
-				
-				// glue is a proxy that only exports the one interface, 
-				// so safe to export it all
-				xmlrpc.addHandler("dumbhippo", glue);				
-				byte[] result = xmlrpc.execute(request.getInputStream());
-				response.setContentType("text/xml");
-				response.setContentLength(result.length);
-				OutputStream out = response.getOutputStream();
-				out.write(result);
-				out.flush();
-			} else {
-				HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
-			
-				invokeHttpRequest(glue, request, response);
-			}
-		} catch (HttpException e) {
-			logger.debug(e);
-			e.send(response);
+		if (tryRedirectRequests(request, response)) {
+
+		} else if (tryLoginRequests(request, response)) {
 			return;
+		} else if (request.getRequestURI().startsWith("/xmlrpc/")) {
+			XmlRpcServer xmlrpc = new XmlRpcServer();
+			// Java thread locks are recursive so this is OK...
+			XmlRpcMethods glue = WebEJBUtil.defaultLookup(XmlRpcMethods.class);
+
+			// glue is a proxy that only exports the one interface,
+			// so safe to export it all
+			xmlrpc.addHandler("dumbhippo", glue);
+			byte[] result = xmlrpc.execute(request.getInputStream());
+			response.setContentType("text/xml");
+			response.setContentLength(result.length);
+			OutputStream out = response.getOutputStream();
+			out.write(result);
+			out.flush();
+		} else {
+			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
+
+			invokeHttpRequest(glue, request, response);
 		}
 	}
 	
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		logRequest(request, "GET");
-		
-		try {
-			if (tryRedirectRequests(request, response)) {
-				return;
-			} else {
-				HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
-				invokeHttpRequest(glue, request, response);
-			}
-		} catch (HttpException e) {
-			logger.debug(e);
-			e.send(response);
+	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
+		if (tryRedirectRequests(request, response)) {
 			return;
+		} else {
+			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
+			invokeHttpRequest(glue, request, response);
 		}
 	}
 }
