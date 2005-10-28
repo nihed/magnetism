@@ -15,6 +15,7 @@ var dhXmlRoot = dhServerUri + "xml/";
 var dhXmlRpcRoot = dhServerUri + "xmlrpc/";
 var dhTextRoot = dhServerUri + "text/";
 var dhPostRoot = dhServerUri + "action/";
+var dhUploadRoot = dhServerUri + "upload/";
 
 // configure Dojo; don't put anything here we expect to change, instead make a 
 // dh variable above then slave djConfig to it.
