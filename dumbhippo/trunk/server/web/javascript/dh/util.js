@@ -1,25 +1,17 @@
 dojo.provide("dh.util");
 
 dh.util.getParamsFromLocation = function() {
-	var loc = document.location.toString();
-	var locSplitOnQuest = loc.split("?");
-	if (locSplitOnQuest.length < 2) {
-		dojo.debug("no params parsed");
-		return {};
-	}
-	var paramsString = locSplitOnQuest[locSplitOnQuest.length - 1];
-	dojo.debug("loc = " + loc + " locSplitOnQuest = " + locSplitOnQuest + " paramsString = " + paramsString);
+	var query = window.location.search.substring(1);
+	dojo.debug("query: " + query);
 	var map = {};
-	var params = paramsString.split("&");
-   	for (var i in params) {
-   		if (params[i].length == 0) {
-   			continue;
-   		}
-   		var keyvalue = params[i].split("=");
-   		if (keyvalue.length != 2) {
-   			dojo.debug("Malformed keyvalue pair '" + keyvalue + "'");
-   		} else {
-   			map[keyvalue[0]] = decodeURIComponent(keyvalue[1]);
+	var params = query.split("&");
+   	for (var i = 0; i < params.length; i++) {
+   		var eqpos = params[i].indexOf('=')
+   		if (eqpos > 0) {
+   		    var key = params[i].substring(0, eqpos);
+   		    var val = params[i].substring(eqpos+1);
+   			map[key] = decodeURIComponent(val);
+   			dojo.debug("mapping query key " + key + " to " + map[key]);
    		}
     }
     return map;

@@ -200,10 +200,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(Person user, String url, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+	public void doShareLink(Person user, String title, String url, String recipientIds, String description) throws ParseException, GuidNotFoundException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		postingBoard.createURLPost(user, null, description, url, recipientGuids);
+		postingBoard.createURLPost(user, title, description, url, recipientGuids);
 	}
 
 	

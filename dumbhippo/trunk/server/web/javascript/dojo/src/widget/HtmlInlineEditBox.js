@@ -43,23 +43,15 @@ dojo.widget.HtmlInlineEditBox = function() {
 		if(node.normalize) { node.normalize(); }
 
 		dojo.widget.buildAndAttachTemplate(this);
+		
+		// It had better be a text node...
+		var initialText = node.nodeValue
+		while (node.firstChild) {
+		  node.removeChild(node.firstChild)
+		}
 
 		this.editable = document.createElement("span");
-		// this.editable.appendChild(node.firstChild);
-		while(node.firstChild){
-			this.editable.appendChild(node.firstChild);
-		}
-		// this.textValue = this.editable.firstChild.nodeValue;
-		this.textValue = dojo.string.trim(this.editable.innerHTML);
-		if(dojo.string.trim(this.textValue).length == 0){
-			this.editable.innerHTML = this.defaultText;
-		}
-		/*
-		if(node.hasChildNodes()) {
-			node.insertBefore(this.editable, node.firstChild);
-		} else {
-		}
-		*/
+		this.setText(initialText)
 		node.appendChild(this.editable);
 
 		// delay to try and show up before stylesheet
@@ -127,8 +119,7 @@ dojo.widget.HtmlInlineEditBox = function() {
 			this.doFade = true;
 			this.history.push(this.textValue);
 			this.onSave(ee.value, this.textValue);
-			this.textValue = ee.value;
-			this.editable.innerHTML = this.textValue;
+			this.setText(ee.value);
 		} else {
 			this.doFade = false;
 		}
@@ -152,17 +143,17 @@ dojo.widget.HtmlInlineEditBox = function() {
 	}
 
 	this.setText = function(txt){
-		// sets the text without informing the server
-		var tt = dojo.string.trim(txt);
-		this.textValue = tt
-		this.editable.innerHTML = tt;
+		this.textValue = txt
+		while(this.editable.firstChild){
+			this.editable.removeChild(this.editable.firstChild)
+		}		
+		this.editable.appendChild(document.createTextNode(txt))
 	}
 
 	this.undo = function() {
 		if(this.history.length > 0) {
 			var value = this.history.pop();
-			this.editable.innerHTML = value;
-			this.textValue = value;
+			this.setText(value)
 			this.onUndo(value);
 		}
 	}

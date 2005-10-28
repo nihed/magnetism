@@ -16,7 +16,8 @@ dh.sharelink.allKnownIds = {};
 // currently selected recipients, may be group or person objects
 dh.sharelink.selectedRecipients = [];
 
-dh.sharelink.urlToShareEditBox = null;
+dh.sharelink.urlToShare = null;
+dh.sharelink.urlTitleToShareEditBox = null;
 dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
 dh.sharelink.createGroupPopup = null;
@@ -325,12 +326,13 @@ dhDoAddRecipientKeyUp = function(event) {
 dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
 	
-	var urlHtml = dh.sharelink.urlToShareEditBox.textValue;
+	var title = dh.sharelink.urlTitleToShareEditBox.textValue;
 	var descriptionHtml = dh.sharelink.descriptionRichText.getEditorContent();
 	
 	var commaRecipients = dh.util.join(dh.sharelink.selectedRecipients, ",", "id");
 	
-	dojo.debug("url = " + urlHtml);
+	dojo.debug("url = " + dh.sharelink.urlToShare);
+	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
 	dojo.debug("rcpts = " + commaRecipients);
 	
@@ -342,7 +344,8 @@ dh.sharelink.submitButtonClicked = function() {
 	dh.login.requireLogin(function() {					
 		dh.server.doPOST("sharelink",
 						{ 
-							"url" : urlHtml, 
+							"url" : dh.sharelink.urlToShare,
+							"title" : title, 
 						  	"description" : descriptionHtml,
 						  	"recipients" : commaRecipients
 						},
@@ -528,11 +531,16 @@ dh.sharelink.init = function() {
 		
 	dh.login.requireLogin(function() {
 		dojo.debug("dh.sharelink logged in!");
+	
 		var params = dh.util.getParamsFromLocation();
-		dh.sharelink.urlToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlToShare");
-		if (dojo.lang.has(params, "url")) {
-			// FIXME InlineEditBox takes HTML, even though it's called setText, need to escape
-			dh.sharelink.urlToShareEditBox.setText(params["url"]);
+		dh.sharelink.urlToShare = params["url"]
+		if (!dh.sharelink.urlToShare) {
+		  alert("you must specify a target url in the URL query string (if you're seeing this message you know what that means).");
+		}		
+		dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
+		var params = dh.util.getParamsFromLocation();
+		if (dojo.lang.has(params, "title")) {
+			dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 		}
 	
 		dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
