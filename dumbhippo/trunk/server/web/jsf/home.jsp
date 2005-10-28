@@ -53,7 +53,7 @@
 	</table>
 	</div>
 	<div class="toolbar">
-	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="javascript:alert('DOJO');">Your Famliy Page</a>
+	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/family.faces">Your Famliy Page</a>
 	</div>
 
 	<div class="person">
@@ -74,6 +74,13 @@
 		<div class="cool-bubble-shadow">		
 		<table class="cool-bubble">
 		<tr>
+		    <td class="cool-person" rowSpan="3">
+			<a class="cool-person" href="">
+			<img class="cool-person" src="" />
+			<br/>
+			<dh:entity value="${info.posterInfo}"/>
+			</a>
+		    </td>
 		    <td class="cool-link">
 			<div class="cool-link">
 			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>

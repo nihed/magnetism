@@ -48,7 +48,7 @@
 	</table>
 	</div>
 	<div class="toolbar">
-	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="javascript:alert('DOJO');">Your Page</a> &#151;
+	Do It: <a href="javascript:alert('DOJO');">&#187; Share</a> &#151; <a href="/jsf/home.faces">Your Page</a> &#151;
 		<c:if test="${viewgroup.isMember}"><a href="javascript:leaveGroup()">Leave <c:out value="${viewgroup.name}"/></a></c:if>
 		<c:if test="${!viewgroup.isMember}"><a href="javascript:joinGroup()">Join <c:out value="${viewgroup.name}"/></a></c:if>
 	</div>
