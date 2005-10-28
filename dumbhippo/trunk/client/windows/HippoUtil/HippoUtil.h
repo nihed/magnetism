@@ -126,6 +126,17 @@ public:
 	return ::SysStringLen(m_str);
     }
 
+	void setUTF8(const char *utf8) {
+		int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+		if (addlen == 0)
+			return;
+		int reqlen = Length() + addlen;
+		::SysReAllocStringLen(&m_str, m_str, reqlen);
+		int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, m_str, reqlen);
+		if (ret == 0)
+			return;
+	}
+
     operator BSTR () {
 	return m_str;
     }

@@ -453,45 +453,67 @@ HippoIM::onMessage (LmMessageHandler *handler,
 	   
 		if (strcmp (child->name, "link") == 0)
 	    {
-		const WCHAR *urlW = NULL;
-		const WCHAR *postIdW = NULL;
-		const WCHAR *titleW = NULL;
-		const WCHAR *senderNameW = NULL;
-		const WCHAR *descriptionW = NULL;
+		HippoLinkShare linkshare;
+		LmMessageNode *node;
 
 	    const char *url = lm_message_node_get_attribute(child, "href");
 		if (!url) {
 			im->ui_->debugLogU("Malformed link message, no URL");
 			continue;
 		}
-		urlW = g_utf8_to_utf16(url, -1, NULL, NULL, NULL);
+		linkshare.url.setUTF8(url);
+
 		const char *postId = lm_message_node_get_attribute(child, "id");
 		if (!postId) {
 			im->ui_->debugLogU("Malformed link message, no post ID");
 			continue;
 		}
-		postIdW = g_utf8_to_utf16(postId, -1, NULL, NULL, NULL);
+		linkshare.postId.setUTF8(postId);
 
-		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
-		if (titleNode && titleNode->value)
-		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
+		/* WARNING !  Must be in same order as XML stream */
+		node = lm_message_node_get_child (child, "title");
+		if (!(node && node->value))
+			continue;
+		linkshare.title.setUTF8(node->value);
 
-		LmMessageNode *senderName = lm_message_node_get_child(child, "senderName");
-		if (senderName && senderName->value)
-			senderNameW = g_utf8_to_utf16(senderName->value, -1, NULL, NULL, NULL);
+		node = lm_message_node_get_child (child, "senderName");
+		if (!(node && node->value))
+			continue;
+		linkshare.senderName.setUTF8(node->value);
 
-		LmMessageNode *descriptionNode = lm_message_node_get_child(child, "description");
-		if (descriptionNode && descriptionNode->value)
-		    descriptionW = g_utf8_to_utf16(descriptionNode->value, -1, NULL, NULL, NULL);
+		node = lm_message_node_get_child (child, "description");
+		if (!(node && node->value))
+			continue;
+		linkshare.description.setUTF8(node->value);
 
-		im->ui_->onLinkMessage(postIdW, senderNameW, urlW, titleW, descriptionW);
+		node = lm_message_node_get_child (child, "recipients");
+		if (!node)
+			continue;
+		LmMessageNode *subchild;
+		for (subchild = node->children; subchild; subchild = subchild->next) {
+			if (strcmp (subchild->name, "recipient") != 0)
+				continue;
+			if (!subchild->value)
+				continue;
+			HippoBSTR str;
+			str.setUTF8(subchild->value);
+			linkshare.personRecipients.append(str);
+		}
+		node = lm_message_node_get_child (child, "groupRecipients");
+		if (!node)
+			continue;
+		for (subchild = node->children; subchild; subchild = subchild->next) {
+			if (strcmp (subchild->name, "recipient") != 0)
+				continue;
+			if (!subchild->value)
+				continue;
+			HippoBSTR str;
+			str.setUTF8(subchild->value);
+			linkshare.groupRecipients.append(str);
+		}
 
-		g_free((void *)senderNameW);
-		g_free((void *)postIdW);
-		g_free((void *)urlW);
-		g_free((void *)titleW);
-		g_free((void *)descriptionW);
-	    } 
+		im->ui_->onLinkMessage(linkshare);
+		}
 		else if (strcmp (child->name, "linkClicked") == 0)
 	    {
 		const WCHAR *urlW = NULL;

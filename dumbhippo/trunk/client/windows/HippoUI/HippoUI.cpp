@@ -342,8 +342,8 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
     if (!SUCCEEDED (shareURL.Append(L"?url=")))
 	return;
 
-	DWORD len = 1023; 
 	wchar_t encoded[1024] = {0}; 
+	DWORD len = sizeof(encoded)/sizeof(encoded[0]);
 
 	if (!SUCCEEDED (UrlEscape(url, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
 	return;
@@ -353,6 +353,8 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
     if (!SUCCEEDED (shareURL.Append(L"&title=")))
 	return;
 
+	encoded[0] = 0;
+	len = sizeof(encoded)/sizeof(encoded[0]);
 	if (!SUCCEEDED (UrlEscape(title, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
 	return;
 	if (!SUCCEEDED (shareURL.Append(encoded)))
@@ -511,13 +513,9 @@ HippoUI::onAuthSuccess()
 }
 
 void 
-HippoUI::onLinkMessage(const WCHAR *postId,
-					   const WCHAR *sender,
-					   const WCHAR *url,
-	                   const WCHAR *title,
-		               const WCHAR *description)
+HippoUI::onLinkMessage(HippoLinkShare &linkshare)
 {
-    notificationIcon_.showURL(postId, sender, url, title, description);
+    notificationIcon_.showURL(linkshare);
 }
 
 void 

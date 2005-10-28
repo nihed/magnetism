@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 
 class HippoUI;
+struct HippoLinkShare;
 
 class HippoIcon
 {
@@ -24,11 +25,7 @@ public:
     void processMessage(WPARAM wParam,
 		        LPARAM lParam);
 	                
-    void showURL(const WCHAR *postId,
-		         const WCHAR *senderName,
-		         const WCHAR *url,
-	             const WCHAR *title,
-		         const WCHAR *description);
+    void showURL(HippoLinkShare &linkshare);
 	void showURLClicked(const WCHAR *postId,
 		  	            const WCHAR *clickerName,
 		                const WCHAR *title);

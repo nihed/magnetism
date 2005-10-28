@@ -133,14 +133,10 @@ HippoIcon::processMessage(WPARAM wParam,
 #endif
 
 void
-HippoIcon::showURL(const WCHAR *postId,
-				   const WCHAR *senderName,
-				   const WCHAR *url,
-		           const WCHAR *title,
-		           const WCHAR *description)
+HippoIcon::showURL(HippoLinkShare &linkshare)
 {
-    currentURL_ = url;
-	currentPostId_ = postId;
+    currentURL_ = linkshare.url;
+	currentPostId_ = linkshare.postId;
 
 	displayState_ = DISPLAYING_LINK;
 
@@ -153,25 +149,34 @@ HippoIcon::showURL(const WCHAR *postId,
     const size_t infoLen = sizeof(notifyIconData.szInfo) / sizeof(notifyIconData.szInfo[0]);
 
 	StringCchCopy(notifyIconData.szInfo, infoLen, TEXT(""));
-	if (senderName) {
-	StringCchCat(notifyIconData.szInfo, infoLen, senderName);
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n"));
-    StringCchCat(notifyIconData.szInfo, infoLen, url);
+    StringCchCat(notifyIconData.szInfo, infoLen, linkshare.url);
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n\n"));
+	StringCchCat(notifyIconData.szInfo, infoLen, linkshare.description);
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n\nSent from "));
+	StringCchCat(notifyIconData.szInfo, infoLen, linkshare.senderName);
+	StringCchCat(notifyIconData.szInfo, infoLen, TEXT(" to "));
+	for (unsigned int i = 0; i < linkshare.personRecipients.length(); i++) {
+		StringCchCat(notifyIconData.szInfo, infoLen, linkshare.personRecipients[i]);
+		if (i < linkshare.personRecipients.length() - 1)
+			StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", "));
 	}
-    if (description) {
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n"));
-	StringCchCat(notifyIconData.szInfo, infoLen, description);
-    }
-    if (StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to win)")) == STRSAFE_E_INSUFFICIENT_BUFFER)
-	StringCchCopy(notifyIconData.szInfo + infoLen - 4, 4, TEXT("..."));
+	if (linkshare.personRecipients.length() > 0 
+		&& linkshare.groupRecipients.length() > 0)
+		StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", and the groups "));
+	else if (linkshare.groupRecipients.length() > 0) 
+		StringCchCat(notifyIconData.szInfo, infoLen, TEXT("the groups "));
+	for (unsigned int i = 0; i < linkshare.groupRecipients.length(); i++) {
+		StringCchCat(notifyIconData.szInfo, infoLen, linkshare.groupRecipients[i]);
+		if (i < linkshare.groupRecipients.length() - 1)
+			StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", "));
+	}
+    StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to win)"));
 
     notifyIconData.uTimeout = NEW_POST_NOTIFY_TIMEOUT;
     const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
 	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("New link"));
-    if (title) {
 	StringCchCat(notifyIconData.szInfoTitle, titleLen, TEXT(": "));
-	StringCchCat(notifyIconData.szInfoTitle, titleLen, title);
-    }
+	StringCchCat(notifyIconData.szInfoTitle, titleLen, linkshare.title);
     notifyIconData.dwInfoFlags = NIIF_USER;
    
     Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);

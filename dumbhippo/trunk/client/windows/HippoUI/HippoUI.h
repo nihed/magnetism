@@ -19,6 +19,17 @@ struct HippoBrowserInfo
     DWORD cookie;
 };
 
+struct HippoLinkShare
+{
+	HippoBSTR postId;
+	HippoBSTR senderName;
+	HippoBSTR url;
+	HippoBSTR title;
+	HippoBSTR description;
+	HippoArray<HippoBSTR> personRecipients;
+	HippoArray<HippoBSTR> groupRecipients;
+};
+
 class HippoUI 
     : public IHippoUI 
 {
@@ -58,11 +69,7 @@ public:
 	void onConnectionChange(bool connected);
     void onAuthFailure();
     void onAuthSuccess();
-    void onLinkMessage(const WCHAR *postId,
-		               const WCHAR *senderName,
-					   const WCHAR *url,
-	                   const WCHAR *title,
-		               const WCHAR *description);
+    void onLinkMessage(HippoLinkShare &link);
     void onLinkClicked(const WCHAR *postId,
 		               const WCHAR *clickerName,
 	                   const WCHAR *title);
