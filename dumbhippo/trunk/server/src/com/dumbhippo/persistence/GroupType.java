@@ -7,5 +7,6 @@ package com.dumbhippo.persistence;
  */
 public enum GroupType {
 	MEMBERS_ONLY,
+	FRIENDS_ONLY,
 	PUBLIC;
 }
