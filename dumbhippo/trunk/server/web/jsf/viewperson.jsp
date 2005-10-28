@@ -1,14 +1,14 @@
 <html>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
+<jsp:useBean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
+<jsp:setProperty name="viewperson" property="signin" value="${signin}"/>
+<jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
 
-<f:view>
-	<head>
-	<title><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></title>
-	</head>
+<head>
+	<title><c:out value="${viewperson.personInfo.humanReadableName}"/></title>
 	<link rel="stylesheet" href="/css/person.css" type="text/css" />
 	<script src="/javascript/config.js" type="text/javascript"></script>
     <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
@@ -37,12 +37,13 @@
 				  	    	 });
 	    }
     </script>
-	<body>
+</head>
+<body>
 	<div class="header">
 	<table>
 		<tr>
 		<td><span class="first-letter dh">D</span><span class="dh">umb</span><span class="first-letter dh">H</span><span class="dh">ippo</span></td>
-		<td class="right"><h:outputText value="#{viewperson.personInfo.humanReadableName}"/></td>
+		<td class="right"><c:out value="${viewperson.personInfo.humanReadableName}"/></td>
 		</tr>
 	</table>
 	</div>
@@ -111,6 +112,5 @@
 	</table>
 	</div>
 
-	</body>
-</f:view>
+</body>
 </html>

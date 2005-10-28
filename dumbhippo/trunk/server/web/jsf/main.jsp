@@ -1,49 +1,39 @@
 <html>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
 
-<f:view>
-	<head>
+<head>
 	<title>Main</title>
-	</head>
-	<body>
-	<h:form>
-		<h3>This is the main page.</h3>
+	<link rel="stylesheet" href="/css/group.css" type="text/css" />
+	<script src="/javascript/config.js" type="text/javascript"></script>
+    <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
+    <script src="/javascript/common.js" type="text/javascript"></script>
+    <script type="text/javascript">
+	    dojo.require("dh.server");	    
+	    function dhSignOut() {
+	    	dh.server.doPOST("signout", { },
+				  	    	 function(type, data, http) {
+				  	    	 	 document.location.reload();
+				  	    	 },
+				  	    	 function(type, error, http) {
+				  	    	     alert("Couldn't sign out");
+				  	    	 });
+	    }
+    </script>	
+</head>
+<body>
+	<h3>This is the main page.</h3>
 
-		<!-- TODO: dump a JSF data table here with links associated with the 
-               		current viewuser --> 
-        <!-- TODO: dump a JSF data table here with people connected to the 
-               		current viewuser -->
-
-	    <c:url value="home.faces" var="homeurl"/>
-		<p><a href="${homeurl}">Home page</a></p>
-
-		<c:url value="invite.faces" var="inviteurl"/>
-		<p><a href="${inviteurl}">Invite a user</p>
-
-		<c:url value="/sharelink.html" var="sharelinkurl"/>
-		<p><a href="${sharelinkurl}">Share a link</a></p>
-		
- 		<p>
-  		<h:panelGroup rendered="#{signin.valid}">
-		    <h:commandLink action="#{signin.doLogout}">
-			     <h:outputText value="Log out #{signin.user}"/>
-		       </h:commandLink>
-   		</h:panelGroup>
-        </p>
-   
-        <p>
-   		<h:panelGroup rendered="#{!signin.valid}">
-			<h:commandLink action="addclient">
-				  <h:outputText value="Sign in current client" />
-			   </h:commandLink>
-   		</h:panelGroup>
-   		</p>
-
-		</h3>
-   
-	</h:form>
-	</body>
-</f:view>
+    <c:choose>
+ 	<c:when test="${signin.valid}">
+	 	<c:url value="home" var="homeurl"/>
+	   	<p><a href="${homeurl}">Your home page</a></p>
+	   	<p><a href="javascript:dhSignOut()">Sign out</a>/</p>
+  	</c:when>
+	<c:otherwise>
+	 	<c:url value="signin?next=home" var="signinurl"/>
+  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
+ 	</c:otherwise>
+	</c:choose>
+</body>
 </html>

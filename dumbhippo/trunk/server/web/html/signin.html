@@ -17,7 +17,13 @@
 	
 	function dhDoSignIn() {
 	    dh.login.requireLogin(function() {
-	    	dh.util.closeWindow();
+			var params=dh.util.getParamsFromLocation();
+			if (params.next) {
+			    if (params.next.match(/^[a-zA-Z]+$/))
+					window.open(params.next, "_self");
+			} else {
+		    	dh.util.closeWindow();
+		    }
 	    });
 	}
 	

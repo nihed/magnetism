@@ -74,7 +74,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		}	
 	}
 
-	private void logRequest(HttpServletRequest request, String type) {
+	protected void logRequest(HttpServletRequest request, String type) {
 		logger.debug(type + " uri=" + request.getRequestURI() + " content-type=" + request.getContentType());
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
@@ -144,7 +144,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	 */
 	
 	@Override
-	protected final void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
 		logRequest(request, "POST");
 		
@@ -157,7 +157,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	@Override
-	protected final void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		logRequest(request, "GET");
 		
 		try {

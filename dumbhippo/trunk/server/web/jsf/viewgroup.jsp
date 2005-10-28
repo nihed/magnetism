@@ -1,13 +1,14 @@
 <html>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
+<jsp:useBean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
+<jsp:setProperty name="viewgroup" property="signin" value="${signin}"/>
+<jsp:setProperty name="viewgroup" property="viewedGroupId" param="groupId"/>
 
-<f:view>
-	<head>
-	<title><h:outputText value="#{viewgroup.name}"/></title>
+<head>
+	<title><c:out value="${viewgroup.name}"/></title>
 	<link rel="stylesheet" href="/css/group.css" type="text/css" />
 	<script src="/javascript/config.js" type="text/javascript"></script>
     <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
@@ -37,13 +38,13 @@
 	    }
 	    
     </script>
-    </head>
-	<body>
+</head>
+<body>
 	<div class="header">
 	<table>
 		<tr>
 		<td><span class="first-letter dh">D</span><span class="dh">umb</span><span class="first-letter dh">H</span><span class="dh">ippo</span></td>
-		<td class="right"><a href=""><h:outputText value="#{viewgroup.name}"/></a></td>
+		<td class="right"><a href=""><c:out value="${viewgroup.name}"/></a></td>
 		</tr>
 	</table>
 	</div>
@@ -112,6 +113,5 @@
 	</table>
 	</div>
 
-	</body>
-</f:view>
+</body>
 </html>

@@ -157,7 +157,7 @@
 			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
 			
 			<!-- our static pages, css, etc. -->
-			<fileset dir="${web}" includes="*.html" />
+			<fileset dir="${web}" includes="html/*.html" />
 			<fileset dir="${web}" includes="jsf/*.jsp" />
 			<fileset dir="${web}" includes="jsf/*.jspf" />
 			<fileset dir="${web}" includes="jsf/*.tld" />

@@ -4,12 +4,14 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
 
-    <display-name>Dumb Hippo</display-name>
-    <description>
-	Blah.
-    </description>
+   <display-name>DumbHippo</display-name>
+   <description>
+       The DumbHippo web application  
+   </description>
+   
+   <!-- URLs hard-coded to go to our custom servlet -->
     
-    <servlet>
+   <servlet>
       <servlet-name>HippoServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.HippoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -39,23 +41,51 @@
       <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/redirect</url-pattern>
    </servlet-mapping>
+   
+   <servlet>
+      <servlet-name>SendInviteServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.SendInviteServlet</servlet-class>
+   </servlet>   
+   
+   <servlet-mapping>
+      <servlet-name>SendInviteServlet</servlet-name>
+      <url-pattern>/sendinvite</url-pattern>
+   </servlet-mapping>
 
-    <!-- FIXME jboss specific? -->
-	<listener>
-	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
-	</listener>    
+   <!-- JavaServer Faces; we'll look up the servlet by name, so we don't need any servlet-mapping -->
 
-<!-- JSF stuff -->    
+   <!-- MyFaces specific, needed for parsing faces-config.xml  -->
+   <listener>
+   <listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
+   </listener>    
+
    <servlet>
       <servlet-name>Faces Servlet</servlet-name>
       <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
-   </servlet>   
-
+   </servlet>
+   
    <servlet-mapping>
       <servlet-name>Faces Servlet</servlet-name>
       <url-pattern>*.faces</url-pattern>
-   </servlet-mapping>  
+   </servlet-mapping>
+
+   <!-- Map everything else to our URL-Rewriting servlet -->  
+
+   <servlet>
+      <servlet-name>RewriteServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+      <init-param>
+          <param-name>requiresSignin</param-name>
+          <param-value>home,welcome,invite,sharelink</param-value>
+      </init-param>
+   </servlet>   
+
+   <servlet-mapping>
+      <servlet-name>RewriteServlet</servlet-name>
+      <url-pattern>/</url-pattern>
+   </servlet-mapping>
 
    <welcome-file-list>
       <welcome-file>index.html</welcome-file>

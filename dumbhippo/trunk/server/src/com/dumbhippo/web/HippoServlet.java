@@ -350,13 +350,31 @@ public class HippoServlet extends AbstractServlet {
 		return true;
 	}
 
+	private boolean trySignoutRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException { 
+		if (!request.getRequestURI().equals("/action/signout") ||
+		    !request.getMethod().toUpperCase().equals("POST"))
+			return false;
+		
+		HttpSession session = request.getSession();
+		if (session != null)
+			session.invalidate();		
+		
+		// FIXME we need to drop the Client object when we do this,
+		// both to save our own disk space, and in case someone stole the 
+		// cookie.
+		
+		response.addCookie(LoginCookie.newDeleteCookie());
+		
+		return true;
+	}
+	
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
-		if (tryRedirectRequests(request, response)) {
-
-		} else if (tryLoginRequests(request, response)) {
-			return;
+		if (tryRedirectRequests(request, response) ||
+		    tryLoginRequests(request, response) ||
+		    trySignoutRequest(request, response)) {
+			/* nothing */
 		} else if (request.getRequestURI().startsWith("/xmlrpc/")) {
 			XmlRpcServer xmlrpc = new XmlRpcServer();
 			// Java thread locks are recursive so this is OK...

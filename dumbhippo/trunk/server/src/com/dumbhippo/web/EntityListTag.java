@@ -12,6 +12,9 @@ public class EntityListTag extends SimpleTagSupport {
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		
+		if (entities == null)
+			return;
+		
 		boolean first = true;
 		for (Object o : entities) {
 			if (!first)

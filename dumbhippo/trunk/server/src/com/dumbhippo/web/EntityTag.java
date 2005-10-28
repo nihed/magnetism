@@ -18,11 +18,11 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (o instanceof PersonInfo) {
 			PersonInfo info = (PersonInfo)o;
-			link = "viewperson.faces?personId=" + info.getPerson().getId();
+			link = "viewperson?personId=" + info.getPerson().getId();
 			body = info.getHumanReadableName();
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
-			link = "viewgroup.faces?groupId=" + group.getId();
+			link = "viewgroup?groupId=" + group.getId();
 			body = group.getName();
 		} else {
 			body = "???";

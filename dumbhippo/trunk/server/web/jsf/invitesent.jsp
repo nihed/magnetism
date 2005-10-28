@@ -1,25 +1,19 @@
 <html>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<f:view>
-	<head>
+<head>
 	<title>Invite Sent</title>
-	</head>
-	<body>
-	<h:form>
+</head>
+<body>
 		<h3>Congratulations, the invitation to 
-		    <h:outputText value="#{invite.fullName}"/>
-		    (<h:outputText value="#{invite.email}"/>) was sent.</h3>
+		    <c:out value="${fullName}"/>
+		    (<c:out value="${email}"/>) was sent.</h3>
 		<!--  print the link now -->
-		<c:url value="verify.faces?authKey=${invite.authKey}" var="authurl"/>
+		<c:url value="verify?authKey=${authKey}" var="authurl"/>
 		<p>Invite url: <a href="${authurl}">${authurl}</a>
         </p>
-		<p><h:commandLink action="main">
-			<h:outputText value="Go back to the main page" />
-		</h:commandLink></p>
-	</h:form>
-	</body>
-</f:view>
+        
+        <c:url value="main" var="mainurl"/>
+		<p><a href="${mainurl}">Go back to the main page</a></p>
+</body>
 </html>

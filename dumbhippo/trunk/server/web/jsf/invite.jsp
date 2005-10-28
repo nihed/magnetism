@@ -1,27 +1,25 @@
 <html>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<f:view>
-	<head>
+<head>
 	<title>Invite</title>
-	</head>
-	<body>
-	<h:form>
+</head>
+<body>
+	<c:url value="sendinvite" var="submiturl"/>
+	<form action="${submiturl}" method="post">
 		<h3>Please enter the name and email of the user to invite:</h3>
 		<table>
 			<tr>
 				<td>Name:</td>
-				<td><h:inputText value="#{invite.fullName}" /></td>
+				<td><input name="fullName"></td>
 			</tr>
 			<tr>
 				<td>Email:</td>
-				<td><h:inputText value="#{invite.email}" /></td>
+				<td><input name="email"></td>
 			</tr>
 		</table>
-		<p><h:commandButton value="Invite" action="#{invite.doInvite}" /></p>
-	</h:form>
-	</body>
-</f:view>
+		<input type="submit" value="Invite"/>
+
+	</form>
+</body>
 </html>
