@@ -85,7 +85,8 @@ public class HeadshotServlet extends AbstractServlet {
 				}
 
 				// FIXME It would be nicer to only pad images so they are always square and our 
-				// css won't mangle their aspect ratio.
+				// css won't mangle their aspect ratio. I think to do this we have to manually
+				// create the destination BufferedImage and then transform onto it.
 				
 				// FIXME it would be nicer to avoid round-tripping a jpeg through a BufferedImage
 
