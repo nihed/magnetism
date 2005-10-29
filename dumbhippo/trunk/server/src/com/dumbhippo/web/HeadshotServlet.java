@@ -130,7 +130,7 @@ public class HeadshotServlet extends AbstractServlet {
 		xml.appendEscaped(Configuration.HEADSHOTS_RELATIVE_PATH);
 		xml.appendEscaped("/" + user.getId());
 		xml.append("\"/>\n");
-		xml.append("<p>(If this is your old photo, try pressing reload.)</p>");
+		xml.append("<p>(If this is your old photo, your browser probably cached it. <a href=\"/home\">Go to your page</a> and then press reload.)</p>");
 		xml.append("<p><a href=\"/home\">Go to your page</a></p>");
 		xml.append("<p><a href=\"/myphoto\">Change to another photo</a></p>");
 		xml.append("</body>\n</html>\n");
