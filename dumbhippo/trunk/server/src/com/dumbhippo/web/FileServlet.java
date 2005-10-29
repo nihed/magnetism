@@ -75,12 +75,18 @@ public class FileServlet extends AbstractServlet {
 		String noPrefix = request.getRequestURI().replaceFirst("\\/files", "");
 		File toServe = new File(filesDir, noPrefix);
 		logger.debug("sending file " + toServe.getCanonicalPath());
+		
+		if (noPrefix.startsWith(Configuration.HEADSHOTS_RELATIVE_PATH)) {
+			response.setContentType("image/png");
+		} else {
+			logger.debug("no content type known for " + noPrefix);
+		}
+		
+		logger.debug("Content type " + response.getContentType());
+		
 		InputStream in = new FileInputStream(toServe);
 		OutputStream out = response.getOutputStream();
 		copy(in, out);
 		out.flush();
-		
-		// set content type... but no good way to know what it is...
-		response.setContentType("image/png");
 	}
 }

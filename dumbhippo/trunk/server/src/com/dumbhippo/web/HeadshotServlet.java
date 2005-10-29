@@ -1,12 +1,17 @@
 package com.dumbhippo.web;
 
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +32,12 @@ public class HeadshotServlet extends AbstractServlet {
 
 	private static final Log logger = GlobalSetup.getLog(HeadshotServlet.class);
 
+	private static final int HEADSHOT_DIMENSION = 48;
+	private static final int MAX_FILE_SIZE = 1024 * 1024 * 5; // 5M is huge, but photos can be big...
+	// scaling something huge is probably bad, but allowing a typical desktop background is 
+	// good if we can handle it...
+	private static final int MAX_IMAGE_DIMENSION = 2048;
+	
 	private Configuration config;
 	private URI headshotSaveUri;
 	private File headshotSaveDir;
@@ -48,37 +59,64 @@ public class HeadshotServlet extends AbstractServlet {
 	
 	private void doHeadshot(HttpServletRequest request, HttpServletResponse response, DiskFileUpload upload, List items)
 			throws HttpException, IOException {
-		
+
 		logger.debug("uploading headshot");
-		
+
 		Person user = doLogin(request, response, true);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in to upload a headshot");
-		
+
 		for (Object o : items) {
 			FileItem item = (FileItem) o;
 			if (item.isFormField()) {
 				logger.debug("Form field " + item.getFieldName() + " = " + item.getString());
 			} else {
-				logger.debug("File " + item.getName() + " size " + item.getSize() + " content-type " + item.getContentType());
-				
-				if (!item.getContentType().equals("image/png")) {
-					// we have no way to record the mime type for when we serve the file
-					throw new HttpException(HttpResponseCode.BAD_REQUEST, "we only do PNG for now");
+				logger.debug("File " + item.getName() + " size " + item.getSize() + " content-type "
+						+ item.getContentType());
+
+				InputStream in = item.getInputStream();
+
+				BufferedImage image = ImageIO.read(in);
+				if (image == null) {
+					throw new HttpException(HttpResponseCode.BAD_REQUEST, "Could not load your image");
 				}
+				if (image.getWidth() > MAX_IMAGE_DIMENSION || image.getHeight() > MAX_IMAGE_DIMENSION) {
+					throw new HttpException(HttpResponseCode.BAD_REQUEST, "Your image is too big");
+				}
+
+				// FIXME It would be nicer to only pad images so they are always square and our 
+				// css won't mangle their aspect ratio.
 				
+				// FIXME it would be nicer to avoid round-tripping a jpeg through a BufferedImage
+
+				double scaleX, scaleY;
+				if (image.getHeight() > image.getWidth()) {
+					scaleY = HEADSHOT_DIMENSION / (double) image.getHeight();
+					scaleX = scaleY;
+				} else {
+					scaleX = HEADSHOT_DIMENSION / (double) image.getWidth();
+					scaleY = scaleX;
+				}
+
+				logger.debug("Scaling headshot scaleX = " + scaleX + " scaleY = " + scaleY + "new width = "
+						+ image.getWidth() * scaleX + " new height = " + image.getHeight() * scaleY);
+
+				AffineTransform tx = new AffineTransform();
+				tx.scale(scaleX, scaleY);
+				AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+				BufferedImage scaled = op.filter(image, null);
 				File saveDest = new File(headshotSaveDir, user.getId());
-				
-				try {
-					logger.debug("saving to " + saveDest.getCanonicalPath());
-					item.write(saveDest);
-				} catch (Exception e) {
-					logger.error(e);
-					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "failed to save photo", e);
+				logger.debug("saving to " + saveDest.getCanonicalPath());
+
+				// FIXME this should be JPEG, but Java appears to fuck that up
+				// on a lot
+				// of images and produce a corrupt image
+				if (!ImageIO.write(scaled, "png", saveDest)) {
+					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "Failed to save image");
 				}
 			}
 		}
-		
+
 		response.setContentType("text/html");
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendHtmlHead("Your Photo");
@@ -88,9 +126,11 @@ public class HeadshotServlet extends AbstractServlet {
 		xml.appendEscaped(Configuration.HEADSHOTS_RELATIVE_PATH);
 		xml.appendEscaped("/" + user.getId());
 		xml.append("\"/>\n");
-		xml.append("<a href=\"/home\">Go to your page</a>");
+		xml.append("<p>(If this is your old photo, try pressing reload.)</p>");
+		xml.append("<p><a href=\"/home\">Go to your page</a></p>");
+		xml.append("<p><a href=\"/myphoto\">Change to another photo</a></p>");
 		xml.append("</body>\n</html>\n");
-		
+
 		OutputStream out = response.getOutputStream();
 		out.write(xml.toString().getBytes());
 		out.flush();
@@ -99,6 +139,7 @@ public class HeadshotServlet extends AbstractServlet {
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
 		DiskFileUpload upload = new DiskFileUpload();
+		upload.setSizeMax(MAX_FILE_SIZE);
 		
 		try {
 			List items = upload.parseRequest(request);

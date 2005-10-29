@@ -63,6 +63,10 @@
 	   	<c:out value="${home.personInfo.humanReadableName}"/>
 	   	</span>
 	</div>
+	<div>
+	<c:url value="myphoto" var="myphoto"/>
+	<a href="${myphoto}">Change my photo</a>
+	</div>
 
 	<div class="main">
 

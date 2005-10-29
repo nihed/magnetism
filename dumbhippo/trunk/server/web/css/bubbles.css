@@ -29,8 +29,17 @@ td.cool-person {
 }
 img.cool-person {
 	margin:					0.3em;
-	width:					7em;
-	max-height:				15em;
+	/* Right now the Java code scales headshots to a max of 48px in each
+	 * dimension, but preserving aspect ratio. If height < width the below
+	 * will mangle the aspect again. If changing from 48px, also change the 
+	 * Java code. We need to fix the Java code to always produce exactly 
+	 * 48x48 images though (i.e. pad images with transparency) since 
+	 * css can't be smart about "max size of largest dimension".
+	 * height is fixed here because for a headshot height>width seems more 
+	 * likely than width>height.
+	 */
+	max-width:				48px;
+	height:					48px;
 	border:					0;
 }
 td.cool-link {
