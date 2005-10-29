@@ -4,15 +4,17 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToOne;
 
-// Not used yet
-//@Entity
+
+@Entity
 public class PersonPostData extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Post post;
 	private Person person;
 	private Date clickedDate;
+	
+	protected PersonPostData() {}
 	
 	public PersonPostData(Person person, Post post) {
 		this(person, post, new Date());
@@ -29,16 +31,17 @@ public class PersonPostData extends DBUnique {
 	}	
 
 	@Column(nullable=false)
-	@OneToMany
+	@ManyToOne
 	public Person getPerson() {
 		return person;
 	}
 	
 	@Column(nullable=false)
-	@OneToMany
+	@ManyToOne
 	public Post getPost() {
 		return post;
 	}
+	
 	@Column(nullable=true)
 	public Date getClickedDate() {
 		return clickedDate;

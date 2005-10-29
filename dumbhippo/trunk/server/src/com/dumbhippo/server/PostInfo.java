@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 
@@ -19,10 +20,11 @@ import com.dumbhippo.persistence.Resource;
 public class PostInfo {
 	private Post post;
 	private String url;
+	private boolean viewerHasViewed;
 	private PersonInfo posterInfo;
 	private List<Object> recipients;
 	
-	public PostInfo(IdentitySpider spider, Person viewer, Post p) {
+	public PostInfo(IdentitySpider spider, Person viewer, Post p, PersonPostData ppd) {
 		post = p;
 		
 		for (Resource r : post.getResources()) {
@@ -42,6 +44,8 @@ public class PostInfo {
 		for (Person recipient : post.getPersonRecipients()) {
 			recipients.add(new PersonInfo(spider, viewer, recipient));
 		}
+		
+		viewerHasViewed = ppd != null;
 	}
 	
 	public String getTitle() {
@@ -66,5 +70,9 @@ public class PostInfo {
 	
 	public Post getPost() {
 		return post;
+	}
+
+	public boolean isViewerHasViewed() {
+		return viewerHasViewed;
 	}
 }

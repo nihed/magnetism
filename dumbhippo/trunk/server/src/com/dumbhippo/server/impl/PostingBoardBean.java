@@ -11,6 +11,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -22,6 +23,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
@@ -114,8 +116,10 @@ public class PostingBoardBean implements PostingBoard {
 		List<PostInfo> result = new ArrayList<PostInfo>();
 		
 		List<Post> posts = getPostsFor(poster, max);
-		for (Post p : posts)
-			result.add(new PostInfo(identitySpider, viewer, p));
+		for (Post p : posts) {
+			PersonPostData ppd = getPersonPostData(viewer, p);				
+			result.add(new PostInfo(identitySpider, viewer, p, ppd));
+		}
 		
 		return result;
 	}
@@ -131,10 +135,23 @@ public class PostingBoardBean implements PostingBoard {
 		List<Post> posts = q.getResultList();
 		
 		List<PostInfo> results = new ArrayList<PostInfo>();
-		for (Post p : posts) 
-			results.add(new PostInfo(identitySpider, recipient, p));
+		for (Post p : posts) {
+			PersonPostData ppd = getPersonPostData(recipient, p);			
+			results.add(new PostInfo(identitySpider, recipient, p, ppd));
+		}
 		
 		return results;
+	}
+	
+	private PersonPostData getPersonPostData(Person viewer, Post post) {
+		Query q = em.createQuery("select ppd from PersonPostData ppd where ppd.post = :post and ppd.person = :viewer");
+		q.setParameter("post", post);
+		q.setParameter("viewer", viewer);
+		try {
+			return (PersonPostData) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
 	}
 	
 	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max) {
@@ -148,8 +165,10 @@ public class PostingBoardBean implements PostingBoard {
 		List<Post> posts = q.getResultList();
 		
 		List<PostInfo> results = new ArrayList<PostInfo>();
-		for (Post p : posts) 
-			results.add(new PostInfo(identitySpider, viewer, p));;
+		for (Post p : posts) {
+			PersonPostData ppd = getPersonPostData(viewer, p);
+			results.add(new PostInfo(identitySpider, viewer, p, ppd));
+		}
 		
 		return results;
 	}
@@ -162,7 +181,7 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Post " + post + " clicked by " + clicker);
 		messageSender.sendPostClickedNotification(post, clicker);
 		// FIXME should be unique...
-	//	PersonPostData postData = new PersonPostData(clicker, post);
-	//	em.persist(postData);
+		PersonPostData postData = new PersonPostData(clicker, post);
+		em.persist(postData);
 	}
 }

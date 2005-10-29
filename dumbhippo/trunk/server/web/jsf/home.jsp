@@ -85,7 +85,15 @@
 		    </td>
 		    <td class="cool-link">
 			<div class="cool-link">
-			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+			<c:choose>
+				<c:when test="${info.viewerHasViewed}">
+					<c:set var="linkcss" value="cool-link-viewed" scope="page"/>
+				</c:when>
+				<c:otherwise>
+					<c:set var="linkcss" value="cool-link" scope="page"/>
+				</c:otherwise>
+			</c:choose>
+			<a class="${linkcss}" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
 			</div>
 		    </td>
 		</tr>

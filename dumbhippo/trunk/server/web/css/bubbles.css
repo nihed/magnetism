@@ -48,6 +48,15 @@ div.cool-link {
 	padding:				0;
 	margin:					0;
 }
+div.cool-link-viewed {
+	width:					22em;
+	text-overflow:				ellipsis;
+	overflow:				hidden;
+	padding:				0;
+	margin:					0;
+	color:					gray;
+}
+
 a.cool-link {
 	text-decoration:			underline;
 	
