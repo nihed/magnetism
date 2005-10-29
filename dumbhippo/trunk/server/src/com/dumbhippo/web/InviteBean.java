@@ -23,6 +23,7 @@ public class InviteBean {
 	
 	private String authKey;
 	
+	@Signin
 	private SigninBean signin;
 
 	private InvitationSystem invitationSystem;
@@ -80,9 +81,5 @@ public class InviteBean {
 
 	public SigninBean getSignin() {
 		return signin;
-	}
-
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
 	}
 }

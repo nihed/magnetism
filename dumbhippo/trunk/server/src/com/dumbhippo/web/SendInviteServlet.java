@@ -48,7 +48,7 @@ public class SendInviteServlet extends AbstractServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
 		
-		logRequest(request, "POST");
+		logRequest(request, "GET");
 		
 		try {
 			Invitation invitation = doSendInvite(request, response);
@@ -59,20 +59,5 @@ public class SendInviteServlet extends AbstractServlet {
 			logger.debug(e);
 			e.send(response);
 		}		
-	}
-
-	// This won't be called because we overrode doPost
-	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) {
-		throw new NotImplementedException();				 
-	}
-
-	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			IOException {
-		// Throwing "405 Method Not Allowed" would seem good, but according to the spec
-		// we'd need to then set an Allowed header
-
-		throw new HttpException(HttpResponseCode.NOT_FOUND, "You can only POST to sendinvite");				 
 	}
 }

@@ -27,7 +27,8 @@ public class ViewPersonPage {
 	
 	private Person viewedPerson;
 	private String viewedPersonId;
-	
+
+	@Signin
 	private SigninBean signin;
 	
 	private IdentitySpider identitySpider;
@@ -48,10 +49,6 @@ public class ViewPersonPage {
 	
 	public SigninBean getSignin() {
 		return signin;
-	}
-
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
 	}
 
 	public String getViewedPersonId() {

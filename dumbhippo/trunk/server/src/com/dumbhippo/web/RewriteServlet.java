@@ -24,27 +24,13 @@ public class RewriteServlet extends HttpServlet {
 	static final long serialVersionUID = 1;
 	
 	private Set<String> requiresSignin;
-	private Set<String> jsfPages;
+	private Set<String> jspPages;
 	private Set<String> htmlPages;
 	
 	private ServletContext context;
 	
 	private boolean hasSignin(HttpServletRequest request) {
-		// First see if the user is already signed in to the session
-		SigninBean signin;
-		signin = SigninBean.getFromHttpSession(request.getSession());
-		if (signin != null)
-			return true;
-		
-		// If not, try to authenticate using cookies they've sent
-		try {
-			CookieAuthentication.authenticate(request);
-			return true;
-		} catch (BadTastingException e) {
-			return false;
-		} catch (NotLoggedInException e2) {
-			return false;
-		}
+		return SigninBean.getForRequest(request).isValid();
 	}
 	
 	@Override
@@ -55,7 +41,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		String path = request.getServletPath();
 		
-		logger.debug("Handling request for" + path);
+		// logger.debug("Handling request for" + path);
 		
 		if (path.equals("/")) {
 			if (hasSignin(request))
@@ -84,9 +70,9 @@ public class RewriteServlet extends HttpServlet {
 		
 		String afterSlash = path.substring(1);
 		
-		if (jsfPages.contains(afterSlash)) {
-			dispatcher = context.getNamedDispatcher("Faces Servlet");
-			newPath = "/jsf" + path + ".jsp";
+		if (jspPages.contains(afterSlash)) {
+			dispatcher = context.getNamedDispatcher("jsp");
+			newPath = "/jsp" + path + ".jsp";
 		} else if (htmlPages.contains(afterSlash)) {
 			dispatcher = context.getNamedDispatcher("default");
 			newPath = "/html" + path + ".html";
@@ -111,13 +97,13 @@ public class RewriteServlet extends HttpServlet {
 			for (String page : requiresSigninString.split(","))
 				requiresSignin.add(page);
 		
-		jsfPages = new HashSet<String>();
-		Set jsfPaths = context.getResourcePaths("/jsf/");
-		if (jsfPaths != null) {
-			for (Object o : jsfPaths) {
+		jspPages = new HashSet<String>();
+		Set jspPaths = context.getResourcePaths("/jsp/");
+		if (jspPaths != null) {
+			for (Object o : jspPaths) {
 				String path = (String)o;
 				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
-					jsfPages.add(path.substring(5, path.length() - 4));
+					jspPages.add(path.substring(5, path.length() - 4));
 			}
 		}
 		

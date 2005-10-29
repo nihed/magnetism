@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import java.io.Serializable;
 
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -29,31 +27,36 @@ public class SigninBean implements Serializable {
 	
 	private Person user;
 	
-	/**
-	 * Should only be called by JSF.
-	 */
-	public SigninBean() {
-		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
-		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();
+	private SigninBean(HttpServletRequest request) {
 		try {
-			user = CookieAuthentication.authenticate(req);
+			user = CookieAuthentication.authenticate(request);
 		} catch (BadTastingException e) {
 			user = null;
 		} catch (NotLoggedInException e) {
 			user = null;
 		}
-		// We store ourselves twice in the session so that
-		// the XML-RPC server can access the object under this name
-		// too
-		HttpSession session = (HttpSession) ctx.getSession(true);
-		session.setAttribute("dumbhippo.signin", this);
-		logger.debug("storing signin in session");
+		
+		request.getSession().setAttribute("dumbhippo.signin", this);
+		logger.debug("storing SigninBean in session, valid = " + isValid());
 	}
 
-	public static SigninBean getFromHttpSession(HttpSession sess) {
-		if (sess == null)
-			return null;
-		return (SigninBean) sess.getAttribute("dumbhippo.signin");
+	public static SigninBean getForRequest(HttpServletRequest request) {
+		SigninBean result = null;
+		
+		if (request == null)
+			throw new NullPointerException("null request");
+		
+		try {
+			result = (SigninBean) request.getSession().getAttribute("dumbhippo.signin");
+		} catch (ClassCastException e) {
+			logger.debug("Value of dumbhippo.signin wasn't a SigninBean");
+			result = null;
+		}
+		
+		if (result == null)
+			result = new SigninBean(request);
+				
+		return result;
 	}
 		
 	public static String computeClientIdentifier(HttpServletRequest request) {
@@ -88,20 +91,5 @@ public class SigninBean implements Serializable {
 			throw new RuntimeException("Login required");
 		}
 		return user;
-	}
-	
-	public String doLogout() {
-		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
-		HttpServletResponse response = (HttpServletResponse) ctx.getResponse();		
-		unsetCookie(response);	
-		HttpSession session = (HttpSession) ctx.getSession(false);
-		if (session != null)
-			session.invalidate();		
-		
-		// FIXME we need to drop the Client object when we do this,
-		// both to save our own disk space, and in case someone stole the 
-		// cookie.
-		
-		return "main";
 	}
 }

@@ -9,7 +9,7 @@
        The DumbHippo web application  
    </description>
    
-   <!-- URLs hard-coded to go to our custom servlet -->
+   <!-- URLs hard-coded to go to our custom servlets -->
     
    <servlet>
       <servlet-name>HippoServlet</servlet-name>
@@ -74,22 +74,14 @@
       <url-pattern>/files/*</url-pattern>
    </servlet-mapping>
 
-
-   <!-- JavaServer Faces; we'll look up the servlet by name, so we don't need any servlet-mapping -->
-   <!-- MyFaces specific, needed for parsing faces-config.xml  -->
-   <listener>
-  	<listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
-   </listener>    
-
    <servlet>
-      <servlet-name>Faces Servlet</servlet-name>
-      <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-   </servlet>
+      <servlet-name>VerifyServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.VerifyServlet</servlet-class>
+   </servlet>   
    
    <servlet-mapping>
-      <servlet-name>Faces Servlet</servlet-name>
-      <url-pattern>*.faces</url-pattern>
+      <servlet-name>VerifyServlet</servlet-name>
+      <url-pattern>/verify</url-pattern>
    </servlet-mapping>
 
    <!-- Map everything else to our URL-Rewriting servlet -->  

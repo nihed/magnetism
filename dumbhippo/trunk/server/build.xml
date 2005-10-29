@@ -39,7 +39,6 @@
 			<include name="*ejb3*.jar"/>
 			<include name="hibernate3.jar"/>
 		</fileset>
-		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/myfaces-api.jar"/>		
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 	</path>
 
@@ -158,9 +157,8 @@
 			
 			<!-- our static pages, css, etc. -->
 			<fileset dir="${web}" includes="html/*.html" />
-			<fileset dir="${web}" includes="jsf/*.jsp" />
-			<fileset dir="${web}" includes="jsf/*.jspf" />
-			<fileset dir="${web}" includes="jsf/*.tld" />
+			<fileset dir="${web}" includes="jsp/*.jsp" />
+			<fileset dir="${web}" includes="jsp/*.tld" />
 			<fileset dir="${web}" includes="css/*.css" />
 
 			<fileset dir="${build}">
@@ -170,7 +168,6 @@
 				<attribute name="Class-Path" value="${bundled-classpath} xmlrpc-2.0.jar" />
 			</manifest>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
-			<webinf dir="${web}" includes="**/faces-config.xml" />
 		</war>
 	</target>
 

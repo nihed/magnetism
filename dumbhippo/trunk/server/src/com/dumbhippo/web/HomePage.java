@@ -24,7 +24,8 @@ import com.dumbhippo.server.PostingBoard;
  */
 public class HomePage {
 	static private final Log logger = GlobalSetup.getLog(HomePage.class);
-	
+
+	@Signin
 	private SigninBean signin;
 	
 	private Configuration configuration;
@@ -47,10 +48,6 @@ public class HomePage {
 	
 	public SigninBean getSignin() {
 		return signin;
-	}
-
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
 	}
 
 	public PersonInfo getPersonInfo() {

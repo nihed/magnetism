@@ -1,7 +1,5 @@
 package com.dumbhippo.web;
 
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
@@ -20,12 +18,6 @@ public class CookieAuthentication {
 		public NotLoggedInException(String string) {
 			super(string);
 		}
-	}
-	
-	public static Person authFromFacesContext() throws BadTastingException, NotLoggedInException {
-		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
-		HttpServletRequest req = (HttpServletRequest) ctx.getRequest();		
-		return authenticate(req);		
 	}
 	
 	/**

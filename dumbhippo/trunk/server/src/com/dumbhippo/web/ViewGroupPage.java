@@ -21,7 +21,8 @@ public class ViewGroupPage {
 	
 	private Group viewedGroup;
 	private String viewedGroupId;
-	
+
+	@Signin
 	private SigninBean signin;
 	
 	private IdentitySpider identitySpider;
@@ -41,10 +42,6 @@ public class ViewGroupPage {
 	
 	public SigninBean getSignin() {
 		return signin;
-	}
-
-	public void setSignin(SigninBean signin) {
-		this.signin = signin;
 	}
 
 	public String getViewedGroupId() {

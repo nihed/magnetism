@@ -288,7 +288,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// FIXME obviously we should redirect you to login and then come back...
 		if (user == null && invitation == null) {
-			throw new RedirectException("Do you need to <a href=\"/jsf/addclient.faces\">log in</a>?");
+			throw new RedirectException("Do you need to <a href=\"/home\">log in</a>?");
 		}
 
 		Post post;

@@ -16,6 +16,7 @@ import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
@@ -23,6 +24,7 @@ import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.RedirectException;
+import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.XmlRpcMethods;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -296,6 +298,19 @@ public class HippoServlet extends AbstractServlet {
 		return true;
 	}
 	
+	// FIXME this should go away
+	public static LoginCookie addNewClientForEmail(String email, HttpServletRequest request, HttpServletResponse response) {
+		TestGlue testGlue = WebEJBUtil.defaultLookup(TestGlue.class);
+		HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
+		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier(request));
+		LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
+		response.addCookie(loginCookie.getCookie());
+		HttpSession sess = request.getSession(false);
+		if (sess != null)
+			sess.invalidate();
+		return loginCookie;
+	}
+	
 	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
 		// special method that magically causes us to look at your cookie and log you 
 		// in if it's set, then return person you're logged in as or "false"
@@ -318,7 +333,7 @@ public class HippoServlet extends AbstractServlet {
 				throw new HttpException(HttpResponseCode.BAD_REQUEST, "No email address provided");
 			}
 
-			LoginCookie loginCookie = AddClientBean.addNewClientForEmail(email, request, response);
+			LoginCookie loginCookie = addNewClientForEmail(email, request, response);
 			
 			try {
 				user = CookieAuthentication.authenticate(loginCookie);
