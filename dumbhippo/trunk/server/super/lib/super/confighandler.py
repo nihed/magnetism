@@ -55,7 +55,11 @@ class ConfigHandler (xml.sax.ContentHandler):
                 if (self.config.has_service(name)):
                     self.service = self.config.get_service(name)
                 else:
-                    self.service = Service(name, self.config)
+                    if (cls):
+                        module = "super." + cls.lower()
+                        exec "import %s; self.service = %s.%s(name, self.config)" % (module, module, cls)
+                    else:
+                        self.service = Service(name, self.config)
                     self.config.add_service(self.service)
                 self.state = SERVICE
                 return

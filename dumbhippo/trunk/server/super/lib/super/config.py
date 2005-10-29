@@ -198,7 +198,12 @@ class Config:
                         ans = ans.strip()
                         if ans == 'y':
                             svc.nuke()
-
+        elif action == 'watch':
+            if len(services) > 1:
+                print >>sys.stderr, "You can only watch one service"
+                sys.exit(1)
+            self.services[services[0]].watch()
+                    
     def add_service(self, service):
         """Add service to the list of services."""
         self.services[service.get_name()] = service

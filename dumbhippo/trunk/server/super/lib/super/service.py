@@ -2,6 +2,7 @@ import errno
 import os
 import stat
 import sys
+import time
 
 import super.dirtree
 from super.dirtree import DirTree
@@ -150,7 +151,45 @@ class Service:
         
     def nuke(self):
         nukeCommand = self.expand_parameter('nukeCommand')
-        return os.system(nukeCommand) == 0	
+        return os.system(nukeCommand) == 0
+
+    def playSound(self, soundFile):
+        """Plays the given sound (as an alert during 'super watch')"""
+        playCommand = self.expand_parameter("playSoundCommand")
+        if (os.system(playCommand % soundFile) != 0):
+            print >>sys.stderr, "Error playing sound"
+
+    def watchLine(self, line):
+        """Display (or ignore) a line of a watched file; to be overridden
+           by subclassess."""
+        print line
+
+    def watchFile(self, filename):
+        """Tail a file, executing self.watchLine() for each line"""
+        f = open(filename)
+        f.seek(0, 2) # The end
+        
+        buf = ''
+        while True:
+            buf += f.read()
+            while (buf):
+                pos = 0
+                while True:
+                    next = buf.find('\n')
+                    if next < 0:
+                        break
+                    self.watchLine(buf[0:next])
+                    buf = buf[next + 1:]
+            time.sleep(0.25)
+
+    def watch(self):
+        try:
+            filename = self.expand_parameter('logFile')
+        except KeyError:
+            print >>sys.stderr, "No log file defined for", self.name
+            sys.exit(1)
+            
+        self.watchFile(filename)
 
     def _clean_recurse(self, path, fullpath):
         # Worker function for clean()
