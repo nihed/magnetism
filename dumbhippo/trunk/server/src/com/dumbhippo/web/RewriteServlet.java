@@ -43,6 +43,8 @@ public class RewriteServlet extends HttpServlet {
 		
 		// logger.debug("Handling request for" + path);
 		
+		// The root URL is special-cased
+		
 		if (path.equals("/")) {
 			if (hasSignin(request))
 				response.sendRedirect(response.encodeRedirectURL("home"));
@@ -69,6 +71,22 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		String afterSlash = path.substring(1);
+		
+		// If this is a request to one of the pages configured as requiresLogin,
+		// and the user isn't signed in, go to /signin, storing the real
+		// destination in the query string. This only works for GET, since we'd
+		// have to save the POST parameters somewhere.
+		
+		if (requiresSignin.contains(afterSlash) && 
+			!hasSignin(request) && 
+			request.getMethod().toUpperCase().equals("GET")) {
+			String url = response.encodeRedirectURL("/signin?next=" + afterSlash);
+			response.sendRedirect(url);
+			return;
+		}
+			
+		// Now handle the primary set of user visible pages, which is a merge
+		// of static HTML and JSP's.
 		
 		if (jspPages.contains(afterSlash)) {
 			dispatcher = context.getNamedDispatcher("jsp");
