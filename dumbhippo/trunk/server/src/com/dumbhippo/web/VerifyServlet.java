@@ -8,12 +8,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
-import org.jboss.util.NotImplementedException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Invitation;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.InvitationSystem;
 
 public class VerifyServlet extends AbstractServlet {

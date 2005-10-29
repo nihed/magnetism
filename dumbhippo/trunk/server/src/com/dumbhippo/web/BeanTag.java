@@ -2,24 +2,16 @@ package com.dumbhippo.web;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.JspFragment;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import org.apache.commons.logging.Log;
-import org.jboss.util.NotImplementedException;
-
-import sun.security.action.GetBooleanAction;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.server.PersonInfo;
 
 public class BeanTag extends SimpleTagSupport {
 	private static final Log logger = GlobalSetup.getLog(BeanTag.class);

@@ -12,14 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-
-import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
-import com.dumbhippo.web.LoginCookie.BadTastingException;
-
 public class RewriteServlet extends HttpServlet {
-	private static final Log logger = GlobalSetup.getLog(RewriteServlet.class);
 	
 	static final long serialVersionUID = 1;
 	
@@ -40,8 +33,6 @@ public class RewriteServlet extends HttpServlet {
 		String newPath = null;
 		
 		String path = request.getServletPath();
-		
-		// logger.debug("Handling request for" + path);
 		
 		// The root URL is special-cased
 		

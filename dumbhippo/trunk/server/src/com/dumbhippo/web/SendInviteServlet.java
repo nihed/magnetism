@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
-import org.jboss.util.NotImplementedException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Invitation;
