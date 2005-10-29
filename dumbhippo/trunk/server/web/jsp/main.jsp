@@ -1,6 +1,7 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
+<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<dh:bean id="signin" class="com.dumbhippo.web.SigninBean" scope="request"/>
 
 <head>
 	<title>Main</title>
@@ -28,7 +29,7 @@
  	<c:when test="${signin.valid}">
 	 	<c:url value="home" var="homeurl"/>
 	   	<p><a href="${homeurl}">Your home page</a></p>
-	   	<p><a href="javascript:dhSignOut()">Sign out</a>/</p>
+	   	<p><a href="javascript:dhSignOut()">Sign out</a></p>
   	</c:when>
 	<c:otherwise>
 	 	<c:url value="signin?next=home" var="signinurl"/>

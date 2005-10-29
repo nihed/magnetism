@@ -7,6 +7,27 @@
 	<shortname>dh</shortname>
 	<info>DumbHippo Tag library</info>
     <tag>
+        <name>bean</name>
+        <tagclass>com.dumbhippo.web.BeanTag</tagclass>
+        <bodycontent>tagdependent</bodycontent>
+        <info>A bean to instantiate with DumbHippo specific injection</info>
+	    <attribute>
+           <name>id</name>
+           <required>true</required>
+           <rtexprvalue>false</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>class</name>
+           <required>true</required>
+           <rtexprvalue>false</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>scope</name>
+           <required>true</required>
+           <rtexprvalue>false</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
         <name>entity</name>
         <tagclass>com.dumbhippo.web.EntityTag</tagclass>
         <bodycontent>empty</bodycontent>

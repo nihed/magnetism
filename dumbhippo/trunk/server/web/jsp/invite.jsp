@@ -1,5 +1,6 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 
 <head>
 	<title>Invite</title>

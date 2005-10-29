@@ -2,9 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
-<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
-<jsp:useBean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
-<jsp:setProperty name="viewgroup" property="signin" value="${signin}"/>
+<dh:bean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
 <jsp:setProperty name="viewgroup" property="viewedGroupId" param="groupId"/>
 
 <head>

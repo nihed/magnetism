@@ -2,9 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
-<jsp:useBean id="signin" class="com.dumbhippo.web.SigninBean" scope="session"/>
-<jsp:useBean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
-<jsp:setProperty name="home" property="signin" value="${signin}"/>
+<dh:bean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
 
 <head>
 	<title><c:out value="${home.personInfo.humanReadableName}"/></title>
