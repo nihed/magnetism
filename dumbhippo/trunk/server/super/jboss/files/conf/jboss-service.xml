@@ -327,7 +327,7 @@
       </attribute>
 
       <!-- Frequency in milliseconds to rescan the URLs for changes -->
-      <attribute name="ScanPeriod">5000</attribute>
+      <attribute name="ScanPeriod">@@deployScanPeriod@@</attribute>
       <!-- A flag to disable the scans -->
       <attribute name="ScanEnabled">true</attribute>
 
