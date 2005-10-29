@@ -33,6 +33,7 @@ public class FileServlet extends AbstractServlet {
 	private Configuration config;
 	private URI filesUri;
 	private File filesDir;
+	private File headshotDefault;
 	
 	@Override
 	public void init() {
@@ -46,6 +47,8 @@ public class FileServlet extends AbstractServlet {
 			throw new RuntimeException("files url busted: " + filesUrl, e);
 		}
 		filesDir = new File(filesUri);
+		
+		headshotDefault = new File(filesDir, Configuration.HEADSHOTS_RELATIVE_PATH + "/default");
 	}
 	
 	@Override
@@ -72,21 +75,29 @@ public class FileServlet extends AbstractServlet {
 	@Override
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
+		File defaultFile = null;
 		String noPrefix = request.getRequestURI().replaceFirst("\\/files", "");
 		File toServe = new File(filesDir, noPrefix);
 		logger.debug("sending file " + toServe.getCanonicalPath());
 		
 		if (noPrefix.startsWith(Configuration.HEADSHOTS_RELATIVE_PATH)) {
 			response.setContentType("image/png");
+			defaultFile = headshotDefault;
 		} else {
 			logger.debug("no content type known for " + noPrefix);
 		}
 		
 		logger.debug("Content type " + response.getContentType());
 		
-		InputStream in = new FileInputStream(toServe);
+		InputStream in;
+		try {
+			in = new FileInputStream(toServe);
+		} catch (IOException e) {
+			in = new FileInputStream(defaultFile);
+		}
 		OutputStream out = response.getOutputStream();
 		copy(in, out);
 		out.flush();
 	}
 }
+
