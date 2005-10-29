@@ -110,8 +110,11 @@ public class HeadshotServlet extends AbstractServlet {
 				logger.debug("saving to " + saveDest.getCanonicalPath());
 
 				// FIXME this should be JPEG, but Java appears to fuck that up
-				// on a lot
-				// of images and produce a corrupt image
+				// on a lot of images and produce a corrupt image
+				// (someone on the internet says it's because scaling other than 
+				// NEAREST_NEIGHBOR puts an alpha channel in the BufferedImage, 
+				// which Java tries to save in the JPEG confusing most apps but 
+				// not Java's own JPEG loader - see link on wiki)
 				if (!ImageIO.write(scaled, "png", saveDest)) {
 					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "Failed to save image");
 				}
