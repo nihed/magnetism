@@ -1,115 +1,52 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
+
 <dh:bean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
 <jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
 
+<c:set var="personName" value="${viewperson.personInfo.humanReadableName}" scope="page"/>
+<c:set var="personId" value="${viewperson.personInfo.person.id}" scope="page"/>
+
 <head>
-	<title><c:out value="${viewperson.personInfo.humanReadableName}"/></title>
+	<title><c:out value="${personName}"/></title>
 	<link rel="stylesheet" href="/css/person.css" type="text/css" />
-	<script src="/javascript/config.js" type="text/javascript"></script>
-    <script src="/javascript/dojo/dojo.js" type="text/javascript"></script>
-    <script src="/javascript/common.js" type="text/javascript"></script>
-    <script type="text/javascript">
-	    dojo.require("dh.server");
-	    
-	    function addContact() {
-	    	dh.server.doPOST("addcontactperson",
-						     { "contactId" : "${viewperson.personInfo.person.id}" },
-				  	    	 function(type, data, http) {
-				  	    	 	 document.location.reload();
-				  	    	 },
-				  	    	 function(type, error, http) {
-				  	    	     alert("Couldn't add user to contact list");
-				  	    	 });
-	    }
-	    function removeContact() {
-	    	dh.server.doPOST("removecontactperson",
-						     { "contactId" : "${viewperson.personInfo.person.id}" },
-				  	    	 function(type, data, http) {
-				  	    	 	 document.location.reload();
-				  	    	 },
-				  	    	 function(type, error, http) {
-				  	    	     alert("Couldn't add user to contact list");
-				  	    	 });
-	    }
-    </script>
+	<dht:scriptIncludes/>
 </head>
 <body>
-	<div class="header">
-	<table>
-		<tr>
-		<td><span class="first-letter dh">D</span><span class="dh">umb</span><span class="first-letter dh">H</span><span class="dh">ippo</span></td>
-		<td class="right"><c:out value="${viewperson.personInfo.humanReadableName}"/></td>
-		</tr>
-	</table>
-	</div>
-	<div class="toolbar">
-	<c:url value="sharelink?next=viewperson" var="share"/>
-	Do It: <a href="${share}">&#187; Share</a> &#151; <a href="/jsf/home.faces">Your Page</a> &#151;
-		<c:if test="${viewperson.isContact}"><a href="javascript:removeContact()">Remove <c:out value="${viewperson.personInfo.humanReadableName}"/> from my contact list</a></c:if>
-		<c:if test="${!viewperson.isContact}"><a href="javascript:addContact()">I know <c:out value="${viewperson.personInfo.humanReadableName}"/></a></c:if>
-	</div>
+    <dht:header><c:out value="${personName}"/></dht:header>
+    
+    <dht:toolbar> &#151;
+    	<c:choose>
+    		<c:when test="${viewperson.isContact}">
+    			<a href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contact list</a>
+	    	</c:when>
+    		<c:otherwise>
+				<a href='javascript:dh.actions.addContact("${personId}")'>I know <c:out value="${personName}"/></a>
+			</c:otherwise>
+		</c:choose>
+	</dht:toolbar>
 
 	<div class="main">
-
-	<table>
-	<tr><td>
-
-	<div class="shared-links">	
-		<strong>Cool Shared Links</strong>
-
-		<c:forEach items="${viewperson.postInfos}" var="info">
-		<div class="cool-bubble-shadow">		
-		<table class="cool-bubble">
+		<table>
 		<tr>
-		    <td class="cool-person" rowSpan="3">
-			<a class="cool-person" href="">
-			<img class="cool-person" src="/files/headshots/${info.posterInfo.person.id}" />
-			<br/>
-			<dh:entity value="${info.posterInfo}"/>
-			</a>
-		    </td>
-		    <td class="cool-link">
-			<div class="cool-link">
-			<a class="cool-link" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+		<td>
+			<div class="shared-links">	
+				<strong>Cool Shared Links</strong>
+				<c:forEach items="${viewperson.postInfos}" var="info">
+					<dht:postBubble info="${info}"/>
+				</c:forEach>
 			</div>
-		    </td>
-		</tr>
-		<tr>
-		    <td class="cool-link-desc">
-			<c:out value="${info.post.text}"/>
-		    </td>
-		</tr>
-		<tr>
-		    <td class="cool-link-meta">
-			<div class="cool-link-date">
-				(<fmt:formatDate value="${info.post.postDate}" type="both"/>)
+		</td>
+		<td>
+			<div class="groups">
+				<strong>Groups:</strong><br/>
+				<dh:entityList value="${viewperson.groups}"/>
 			</div>
-			<div class="cool-link-to">
-				<dh:entityList value="${info.recipients}"/>
-			</div>
-		   </td>
+		</td>
 		</tr>
 		</table>
-		</div>
-
-		</c:forEach>
-
 	</div>
-
-	</td>
-	<td>
-	<div class="groups">
-	<strong>Groups:</strong>
-	<br/>
-	<dh:entityList value="${viewperson.groups}"/>
-	</div>
-	</td>
-	</tr>
-	</table>
-	</div>
-
 </body>
 </html>

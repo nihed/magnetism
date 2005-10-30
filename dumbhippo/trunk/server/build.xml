@@ -160,6 +160,9 @@
 			<fileset dir="${web}" includes="jsp/*.jsp" />
 			<fileset dir="${web}" includes="jsp/*.tld" />
 			<fileset dir="${web}" includes="css/*.css" />
+			
+			<!-- tag files -->
+            <webinf dir="${web}" includes="tags/*.tag" />
 
 			<fileset dir="${build}">
 				<include name="**/web/**/*.class" />
