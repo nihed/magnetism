@@ -86,9 +86,6 @@ public class SigninBean implements Serializable {
 	}
 	
 	public Person getUser() {
-		if (user == null) {
-			throw new RuntimeException("Login required");
-		}
 		return user;
 	}
 }

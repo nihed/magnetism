@@ -24,6 +24,15 @@ public class PostInfo {
 	private PersonInfo posterInfo;
 	private List<Object> recipients;
 	
+	/**
+	 * Create a new PersonInfo object.
+	 * 
+	 * @param spider an IdentitySpider object
+	 * @param viewer the person viewing the post, may be null
+	 * @param p the post to view
+	 * @param ppd information about the relationship of the viewer to the post, must be
+	 *        null if viewer is null.
+	 */
 	public PostInfo(IdentitySpider spider, Person viewer, Post p, PersonPostData ppd) {
 		post = p;
 		

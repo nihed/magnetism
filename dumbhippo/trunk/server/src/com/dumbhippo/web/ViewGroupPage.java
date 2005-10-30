@@ -72,6 +72,9 @@ public class ViewGroupPage {
 	}
 	
 	public boolean getIsMember() {
-		return groupSystem.isMember(viewedGroup, signin.getUser());
+		if (signin.isValid())
+			return groupSystem.isMember(viewedGroup, signin.getUser());
+		else
+			return false;
 	}
 }

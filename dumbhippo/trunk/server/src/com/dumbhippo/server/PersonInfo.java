@@ -25,6 +25,11 @@ public class PersonInfo {
 	private Person person;
 	private String humanReadableName;
 	
+	/**
+	 * @param spider an IdentitySpider object
+	 * @param viewer person viewing the viewed person, may be null for an anonymous view
+	 * @param p the person being viewed
+	 */
 	public PersonInfo(IdentitySpider spider, Person viewer, Person p) {
 		person = p;
 		

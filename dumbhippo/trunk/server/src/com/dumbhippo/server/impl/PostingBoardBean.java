@@ -144,6 +144,9 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private PersonPostData getPersonPostData(Person viewer, Post post) {
+		if (viewer == null)
+			return null;
+		
 		Query q = em.createQuery("select ppd from PersonPostData ppd where ppd.post = :post and ppd.person = :viewer");
 		q.setParameter("post", post);
 		q.setParameter("viewer", viewer);

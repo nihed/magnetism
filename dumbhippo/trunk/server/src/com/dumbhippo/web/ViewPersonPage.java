@@ -82,12 +82,10 @@ public class ViewPersonPage {
 	}
 	
 	public boolean getIsContact() {
-		try {
-		return identitySpider.isContact(signin.getUser(), viewedPerson);
-		} catch (Exception e) {
-			logger.debug("The exception was", e);
-			throw new RuntimeException(e);
-		}
+		if (signin.isValid())
+			return identitySpider.isContact(signin.getUser(), viewedPerson);
+		else
+			return false;
 	}
 	
 	public List<Group> getGroups() {
