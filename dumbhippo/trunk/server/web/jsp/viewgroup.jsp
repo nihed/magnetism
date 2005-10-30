@@ -32,7 +32,8 @@
 			<div class="shared-links">	
 				<strong>Cool New Links</strong>
 				<c:forEach items="${viewgroup.postInfos}" var="info">
-				<dht:postBubble info="${info}"/>
+					<dht:postBubble info="${info}"/>
+				</c:forEach>
 			</div>
 		</td>
 		<td>
