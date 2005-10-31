@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -14,6 +15,7 @@ import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
@@ -28,6 +30,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.Mailer;
+import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PersonView;
 
 @Stateless
@@ -58,6 +61,26 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			ret = null;
 		}
 		return ret;
+	}
+	
+	public Set<PersonInfo> findInviters(Person invitee) {
+		Query query = em.createQuery("select inviter from " +
+								     "Person inviter, Invitation invite, ResourceOwnershipClaim roc " + 
+								     "where inviter in elements(invite.inviters) and " +
+								     "roc.resource = invite.invitee and " +
+								     "roc.assertedBy = :theman and " +
+								     "roc.claimedOwner = :invitee");
+		query.setParameter("invitee", invitee);
+		query.setParameter("theman", spider.getTheMan());
+		
+		@SuppressWarnings("unchecked")
+		List<Person> inviters = query.getResultList(); 
+		
+		Set<PersonInfo> result = new HashSet<PersonInfo>();
+		for (Person p : inviters)
+			result.add(new PersonInfo(spider, invitee, p));
+		
+		return result; 
 	}
 
 	public Invitation createGetInvitation(Person inviter, Resource invitee) {

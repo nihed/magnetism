@@ -12,6 +12,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostInfo;
 import com.dumbhippo.server.PostingBoard;
@@ -22,21 +23,25 @@ import com.dumbhippo.server.PostingBoard;
  * Displays information for the logged in user, such as links recently
  * shared with him.
  */
-public class HomePage {
-	static private final Log logger = GlobalSetup.getLog(HomePage.class);
+public class WelcomePage {
+	static private final Log logger = GlobalSetup.getLog(WelcomePage.class);
 
 	@Signin
 	private SigninBean signin;
 	
+	private Configuration configuration;
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private PersonInfo personInfo;
 	private GroupSystem groupSystem;
+	private InvitationSystem invitationSystem;
 	
-	public HomePage() throws NamingException {
+	public WelcomePage() throws NamingException {
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}
 	
 	public SigninBean getSignin() {
@@ -59,7 +64,11 @@ public class HomePage {
 		return Group.sortedList(groupSystem.findGroups(signin.getUser()));
 	}
 	
-	public List<PersonInfo> getContacts() {
-		return PersonInfo.sortedList(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
+	public String getDownloadUrlWindows() {
+		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
+	}
+	
+	public List<PersonInfo> getInviters() {
+		return PersonInfo.sortedList(invitationSystem.findInviters(signin.getUser()));
 	}
 }

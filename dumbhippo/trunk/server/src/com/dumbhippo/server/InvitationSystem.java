@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.util.Collection;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -18,6 +19,15 @@ public interface InvitationSystem {
 	 * @return the corresponding invitation, or null if none
 	 */
 	public Invitation lookupInvitationByKey(String authKey);
+	
+	/**
+	 * Find all inviters for resources provably owned by a person.
+	 * 
+	 * @param invitee The person that was invited
+	 * @return a set of all the inviters for the invitee; the
+	 *   resulting PersonInfo use invitee as the viewpoint.
+	 */
+	public Set<PersonInfo> findInviters(Person invitee);
 	
 	/**
 	 * Add inviter as a person wanting to invite the owner
