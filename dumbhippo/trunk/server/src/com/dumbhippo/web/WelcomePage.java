@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import javax.naming.NamingException;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
@@ -36,7 +34,7 @@ public class WelcomePage {
 	private GroupSystem groupSystem;
 	private InvitationSystem invitationSystem;
 	
-	public WelcomePage() throws NamingException {
+	public WelcomePage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);

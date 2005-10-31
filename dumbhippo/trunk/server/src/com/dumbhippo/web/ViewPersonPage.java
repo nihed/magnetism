@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import javax.naming.NamingException;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
@@ -13,8 +11,8 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
@@ -36,7 +34,7 @@ public class ViewPersonPage {
 	private PostingBoard postBoard;
 	private PersonInfo personInfo;
 	
-	public ViewPersonPage() throws NamingException {
+	public ViewPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);

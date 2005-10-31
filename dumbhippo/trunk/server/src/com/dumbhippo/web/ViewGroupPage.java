@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import javax.naming.NamingException;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
@@ -29,7 +27,7 @@ public class ViewGroupPage {
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
 	
-	public ViewGroupPage() throws NamingException {
+	public ViewGroupPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);

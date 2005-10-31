@@ -2,15 +2,11 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import javax.naming.NamingException;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostInfo;
@@ -33,7 +29,7 @@ public class HomePage {
 	private PersonInfo personInfo;
 	private GroupSystem groupSystem;
 	
-	public HomePage() throws NamingException {
+	public HomePage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);

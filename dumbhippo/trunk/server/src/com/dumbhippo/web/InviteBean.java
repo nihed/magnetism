@@ -1,7 +1,5 @@
 package com.dumbhippo.web;
 
-import javax.naming.NamingException;
-
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.InvitationSystem;
@@ -28,12 +26,12 @@ public class InviteBean {
 
 	private InvitationSystem invitationSystem;
 	
-	public InviteBean() throws NamingException {
+	public InviteBean() {
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}
 
 	// action handler for form submit
-	public String doInvite() throws NamingException {
+	public String doInvite() {
 		Person user = signin.getUser();
 		
 		Invitation invitation 
