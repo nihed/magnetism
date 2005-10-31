@@ -58,6 +58,11 @@ dh.util.closeWindow = function() {
 	if (embed && embed.readyState && embed.readyState >= 3) {
 		embed.CloseWindow(); // this never returns though, I don't think
 		return true;
+	// In a javascript popup window from the javascript.open function
+	//   window.opener will be defined as the parent window object
+	} else if (typeof window.opener != "undefined") {
+		window.close();
+		return true;
 	} else {
 		return false;
 	}
