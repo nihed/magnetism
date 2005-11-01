@@ -66,7 +66,7 @@ public class ViewGroupPage {
 	}
 	
 	public List<PersonInfo> getMembers() {
-		return PersonInfo.sortedList(groupSystem.getMemberInfos(signin.getUser(), viewedGroupId));
+		return PersonInfo.sortedList(groupSystem.getMemberInfos(viewedGroup, signin.getUser()));
 	}
 	
 	public boolean getIsMember() {

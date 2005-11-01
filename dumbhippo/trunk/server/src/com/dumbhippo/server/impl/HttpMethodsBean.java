@@ -118,7 +118,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		boolean hadCompletion = false;
 		if (entryContents != null) {
 			Set<Person> contacts = identitySpider.getContacts(user);
-			Set<Group> groups = groupSystem.findGroups(user);
+			Set<Group> groups = groupSystem.findGroups(user, user);
 
 			// it's important that empty string returns all completions,
 			// otherwise

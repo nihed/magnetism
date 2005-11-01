@@ -17,9 +17,9 @@ public interface GroupSystem {
 	
 	public void removeMember(Person remover, Group group, Person person);
 	
-	public Set<PersonInfo> getMemberInfos(Person viewpoint, String groupId);
+	public Set<PersonInfo> getMemberInfos(Group group, Person viewer);
 	
 	public boolean isMember(Group group, Person member);
 	
-	public Set<Group> findGroups(Person viewpoint);	
+	public Set<Group> findGroups(Person member, Person viewer);	
 }

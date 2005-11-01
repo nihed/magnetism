@@ -22,13 +22,16 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
@@ -48,6 +51,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private IdentitySpider identitySpider;	
 	
+	@EJB
+	private AccountSystem accountSystem;
+
 	@EJB
 	private MessageSender messageSender;
 
@@ -135,54 +141,12 @@ public class PostingBoardBean implements PostingBoard {
 		return post;
 	}
 
-	public List<Post> getPostsFor(Person poster, int max) {
-		Query q;
-		q = em.createQuery("select p from Post p, LinkResource link where p.poster = :personid and link.id in elements(p.resources) order by p.postDate desc");
-		q.setParameter("personid", poster);
-		if (max > 0)
-			q.setMaxResults(max);
-
-		@SuppressWarnings("unchecked")		
-		List<Post> ret = q.getResultList();	
-		return ret;
-	}
-
-	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max) {
-		List<PostInfo> result = new ArrayList<PostInfo>();
-		
-		List<Post> posts = getPostsFor(poster, max);
-		for (Post p : posts) {
-			PersonPostData ppd = getPersonPostData(viewer, p);				
-			result.add(new PostInfo(identitySpider, viewer, p, ppd));
-		}
-		
-		return result;
-	}
-	
-	public List<PostInfo> getReceivedPostInfos(Person recipient, int max) {
-		Query q;
-		q = em.createQuery("select p from Post p where :recipient in elements(p.expandedRecipients) order by p.postDate desc");
-		q.setParameter("recipient", recipient);
-		if (max > 0) 
-			q.setMaxResults(max);
-
-		@SuppressWarnings("unchecked")		
-		List<Post> posts = q.getResultList();
-		
-		List<PostInfo> results = new ArrayList<PostInfo>();
-		for (Post p : posts) {
-			PersonPostData ppd = getPersonPostData(recipient, p);			
-			results.add(new PostInfo(identitySpider, recipient, p, ppd));
-		}
-		
-		return results;
-	}
-	
 	private PersonPostData getPersonPostData(Person viewer, Post post) {
 		if (viewer == null)
 			return null;
 		
-		Query q = em.createQuery("select ppd from PersonPostData ppd where ppd.post = :post and ppd.person = :viewer");
+		Query q = em.createQuery("SELECT ppd FROM PersonPostData ppd " +
+				                 "WHERE ppd.post = :post AND ppd.person = :viewer");
 		q.setParameter("post", post);
 		q.setParameter("viewer", viewer);
 		try {
@@ -192,23 +156,97 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max) {
-		Query q;
-		q = em.createQuery("select p from Post p where :recipient in elements(p.groupRecipients) order by p.postDate desc");
-		q.setParameter("recipient", recipient);
+	// Hibernate bug: I think we should be able to write
+	// EXISTS (SELECT group FROM IN(post.groupRecipients) group WHERE
+	//         :viewer MEMBER of group.MEMBERS)
+	// according to the EJB3 persistance spec, but that results in
+	// garbage SQL
+	
+	static final String CAN_VIEW = 
+		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
+              ":viewer MEMBER OF post.personRecipients OR " +
+              "EXISTS (SELECT g FROM Group g WHERE " +
+                         "g MEMBER OF post.groupRecipients AND " + 
+                         "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
+                           ":viewer MEMBER OF g.members)))";
+	
+	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
+	
+	private List<PostInfo> getPostInfos(Query q, Person viewer, int max) {
 		if (max > 0)
 			q.setMaxResults(max);
 
 		@SuppressWarnings("unchecked")		
-		List<Post> posts = q.getResultList();
+		List<Post> posts = q.getResultList();	
 		
-		List<PostInfo> results = new ArrayList<PostInfo>();
+		List<PostInfo> result = new ArrayList<PostInfo>();
 		for (Post p : posts) {
-			PersonPostData ppd = getPersonPostData(viewer, p);
-			results.add(new PostInfo(identitySpider, viewer, p, ppd));
+			PersonPostData ppd = getPersonPostData(viewer, p);				
+			result.add(new PostInfo(identitySpider, viewer, p, ppd));
 		}
 		
-		return results;
+		return result;		
+	}
+	
+	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max) {
+		Query q;
+		q = em.createQuery("SELECT post FROM Post post " +
+				           "WHERE post.poster = :poster AND " +
+				           CAN_VIEW + ORDER_RECENT);
+		
+		q.setParameter("poster", poster);
+		q.setParameter("viewer", viewer);
+		
+		return getPostInfos(q, viewer, max);
+	}
+	
+	public List<PostInfo> getReceivedPostInfos(Person recipient, int max) {
+		// There's an efficiency win here by specializing to the case where
+		// viewer == recipient ... we know that posts are always visible
+		// to the recipient
+		
+		Query q;
+		q = em.createQuery("SELECT post FROM Post post " +
+				           "WHERE :recipient MEMBER OF post.expandedRecipients " +
+				           ORDER_RECENT);
+		
+		q.setParameter("recipient", recipient);
+
+		return getPostInfos(q, recipient, max);
+	}
+	
+	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max) {
+		Query q;
+		q = em.createQuery("SELECT post FROM Post post " +
+				           "WHERE :recipient MEMBER OF post.groupRecipients AND " +
+				           CAN_VIEW + ORDER_RECENT);
+		
+		q.setParameter("recipient", recipient);
+		q.setParameter("viewer", viewer);
+		
+		return getPostInfos(q, viewer, max);
+	}
+	
+	public List<PostInfo> getContactPostInfos(Person viewer, boolean include_received, int max) {
+		List<PostInfo> results = new ArrayList<PostInfo>();
+		
+		HippoAccount account = accountSystem.lookupAccountByPerson(viewer); 
+		if (account == null)
+			return results; // return an empty list
+		
+		String recipient_clause = include_received ? "" : "NOT :viewer MEMBER OF post.expandedRecipients AND "; 
+
+		Query q;
+		q = em.createQuery("SELECT post FROM HippoAccount account, Post post " + 
+						   "WHERE account = :account AND " +
+				               "post.poster MEMBER OF account.contacts AND " +
+				                recipient_clause +
+				                CAN_VIEW + ORDER_RECENT);
+		
+		q.setParameter("account", account);
+		q.setParameter("viewer", viewer);		
+		
+		return getPostInfos(q, viewer, max);
 	}
 	
 	public Post loadPost(Guid guid) {

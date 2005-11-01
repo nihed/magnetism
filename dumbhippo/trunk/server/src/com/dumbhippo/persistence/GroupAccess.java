@@ -7,6 +7,6 @@ package com.dumbhippo.persistence;
  */
 public enum GroupAccess {
 	SECRET,
-	FRIENDS_ONLY,
+	PUBLIC_INVITE,
 	PUBLIC;
 }

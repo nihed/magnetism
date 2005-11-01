@@ -25,7 +25,7 @@ public class Group extends GuidPersistable {
 		
 	private void initMissing() {
 		if (access == null)
-			access = GroupAccess.FRIENDS_ONLY;
+			access = GroupAccess.PUBLIC_INVITE;
 		if (members == null)
 			members = new HashSet<Person>();
 	}

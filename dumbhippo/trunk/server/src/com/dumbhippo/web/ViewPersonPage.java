@@ -87,8 +87,6 @@ public class ViewPersonPage {
 	}
 	
 	public List<Group> getGroups() {
-		// FIXME: We want to lock this down more and only show a subset of groups.
-		
-		return Group.sortedList(groupSystem.findGroups(viewedPerson));
+		return Group.sortedList(groupSystem.findGroups(viewedPerson, signin.getUser()));
 	}
 }

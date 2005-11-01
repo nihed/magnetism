@@ -46,16 +46,20 @@ public class HomePage {
 		return personInfo;
 	}
 	
-	public List<PostInfo> getReceivedPostInfos() {
+	public List<PostInfo> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
 		return postBoard.getReceivedPostInfos(signin.getUser(), 0);
 	}
 	
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getUser()));
+		return Group.sortedList(groupSystem.findGroups(signin.getUser(), signin.getUser()));
 	}
 	
 	public List<PersonInfo> getContacts() {
 		return PersonInfo.sortedList(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
+	}
+	
+	public List<PostInfo> getContactPosts() {
+		return postBoard.getContactPostInfos(signin.getUser(), false, 0);
 	}
 }
