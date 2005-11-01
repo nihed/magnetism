@@ -1,8 +1,13 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
+
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -12,6 +17,8 @@ import com.dumbhippo.server.PersonView;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
+	
+	static private final Log logger = GlobalSetup.getLog(MessengerGlueBean.class);
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -71,5 +78,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		JabberUser user = new JabberUser(username, account.getOwner().getName().getFullName(), view.getEmail().getEmail());
 	
 		return user;
+	}
+
+	public void serverStartup(long timestamp) {
+		logger.debug("Jabber server startup at " + new Date(timestamp));
+	}
+	
+	public void onUserAvailable(String username) {
+		logger.debug("Jabber user " + username + " now available");
+	}
+
+	public void onUserUnavailable(String username) {
+		logger.debug("Jabber user " + username + " now unavailable");
 	}
 }

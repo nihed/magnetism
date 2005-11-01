@@ -8,7 +8,7 @@ import javax.naming.NamingException;
  */
 public class EJBUtil {
 	public static <T> T defaultLookup(Class<T> clazz) {
-		InitialContext namingContext;
+		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
 		try {
 			namingContext = new InitialContext();
 		} catch (NamingException e) {
