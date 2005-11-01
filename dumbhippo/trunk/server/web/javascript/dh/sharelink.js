@@ -546,9 +546,9 @@ dh.sharelink.init = function() {
 		
 		var urlParam = params["url"]
 		if (urlParam) {
-			dh.sharelink.urlToShareEditBox.textValue = urlParam;
+			dh.sharelink.urlToShareEditBox.value = urlParam;
 		} else {
-			dh.sharelink.urlToShareEditBox.textValue = "(enter link to share)";
+			dh.sharelink.urlToShareEditBox.value = "(enter link to share)";
 			var urlDiv = document.getElementById("dhUrlToShareDiv");
 			dh.util.show(urlDiv);
 		}
