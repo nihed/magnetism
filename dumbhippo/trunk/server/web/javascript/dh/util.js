@@ -60,7 +60,7 @@ dh.util.closeWindow = function() {
 		return true;
 	// In a javascript popup window from the javascript.open function
 	//   window.opener will be defined as the parent window object
-	} else if (typeof window.opener != "undefined") {
+	} else if (window.opener) {
 		window.close();
 		return true;
 	} else {
