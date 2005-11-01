@@ -25,7 +25,7 @@ public class PostInfo {
 	private List<Object> recipients;
 	
 	/**
-	 * Create a new PersonInfo object.
+	 * Create a new PostInfo object.
 	 * 
 	 * @param spider an IdentitySpider object
 	 * @param viewer the person viewing the post, may be null
