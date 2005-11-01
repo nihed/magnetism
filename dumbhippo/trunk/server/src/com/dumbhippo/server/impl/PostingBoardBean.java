@@ -204,6 +204,13 @@ public class PostingBoardBean implements PostingBoard {
 	public Post loadPost(Guid guid) {
 		return em.find(Post.class, guid.toString());
 	}
+	
+	public PostInfo loadPostInfo(Guid guid, Person viewer) {
+		Post p =  em.find(Post.class, guid.toString());
+		PersonPostData ppd = getPersonPostData(viewer, p);
+		// FIXME access control check here, when used from post framer?
+		return (new PostInfo(identitySpider, viewer, p, ppd));
+	}
 
 	public void postClickedBy(Post post, Person clicker) {
 		logger.debug("Post " + post + " clicked by " + clicker);

@@ -24,7 +24,7 @@
 					<c:set var="linkcss" value="cool-link" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="${linkcss}" title="${info.url}" href="${info.url}"><c:out value="${info.title}"/></a>
+			<a class="${linkcss}" title="${info.url}" href="/jsp/frameset.jsp?postId=${info.post.id}"><c:out value="${info.title}"/></a>
 		</div>
 	</td>
 	</tr>

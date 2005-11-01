@@ -49,6 +49,8 @@ public interface PostingBoard {
 			Set<Person> expandedRecipients);
 
 	public Post loadPost(Guid guid);
+	
+	public PostInfo loadPostInfo(Guid guid, Person viewer);
 
 	public void postClickedBy(Post post, Person clicker);
 }
