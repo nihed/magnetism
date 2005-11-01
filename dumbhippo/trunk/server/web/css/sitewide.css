@@ -152,6 +152,10 @@ form.inlineEditBox input[type=text] {
 	margin-top: 	1em;
 }
 
+.dh-center-children {
+	text-align: 	center;
+}
+
 /* Right now, white background with round corners and black outline */
 .dhItemBox {
 	background-color:			#fff;

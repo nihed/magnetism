@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "tutorial" page 
+ */
+
+@import "sitewide.css";
+
+.dh-tutorial-movie-area {
+	left: 20%;
+	margin: 3em;
+}
+
+.dh-tutorial-movie {
+	width: 		240;
+	height: 	200;
+	border: 	1px solid black;
+	text-align: center;
+}
+
+.dh-tutorial-edit-table tr td {
+	padding:	.5em;
+}
