@@ -58,6 +58,8 @@ public class SessionManager extends BasicModule {
     private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
     private OutgoingServerSessionListener outgoingServerListener = new OutgoingServerSessionListener();
 
+    private Set<SessionManagerListener> listeners;
+    
     /**
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map
      * will hold client sessions.
@@ -151,6 +153,8 @@ public class SessionManager extends BasicModule {
                 JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
             }
         }
+        
+        listeners = new HashSet<SessionManagerListener>();
     }
 
     /**
@@ -539,6 +543,8 @@ public class SessionManager extends BasicModule {
                 routingTable.addRoute(session.getAddress(), session);
                 // Broadcast presence between the user's resources
                 broadcastPresenceToOtherResource(session);
+                
+                notifyClientSessionAvailable(session);
             }
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous (? - shouldn't happen)
@@ -630,6 +636,8 @@ public class SessionManager extends BasicModule {
                     // Broadcast presence between the user's resources
                     broadcastPresenceToOtherResource(session);
                 }
+                
+                notifyClientSessionUnavailable(session);
             }
             catch (UserNotFoundException e) {
                 // Do nothing since the session is anonymous
@@ -1485,5 +1493,33 @@ public class SessionManager extends BasicModule {
                 }
             }
         }
+    }
+    
+    private void notifyClientSessionAvailable(ClientSession session) {
+    	synchronized (listeners) {
+    		for (SessionManagerListener l : listeners) {
+    			l.onClientSessionAvailable(session);
+    		}
+    	}
+    }
+    
+    private void notifyClientSessionUnavailable(ClientSession session) {
+    	synchronized (listeners) {
+    		for (SessionManagerListener l : listeners) {
+    			l.onClientSessionUnavailable(session);
+    		}
+    	}
+    }
+    
+    public void registerListener(SessionManagerListener listener) {
+    	synchronized(listeners) {
+    		listeners.add(listener);
+    	}
+    }
+    
+    public void unregisterListener(SessionManagerListener listener) {
+    	synchronized(listeners) {
+    		listeners.remove(listener);
+    	}
     }
 }
