@@ -94,12 +94,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		// account could be null due to debug users or our own send-notifications
 		// user, i.e. any user on the jabber server that we don't know about
 		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
-		if (account != null && !account.getHasUsedLocalApp()) {
+		if (account != null && !account.getWasSentShareLinkTutorial()) {
 			logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 
 			postingBoard.doShareLinkTutorialPost(account.getOwner());
 
-			account.setHasUsedLocalApp(true);
+			account.setWasSentShareLinkTutorial(true);
 		}
 	}
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -53,6 +54,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private Configuration configuration;
 	
+	@javax.annotation.Resource
+	private EJBContext ejbContext;
+	
 	private void sendPostNotifications(Post post, Set<Person> expandedRecipients) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
@@ -94,7 +98,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
+		Post post = createPostViaProxy(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
 		sendPostNotifications(post, expandedRecipients);
 
@@ -108,13 +112,19 @@ public class PostingBoardBean implements PostingBoard {
 		Set<Group> emptyGroups = Collections.emptySet();
 		Set<Person> recipientSet = Collections.singleton(recipient);
 
-		Post post = createPost(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
+		Post post = createPostViaProxy(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
 				"Learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet);
 
 		sendPostNotifications(post, recipientSet);
 	}
 	
-	// internal function that is public only because of TransactionAttribute
+	private Post createPostViaProxy(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
+		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
+		
+		return proxy.createPost(poster, visibility, title, text, resources, personRecipients, groupRecipients, expandedRecipients);
+	}
+	
+	// internal function that is public only because of TransactionAttribute; use createPostViaProxy
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Post createPost(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		

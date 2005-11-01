@@ -49,7 +49,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	
 	private Set<Person> contacts;
 	
-	private boolean hasUsedLocalApp = false;
+	private boolean wasSentShareLinkTutorial = false;
 	private boolean hasDoneShareLinkTutorial = false;
 	
 	/*
@@ -267,11 +267,11 @@ public class HippoAccount extends DBUnique implements Serializable {
 	}
 
 	@Column(nullable=false)
-	public boolean getHasUsedLocalApp() {
-		return hasUsedLocalApp;
+	public boolean getWasSentShareLinkTutorial() {
+		return wasSentShareLinkTutorial;
 	}
 
-	public void setHasUsedLocalApp(boolean hasUsedClient) {
-		this.hasUsedLocalApp = hasUsedClient;
+	public void setWasSentShareLinkTutorial(boolean wasSentShareLinkTutorial) {
+		this.wasSentShareLinkTutorial = wasSentShareLinkTutorial;
 	}
 }

@@ -84,19 +84,15 @@ public interface MessengerGlueRemote {
 	/**
 	 * Called when Jabber server starts up, so we can detect when 
 	 * we have a new server and need to reset.
-	 * timestamp parameter fixes an extremely hypothetical race condition
-	 * 
-	 * Without a singleton-across-all-EJB-servers stateful bean this method
-	 * more or less has to be a no-op unfortunately 
-	 * 
+	 *  
 	 * @param timestamp when the server is starting, from System.currentTimeMillis()
 	 */
 	public void serverStartup(long timestamp);
 	
 	/**
 	 * Called each time a user opens their first session. Note that this 
-	 * can only be used to take some action on user availability, it can't
-	 * be used to track state since this is a stateless bean.
+	 * can only be used to take some action on user availability, unless we 
+	 * add database fields to track state.
 	 * 
 	 * @param username the username that has a new session available
 	 */
@@ -108,7 +104,8 @@ public interface MessengerGlueRemote {
 	 * and restart. To try to track user presence you'd 
 	 * need to address this by e.g. having Jive reset
 	 * our list of available users when it starts up.
-	 * Also, to track user presence we'd need a stateful bean.
+	 * Also, to track user presence we'd need a database 
+	 * representation of it.
 	 * 
 	 * @param username the username that became unavailable
 	 */
