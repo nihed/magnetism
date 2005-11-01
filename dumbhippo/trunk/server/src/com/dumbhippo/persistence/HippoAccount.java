@@ -49,6 +49,9 @@ public class HippoAccount extends DBUnique implements Serializable {
 	
 	private Set<Person> contacts;
 	
+	private boolean hasUsedLocalApp = false;
+	private boolean hasDoneShareLinkTutorial = false;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -252,5 +255,23 @@ public class HippoAccount extends DBUnique implements Serializable {
 	
 	public void removeContacts(Set<Person> persons) {
 		contacts.removeAll(persons);
+	}
+
+	@Column(nullable=false)
+	public boolean getHasDoneShareLinkTutorial() {
+		return hasDoneShareLinkTutorial;
+	}
+
+	public void setHasDoneShareLinkTutorial(boolean hasDoneShareLinkTutorial) {
+		this.hasDoneShareLinkTutorial = hasDoneShareLinkTutorial;
+	}
+
+	@Column(nullable=false)
+	public boolean getHasUsedLocalApp() {
+		return hasUsedLocalApp;
+	}
+
+	public void setHasUsedLocalApp(boolean hasUsedClient) {
+		this.hasUsedLocalApp = hasUsedClient;
 	}
 }

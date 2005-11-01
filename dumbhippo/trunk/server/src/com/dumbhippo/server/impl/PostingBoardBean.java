@@ -22,11 +22,14 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PostInfo;
@@ -46,8 +49,19 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private MessageSender messageSender;
-		
-	public Post createURLPost(Person poster, String title, String text, String url, Set<String> recipientGuids, PostVisibility visibility) throws ParseException, GuidNotFoundException {
+
+	@EJB
+	private Configuration configuration;
+	
+	private void sendPostNotifications(Post post, Set<Person> expandedRecipients) {
+		// FIXME I suspect this should be outside the transaction and asynchronous
+		logger.debug("Sending out jabber/email notifications...");
+		for (Person r : expandedRecipients) {
+			messageSender.sendPostNotification(r, post);
+		}
+	}
+	
+	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String url, Set<String> recipientGuids) throws ParseException, GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// this is what can throw ParseException
@@ -82,14 +96,25 @@ public class PostingBoardBean implements PostingBoard {
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
-		// FIXME I suspect this should be outside the transaction and asynchronous
-		logger.debug("Sending out jabber/email notifications... (to Person only)");
-		for (Person r : expandedRecipients) {
-			messageSender.sendPostNotification(r, post);
-		}
+		sendPostNotifications(post, expandedRecipients);
+
 		return post;
 	}
 	
+	public void doShareLinkTutorialPost(Person recipient) {
+
+		Person poster = identitySpider.getTheMan();
+		LinkResource link = identitySpider.getLink(configuration.getProperty(HippoProperty.BASEURL) + "/tutorial");
+		Set<Group> emptyGroups = Collections.emptySet();
+		Set<Person> recipientSet = Collections.singleton(recipient);
+
+		Post post = createPost(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
+				"Learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet);
+
+		sendPostNotifications(post, recipientSet);
+	}
+	
+	// internal function that is public only because of TransactionAttribute
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Post createPost(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		

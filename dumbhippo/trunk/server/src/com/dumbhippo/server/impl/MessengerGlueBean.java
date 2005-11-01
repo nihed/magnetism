@@ -14,6 +14,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostingBoard;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -26,6 +27,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private AccountSystem accountSystem;
 
+	@EJB
+	private PostingBoard postingBoard;
+		
 	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
 		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
 		if (account == null)
@@ -86,6 +90,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public void onUserAvailable(String username) {
 		logger.debug("Jabber user " + username + " now available");
+		
+		// account could be null due to debug users or our own send-notifications
+		// user, i.e. any user on the jabber server that we don't know about
+		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
+		if (account != null && !account.getHasUsedLocalApp()) {
+			logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
+
+			postingBoard.doShareLinkTutorialPost(account.getOwner());
+
+			account.setHasUsedLocalApp(true);
+		}
 	}
 
 	public void onUserUnavailable(String username) {

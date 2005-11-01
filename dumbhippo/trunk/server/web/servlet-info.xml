@@ -91,7 +91,7 @@
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,invite,sharelink</param-value>
+          <param-value>home,welcome,invite,sharelink,tutorial</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

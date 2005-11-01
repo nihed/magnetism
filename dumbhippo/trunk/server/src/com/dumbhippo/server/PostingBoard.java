@@ -25,9 +25,25 @@ public interface PostingBoard {
 
 	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max);
 
-	public Post createURLPost(Person poster, String title, String text, String link, Set<String> recipientGuids,
-			PostVisibility visibility) throws ParseException, GuidNotFoundException;
+	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String link, Set<String> recipientGuids)
+		throws ParseException, GuidNotFoundException;
 
+	public void doShareLinkTutorialPost(Person recipient);
+	
+	/**
+	 * You don't want to use this directly because it doesn't send any notifications.
+	 * It's only public so we can use the transaction annotation on it.
+	 * 
+	 * @param poster
+	 * @param visibility
+	 * @param title
+	 * @param text
+	 * @param resources
+	 * @param personRecipients
+	 * @param groupRecipients
+	 * @param expandedRecipients
+	 * @return
+	 */
 	public Post createPost(Person poster, PostVisibility visibility, String title, String text,
 			Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients,
 			Set<Person> expandedRecipients);

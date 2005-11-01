@@ -204,7 +204,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		postingBoard.createURLPost(user, title, description, url, recipientGuids, secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC);
+		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipientGuids);
 	}
 
 	
