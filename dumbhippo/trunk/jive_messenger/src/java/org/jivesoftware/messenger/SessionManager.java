@@ -1511,12 +1511,22 @@ public class SessionManager extends BasicModule {
     	}
     }
     
+    /**
+     * Adds the given listener, avoid calling from inside the listener event handlers.
+     * 
+     * @param listener the listener
+     */
     public void registerListener(SessionManagerListener listener) {
     	synchronized(listeners) {
     		listeners.add(listener);
     	}
     }
     
+    /**
+     * Removes the given listener, avoid calling from inside the listener event handlers.
+     * 
+     * @param listener the listener
+     */
     public void unregisterListener(SessionManagerListener listener) {
     	synchronized(listeners) {
     		listeners.remove(listener);

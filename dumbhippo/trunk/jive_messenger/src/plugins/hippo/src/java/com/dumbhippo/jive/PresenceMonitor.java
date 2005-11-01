@@ -2,6 +2,8 @@ package com.dumbhippo.jive;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.jivesoftware.messenger.ClientSession;
 import org.jivesoftware.messenger.SessionManagerListener;
@@ -14,15 +16,38 @@ import com.dumbhippo.server.util.EJBUtil;
 public class PresenceMonitor implements SessionManagerListener {
 
 	private Map<String, Integer> sessionCounts;
+	private Executor notificationQueue;
+	
+	private class Notification implements Runnable {
+
+		private String user;
+		private boolean available;
+
+		Notification(String user, boolean available) {
+			this.user = user;
+			this.available = available;
+		}
+		
+		public void run() {
+			Log.debug("Running notification that user " + user + " available = " + available);
+			if (available) {
+				getGlue().onUserAvailable(user);
+			} else {
+				getGlue().onUserUnavailable(user);
+			}
+		}
+	}
 	
 	private MessengerGlueRemote getGlue() {
 		// don't cache this for now, so jive will be robust against jboss redeploy,
-		// and so we're thread safe automatically
+		// and so we're thread safe automatically (note that our notification queue
+		// calls this from another thread)
 		return EJBUtil.defaultLookup(MessengerGlueRemote.class);
 	}
 	
 	public PresenceMonitor() {
 		sessionCounts = new HashMap<String, Integer>();
+		notificationQueue = Executors.newSingleThreadExecutor();
 	}
 
 	private void onSessionCountChange(ClientSession session, int increment) {
@@ -44,16 +69,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			else
 				oldCount = tmp;
 			
-			if (oldCount == 0) {
-				if (increment > 0) {
-					newCount = increment;
-				} else {
-					Log.error("should not happen, decrementing client count when there was no client count for user " + user);
-					newCount = oldCount;
-				}
-			} else {
-				newCount = oldCount + increment;
-			}
+			newCount = oldCount + increment;
 			
 			if (newCount < 0) {
 				Log.error("Bug! decremented user session count below 0, old count " + oldCount + " increment " + increment);
@@ -62,15 +78,16 @@ public class PresenceMonitor implements SessionManagerListener {
 				
 			if (oldCount != newCount)
 				sessionCounts.put(user, newCount);
-		}
 			
-		Log.debug("User " + user + " now has " + newCount + " sessions was " + oldCount);
+			Log.debug("User " + user + " now has " + newCount + " sessions was " + oldCount);
 		
-		// Very deliberately outside synchronized block
-		if (oldCount > 0 && newCount == 0) {
-			getGlue().onUserUnavailable(user);
-		} else if (oldCount == 0 && newCount > 0) {
-			getGlue().onUserAvailable(user);
+			// We queue this stuff so we aren't invoking some database operation in jboss
+			// with the lock held and blocking all new clients in the meantime
+			if (oldCount > 0 && newCount == 0) {
+				notificationQueue.execute(new Notification(user, false));
+			} else if (oldCount == 0 && newCount > 0) {
+				notificationQueue.execute(new Notification(user, true));
+			}
 		}
 	}
 	
