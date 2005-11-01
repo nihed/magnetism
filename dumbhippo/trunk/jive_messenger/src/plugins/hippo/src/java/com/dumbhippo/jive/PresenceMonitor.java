@@ -2,7 +2,7 @@ package com.dumbhippo.jive;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.jivesoftware.messenger.ClientSession;
@@ -16,7 +16,7 @@ import com.dumbhippo.server.util.EJBUtil;
 public class PresenceMonitor implements SessionManagerListener {
 
 	private Map<String, Integer> sessionCounts;
-	private Executor notificationQueue;
+	private ExecutorService notificationQueue;
 	
 	private class Notification implements Runnable {
 
