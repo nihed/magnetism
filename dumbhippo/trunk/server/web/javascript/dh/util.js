@@ -136,16 +136,42 @@ dh.util.goToNextPage = function(def) {
 	}
 }
 
-dh.util.getTextFromRichText = function(richtext) {
+// loosely based on dojo.html.renderedTextContent
+dh.util.getTextFromHtmlNode = function(node) {
+	var result = "";
+	if (node == null) { return result; }
+	
+	switch (node.nodeType) {
+		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
+			if (node.nodeName.toLowerCase() == "br") {
+				result += "\n";
+			} else {
+				//dojo.debug("element = " + node.nodeName);
+			}
+			break;
+		case 5: // ENTITY_REFERENCE_NODE
+			result += node.nodeValue;
+			break;
+		case 2: // ATTRIBUTE_NODE
+			break;
+		case 3: // TEXT_NODE
+		case 4: // CDATA_SECTION_NODE
+			result += node.nodeValue;
+			break;
+		default:
+			break;
+	}
+	
+	for (var i = 0; i < node.childNodes.length; i++) {
+		result += dh.util.getTextFromHtmlNode(node.childNodes[i]);
+	}
 
-	// our rich text widgets have no way to enter 
-	// arbitrary html, so the only html in them
-	// will be the <br/> or other limited set.
-	// if you just type in a tag by hand, it gets
-	// escaped (will already be &lt;script&gt; 
-	// for example)
-	var html = richtext.getEditorContent();
-	var text = html.replace(/<br\/>/g, "\n");
-	text = text.replace(/<br>/g, "\n");
-	return text;
+	return result;
+}
+
+dh.util.getTextFromRichText = function(richtext) {
+	// dojo has dojo.html.renderedTextContent() but it isn't 
+	// finished and doesn't work well enough for our purposes here
+	// yet (probably overkill too since we offer no styled text toolbar)
+	return dh.util.getTextFromHtmlNode(richtext.editNode);
 }

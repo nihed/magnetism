@@ -343,10 +343,6 @@ dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("rcpts = " + commaRecipients);
 	dojo.debug("secret = " + secret);
 	
-	// FIXME we don't really want to send HTML to the server... at least not 
-	// without "simplification" to tags we understand which would be easy on 
-	// client side...
-	
 	// double-check that we're logged in
 	dh.login.requireLogin(function() {					
 		dh.server.doPOST("sharelink",
