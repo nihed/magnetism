@@ -25,16 +25,16 @@ public class PostView {
 	/**
 	 * Create a new PostView object.
 	 * 
-	 * @param spider an IdentitySpider object
-	 * @param viewer the person viewing the post, may be null
 	 * @param p the post to view
-	 * @param ppd information about the relationship of the viewer to the post, must be
-	 *        null if viewer is null.
+	 * @param poster the person who posted the post
+	 * @param ppd information about the relationship of the viewer to the post, may be null
+	 * @param recipientList the list of (visible) recipients of the post
 	 */
-	public PostView(Post p, PersonView poster, PersonPostData ppd, List<Object>recipients) {
+	public PostView(Post p, PersonView poster, PersonPostData ppd, List<Object>recipientList) {
 		post = p;
 		posterView = poster;
 		viewerHasViewed = ppd != null;
+		recipients = recipientList;
 		
 		for (Resource r : post.getResources()) {
 			if (r instanceof LinkResource) {

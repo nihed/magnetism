@@ -267,7 +267,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		if (viewer == null) {
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
-					           "AND c.assertedBy = :theMan");
+					           "AND c.assertedBy = :theman");
 		} else {
 			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
 					           "AND (c.assertedBy = :theman OR c.assertedBy = :viewer)")

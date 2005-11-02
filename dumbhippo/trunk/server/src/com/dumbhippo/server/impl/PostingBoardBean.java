@@ -172,15 +172,55 @@ public class PostingBoardBean implements PostingBoard {
                          "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
                            ":viewer MEMBER OF g.members)))";
 	
-	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
+	static final String CAN_VIEW_ANONYMOUS = 
+		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
+              "EXISTS (SELECT g FROM Group g WHERE " +
+                         "g MEMBER OF post.groupRecipients AND " + 
+                         "g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + "))";
 
+	
+	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
+	
+
+	// If we want in the future to visually indicate whether there were
+	// undisclosed recipients for a post, we might be able to use the
+	// following (untested) trick:
+	//
+	// 
+	// SELECT NEW com.dumbhippo.PostingBoardBean.GroupResult(g,h) 
+	//      FROM Post post, Group g LEFT JOIN Group h ON h=g
+    //      WHERE post = :post AND
+    //            g MEMBER OF post.groupRecipients AND
+    //            (h.access >= PUBLIC_INVITE OR
+    //             ":viewer MEMBER OF h.members)
+	//
+	
 	private PostView getPostView(Viewpoint viewpoint, Post post) {
+		Person viewer = viewpoint.getViewer();
 		List<Object> recipients = new ArrayList<Object>();
 		
-		recipients.addAll(post.getGroupRecipients());
+		// Groups recipients are visible if the group is non-secret
+		// or if the view is a member of the group
+
+		String viewerClause = viewer != null ? " OR :viewer MEMBER OF g.members " : ""; 
 		
-		for (Person recipient : post.getPersonRecipients())
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
+		Query q = em.createQuery("SELECT g FROM Post post, Group g " +
+				                     "WHERE post = :post AND " + 
+				                           "g MEMBER OF post.groupRecipients AND " +
+				                           "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + 
+				                           viewerClause + ")");
+		q.setParameter("post", post);
+		if (viewer != null)
+			q.setParameter("viewer", viewer);
+
+		for (Object o : q.getResultList())
+			recipients.add(o);
+		
+		// Person recipients are visible only if the viewer is also a person recipient
+		if (post.getPersonRecipients().contains(viewpoint.getViewer())) {
+			for (Person recipient : post.getPersonRecipients())
+				recipients.add(identitySpider.getPersonView(viewpoint, recipient));
+		}
 		
 		return new PostView(post, 
 					        identitySpider.getPersonView(viewpoint, post.getPoster()),
@@ -207,12 +247,18 @@ public class PostingBoardBean implements PostingBoard {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
-		q = em.createQuery("SELECT post FROM Post post " +
-				           "WHERE post.poster = :poster AND " +
-				           CAN_VIEW + ORDER_RECENT);
+		if (viewer == null) {
+			q = em.createQuery("SELECT post FROM Post post " +
+					           "WHERE post.poster = :poster AND " +
+					           CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+		} else {
+			q = em.createQuery("SELECT post FROM Post post " +
+			           "WHERE post.poster = :poster AND " +
+			           CAN_VIEW + ORDER_RECENT);
+			q.setParameter("viewer", viewer);
+		}
 		
 		q.setParameter("poster", poster);
-		q.setParameter("viewer", viewer);
 		
 		return getPostViews(viewpoint, q, max);
 	}
@@ -238,19 +284,25 @@ public class PostingBoardBean implements PostingBoard {
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
-		
-		q = em.createQuery("SELECT post FROM Post post " +
-				           "WHERE :recipient MEMBER OF post.groupRecipients AND " +
-				           CAN_VIEW + ORDER_RECENT);
+
+		if (viewer == null) {
+			q = em.createQuery("SELECT post FROM Post post " +
+	                           "WHERE :recipient MEMBER OF post.groupRecipients AND " +
+	                           CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+		} else {
+			q = em.createQuery("SELECT post FROM Post post " +
+			                   "WHERE :recipient MEMBER OF post.groupRecipients AND " +
+			                   CAN_VIEW + ORDER_RECENT);
+			q.setParameter("viewer", viewer);
+		}
 		
 		q.setParameter("recipient", recipient);
-		q.setParameter("viewer", viewer);
 		
 		return getPostViews(viewpoint, q, max);
 	}
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max) {
-		if (!viewpoint.getViewer().equals(user))
+		if (!user.equals(viewpoint.getViewer()))
 			return Collections.emptyList();
 		
 		HippoAccount account = accountSystem.lookupAccountByPerson(user); 
