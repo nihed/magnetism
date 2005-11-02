@@ -24,7 +24,7 @@
 					<c:set var="linkcss" value="cool-link" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="${linkcss}" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.title}"/></a>
+			<a class="${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.title}"/></a>
 		</div>
 	</td>
 	</tr>
