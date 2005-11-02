@@ -2,6 +2,7 @@ dojo.provide("dh.sharelink");
 
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
+dojo.require("dojo.html");
 dojo.require("dojo.widget.RichText");
 dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
@@ -566,6 +567,9 @@ dh.sharelink.init = function() {
 	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
 	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
 						dj_global, "dhDoCreateGroupKeyUp");
+						
+	// set default focus
+	dh.sharelink.recipientComboBox.textInputNode.focus();
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
