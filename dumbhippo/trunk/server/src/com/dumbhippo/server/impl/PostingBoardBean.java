@@ -36,8 +36,9 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Stateless
@@ -141,7 +142,8 @@ public class PostingBoardBean implements PostingBoard {
 		return post;
 	}
 
-	private PersonPostData getPersonPostData(Person viewer, Post post) {
+	private PersonPostData getPersonPostData(Viewpoint viewpoint, Post post) {
+		Person viewer = viewpoint.getViewer();
 		if (viewer == null)
 			return null;
 		
@@ -171,25 +173,40 @@ public class PostingBoardBean implements PostingBoard {
                            ":viewer MEMBER OF g.members)))";
 	
 	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
+
+	private PostView getPostView(Viewpoint viewpoint, Post post) {
+		List<Object> recipients = new ArrayList<Object>();
+		
+		recipients.addAll(post.getGroupRecipients());
+		
+		for (Person recipient : post.getPersonRecipients())
+			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
+		
+		return new PostView(post, 
+					        identitySpider.getPersonView(viewpoint, post.getPoster()),
+					        getPersonPostData(viewpoint, post),
+					        recipients);
+	}
 	
-	private List<PostInfo> getPostInfos(Query q, Person viewer, int max) {
+	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, int max) {
 		if (max > 0)
 			q.setMaxResults(max);
 
 		@SuppressWarnings("unchecked")		
 		List<Post> posts = q.getResultList();	
 		
-		List<PostInfo> result = new ArrayList<PostInfo>();
-		for (Post p : posts) {
-			PersonPostData ppd = getPersonPostData(viewer, p);				
-			result.add(new PostInfo(identitySpider, viewer, p, ppd));
+		List<PostView> result = new ArrayList<PostView>();
+		for (Post p : posts) {				
+			result.add(getPostView(viewpoint, p));
 		}
 		
 		return result;		
 	}
 	
-	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max) {
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int max) {
+		Person viewer = viewpoint.getViewer();
 		Query q;
+		
 		q = em.createQuery("SELECT post FROM Post post " +
 				           "WHERE post.poster = :poster AND " +
 				           CAN_VIEW + ORDER_RECENT);
@@ -197,13 +214,16 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("poster", poster);
 		q.setParameter("viewer", viewer);
 		
-		return getPostInfos(q, viewer, max);
+		return getPostViews(viewpoint, q, max);
 	}
 	
-	public List<PostInfo> getReceivedPostInfos(Person recipient, int max) {
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int max) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
-		// to the recipient
+		// to the recipient; we don't bother implementing the other case for
+		// now.
+		if (!recipient.equals(viewpoint.getViewer()))
+			throw new IllegalArgumentException();
 		
 		Query q;
 		q = em.createQuery("SELECT post FROM Post post " +
@@ -212,11 +232,13 @@ public class PostingBoardBean implements PostingBoard {
 		
 		q.setParameter("recipient", recipient);
 
-		return getPostInfos(q, recipient, max);
+		return getPostViews(viewpoint, q, max);
 	}
 	
-	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max) {
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max) {
+		Person viewer = viewpoint.getViewer();
 		Query q;
+		
 		q = em.createQuery("SELECT post FROM Post post " +
 				           "WHERE :recipient MEMBER OF post.groupRecipients AND " +
 				           CAN_VIEW + ORDER_RECENT);
@@ -224,15 +246,16 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("recipient", recipient);
 		q.setParameter("viewer", viewer);
 		
-		return getPostInfos(q, viewer, max);
+		return getPostViews(viewpoint, q, max);
 	}
 	
-	public List<PostInfo> getContactPostInfos(Person viewer, boolean include_received, int max) {
-		List<PostInfo> results = new ArrayList<PostInfo>();
+	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max) {
+		if (!viewpoint.getViewer().equals(user))
+			return Collections.emptyList();
 		
-		HippoAccount account = accountSystem.lookupAccountByPerson(viewer); 
+		HippoAccount account = accountSystem.lookupAccountByPerson(user); 
 		if (account == null)
-			return results; // return an empty list
+			return Collections.emptyList();
 		
 		String recipient_clause = include_received ? "" : "NOT :viewer MEMBER OF post.expandedRecipients AND "; 
 
@@ -244,20 +267,19 @@ public class PostingBoardBean implements PostingBoard {
 				                CAN_VIEW + ORDER_RECENT);
 		
 		q.setParameter("account", account);
-		q.setParameter("viewer", viewer);		
+		q.setParameter("viewer", user);		
 		
-		return getPostInfos(q, viewer, max);
+		return getPostViews(viewpoint, q, max);
 	}
 	
-	public Post loadPost(Guid guid) {
+	public Post loadRawPost(Viewpoint viewpoint, Guid guid) {
 		return em.find(Post.class, guid.toString());
 	}
 	
-	public PostInfo loadPostInfo(Guid guid, Person viewer) {
+	public PostView loadPost(Viewpoint viewpoint, Guid guid) {
 		Post p =  em.find(Post.class, guid.toString());
-		PersonPostData ppd = getPersonPostData(viewer, p);
 		// FIXME access control check here, when used from post framer?
-		return (new PostInfo(identitySpider, viewer, p, ppd));
+		return getPostView(viewpoint, p);
 	}
 
 	public void postClickedBy(Post post, Person clicker) {

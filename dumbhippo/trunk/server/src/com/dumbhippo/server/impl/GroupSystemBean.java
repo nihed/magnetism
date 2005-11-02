@@ -15,7 +15,8 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.Viewpoint;
 
 @Stateless
 public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
@@ -58,7 +59,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					                ":viewer MEMBER OF g.members) ";
 	static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
-	public Set<PersonInfo> getMemberInfos(Group group, Person viewer) {
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group) {
+		Person viewer = viewpoint.getViewer();
 		Query q;
 		
 		if (viewer == null) {
@@ -75,17 +77,34 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		q.setParameter("group", group);
 
-		Set<PersonInfo> result = new HashSet<PersonInfo>();
+		Set<PersonView> result = new HashSet<PersonView>();
 		for (Object o : q.getResultList()) 
-			result.add(identitySpider.getViewpoint(viewer, (Person)o));
+			result.add(identitySpider.getPersonView(viewpoint, (Person)o));
 		
 		return result;
 	}
 	
-	public boolean isMember(Group group, Person member) {
-		Query query = em.createQuery("SELECT COUNT(g) from Group g " +
-				                         "WHERE g = :group AND " + 
-				                               ":member MEMBER OF g.members");
+	public boolean isMember(Viewpoint viewpoint, Group group, Person member) {
+		Person viewer = viewpoint.getViewer();
+		Query query;
+		
+		if (member.equals(viewer)) {
+			query = em.createQuery("SELECT COUNT(g) from Group g " +
+			                           "WHERE g = :group AND " + 
+			                                 ":member MEMBER OF g.members");			
+		} else if (viewer == null) {
+			query = em.createQuery("SELECT COUNT(g) from Group g " +
+	                   "WHERE g = :group AND " + 
+                       ":member MEMBER OF g.members AND " +
+                        CAN_SEE_ANONYMOUS);			
+		} else {
+			query = em.createQuery("SELECT COUNT(g) from Group g " +
+	                   "WHERE g = :group AND " + 
+                          ":member MEMBER OF g.members AND " +
+                           CAN_SEE);
+			query.setParameter("viewer", viewpoint.getViewer());
+			
+		}
 		query.setParameter("group", group);
 		query.setParameter("member", member);
 		
@@ -94,10 +113,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return (Integer)query.getSingleResult() > 0;
 	}
 
-	public Set<Group> findGroups(Person member, Person viewer) {
+	public Set<Group> findGroups(Viewpoint viewpoint, Person member) {
+		Person viewer = viewpoint.getViewer();
 		Query q;
 		
-		if (viewer == member) {
+		if (member.equals(viewpoint.getViewer())) {
 			// Special case this for effiency
 			q = em.createQuery("SELECT g FROM Group g WHERE :member MEMBER OF g.members");
 		} else if (viewer == null) {

@@ -17,13 +17,13 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 @Local
 public interface PostingBoard {
 
-	public List<PostInfo> getPostInfosFor(Person poster, Person viewer, int max);
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int max);
 
-	public List<PostInfo> getReceivedPostInfos(Person recipient, int max);
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int max);
 
-	public List<PostInfo> getGroupPostInfos(Group recipient, Person viewer, int max);
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max);
 	
-	public List<PostInfo> getContactPostInfos(Person viewer, boolean include_received, int max);
+	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max);
 
 	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String link, Set<String> recipientGuids)
 		throws ParseException, GuidNotFoundException;
@@ -48,9 +48,9 @@ public interface PostingBoard {
 			Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients,
 			Set<Person> expandedRecipients);
 
-	public Post loadPost(Guid guid);
+	public Post loadRawPost(Viewpoint viewpoint, Guid guid);
 	
-	public PostInfo loadPostInfo(Guid guid, Person viewer);
+	public PostView loadPost(Viewpoint viewpoint, Guid guid);
 
 	public void postClickedBy(Post post, Person clicker);
 }

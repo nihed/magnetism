@@ -25,9 +25,9 @@ public interface InvitationSystem {
 	 * 
 	 * @param invitee The person that was invited
 	 * @return a set of all the inviters for the invitee; the
-	 *   resulting PersonInfo use invitee as the viewpoint.
+	 *   resulting PersonView use invitee as the viewpoint.
 	 */
-	public Set<PersonInfo> findInviters(Person invitee);
+	public Set<PersonView> findInviters(Person invitee);
 	
 	/**
 	 * Add inviter as a person wanting to invite the owner

@@ -6,9 +6,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Post;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -26,12 +24,10 @@ public class FramerPage {
 	@Signin
 	private SigninBean signin;
 	
-	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
-	private PostInfo postInfo;
+	private PostView post;
 	
 	public FramerPage() {
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 	
@@ -43,9 +39,9 @@ public class FramerPage {
 		return postId;
 	}
 	
-	protected void setPostInfo(PostInfo postInfo) {
-		this.postInfo = postInfo;
-		this.postId = postInfo.getPost().getId();
+	protected void setPost(PostView post) {
+		this.post = post;
+		this.postId = post.getPost().getId();
 		logger.debug("viewing post: " + this.postId);
 	}
 
@@ -54,11 +50,12 @@ public class FramerPage {
 			logger.debug("no post id");
 			return;
 		} else {
-			setPostInfo(postBoard.loadPostInfo(new Guid(postId), signin.getUser()));
+			// Fixme - don't backtrace if the user isn't authorized to view the post
+			setPost(postBoard.loadPost(signin.getViewpoint(), new Guid(postId)));
 		}
 	}
 	
-	public PostInfo getPostInfo() {
-		return postInfo;
+	public PostView getPost() {
+		return post;
 	}
 }

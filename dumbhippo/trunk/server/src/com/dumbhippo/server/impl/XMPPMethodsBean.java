@@ -16,6 +16,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.XMPPMethods;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -40,7 +41,8 @@ public class XMPPMethodsBean implements XMPPMethods, Serializable {
 		logger.debug("postClicked invoked: " + clickerId + " " + postId);
 		Guid postGuid = new Guid(postId);
 		Person clicker = identitySpider.lookupGuid(Person.class, clickerId);
-		Post post = postingBoard.loadPost(postGuid);
-		postingBoard.postClickedBy(post, clicker);
+		Post post = postingBoard.loadRawPost(new Viewpoint(clicker), postGuid);
+		if (post != null)
+			postingBoard.postClickedBy(post, clicker);
 	}
 }

@@ -6,7 +6,7 @@
 <dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
 
 <head>
-	<title>Welcome <c:out value="${welcome.personInfo.humanReadableName}"/>!</title>
+	<title>Welcome <c:out value="${welcome.person.humanReadableName}"/>!</title>
 	<link rel="stylesheet" href="/css/welcome.css" type="text/css" />
 	<dht:scriptIncludes/>
 </head>
@@ -48,8 +48,8 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool Shared Links</strong>
-				<c:forEach items="${welcome.receivedPostInfos}" var="info">
-					<dht:postBubble info="${info}"/>
+				<c:forEach items="${welcome.receivedPosts}" var="post">
+					<dht:postBubble post="${post}"/>
 				</c:forEach>
 			</div>
 		</td>

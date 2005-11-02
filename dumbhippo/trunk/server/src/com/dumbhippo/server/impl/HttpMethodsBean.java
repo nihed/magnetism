@@ -31,9 +31,10 @@ import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RedirectException;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Stateless
@@ -75,10 +76,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	private void returnPersonsXml(XmlBuilder xml, Person user, Set<Person> persons) {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
 		if (persons != null) {
 			for (Person p : persons) {
 				// FIXME this is mind-blowingly inefficient
-				PersonInfo view = identitySpider.getViewpoint(user, p);
+				PersonView view = identitySpider.getPersonView(viewpoint, p);
 				String humanReadable = view.getHumanReadableName();
 				xml.appendTextNode("person", null, "id", p.getId(), "display", humanReadable);
 			}
@@ -112,13 +115,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			String entryContents, boolean createContact) throws IOException {
 
 		XmlBuilder xml = new XmlBuilder();
+		Viewpoint viewpoint = new Viewpoint(user);
 
 		startReturnObjectsXml(contentType, xml);
 
 		boolean hadCompletion = false;
 		if (entryContents != null) {
-			Set<Person> contacts = identitySpider.getContacts(user);
-			Set<Group> groups = groupSystem.findGroups(user, user);
+			Set<Person> contacts = identitySpider.getRawContacts(user);
+			Set<Group> groups = groupSystem.findGroups(viewpoint, user);
 
 			// it's important that empty string returns all completions,
 			// otherwise
@@ -128,7 +132,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			for (Person c : contacts) {
 				String completion = null;
 
-				PersonInfo view = identitySpider.getViewpoint(user, c);
+				PersonView view = identitySpider.getPersonView(viewpoint, c);
 				String humanReadable = view.getHumanReadableName();
 				EmailResource email = view.getEmail();
 				if (humanReadable.startsWith(entryContents)) {

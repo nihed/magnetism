@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +33,8 @@ import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.Viewpoint;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -259,7 +261,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		"SELECT e FROM EmailResource e, ResourceOwnershipClaim c " +
 		    "WHERE e.id = c.resource and c.claimedOwner = :person ";
 	
-	private EmailResource getEmail(Person person, Person viewer) {
+	private EmailResource getEmail(Viewpoint viewpoint, Person person) {
+		Person viewer = viewpoint.getViewer();
 		Query q;
 		
 		if (viewer == null) {
@@ -280,12 +283,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 		
-	public PersonInfo getViewpoint(Person viewpoint, Person p) {
-		return new PersonInfo(p, getEmail(p, viewpoint));
+	public PersonView getPersonView(Viewpoint viewpoint, Person p) {
+		if (viewpoint == null)
+			throw new IllegalArgumentException("null viewpoint");
+		
+		return new PersonView(p, getEmail(viewpoint, p));
 	}
 
-	public PersonInfo getSystemViewpoint(Person p) {
-		return getViewpoint(getTheMan(), p);
+	public PersonView getSystemView(Person p) {
+		return getPersonView(new Viewpoint(getTheMan()), p);
 	}
 	
 	public void setName(Person person, FullName name) {
@@ -356,20 +362,26 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		account.removeContact(contact);		
 	}
 
-	public Set<Person> getContacts(Person user) {
+	public Set<Person> getRawContacts(Person user) {
 		HippoAccount account = accountSystem.lookupAccountByPerson(user);
 		return account.getContacts();
 	}
 	
-	public Set<PersonInfo> getContactInfos(Person viewer, Person user) {
-		Set<PersonInfo> result = new HashSet<PersonInfo>();
-		for (Person p : getContacts(user)) 
-			result.add(getViewpoint(viewer, p));
+	public Set<PersonView> getContacts(Viewpoint viewpoint, Person user) {
+		if (!user.equals(viewpoint.getViewer()))
+				return Collections.emptySet();
+		
+		Set<PersonView> result = new HashSet<PersonView>();
+		for (Person p : getRawContacts(user)) 
+			result.add(getPersonView(viewpoint, p));
 		
 		return result;
 	}
 	
-	public boolean isContact(Person user, Person contact) {
+	public boolean isContact(Viewpoint viewpoint, Person user, Person contact) {
+		if (!user.equals(viewpoint.getViewer()))
+				return false;
+		
 		Query query = em.createQuery("select count(a) from HippoAccount a where a.owner = :user and :contact in elements(a.contacts)");
 		query.setParameter("user", user);
 		query.setParameter("contact", contact);
@@ -379,4 +391,3 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return (Integer)query.getSingleResult() > 0;
 	}
 }
-

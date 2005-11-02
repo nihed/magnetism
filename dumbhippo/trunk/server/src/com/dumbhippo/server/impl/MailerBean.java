@@ -17,7 +17,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.Viewpoint;
 
 
 /**
@@ -68,8 +69,9 @@ public class MailerBean implements Mailer {
 	}
 
 	public MimeMessage createMessage(Person from, Person to) {
-		PersonInfo fromViewedBySelf = identitySpider.getViewpoint(from, from);
-		PersonInfo toViewedByFrom = identitySpider.getViewpoint(from, to);
+		Viewpoint viewpoint = new Viewpoint(from);
+		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, from);
+		PersonView toViewedByFrom = identitySpider.getPersonView(viewpoint, to);
 		
 		InternetAddress fromAddress;
 		InternetAddress toAddress;

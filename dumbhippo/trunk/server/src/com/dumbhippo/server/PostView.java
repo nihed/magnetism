@@ -1,10 +1,8 @@
 package com.dumbhippo.server;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.persistence.LinkResource;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -17,15 +15,15 @@ import com.dumbhippo.persistence.Resource;
  * constructor accesses lazily loaded fields of the Post; all of its
  * properties and methods are safe to access at any point.
  */
-public class PostInfo {
+public class PostView {
 	private Post post;
 	private String url;
 	private boolean viewerHasViewed;
-	private PersonInfo posterInfo;
+	private PersonView posterView;
 	private List<Object> recipients;
 	
 	/**
-	 * Create a new PostInfo object.
+	 * Create a new PostView object.
 	 * 
 	 * @param spider an IdentitySpider object
 	 * @param viewer the person viewing the post, may be null
@@ -33,8 +31,10 @@ public class PostInfo {
 	 * @param ppd information about the relationship of the viewer to the post, must be
 	 *        null if viewer is null.
 	 */
-	public PostInfo(IdentitySpider spider, Person viewer, Post p, PersonPostData ppd) {
+	public PostView(Post p, PersonView poster, PersonPostData ppd, List<Object>recipients) {
 		post = p;
+		posterView = poster;
+		viewerHasViewed = ppd != null;
 		
 		for (Resource r : post.getResources()) {
 			if (r instanceof LinkResource) {
@@ -43,17 +43,6 @@ public class PostInfo {
 				break;
 			}
 		}
-		
-	    posterInfo = spider.getViewpoint(viewer, post.getPoster());
-		
-		recipients = new ArrayList<Object>();
-		
-		recipients.addAll(post.getGroupRecipients());
-		
-		for (Person recipient : post.getPersonRecipients())
-			recipients.add(spider.getViewpoint(viewer, recipient));
-		
-		viewerHasViewed = ppd != null;
 	}
 	
 	public String getTitle() {
@@ -68,8 +57,8 @@ public class PostInfo {
 		return url;	
 	}
 	
-	public PersonInfo getPosterInfo() {
-		return posterInfo;
+	public PersonView getPoster() {
+		return posterView;
 	}
 	
 	public List<Object> getRecipients() {

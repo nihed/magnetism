@@ -6,7 +6,7 @@
 <dh:bean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
 
 <head>
-	<title><c:out value="${home.personInfo.humanReadableName}"/></title>
+	<title><c:out value="${home.person.humanReadableName}"/></title>
 	<link rel="stylesheet" href="/css/home.css" type="text/css" />
 	<dht:scriptIncludes/>
 </head>
@@ -18,8 +18,8 @@
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
-		<img class="cool-person" src="/files/headshots/${home.personInfo.person.id}" />
-		<dht:userNameEdit value="${home.personInfo.humanReadableName}"/>
+		<img class="cool-person" src="/files/headshots/${home.person.person.id}" />
+		<dht:userNameEdit value="${home.person.humanReadableName}"/>
 	</div>
 	<div>
 		<c:url value="myphoto" var="myphoto"/>
@@ -32,16 +32,16 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared With You</strong>
-				<c:forEach items="${home.receivedPosts}" var="info">
-					<dht:postBubble info="${info}"/>
+				<c:forEach items="${home.receivedPosts}" var="post">
+					<dht:postBubble post="${post}"/>
 				</c:forEach>
 			</div>
 		</td>
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared By your friends</strong>
-				<c:forEach items="${home.contactPosts}" var="info">
-					<dht:postBubble info="${info}"/>
+				<c:forEach items="${home.contactPosts}" var="post">
+					<dht:postBubble post="${post}"/>
 				</c:forEach>
 			</div>
 		</td>

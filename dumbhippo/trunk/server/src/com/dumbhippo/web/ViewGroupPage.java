@@ -9,8 +9,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -33,9 +33,9 @@ public class ViewGroupPage {
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
-	public List<PostInfo> getPostInfos() {
+	public List<PostView> getPosts() {
 		assert viewedGroup != null;
-		return postBoard.getGroupPostInfos(viewedGroup, signin.getUser(), 0);
+		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 0);
 	}
 	
 	public SigninBean getSignin() {
@@ -65,13 +65,13 @@ public class ViewGroupPage {
 		}
 	}
 	
-	public List<PersonInfo> getMembers() {
-		return PersonInfo.sortedList(groupSystem.getMemberInfos(viewedGroup, signin.getUser()));
+	public List<PersonView> getMembers() {
+		return PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup));
 	}
 	
 	public boolean getIsMember() {
 		if (signin.isValid())
-			return groupSystem.isMember(viewedGroup, signin.getUser());
+			return groupSystem.isMember(signin.getViewpoint(), viewedGroup, signin.getUser());
 		else
 			return false;
 	}

@@ -22,20 +22,20 @@ import com.dumbhippo.persistence.Person;
  * This class is a person as viewed by another person; it differs from
  * PersonView primarily in not being a session bean.
  */
-public class PersonInfo {
+public class PersonView {
 	private Person person;
 	private EmailResource email;
 	private String humanReadableName;
 	
 	/**
-	 * Construct a new PersonInfo object representing a view of a particular
+	 * Construct a new PersonView object representing a view of a particular
 	 * person by another object. Use IdentitySpider.getViewpoint() rather than
 	 * this function.
 	 * 
 	 * @param p The Person object 
 	 * @param e The 
 	 */
-	public PersonInfo(Person p, EmailResource e) {
+	public PersonView(Person p, EmailResource e) {
 		person = p;
 		email = e;
 		
@@ -61,7 +61,7 @@ public class PersonInfo {
 	}
 	
 	/**
-	 * Convert an (unordered) set of PersonInfo into a a list and
+	 * Convert an (unordered) set of PersonView into a a list and
 	 * sort alphabetically with the default collator. You generally
 	 * want to do this before displaying things to user, since
 	 * iteration through Set will be in hash table order.
@@ -69,14 +69,14 @@ public class PersonInfo {
 	 * @param groups a set of Person objects
 	 * @return a newly created List containing the sorted groups
 	 */
-	static public List<PersonInfo> sortedList(Set<PersonInfo> infos) {
-		ArrayList<PersonInfo> list = new ArrayList<PersonInfo>();
-		list.addAll(infos);
+	static public List<PersonView> sortedList(Set<PersonView> views) {
+		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		list.addAll(views);
 
 		final Collator collator = Collator.getInstance();
-		Collections.sort(list, new Comparator<PersonInfo>() {
-			public int compare (PersonInfo i1, PersonInfo i2) {
-				return collator.compare(i1.getHumanReadableName(), i2.getHumanReadableName());
+		Collections.sort(list, new Comparator<PersonView>() {
+			public int compare (PersonView v1, PersonView v2) {
+				return collator.compare(v1.getHumanReadableName(), v2.getHumanReadableName());
 			}
 		});
 		

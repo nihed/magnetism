@@ -30,7 +30,7 @@
 			Other people see you as:
 		</td>
 		<td>
-			<dht:userNameEdit value="${tutorial.personInfo.humanReadableName}"/>
+			<dht:userNameEdit value="${tutorial.person.humanReadableName}"/>
 		</td>
 		</tr>
 		<tr>

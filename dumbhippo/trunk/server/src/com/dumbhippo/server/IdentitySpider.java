@@ -184,21 +184,27 @@ public interface IdentitySpider {
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
-	public Set<Person> getContacts(Person user);
+	public Set<Person> getRawContacts(Person user);
 	
 	/** 
-	 * Get the contacts of the given person as a list of PersonInfo
+	 * Get the contacts of the given person as a list of PersonView
+	 * @param viewpoint viewpoint person viewing the contacts (only
+	 *          a user can see their contacts, so if viewpoint.getviewer()
+	 *          doesn't match user, the result will be empty)    
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
-	public Set<PersonInfo> getContactInfos(Person viewer, Person user);
+	public Set<PersonView> getContacts(Viewpoint viewpoint, Person user);
 	
 	/**
-	 * Checks whethera  person has another other as a contact
+	 * Checks whether a person has another other as a contact
+	 * @param current viewpoint (only a user can see their contacts, 
+	 *          so if viewpoint.getviewer() doesn't match user, the result will 
+	 *          be false) 
 	 * @param user who to look in the contacts of
 	 * @param contact person to look for in the contacts
 	 */
-	public boolean isContact(Person user, Person contact);
+	public boolean isContact(Viewpoint viewpoint, Person user, Person contact);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
@@ -223,11 +229,11 @@ public interface IdentitySpider {
 	/**
 	 * Returns an object describing a person from the viewpoint of another person.
 	 * 
-	 * @param viewpoint the person who is viewing
+	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param p the person being viewed
 	 * @return a new PersonView object
 	 */
-	public PersonInfo getViewpoint(Person viewpoint, Person p);
+	public PersonView getPersonView(Viewpoint viewpoint, Person p);
 	
 	
 	/**
@@ -237,5 +243,5 @@ public interface IdentitySpider {
 	 * @param p the person being viewed
 	 * @return new PersonView object
 	 */
-	public PersonInfo getSystemViewpoint(Person p); 
+	public PersonView getSystemView(Person p); 
 }

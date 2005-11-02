@@ -8,8 +8,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
 /**
@@ -26,7 +26,7 @@ public class HomePage {
 	
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
-	private PersonInfo personInfo;
+	private PersonView person;
 	private GroupSystem groupSystem;
 	
 	public HomePage() {
@@ -39,27 +39,27 @@ public class HomePage {
 		return signin;
 	}
 
-	public PersonInfo getPersonInfo() {
-		if (personInfo == null)
-			personInfo = identitySpider.getViewpoint(signin.getUser(), signin.getUser());
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
 		
-		return personInfo;
+		return person;
 	}
 	
-	public List<PostInfo> getReceivedPosts() {
+	public List<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPostInfos(signin.getUser(), 0);
+		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
 	}
 	
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getUser(), signin.getUser()));
+		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
 	}
 	
-	public List<PersonInfo> getContacts() {
-		return PersonInfo.sortedList(identitySpider.getContactInfos(signin.getUser(), signin.getUser()));
+	public List<PersonView> getContacts() {
+		return PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser()));
 	}
 	
-	public List<PostInfo> getContactPosts() {
-		return postBoard.getContactPostInfos(signin.getUser(), false, 0);
+	public List<PostView> getContactPosts() {
+		return postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0);
 	}
 }

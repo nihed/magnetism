@@ -30,7 +30,8 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.Mailer;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.Viewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -62,7 +63,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ret;
 	}
 	
-	public Set<PersonInfo> findInviters(Person invitee) {
+	public Set<PersonView> findInviters(Person invitee) {
 		Query query = em.createQuery("select inviter from " +
 								     "Person inviter, Invitation invite, ResourceOwnershipClaim roc " + 
 								     "where inviter in elements(invite.inviters) and " +
@@ -75,9 +76,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		@SuppressWarnings("unchecked")
 		List<Person> inviters = query.getResultList(); 
 		
-		Set<PersonInfo> result = new HashSet<PersonInfo>();
+		Viewpoint viewpoint = new Viewpoint(invitee);
+		
+		Set<PersonView> result = new HashSet<PersonView>();
 		for (Person p : inviters)
-			result.add(spider.getViewpoint(invitee, p));
+			result.add(spider.getPersonView(viewpoint, p));
 		
 		return result; 
 	}
@@ -107,7 +110,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
-		PersonInfo viewedInviter = spider.getViewpoint(null, inviter);
+		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);
 		String inviterName = viewedInviter.getHumanReadableName();
 		
 		URL url;
@@ -181,7 +184,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	public Collection<String> getInviterNames(Invitation invite) {
 		Set<String> names = new HashSet<String>();  
 		for (Person inviter : invite.getInviters()) {
-			PersonInfo view = spider.getSystemViewpoint(inviter);
+			PersonView view = spider.getSystemView(inviter);
 	        String readable = view.getHumanReadableName();
 	        if (readable != null) {    
 	        	names.add(readable);

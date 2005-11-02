@@ -10,8 +10,8 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -32,7 +32,7 @@ public class ViewPersonPage {
 	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	private PostingBoard postBoard;
-	private PersonInfo personInfo;
+	private PersonView person;
 	
 	public ViewPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
@@ -40,9 +40,9 @@ public class ViewPersonPage {
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
-	public List<PostInfo> getPostInfos() {
+	public List<PostView> getPosts() {
 		assert viewedPerson != null;
-		return postBoard.getPostInfosFor(viewedPerson, signin.getUser(), 0);
+		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0);
 	}
 	
 	public SigninBean getSignin() {
@@ -72,21 +72,21 @@ public class ViewPersonPage {
 		}
 	}
 	
-	public PersonInfo getPersonInfo() {
-		if (personInfo == null)
-			personInfo = identitySpider.getViewpoint(signin.getUser(), viewedPerson);
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), viewedPerson);
 		
-		return personInfo;
+		return person;
 	}
 	
 	public boolean getIsContact() {
 		if (signin.isValid())
-			return identitySpider.isContact(signin.getUser(), viewedPerson);
+			return identitySpider.isContact(signin.getViewpoint(), signin.getUser(), viewedPerson);
 		else
 			return false;
 	}
 	
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(viewedPerson, signin.getUser()));
+		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), viewedPerson));
 	}
 }

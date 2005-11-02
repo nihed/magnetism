@@ -35,7 +35,8 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.Mailer.NoAddressKnownException;
 
@@ -231,12 +232,14 @@ public class MessageSenderBean implements MessageSender {
 				logger.debug("no url found on post");
 				return;
 			}
+			
+			Viewpoint viewpoint = new Viewpoint(recipient);
 
-			PersonInfo recipientView = identitySpider.getViewpoint(recipient, post.getPoster());
+			PersonView recipientView = identitySpider.getPersonView(viewpoint, post.getPoster());
 			String senderName = recipientView.getHumanReadableName();
 			Set<String> recipientNames = new HashSet<String>();
 			for (Person p : post.getPersonRecipients()) {
-				PersonInfo viewedP = identitySpider.getViewpoint(recipient, p);
+				PersonView viewedP = identitySpider.getPersonView(viewpoint, p);
 				recipientNames.add(viewedP.getHumanReadableName());
 			}
 			Set<String> groupRecipientNames = new HashSet<String>();
@@ -265,8 +268,10 @@ public class MessageSenderBean implements MessageSender {
 			Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
 
 			Set<Resource> resources = post.getResources();
+			
+			Viewpoint viewpoint = new Viewpoint(post.getPoster());
 	
-			PersonInfo senderView = identitySpider.getViewpoint(post.getPoster(), clicker);
+			PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
 			String senderName = senderView.getHumanReadableName();
 			String title = post.getTitle();
 			if (title == null || title.equals("")) {
@@ -294,7 +299,8 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendPostNotification(Person recipient, Post post) throws NoAddressKnownException {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
-			PersonInfo posterViewedByRecipient = identitySpider.getViewpoint(recipient, post.getPoster());
+			PersonView posterViewedByRecipient = identitySpider.getPersonView(new Viewpoint(recipient), 
+					                                                          post.getPoster());
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();

@@ -6,7 +6,7 @@
 <dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="postId"/>
 
-<c:set var="title" value="${framer.postInfo.title}" scope="page"/>
+<c:set var="title" value="${framer.post.title}" scope="page"/>
 
 <head>
 	<title><c:out value="${title}"/></title>
@@ -18,10 +18,10 @@
 		<table>
 		<tr>
 		<td>
-			<dht:postBubble info="${framer.postInfo}"/>
+			<dht:postBubble post="${framer.post}"/>
 		</td>
 		<td>
-		    <a href="${framer.postInfo.url}" target=_top>Remove frame</a>
+		    <a href="${framer.post.url}" target=_top>Remove frame</a>
 		</td>
 		</tr>
 		</table>

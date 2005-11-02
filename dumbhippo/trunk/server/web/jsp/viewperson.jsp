@@ -6,8 +6,8 @@
 <dh:bean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
 <jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
 
-<c:set var="personName" value="${viewperson.personInfo.humanReadableName}" scope="page"/>
-<c:set var="personId" value="${viewperson.personInfo.person.id}" scope="page"/>
+<c:set var="personName" value="${viewperson.person.humanReadableName}" scope="page"/>
+<c:set var="personId" value="${viewperson.person.person.id}" scope="page"/>
 
 <head>
 	<title><c:out value="${personName}"/></title>
@@ -34,8 +34,8 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool Shared Links</strong>
-				<c:forEach items="${viewperson.postInfos}" var="info">
-					<dht:postBubble info="${info}"/>
+				<c:forEach items="${viewperson.posts}" var="post">
+					<dht:postBubble post="${post}"/>
 				</c:forEach>
 			</div>
 		</td>

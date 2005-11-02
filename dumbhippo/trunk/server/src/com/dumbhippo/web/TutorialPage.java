@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonInfo;
+import com.dumbhippo.server.PersonView;
 
 /**
  * @author hp
@@ -19,7 +19,7 @@ public class TutorialPage {
 	private SigninBean signin;
 	
 	private IdentitySpider identitySpider;
-	private PersonInfo personInfo;
+	private PersonView person;
 	
 	public TutorialPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
@@ -29,10 +29,10 @@ public class TutorialPage {
 		return signin;
 	}
 
-	public PersonInfo getPersonInfo() {
-		if (personInfo == null)
-			personInfo = identitySpider.getViewpoint(signin.getUser(), signin.getUser());
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
 		
-		return personInfo;
+		return person;
 	}
 }

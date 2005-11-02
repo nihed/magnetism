@@ -11,8 +11,8 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PostInfo;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
 /**
@@ -30,7 +30,7 @@ public class WelcomePage {
 	private Configuration configuration;
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
-	private PersonInfo personInfo;
+	private PersonView person;
 	private GroupSystem groupSystem;
 	private InvitationSystem invitationSystem;
 	
@@ -46,27 +46,27 @@ public class WelcomePage {
 		return signin;
 	}
 
-	public PersonInfo getPersonInfo() {
-		if (personInfo == null)
-			personInfo = identitySpider.getViewpoint(signin.getUser(), signin.getUser());
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
 		
-		return personInfo;
+		return person;
 	}
 	
-	public List<PostInfo> getReceivedPostInfos() {
+	public List<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPostInfos(signin.getUser(), 0);
+		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
 	}
 	
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getUser(), signin.getUser()));
+		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
 	}
 	
 	public String getDownloadUrlWindows() {
 		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
 	}
 	
-	public List<PersonInfo> getInviters() {
-		return PersonInfo.sortedList(invitationSystem.findInviters(signin.getUser()));
+	public List<PersonView> getInviters() {
+		return PersonView.sortedList(invitationSystem.findInviters(signin.getUser()));
 	}
 }
