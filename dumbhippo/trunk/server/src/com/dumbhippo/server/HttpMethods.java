@@ -22,6 +22,10 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
+	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user)
+			throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "entryContents" })
 	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
 			throws IOException;

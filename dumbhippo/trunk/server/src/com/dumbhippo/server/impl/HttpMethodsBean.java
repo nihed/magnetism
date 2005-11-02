@@ -75,15 +75,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(xml.toString().getBytes());
 	}
 	
-	private void returnPersonsXml(XmlBuilder xml, Person user, Set<Person> persons) {
-		Viewpoint viewpoint = new Viewpoint(user);
-		
+	private void returnPersonsXml(XmlBuilder xml, Set<PersonView> persons) {
 		if (persons != null) {
-			for (Person p : persons) {
-				// FIXME this is mind-blowingly inefficient
-				PersonView view = identitySpider.getPersonView(viewpoint, p);
-				String humanReadable = view.getHumanReadableName();
-				xml.appendTextNode("person", null, "id", p.getId(), "display", humanReadable);
+			for (PersonView p : persons) {
+				xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName());
 			}
 		}		
 	}
@@ -100,17 +95,31 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("completion", null, "id", object.getId(), "text", completes);
 	}
 	
-	private void returnObjects(OutputStream out, HttpResponseData contentType, Person user, Set<Person> persons, Set<Group> groups) throws IOException {
+	private void returnObjects(OutputStream out, HttpResponseData contentType, Person user, Set<PersonView> persons, Set<Group> groups) throws IOException {
 		XmlBuilder xml = new XmlBuilder();		
 
 		startReturnObjectsXml(contentType, xml);
 		
-		returnPersonsXml(xml, user, persons);
+		returnPersonsXml(xml, persons);
 		returnGroupsXml(xml, user, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
 
+
+	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		Viewpoint viewpoint = new Viewpoint(user);
+
+		startReturnObjectsXml(contentType, xml);
+		
+		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
+		Set<Group> groups = groupSystem.findGroups(viewpoint, user);
+		
+		returnObjects(out, contentType, user, persons, groups);
+		endReturnObjectsXml(out, xml);
+	}
+	
 	private void implementCompletions(OutputStream out, HttpResponseData contentType, Person user,
 			String entryContents, boolean createContact) throws IOException {
 
@@ -121,7 +130,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		boolean hadCompletion = false;
 		if (entryContents != null) {
-			Set<Person> contacts = identitySpider.getRawContacts(user);
+			Set<PersonView> contacts = identitySpider.getContacts(viewpoint, user);
 			Set<Group> groups = groupSystem.findGroups(viewpoint, user);
 
 			// it's important that empty string returns all completions,
@@ -129,24 +138,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// the arrow on the combobox doesn't drop down anything when it's
 			// empty
 
-			for (Person c : contacts) {
+			for (PersonView c : contacts) {
 				String completion = null;
 
-				PersonView view = identitySpider.getPersonView(viewpoint, c);
-				String humanReadable = view.getHumanReadableName();
-				EmailResource email = view.getEmail();
+				String humanReadable = c.getHumanReadableName();
+				EmailResource email = c.getEmail();
 				if (humanReadable.startsWith(entryContents)) {
 					completion = humanReadable;
 				} else if (email.getEmail().startsWith(entryContents)) {
 					completion = email.getEmail();
-				} else if (c.getId().startsWith(entryContents)) {
-					completion = c.getId();
 				}
 
 				if (completion != null) {
 					hadCompletion = true;
-					returnPersonsXml(xml, user, Collections.singleton(c));
-					returnCompletionXml(xml, c, completion);
+					returnPersonsXml(xml, Collections.singleton(c));
+					returnCompletionXml(xml, c.getPerson(), completion);
 				}
 			}
 
@@ -171,7 +177,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// Create a new contact to be the completion
 			EmailResource email = identitySpider.getEmail(entryContents);
 			Person contact = identitySpider.createContact(user, email);
-			returnPersonsXml(xml, user, Collections.singleton(contact));
+			PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
+			returnPersonsXml(xml, Collections.singleton(contactView));
 			returnCompletionXml(xml, contact, entryContents);
 		}
 		
@@ -235,8 +242,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
 		Person contact = identitySpider.createContact(user, emailResource);
+		Viewpoint viewpoint = new Viewpoint(user);
+		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
 
-		returnObjects(out, contentType, user, Collections.singleton(contact), null);
+		returnObjects(out, contentType, user, Collections.singleton(contactView), null);
 	}
 	
 	public void doJoinGroup(Person user, String groupId) {
