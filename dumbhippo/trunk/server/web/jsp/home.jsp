@@ -32,11 +32,21 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared With You</strong>
-				<c:forEach items="${home.receivedPostInfos}" var="info">
+				<c:forEach items="${home.receivedPosts}" var="info">
 					<dht:postBubble info="${info}"/>
 				</c:forEach>
 			</div>
 		</td>
+		<td>
+			<div class="shared-links">	
+				<strong>Links Shared By your friends</strong>
+				<c:forEach items="${home.contactPosts}" var="info">
+					<dht:postBubble info="${info}"/>
+				</c:forEach>
+			</div>
+		</td>
+		</tr>
+		</tr>
 		<td>
 			<div class="groups">
 				<strong>Groups You're In</strong>

@@ -74,7 +74,7 @@ public class ViewPersonPage {
 	
 	public PersonInfo getPersonInfo() {
 		if (personInfo == null)
-			personInfo = new PersonInfo(identitySpider, signin.getUser(), viewedPerson);
+			personInfo = identitySpider.getViewpoint(signin.getUser(), viewedPerson);
 		
 		return personInfo;
 	}

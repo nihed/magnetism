@@ -44,15 +44,14 @@ public class PostInfo {
 			}
 		}
 		
-	    posterInfo = new PersonInfo(spider, viewer, post.getPoster());
+	    posterInfo = spider.getViewpoint(viewer, post.getPoster());
 		
 		recipients = new ArrayList<Object>();
 		
 		recipients.addAll(post.getGroupRecipients());
 		
-		for (Person recipient : post.getPersonRecipients()) {
-			recipients.add(new PersonInfo(spider, viewer, recipient));
-		}
+		for (Person recipient : post.getPersonRecipients())
+			recipients.add(spider.getViewpoint(viewer, recipient));
 		
 		viewerHasViewed = ppd != null;
 	}

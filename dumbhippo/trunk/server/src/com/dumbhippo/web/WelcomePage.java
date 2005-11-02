@@ -48,7 +48,7 @@ public class WelcomePage {
 
 	public PersonInfo getPersonInfo() {
 		if (personInfo == null)
-			personInfo = new PersonInfo(identitySpider, signin.getUser(), signin.getUser());
+			personInfo = identitySpider.getViewpoint(signin.getUser(), signin.getUser());
 		
 		return personInfo;
 	}
@@ -59,7 +59,7 @@ public class WelcomePage {
 	}
 	
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getUser()));
+		return Group.sortedList(groupSystem.findGroups(signin.getUser(), signin.getUser()));
 	}
 	
 	public String getDownloadUrlWindows() {

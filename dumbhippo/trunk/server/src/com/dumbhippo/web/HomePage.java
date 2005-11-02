@@ -41,7 +41,7 @@ public class HomePage {
 
 	public PersonInfo getPersonInfo() {
 		if (personInfo == null)
-			personInfo = new PersonInfo(identitySpider, signin.getUser(), signin.getUser());
+			personInfo = identitySpider.getViewpoint(signin.getUser(), signin.getUser());
 		
 		return personInfo;
 	}

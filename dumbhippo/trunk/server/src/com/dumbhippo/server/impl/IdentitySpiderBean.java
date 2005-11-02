@@ -33,7 +33,6 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PersonView;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -256,18 +255,37 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	private PersonView constructPersonView(Person viewpoint, Person p) {
-		PersonView view = (PersonView) ejbContext.lookup(PersonView.class.getCanonicalName());
-		view.init(viewpoint, p);
-		return view;
-	}
+	private static final String BASE_LOOKUP_EMAIL_QUERY = 
+		"SELECT e FROM EmailResource e, ResourceOwnershipClaim c " +
+		    "WHERE e.id = c.resource and c.claimedOwner = :person ";
 	
-	public PersonView getViewpoint(Person viewpoint, Person p) {
-		return constructPersonView(viewpoint, p);
+	private EmailResource getEmail(Person person, Person viewer) {
+		Query q;
+		
+		if (viewer == null) {
+			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
+					           "AND c.assertedBy = :theMan");
+		} else {
+			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
+					           "AND (c.assertedBy = :theman OR c.assertedBy = :viewer)")
+			.setParameter("viewer", viewer);
+		}
+		q.setParameter("theman", getTheMan());
+		q.setParameter("person", person);
+	
+		try {
+			return (EmailResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+	}
+		
+	public PersonInfo getViewpoint(Person viewpoint, Person p) {
+		return new PersonInfo(p, getEmail(viewpoint, p));
 	}
 
-	public PersonView getSystemViewpoint(Person p) {
-		return constructPersonView(getTheMan(), p);
+	public PersonInfo getSystemViewpoint(Person p) {
+		return getViewpoint(getTheMan(), p);
 	}
 	
 	public void setName(Person person, FullName name) {
@@ -346,7 +364,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public Set<PersonInfo> getContactInfos(Person viewer, Person user) {
 		Set<PersonInfo> result = new HashSet<PersonInfo>();
 		for (Person p : getContacts(user)) 
-			result.add(new PersonInfo(this, viewer, p));
+			result.add(getViewpoint(viewer, p));
 		
 		return result;
 	}

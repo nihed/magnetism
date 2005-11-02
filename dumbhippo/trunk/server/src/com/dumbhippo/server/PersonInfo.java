@@ -7,8 +7,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import com.dumbhippo.FullName;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.server.PersonView;
 
 /**
  * @author otaylor
@@ -23,26 +24,40 @@ import com.dumbhippo.server.PersonView;
  */
 public class PersonInfo {
 	private Person person;
+	private EmailResource email;
 	private String humanReadableName;
 	
 	/**
-	 * @param spider an IdentitySpider object
-	 * @param viewer person viewing the viewed person, may be null for an anonymous view
-	 * @param p the person being viewed
+	 * Construct a new PersonInfo object representing a view of a particular
+	 * person by another object. Use IdentitySpider.getViewpoint() rather than
+	 * this function.
+	 * 
+	 * @param p The Person object 
+	 * @param e The 
 	 */
-	public PersonInfo(IdentitySpider spider, Person viewer, Person p) {
+	public PersonInfo(Person p, EmailResource e) {
 		person = p;
+		email = e;
 		
-		PersonView personView = spider.getViewpoint(viewer, person);
-		humanReadableName = personView.getHumanReadableName();
+		FullName name = person.getName();
+		if (name != null && !name.isEmpty())
+			humanReadableName = name.toString();
+		else if (email != null) 
+			humanReadableName = email.getEmail();
+		else
+			humanReadableName = "<Unknown>";
 	}
-	
+		
 	public Person getPerson() {
 		return person;
 	}
 	
 	public String getHumanReadableName() {
 		return humanReadableName;
+	}
+	
+	public EmailResource getEmail() {
+		return email;
 	}
 	
 	/**
@@ -67,5 +82,4 @@ public class PersonInfo {
 		
 		return list;
 	}
-
 }

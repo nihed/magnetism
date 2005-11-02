@@ -31,7 +31,7 @@ import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RedirectException;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
@@ -78,7 +78,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (persons != null) {
 			for (Person p : persons) {
 				// FIXME this is mind-blowingly inefficient
-				PersonView view = identitySpider.getViewpoint(user, p);
+				PersonInfo view = identitySpider.getViewpoint(user, p);
 				String humanReadable = view.getHumanReadableName();
 				xml.appendTextNode("person", null, "id", p.getId(), "display", humanReadable);
 			}
@@ -128,7 +128,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			for (Person c : contacts) {
 				String completion = null;
 
-				PersonView view = identitySpider.getViewpoint(user, c);
+				PersonInfo view = identitySpider.getViewpoint(user, c);
 				String humanReadable = view.getHumanReadableName();
 				EmailResource email = view.getEmail();
 				if (humanReadable.startsWith(entryContents)) {

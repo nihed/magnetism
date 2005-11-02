@@ -1,6 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,7 +9,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.Person;
@@ -79,7 +77,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 		Set<PersonInfo> result = new HashSet<PersonInfo>();
 		for (Object o : q.getResultList()) 
-			result.add(new PersonInfo(identitySpider, viewer, (Person)o));
+			result.add(identitySpider.getViewpoint(viewer, (Person)o));
 		
 		return result;
 	}

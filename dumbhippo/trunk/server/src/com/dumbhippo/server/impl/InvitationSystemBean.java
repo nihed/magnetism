@@ -31,7 +31,6 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonInfo;
-import com.dumbhippo.server.PersonView;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -78,7 +77,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		Set<PersonInfo> result = new HashSet<PersonInfo>();
 		for (Person p : inviters)
-			result.add(new PersonInfo(spider, invitee, p));
+			result.add(spider.getViewpoint(invitee, p));
 		
 		return result; 
 	}
@@ -108,7 +107,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
-		PersonView viewedInviter = spider.getViewpoint(null, inviter);
+		PersonInfo viewedInviter = spider.getViewpoint(null, inviter);
 		String inviterName = viewedInviter.getHumanReadableName();
 		
 		URL url;
@@ -182,7 +181,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	public Collection<String> getInviterNames(Invitation invite) {
 		Set<String> names = new HashSet<String>();  
 		for (Person inviter : invite.getInviters()) {
-			PersonView view = spider.getSystemViewpoint(inviter);
+			PersonInfo view = spider.getSystemViewpoint(inviter);
 	        String readable = view.getHumanReadableName();
 	        if (readable != null) {    
 	        	names.add(readable);

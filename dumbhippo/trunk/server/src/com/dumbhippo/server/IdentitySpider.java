@@ -227,7 +227,7 @@ public interface IdentitySpider {
 	 * @param p the person being viewed
 	 * @return a new PersonView object
 	 */
-	public PersonView getViewpoint(Person viewpoint, Person p);
+	public PersonInfo getViewpoint(Person viewpoint, Person p);
 	
 	
 	/**
@@ -237,5 +237,5 @@ public interface IdentitySpider {
 	 * @param p the person being viewed
 	 * @return new PersonView object
 	 */
-	public PersonView getSystemViewpoint(Person p); 
+	public PersonInfo getSystemViewpoint(Person p); 
 }

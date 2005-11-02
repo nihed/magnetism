@@ -38,7 +38,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonInfo;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.Mailer.NoAddressKnownException;
 
@@ -207,7 +207,6 @@ public class MessageSenderBean implements MessageSender {
 
 		public synchronized void sendPostNotification(Person recipient, Post post) {
 			XMPPConnection connection = getConnection();
-			PersonView recipientView;
 
 			StringBuilder recipientJid = new StringBuilder();
 			recipientJid.append(recipient.getId().toString());
@@ -236,11 +235,11 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 
-			recipientView = identitySpider.getViewpoint(recipient, post.getPoster());
+			PersonInfo recipientView = identitySpider.getViewpoint(recipient, post.getPoster());
 			String senderName = recipientView.getHumanReadableName();
 			Set<String> recipientNames = new HashSet<String>();
 			for (Person p : post.getPersonRecipients()) {
-				PersonView viewedP = identitySpider.getViewpoint(recipient, p);
+				PersonInfo viewedP = identitySpider.getViewpoint(recipient, p);
 				recipientNames.add(viewedP.getHumanReadableName());
 			}
 			Set<String> groupRecipientNames = new HashSet<String>();
@@ -270,7 +269,7 @@ public class MessageSenderBean implements MessageSender {
 
 			Set<Resource> resources = post.getResources();
 	
-			PersonView senderView = identitySpider.getViewpoint(post.getPoster(), clicker);
+			PersonInfo senderView = identitySpider.getViewpoint(post.getPoster(), clicker);
 			String senderName = senderView.getHumanReadableName();
 			String title = post.getTitle();
 			if (title == null || title.equals("")) {
@@ -298,7 +297,7 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendPostNotification(Person recipient, Post post) throws NoAddressKnownException {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
-			PersonView posterViewedByRecipient = identitySpider.getViewpoint(recipient, post.getPoster());
+			PersonInfo posterViewedByRecipient = identitySpider.getViewpoint(recipient, post.getPoster());
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();
