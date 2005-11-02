@@ -135,3 +135,17 @@ dh.util.goToNextPage = function(def) {
 		dojo.debug("invalid next page target " + where);
 	}
 }
+
+dh.util.getTextFromRichText = function(richtext) {
+
+	// our rich text widgets have no way to enter 
+	// arbitrary html, so the only html in them
+	// will be the <br/> or other limited set.
+	// if you just type in a tag by hand, it gets
+	// escaped (will already be &lt;script&gt; 
+	// for example)
+	var html = richtext.getEditorContent();
+	var text = html.replace(/<br\/>/g, "\n");
+	text = text.replace(/<br>/g, "\n");
+	return text;
+}

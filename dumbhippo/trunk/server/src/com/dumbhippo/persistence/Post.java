@@ -17,6 +17,8 @@ import javax.persistence.Transient;
 
 import org.jboss.annotation.ejb.Clustered;
 
+import com.dumbhippo.XmlBuilder;
+
 @Entity
 public class Post extends GuidPersistable {
 
@@ -178,6 +180,13 @@ public class Post extends GuidPersistable {
 		}
 	}
 
+	@Transient
+	public String getTextAsHtml() {
+		XmlBuilder builder = new XmlBuilder();
+		builder.appendTextAsHtml(getText());
+		return builder.toString();
+	}
+	
 	@Column(nullable=false)
 	public Date getPostDate() {
 		return postDate;

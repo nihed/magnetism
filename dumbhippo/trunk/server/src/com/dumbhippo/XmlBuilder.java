@@ -3,6 +3,9 @@
  */
 package com.dumbhippo;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,6 +118,37 @@ public class XmlBuilder {
 		if (content != null)
 			appendEscaped(content);
 		closeElement();
+	}
+	
+
+	/**
+	 * A convenience function useful when sending html mail or 
+	 * showing post on a web page. Converts plain text to 
+	 * HTML, adding &lt;p&gt; and &lt;br&gt; tags for example.
+	 * 
+	 * @param text the text to convert and append
+	 */
+	public void appendTextAsHtml(String text) {	
+		append("<p>\n");
+		// I suppose this is a wasteful way to be able to use getLine()
+		BufferedReader reader = new BufferedReader(new StringReader(text));
+		try {
+			boolean lastLineEmpty = false;
+			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+				if (line.matches("^\\s*$")) {
+					if (!lastLineEmpty) {
+						append("\n</p>\n<p>");
+					}
+					lastLineEmpty = true;
+				} else {
+					appendEscaped(line);
+					lastLineEmpty = false;
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("should not get IOException on a StringReader", e);
+		}
+		append("</p>\n");
 	}
 	
 	private void preAppend() {

@@ -1,8 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashSet;
@@ -351,28 +348,8 @@ public class MessageSenderBean implements MessageSender {
 			
 			// TEXT: append post text
 			messageText.append(post.getText());
-
 			// HTML: append post text
-			messageHtml.append("<p>\n");
-			// I suppose this is a wasteful way to be able to use getLine()
-			BufferedReader reader = new BufferedReader(new StringReader(post.getText()));
-			try {
-				boolean lastLineEmpty = false;
-				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-					if (line.matches("^\\s*$")) {
-						if (!lastLineEmpty) {
-							messageHtml.append("\n</p>\n<p>");
-						}
-						lastLineEmpty = true;
-					} else {
-						messageHtml.appendEscaped(line);
-						lastLineEmpty = false;
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException("should not get IOException on a StringReader", e);
-			}
-			messageHtml.append("</p>\n");
+			messageHtml.appendTextAsHtml(post.getText());
 			
 			// TEXT: append footer
 			messageText.append("\n\n");

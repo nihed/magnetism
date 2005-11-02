@@ -30,7 +30,7 @@
 	</tr>
 	<tr>
 	<td class="cool-link-desc">
-		<c:out value="${info.post.text}"/>
+		<c:out value="${info.post.textAsHtml}" escapeXml="false"/>
 	</td>
 	</tr>
 	<tr>
