@@ -281,7 +281,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 		
 	public PersonInfo getViewpoint(Person viewpoint, Person p) {
-		return new PersonInfo(p, getEmail(viewpoint, p));
+		return new PersonInfo(p, getEmail(p, viewpoint));
 	}
 
 	public PersonInfo getSystemViewpoint(Person p) {
