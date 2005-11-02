@@ -101,6 +101,14 @@
       <url-pattern>/</url-pattern>
    </servlet-mapping>
 
+   <!-- The reason for adding this is to override the default binding
+        of *.jsp to the 'jsp' servlet. We want JSP's to be only
+        accessible through our rewritten URLs -->
+   <servlet-mapping>
+      <servlet-name>RewriteServlet</servlet-name>
+      <url-pattern>*.jsp</url-pattern>
+   </servlet-mapping>
+
    <welcome-file-list>
       <welcome-file>index.html</welcome-file>
    </welcome-file-list>
