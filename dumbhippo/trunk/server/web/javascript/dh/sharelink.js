@@ -7,7 +7,6 @@ dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
 dojo.require("dojo.widget.HtmlInlineEditBox");
 dojo.require("dh.server");
-dojo.require("dh.login");
 dojo.require("dh.util");
 dojo.require("dh.model");
 
@@ -344,8 +343,7 @@ dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("secret = " + secret);
 	
 	// double-check that we're logged in
-	dh.login.requireLogin(function() {					
-		dh.server.doPOST("sharelink",
+	dh.server.doPOST("sharelink",
 						{ 
 							"url" : url,
 							"title" : title, 
@@ -361,7 +359,6 @@ dh.sharelink.submitButtonClicked = function() {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
 
 						});
-	});
 }
 
 dh.sharelink.copyCompletions = function(completions, filterSelected) {
@@ -532,47 +529,43 @@ dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
 
 dh.sharelink.init = function() {
 	dojo.debug("dh.sharelink.init");
-		
-	dh.login.requireLogin(function() {
-		dojo.debug("dh.sharelink logged in!");
+			
+	var params = dh.util.getParamsFromLocation();
 	
-		var params = dh.util.getParamsFromLocation();
-		
-		dh.sharelink.urlToShareEditBox = document.getElementById("dhUrlToShare");
-		
-		var urlParam = params["url"]
-		if (urlParam) {
-			dh.sharelink.urlToShareEditBox.value = urlParam;
-		} else {
-			dh.sharelink.urlToShareEditBox.value = "(enter link to share)";
-			var urlDiv = document.getElementById("dhUrlToShareDiv");
-			dh.util.show(urlDiv);
-		}
-		
-		dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
-		var params = dh.util.getParamsFromLocation();
-		if (dojo.lang.has(params, "title")) {
-			dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
-		}
+	dh.sharelink.urlToShareEditBox = document.getElementById("dhUrlToShare");
 	
-		dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
+	var urlParam = params["url"]
+	if (urlParam) {
+		dh.sharelink.urlToShareEditBox.value = urlParam;
+	} else {
+		dh.sharelink.urlToShareEditBox.value = "(enter link to share)";
+		var urlDiv = document.getElementById("dhUrlToShareDiv");
+		dh.util.show(urlDiv);
+	}
 	
-		dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
-		dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
-		
-		// most of the dojo is set up now, so show the widgets
-		dh.util.showId("dhShareLinkForm");
-		
-		// rich text areas can't exist when display:none, so we have to create it after showing
-		dh.sharelink.descriptionRichText = dojo.widget.fromScript("richtext", 
-																 {}, // props,
-																 document.getElementById("dhShareLinkDescription"));
-																 
-		dh.sharelink.createGroupPopup = document.getElementById("dhCreateGroupPopup");					 
-		dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
-		dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
-							dj_global, "dhDoCreateGroupKeyUp");
-	});
+	dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
+	var params = dh.util.getParamsFromLocation();
+	if (dojo.lang.has(params, "title")) {
+		dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
+	}
+
+	dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
+
+	dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
+	dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
+	
+	// most of the dojo is set up now, so show the widgets
+	dh.util.showId("dhShareLinkForm");
+	
+	// rich text areas can't exist when display:none, so we have to create it after showing
+	dh.sharelink.descriptionRichText = dojo.widget.fromScript("richtext", 
+															 {}, // props,
+															 document.getElementById("dhShareLinkDescription"));
+															 
+	dh.sharelink.createGroupPopup = document.getElementById("dhCreateGroupPopup");					 
+	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
+	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
+						dj_global, "dhDoCreateGroupKeyUp");
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
