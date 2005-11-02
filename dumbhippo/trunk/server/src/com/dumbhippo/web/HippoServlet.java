@@ -143,6 +143,8 @@ public class HippoServlet extends AbstractServlet {
 					"Don't know about URI path /" + typeDir + " , only /xml, /text for GET plus /action for POST only)");
 		}
 
+		boolean foundMethod = false;
+		
 		for (Class<?> iface : interfaces) {
 			logger.debug("Looking for method " + requestedMethod + " on " + iface.getCanonicalName());
 			for (Method m : iface.getMethods()) {
@@ -155,6 +157,10 @@ public class HippoServlet extends AbstractServlet {
 					continue;
 				}
 
+				if (paramsAnnotation == null) {
+					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "missing params annotation on " + m.getName());
+				}
+				
 				String lowercase = m.getName().toLowerCase();
 				if (!(lowercase.equals(getRequestedMethod) || lowercase.equals(doRequestedMethod))) {
 					logger.debug("Method " + m.getName() + " does not match " + getRequestedMethod + " or "
@@ -212,9 +218,14 @@ public class HippoServlet extends AbstractServlet {
 				out.flush();
 
 				logger.debug("Reply for " + m.getName() + " sent");
-				
+		
+				foundMethod = true;
 				break; // don't call two different methods!
 			}
+		}
+		
+		if (!foundMethod) {
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "No such method " + requestedMethod);
 		}
 	}
 	

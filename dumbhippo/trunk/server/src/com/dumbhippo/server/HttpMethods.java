@@ -22,20 +22,13 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { })
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user)
 			throws IOException;
-	
-	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "entryContents" })
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
-			throws IOException;
 
-	// FIXME this API looks lame to clients; suggest:
-	// 1) the URL use studlyCaps instead of all-lowercase
-	// 2) we add support for optional and boolean params and then have createContact=true
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "entryContents" })
-	public void doFriendCompletionsOrCreateContact(OutputStream out, HttpResponseData contentType, Person user, String entryContents)
+	@HttpParams( { "email" })
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, Person user, String email)
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)

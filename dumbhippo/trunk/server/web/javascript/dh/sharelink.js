@@ -11,7 +11,9 @@ dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.model");
 
-// hash of all persons/groups we have ever loaded up, keyed by guid
+// whether allKnownIds has successfully been filled in
+dh.sharelink.haveLoadedContacts = false;
+// hash of all persons/groups we should autocomplete on, keyed by guid
 dh.sharelink.allKnownIds = {};
 // currently selected recipients, may be group or person objects
 dh.sharelink.selectedRecipients = [];
@@ -34,6 +36,31 @@ dh.sharelink.findGuid = function(set, id) {
 		}
 	}
 	return null;
+}
+
+// merges an XML document into allKnownIds and returns an array
+// of the newly-added items
+dh.sharelink.mergeObjectsDocument = function(doc) {
+	var retval = [];
+	var objectsElement = doc.getElementsByTagName("objects").item(0);
+	if (!objectsElement) {
+		dojo.debug("no <objects> element");
+		return retval;
+	}
+	var nodeList = objectsElement.childNodes;
+	for (var i = 0; i < nodeList.length; ++i) {
+		var element = nodeList.item(i);
+		if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+			continue;
+		} else {
+			var obj = dh.model.objectFromXmlNode(element);
+		    // merge in a new person/group we know about, overwriting any older data
+		    dh.sharelink.allKnownIds[obj.id] = obj;
+		    retval.push(obj);
+		    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
+		}
+	}
+	return retval;
 }
 
 dh.sharelink.findIdNode = function(id) {
@@ -120,25 +147,17 @@ dh.sharelink.doCreateGroup = function() {
 						"members" : commaMembers
 					},
 					function(type, data, http) {
-						//dojo.debug("creategroup got back data " + dhAllPropsAsString(data));
-						
-						var objectsElement = data.getElementsByTagName("objects").item(0);
-						var nodeList = objectsElement.childNodes;
-						for (var i = 0; i < nodeList.length; ++i) {
-							var element = nodeList.item(i);
-							if (element.nodeType != dojo.dom.ELEMENT_NODE) {
-								continue;
-							} else {
-								var obj = dh.model.objectFromXmlNode(element);
-						    	dh.sharelink.allKnownIds[obj.id] = obj;
-						    	dojo.debug(" saved new group type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
-						    	
-						    	// add the group as a recipient
-						    	dh.sharelink.doAddRecipient(obj.id);
-							}
+						dojo.debug("got back a new group " + data);
+						dojo.debug("text is : " + http.responseText);
+					
+						var newGroups = dh.sharelink.mergeObjectsDocument(data);
+
+						for (var i = 0; i < newGroups.length; ++i) {							    	
+							// add the group as a recipient
+					    	dh.sharelink.doAddRecipient(newGroups[i].id);
 						}
 						
-						// remove the individual members
+						// remove the individual members as recipients
 						for (var i = 0; i < groupMembers.length; ++i) {
 							dh.sharelink.removeRecipient(groupMembers[i].id);
 						}
@@ -146,13 +165,14 @@ dh.sharelink.doCreateGroup = function() {
 						dh.util.hide(dh.sharelink.createGroupPopup);
 						dh.sharelink.createGroupNameEntry.value = "";
 						dh.util.hide(statusNode);
+						dh.sharelink.unhighlightPossibleGroup();
 						dh.sharelink.creatingGroup = false;
 					},
 					function(type, error, http) {
 						//dojo.debug("creategroup got back error " + dhAllPropsAsString(error));
 						// FIXME display the error, don't hide status
 						dh.util.hide(statusNode);
-						dh.sharelink.creatingGroup = false;						
+						dh.sharelink.creatingGroup = false;		
 					});
 }
 
@@ -199,53 +219,31 @@ dhRemoveRecipientClicked = function(event) {
 	dh.sharelink.removeRecipient(idToRemove, node);
 }
 
-dh.sharelink.doAddRecipientFromCombo = function(fromKeyPress) {
+// called when user presses Enter or the Add button
+dh.sharelink.doAddRecipientFromCombo = function(createContact) {
 	var cb = dh.sharelink.recipientComboBox;
-	var previousValue = cb.textInputNode.value;
-			
-	cb.dataProvider.getResults(previousValue,
-							true,
-							function(completions) {
-								if (previousValue != cb.textInputNode.value) {
-									// the user typed or deleted or something since we 
-									// sent the request; so abort and do nothing
-									return;
-								}
-							
-								if (completions.length == 0) {
-									alert("Don't know who " + previousValue + " is...");
-									return;
-								} 
-								
-								var filtered = dh.sharelink.copyCompletions(completions, true);
-								
-								if (filtered.length > 1) {
-									// ambiguous, pop up combo completer ... better thing to do?
-									if (!fromKeyPress) {
-										cb.dataProvider.emitProvideSearchResults(filtered, previousValue);
-									} else {
-										// Dojo calls hideResultList() in its key handler, we need 
-										// a better plan here...
-										var all = "";
-										for (var i = 0; i < filtered.length; ++i) {
-											if (i != 0) {
-												all = all + ", ";
-											}
-											all = all + filtered[i][0];
-										}
-										alert("Not sure which of these you mean: " + all);
-									}
-								} else if (filtered.length == 1) {
-									var recipientId = filtered[0][1];
-									dojo.debug("got single completion back, " + recipientId);
-									dh.sharelink.doAddRecipient(recipientId);
-								} else {
-									// filtered.length == 0 and completions.length > 0
-									//alert("already added them");
-									var node = dh.sharelink.findIdNode(completions[0][1]);
-									dh.util.flash(node);
-								}
-							});
+	var email = cb.textInputNode.value;
+	
+	dojo.debug("looking up contact " + email);
+
+	dh.server.getXmlPOST("createorgetcontact",
+			{ "email" : email },
+			function(type, data, http) {
+				dojo.debug("got back a contact " + data);
+				dojo.debug("text is : " + http.responseText);
+						
+				var newContacts = dh.sharelink.mergeObjectsDocument(data);
+				
+				for (var i = 0; i < newContacts.length; ++i) {
+					// add someone; this flashes their entry and is a no-op 
+					// if they were already added
+					dh.sharelink.doAddRecipient(newContacts[i].id);
+				}
+			},
+			function(type, error, http) {
+				dojo.debug(" got back error " + dhAllPropsAsString(error));
+				// FIXME display
+			});
 }
 
 dh.sharelink.doAddRecipient = function(selectedId) {	
@@ -281,7 +279,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		dojo.html.addClass(td, "dhHeadShot");
 		tr1.appendChild(td);
 		var img = document.createElement("img");
-		img.setAttribute("src", "http://planet.gnome.org/heads/nobody.png");
+		img.setAttribute("src", dhHeadshotsRoot + obj.id);
 		td.appendChild(img);
 		var td = document.createElement("td");
 		dojo.html.addClass(td, "dhRemoveRecipient");
@@ -310,12 +308,13 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		if (!dh.util.disableOpacityEffects)	
 			var anim = dojo.fx.html.fadeIn(idNode, 800);
 	} else {
-		dh.util.flash();
+		dh.util.flash(dh.sharelink.findIdNode(obj.id));
 	}
 	
 	// clear the combo again
 	dh.sharelink.recipientComboBox.textInputNode.value = "";
 	dh.sharelink.recipientComboBox.dataProvider.lastSearchProvided = null;
+	dh.sharelink.recipientComboBox.dataProvider.singleCompletionId = null;
 }
 
 dhDoAddRecipientKeyUp = function(event) {
@@ -362,6 +361,27 @@ dh.sharelink.submitButtonClicked = function() {
 						});
 }
 
+dh.sharelink.loadContacts = function() {
+	if (dh.sharelink.haveLoadedContacts)
+		return;
+	
+	dh.server.getXmlGET("contactsandgroups",
+			{ },
+			function(type, data, http) {
+				dojo.debug("got back contacts " + data);
+				dojo.debug("text is : " + http.responseText);
+							
+				dh.sharelink.mergeObjectsDocument(data);
+				
+				dh.sharelink.haveLoadedContacts = true;
+			},
+			function(type, error, http) {
+				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
+				
+				// note that we don't cache an empty result set, we will retry instead...
+			});
+}
+
 dh.sharelink.copyCompletions = function(completions, filterSelected) {
 	// second arg is optional
 	if (arguments.length < 2) {
@@ -382,105 +402,35 @@ dh.sharelink.copyCompletions = function(completions, filterSelected) {
 
 dh.sharelink.FriendListProvider = function() {
 
-	// completions we are working on, hash from search string + ":" + args to array of resultsFunc
-	this.pendingCompletions = {};
-
-	// all completions we have done, hash from the search string to the provideSearchResults arg
-	this.allKnownCompletions = {};
-
 	this.lastSearchProvided = null;
+	this.singleCompletionId = null;
 
-	this.notifyPending = function(cacheKey, completions) {
-		dojo.debug("notifying of completion to " + cacheKey);
-		var pending = this.pendingCompletions[cacheKey];
-		delete this.pendingCompletions[cacheKey];
-		for (var i = 0; i < pending.length; ++i) {
-			pending[i](completions);
-		}
-	}
-
-	// resultsFunc should NOT mutate the returned results, unlike the Dojo signal 
-	// handler on provideSearchResults()
-	this.getResults = function(searchStr, createContactIfNotFound, resultsFunc) {
-
-		var cacheKey = searchStr + ":" + createContactIfNotFound;
-
-		if (dojo.lang.has(this.allKnownCompletions, cacheKey)) {
-			dojo.debug("using cached result for " + cacheKey);
-			resultsFunc(this.allKnownCompletions[cacheKey]);
-			return;
-		}
-
-		if (dojo.lang.has(this.pendingCompletions, cacheKey)) {
-			dojo.debug("adding another resultsFunc for " + cacheKey);
-			this.pendingCompletions[cacheKey].push(resultsFunc);
-			return;
-		}
-
-		dojo.debug("creating first results query for " + cacheKey);
-		this.pendingCompletions[cacheKey] = [resultsFunc];
-		
-		var _this = this;
-		
-		var method;
-		var func;
-		if (createContactIfNotFound) {
-			method = "friendcompletionsorcreatecontact";
-			func = dh.server.getXmlPOST;
-		} else {
-			method = "friendcompletions";
-			func = dh.server.getXmlGET;
-		}
-		
-		func(method,
-			{ "entryContents" : searchStr },
-			function(type, data, http) {
-					dojo.debug(method + " got back data " + data);
-					dojo.debug("text is : " + http.responseText);
-					//dojo.debug(data.doctype);
-								
-					var completions = [];
-								
-					var objectsElement = data.getElementsByTagName("objects").item(0);
-					var nodeList = objectsElement.childNodes;
-					for (var i = 0; i < nodeList.length; ++i) {
-						var element = nodeList.item(i);
-						if (element.nodeType != dojo.dom.ELEMENT_NODE) {
-							continue;
-						} else if (element.nodeName == "completion") {
-							completions.push([element.getAttribute("text"), element.getAttribute("id")]);
-						} else {
-							var obj = dh.model.objectFromXmlNode(element);
-						    // merge in a new person/group we know about, overwriting any older data
-						    dh.sharelink.allKnownIds[obj.id] = obj;
-						    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
-						}
-					}
-					
-					// save cached completions
-					_this.allKnownCompletions[searchStr] = completions;
-
-					_this.notifyPending(cacheKey, completions);
-				},
-				function(type, error, http) {
-					dojo.debug(method + " got back error " + dhAllPropsAsString(error));
-					_this.notifyPending(cacheKey, []);
-					
-					// note that we don't cache an empty result set, we will retry instead...
-				});
-	}
-
-	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD"
+	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD" which we ignore for now
 	this.startSearch = function(searchStr, type, ignoreLimit) {
 		//dojo.debug("friend startSearch");
 		
-		var _this = this;
-
-		this.getResults(searchStr, false, function(completions) {
-			// dojo "eats" the completions so we have to copy them (we need to filter anyhow)
-			dh.sharelink.lastSearchProvidedToComboBox = searchStr;
-			_this.emitProvideSearchResults(dh.sharelink.copyCompletions(completions, true), searchStr);
-		});
+		var st = type || "substring";
+		
+		// not case-sensitive
+		searchStr = searchStr.toLowerCase();
+		
+		if (st.toLowerCase() != "substring")
+			dojo.raise("we only do substring search");
+		
+		var completions = [];
+		
+		for (var id in dh.sharelink.allKnownIds) {
+			var obj = dh.sharelink.allKnownIds[id];
+			
+			if (obj.displayName.indexOf(searchStr) >= 0) {
+				if (!dh.sharelink.findGuid(dh.sharelink.selectedRecipients,
+							               obj.id)) {
+					completions.push([obj.displayName, obj.id]);
+				}
+			}
+		}
+		
+		this.emitProvideSearchResults(completions, searchStr);
 	}
 
 	// a "signal", pass it an array of 2-item arrays, where the pairs
@@ -496,6 +446,14 @@ dh.sharelink.FriendListProvider = function() {
 	
 		dojo.debug("lastSearchProvided -" + this.lastSearchProvided + "- forSearchStr -" + forSearchStr + "-");
 	
+		if (resultsDataPairs.length == 1) {
+			this.singleCompletionId = resultsDataPairs[0][1];
+			dojo.debug("single completion is " + this.singleCompletionId);
+		} else {
+			this.singleCompletionId = null;
+			dojo.debug("there are " + resultsDataPairs.length + " completions");
+		}
+	
 		if (this.lastSearchProvided == forSearchStr) {
 			// just show the list.
 			dh.sharelink.recipientComboBox.showResultList(); // is a no-op if already showing
@@ -503,6 +461,14 @@ dh.sharelink.FriendListProvider = function() {
 			dojo.debug("providing search results to the combo for '" + forSearchStr + "' results are " + resultsDataPairs);
 			this.lastSearchProvided = forSearchStr;
 			this.provideSearchResults(resultsDataPairs);
+		}
+		
+		// maybe not the best place to do this
+		if (this.singleCompletionId) {
+			dojo.debug("adding single completion " + this.singleCompletionId);
+			dh.sharelink.doAddRecipient(this.singleCompletionId);
+		} else {
+			dojo.debug("don't have single completion");
 		}
 	}
 }
@@ -553,6 +519,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
 
 	dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
+	dh.sharelink.recipientComboBox.searchType = "substring";
 	dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
 	
 	// most of the dojo is set up now, so show the widgets
@@ -570,6 +537,9 @@ dh.sharelink.init = function() {
 						
 	// set default focus
 	dh.sharelink.recipientComboBox.textInputNode.focus();
+	
+	// load up your contacts
+	dh.sharelink.loadContacts();
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things

@@ -65,33 +65,36 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupPersonByResource(viewpoint, res);
 	}
 	
-	public Person lookupPersonByResource(Resource resource) {
+	/**
+	 * Note, this is NOT the same as getting the owner of the resource from the viewpoint
+	 * of assertedBy, because we don't fall back to "the man" (and the viewpoint is allowed
+	 * to be "the man")
+	 * 
+	 * @param resource resource to look up
+	 * @param assertedBy who has to say the person owns this
+	 * @return who owns the resource according to assertedBy, or null
+	 */
+	private Person lookupPersonByResourceAssertedBy(Resource resource, Person assertedBy) {
 		Person person;
 		try {
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and c.assertedBy = :theman")
+			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and c.assertedBy = :assertedBy")
 			.setParameter("resource", resource)
-			.setParameter("theman", getTheMan())
+			.setParameter("assertedBy", assertedBy)
 			.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
 		return person;
 	}
-
+	
+	public Person lookupPersonByResource(Resource resource) {
+		return lookupPersonByResourceAssertedBy(resource, getTheMan());
+	}
+	
 	public Person lookupPersonByResource(Person viewpoint, Resource resource) {
-		Person person;
-		try {
-			// FIXME: this query could return multiple results if there is both a 
-			//   personal ownership assertion and a system-wide ownership assertion.
-			//   It might be better to just do two queries.
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and (c.assertedBy = :viewpoint or c.assertedBy = :theman)")
-			.setParameter("resource", resource)
-			.setParameter("viewpoint", viewpoint)
-			.setParameter("theman", getTheMan())
-			.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
-		}
+		Person person = lookupPersonByResourceAssertedBy(resource, viewpoint);
+		if (person == null)
+			person = lookupPersonByResourceAssertedBy(resource, getTheMan());
 		return person;
 	}
 	

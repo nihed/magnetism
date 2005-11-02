@@ -21,7 +21,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -91,10 +90,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	private void returnCompletionXml(XmlBuilder xml, GuidPersistable object, String completes) {
-		xml.appendTextNode("completion", null, "id", object.getId(), "text", completes);
-	}
-	
 	private void returnObjects(OutputStream out, HttpResponseData contentType, Person user, Set<PersonView> persons, Set<Group> groups) throws IOException {
 		XmlBuilder xml = new XmlBuilder();		
 
@@ -106,97 +101,29 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		endReturnObjectsXml(out, xml);
 	}
 
-
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user) throws IOException {
-		XmlBuilder xml = new XmlBuilder();
 		Viewpoint viewpoint = new Viewpoint(user);
-
-		startReturnObjectsXml(contentType, xml);
 		
 		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
 		Set<Group> groups = groupSystem.findGroups(viewpoint, user);
 		
 		returnObjects(out, contentType, user, persons, groups);
-		endReturnObjectsXml(out, xml);
 	}
 	
-	private void implementCompletions(OutputStream out, HttpResponseData contentType, Person user,
-			String entryContents, boolean createContact) throws IOException {
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, Person user,
+			String email) throws IOException {
 
 		XmlBuilder xml = new XmlBuilder();
 		Viewpoint viewpoint = new Viewpoint(user);
 
 		startReturnObjectsXml(contentType, xml);
 
-		boolean hadCompletion = false;
-		if (entryContents != null) {
-			Set<PersonView> contacts = identitySpider.getContacts(viewpoint, user);
-			Set<Group> groups = groupSystem.findGroups(viewpoint, user);
-
-			// it's important that empty string returns all completions,
-			// otherwise
-			// the arrow on the combobox doesn't drop down anything when it's
-			// empty
-
-			for (PersonView c : contacts) {
-				String completion = null;
-
-				String humanReadable = c.getHumanReadableName();
-				EmailResource email = c.getEmail();
-				if (humanReadable.startsWith(entryContents)) {
-					completion = humanReadable;
-				} else if (email.getEmail().startsWith(entryContents)) {
-					completion = email.getEmail();
-				}
-
-				if (completion != null) {
-					hadCompletion = true;
-					returnPersonsXml(xml, Collections.singleton(c));
-					returnCompletionXml(xml, c.getPerson(), completion);
-				}
-			}
-
-			for (Group g : groups) {
-				String completion = null;
-
-				if (g.getName().startsWith(entryContents)) {
-					completion = g.getName();
-				} else if (g.getId().startsWith(entryContents)) {
-					completion = g.getId();
-				}
-
-				if (completion != null) {
-					hadCompletion = true;
-					returnGroupsXml(xml, user, Collections.singleton(g));
-					returnCompletionXml(xml, g, completion);
-				}
-			}
-		}
-
-		if (createContact && !hadCompletion) {
-			// Create a new contact to be the completion
-			EmailResource email = identitySpider.getEmail(entryContents);
-			Person contact = identitySpider.createContact(user, email);
-			PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
-			returnPersonsXml(xml, Collections.singleton(contactView));
-			returnCompletionXml(xml, contact, entryContents);
-		}
+		EmailResource resource = identitySpider.getEmail(email);
+		Person contact = identitySpider.createContact(user, resource);
+		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
+		returnPersonsXml(xml, Collections.singleton(contactView));
 		
 		endReturnObjectsXml(out, xml);
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dumbhippo.server.AjaxGlueHttp#getFriendCompletions(java.io.OutputStream,
-	 *      java.lang.String, java.lang.String)
-	 */
-	public void getFriendCompletions(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
-		implementCompletions(out, contentType, user, entryContents, false);
-	}
-
-	public void doFriendCompletionsOrCreateContact(OutputStream out, HttpResponseData contentType, Person user, String entryContents) throws IOException {
-		implementCompletions(out, contentType, user, entryContents, true);
 	}
 	
 	static private Set<String> splitIdList(String list) {
