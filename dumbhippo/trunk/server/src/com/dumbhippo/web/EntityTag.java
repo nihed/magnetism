@@ -29,7 +29,7 @@ public class EntityTag extends SimpleTagSupport {
 		}
 		
 		if (link != null)
-			return "<a href='" + link + "\'>" + XmlBuilder.escape(body) + "</a>";  
+			return "<a href='" + link + "\' target=_top>" + XmlBuilder.escape(body) + "</a>";  
 		else  
 			return body;
 	}

@@ -9,7 +9,7 @@
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 
 <frameset rows="100,*">
-    <frame name="top" src="/jsp/framer.jsp?postId=${framer.postId}">
+    <frame name="top" src="framer?postId=${framer.postId}">
     <frame name="bottom" src="${framer.post.url}">
 </frameset>
 <noframes>
