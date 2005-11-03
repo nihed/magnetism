@@ -170,6 +170,13 @@ form.inlineEditBox input[type=text] {
 	padding:						0.5em;
 }
 
+/* A message we flash before closing the page */
+.dh-closing-message {
+	top:				30%;
+	text-align:			center;
+	font-size:			larger;
+}
+
 /* Dojo debug spew goes in element with id=dojoDebug */
 #dojoDebug {
 	font-size:	small;

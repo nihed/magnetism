@@ -1,4 +1,5 @@
 dojo.provide("dh.util");
+dojo.require("dojo.html");
 
 dh.util.getParamsFromLocation = function() {
 	var query = window.location.search.substring(1);
@@ -102,7 +103,26 @@ dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.gec
 // arg is the default page to go to if none was specified
 // "close" and "here" are magic pseudo-pages for close the window
 // and stay on this page
-dh.util.goToNextPage = function(def) {
+dh.util.goToNextPage = function(def, flashMessage) {
+
+	if (flashMessage) {
+		// delete the whole page
+		dh.util.hide(document.body);
+		while (document.body.firstChild) {
+			document.body.removeChild(document.body.firstChild);
+		}
+		
+		// insert the message
+		var messageNode = document.createElement("div");
+		dojo.html.addClass(messageNode, "dh-closing-message");
+		messageNode.appendChild(document.createTextNode(flashMessage));
+		document.body.appendChild(messageNode);
+		dh.util.show(document.body);
+		
+		setTimeout("dh.util.goToNextPage(\"" + def + "\");", 3000); // in 3 seconds, go to next page
+		return;
+	}
+
 	var params=dh.util.getParamsFromLocation();
 	var where = params.next;
 	

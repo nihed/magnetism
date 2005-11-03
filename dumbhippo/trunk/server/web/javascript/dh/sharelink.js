@@ -427,7 +427,7 @@ dh.sharelink.submitButtonClicked = function() {
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
-							dh.util.goToNextPage("home");
+							dh.util.goToNextPage("home", "You've been shared!");
 						},
 						function(type, error, http) {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
