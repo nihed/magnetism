@@ -23,9 +23,11 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
@@ -100,8 +102,10 @@ public class PostingBoardBean implements PostingBoard {
 		// build expanded recipients
 		expandedRecipients.addAll(personRecipients);
 		for (Group g : groupRecipients) {
-			Set<Person> members = g.getMembers();
-			expandedRecipients.addAll(members);
+			for (GroupMember groupMember : g.getMembers()) {
+				if (groupMember.getStatus().isMember())
+					expandedRecipients.add(groupMember.getMember());
+			}
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
@@ -159,8 +163,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	// Hibernate bug: I think we should be able to write
-	// EXISTS (SELECT group FROM IN(post.groupRecipients) group WHERE
-	//         :viewer MEMBER of group.MEMBERS)
+	// EXISTS (SELECT g FROM IN(post.groupRecipients) g WHERE [..])
 	// according to the EJB3 persistance spec, but that results in
 	// garbage SQL
 	
@@ -170,14 +173,15 @@ public class PostingBoardBean implements PostingBoard {
               "EXISTS (SELECT g FROM Group g WHERE " +
                          "g MEMBER OF post.groupRecipients AND " + 
                          "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
-                           ":viewer MEMBER OF g.members)))";
+			               "EXISTS (SELECT vgm FROM GroupMember vgm " +
+                                       "WHERE vgm.group = g AND vgm.member = :viewer AND " +
+                                             "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")))) ";
 	
 	static final String CAN_VIEW_ANONYMOUS = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
               "EXISTS (SELECT g FROM Group g WHERE " +
                          "g MEMBER OF post.groupRecipients AND " + 
                          "g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + "))";
-
 	
 	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 	

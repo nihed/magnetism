@@ -10,7 +10,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
@@ -20,14 +20,14 @@ public class Group extends GuidPersistable {
 	
 	private GroupAccess access;
 	private String name;
-	private Set<Person> members;
+	private Set<GroupMember> members;
 	private boolean markedForDelete;
 		
 	private void initMissing() {
 		if (access == null)
 			access = GroupAccess.PUBLIC_INVITE;
 		if (members == null)
-			members = new HashSet<Person>();
+			members = new HashSet<GroupMember>();
 	}
 	
 	public Group() {
@@ -39,7 +39,7 @@ public class Group extends GuidPersistable {
 		initMissing();
 	}
 	
-	public Group(String name, Set<Person> members) {
+	public Group(String name, Set<GroupMember> members) {
 		this.name = name;
 		setMembers(members);
 		initMissing();
@@ -62,8 +62,8 @@ public class Group extends GuidPersistable {
 		this.markedForDelete = markedForDelete;
 	}
 
-	@ManyToMany
-	public Set<Person> getMembers() {
+	@OneToMany(mappedBy="group")
+	public Set<GroupMember> getMembers() {
 		return members;
 	}
 	
@@ -72,23 +72,10 @@ public class Group extends GuidPersistable {
 	 * addMember()
 	 * @param members
 	 */
-	protected void setMembers(Set<Person> members) {
+	protected void setMembers(Set<GroupMember> members) {
 		if (members == null)
 			throw new IllegalArgumentException("null");
 		this.members = members;
-	}
-	
-	public void addMember(Person person) {
-		members.add(person);
-	}
-	
-	public void addMembers(Set<Person> persons) {
-		members.addAll(persons);
-	}
-	
-	public void removeMember(Person person) {
-		// Silently do nothing if already not a member
-		members.remove(person);
 	}
 	
 	@Column(nullable=false)

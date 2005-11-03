@@ -12,7 +12,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
+
 public class RewriteServlet extends HttpServlet {
+	@SuppressWarnings("unused")
+	private static final Log logger = GlobalSetup.getLog(RewriteServlet.class);	
 	
 	static final long serialVersionUID = 1;
 	
@@ -27,12 +33,12 @@ public class RewriteServlet extends HttpServlet {
 	}
 	
 	@Override
-	public void service(HttpServletRequest request,	HttpServletResponse response) 
-		throws IOException, ServletException {
-		RequestDispatcher dispatcher = null;
+	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException { 
 		String newPath = null;
 		
 		String path = request.getServletPath();
+		
+		// logger.debug("Handling request for " + path);
 		
 		// The root URL is special-cased
 		
@@ -56,8 +62,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		if (path.startsWith("/javascript/") || 
 			path.startsWith("/css/")) {
-			dispatcher = context.getNamedDispatcher("default");
-			dispatcher.forward(request, response);
+			context.getNamedDispatcher("default").forward(request, response);
 			return;
 		}
 		
@@ -80,16 +85,16 @@ public class RewriteServlet extends HttpServlet {
 		// of static HTML and JSP's.
 		
 		if (jspPages.contains(afterSlash)) {
-			dispatcher = context.getNamedDispatcher("jsp");
+			// We can't use RewrittenRequest for JSP's because it breaks the
+			// handling of <jsp:forward/> and is generally unreliable.
 			newPath = "/jsp" + path + ".jsp";
+			context.getRequestDispatcher(newPath).forward(request, response);
 		} else if (htmlPages.contains(afterSlash)) {
-			dispatcher = context.getNamedDispatcher("default");
+			// We could eliminate the use of RewrittenRequest entirely by
+			// adding a mapping for *.html to servlet-info.xml
 			newPath = "/html" + path + ".html";
-		}
-		
-		if (dispatcher != null) {
-			HttpServletRequest wrappedRequest = new RewrittenRequest(request, newPath);
-			dispatcher.forward(wrappedRequest, response);
+			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
+			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 		} else {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}

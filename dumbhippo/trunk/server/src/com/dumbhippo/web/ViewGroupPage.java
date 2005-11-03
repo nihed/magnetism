@@ -2,11 +2,16 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
+import javax.servlet.ServletException;
+
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
@@ -27,6 +32,8 @@ public class ViewGroupPage {
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
 	
+	private GroupMember groupMember;
+	
 	public ViewGroupPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -46,22 +53,35 @@ public class ViewGroupPage {
 		return viewedGroupId;
 	}
 	
-	protected void setViewedGroup(Group group) {
-		this.viewedGroup = group;
-		this.viewedGroupId = group.getId();
-		logger.debug("viewing Group: " + this.viewedGroupId);
-	}
-	
 	public String getName() {
 		return viewedGroup.getName();
 	}
 
 	public void setViewedGroupId(String groupId) throws ParseException, GuidNotFoundException {
-		if (groupId == null) {
-			logger.debug("no viewed group");
-			return;
-		} else {
-			setViewedGroup(identitySpider.lookupGuidString(Group.class, groupId));
+		viewedGroupId = groupId;
+		
+		if (groupId != null) {
+			try {
+				viewedGroup = identitySpider.lookupGuidString(Group.class, groupId);
+			} catch (ParseException e) {
+				viewedGroupId = null;
+			} catch (GuidNotFoundException e) {
+				viewedGroupId = null;
+			}
+		}
+		
+		if (viewedGroup != null) {
+			groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+			
+			// Create a detached GroupMember to avoid null checks 
+			if (groupMember == null)
+				groupMember = new GroupMember(viewedGroup, signin.getUser(), MembershipStatus.NONMEMBER);
+			
+			if (!getGroupMember().getStatus().isMember() && viewedGroup.getAccess() == GroupAccess.SECRET) {
+				viewedGroupId = null;
+				viewedGroup = null;
+				groupMember = null;
+			}
 		}
 	}
 	
@@ -69,10 +89,17 @@ public class ViewGroupPage {
 		return PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup));
 	}
 	
+	public GroupMember getGroupMember() {
+		return groupMember;
+	}
+	
 	public boolean getIsMember() {
-		if (signin.isValid())
-			return groupSystem.isMember(signin.getViewpoint(), viewedGroup, signin.getUser());
-		else
-			return false;
+		return getGroupMember().getStatus().isMember();
+	}
+	
+	public boolean getCanJoin() {
+		return !getIsMember() && 
+		       (viewedGroup.getAccess() == GroupAccess.PUBLIC ||
+		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
 	}
 }

@@ -6,6 +6,8 @@
 <dh:bean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
 <jsp:setProperty name="viewgroup" property="viewedGroupId" param="groupId"/>
 
+<c:if test="${empty viewgroup.viewedGroupId}"><jsp:forward page="/jsp/nogroup.jsp"/></c:if>
+
 <head>
 	<title><c:out value="${viewgroup.name}"/></title>
 	<link rel="stylesheet" href="/css/group.css" type="text/css" />
@@ -14,14 +16,14 @@
 <body>
 	<dht:header><c:out value="${viewgroup.name}"/></dht:header>
 	
-	<dht:toolbar> &#151;
+	<dht:toolbar>
 		<c:choose>
 			<c:when test="${viewgroup.isMember}">
-				<a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave <c:out value="${viewgroup.name}"/></a>
+				 &#151; <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave <c:out value="${viewgroup.name}"/></a>
 			</c:when>
-			<c:otherwise>
-				<a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join <c:out value="${viewgroup.name}"/></a>
-			</c:otherwise>
+			<c:when test="${viewgroup.canJoin}">
+				 &#151; <a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join <c:out value="${viewgroup.name}"/></a>
+			</c:when>
 		</c:choose>
 	</dht:toolbar>
 

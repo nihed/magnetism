@@ -99,9 +99,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				// display just a few of them
 				
 				StringBuilder sampleMembers = new StringBuilder();
-				Set<Person> members = g.getMembers();
+				Set<PersonView> members = groupSystem.getMembers(viewpoint, g);
 				logger.debug(members.size() + " members of " + g.getName());
-				for (Person p : members) {
+				for (PersonView member : members) {
 					if (sampleMembers.length() > PersonView.MAX_SHORT_NAME_LENGTH * 5) {
 						sampleMembers.append(" ...");
 						break;
@@ -110,7 +110,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					if (sampleMembers.length() > 0)
 						sampleMembers.append(" ");
 				
-					PersonView member = identitySpider.getPersonView(viewpoint, p);
 					String shortName = member.getHumanReadableShortName();
 					sampleMembers.append(shortName);
 				}
@@ -190,8 +189,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
 		
 		Group group = groupSystem.createGroup(user, name);
-		group.addMember(user);
-		group.addMembers(memberPeople);
+		for (Person p : memberPeople)
+			groupSystem.addMember(user, group, p);
 		
 		Viewpoint viewpoint = new Viewpoint(user);
 		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));

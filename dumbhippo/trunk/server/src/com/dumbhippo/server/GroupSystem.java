@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Person;
 
 @Local
@@ -19,7 +20,7 @@ public interface GroupSystem {
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group);
 	
-	public boolean isMember(Viewpoint viewpoint, Group group, Person member);
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, Person member);
 	
 	public Set<Group> findGroups(Viewpoint viewpoint, Person member);	
 }
