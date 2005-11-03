@@ -38,7 +38,8 @@ dh.model.personFromXmlNode = function(element) {
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
 	var email = element.getAttribute("email");
-	
+
+	// note, empty string is "false"	
 	if (!id)
 		dojo.raise("no id attr on <person> node");
 	if (!displayName)
@@ -53,7 +54,8 @@ dh.model.groupFromXmlNode = function(element) {
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
-	
+
+	// note, empty string is "false"	
 	if (!id)
 		dojo.raise("no id attr on <group> node");
 	if (!displayName)

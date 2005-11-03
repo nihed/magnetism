@@ -21,8 +21,20 @@ public class EmailResource extends Resource {
 	
 	protected EmailResource() {}
 
+	// this is a "last ditch" validation to protect the DB, we should have
+	// checked before here to come up with a user-visible message
+	private void validateEmail(String str) throws IllegalArgumentException {
+		// the @ sign check would also catch length == 0, but just trying to be more clear
+		if (str.length() == 0) {
+			throw new IllegalArgumentException("Empty email address");
+		} else if (!str.contains("@")) {
+			throw new IllegalArgumentException("No @ sign in email address");
+		}
+	}
+	
 	public EmailResource(String string) {
 		super();
+		validateEmail(string);
 		setEmail(string);
 	}
 
@@ -43,6 +55,8 @@ public class EmailResource extends Resource {
 	 * @param email
 	 */
 	protected void setEmail(String email) {
+		if (email != null)
+			validateEmail(email); // in theory the database has nothing that would fail...
 		this.email = email;
 	}
 

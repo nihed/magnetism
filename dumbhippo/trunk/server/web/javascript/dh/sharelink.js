@@ -224,6 +224,12 @@ dh.sharelink.doAddRecipientFromCombo = function(createContact) {
 	var cb = dh.sharelink.recipientComboBox;
 	var email = cb.textInputNode.value;
 	
+	if (email.length == 0 || email.indexOf("@") < 0) {
+		dojo.debug("invalid email address: " + email);
+		// FIXME display something
+		return;
+	}
+	
 	dojo.debug("looking up contact " + email);
 
 	dh.server.getXmlPOST("createorgetcontact",
@@ -246,14 +252,27 @@ dh.sharelink.doAddRecipientFromCombo = function(createContact) {
 			});
 }
 
+dhComboBoxOptionSelected = function() {
+	// combo box does not reliably fill in selectedResult I 
+	// don't think, but it should in selectOption which we are the handler
+	// for.
+	if (!dh.sharelink.recipientComboBox.selectedResult) {
+		dojo.debug("no result selected");
+		return;
+	}
+	var id = dh.sharelink.recipientComboBox.selectedResult[1];
+	dojo.debug("selected = " + id);
+	dh.sharelink.doAddRecipient(id);
+}
+
 dh.sharelink.doAddRecipient = function(selectedId) {	
 	
 	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
 	
 	var objKey = dh.sharelink.findGuid(dh.sharelink.allKnownIds, selectedId);
 	if (!objKey) {
-		// FIXME display something, this is the validation step
-		alert("dunno who that is... (" + selectedId + ")");
+		// user should never get here
+		alert("something went wrong adding that person ... (" + selectedId + ")");
 		return;
 	}
 	
@@ -487,7 +506,7 @@ dh.sharelink.FriendListProvider = function() {
 		}
 		
 		// maybe not the best place to do this
-		if (this.singleCompletionId) {
+		if (this.singleCompletionId && forSearchStr.length > 0) {
 			dojo.debug("adding single completion " + this.singleCompletionId);
 			dh.sharelink.doAddRecipient(this.singleCompletionId);
 		} else {
@@ -543,6 +562,7 @@ dh.sharelink.init = function() {
 
 	dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
 	dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
+	dojo.event.connect(dh.sharelink.recipientComboBox, "selectOption", dj_global, "dhComboBoxOptionSelected");
 	
 	// most of the dojo is set up now, so show the widgets
 	dh.util.showId("dhShareLinkForm");
