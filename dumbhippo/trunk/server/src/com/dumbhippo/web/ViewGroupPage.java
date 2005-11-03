@@ -76,8 +76,13 @@ public class ViewGroupPage {
 			// Create a detached GroupMember to avoid null checks 
 			if (groupMember == null)
 				groupMember = new GroupMember(viewedGroup, signin.getUser(), MembershipStatus.NONMEMBER);
-			
-			if (!getGroupMember().getStatus().isMember() && viewedGroup.getAccess() == GroupAccess.SECRET) {
+
+			// We don't want the whole page to go poof if you remove yourself, so you can 
+			// still see the page if you were once a member, though you can't see all the
+			// contents (unless you re-add yourself)
+			if (viewedGroup.getAccess() == GroupAccess.SECRET &&
+			    !(getGroupMember().getStatus().isMember() || 
+			      getGroupMember().getStatus() == MembershipStatus.REMOVED)) {  
 				viewedGroupId = null;
 				viewedGroup = null;
 				groupMember = null;
