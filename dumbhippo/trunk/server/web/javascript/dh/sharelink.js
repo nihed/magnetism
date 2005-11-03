@@ -267,7 +267,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		idNode.setAttribute("dhId", obj.id);
 		dojo.html.addClass(idNode, "dhRecipient");
 		dojo.html.addClass(idNode, "dhItemBox");
-		if (dh.util.isShowing(dh.sharelink.createGroupPopup))
+		if (dh.util.isShowing(dh.sharelink.createGroupPopup) && obj.isPerson())
 			dojo.html.addClass(idNode, "dhCouldBeInGroup");
 		
 		// don't think tbody is used anymore?
@@ -279,7 +279,10 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		dojo.html.addClass(td, "dhHeadShot");
 		tr1.appendChild(td);
 		var img = document.createElement("img");
-		img.setAttribute("src", dhHeadshotsRoot + obj.id);
+		if (obj.isPerson())
+			img.setAttribute("src", dhHeadshotsRoot + obj.id);
+		else
+			img.setAttribute("src", dhGroupshotsRoot + obj.id);
 		td.appendChild(img);
 		var td = document.createElement("td");
 		dojo.html.addClass(td, "dhRemoveRecipient");
@@ -313,6 +316,8 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 	
 	// clear the combo again
 	dh.sharelink.recipientComboBox.textInputNode.value = "";
+	if (dh.sharelink.recipientComboBox._result_list_open)
+		dh.sharelink.recipientComboBox.hideResultList();
 	dh.sharelink.recipientComboBox.dataProvider.lastSearchProvided = null;
 	dh.sharelink.recipientComboBox.dataProvider.singleCompletionId = null;
 }
@@ -409,23 +414,41 @@ dh.sharelink.FriendListProvider = function() {
 	this.startSearch = function(searchStr, type, ignoreLimit) {
 		//dojo.debug("friend startSearch");
 		
-		var st = type || "substring";
+		var st = type || "startstring";
 		
 		// not case-sensitive
 		searchStr = searchStr.toLowerCase();
 		
-		if (st.toLowerCase() != "substring")
-			dojo.raise("we only do substring search");
+		var matchFunc;
+		if (st.toLowerCase() == "substring") {
+			matchFunc = function(text, searchStr) {
+				return text.toLowerCase().indexOf(searchStr) >= 0;
+			}
+		} else {
+			matchFunc = function(text, searchStr) {
+				return text.toLowerCase().substr(0, searchStr.length) == searchStr;
+			}
+		}
 		
 		var completions = [];
 		
 		for (var id in dh.sharelink.allKnownIds) {
 			var obj = dh.sharelink.allKnownIds[id];
 			
-			if (obj.displayName.indexOf(searchStr) >= 0) {
+			var found = null;
+			var matchedStr = null;
+			if (matchFunc(obj.displayName, searchStr)) {
+				found = obj;
+				matchedStr = obj.displayName;
+			} else if (obj.email && matchFunc(obj.email, searchStr)) {
+				found = obj;
+				matchedStr = obj.email;
+			}
+			
+			if (found) {
 				if (!dh.sharelink.findGuid(dh.sharelink.selectedRecipients,
-							               obj.id)) {
-					completions.push([obj.displayName, obj.id]);
+							               found.id)) {
+					completions.push([matchedStr, found.id]);
 				}
 			}
 		}
@@ -519,7 +542,6 @@ dh.sharelink.init = function() {
 	dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
 
 	dh.sharelink.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
-	dh.sharelink.recipientComboBox.searchType = "substring";
 	dojo.event.connect(dh.sharelink.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
 	
 	// most of the dojo is set up now, so show the widgets

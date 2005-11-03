@@ -34,6 +34,7 @@ public class FileServlet extends AbstractServlet {
 	private URI filesUri;
 	private File filesDir;
 	private File headshotDefault;
+	private File groupshotDefault;
 	
 	@Override
 	public void init() {
@@ -49,6 +50,7 @@ public class FileServlet extends AbstractServlet {
 		filesDir = new File(filesUri);
 		
 		headshotDefault = new File(filesDir, Configuration.HEADSHOTS_RELATIVE_PATH + "/default");
+		groupshotDefault = new File(filesDir, Configuration.GROUPSHOTS_RELATIVE_PATH + "/default");
 	}
 	
 	@Override
@@ -83,6 +85,9 @@ public class FileServlet extends AbstractServlet {
 		if (noPrefix.startsWith(Configuration.HEADSHOTS_RELATIVE_PATH)) {
 			response.setContentType("image/png");
 			defaultFile = headshotDefault;
+		} else if (noPrefix.startsWith(Configuration.GROUPSHOTS_RELATIVE_PATH)) {
+			response.setContentType("image/png");
+			defaultFile = groupshotDefault;
 		} else {
 			logger.debug("no content type known for " + noPrefix);
 		}

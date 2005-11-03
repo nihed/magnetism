@@ -77,9 +77,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private void returnPersonsXml(XmlBuilder xml, Set<PersonView> persons) {
 		if (persons != null) {
 			for (PersonView p : persons) {
-				xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName());
+				EmailResource email = p.getEmail();
+				if (email != null) {
+					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
+							"email", email.getEmail());
+				} else {
+					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName());
+				}
 			}
-		}		
+		}
 	}
 	
 	private void returnGroupsXml(XmlBuilder xml, Person user, Set<Group> groups) {

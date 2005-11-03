@@ -13,6 +13,7 @@ import javax.ejb.Local;
 public interface Configuration {
 
 	static final public String HEADSHOTS_RELATIVE_PATH = "/headshots";
+	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
 	
 	@ApplicationException
 	public class PropertyNotFoundException extends Exception {
