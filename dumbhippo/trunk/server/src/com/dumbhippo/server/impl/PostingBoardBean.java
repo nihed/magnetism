@@ -167,21 +167,25 @@ public class PostingBoardBean implements PostingBoard {
 	// according to the EJB3 persistance spec, but that results in
 	// garbage SQL
 	
+	static final String VISIBLE_GROUP =
+        "g MEMBER OF post.groupRecipients AND " + 
+		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
+          "EXISTS (SELECT vgm FROM GroupMember vgm " +
+          "WHERE vgm.group = g AND vgm.member = :viewer AND " +
+                "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
+	
+	static final String VISIBLE_GROUP_ANONYMOUS =
+        "g MEMBER OF post.groupRecipients AND " + 
+		"g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
+	
 	static final String CAN_VIEW = 
-		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
+		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
               ":viewer MEMBER OF post.personRecipients OR " +
-              "EXISTS (SELECT g FROM Group g WHERE " +
-                         "g MEMBER OF post.groupRecipients AND " + 
-                         "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
-			               "EXISTS (SELECT vgm FROM GroupMember vgm " +
-                                       "WHERE vgm.group = g AND vgm.member = :viewer AND " +
-                                             "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")))) ";
+              "EXISTS (SELECT g FROM Group g WHERE " + VISIBLE_GROUP + "))";
 	
 	static final String CAN_VIEW_ANONYMOUS = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
-              "EXISTS (SELECT g FROM Group g WHERE " +
-                         "g MEMBER OF post.groupRecipients AND " + 
-                         "g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + "))";
+              "EXISTS (SELECT g FROM Group g WHERE " + VISIBLE_GROUP_ANONYMOUS + "))";
 	
 	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 	
@@ -199,6 +203,9 @@ public class PostingBoardBean implements PostingBoard {
     //             ":viewer MEMBER OF h.members)
 	//
 	
+	static final String GET_POST_VIEW_QUERY = 
+		"SELECT g FROM Post post, Group g WHERE post = :post";
+
 	private PostView getPostView(Viewpoint viewpoint, Post post) {
 		Person viewer = viewpoint.getViewer();
 		List<Object> recipients = new ArrayList<Object>();
@@ -206,17 +213,16 @@ public class PostingBoardBean implements PostingBoard {
 		// Groups recipients are visible if the group is non-secret
 		// or if the view is a member of the group
 
-		String viewerClause = viewer != null ? " OR :viewer MEMBER OF g.members " : ""; 
-		
-		Query q = em.createQuery("SELECT g FROM Post post, Group g " +
-				                     "WHERE post = :post AND " + 
-				                           "g MEMBER OF post.groupRecipients AND " +
-				                           "(g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + 
-				                           viewerClause + ")");
-		q.setParameter("post", post);
-		if (viewer != null)
+		Query q;
+		if (viewer == null) {
+			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP_ANONYMOUS);
+		} else {
+			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP);
 			q.setParameter("viewer", viewer);
+		}
 
+		q.setParameter("post", post);
+		
 		for (Object o : q.getResultList())
 			recipients.add(o);
 		
@@ -247,18 +253,17 @@ public class PostingBoardBean implements PostingBoard {
 		return result;		
 	}
 	
+	static final String GET_POSTS_FOR_QUERY =
+		"SELECT post FROM Post post WHERE post.poster = :poster";
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
 		if (viewer == null) {
-			q = em.createQuery("SELECT post FROM Post post " +
-					           "WHERE post.poster = :poster AND " +
-					           CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+			q = em.createQuery(GET_POSTS_FOR_QUERY + " AND " + CAN_VIEW_ANONYMOUS + ORDER_RECENT);
 		} else {
-			q = em.createQuery("SELECT post FROM Post post " +
-			           "WHERE post.poster = :poster AND " +
-			           CAN_VIEW + ORDER_RECENT);
+			q = em.createQuery(GET_POSTS_FOR_QUERY + " AND " + CAN_VIEW + ORDER_RECENT);
 			q.setParameter("viewer", viewer);
 		}
 		
@@ -285,18 +290,17 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, max);
 	}
 	
+	static final String GET_GROUP_POSTS_QUERY = 
+		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
+	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 
 		if (viewer == null) {
-			q = em.createQuery("SELECT post FROM Post post " +
-	                           "WHERE :recipient MEMBER OF post.groupRecipients AND " +
-	                           CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+			q = em.createQuery(GET_GROUP_POSTS_QUERY + " AND " + CAN_VIEW_ANONYMOUS + ORDER_RECENT);
 		} else {
-			q = em.createQuery("SELECT post FROM Post post " +
-			                   "WHERE :recipient MEMBER OF post.groupRecipients AND " +
-			                   CAN_VIEW + ORDER_RECENT);
+			q = em.createQuery(GET_GROUP_POSTS_QUERY + " AND " + CAN_VIEW + ORDER_RECENT);
 			q.setParameter("viewer", viewer);
 		}
 		
