@@ -26,9 +26,9 @@ public class EmailResource extends Resource {
 	private void validateEmail(String str) throws IllegalArgumentException {
 		// the @ sign check would also catch length == 0, but just trying to be more clear
 		if (str.length() == 0) {
-			throw new IllegalArgumentException("Empty email address");
+			throw new IllegalArgumentException("Empty email address: " + str);
 		} else if (!str.contains("@")) {
-			throw new IllegalArgumentException("No @ sign in email address");
+			throw new IllegalArgumentException("No @ sign in email address: " + str);
 		}
 	}
 	
