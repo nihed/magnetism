@@ -159,7 +159,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String FIND_GROUPS_QUERY = "SELECT gm.group FROM GroupMember gm, Group g " +
-                                            "WHERE gm.member = :member AND g = gm.group";
+                                            "WHERE gm.member = :member AND g = gm.group AND " +
+                                                  "gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
 	public Set<Group> findGroups(Viewpoint viewpoint, Person member) {
 		Person viewer = viewpoint.getViewer();
