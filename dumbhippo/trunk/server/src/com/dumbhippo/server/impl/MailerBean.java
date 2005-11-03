@@ -31,6 +31,7 @@ import com.dumbhippo.server.Viewpoint;
  */
 @Stateless
 public class MailerBean implements Mailer {
+	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(MailerBean.class);
 	
 	@EJB

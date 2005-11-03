@@ -2,8 +2,6 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import javax.servlet.ServletException;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
@@ -20,6 +18,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 public class ViewGroupPage {
+	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(ViewGroupPage.class);	
 	
 	private Group viewedGroup;

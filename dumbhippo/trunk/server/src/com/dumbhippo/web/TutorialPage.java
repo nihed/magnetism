@@ -13,6 +13,7 @@ import com.dumbhippo.server.PersonView;
  * personal information.
  */
 public class TutorialPage {
+	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(TutorialPage.class);
 
 	@Signin
