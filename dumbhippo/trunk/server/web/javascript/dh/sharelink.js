@@ -25,6 +25,7 @@ dh.sharelink.recipientComboBox = null;
 dh.sharelink.descriptionRichText = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
+dh.sharelink.createGroupLink = null;
 
 dh.sharelink.findGuid = function(set, id) {
 	// set can be an array or a hash
@@ -154,6 +155,7 @@ dh.sharelink.doCreateGroup = function() {
 
 						for (var i = 0; i < newGroups.length; ++i) {							    	
 							// add the group as a recipient
+							dojo.debug("adding newly-created group as recipient");
 					    	dh.sharelink.doAddRecipient(newGroups[i].id);
 						}
 						
@@ -182,6 +184,25 @@ dhDoCreateGroupKeyUp = function(event) {
 	}
 }
 
+dh.sharelink.considerShowingCreateGroupLink = function() {
+	var personCount = 0;
+	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
+		if (dh.sharelink.selectedRecipients[i].isPerson())
+			personCount += 1;
+	}
+	
+	// we could also remove the create group dialog if it's up, but 
+	// not clear it's right anyway (if you start editing recipients with 
+	// that up, maybe you are going to put some group members back in the list
+	// in a minute)
+	
+	if (personCount > 1) {
+		dh.util.show(dh.sharelink.createGroupLink);	
+	} else {
+		dh.util.hide(dh.sharelink.createGroupLink);
+	}
+}
+
 dh.sharelink.removeRecipient = function(recipientId, node) {
 	if (arguments.length < 2) {
 		node = dh.sharelink.findIdNode(recipientId);
@@ -198,6 +219,8 @@ dh.sharelink.removeRecipient = function(recipientId, node) {
 			node.parentNode.removeChild(node);
 		});
 	}
+	
+	dh.sharelink.considerShowingCreateGroupLink();
 }
 
 dhRemoveRecipientClicked = function(event) {
@@ -243,6 +266,7 @@ dh.sharelink.doAddRecipientFromCombo = function(createContact) {
 				for (var i = 0; i < newContacts.length; ++i) {
 					// add someone; this flashes their entry and is a no-op 
 					// if they were already added
+					dojo.debug("adding newly-created contact as recipient");
 					dh.sharelink.doAddRecipient(newContacts[i].id);
 				}
 			},
@@ -261,11 +285,19 @@ dhComboBoxOptionSelected = function() {
 		return;
 	}
 	var id = dh.sharelink.recipientComboBox.selectedResult[1];
-	dojo.debug("selected = " + id);
-	dh.sharelink.doAddRecipient(id);
+
+	// Unfortunately dojo calls this 
+	// callback twice when you click a recipient, and we don't
+	// want to flash the recipient on the second time. 
+	// Conveniently, a selected recipient won't be in the dropdown
+	// if it's already added normally, so no effect on normal behavior
+	// if we do noFlash = true
+
+	dojo.debug("adding recipient since selected = " + id);
+	dh.sharelink.doAddRecipient(id, true);
 }
 
-dh.sharelink.doAddRecipient = function(selectedId) {	
+dh.sharelink.doAddRecipient = function(selectedId, noFlash) {	
 	
 	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
 	
@@ -344,8 +376,11 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 	
 		if (!dh.util.disableOpacityEffects)	
 			var anim = dojo.fx.html.fadeIn(idNode, 800);
+			
+		dh.sharelink.considerShowingCreateGroupLink();
 	} else {
-		dh.util.flash(dh.sharelink.findIdNode(obj.id));
+		if (!noFlash)
+			dh.util.flash(dh.sharelink.findIdNode(obj.id));
 	}
 	
 	// clear the combo again
@@ -522,7 +557,7 @@ dh.sharelink.FriendListProvider = function() {
 		
 		// maybe not the best place to do this
 		if (this.singleCompletionId && forSearchStr.length > 0) {
-			dojo.debug("adding single completion " + this.singleCompletionId);
+			dojo.debug("adding single completion as recipient " + this.singleCompletionId);
 			dh.sharelink.doAddRecipient(this.singleCompletionId);
 		} else {
 			dojo.debug("don't have single completion");
@@ -591,6 +626,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
 	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
 						dj_global, "dhDoCreateGroupKeyUp");
+	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");
 						
 	// set default focus
 	dh.sharelink.recipientComboBox.textInputNode.focus();

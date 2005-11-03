@@ -60,6 +60,11 @@
 <div class="dhVerticalPadding"></div>
 
 <div id="dhRecipientListArea" class="dhBackgroundBox">
+	<div id="dhRecipientList">
+
+
+	</div><!-- end of recipient list div -->
+
 	<div id="dhCreateGroupPopup" class="dhItemBox dhInvisible">
 		<div class="dhLabel">New <u>G</u>roup Name</div>
 		<input id="dhCreateGroupName"/>
@@ -67,14 +72,10 @@
 		onclick="dh.sharelink.doCreateGroup();"/>
 		<p id="dhCreateGroupStatus" class="dhStatusLabel dhInvisible"></p>
 	</div>
-	<a id="dhCreateGroupLink" class="dhActionLink"
+	<a id="dhCreateGroupLink" class="dhActionLink dhInvisible"
  	onmouseover="dh.sharelink.highlightPossibleGroup();"
  	onmouseout="dh.sharelink.unhighlightPossibleGroup();"
  	href="javascript:dh.sharelink.toggleCreateGroup();">Create Group from These</a>
-<div id="dhRecipientList">
-
-
-</div><!-- end of recipient list div -->
 </div><!-- end of div containing create group link and recipient list -->
 
 <div class="dhVerticalPadding"></div>

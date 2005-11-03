@@ -70,7 +70,7 @@ body {
 	padding:					0.5em;
 	position:					absolute;
 	right:						2em;
-	top:						2em;
+	bottom:						2em;
 	width:						23em; /* a bit larger than the input inside it */
 }
 
