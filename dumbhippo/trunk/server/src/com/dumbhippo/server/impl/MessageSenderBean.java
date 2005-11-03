@@ -24,12 +24,10 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.HippoAccount;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
@@ -61,9 +59,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	private Configuration config;
-	
-	@EJB
-	private AccountSystem accountSystem;	
 
 	@EJB
 	private Mailer mailer;
@@ -405,11 +400,9 @@ public class MessageSenderBean implements MessageSender {
 		this.xmppSender = new XMPPSender();
 	}
 	
-	public void sendPostNotification(Person recipient, Post post) {
-		HippoAccount account = accountSystem.lookupAccountByPerson(recipient);
-		
+	public void sendPostNotification(Person recipient, Post post) {		
 		// in the future the test could be "account != null && logged on to jabber recently" or something
-		if (account != null) {
+		if (identitySpider.hasAccount(recipient)) {
 			xmppSender.sendPostNotification(recipient, post);
 		} else {
 			try {

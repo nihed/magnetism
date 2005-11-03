@@ -12,7 +12,6 @@ import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Transient;
 
 import org.apache.commons.logging.Log;
 
@@ -79,11 +78,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (persons != null) {
 			for (PersonView p : persons) {
 				EmailResource email = p.getEmail();
+				String hasAccount = identitySpider.hasAccount(p.getPerson()) ? "true" : "false";
 				if (email != null) {
 					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
+							"hasAccount", hasAccount,
 							"email", email.getEmail());
 				} else {
-					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName());
+					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
+							"hasAccount", hasAccount);
 				}
 			}
 		}

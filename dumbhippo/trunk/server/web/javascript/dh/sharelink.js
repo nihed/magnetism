@@ -323,14 +323,17 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		tr2.appendChild(td);
 		td.appendChild(document.createTextNode(obj.displayName));
 
+		var tr3  = document.createElement("tr");
+		tbody.appendChild(tr3);
+		var td = document.createElement("td");
+		dojo.html.addClass(td, "dhRecipientNote");
+		td.setAttribute("colSpan","2");
+		tr3.appendChild(td);
 		if (obj.isGroup()) {
-			var tr3  = document.createElement("tr");
-			tbody.appendChild(tr3);
-			var td = document.createElement("td");
-			dojo.html.addClass(td, "dhSampleGroupMembers");
-			td.setAttribute("colSpan","2");
-			tr3.appendChild(td);
 			td.appendChild(document.createTextNode(obj.sampleMembers));
+		} else {
+			if (!obj.hasAccount)
+				td.appendChild(document.createTextNode("via email"));
 		}
 
 		if (!dh.util.disableOpacityEffects)

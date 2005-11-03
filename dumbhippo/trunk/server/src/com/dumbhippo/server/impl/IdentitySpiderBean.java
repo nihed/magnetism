@@ -393,4 +393,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// return Long not Integer according to the spec.
 		return (Integer)query.getSingleResult() > 0;
 	}
+
+	public boolean hasAccount(Person p) {
+		HippoAccount account = accountSystem.lookupAccountByPerson(p);
+		return account != null;
+	}
 }

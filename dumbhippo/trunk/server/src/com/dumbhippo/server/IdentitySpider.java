@@ -243,5 +243,14 @@ public interface IdentitySpider {
 	 * @param p the person being viewed
 	 * @return new PersonView object
 	 */
-	public PersonView getSystemView(Person p); 
+	public PersonView getSystemView(Person p);
+	
+	/**
+	 * See whether the person has an account or is just a key 
+	 * for some foreign resources.
+	 * 
+	 * @param p the person
+	 * @return true if they have an account
+	 */
+	public boolean hasAccount(Person p);
 }
