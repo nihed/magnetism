@@ -24,9 +24,10 @@ dh.model.Person = function(id, displayName, email) {
 }
 dojo.inherits(dh.model.Person, dh.model.GuidPersistable);
 
-dh.model.Group = function(id, displayName) {
+dh.model.Group = function(id, displayName, sampleMembers) {
 	this.id = id;
 	this.displayName = displayName;
+	this.sampleMembers = sampleMembers; // can be null
 	this.kind = "group";
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
@@ -54,6 +55,7 @@ dh.model.groupFromXmlNode = function(element) {
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
+	var sampleMembers = element.getAttribute("sampleMembers");
 
 	// note, empty string is "false"	
 	if (!id)
@@ -61,7 +63,7 @@ dh.model.groupFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <group> node");
 	
-	return new dh.model.Group(id, displayName);
+	return new dh.model.Group(id, displayName, sampleMembers);
 }
 
 dh.model.objectFromXmlNode = function(element) {

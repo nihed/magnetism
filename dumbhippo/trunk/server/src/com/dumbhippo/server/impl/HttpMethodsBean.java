@@ -12,6 +12,7 @@ import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Transient;
 
 import org.apache.commons.logging.Log;
 
@@ -88,21 +89,42 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	private void returnGroupsXml(XmlBuilder xml, Person user, Set<Group> groups) {
+	private void returnGroupsXml(XmlBuilder xml, Viewpoint viewpoint, Set<Group> groups) {
 		if (groups != null) {
 			for (Group g : groups) {
-				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName());
+				
+				// FIXME with the right database query we can avoid getting *all* the members to 
+				// display just a few of them
+				
+				StringBuilder sampleMembers = new StringBuilder();
+				Set<Person> members = g.getMembers();
+				logger.debug(members.size() + " members of " + g.getName());
+				for (Person p : members) {
+					if (sampleMembers.length() > PersonView.MAX_SHORT_NAME_LENGTH * 5) {
+						sampleMembers.append(" ...");
+						break;
+					} 
+					
+					if (sampleMembers.length() > 0)
+						sampleMembers.append(" ");
+				
+					PersonView member = identitySpider.getPersonView(viewpoint, p);
+					String shortName = member.getHumanReadableShortName();
+					sampleMembers.append(shortName);
+				}
+				
+				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName(), "sampleMembers", sampleMembers.toString());
 			}
 		}
 	}
 	
-	private void returnObjects(OutputStream out, HttpResponseData contentType, Person user, Set<PersonView> persons, Set<Group> groups) throws IOException {
-		XmlBuilder xml = new XmlBuilder();		
+	private void returnObjects(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, Set<PersonView> persons, Set<Group> groups) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
 
 		startReturnObjectsXml(contentType, xml);
 		
 		returnPersonsXml(xml, persons);
-		returnGroupsXml(xml, user, groups);
+		returnGroupsXml(xml, viewpoint, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
@@ -113,7 +135,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
 		Set<Group> groups = groupSystem.findGroups(viewpoint, user);
 		
-		returnObjects(out, contentType, user, persons, groups);
+		returnObjects(out, contentType, viewpoint, persons, groups);
 	}
 	
 	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, Person user,
@@ -169,7 +191,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		group.addMember(user);
 		group.addMembers(memberPeople);
 		
-		returnObjects(out, contentType, user, null, Collections.singleton(group));
+		Viewpoint viewpoint = new Viewpoint(user);
+		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));
 	}
 
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
@@ -178,7 +201,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Viewpoint viewpoint = new Viewpoint(user);
 		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
 
-		returnObjects(out, contentType, user, Collections.singleton(contactView), null);
+		returnObjects(out, contentType, viewpoint, Collections.singleton(contactView), null);
 	}
 	
 	public void doJoinGroup(Person user, String groupId) {

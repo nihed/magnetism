@@ -23,6 +23,9 @@ import com.dumbhippo.persistence.Person;
  * PersonView primarily in not being a session bean.
  */
 public class PersonView {
+	
+	public static final int MAX_SHORT_NAME_LENGTH = 15;
+	
 	private Person person;
 	private EmailResource email;
 	private String humanReadableName;
@@ -41,7 +44,7 @@ public class PersonView {
 		
 		FullName name = person.getName();
 		if (name != null && !name.isEmpty())
-			humanReadableName = name.toString();
+			humanReadableName = name.getFullName();
 		else if (email != null) 
 			humanReadableName = email.getEmail();
 		else
@@ -54,6 +57,21 @@ public class PersonView {
 	
 	public String getHumanReadableName() {
 		return humanReadableName;
+	}
+	
+	public String getHumanReadableShortName() {
+		String name;
+		name = person.getNickname();
+		if (name == null || name.length() == 0)
+			name = person.getName().getFirstName();
+		if (name == null || name.length() == 0)
+			name = humanReadableName;
+
+		if (name.length() > MAX_SHORT_NAME_LENGTH) {
+			return name.substring(0, MAX_SHORT_NAME_LENGTH);
+		} else {
+			return name;
+		}
 	}
 	
 	public EmailResource getEmail() {

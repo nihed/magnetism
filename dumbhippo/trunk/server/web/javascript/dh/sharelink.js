@@ -303,6 +303,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		else
 			img.setAttribute("src", dhGroupshotsRoot + obj.id);
 		td.appendChild(img);
+		
 		var td = document.createElement("td");
 		dojo.html.addClass(td, "dhRemoveRecipient");
 		tr1.appendChild(td);
@@ -313,6 +314,7 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		removeLink.setAttribute("rowSpan", "2");
 		dojo.event.connect(removeLink, "onclick", dj_global, "dhRemoveRecipientClicked");
 		td.appendChild(removeLink);
+		
 		var tr2  = document.createElement("tr");
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
@@ -320,6 +322,16 @@ dh.sharelink.doAddRecipient = function(selectedId) {
 		td.setAttribute("colSpan","2");
 		tr2.appendChild(td);
 		td.appendChild(document.createTextNode(obj.displayName));
+
+		if (obj.isGroup()) {
+			var tr3  = document.createElement("tr");
+			tbody.appendChild(tr3);
+			var td = document.createElement("td");
+			dojo.html.addClass(td, "dhSampleGroupMembers");
+			td.setAttribute("colSpan","2");
+			tr3.appendChild(td);
+			td.appendChild(document.createTextNode(obj.sampleMembers));
+		}
 
 		if (!dh.util.disableOpacityEffects)
 			dojo.html.setOpacity(idNode, 0);

@@ -13,6 +13,7 @@ public class Person extends GuidPersistable {
 	private static final long serialVersionUID = 0L;
 
 	private FullName name;
+	private String nickname;
 	
 	public Person() { 
 		super();
@@ -60,5 +61,13 @@ public class Person extends GuidPersistable {
 	public void setName(FullName name) {
 		// because FullName is immutable, no need to copy it here
 		this.name = name;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 }

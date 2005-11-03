@@ -108,3 +108,8 @@ a.dhRemoveRecipient:link {
 td.dhRecipientName {
 	font-size:					9pt;
 }
+
+.dhSampleGroupMembers {
+	font-size:					7pt;
+	font-style:					italic;
+}
