@@ -38,10 +38,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	public Group createGroup(Person creator, String name) {	
 		Group g = new Group(name);
+		em.persist(g);
 		GroupMember groupMember = new GroupMember(g, creator, MembershipStatus.ACTIVE);
 		em.persist(groupMember);
+		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
-		em.persist(g);
 		return g;
 	}
 	
