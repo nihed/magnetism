@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<document>
+  <body>
+    <section name="Getting Started with Java AIM Bot">
+      <p>
+        This document (as well as the others in this section) provide
+        an introduction to how to setup and use Java AIM Bot.
+      </p>
+      <subsection name="Overview of the Getting Started Documentation">
+        <table>
+          <tr><th>Document</th><th>Description</th></tr>
+          <tr><td><a href="download.html">Download</a></td>
+            <td>
+              Before you can start using Java AIM Bot, you'll have
+              to download the distribution.  This document
+              provides links to the various distributions available.
+            </td>
+          </tr>
+          <tr><td><a href="configure.html">Configure</a></td>
+            <td>
+              This document provides information about how to configure
+              the various properties of Java AIM Bot.
+            </td>
+          </tr>
+          <tr><td><a href="run.html">Run</a></td>
+            <td>
+              This document provides information on how to run your own bot.
+            </td>
+          </tr>
+        </table>
+      </subsection>
+    </section>
+ </body>
+</document>

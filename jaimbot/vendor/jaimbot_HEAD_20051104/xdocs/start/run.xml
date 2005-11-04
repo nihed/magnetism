@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<document>
+	<body>
+		<section name="Running Java AIM Bot">
+			<p>After configuring the properties of your bot, you are ready to
+				run it. If you are running from a binary distribution you should
+				see the following layout:</p>
+			<source><![CDATA[
+	.
+	|-- conf
+	|-- docs
+	|-- jaimbot-1.4.jar
+	`-- lib
+
+	]]></source>
+			<p>You should have a Java 1.4 JRE in your path and open a shell at
+				the root level of your Java AIM Bot install. Then type the
+				following for windows:</p>
+			<source><![CDATA[java -classpath "jaimbot-1.4.jar;lib\rdf-1.0.jar;lib\megahal-1.0.jar;conf" com.levelonelabs.aimbot.AIMBot]]></source>
+			<p>And for unix-like operating systems:</p>
+			<source><![CDATA[java -classpath "jaimbot-1.4.jar:lib/rdf-1.0.jar:lib/megahal-1.0.jar:conf" com.levelonelabs.aimbot.AIMBot]]></source>
+			<p>
+				To run Java AIM Bot from a src distribution you must compile it using your IDE or by typing:	
+			</p>
+			<source><![CDATA[ant compile]]></source>
+			<p>
+				You can then run the bot as shown above but point to your build directory ("build/classes") instead of 
+				the jaimbot-1.4.jar.
+			</p>
+		</section>
+	</body>
+</document>
