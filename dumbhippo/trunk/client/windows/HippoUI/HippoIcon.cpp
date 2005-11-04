@@ -6,7 +6,10 @@
 #include <strsafe.h>
 #include "HippoIcon.h"
 #include "HippoUI.h"
+#include <HippoUtil.h>
+#include <HippoUtil_h.h>
 #include "Resource.h"
+#include "Guid.h"
 
 // Note that timeout values are clamped between 10 and 30 seconds
 // by current versions of Windows
@@ -139,6 +142,13 @@ HippoIcon::showURL(HippoLinkShare &linkshare)
 	currentPostId_ = linkshare.postId;
 
 	displayState_ = DISPLAYING_LINK;
+
+	{
+		HippoPtr<HippoBubble> bubble = new HippoBubble;
+		bubble->setUI(ui_);
+		bubble->setLinkNotification(linkshare);
+		bubble->show();
+	}
 
     NOTIFYICONDATA notifyIconData = { 0 };
 

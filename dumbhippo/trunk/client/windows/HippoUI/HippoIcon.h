@@ -5,6 +5,7 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoBubble.h"
 
 class HippoUI;
 struct HippoLinkShare;
@@ -35,6 +36,7 @@ private:
 
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
+	HWND popupWindow_;
     UINT message_;
     HICON icon_;
 

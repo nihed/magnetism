@@ -167,6 +167,26 @@ public:
     BSTR m_str;
 };
 
+inline bool
+hippoHresultToString(HRESULT hr, HippoBSTR &str)
+{
+    WCHAR *buf;
+
+    if (!FormatMessageW (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			 FORMAT_MESSAGE_FROM_SYSTEM,
+			 NULL,
+			 hr,
+			 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
+			 (LPWSTR) &buf,
+			 0, NULL)) {
+		return false;
+    } else {
+	str = (WCHAR*) buf;
+	LocalFree (buf);
+	return true;
+    }
+}
+
 inline void hippoDebug(WCHAR *format, ...)
 {
     WCHAR buf[1024];
@@ -175,6 +195,22 @@ inline void hippoDebug(WCHAR *format, ...)
     StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
     va_end (vap);
     MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
+}
+
+inline void hippoDebugLastErr(WCHAR *fmt, ...) 
+{
+	HippoBSTR str;
+	HippoBSTR errstr;
+    WCHAR buf[1024];
+	HRESULT res = GetLastError();
+    va_list vap;
+    va_start (vap, fmt);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), fmt, vap);
+    va_end (vap);
+	str.Append(buf);
+	hippoHresultToString(res, errstr);
+	str.Append(errstr);
+	MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
 }
 
 /* Avoid (incorrect) warnings that you get because SetWindowLongPtr()

@@ -22,6 +22,7 @@ struct HippoBrowserInfo
 struct HippoLinkShare
 {
 	HippoBSTR postId;
+	HippoBSTR senderId;
 	HippoBSTR senderName;
 	HippoBSTR url;
 	HippoBSTR title;
@@ -74,6 +75,9 @@ public:
 		               const WCHAR *clickerName,
 	                   const WCHAR *title);
 
+	HRESULT getRemoteURL(BSTR appletName, BSTR *result);
+    HRESULT getAppletURL(BSTR appletName, BSTR *result);
+
 private:
     bool registerActive();
     bool registerClass();
@@ -91,7 +95,6 @@ private:
 
     void revokeActive();
 
-    HRESULT getAppletURL(BSTR appletName, BSTR *result);
     void showAppletWindow(BSTR url);
 
     static LRESULT CALLBACK windowProc(HWND   window,

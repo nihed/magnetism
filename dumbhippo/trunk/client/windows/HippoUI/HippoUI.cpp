@@ -23,8 +23,6 @@
 #include "Guid.h"
 #pragma data_seg()
 
-using namespace MSHTML;
-
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
@@ -286,6 +284,8 @@ HippoUI::getPreferences()
     return &preferences_;
 }
 
+
+
 void
 HippoUI::showAppletWindow(BSTR url)
 {
@@ -336,7 +336,7 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
 {
     HippoBSTR shareURL;
 
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"sharelink"), &shareURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"sharelink"), &shareURL)))
 	return;
 
     if (!SUCCEEDED (shareURL.Append(L"?url=")))
@@ -369,7 +369,7 @@ HippoUI::showSignInWindow()
 {
     HippoBSTR signInURL;
     
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"signin"), &signInURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"signin"), &signInURL)))
 	return;
 
     showAppletWindow(signInURL);
@@ -459,7 +459,7 @@ HippoUI::showRecent(void)
 		return;
 	}
     
-    if (!SUCCEEDED (getAppletURL(HippoBSTR(L"home"), &recentURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"home"), &recentURL)))
 	return;
 
     VARIANT missing;
@@ -733,11 +733,50 @@ HippoUI::updateMenu()
     }
 }
 
+HRESULT
+HippoUI::getAppletURL(BSTR filename, BSTR *url)
+{
+    HRESULT hr;
+
+    // XXX can theoretically truncate if we have a \?\\foo\bar\...
+    // path which isn't limited to the short Windows MAX_PATH
+    // Could use dynamic allocation here
+    WCHAR baseBuf[MAX_PATH];
+
+    if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
+        return E_FAIL;
+
+    for (size_t i = wcslen(baseBuf); i > 0; i--)
+        if (baseBuf[i - 1] == '\\')
+            break;
+
+    if (i == 0)  // No \ in path?
+        return E_FAIL;
+
+    HippoBSTR path((UINT)i, baseBuf);
+    hr = path.Append(L"applets\\");
+    if (!SUCCEEDED (hr))
+        return hr;
+
+    hr = path.Append(filename);
+    if (!SUCCEEDED (hr))
+        return hr;
+
+    WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
+    DWORD urlLength = INTERNET_MAX_URL_LENGTH;
+    hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
+    if (!SUCCEEDED (hr))
+        return hr;
+
+    *url = SysAllocString(urlBuf);
+    return *url ? S_OK : E_OUTOFMEMORY;
+}
+
 // Find the pathname for a HTML file, based on the location of the .exe
 // We could alternatively use res: URIs and embed the HTML files in the
 // executable, but this is probably more flexible
 HRESULT
-HippoUI::getAppletURL(BSTR appletName, BSTR *result)
+HippoUI::getRemoteURL(BSTR appletName, BSTR *result)
 {
     HRESULT hr;
     HippoBSTR webServer;

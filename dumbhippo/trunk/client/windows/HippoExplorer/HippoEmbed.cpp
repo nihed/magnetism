@@ -228,8 +228,8 @@ HippoEmbed::GetIDsOfNames (REFIID    riid,
     return DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
  }
         
- STDMETHODIMP
- HippoEmbed::Invoke (DISPID        member,
+STDMETHODIMP
+HippoEmbed::Invoke (DISPID        member,
 		     const IID    &iid,
 		     LCID          lcid,              
 		     WORD          flags,

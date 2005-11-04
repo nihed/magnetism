@@ -34,11 +34,19 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\clientstyle.xml">
+		</File>
+		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File
-			RelativePath=".\shareURL.htm"
-			DeploymentContent="TRUE">
+			RelativePath=".\notification.css">
+		</File>
+		<File
+			RelativePath=".\notification.js">
+		</File>
+		<File
+			RelativePath=".\notification.xml">
 		</File>
 	</Files>
 	<Globals>

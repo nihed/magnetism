@@ -481,6 +481,11 @@ HippoIM::onMessage (LmMessageHandler *handler,
 			continue;
 		linkshare.senderName.setUTF8(node->value);
 
+		node = lm_message_node_get_child (child, "senderGuid");
+		if (!(node && node->value))
+			continue;
+		linkshare.senderId.setUTF8(node->value);
+
 		node = lm_message_node_get_child (child, "description");
 		if (!(node && node->value))
 			continue;
