@@ -296,12 +296,17 @@ public class AIMClient implements Runnable, AIMSender {
         return Arrays.asList(buddyHash.keySet().toArray()).iterator();
     }
 
+    public void newThread() {
+    	Thread t = new Thread(this);
+    	t.setDaemon(true);
+    	t.start();
+    }
 
     /**
      * Sign on to aim server
      */
     public void signOn() {
-        new Thread(this).start();
+    	newThread();
 
         // check the connection
         watchdogCheck = new AimConnectionCheck(this, true);
@@ -1167,6 +1172,14 @@ public class AIMClient implements Runnable, AIMSender {
                     return;
                 }
 
+                if (error.equals("983")) {
+                	generateError(error, "You have been connecting and "
+	   + "disconnecting too frequently.  Wait 10 minutes and try again. "
+	   + "If you continue to try, you will need to wait even longer.");
+                	System.exit(1);
+                	return;
+                }
+                
                 if (error.equals("Signon err")) {
                     String text = inToken.nextToken();
                     generateError(error, "AIM Signon failure: " + text);
@@ -1470,7 +1483,8 @@ public class AIMClient implements Runnable, AIMSender {
                         logger.info("*** AIM -- CONNECTION PROBLEM(" + new Date() + "): Connection was not verified!");
                         logger.info("****** Assuming it was dropped, issuing restart.");
                         aim.signoff("Connection Dropped!");
-                        new Thread(aim).start();
+                        //aim.newThread();
+                        System.exit(1);
                     }
                 }
             } catch (Exception e) {
