@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<document>
+	<body>
+		<section name="Configuring Java AIM Bot">
+			<p>After downloading Java AIM Bot you must configure it using the
+				provided properties file. The bot.properties file can be found
+				in the conf directory.</p>
+			<subsection name="Specifying a username and password (REQUIRED)">
+				<p>You must specify a valid AIM username and password. You can
+					obtain an AIM username by visiting <a
+					href="http://my.screenname.aol.com/">AOL's screename service</a>
+					.</p>
+				<p>Once you have a screename and password you should specify
+					them in the bot.properties file by editing the following
+					lines:</p>
+				<source><![CDATA[
+aim.username=
+aim.password=
+
+]]></source>
+				<p>For example, if your username is <b>myUserName</b> and your
+					password is <b>myPassword</b> you should edit the file as
+					follows:</p>
+				<source><![CDATA[
+aim.username=myUserName
+aim.password=myPassword
+
+]]></source>
+			</subsection>
+			<subsection name="Specifying an bot Administrator (OPTIONAL)">
+				<p>Once you have specified a username and password for your bot,
+					you can actually run it, but you probably want to specify
+					your own screename as an Administrator of the bot. This will
+					allow you to access privileged commands, such as the
+					ability to remove users and specify other administrators.</p>
+				<p>This can be accomplished by setting the following line to
+					your screename:</p>
+				<source><![CDATA[
+bot.admin=
+]]></source>
+			</subsection>
+			<subsection name="Making your bot public or private (OPTIONAL)">
+				<p>By default your bot will only allow actual users of the bot
+					to access its services. You can set the following property
+					to <i>true</i> to have the bot automatically add all
+					screenames that message it, to its users list. You should
+					change the following line:</p>
+				<source><![CDATA[
+#bot.autoadd=false
+]]></source>
+				<p>To this:</p>
+				<source><![CDATA[
+bot.autoadd=true
+]]></source>
+			<p><b>NOTE:</b> It is recommended that if you run a private bot, you also configure it
+				to ignore non-users (so they can't warn it).  See information on how to do this with
+				the bot.nonuser.response property below.
+			</p>
+			</subsection>
+			<subsection name="Enforcing only users can use the bot (OPTIONAL)">
+				<p>By default your bot will only allow actual users of the bot
+					to access its services (buddys are not users). You can set the following property
+					to <i>false</i> to have the bot allow buddys as well as users to use it. You should
+					change the following line:</p>
+				<source><![CDATA[
+#bot.enforceUser=true
+]]></source>
+				<p>To this:</p>
+				<source><![CDATA[
+bot.enforceUser=false
+]]></source>
+			<p><b>NOTE:</b> It is recommended that you leave this true, which allows you to have buddies in your buddy
+			list that can't use the bot's services.
+			</p>
+			</subsection>
+			<subsection name="Specifying your bot's profile (OPTIONAL)">
+				<p>By default your bot's profile will point people to this project. You
+					can change this to something more personal by editing the following
+					property:</p>
+				<source><![CDATA[
+#bot.profile=I'm running code from:\n http://jaimbot.sourceforge.net/
+]]></source>
+				<p>You can change this message, by uncommenting that property and setting it
+					to anything else.  <b>IMPORTANT:</b> It must all be on one line; if you
+					want mutlipe line, you can use \n instead of returns.</p>
+				<p>For example, if you want the bot to say "I'm not a bot." you should edit the file as
+					follows:</p>
+				<source><![CDATA[
+bot.profile=I'm not a bot.
+]]></source>
+			</subsection>
+			<subsection name="Specifying what to say to non-users (OPTIONAL)">
+				<p>Since, by default, your bot will only allow actual users of the bot
+					to access its services you may want to personalize what your bot says
+					to a person that messages it, that isn't yet a user.  The following line
+					allows you to configure this:</p>
+				<source><![CDATA[
+#bot.nonuser.response=Sorry, you must be a user of this system to send requests.
+]]></source>
+				<p>You can change this message, by uncommenting that property and setting it
+					to anything else.  <b>IMPORTANT:</b> It must all be on one line; if you
+					want mutlipe line, you can use \n instead of returns.</p>
+				<p>For example, if you want the bot to say "You need to be registered to use this
+					bot, please visit my website to register:<br/>http://your.web.site.com/." you should edit the file as
+					follows:</p>
+				<source><![CDATA[
+bot.nonuser.response=You need to be registered to use this bot, please visit my website to register:\nhttp://your.web.site.com/.
+]]></source>
+				<p>
+					If you want your bot to ignore non-users (which is recommended if you are running a 
+					private bot).  You can uncomment this property and set it to nothing.  This way
+					non-users will not be able to warn your bot.  You can achieve this by setting the property
+					as follows:
+				</p>
+					<source><![CDATA[
+bot.nonuser.response=]]></source>
+			</subsection>
+			<subsection name="Saving your settings (OPTIONAL)">
+				<p>By default your bot will save its settings and state to a file when it 
+					is shutdown (even by killing the JVM), which it will read the next time it
+					is started to reapply the settings and state. You can set the following property
+					to <i>false</i> to disable this behavior. You should
+					change the following line:</p>
+				<source><![CDATA[
+#bot.autopersist=true
+]]></source>
+				<p>To this:</p>
+				<source><![CDATA[
+bot.autopersist=false
+]]></source>
+			<p><b>NOTE:</b> If you disable this you will need to send the message "persist" to the bot
+			as an admin in order to save its settings and state before you shut it down.
+			</p>
+			</subsection>
+			<subsection name="Specifying logging options (OPTIONAL)">
+				<p>The following options let you specify the level of output
+					that should show up in the log file, and specify the name of
+					the file. To set them you should first remove the "#"
+					symbol, then set them to an appropriate value.</p>
+				<source><![CDATA[
+# SEVERE (big problems)> WARNING (problems) > INFO (system status) > FINE (all aim messages)> FINEST (gory details)
+#logger.level=INFO
+
+#Defaults <aim.username>_aimbot.log.xml
+#logger.file=
+]]></source>
+			</subsection>
+			<subsection name="Specifying the modules to load (OPTIONAL)">
+				<p>You can also specify which modules you want loaded into the
+					bot and which order they should be loaded. To load a module
+					into the bot you should have an entry in the file like
+					"mod.X=MODNAME" where X is the number which specifies the
+					order in which the module should be loaded, and MODNAME is
+					the fully specified class name of the module.</p>
+				<p>Module 0 is a special module which will get all requests that
+					aren't serviced by other modules. By default this is set to
+					the MegaHal AI chatter bot module.</p>
+				<p>The following are the default settings and will probably work fine for 
+					your bot unless you want to enable/disable a specific module, or
+					if you want to load your own custom modules.</p>
+				<source><![CDATA[
+#mod.0 is the Default mod that will handle messages that aren't serviced by other mods
+mod.0=com.levelonelabs.aimbot.modules.MegaHalModule
+#
+# Recommended Mods
+#
+mod.1=com.levelonelabs.aimbot.modules.MessengerModule
+mod.2=com.levelonelabs.aimbot.modules.UserAdminModule
+mod.3=com.levelonelabs.aimbot.modules.ListModule
+mod.4=com.levelonelabs.aimbot.modules.PreferenceModule
+mod.5=com.levelonelabs.aimbot.modules.UserInformationModule
+#
+# Info Mods
+#
+mod.6=com.levelonelabs.aimbot.modules.HeadlinesModule
+mod.7=com.levelonelabs.aimbot.modules.StockModule
+mod.8=com.levelonelabs.aimbot.modules.TVListingsModule
+mod.9=com.levelonelabs.aimbot.modules.WeatherModule
+mod.10=com.levelonelabs.aimbot.modules.BabelModule
+mod.11=com.levelonelabs.aimbot.modules.TicTacToeModule
+mod.12=com.levelonelabs.aimbot.modules.ReminderModule
+# opens port 1234 for command line interface to send messages
+#mod.13=com.levelonelabs.aimbot.modules.TelnetModule
+]]></source>
+			</subsection>
+		</section>
+	</body>
+</document>

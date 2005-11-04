@@ -1,0 +1,3 @@
+cd ..
+ant compile
+nohup java -Dconfig.file=mybot.properties -classpath "./build/classes:./lib/rdf-1.0.jar:./lib/megahal-1.0.jar:./conf" com.levelonelabs.aimbot.AIMBot &
