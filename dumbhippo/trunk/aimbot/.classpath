@@ -2,6 +2,6 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src/java"/>
-	<classpathentry including="com/levelonelabs/aim/*" excluding="com/levelonelabs/aimbot/" kind="src" path="jaimbot/src"/>
+	<classpathentry kind="src" path="jaimbot/src"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
