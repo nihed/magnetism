@@ -70,9 +70,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		MembershipStatus newStatus;
 		if (selfAdd)
-			newStatus = MembershipStatus.INVITED;
-		else
 			newStatus = MembershipStatus.ACTIVE;
+		else
+			newStatus = MembershipStatus.INVITED;
 
 		if (!(groupMember != null && selfAdd) &&
 			group.getAccess() != GroupAccess.PUBLIC &&
@@ -81,6 +81,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}	
 				
 		if (groupMember != null) {
+			switch (groupMember.getStatus()) {
+			case NONMEMBER:
+				throw new IllegalStateException();
+			case REMOVED:
+				if (!selfAdd)
+					groupMember.setAdder(adder); // Mark adder for "please come back"
+				break;
+			case INVITED:
+				if (!selfAdd)
+					return; // already invited, do nothing
+				break;
+			case ACTIVE:
+				return; // Nothing to do
+			}
 			groupMember.setStatus(newStatus);
 		} else {
 			groupMember = new GroupMember(group, person, newStatus);

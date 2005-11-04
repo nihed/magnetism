@@ -18,7 +18,7 @@
 	
 	<dht:toolbar>
 		<c:choose>
-			<c:when test="${viewgroup.isMember}">
+			<c:when test="${viewgroup.isMember && empty viewgroup.inviter}">
 				 &#151; <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave <c:out value="${viewgroup.name}"/></a>
 			</c:when>
 			<c:when test="${viewgroup.canJoin}">
@@ -28,6 +28,14 @@
 	</dht:toolbar>
 
 	<div class="main">
+		<c:if test="${!empty viewgroup.inviter}">
+			<div>
+				You were invited to this group by <dh:entity value="${viewgroup.inviter}"/><br/>
+				<a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Accept invitation</a>&nbsp
+				<a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Remove me</a>
+			</div>
+		</c:if>
+			
 		<table>
 		<tr>
 		<td>

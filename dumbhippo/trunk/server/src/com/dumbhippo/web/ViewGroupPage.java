@@ -30,6 +30,7 @@ public class ViewGroupPage {
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
+	private PersonView inviter;
 	
 	private GroupMember groupMember;
 	
@@ -85,6 +86,14 @@ public class ViewGroupPage {
 				viewedGroupId = null;
 				viewedGroup = null;
 				groupMember = null;
+				
+				return;
+			}
+			
+			logger.debug("Status is " + groupMember.getStatus());
+			if (groupMember.getStatus() == MembershipStatus.INVITED &&
+			    groupMember.getAdder() != null) {
+				inviter = identitySpider.getPersonView(signin.getViewpoint(), getGroupMember().getAdder());	
 			}
 		}
 	}
@@ -105,5 +114,9 @@ public class ViewGroupPage {
 		return !getIsMember() && 
 		       (viewedGroup.getAccess() == GroupAccess.PUBLIC ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
+	}
+	
+	public PersonView getInviter() {
+		return inviter;
 	}
 }
