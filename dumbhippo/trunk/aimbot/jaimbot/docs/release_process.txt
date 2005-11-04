@@ -1,0 +1,45 @@
+This document defines the steps required to create a release of Jaimbot.
+
+--<==== Prepare the Release ==>--
+
+1.	Check out fresh working copy of jaimbot module from CVS.
+2.	Set the release version number in Maven project.xml and in Ant build.xml.
+	For example, jaimbot-1.2.1 would become jaimbot-1.3 for an incremental release.
+	-For Maven:
+		-<currentVersion>1.3</currentVersion>
+		-also add version to versions list:
+			<version>
+      			<id>1.3</id>
+      			<name>1.3</name>
+      			<tag>jaimbot-1_3</tag>
+			</version>
+	-For Ant:
+		-<property name="version" value="1.3"/>
+3.	Search and replace the version in any documentation in the xdocs directory.	
+4.	Perform a successful build, and site generation (maven site).
+5.	Check for any problems in the project reports (specifically: metrics, pmd, and make sure cvs reports worked).
+6.	Verify the Configure and Run instructions are still accurate on the website.
+7.	Run "ant changelog" and see whats new, save the changelog.html somewhere.
+8.	Summarize the significant changes in a text file (for use later).
+9.	Update the release date in the Ant build.xml (used to generate the changelog from above), to today's date.
+	-e.g.   <property name="version.date" value="30 Apr 2003"/>
+10.	Commit your changes to the version control repository. 
+11.	Tag the release via cvs -q tag PROJECT_VERSION_MODIFIER. e.g.  jaimbot-1_2_1 or jaimbot-1_3
+
+
+--<==== Do the Release ==>--
+
+1.	Deploy the website.
+	-maven site:deploy -Dmaven.username=ostersc
+2.  Add the release to the SF package: https://sourceforge.net/project/admin/newrelease.php?package_id=76970&group_id=76339
+3.  Attach the significant changes text file you created earlier to the release.
+4.	Attach the ant generated changelog.html as the changelog.  You should remove the html and body
+	parts, and everything up to the first change.
+5.  Create the distributions.
+	-maven dist
+6.  Upload the distributions to upload.sourceforge.net incoming directory.
+7.	Added the uploaded distributions to the SF file release.
+8.  Configure the "Step 3" options in the SF file release.
+9.  Download a binary release and test it.
+10.	Click the button to notify users.
+11.	Add the release to freshmeat.net (http://freshmeat.net/add-release/37325/)

@@ -1,0 +1,30 @@
+
+Add a module to completely manage roles:
+	-add role to buddy
+	-remove role from buddy
+	
+	
+Is there an alternative in the Protocol for the watchdog thread to use beside AIMing itself?
+	-some sort of echo response?	(KEEP_ALIVE maybe?)
+
+*DONE* Add toc_get_status <screenname> call when we recieve an AIM from an offline buddy (may help when we have more than MAX buddies)
+
+*DONE*
+	autoaddbuddy in aimclient will only add a buddy (not add User role).
+	AIMCLient should never use Roles!
+	
+	add a property enforceUser to bot that when true, will cause bot to check for user role before passing on to modules
+		-so, when enforced, the modules will never see requests from non-users
+		-when not enforced, any "buddy" can use the services
+	
+	this allows server-side "buddies" to be stored, but aimbot still managages meta-information and controls access.
+	Thus a jaimbot-user could use their own username, load in all their buddies from the server to the bot, but 
+	still manage the ACL themselves.  The new module (described below) will allow them to easily convert all their buddies to users.
+
+*DONE* Add a module to:
+	- convert all buddies to users
+	- (change adduser to check for buddy existing, but not having User role, and add it)
+	- purge all non-users from buddy list
+	- purge "in-active" buddies
+		-no-messages, no-preferences, no-roles (besides User), (make sure not to remove the bot itself ;) )	
+	
