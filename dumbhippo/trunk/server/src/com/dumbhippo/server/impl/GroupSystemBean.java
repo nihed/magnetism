@@ -99,6 +99,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groupMember.setStatus(newStatus);
 		} else {
 			groupMember = new GroupMember(group, person, newStatus);
+			if (!selfAdd) 
+				groupMember.setAdder(adder);
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);
