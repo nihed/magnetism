@@ -134,10 +134,16 @@ public class Main {
 			e1.printStackTrace();
 		}
 		
-		//Bot bot = new Bot();
-		//bot.signOn();
-
-		// the Bot starts a daemon thread; here we 
+		
+		if (false && true)
+			throw new RuntimeException("quit here");
+		
+		Bot bot = new Bot();
+		Thread t = new Thread(bot);
+		t.setDaemon(true);
+		t.start();
+		
+		// the Bot is a daemon thread; here we 
 		// just want to wait forever until killed by 
 		// the OS. This means when we're killed by the 
 		// OS the JVM will exit.

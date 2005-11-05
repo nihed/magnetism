@@ -6,7 +6,7 @@ import com.levelonelabs.aim.AIMBuddy;
 import com.levelonelabs.aim.AIMClient;
 import com.levelonelabs.aim.AIMListener;
 
-class Bot {
+class Bot implements Runnable {
 
 	private AIMClient aim;
 	private Random random;
@@ -65,14 +65,6 @@ class Bot {
 		aim.addAIMListener(new Listener());
 	}
 
-	void signOn() {
-		aim.signOn();
-		
-		//aim.addBuddy(new AIMBuddy("bryanwclark"));
-		//aim.addBuddy(new AIMBuddy("dfxfischer"));
-		//aim.addBuddy(new AIMBuddy("hp40000"));
-	}
-
 	void saySomethingRandom(AIMBuddy buddy) {
 		switch (random.nextInt(5)) {
 		case 0:
@@ -91,5 +83,9 @@ class Bot {
 			aim.sendMessage(buddy, "I may be dumb, but I'm not stupid");
 			break;
 		}
+	}
+
+	public void run() {
+		aim.signOn();
 	}
 }

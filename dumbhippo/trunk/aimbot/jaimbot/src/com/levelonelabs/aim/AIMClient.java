@@ -200,7 +200,7 @@ public class AIMClient implements Runnable, AIMSender {
      * @return the string without HTML
      */
     public static String stripHTML(String line) {
-        StringBuffer sb = new StringBuffer(line);
+        StringBuilder sb = new StringBuilder(line);
         String out = "";
 
         for (int i = 0; i < (sb.length() - 1); i++) {
@@ -296,18 +296,10 @@ public class AIMClient implements Runnable, AIMSender {
         return Arrays.asList(buddyHash.keySet().toArray()).iterator();
     }
 
-    public void newThread() {
-    	Thread t = new Thread(this);
-    	t.setDaemon(true);
-    	t.start();
-    }
-
     /**
      * Sign on to aim server
      */
     public void signOn() {
-    	newThread();
-
         // check the connection
         watchdogCheck = new AimConnectionCheck(this, true);
 
@@ -1176,7 +1168,6 @@ public class AIMClient implements Runnable, AIMSender {
                 	generateError(error, "You have been connecting and "
 	   + "disconnecting too frequently.  Wait 10 minutes and try again. "
 	   + "If you continue to try, you will need to wait even longer.");
-                	System.exit(1);
                 	return;
                 }
                 
@@ -1479,12 +1470,9 @@ public class AIMClient implements Runnable, AIMSender {
                 } else {
                     // need to see if we got a response
                     if (!aim.connectionVerified) {
-                        // restart the connection if we didnt see the message
                         logger.info("*** AIM -- CONNECTION PROBLEM(" + new Date() + "): Connection was not verified!");
                         logger.info("****** Assuming it was dropped, issuing restart.");
                         aim.signoff("Connection Dropped!");
-                        //aim.newThread();
-                        System.exit(1);
                     }
                 }
             } catch (Exception e) {
