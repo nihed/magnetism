@@ -41,7 +41,8 @@
 /deploy/client-deployer-service.xml             # Download .jar to clients
 /deploy/http-invoker.sar                        # JMX over HTTP
 /deploy/jboss-ws4ee.sar                         # Web Service framework
-/deploy/jms                                     # Java Messaging
+# we are using this for the moment
+#/deploy/jms                                     # Java Messaging
 /deploy/management                              # JSR-177 (???)
 /deploy/scheduler-service.xml                   # An example
 
