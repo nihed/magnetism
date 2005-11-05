@@ -35,9 +35,11 @@ import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -174,6 +176,17 @@ public class PostingBoardBean implements PostingBoard {
           "WHERE vgm.group = g AND vgm.member = :viewer AND " +
                 "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
 	
+	// For fetching visibility of groups in post recipient lists.
+	// We optimize the handling of viewer GroupMember since we
+	// are already fetching that, and we also treat groups where
+	// we were a past member as visible. (See
+	// GroupSystemBean.CAN_SEE_POST)
+	static final String VISIBLE_GROUP_FOR_POST =
+        "g MEMBER OF post.groupRecipients AND " + 
+		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
+          "(vgm.group = g AND vgm.member = :viewer AND " +
+           "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
+	
 	static final String VISIBLE_GROUP_ANONYMOUS =
         "g MEMBER OF post.groupRecipients AND " + 
 		"g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
@@ -190,41 +203,61 @@ public class PostingBoardBean implements PostingBoard {
 	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 	
 
-	// If we want in the future to visually indicate whether there were
-	// undisclosed recipients for a post, we might be able to use the
-	// following (untested) trick:
-	//
-	// 
-	// SELECT NEW com.dumbhippo.PostingBoardBean.GroupResult(g,h) 
-	//      FROM Post post, Group g LEFT JOIN Group h ON h=g
-    //      WHERE post = :post AND
-    //            g MEMBER OF post.groupRecipients AND
-    //            (h.access >= PUBLIC_INVITE OR
-    //             ":viewer MEMBER OF h.members)
+	// If we wanted to indicate undisclosed recipients, we would just omit
+	// the VISIBLE_GROUP_WITH_MEMBER then compute visibility by hand on
+	// the returned groups; this is cheap since we have the GroupMember
+	// for the viewer already
 	//
 	
 	static final String GET_POST_VIEW_QUERY = 
-		"SELECT g FROM Post post, Group g WHERE post = :post";
-
-	private PostView getPostView(Viewpoint viewpoint, Post post) {
+		"SELECT NEW com.dumbhippo.server.impl.GroupQueryResult(g,vgm) " +
+		"FROM Post post, Group g LEFT JOIN g.members vgm " +
+		"WHERE post = :post AND vgm.member = :viewer ";
+	
+	static final String GET_POST_VIEW_QUERY_ANONYMOUS = 
+		"SELECT g " +
+		"FROM Post post, Group g " +
+		"WHERE post = :post";
+	
+	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<Object> recipients) {
 		Person viewer = viewpoint.getViewer();
-		List<Object> recipients = new ArrayList<Object>();
-		
-		// Groups recipients are visible if the group is non-secret
-		// or if the view is a member of the group
 
 		Query q;
 		if (viewer == null) {
-			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP_ANONYMOUS);
+			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_ANONYMOUS);
 		} else {
-			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP);
+			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP_FOR_POST);
 			q.setParameter("viewer", viewer);
 		}
 
 		q.setParameter("post", post);
 		
-		for (Object o : q.getResultList())
-			recipients.add(o);
+		if (viewer == null) {
+			for (Object o : q.getResultList()) {
+				recipients.add(new GroupView((Group)o, null, null));
+			}
+		} else {
+			for (Object o : q.getResultList()) {
+				GroupQueryResult gr = (GroupQueryResult)o;
+				GroupMember groupMember = gr.getGroupMember();
+				PersonView inviter  = null;
+				
+				if (groupMember != null) {
+					if (groupMember.getStatus() == MembershipStatus.INVITED) {
+						Person adder = groupMember.getAdder();
+						if (adder != null)
+							inviter = identitySpider.getPersonView(viewpoint, adder);
+					}
+				}
+				recipients.add(new GroupView(gr.getGroup(), groupMember, inviter));
+			}
+		}
+	}
+
+	private PostView getPostView(Viewpoint viewpoint, Post post) {
+		List<Object> recipients = new ArrayList<Object>();
+		
+		addGroupRecipients(viewpoint, post, recipients);
 		
 		// Person recipients are visible only if the viewer is also a person recipient
 		if (post.getPersonRecipients().contains(viewpoint.getViewer())) {

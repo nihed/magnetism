@@ -26,7 +26,9 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
+import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -134,7 +136,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
-		Set<Group> groups = groupSystem.findGroups(viewpoint, user);
+		Set<Group> groups = groupSystem.findRawGroups(viewpoint, user);
 		
 		returnObjects(out, contentType, viewpoint, persons, groups);
 	}
@@ -196,6 +198,23 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));
 	}
 
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, Person user, String groupId, String memberIds)
+			throws IOException, ParseException, GuidNotFoundException {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
+		Set<String> memberGuids = splitIdList(memberIds);
+		
+		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
+		
+		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+		if (group == null)
+			throw new RuntimeException("No such group");
+		for (Person p : memberPeople)
+			groupSystem.addMember(user, group, p);
+		
+		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));		
+	}
+
 	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
 		Person contact = identitySpider.createContact(user, emailResource);
@@ -206,25 +225,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doJoinGroup(Person user, String groupId) {
-		try {
-			Group group = identitySpider.lookupGuidString(Group.class, groupId);
-			groupSystem.addMember(user, group, user);
-		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid", e);
-		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found", e);
-		}
+		Viewpoint viewpoint = new Viewpoint(user);
+		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+		if (group == null)
+			throw new RuntimeException("No such group");
+		groupSystem.addMember(user, group, user);
 	}
 	
 	public void doLeaveGroup(Person user, String groupId) {
-		try {
-			Group group = identitySpider.lookupGuidString(Group.class, groupId);
-			groupSystem.removeMember(user, group, user);
-		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid", e);
-		} catch (IdentitySpider.GuidNotFoundException e) {
-			throw new RuntimeException("Guid not found", e);
-		}
+		Viewpoint viewpoint = new Viewpoint(user);
+		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+		if (group == null)
+			throw new RuntimeException("No such group");
+		groupSystem.removeMember(user, group, user);
 	}
 	
 	public void doAddContactPerson(Person user, String contactId) {

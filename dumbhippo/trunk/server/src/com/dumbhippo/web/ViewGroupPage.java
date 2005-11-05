@@ -60,14 +60,12 @@ public class ViewGroupPage {
 	public void setViewedGroupId(String groupId) throws ParseException, GuidNotFoundException {
 		viewedGroupId = groupId;
 		
+		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that
+		// we only do one lookup in the database. Careful: need to propagate
+		// the handling of REMOVED members from lookupGroupById to getGroupMember
+		
 		if (groupId != null) {
-			try {
-				viewedGroup = identitySpider.lookupGuidString(Group.class, groupId);
-			} catch (ParseException e) {
-				viewedGroupId = null;
-			} catch (GuidNotFoundException e) {
-				viewedGroupId = null;
-			}
+			viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
 		}
 		
 		if (viewedGroup != null) {
@@ -77,19 +75,6 @@ public class ViewGroupPage {
 			if (groupMember == null)
 				groupMember = new GroupMember(viewedGroup, signin.getUser(), MembershipStatus.NONMEMBER);
 
-			// We don't want the whole page to go poof if you remove yourself, so you can 
-			// still see the page if you were once a member, though you can't see all the
-			// contents (unless you re-add yourself)
-			if (viewedGroup.getAccess() == GroupAccess.SECRET &&
-			    !(getGroupMember().getStatus().isMember() || 
-			      getGroupMember().getStatus() == MembershipStatus.REMOVED)) {  
-				viewedGroupId = null;
-				viewedGroup = null;
-				groupMember = null;
-				
-				return;
-			}
-			
 			logger.debug("Status is " + groupMember.getStatus());
 			if (groupMember.getStatus() == MembershipStatus.INVITED &&
 			    groupMember.getAdder() != null) {
@@ -98,8 +83,20 @@ public class ViewGroupPage {
 		}
 	}
 	
-	public List<PersonView> getMembers() {
-		return PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup));
+	public List<PersonView> getMembers(MembershipStatus status) {
+		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup, status));
+		if (result.isEmpty())
+			return null;
+		else
+			return result;
+	}
+	
+	public List<PersonView> getActiveMembers() {
+		return getMembers(MembershipStatus.ACTIVE);
+	}
+	
+	public List<PersonView> getInvitedMembers() {
+		return getMembers(MembershipStatus.INVITED);
 	}
 	
 	public GroupMember getGroupMember() {

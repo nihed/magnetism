@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -86,7 +87,8 @@ public class ViewPersonPage {
 			return false;
 	}
 	
+	// We don't show group's you haven't accepted the invitation for on your public page
 	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), viewedPerson));
+		return Group.sortedList(groupSystem.findRawGroups(signin.getViewpoint(), viewedPerson, MembershipStatus.ACTIVE));
 	}
 }

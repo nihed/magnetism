@@ -8,6 +8,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -58,8 +59,8 @@ public class WelcomePage {
 		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
 	}
 	
-	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
+	public List<GroupView> getGroups() {
+		return GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
 	}
 	
 	public String getDownloadUrlWindows() {

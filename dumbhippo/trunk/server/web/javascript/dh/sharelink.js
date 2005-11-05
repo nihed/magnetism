@@ -26,6 +26,9 @@ dh.sharelink.descriptionRichText = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
 dh.sharelink.createGroupLink = null;
+dh.sharelink.addMemberLink = null;
+dh.sharelink.addMemberDescription = null;
+dh.sharelink.addMemberGroup = null;
 
 dh.sharelink.findGuid = function(set, id) {
 	// set can be an array or a hash
@@ -120,14 +123,15 @@ dh.sharelink.toggleCreateGroup = function() {
 		dh.sharelink.unhighlightPossibleGroup();
 }
 
-dh.sharelink.creatingGroup = false;
+dh.sharelink.inAction = false;
+
 dh.sharelink.doCreateGroup = function() {
 	var name = dh.sharelink.createGroupNameEntry.value;
 
-	// don't get two of these in flight at once
-	if (dh.sharelink.creatingGroup)
+	// don't get two actions in flight at once
+	if (dh.sharelink.inAction)
 		return;
-	dh.sharelink.creatingGroup = true;
+	dh.sharelink.inAction = true;
 		
 	var statusNode = document.getElementById("dhCreateGroupStatus");
 	dojo.dom.textContent(statusNode, "Please wait...");
@@ -168,13 +172,13 @@ dh.sharelink.doCreateGroup = function() {
 						dh.sharelink.createGroupNameEntry.value = "";
 						dh.util.hide(statusNode);
 						dh.sharelink.unhighlightPossibleGroup();
-						dh.sharelink.creatingGroup = false;
+						dh.sharelink.inAction = false;
 					},
 					function(type, error, http) {
 						//dojo.debug("creategroup got back error " + dhAllPropsAsString(error));
 						// FIXME display the error, don't hide status
 						dh.util.hide(statusNode);
-						dh.sharelink.creatingGroup = false;		
+						dh.sharelink.inAction = false;		
 					});
 }
 
@@ -184,22 +188,109 @@ dhDoCreateGroupKeyUp = function(event) {
 	}
 }
 
-dh.sharelink.considerShowingCreateGroupLink = function() {
-	var personCount = 0;
+dh.sharelink.doAddMembers = function() {
+	// don't get two actions in flight at once
+	if (dh.sharelink.inAction)
+		return;
+	dh.sharelink.inAction = true;
+		
+	var statusNode = document.getElementById("dhCreateGroupStatus");
+	dojo.dom.textContent(statusNode, "Please wait...");
+	dh.util.show(statusNode);
+	
+	var groupId;
+	
+	var groupMembers = [];
 	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
-		if (dh.sharelink.selectedRecipients[i].isPerson())
+		var r = dh.sharelink.selectedRecipients[i];
+		if (r.isPerson()) {
+			groupMembers.push(r);
+		} else {
+			groupId = r.id;
+		}
+	}
+	if (!groupId) // No group???
+		return;
+	
+	var commaMembers = dh.util.join(groupMembers, ",", "id");
+		
+	dh.server.getXmlPOST("addmembers",
+					{ 
+						"groupId" : groupId, 
+						"members" : commaMembers
+					},
+					function(type, data, http) {
+						dojo.debug("got back a replacement group " + data);
+						dojo.debug("text is : " + http.responseText);
+					
+						// remove the group and individual members as recipients
+						dh.sharelink.removeRecipient(groupId);
+
+						for (var i = 0; i < groupMembers.length; ++i) {
+							dh.sharelink.removeRecipient(groupMembers[i].id);
+						}
+						
+						var newGroups = dh.sharelink.mergeObjectsDocument(data);
+
+						for (var i = 0; i < newGroups.length; ++i) {							    	
+							// add the group as a recipient
+							dojo.debug("adding newly-created group as recipient");
+					    	dh.sharelink.doAddRecipient(newGroups[i].id);
+						}
+						
+						dh.util.hide(statusNode);
+						dh.sharelink.unhighlightPossibleGroup();
+						dh.sharelink.inAction = false;
+					},
+					function(type, error, http) {
+						//dojo.debug("addmembers got back error " + dhAllPropsAsString(error));
+						// FIXME display the error, don't hide status
+						dh.util.hide(statusNode);
+						dh.sharelink.inAction = false;		
+					});
+}
+
+dh.sharelink.updateActionLinks = function() {
+	var personCount = 0;
+	var groupCount = 0;
+	var group;
+	var person;
+
+	for (var i = 0; i < dh.sharelink.selectedRecipients.length; ++i) {
+		if (dh.sharelink.selectedRecipients[i].isPerson()) {
 			personCount += 1;
+			person = dh.sharelink.selectedRecipients[i];
+		} else {
+			groupCount += 1;
+			group = dh.sharelink.selectedRecipients[i];
+		}
 	}
 	
 	// we could also remove the create group dialog if it's up, but 
 	// not clear it's right anyway (if you start editing recipients with 
-	// that up, maybe you are going to put some group members back in the list
-	// in a minute)
+	// that up, maybe you are going to put some group members back in 
+	// the list in a minute. If you try to add a group to a group,
+	// you should have the ability to remove it again without losing
+	// your group name.)
 	
-	if (personCount > 1) {
+	if (personCount > 1 && groupCount == 0) {
 		dh.util.show(dh.sharelink.createGroupLink);	
 	} else {
 		dh.util.hide(dh.sharelink.createGroupLink);
+	}
+	
+	if (personCount > 0 && groupCount == 1) {
+		var descriptionText;
+		if (personCount == 1)
+			descriptionText = person.displayName;
+		else 
+			descriptionText = "all";
+			
+		dojo.dom.textContent(dh.sharelink.addMemberDescription, descriptionText);
+		dojo.dom.textContent(dh.sharelink.addMemberGroup, group.displayName);
+		dh.util.show(dh.sharelink.addMemberLink);
+	} else {
+		dh.util.hide(dh.sharelink.addMemberLink);
 	}
 }
 
@@ -220,7 +311,8 @@ dh.sharelink.removeRecipient = function(recipientId, node) {
 		});
 	}
 	
-	dh.sharelink.considerShowingCreateGroupLink();
+	dojo.debug("Updating action links");
+	dh.sharelink.updateActionLinks();
 }
 
 dhRemoveRecipientClicked = function(event) {
@@ -377,7 +469,7 @@ dh.sharelink.doAddRecipient = function(selectedId, noFlash) {
 		if (!dh.util.disableOpacityEffects)	
 			var anim = dojo.fx.html.fadeIn(idNode, 800);
 			
-		dh.sharelink.considerShowingCreateGroupLink();
+		dh.sharelink.updateActionLinks();
 	} else {
 		if (!noFlash)
 			dh.util.flash(dh.sharelink.findIdNode(obj.id));
@@ -627,6 +719,10 @@ dh.sharelink.init = function() {
 	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
 						dj_global, "dhDoCreateGroupKeyUp");
 	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");
+	dh.sharelink.addMemberLink = document.getElementById("dhAddMemberLink");
+	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");
+	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
+
 						
 	// set default focus
 	dh.sharelink.recipientComboBox.textInputNode.focus();

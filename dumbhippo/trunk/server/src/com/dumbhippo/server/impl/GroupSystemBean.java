@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Viewpoint;
@@ -119,24 +120,49 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// We might want to allow REMOVED members full visibility, to give a 
 	// "nomail" feel, but changing the visibility allows people to see
 	// what the world sees and makes the operation more concrete
-	static final String CAN_SEE = " (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
-					                "EXISTS (SELECT vgm FROM GroupMember vgm " +
-	                                         "WHERE vgm.group = g AND vgm.member = :viewer AND " +
-	                                             "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
+	// 
+	// So, we have two query strings "Can see that the group exists" - 
+	// this is needed to avoid the group page vanishing when you remove
+	// yourself - and also "Can see private posts and members". There is 
+	// no difference between the two for the anonymous viewer.
+	static final String CAN_SEE = 
+		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
+		  "EXISTS (SELECT vgm FROM GroupMember vgm " +
+	              "WHERE vgm.group = g AND vgm.member = :viewer AND " +
+	              "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
+	static final String CAN_SEE_GROUP =
+		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
+		  "EXISTS (SELECT vgm FROM GroupMember vgm " +
+                  "WHERE vgm.group = g AND vgm.member = :viewer AND " +
+                  "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
 	static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String GET_MEMBERS_QUERY = "SELECT gm.member from GroupMember gm, Group g " +
-	                                        "WHERE gm.group = :group AND g = :group ";
+	                                        "WHERE gm.group = :group AND g = :group";
 		
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group) {
+		return getMembers(viewpoint, group, null);
+	}
+	
+	private String getStatusClause(MembershipStatus status) {
+		if (status != null) {
+			return " AND gm.status = " + status.ordinal();
+		} else {
+			return " AND gm.status >= " + MembershipStatus.INVITED.ordinal();
+		}
+	}
+	
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
+		String statusClause = getStatusClause(status);
+		
 		if (viewer == null) {
-			q = em.createQuery(GET_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS);
+			q = em.createQuery(GET_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		} else {
-			q = em.createQuery(GET_MEMBERS_QUERY + " AND " + CAN_SEE);
+			q = em.createQuery(GET_MEMBERS_QUERY + " AND " + CAN_SEE + statusClause);
 			q.setParameter("viewer", viewer);			
 		}
 		q.setParameter("group", group);
@@ -175,21 +201,23 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	// The selection of Group is only needed for the CAN_SEE checks
-	static final String FIND_GROUPS_QUERY = "SELECT gm.group FROM GroupMember gm, Group g " +
-                                            "WHERE gm.member = :member AND g = gm.group AND " +
-                                                  "gm.status  >= " + MembershipStatus.INVITED.ordinal();
+	static final String FIND_RAW_GROUPS_QUERY = "SELECT gm.group FROM GroupMember gm, Group g " +
+                                                "WHERE gm.member = :member AND g = gm.group AND " +
+                                                    "gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
-	public Set<Group> findGroups(Viewpoint viewpoint, Person member) {
+	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
+		String statusClause = getStatusClause(status);
+		
 		if (member.equals(viewpoint.getViewer())) {
 			// Special case this for effiency
-			q = em.createQuery(FIND_GROUPS_QUERY); 
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause); 
 		} else if (viewer == null) {
-			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		} else {
-			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause);
 			q.setParameter("viewer", viewer);			
 		}
 		q.setParameter("member", member);
@@ -198,5 +226,62 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			ret.add((Group) o);
 		}
 		return ret;
+	}
+	
+	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member) {
+		return findRawGroups(viewpoint, member, null);
+	}
+
+	// The selection of Group is only needed for the CAN_SEE checks
+	static final String FIND_GROUPS_QUERY = "SELECT gm FROM GroupMember gm, Group g " +
+                                                 "WHERE gm.member = :member AND g = gm.group AND " +
+                                                   "gm.status  >= " + MembershipStatus.INVITED.ordinal();
+
+	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member) {
+		Query q;
+		
+		// See the usage of PostingBoardBean.VISIBLE_GROUP_WITH_MEMBER for
+		// how to implement the general case
+		if (!member.equals(viewpoint.getViewer()))
+			throw new RuntimeException("Not implemented");
+		
+		q = em.createQuery(FIND_GROUPS_QUERY); 
+		q.setParameter("member", member);
+		Set<GroupView> result = new HashSet<GroupView>();
+		for (Object o : q.getResultList()) {
+			GroupMember groupMember = (GroupMember)o;
+			PersonView inviter  = null;
+			
+			if (groupMember.getStatus() == MembershipStatus.INVITED) {
+				Person adder = groupMember.getAdder();
+				if (adder != null)
+					inviter = identitySpider.getPersonView(viewpoint, adder);
+			}
+			result.add(new GroupView(groupMember.getGroup(), groupMember, inviter));
+		}
+		return result;	
+	}
+	
+	
+	// The selection of Group is only needed for the CAN_SEE checks
+	static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
+
+	public Group lookupGroupById(Viewpoint viewpoint, String groupId) {
+		Person viewer = viewpoint.getViewer();
+		Query query;
+		
+		if (viewer == null) {
+			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
+		} else {
+			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_GROUP);
+			query.setParameter("viewer", viewpoint.getViewer());
+		}
+		query.setParameter("groupId", groupId);
+		
+		try {
+			return (Group)query.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
 	}
 }

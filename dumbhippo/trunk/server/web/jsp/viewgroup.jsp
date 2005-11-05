@@ -47,9 +47,20 @@
 			</div>
 		</td>
 		<td>
+			<c:set var="invitedMembers" value="${viewgroup.invitedMembers}"/>
 			<div class="group-members">
-				<strong>Members:</strong><br/>
-				<dh:entityList value="${viewgroup.members}"/>
+				<c:choose>
+					<c:when test="${!empty invitedMembers}">
+						<strong>Active members:</strong><br/>
+						<dh:entityList value="${viewgroup.activeMembers}"/><br/>
+						<strong>Invited Members:</strong><br/>
+						<dh:entityList value="${invitedMembers}"/>
+					</c:when>
+					<c:otherwise>
+						<strong>Members:</strong><br/>
+						<dh:entityList value="${viewgroup.activeMembers}"/>
+					</c:otherwise>
+				</c:choose>
 			</div>
 		</td>
 		</tr>

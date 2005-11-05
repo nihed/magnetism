@@ -36,6 +36,11 @@ public interface HttpMethods {
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String memberIds)
 			throws IOException, ParseException, GuidNotFoundException;
 
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "groupId", "members" })
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, Person user, String groupId, String memberIds)
+			throws IOException, ParseException, GuidNotFoundException;
+
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret" })
 	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException,

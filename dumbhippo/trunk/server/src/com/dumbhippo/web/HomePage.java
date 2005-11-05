@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
@@ -51,8 +52,8 @@ public class HomePage {
 		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
 	}
 	
-	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
+	public List<GroupView> getGroups() {
+		return GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
 	}
 	
 	public List<PersonView> getContacts() {

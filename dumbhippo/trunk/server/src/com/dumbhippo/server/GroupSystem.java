@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 
 @Local
@@ -20,7 +21,26 @@ public interface GroupSystem {
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group);
 	
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
+	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, Person member);
 	
-	public Set<Group> findGroups(Viewpoint viewpoint, Person member);	
+	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member);	
+	
+	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status);	
+
+	/**
+	 * Find the groups that member is in. Currently, only the case
+	 * where member == viewpoint.getViewer() is implemented; if you
+	 * need the more general case, use findRawGroups(). (That doesn't
+	 * give the inviter information, but generally when you are viewing
+	 * someone else's groups, you don't want that.)
+	 * 
+	 * @param viewpoint the viewpoint of the viewer viewing member
+	 * @param member the person being viewed
+	 * @return a list of GroupView objects for the groups member is in
+	 */
+	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member);	
+	
+	public Group lookupGroupById(Viewpoint viewpoint, String groupId);
 }

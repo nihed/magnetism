@@ -7,6 +7,8 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
 public class EntityTag extends SimpleTagSupport {
@@ -20,6 +22,15 @@ public class EntityTag extends SimpleTagSupport {
 			PersonView view = (PersonView)o;
 			link = "viewperson?personId=" + view.getPerson().getId();
 			body = view.getHumanReadableName();
+		} else if (o instanceof GroupView) {
+			GroupView groupView = (GroupView)o;
+			Group group = groupView.getGroup();
+			PersonView inviter = groupView.getInviter();
+			link = "viewgroup?groupId=" + group.getId();
+			if (inviter != null)
+				body = group.getName() + " (invited by " + inviter.getHumanReadableName() + ")";
+			else
+				body = group.getName();
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
 			link = "viewgroup?groupId=" + group.getId();

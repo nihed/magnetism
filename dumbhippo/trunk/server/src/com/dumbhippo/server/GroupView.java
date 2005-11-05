@@ -1,0 +1,70 @@
+package com.dumbhippo.server;
+
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+
+import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.MembershipStatus;
+
+/**
+ * @author otaylor
+ *
+ * This is a class encapsulating information about a Group that can be
+ * returned out of the session tier and used by web pages; only the
+ * constructor makes queries into the database; the read-only properties of 
+ * this object access pre-computed data.
+ */ 
+ public class GroupView {
+	 Group group;
+	 GroupMember groupMember;
+	 PersonView inviter;
+	 
+	 public GroupView(Group g, GroupMember gm, PersonView i) {
+		 group = g;
+		 groupMember = gm;
+		 inviter = i;
+	 }
+	 
+	 public Group getGroup() {
+		 return group;
+	 }
+	 
+	 public MembershipStatus getStatus() {
+		 if (groupMember != null)
+			 return groupMember.getStatus();
+		 else
+			 return MembershipStatus.NONMEMBER;
+	 }
+	 
+	 public PersonView getInviter() {
+		 return inviter;
+	 }
+	 
+	/**
+	 * Convert an (unordered) set of groups into a a list and
+	 * sort alphabetically with the default collator. You generally
+	 * want to do this before displaying things to user, since
+	 * iteration through Set will be in hash table order.
+	 * 
+	 * @param groups a set of Group objects
+	 * @return a newly created List containing the sorted groups
+	 */
+	 static public List<GroupView> sortedList(Set<GroupView> groups) {
+		 ArrayList<GroupView> list = new ArrayList<GroupView>();
+		 list.addAll(groups);
+		 
+		 final Collator collator = Collator.getInstance();
+		 Collections.sort(list, new Comparator<GroupView>() {
+			 public int compare (GroupView g1, GroupView g2) {
+				 return collator.compare(g1.group.getName(), g2.group.getName());
+			 }
+		 });
+		 
+		 return list;
+	 }
+}
