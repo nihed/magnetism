@@ -3,7 +3,7 @@
 // Rather than turning this on globally, it's probably better to
 // add 'djConfig.isDebug = true' to the page your are editing 
 // immediately after including config.js
-var dhDebug = false;
+var dhDebug = true;
 var dhServerUri = "/";
 var dhScriptRoot = dhServerUri + "javascript/";
 if (dhDebug && document.location.toString().substring(0,5) == "file:") {
