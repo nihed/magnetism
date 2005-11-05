@@ -71,7 +71,7 @@ public class AIMClient implements Runnable, AIMSender {
     private AimConnectionCheck watchdogCheck;
     private AimConnectionCheck watchdogVerify;
     boolean connectionVerified = false;
-    private Timer connectionCheck = new Timer();
+    private Timer connectionCheck = new Timer(true); // daemon thread
 
     static Logger logger = Logger.getLogger(AIMClient.class.getName());
 
@@ -324,7 +324,6 @@ public class AIMClient implements Runnable, AIMSender {
         }
     }
 
-
     /**
      * Sign off from aim server
      */
@@ -434,12 +433,14 @@ public class AIMClient implements Runnable, AIMSender {
         byte[] data;
         while (true) {
             try {
-                in.skip(4);
-                length = in.readShort();
-                data = new byte[length];
-                in.readFully(data);
-                fromAIM(data);
-                // logger.fine("SEQNO:"+seqNo);
+            	synchronized (in) {
+            		in.skip(4);
+            		length = in.readShort();
+            		data = new byte[length];
+            		in.readFully(data);
+            	}
+            	fromAIM(data);
+            	// logger.fine("SEQNO:"+seqNo);
             } catch (InterruptedIOException e) {
                 // This is normal; read times out when we dont read anything.
                 // logger.fine("*** AIM ERROR: " + e + " ***");
@@ -776,7 +777,7 @@ public class AIMClient implements Runnable, AIMSender {
      * @exception IOException
      *                Description of Exception
      */
-    private void frameSend(String toBeSent) throws IOException {
+    synchronized private void frameSend(String toBeSent) throws IOException {
         if (sendLimit < MAX_POINTS) {
             sendLimit += ((System.currentTimeMillis() - lastFrameSendTime) / RECOVER_RATE);
             // never let the limit exceed the max, else this code won't work
@@ -1433,6 +1434,11 @@ public class AIMClient implements Runnable, AIMSender {
      * to check. One to send the message (sender=true), One to check the result
      * (sender=false)
      * 
+     * FIXME this is totally broken, because AIMClient isn't threadsafe to 
+     * speak of (I added a couple halfhearted synchronized sections, but 
+     * didn't really comprehensively fix). The timer is running in a 
+     * separate thread... -hp
+     * 
      * @author Scott Oster
      * @created February 28, 2002
      */
@@ -1471,7 +1477,7 @@ public class AIMClient implements Runnable, AIMSender {
                     // need to see if we got a response
                     if (!aim.connectionVerified) {
                         logger.info("*** AIM -- CONNECTION PROBLEM(" + new Date() + "): Connection was not verified!");
-                        logger.info("****** Assuming it was dropped, issuing restart.");
+                        logger.info("****** Assuming it was dropped.");
                         aim.signoff("Connection Dropped!");
                     }
                 }
