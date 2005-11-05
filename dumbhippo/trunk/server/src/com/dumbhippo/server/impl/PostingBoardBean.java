@@ -20,7 +20,6 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -76,12 +75,9 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String url, Set<String> recipientGuids) throws ParseException, GuidNotFoundException {
+	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients) throws GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
-		// this is what can throw ParseException
-		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
-
 		// for each recipient, if it's a group we want to explode it into persons
 		// (but also keep the group itself), if it's a person we just add it
 		

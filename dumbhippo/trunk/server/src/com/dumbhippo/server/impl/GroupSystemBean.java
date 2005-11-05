@@ -284,4 +284,30 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return null;
 		}
 	}
+	
+	static final String FIND_ADDABLE_CONTACTS_QUERY = 
+		"SELECT p from HippoAccount a, Person p, Group g " +
+		"WHERE a.owner = :viewer AND p MEMBER OF a.contacts AND " + 
+			  "g.id = :groupid AND " + CAN_SEE_GROUP + " AND " + 
+			  "NOT EXISTS(SELECT gm FROM GroupMember gm " +
+				         "WHERE gm.group = :groupid AND gm.member = p AND " +
+				               "gm.status >= " + MembershipStatus.INVITED.ordinal() + ")";
+	
+	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, Person owner, String groupId) {
+		Person viewer = viewpoint.getViewer();
+		
+		if (!owner.equals(viewer))
+			throw new RuntimeException("Not implemented");
+		
+		Query q = em.createQuery(FIND_ADDABLE_CONTACTS_QUERY);
+		q.setParameter("viewer", viewer);
+		q.setParameter("groupid", groupId);
+
+		Set<PersonView> result = new HashSet<PersonView>();
+
+		for (Object o: q.getResultList())
+			result.add(identitySpider.getPersonView(viewpoint, (Person)o));
+		
+		return result;
+	}
 }

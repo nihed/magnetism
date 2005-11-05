@@ -103,8 +103,10 @@ dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.gec
 // arg is the default page to go to if none was specified
 // "close" and "here" are magic pseudo-pages for close the window
 // and stay on this page
+//
+// Note that we don't validate the default, just what we retrieve from paremeters,
+// so you must not pass user input as 'def' to this function.
 dh.util.goToNextPage = function(def, flashMessage) {
-
 	if (flashMessage) {
 		// delete the whole page
 		dh.util.hide(document.body);
@@ -148,7 +150,7 @@ dh.util.goToNextPage = function(def, flashMessage) {
 		dh.util.closeWindow();
 	} else if (where == "here") {
 		dojo.debug("staying put");
-	} else if (where.match(/^[a-zA-Z]+$/)) {
+	} else if (where == def || where.match(/^[a-zA-Z]+$/)) {
 		dojo.debug("opening " + where);
     	window.open(where, "_self");
 	} else {

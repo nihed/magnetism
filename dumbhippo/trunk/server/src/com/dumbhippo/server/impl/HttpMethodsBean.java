@@ -21,14 +21,16 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Invitation;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HttpContentTypes;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
-import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -60,6 +62,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private InvitationSystem invitationSystem;
+	
+	@EJB
+	private Configuration configuration;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -126,12 +131,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		startReturnObjectsXml(contentType, xml);
 		
-		returnPersonsXml(xml, persons);
+		if (persons != null)
+			returnPersonsXml(xml, persons);
+		if (groups != null)
 		returnGroupsXml(xml, viewpoint, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
 
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, Person user, String groupId) throws IOException {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
+		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint, user, groupId);
+		
+		returnObjects(out, contentType, viewpoint, persons, null);
+	}
+	
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
@@ -174,9 +189,42 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipientGuids);
+		
+		// this is what can throw ParseException
+		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
+		
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);
 	}
 
+	public void doShareGroup(Person user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
+		Set<String> recipientGuids = splitIdList(recipientIds);
+		
+		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+		if (group == null)
+			throw new RuntimeException("No such group");
+		
+		// this is what can throw ParseException
+		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
+		
+		for (GuidPersistable r : recipients) {
+			if (r instanceof Person)
+				groupSystem.addMember(user, group, (Person)r);
+			else
+				throw new GuidNotFoundException(r.getId());
+		}
+
+		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
+		String url = baseurl + "/viewgroup?groupId=" + group.getId();
+		
+		PersonView selfView = identitySpider.getPersonView(viewpoint, user);
+		String title = group.getName() + " (invitation from " + selfView.getHumanReadableName() + ")";
+			
+		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
+		
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);		
+	}
 	
 	public void doRenamePerson(Person user, String name) {
 		FullName fullname = FullName.parseHumanString(name);

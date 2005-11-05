@@ -43,4 +43,15 @@ public interface GroupSystem {
 	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member);	
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId);
+	
+	/**
+	 * Finds the set of contacts of an account owner that aren't already
+	 * members of a group (and thus can be added to the group)
+	 * 
+	 * @param viewpoint viewpoint from which we are viewing the setup
+	 * @param owner account owner (must equal viewpoint.getViewer() currently)
+	 * @param groupId group ID of a group
+	 * @return the contacts of owner that aren't already members of the group
+	 */
+	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, Person owner, String groupId);
 }

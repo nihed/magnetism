@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;

@@ -22,6 +22,11 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "groupId" })
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, Person user, String groupId)
+			throws IOException;
+
+	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { })
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user)
 			throws IOException;
@@ -44,6 +49,11 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret" })
 	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException,
+			GuidNotFoundException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId", "recipients", "description" })
+	public void doShareGroup(Person user, String groupId, String recipientIds, String description) throws ParseException,
 			GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)

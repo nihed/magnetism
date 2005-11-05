@@ -7,7 +7,6 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 

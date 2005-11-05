@@ -17,14 +17,20 @@
 	<dht:header><c:out value="${viewgroup.name}"/></dht:header>
 	
 	<dht:toolbar>
-		<c:choose>
-			<c:when test="${viewgroup.isMember && empty viewgroup.inviter}">
-				 &#151; <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave <c:out value="${viewgroup.name}"/></a>
-			</c:when>
-			<c:when test="${viewgroup.canJoin}">
-				 &#151; <a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join <c:out value="${viewgroup.name}"/></a>
-			</c:when>
-		</c:choose>
+		<c:if test="${empty viewgroup.inviter}">
+			<c:if test="${viewgroup.isMember && !viewgroup.isForum}">
+				<c:url var="addmembersurl" value="sharegroup?groupId=${viewgroup.viewedGroupId}"/>
+				 &#151; <a href='${addmembersurl}'>Share <c:out value="${viewgroup.name}"/> with friends</a>
+			</c:if>
+			<c:choose>
+				<c:when test="${viewgroup.isMember && empty viewgroup.inviter}">
+					 &#151; <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave <c:out value="${viewgroup.name}"/></a>
+				</c:when>
+				<c:when test="${viewgroup.canJoin}">
+					 &#151; <a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join <c:out value="${viewgroup.name}"/></a>
+				</c:when>
+			</c:choose>
+		</c:if>
 	</dht:toolbar>
 
 	<div class="main">

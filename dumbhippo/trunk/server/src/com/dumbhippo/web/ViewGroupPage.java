@@ -66,6 +66,8 @@ public class ViewGroupPage {
 		
 		if (groupId != null) {
 			viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
+			if (viewedGroup == null)
+				viewedGroupId = null;
 		}
 		
 		if (viewedGroup != null) {
@@ -75,7 +77,6 @@ public class ViewGroupPage {
 			if (groupMember == null)
 				groupMember = new GroupMember(viewedGroup, signin.getUser(), MembershipStatus.NONMEMBER);
 
-			logger.debug("Status is " + groupMember.getStatus());
 			if (groupMember.getStatus() == MembershipStatus.INVITED &&
 			    groupMember.getAdder() != null) {
 				inviter = identitySpider.getPersonView(signin.getViewpoint(), getGroupMember().getAdder());	
@@ -111,6 +112,10 @@ public class ViewGroupPage {
 		return !getIsMember() && 
 		       (viewedGroup.getAccess() == GroupAccess.PUBLIC ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
+	}
+	
+	public boolean getIsForum() {
+		return viewedGroup.getAccess() == GroupAccess.PUBLIC;
 	}
 	
 	public PersonView getInviter() {

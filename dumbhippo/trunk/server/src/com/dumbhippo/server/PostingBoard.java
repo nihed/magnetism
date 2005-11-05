@@ -6,8 +6,8 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
@@ -25,8 +25,8 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max);
 
-	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String link, Set<String> recipientGuids)
-		throws ParseException, GuidNotFoundException;
+	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
+		throws GuidNotFoundException;
 
 	public void doShareLinkTutorialPost(Person recipient);
 	
