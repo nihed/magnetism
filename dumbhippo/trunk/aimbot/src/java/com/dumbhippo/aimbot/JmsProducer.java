@@ -34,6 +34,7 @@ public class JmsProducer extends JmsQueue {
 		}
 	}
 	
+	@Override
 	public void close() {
 		try {
 			messageProducer.close();

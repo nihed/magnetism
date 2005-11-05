@@ -1,6 +1,8 @@
 package com.dumbhippo.aimbot;
 
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.levelonelabs.aim.AIMBuddy;
 import com.levelonelabs.aim.AIMClient;
@@ -8,9 +10,65 @@ import com.levelonelabs.aim.AIMListener;
 
 class Bot implements Runnable {
 
+	static private Timer timer;
+	
 	private AIMClient aim;
 	private Random random;
+	private SelfPinger pinger;
+	
+    /** FIXME this is a bit broken, because AIMClient isn't threadsafe to 
+     * speak of, and the timer is running in a 
+     * separate thread... I synchronized the "send a frame" method so 
+     * at least we won't send completely corrupt garbage, but didn't 
+     * comprehensively make the class threadsafe -hp
+     */
+	class SelfPinger extends TimerTask {
+	    // check connection ever "TIME_DELAY" milliseconds (5 mins)
+	    private static final long TIME_DELAY = 5 * 60 * 1000;
+	    
+	    SelfPinger() {
+	    	timer.schedule(this, TIME_DELAY, TIME_DELAY);
+	    }
+	    
+		@Override
+		public void run() {
+			if (aim.getOnline()) {
+				// clock setting back just works since we do a 
+				// ping then which fixes last message timestamp
+				
+				long now = System.currentTimeMillis();
+				long last = aim.getLastMessageTimestamp();
 
+				// only ping if we've been idle
+				if ((now - last) > TIME_DELAY) {
+					aim.sendMessageRaw(aim.getName(), AIMClient.PING);
+					
+					// set up a one-shot to verify results
+					timer.schedule(new Ponger(), TIME_DELAY);
+				}
+            } else {
+            	cancel();
+            }
+		}
+		
+		class Ponger extends TimerTask {
+
+			@Override
+			public void run() {
+				// if we've now been idle for a while, sign us off, 
+				// the connection is hosed
+				if (aim.getOnline()) {
+					long now = System.currentTimeMillis();
+					long last = aim.getLastMessageTimestamp();
+
+					if ((now - last) > TIME_DELAY*2) {
+						aim.signOff();
+					}
+				}
+			}
+		}
+	}
+	
 	class Listener implements AIMListener {
 		public void handleConnected() {
 			System.out.println("connected");
@@ -58,11 +116,15 @@ class Bot implements Runnable {
 	}
 	
 	Bot() {
-		random = new Random();
+		// don't put things in constructor that need to be recreated 
+		// for each run()
 		
-		aim = new AIMClient("DumbHippoBot", "s3kr3tcode", "My Profile!",
-				"You aren't a buddy!", true /*auto-add everyone as buddy*/);
-		aim.addAIMListener(new Listener());
+		synchronized(Bot.class) {
+			if (timer == null)
+				timer = new Timer(true); // daemon thread
+		}
+		
+		random = new Random();
 	}
 
 	void saySomethingRandom(AIMBuddy buddy) {
@@ -86,9 +148,19 @@ class Bot implements Runnable {
 	}
 
 	public void run() {
+		
+		aim = new AIMClient("DumbHippoBot", "s3kr3tcode", "My Profile!",
+				"You aren't a buddy!", true /*auto-add everyone as buddy*/);
+		aim.addAIMListener(new Listener());
+		
+		pinger = new SelfPinger();
+		
 		System.out.println("Signing on...");
-		aim.signOn();
-		System.out.println("Bot is off...");
 		aim.run();
+		System.out.println("Signed off.");
+		aim = null;
+		
+		pinger.cancel();
+		pinger = null;
 	}
 }

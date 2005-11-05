@@ -35,6 +35,7 @@ public class JmsConsumer extends JmsQueue {
 		}
 	}
 	
+	@Override
 	public void close() {
 		try {
 			messageConsumer.close();

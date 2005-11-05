@@ -70,7 +70,9 @@ public interface AIMSender {
 
     public void addAIMListener(AIMListener listener);
 
-    public void signOn();
+    // in AIMClient this method didn't do anything except
+    // sleep() while run() was doing stuff
+    //public void signOn();
     public void signOff();
 
     public void setPermitMode(int mode);

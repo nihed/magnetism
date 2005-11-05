@@ -52,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Logger;
 
 
@@ -64,16 +62,10 @@ import java.util.logging.Logger;
  * @created September 4, 2001
  */
 public class AIMClient implements Runnable, AIMSender {
-    // check connection ever "TIME_DELAY" milliseconds (5 mins)
-    private static final long TIME_DELAY = 5 * 60 * 1000;
-    private static final String PING = "PING";
-
-    private AimConnectionCheck watchdogCheck;
-    private AimConnectionCheck watchdogVerify;
-    boolean connectionVerified = false;
-    private Timer connectionCheck = new Timer(true); // daemon thread
-
-    static Logger logger = Logger.getLogger(AIMClient.class.getName());
+	
+    public static final String PING = "PING";
+	
+    private static Logger logger = Logger.getLogger(AIMClient.class.getName());
 
     // rate limiting
     private static final int MAX_POINTS = 10;
@@ -128,7 +120,8 @@ public class AIMClient implements Runnable, AIMSender {
 
     private Set<String> denied;
 
-
+    private long lastMessageTimestamp;
+    
     /**
      * Constructor for the AIMClient object
      * 
@@ -297,40 +290,9 @@ public class AIMClient implements Runnable, AIMSender {
     }
 
     /**
-     * Sign on to aim server
-     */
-    public void signOn() {
-        // check the connection
-        watchdogCheck = new AimConnectionCheck(this, true);
-
-        // verify the message was received 5 secs later
-        watchdogVerify = new AimConnectionCheck(this, false);
-        connectionCheck.scheduleAtFixedRate(watchdogCheck, TIME_DELAY, TIME_DELAY);
-        connectionCheck.scheduleAtFixedRate(watchdogVerify, TIME_DELAY + 5000, TIME_DELAY);
-
-        // give the server time to log us on before returning flow to the user
-        // check for success once every 2 secs, up to 20 secs
-        // true connection comes from the handledConnected call back
-        for (int i = 0; i < 10; i++) {
-            if (!this.online) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                return;
-            }
-        }
-    }
-
-    /**
      * Sign off from aim server
      */
     public void signOff() {
-        // cancel the ping until signon is called again
-        watchdogCheck.cancel();
-        watchdogVerify.cancel();
         signoff("User request");
     }
 
@@ -431,7 +393,7 @@ public class AIMClient implements Runnable, AIMSender {
         }
 
         byte[] data;
-        while (true) {
+        while (online) {
             try {
             	synchronized (in) {
             		in.skip(4);
@@ -493,7 +455,7 @@ public class AIMClient implements Runnable, AIMSender {
         }
 
         if (buddy.isOnline()) {
-            sendMesg(buddy.getName(), text);
+            sendMessageRaw(buddy.getName(), text);
         } else {
             // for some reason we are sending a message to an offline buddy
             // this will generate a status request for them (this message will
@@ -829,7 +791,7 @@ public class AIMClient implements Runnable, AIMSender {
                 logger.info("MESSAGE FROM A NON BUDDY(" + from + ")");
                 // only send a response if a non-empty one is configured
                 if ((nonUserResponse != null) && !nonUserResponse.equals("")) {
-                    sendMesg(from, nonUserResponse);
+                    sendMessageRaw(from, nonUserResponse);
                 }
                 return;
             }
@@ -1029,9 +991,6 @@ public class AIMClient implements Runnable, AIMSender {
             StringTokenizer inToken = new StringTokenizer(inString, ":");
             String command = inToken.nextToken();
             if (command.equals("IM_IN2")) {
-                // treat every message received as verification
-                this.connectionVerified = true;
-
                 String from = imNormalize(inToken.nextToken());
                 // whats this?
                 inToken.nextToken();
@@ -1044,11 +1003,13 @@ public class AIMClient implements Runnable, AIMSender {
 
                 String request = stripHTML(mesg);
 
+                lastMessageTimestamp = System.currentTimeMillis();
+                
                 if ((from.equalsIgnoreCase(this.name)) && (request.equals(AIMClient.PING))) {
                     logger.fine("AIM CONNECTION VERIFIED(" + new Date() + ").");
                     return;
                 }
-
+                
                 logger.fine("*** AIM MESSAGE: " + from + " > " + request + " ***");
 
                 // CALL ALL LISTENERS HERE
@@ -1262,7 +1223,7 @@ public class AIMClient implements Runnable, AIMSender {
      * @param text
      *            to send
      */
-    void sendMesg(String to, String text) {
+    public void sendMessageRaw(String to, String text) {
         if (text.length() >= 1024) {
             text = text.substring(0, 1024);
         }
@@ -1326,6 +1287,9 @@ public class AIMClient implements Runnable, AIMSender {
      * @param place
      */
     private void signoff(String place) {
+    	if (!online)
+    		return;
+    	
         online = false;
         logger.fine("Trying to close IM (" + place + ").....");
         try {
@@ -1346,7 +1310,13 @@ public class AIMClient implements Runnable, AIMSender {
         logger.fine("*** AIM CLIENT SIGNED OFF.");
     }
 
-
+    /** 
+     * @returns true if we are authenticated and connected
+     */
+    public boolean getOnline() {
+    	return online;
+    }
+    
     /**
      * Add a buddy to the denied list
      * 
@@ -1428,62 +1398,11 @@ public class AIMClient implements Runnable, AIMSender {
         sendAway(reason);
     }
 
-
-    /**
-     * Try to verify our connections by messaging ourselves. Takes 2 instances
-     * to check. One to send the message (sender=true), One to check the result
-     * (sender=false)
-     * 
-     * FIXME this is totally broken, because AIMClient isn't threadsafe to 
-     * speak of (I added a couple halfhearted synchronized sections, but 
-     * didn't really comprehensively fix). The timer is running in a 
-     * separate thread... -hp
-     * 
-     * @author Scott Oster
-     * @created February 28, 2002
-     */
-    static class AimConnectionCheck extends TimerTask {
-        AIMClient aim;
-        private boolean sender;
-
-
-        /**
-         * Constructor for the AimConnectionCheck object
-         * 
-         * @param aim
-         *            handle to aim
-         * @param sender
-         *            which instance it is
-         */
-        public AimConnectionCheck(AIMClient aim, boolean sender) {
-            this.aim = aim;
-            this.sender = sender;
-        }
-
-
-        /**
-         * Main processing method for the AimConnectionCheck object
-         */
-        public void run() {
-            try {
-                if (sender) {
-                    aim.connectionVerified = false;
-                    // only message if we are online (when we get reconnected
-                    // online will be true)
-                    if (aim.online) {
-                        aim.sendMesg(aim.name, AIMClient.PING);
-                    }
-                } else {
-                    // need to see if we got a response
-                    if (!aim.connectionVerified) {
-                        logger.info("*** AIM -- CONNECTION PROBLEM(" + new Date() + "): Connection was not verified!");
-                        logger.info("****** Assuming it was dropped.");
-                        aim.signoff("Connection Dropped!");
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+	public String getName() {
+		return name;
+	}
+	
+	public long getLastMessageTimestamp() {
+		return lastMessageTimestamp;
+	}
 }
