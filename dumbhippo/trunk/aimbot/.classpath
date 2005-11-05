@@ -3,5 +3,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="jaimbot/src"/>
+	<classpathentry kind="lib" path="/opt/jboss/client/jbossall-client.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/server"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
