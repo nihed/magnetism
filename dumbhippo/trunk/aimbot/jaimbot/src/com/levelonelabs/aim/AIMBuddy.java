@@ -32,11 +32,7 @@
 
 package com.levelonelabs.aim;
 
-import org.w3c.dom.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import org.w3c.dom.Element;
 
 
 /**
@@ -50,9 +46,6 @@ public class AIMBuddy implements XMLizable {
     transient boolean online;
     transient int warningAmount = 0;
     boolean banned;
-    ArrayList messages = new ArrayList();
-    HashMap roles = new HashMap();
-    HashMap preferences = new HashMap();
     String group;
 
 
@@ -102,19 +95,6 @@ public class AIMBuddy implements XMLizable {
 
 
     /**
-     * Sets the preference attribute of the AIMBuddy object
-     * 
-     * @param pref
-     *            The new preference value
-     * @param val
-     *            The new preference value
-     */
-    public void setPreference(String pref, String val) {
-        preferences.put(pref, val);
-    }
-
-
-    /**
      * Gets the name attribute of the AIMBuddy object
      * 
      * @return The name value
@@ -131,88 +111,6 @@ public class AIMBuddy implements XMLizable {
      */
     public boolean isOnline() {
         return online;
-    }
-
-
-    /**
-     * Gets the preference attribute of the AIMBuddy object
-     * 
-     * @param pref
-     * @return The preference value
-     */
-    public String getPreference(String pref) {
-        return (String) preferences.get(pref);
-    }
-
-
-    /**
-     * Gets the preferences attribute of the AIMBuddy object
-     * 
-     * @return The preferences value
-     */
-    public HashMap getPreferences() {
-        return preferences;
-    }
-
-
-    /**
-     * Adds a feature to the Role attribute of the AIMBuddy object
-     * 
-     * @param role
-     *            The feature to be added to the Role attribute
-     */
-    public void addRole(String role) {
-        roles.put(role, role);
-    }
-
-
-    /**
-     * Gets the messages attribute of the AIMBuddy object
-     * 
-     * @return The messages value
-     */
-    public ArrayList getMessages() {
-        return messages;
-    }
-
-
-    /**
-     * Adds a feature to the Message attribute of the AIMBuddy object
-     * 
-     * @param message
-     *            The feature to be added to the Message attribute
-     */
-    public void addMessage(String message) {
-        messages.add(message);
-    }
-
-
-    /**
-     * Remove all messages
-     */
-    public void clearMessages() {
-        messages.clear();
-    }
-
-
-    /**
-     * Does buddy have messages?
-     * 
-     * @return true for more than 0 messages
-     */
-    public boolean hasMessages() {
-        return !messages.isEmpty();
-    }
-
-
-    /**
-     * Do I have specified role
-     * 
-     * @param role
-     * @return true if buddy has the role
-     */
-    public boolean hasRole(String role) {
-        return roles.containsKey(role);
     }
 
 
@@ -255,41 +153,6 @@ public class AIMBuddy implements XMLizable {
         } else {
             setBanned(false);
         }
-
-        // parse roles
-        roles = new HashMap();
-        NodeList list = fullStateElement.getElementsByTagName("role");
-        for (int i = 0; i < list.getLength(); i++) {
-            Element roleElem = (Element) list.item(i);
-            String role = roleElem.getAttribute("name");
-            addRole(role);
-        }
-
-        // parse messages
-        messages = new ArrayList();
-        list = fullStateElement.getElementsByTagName("message");
-        for (int i = 0; i < list.getLength(); i++) {
-            Element messElem = (Element) list.item(i);
-            NodeList cdatas = messElem.getChildNodes();
-            for (int j = 0; j < cdatas.getLength(); j++) {
-                Node node = cdatas.item(j);
-                if (node.getNodeType() == Node.CDATA_SECTION_NODE) {
-                    String message = node.getNodeValue();
-                    addMessage(message);
-                    break;
-                }
-            }
-        }
-
-        // parse prefs
-        preferences = new HashMap();
-        list = fullStateElement.getElementsByTagName("preference");
-        for (int i = 0; i < list.getLength(); i++) {
-            Element prefElem = (Element) list.item(i);
-            String pref = prefElem.getAttribute("name");
-            String val = prefElem.getAttribute("value");
-            this.setPreference(pref, val);
-        }
     }
 
 
@@ -297,35 +160,10 @@ public class AIMBuddy implements XMLizable {
      * @see com.levelonelabs.aim.XMLizable#writeState(Element)
      */
     public void writeState(Element emptyStateElement) {
-        Document doc = emptyStateElement.getOwnerDocument();
+        //Document doc = emptyStateElement.getOwnerDocument();
         emptyStateElement.setAttribute("name", this.getName());
         emptyStateElement.setAttribute("group", this.getGroup());
         emptyStateElement.setAttribute("isBanned", Boolean.toString(this.isBanned()));
-
-        Iterator roleit = roles.keySet().iterator();
-        while (roleit.hasNext()) {
-            String role = (String) roleit.next();
-            Element roleElem = doc.createElement("role");
-            roleElem.setAttribute("name", role);
-            emptyStateElement.appendChild(roleElem);
-        }
-
-        Iterator prefs = preferences.keySet().iterator();
-        while (prefs.hasNext()) {
-            String pref = (String) prefs.next();
-            Element prefElem = doc.createElement("preference");
-            prefElem.setAttribute("name", pref);
-            prefElem.setAttribute("value", (String) preferences.get(pref));
-            emptyStateElement.appendChild(prefElem);
-        }
-
-        for (int i = 0; i < messages.size(); i++) {
-            String message = (String) messages.get(i);
-            Element messElem = doc.createElement("message");
-            CDATASection data = doc.createCDATASection(message);
-            messElem.appendChild(data);
-            emptyStateElement.appendChild(messElem);
-        }
     }
 
 

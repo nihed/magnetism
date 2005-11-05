@@ -40,6 +40,7 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 
 
@@ -51,7 +52,7 @@ import java.util.ListIterator;
  * @created May 28, 2002
  */
 public class AIMGroup implements XMLizable {
-    private ArrayList buddies=new ArrayList();
+    private List<String> buddies=new ArrayList<String>();
     private String name;
 
     /**
@@ -80,7 +81,7 @@ public class AIMGroup implements XMLizable {
      *
      * @todo Need to make a real enumer or deep clone, to lazy right now
      */
-    public ArrayList getList() {
+    public List<String> getList() {
         return this.buddies;
     }
 
@@ -144,7 +145,7 @@ public class AIMGroup implements XMLizable {
      * @see com.levelonelabs.aim.XMLizable#readState(Element)
      */
     public void readState(Element fullStateElement) {
-        buddies=new ArrayList();
+        buddies=new ArrayList<String>();
         NodeList list=fullStateElement.getElementsByTagName("buddy");
         for(int i=0; i < list.getLength(); i++) {
             Element buddyElem=(Element) list.item(i);

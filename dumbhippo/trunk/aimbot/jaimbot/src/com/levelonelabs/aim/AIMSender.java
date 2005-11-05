@@ -62,9 +62,9 @@ public interface AIMSender {
     public Iterator getBuddyNames();
     public AIMBuddy getBuddy(String name);
     public void addBuddy(AIMBuddy buddy);
-    public void addBuddies(List buddyList);
+    public void addBuddies(List<AIMBuddy> buddyList);
     public void removeBuddy(AIMBuddy buddy);
-    public void removeBuddies(List buddyList);
+    public void removeBuddies(List<AIMBuddy> buddyList);
 
     public void banBuddy(AIMBuddy buddy);
 

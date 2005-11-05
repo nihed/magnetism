@@ -93,7 +93,7 @@ public class AIMClient implements Runnable, AIMSender {
 
     private int authorizerPort = 29999;
 
-    private List aimListeners = new ArrayList();
+    private List<AIMListener> aimListeners = new ArrayList<AIMListener>();
 
     String name;
 
@@ -116,7 +116,7 @@ public class AIMClient implements Runnable, AIMSender {
 
     private DataOutputStream out;
 
-    private Map buddyHash;
+    private Map<String,AIMBuddy> buddyHash;
 
     private int sendLimit = MAX_POINTS;
 
@@ -124,9 +124,9 @@ public class AIMClient implements Runnable, AIMSender {
 
     private int permitMode = PERMIT_ALL;
 
-    private Set permitted;
+    private Set<String> permitted;
 
-    private Set denied;
+    private Set<String> denied;
 
 
     /**
@@ -144,9 +144,9 @@ public class AIMClient implements Runnable, AIMSender {
     public AIMClient(String name, String pass, String info, String response, boolean autoAddUsers) {
         this.nonUserResponse = response;
 
-        buddyHash = new HashMap();
-        permitted = new HashSet();
-        denied = new HashSet();
+        buddyHash = new HashMap<String,AIMBuddy>();
+        permitted = new HashSet<String>();
+        denied = new HashSet<String>();
         this.name = imNormalize(name);
         this.pass = pass;
         this.info = info;
@@ -550,7 +550,7 @@ public class AIMClient implements Runnable, AIMSender {
      * @param buddyList
      *            List of AIMBuddy
      */
-    public void addBuddies(List buddyList) {
+    public void addBuddies(List<AIMBuddy> buddyList) {
         // make a list of buddys for each "group"
         Map groupMap = createGroupMap(buddyList);
 
@@ -596,9 +596,9 @@ public class AIMClient implements Runnable, AIMSender {
      * @return a Map <String, List> keyed with group name with value a list of
      *         buddies in that group
      */
-    private Map createGroupMap(List buddyList) {
+    private Map createGroupMap(List<AIMBuddy> buddyList) {
         // <group name,List of buddy>
-        Map groupMap = new HashMap();
+        Map<String,List<AIMBuddy>> groupMap = new HashMap<String,List<AIMBuddy>>();
 
         // iterate the buddies and group them by group name
         for (Iterator iter = buddyList.iterator(); iter.hasNext();) {
@@ -607,10 +607,10 @@ public class AIMClient implements Runnable, AIMSender {
                 AIMBuddy buddy = (AIMBuddy) obj;
                 String group = buddy.getGroup();
                 // pull the list of buddies in this buddy's group
-                List groupList = (List) groupMap.get(group);
+                List<AIMBuddy> groupList = groupMap.get(group);
                 if (groupList == null) {
                     // first buddy in this group, make a new list
-                    groupList = new ArrayList();
+                    groupList = new ArrayList<AIMBuddy>();
                     groupMap.put(group, groupList);
                 }
                 // add the buddy to the list of buddies in this group
@@ -657,7 +657,7 @@ public class AIMClient implements Runnable, AIMSender {
      * @param buddyList
      *            List of AIMBuddy
      */
-    public void removeBuddies(List buddyList) {
+    public void removeBuddies(List<AIMBuddy> buddyList) {
         // make a list of buddys for each "group"
         Map groupMap = createGroupMap(buddyList);
 
@@ -1113,11 +1113,11 @@ public class AIMClient implements Runnable, AIMSender {
                 int evilAmount = Integer.parseInt(inToken.nextToken());
                 aimbud.setWarningAmount(evilAmount);
                 if (stat.equals("T")) { // See whether user is available.
-                    String signOnTime = inToken.nextToken();
+                    @SuppressWarnings("unused") String signOnTime = inToken.nextToken();
 
                     // TODO: what is the format of this?
                     // System.err.println(bname+" signon="+signOnTime);
-                    String idleTime = inToken.nextToken();
+                    @SuppressWarnings("unused") String idleTime = inToken.nextToken();
                     // System.err.println(bname+"
                     // idle="+Integer.valueOf(idleTime).intValue()+" mins");
                     if (-1 != inToken.nextToken().indexOf('U')) {
@@ -1229,7 +1229,7 @@ public class AIMClient implements Runnable, AIMSender {
                             arg=arg.substring(0,ind);
                         }
                         
-                        buddy = (AIMBuddy) buddyHash.get(imNormalize(arg));
+                        buddy = buddyHash.get(imNormalize(arg));
                         if (buddy == null) {
                             buddy = new AIMBuddy(arg, current_group);
                             buddyHash.put(imNormalize(arg), buddy);
@@ -1258,7 +1258,7 @@ public class AIMClient implements Runnable, AIMSender {
         }
 
         // this will "readd" existing buddies, but thats ok
-        addBuddies(new ArrayList(buddyHash.values()));
+        addBuddies(new ArrayList<AIMBuddy>(buddyHash.values()));
         setPermitMode(new_permit_mode);
     }
 
