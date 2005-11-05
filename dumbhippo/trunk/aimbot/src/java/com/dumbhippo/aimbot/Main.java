@@ -1,142 +1,35 @@
 package com.dumbhippo.aimbot;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.naming.InitialContext;
-import javax.naming.NameClassPair;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
 
 public class Main {
 
-	public static void main(String[] args) {
+	private static void testJms() {
+		JmsProducer producer = new JmsProducer("FooQueue");
+		JmsConsumer consumer = new JmsConsumer("FooQueue");
 		
-		InitialContext ctx = null;
-		try {
-			ctx = new InitialContext();
-		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		TextMessage message = producer.createTextMessage("WOOOHOO");
+		producer.send(message);
 		
-		try {
-			NamingEnumeration<NameClassPair> ne = ctx.list("/");
-			while (ne.hasMore()) {
-				NameClassPair pair = ne.next();
-				System.out.println(pair.getName() + ", " + pair.getClassName());
-			}
-		} catch (NamingException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
-		}
+		System.out.println("waiting to receive...");
 		
-		ConnectionFactory connectionFactory = null;
-		try {
-			connectionFactory = (ConnectionFactory) ctx.lookup("RMIConnectionFactory");
-		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		Connection connection = null;
+		Message received = consumer.receive();
+		TextMessage textReceived = (TextMessage) received;
 		
 		try {
-			connection = connectionFactory.createConnection();
+			System.out.println("Got: " + textReceived.getText());
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		Session session = null;
-		
-		try {
-			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-		} catch (JMSException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		Destination destination = null;
-		try {
-			destination = (Destination) ctx.lookup("queue/FooQueue");
-		} catch (NamingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		MessageProducer messageProducer = null;
-		
-		try {
-			messageProducer = session.createProducer(destination);
-		} catch (JMSException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		TextMessage message = null;
-		
-		try {
-			message = session.createTextMessage("WOOOHOO");
-		} catch (JMSException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		try {
-			messageProducer.send(message);
-		} catch (JMSException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		MessageConsumer messageConsumer = null;
-		
-		try {
-			messageConsumer = session.createConsumer(destination);
-		} catch (JMSException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		
-		System.out.println("waiting to receive...");
-		
-		Message received = null;
-		
-		try {
-			received = messageConsumer.receive();
-		} catch (JMSException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		
-		TextMessage textReceived = (TextMessage) received;
-		
-		try {
-			System.out.println("Got: " + textReceived.getText());
-		} catch (JMSException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		
-		try {
-			messageProducer.close();
-			session.close();
-			connection.close();
-		} catch (JMSException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		
-		if (false && true)
-			throw new RuntimeException("quit here");
+		producer.close();
+		consumer.close();
+	}
+	
+	public static void main(String[] args) {
 		
 		Bot bot = new Bot();
 		Thread t = new Thread(bot);

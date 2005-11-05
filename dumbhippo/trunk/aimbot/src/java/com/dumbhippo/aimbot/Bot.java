@@ -86,6 +86,9 @@ class Bot implements Runnable {
 	}
 
 	public void run() {
+		System.out.println("Signing on...");
 		aim.signOn();
+		System.out.println("Bot is off...");
+		aim.run();
 	}
 }
