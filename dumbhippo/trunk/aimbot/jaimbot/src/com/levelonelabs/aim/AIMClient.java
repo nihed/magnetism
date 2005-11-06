@@ -61,23 +61,23 @@ public class AIMClient implements AIMSender {
 
     private boolean autoAddUsers = false;
 
-    private Map<String,AIMBuddy> buddyHash;
+    private Map<ScreenName,AIMBuddy> buddyHash;
 
-    private Set<String> permitted;
+    private Set<ScreenName> permitted;
 
-    private Set<String> denied;
+    private Set<ScreenName> denied;
     
     public AIMClient(String name, String pass, String info, String response, boolean autoAddUsers) {
         this.nonUserResponse = response;
         
         aimListeners = new ArrayList<AIMListener>();
         rawListeners = new ArrayList<AIMRawListener>();
-        buddyHash = new HashMap<String,AIMBuddy>();
-        permitted = new HashSet<String>();
-        denied = new HashSet<String>();
+        buddyHash = new HashMap<ScreenName,AIMBuddy>();
+        permitted = new HashSet<ScreenName>();
+        denied = new HashSet<ScreenName>();
         this.autoAddUsers = autoAddUsers;
         
-        connection = new AIMRawConnection(AIMBuddy.normalize(name), pass, info,
+        connection = new AIMRawConnection(new ScreenName(name), pass, info,
         		new RawListener());
         
         this.addBuddy(new AIMBuddy(name));    	
@@ -101,8 +101,8 @@ public class AIMClient implements AIMSender {
      * @param buddyName
      * @return The buddy
      */
-    public AIMBuddy getBuddy(String buddyName) {
-        return buddyHash.get(AIMBuddy.normalize(buddyName));
+    public AIMBuddy getBuddy(ScreenName buddyName) {
+        return buddyHash.get(buddyName);
     }
 
     /**
@@ -110,9 +110,9 @@ public class AIMClient implements AIMSender {
      * 
      * @return list
      */
-    public List<String> getBuddyNames() {
-    	Set<String> names = buddyHash.keySet();
-    	String[] arrayNames = names.toArray(new String[names.size()]);
+    public List<ScreenName> getBuddyNames() {
+    	Set<ScreenName> names = buddyHash.keySet();
+    	ScreenName[] arrayNames = names.toArray(new ScreenName[names.size()]);
     	                                      
         return Arrays.asList(arrayNames);
     }
@@ -140,7 +140,7 @@ public class AIMClient implements AIMSender {
         rawListeners.add(listener);
     }
     
-    public void sendMessageRaw(String buddy, String html) {
+    public void sendMessageRaw(ScreenName buddy, String html) {
     	connection.sendMessage(buddy, html);
     }
     
@@ -170,7 +170,7 @@ public class AIMClient implements AIMSender {
         connection.addBuddy(buddy.getName(), buddy.getGroup());
         
         // logger.fine("Added buddy to hash");
-        buddyHash.put(AIMBuddy.normalize(buddy.getName()), buddy);
+        buddyHash.put(buddy.getName(), buddy);
     }
 
     public void removeBuddy(AIMBuddy buddy) {
@@ -181,12 +181,10 @@ public class AIMClient implements AIMSender {
             return;
         }
 
-        String buddyname = AIMBuddy.normalize(buddy.getName());
-
-        connection.removeBuddy(buddyname, buddy.getGroup());
+        connection.removeBuddy(buddy.getName(), buddy.getGroup());
         
         // logger.fine("Removed buddy from hash");
-        buddyHash.remove(AIMBuddy.normalize(buddy.getName()));
+        buddyHash.remove(buddy.getName());
     }
 
     /**
@@ -199,7 +197,7 @@ public class AIMClient implements AIMSender {
         	throw new IllegalArgumentException("null buddy");
 
         logger.fine("Attempting to warn: " + buddy.getName() + ".");
-        connection.sendWarning(AIMBuddy.normalize(buddy.getName()));
+        connection.sendWarning(buddy.getName());
     }
 
     public void banBuddy(AIMBuddy buddy) {
@@ -212,10 +210,10 @@ public class AIMClient implements AIMSender {
         
         buddy.setBanned(true);
         
-        connection.sendDeny(AIMBuddy.normalize(buddy.getName()));
+        connection.sendDeny(buddy.getName());
     }
 
-    private void generateMessage(String from, String htmlMessage) {
+    private void generateMessage(ScreenName from, String htmlMessage) {
         AIMBuddy aimbud = getBuddy(from);
         if (aimbud == null) {
             if (autoAddUsers) {
@@ -245,7 +243,7 @@ public class AIMClient implements AIMSender {
         }
     }
 
-    private void generateWarning(String from, int amount) {
+    private void generateWarning(ScreenName from, int amount) {
         AIMBuddy aimbud = getBuddy(from);
         for (AIMListener l : aimListeners) {
             try {
@@ -286,7 +284,7 @@ public class AIMClient implements AIMSender {
         }
     }
 
-    private void generateBuddySignOn(String buddy, String message) {
+    private void generateBuddySignOn(ScreenName buddy, String message) {
         AIMBuddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
             logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
@@ -305,7 +303,7 @@ public class AIMClient implements AIMSender {
         }
     }
 
-    private void generateBuddySignOff(String buddy, String message) {
+    private void generateBuddySignOff(ScreenName buddy, String message) {
         AIMBuddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
             logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
@@ -323,7 +321,7 @@ public class AIMClient implements AIMSender {
         }
     }
 
-    private void generateBuddyAvailable(String buddy, String message) {
+    private void generateBuddyAvailable(ScreenName buddy, String message) {
         AIMBuddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
             logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
@@ -338,7 +336,7 @@ public class AIMClient implements AIMSender {
         }
     }
 
-    private void generateBuddyUnavailable(String buddy, String message) {
+    private void generateBuddyUnavailable(ScreenName buddy, String message) {
         AIMBuddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
             logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
@@ -367,10 +365,9 @@ public class AIMClient implements AIMSender {
      * @param buddy
      */
     public void denyBuddy(AIMBuddy buddy) {
-        String bname = AIMBuddy.normalize(buddy.getName());
-        permitted.remove(bname);
-        denied.add(bname);
-        connection.sendDeny(bname);
+        permitted.remove(buddy.getName());
+        denied.add(buddy.getName());
+        connection.sendDeny(buddy.getName());
     }
 
 
@@ -380,10 +377,9 @@ public class AIMClient implements AIMSender {
      * @param buddy
      */
     public void permitBuddy(AIMBuddy buddy) {
-        String bname = AIMBuddy.normalize(buddy.getName());
-        denied.remove(bname);
-        permitted.add(bname);
-        connection.sendPermit(bname);
+        denied.remove(buddy.getName());
+        permitted.add(buddy.getName());
+        connection.sendPermit(buddy.getName());
     }
 
     /**
@@ -429,7 +425,7 @@ public class AIMClient implements AIMSender {
     	connection.sendUnvailable(reason);
     }
 
-	public String getName() {
+	public ScreenName getName() {
 		return connection.getName();
 	}
 	
@@ -439,7 +435,7 @@ public class AIMClient implements AIMSender {
 	
 	private class RawListener implements AIMRawListener {
 
-		public void handleMessage(String buddy, String htmlMessage) {
+		public void handleMessage(ScreenName buddy, String htmlMessage) {
 			for (AIMRawListener l : rawListeners) {
 				try {
 					l.handleMessage(buddy, htmlMessage);
@@ -450,31 +446,30 @@ public class AIMClient implements AIMSender {
 			generateMessage(buddy, htmlMessage);
 		}
 
-		public void handleSetEvilAmount(String buddy, int amount) {
+		public void handleSetEvilAmount(ScreenName whoEviledUs, int amount) {
 			for (AIMRawListener l : rawListeners) {
 				try {
-					l.handleSetEvilAmount(buddy, amount);
+					l.handleSetEvilAmount(whoEviledUs, amount);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 			
-			// TODO Auto-generated method stub
-            AIMBuddy aimbud = getBuddy(buddy);
+            AIMBuddy buddy = getBuddy(connection.getName());
             
             // if what we have is less than what the server just sent, its
             // a warning otherwise it was just a server decrement update
             
-            boolean increased = getBuddy(buddy).getWarningAmount() < amount;
+            boolean increased = buddy.getWarningAmount() < amount;
             
-            aimbud.setWarningAmount(amount);
+            buddy.setWarningAmount(amount);
             
 			if (increased) {
-                generateWarning(buddy, amount);
+                generateWarning(whoEviledUs, amount);
             }
 		}
 
-		public void handleBuddySignOn(String buddy, String htmlInfo) {
+		public void handleBuddySignOn(ScreenName buddy, String htmlInfo) {
 			for (AIMRawListener l : rawListeners) {
 				try {
 					l.handleBuddySignOn(buddy, htmlInfo);
@@ -485,7 +480,7 @@ public class AIMClient implements AIMSender {
 			generateBuddySignOn(buddy, htmlInfo);
 		}
 
-		public void handleBuddySignOff(String buddy, String htmlInfo) {
+		public void handleBuddySignOff(ScreenName buddy, String htmlInfo) {
 			for (AIMRawListener l : rawListeners) {
 				try {
 					l.handleBuddySignOff(buddy, htmlInfo);
@@ -496,7 +491,7 @@ public class AIMClient implements AIMSender {
 			generateBuddySignOff(buddy, htmlInfo);			
 		}
 
-		public void handleBuddyUnavailable(String buddy, String htmlMessage) {
+		public void handleBuddyUnavailable(ScreenName buddy, String htmlMessage) {
 			for (AIMRawListener l : rawListeners) {
 				try {
 					l.handleBuddyUnavailable(buddy, htmlMessage);
@@ -508,7 +503,7 @@ public class AIMClient implements AIMSender {
 			
 		}
 
-		public void handleBuddyAvailable(String buddy, String htmlMessage) {
+		public void handleBuddyAvailable(ScreenName buddy, String htmlMessage) {
 			for (AIMRawListener l : rawListeners) {
 				try {
 					l.handleBuddyAvailable(buddy, htmlMessage);

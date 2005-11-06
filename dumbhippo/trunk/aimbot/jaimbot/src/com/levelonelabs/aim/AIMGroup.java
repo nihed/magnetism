@@ -34,12 +34,7 @@
 package com.levelonelabs.aim;
 
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -51,8 +46,8 @@ import java.util.ListIterator;
  *
  * @created May 28, 2002
  */
-public class AIMGroup implements XMLizable {
-    private List<String> buddies=new ArrayList<String>();
+public class AIMGroup {
+    private List<ScreenName> buddies = new ArrayList<ScreenName>();
     private String name;
 
     /**
@@ -61,7 +56,7 @@ public class AIMGroup implements XMLizable {
      * @param name
      */
     public AIMGroup(String name) {
-        this.name=name;
+        this.name = name;
     }
 
     /**
@@ -81,7 +76,7 @@ public class AIMGroup implements XMLizable {
      *
      * @todo Need to make a real enumer or deep clone, to lazy right now
      */
-    public List<String> getList() {
+    public List<ScreenName> getList() {
         return this.buddies;
     }
 
@@ -93,7 +88,7 @@ public class AIMGroup implements XMLizable {
      *
      * @return true if the buddy wasnt already part of the list
      */
-    public boolean add(String buddy) {
+    public boolean add(ScreenName buddy) {
         if(!this.buddies.contains(buddy)) {
             return this.buddies.add(buddy);
         }
@@ -138,36 +133,5 @@ public class AIMGroup implements XMLizable {
             sb.append(it.next()+" ");
         }
         return sb.toString();
-    }
-
-
-    /**
-     * @see com.levelonelabs.aim.XMLizable#readState(Element)
-     */
-    public void readState(Element fullStateElement) {
-        buddies=new ArrayList<String>();
-        NodeList list=fullStateElement.getElementsByTagName("buddy");
-        for(int i=0; i < list.getLength(); i++) {
-            Element buddyElem=(Element) list.item(i);
-            String name=buddyElem.getAttribute("name");
-            add(name);
-        }
-    }
-
-
-    /**
-     * @see com.levelonelabs.aim.XMLizable#writeState(Element)
-     */
-    public void writeState(Element emptyStateElement) {
-        Document doc=emptyStateElement.getOwnerDocument();
-        emptyStateElement.setAttribute("name", this.getName());
-
-        Iterator buds=buddies.listIterator();
-        while(buds.hasNext()) {
-            String bud=(String) buds.next();
-            Element budElem=doc.createElement("buddy");
-            budElem.setAttribute("name", bud);
-            emptyStateElement.appendChild(budElem);
-        }
     }
 }

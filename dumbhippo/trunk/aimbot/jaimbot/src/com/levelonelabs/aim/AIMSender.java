@@ -34,7 +34,6 @@
 package com.levelonelabs.aim;
 
 
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -59,8 +58,8 @@ public interface AIMSender {
 
     public void sendWarning(AIMBuddy buddy);
 
-    public List<String> getBuddyNames();
-    public AIMBuddy getBuddy(String name);
+    public List<ScreenName> getBuddyNames();
+    public AIMBuddy getBuddy(ScreenName name);
     public void addBuddy(AIMBuddy buddy);
     public void removeBuddy(AIMBuddy buddy);
 

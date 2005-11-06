@@ -46,7 +46,7 @@ public interface AIMListener extends AIMBaseListener {
     public void handleMessage(AIMBuddy buddy, String messageHtml);
 
 
-    public void handleWarning(AIMBuddy buddy, int amount);
+    public void handleWarning(AIMBuddy whoEviledUs, int amount);
 
 
     public void handleBuddySignOn(AIMBuddy buddy, String infoHtml);

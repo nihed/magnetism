@@ -32,7 +32,6 @@
 
 package com.levelonelabs.aim;
 
-import org.w3c.dom.Element;
 
 
 /**
@@ -41,188 +40,63 @@ import org.w3c.dom.Element;
  * @author Will Gorman, Scott Oster
  * @created November 8, 2001
  */
-public class AIMBuddy implements XMLizable {
-    String name;
+public class AIMBuddy {
+    ScreenName name;
     transient boolean online;
     transient int warningAmount = 0;
     boolean banned;
     String group;
 
-    /**
-     * Constructor for the AIMBuddy object
-     * 
-     * @param name
-     */
+    public AIMBuddy(ScreenName name, String group) {
+    	this.name = name;
+    	setGroup(group);
+    }
+
+    public AIMBuddy(ScreenName name) {
+        this(name, AIMClient.DEFAULT_GROUP);
+    }
+    
     public AIMBuddy(String name) {
         this(name, AIMClient.DEFAULT_GROUP);
     }
-
-
-    /**
-     * Constructor for the AIMBuddy object
-     * 
-     * @param name
-     * @param group
-     *            buddy group in buddylist
-     */
+    
     public AIMBuddy(String name, String group) {
-        this.name = name;
-        setGroup(group);
+    	this(new ScreenName(name), group);
     }
 
-
-    /**
-     * Sets the name attribute of the AIMBuddy object
-     * 
-     * @param name
-     *            The new name value
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-
-    /**
-     * Sets the online attribute of the AIMBuddy object
-     * 
-     * @param online
-     *            The new online value
-     */
     public void setOnline(boolean online) {
         this.online = online;
     }
 
-
-    /**
-     * Gets the name attribute of the AIMBuddy object
-     * 
-     * @return The name value
-     */
-    public String getName() {
+    public ScreenName getName() {
         return name;
     }
 
-
-    /**
-     * Gets the online attribute of the AIMBuddy object
-     * 
-     * @return The online value
-     */
     public boolean isOnline() {
         return online;
     }
 
-
-    /**
-     * Returns the banned.
-     * 
-     * @return boolean
-     */
     public boolean isBanned() {
         return banned;
     }
 
-
-    /**
-     * Sets the banned.
-     * 
-     * @param banned
-     *            The banned to set
-     */
     public void setBanned(boolean banned) {
         this.banned = banned;
     }
 
-
-    /**
-     * @see com.levelonelabs.aim.XMLizable#readState(Element)
-     */
-    public void readState(Element fullStateElement) {
-        // parse group
-        String group = fullStateElement.getAttribute("group");
-        if (group == null || group.trim().equals("")) {
-            group = AIMSender.DEFAULT_GROUP;
-        }
-        setGroup(group);
-
-        // parse banned
-        String ban = fullStateElement.getAttribute("isBanned");
-        if (ban.equalsIgnoreCase("true")) {
-            setBanned(true);
-        } else {
-            setBanned(false);
-        }
-    }
-
-
-    /**
-     * @see com.levelonelabs.aim.XMLizable#writeState(Element)
-     */
-    public void writeState(Element emptyStateElement) {
-        //Document doc = emptyStateElement.getOwnerDocument();
-        emptyStateElement.setAttribute("name", this.getName());
-        emptyStateElement.setAttribute("group", this.getGroup());
-        emptyStateElement.setAttribute("isBanned", Boolean.toString(this.isBanned()));
-    }
-
-
-    /**
-     * Gets the current warning amount
-     * 
-     * @return the warning amount
-     */
     public int getWarningAmount() {
         return warningAmount;
     }
 
-
-    /**
-     * Sets the current warning amount
-     * 
-     * @param amount
-     */
     public void setWarningAmount(int amount) {
         warningAmount = amount;
     }
 
-
-    /**
-     * Set the group the buddy is in, in the buddy list
-     * 
-     * @param group
-     *            The name of the group this buddy belongs to.
-     */
     public void setGroup(String group) {
         this.group = group;
     }
 
-
-    /**
-     * The name of the group this buddy belongs to, in the buddylist
-     * 
-     * @return The name of the group this buddy belongs to.
-     */
     public String getGroup() {
         return group;
     }
-
-
-	/**
-	 * Protocol method
-	 * 
-	 * @param str the string
-	 * @return normalized string
-	 */
-	public static String normalize(String str) {
-	    String out = "";
-	    str = str.toLowerCase();
-	    char[] arr = str.toCharArray();
-	    for (int i = 0; i < arr.length; i++) {
-	        if (arr[i] != ' ') {
-	            out = out + "" + arr[i];
-	        }
-	    }
-	
-	    return out;
-	}
 }

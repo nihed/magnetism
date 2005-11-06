@@ -1,13 +1,13 @@
 package com.levelonelabs.aim;
 
 public interface AIMRawListener extends AIMBaseListener {
-    public void handleMessage(String buddy, String htmlMessage);
+    public void handleMessage(ScreenName buddy, String htmlMessage);
 
-    public void handleSetEvilAmount(String buddy, int amount);
+    public void handleSetEvilAmount(ScreenName whoEviledUs, int amount);
 
-    public void handleBuddySignOn(String buddy, String htmlInfo);
-    public void handleBuddySignOff(String buddy, String htmlInfo);
+    public void handleBuddySignOn(ScreenName buddy, String htmlInfo);
+    public void handleBuddySignOff(ScreenName buddy, String htmlInfo);
 
-    public void handleBuddyUnavailable(String buddy, String htmlMessage);
-    public void handleBuddyAvailable(String buddy, String htmlMessage);
+    public void handleBuddyUnavailable(ScreenName buddy, String htmlMessage);
+    public void handleBuddyAvailable(ScreenName buddy, String htmlMessage);
 }

@@ -1,3 +1,35 @@
+/*------------------------------------------------------------------------------
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Original Code is levelonelabs.com code.
+ * The Initial Developer of the Original Code is Level One Labs. Portions
+ * created by the Initial Developer are Copyright (C) 2001 the Initial
+ * Developer. All Rights Reserved.
+ *
+ *         Contributor(s):
+ *             Scott Oster      (ostersc@alum.rpi.edu)
+ *             Steve Zingelwicz (sez@po.cwru.edu)
+ *             William Gorman   (willgorman@hotmail.com)
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable
+ * instead of those above. If you wish to allow use of your version of this
+ * file only under the terms of either the GPL or the LGPL, and not to allow
+ * others to use your version of this file under the terms of the NPL, indicate
+ * your decision by deleting the provisions above and replace them with the
+ * notice and other provisions required by the GPL or the LGPL. If you do not
+ * delete the provisions above, a recipient may use your version of this file
+ * under the terms of any one of the NPL, the GPL or the LGPL.
+ *----------------------------------------------------------------------------*/
+
 package com.levelonelabs.aim;
 
 import java.io.BufferedOutputStream;
@@ -49,7 +81,7 @@ public class AIMRawConnection {
 
     private long lastMessageTimestamp;
 
-    private String name;
+    private ScreenName name;
 
     private String pass;
 
@@ -59,9 +91,9 @@ public class AIMRawConnection {
     
     private int permitMode = AIMSender.PERMIT_ALL;
     
-    public AIMRawConnection(String name, String pass, String info, AIMRawListener listener) {
+    public AIMRawConnection(ScreenName name, String pass, String info, AIMRawListener listener) {
 
-        this.name = AIMBuddy.normalize(name);
+        this.name = name;
         this.pass = pass;
         this.info = info;
         this.listener = listener;
@@ -117,12 +149,13 @@ public class AIMRawConnection {
             out.writeByte(1); // SIGNON TYPE
             out.writeShort(seqNo); // SEQ NO
             seqNo = (seqNo + 1) & 65535;
-            out.writeShort(name.length() + 8); // data length = username length
+            String normalName = name.getNormalized();
+            out.writeShort(normalName.length() + 8); // data length = username length
             // + SIGNON DATA
             out.writeInt(1); // FLAP VERSION
             out.writeShort(1); // TLF TAG
-            out.writeShort(name.length()); // username length
-            out.writeBytes(name); // usename
+            out.writeShort(normalName.length()); // username length
+            out.writeBytes(normalName); // usename
             out.flush();
 
             // * Client sends TOC "toc_signon" message
@@ -212,51 +245,42 @@ public class AIMRawConnection {
     	logger.fine("*** AIM CLIENT SIGNED OFF.");
     }
 
-    public void addBuddy(String buddy, String group) {
-    	buddy = AIMBuddy.normalize(buddy);
+    public void addBuddy(ScreenName buddy, String group) {
         if (online) {
             String toBeSent = "toc2_new_buddies {g:" + group + "\nb:" + buddy + "\n}";
             frameSend(toBeSent + "\0");
         }
     }
     
-    public void removeBuddy(String buddy, String group) {
-        buddy = AIMBuddy.normalize(buddy);
-
+    public void removeBuddy(ScreenName buddy, String group) {
         String toBeSent = "toc2_remove_buddy";
         frameSend(toBeSent + " " + buddy + " " + group + "\0");
     }
 
-    public void sendWarning(String buddy) {
-    	buddy = AIMBuddy.normalize(buddy);
-    	
+    public void sendWarning(ScreenName buddy) {
         logger.fine("Attempting to warn: " + buddy + ".");
 
         String work = "toc_evil ";
-        work = work.concat(buddy);
+        work = work.concat(buddy.getNormalized());
         work = work.concat(" norm \0");
         frameSend(work);
     }
     
-    private void sendPermitOrDeny(String buddy, boolean permit) {
+    private void sendPermitOrDeny(String buddyOrEmpty, boolean permit) {
     	String which = permit ? "permit": "deny";
-        if (buddy.length() == 0) {
+        if (buddyOrEmpty.length() == 0) {
         	// this assumes we are in the "opposite mode"
             logger.fine("Attempting to " + which + " all.");
         } else {
-            logger.fine("Attempting to deny: " + buddy + ".");
+            logger.fine("Attempting to deny: " + buddyOrEmpty + ".");
         }
 
         String toBeSent = "toc2_add_" + which;
-        frameSend(toBeSent + " " + buddy + "\0");    	
+        frameSend(toBeSent + " " + buddyOrEmpty + "\0");    	
     }
     
-    public void sendDeny(String buddy) {
-        if (buddy.length() == 0)
-            throw new IllegalArgumentException("empty buddy name");
-       
-        buddy = AIMBuddy.normalize(buddy);
-        sendPermitOrDeny(buddy, false);
+    public void sendDeny(ScreenName buddy) {       
+        sendPermitOrDeny(buddy.getNormalized(), false);
     }
     
     /*
@@ -270,22 +294,18 @@ public class AIMRawConnection {
     }
     */
 
-    public void sendPermit(String buddy) {
-        if (buddy.length() == 0)
-            throw new IllegalArgumentException("empty buddy name");
-       
-        buddy = AIMBuddy.normalize(buddy);
-        sendPermitOrDeny(buddy, true);
+    public void sendPermit(ScreenName buddy) {
+        sendPermitOrDeny(buddy.getNormalized(), true);
     }
 
-    public void sendMessage(String to, String html) {
+    public void sendMessage(ScreenName to, String html) {
         if (html.length() >= 1024) {
             html = html.substring(0, 1024);
         }
         logger.fine("Sending Message " + to + " > " + html);
 
         String work = "toc2_send_im ";
-        work = work.concat(to);
+        work = work.concat(to.getNormalized());
         work = work.concat(" \"");
         for (int i = 0; i < html.length(); i++) {
             switch (html.charAt(i)) {
@@ -310,8 +330,8 @@ public class AIMRawConnection {
         frameSend(work);
     }
     
-    public void sendGetStatus(String buddy) {
-    	frameSend("toc_get_status " + AIMBuddy.normalize(buddy) + "\0");
+    public void sendGetStatus(ScreenName buddy) {
+    	frameSend("toc_get_status " + buddy + "\0");
     }
     
     private void sendSetAway(String reason) {
@@ -340,7 +360,7 @@ public class AIMRawConnection {
     	frameSend("toc2_set_pdmode " + permitMode + "\0");
     }
     
-	public String getName() {
+	public ScreenName getName() {
 		return name;
 	}
 	
@@ -395,7 +415,7 @@ public class AIMRawConnection {
     }
 
     private void command_IM_IN2(StringTokenizer inToken) {
-        String from = AIMBuddy.normalize(inToken.nextToken());
+        ScreenName from = new ScreenName(inToken.nextToken());
         // whats this?
         inToken.nextToken();
         // whats this?
@@ -428,26 +448,28 @@ public class AIMRawConnection {
     
     private void command_EVILED(StringTokenizer inToken) {
         int amount = Integer.parseInt(inToken.nextToken());
-        String from = "anonymous";
+        ScreenName from;
         if (inToken.hasMoreElements()) {
-            from = AIMBuddy.normalize(inToken.nextToken());
+            from = new ScreenName(inToken.nextToken());
+        } else {
+        	from = new ScreenName("anonymous");
         }
         generateSetEvilAmount(from, amount);
     }
     
     private void command_UPDATE_BUDDY2(StringTokenizer inToken) {
-        String bname = AIMBuddy.normalize(inToken.nextToken());
+        ScreenName buddy = new ScreenName(inToken.nextToken());
         String stat = inToken.nextToken();
         if (stat.equals("T")) {
-            generateBuddySignOn(bname, "INFO");
+            generateBuddySignOn(buddy, "INFO");
             // logger.fine("Buddy:" + name + " just signed on.");
         } else if (stat.equals("F")) {
-            generateBuddySignOff(bname, "INFO");
+            generateBuddySignOff(buddy, "INFO");
             // logger.fine("Buddy:" + name + " just signed off.");
         }
         
         int evilAmount = Integer.parseInt(inToken.nextToken());
-        generateSetEvilAmount(bname, evilAmount);
+        generateSetEvilAmount(new ScreenName("anonymous"), evilAmount);
         
         if (stat.equals("T")) { // See whether user is available.
             @SuppressWarnings("unused") String signOnTime = inToken.nextToken();
@@ -458,9 +480,9 @@ public class AIMRawConnection {
             // System.err.println(bname+"
             // idle="+Integer.valueOf(idleTime).intValue()+" mins");
             if (-1 != inToken.nextToken().indexOf('U')) {
-                generateBuddyUnavailable(bname, "INFO");
+                generateBuddyUnavailable(buddy, "INFO");
             } else {
-                generateBuddyAvailable(bname, "INFO");
+                generateBuddyAvailable(buddy, "INFO");
             }
         }
     }
@@ -645,32 +667,32 @@ public class AIMRawConnection {
     		listener.handleDisconnected();
     }
     
-    private void generateMessage(String buddy, String htmlMessage) {
+    private void generateMessage(ScreenName buddy, String htmlMessage) {
     	if (listener != null)
     		listener.handleMessage(buddy, htmlMessage);
     }
     
-    private void generateSetEvilAmount(String buddy, int amount) {
+    private void generateSetEvilAmount(ScreenName whoEviledUs, int amount) {
     	if (listener != null)
-    		listener.handleSetEvilAmount(buddy, amount);
+    		listener.handleSetEvilAmount(whoEviledUs, amount);
     }
     
-    private void generateBuddySignOn(String buddy, String htmlInfo) {
+    private void generateBuddySignOn(ScreenName buddy, String htmlInfo) {
     	if (listener != null)
     		listener.handleBuddySignOn(buddy, htmlInfo);
     }
     
-    private void generateBuddySignOff(String buddy, String htmlInfo) {
+    private void generateBuddySignOff(ScreenName buddy, String htmlInfo) {
     	if (listener != null)
     		listener.handleBuddySignOff(buddy, htmlInfo);
     }
     
-    private void generateBuddyAvailable(String buddy, String htmlMessage) {
+    private void generateBuddyAvailable(ScreenName buddy, String htmlMessage) {
     	if (listener != null)
     		listener.handleBuddyAvailable(buddy, htmlMessage);
     }
     
-    private void generateBuddyUnavailable(String buddy, String htmlMessage) {
+    private void generateBuddyUnavailable(ScreenName buddy, String htmlMessage) {
     	if (listener != null)
     		listener.handleBuddyUnavailable(buddy, htmlMessage);
     } 
@@ -698,7 +720,8 @@ public class AIMRawConnection {
         return out2;
     }
     
-    private static int toc2MagicNumber(String username, String password) {
+    private static int toc2MagicNumber(ScreenName buddy, String password) {
+    	String username = buddy.getNormalized();
         int sn = username.charAt(0) - 96;
         int pw = password.charAt(0) - 96;
 
