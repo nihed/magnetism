@@ -48,7 +48,7 @@ import java.util.logging.Logger;
  * @author Scott Oster, Will Gorman
  * @created September 4, 2001
  */
-public class AIMClient implements AIMSender {
+public class AIMClient {
 	
     private static Logger logger = Logger.getLogger(AIMClient.class.getName());
 

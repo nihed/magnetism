@@ -41,23 +41,29 @@ package com.levelonelabs.aim;
  * @created November 8, 2001
  */
 public class AIMBuddy {
-    ScreenName name;
-    transient boolean online;
-    transient int warningAmount = 0;
-    boolean banned;
-    String group;
-
+	
+	public static final String DEFAULT_GROUP = "TOC";
+	
+    private ScreenName name;
+    private boolean online;
+    private int warningAmount;
+    private boolean banned;
+    private String group;
+    
     public AIMBuddy(ScreenName name, String group) {
+    	warningAmount = 0;
+    	banned = false;
+    	online = false;
     	this.name = name;
     	setGroup(group);
     }
 
     public AIMBuddy(ScreenName name) {
-        this(name, AIMClient.DEFAULT_GROUP);
+        this(name, DEFAULT_GROUP);
     }
     
     public AIMBuddy(String name) {
-        this(name, AIMClient.DEFAULT_GROUP);
+        this(name, DEFAULT_GROUP);
     }
     
     public AIMBuddy(String name, String group) {

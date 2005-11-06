@@ -587,7 +587,7 @@ public class AIMRawConnection {
         PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
         try {
-            String current_group = AIMSender.DEFAULT_GROUP;
+            String current_group = AIMBuddy.DEFAULT_GROUP;
             String line;
             while (null != (line = br.readLine())) {
                 if (line.equals("done:")) {
