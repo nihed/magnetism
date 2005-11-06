@@ -35,17 +35,12 @@ public class Main {
 		Thread t = new Thread(bot);
 		t.setDaemon(true);
 		t.start();
-		
-		// the Bot is a daemon thread; here we 
-		// just want to wait forever until killed by 
-		// the OS. This means when we're killed by the 
-		// OS the JVM will exit.
-		while (true) {
+
+		while (t.isAlive()) {
 			try {
-				Thread.sleep(100000);
+				t.join();
 			} catch (InterruptedException e) {
 			}
 		}
 	}
-	
 }

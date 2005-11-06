@@ -1,5 +1,6 @@
 package com.dumbhippo.aimbot;
 
+import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -32,7 +33,7 @@ class Bot implements Runnable {
 	    
 		@Override
 		public void run() {
-			if (aim.getOnline()) {
+			if (aim != null && aim.getOnline()) {
 				// clock setting back just works since we do a 
 				// ping then which fixes last message timestamp
 				
@@ -41,6 +42,9 @@ class Bot implements Runnable {
 
 				// only ping if we've been idle
 				if ((now - last) > TIME_DELAY) {
+					
+					System.out.println("Self-pinging at " + new Date(now));
+					
 					aim.sendMessageRaw(aim.getName(), AIMClient.PING);
 					
 					// set up a one-shot to verify results
@@ -57,11 +61,14 @@ class Bot implements Runnable {
 			public void run() {
 				// if we've now been idle for a while, sign us off, 
 				// the connection is hosed
-				if (aim.getOnline()) {
+				if (aim != null && aim.getOnline()) {
 					long now = System.currentTimeMillis();
 					long last = aim.getLastMessageTimestamp();
 
+					System.out.println("Ping check, last message at " + new Date(last));
+					
 					if ((now - last) > TIME_DELAY*2) {
+						System.out.println("Last message too old, signing off");
 						aim.signOff();
 					}
 				}
@@ -128,6 +135,7 @@ class Bot implements Runnable {
 	}
 
 	void saySomethingRandom(AIMBuddy buddy) {
+		System.out.println("saying something random to " + buddy.getName());
 		switch (random.nextInt(5)) {
 		case 0:
 			aim.sendMessage(buddy, "You suck");
