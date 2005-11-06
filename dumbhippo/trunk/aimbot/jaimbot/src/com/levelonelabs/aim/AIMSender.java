@@ -59,16 +59,14 @@ public interface AIMSender {
 
     public void sendWarning(AIMBuddy buddy);
 
-    public Iterator getBuddyNames();
+    public List<String> getBuddyNames();
     public AIMBuddy getBuddy(String name);
     public void addBuddy(AIMBuddy buddy);
-    public void addBuddies(List<AIMBuddy> buddyList);
     public void removeBuddy(AIMBuddy buddy);
-    public void removeBuddies(List<AIMBuddy> buddyList);
 
     public void banBuddy(AIMBuddy buddy);
 
-    public void addAIMListener(AIMListener listener);
+    public void addListener(AIMListener listener);
 
     // in AIMClient this method didn't do anything except
     // sleep() while run() was doing stuff

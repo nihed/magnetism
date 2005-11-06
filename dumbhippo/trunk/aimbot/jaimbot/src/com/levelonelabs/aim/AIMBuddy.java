@@ -48,7 +48,6 @@ public class AIMBuddy implements XMLizable {
     boolean banned;
     String group;
 
-
     /**
      * Constructor for the AIMBuddy object
      * 
@@ -206,4 +205,24 @@ public class AIMBuddy implements XMLizable {
     public String getGroup() {
         return group;
     }
+
+
+	/**
+	 * Protocol method
+	 * 
+	 * @param str the string
+	 * @return normalized string
+	 */
+	public static String normalize(String str) {
+	    String out = "";
+	    str = str.toLowerCase();
+	    char[] arr = str.toCharArray();
+	    for (int i = 0; i < arr.length; i++) {
+	        if (arr[i] != ' ') {
+	            out = out + "" + arr[i];
+	        }
+	    }
+	
+	    return out;
+	}
 }

@@ -41,25 +41,18 @@ package com.levelonelabs.aim;
  *
  * @created January 1, 2002
  */
-public interface AIMListener {
+public interface AIMListener extends AIMBaseListener {
 
-    public void handleConnected();
-    public void handleDisconnected();
-
-
-    public void handleMessage(AIMBuddy buddy, String request);
+    public void handleMessage(AIMBuddy buddy, String messageHtml);
 
 
     public void handleWarning(AIMBuddy buddy, int amount);
 
 
-    public void handleBuddySignOn(AIMBuddy buddy, String info);
-    public void handleBuddySignOff(AIMBuddy buddy, String info);
+    public void handleBuddySignOn(AIMBuddy buddy, String infoHtml);
+    public void handleBuddySignOff(AIMBuddy buddy, String infoHtml);
 
 
-    public void handleError(String error, String message);
-
-
-    public void handleBuddyUnavailable(AIMBuddy aimbud, String message);
-    public void handleBuddyAvailable(AIMBuddy aimbud, String message);
+    public void handleBuddyUnavailable(AIMBuddy buddy, String messageHtml);
+    public void handleBuddyAvailable(AIMBuddy buddy, String messageHtml);
 }

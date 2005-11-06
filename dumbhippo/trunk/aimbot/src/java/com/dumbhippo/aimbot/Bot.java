@@ -11,6 +11,7 @@ import com.levelonelabs.aim.AIMListener;
 
 class Bot implements Runnable {
 
+    static private final String PING = "PING";
 	static private Timer timer;
 	
 	private AIMClient aim;
@@ -45,7 +46,7 @@ class Bot implements Runnable {
 					
 					System.out.println("Self-pinging at " + new Date(now));
 					
-					aim.sendMessageRaw(aim.getName(), AIMClient.PING);
+					aim.sendMessageRaw(aim.getName(), PING);
 					
 					// set up a one-shot to verify results
 					timer.schedule(new Ponger(), TIME_DELAY);
@@ -159,7 +160,7 @@ class Bot implements Runnable {
 		
 		aim = new AIMClient("DumbHippoBot", "s3kr3tcode", "My Profile!",
 				"You aren't a buddy!", true /*auto-add everyone as buddy*/);
-		aim.addAIMListener(new Listener());
+		aim.addListener(new Listener());
 		
 		pinger = new SelfPinger();
 		
@@ -171,4 +172,43 @@ class Bot implements Runnable {
 		pinger.cancel();
 		pinger = null;
 	}
+	
+    /**
+     * Strip out HTML from a string
+     * 
+     * @param line * *
+     * @return the string without HTML
+     */
+    private static String stripHTML(String line) {
+        StringBuilder sb = new StringBuilder(line);
+        String out = "";
+
+        for (int i = 0; i < (sb.length() - 1); i++) {
+            if (sb.charAt(i) == '<') {
+                // Most tags
+                if ((sb.charAt(i + 1) == '/') || ((sb.charAt(i + 1) >= 'a') && (sb.charAt(i + 1) <= 'z'))
+                    || ((sb.charAt(i + 1) >= 'A') && (sb.charAt(i + 1) <= 'Z'))) {
+                    for (int j = i + 1; j < sb.length(); j++) {
+                        if (sb.charAt(j) == '>') {
+                            sb = sb.replace(i, j + 1, "");
+                            i--;
+                            break;
+                        }
+                    }
+                } else if (sb.charAt(i + 1) == '!') {
+                    // Comments
+                    for (int j = i + 1; j < sb.length(); j++) {
+                        if ((sb.charAt(j) == '>') && (sb.charAt(j - 1) == '-') && (sb.charAt(j - 2) == '-')) {
+                            sb = sb.replace(i, j + 1, "");
+                            i--;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        out = sb.toString();
+        return out;
+    }
 }
