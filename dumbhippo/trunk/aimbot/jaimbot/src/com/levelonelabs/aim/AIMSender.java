@@ -45,12 +45,6 @@ import java.util.List;
  * @created January 1, 2002
  */
 public interface AIMSender {
-
-    public static final int PERMIT_ALL = 1;
-    public static final int DENY_ALL = 2;
-    public static final int PERMIT_SOME = 3;
-    public static final int DENY_SOME = 4;
-    public static final int PERMIT_BUDDIES = 5;
     
     public static final String DEFAULT_GROUP = "TOC";
     
@@ -72,8 +66,8 @@ public interface AIMSender {
     //public void signOn();
     public void signOff();
 
-    public void setPermitMode(int mode);
-    public int getPermitMode();
+    public void setPermitMode(PermitDenyMode mode);
+    public PermitDenyMode getPermitMode();
     public void denyBuddy(AIMBuddy buddy);
     public void permitBuddy(AIMBuddy buddy);
 

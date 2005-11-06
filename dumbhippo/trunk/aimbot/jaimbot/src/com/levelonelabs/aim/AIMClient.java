@@ -385,29 +385,28 @@ public class AIMClient implements AIMSender {
     /**
      * Gets the permit mode that is set on the server.
      * 
-     * @return int representation (see public statics) of current permit mode.
+     * @return current permit mode.
      */
-    public int getPermitMode() {
+    public PermitDenyMode getPermitMode() {
         return connection.getPermitMode();
     }
 
     /**
-     * Sets the permit mode on the server. (Use constants from AIMSender)
+     * Sets the permit mode on the server.
      * 
      * @param mode
      */
-    public void setPermitMode(int mode) {
-    	if (mode == DENY_SOME && this.denied.size() == 0) {
+    public void setPermitMode(PermitDenyMode mode) {
+    	if (mode == PermitDenyMode.DENY_SOME && this.denied.size() == 0) {
             logger.info("Attempting to deny some, and none are denied, ignoring.");
             return;
-        } else if (mode == PERMIT_SOME && this.permitted.size() == 0) {
+        } else if (mode == PermitDenyMode.PERMIT_SOME && this.permitted.size() == 0) {
             logger.info("Attempting to permit some, and none are permitted, ignoring.");
             return;
         }
 
     	connection.sendSetPermitMode(mode);
     }
-
 
     /**
      * Clear unvailable message

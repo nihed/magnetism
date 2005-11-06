@@ -91,7 +91,7 @@ public class AIMRawConnection {
     
     private AIMRawListener listener;
     
-    private int permitMode = AIMSender.PERMIT_ALL;
+    private PermitDenyMode permitMode = PermitDenyMode.PERMIT_ALL;
     
     public AIMRawConnection(ScreenName name, String pass, String info, AIMRawListener listener) {
 
@@ -353,13 +353,10 @@ public class AIMRawConnection {
     	sendSetAway("");
     }    
 
-    public void sendSetPermitMode(int mode) {
-        if (mode < 1 || mode > 5)
-        	throw new IllegalArgumentException("invalid permit mode: " + mode);
-    	
+    public void sendSetPermitMode(PermitDenyMode mode) {
     	logger.info("Setting permit mode to:" + mode);
     	permitMode = mode;
-    	frameSend("toc2_set_pdmode " + permitMode + "\0");
+    	frameSend("toc2_set_pdmode " + permitMode.getProtocolValue() + "\0");
     }
     
 	public ScreenName getName() {
@@ -380,9 +377,9 @@ public class AIMRawConnection {
     /**
      * Gets the permit mode that is set on the server.
      * 
-     * @return int representation (see public statics) of current permit mode.
+     * @return current mode
      */
-    public int getPermitMode() {
+    public PermitDenyMode getPermitMode() {
     	return permitMode;
     }
     
@@ -443,7 +440,7 @@ public class AIMRawConnection {
             processConfig(config);
             logger.fine("*** AIM CONFIG RECEIVED ***");
         } else {
-            permitMode = AIMSender.PERMIT_ALL;
+            permitMode = PermitDenyMode.PERMIT_ALL;
             logger.fine("*** AIM NO CONFIG RECEIVED ***");
         }
     }
@@ -587,7 +584,7 @@ public class AIMRawConnection {
     }
     
     private void processConfig(String config) {
-        int newPermitMode = AIMSender.PERMIT_ALL;
+        PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
         try {
             String current_group = AIMSender.DEFAULT_GROUP;
@@ -619,7 +616,7 @@ public class AIMRawConnection {
                     	generateAddDenied(new ScreenName(arg));
                         break;
                     case 'm' :
-                        newPermitMode = Integer.parseInt(arg);
+                        newPermitMode = PermitDenyMode.parseInt(arg);
                         break;
                 }
             }
