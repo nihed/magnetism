@@ -546,5 +546,47 @@ public class AIMClient implements AIMSender {
 			}
 			generateError(error, message);
 		}
+
+		public void handleUpdateBuddy(ScreenName name, String group) {
+			for (AIMRawListener l : rawListeners) {
+				try {
+					l.handleUpdateBuddy(name, group);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+            AIMBuddy buddy = buddyHash.get(name);
+            if (buddy == null) {
+                buddy = new AIMBuddy(name, group);
+                buddyHash.put(name, buddy);
+            } else {
+                // they already exist, so just take the server's
+                // word for the group they belong in
+                buddy.setGroup(group);
+            }
+		}
+
+		public void handleAddPermitted(ScreenName buddy) {
+			for (AIMRawListener l : rawListeners) {
+				try {
+					l.handleAddPermitted(buddy);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			permitted.add(buddy);
+		}
+
+		public void handleAddDenied(ScreenName buddy) {
+			for (AIMRawListener l : rawListeners) {
+				try {
+					l.handleAddDenied(buddy);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			denied.add(buddy);
+		}
 	}
 }

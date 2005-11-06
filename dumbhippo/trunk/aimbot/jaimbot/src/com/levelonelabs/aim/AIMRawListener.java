@@ -10,4 +10,9 @@ public interface AIMRawListener extends AIMBaseListener {
 
     public void handleBuddyUnavailable(ScreenName buddy, String htmlMessage);
     public void handleBuddyAvailable(ScreenName buddy, String htmlMessage);
+    
+    // may add a new buddy too
+    public void handleUpdateBuddy(ScreenName buddy, String group);
+    public void handleAddPermitted(ScreenName buddy);
+    public void handleAddDenied(ScreenName buddy);
 }

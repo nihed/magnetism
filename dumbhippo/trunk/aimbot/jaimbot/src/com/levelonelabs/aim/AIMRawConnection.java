@@ -33,10 +33,12 @@
 package com.levelonelabs.aim;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -584,19 +586,11 @@ public class AIMRawConnection {
         lastFrameSendTime = System.currentTimeMillis();
     }
     
-    /**
-     * Processes AIM server-passed config string
-     * 
-     * @param config
-     *            A properly formated TOC configuration.
-     */
-    // FIXME implement
     private void processConfig(String config) {
-    	/*
-        int new_permit_mode = PERMIT_ALL;
+        int newPermitMode = AIMSender.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
         try {
-            String current_group = DEFAULT_GROUP;
+            String current_group = AIMSender.DEFAULT_GROUP;
             String line;
             while (null != (line = br.readLine())) {
                 if (line.equals("done:")) {
@@ -609,34 +603,23 @@ public class AIMRawConnection {
                         current_group = arg;
                         break;
                     case 'b' :
-                        // make a new buddy if they dont exist locally
-                        AIMBuddy buddy = null;
-                        
                         //trim out the alias if there is one
                         int ind = arg.indexOf(":");
-                        if(ind>-1){
-                            arg=arg.substring(0,ind);
+                        if (ind > -1) {
+                            arg = arg.substring(0,ind);
                         }
                         
-                        buddy = buddyHash.get(imNormalize(arg));
-                        if (buddy == null) {
-                            buddy = new AIMBuddy(arg, current_group);
-                            buddyHash.put(imNormalize(arg), buddy);
-                        } else {
-                            // they already exist, so just take the server's
-                            // word
-                            // for the group they belong in
-                            buddy.setGroup(current_group);
-                        }
+                        ScreenName name = new ScreenName(arg);
+                        generateUpdateBuddy(name, current_group);
                         break;
                     case 'p' :
-                        permitted.add(imNormalize(arg));
+                    	generateAddPermitted(new ScreenName(arg));
                         break;
                     case 'd' :
-                        denied.add(imNormalize(arg));
+                    	generateAddDenied(new ScreenName(arg));
                         break;
                     case 'm' :
-                        new_permit_mode = Integer.parseInt(arg);
+                        newPermitMode = Integer.parseInt(arg);
                         break;
                 }
             }
@@ -646,13 +629,25 @@ public class AIMRawConnection {
             return;
         }
 
-        // this will "readd" existing buddies, but thats ok
-        addBuddies(new ArrayList<AIMBuddy>(buddyHash.values()));
-        setPermitMode(new_permit_mode);
-        */
+        permitMode = newPermitMode;
     }
     
-    private void generateError(String error, String message) {
+    private void generateAddDenied(ScreenName name) {
+    	if (listener != null)
+    		listener.handleAddDenied(name);
+	}
+
+	private void generateAddPermitted(ScreenName name) {
+		if (listener != null)
+			listener.handleAddPermitted(name);
+	}
+
+	private void generateUpdateBuddy(ScreenName name, String group) {
+		if (listener != null)
+			listener.handleUpdateBuddy(name, group);
+	}
+
+	private void generateError(String error, String message) {
     	if (listener != null)
     		listener.handleError(error, message);
     }
