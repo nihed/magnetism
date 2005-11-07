@@ -6,6 +6,6 @@ public interface BaseListener {
 
 	public void handleDisconnected();
 
-	public void handleError(String error, String message);
+	public void handleError(TocError error, String message);
 
 }

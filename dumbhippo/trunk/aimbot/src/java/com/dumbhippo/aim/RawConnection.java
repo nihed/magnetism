@@ -39,6 +39,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -102,7 +103,7 @@ public class RawConnection {
             loginIPs = InetAddress.getAllByName(loginServer);
         } catch (UnknownHostException e) {
             signOff("unknown host");
-            generateError("Signon err", e.getMessage());
+            generateError(TocError.SIGNON_ERROR, e.getMessage());
             return;
         }
 
@@ -120,7 +121,7 @@ public class RawConnection {
 
         if (io == null) {
             signOff("can't establish connection");
-            generateError("Signon err", "Unable to establish connection to logon server.");
+            generateError(TocError.SIGNON_ERROR, "Unable to establish connection to logon server.");
             return;
         }
         
@@ -141,10 +142,10 @@ public class RawConnection {
     	if (io == null)
     		return;
     	
-    	logger.debug("Trying to close IM (" + place + ").....");
+    	logger.debug("Trying to close at (" + place + ")");
     	io.close();
     	
-    	logger.debug("*** AIM CLIENT SIGNED OFF.");
+    	logger.debug("SIGNED OFF");
     }
 
     public void read() {
@@ -302,8 +303,31 @@ public class RawConnection {
     	}
     }
     
+    private String toDebugAscii(String str) {
+    	StringBuilder sb = new StringBuilder(str.length());
+    	for (int i = 0; i < str.length(); ++i) {
+    		char c = str.charAt(i);
+    		if (c > 31 && c < 127) {
+    			sb.append(c);
+    		} else if (c == '\n') {
+    			sb.append("\\n");
+    		} else if (c == '\t') {
+    			sb.append("\\t");
+    		} else if (c == '\r') {
+    			sb.append("\\r");
+    		} else if (c == '\0') {
+    			sb.append("\\0");
+    		} else {
+    			sb.append("{0x" + Integer.toString(c, 16) + "}");
+    		}
+    	}
+    	return sb.toString();
+    }
+    
     private void fromAIM(Frame frame) {
     	if (frame.isEndFrame()) {
+    		logger.debug("fromAIM(): end frame");
+    		
     		boolean haveGeneratedConnected = false;
     		if (io.getOnceSignedOn())
     			haveGeneratedConnected = true;
@@ -317,9 +341,11 @@ public class RawConnection {
         try {
             String inString = frame.getAsString();
 
-            logger.debug("*** AIM: " + inString + " ***");
+            logger.debug("Incoming frame is: '" + toDebugAscii(inString) + "'");
             StringTokenizer inToken = new StringTokenizer(inString, ":");
             String command = inToken.nextToken();
+            
+            logger.debug("fromAIM(): command = " + toDebugAscii(command));
             
             if (command.equals("IM_IN2")) {
             	command_IM_IN2(inToken);
@@ -331,10 +357,12 @@ public class RawConnection {
             	command_UPDATE_BUDDY2(inToken);
             } else if (command.equals("ERROR")) {
             	command_ERROR(inToken);
+            } else {
+            	// log this but don't crash, maybe it's harmless
+            	logger.error("unknown AIM command '" + toDebugAscii(command) + "'");
             }
         } catch (Exception e) {
-            logger.error("ERROR: failed to handle aim protocol properly");
-            e.printStackTrace();
+            logger.error("exception handling incoming command: ", e);
         }
     }
 
@@ -351,7 +379,7 @@ public class RawConnection {
 
         lastMessageTimestamp = System.currentTimeMillis();
         
-        logger.debug("*** AIM MESSAGE: " + from + " > " + mesg + " ***");
+        logger.debug("IM: " + from + ": " + toDebugAscii(mesg));
 
         generateMessage(from, mesg);    	
     }
@@ -363,10 +391,10 @@ public class RawConnection {
                 config = config + ":" + inToken.nextToken();
             }
             processConfig(config);
-            logger.debug("*** AIM CONFIG RECEIVED ***");
+            logger.debug("processed AIM config");
         } else {
             permitMode = PermitDenyMode.PERMIT_ALL;
-            logger.debug("*** AIM NO CONFIG RECEIVED ***");
+            logger.debug("config command had no config");
         }
     }
     
@@ -386,10 +414,10 @@ public class RawConnection {
         ScreenName buddy = new ScreenName(inToken.nextToken());
         String stat = inToken.nextToken();
         if (stat.equals("T")) {
-            generateBuddySignOn(buddy, "INFO");
+            generateBuddySignOn(buddy, "");
             // logger.debug("Buddy:" + name + " just signed on.");
         } else if (stat.equals("F")) {
-            generateBuddySignOff(buddy, "INFO");
+            generateBuddySignOff(buddy, "");
             // logger.debug("Buddy:" + name + " just signed off.");
         }
         
@@ -406,67 +434,28 @@ public class RawConnection {
             // System.err.println(bname+"
             // idle="+Integer.valueOf(idleTime).intValue()+" mins");
             if (-1 != inToken.nextToken().indexOf('U')) {
-                generateBuddyUnavailable(buddy, "INFO");
+                generateBuddyUnavailable(buddy, "");
             } else {
-                generateBuddyAvailable(buddy, "INFO");
+                generateBuddyAvailable(buddy, "");
             }
         }
     }
     
     private void command_ERROR(StringTokenizer inToken) {
         String error = inToken.nextToken();
-        logger.error("*** AIM ERROR: " + error + " ***");
-        if (error.equals("901")) {
-            generateError(error, "Not currently available");
-            // logger.debug("Not currently available");
-            return;
-        }
-
-        if (error.equals("902")) {
-            generateError(error, "Warning not currently available");
-            // logger.debug("Warning not currently available");
-            return;
-        }
-
-        if (error.equals("903")) {
-            generateError(error, "Message dropped, sending too fast");
-            // logger.debug("Message dropped, sending too fast");
-            return;
-        }
-
-        if (error.equals("960")) {
-            String person = inToken.nextToken();
-            generateError(error, "Sending messages too fast to " + person);
-            // logger.debug("Sending messages too fast to " + person);
-            return;
-        }
-
-        if (error.equals("961")) {
-            String person = inToken.nextToken();
-            generateError(error, person + " sent you too big a message");
-            // logger.debug(person + " sent you too big a message");
-            return;
-        }
-
-        if (error.equals("962")) {
-            String person = inToken.nextToken();
-            generateError(error, person + " sent you a message too fast");
-            // logger.debug(person + " sent you a message too fast");
-            return;
-        }
-
-        if (error.equals("983")) {
-        	generateError(error, "You have been connecting and "
-+ "disconnecting too frequently.  Wait 10 minutes and try again. "
-+ "If you continue to try, you will need to wait even longer.");
-        	return;
-        }
+        String args = "";
+        if (inToken.hasMoreTokens())
+        	args = inToken.nextToken();
         
-        if (error.equals("Signon err")) {
-            String text = inToken.nextToken();
-            generateError(error, "AIM Signon failure: " + text);
-
-            // logger.debug("AIM Signon failure: " + text);
+        logger.debug("AIM error: '" + error + "' args '" + args + "'");
+        
+        TocError tocError = TocError.parse(error);
+        
+        logger.debug(tocError.format(args));
+        
+        generateError(tocError, tocError.format(args));
+        
+        if (tocError == TocError.SIGNON_ERROR) {
             signOff("Signon err");
         }
     }
@@ -532,24 +521,31 @@ public class RawConnection {
 			listener.handleUpdateBuddy(name, group);
 	}
 
-	private void generateError(String error, String message) {
+	private void generateError(TocError error, String message) {
     	if (listener != null)
     		listener.handleError(error, message);
     }
     
     private void generateConnected() {
+    	logger.debug("generateConnected()");
     	if (listener != null)
     		listener.handleConnected();
     }
     
     private void generateDisconnected() {
+    	logger.debug("generateDisconnected()");
     	if (listener != null)
     		listener.handleDisconnected();
     }
     
     private void generateMessage(ScreenName buddy, String htmlMessage) {
-    	if (listener != null)
-    		listener.handleMessage(buddy, htmlMessage);
+    	if (listener != null) {
+    		try {
+    			listener.handleMessage(buddy, htmlMessage);
+    		} catch (FilterException e) {
+    			
+    		}
+    	}
     }
     
     private void generateSetEvilAmount(ScreenName whoEviledUs, int amount) {
@@ -620,7 +616,13 @@ public class RawConnection {
     	}
     	
     	Frame(byte[] bytes) {
-    		str = new String(bytes);
+    		// FIXME broken encoding, have to figure out TOC encoding handling
+    		try {
+				str = new String(bytes, "ISO-8859-1");
+			} catch (UnsupportedEncodingException e) {
+				logger.error("Unsupported encoding", e);
+				throw new RuntimeException(e);
+			}
     	}
     	
     	Frame(String str) {
@@ -684,6 +686,8 @@ public class RawConnection {
             
             inQueue = new LinkedBlockingQueue<Frame>();
             outQueue = new LinkedBlockingQueue<Frame>();
+            
+            logger.debug("Successfully created new " + getClass().getName());
         }
 
         void setWarnAmount(int warnAmount) {
@@ -740,6 +744,7 @@ public class RawConnection {
         		connection.close();
         	} catch (IOException e) {
         		// not much we can do...
+        		logger.error("Failed to close socket: " + e.getMessage());
         	}
 
         	// note, threads may not be created yet if still signing on
@@ -749,18 +754,21 @@ public class RawConnection {
         		// will return an end frame to the incoming queue
 
         		try {
+        			logger.debug("waiting to join inThread");
         			inThread.join();
         			inThread = null;
         		} catch (InterruptedException e) {
         		}
         	}
 
-        	if (outThread != null)
-            	// send outgoing end frame, to exit outThread
+        	if (outThread != null) {
+            	logger.debug("sending outgoing end frame, to exit outThread");
         		putFrame(new Frame());
+        	}
 
         	while (outThread != null) {
         		try {
+        			logger.debug("waiting to join outThread");
         			outThread.join();
         			outThread = null;
         		} catch (InterruptedException e) {
@@ -790,6 +798,8 @@ public class RawConnection {
         }
         
         private void frameSend(Frame frame) {
+        	logger.debug("frameSend() sendLimit = " + sendLimit + " warnAmount = " + warnAmount);
+        	
         	String toBeSent = frame.getAsString();
             if (sendLimit < MAX_POINTS) {
                 sendLimit += ((System.currentTimeMillis() - lastFrameSendTime) / RECOVER_RATE);
@@ -813,12 +823,15 @@ public class RawConnection {
             	writeFrame(toBeSent);
             } catch (IOException e) {
             	// main thread should notice and close()
+            	logger.debug("IOException in frameSend(): " + e.getMessage());
             }
 
             // sending is more expensive the higher our warning level
             // this should decrement between 1 and 10 points (exponentially)
             sendLimit -= (1 + Math.pow((3 * warnAmount) / 100, 2));
             lastFrameSendTime = System.currentTimeMillis();
+            
+            logger.debug("frameSend() end new sendLimit = " + sendLimit + " send time " + lastFrameSendTime);
         }
         
         private Frame frameRead() {
@@ -827,7 +840,7 @@ public class RawConnection {
             	byte[] data;
 
         		synchronized (in) {
-        			in.skip(4);
+        			in.skip(4); // seq no
         			length = in.readShort();
         			data = new byte[length];
         			in.readFully(data);
@@ -835,10 +848,11 @@ public class RawConnection {
         		Frame f = new Frame(data);
         		return f;
         	} catch (InterruptedIOException e) {
-        		// This is normal; read times out when we dont read anything.
-        		// logger.debug("*** AIM ERROR: " + e + " ***");
+        		// This happens every connection.setSoTimeout() time period
+        		//logger.debug("IO interrupted in frame read: " + e.getMessage());
         		return null;
         	} catch (IOException e) {
+        		logger.debug("IOException reading frame: " + e.getMessage());
         		return new Frame(); // end frame
         	}
         }
@@ -850,13 +864,19 @@ public class RawConnection {
         	inThread = new Thread(new Runnable() {
 
 				public void run() {
+					logger.debug("input thread starting up");
+					
 					// stuff input queue until we get the end frame
 					while (true) {
 						Frame frame = frameRead();
 						if (frame != null) {
+							logger.debug("input thread got an incoming frame");
 							queuePut(inQueue, frame);
-							if (frame.isEndFrame())
+							if (frame.isEndFrame()) {
+								logger.debug("input thread got end frame; exiting");
 								return;
+							}
+				        	logger.debug("input thread going back for another frame...");
 						}
 					}
 				}
@@ -866,13 +886,18 @@ public class RawConnection {
         	outThread = new Thread(new Runnable() {
 
 				public void run() {
+					logger.debug("output thread starting up");
+					
 					// write output queue until we get the end frame
 					while (true) {
 						try {
 							Frame frame = outQueue.take();
 							if (frame != null) {
-								if (frame.isEndFrame())
+								if (frame.isEndFrame()) {
+									logger.debug("output thread got end frame; exiting");
 									return;
+								}
+								logger.debug("output thread got a frame to send");
 								// if connection is closed, this no-ops
 								frameSend(frame);
 							}
@@ -885,6 +910,9 @@ public class RawConnection {
 
         	inThread.setDaemon(true);
         	outThread.setDaemon(true);
+        	
+        	inThread.start();
+        	outThread.start();
         }
         
         public void signOn(ScreenName name, String pass, String info,
@@ -941,7 +969,6 @@ public class RawConnection {
                 onceSignedOn = true;
                 writeFrame("toc_set_info \"" + info + "\"\0");
                 logger.debug("Done with AIM logon");
-                connection.setSoTimeout(3000);
 
                 createThreads();
                 

@@ -239,7 +239,7 @@ public class Client {
                 try {
                 	l.handleMessage(aimbud, htmlMessage);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(e);
                 }
             }
         }
@@ -251,7 +251,7 @@ public class Client {
             try {
             	l.handleWarning(aimbud, amount);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -261,7 +261,7 @@ public class Client {
             try {
             	l.handleConnected();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -271,17 +271,17 @@ public class Client {
             try {
             	l.handleDisconnected();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
 
-    private void generateError(String error, String message) {
+    private void generateError(TocError error, String message) {
     	for (Listener l : aimListeners) {
             try {
                 l.handleError(error, message);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -289,7 +289,7 @@ public class Client {
     private void generateBuddySignOn(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 
@@ -299,7 +299,7 @@ public class Client {
                 try {
                     l.handleBuddySignOn(aimbud, message);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(e);
                 }
             }
         }
@@ -308,7 +308,7 @@ public class Client {
     private void generateBuddySignOff(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 
@@ -318,7 +318,7 @@ public class Client {
             try {
             	l.handleBuddySignOff(aimbud, message);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -326,14 +326,14 @@ public class Client {
     private void generateBuddyAvailable(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
         for (Listener l : aimListeners) {
             try {
             	l.handleBuddyAvailable(aimbud, message);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -341,7 +341,7 @@ public class Client {
     private void generateBuddyUnavailable(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 
@@ -349,7 +349,7 @@ public class Client {
             try {
             	l.handleBuddyUnavailable(aimbud, message);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }
@@ -437,14 +437,23 @@ public class Client {
 	private class ClientListener implements RawListener {
 
 		public void handleMessage(ScreenName buddy, String htmlMessage) {
+			boolean filtered = false;
 			for (RawListener l : rawListeners) {
 				try {
 					l.handleMessage(buddy, htmlMessage);
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (FilterException e) {
+					filtered = true;
+					break;
+				} catch (Exception e2) {
+					logger.error(e2);
 				}
 			}
-			generateMessage(buddy, htmlMessage);
+			
+			if (filtered) {
+				logger.debug("--message was filtered out");
+			} else {
+				generateMessage(buddy, htmlMessage);
+			}
 		}
 
 		public void handleSetEvilAmount(ScreenName whoEviledUs, int amount) {
@@ -452,7 +461,7 @@ public class Client {
 				try {
 					l.handleSetEvilAmount(whoEviledUs, amount);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			
@@ -475,7 +484,7 @@ public class Client {
 				try {
 					l.handleBuddySignOn(buddy, htmlInfo);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateBuddySignOn(buddy, htmlInfo);
@@ -486,7 +495,7 @@ public class Client {
 				try {
 					l.handleBuddySignOff(buddy, htmlInfo);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateBuddySignOff(buddy, htmlInfo);			
@@ -497,7 +506,7 @@ public class Client {
 				try {
 					l.handleBuddyUnavailable(buddy, htmlMessage);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateBuddyUnavailable(buddy, htmlMessage);			
@@ -509,7 +518,7 @@ public class Client {
 				try {
 					l.handleBuddyAvailable(buddy, htmlMessage);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateBuddyAvailable(buddy, htmlMessage);			
@@ -520,7 +529,7 @@ public class Client {
 				try {
 					l.handleConnected();
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateConnected();			
@@ -531,18 +540,18 @@ public class Client {
 				try {
 					l.handleDisconnected();
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateDisconnected();
 		}
 
-		public void handleError(String error, String message) {
+		public void handleError(TocError error, String message) {
 			for (RawListener l : rawListeners) {
 				try {
 					l.handleError(error, message);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			generateError(error, message);
@@ -553,7 +562,7 @@ public class Client {
 				try {
 					l.handleUpdateBuddy(name, group);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 
@@ -573,7 +582,7 @@ public class Client {
 				try {
 					l.handleAddPermitted(buddy);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			permitted.add(buddy);
@@ -584,7 +593,7 @@ public class Client {
 				try {
 					l.handleAddDenied(buddy);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 			}
 			denied.add(buddy);

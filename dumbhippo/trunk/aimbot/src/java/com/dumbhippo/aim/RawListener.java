@@ -1,7 +1,7 @@
 package com.dumbhippo.aim;
 
 public interface RawListener extends BaseListener {
-    public void handleMessage(ScreenName buddy, String htmlMessage);
+    public void handleMessage(ScreenName buddy, String htmlMessage) throws FilterException;
 
     public void handleSetEvilAmount(ScreenName whoEviledUs, int amount);
 

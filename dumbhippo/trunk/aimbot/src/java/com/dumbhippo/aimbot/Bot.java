@@ -5,13 +5,20 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.aim.Buddy;
 import com.dumbhippo.aim.Client;
+import com.dumbhippo.aim.FilterException;
 import com.dumbhippo.aim.Listener;
+import com.dumbhippo.aim.RawListenerAdapter;
+import com.dumbhippo.aim.ScreenName;
+import com.dumbhippo.aim.TocError;
 
 class Bot implements Runnable {
+	private static Log logger = GlobalSetup.getLog(Bot.class);
 
-    static private final String PING = "PING";
 	static private Timer timer;
 	
 	private Client aim;
@@ -25,11 +32,22 @@ class Bot implements Runnable {
      * comprehensively make the class threadsafe -hp
      */
 	class SelfPinger extends TimerTask {
-	    // check connection ever "TIME_DELAY" milliseconds (5 mins)
+	    // check connection every "TIME_DELAY" milliseconds (5 mins)
 	    private static final long TIME_DELAY = 5 * 60 * 1000;
+	    private static final String PING = "PING";
 	    
 	    SelfPinger() {
 	    	timer.schedule(this, TIME_DELAY, TIME_DELAY);
+	    	
+	    	aim.addRawListener(new RawListenerAdapter() {
+	    		public void handleMessage(ScreenName buddy, String htmlMessage)
+				throws FilterException {
+	    			if (buddy.equals(aim.getName()) && htmlMessage.equals(PING)) {
+	    				logger.debug("filtering out " + PING);
+	    				throw new FilterException();
+	    			}
+	    		}
+	    	});
 	    }
 	    
 		@Override
@@ -44,7 +62,7 @@ class Bot implements Runnable {
 				// only ping if we've been idle
 				if ((now - last) > TIME_DELAY) {
 					
-					System.out.println("Self-pinging at " + new Date(now));
+					logger.debug("Self-pinging at " + new Date(now));
 					
 					aim.sendMessageRaw(aim.getName(), PING);
 					
@@ -66,10 +84,10 @@ class Bot implements Runnable {
 					long now = System.currentTimeMillis();
 					long last = aim.getLastMessageTimestamp();
 
-					System.out.println("Ping check, last message at " + new Date(last));
+					logger.debug("Ping check, last message at " + new Date(last));
 					
 					if ((now - last) > TIME_DELAY*2) {
-						System.out.println("Last message too old, signing off");
+						logger.debug("Last message too old, signing off");
 						aim.signOff();
 					}
 				}
@@ -79,40 +97,40 @@ class Bot implements Runnable {
 	
 	class BotListener implements Listener {
 		public void handleConnected() {
-			System.out.println("connected");
+			logger.debug("connected");
 		}
 		
 		public void handleDisconnected() {
-			System.out.println("disconnected");
+			logger.debug("disconnected");
 		}
 		
 		public void handleMessage(Buddy buddy, String request) {
-			System.out.println("message from " + buddy.getName() + ": " + request);
+			logger.debug("message from " + buddy.getName() + ": " + request);
 			saySomethingRandom(buddy);
 		}
 		
 		public void handleWarning(Buddy buddy, int amount) {
-			System.out.println("warning from " + buddy.getName());
+			logger.debug("warning from " + buddy.getName());
 		}
 		
 		public void handleBuddySignOn(Buddy buddy, String info) {
-			System.out.println("Buddy sign on " + buddy.getName());
+			logger.debug("Buddy sign on " + buddy.getName());
 		}
 		
 		public void handleBuddySignOff(Buddy buddy, String info) {
-			System.out.println("Buddy sign off " + buddy.getName());
+			logger.debug("Buddy sign off " + buddy.getName());
 		}
 		
-		public void handleError(String error, String message) {
-			System.out.println("error: " + error + " message: " + message);
+		public void handleError(TocError error, String message) {
+			logger.debug("error: " + message);
 		}
 		
 		public void handleBuddyUnavailable(Buddy buddy, String message) {
-			System.out.println("buddy unavailable: " + buddy.getName() + " message: " + message);
+			logger.debug("buddy unavailable: " + buddy.getName() + " message: " + message);
 		}
 		
 		public void handleBuddyAvailable(Buddy buddy, String message) {
-			System.out.println("buddy available: " + buddy.getName() + " message: " + message);
+			logger.debug("buddy available: " + buddy.getName() + " message: " + message);
 			if (buddy.getName().equals("bryanwclark")) {
 				saySomethingRandom(buddy);
 			} else if (buddy.getName().equals("hp40000")) {
@@ -136,7 +154,7 @@ class Bot implements Runnable {
 	}
 
 	void saySomethingRandom(Buddy buddy) {
-		System.out.println("saying something random to " + buddy.getName());
+		logger.debug("saying something random to " + buddy.getName());
 		switch (random.nextInt(5)) {
 		case 0:
 			aim.sendMessage(buddy, "You suck");
@@ -164,9 +182,9 @@ class Bot implements Runnable {
 		
 		pinger = new SelfPinger();
 		
-		System.out.println("Signing on...");
+		logger.debug("Signing on...");
 		aim.run();
-		System.out.println("Signed off.");
+		logger.debug("Signed off.");
 		aim = null;
 		
 		pinger.cancel();
