@@ -14,11 +14,16 @@ public class JmsQueue {
 	private Session session;
 	private Destination destination;
 	
-	protected JmsQueue(String queue) {
+	protected JmsQueue(String queue, boolean local) {
 		try {
 			InitialContext ctx = new InitialContext();
 		
-			ConnectionFactory connectionFactory = (ConnectionFactory) ctx.lookup("RMIConnectionFactory");
+			ConnectionFactory connectionFactory;
+			
+			if (local)
+				connectionFactory = (ConnectionFactory) ctx.lookup("OILConnectionFactory");
+			else
+				connectionFactory = (ConnectionFactory) ctx.lookup("RMIConnectionFactory");
 	
 			connection = connectionFactory.createConnection();
 		

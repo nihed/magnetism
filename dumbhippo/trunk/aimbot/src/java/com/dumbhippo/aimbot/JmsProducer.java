@@ -8,8 +8,8 @@ import javax.jms.TextMessage;
 public class JmsProducer extends JmsQueue {
 	private MessageProducer messageProducer;
 	
-	public JmsProducer(String queue) {
-		super(queue);
+	public JmsProducer(String queue, boolean local) {
+		super(queue, local);
 		
 		try {
 			messageProducer = getSession().createProducer(getDestination());

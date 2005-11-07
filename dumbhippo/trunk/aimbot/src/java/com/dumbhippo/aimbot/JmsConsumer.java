@@ -8,8 +8,8 @@ public class JmsConsumer extends JmsQueue {
 	
 	private MessageConsumer messageConsumer;
 	
-	public JmsConsumer(String queue) {
-		super(queue);
+	public JmsConsumer(String queue, boolean local) {
+		super(queue, local);
 
 		try {
 			messageConsumer = getSession().createConsumer(getDestination());

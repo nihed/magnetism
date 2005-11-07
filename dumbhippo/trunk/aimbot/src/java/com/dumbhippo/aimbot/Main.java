@@ -7,8 +7,8 @@ import javax.jms.TextMessage;
 public class Main {
 
 	private static void testJms() {
-		JmsProducer producer = new JmsProducer("FooQueue");
-		JmsConsumer consumer = new JmsConsumer("FooQueue");
+		JmsProducer producer = new JmsProducer("FooQueue", false);
+		JmsConsumer consumer = new JmsConsumer("FooQueue", false);
 		
 		TextMessage message = producer.createTextMessage("WOOOHOO");
 		producer.send(message);
