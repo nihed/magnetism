@@ -12,3 +12,16 @@ getParamsFromLocation = function() {
     }
     return map;
 }
+
+handleLinkClicked = function(e) {
+  try {
+	if (!e) e = window.event;
+	e.cancelBubble = true; // e.stopPropagation();
+	e.returnValue = false;
+    window.external.LinkClicked();
+  } catch (e) {
+    alert(e);
+    return false;
+  }
+  return false;
+}

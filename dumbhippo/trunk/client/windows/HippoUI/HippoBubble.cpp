@@ -69,15 +69,22 @@ HippoBubble::createWindow(void)
 	RECT desktopRect;
 	GetClientRect(desktopWindow,&desktopRect);
 
-	MoveWindow(window_, (desktopRect.right - rect.right), (desktopRect.bottom - rect.right), 
+	MoveWindow(window_, (desktopRect.right - rect.right), (desktopRect.bottom - rect.bottom), 
 			   rect.right, rect.bottom, TRUE);
 
 	hippoSetWindowData<HippoBubble>(window_, this);
 
+	return true;
+}
+
+bool
+HippoBubble::embedIE(void)
+{
+	RECT rect;
+	GetClientRect(window_,&rect);
 	OleCreate(CLSID_WebBrowser,IID_IOleObject,OLERENDER_DRAW,0,this,this,(void**)&ie_);
 	ie_->SetHostNames(L"Web Host",L"Web View");
 	OleSetContainedObject(ie_,TRUE);
-
 
 	ie_->DoVerb(OLEIVERB_SHOW,NULL,this,-1,window_,&rect);
 
@@ -96,7 +103,6 @@ HippoBubble::createWindow(void)
 	browser->put_Width(rect.right);
 	browser->put_Height(rect.bottom);
 	browser->put_Resizable(VARIANT_FALSE);
-
 	return true;
 }
 
@@ -203,7 +209,11 @@ HippoBubble::create(void)
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
-	if (!create())
+	if (window_ == NULL) {
+		if (!create())
+			return;
+	}
+	if (!embedIE())
 		return;
 
 	currentLinkId_ = share.postId;
@@ -287,6 +297,7 @@ STDMETHODIMP
 HippoBubble::LinkClicked()
 {
 	ui_->showURL(currentLinkId_, currentLink_);
+	hide();
 	return S_OK;
 }
 
@@ -694,7 +705,15 @@ STDMETHODIMP
 HippoBubble::QueryInterface(const IID &ifaceID, 
 			     void   **result)
 {
-    if (IsEqualIID(ifaceID, IID_IOleClientSite))
+	if (IsEqualIID(ifaceID, IID_IUnknown))
+	*result = static_cast<IUnknown *>(static_cast<IHippoBubble*>(this));
+    else if (IsEqualIID(ifaceID, IID_IDispatch)) 
+	*result = static_cast<IDispatch *>(this);
+    else if (IsEqualIID(ifaceID, IID_IHippoBubble)) 
+	*result = static_cast<IHippoBubble *>(this);
+	else if (IsEqualIID(ifaceID, IID_IDocHostUIHandler))
+	*result = static_cast<IDocHostUIHandler*>(this);
+    else if (IsEqualIID(ifaceID, IID_IOleClientSite))
 	*result = static_cast<IOleClientSite*>(this);
 	else if (IsEqualIID(ifaceID, IID_IOleInPlaceSite)) // || riid == IID_IOleInPlaceSiteEx || riid == IID_IOleInPlaceSiteWindowless)
 	*result = static_cast<IOleInPlaceSite*>(this);
@@ -750,10 +769,12 @@ HippoBubble::GetIDsOfNames (REFIID    riid,
 			   LCID	     lcid,
 			   DISPID   *rgDispId)
  {
+    HRESULT ret;
     if (!ifaceTypeInfo_) 
 	 return E_OUTOFMEMORY;
     
-    return DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
+    ret = DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
+	return ret;
  }
         
 STDMETHODIMP

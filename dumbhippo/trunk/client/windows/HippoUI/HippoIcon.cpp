@@ -149,47 +149,6 @@ HippoIcon::showURL(HippoLinkShare &linkshare)
 		bubble->setLinkNotification(linkshare);
 		bubble->show();
 	}
-
-    NOTIFYICONDATA notifyIconData = { 0 };
-
-    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-    notifyIconData.hWnd = window_;
-    notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_INFO;
-    const size_t infoLen = sizeof(notifyIconData.szInfo) / sizeof(notifyIconData.szInfo[0]);
-
-	StringCchCopy(notifyIconData.szInfo, infoLen, TEXT(""));
-    StringCchCat(notifyIconData.szInfo, infoLen, linkshare.url);
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n\n"));
-	StringCchCat(notifyIconData.szInfo, infoLen, linkshare.description);
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n\nSent from "));
-	StringCchCat(notifyIconData.szInfo, infoLen, linkshare.senderName);
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT(" to "));
-	for (unsigned int i = 0; i < linkshare.personRecipients.length(); i++) {
-		StringCchCat(notifyIconData.szInfo, infoLen, linkshare.personRecipients[i]);
-		if (i < linkshare.personRecipients.length() - 1)
-			StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", "));
-	}
-	if (linkshare.personRecipients.length() > 0 
-		&& linkshare.groupRecipients.length() > 0)
-		StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", and the groups "));
-	else if (linkshare.groupRecipients.length() > 0) 
-		StringCchCat(notifyIconData.szInfo, infoLen, TEXT("the groups "));
-	for (unsigned int i = 0; i < linkshare.groupRecipients.length(); i++) {
-		StringCchCat(notifyIconData.szInfo, infoLen, linkshare.groupRecipients[i]);
-		if (i < linkshare.groupRecipients.length() - 1)
-			StringCchCat(notifyIconData.szInfo, infoLen, TEXT(", "));
-	}
-    StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\n(click to win)"));
-
-    notifyIconData.uTimeout = NEW_POST_NOTIFY_TIMEOUT;
-    const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
-	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("New link"));
-	StringCchCat(notifyIconData.szInfoTitle, titleLen, TEXT(": "));
-	StringCchCat(notifyIconData.szInfoTitle, titleLen, linkshare.title);
-    notifyIconData.dwInfoFlags = NIIF_USER;
-   
-    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
 }
 
 

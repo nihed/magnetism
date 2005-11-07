@@ -133,6 +133,7 @@ private:
 	HippoBSTR currentLink_;
 	HippoBSTR currentLinkId_;
 
+	bool embedIE(void);
 	bool appendTransform(BSTR src, BSTR style, ...);
 	bool create(void);
 	bool createWindow(void);
