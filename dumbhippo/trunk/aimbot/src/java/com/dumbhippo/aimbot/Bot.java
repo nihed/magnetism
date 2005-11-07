@@ -25,12 +25,6 @@ class Bot implements Runnable {
 	private Random random;
 	private SelfPinger pinger;
 	
-    /** FIXME this is a bit broken, because Client isn't threadsafe to 
-     * speak of, and the timer is running in a 
-     * separate thread... I synchronized the "send a frame" method so 
-     * at least we won't send completely corrupt garbage, but didn't 
-     * comprehensively make the class threadsafe -hp
-     */
 	class SelfPinger extends TimerTask {
 	    // check connection every "TIME_DELAY" milliseconds (5 mins)
 	    private static final long TIME_DELAY = 5 * 60 * 1000;
