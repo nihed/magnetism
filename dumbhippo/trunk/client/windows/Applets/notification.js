@@ -53,7 +53,8 @@ dh.notification.handleSenderLinkClicked = dh.client.stdEventHandler(function(e) 
 	return false;
 })
 
-dh.notification.handleBodyClicked = dh.client.stdEventHandler(function(e) {
+// Called when user clicks on close button
+dh.notification.handleCloseClicked = dh.client.stdEventHandler(function(e) {
 	e.stopPropagation();
 	window.external.Close();
 	return false;

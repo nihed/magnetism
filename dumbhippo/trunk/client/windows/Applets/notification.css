@@ -23,6 +23,7 @@ img.dh-notification-sender {
 	 */
 	max-width:				48px;
 	height:					48px;
+	border-style: none;	
 	border:					0;
 }
 div.dh-link-title {
@@ -32,4 +33,9 @@ div.dh-link-title {
 	font-weight:			bold;	
 	padding:				0;
 	margin:					0;
+}
+
+img.dh-close-button 
+{
+	float: right;
 }

@@ -16,14 +16,17 @@
 	<xsl:template match="dh:stylesheet">	
 		<link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
 	</xsl:template>
+	<xsl:template match="dh:closeButton">
+		<img class="dh-close-button" onclick="dh.notification.handleCloseClicked();" src="{$appleturl}close.png"></img>
+	</xsl:template>
 	<xsl:template match="dh:linkimage">
-		<img src="{$senderPhotoUrl}"></img>
+		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><img class="dh-notification-sender" src="{$senderPhotoUrl}"></img></a>
 	</xsl:template>
 	<xsl:template match="dh:senderLink">
-		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><xsl:value-of select="$senderName"/></a>
+		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><span class="dh-notification-sender"><xsl:value-of select="$senderName"/></span></a>
 	</xsl:template>
 	<xsl:template match="dh:link">
-		<a onclick="dh.notification.handleLinkClicked();" href="{$linkURL}" class="linkTitle"><xsl:value-of select="$linkTitle"/></a>
+		<a onclick="dh.notification.handleLinkClicked();" href="{$linkURL}"><xsl:value-of select="$linkTitle"/></a>
 	</xsl:template>
 	<xsl:template match="dh:linkDescription">
 		<xsl:value-of select="$linkDescription"/>

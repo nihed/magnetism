@@ -6,7 +6,8 @@
 <title>moo test</title>
 </head>
 <dh:corescript/>
-<body style="overflow: hidden;" onclick="return dh.notification.handleBodyClicked();">
+<body style="overflow: hidden;">  <!-- onclick="return dh.notification.handleCloseClicked();" -->
+<dh:closeButton/>
 <table class="dh-notification">
 <tr>
 <td class="dh-notification-sender">

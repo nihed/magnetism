@@ -37,6 +37,9 @@
 			RelativePath=".\clientstyle.xml">
 		</File>
 		<File
+			RelativePath=".\close.png">
+		</File>
+		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File
