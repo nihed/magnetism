@@ -22,7 +22,7 @@
 		<xsl:value-of select="$senderName"/>
 	</xsl:template>
 	<xsl:template match="dh:link">
-		<a id="dhLink" onclick="handleLinkClicked();" href="{$linkURL}" class="linkTitle"><xsl:value-of select="$linkTitle"/></a>
+		<a id="dhLink" onclick="dh.client.handleLinkClicked();" href="{$linkURL}" class="linkTitle"><xsl:value-of select="$linkTitle"/></a>
 	</xsl:template>
 	<xsl:template match="dh:linkDescription">
 		<xsl:value-of select="$linkDescription"/>
