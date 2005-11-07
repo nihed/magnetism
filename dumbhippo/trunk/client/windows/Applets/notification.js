@@ -1,5 +1,6 @@
 dh = {}
 dh.client = {}
+dh.notification = {}
 
 // Parse query parameters, sucked from dh.util.
 dh.client.getParamsFromLocation = function() {
@@ -37,8 +38,15 @@ dh.client.stdEventHandler = function(f) {
 }
 
 // Called when the user clicks on the shared link
-dh.client.handleLinkClicked = dh.client.stdEventHandler(function(e) {
+dh.notification.handleLinkClicked = dh.client.stdEventHandler(function(e) {
 	e.stopPropagation();
 	window.external.LinkClicked();
+	window.external.Close();
+	return false;
+})
+
+dh.notification.handleBodyClicked = dh.client.stdEventHandler(function(e) {
+	e.stopPropagation();
+	window.external.Close();
 	return false;
 })

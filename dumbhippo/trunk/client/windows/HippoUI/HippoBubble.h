@@ -27,11 +27,10 @@ public:
 	HippoBubble();
 	~HippoBubble();
 
+	void setUI(HippoUI *ui);
+
 	void setLinkNotification(HippoLinkShare &share);
 	void show(void);
-	void hide();
-
-	void setUI(HippoUI *ui);
 
 	// IUnknown methods
 	STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -104,6 +103,7 @@ public:
 	
 	// IHippoBubble
 	STDMETHODIMP LinkClicked();
+	STDMETHODIMP Close();
 
 	// IDocHostUIHandler
 	STDMETHODIMP EnableModeless(BOOL enable);

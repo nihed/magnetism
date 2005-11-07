@@ -252,15 +252,9 @@ HippoBubble::registerClass()
 void
 HippoBubble::show(void) 
 {	
-	AnimateWindow(window_, 200, AW_BLEND);
+	AnimateWindow(window_, 400, AW_BLEND);
 }
 
-void
-HippoBubble::hide(void)
-{
-	ie_->Release();
-    ShowWindow(window_, SW_HIDE);
-}
 
 bool
 HippoBubble::processMessage(UINT   message,
@@ -270,7 +264,7 @@ HippoBubble::processMessage(UINT   message,
     switch (message) 
     {
     case WM_CLOSE:
-	hide();
+		Close();
 	return true;
     default:
 	return false;
@@ -297,7 +291,14 @@ STDMETHODIMP
 HippoBubble::LinkClicked()
 {
 	ui_->showURL(currentLinkId_, currentLink_);
-	hide();
+	return S_OK;
+}
+
+STDMETHODIMP
+HippoBubble::Close()
+{
+	ie_->Release();
+    ShowWindow(window_, SW_HIDE);
 	return S_OK;
 }
 
