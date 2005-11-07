@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.aim.Buddy;
 import com.dumbhippo.aim.Client;
 import com.dumbhippo.aim.FilterException;
@@ -20,6 +21,9 @@ class Bot implements Runnable {
 	private static Log logger = GlobalSetup.getLog(Bot.class);
 
 	static private Timer timer;
+	
+	private ScreenName name;
+	private String pass;
 	
 	private Client aim;
 	private Random random;
@@ -134,8 +138,8 @@ class Bot implements Runnable {
 			}
 		}
 	}
-	
-	Bot() {
+		
+	Bot(ScreenName name, String pass) {
 		// don't put things in constructor that need to be recreated 
 		// for each run()
 		
@@ -145,6 +149,9 @@ class Bot implements Runnable {
 		}
 		
 		random = new Random();
+		
+		this.name = name;
+		this.pass = pass;
 	}
 
 	void saySomethingRandom(Buddy buddy) {
@@ -168,59 +175,78 @@ class Bot implements Runnable {
 		}
 	}
 
-	public void run() {
+	public void signOn() {
+		if (aim != null)
+			throw new IllegalStateException("can't sign on when you're already running");
+
+		logger.debug("Bot signing on...");
 		
-		aim = new Client("DumbHippoBot", "s3kr3tcode", "My Profile!",
-				"You aren't a buddy!", true /*auto-add everyone as buddy*/);
-		aim.addListener(new BotListener());
+		Client client = new Client(name, pass, "I am DUMB HIPPO BOT",
+				"Hmm, who are you?", true /*auto-add everyone as buddy*/);
+		client.addListener(new BotListener());
 		
-		pinger = new SelfPinger();
+		client.signOn();
 		
-		logger.debug("Signing on...");
-		aim.run();
-		logger.debug("Signed off.");
-		aim = null;
-		
-		pinger.cancel();
-		pinger = null;
+		if (client.getOnline()) {
+			aim = client;
+		} else {
+			logger.error("Bot failed to sign on");
+		}
 	}
 	
-    /**
-     * Strip out HTML from a string
-     * 
-     * @param line * *
-     * @return the string without HTML
-     */
-    private static String stripHTML(String line) {
-        StringBuilder sb = new StringBuilder(line);
-        String out = "";
-
-        for (int i = 0; i < (sb.length() - 1); i++) {
-            if (sb.charAt(i) == '<') {
-                // Most tags
-                if ((sb.charAt(i + 1) == '/') || ((sb.charAt(i + 1) >= 'a') && (sb.charAt(i + 1) <= 'z'))
-                    || ((sb.charAt(i + 1) >= 'A') && (sb.charAt(i + 1) <= 'Z'))) {
-                    for (int j = i + 1; j < sb.length(); j++) {
-                        if (sb.charAt(j) == '>') {
-                            sb = sb.replace(i, j + 1, "");
-                            i--;
-                            break;
-                        }
-                    }
-                } else if (sb.charAt(i + 1) == '!') {
-                    // Comments
-                    for (int j = i + 1; j < sb.length(); j++) {
-                        if ((sb.charAt(j) == '>') && (sb.charAt(j - 1) == '-') && (sb.charAt(j - 2) == '-')) {
-                            sb = sb.replace(i, j + 1, "");
-                            i--;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        out = sb.toString();
-        return out;
-    }
+	public void run() {
+		if (aim == null)
+			signOn();
+		
+		if (aim != null) {
+			pinger = new SelfPinger();
+			
+			logger.debug("Bot thread waiting for events...");
+			aim.read();
+			logger.debug("Bot thread exiting");
+			aim = null;
+			
+			pinger.cancel();
+			pinger = null;
+		}
+	}
+	
+	public void signOff() {
+		if (aim != null) {
+			aim.signOff();
+			// this should cause read() to return so in run() we set aim = null
+		}
+	}
+	
+	public boolean getOnline() {
+		return aim != null && aim.getOnline();
+	}
+	
+	// Normally called from a separate thread
+	public void doInvite(BotTaskInvite invite) throws BotTaskFailedException {
+		
+		logger.debug("Bot " + name + " got invite task from " + invite.getFromAimName() + " for " + invite.getInviteeAimName());
+		
+		// we save a reference in case it gets set to null by the main thread
+		Client client = aim;
+		
+		if (client == null) {
+			throw new BotTaskFailedException("bot is not running");
+		}
+		
+		ScreenName recipientName = new ScreenName(invite.getInviteeAimName());
+		Buddy recipient = client.addBuddy(recipientName);
+		
+		XmlBuilder builder = new XmlBuilder();
+		builder.append("Invitation from ");
+		builder.appendEscaped(invite.getFromAimName());
+		builder.appendTextNode("a", "click here to join", "href", invite.getInviteUrl());
+		
+		client.sendMessage(recipient, builder.toString());
+		
+		if (!client.getOnline()) {
+			// most likely this means we failed (there's really no way to know reliably)
+			throw new BotTaskFailedException("offline right when we sent the message");
+		}
+	}
 }

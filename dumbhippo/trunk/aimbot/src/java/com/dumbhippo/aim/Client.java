@@ -63,37 +63,36 @@ public class Client {
 
     private boolean autoAddUsers = false;
 
-    private Map<ScreenName,Buddy> buddyHash;
+    private Map<ScreenName,Buddy> buddyHash; // must synchronize!
 
     private Set<ScreenName> permitted;
 
     private Set<ScreenName> denied;
     
-    public Client(String name, String pass, String info, String response, boolean autoAddUsers) {
+    public Client(ScreenName name, String pass, String info, String response, boolean autoAddUsers) {
         this.nonUserResponse = response;
         
         aimListeners = new ArrayList<Listener>();
         rawListeners = new ArrayList<RawListener>();
-        buddyHash = new HashMap<ScreenName,Buddy>();
+        buddyHash = new HashMap<ScreenName,Buddy>(); // must synchronize on this to touch it
         permitted = new HashSet<ScreenName>();
         denied = new HashSet<ScreenName>();
         this.autoAddUsers = autoAddUsers;
         
-        connection = new RawConnection(new ScreenName(name), pass, info,
-        		new ClientListener());
+        connection = new RawConnection(name, pass, info, new ClientListener());
         
-        this.addBuddy(new Buddy(name));    	
+        this.addBuddy(name);
     }
 
-    public Client(String name, String pass, String info, boolean autoAddUsers) {
+    public Client(ScreenName name, String pass, String info, boolean autoAddUsers) {
         this(name, pass, info, "Sorry, you must be a user of this system to send requests.", autoAddUsers);
     }
 
-    public Client(String name, String pass, String info) {
+    public Client(ScreenName name, String pass, String info) {
         this(name, pass, info, false);
     }
 
-    public Client(String name, String pass) {
+    public Client(ScreenName name, String pass) {
         this(name, pass, "No info", false);
     }
 
@@ -104,17 +103,22 @@ public class Client {
      * @return The buddy
      */
     public Buddy getBuddy(ScreenName buddyName) {
-        return buddyHash.get(buddyName);
+    	synchronized (buddyHash) {
+    		return buddyHash.get(buddyName);
+    	}
     }
-
+  
     /**
      * Get a list of all the current buddy names
      * 
      * @return list
      */
     public List<ScreenName> getBuddyNames() {
-    	Set<ScreenName> names = buddyHash.keySet();
-    	ScreenName[] arrayNames = names.toArray(new ScreenName[names.size()]);
+    	ScreenName[] arrayNames;
+    	synchronized (buddyHash) {
+    		Set<ScreenName> names = buddyHash.keySet();
+    		arrayNames = names.toArray(new ScreenName[names.size()]);
+    	}
     	                                      
         return Arrays.asList(arrayNames);
     }
@@ -126,11 +130,18 @@ public class Client {
     	connection.signOff("User request");
     }
 
-    /**
-     * Main processing method for the Client object
+    /** 
+     * Block until we're signed on or failed to sign on
+     *
      */
-    public void run() {
+    public void signOn() {
     	connection.signOn();
+    }
+    
+    /**
+     * Block until we have an incoming event
+     */
+    public void read() {
     	connection.read();
     }
 
@@ -146,6 +157,7 @@ public class Client {
     	connection.sendMessage(buddy, html);
     }
     
+    // this is often called from another thread
     public void sendMessage(Buddy buddy, String html) {
     	if (buddy == null)
     		throw new IllegalArgumentException("null buddy");
@@ -161,32 +173,37 @@ public class Client {
         }
     }
 
-    public void addBuddy(Buddy buddy) {
-        if (buddy == null)
-        	throw new IllegalArgumentException("null buddy");
+    public Buddy addBuddy(ScreenName buddyName) {
+        if (buddyName == null)
+        	throw new IllegalArgumentException("null buddy name");
 
-        if (getBuddy(buddy.getName()) != null) {
-            return;
-        }
-
-        connection.addBuddy(buddy.getName(), buddy.getGroup());
+    	Buddy buddy; 
+        synchronized (buddyHash) {
+        	buddy = getBuddy(buddyName);
+        	if (buddy != null)
+        		return buddy;
         
-        // logger.debug("Added buddy to hash");
-        buddyHash.put(buddy.getName(), buddy);
+        	buddy = new Buddy(buddyName);
+        	buddyHash.put(buddy.getName(), buddy);
+        }
+        
+        connection.addBuddy(buddy.getName(), buddy.getGroup());
+        return buddy;
     }
 
     public void removeBuddy(Buddy buddy) {
         if (buddy == null)
         	throw new IllegalArgumentException("null buddy");
 
-        if (getBuddy(buddy.getName()) == null) {
-            return;
+        synchronized (buddyHash) {
+        	if (getBuddy(buddy.getName()) == null) {
+        		return;
+        	}
+        	// logger.debug("Removed buddy from hash");
+        	buddyHash.remove(buddy.getName());
         }
-
-        connection.removeBuddy(buddy.getName(), buddy.getGroup());
         
-        // logger.debug("Removed buddy from hash");
-        buddyHash.remove(buddy.getName());
+    	connection.removeBuddy(buddy.getName(), buddy.getGroup());
     }
 
     /**
@@ -219,8 +236,7 @@ public class Client {
         Buddy aimbud = getBuddy(from);
         if (aimbud == null) {
             if (autoAddUsers) {
-                aimbud = new Buddy(from);
-                addBuddy(aimbud);
+                addBuddy(from);
                 aimbud.setOnline(true);
             } else {
                 logger.info("MESSAGE FROM A NON BUDDY(" + from + ")");
@@ -566,15 +582,17 @@ public class Client {
 				}
 			}
 
-            Buddy buddy = buddyHash.get(name);
-            if (buddy == null) {
-                buddy = new Buddy(name, group);
-                buddyHash.put(name, buddy);
-            } else {
-                // they already exist, so just take the server's
-                // word for the group they belong in
-                buddy.setGroup(group);
-            }
+			synchronized (buddyHash) {
+				Buddy buddy = buddyHash.get(name);
+				if (buddy == null) {
+					buddy = new Buddy(name, group);
+					buddyHash.put(name, buddy);
+				} else {
+					// they already exist, so just take the server's
+					// word for the group they belong in
+					buddy.setGroup(group);
+				}
+			}
 		}
 
 		public void handleAddPermitted(ScreenName buddy) {
