@@ -30,29 +30,79 @@
  * under the terms of any one of the NPL, the GPL or the LGPL.
  *----------------------------------------------------------------------------*/
 
-
 package com.levelonelabs.aim;
 
 
+
 /**
- * Interface for AIM service requestor
- *
- * @author Scott Oster
- *
- * @created January 1, 2002
+ * Represents an AIM Buddy
+ * 
+ * @author Will Gorman, Scott Oster
+ * @created November 8, 2001
  */
-public interface AIMListener extends AIMBaseListener {
+public class Buddy {
+	
+	public static final String DEFAULT_GROUP = "TOC";
+	
+    private ScreenName name;
+    private boolean online;
+    private int warningAmount;
+    private boolean banned;
+    private String group;
+    
+    public Buddy(ScreenName name, String group) {
+    	warningAmount = 0;
+    	banned = false;
+    	online = false;
+    	this.name = name;
+    	setGroup(group);
+    }
 
-    public void handleMessage(AIMBuddy buddy, String messageHtml);
+    public Buddy(ScreenName name) {
+        this(name, DEFAULT_GROUP);
+    }
+    
+    public Buddy(String name) {
+        this(name, DEFAULT_GROUP);
+    }
+    
+    public Buddy(String name, String group) {
+    	this(new ScreenName(name), group);
+    }
 
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
 
-    public void handleWarning(AIMBuddy whoEviledUs, int amount);
+    public ScreenName getName() {
+        return name;
+    }
 
+    public boolean isOnline() {
+        return online;
+    }
 
-    public void handleBuddySignOn(AIMBuddy buddy, String infoHtml);
-    public void handleBuddySignOff(AIMBuddy buddy, String infoHtml);
+    public boolean isBanned() {
+        return banned;
+    }
 
+    public void setBanned(boolean banned) {
+        this.banned = banned;
+    }
 
-    public void handleBuddyUnavailable(AIMBuddy buddy, String messageHtml);
-    public void handleBuddyAvailable(AIMBuddy buddy, String messageHtml);
+    public int getWarningAmount() {
+        return warningAmount;
+    }
+
+    public void setWarningAmount(int amount) {
+        warningAmount = amount;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public String getGroup() {
+        return group;
+    }
 }

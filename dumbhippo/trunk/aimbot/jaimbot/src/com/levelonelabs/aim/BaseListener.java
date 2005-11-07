@@ -1,6 +1,6 @@
 package com.levelonelabs.aim;
 
-public interface AIMBaseListener {
+public interface BaseListener {
 
 	public void handleConnected();
 

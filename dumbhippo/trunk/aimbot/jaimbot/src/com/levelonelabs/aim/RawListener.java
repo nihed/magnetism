@@ -1,6 +1,6 @@
 package com.levelonelabs.aim;
 
-public interface AIMRawListener extends AIMBaseListener {
+public interface RawListener extends BaseListener {
     public void handleMessage(ScreenName buddy, String htmlMessage);
 
     public void handleSetEvilAmount(ScreenName whoEviledUs, int amount);

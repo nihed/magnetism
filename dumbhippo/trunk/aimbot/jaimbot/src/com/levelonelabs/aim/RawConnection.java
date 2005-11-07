@@ -45,8 +45,8 @@ import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
-public class AIMRawConnection {
-	private static Logger logger = Logger.getLogger(AIMRawConnection.class.getName());
+public class RawConnection {
+	private static Logger logger = Logger.getLogger(RawConnection.class.getName());
 	
     // rate limiting
     private static final int MAX_POINTS = 10;
@@ -89,11 +89,11 @@ public class AIMRawConnection {
 
     private String info;
     
-    private AIMRawListener listener;
+    private RawListener listener;
     
     private PermitDenyMode permitMode = PermitDenyMode.PERMIT_ALL;
     
-    public AIMRawConnection(ScreenName name, String pass, String info, AIMRawListener listener) {
+    public RawConnection(ScreenName name, String pass, String info, RawListener listener) {
 
         this.name = name;
         this.pass = pass;
@@ -587,7 +587,7 @@ public class AIMRawConnection {
         PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
         try {
-            String current_group = AIMBuddy.DEFAULT_GROUP;
+            String current_group = Buddy.DEFAULT_GROUP;
             String line;
             while (null != (line = br.readLine())) {
                 if (line.equals("done:")) {

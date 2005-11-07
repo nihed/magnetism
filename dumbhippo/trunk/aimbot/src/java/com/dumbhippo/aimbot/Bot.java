@@ -5,20 +5,20 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.levelonelabs.aim.AIMBuddy;
-import com.levelonelabs.aim.AIMClient;
-import com.levelonelabs.aim.AIMListener;
+import com.levelonelabs.aim.Buddy;
+import com.levelonelabs.aim.Client;
+import com.levelonelabs.aim.Listener;
 
 class Bot implements Runnable {
 
     static private final String PING = "PING";
 	static private Timer timer;
 	
-	private AIMClient aim;
+	private Client aim;
 	private Random random;
 	private SelfPinger pinger;
 	
-    /** FIXME this is a bit broken, because AIMClient isn't threadsafe to 
+    /** FIXME this is a bit broken, because Client isn't threadsafe to 
      * speak of, and the timer is running in a 
      * separate thread... I synchronized the "send a frame" method so 
      * at least we won't send completely corrupt garbage, but didn't 
@@ -77,7 +77,7 @@ class Bot implements Runnable {
 		}
 	}
 	
-	class Listener implements AIMListener {
+	class BotListener implements Listener {
 		public void handleConnected() {
 			System.out.println("connected");
 		}
@@ -86,20 +86,20 @@ class Bot implements Runnable {
 			System.out.println("disconnected");
 		}
 		
-		public void handleMessage(AIMBuddy buddy, String request) {
+		public void handleMessage(Buddy buddy, String request) {
 			System.out.println("message from " + buddy.getName() + ": " + request);
 			saySomethingRandom(buddy);
 		}
 		
-		public void handleWarning(AIMBuddy buddy, int amount) {
+		public void handleWarning(Buddy buddy, int amount) {
 			System.out.println("warning from " + buddy.getName());
 		}
 		
-		public void handleBuddySignOn(AIMBuddy buddy, String info) {
+		public void handleBuddySignOn(Buddy buddy, String info) {
 			System.out.println("Buddy sign on " + buddy.getName());
 		}
 		
-		public void handleBuddySignOff(AIMBuddy buddy, String info) {
+		public void handleBuddySignOff(Buddy buddy, String info) {
 			System.out.println("Buddy sign off " + buddy.getName());
 		}
 		
@@ -107,11 +107,11 @@ class Bot implements Runnable {
 			System.out.println("error: " + error + " message: " + message);
 		}
 		
-		public void handleBuddyUnavailable(AIMBuddy buddy, String message) {
+		public void handleBuddyUnavailable(Buddy buddy, String message) {
 			System.out.println("buddy unavailable: " + buddy.getName() + " message: " + message);
 		}
 		
-		public void handleBuddyAvailable(AIMBuddy buddy, String message) {
+		public void handleBuddyAvailable(Buddy buddy, String message) {
 			System.out.println("buddy available: " + buddy.getName() + " message: " + message);
 			if (buddy.getName().equals("bryanwclark")) {
 				saySomethingRandom(buddy);
@@ -135,7 +135,7 @@ class Bot implements Runnable {
 		random = new Random();
 	}
 
-	void saySomethingRandom(AIMBuddy buddy) {
+	void saySomethingRandom(Buddy buddy) {
 		System.out.println("saying something random to " + buddy.getName());
 		switch (random.nextInt(5)) {
 		case 0:
@@ -158,9 +158,9 @@ class Bot implements Runnable {
 
 	public void run() {
 		
-		aim = new AIMClient("DumbHippoBot", "s3kr3tcode", "My Profile!",
+		aim = new Client("DumbHippoBot", "s3kr3tcode", "My Profile!",
 				"You aren't a buddy!", true /*auto-add everyone as buddy*/);
-		aim.addListener(new Listener());
+		aim.addListener(new BotListener());
 		
 		pinger = new SelfPinger();
 		
