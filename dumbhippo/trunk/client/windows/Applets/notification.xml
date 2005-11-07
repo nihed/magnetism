@@ -2,20 +2,20 @@
 <!-- note this file must actually be XML to make XSLT work -->
 <html xmlns:dh="http://dumbhippo.com/schema/clientjs">
 <head>
-<link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
+<dh:stylesheet/>
 <title>moo test</title>
 </head>
 <dh:corescript/>
 <body style="overflow: hidden;" onclick="return dh.notification.handleBodyClicked();">
-<table>
+<table class="dh-notification">
 <tr>
+<td class="dh-notification-sender">
 <dh:linkimage/><br/>
-<div class="senderName"><dh:senderName/></div>
-<td>
+<div><dh:senderName/></div>
 </td>
 <td>
-<div><dh:link/></div>
-<div class="linkDescription"><dh:linkDescription/></div>
+<div class="dh-link-title"><dh:link/></div>
+<div><dh:linkDescription/></div>
 </td>
 </tr>
 </table>

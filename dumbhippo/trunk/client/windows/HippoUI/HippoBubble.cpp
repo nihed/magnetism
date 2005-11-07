@@ -69,7 +69,7 @@ HippoBubble::createWindow(void)
 	RECT desktopRect;
 	GetClientRect(desktopWindow,&desktopRect);
 
-	MoveWindow(window_, (desktopRect.right - rect.right), (desktopRect.bottom - rect.bottom), 
+	MoveWindow(window_, (desktopRect.right - rect.right) - 10, (desktopRect.bottom - rect.bottom) - 10, 
 			   rect.right, rect.bottom, TRUE);
 
 	hippoSetWindowData<HippoBubble>(window_, this);

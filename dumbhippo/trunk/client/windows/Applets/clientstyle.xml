@@ -12,11 +12,12 @@
 				encoding="UTF-8"/>
 	<xsl:template match="dh:corescript">
 		<script language="javascript" src="{$appleturl}notification.js"></script>
-		<xsl:apply-templates/>
+	</xsl:template>
+	<xsl:template match="dh:stylesheet">	
+		<link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
 	</xsl:template>
 	<xsl:template match="dh:linkimage">
 		<img src="{$senderPhotoUrl}"></img>
-		<xsl:apply-templates/>
 	</xsl:template>
 	<xsl:template match="dh:senderName">
 		<xsl:value-of select="$senderName"/>
