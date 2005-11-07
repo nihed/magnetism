@@ -60,6 +60,7 @@ public:
     HippoPreferences *getPreferences();
 
     void showMenu(UINT buttonFlag);
+	void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
     void showURL(BSTR postId, BSTR url);
     void showShareWindow(BSTR title, BSTR url);
 	void HippoUI::showRecent();

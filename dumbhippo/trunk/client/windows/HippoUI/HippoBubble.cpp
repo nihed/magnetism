@@ -54,7 +54,7 @@ bool
 HippoBubble::createWindow(void)
 {
 	window_ = CreateWindow(CLASS_NAME, L"Hippo Notification", WS_POPUP | WS_EX_TOPMOST,
-		CW_USEDEFAULT, CW_USEDEFAULT, 400, 200, 
+		CW_USEDEFAULT, CW_USEDEFAULT, 400, 125, 
 		NULL, NULL, instance_, NULL);
 	if (!window_) {
 		hippoDebugLastErr(L"Couldn't create window!");
@@ -65,11 +65,10 @@ HippoBubble::createWindow(void)
 	RECT rect;
 	GetClientRect(window_,&rect);
 
-	HWND desktopWindow = GetDesktopWindow();
 	RECT desktopRect;
-	GetClientRect(desktopWindow,&desktopRect);
+	HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-	MoveWindow(window_, (desktopRect.right - rect.right) - 10, (desktopRect.bottom - rect.bottom) - 10, 
+	MoveWindow(window_, (desktopRect.right - rect.right), (desktopRect.bottom - rect.bottom), 
 			   rect.right, rect.bottom, TRUE);
 
 	hippoSetWindowData<HippoBubble>(window_, this);
@@ -219,10 +218,16 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	currentLinkId_ = share.postId;
 	currentLink_ = share.url;
 
+	HippoBSTR senderURLfrag;
+	senderURLfrag.Append(L"viewperson?personId=");
+	senderURLfrag.Append(share.senderId);
+	ui_->getRemoteURL(senderURLfrag, &currentSenderUrl_);
+
 	HippoBSTR photoURLfrag(L"files/headshots/");
 	photoURLfrag.Append(share.senderId);
 	HippoBSTR photoURL;
 	ui_->getRemoteURL(photoURLfrag, &photoURL);
+
 	appendTransform(L"notification.xml", L"clientstyle.xml", L"senderPhotoUrl", photoURL.m_str, 
 		L"senderName", share.senderName, L"linkURL", share.url, 
 		L"linkTitle", share.title, L"linkDescription", share.description, NULL);
@@ -296,6 +301,14 @@ STDMETHODIMP
 HippoBubble::LinkClicked()
 {
 	ui_->showURL(currentLinkId_, currentLink_);
+	return S_OK;
+}
+
+STDMETHODIMP 
+HippoBubble::SenderLinkClicked() 
+{
+	HippoPtr<IWebBrowser2> browser;
+	ui_->launchBrowser(currentSenderUrl_, browser);
 	return S_OK;
 }
 

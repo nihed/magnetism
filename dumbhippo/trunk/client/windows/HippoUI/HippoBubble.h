@@ -102,6 +102,7 @@ public:
 	STDMETHODIMP LockContainer(BOOL fLock);
 	
 	// IHippoBubble
+	STDMETHODIMP SenderLinkClicked();
 	STDMETHODIMP LinkClicked();
 	STDMETHODIMP Close();
 
@@ -132,6 +133,7 @@ private:
 
 	HippoBSTR currentLink_;
 	HippoBSTR currentLinkId_;
+	HippoBSTR currentSenderUrl_;
 
 	bool embedIE(void);
 	bool appendTransform(BSTR src, BSTR style, ...);

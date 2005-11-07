@@ -45,6 +45,14 @@ dh.notification.handleLinkClicked = dh.client.stdEventHandler(function(e) {
 	return false;
 })
 
+// Called when the user clicks on the sender name
+dh.notification.handleSenderLinkClicked = dh.client.stdEventHandler(function(e) {
+	e.stopPropagation();
+	window.external.SenderLinkClicked();
+	window.external.Close();
+	return false;
+})
+
 dh.notification.handleBodyClicked = dh.client.stdEventHandler(function(e) {
 	e.stopPropagation();
 	window.external.Close();

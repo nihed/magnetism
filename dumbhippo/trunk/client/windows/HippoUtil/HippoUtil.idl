@@ -36,5 +36,7 @@ library HippoUtil {
 	HRESULT LinkClicked();
 	[id(121), helpstring("Body Clicked")]
 	HRESULT Close();
+	[id(122), helpstring("Sender Link Clicked")]
+	HRESULT SenderLinkClicked();
     }
 }

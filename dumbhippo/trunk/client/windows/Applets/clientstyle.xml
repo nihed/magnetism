@@ -19,11 +19,11 @@
 	<xsl:template match="dh:linkimage">
 		<img src="{$senderPhotoUrl}"></img>
 	</xsl:template>
-	<xsl:template match="dh:senderName">
-		<xsl:value-of select="$senderName"/>
+	<xsl:template match="dh:senderLink">
+		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><xsl:value-of select="$senderName"/></a>
 	</xsl:template>
 	<xsl:template match="dh:link">
-		<a id="dhLink" onclick="dh.notification.handleLinkClicked();" href="{$linkURL}" class="linkTitle"><xsl:value-of select="$linkTitle"/></a>
+		<a onclick="dh.notification.handleLinkClicked();" href="{$linkURL}" class="linkTitle"><xsl:value-of select="$linkTitle"/></a>
 	</xsl:template>
 	<xsl:template match="dh:linkDescription">
 		<xsl:value-of select="$linkDescription"/>

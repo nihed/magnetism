@@ -398,13 +398,9 @@ HippoUI::showMenu(UINT buttonFlag)
     PostMessage(window_, WM_NULL, 0, 0);
 }
 
-// Show a window when the user clicks on a shared link
-void 
-HippoUI::showURL(BSTR postId, BSTR url)
+void
+HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 {
-    HippoBSTR shareURL;
-
-    HippoPtr<IWebBrowser2> webBrowser;
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
 	             IID_IWebBrowser2, (void **)&webBrowser);
 
@@ -419,6 +415,16 @@ HippoUI::showURL(BSTR postId, BSTR url)
     webBrowser->Navigate(url,
    		         &missing, &missing, &missing, &missing);
 
+    webBrowser->put_Visible(VARIANT_TRUE);
+}
+
+// Show a window when the user clicks on a shared link
+void 
+HippoUI::showURL(BSTR postId, BSTR url)
+{
+    HippoPtr<IWebBrowser2> webBrowser;
+
+	launchBrowser(url, webBrowser);
     /* Something like the following should activate a explorer bar,
      * (see Q255920) but doesn't seem to work.
      */
@@ -427,7 +433,7 @@ HippoUI::showURL(BSTR postId, BSTR url)
     VARIANT barID;
     barID.vt = VT_BSTR;
     barID.bstrVal = barIDString;
-
+ 
     VARIANT show;
     barID.vt = VT_BOOL;
     barID.boolVal = VARIANT_TRUE;
@@ -437,7 +443,6 @@ HippoUI::showURL(BSTR postId, BSTR url)
 	hippoDebug(L"Couldn't show browser bar: %X", hr);
 #endif
 
-    webBrowser->put_Visible(VARIANT_TRUE);
 	WCHAR *postIdW = postId;
 	char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);
 	im_.notifyPostClickedU(postIdU);
