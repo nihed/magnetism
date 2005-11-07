@@ -50,7 +50,7 @@ public enum TocError {
 		
 		// if there's no %s then "args" is ignored
 		
-		if (this == ERROR_NOT_SEEN_BEFORE)
+		if (this.code < 0)
 			return String.format("unknown code: " + format, args);
 		else
 			return String.format(code + ": " + format, args);
