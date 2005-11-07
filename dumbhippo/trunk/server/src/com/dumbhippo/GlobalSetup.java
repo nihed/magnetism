@@ -21,8 +21,6 @@ import org.apache.log4j.PropertyConfigurator;
  */
 public final class GlobalSetup {
 	private volatile static boolean initialized = false;
-	
-	static Log logger = LogFactory.getLog(GlobalSetup.class);	
 
 	private GlobalSetup() {
 		// can't instantiate this thing
@@ -36,7 +34,7 @@ public final class GlobalSetup {
 		PropertyConfigurator.configure(url);
 		//BasicConfigurator.configure();
 		
-		logger.info("Initialized logging, config = " + url);
+		//logger.info("Initialized logging, config = " + url);
 	}
 	
 	private static void initialize() {
