@@ -357,8 +357,10 @@ public class RawConnection {
             	command_UPDATE_BUDDY2(inToken);
             } else if (command.equals("ERROR")) {
             	command_ERROR(inToken);
+            } else if (command.equals("NICK")) {
+            	command_NICK(inToken);
             } else {
-            	// log this but don't crash, maybe it's harmless
+            	// log this but don't crash, probably it's harmless
             	logger.error("unknown AIM command '" + toDebugAscii(command) + "'");
             }
         } catch (Exception e) {
@@ -381,7 +383,7 @@ public class RawConnection {
         
         logger.debug("IM: " + from + ": " + toDebugAscii(mesg));
 
-        generateMessage(from, mesg);    	
+        generateMessage(from, mesg);
     }
     
     private void command_CONFIG2(StringTokenizer inToken) {
@@ -460,6 +462,21 @@ public class RawConnection {
         }
     }
         
+    private void command_NICK(StringTokenizer inToken) {
+    	String nick = inToken.nextToken();
+    	logger.debug("Got our nick = '" + nick + "'");
+    	
+    	ScreenName newName = new ScreenName(nick);
+    	
+    	// equals is defined using the normal form only
+    	if (newName.equals(name)) {
+    		name = newName;
+    	} else {
+    		logger.error("Strange, got a new nick with normal form " + newName.getNormalized()
+    				+ " while we are " + name.getNormalized());
+    	}
+    }
+    
     private void processConfig(String config) {
         PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
@@ -789,7 +806,7 @@ public class RawConnection {
         
         private void writeFrame(String toBeSent) throws IOException {
         	out.writeByte(42); // *
-        	out.writeByte(2); // DATA
+        	out.writeByte(2); // DATA frame type code
         	out.writeShort(seqNo); // SEQ NO
         	seqNo = (seqNo + 1) & 65535;
         	out.writeShort(toBeSent.length()); // DATA SIZE
@@ -837,16 +854,47 @@ public class RawConnection {
         private Frame frameRead() {
         	try {
             	int length;
-            	byte[] data;
+            	byte[] data = null;
 
         		synchronized (in) {
-        			in.skip(4); // seq no
+        			byte b = in.readByte();
+        			if (b != '*') {
+        				logger.error("Frame starts with " + b + " not with *?");
+        			}
+        			b = in.readByte();
+        			short seq = in.readShort();
+        			logger.debug("frame type = " + b + " seq no = " + seq);
+        			
         			length = in.readShort();
-        			data = new byte[length];
-        			in.readFully(data);
+        			boolean readData = false;
+        			switch (b) {
+        			case 1: // SIGNON
+        				logger.warn("ignoring SIGNON, we probably got a PAUSE before it...");
+        				break;
+        			case 2: // DATA
+        				readData = true;
+        				break;
+        			case 5:  // KEEP_ALIVE
+        				// we get lots of these
+        				break;
+        			case 3: // ERROR (supposedly not used by TOC)
+        			case 4: // SIGNOFF (supposedly not used by TOC)
+        			default:
+        				logger.warn("ignoring weird frame type");
+        				break;
+        			}
+        			if (readData) {
+            			data = new byte[length];
+            			in.readFully(data);
+        			} else {
+        				in.skip(length);
+        			}
         		}
-        		Frame f = new Frame(data);
-        		return f;
+        		if (data != null) {
+        			return new Frame(data);
+        		} else {
+        			return null;
+        		}
         	} catch (InterruptedIOException e) {
         		// This happens every connection.setSoTimeout() time period
         		//logger.debug("IO interrupted in frame read: " + e.getMessage());
@@ -960,7 +1008,7 @@ public class RawConnection {
                     return;
                 }
 
-                in.skip(4); // seq num
+                in.skip(4); // * + frametype + seq num
                 length = in.readShort(); // data length
                 signon = new byte[length];
                 in.readFully(signon); // data
