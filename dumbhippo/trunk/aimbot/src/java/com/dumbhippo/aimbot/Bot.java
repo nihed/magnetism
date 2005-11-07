@@ -5,9 +5,9 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.levelonelabs.aim.Buddy;
-import com.levelonelabs.aim.Client;
-import com.levelonelabs.aim.Listener;
+import com.dumbhippo.aim.Buddy;
+import com.dumbhippo.aim.Client;
+import com.dumbhippo.aim.Listener;
 
 class Bot implements Runnable {
 
