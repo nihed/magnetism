@@ -79,7 +79,7 @@ public class RawConnection {
 
     private int sendLimit = MAX_POINTS;
 
-    private long lastFrameSendTime = System.currentTimeMillis();
+    private long lastFrameSendTime;
 
     private long lastMessageTimestamp;
 
@@ -91,10 +91,16 @@ public class RawConnection {
     
     private RawListener listener;
     
-    private PermitDenyMode permitMode = PermitDenyMode.PERMIT_ALL;
+    private PermitDenyMode permitMode;
+    
+    private int warnAmount;
     
     public RawConnection(ScreenName name, String pass, String info, RawListener listener) {
 
+    	warnAmount = 0;
+    	permitMode = PermitDenyMode.PERMIT_ALL;
+    	lastFrameSendTime = System.currentTimeMillis();
+    	
         this.name = name;
         this.pass = pass;
         this.info = info;
@@ -454,6 +460,7 @@ public class RawConnection {
         	from = new ScreenName("anonymous");
         }
         generateSetEvilAmount(from, amount);
+        warnAmount = amount;
     }
     
     private void command_UPDATE_BUDDY2(StringTokenizer inToken) {
@@ -469,6 +476,7 @@ public class RawConnection {
         
         int evilAmount = Integer.parseInt(inToken.nextToken());
         generateSetEvilAmount(new ScreenName("anonymous"), evilAmount);
+        warnAmount = evilAmount;
         
         if (stat.equals("T")) { // See whether user is available.
             @SuppressWarnings("unused") String signOnTime = inToken.nextToken();
@@ -577,9 +585,7 @@ public class RawConnection {
 
         // sending is more expensive the higher our warning level
         // this should decrement between 1 and 10 points (exponentially)
-        // FIXME
-        //int warnAmount = getBuddy(this.name).getWarningAmount();
-        //sendLimit -= (1 + Math.pow((3 * warnAmount) / 100, 2));
+        sendLimit -= (1 + Math.pow((3 * warnAmount) / 100, 2));
         lastFrameSendTime = System.currentTimeMillis();
     }
     
