@@ -39,7 +39,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 
 
 /**
@@ -49,9 +52,8 @@ import java.util.logging.Logger;
  * @created September 4, 2001
  */
 public class Client {
+	private static Log logger = GlobalSetup.getLog(Client.class);
 	
-    private static Logger logger = Logger.getLogger(Client.class.getName());
-
     private RawConnection connection;
     
     private List<Listener> aimListeners;
@@ -169,7 +171,7 @@ public class Client {
 
         connection.addBuddy(buddy.getName(), buddy.getGroup());
         
-        // logger.fine("Added buddy to hash");
+        // logger.debug("Added buddy to hash");
         buddyHash.put(buddy.getName(), buddy);
     }
 
@@ -183,7 +185,7 @@ public class Client {
 
         connection.removeBuddy(buddy.getName(), buddy.getGroup());
         
-        // logger.fine("Removed buddy from hash");
+        // logger.debug("Removed buddy from hash");
         buddyHash.remove(buddy.getName());
     }
 
@@ -196,7 +198,7 @@ public class Client {
         if (buddy == null)
         	throw new IllegalArgumentException("null buddy");
 
-        logger.fine("Attempting to warn: " + buddy.getName() + ".");
+        logger.debug("Attempting to warn: " + buddy.getName() + ".");
         connection.sendWarning(buddy.getName());
     }
 
@@ -231,7 +233,7 @@ public class Client {
         }
 
         if (aimbud.isBanned()) {
-            logger.fine("Ignoring message from banned user (" + from + "):" + htmlMessage);
+            logger.debug("Ignoring message from banned user (" + from + "):" + htmlMessage);
         } else {
         	for (Listener l : aimListeners) {
                 try {
@@ -287,7 +289,7 @@ public class Client {
     private void generateBuddySignOn(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 
@@ -306,11 +308,11 @@ public class Client {
     private void generateBuddySignOff(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 
-        // logger.fine("XML = \n" + aimbud.toXML());
+        // logger.debug("XML = \n" + aimbud.toXML());
         aimbud.setOnline(false);
         for (Listener l : aimListeners) {
             try {
@@ -324,7 +326,7 @@ public class Client {
     private void generateBuddyAvailable(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
         for (Listener l : aimListeners) {
@@ -339,7 +341,7 @@ public class Client {
     private void generateBuddyUnavailable(ScreenName buddy, String message) {
         Buddy aimbud = getBuddy(buddy);
         if (aimbud == null) {
-            logger.severe("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
+            logger.error("ERROR:  NOTIFICATION ABOUT NON BUDDY(" + buddy + ")");
             return;
         }
 

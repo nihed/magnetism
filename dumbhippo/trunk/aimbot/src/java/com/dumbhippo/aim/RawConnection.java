@@ -43,16 +43,15 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 
 public class RawConnection {
-	private static Logger logger = Logger.getLogger(RawConnection.class.getName());
-	
-    // rate limiting
-    private static final int MAX_POINTS = 10;
-
-    private static final int RECOVER_RATE = 2200;
-
+	private static Log logger = GlobalSetup.getLog(RawConnection.class);
+    
     // for TOC3 (using toc2_login)
     // private static final String REVISION = "\"TIC:\\Revision: 1.61 \" 160 US
     // \"\" \"\" 3 0 30303 -kentucky -utf8 94791632";
@@ -65,22 +64,11 @@ public class RawConnection {
     private String authorizerServer = "login.oscar.aol.com";
 
     private int authorizerPort = 29999;
-
-    private boolean online;
     
     // private final String ROAST = "Tic/Toc";
-    private int seqNo;
 
-    private Socket connection;
-
-    private DataInputStream in;
-
-    private DataOutputStream out;
-
-    private int sendLimit = MAX_POINTS;
-
-    private long lastFrameSendTime;
-
+    private IOThreads io;
+    
     private long lastMessageTimestamp;
 
     private ScreenName name;
@@ -97,9 +85,8 @@ public class RawConnection {
     
     public RawConnection(ScreenName name, String pass, String info, RawListener listener) {
 
-    	warnAmount = 0;
+    	setWarnAmount(0);
     	permitMode = PermitDenyMode.PERMIT_ALL;
-    	lastFrameSendTime = System.currentTimeMillis();
     	
         this.name = name;
         this.pass = pass;
@@ -108,9 +95,6 @@ public class RawConnection {
     }
     
     public void signOn() {
-        int length;
-        seqNo = (int) Math.floor(Math.random() * 65535.0);
-
         // AOL likes to have a bunch of bogus IPs for some reason, so lets try
         // them all until one works
         InetAddress[] loginIPs = null;
@@ -124,137 +108,54 @@ public class RawConnection {
 
         for (int i = 0; i < loginIPs.length; i++) {
             try {
-                logger.fine("Attempting to logon using IP:" + loginIPs[i]);
+                logger.debug("Attempting to logon using IP:" + loginIPs[i]);
                 // * Client connects to TOC
-                connection = new Socket(loginIPs[i], loginPort);
-                connection.setSoTimeout(10000);
-                in = new DataInputStream(connection.getInputStream());
-                out = new DataOutputStream(new BufferedOutputStream(connection.getOutputStream()));
-                logger.fine("Successfully connected using IP:" + loginIPs[i]);
+                io = new IOThreads(loginIPs[i], loginPort);
+                logger.debug("Successfully connected using IP:" + loginIPs[i]);
                 break;
-            } catch (Exception e) {
+            } catch (IOException e) {
                 // try the next one
             }
         }
 
-        if (connection == null || in == null || out == null) {
+        if (io == null) {
             signOff("can't establish connection");
             generateError("Signon err", "Unable to establish connection to logon server.");
             return;
         }
+        
+        // From here on we're guaranteed to get an end frame from "io" when 
+        // it closes.
 
-        logger.fine("*** Starting AIM CLIENT (SEQNO:" + seqNo + ") ***");
-        try {
-            // * Client sends "FLAPON\r\n\r\n"
-            out.writeBytes("FLAPON\r\n\r\n");
-            out.flush();
-            // 6 byte header, plus 4 FLAP version (1)
-            byte[] signon = new byte[10];
-            // * TOC sends Client FLAP SIGNON
-            in.readFully(signon);
-            // * Client sends TOC FLAP SIGNON
-            out.writeByte(42);// *
-            out.writeByte(1); // SIGNON TYPE
-            out.writeShort(seqNo); // SEQ NO
-            seqNo = (seqNo + 1) & 65535;
-            String normalName = name.getNormalized();
-            out.writeShort(normalName.length() + 8); // data length = username length
-            // + SIGNON DATA
-            out.writeInt(1); // FLAP VERSION
-            out.writeShort(1); // TLF TAG
-            out.writeShort(normalName.length()); // username length
-            out.writeBytes(normalName); // usename
-            out.flush();
-
-            // * Client sends TOC "toc_signon" message
-            frameSend("toc2_signon " + authorizerServer + " " + authorizerPort + " " + name + " " + imRoast(pass)
-                + " English " + REVISION + " " + toc2MagicNumber(name, pass) + "\0");
-
-            // * if login fails TOC drops client's connection
-            // else TOC sends client SIGN_ON reply
-            in.skip(4); // seq num
-            length = in.readShort(); // data length
-            signon = new byte[length];
-            in.readFully(signon); // data
-            if (new String(signon).startsWith("ERROR")) {
-                fromAIM(signon);
-                logger.severe("Signon error");
-                signOff("signon error");
-                return;
-            }
-
-            in.skip(4); // seq num
-            length = in.readShort(); // data length
-            signon = new byte[length];
-            in.readFully(signon); // data
-            // * Client sends TOC toc_init_done message
-            frameSend("toc_init_done\0");
-            online = true;
-            generateConnected();
-            frameSend("toc_set_info \"" + info + "\"\0");
-            logger.fine("Done with AIM logon");
-            connection.setSoTimeout(3000);
-        } catch (InterruptedIOException e) {
-            signOff("interrupted IO signing on");
-        } catch (IOException e) {
-            signOff("IOException signing on");
-        }
+        io.signOn(name, pass, info, authorizerServer, authorizerPort);
+        if (io.getOnceSignedOn())
+        	generateConnected();
     }
     
-    public void read() {
-    	int length;
-        byte[] data;
-        while (online) {
-            try {
-            	synchronized (in) {
-            		in.skip(4);
-            		length = in.readShort();
-            		data = new byte[length];
-            		in.readFully(data);
-            	}
-            	fromAIM(data);
-            	// logger.fine("SEQNO:"+seqNo);
-            } catch (InterruptedIOException e) {
-                // This is normal; read times out when we dont read anything.
-                // logger.fine("*** AIM ERROR: " + e + " ***");
-            } catch (IOException e) {
-                logger.severe("*** AIM ERROR: " + e + " ***");
-                break;
-            }
-        }
-    }
-
     /**
      * sign off
      * 
      * @param place (for debugging)
      */
     public void signOff(String place) {
-    	if (!online)
+    	if (io == null)
     		return;
     	
-    	online = false;
-    	logger.fine("Trying to close IM (" + place + ").....");
-    	try {
-    		if (null != out) {
-    			out.close();
-    		}
-    		if (null != in) {
-    			in.close();
-    		}
-    		if (null != connection) {
-    			connection.close();
-    		}
-    	} catch (IOException e) {
-    		logger.severe(e.toString());
-    	}
+    	logger.debug("Trying to close IM (" + place + ").....");
+    	io.close();
     	
-    	generateDisconnected();
-    	logger.fine("*** AIM CLIENT SIGNED OFF.");
+    	logger.debug("*** AIM CLIENT SIGNED OFF.");
     }
 
+    public void read() {
+    	while (io != null) {
+    		Frame frame = io.takeFrame();
+    		fromAIM(frame);
+    	}
+    }
+    
     public void addBuddy(ScreenName buddy, String group) {
-        if (online) {
+        if (getOnline()) {
             String toBeSent = "toc2_new_buddies {g:" + group + "\nb:" + buddy + "\n}";
             frameSend(toBeSent + "\0");
         }
@@ -266,7 +167,7 @@ public class RawConnection {
     }
 
     public void sendWarning(ScreenName buddy) {
-        logger.fine("Attempting to warn: " + buddy + ".");
+        logger.debug("Attempting to warn: " + buddy + ".");
 
         String work = "toc_evil ";
         work = work.concat(buddy.getNormalized());
@@ -278,9 +179,9 @@ public class RawConnection {
     	String which = permit ? "permit": "deny";
         if (buddyOrEmpty.length() == 0) {
         	// this assumes we are in the "opposite mode"
-            logger.fine("Attempting to " + which + " all.");
+            logger.debug("Attempting to " + which + " all.");
         } else {
-            logger.fine("Attempting to deny: " + buddyOrEmpty + ".");
+            logger.debug("Attempting to deny: " + buddyOrEmpty + ".");
         }
 
         String toBeSent = "toc2_add_" + which;
@@ -310,7 +211,7 @@ public class RawConnection {
         if (html.length() >= 1024) {
             html = html.substring(0, 1024);
         }
-        logger.fine("Sending Message " + to + " > " + html);
+        logger.debug("Sending Message " + to + " > " + html);
 
         String work = "toc2_send_im ";
         work = work.concat(to.getNormalized());
@@ -377,7 +278,7 @@ public class RawConnection {
      * @returns true if we are authenticated and connected
      */
     public boolean getOnline() {
-    	return online;
+    	return io != null && io.isOpen();
     }
     
     /**
@@ -389,16 +290,34 @@ public class RawConnection {
     	return permitMode;
     }
     
-    /**
-     * message recieved from aim
-     * 
-     * @param buffer
-     */
-    private void fromAIM(byte[] buffer) {
+    private void setWarnAmount(int warnAmount) {
+    	this.warnAmount = warnAmount;
+    	if (io != null)
+    		io.setWarnAmount(this.warnAmount);
+    }
+    
+    private void frameSend(String toBeSent) {
+    	if (io != null) {
+    		io.putFrame(new Frame(toBeSent));
+    	}
+    }
+    
+    private void fromAIM(Frame frame) {
+    	if (frame.isEndFrame()) {
+    		boolean haveGeneratedConnected = false;
+    		if (io.getOnceSignedOn())
+    			haveGeneratedConnected = true;
+    		
+    		io = null;
+    		
+    		if (haveGeneratedConnected)
+    			generateDisconnected();
+    		return;
+    	}
         try {
-            String inString = new String(buffer);
+            String inString = frame.getAsString();
 
-            logger.fine("*** AIM: " + inString + " ***");
+            logger.debug("*** AIM: " + inString + " ***");
             StringTokenizer inToken = new StringTokenizer(inString, ":");
             String command = inToken.nextToken();
             
@@ -414,7 +333,7 @@ public class RawConnection {
             	command_ERROR(inToken);
             }
         } catch (Exception e) {
-            logger.severe("ERROR: failed to handle aim protocol properly");
+            logger.error("ERROR: failed to handle aim protocol properly");
             e.printStackTrace();
         }
     }
@@ -432,7 +351,7 @@ public class RawConnection {
 
         lastMessageTimestamp = System.currentTimeMillis();
         
-        logger.fine("*** AIM MESSAGE: " + from + " > " + mesg + " ***");
+        logger.debug("*** AIM MESSAGE: " + from + " > " + mesg + " ***");
 
         generateMessage(from, mesg);    	
     }
@@ -444,10 +363,10 @@ public class RawConnection {
                 config = config + ":" + inToken.nextToken();
             }
             processConfig(config);
-            logger.fine("*** AIM CONFIG RECEIVED ***");
+            logger.debug("*** AIM CONFIG RECEIVED ***");
         } else {
             permitMode = PermitDenyMode.PERMIT_ALL;
-            logger.fine("*** AIM NO CONFIG RECEIVED ***");
+            logger.debug("*** AIM NO CONFIG RECEIVED ***");
         }
     }
     
@@ -460,7 +379,7 @@ public class RawConnection {
         	from = new ScreenName("anonymous");
         }
         generateSetEvilAmount(from, amount);
-        warnAmount = amount;
+        setWarnAmount(amount);
     }
     
     private void command_UPDATE_BUDDY2(StringTokenizer inToken) {
@@ -468,15 +387,15 @@ public class RawConnection {
         String stat = inToken.nextToken();
         if (stat.equals("T")) {
             generateBuddySignOn(buddy, "INFO");
-            // logger.fine("Buddy:" + name + " just signed on.");
+            // logger.debug("Buddy:" + name + " just signed on.");
         } else if (stat.equals("F")) {
             generateBuddySignOff(buddy, "INFO");
-            // logger.fine("Buddy:" + name + " just signed off.");
+            // logger.debug("Buddy:" + name + " just signed off.");
         }
         
         int evilAmount = Integer.parseInt(inToken.nextToken());
         generateSetEvilAmount(new ScreenName("anonymous"), evilAmount);
-        warnAmount = evilAmount;
+        setWarnAmount(evilAmount);
         
         if (stat.equals("T")) { // See whether user is available.
             @SuppressWarnings("unused") String signOnTime = inToken.nextToken();
@@ -496,43 +415,43 @@ public class RawConnection {
     
     private void command_ERROR(StringTokenizer inToken) {
         String error = inToken.nextToken();
-        logger.severe("*** AIM ERROR: " + error + " ***");
+        logger.error("*** AIM ERROR: " + error + " ***");
         if (error.equals("901")) {
             generateError(error, "Not currently available");
-            // logger.fine("Not currently available");
+            // logger.debug("Not currently available");
             return;
         }
 
         if (error.equals("902")) {
             generateError(error, "Warning not currently available");
-            // logger.fine("Warning not currently available");
+            // logger.debug("Warning not currently available");
             return;
         }
 
         if (error.equals("903")) {
             generateError(error, "Message dropped, sending too fast");
-            // logger.fine("Message dropped, sending too fast");
+            // logger.debug("Message dropped, sending too fast");
             return;
         }
 
         if (error.equals("960")) {
             String person = inToken.nextToken();
             generateError(error, "Sending messages too fast to " + person);
-            // logger.fine("Sending messages too fast to " + person);
+            // logger.debug("Sending messages too fast to " + person);
             return;
         }
 
         if (error.equals("961")) {
             String person = inToken.nextToken();
             generateError(error, person + " sent you too big a message");
-            // logger.fine(person + " sent you too big a message");
+            // logger.debug(person + " sent you too big a message");
             return;
         }
 
         if (error.equals("962")) {
             String person = inToken.nextToken();
             generateError(error, person + " sent you a message too fast");
-            // logger.fine(person + " sent you a message too fast");
+            // logger.debug(person + " sent you a message too fast");
             return;
         }
 
@@ -547,48 +466,11 @@ public class RawConnection {
             String text = inToken.nextToken();
             generateError(error, "AIM Signon failure: " + text);
 
-            // logger.fine("AIM Signon failure: " + text);
+            // logger.debug("AIM Signon failure: " + text);
             signOff("Signon err");
         }
     }
-    
-    private void frameSend(String toBeSent) {
-        if (sendLimit < MAX_POINTS) {
-            sendLimit += ((System.currentTimeMillis() - lastFrameSendTime) / RECOVER_RATE);
-            // never let the limit exceed the max, else this code won't work
-            // right
-            sendLimit = Math.min(MAX_POINTS, sendLimit);
-            if (sendLimit < MAX_POINTS) {
-                // sendLimit could be less than 0, this still works properly
-                logger.fine("Current send limit=" + sendLimit + " out of " + MAX_POINTS);
-                try {
-                    // this will wait for every point below the max
-                    int waitAmount = MAX_POINTS - sendLimit;
-                    logger.fine("Delaying send " + waitAmount + " units");
-                    Thread.sleep(RECOVER_RATE * waitAmount);
-                    sendLimit += waitAmount;
-                } catch (InterruptedException ie) {
-                }
-            }
-        }
-        try {
-        	out.writeByte(42); // *
-        	out.writeByte(2); // DATA
-        	out.writeShort(seqNo); // SEQ NO
-        	seqNo = (seqNo + 1) & 65535;
-        	out.writeShort(toBeSent.length()); // DATA SIZE
-        	out.writeBytes(toBeSent); // DATA
-        	out.flush();
-        } catch (IOException e) {
-        	signOff("IOException sending frame");
-        }
-
-        // sending is more expensive the higher our warning level
-        // this should decrement between 1 and 10 points (exponentially)
-        sendLimit -= (1 + Math.pow((3 * warnAmount) / 100, 2));
-        lastFrameSendTime = System.currentTimeMillis();
-    }
-    
+        
     private void processConfig(String config) {
         PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
@@ -627,7 +509,7 @@ public class RawConnection {
                 }
             }
         } catch (IOException e) {
-            logger.warning("Error reading configuration.");
+            logger.warn("Error reading configuration.");
             signOff("IOException in processing config");
             return;
         }
@@ -728,5 +610,344 @@ public class RawConnection {
         int c = pw * a;
 
         return c - a + b + 71665152;
+    }
+    
+    private static class Frame {
+    	private String str;
+    	
+    	Frame() {
+    		str = null;
+    	}
+    	
+    	Frame(byte[] bytes) {
+    		str = new String(bytes);
+    	}
+    	
+    	Frame(String str) {
+    		this.str = str; 
+    	}
+    	
+    	boolean isEndFrame() {
+    		return str == null;
+    	}
+    	
+    	byte[] getBytes() {
+    		return str.getBytes();
+    	}
+    	
+    	String getAsString() {
+    		return str;
+    	}
+    }
+    
+    private static class IOThreads {
+        
+        // rate limiting
+        private static final int MAX_POINTS = 10;
+
+        private static final int RECOVER_RATE = 2200;    	
+    	
+        private Socket connection;
+
+        private DataInputStream in;
+
+        private DataOutputStream out;
+
+        private int seqNo;
+
+        private int sendLimit;
+        
+        private long lastFrameSendTime;
+        
+        private int warnAmount;
+        
+        // did we ever authenticate?
+        private boolean onceSignedOn; 
+        
+        private LinkedBlockingQueue<Frame> inQueue;
+        
+        private LinkedBlockingQueue<Frame> outQueue;
+        
+        private Thread inThread;
+        
+        private Thread outThread;
+        
+        IOThreads(InetAddress address, int port) throws IOException {
+            connection = new Socket(address, port);
+            connection.setSoTimeout(10000);
+            in = new DataInputStream(connection.getInputStream());
+            out = new DataOutputStream(new BufferedOutputStream(connection.getOutputStream()));
+            
+            sendLimit = MAX_POINTS;
+        	lastFrameSendTime = System.currentTimeMillis();
+            seqNo = (int) Math.floor(Math.random() * 65535.0);
+            
+            inQueue = new LinkedBlockingQueue<Frame>();
+            outQueue = new LinkedBlockingQueue<Frame>();
+        }
+
+        void setWarnAmount(int warnAmount) {
+        	this.warnAmount = warnAmount;
+        }
+        
+        boolean isOpen() {
+        	// this connection looks open until the queues are empty
+        	// and nothing more could be read into them
+        	return !(connection.isClosed() && inQueue.isEmpty());
+        }
+        
+        boolean getOnceSignedOn() {
+        	return onceSignedOn;
+        }
+        
+        Frame takeFrame() {
+        	Frame frame = null;
+        	while (frame == null && isOpen()) {
+        		try {
+        			frame = inQueue.take();
+        		} catch (InterruptedException e) {
+        		}
+        	}
+			if (frame != null && frame.isEndFrame())
+				close();
+        	return frame;
+        }
+        
+        void putFrame(Frame frame) {
+        	if (frame == null)
+        		throw new IllegalArgumentException("null frame");
+        	queuePut(outQueue, frame);
+        }
+        
+        /**
+         * There are three ways this can be called. In scenario 1, we get an IO error
+         * in the input thread in frameRead(), which adds an end frame to the 
+         * incoming queue. We then call close() from takeFrame().
+         * In scenario 2, we close the connection on our side by calling this 
+         * directly.  In scenario 3, we call this during signOn().
+         */
+        void close() {
+        	if (Thread.currentThread() == inThread)
+        		throw new IllegalStateException("close() called from input thread");
+        	if (Thread.currentThread() == outThread)
+        		throw new IllegalStateException("close() called from output thread");
+
+        	try {
+        		// don't set these to null, it creates a big synchronization
+        		// problem since the child threads use them
+        		out.close();
+        		in.close();
+        		connection.close();
+        	} catch (IOException e) {
+        		// not much we can do...
+        	}
+
+        	// note, threads may not be created yet if still signing on
+        	
+        	while (inThread != null) {            	
+        		// frameRead() called from the inThread 
+        		// will return an end frame to the incoming queue
+
+        		try {
+        			inThread.join();
+        			inThread = null;
+        		} catch (InterruptedException e) {
+        		}
+        	}
+
+        	if (outThread != null)
+            	// send outgoing end frame, to exit outThread
+        		putFrame(new Frame());
+
+        	while (outThread != null) {
+        		try {
+        			outThread.join();
+        			outThread = null;
+        		} catch (InterruptedException e) {
+        		}
+        	}
+    	}
+        
+        private static void queuePut(LinkedBlockingQueue<Frame> queue, Frame frame) {
+        	while (true) {
+        		try {
+        			queue.put(frame);
+        			break;
+        		} catch (InterruptedException e) {
+        			
+        		}
+        	}
+        }
+        
+        private void writeFrame(String toBeSent) throws IOException {
+        	out.writeByte(42); // *
+        	out.writeByte(2); // DATA
+        	out.writeShort(seqNo); // SEQ NO
+        	seqNo = (seqNo + 1) & 65535;
+        	out.writeShort(toBeSent.length()); // DATA SIZE
+        	out.writeBytes(toBeSent); // DATA
+        	out.flush();
+        }
+        
+        private void frameSend(Frame frame) {
+        	String toBeSent = frame.getAsString();
+            if (sendLimit < MAX_POINTS) {
+                sendLimit += ((System.currentTimeMillis() - lastFrameSendTime) / RECOVER_RATE);
+                // never let the limit exceed the max, else this code won't work
+                // right
+                sendLimit = Math.min(MAX_POINTS, sendLimit);
+                if (sendLimit < MAX_POINTS) {
+                    // sendLimit could be less than 0, this still works properly
+                    logger.debug("Current send limit=" + sendLimit + " out of " + MAX_POINTS);
+                    try {
+                        // this will wait for every point below the max
+                        int waitAmount = MAX_POINTS - sendLimit;
+                        logger.debug("Delaying send " + waitAmount + " units");
+                        Thread.sleep(RECOVER_RATE * waitAmount);
+                        sendLimit += waitAmount;
+                    } catch (InterruptedException ie) {
+                    }
+                }
+            }
+            try {
+            	writeFrame(toBeSent);
+            } catch (IOException e) {
+            	// main thread should notice and close()
+            }
+
+            // sending is more expensive the higher our warning level
+            // this should decrement between 1 and 10 points (exponentially)
+            sendLimit -= (1 + Math.pow((3 * warnAmount) / 100, 2));
+            lastFrameSendTime = System.currentTimeMillis();
+        }
+        
+        private Frame frameRead() {
+        	try {
+            	int length;
+            	byte[] data;
+
+        		synchronized (in) {
+        			in.skip(4);
+        			length = in.readShort();
+        			data = new byte[length];
+        			in.readFully(data);
+        		}
+        		Frame f = new Frame(data);
+        		return f;
+        	} catch (InterruptedIOException e) {
+        		// This is normal; read times out when we dont read anything.
+        		// logger.debug("*** AIM ERROR: " + e + " ***");
+        		return null;
+        	} catch (IOException e) {
+        		return new Frame(); // end frame
+        	}
+        }
+
+        private void createThreads() {
+        	if (inThread != null || outThread != null)
+        		throw new IllegalStateException("threads already exist");
+        	
+        	inThread = new Thread(new Runnable() {
+
+				public void run() {
+					// stuff input queue until we get the end frame
+					while (true) {
+						Frame frame = frameRead();
+						if (frame != null) {
+							queuePut(inQueue, frame);
+							if (frame.isEndFrame())
+								return;
+						}
+					}
+				}
+        		
+        	});
+        	
+        	outThread = new Thread(new Runnable() {
+
+				public void run() {
+					// write output queue until we get the end frame
+					while (true) {
+						try {
+							Frame frame = outQueue.take();
+							if (frame != null) {
+								if (frame.isEndFrame())
+									return;
+								// if connection is closed, this no-ops
+								frameSend(frame);
+							}
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+        		
+        	});
+
+        	inThread.setDaemon(true);
+        	outThread.setDaemon(true);
+        }
+        
+        public void signOn(ScreenName name, String pass, String info,
+        		String authorizerServer, int authorizerPort) {
+            logger.debug("*** Starting AIM CLIENT (SEQNO:" + seqNo + ") ***");
+            try {
+                int length;
+            	
+                // * Client sends "FLAPON\r\n\r\n"
+                out.writeBytes("FLAPON\r\n\r\n");
+                out.flush();
+                // 6 byte header, plus 4 FLAP version (1)
+                byte[] signon = new byte[10];
+                // * TOC sends Client FLAP SIGNON
+                in.readFully(signon);
+                // * Client sends TOC FLAP SIGNON
+                out.writeByte(42);// *
+                out.writeByte(1); // SIGNON TYPE
+                out.writeShort(seqNo); // SEQ NO
+                seqNo = (seqNo + 1) & 65535;
+                String normalName = name.getNormalized();
+                out.writeShort(normalName.length() + 8); // data length = username length
+                // + SIGNON DATA
+                out.writeInt(1); // FLAP VERSION
+                out.writeShort(1); // TLF TAG
+                out.writeShort(normalName.length()); // username length
+                out.writeBytes(normalName); // usename
+                out.flush();
+
+                // * Client sends TOC "toc_signon" message
+                String signonCommand = "toc2_signon " + authorizerServer + " " + authorizerPort + " " + name + " " + imRoast(pass)
+                    + " English " + REVISION + " " + toc2MagicNumber(name, pass) + "\0";
+                writeFrame(signonCommand);
+                
+                // * if login fails TOC drops client's connection
+                // else TOC sends client SIGN_ON reply
+                in.skip(4); // seq num
+                length = in.readShort(); // data length
+                signon = new byte[length];
+                in.readFully(signon); // data
+                if (new String(signon).startsWith("ERROR")) {
+                	queuePut(inQueue, new Frame(signon));
+                    logger.error("Signon error");
+                    queuePut(inQueue, new Frame()); // end frame
+                    return;
+                }
+
+                in.skip(4); // seq num
+                length = in.readShort(); // data length
+                signon = new byte[length];
+                in.readFully(signon); // data
+                // * Client sends TOC toc_init_done message
+                writeFrame("toc_init_done\0");
+                onceSignedOn = true;
+                writeFrame("toc_set_info \"" + info + "\"\0");
+                logger.debug("Done with AIM logon");
+                connection.setSoTimeout(3000);
+
+                createThreads();
+                
+            } catch (IOException e) {
+            	queuePut(inQueue, new Frame()); // end frame
+            }
+        }
     }
 }
