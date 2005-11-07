@@ -6,7 +6,7 @@
 <title>moo test</title>
 </head>
 <dh:corescript/>
-<body style="overflow: hidden;">
+<body style="overflow: hidden;" onclick="return dh.notification.handleBodyClicked();">
 <table>
 <tr>
 <dh:linkimage/><br/>

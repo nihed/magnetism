@@ -236,8 +236,8 @@ HippoBubble::registerClass()
 	ZeroMemory(&wcex, sizeof(WNDCLASSEX));
     wcex.cbSize = sizeof(WNDCLASSEX); 
 
-    wcex.style		= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= windowProc;
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = windowProc;
     wcex.cbClsExtra	= 0;
     wcex.cbWndExtra	= 0;
     wcex.hInstance	= instance_;
@@ -246,7 +246,12 @@ HippoBubble::registerClass()
     wcex.lpszMenuName	= NULL;
     wcex.lpszClassName	= CLASS_NAME;
 
-    return RegisterClassEx(&wcex) != 0;
+	if (RegisterClassEx(&wcex) == 0) {
+		if (GetClassInfoEx(instance_, CLASS_NAME, &wcex) != 0)
+			return true;
+		return false;
+	}
+	return true;
 }
 
 void
@@ -298,7 +303,7 @@ STDMETHODIMP
 HippoBubble::Close()
 {
 	ie_->Release();
-    ShowWindow(window_, SW_HIDE);
+	AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
 	return S_OK;
 }
 
