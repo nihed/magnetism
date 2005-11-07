@@ -397,14 +397,17 @@ dh.share.FriendListProvider = function() {
 			this.lastSearchProvided = forSearchStr;
 			this.provideSearchResults(resultsDataPairs);
 		}
-		
-		// maybe not the best place to do this
-		if (this.singleCompletionId && forSearchStr.length > 0) {
-			dojo.debug("adding single completion as recipient " + this.singleCompletionId);
-			dh.share.doAddRecipient(this.singleCompletionId);
-		} else {
-			dojo.debug("don't have single completion");
-		}
+
+		// This code adds the recipient if there is only a single one. It's
+		// from experience, a really bad idea to do this; it's unpredictable
+		// for the user, and often does something they don't want.
+
+//		if (this.singleCompletionId && forSearchStr.length > 0) {
+//			dojo.debug("adding single completion as recipient " + this.singleCompletionId);
+//			dh.share.doAddRecipient(this.singleCompletionId);
+//		} else {
+//			dojo.debug("don't have single completion");
+//		}
 	}
 }
 dojo.inherits(dh.share.FriendListProvider, Object);
