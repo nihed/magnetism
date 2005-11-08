@@ -52,15 +52,8 @@ public class ScreenName {
 	}
 	
 	private static String normalize(String str) {
-	    String out = "";
 	    str = str.toLowerCase();
-	    char[] arr = str.toCharArray();
-	    for (int i = 0; i < arr.length; i++) {
-	        if (arr[i] != ' ') {
-	            out = out + "" + arr[i];
-	        }
-	    }
-	
-	    return out;
+	    str = str.replaceAll(" ", "");
+	    return str;
 	}
 }
