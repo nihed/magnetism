@@ -53,7 +53,7 @@ public class InvitationToken extends Token {
 	}
 
 	@OneToOne
-	@JoinColumn(nullable=false)
+	@JoinColumn(nullable=false,unique=true)
 	public Resource getInvitee() {
 		return invitee;
 	}
