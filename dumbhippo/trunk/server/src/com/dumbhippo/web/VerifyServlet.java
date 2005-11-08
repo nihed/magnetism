@@ -10,8 +10,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.InvitationSystem;
 
 public class VerifyServlet extends AbstractServlet {
@@ -39,8 +41,8 @@ public class VerifyServlet extends AbstractServlet {
 		if (inviterNames == null)  
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Authentication key verification failed");
 		
-		Client client = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request));
-		SigninBean.setCookie(response, invite.getResultingPerson().getId(), client.getAuthKey());
+		Pair<Client,Person> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request));
+		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
 	}
 	
 	@Override

@@ -17,6 +17,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
@@ -154,7 +155,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 	
-	public Client viewInvitation(InvitationToken invite, String firstClientName) {
+	public Pair<Client,Person> viewInvitation(InvitationToken invite, String firstClientName) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + "has already been viewed");
 		}
@@ -174,11 +175,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			InvitationToken persisted = em.find(InvitationToken.class, invite.getId());
 			persisted.setViewed(true);
 			persisted.setResultingPerson(acct.getOwner());
+			invite = persisted;
 		}
 
 		notifyInvitationViewed(invite);
 		
-		return client;
+		return new Pair<Client,Person>(client, invite.getResultingPerson());
 	}
 
 	public Collection<String> getInviterNames(InvitationToken invite) {

@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
@@ -55,9 +56,9 @@ public interface InvitationSystem {
 	 * 
 	 * @param invite the invitation
 	 * @param firstClientName name of the first client to create
-	 * @return initial client authorized to access the account
+	 * @return initial client authorized to access the account and the resulting person from the invite
 	 */
-	public Client viewInvitation(InvitationToken invite, String firstClientName);
+	public Pair<Client,Person> viewInvitation(InvitationToken invite, String firstClientName);
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
