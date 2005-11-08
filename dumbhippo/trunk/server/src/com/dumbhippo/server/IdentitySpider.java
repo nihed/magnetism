@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -58,6 +59,30 @@ public interface IdentitySpider {
 	 * @return a resource for the email
 	 */
 	public EmailResource findOrCreateEmail(String email);
+	
+	/**
+	 * Gets a Resource object for the given AIM address, creating
+	 * it if necessary. Note that the result is a detached entity.
+	 * 
+	 * Note that often if you do:
+	 *    resource = identitySpider.getAim(screenName);
+	 * then resource.getScreenName().equals(screenName) 
+	 * will return false. This is because resources always
+	 * have the normalized form for AIM addresses.
+	 * 
+	 * @param screenName the address
+	 * @return a resource for the address
+	 */
+	public AimResource getAim(String screenName);
+	
+	/**
+	 * This is an internal detail used in implementing getAim(); getAim
+	 * adds retry. 
+	 * 
+	 * @param screenName the address
+	 * @return a resource for the address
+	 */
+	public AimResource findOrCreateAim(String screenName);
 	
 	/**
 	 * Gets a Resource object for the given URL, creating
@@ -139,7 +164,7 @@ public interface IdentitySpider {
 	 */
 	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy);
 	
-	/** 
+	/**
 	 * Record an assertion that we have (at least weakly) verified the person has control of
 	 * a particular resource.  An example might be clicking on a link in an email 
 	 * sent to an email address resource, or conversing with the person via IM.

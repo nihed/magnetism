@@ -33,8 +33,6 @@ public class EmailResource extends Resource {
 	}
 	
 	public EmailResource(String string) {
-		super();
-		validateEmail(string);
 		setEmail(string);
 	}
 

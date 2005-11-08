@@ -23,6 +23,7 @@ import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.HippoAccount;
@@ -169,6 +170,42 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			res = (EmailResource) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			res = new EmailResource(email);
+			em.persist(res);
+		}
+		
+		return res;	
+	}
+	
+	public AimResource getAim(String screenName) {
+		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
+		int retries = 1;
+		
+		while (true) {
+			try {
+				return proxy.findOrCreateAim(screenName);
+			} catch (Exception e) {
+				if (retries > 0 && isDuplicateException(e)) {
+					logger.debug("Race condition creating aim resource, retrying");
+					retries--;
+				} else {
+					throw new RuntimeException("Unexpected error creating aim resource", e);
+				}
+			}
+		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public AimResource findOrCreateAim(String screenName) {
+		Query q;
+		
+		q = em.createQuery("from AimResource a where a.screenName = :name");
+		q.setParameter("name", screenName);
+		
+		AimResource res;
+		try {
+			res = (AimResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			res = new AimResource(screenName);
 			em.persist(res);
 		}
 		
