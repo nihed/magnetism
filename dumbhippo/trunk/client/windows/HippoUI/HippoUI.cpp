@@ -339,7 +339,7 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
     if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"sharelink"), &shareURL)))
 	return;
 
-    if (!SUCCEEDED (shareURL.Append(L"?url=")))
+    if (!SUCCEEDED (shareURL.Append(L"?next=close&url=")))
 	return;
 
 	wchar_t encoded[1024] = {0}; 

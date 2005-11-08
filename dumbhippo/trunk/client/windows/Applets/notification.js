@@ -59,3 +59,41 @@ dh.notification.handleCloseClicked = dh.client.stdEventHandler(function(e) {
 	window.external.Close();
 	return false;
 })
+
+
+
+dhSetRecipients = function (personRecipients, groupRecipients) {
+	var appendSpanText = function (elt, text, styleClass) {
+		var span = document.createElement("span")
+		span.setAttribute("className", styleClass)
+		span.appendChild(document.createTextNode(text))
+		elt.appendChild(span)	
+	}
+	var joinSpannedText = function (elt, arr, styleClass, sep) {
+		for (var i = 0; i < arr.length; i++) {
+			appendSpanText(elt, arr[i], styleClass)
+			if (i < arr.length - 1) {
+				elt.appendChild(document.createTextNode(sep))
+			}
+		}	
+	}
+    var personRecipients = (new VBArray(personRecipients).toArray())
+    var groupRecipients = (new VBArray(groupRecipients).toArray())
+ 
+	// FIXME this is all hostile to i18n   
+    var elt = document.getElementById("dh-notification-recipients")
+	while (elt.firstChild) { elt.removeChild(elt.firstChild); }
+	
+	joinSpannedText(elt, personRecipients, "dh-notification-recipient", ", ")
+	if (personRecipients.length > 0 && groupRecipients.length > 0) {
+		elt.appendChild(document.createTextNode(" and "))
+	}
+	if (groupRecipients.length > 1) {
+		elt.appendChild(document.createTextNode("the groups "))
+		joinSpannedText(elt, groupRecipients, "dh-notification-group-recipient", ", ")
+	} else if (groupRecipients.length == 1) {
+		elt.appendChild(document.createTextNode("the "))
+		appendSpanText(elt, groupRecipients[0], "dh-notification-group-recipient")
+		elt.appendChild(document.createTextNode(" group"))
+	}
+}

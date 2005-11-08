@@ -35,6 +35,22 @@ div.dh-link-title {
 	margin:					0;
 }
 
+div.dh-notification-meta 
+{
+	color: Gray;
+	font-size: 70%;
+}
+
+span.dh-notification-recipient
+{
+	font-weight: bold
+}
+
+span.dh-notification-group-recipient
+{
+	font-weight: bold
+}
+
 img.dh-close-button 
 {
 	float: right;

@@ -20,5 +20,9 @@
 </td>
 </tr>
 </table>
+<div id="dh-notification-meta" class="dh-notification-meta">
+<span id="dh-notification-swarming"></span><br/>
+This was sent to <span id="dh-notification-recipients"></span>
+</div>
 </body>
 </html>

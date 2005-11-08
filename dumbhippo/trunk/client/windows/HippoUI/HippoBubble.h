@@ -137,6 +137,7 @@ private:
 
 	bool embedIE(void);
 	bool appendTransform(BSTR src, BSTR style, ...);
+	bool invokeJavascript(BSTR funcName, VARIANT *invokeResult, ...);
 	bool create(void);
 	bool createWindow(void);
 	bool registerClass();

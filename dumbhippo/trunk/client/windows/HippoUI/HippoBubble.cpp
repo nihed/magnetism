@@ -205,6 +205,26 @@ HippoBubble::create(void)
 	return true;
 }
 
+static SAFEARRAY *
+hippoStrArrayToSafeArray(HippoArray<HippoBSTR> &args)
+{
+	// I swear the SAFEARRAY API was *designed* to be painful
+	SAFEARRAYBOUND dim[1];
+	dim[0].lLbound= 0;
+	dim[0].cElements = args.length();
+	SAFEARRAY *ret = SafeArrayCreate(VT_VARIANT, 1, dim);
+	for (unsigned int i = 0; i < args.length(); i++) {
+		VARIANT *data;
+		_variant_t argv;
+		SafeArrayAccessData(ret, (void**)&data);
+		argv.vt = VT_BSTR;
+		argv.bstrVal = args[i];
+		VariantCopy(&(data[i]), &argv);
+		SafeArrayUnaccessData(ret);
+	}
+	return ret;
+}
+
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
@@ -231,6 +251,66 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	appendTransform(L"notification.xml", L"clientstyle.xml", L"senderPhotoUrl", photoURL.m_str, 
 		L"senderName", share.senderName, L"linkURL", share.url, 
 		L"linkTitle", share.title, L"linkDescription", share.description, NULL);
+	SAFEARRAY *personRecipients = hippoStrArrayToSafeArray(share.personRecipients);
+	VARIANT personRecipientsArg;
+	personRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
+	personRecipientsArg.parray = personRecipients;
+	SAFEARRAY *groupRecipients = hippoStrArrayToSafeArray(share.groupRecipients);
+	VARIANT groupRecipientsArg;
+	groupRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
+	groupRecipientsArg.parray = groupRecipients;
+	VARIANT result;
+	invokeJavascript(L"dhSetRecipients", &result, &groupRecipientsArg, &personRecipientsArg, NULL);
+	SafeArrayDestroy(personRecipients);
+	SafeArrayDestroy(groupRecipients);
+}
+
+bool
+HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, ...)
+{
+    va_list vap;
+	VARIANT *arg;
+	int maxargs = 16;
+	int nargs;
+
+	va_start (vap, invokeResult);
+
+	HippoQIPtr<IWebBrowser2> browser(ie_);
+	IDispatch *docDispatch;
+	browser->get_Document(&docDispatch);
+	HippoQIPtr<IHTMLDocument2> doc(docDispatch);
+	IDispatch *script;
+	doc->get_Script(&script);
+
+	DISPID id = NULL;
+	HRESULT result = script->GetIDsOfNames(IID_NULL,&funcName,1,LOCALE_SYSTEM_DEFAULT,&id);
+	if (FAILED(result))
+		return false;
+
+	DISPPARAMS args;
+	ZeroMemory(&args, sizeof(args));
+	args.rgvarg = new VARIANT[maxargs];
+	args.cNamedArgs = 0;
+
+	nargs = 0;
+	while ((arg = va_arg (vap, VARIANT *)) != NULL) {
+		nargs++;
+		if (nargs >= maxargs)
+			return false; // this should be fatal
+		args.rgvarg[nargs-1] = *arg;
+	}
+	args.cArgs = nargs;
+
+	EXCEPINFO excep;
+	ZeroMemory(&excep, sizeof(excep));
+	UINT argErr;
+	result = script->Invoke(id, IID_NULL, 0, DISPATCH_METHOD,
+							&args, invokeResult, &excep, &argErr);
+	delete [] args.rgvarg;
+	va_end (vap);
+	if (FAILED(result))
+		return false;
+	return true;
 }
 
 bool
