@@ -1,7 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,7 +9,6 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Transient;
 
 @Entity
 public class InvitationToken extends Token {
@@ -85,23 +82,7 @@ public class InvitationToken extends Token {
 	public void setViewed(boolean viewed) {
 		this.viewed = viewed;
 	}	
-	
-	@Transient
-	public String getPartialAuthURL() {
-		return "verify?authKey=" + getAuthKey();
-	}
-	
-	@Transient
-	public String getAuthURL(URL prefix) {
-		URL authURL;
-		try {
-			authURL = new URL(prefix, getPartialAuthURL());
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		return authURL.toString();
-	}
-	
+		
 	public String toString() {
 		return "{InvitationToken invitee=" + invitee + "}";
 	}

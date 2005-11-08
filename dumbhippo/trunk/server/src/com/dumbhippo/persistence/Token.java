@@ -1,11 +1,14 @@
 package com.dumbhippo.persistence;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.Transient;
 
 import com.dumbhippo.identity20.RandomToken;
 
@@ -46,5 +49,21 @@ public class Token extends DBUnique {
 
 	protected void setCreationDate(Date creationDate) {
 		this.creationDate = creationDate.getTime();
+	}
+	
+	@Transient
+	public String getPartialAuthURL() {
+		return "verify?authKey=" + getAuthKey();
+	}
+	
+	@Transient
+	public String getAuthURL(URL prefix) {
+		URL authURL;
+		try {
+			authURL = new URL(prefix, getPartialAuthURL());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		return authURL.toString();
 	}
 }
