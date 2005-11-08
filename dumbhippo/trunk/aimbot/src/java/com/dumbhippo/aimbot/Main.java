@@ -7,6 +7,8 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.jms.JmsConsumer;
+import com.dumbhippo.jms.JmsProducer;
 
 public class Main {
 	private static Log logger = GlobalSetup.getLog(Main.class);
@@ -42,7 +44,7 @@ public class Main {
 		}
 		
 		public void run() {
-			JmsConsumer consumer = new JmsConsumer(queue, false);
+			JmsConsumer consumer = new JmsConsumer(queue);
 			
 			while (true) {
 		
