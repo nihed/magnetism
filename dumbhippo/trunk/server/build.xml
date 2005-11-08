@@ -214,6 +214,7 @@
 				<include name="*.properties" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/dumbhippo/*.properties" />
+				<include name="**/jms/**/*.class" />
 				<include name="**/identity20/**/*.class" />
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
