@@ -78,6 +78,7 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
 		
 		private String senderName;
+		private Guid senderGuid;
 		
 		private Set<String> recipientNames;
 		
@@ -95,6 +96,7 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
 			builder.appendTextNode("senderName", senderName, "isCache", "true");
+			builder.appendTextNode("senderGuid", senderGuid.toString());			
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
 			builder.openElement("recipients");
@@ -110,8 +112,10 @@ public class MessageSenderBean implements MessageSender {
 			builder.closeElement();
 			return builder.toString();
 		}
-		public LinkExtension(String senderName, Guid postId, Set<String> recipientNames, Set<String> groupRecipients, String url, String title, String description) {
+		public LinkExtension(String senderName, Guid senderGuid, 
+				Guid postId, Set<String> recipientNames, Set<String> groupRecipients, String url, String title, String description) {
 			this.senderName = senderName;
+			this.senderGuid = senderGuid;
 			this.guid = postId;
 			this.recipientNames = recipientNames;
 			this.groupRecipients = groupRecipients;
@@ -144,7 +148,7 @@ public class MessageSenderBean implements MessageSender {
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement("linkClicked", "xmlns", NAMESPACE, "id", guid.toString());
-			builder.appendTextNode("clickerName", clickerName, "isCache", "true");			
+			builder.appendTextNode("clickerName", clickerName, "isCache", "true");	
 			builder.appendTextNode("title", title, "isCache", "true");
 			builder.closeElement();
 			return builder.toString();
@@ -242,7 +246,9 @@ public class MessageSenderBean implements MessageSender {
 				groupRecipientNames.add(g.getName());
 			}
 			
-			message.addExtension(new LinkExtension(senderName, post.getGuid(), recipientNames, groupRecipientNames, 
+			message.addExtension(new LinkExtension(senderName,
+					post.getPoster().getGuid(),
+					post.getGuid(), recipientNames, groupRecipientNames, 
 					url, title, post.getText()));
 
 			message.setBody(String.format("%s\n%s", title, url));
