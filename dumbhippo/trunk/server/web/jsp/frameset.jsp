@@ -8,6 +8,10 @@
 
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 
+<head>
+        <title><c:out value="${title}"/></title>
+</head>
+
 <frameset rows="100,*">
     <frame name="top" src="framer?postId=${framer.postId}">
     <frame name="bottom" src="${framer.post.url}">
