@@ -957,7 +957,9 @@ public class RawConnection {
         	});
 
         	inThread.setDaemon(true);
+        	inThread.setName("Socket reader " + connection);
         	outThread.setDaemon(true);
+        	outThread.setName("Socket writer " + connection);
         	
         	inThread.start();
         	outThread.start();

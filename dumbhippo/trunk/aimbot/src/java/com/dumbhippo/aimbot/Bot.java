@@ -4,6 +4,10 @@ import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 
@@ -28,6 +32,13 @@ class Bot implements Runnable {
 	private Client aim;
 	private Random random;
 	private SelfPinger pinger;
+	
+	private Lock quitLock;
+	private Condition quitCondition;
+	private boolean quit;
+	
+	private Lock onlineLock;
+	private Condition onlineCondition;
 	
 	class SelfPinger extends TimerTask {
 	    // check connection every "TIME_DELAY" milliseconds (5 mins)
@@ -95,40 +106,40 @@ class Bot implements Runnable {
 	
 	class BotListener implements Listener {
 		public void handleConnected() {
-			logger.debug("connected");
+			logger.info(name + " connected");
 		}
 		
 		public void handleDisconnected() {
-			logger.debug("disconnected");
+			logger.info(name + " disconnected");
 		}
 		
 		public void handleMessage(Buddy buddy, String request) {
-			logger.debug("message from " + buddy.getName() + ": " + request);
+			logger.info(name + " message from " + buddy.getName() + ": " + request);
 			saySomethingRandom(buddy);
 		}
 		
 		public void handleWarning(Buddy buddy, int amount) {
-			logger.debug("warning from " + buddy.getName());
+			logger.info(name + " warning from " + buddy.getName());
 		}
 		
 		public void handleBuddySignOn(Buddy buddy, String info) {
-			logger.debug("Buddy sign on " + buddy.getName());
+			logger.debug(name + " Buddy sign on " + buddy.getName());
 		}
 		
 		public void handleBuddySignOff(Buddy buddy, String info) {
-			logger.debug("Buddy sign off " + buddy.getName());
+			logger.debug(name + " Buddy sign off " + buddy.getName());
 		}
 		
 		public void handleError(TocError error, String message) {
-			logger.debug("error: " + message);
+			logger.warn(name + " error: " + message);
 		}
 		
 		public void handleBuddyUnavailable(Buddy buddy, String message) {
-			logger.debug("buddy unavailable: " + buddy.getName() + " message: " + message);
+			logger.debug(name + " buddy unavailable: " + buddy.getName() + " message: " + message);
 		}
 		
 		public void handleBuddyAvailable(Buddy buddy, String message) {
-			logger.debug("buddy available: " + buddy.getName() + " message: " + message);
+			logger.debug(name + " buddy available: " + buddy.getName() + " message: " + message);
 			if (buddy.getName().equals("bryanwclark")) {
 				saySomethingRandom(buddy);
 			} else if (buddy.getName().equals("hp40000")) {
@@ -152,6 +163,11 @@ class Bot implements Runnable {
 		
 		this.name = name;
 		this.pass = pass;
+		
+		quitLock = new ReentrantLock();
+		quitCondition = quitLock.newCondition();
+		onlineLock = new ReentrantLock();
+		onlineCondition = onlineLock.newCondition();
 	}
 
 	void saySomethingRandom(Buddy buddy) {
@@ -175,11 +191,16 @@ class Bot implements Runnable {
 		}
 	}
 
-	public void signOn() {
+	private void signOn() {
 		if (aim != null)
 			throw new IllegalStateException("can't sign on when you're already running");
 
 		logger.debug("Bot signing on...");
+		
+		if ((new Random()).nextBoolean()) {
+			logger.debug("Randomly generated signon failure!");
+			return;
+		}
 		
 		Client client = new Client(name, pass, "I am DUMB HIPPO BOT",
 				"Hmm, who are you?", true /*auto-add everyone as buddy*/);
@@ -193,31 +214,131 @@ class Bot implements Runnable {
 			logger.error("Bot failed to sign on");
 		}
 	}
-	
-	public void run() {
-		if (aim == null)
-			signOn();
-		
-		if (aim != null) {
-			pinger = new SelfPinger();
-			
-			logger.debug("Bot thread waiting for events...");
-			aim.read();
-			logger.debug("Bot thread exiting");
-			aim = null;
-			
-			pinger.cancel();
-			pinger = null;
-		}
-	}
-	
-	public void signOff() {
+
+	private void signOff() {
 		if (aim != null) {
 			aim.signOff();
-			// this should cause read() to return so in run() we set aim = null
 		}
 	}
 	
+	private void signalOnlineMaybeChanged() {
+		onlineLock.lock();
+		try {
+			onlineCondition.signalAll();
+		} finally {
+			onlineLock.unlock();
+		}
+	}
+	
+	public void waitForOnlineMaybeChanged() {
+		onlineLock.lock();
+		try {
+			onlineCondition.await();
+		} catch (InterruptedException e) {
+			// nothing to do, it's fine if online didn't really change
+		} finally {
+			onlineLock.unlock();
+		}
+	}
+	
+	private void setQuit(boolean value) {
+		quitLock.lock();
+		try {
+			if (quit != value) {
+				quit = value;
+				quitCondition.notifyAll();
+			}
+		} finally {
+			quitLock.unlock();
+		}
+	}
+	
+	public void run() {
+		final long FAILED_IF_LESS_THAN_MS = 15000;
+		final int MAX_FAILURES = 11;
+				
+		int failures = 0;
+		
+		setQuit(false);
+		
+		while (true) {
+			quitLock.lock();
+			try {
+				if (quit) {
+					logger.debug("Bot quitting");
+					// in case someone is waiting on this (e.g. if we never connected even once, we won't have called it yet)
+					signalOnlineMaybeChanged();
+					return;
+				}
+				
+				if (failures > 0) {
+					// don't go overboard
+					if (failures > MAX_FAILURES) {
+						failures = MAX_FAILURES;
+					}
+					// 2 seconds, 4 seconds, 8 seconds, ... 2048 seconds for MAX_FAILURES=11   
+					long pauseSeconds = (long) Math.pow(2, failures);
+					try {
+						logger.debug("Waiting " + pauseSeconds + " seconds (" + pauseSeconds/60 + ") minutes to reconnect");
+						quitCondition.await(pauseSeconds, TimeUnit.SECONDS);
+					} catch (InterruptedException e) {
+					}
+				}
+				
+			} finally {
+				quitLock.unlock();
+			}
+					
+			if (aim == null)
+				signOn();
+			
+			if (aim != null) {
+				long lastSignOn = 0;
+				long lastSignOff = 0;
+				
+				pinger = new SelfPinger();
+				
+				logger.debug("New connection OK, waiting for events...");
+				lastSignOn = System.currentTimeMillis();
+				signalOnlineMaybeChanged(); // wake up people who want to see we're online
+				
+				aim.read();
+				
+				logger.debug("Bot connection closed");
+				
+				aim = null;
+				
+				pinger.cancel();
+				pinger = null;
+				
+				lastSignOff = System.currentTimeMillis();
+				
+				if ((lastSignOff - lastSignOn) < FAILED_IF_LESS_THAN_MS) {
+					logger.debug("We were signed on less than " + FAILED_IF_LESS_THAN_MS/1000 + " seconds, counting as failure to connect");
+					++failures;
+				} else {
+					// reset the back-off
+					failures = 0;
+				}
+				
+				signalOnlineMaybeChanged(); // wake up people who want to see we're offline
+			} else {
+				++failures;
+			}
+		}
+	}
+	
+	public void quit() {		
+		setQuit(true);
+		
+		signOff();
+	}
+	
+	/**
+	 * Sees if we're currently authenticated. Note that this changes 
+	 * over time as we'll disconnect and reconnect.
+	 * @return true if we currently signed on
+	 */
 	public boolean getOnline() {
 		return aim != null && aim.getOnline();
 	}
