@@ -4,6 +4,7 @@
 package com.dumbhippo.persistence;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,9 +30,10 @@ public class Client extends DBUnique implements Serializable {
 
 	private String name;
 
+	// store date in this form since it's immutable and lightweight
 	private long lastUsed;
 
-	private void init(String authKey, String name, long lastUsed) {
+	private Client(String authKey, String name, long lastUsed) {
 		this.authKey = authKey;
 		if (this.authKey == null)
 			this.authKey = RandomToken.createNew().toString();
@@ -40,16 +42,16 @@ public class Client extends DBUnique implements Serializable {
 	}
 
 	public Client() {
-		init(null, "Anonymous", // TODO localize
+		this(null, "Anonymous", // TODO localize
 				System.currentTimeMillis());
 	}
 
 	public Client(String name) {
-		init(null, name, System.currentTimeMillis());
+		this(null, name, System.currentTimeMillis());
 	}
 	
 	public Client(Client client) {
-		init(client.authKey, client.name, client.lastUsed);
+		this(client.authKey, client.name, client.lastUsed);
 	}
 	
 	public String toString() {
@@ -58,7 +60,7 @@ public class Client extends DBUnique implements Serializable {
 		return builder.toString();
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false,length=RandomToken.STRING_LENGTH)
 	public String getAuthKey() {
 		return authKey;
 	}
@@ -68,12 +70,12 @@ public class Client extends DBUnique implements Serializable {
 	}
 
 	@Column(nullable=false)
-	public long getLastUsed() {
-		return lastUsed;
+	public Date getLastUsed() {
+		return new Date(lastUsed);
 	}
 
-	public void setLastUsed(long lastUsed) {
-		this.lastUsed = lastUsed;
+	public void setLastUsed(Date lastUsed) {
+		this.lastUsed = lastUsed.getTime();
 	}
 
 	/**

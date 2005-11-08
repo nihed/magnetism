@@ -19,11 +19,13 @@ import com.dumbhippo.StringUtils;
 public final class RandomToken {
 	private byte[] data;
 	
-	static public final int LENGTH = 10;
+	static public final int BINARY_LENGTH = 20;
+	// each byte is 2 ascii chars in hex encoding
+	static public final int STRING_LENGTH = BINARY_LENGTH * 2;
 	
 	public static final RandomToken createNew() {
 		Random r = new SecureRandom();
-		byte[] data = new byte[LENGTH];
+		byte[] data = new byte[BINARY_LENGTH];
 		r.nextBytes(data);
 		
 		return new RandomToken(data);
@@ -38,7 +40,10 @@ public final class RandomToken {
 	}
 	
 	public String toString() {
-		return StringUtils.hexEncode(data);
+		String ret = StringUtils.hexEncode(data);
+		if (ret.length() != STRING_LENGTH)
+			throw new RuntimeException("Broken: wrong string length for hex encoded random token");
+		return ret;
 	}
 	
 	public int hashCode() {

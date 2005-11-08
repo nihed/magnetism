@@ -3,8 +3,8 @@
  */
 package com.dumbhippo.persistence;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -41,19 +41,19 @@ public class ResourceOwnershipClaim extends DBUnique {
 	}
 
 	@ManyToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	Person getAssertedBy() {
 		return assertedBy;
 	}
 
 	@ManyToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	Person getClaimedOwner() {
 		return claimedOwner;
 	}
 	
 	@ManyToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	Resource getResource() {
 		return resource;
 	}

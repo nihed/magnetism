@@ -29,7 +29,7 @@ public class ServerSecret implements Serializable {
 	}
 	
 	@Id(generate = GeneratorType.NONE)
-	@Column(length = RandomToken.LENGTH, nullable = false)
+	@Column(length = RandomToken.BINARY_LENGTH, nullable = false)
 	public byte[] getSecret() {
 		return secret;
 	}

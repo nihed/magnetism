@@ -8,18 +8,17 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
-import com.dumbhippo.identity20.RandomToken;
-
 @Entity
-public class Invitation extends DBUnique {
+public class InvitationToken extends Token {
 	private static final long serialVersionUID = 1L;
+	
 	private Resource invitee;
 	private Set<Person> inviters;
-	private String authKey;
 	private boolean viewed;
 	private Person resultingPerson;
 	
@@ -41,20 +40,20 @@ public class Invitation extends DBUnique {
 			inviters = new HashSet<Person>();
 	}
 	
-	protected Invitation() {
+	protected InvitationToken() {
 		initMissing();
 	}
 
-	public Invitation(Resource invitee, Person inviter) {
+	public InvitationToken(Resource invitee, Person inviter) {
+		super(true);
 		this.viewed = false;
 		this.invitee = invitee;
 		this.inviters = new HashSet<Person>();
 		this.inviters.add(inviter);
-		authKey = RandomToken.createNew().toString();
 	}
 
 	@OneToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	public Resource getInvitee() {
 		return invitee;
 	}
@@ -64,17 +63,8 @@ public class Invitation extends DBUnique {
 		return inviters;
 	}
 
-	@Column(nullable=false)
-	public String getAuthKey() {
-		return authKey;
-	}
-
 	public void addInviter(Person inviter) {
 		this.inviters.add(inviter);
-	}
-
-	protected void setAuthKey(String authKey) {
-		this.authKey = authKey;
 	}
 
 	protected void setInvitee(Resource invitee) {
@@ -87,6 +77,7 @@ public class Invitation extends DBUnique {
 		this.inviters = inviters;
 	}
 
+	@Column(nullable=false)
 	public boolean isViewed() {
 		return viewed;
 	}
@@ -97,7 +88,7 @@ public class Invitation extends DBUnique {
 	
 	@Transient
 	public String getPartialAuthURL() {
-		return "jsf/verify?authKey=" + getAuthKey();
+		return "verify?authKey=" + getAuthKey();
 	}
 	
 	@Transient
@@ -112,6 +103,6 @@ public class Invitation extends DBUnique {
 	}
 	
 	public String toString() {
-		return "{Invitation invitee=" + invitee + "}";
+		return "{InvitationToken invitee=" + invitee + "}";
 	}
 }

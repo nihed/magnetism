@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -22,7 +23,7 @@ public class Post extends GuidPersistable {
 	private Person poster;
 	private PostVisibility visibility;
 	private String explicitTitle;
-	private Date postDate;
+	private long postDate;
 	private String text;
 	private Set<Person> personRecipients;
 	private Set<Group> groupRecipients;
@@ -66,12 +67,12 @@ public class Post extends GuidPersistable {
 		this.groupRecipients = groupRecipients;
 		this.expandedRecipients = expandedRecipients;
 		this.resources = resources;
-		this.postDate = new Date();
+		this.postDate = System.currentTimeMillis();
 		initMissing();
 	}
 	
 	@ManyToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	public Person getPoster() {
 		return poster;
 	}
@@ -184,11 +185,11 @@ public class Post extends GuidPersistable {
 	
 	@Column(nullable=false)
 	public Date getPostDate() {
-		return postDate;
+		return new Date(postDate);
 	}
 
 	protected void setPostDate(Date postDate) {
-		this.postDate = postDate;
+		this.postDate = postDate.getTime();
 	}
 	
 	public String toString() {

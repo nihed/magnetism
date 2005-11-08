@@ -6,7 +6,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
@@ -18,7 +18,7 @@ public interface InvitationSystem {
 	 * @param authKey potential authentication key
 	 * @return the corresponding invitation, or null if none
 	 */
-	public Invitation lookupInvitationByKey(String authKey);
+	public InvitationToken lookupInvitationByKey(String authKey);
 	
 	/**
 	 * Find all inviters for resources provably owned by a person.
@@ -37,7 +37,7 @@ public interface InvitationSystem {
 	 * @param email
 	 * @return
 	 */
-	public Invitation createEmailInvitation(Person inviter, String email);
+	public InvitationToken createEmailInvitation(Person inviter, String email);
 	
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
@@ -45,7 +45,7 @@ public interface InvitationSystem {
 	 * @param invitee the person being invited
 	 * @return an invitation object describing the Multiple Invite Group
 	 */
-	public Invitation createGetInvitation(Person inviter, Resource invitee);
+	public InvitationToken createGetInvitation(Person inviter, Resource invitee);
 	
 	/**
 	 * Mark an invitation as viewed; this creates an initial HippoAccount
@@ -57,7 +57,7 @@ public interface InvitationSystem {
 	 * @param firstClientName name of the first client to create
 	 * @return initial client authorized to access the account
 	 */
-	public Client viewInvitation(Invitation invite, String firstClientName);
+	public Client viewInvitation(InvitationToken invite, String firstClientName);
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
@@ -66,7 +66,7 @@ public interface InvitationSystem {
 	 * @param invite an invitation
 	 * @return a collection of names
 	 */
-	public Collection<String> getInviterNames(Invitation invite);
+	public Collection<String> getInviterNames(InvitationToken invite);
 	
 	/**
 	 * Send an email to the invitee that inviter has requested them
@@ -75,5 +75,5 @@ public interface InvitationSystem {
 	 * @param invite
 	 * @param inviter
 	 */
-	public void sendEmailNotification(Invitation invite, Person inviter);
+	public void sendEmailNotification(InvitationToken invite, Person inviter);
 }

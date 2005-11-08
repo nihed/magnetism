@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.InvitationSystem;
 
@@ -18,7 +18,7 @@ public class SendInviteServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 
-	private Invitation doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException{
+	private InvitationToken doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException{
 		Person user = doLogin(request, response, false);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
@@ -37,7 +37,7 @@ public class SendInviteServlet extends AbstractServlet {
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		Invitation invitation = invitationSystem.createEmailInvitation(user, email);
+		InvitationToken invitation = invitationSystem.createEmailInvitation(user, email);
 		invitationSystem.sendEmailNotification(invitation, user);
 		
 		return invitation;
@@ -50,7 +50,7 @@ public class SendInviteServlet extends AbstractServlet {
 		logRequest(request, "GET");
 		
 		try {
-			Invitation invitation = doSendInvite(request, response);
+			InvitationToken invitation = doSendInvite(request, response);
 			
 			request.setAttribute("authKey", invitation.getAuthKey());
 			request.getRequestDispatcher("/invitesent").forward(request, response);

@@ -20,7 +20,7 @@ import javax.persistence.Query;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AccountSystem;
@@ -51,11 +51,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	@EJB
 	private Configuration configuration;
 	
-	protected Invitation lookupInvitationFor(Resource invitee) {
-		Invitation ret;
+	protected InvitationToken lookupInvitationFor(Resource invitee) {
+		InvitationToken ret;
 		try {
-			ret = (Invitation) em.createQuery(
-				"from Invitation as iv where iv.invitee = :resource")
+			ret = (InvitationToken) em.createQuery(
+				"from InvitationToken as iv where iv.invitee = :resource")
 				.setParameter("resource", invitee).getSingleResult();
 		} catch (EntityNotFoundException e) {
 			ret = null;
@@ -65,7 +65,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	public Set<PersonView> findInviters(Person invitee) {
 		Query query = em.createQuery("select inviter from " +
-								     "Person inviter, Invitation invite, ResourceOwnershipClaim roc " + 
+								     "Person inviter, InvitationToken invite, ResourceOwnershipClaim roc " + 
 								     "where inviter in elements(invite.inviters) and " +
 								     "roc.resource = invite.invitee and " +
 								     "roc.assertedBy = :theman and " +
@@ -85,10 +85,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public Invitation createGetInvitation(Person inviter, Resource invitee) {
-		Invitation iv = lookupInvitationFor(invitee);
+	public InvitationToken createGetInvitation(Person inviter, Resource invitee) {
+		InvitationToken iv = lookupInvitationFor(invitee);
 		if (iv == null) {
-			iv = new Invitation(invitee, inviter);
+			iv = new InvitationToken(invitee, inviter);
 			em.persist(iv);
 		} else {
 			iv.addInviter(inviter);
@@ -97,14 +97,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 
-	public Invitation createEmailInvitation(Person inviter, String email) {
+	public InvitationToken createEmailInvitation(Person inviter, String email) {
 		Resource emailRes = spider.getEmail(email);
 		return createGetInvitation(inviter, emailRes);
 	}	
 	
-	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
+	protected static final String invitationFromAddress = "Dumb Hippo InvitationToken <invitations@dumbhippo.com>";
 	
-	public void sendEmailNotification(Invitation invite, Person inviter) {
+	public void sendEmailNotification(InvitationToken invite, Person inviter) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		String inviteeEmail = invitee.getEmail();
 
@@ -122,7 +122,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		try {
-			msg.setSubject("Invitation from " + inviterName + " to join Dumb Hippo");
+			msg.setSubject("InvitationToken from " + inviterName + " to join Dumb Hippo");
 			msg.setText("Moo!\n\nYou've been invited by " + inviterName + " to join Dumb Hippo!\n\n"
 					+ "Follow this link to see what the mooing's about:\n" + invite.getAuthURL(url));
 		} catch (MessagingException e) {
@@ -132,11 +132,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		mailer.sendMessage(msg);
 	}
 
-	public Invitation lookupInvitationByKey(String authKey) {
-		Invitation ret;
+	public InvitationToken lookupInvitationByKey(String authKey) {
+		InvitationToken ret;
 		try {
-			ret = (Invitation) em.createQuery(
-				"from Invitation as iv where iv.authKey = :key")
+			ret = (InvitationToken) em.createQuery(
+				"from InvitationToken as iv where iv.authKey = :key")
 				.setParameter("key", authKey).getSingleResult();
 		} catch (EntityNotFoundException e) {
 			ret = null;
@@ -147,16 +147,16 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ret;
 	}
 
-	protected void notifyInvitationViewed(Invitation invite) {
+	protected void notifyInvitationViewed(InvitationToken invite) {
 		// adding @suppresswarnings here makes javac crash, whee
 		for (Person inviter : invite.getInviters()) {
 			// TODO send notification via xmpp to inviter that invitee viewed
 		}
 	}
 	
-	public Client viewInvitation(Invitation invite, String firstClientName) {
+	public Client viewInvitation(InvitationToken invite, String firstClientName) {
 		if (invite.isViewed()) {
-			throw new IllegalArgumentException("Invitation " + invite + "has already been viewed");
+			throw new IllegalArgumentException("InvitationToken " + invite + "has already been viewed");
 		}
 		
 		Resource invitationResource = invite.getInvitee();
@@ -171,7 +171,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		invite.setResultingPerson(acct.getOwner());
 		if (!em.contains (invite)) {
 			// we have to modify a persisted copy also...
-			Invitation persisted = em.find(Invitation.class, invite.getId());
+			InvitationToken persisted = em.find(InvitationToken.class, invite.getId());
 			persisted.setViewed(true);
 			persisted.setResultingPerson(acct.getOwner());
 		}
@@ -181,7 +181,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return client;
 	}
 
-	public Collection<String> getInviterNames(Invitation invite) {
+	public Collection<String> getInviterNames(InvitationToken invite) {
 		Set<String> names = new HashSet<String>();  
 		for (Person inviter : invite.getInviters()) {
 			PersonView view = spider.getSystemView(inviter);

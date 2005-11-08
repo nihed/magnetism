@@ -23,7 +23,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
@@ -312,7 +312,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void handleRedirect(Person user, String url, String postId, String inviteKey) throws RedirectException {
 		
-		Invitation invitation = null;
+		InvitationToken invitation = null;
 		
 		if (user == null && inviteKey != null) {
 			invitation = invitationSystem.lookupInvitationByKey(inviteKey);

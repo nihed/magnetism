@@ -11,7 +11,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.Invitation;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.server.InvitationSystem;
 
 public class VerifyServlet extends AbstractServlet {
@@ -28,7 +28,7 @@ public class VerifyServlet extends AbstractServlet {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Authentication key not provided");
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);		
-		Invitation invite = invitationSystem.lookupInvitationByKey(authKey);
+		InvitationToken invite = invitationSystem.lookupInvitationByKey(authKey);
 		
 		Collection<String> inviterNames;
 		if (invite != null)

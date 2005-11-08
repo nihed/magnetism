@@ -4,7 +4,6 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.ResourceClaimToken;
 
 /**
  * Methods related to adding a new resource to your account.
