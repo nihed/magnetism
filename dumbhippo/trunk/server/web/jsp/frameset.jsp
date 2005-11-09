@@ -12,7 +12,7 @@
         <title><c:out value="${title}"/></title>
 </head>
 
-<frameset rows="100,*">
+<frameset rows="110,*">
     <frame name="top" src="framer?postId=${framer.postId}">
     <frame name="bottom" src="${framer.post.url}">
 </frameset>

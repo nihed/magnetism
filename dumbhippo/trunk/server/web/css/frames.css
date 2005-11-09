@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+
+@import "sitewide.css";
+@import "bubbles.css";
+
+body {
+	height:			99px;
+	overflow:		hidden;
+}
+body, div, table, tbody, td, tr {
+	margin:			0;
+	padding:		0;
+	border:			0;
+	width:			100%;
+}
+div.cool-bubble-shadow {
+	margin:			1px;
+}

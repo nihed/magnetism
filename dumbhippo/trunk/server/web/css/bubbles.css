@@ -5,9 +5,11 @@ div.cool-bubble-shadow {
 	background-color:			black;
 	width:					30em;
 	position:				relative;
+	-moz-border-radius:			7px;
 }
 table.cool-bubble {
 	border:					1px solid black;
+	-moz-border-radius:			7px;
 	width:					30em;
 	max-width:				30em;
 	background-color:			white;
@@ -21,14 +23,33 @@ table.cool-bubble * {
 	font-size:				90%;
 	vertical-align:				top;
 }
+table.cool-bubble tbody {
+	width:					100%;
+	height:					100%;
+}
 td.cool-person {
 	text-align:				center;
-	width:					8em;
+	width:					50px;
 	text-overflow:				ellipsis;
 	overflow:				hidden;
+	vertical-align:				middle;
 }
-img.cool-person {
+a.cool-person, a.cool-group {
+	display:				block;
+	width:					50px;
+	text-align:				center;
+	float:					left;
 	margin:					0.3em;
+}
+div.cool-person, div.cool-group {
+	width:					50px;
+	overflow:				hidden;
+	text-overflow:				ellipsis;
+	font-size:				x-small;
+	cursor:					hand;
+}
+img.cool-person, img.cool-group {
+	margin:					auto;
 	/* Right now the Java code scales headshots to a max of 48px in each
 	 * dimension, but preserving aspect ratio. If height < width the below
 	 * will mangle the aspect again. If changing from 48px, also change the 
@@ -80,6 +101,7 @@ td.cool-link-desc {
 td.cool-link-meta {
 	text-align:				right;
 	font-size:				8pt;
+	vertical-align:				bottom;
 }
 div.cool-link-date {
 

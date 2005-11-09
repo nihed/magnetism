@@ -10,21 +10,36 @@
 
 <head>
 	<title><c:out value="${title}"/></title>
-	<link rel="stylesheet" href="/css/person.css" type="text/css" />
+	<link rel="stylesheet" href="/css/frames.css" type="text/css" />
 	<dht:scriptIncludes/>
+        <script type="text/javascript">
+                dojo.require("dojo.html");
+	</script>
 </head>
 <body>
 	<div id="dhMain">
 		<table>
 		<tr>
-		<td>
-			<dht:postBubble post="${framer.post}"/>
+		<td style="width:50%;">
+		    <dht:postBubble post="${framer.post}"/>
 		</td>
-		<td>
+		<td style="width:30%;">
+		    <a id="chat-room">Join Chat Room</a>
+		</td>
+		<td style="width:10%;">
 		    <a href="${framer.post.url}" target=_top>Remove frame</a>
 		</td>
 		</tr>
 		</table>
 	</div>
+
+
+<script>
+a = document.getElementById("chat-room");
+room = new String('<c:out value="${title}"/>' + ' Dumb Hippo');
+result = room.replace(/\s/g, '');
+a.href='aim:GoChat?Exchange=5&roomname=' + escape(result.slice(0,10));
+</script>
+
 </body>
 </html>
