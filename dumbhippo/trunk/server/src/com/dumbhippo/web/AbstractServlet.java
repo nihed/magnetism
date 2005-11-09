@@ -70,7 +70,40 @@ public abstract class AbstractServlet extends HttpServlet {
 			httpResponseCode.send(response, getMessage());
 		}	
 	}
+	
+	/**
+	 * This exception will be shown to the user on an error page.
+	 * Don't put technobabble in the message.
+	 */
+	static class ErrorPageException extends Exception {
+		private static final long serialVersionUID = 0L;
+		
+		ErrorPageException(String message) {
+			super(message);
+		}
+	}
 
+	protected void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response, String errorText)
+		throws ServletException, IOException {
+		request.setAttribute("errorText", errorText);
+		request.getRequestDispatcher("/error").forward(request, response);
+	}
+	
+	protected void redirectToNextPage(HttpServletRequest request, HttpServletResponse response, String next, String flashMessage)
+		throws ServletException, IOException {
+		// if we have a flash message or need to close the window, we have to load a special
+		// page that does that in JavaScript; otherwise we can just redirect you straightaway
+		if (flashMessage != null || next.equals("/close") || next.equals("close")) {
+			request.setAttribute("next", next);
+			if (flashMessage != null)
+				request.setAttribute("flashMessage", flashMessage);
+			request.getRequestDispatcher("/flash").forward(request, response);
+		} else {
+			String url = response.encodeRedirectURL(next);
+			response.sendRedirect(url);
+		}
+	}
+	
 	protected void logRequest(HttpServletRequest request, String type) {
 		logger.debug(type + " uri=" + request.getRequestURI() + " content-type=" + request.getContentType());
 		Enumeration names = request.getAttributeNames(); 
@@ -95,16 +128,17 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	protected Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
+		// FIXME what is the "log" parameter about?
 		return SigninBean.getForRequest(request).getUser();
 	}	
 
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-		  	IOException {
+		  	ErrorPageException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "POST not implemented");				 
 	}
 
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			IOException {
+			ErrorPageException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
 
@@ -124,6 +158,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);
+		} catch (ErrorPageException e) {
+			logger.debug(e);
+			forwardToErrorPage(request, response, e.getMessage());
 		}
 	}
 	
@@ -136,6 +173,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);
+		} catch (ErrorPageException e) {
+			logger.debug(e);
+			forwardToErrorPage(request, response, e.getMessage());
 		}
 	}
 }

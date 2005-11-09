@@ -4,6 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
@@ -47,5 +48,22 @@ public class ResourceClaimToken extends Token {
 	}
 	protected void setResource(Resource resource) {
 		this.resource = resource;
+	}
+	
+	@Transient
+	@Override
+	public long getExpirationPeriodInSeconds() {
+		if (resource instanceof EmailResource) {
+			return 60*60*24*3; // 3 days 
+		} else if (resource instanceof AimResource) {
+			return 60*30; // half hour
+		} else {
+			return super.getExpirationPeriodInSeconds();
+		}
+	}
+	
+	@Override
+	public String toString() {
+		return "{" + person + " claims " + resource + " token " + super.toString() + "}";
 	}
 }

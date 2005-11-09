@@ -66,4 +66,20 @@ public class Token extends DBUnique {
 		}
 		return authURL.toString();
 	}
+	
+	@Transient
+	protected long getExpirationPeriodInSeconds() {
+		return 60*60; // 1 hour
+	}
+	
+	@Transient
+	public boolean isExpired() {
+		long age = (System.currentTimeMillis() - getCreationDate().getTime()) / 1000;
+		return (age < 0 || age > getExpirationPeriodInSeconds());	
+	}
+	
+	@Override
+	public String toString() {
+		return getAuthKey() + "@[" + getCreationDate() + "]";
+	}
 }

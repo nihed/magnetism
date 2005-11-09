@@ -2,6 +2,9 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
+import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
@@ -23,11 +26,14 @@ public interface LoginVerifier {
 	public String getAuthKey(Resource resource); 
 	
 	/**
-	 * Try to verify a login token, returning the person you have successfully 
-	 * logged in as or throwing an exception.
+	 * Try to sign in a login token, returning the person you have successfully 
+	 * logged in as and a new cookie, or throwing an exception if something
+	 * goes wrong.
 	 * 
-	 * @param authKey token for verification
+	 * @param token token for verification
+	 * @param clientName a name for the client cookie
+	 * @returns new cookie and logged-in user
 	 * @throws LoginVerifierException if no ownership claim is created
 	 */
-	public Person verify(String authKey) throws LoginVerifierException;
+	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws LoginVerifierException;
 }

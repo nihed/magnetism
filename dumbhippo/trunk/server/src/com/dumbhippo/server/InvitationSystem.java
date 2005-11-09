@@ -13,14 +13,7 @@ import com.dumbhippo.persistence.Resource;
 
 @Local
 public interface InvitationSystem {
-	
-	/**
-	 * Look up an invitation by authentication key
-	 * @param authKey potential authentication key
-	 * @return the corresponding invitation, or null if none
-	 */
-	public InvitationToken lookupInvitationByKey(String authKey);
-	
+		
 	/**
 	 * Find all inviters for resources provably owned by a person.
 	 * 

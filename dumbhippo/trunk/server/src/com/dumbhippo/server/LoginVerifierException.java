@@ -7,10 +7,10 @@ public class LoginVerifierException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	LoginVerifierException(String message, Throwable cause) {
+	public LoginVerifierException(String message, Throwable cause) {
 		super(message, cause);
 	}
-	LoginVerifierException(String message) {
+	public LoginVerifierException(String message) {
 		super(message);
 	}
 }

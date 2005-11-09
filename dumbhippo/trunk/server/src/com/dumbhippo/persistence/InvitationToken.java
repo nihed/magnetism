@@ -9,6 +9,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 @Entity
 public class InvitationToken extends Token {
@@ -84,6 +85,18 @@ public class InvitationToken extends Token {
 	}	
 		
 	public String toString() {
-		return "{InvitationToken invitee=" + invitee + "}";
+		return "{InvitationToken invitee " + invitee + " token " + super.toString() + "}";
+	}
+
+	@Transient
+	@Override
+	public long getExpirationPeriodInSeconds() {
+		if (invitee instanceof EmailResource) {
+			return 60*60*24*7; // 7 days 
+		} else if (invitee instanceof AimResource) {
+			return 60*60*24; // 1 day
+		} else {
+			return super.getExpirationPeriodInSeconds();
+		}
 	}
 }

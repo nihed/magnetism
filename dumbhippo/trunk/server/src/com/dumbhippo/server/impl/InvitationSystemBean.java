@@ -133,21 +133,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		mailer.sendMessage(msg);
 	}
 
-	public InvitationToken lookupInvitationByKey(String authKey) {
-		InvitationToken ret;
-		try {
-			ret = (InvitationToken) em.createQuery(
-				"from InvitationToken as iv where iv.authKey = :key")
-				.setParameter("key", authKey).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			ret = null;
-		} catch (Exception e) { // FIXME !  needed because an org.hibernate. exception gets thrown
-			                    // probably a jboss bug
-			ret = null;
-		}
-		return ret;
-	}
-
 	protected void notifyInvitationViewed(InvitationToken invite) {
 		// adding @suppresswarnings here makes javac crash, whee
 		for (Person inviter : invite.getInviters()) {

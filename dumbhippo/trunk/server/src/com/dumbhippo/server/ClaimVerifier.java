@@ -4,6 +4,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.ResourceClaimToken;
 
 /**
  * Methods related to adding a new resource to your account.
@@ -37,9 +38,9 @@ public interface ClaimVerifier {
 	 * If this method succeeds then a new ResourceOwnershipClaim is created.
 	 * 
 	 * @param user logged-in user for double-check or null if unknown
-	 * @param authKey token for verification
+	 * @param token token for verification
 	 * @param resource resource, or null
 	 * @throws ClaimVerifierException if no ownership claim is created
 	 */
-	public void verify(Person user, String authKey, Resource resource) throws ClaimVerifierException;
+	public void verify(Person user, ResourceClaimToken token, Resource resource) throws ClaimVerifierException;
 }

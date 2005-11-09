@@ -34,4 +34,11 @@ public abstract class Resource extends GuidPersistable {
 	 */
 	@Transient
 	public abstract String getHumanReadableString();
+	
+	@Override
+	public String toString() {
+		// this is for debug spew, getHumanReadableString() is for showing to humans
+		// (the quotes are really just so we notice if we mess that up)
+		return "'" + getHumanReadableString() + "'";
+	}
 }

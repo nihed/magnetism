@@ -18,7 +18,7 @@ public class SendInviteServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 
-	private InvitationToken doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException{
+	private void doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException{
 		Person user = doLogin(request, response, false);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
@@ -40,23 +40,15 @@ public class SendInviteServlet extends AbstractServlet {
 		InvitationToken invitation = invitationSystem.createEmailInvitation(user, email);
 		invitationSystem.sendEmailNotification(invitation, user);
 		
-		return invitation;
+		request.setAttribute("fullName", fullName);
+		request.setAttribute("email", email);
+		request.setAttribute("authKey", invitation.getAuthKey());
+		request.getRequestDispatcher("/invitesent").forward(request, response);
 	}
 	
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException {
-		
-		logRequest(request, "GET");
-		
-		try {
-			InvitationToken invitation = doSendInvite(request, response);
-			
-			request.setAttribute("authKey", invitation.getAuthKey());
-			request.getRequestDispatcher("/invitesent").forward(request, response);
-		} catch (HttpException e) {
-			logger.debug(e);
-			e.send(response);
-		}		
+	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+			IOException, HttpException, ErrorPageException {
+		doSendInvite(request, response);
 	}
 }

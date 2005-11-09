@@ -27,16 +27,17 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RedirectException;
+import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -61,10 +62,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private GroupSystem groupSystem;
 
 	@EJB
-	private InvitationSystem invitationSystem;
-	
-	@EJB
 	private Configuration configuration;
+
+	@EJB
+	private TokenSystem tokenSystem;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -315,7 +316,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		InvitationToken invitation = null;
 		
 		if (user == null && inviteKey != null) {
-			invitation = invitationSystem.lookupInvitationByKey(inviteKey);
+			Token token = tokenSystem.lookupTokenByKey(inviteKey);
+			if (token != null && token instanceof InvitationToken)
+				invitation = (InvitationToken) token; 
 		}
 		
 		// FIXME obviously we should redirect you to login and then come back...
