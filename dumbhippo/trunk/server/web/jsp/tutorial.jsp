@@ -17,34 +17,64 @@
 
 	<dht:toolbar/>
 
-	<p></p>
-	
-	<div class="dh-tutorial-movie-area">
-		<div class="dh-tutorial-movie">Tutorial Movie Here</div>
-	</div>
-
 	<div id="dhMain">
-		<table class="dh-tutorial-edit-table">
-		<tr>
-		<td>
-			Other people see you as:
-		</td>
-		<td>
-			<dht:userNameEdit value="${tutorial.person.humanReadableName}"/>
-		</td>
-		</tr>
-		<tr>
-		<td>
-			Blah blah:
-		</td>
-		<td>
-			<input/>
-		</td>
-		</tr>
-		</table>
+	
+		<div class="dh-tutorial-movie-area">
+			<div class="dh-tutorial-movie">Tutorial Movie Here</div>
+		</div>
+	
+		<div class="dhBackgroundBox">
+			<b>Help your friends find you</b>
+			
+			<table class="dh-edit-table">
+			<tr>
+			<td class="dh-edit-table-label">
+				<!-- don't try to use css counters, firefox no like -->
+				<span class="dh-step">1</span>
+				Your name is:
+			</td>
+			<td class="dh-edit-table-control">
+				<dht:userNameEdit value="${tutorial.person.humanReadableName}"/>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">Click on the name to change it.
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+				<span class="dh-step">2</span>
+				<a href="aim:GoIM?screenname=DumbHippoBot&message=Hello+Bot">
+				IM us your screen name
+				</a>
+			</td>
+			<td>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">Will not be seen by 
+				strangers or used for spam.
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+				<span class="dh-step">3</span>
+				Add an email address:
+			</td>
+			<td class="dh-edit-table-control">
+				<input id="dhExtraEmailAddress"/>
+				<input type="button" value="Send Verification"/>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">Click on the link you get in the mail.
+			</td>
+			</tr>
+			</table>
+		</div>
 		
 		<p>
-		<a href="home">I get it! Return me to my page.</a>
+		All done? <a href="home">Return to your page.</a>
 		</p>
 		
 	</div>

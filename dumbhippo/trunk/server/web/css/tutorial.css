@@ -17,6 +17,47 @@
 	text-align: center;
 }
 
-.dh-tutorial-edit-table tr td {
-	padding:	.5em;
+.dh-edit-table {
+	margin:			.5em;
+}
+
+.dh-step {
+	font-weight:	bold;
+	padding-right:  1.5em;
+}
+
+.dh-step:before {
+	content:		'Step ';
+}
+
+.dh-step:after {
+	content:		'.';
+}
+
+.dh-edit-table tr {
+	padding:		1.5em;
+}
+
+.dh-edit-table-label {
+	padding-left:	.5em;
+	padding-right:	1em;
+}
+
+.dh-edit-table-control {
+	text-align:		right;
+}
+
+.dh-explanation {
+	text-align: 	right;
+	font-size:		smaller;
+	font-style: 	italic;
+	padding-bottom:	.5em;
+	padding-left:	2.5em;
+}
+
+/* Lame hack to keep dojo Edit link from screwing with the layout on mouseover;
+ * need to just fix this widget
+ */
+a.editLabel {
+	position:		absolute;
 }
