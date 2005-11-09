@@ -54,8 +54,8 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private IdentitySpider identitySpider;	
-	
 	@EJB
+	
 	private AccountSystem accountSystem;
 
 	@EJB
@@ -110,7 +110,6 @@ public class PostingBoardBean implements PostingBoard {
 		Post post = createPostViaProxy(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
 		
 		sendPostNotifications(post, expandedRecipients);
-
 		return post;
 	}
 	

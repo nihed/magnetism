@@ -103,7 +103,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return createGetInvitation(inviter, emailRes);
 	}	
 	
-	protected static final String invitationFromAddress = "Dumb Hippo InvitationToken <invitations@dumbhippo.com>";
+	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
 	
 	public void sendEmailNotification(InvitationToken invite, Person inviter) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
@@ -123,7 +123,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		try {
-			msg.setSubject("InvitationToken from " + inviterName + " to join Dumb Hippo");
+			msg.setSubject("Invitation from " + inviterName + " to join Dumb Hippo");
 			msg.setText("Moo!\n\nYou've been invited by " + inviterName + " to join Dumb Hippo!\n\n"
 					+ "Follow this link to see what the mooing's about:\n" + invite.getAuthURL(url));
 		} catch (MessagingException e) {

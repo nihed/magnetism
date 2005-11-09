@@ -309,6 +309,9 @@ public class MessageSenderBean implements MessageSender {
 			messageHtml.appendHtmlHead("");
 			messageHtml.append("<body>\n");
 			
+			messageHtml.append("<div style=\"width:500px\">\n");
+			messageHtml.append("  <div style=\"border:1px solid black;min-height:100px;\"><!-- bubble div -->\n");
+			
 			Set<Resource> resources = post.getResources();
 			
 			String title = post.getTitle();
@@ -339,35 +342,80 @@ public class MessageSenderBean implements MessageSender {
 					messageText.append(url);
 					messageText.append("\n");
 					
-					messageHtml.append("<p><a href=\"");
-					messageHtml.appendEscaped(redirectUrl.toString());
-					messageHtml.append("\">" + title + "</a> (link goes via DumbHippo)</p>\n");
+					
+			        String format = "<div style=\"margin:0.3em;\">\n" 
+			        + "<a style=\"font-weight:bold;font-size:150%%;\" title=\"%s\" href=\"%s\">%s</a>\n"
+			        + "</div>\n";
+
+			        // FIXME we repeat the post title for every link, if we ever really support multiple links 
+			        messageHtml.append(String.format(format, XmlBuilder.escape(url),
+			        		XmlBuilder.escape(redirectUrl.toString()), XmlBuilder.escape(title)));
 				}
 			}
 
 			if (title == null) {
-				// if this doesn't sound like spam I'm not sure what does...
-				title = "Check out this link!";
+				// uhhhh....
+				title = "Untitled Post";
 			}
 			
 			messageText.append("\n");
-			messageHtml.append("<br/>\n");
 			
 			// TEXT: append post text
 			messageText.append(post.getText());
+			
 			// HTML: append post text
+			messageHtml.append("<div style=\"font-size:120%;margin:0.5em;\">\n");
 			messageHtml.appendTextAsHtml(post.getText());
+			messageHtml.append("</div>\n");
+
+			messageHtml.append("  </div><!-- close bubble div -->\n");
+			
+			// TEXT: "link shared by"
+			
+			messageText.append("  (Link shared by " + posterViewedByRecipient.getHumanReadableName() + ")");
+			
+			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedByRecipient.getPerson().getId();
+			String recipientInviteUrl = baseurl; // FIXME invite url for recipient
+			String recipientStopUrl = baseurl;   // FIXME stop getting mail url for recipient
+			
+			// HTML: "link shared by"
+			messageHtml.append("<div style=\"margin:0.2em;font-style:italic;text-align:right;font-size:small;vertical-align:bottom;\">");
+			String format = "(Link shared from "
+				+ "<a title=\"%s\" href=\"%s\">%s</a> "
+				+ "to <a href=\"%s\">%s</a>)\n"
+				+ "</div>\n";
+			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedByRecipient.getEmail().getEmail()),
+						XmlBuilder.escape(posterPublicPageUrl),
+						XmlBuilder.escape(posterViewedByRecipient.getHumanReadableName()),
+						XmlBuilder.escape(recipientInviteUrl),
+						XmlBuilder.escape(recipient.getName().getFullName()))); // FIXME recipient's Email address instead 
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
-			messageText.append("                    (Message sent by " + posterViewedByRecipient.getHumanReadableName() + " using " + baseurl + ")\n");
+			messageText.append("      " + posterViewedByRecipient.getHumanReadableShortName()
+					+ " created an invitation for you: " + recipientInviteUrl + "\n");
+			messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			
 			// HTML: append footer
-			messageHtml.append("<p style=\"font-size: smaller; font-style: italic; text-align: center;\">(Message sent by ");
-			messageHtml.appendEscaped(posterViewedByRecipient.getHumanReadableName());
-			messageHtml.append(" using <a href=\"");
-			messageHtml.appendEscaped(baseurl);
-			messageHtml.append("\">DumbHippo</a>)</p>\n");
+			
+			format = "<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n"
+				+ "<a href=\"%s\">%s</a> created an open "
+				+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Dumb Hippo</a>\n"
+				+ "</div>\n";
+			messageHtml.append(String.format(format, 
+					XmlBuilder.escape(posterPublicPageUrl),
+					XmlBuilder.escape(posterViewedByRecipient.getHumanReadableShortName()),
+					XmlBuilder.escape(recipientInviteUrl),
+					XmlBuilder.escape(baseurl)));
+
+			format = "<div style=\"text-align:center;margin-top:1em;font-size:8pt;\">\n" 
+				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's DumbHippo?</a> | <a style=\"font-size:8pt;\" href=\"%s\">Stop Getting These Mails</a>\n"
+				+ "</div>\n";
+			messageHtml.append(String.format(format,
+					XmlBuilder.escape(recipientInviteUrl),
+					XmlBuilder.escape(recipientStopUrl)));
+ 			
+			messageHtml.append("</div>\n");
 			messageHtml.append("</body>\n</html>\n");
 					
 			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
