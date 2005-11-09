@@ -53,6 +53,7 @@ HippoBubble::setUI(HippoUI *ui)
 bool
 HippoBubble::createWindow(void)
 {
+	/// TODO make not modal
 	window_ = CreateWindow(CLASS_NAME, L"Hippo Notification", WS_POPUP | WS_EX_TOPMOST,
 		CW_USEDEFAULT, CW_USEDEFAULT, 400, 125, 
 		NULL, NULL, instance_, NULL);
@@ -241,6 +242,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	HippoBSTR senderURLfrag;
 	senderURLfrag.Append(L"viewperson?personId=");
 	senderURLfrag.Append(share.senderId);
+	currentSenderUrl_ = NULL;
 	ui_->getRemoteURL(senderURLfrag, &currentSenderUrl_);
 
 	HippoBSTR photoURLfrag(L"files/headshots/");
@@ -263,6 +265,13 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	invokeJavascript(L"dhSetRecipients", &result, &groupRecipientsArg, &personRecipientsArg, NULL);
 	SafeArrayDestroy(personRecipients);
 	SafeArrayDestroy(groupRecipients);
+	show();
+}
+
+void 
+HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
+{
+
 }
 
 bool
@@ -342,6 +351,7 @@ HippoBubble::registerClass()
 void
 HippoBubble::show(void) 
 {	
+	ui_->debugLogW(L"doing bubble show");
 	AnimateWindow(window_, 400, AW_BLEND);
 }
 
@@ -397,6 +407,7 @@ HippoBubble::Close()
 {
 	ie_->Release();
 	AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
+	ui_->debugLogU("closing link notification");
 	return S_OK;
 }
 

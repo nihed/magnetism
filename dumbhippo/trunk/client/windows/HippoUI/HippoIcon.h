@@ -27,26 +27,17 @@ public:
 		        LPARAM lParam);
 	                
     void showURL(HippoLinkShare &linkshare);
-	void showURLClicked(const WCHAR *postId,
-		  	            const WCHAR *clickerName,
-		                const WCHAR *title);
+	void showURLClicked(HippoLinkSwarm &linkswarm);
 
 private:
     void showMenu(UINT buttonFlag);
 
+	HippoBubble bubble_;
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
 	HWND popupWindow_;
     UINT message_;
     HICON icon_;
-
-	enum {
-		DISPLAYING_NONE,
-		DISPLAYING_LINK,
-		DISPLAYING_CLICK
-	} displayState_;
-    HippoBSTR currentURL_;
-	HippoBSTR currentPostId_;
 
     // When the user clicks on us with a ballon tip, we get *first* a NIN_BALLOONUSERCLICK
     // then a WM_[LR]BUTTONDOWN. We want to ignore the second to avoid going to the

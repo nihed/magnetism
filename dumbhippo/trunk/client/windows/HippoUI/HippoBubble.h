@@ -12,6 +12,7 @@
 
 class HippoUI;
 struct HippoLinkShare;
+struct HippoLinkSwarm;
 
 class HippoBubble :
 	public IHippoBubble,
@@ -30,6 +31,7 @@ public:
 	void setUI(HippoUI *ui);
 
 	void setLinkNotification(HippoLinkShare &share);
+	void setSwarmNotification(HippoLinkSwarm &swarm);
 	void show(void);
 
 	// IUnknown methods

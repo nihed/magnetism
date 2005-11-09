@@ -31,6 +31,13 @@ struct HippoLinkShare
 	HippoArray<HippoBSTR> groupRecipients;
 };
 
+struct HippoLinkSwarm
+{
+	HippoBSTR postId;
+	HippoBSTR clickerName;
+	HippoBSTR title;
+};
+
 class HippoUI 
     : public IHippoUI 
 {
@@ -72,9 +79,7 @@ public:
     void onAuthFailure();
     void onAuthSuccess();
     void onLinkMessage(HippoLinkShare &link);
-    void onLinkClicked(const WCHAR *postId,
-		               const WCHAR *clickerName,
-	                   const WCHAR *title);
+    void onLinkClicked(HippoLinkSwarm &swarm);
 
 	HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);

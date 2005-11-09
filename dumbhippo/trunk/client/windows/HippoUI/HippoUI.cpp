@@ -409,6 +409,8 @@ HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 		return;
 	}
 
+	debugLogW(L"launching browser for %S", url);
+
     VARIANT missing;
     missing.vt = VT_EMPTY;
 
@@ -524,11 +526,9 @@ HippoUI::onLinkMessage(HippoLinkShare &linkshare)
 }
 
 void 
-HippoUI::onLinkClicked(const WCHAR *postId,
-					   const WCHAR *clicker,
-	                   const WCHAR *title)
+HippoUI::onLinkClicked(HippoLinkSwarm &linkswarm)
 {
-	notificationIcon_.showURLClicked(postId, clicker, title);
+	notificationIcon_.showURLClicked(linkswarm);
 }
 
 // Tries to register as the singleton HippoUI, returns true on success

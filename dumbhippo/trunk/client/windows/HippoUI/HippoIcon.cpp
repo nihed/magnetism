@@ -33,6 +33,7 @@ void
 HippoIcon::setUI(HippoUI *ui)
 {
     ui_ = ui;
+	bubble_.setUI(ui_);
 }
 
 bool
@@ -53,8 +54,6 @@ HippoIcon::create(HWND window)
     notifyIconData.hIcon = icon_;
 
     Shell_NotifyIcon(NIM_ADD, &notifyIconData);
-
-	displayState_ = DISPLAYING_NONE;
 
     return true;
 }
@@ -104,10 +103,6 @@ HippoIcon::processMessage(WPARAM wParam,
     switch (lParam) {
     case WM_LBUTTONDOWN:
     case NIN_SELECT:
-	if (ignoreNextClick_) {
-	    ignoreNextClick_ = false;
-	    return;
-	}
         ui_->showMenu(TPM_LEFTBUTTON);
         break;
     case WM_RBUTTONDOWN:
@@ -117,72 +112,23 @@ HippoIcon::processMessage(WPARAM wParam,
     case NIN_BALLOONSHOW:
 	break;
     case NIN_BALLOONUSERCLICK:
-		if (displayState_ == DISPLAYING_LINK) {
-			ignoreNextClick_ = true;
-			ui_->showURL(currentPostId_, currentURL_);
-		}
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
-		displayState_ = DISPLAYING_NONE;
 	break;
     }
     
 }
 
-// XP SP2 addition
-#ifndef NIIF_USER
-#define NIIF_USER 4
-#endif
-
 void
 HippoIcon::showURL(HippoLinkShare &linkshare)
 {
-    currentURL_ = linkshare.url;
-	currentPostId_ = linkshare.postId;
-
-	displayState_ = DISPLAYING_LINK;
-
-	{
-		HippoPtr<HippoBubble> bubble = new HippoBubble;
-		bubble->setUI(ui_);
-		bubble->setLinkNotification(linkshare);
-		bubble->show();
-	}
+	bubble_.setLinkNotification(linkshare);
 }
 
-
 void
-HippoIcon::showURLClicked(const WCHAR *postId,
-				          const WCHAR *clickerName,
-		                  const WCHAR *title)
+HippoIcon::showURLClicked(HippoLinkSwarm &linkswarm)
 {
-    currentURL_ = NULL;
-	currentPostId_ = postId;
-
-	displayState_ = DISPLAYING_CLICK;
-
-	ui_->debugLogU("Showing clicked bubble");
-
-    NOTIFYICONDATA notifyIconData = { 0 };
-
-    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-    notifyIconData.hWnd = window_;
-    notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_INFO;
-    const size_t infoLen = sizeof(notifyIconData.szInfo) / sizeof(notifyIconData.szInfo[0]);
-
-	StringCchCopy(notifyIconData.szInfo, infoLen, TEXT(""));
-	StringCchCat(notifyIconData.szInfo, infoLen, clickerName);
-	// FIXME i18n
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT(" has viewed your share \""));
-    StringCchCat(notifyIconData.szInfo, infoLen, title);
-	StringCchCat(notifyIconData.szInfo, infoLen, TEXT("\""));
-
-    notifyIconData.uTimeout = CLICKED_ON_NOTIFY_TIMEOUT;
-    const size_t titleLen = sizeof(notifyIconData.szInfoTitle) / sizeof(notifyIconData.szInfoTitle[0]);
-	StringCchCopy(notifyIconData.szInfoTitle, titleLen, TEXT("XMPP Remoted Hardware Event 0x23A"));
-    notifyIconData.dwInfoFlags = NIIF_USER;
-   
-    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+ 	bubble_.setSwarmNotification(linkswarm);
+//	bubble_.show();
 }

@@ -521,33 +521,26 @@ HippoIM::onMessage (LmMessageHandler *handler,
 		}
 		else if (strcmp (child->name, "linkClicked") == 0)
 	    {
-		const WCHAR *urlW = NULL;
-		const WCHAR *postIdW = NULL;
-		const WCHAR *titleW = NULL;
-		const WCHAR *clickerNameW = NULL;
+			HippoLinkSwarm linkswarm;
 
-		im->ui_->debugLogU("Got link clicked");
+			im->ui_->debugLogU("Got link clicked");
 
-		const char *postId = lm_message_node_get_attribute(child, "id");
-		if (!postId) {
-			im->ui_->debugLogU("Malformed link message, no post ID");
-			continue;
-		}
-		postIdW = g_utf8_to_utf16(postId, -1, NULL, NULL, NULL);
+			const char *postId = lm_message_node_get_attribute(child, "id");
+			if (!postId) {
+				im->ui_->debugLogU("Malformed link message, no post ID");
+				continue;
+			}
+			linkswarm.postId.setUTF8(postId);
 
-		LmMessageNode *clickerName = lm_message_node_get_child(child, "clickerName");
-		if (clickerName && clickerName->value)
-			clickerNameW = g_utf8_to_utf16(clickerName->value, -1, NULL, NULL, NULL);
+			LmMessageNode *clickerName = lm_message_node_get_child(child, "clickerName");
+			if (clickerName && clickerName->value)
+				linkswarm.clickerName.setUTF8(clickerName->value);
 
-		LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
-		if (titleNode && titleNode->value)
-		    titleW = g_utf8_to_utf16(titleNode->value, -1, NULL, NULL, NULL);
+			LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
+			if (titleNode && titleNode->value)
+				linkswarm.title.setUTF8(titleNode->value);
 
-		im->ui_->onLinkClicked(postIdW, clickerNameW, titleW);
-
-		g_free((void *)clickerNameW);		
-		g_free((void *)postIdW);
-		g_free((void *)titleW);
+			im->ui_->onLinkClicked(linkswarm);
 		} else {
 			im->ui_->debugLogU("Unknown message \"%s\", delegating to next handler", child->name ? child->name : "(null)");
 		}

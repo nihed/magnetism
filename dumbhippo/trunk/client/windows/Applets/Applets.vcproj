@@ -34,22 +34,27 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\clientstyle.xml">
+			RelativePath=".\clientstyle.xml"
+			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\close.png">
+			RelativePath=".\close.png"
+			DeploymentContent="TRUE">
 		</File>
 		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File
-			RelativePath=".\notification.css">
+			RelativePath=".\notification.css"
+			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\notification.js">
+			RelativePath=".\notification.js"
+			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\notification.xml">
+			RelativePath=".\notification.xml"
+			DeploymentContent="TRUE">
 		</File>
 	</Files>
 	<Globals>
