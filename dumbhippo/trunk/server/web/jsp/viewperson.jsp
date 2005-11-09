@@ -28,7 +28,7 @@
 		</c:choose>
 	</dht:toolbar>
 
-	<div class="main">
+	<div id="dhMain">
 		<table>
 		<tr>
 		<td>

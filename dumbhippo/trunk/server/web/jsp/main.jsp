@@ -11,6 +11,11 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
+	<dht:header>
+		Main
+	</dht:header>
+	<dht:toolbar/>
+
 	<h3>This is the main page.</h3>
 
     <c:choose>

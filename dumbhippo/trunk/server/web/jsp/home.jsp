@@ -26,7 +26,7 @@
 		<a href="${myphoto}">Change my photo</a>
 	</div>
 
-	<div class="main">
+	<div id="dhMain">
 		<table>
 		<tr>
 		<td>

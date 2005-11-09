@@ -8,7 +8,11 @@
 	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
 </head>
 <body>
-	<div class="main">
+	<dht:header>
+		Error
+	</dht:header>
+
+	<div id="dhMain">
 		
 		<h2>Oops!</h2>
 		

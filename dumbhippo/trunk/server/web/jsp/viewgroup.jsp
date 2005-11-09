@@ -6,7 +6,9 @@
 <dh:bean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
 <jsp:setProperty name="viewgroup" property="viewedGroupId" param="groupId"/>
 
-<c:if test="${empty viewgroup.viewedGroupId}"><jsp:forward page="/jsp/nogroup.jsp"/></c:if>
+<c:if test="${empty viewgroup.viewedGroupId}">
+	<dht:errorPage>Group not found</dht:errorPage>
+</c:if>
 
 <head>
 	<title><c:out value="${viewgroup.name}"/></title>
@@ -33,7 +35,7 @@
 		</c:if>
 	</dht:toolbar>
 
-	<div class="main">
+	<div id="dhMain">
 		<c:if test="${!empty viewgroup.inviter}">
 			<div>
 				You were invited to this group by <dh:entity value="${viewgroup.inviter}"/><br/>

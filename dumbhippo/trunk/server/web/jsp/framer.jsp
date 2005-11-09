@@ -14,7 +14,7 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
-	<div class="main">
+	<div id="dhMain">
 		<table>
 		<tr>
 		<td>

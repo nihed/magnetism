@@ -100,6 +100,13 @@ dh.util.join = function(array, separator, elemProp) {
 
 dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.geckoVersion < 20051001;
 
+dh.util.getMainNode = function() {
+	var node = document.getElementById("dhMain");
+	if (!node)
+		node = document.body;
+	return node;
+}
+
 // arg is the default page to go to if none was specified
 // "close" and "here" are magic pseudo-pages for close the window
 // and stay on this page
@@ -109,17 +116,18 @@ dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.gec
 dh.util.goToNextPage = function(def, flashMessage) {
 	if (flashMessage) {
 		// delete the whole page
-		dh.util.hide(document.body);
-		while (document.body.firstChild) {
-			document.body.removeChild(document.body.firstChild);
+		var main = dh.util.getMainNode();
+		dh.util.hide(main);
+		while (main.firstChild) {
+			main.removeChild(main.firstChild);
 		}
 		
 		// insert the message
 		var messageNode = document.createElement("div");
 		dojo.html.addClass(messageNode, "dh-closing-message");
 		messageNode.appendChild(document.createTextNode(flashMessage));
-		document.body.appendChild(messageNode);
-		dh.util.show(document.body);
+		main.appendChild(messageNode);
+		dh.util.show(main);
 		
 		setTimeout("dh.util.goToNextPage(\"" + def + "\");", 3000); // in 3 seconds, go to next page
 		return;

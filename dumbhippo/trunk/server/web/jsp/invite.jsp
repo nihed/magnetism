@@ -1,24 +1,35 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <head>
-	<title>Invite</title>
+	<title>Invite a Friend</title>
+	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
+	<dht:scriptIncludes/>
 </head>
 <body>
-	<c:url value="sendinvite" var="submiturl"/>
-	<form action="${submiturl}" method="post">
-		<h3>Please enter the name and email of the user to invite:</h3>
-		<table>
-			<tr>
-				<td>Name:</td>
-				<td><input name="fullName"></td>
-			</tr>
-			<tr>
-				<td>Email:</td>
-				<td><input name="email"></td>
-			</tr>
-		</table>
-		<input type="submit" value="Invite"/>
-	</form>
+	<dht:header>
+		Inviting a Friend
+	</dht:header>
+	<dht:toolbar/>
+
+	<div id="dhMain">
+		<c:url value="sendinvite" var="submiturl"/>
+		<form action="${submiturl}" method="post">
+			<h3>Invite someone by email:</h3>
+			<table>
+				<tr>
+					<td>Name:</td>
+					<td><input name="fullName"></td>
+				</tr>
+				<tr>
+					<td>Email:</td>
+					<td><input name="email"></td>
+				</tr>
+			</table>
+			<input type="submit" value="Invite"/>
+		</form>
+	</div>
 </body>
 </html>

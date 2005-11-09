@@ -23,7 +23,7 @@
 		<div class="dh-tutorial-movie">Tutorial Movie Here</div>
 	</div>
 
-	<div class="main">
+	<div id="dhMain">
 		<table class="dh-tutorial-edit-table">
 		<tr>
 		<td>
