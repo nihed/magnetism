@@ -4,7 +4,7 @@ targetdir=@@targetdir@@
 
 echo "Starting IM Bot..."
 
-cd $targetdir/bin
+cd $targetdir
 
 if [ x"$JAVA_HOME" != x ] ; then
     JAVA="$JAVA_HOME/bin/java"
@@ -12,10 +12,17 @@ else
     JAVA=java
 fi
 
-"$JAVA" -Xdebug 				\
-     -server 					\
-     -classpath $targetdir/lib/startup.jar 	\
-     -jar $targetdir/lib/startup.jar >/dev/null 2>&1 &
+deps=""
+for D in $targetdir/lib/*.jar ; do 
+	deps="$D:$deps" ;
+done
+
+echo "classpath $deps"
+
+"$JAVA" -Xdebug 					\
+     -server 						\
+     -classpath $deps:$targetdir/dumbhippo-imbot.jar 	\
+     com.dumbhippo.aimbot.Main  >$targetdir/logs/imbot.log 2>&1 &
 
 pid=$!
 
