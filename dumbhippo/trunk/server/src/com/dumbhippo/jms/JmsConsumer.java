@@ -3,6 +3,9 @@ package com.dumbhippo.jms;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.naming.NamingException;
+
+import com.dumbhippo.jms.JmsQueue.Init;
 
 
 /**
@@ -10,50 +13,82 @@ import javax.jms.MessageConsumer;
  * There is no reason to use this inside the app server, just 
  * create a message-driven bean. Outside the app server it lets you 
  * read messages from a JMS queue without fighting all the JMS 
- * boilerplate.
+ * boilerplate. Also makes communication failures block/retry instead
+ * of throwing an exception.
  * 
  * @author hp
  *
  */
 public class JmsConsumer extends JmsQueue {
 	
-	private MessageConsumer messageConsumer;
-	
 	public JmsConsumer(String queue) {
 		super(queue, false);
-
-		try {
-			messageConsumer = getSession().createConsumer(getDestination());
-			getConnection().start();
-		} catch (JMSException e) {
-			throw new JmsUncheckedException(e);
-		}
+	}
+	
+	public MessageConsumer getConsumer() {
+		return ((ConsumerInit)open()).getConsumer();
 	}
 	
 	public Message receive() {
-		try {
-			return messageConsumer.receive();
-		} catch (JMSException e) {
-			throw new JmsUncheckedException(e);
+		while (true) {
+			try {
+				return getConsumer().receive();
+			} catch (JMSException e) {
+				logger.warn("Exception in receive()", e);
+				// There are probably exceptions we shouldn't do this with,
+				// but JMS kindly uses the same exception for everything
+				close();
+			}
 		}
 	}
 	
 	public Message receive(long timeout) {
 		try {
-			return messageConsumer.receive(timeout);
+			return getConsumer().receive(timeout);
 		} catch (JMSException e) {
-			throw new JmsUncheckedException(e);
+			logger.warn("Exception in receive()", e);
+			return null;
 		}
 	}
 	
-	@Override
-	public void close() {
-		try {
-			messageConsumer.close();
-		} catch (JMSException e) {
-			throw new JmsUncheckedException(e);
+	private static class ConsumerInit extends Init {
+		private MessageConsumer messageConsumer;
+		
+		ConsumerInit(String queue, boolean local) throws JMSException, NamingException {
+			super(queue, local);
 		}
-		super.close();
+
+		@Override
+		protected void openSub() throws NamingException, JMSException {
+			messageConsumer = getSession().createConsumer(getDestination());
+			
+			logger.debug("New JMS consumer object created");
+			
+			// is it OK to do this more than once? of course right now 
+			// we always close consumer and connection at the same time
+			getConnection().start();				
+		}
+		
+		@Override
+		protected void closeSub() throws JMSException {
+			try {
+				if (messageConsumer != null) {
+					logger.debug("Closing JMS consumer object");
+					messageConsumer.close();
+				}
+			} finally {
+				messageConsumer = null;
+			}
+		}
+
+		public MessageConsumer getConsumer() {
+			return messageConsumer;
+		}
+	}
+
+	@Override
+	protected Init newInit(String queue, boolean local) throws JMSException, NamingException {
+		return new ConsumerInit(queue, local);
 	}
 }
 
