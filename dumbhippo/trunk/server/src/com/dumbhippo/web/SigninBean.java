@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -25,7 +25,7 @@ public class SigninBean implements Serializable {
 
 	private static final Log logger = GlobalSetup.getLog(SigninBean.class);
 	
-	private Person user;
+	private User user;
 	
 	private SigninBean(HttpServletRequest request) {
 		try {
@@ -86,7 +86,7 @@ public class SigninBean implements Serializable {
 		return user != null;
 	}
 	
-	public Person getUser() {
+	public User getUser() {
 		return user;
 	}
 	

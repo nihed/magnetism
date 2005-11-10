@@ -6,7 +6,9 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -110,18 +112,8 @@ public interface IdentitySpider {
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
 	 */
-	public Person lookupPersonByEmail(String email);
+	public User lookupPersonByEmail(String email);
 	
-	/**
-	 * Finds the person which owns an email address from a
-	 * particular person's viewpoint.  
-	 * 
-	 * @param viewpoint
-	 * @param email the possibly-owned email address
-	 * @return the owning person, or null if none
-	 */	
-	public Person lookupPersonByEmail(Person viewpoint, String email);
-		
 	//public Person lookupPersonByAim(String aim);
 	//public Person lookupPersonByAim(Person viewpoint, String aim);
 
@@ -133,36 +125,13 @@ public interface IdentitySpider {
 	 * @param resource the possibly-owned resource
 	 * @return the owning person, or null if none
 	 */
-	public Person lookupPersonByResource(Resource resource);
-	
-	/**
-	 * Finds the person who owns a resource from a
-	 * particular person's viewpoint. 
-	 * 
-	 * @param viewpoint
-	 * @param resource the possibly-owned resource
-	 * @return the owning person, or null if none
-	 */	
-	public Person lookupPersonByResource(Person viewpoint, Resource resource);
+	public User lookupPersonByResource(Resource resource);
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException;
 	
 	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, GuidNotFoundException;
 	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws GuidNotFoundException;
-	
-	/** 
-	 * Add a claim by assertedBy that owner is the owner of the resource.
-	 * For this call, the assertedBy can't be null or TheMan, we only 
-	 * set those when we prove things ourselves.
-	 *
-	 * TODO should only permit assertedBy.equals(currentUser)
-	 * 
-	 * @param owner claimed owner
-	 * @param resource thing to be owned
-	 * @param assertedBy who is claiming it
-	 */
-	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy);
 	
 	/**
 	 * Record an assertion that we have (at least weakly) verified the person has control of
@@ -172,44 +141,44 @@ public interface IdentitySpider {
 	 * @param owner claimed owner
 	 * @param resource thing to be owned
 	 */	
-	public void addVerifiedOwnershipClaim(Person owner, Resource res);
+	public void addVerifiedOwnershipClaim(User owner, Resource res);
 	
 	/**
-	 * If the resource already has an account holder who has a verified
-	 * claim on it, returns the Person who owns the resource and adds them
-	 * to the contacts of the passed-in person.
-	 *
-	 * Otherwise, creates a new Person, makes it own the given resource, and 
+	 * If the person has a Contact with a resource sharing a (system-verified)
+	 * owner with resource, adds resource to that contact and returns the
+	 * Contact.
+	 * 
+	 * Otherwise, creates a new Contact, makes it own the given resource, and 
 	 * adds the Person to the owner's contact list.
 	 * 
 	 * @param person person whose contact it is (logged in user usually)
 	 * @param contact the contact address
 	 * @return the new person in the contact list
 	 */
-	public Person createContact(Person person, Resource contact);
+	public Contact createContact(User user, Resource resource);
 	
 	/**
 	 * Add a contact to a person's account. 
 	 * 
-	 * @param person whose contact it is (must have an account)
-	 * @param the new person to add to the contact list
+	 * @param user whose contact it is
+	 * @param contactPerson the new person to add to the contact list
 	 */
-	public void addContactPerson(Person person, Person contact);
+	public void addContactPerson(User user, Person contactPerson);
 	
 	/**
 	 * Remove a contact from a person's account. 
 	 * 
-	 * @param person whose contact it is (must have an account)
-	 * @param the person to remove from the contact list
+	 * @param user whose contact it is
+	 * @param contactPerson the person to remove from the contact list
 	 */
-	public void removeContactPerson(Person person, Person contact);
+	public void removeContactPerson(User user, Person contactPerson);
 
 	/** 
 	 * Get the contacts of the given person
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
-	public Set<Person> getRawContacts(Person user);
+	public Set<Contact> getRawContacts(User user);
 	
 	/** 
 	 * Get the contacts of the given person as a list of PersonView
@@ -219,7 +188,7 @@ public interface IdentitySpider {
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
-	public Set<PersonView> getContacts(Viewpoint viewpoint, Person user);
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user);
 	
 	/**
 	 * Checks whether a person has another other as a contact
@@ -229,19 +198,21 @@ public interface IdentitySpider {
 	 * @param user who to look in the contacts of
 	 * @param contact person to look for in the contacts
 	 */
-	public boolean isContact(Viewpoint viewpoint, Person user, Person contact);
+	public boolean isContact(Viewpoint viewpoint, User user, Person contact);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
 	 *
 	 * (More helpfully: The Man is the system user; his opinions 
-	 * are taken as true for everyone, e.g. in ResourceOwnershipClaim)
+	 * are taken as true for everyone)
 	 * 
 	 * Note that the result is a detached entity.
+	 * 
+	 * This function is going away, along with theMan. 
 	 *
 	 * @return The Man
 	 */
-	public Person getTheMan();
+	public User getTheMan();
 	
 	/**
 	 * This is an internal detail used in implementing getTheMan(); getTheMan
@@ -249,7 +220,7 @@ public interface IdentitySpider {
 	 * 
 	 * @return The Man
 	 */
-	public Person findOrCreateTheMan();
+	public User findOrCreateTheMan();
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person.
@@ -265,17 +236,18 @@ public interface IdentitySpider {
 	 * 
 	 * Returns an object describing a person from the global viewpoint.
 	 * 
-	 * @param p the person being viewed
+	 * @param user the person being viewed. Always an account holder
 	 * @return new PersonView object
 	 */
-	public PersonView getSystemView(Person p);
+	public PersonView getSystemView(User user);
 	
 	/**
-	 * See whether the person has an account or is just a key 
-	 * for some foreign resources.
+	 * If person is a User, returns person. If it is an Contact
+	 * and is associated with a user, return that user. Otherwise, 
+	 * returns null.
 	 * 
-	 * @param p the person
-	 * @return true if they have an account
+	 * @param the person
+	 * @return the user the contact is associated with, or null
 	 */
-	public boolean hasAccount(Person p);
+	public User getUser(Person person);
 }

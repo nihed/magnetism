@@ -5,9 +5,9 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.ClaimVerifierException;
 import com.dumbhippo.server.IdentitySpider;
@@ -23,22 +23,22 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public String getAuthKey(Person person, Resource resource) {
+	public String getAuthKey(User user, Resource resource) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public void verify(Person user, ResourceClaimToken token, Resource resource) throws ClaimVerifierException {
+	public void verify(User user, ResourceClaimToken token, Resource resource) throws ClaimVerifierException {
 		if (user != null) {
-			if (!user.equals(token.getPerson())) {
+			if (!user.equals(token.getUser())) {
 				Viewpoint viewpoint = new Viewpoint(user);
 				PersonView self = identitySpider.getPersonView(viewpoint, user);
-				PersonView other = identitySpider.getPersonView(viewpoint, token.getPerson());
+				PersonView other = identitySpider.getPersonView(viewpoint, token.getUser());
 				throw new ClaimVerifierException("You are signed in as " + self.getHumanReadableName() 
 						+ " but trying to change the account " + other.getHumanReadableName());
 			}
 		} else {
-			user = token.getPerson();
+			user = token.getUser();
 		}
 
 		assert user != null;

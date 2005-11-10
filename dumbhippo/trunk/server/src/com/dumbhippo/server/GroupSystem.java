@@ -8,12 +8,13 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 
 @Local
 public interface GroupSystem {
-	public Group createGroup(Person creator, String name);
+	public Group createGroup(User creator, String name);
 	
-	public void deleteGroup(Person deleter, Group group);
+	public void deleteGroup(User deleter, Group group);
 	
 	public void addMember(Person adder, Group group, Person person);
 	

@@ -4,6 +4,7 @@ import javax.ejb.Local;
 import javax.mail.internet.MimeMessage;
 
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 
 @Local
 public interface Mailer {
@@ -31,7 +32,7 @@ public interface Mailer {
 		}
 	}
 	
-	public MimeMessage createMessage(Person from, Person to) throws NoAddressKnownException;
+	public MimeMessage createMessage(User from, Person to) throws NoAddressKnownException;
 	public MimeMessage createMessage(SpecialSender from, String to);
 	
 	public void sendMessage(MimeMessage message);

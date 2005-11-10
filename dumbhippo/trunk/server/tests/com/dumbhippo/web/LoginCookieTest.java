@@ -2,19 +2,20 @@ package com.dumbhippo.web;
 
 import javax.servlet.http.Cookie;
 
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.HippoAccount;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Account;
 
 import junit.framework.TestCase;
 
 public class LoginCookieTest extends TestCase {
 
 	public void testCookieRoundtrip() throws Exception {
-		Client c = new Client();
-		Person p = new Person();
-		HippoAccount acct = new HippoAccount(p, c);
-		String personId = p.getId();
+		User h = new User();
+		Account acct = new Account(h);
+		Client c = new Client(acct);
+		acct.authorizeNewClient(c);
+		String personId = h.getId();
 		String authKey = c.getAuthKey();
 		LoginCookie loginCookie = new LoginCookie(personId, authKey);
 		assertEquals(personId, loginCookie.getPersonId());

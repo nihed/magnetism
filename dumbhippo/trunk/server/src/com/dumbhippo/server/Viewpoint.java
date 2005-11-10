@@ -1,6 +1,6 @@
 package com.dumbhippo.server;
 
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 
 /**
  * The Viewpoint class is simply a wrapper for Person to give us
@@ -10,13 +10,13 @@ import com.dumbhippo.persistence.Person;
  * @author otaylor
  */
 public class Viewpoint {
-	final Person viewer;
+	final User viewer;
 	
-	public Viewpoint(Person p) {
-		viewer = p;
+	public Viewpoint(User viewer) {
+		this.viewer = viewer;
 	}
 	
-	public Person getViewer() {
+	public User getViewer() {
 		return viewer;
-	}
+	}	
 }

@@ -7,7 +7,7 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 
 /**
  * @author hp
@@ -18,9 +18,9 @@ public interface TestGlue {
 
 	public void loadTestData();
 
-	public Set<HippoAccount> getActiveAccounts();
+	public Set<Account> getActiveAccounts();
 	
-	public String authorizeNewClient(long accountId, String name);
+	public String authorizeNewClient(String accountId, String name);
 	
-	public HippoAccount findOrCreateAccountFromEmail(String email);
+	public Account findOrCreateAccountFromEmail(String email);
 }

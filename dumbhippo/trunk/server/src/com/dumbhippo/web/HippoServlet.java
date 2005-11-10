@@ -16,8 +16,9 @@ import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpOptions;
@@ -76,7 +77,7 @@ public class HippoServlet extends AbstractServlet {
 		}
 		
 		if (args.length > i && Person.class.isAssignableFrom(args[i])) {
-			Person loggedIn = getLoggedInPerson(request);
+			Person loggedIn = getLoggedInUser(request);
 			toPassIn.add(loggedIn);
 			i += 1;
 		}
@@ -229,7 +230,7 @@ public class HippoServlet extends AbstractServlet {
 		}
 	}
 	
-	private Person getLoggedInPerson(HttpServletRequest request) throws HttpException {
+	private User getLoggedInUser(HttpServletRequest request) throws HttpException {
 		try {
 			return CookieAuthentication.authenticate(request);
 		} catch (BadTastingException e) {
@@ -272,9 +273,9 @@ public class HippoServlet extends AbstractServlet {
 			out.flush();
 		} else {
 			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
-			Person user;
+			User user;
 			try {
-				user = getLoggedInPerson(request);
+				user = getLoggedInUser(request);
 			} catch (HttpException e) {
 				user = null; // not fatal as it usually is
 			}
@@ -312,7 +313,7 @@ public class HippoServlet extends AbstractServlet {
 	// FIXME this should go away
 	public static LoginCookie addNewClientForEmail(String email, HttpServletRequest request, HttpServletResponse response) {
 		TestGlue testGlue = WebEJBUtil.defaultLookup(TestGlue.class);
-		HippoAccount account = testGlue.findOrCreateAccountFromEmail(email);
+		Account account = testGlue.findOrCreateAccountFromEmail(email);
 		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier(request));
 		LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
 		response.addCookie(loginCookie.getCookie());

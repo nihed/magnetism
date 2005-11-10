@@ -10,6 +10,7 @@ import java.util.Set;
 import com.dumbhippo.FullName;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 
 /**
  * @author otaylor
@@ -27,6 +28,7 @@ public class PersonView {
 	public static final int MAX_SHORT_NAME_LENGTH = 15;
 	
 	private Person person;
+	private User user;
 	private EmailResource email;
 	private String humanReadableName;
 	
@@ -38,11 +40,15 @@ public class PersonView {
 	 * @param p The Person object 
 	 * @param e The 
 	 */
-	public PersonView(Person p, EmailResource e) {
+	public PersonView(Person p, User u, EmailResource e) {
 		person = p;
+		user = u;
 		email = e;
 		
 		FullName name = person.getName();
+		if ((name == null || name.isEmpty()) && user != null)
+			name = user.getName();
+		
 		if (name != null && !name.isEmpty())
 			humanReadableName = name.getFullName();
 		else if (email != null) 
@@ -62,8 +68,12 @@ public class PersonView {
 	public String getHumanReadableShortName() {
 		String name;
 		name = person.getNickname();
+		if ((name == null || name.length() == 0) && user != null)
+			name = user.getNickname();
 		if (name == null || name.length() == 0)
 			name = person.getName().getFirstName();
+		if ((name == null || name.length() == 0) && user != null)
+			name = user.getName().getFirstName();
 		if (name == null || name.length() == 0)
 			name = humanReadableName;
 
@@ -72,6 +82,10 @@ public class PersonView {
 		} else {
 			return name;
 		}
+	}
+	
+	public User getUser() {
+		return user;
 	}
 	
 	public EmailResource getEmail() {

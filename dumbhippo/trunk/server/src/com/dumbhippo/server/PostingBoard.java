@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Local
@@ -25,7 +26,7 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max);
 
-	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
 		throws GuidNotFoundException;
 
 	public void doShareLinkTutorialPost(Person recipient);
@@ -44,7 +45,7 @@ public interface PostingBoard {
 	 * @param expandedRecipients
 	 * @return
 	 */
-	public Post createPost(Person poster, PostVisibility visibility, String title, String text,
+	public Post createPost(User poster, PostVisibility visibility, String title, String text,
 			Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients,
 			Set<Person> expandedRecipients);
 
@@ -52,5 +53,5 @@ public interface PostingBoard {
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid);
 
-	public void postClickedBy(Post post, Person clicker);
+	public void postClickedBy(Post post, User clicker);
 }

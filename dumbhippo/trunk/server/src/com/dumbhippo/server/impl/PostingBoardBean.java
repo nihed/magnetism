@@ -24,7 +24,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
@@ -75,7 +76,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(Person poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients) throws GuidNotFoundException {
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients) throws GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// for each recipient, if it's a group we want to explode it into persons
@@ -115,7 +116,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public void doShareLinkTutorialPost(Person recipient) {
 
-		Person poster = identitySpider.getTheMan();
+		User poster = identitySpider.getTheMan();
 		LinkResource link = identitySpider.getLink(configuration.getProperty(HippoProperty.BASEURL) + "/tutorial");
 		Set<Group> emptyGroups = Collections.emptySet();
 		Set<Person> recipientSet = Collections.singleton(recipient);
@@ -126,7 +127,7 @@ public class PostingBoardBean implements PostingBoard {
 		sendPostNotifications(post, recipientSet);
 	}
 	
-	private Post createPostViaProxy(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
+	private Post createPostViaProxy(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
 		
 		return proxy.createPost(poster, visibility, title, text, resources, personRecipients, groupRecipients, expandedRecipients);
@@ -134,7 +135,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	// internal function that is public only because of TransactionAttribute; use createPostViaProxy
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(Person poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
+	public Post createPost(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients, Set<Person> expandedRecipients) {
 		
 		logger.debug("saving new Post");
 		Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
@@ -341,14 +342,14 @@ public class PostingBoardBean implements PostingBoard {
 		if (!user.equals(viewpoint.getViewer()))
 			return Collections.emptyList();
 		
-		HippoAccount account = accountSystem.lookupAccountByPerson(user); 
+		Account account = accountSystem.lookupAccountByPerson(user); 
 		if (account == null)
 			return Collections.emptyList();
 		
 		String recipient_clause = include_received ? "" : "NOT :viewer MEMBER OF post.expandedRecipients AND "; 
 
 		Query q;
-		q = em.createQuery("SELECT post FROM HippoAccount account, Post post " + 
+		q = em.createQuery("SELECT post FROM Account account, Post post " + 
 						   "WHERE account = :account AND " +
 				               "post.poster MEMBER OF account.contacts AND " +
 				                recipient_clause +
@@ -370,7 +371,7 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-	public void postClickedBy(Post post, Person clicker) {
+	public void postClickedBy(Post post, User clicker) {
 		logger.debug("Post " + post + " clicked by " + clicker);
 		messageSender.sendPostClickedNotification(post, clicker);
 		// FIXME should be unique...

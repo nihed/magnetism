@@ -18,7 +18,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 
 import com.dumbhippo.Digest;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.util.EJBUtil;
 
 /**
@@ -46,22 +46,22 @@ public class TestClient {
 	}
 	
 	public List<Thread> spawnAccountTesters() {
-		Set<HippoAccount> accounts = test.getActiveAccounts();
+		Set<Account> accounts = test.getActiveAccounts();
 
 		System.out.print("Account IDs: ");
-		for (HippoAccount a : accounts) {
+		for (Account a : accounts) {
 			System.out.print(a.getId() + " ");
 		}
 		System.out.print("\n");
 		
 		List<Thread> threads = new ArrayList<Thread>();
 		
-		Iterator<HippoAccount> i = accounts.iterator();
+		Iterator<Account> i = accounts.iterator();
 		while (i.hasNext()) {
-			HippoAccount first = i.next();
+			Account first = i.next();
 			if (!i.hasNext())
 				break; // just ignore the odd one
-			HippoAccount second = i.next();
+			Account second = i.next();
 			
 			Runnable tester = new AccountTester(first, second);
 			Thread thread = new Thread(tester);
@@ -87,13 +87,13 @@ public class TestClient {
 	
 	public class AccountTester implements Runnable, PacketListener {
 		
-		private HippoAccount account;
-		private HippoAccount friend;
+		private Account account;
+		private Account friend;
 		private String authCookie;
 		private XMPPConnection connection;
 		private boolean authorized = false;
 		
-		public AccountTester(HippoAccount account, HippoAccount friend) {
+		public AccountTester(Account account, Account friend) {
 			this.account = account;
 			this.friend = friend;
 			

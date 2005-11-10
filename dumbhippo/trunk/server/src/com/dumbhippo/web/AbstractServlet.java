@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 
 public abstract class AbstractServlet extends HttpServlet {
 
@@ -127,7 +127,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 	}
 	
-	protected Person doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
+	protected User doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
 		// FIXME what is the "log" parameter about?
 		return SigninBean.getForRequest(request).getUser();
 	}	

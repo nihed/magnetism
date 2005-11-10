@@ -19,6 +19,8 @@ import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -86,7 +88,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (persons != null) {
 			for (PersonView p : persons) {
 				EmailResource email = p.getEmail();
-				String hasAccount = identitySpider.hasAccount(p.getPerson()) ? "true" : "false";
+				String hasAccount = p.getUser() != null ? "true" : "false";
 				if (email != null) {
 					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
 							"hasAccount", hasAccount,
@@ -140,7 +142,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		endReturnObjectsXml(out, xml);
 	}
 
-	public void getAddableContacts(OutputStream out, HttpResponseData contentType, Person user, String groupId) throws IOException {
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, User user, String groupId) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint, user, groupId);
@@ -148,7 +150,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnObjects(out, contentType, viewpoint, persons, null);
 	}
 	
-	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user) throws IOException {
+	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, User user) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
@@ -157,7 +159,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnObjects(out, contentType, viewpoint, persons, groups);
 	}
 	
-	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, Person user,
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, User user,
 			String email) throws IOException {
 
 		XmlBuilder xml = new XmlBuilder();
@@ -186,7 +188,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
@@ -197,7 +199,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);
 	}
 
-	public void doShareGroup(Person user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<String> recipientGuids = splitIdList(recipientIds);
@@ -227,13 +229,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);		
 	}
 	
-	public void doRenamePerson(Person user, String name) {
+	public void doRenamePerson(User user, String name) {
+		// We can't use merge() here because of a bug in Hiberaate with merge()
+		// and the inverse side of a OneToOne relationship.
+		// http://opensource2.atlassian.com/projects/hibernate/browse/HHH-1004
+		User attachedUser = em.find(User.class, user.getId());
 		FullName fullname = FullName.parseHumanString(name);
-		user.setName(fullname);
-		em.merge(user);
+		attachedUser.setName(fullname);
 	}
 	
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String members) throws IOException, ParseException, GuidNotFoundException {
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members) throws IOException, ParseException, GuidNotFoundException {
 				
 		Set<String> memberGuids = splitIdList(members);
 		
@@ -247,7 +252,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));
 	}
 
-	public void doAddMembers(OutputStream out, HttpResponseData contentType, Person user, String groupId, String memberIds)
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, User user, String groupId, String memberIds)
 			throws IOException, ParseException, GuidNotFoundException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
@@ -264,16 +269,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnObjects(out, contentType, viewpoint, null, Collections.singleton(group));		
 	}
 
-	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException {
+	public void doAddContact(OutputStream out, HttpResponseData contentType, User user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
-		Person contact = identitySpider.createContact(user, emailResource);
+		Contact contact = identitySpider.createContact(user, emailResource);
 		Viewpoint viewpoint = new Viewpoint(user);
 		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
 
 		returnObjects(out, contentType, viewpoint, Collections.singleton(contactView), null);
 	}
 	
-	public void doJoinGroup(Person user, String groupId) {
+	public void doJoinGroup(User user, String groupId) {
 		Viewpoint viewpoint = new Viewpoint(user);
 		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 		if (group == null)
@@ -281,7 +286,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		groupSystem.addMember(user, group, user);
 	}
 	
-	public void doLeaveGroup(Person user, String groupId) {
+	public void doLeaveGroup(User user, String groupId) {
 		Viewpoint viewpoint = new Viewpoint(user);
 		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 		if (group == null)
@@ -289,7 +294,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		groupSystem.removeMember(user, group, user);
 	}
 	
-	public void doAddContactPerson(Person user, String contactId) {
+	public void doAddContactPerson(User user, String contactId) {
 		try {
 			Person contact = identitySpider.lookupGuidString(Person.class, contactId);
 			identitySpider.addContactPerson(user, contact);
@@ -300,7 +305,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	public void doRemoveContactPerson(Person user, String contactId) {
+	public void doRemoveContactPerson(User user, String contactId) {
 		try {
 			Person contact = identitySpider.lookupGuidString(Person.class, contactId);
 			identitySpider.removeContactPerson(user, contact);
@@ -311,7 +316,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void handleRedirect(Person user, String url, String postId, String inviteKey) throws RedirectException {
+	public void handleRedirect(User user, String url, String postId, String inviteKey) throws RedirectException {
 		
 		InvitationToken invitation = null;
 		

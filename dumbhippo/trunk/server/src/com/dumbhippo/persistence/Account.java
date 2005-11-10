@@ -1,18 +1,16 @@
-/**
- * 
- */
 package com.dumbhippo.persistence;
 
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import org.apache.commons.logging.Log;
 
@@ -23,10 +21,10 @@ import com.dumbhippo.GlobalSetup;
 /**
  * Object representing a Hippo account. Lots of things you might expect to be
  * here are not, because they're instead handled by saying that the Person in
- * question has a ResourceOwnershipClaim on a Resource. So e.g. you your email address, home page, 
+ * question owns a Resource (see AccountClaim). So e.g. you your email address, home page, 
  * and other kinds of profile information.
  * If something can be in someone's contacts list without corresponding
- * to a registered Hippo user, then it can't be in the HippoAccount.
+ * to a registered Hippo user, then it can't be in the Account.
  * 
  * Putting things in the hippo account is a little subjective, but roughly we
  * store things here if nobody but the account holder would have an opinion on
@@ -40,15 +38,15 @@ import com.dumbhippo.GlobalSetup;
  * 
  */
 @Entity
-public class HippoAccount extends DBUnique implements Serializable {
+public class Account extends Resource implements Serializable {
 
-	private static final Log logger = GlobalSetup.getLog(HippoAccount.class);	
+	private static final Log logger = GlobalSetup.getLog(Account.class);	
 	
 	private static final long serialVersionUID = 0L;
 		
-	private Person owner;
+	private User owner;
 	
-	private Set<Person> contacts;
+	private Set<Contact> contacts;
 	
 	private boolean wasSentShareLinkTutorial = false;
 	private boolean hasDoneShareLinkTutorial = false;
@@ -64,32 +62,18 @@ public class HippoAccount extends DBUnique implements Serializable {
 		if (clients == null)
 			clients = new HashSet<Client>();
 		if (contacts == null)
-			contacts = new HashSet<Person>();
+			contacts = new HashSet<Contact>();
 	}
 	
 	/**
 	 * Used only for Hibernate 
 	 */
-	protected HippoAccount() {
+	protected Account() {
 		initMissing();
 	}
 	
-	public HippoAccount(Person person, Set<Client> clients) {
-		owner = person;
-		setClients(clients);
-		initMissing();
-	}
-	
-	public HippoAccount(Person person, Client initialClient) {		
-		owner = person;
-		Set<Client> c = new HashSet<Client>();
-		c.add(initialClient);
-		setClients(c);
-		initMissing();
-	}
-
-	public HippoAccount(Person person) {	
-		owner = person;
+	public Account(User owner) {	
+		this.owner = owner;
 		initMissing();
 	}
 	
@@ -100,26 +84,8 @@ public class HippoAccount extends DBUnique implements Serializable {
 			builder.append(owner.toString());
 		else 
 			builder.append("null");
-		if (clients != null) {
-			builder.append(" clients = { ");
-			for (Client c : clients) {
-				builder.append(c.toString());
-				builder.append(" ");
-			}
-			builder.append("} }");
-		} else {
-			builder.append(" clients = null ");
-		}
-		if (contacts != null) {
-			builder.append(" contacts = { ");
-			for (Person p : contacts) {
-				builder.append(p.toString());
-				builder.append(" ");
-			}
-			builder.append("} }");
-		} else {
-			builder.append(" contacts = null ");
-		}
+		// Don't dump clients/contacts here - otherwise we won't be
+		// able to toString() a detached account
 		
 		return builder.toString();
 	}
@@ -183,7 +149,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * 
 	 * @return the clients (programs/machines) used with this account
 	 */
-	@OneToMany
+	@OneToMany(cascade = { CascadeType.ALL }, mappedBy="account")
 	protected Set<Client> getClients() {
 		return clients;
 	}
@@ -202,7 +168,7 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 */
 	@OneToOne
 	@JoinColumn(nullable=false)
-	public Person getOwner() {
+	public User getOwner() {
 		return owner;
 	}
 
@@ -212,12 +178,12 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * 
 	 * @param owner The owner to set.
 	 */
-	protected void setOwner(Person owner) {
+	protected void setOwner(User owner) {
 		this.owner = owner;
 	}
 
-	@ManyToMany
-	public Set<Person> getContacts() {
+	@OneToMany(mappedBy="account")
+	public Set<Contact> getContacts() {
 		if (contacts == null)
 			throw new RuntimeException("no contacts set???");
 		return contacts;
@@ -230,32 +196,32 @@ public class HippoAccount extends DBUnique implements Serializable {
 	 * 
 	 * @param contacts your contacts
 	 */
-	protected void setContacts(Set<Person> contacts) {
+	protected void setContacts(Set<Contact> contacts) {
 		if (contacts == null)
 			throw new IllegalArgumentException("null contacts");
 		this.contacts = contacts;
 	}
 	
-	public void addContact(Person person) {
-		if (person == null)
+	public void addContact(Contact contact) {
+		if (contact == null)
 			throw new IllegalArgumentException("null person");
 		if (contacts == null)
 			throw new RuntimeException("no contacts set???");
-		contacts.add(person);
+		contacts.add(contact);
 	}
 	
-	public void addContacts(Set<Person> persons) {
-		if (persons == null)
+	public void addContacts(Set<Contact> contact) {
+		if (contact == null)
 			throw new IllegalArgumentException("null persons");
-		contacts.addAll(persons);
+		contacts.addAll(contact);
 	}
 	
-	public void removeContact(Person person) {
-		contacts.remove(person);
+	public void removeContact(Contact contact) {
+		contacts.remove(contact);
 	}
 	
-	public void removeContacts(Set<Person> persons) {
-		contacts.removeAll(persons);
+	public void removeContacts(Set<Contact> contacts) {
+		contacts.removeAll(contacts);
 	}
 
 	@Column(nullable=false)
@@ -274,5 +240,11 @@ public class HippoAccount extends DBUnique implements Serializable {
 
 	public void setWasSentShareLinkTutorial(boolean wasSentShareLinkTutorial) {
 		this.wasSentShareLinkTutorial = wasSentShareLinkTutorial;
+	}
+
+	@Override
+	@Transient
+	public String getHumanReadableString() {
+		return owner.getName().toString();
 	}
 }

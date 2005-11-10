@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
@@ -37,7 +38,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public Group createGroup(Person creator, String name) {	
+	public Group createGroup(User creator, String name) {	
 		Group g = new Group(name);
 		em.persist(g);
 		GroupMember groupMember = new GroupMember(g, creator, MembershipStatus.ACTIVE);
@@ -47,7 +48,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return g;
 	}
 	
-	public void deleteGroup(Person deleter, Group group) {
+	public void deleteGroup(User deleter, Group group) {
 		if (!group.getMembers().contains(deleter)) {
 			throw new IllegalArgumentException("invalid person deleting group");
 		}
@@ -286,7 +287,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	static final String FIND_ADDABLE_CONTACTS_QUERY = 
-		"SELECT p from HippoAccount a, Person p, Group g " +
+		"SELECT p from Account a, Person p, Group g " +
 		"WHERE a.owner = :viewer AND p MEMBER OF a.contacts AND " + 
 			  "g.id = :groupid AND " + CAN_SEE_GROUP + " AND " + 
 			  "NOT EXISTS(SELECT gm FROM GroupMember gm " +

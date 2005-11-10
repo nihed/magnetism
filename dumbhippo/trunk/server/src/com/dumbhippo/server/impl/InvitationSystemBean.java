@@ -20,10 +20,11 @@ import javax.persistence.Query;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -64,15 +65,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ret;
 	}
 	
-	public Set<PersonView> findInviters(Person invitee) {
+	public Set<PersonView> findInviters(User invitee) {
 		Query query = em.createQuery("select inviter from " +
-								     "Person inviter, InvitationToken invite, ResourceOwnershipClaim roc " + 
-								     "where inviter in elements(invite.inviters) and " +
-								     "roc.resource = invite.invitee and " +
-								     "roc.assertedBy = :theman and " +
-								     "roc.claimedOwner = :invitee");
+								     "Person inviter, InvitationToken invite, AccountClaim ar " + 
+								     "where inviter member of invite.inviters and " +
+								     "ar.resource = invite.invitee and " +
+								     "ar.claimedOwner = :invitee");
 		query.setParameter("invitee", invitee);
-		query.setParameter("theman", spider.getTheMan());
 		
 		@SuppressWarnings("unchecked")
 		List<Person> inviters = query.getResultList(); 
@@ -86,7 +85,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public InvitationToken createGetInvitation(Person inviter, Resource invitee) {
+	public InvitationToken createGetInvitation(User inviter, Resource invitee) {
 		InvitationToken iv = lookupInvitationFor(invitee);
 		if (iv == null) {
 			iv = new InvitationToken(invitee, inviter);
@@ -98,14 +97,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 
-	public InvitationToken createEmailInvitation(Person inviter, String email) {
+	public InvitationToken createEmailInvitation(User inviter, String email) {
 		Resource emailRes = spider.getEmail(email);
 		return createGetInvitation(inviter, emailRes);
 	}	
 	
 	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
 	
-	public void sendEmailNotification(InvitationToken invite, Person inviter) {
+	public void sendEmailNotification(InvitationToken invite, User inviter) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		String inviteeEmail = invitee.getEmail();
 
@@ -146,7 +145,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		Resource invitationResource = invite.getInvitee();
-		HippoAccount acct = accounts.createAccountFromResource(invitationResource);
+		Account acct = accounts.createAccountFromResource(invitationResource);
 		
 		Client client = null;
 		if (firstClientName != null) {
@@ -170,7 +169,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 	public Collection<String> getInviterNames(InvitationToken invite) {
 		Set<String> names = new HashSet<String>();  
-		for (Person inviter : invite.getInviters()) {
+		for (User inviter : invite.getInviters()) {
 			PersonView view = spider.getSystemView(inviter);
 	        String readable = view.getHumanReadableName();
 	        if (readable != null) {    

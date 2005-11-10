@@ -23,14 +23,17 @@ import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Contact;
+import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.ResourceOwnershipClaim;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
@@ -45,8 +48,6 @@ import com.dumbhippo.server.Viewpoint;
 public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
 	static private final Log logger = GlobalSetup.getLog(IdentitySpider.class);
 	
-	private static final String BASE_LOOKUP_PERSON_RESOURCE_QUERY = "select p from Person p, ResourceOwnershipClaim c where p.id = c.claimedOwner and c.resource = :resource ";
-
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
@@ -56,47 +57,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private AccountSystem accountSystem;
 	
-	public Person lookupPersonByEmail(String email) {
+	public User lookupPersonByEmail(String email) {
 		EmailResource res = getEmail(email);
 		return lookupPersonByResource(res);
 	}
 
-	public Person lookupPersonByEmail(Person viewpoint, String email) {
-		EmailResource res = getEmail(email);
-		return lookupPersonByResource(viewpoint, res);
-	}
+	private static final String LOOKUP_PERSON_BY_RESOURCE_QUERY =
+		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
 	
-	/**
-	 * Note, this is NOT the same as getting the owner of the resource from the viewpoint
-	 * of assertedBy, because we don't fall back to "the man" (and the viewpoint is allowed
-	 * to be "the man")
-	 * 
-	 * @param resource resource to look up
-	 * @param assertedBy who has to say the person owns this
-	 * @return who owns the resource according to assertedBy, or null
-	 */
-	private Person lookupPersonByResourceAssertedBy(Resource resource, Person assertedBy) {
-		Person person;
+	public User lookupPersonByResource(Resource resource) {
 		try {
-			person = (Person) em.createQuery(BASE_LOOKUP_PERSON_RESOURCE_QUERY + "and c.assertedBy = :assertedBy")
+			return (User) em.createQuery(LOOKUP_PERSON_BY_RESOURCE_QUERY)
 			.setParameter("resource", resource)
-			.setParameter("assertedBy", assertedBy)
 			.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
-		return person;
-	}
-	
-	public Person lookupPersonByResource(Resource resource) {
-		return lookupPersonByResourceAssertedBy(resource, getTheMan());
-	}
-	
-	public Person lookupPersonByResource(Person viewpoint, Resource resource) {
-		Person person = lookupPersonByResourceAssertedBy(resource, viewpoint);
-		if (person == null)
-			person = lookupPersonByResourceAssertedBy(resource, getTheMan());
-		return person;
 	}
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException {
@@ -248,14 +224,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return res;	
 	}
 	
-	private transient Person theMan;
+	private transient User theMan;
 	
 	private static final String theManGuid = "8716baa63bef600797fbc59e06010000a35ad1637e6a7f87";
 	private static final String theManEmail = "theman@dumbhippo.com";
 
 	// This needs to be synchronized since the stateless session bean might be shared
 	// between threads.
-	public synchronized Person getTheMan() {
+	public synchronized User getTheMan() {
 		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
 		int retries = 1;
 		
@@ -275,8 +251,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Person findOrCreateTheMan() {
-		Person result;
+	public User findOrCreateTheMan() {
+		User result;
 		Guid guid;
 		try {
 			guid = new Guid(theManGuid);
@@ -284,54 +260,92 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
 		}
 		try {
-			result = lookupGuid(Person.class, guid);
+			result = lookupGuid(User.class, guid);
 		} catch (GuidNotFoundException e) {
 			logger.debug("Creating theman@dumbhippo.com");
 			EmailResource resource = getEmail(theManEmail);
-			result = new Person(guid);		
+			result = new User(guid);		
 			em.persist(result);
-			ResourceOwnershipClaim claim = new ResourceOwnershipClaim(result, resource, result);
-			em.persist(claim);
+			addVerifiedOwnershipClaim(result, resource);
 		}
 		
 		return result;
 	}
 	
-	private static final String BASE_LOOKUP_EMAIL_QUERY = 
-		"SELECT e FROM EmailResource e, ResourceOwnershipClaim c " +
-		    "WHERE e.id = c.resource and c.claimedOwner = :person ";
+	private static final String GET_EMAIL_FOR_USER_QUERY = 
+		"SELECT e FROM EmailResource e, AccountClaim ac " +
+		    "WHERE e.id = ac.resource and ac.owner = :user ";
 	
-	private EmailResource getEmail(Viewpoint viewpoint, Person person) {
-		Person viewer = viewpoint.getViewer();
-		Query q;
-		
-		if (viewer == null) {
-			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
-					           "AND c.assertedBy = :theman");
-		} else {
-			q = em.createQuery(BASE_LOOKUP_EMAIL_QUERY + 
-					           "AND (c.assertedBy = :theman OR c.assertedBy = :viewer)")
-			.setParameter("viewer", viewer);
-		}
-		q.setParameter("theman", getTheMan());
-		q.setParameter("person", person);
-	
+	private EmailResource getEmailForUser(User user) {
 		try {
-			return (EmailResource) q.getSingleResult();
+			return (EmailResource)em.createQuery(GET_EMAIL_FOR_USER_QUERY)
+				.setParameter("user", user)
+				.setMaxResults(1)
+				.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
 	}
-		
+	
+	private static final String GET_EMAIL_FOR_CONTACT_QUERY = 
+		"SELECT e FROM EmailResource e, ContactClaim cc " +
+		    "WHERE e.id = cc.resource and cc.contact = :contact ";
+	
+	private EmailResource getEmailForContact(Contact contact) {
+		try {
+			return (EmailResource)em.createQuery(GET_EMAIL_FOR_CONTACT_QUERY)
+				.setParameter("contact", contact)
+				.setMaxResults(1)
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}		
+	}
+	
+	private EmailResource getEmail(Viewpoint viewpoint, Person person) {
+		if (person instanceof User)
+			return getEmailForUser((User)person);
+		else {
+			return getEmailForContact((Contact)person);
+		}
+	}
+	
+	private static final String GET_USER_FOR_CONTACT_QUERY = 
+		"SELECT a.owner FROM Account a, ContactClaim cc " +
+		    "WHERE a = cc.resource and cc.contact = :contact ";
+	
+	private User getUserForContact(Contact contact) {
+		try {
+			return (User)em.createQuery(GET_USER_FOR_CONTACT_QUERY)
+				.setParameter("contact", contact)
+				.setMaxResults(1)
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}		
+	}
+	
+	public User getUser(Person person) {
+		if (person instanceof User)
+			return (User)person;
+		else {
+			User user = getUserForContact((Contact)person);
+			
+			logger.debug("getUserForContact: contact = " + person.getId() + "user = " + user);
+			
+			return user;
+		}
+	}
+	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		
-		return new PersonView(p, getEmail(viewpoint, p));
+		return new PersonView(p, getUser(p), getEmail(viewpoint, p));
 	}
 
-	public PersonView getSystemView(Person p) {
-		return getPersonView(new Viewpoint(getTheMan()), p);
+	public PersonView getSystemView(User user) {
+		return new PersonView(user, user, getEmailForUser(user));
 	}
 	
 	public void setName(Person person, FullName name) {
@@ -339,75 +353,121 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.persist(person);
 	}
 	
-	private void internalAddOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
-		
-		if (owner == null || resource == null || assertedBy == null) {
-			throw new IllegalArgumentException("null argument");
-		}
-		
-		ResourceOwnershipClaim claim = new ResourceOwnershipClaim(owner, resource, assertedBy);
-		em.persist(claim);		
-	}
-	
-	/* FIXME You need to be able to only 
-	 * do assertedBy == current authorized user. This whole interface
-	 * is screwy.
-	 */
-	public void addOwnershipClaim(Person owner, Resource resource, Person assertedBy) {
-		if (assertedBy.getId() == getTheMan().getId()) {
-			throw new IllegalArgumentException("Can't add this ownership claim");
-		}
-		internalAddOwnershipClaim(owner, resource, assertedBy);
-	}
-	
-	public void addVerifiedOwnershipClaim(Person claimedOwner, Resource res) {
-		internalAddOwnershipClaim(claimedOwner, res, getTheMan());
+	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
+		AccountClaim ac = new AccountClaim(claimedOwner, res);
+		em.persist(ac);
 	}
 
-	public Person createContact(Person person, Resource contact) {
-		Person ret;
+	static final String FIND_CONTACT_BY_USER_QUERY =
+		"SELECT cc.contact FROM Account contactAccount, ContactClaim cc " +
+		"WHERE contactAccount.owner = :contactUser " +
+		  "AND cc.account = :account AND cc.resource = contactAccount";
+		
+	private Contact findContactByUser(User owner, User contactUser) {
+		try {
+			return (Contact)em.createQuery(FIND_CONTACT_BY_USER_QUERY)
+				.setParameter("account", owner.getAccount())
+				.setParameter("contactUser", contactUser)
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+	}
 	
-		if (person == null)
+	static final String FIND_CONTACT_BY_RESOURCE_QUERY =
+		"SELECT cc.contact FROM ContactClaim cc " +
+		"WHERE cc.account = :account AND cc.resource = :resource";
+		
+	private Contact findContactByResource(User owner, Resource resource) {
+		try {
+			return (Contact)em.createQuery(FIND_CONTACT_BY_RESOURCE_QUERY)
+				.setParameter("account", owner.getAccount())
+				.setParameter("resource", resource)
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+	}
+	
+	private Contact doCreateContact(User user, Resource resource) {
+		// FIXME: add to contact.getResources(). I'm not sure how
+		// to do that without causing a database query, however.
+		// I suppose we could have contact.addResource() that bypassed
+		// the interception on getResources().
+		
+		Contact contact = new Contact(user.getAccount());
+		em.persist(contact);
+		
+		ContactClaim cc = new ContactClaim(contact, resource);
+		em.persist(cc);
+		
+		return contact;
+	}
+	
+	public Contact createContact(User user, Resource resource) {
+		if (user == null)
 			throw new IllegalArgumentException("null contact owner");
-		if (contact == null)
+		if (resource == null)
 			throw new IllegalArgumentException("null contact resource");
 		
-		ret = lookupPersonByResource(person, contact);
-		if (ret == null) {
-			ret = new Person();
-			em.persist(ret);
-			addOwnershipClaim(ret, contact, person);
+		Contact contact = findContactByResource(user, resource);
+		if (contact == null) {
+			contact = doCreateContact(user, resource);
+			
+			// Things work better (especially for now, when we don't fully
+			// implement spidering) if contacts own the account resource for
+			// users.
+			if (!(resource instanceof Account)) {
+				logger.debug("Adding contact resource pointing to account");
+				User contactUser = lookupPersonByResource(resource);
+				
+				ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());
+				em.persist(cc);
+			}
 		}
+			
 		
-		addContactPerson(person, ret);
-
-		return ret;
+		return contact;
 	}
 	
-	public void addContactPerson(Person person, Person contact) {
-		HippoAccount account = accountSystem.lookupAccountByPerson(person);
-		if (account == null)
-			throw new RuntimeException("trying to add contact to someone without an account");
-		if (!em.contains(account))
-			throw new RuntimeException("account to add contact to somehow detached");
-		logger.debug("adding contact " + contact + " to account " + account);
-		account.addContact(contact);		
+	public void addContactPerson(User user, Person contactPerson) {
+		logger.debug("adding contact " + contactPerson + " to account " + user.getAccount());
+		
+		if (contactPerson instanceof Contact) {
+			// Must be a contact of user, so nothing to do
+			assert ((Contact)contactPerson).getAccount() == user.getAccount();
+		} else {
+			User contactUser = (User)contactPerson;
+			
+			if (findContactByUser(user, contactUser) != null)
+				return;
+			
+			doCreateContact(user, contactUser.getAccount());
+		}
 	}
 
-	public void removeContactPerson(Person person, Person contact) {
-		HippoAccount account = accountSystem.lookupAccountByPerson(person);
-		if (account == null)
-			throw new RuntimeException("trying to remove contact to someone without an account");
-		logger.debug("removing contact " + contact + " from account " + account);
-		account.removeContact(contact);		
+	public void removeContactPerson(User user, Person contactPerson) {
+		logger.debug("removing contact " + contactPerson + " from account " + user.getAccount());
+
+		Contact contact;
+		if (contactPerson instanceof Contact)
+			contact = (Contact)contactPerson;
+		else {
+			contact = findContactByUser(user, (User)contactPerson);
+			if (contact == null) // Nothing to do
+				return;
+		}
+
+		em.remove(contact);		
 	}
 
-	public Set<Person> getRawContacts(Person user) {
-		HippoAccount account = accountSystem.lookupAccountByPerson(user);
+	public Set<Contact> getRawContacts(User user) {
+		// We call lookupAccountByPerson to deal with possibly detached users
+		Account account = accountSystem.lookupAccountByPerson(user);
 		return account.getContacts();
 	}
 	
-	public Set<PersonView> getContacts(Viewpoint viewpoint, Person user) {
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user) {
 		if (!user.equals(viewpoint.getViewer()))
 				return Collections.emptySet();
 		
@@ -418,21 +478,30 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	public boolean isContact(Viewpoint viewpoint, Person user, Person contact) {
+	static final String IS_CONTACT_QUERY =
+		"SELECT COUNT(cc.contact) FROM Account contactAccount, ContactClaim cc " +
+		"WHERE contactAccount.owner = :contactUser " +
+		  "AND cc.account = :account AND cc.resource = contactAccount";
+		
+	public boolean isContact(Viewpoint viewpoint, User user, Person contactPerson) {
 		if (!user.equals(viewpoint.getViewer()))
 				return false;
 		
-		Query query = em.createQuery("select count(a) from HippoAccount a where a.owner = :user and :contact in elements(a.contacts)");
-		query.setParameter("user", user);
-		query.setParameter("contact", contact);
-		
-		// This is a bug in the Hibernate EJB3 implementation; a count query shoudl
-		// return Long not Integer according to the spec.
-		return (Integer)query.getSingleResult() > 0;
-	}
-
-	public boolean hasAccount(Person p) {
-		HippoAccount account = accountSystem.lookupAccountByPerson(p);
-		return account != null;
+		if (contactPerson instanceof Contact) {
+			// Must be a contact of user, so trivial
+			assert ((Contact)contactPerson).getAccount() == user.getAccount();
+			return true;
+		} else {
+			User contactUser = (User)contactPerson;
+			
+			// According to the spec, a count query should return a Long, Hibernate
+			// returns an Integer. We use (Number) to be robust
+			Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
+				.setParameter("contactUser", contactUser)
+				.setParameter("account", user.getAccount())
+				.getSingleResult();
+			
+			return count.longValue() > 0;
+		}
 	}
 }

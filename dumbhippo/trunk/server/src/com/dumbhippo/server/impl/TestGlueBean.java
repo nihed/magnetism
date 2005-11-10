@@ -16,8 +16,9 @@ import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TestGlue;
@@ -75,9 +76,9 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 				throw new Error("null resource");
 			}
 
-			HippoAccount account = accountSystem.createAccountFromResource(resource);
+			Account account = accountSystem.createAccountFromResource(resource);
 			if (account == null) {
-				System.err.println("HippoAccount is null");
+				System.err.println("Account is null");
 				throw new Error("null account");
 			}
 			
@@ -87,27 +88,27 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 		
 	}
 
-	public Set<HippoAccount> getActiveAccounts() {
+	public Set<Account> getActiveAccounts() {
 		// the returned data here includes all the auth cookies...
 		// so you probably shouldn't do this outside of test glue
 		logger.debug("getting active accounts spider = " + identitySpider);
 		return accountSystem.getActiveAccounts();
 	}
 	
-	public String authorizeNewClient(long accountId, String name) {
+	public String authorizeNewClient(String accountId, String name) {
 		logger.debug("authorizing new client for account " + accountId + " name = " + name);
 		// Replace account with one attached to persistence context
-		HippoAccount persistedAccount = em.find(HippoAccount.class, accountId);
+		Account persistedAccount = em.find(Account.class, accountId);
 		logger.debug("persistedAccount = " + persistedAccount);
 		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
 		logger.debug("added client authKey = " + client.getAuthKey() + " client works = " + persistedAccount.checkClientCookie(client.getAuthKey()));
 		return client.getAuthKey();
 	}
 
-	public HippoAccount findOrCreateAccountFromEmail(String email) {
-		Person person = identitySpider.lookupPersonByEmail(email);
-		if (person != null) {
-			HippoAccount account = accountSystem.lookupAccountByPerson(person); 
+	public Account findOrCreateAccountFromEmail(String email) {
+		User user = identitySpider.lookupPersonByEmail(email);
+		if (user != null) {
+			Account account = accountSystem.lookupAccountByPerson(user); 
 			if (account != null) {
 				return account;
 			}

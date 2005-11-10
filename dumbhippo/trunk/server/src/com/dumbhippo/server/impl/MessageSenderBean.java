@@ -28,6 +28,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
@@ -202,7 +203,7 @@ public class MessageSenderBean implements MessageSender {
 			return connection;
 		}
 
-		public synchronized void sendPostNotification(Person recipient, Post post) {
+		public synchronized void sendPostNotification(User recipient, Post post) {
 			XMPPConnection connection = getConnection();
 
 			StringBuilder recipientJid = new StringBuilder();
@@ -257,10 +258,10 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public synchronized void sendPostClickedNotification(Post post, Person clicker) {
+		public synchronized void sendPostClickedNotification(Post post, User clicker) {
 			XMPPConnection connection = getConnection();
 			
-			Person poster = post.getPoster();
+			User poster = post.getPoster();
 			
 			StringBuilder recipientJid = new StringBuilder();
 			recipientJid.append(poster.getId().toString());
@@ -300,8 +301,11 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendPostNotification(Person recipient, Post post) throws NoAddressKnownException {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
-			PersonView posterViewedByRecipient = identitySpider.getPersonView(new Viewpoint(recipient), 
-					                                                          post.getPoster());
+			
+			// Since the recipient doesn't have an account, we can't get the recipient's view
+			// of the poster. Send out information from the poster's view of themself.
+			PersonView posterViewedBySelf = identitySpider.getPersonView(new Viewpoint(post.getPoster()), 
+					                                                     post.getPoster());
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();
@@ -372,9 +376,9 @@ public class MessageSenderBean implements MessageSender {
 			
 			// TEXT: "link shared by"
 			
-			messageText.append("  (Link shared by " + posterViewedByRecipient.getHumanReadableName() + ")");
+			messageText.append("  (Link shared by " + posterViewedBySelf.getHumanReadableName() + ")");
 			
-			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedByRecipient.getPerson().getId();
+			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getPerson().getId();
 			String recipientInviteUrl = baseurl; // FIXME invite url for recipient
 			String recipientStopUrl = baseurl;   // FIXME stop getting mail url for recipient
 			
@@ -384,15 +388,15 @@ public class MessageSenderBean implements MessageSender {
 				+ "<a title=\"%s\" href=\"%s\">%s</a> "
 				+ "to <a href=\"%s\">%s</a>)\n"
 				+ "</div>\n";
-			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedByRecipient.getEmail().getEmail()),
+			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedBySelf.getEmail().getEmail()),
 						XmlBuilder.escape(posterPublicPageUrl),
-						XmlBuilder.escape(posterViewedByRecipient.getHumanReadableName()),
+						XmlBuilder.escape(posterViewedBySelf.getHumanReadableName()),
 						XmlBuilder.escape(recipientInviteUrl),
 						XmlBuilder.escape(recipient.getName().getFullName()))); // FIXME recipient's Email address instead 
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
-			messageText.append("      " + posterViewedByRecipient.getHumanReadableShortName()
+			messageText.append("      " + posterViewedBySelf.getHumanReadableShortName()
 					+ " created an invitation for you: " + recipientInviteUrl + "\n");
 			messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			
@@ -404,7 +408,7 @@ public class MessageSenderBean implements MessageSender {
 				+ "</div>\n";
 			messageHtml.append(String.format(format, 
 					XmlBuilder.escape(posterPublicPageUrl),
-					XmlBuilder.escape(posterViewedByRecipient.getHumanReadableShortName()),
+					XmlBuilder.escape(posterViewedBySelf.getHumanReadableShortName()),
 					XmlBuilder.escape(recipientInviteUrl),
 					XmlBuilder.escape(baseurl)));
 
@@ -456,8 +460,9 @@ public class MessageSenderBean implements MessageSender {
 	
 	public void sendPostNotification(Person recipient, Post post) {		
 		// in the future the test could be "account != null && logged on to jabber recently" or something
-		if (identitySpider.hasAccount(recipient)) {
-			xmppSender.sendPostNotification(recipient, post);
+		User user = identitySpider.getUser(recipient);
+		if (user != null) {
+			xmppSender.sendPostNotification(user, post);
 		} else {
 			try {
 				emailSender.sendPostNotification(recipient, post);
@@ -467,7 +472,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	public void sendPostClickedNotification(Post post, Person clicker) {
+	public void sendPostClickedNotification(Post post, User clicker) {
 		xmppSender.sendPostClickedNotification(post, clicker);
 	}
 }

@@ -10,30 +10,30 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="ResourceClaimToken", 
 		   uniqueConstraints = 
-		      {@UniqueConstraint(columnNames={"person_id", "resource_id"})}
+		      {@UniqueConstraint(columnNames={"user_id", "resource_id"})}
 	      )
 public class ResourceClaimToken extends Token {
 	private static final long serialVersionUID = 1L;
 	
-	private Person person;
+	private User user;
 	private Resource resource;
 	
 	protected ResourceClaimToken() {
 	}
 	
-	public ResourceClaimToken(Person person, Resource resource) {
+	public ResourceClaimToken(User user, Resource resource) {
 		super(true);
-		this.person = person;
+		this.user = user;
 		this.resource = resource;
 	}
 	
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	public Person getPerson() {
-		return person;
+	public User getUser() {
+		return user;
 	}
-	protected void setPerson(Person person) {
-		this.person = person;
+	protected void setUser(User user) {
+		this.user = user;
 	}
 	
 	// this is nullable because sometimes the resource comes in 
@@ -64,6 +64,6 @@ public class ResourceClaimToken extends Token {
 	
 	@Override
 	public String toString() {
-		return "{" + person + " claims " + resource + " token " + super.toString() + "}";
+		return "{" + user + " claims " + resource + " token " + super.toString() + "}";
 	}
 }

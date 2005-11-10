@@ -8,6 +8,8 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import com.dumbhippo.identity20.RandomToken;
 
@@ -26,14 +28,17 @@ public class Client extends DBUnique implements Serializable {
 
 	private static final long serialVersionUID = 0L;
 
+	private Account account;
+
 	private String authKey;
 
 	private String name;
-
+	
 	// store date in this form since it's immutable and lightweight
 	private long lastUsed;
 
-	private Client(String authKey, String name, long lastUsed) {
+	private Client(Account account, String authKey, String name, long lastUsed) {
+		this.account = account;
 		this.authKey = authKey;
 		if (this.authKey == null)
 			this.authKey = RandomToken.createNew().toString();
@@ -41,23 +46,36 @@ public class Client extends DBUnique implements Serializable {
 		this.lastUsed = lastUsed;
 	}
 
-	public Client() {
-		this(null, "Anonymous", // TODO localize
+	public Client(Account account) {
+		this(account, null, "Anonymous", // TODO localize
 				System.currentTimeMillis());
+		
 	}
+	
+	protected Client() {}
 
-	public Client(String name) {
-		this(null, name, System.currentTimeMillis());
+	public Client(Account account, String name) {
+		this(account, null, name, System.currentTimeMillis());
 	}
 	
 	public Client(Client client) {
-		this(client.authKey, client.name, client.lastUsed);
+		this(client.account, client.authKey, client.name, client.lastUsed);
 	}
 	
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{Client name = " + name + " authKey " + "???" + " lastUsed " + lastUsed + "}");
 		return builder.toString();
+	}
+	
+	@ManyToOne
+	@JoinColumn(nullable=false)
+	public Account getAccount() {
+		return account;
+	}
+	
+	public void setAccount(Account account) {
+		this.account = account;
 	}
 	
 	@Column(nullable=false,length=RandomToken.STRING_LENGTH)

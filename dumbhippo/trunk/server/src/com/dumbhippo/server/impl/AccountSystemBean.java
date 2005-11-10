@@ -11,8 +11,9 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.AccountSystem;
@@ -27,46 +28,47 @@ public class AccountSystemBean implements AccountSystem {
 	@EJB
 	private IdentitySpider spider;
 
-	public HippoAccount createAccountFromResource(Resource res) {
-		Person person = new Person();
-		em.persist(person);
-		spider.addVerifiedOwnershipClaim(person, res);
-		HippoAccount account = new HippoAccount(person);
+	public Account createAccountFromResource(Resource res) {
+		User user = new User();
+		em.persist(user);
+		spider.addVerifiedOwnershipClaim(user, res);
+		Account account = new Account(user);
 		em.persist(account);
+		spider.addVerifiedOwnershipClaim(user, account);
 		return account;
 	}
 
-	public HippoAccount createAccountFromEmail(String email) {
+	public Account createAccountFromEmail(String email) {
 		Resource res = spider.getEmail(email);
 		return createAccountFromResource(res);
 	}
 
-	public Client authorizeNewClient(HippoAccount acct, String name) {
-		Client c = new Client(name);
+	public Client authorizeNewClient(Account acct, String name) {
+		Client c = new Client(acct, name);
 		em.persist(c);
 		acct.authorizeNewClient(c);
 		return c;
 	}
 	
 	public boolean checkClientCookie(Person user, String authKey) {
-		HippoAccount account = lookupAccountByPerson(user);
+		Account account = lookupAccountByPerson(user);
 		return account.checkClientCookie(authKey);
 	}
 
-	public HippoAccount lookupAccountByPerson(Person person) {
-		HippoAccount ret;
+	public Account lookupAccountByPerson(Person person) {
+		Account ret;
 		try {
-			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.owner = :person").setParameter("person", person).getSingleResult();
+			ret = (Account) em.createQuery("from Account a where a.owner = :person").setParameter("person", person).getSingleResult();
 		} catch (EntityNotFoundException e) {
 			ret = null;
 		}
 		return ret;
 	}
 
-	public HippoAccount lookupAccountByPersonId(String personId) {
-		HippoAccount ret;
+	public Account lookupAccountByPersonId(String personId) {
+		Account ret;
 		try {
-			ret = (HippoAccount) em.createQuery("from HippoAccount a where a.owner.id = :id").setParameter("id", personId).getSingleResult();
+			ret = (Account) em.createQuery("from Account a where a.owner.id = :id").setParameter("id", personId).getSingleResult();
 		} catch (EntityNotFoundException e) {
 			ret = null;
 		}
@@ -74,18 +76,18 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public long getNumberOfActiveAccounts() {
-		long count = (Long) em.createQuery("SELECT SIZE(*) FROM HippoAccount a").getSingleResult();
+		long count = (Long) em.createQuery("SELECT SIZE(*) FROM Account a").getSingleResult();
 		return count;
 	}
 
-	public Set<HippoAccount> getActiveAccounts() {
-		Query q = em.createQuery("FROM HippoAccount");
+	public Set<Account> getActiveAccounts() {
+		Query q = em.createQuery("FROM Account");
 		
-		Set<HippoAccount> accounts = new HashSet<HippoAccount>();
+		Set<Account> accounts = new HashSet<Account>();
 		List list = q.getResultList();
 		
 		for (Object o : list) {
-			accounts.add((HippoAccount) o);
+			accounts.add((Account) o);
 		}
 		
 		return accounts;

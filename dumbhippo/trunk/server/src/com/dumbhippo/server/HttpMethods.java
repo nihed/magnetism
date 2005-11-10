@@ -6,16 +6,16 @@ import java.io.OutputStream;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
  * - Methods must be named getFoo or doFoo
- *  - the args to a method are: OutputStream,HttpResponseData pair; Person
+ *  - the args to a method are: OutputStream,HttpResponseData pair; User
  * logged in user; http params
  *  - the OutputStream,HttpResponseData can be omitted if you only return
  * content type NONE
- *  - if you have the Person arg then you require login for the method to work
+ *  - if you have the User arg then you require login for the method to work
  * 
  */
 @Local
@@ -23,63 +23,63 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId" })
-	public void getAddableContacts(OutputStream out, HttpResponseData contentType, Person user, String groupId)
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, User user, String groupId)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { })
-	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, Person user)
+	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, User user)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, Person user, String email)
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, User user, String email)
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "name", "members" })
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, Person user, String name, String memberIds)
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String memberIds)
 			throws IOException, ParseException, GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "members" })
-	public void doAddMembers(OutputStream out, HttpResponseData contentType, Person user, String groupId, String memberIds)
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, User user, String groupId, String memberIds)
 			throws IOException, ParseException, GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret" })
-	public void doShareLink(Person user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException,
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException,
 			GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })
-	public void doShareGroup(Person user, String groupId, String recipientIds, String description) throws ParseException,
+	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException,
 			GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
 	@HttpOptions(invalidatesSession = true)
-	public void doRenamePerson(Person user, String name);
+	public void doRenamePerson(User user, String name);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "contactId" })
-	public void doAddContactPerson(Person user, String contactId);
+	public void doAddContactPerson(User user, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "contactId" })
-	public void doRemoveContactPerson(Person user, String contactId);
+	public void doRemoveContactPerson(User user, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doJoinGroup(Person user, String groupId);
+	public void doJoinGroup(User user, String groupId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doLeaveGroup(Person user, String groupId);
+	public void doLeaveGroup(User user, String groupId);
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doAddContact(OutputStream out, HttpResponseData contentType, Person user, String email) throws IOException;
+	public void doAddContact(OutputStream out, HttpResponseData contentType, User user, String email) throws IOException;
 
 	
 	/**
@@ -91,5 +91,5 @@ public interface HttpMethods {
 	 * @param inviteKey invitation key or null if person is registered
 	 * @throws RedirectException if the ids are invalid for example
 	 */
-	public void handleRedirect(Person user, String url, String postId, String inviteKey) throws RedirectException;
+	public void handleRedirect(User user, String url, String postId, String inviteKey) throws RedirectException;
 }

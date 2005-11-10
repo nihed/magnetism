@@ -5,7 +5,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 
@@ -14,16 +14,16 @@ import com.dumbhippo.persistence.Resource;
 public interface AccountSystem {
 	
 	/**
-	 * Create a new HippoAccount owning the specified email
+	 * Create a new Account owning the specified email
 	 * address.  @see createAccountFromResource
 	 * 
 	 * @param email
 	 * @return
 	 */
-	public HippoAccount createAccountFromEmail(String email);
+	public Account createAccountFromEmail(String email);
 	
 	/**
-	 * Adds a new HippoAccount (and Person) with verified ownership
+	 * Adds a new Account (and Person) with verified ownership
 	 * of the specified resource.  This relationship
 	 * will be globally visible, and should have been (at least weakly) verified
 	 * by some means (e.g. the person appears to have access to the specified
@@ -32,7 +32,7 @@ public interface AccountSystem {
 	 * @param email
 	 * @return a new Person
 	 */
-	public HippoAccount createAccountFromResource(Resource res);
+	public Account createAccountFromResource(Resource res);
 	
 	/**
 	 * Associate a new client with an account, with its own 
@@ -42,7 +42,7 @@ public interface AccountSystem {
 	 * @param identifier a "name" for the client, @see Client
 	 * @return a new client object
 	 */
-	public Client authorizeNewClient(HippoAccount acct, String name);
+	public Client authorizeNewClient(Account acct, String name);
 	
 	/**
 	 * Checks whether the user can authenticate with this auth key
@@ -65,7 +65,7 @@ public interface AccountSystem {
 	 * usage only...
 	 * @return all active accounts in the system
 	 */
-	public Set<HippoAccount> getActiveAccounts();
+	public Set<Account> getActiveAccounts();
 	
 	/**
 	 * Looks up an account by the Person it's associated with. 
@@ -77,7 +77,7 @@ public interface AccountSystem {
 	 * @param person the person
 	 * @return their account or null if they don't have one
 	 */
-	public HippoAccount lookupAccountByPerson(Person person);
+	public Account lookupAccountByPerson(Person person);
 	
 	/**
 	 * Lookup an account by the GUID of the person who owns it.
@@ -85,5 +85,5 @@ public interface AccountSystem {
 	 * @param personId person's ID
 	 * @return account for this person Id, or null
 	 */
-	public HippoAccount lookupAccountByPersonId(String personId);		
+	public Account lookupAccountByPersonId(String personId);		
 }

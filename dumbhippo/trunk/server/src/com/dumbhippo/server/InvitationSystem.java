@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 
 @Local
 public interface InvitationSystem {
@@ -21,7 +22,7 @@ public interface InvitationSystem {
 	 * @return a set of all the inviters for the invitee; the
 	 *   resulting PersonView use invitee as the viewpoint.
 	 */
-	public Set<PersonView> findInviters(Person invitee);
+	public Set<PersonView> findInviters(User invitee);
 	
 	/**
 	 * Add inviter as a person wanting to invite the owner
@@ -31,7 +32,7 @@ public interface InvitationSystem {
 	 * @param email
 	 * @return
 	 */
-	public InvitationToken createEmailInvitation(Person inviter, String email);
+	public InvitationToken createEmailInvitation(User inviter, String email);
 	
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
@@ -39,10 +40,10 @@ public interface InvitationSystem {
 	 * @param invitee the person being invited
 	 * @return an invitation object describing the Multiple Invite Group
 	 */
-	public InvitationToken createGetInvitation(Person inviter, Resource invitee);
+	public InvitationToken createGetInvitation(User inviter, Resource invitee);
 	
 	/**
-	 * Mark an invitation as viewed; this creates an initial HippoAccount
+	 * Mark an invitation as viewed; this creates an initial Account
 	 * for the user and such, and grants the client access to the account
 	 * by adding a Client object. If firstClientName is null no client 
 	 * is added.
@@ -69,5 +70,5 @@ public interface InvitationSystem {
 	 * @param invite
 	 * @param inviter
 	 */
-	public void sendEmailNotification(InvitationToken invite, Person inviter);
+	public void sendEmailNotification(InvitationToken invite, User inviter);
 }

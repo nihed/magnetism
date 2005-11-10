@@ -1,7 +1,7 @@
 package com.dumbhippo.web;
 
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.InvitationSystem;
 
 /**
@@ -32,7 +32,7 @@ public class InviteBean {
 
 	// action handler for form submit
 	public String doInvite() {
-		Person user = signin.getUser();
+		User user = signin.getUser();
 		
 		InvitationToken invitation 
 			= invitationSystem.createEmailInvitation(user, getEmail());

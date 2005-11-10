@@ -8,7 +8,7 @@ import javax.ejb.Stateless;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.HippoAccount;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
@@ -30,8 +30,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private PostingBoard postingBoard;
 		
-	private HippoAccount accountFromUsername(String username) throws JabberUserNotFoundException {
-		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
+	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
+		Account account = accountSystem.lookupAccountByPersonId(username);
 		if (account == null)
 			throw new JabberUserNotFoundException("username does not exist");
 		
@@ -41,7 +41,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 	
 	public boolean authenticateJabberUser(String username, String token, String digest) {
-		HippoAccount account;
+		Account account;
 		
 		try {
 			account = accountFromUsername(username);
@@ -75,7 +75,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	public JabberUser loadUser(String username) throws JabberUserNotFoundException {
 		
-		HippoAccount account = accountFromUsername(username);
+		Account account = accountFromUsername(username);
 		
 		PersonView view = identitySpider.getSystemView(account.getOwner());
 		
@@ -93,7 +93,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		// account could be null due to debug users or our own send-notifications
 		// user, i.e. any user on the jabber server that we don't know about
-		HippoAccount account = accountSystem.lookupAccountByPersonId(username);
+		Account account = accountSystem.lookupAccountByPersonId(username);
 		if (account != null && !account.getWasSentShareLinkTutorial()) {
 			logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 

@@ -4,7 +4,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
@@ -29,7 +29,7 @@ public class CookieAuthentication {
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static Person authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
+	public static User authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
@@ -52,7 +52,7 @@ public class CookieAuthentication {
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static Person authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
+	public static User authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
 
 		if (loginCookie == null) {
 			throw new NotLoggedInException("No login cookie set");
@@ -64,29 +64,29 @@ public class CookieAuthentication {
 	/**
 	 * Try to login from a personId/authKey.
 	 * 
-	 * @param personId
+	 * @param userId
 	 *            the person ID
 	 * @param authKey
 	 *            the auth key
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static Person authenticate(String personId, String authKey) throws BadTastingException, NotLoggedInException {
+	public static User authenticate(String userId, String authKey) throws BadTastingException, NotLoggedInException {
 		// This should be one of the only classes in web tier 
 		// using account system
 		AccountSystem accountSystem = WebEJBUtil.uncheckedDefaultLookup(AccountSystem.class);
 		IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-		Person person;		
+		User user;		
 		try {
-			person = identitySpider.lookupGuidString(Person.class, personId);
+			user = identitySpider.lookupGuidString(User.class, userId);
 		} catch (GuidNotFoundException e) {
-			throw new BadTastingException("Cookie had unknown person ID '" + personId + "'");
+			throw new BadTastingException("Cookie had unknown person ID '" + userId + "'");
 		} catch (ParseException e) {
-			throw new BadTastingException("Cookie had malformded person ID '" + personId + "'");
+			throw new BadTastingException("Cookie had malformded person ID '" + userId + "'");
 		}
-		if (!accountSystem.checkClientCookie(person, authKey)) {
+		if (!accountSystem.checkClientCookie(user, authKey)) {
 			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
-		return person;
+		return user;
 	}
 }

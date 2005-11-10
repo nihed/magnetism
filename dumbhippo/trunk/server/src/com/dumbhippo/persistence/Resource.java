@@ -12,7 +12,7 @@ import com.dumbhippo.identity20.Guid;
  * A Resource is some object that has an associated GUID
  * and everyone can have a different opinion about its owner.
  * i.e. make something a Resource rather than GuidPersistable
- * if you want it to be subject to ResourceOwnershipClaim
+ * if you want it to be subject to AccountClaim or ContactClaim
  * (see also PersonView)
  * 
  * @author hp

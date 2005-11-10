@@ -20,7 +20,7 @@ public class Post extends GuidPersistable {
 
 	private static final long serialVersionUID = 0L;
 
-	private Person poster;
+	private User poster;
 	private PostVisibility visibility;
 	private String explicitTitle;
 	private long postDate;
@@ -57,7 +57,7 @@ public class Post extends GuidPersistable {
 	 * @param expandedRecipients
 	 * @param resources
 	 */
-	public Post(Person poster, PostVisibility visibility, String explicitTitle, String text, Set<Person> personRecipients,
+	public Post(User poster, PostVisibility visibility, String explicitTitle, String text, Set<Person> personRecipients,
 			Set<Group> groupRecipients, Set<Person> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.visibility = visibility;
@@ -73,10 +73,10 @@ public class Post extends GuidPersistable {
 	
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	public Person getPoster() {
+	public User getPoster() {
 		return poster;
 	}
-	public void setPoster(Person poster) {
+	public void setPoster(User poster) {
 		this.poster = poster;
 	}
 	

@@ -16,7 +16,7 @@ public class InvitationToken extends Token {
 	private static final long serialVersionUID = 1L;
 	
 	private Resource invitee;
-	private Set<Person> inviters;
+	private Set<User> inviters;
 	private boolean viewed;
 	private Person resultingPerson;
 	
@@ -35,18 +35,18 @@ public class InvitationToken extends Token {
 
 	private void initMissing() {
 		if (inviters == null)
-			inviters = new HashSet<Person>();
+			inviters = new HashSet<User>();
 	}
 	
 	protected InvitationToken() {
 		initMissing();
 	}
 
-	public InvitationToken(Resource invitee, Person inviter) {
+	public InvitationToken(Resource invitee, User inviter) {
 		super(true);
 		this.viewed = false;
 		this.invitee = invitee;
-		this.inviters = new HashSet<Person>();
+		this.inviters = new HashSet<User>();
 		this.inviters.add(inviter);
 	}
 
@@ -57,11 +57,11 @@ public class InvitationToken extends Token {
 	}
 
 	@ManyToMany(fetch=FetchType.EAGER)
-	public Set<Person> getInviters() {
+	public Set<User> getInviters() {
 		return inviters;
 	}
 
-	public void addInviter(Person inviter) {
+	public void addInviter(User inviter) {
 		this.inviters.add(inviter);
 	}
 
@@ -69,7 +69,7 @@ public class InvitationToken extends Token {
 		this.invitee = invitee;
 	}
 
-	protected void setInviters(Set<Person> inviters) {
+	protected void setInviters(Set<User> inviters) {
 		if (inviters == null)
 			throw new IllegalArgumentException("null");
 		this.inviters = inviters;

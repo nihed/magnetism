@@ -14,6 +14,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -40,7 +41,7 @@ public class XMPPMethodsBean implements XMPPMethods, Serializable {
 	public void postClicked(Guid clickerId, String postId) throws GuidNotFoundException, ParseException {
 		logger.debug("postClicked invoked: " + clickerId + " " + postId);
 		Guid postGuid = new Guid(postId);
-		Person clicker = identitySpider.lookupGuid(Person.class, clickerId);
+		User clicker = identitySpider.lookupGuid(User.class, clickerId);
 		Post post = postingBoard.loadRawPost(new Viewpoint(clicker), postGuid);
 		if (post != null)
 			postingBoard.postClickedBy(post, clicker);

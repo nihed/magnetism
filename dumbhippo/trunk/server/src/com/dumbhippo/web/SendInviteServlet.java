@@ -10,7 +10,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.InvitationSystem;
 
 public class SendInviteServlet extends AbstractServlet {
@@ -19,7 +19,7 @@ public class SendInviteServlet extends AbstractServlet {
 	static final long serialVersionUID = 1;
 
 	private void doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException{
-		Person user = doLogin(request, response, false);
+		User user = doLogin(request, response, false);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
 		
