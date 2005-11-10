@@ -23,6 +23,8 @@
 /deploy/httpha-invoker.sar
 /deploy/jbossweb-ejb.jar
 /deploy/jbossweb-tomcat55.sar/ROOT.war
+# this configures the default JMS provider for message-driven beans,
+# but it sets up an HA/cluster configuration so we have our own version
 /deploy/jms/hajndi-jms-ds.xml
 /deploy/deploy.last
 /deploy/snmp-adaptor.sar

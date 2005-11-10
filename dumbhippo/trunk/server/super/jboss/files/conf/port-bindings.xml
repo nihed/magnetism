@@ -39,12 +39,18 @@
            figured out this crazy XML/MBean mapping goo.  I deserve a medal.
         -->
       <service-config name="jboss.remoting:type=Connector,name=DefaultEjb3Connector,handler=ejb3"
-        delgateClass="org.jboss.services.binding.AttributeMappingDelegate">
+        delegateClass="org.jboss.services.binding.AttributeMappingDelegate">
         <delegate-config>
           <attribute name="InvokerLocator">socket://0.0.0.0:${port}</attribute>
         </delegate-config>
         <binding port="@@jbossInvokerLocatorPort@@"/>
       </service-config>
+      
+      <service-config name="jboss.mq:service=InvocationLayer,type=OIL"
+         delegateClass="org.jboss.services.binding.AttributeMappingDelegate">
+         <delegate-config portName="ServerBindPort"/>
+         <binding port="@@jbossOilInvocationLayerPort@@"/>
+      </service-config>      
       
       <!-- ********************* tomcat ********************** -->
 

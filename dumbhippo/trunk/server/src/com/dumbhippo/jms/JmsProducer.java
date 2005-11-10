@@ -53,6 +53,7 @@ public class JmsProducer extends JmsQueue {
 		while (true) {
 			try {
 				getProducer().send(message);
+				logger.debug("Sent message OK " + message);
 				break;
 			} catch (JMSException e) {
 				close();
