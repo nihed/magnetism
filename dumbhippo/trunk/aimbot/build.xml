@@ -6,30 +6,48 @@
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="reports.tests" value="${target}/reports" />
+	<property name="target.lib" value="${target}/lib" />
 	<property name="src.java" value="src/java" />
 	<property name="src.tests.java" value="src/test/java" />
+	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+		<include name="jbossall-client.jar"/>
+		<include name="jbossmq-client.jar"/>
+		<include name="jboss-j2ee.jar"/>
+		<include name="log4j.jar"/>
+	</fileset>
+	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
+		<include name="target/classes/dumbhippo-client.jar"/>
+		<include name="lib/commons-logging-1.0.4.jar"/>
+		<include name="lib/commons-logging-api-1.0.4.jar"/>
+	</fileset>
     <path id="project.classpath">
         <pathelement location="${build}"/>
-        <pathelement location="${jboss.path}/client/jbossall-client.jar"/>
-    	<pathelement location="${jboss.path}/client/log4j.jar"/>
-        <pathelement location="${hippo.server.path}/target/classes/dumbhippo-client.jar"/>
-        <pathelement location="${hippo.server.path}/lib/commons-logging-1.0.4.jar"/>
-        <pathelement location="${hippo.server.path}/lib/commons-logging-api-1.0.4.jar"/>
+    	<fileset refid="dependency.jars.jboss" />
+    	<fileset refid="dependency.jars.server" />
     </path>
     <target name="init">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    	<echo message="creating directories..." />
         <mkdir dir="${build}"/>    	
         <mkdir dir="${build.tests}"/>    	
-        <mkdir dir="${reports.tests}"/>    	
+        <mkdir dir="${reports.tests}"/> 
+    	<mkdir dir="${target.lib}"/>
+    	<echo message="checking for up to date jar..." />
 		<uptodate property="uptodate.imbot" targetfile="target/classes/dumbhippo-imbot.jar">
 		    <srcfiles dir= "${src.java}" includes="**/*.java"/>
 		    <srcfiles dir= "${src.java}" includes="**/*.properties" />
 		</uptodate>
+    	<echo message="copying in dependency jars" />
+    	<copy todir="${target.lib}">
+			<mapper type="flatten" />
+	    	<fileset refid="dependency.jars.jboss" />
+    		<fileset refid="dependency.jars.server" />
+    	</copy>
     </target>
     <target name="clean">
         <delete dir="target"/>
     </target>
     <target depends="init" name="build">
-        <echo message="${ant.project.name}: ${ant.file}"/>
         <javac destdir="${build}" debug="on" source="1.5">
             <src path="${src.java}"/>
             <classpath refid="project.classpath"/>
@@ -42,6 +60,9 @@
 				<include name="**/*.properties" />
 				<include name="**/*.class" />
 			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="com.dumbhippo.aimbot.Main" />
+			</manifest>
 		</jar>
 	</target>
     <target name="run">
