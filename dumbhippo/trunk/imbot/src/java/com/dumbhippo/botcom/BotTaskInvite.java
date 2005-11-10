@@ -1,4 +1,4 @@
-package com.dumbhippo.aimbot;
+package com.dumbhippo.botcom;
 
 public class BotTaskInvite extends BotTask {
 

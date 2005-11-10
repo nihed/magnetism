@@ -1,4 +1,4 @@
-package com.dumbhippo.aimbot;
+package com.dumbhippo.botcom;
 
 public class BotEvent {
 	private String botName;

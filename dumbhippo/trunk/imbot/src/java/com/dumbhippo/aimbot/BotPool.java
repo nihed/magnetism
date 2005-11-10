@@ -8,6 +8,11 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.aim.ScreenName;
+import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotTask;
+import com.dumbhippo.botcom.BotTaskFailedException;
+import com.dumbhippo.botcom.BotTaskInvite;
+import com.dumbhippo.botcom.BotTaskNoop;
 
 public class BotPool implements BotListener {
 	

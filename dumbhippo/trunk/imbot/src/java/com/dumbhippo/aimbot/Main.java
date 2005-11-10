@@ -8,6 +8,10 @@ import javax.jms.TextMessage;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventToken;
+import com.dumbhippo.botcom.BotTask;
+import com.dumbhippo.botcom.BotTaskInvite;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
 

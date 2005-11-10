@@ -24,6 +24,10 @@ import com.dumbhippo.aim.Listener;
 import com.dumbhippo.aim.RawListenerAdapter;
 import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
+import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventToken;
+import com.dumbhippo.botcom.BotTaskFailedException;
+import com.dumbhippo.botcom.BotTaskInvite;
 import com.dumbhippo.identity20.RandomToken;
 
 class Bot implements Runnable {
