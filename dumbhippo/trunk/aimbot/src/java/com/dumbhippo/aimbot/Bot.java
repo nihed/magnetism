@@ -197,10 +197,12 @@ class Bot implements Runnable {
 
 		logger.debug("Bot signing on...");
 		
+		/*
 		if ((new Random()).nextBoolean()) {
 			logger.debug("Randomly generated signon failure!");
 			return;
 		}
+		*/
 		
 		Client client = new Client(name, pass, "I am DUMB HIPPO BOT",
 				"Hmm, who are you?", true /*auto-add everyone as buddy*/);

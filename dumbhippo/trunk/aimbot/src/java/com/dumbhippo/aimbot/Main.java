@@ -46,6 +46,8 @@ public class Main {
 		public void run() {
 			JmsConsumer consumer = new JmsConsumer(queue);
 			
+			logger.info("Starting dispatch thread for queue " + queue);
+			
 			while (true) {
 		
 				if (this.quit) {
@@ -53,6 +55,7 @@ public class Main {
 					break;
 				}
 				
+				logger.debug("Waiting for message in queue " + queue);
 				Message received = consumer.receive();
 				
 				logger.debug("received message " + received);
@@ -95,7 +98,7 @@ public class Main {
 		
 		Thread t = watchQueue("FooQueue", pool);
 
-		generateTestTasks("FooQueue");
+		//generateTestTasks("FooQueue");
 		
 		while (t.isAlive()) {
 			try {

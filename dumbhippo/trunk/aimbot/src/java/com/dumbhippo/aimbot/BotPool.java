@@ -1,7 +1,7 @@
 package com.dumbhippo.aimbot;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.logging.Log;
@@ -12,7 +12,7 @@ import com.dumbhippo.aim.ScreenName;
 public class BotPool {
 	
 	private static Log logger = GlobalSetup.getLog(BotPool.class);
-	private Map<ScreenName,BotQueue> bots;
+	private List<BotQueue> bots;
 	
 	static private class BotQueue {
 		private ScreenName name;
@@ -87,12 +87,12 @@ public class BotPool {
 			}
 		}
 		
-		BotQueue(String name, String pass) {
-			this.name = new ScreenName(name);
+		BotQueue(ScreenName name, String pass) {
+			this.name = name;
 			this.bot = new Bot(this.name, pass);
 			taskQueue = new LinkedBlockingQueue<BotTask>();
 		}
-			
+
 		ScreenName getName() {
 			return name;
 		}
@@ -118,7 +118,7 @@ public class BotPool {
 			if (botThread != null)
 				throw new IllegalStateException("already active");
 			
-			logger.debug("Activating queue for " + name);
+			logger.info("Activating queue for bot " + name);
 			
 			botThread = new Thread(bot);
 			botThread.setDaemon(true);
@@ -168,25 +168,25 @@ public class BotPool {
 	
 	BotPool() {
 		
-		bots = new HashMap<ScreenName,BotQueue>();
+		bots = new ArrayList<BotQueue>();
 		
-		// FIXME read this from a config file
-		BotQueue queue;
-		
-		queue = new BotQueue("DumbHippoBot", "s3kr3tcode");
-		bots.put(queue.getName(), queue);
+		Config config = Config.getDefault();
+		for (BotConfig b : config.getBotConfigs()) {
+			BotQueue queue = new BotQueue(b.getName(), b.getPass());
+			bots.add(queue);
+		}
 	}
 	
 	// this is called from multiple threads, a cheesy synchronized on the 
 	// method works fine for now since this is the only place we activate 
 	// bots
 	public synchronized void put(BotTask task) {
-		// for now we always just use one bot
+		// for now we always just use the first bot
 		
 		BotQueue queue;
 		
-		// pick the one bot at random
-		queue = bots.values().iterator().next();
+		// pick the first bot from the config file
+		queue = bots.iterator().next();
 		
 		if (!queue.isActive())
 			queue.activate();
