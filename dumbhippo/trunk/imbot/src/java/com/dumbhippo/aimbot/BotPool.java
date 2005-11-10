@@ -122,13 +122,13 @@ public class BotPool {
 			
 			botThread = new Thread(bot);
 			botThread.setDaemon(true);
-			botThread.setName("Bot " + name);
+			botThread.setName("Bot-" + name);
 				
 			taskDispatcher = new TaskDispatcher();
 				
 			taskThread = new Thread(taskDispatcher);
 			taskThread.setDaemon(true);
-			taskThread.setName("Dispatcher for bot " + name);
+			taskThread.setName("Tasks-" + name);
 			
 			botThread.start();
 			taskThread.start();
@@ -175,7 +175,9 @@ public class BotPool {
 			BotQueue queue = new BotQueue(b.getName(), b.getPass());
 			bots.add(queue);
 		}
-		
+	}
+	
+	public void start() {
 		logger.info("Starting up all the bots");
 		for (BotQueue q : bots) {
 			q.activate();

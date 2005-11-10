@@ -22,7 +22,7 @@ import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
 
 class Bot implements Runnable {
-	private static Log logger = GlobalSetup.getLog(Bot.class);
+	private static final Log logger = GlobalSetup.getLog(Bot.class);
 
 	static private Timer timer;
 	
@@ -104,7 +104,7 @@ class Bot implements Runnable {
 		}
 	}
 	
-	class BotListener implements Listener {
+	class ClientListener implements Listener {
 		public void handleConnected() {
 			logger.info(name + " connected");
 		}
@@ -113,13 +113,28 @@ class Bot implements Runnable {
 			logger.info(name + " disconnected");
 		}
 		
-		public void handleMessage(Buddy buddy, String request) {
-			logger.info(name + " message from " + buddy.getName() + ": " + request);
-			saySomethingRandom(buddy);
+		public void handleMessage(Buddy buddy, String messageHtml) {
+			logger.info(name + " message from " + buddy.getName() + ": " + messageHtml);
+			
+			Client client = aim;
+			if (client == null)
+				return;
+			
+			if (messageHtml.contains("inviteKey")) {
+				client.sendMessage(buddy, "Got it!");
+			} else {
+				saySomethingRandom(buddy);
+			}
 		}
 		
 		public void handleWarning(Buddy buddy, int amount) {
 			logger.info(name + " warning from " + buddy.getName());
+	
+			Client client = aim;
+			if (client == null)
+				return;
+			logger.debug("retaliating by warning back");
+			client.sendWarning(buddy);
 		}
 		
 		public void handleBuddySignOn(Buddy buddy, String info) {
@@ -140,13 +155,6 @@ class Bot implements Runnable {
 		
 		public void handleBuddyAvailable(Buddy buddy, String message) {
 			logger.debug(name + " buddy available: " + buddy.getName() + " message: " + message);
-			if (buddy.getName().equals("bryanwclark")) {
-				saySomethingRandom(buddy);
-			} else if (buddy.getName().equals("hp40000")) {
-				saySomethingRandom(buddy);
-			} else if (buddy.getName().equals("dfxfischer")) {
-				saySomethingRandom(buddy);
-			}
 		}
 	}
 		
@@ -170,33 +178,40 @@ class Bot implements Runnable {
 		onlineCondition = onlineLock.newCondition();
 	}
 
-	void saySomethingRandom(Buddy buddy) {
+	private void saySomethingRandom(Buddy buddy) {
+		Client client = aim;
 		logger.debug("saying something random to " + buddy.getName());
+		if (client == null)
+			return;
 		switch (random.nextInt(5)) {
 		case 0:
-			aim.sendMessage(buddy, "You suck");
+			client.sendMessage(buddy, "You suck");
 			break;
 		case 1:
-			aim.sendMessage(buddy, "Mortle frobbles the tib tom");
+			client.sendMessage(buddy, "Mortle frobbles the tib tom");
 			break;
 		case 2:
-			aim.sendMessage(buddy, "Hippo Hippo Hooray");
+			client.sendMessage(buddy, "Hippo Hippo Hooray");
 			break;
 		case 3:
-			aim.sendMessage(buddy, "Do I repeat myself often?");
+			client.sendMessage(buddy, "Do I repeat myself often?");
 			break;
 		case 4:
-			aim.sendMessage(buddy, "I may be dumb, but I'm not stupid");
+			client.sendMessage(buddy, "I may be dumb, but I'm not stupid");
 			break;
 		}
 	}
-
+	
 	private void signOn() {
 		if (aim != null)
 			throw new IllegalStateException("can't sign on when you're already running");
 
 		logger.debug("Bot signing on...");
 		
+		/*
+		if (false || true)
+			return; // simulate signon failure
+		*/
 		/*
 		if ((new Random()).nextBoolean()) {
 			logger.debug("Randomly generated signon failure!");
@@ -206,7 +221,7 @@ class Bot implements Runnable {
 		
 		Client client = new Client(name, pass, "I am DUMB HIPPO BOT",
 				"Hmm, who are you?", true /*auto-add everyone as buddy*/);
-		client.addListener(new BotListener());
+		client.addListener(new ClientListener());
 		
 		client.signOn();
 		

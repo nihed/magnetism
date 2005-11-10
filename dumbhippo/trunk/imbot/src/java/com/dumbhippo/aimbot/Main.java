@@ -89,6 +89,7 @@ public class Main {
 		logger.debug("Connecting queue " + queue + " to the bot pool");
 		Thread t = new Thread(new QueueToPoolDispatcher(queue, pool));
 		t.setDaemon(true);
+		t.setName("Dispatch-" + queue);
 		t.start();
 		return t;
 	}
@@ -97,7 +98,9 @@ public class Main {
 		BotPool pool = new BotPool();
 		
 		Thread t = watchQueue("FooQueue", pool);
-
+		
+		pool.start();
+		
 		//generateTestTasks("FooQueue");
 		
 		while (t.isAlive()) {
@@ -107,5 +110,6 @@ public class Main {
 			}
 		}
 		logger.info("Exiting");
+		System.exit(0);
 	}
 }
