@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="all" name="imbot">
+	<property name="hippo.server.path" value="${basedir}/../server"/>
+	<property name="jboss.path" value="${jboss.path}"/>
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
+	<property name="reports.tests" value="${target}/reports" />
+	<property name="src.java" value="${src.java}" />
+	<property name="src.tests.java" value="src/test/java" />
+    <path id="project.classpath">
+        <pathelement location="${build}"/>
+        <pathelement location="${jboss.path}/client/jbossall-client.jar"/>
+        <pathelement location="${hippo.server.path}/target/classes/dumbhippo-client.jar"/>
+        <pathelement location="${hippo.server.path}/lib/commons-logging-1.0.4.jar"/>
+        <pathelement location="${hippo.server.path}/lib/commons-logging-api-1.0.4.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="target/classes"/>    	
+		<uptodate property="uptodate.imbot" targetfile="target/classes/dumbhippo-imbot.jar">
+		    <srcfiles dir= "${src.java}" includes="**/*.java"/>
+		    <srcfiles dir= "${src.java}" includes="**/*.properties" />
+		</uptodate>
+    </target>
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+    <target depends="init" name="build">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac destdir="${build}" debug="on" source="1.5">
+            <src path="${src.java}"/>
+            <classpath refid="project.classpath"/>
+        </javac>
+    </target>
+	<target name="jar" depends="build" unless="uptodate.imbot">
+		<echo message="repacking jar" />
+		<jar destfile="${build}/dumbhippo-imbot.jar">
+			<fileset dir="${build}">
+				<include name="**/*.properties" />
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+    <target name="run">
+        <java classname="com.dumbhippo.aimbot.Main" failonerror="true" fork="yes">
+            <classpath refid="project.classpath"/>
+        </java>
+    </target>
+	<target name="all" depends="jar"/>
+	
+	<!-- test stuff -->
+	<path id="tests.classpath">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.classpath" />
+	</path>
+
+	<target name="test" depends="build">
+		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.class.path" />
+		</javac>
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="AllTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+	
+</project>
