@@ -1,3 +1,4 @@
+package com.dumbhippo.imbot.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

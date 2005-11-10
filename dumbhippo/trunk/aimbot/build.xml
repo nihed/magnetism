@@ -17,7 +17,9 @@
         <pathelement location="${hippo.server.path}/lib/commons-logging-api-1.0.4.jar"/>
     </path>
     <target name="init">
-        <mkdir dir="target/classes"/>    	
+        <mkdir dir="${build}"/>    	
+        <mkdir dir="${build.tests}"/>    	
+        <mkdir dir="${reports.tests}"/>    	
 		<uptodate property="uptodate.imbot" targetfile="target/classes/dumbhippo-imbot.jar">
 		    <srcfiles dir= "${src.java}" includes="**/*.java"/>
 		    <srcfiles dir= "${src.java}" includes="**/*.properties" />
@@ -47,7 +49,7 @@
             <classpath refid="project.classpath"/>
         </java>
     </target>
-	<target name="all" depends="jar"/>
+	<target name="all" depends="jar,test"/>
 	
 	<!-- test stuff -->
 	<path id="tests.classpath">
@@ -56,8 +58,8 @@
 	</path>
 
 	<target name="test" depends="build">
-		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
-			<classpath refid="tests.class.path" />
+		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.classpath" />
 		</javac>
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
@@ -68,7 +70,7 @@
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.tests}">
 				<fileset dir="${src.tests.java}">
-					<include name="AllTests.java" />
+					<include name="com/dumbhippo/imbot/test/AllTests.java" />
 				</fileset>
 			</batchtest>
 			<classpath refid="tests.classpath"/>

@@ -3,9 +3,9 @@ package com.dumbhippo.aim;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.dumbhippo.server.TestUtils;
-
 import junit.framework.TestCase;
+
+import com.dumbhippo.imbot.test.TestUtils;
 
 public class ScreenNameTest extends TestCase {
 
