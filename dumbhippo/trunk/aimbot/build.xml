@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="all" name="imbot">
 	<property name="hippo.server.path" value="${basedir}/../server"/>
-	<property name="jboss.path" value="${jboss.path}"/>
+	<property name="jboss.path" value="/opt/jboss"/>
 	<property name="target" value="target" />
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="reports.tests" value="${target}/reports" />
-	<property name="src.java" value="${src.java}" />
+	<property name="src.java" value="src/java" />
 	<property name="src.tests.java" value="src/test/java" />
     <path id="project.classpath">
         <pathelement location="${build}"/>
         <pathelement location="${jboss.path}/client/jbossall-client.jar"/>
+    	<pathelement location="${jboss.path}/client/log4j.jar"/>
         <pathelement location="${hippo.server.path}/target/classes/dumbhippo-client.jar"/>
         <pathelement location="${hippo.server.path}/lib/commons-logging-1.0.4.jar"/>
         <pathelement location="${hippo.server.path}/lib/commons-logging-api-1.0.4.jar"/>
