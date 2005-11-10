@@ -175,11 +175,17 @@ public class BotPool {
 			BotQueue queue = new BotQueue(b.getName(), b.getPass());
 			bots.add(queue);
 		}
+		
+		logger.info("Starting up all the bots");
+		for (BotQueue q : bots) {
+			q.activate();
+		}
+		logger.info("All bots launched");
 	}
 	
 	// this is called from multiple threads, a cheesy synchronized on the 
-	// method works fine for now since this is the only place we activate 
-	// bots
+	// method works fine for now since this is the only place we mess 
+	// with the bots
 	public synchronized void put(BotTask task) {
 		// for now we always just use the first bot
 		
@@ -187,9 +193,6 @@ public class BotPool {
 		
 		// pick the first bot from the config file
 		queue = bots.iterator().next();
-		
-		if (!queue.isActive())
-			queue.activate();
 		
 		queue.put(task);
 	}
