@@ -9,10 +9,11 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.aim.ScreenName;
 
-public class BotPool {
+public class BotPool implements BotListener {
 	
 	private static Log logger = GlobalSetup.getLog(BotPool.class);
 	private List<BotQueue> bots;
+	private LinkedBlockingQueue<BotEvent> eventQueue;
 	
 	static private class BotQueue {
 		private ScreenName name;
@@ -164,6 +165,10 @@ public class BotPool {
 				}
 			}
 		}
+		
+		void addListener(BotListener listener) {
+			bot.addListener(listener);
+		}
 	}
 	
 	BotPool() {
@@ -175,11 +180,14 @@ public class BotPool {
 			BotQueue queue = new BotQueue(b.getName(), b.getPass());
 			bots.add(queue);
 		}
+		
+		eventQueue = new LinkedBlockingQueue<BotEvent>();
 	}
 	
 	public void start() {
 		logger.info("Starting up all the bots");
 		for (BotQueue q : bots) {
+			q.addListener(this);
 			q.activate();
 		}
 		logger.info("All bots launched");
@@ -197,5 +205,20 @@ public class BotPool {
 		queue = bots.iterator().next();
 		
 		queue.put(task);
+	}
+	
+	public BotEvent take() throws InterruptedException {
+		return eventQueue.take();
+	}
+
+	// called from the bot thread...
+	public void onEvent(BotEvent event) {
+		while (true) {
+			try {
+				eventQueue.put(event);
+				break;
+			} catch (InterruptedException e) {
+			}
+		}
 	}
 }

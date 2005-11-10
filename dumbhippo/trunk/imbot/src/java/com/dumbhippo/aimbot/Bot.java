@@ -1,13 +1,17 @@
 package com.dumbhippo.aimbot;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 
@@ -20,11 +24,15 @@ import com.dumbhippo.aim.Listener;
 import com.dumbhippo.aim.RawListenerAdapter;
 import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
+import com.dumbhippo.identity20.RandomToken;
 
 class Bot implements Runnable {
 	private static final Log logger = GlobalSetup.getLog(Bot.class);
 
-	static private Timer timer;
+	private static Timer timer;
+	
+	private static final String tokenRegex = "[a-f0-9]{" + RandomToken.STRING_LENGTH + "}";
+	private static final Pattern tokenPattern = Pattern.compile(tokenRegex);
 	
 	private ScreenName name;
 	private String pass;
@@ -39,6 +47,8 @@ class Bot implements Runnable {
 	
 	private Lock onlineLock;
 	private Condition onlineCondition;
+	
+	private Set<BotListener> listeners;
 	
 	class SelfPinger extends TimerTask {
 	    // check connection every "TIME_DELAY" milliseconds (5 mins)
@@ -118,10 +128,13 @@ class Bot implements Runnable {
 			
 			Client client = aim;
 			if (client == null)
-				return;
+				return;		
 			
-			if (messageHtml.contains("inviteKey")) {
+			Matcher m = tokenPattern.matcher(messageHtml);
+			if (m.find()) {
 				client.sendMessage(buddy, "Got it!");
+				sendEvent(new BotEventToken(name.getNormalized(), buddy.getName().getNormalized(), 
+						m.group()));
 			} else {
 				saySomethingRandom(buddy);
 			}
@@ -176,6 +189,8 @@ class Bot implements Runnable {
 		quitCondition = quitLock.newCondition();
 		onlineLock = new ReentrantLock();
 		onlineCondition = onlineLock.newCondition();
+		
+		this.listeners = new HashSet<BotListener>();
 	}
 
 	private void saySomethingRandom(Buddy buddy) {
@@ -385,6 +400,24 @@ class Bot implements Runnable {
 		if (!client.getOnline()) {
 			// most likely this means we failed (there's really no way to know reliably)
 			throw new BotTaskFailedException("offline right when we sent the message");
+		}
+	}
+	
+	public void addListener(BotListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	public void removeListener(BotListener listener) {
+		this.listeners.remove(listener);
+	}
+	
+	private void sendEvent(BotEvent event) {
+		for (BotListener l : listeners) {
+			try {
+				l.onEvent(event);
+			} catch (Exception e) {
+				logger.warn("Bot listener exception", e);
+			}
 		}
 	}
 }
