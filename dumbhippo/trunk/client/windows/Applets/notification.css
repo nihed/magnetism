@@ -48,7 +48,8 @@ span.dh-notification-recipient
 
 span.dh-notification-group-recipient
 {
-	font-weight: bold
+	font-weight: bold;
+	font-size: larger;
 }
 
 img.dh-close-button 

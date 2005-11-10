@@ -5,6 +5,8 @@ all: *.xml *.css *.png *.js
 	copy notification.js $(OUTDIR)\applets
 	copy notification.css $(OUTDIR)\applets	
 	copy close.png $(OUTDIR)\applets
+	copy activeLeft.png $(OUTDIR)\applets
+	copy activeRight.png $(OUTDIR)\applets
 
 clean:
 	deltree $(OUTDIR)\applets

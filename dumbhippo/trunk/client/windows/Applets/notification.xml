@@ -3,26 +3,11 @@
 <html xmlns:dh="http://dumbhippo.com/schema/clientjs">
 <head>
 <dh:stylesheet/>
-<title>moo test</title>
+<title>dumbhippo notification</title>
 </head>
 <dh:corescript/>
-<body style="overflow: hidden;">  <!-- onclick="return dh.notification.handleCloseClicked();" -->
+<body style="overflow: hidden;" onload="dhInit();">
 <dh:closeButton/>
-<table class="dh-notification">
-<tr>
-<td class="dh-notification-sender">
-<dh:linkimage/><br/>
-<div><dh:senderLink/></div>
-</td>
-<td>
-<div class="dh-link-title"><dh:link/></div>
-<div><dh:linkDescription/></div>
-</td>
-</tr>
-</table>
-<div id="dh-notification-meta" class="dh-notification-meta">
-<span id="dh-notification-swarming"></span><br/>
-This was sent to <span id="dh-notification-recipients"></span>
-</div>
+<div id="dh-notification"></div>
 </body>
 </html>

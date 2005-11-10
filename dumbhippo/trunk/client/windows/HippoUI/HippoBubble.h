@@ -104,8 +104,9 @@ public:
 	STDMETHODIMP LockContainer(BOOL fLock);
 	
 	// IHippoBubble
-	STDMETHODIMP SenderLinkClicked();
-	STDMETHODIMP LinkClicked();
+	STDMETHODIMP DebugLog(BSTR str);
+	STDMETHODIMP DisplaySharedLink(BSTR linkId, BSTR url);
+	STDMETHODIMP OpenExternalURL(BSTR url);
 	STDMETHODIMP Close();
 
 	// IDocHostUIHandler
@@ -139,7 +140,7 @@ private:
 
 	bool embedIE(void);
 	bool appendTransform(BSTR src, BSTR style, ...);
-	bool invokeJavascript(BSTR funcName, VARIANT *invokeResult, ...);
+	bool invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, ...);
 	bool create(void);
 	bool createWindow(void);
 	bool registerClass();

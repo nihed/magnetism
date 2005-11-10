@@ -103,6 +103,18 @@ HippoBubble::embedIE(void)
 	browser->put_Width(rect.right);
 	browser->put_Height(rect.bottom);
 	browser->put_Resizable(VARIANT_FALSE);
+
+	appendTransform(L"notification.xml", L"clientstyle.xml", NULL);
+
+	// Kind of a hack
+	HippoBSTR serverURLStr;
+	ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
+	HippoBSTR appletURLStr;
+	ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
+	variant_t serverUrl(serverURLStr.m_str);
+	variant_t appletUrl(appletURLStr.m_str);
+	variant_t result;
+	invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
 	return true;
 }
 
@@ -203,6 +215,8 @@ HippoBubble::create(void)
 	if (!createWindow()) {
 		return false;
 	}
+	if (!embedIE())
+		return false;
 	return true;
 }
 
@@ -233,26 +247,12 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 		if (!create())
 			return;
 	}
-	if (!embedIE())
-		return;
 
-	currentLinkId_ = share.postId;
-	currentLink_ = share.url;
-
-	HippoBSTR senderURLfrag;
-	senderURLfrag.Append(L"viewperson?personId=");
-	senderURLfrag.Append(share.senderId);
-	currentSenderUrl_ = NULL;
-	ui_->getRemoteURL(senderURLfrag, &currentSenderUrl_);
-
-	HippoBSTR photoURLfrag(L"files/headshots/");
-	photoURLfrag.Append(share.senderId);
-	HippoBSTR photoURL;
-	ui_->getRemoteURL(photoURLfrag, &photoURL);
-
-	appendTransform(L"notification.xml", L"clientstyle.xml", L"senderPhotoUrl", photoURL.m_str, 
-		L"senderName", share.senderName, L"linkURL", share.url, 
-		L"linkTitle", share.title, L"linkDescription", share.description, NULL);
+	variant_t senderName(share.senderName);
+	variant_t senderId(share.senderId);
+	variant_t linkTitle(share.title);
+	variant_t linkURL(share.url);
+	variant_t linkDescription(share.description);
 	SAFEARRAY *personRecipients = hippoStrArrayToSafeArray(share.personRecipients);
 	VARIANT personRecipientsArg;
 	personRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
@@ -261,10 +261,14 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	VARIANT groupRecipientsArg;
 	groupRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
 	groupRecipientsArg.parray = groupRecipients;
+
 	VARIANT result;
-	invokeJavascript(L"dhSetRecipients", &result, &groupRecipientsArg, &personRecipientsArg, NULL);
+	invokeJavascript(L"dhAddLinkShare", &result, 7, &senderName,
+		                                 &senderId, &linkTitle, &linkURL, &linkDescription,
+										 &personRecipientsArg, &groupRecipientsArg);
 	SafeArrayDestroy(personRecipients);
 	SafeArrayDestroy(groupRecipients);
+
 	show();
 }
 
@@ -275,14 +279,13 @@ HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
 }
 
 bool
-HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, ...)
+HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, ...)
 {
     va_list vap;
 	VARIANT *arg;
-	int maxargs = 16;
-	int nargs;
+	int argc;
 
-	va_start (vap, invokeResult);
+	va_start (vap, nargs);
 
 	HippoQIPtr<IWebBrowser2> browser(ie_);
 	IDispatch *docDispatch;
@@ -298,15 +301,14 @@ HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, ...)
 
 	DISPPARAMS args;
 	ZeroMemory(&args, sizeof(args));
-	args.rgvarg = new VARIANT[maxargs];
+	args.rgvarg = new VARIANT[nargs];
 	args.cNamedArgs = 0;
 
-	nargs = 0;
-	while ((arg = va_arg (vap, VARIANT *)) != NULL) {
-		nargs++;
-		if (nargs >= maxargs)
-			return false; // this should be fatal
-		args.rgvarg[nargs-1] = *arg;
+	argc = 0;
+	for (int argc = 0; argc < nargs; argc++) {
+		arg = va_arg (vap, VARIANT *);
+		// This has to be in reverse order for some reason...CRACK
+		args.rgvarg[(nargs-argc)-1] = *arg;
 	}
 	args.cArgs = nargs;
 
@@ -353,6 +355,8 @@ HippoBubble::show(void)
 {	
 	ui_->debugLogW(L"doing bubble show");
 	AnimateWindow(window_, 400, AW_BLEND);
+	if (!BringWindowToTop(window_))
+		ui_->logLastError(L"Failed to invoke BringWindowToTop");
 }
 
 
@@ -387,25 +391,32 @@ HippoBubble::windowProc(HWND   window,
 }
 
 // IHippoBubble
+
 STDMETHODIMP
-HippoBubble::LinkClicked()
+HippoBubble::DebugLog(BSTR str)
 {
-	ui_->showURL(currentLinkId_, currentLink_);
+	ui_->debugLogW(L"%s", str);
 	return S_OK;
 }
 
 STDMETHODIMP 
-HippoBubble::SenderLinkClicked() 
+HippoBubble::DisplaySharedLink(BSTR linkId, BSTR url)
+{
+	ui_->displaySharedLink(linkId, url);
+	return S_OK;
+}
+
+STDMETHODIMP
+HippoBubble::OpenExternalURL(BSTR url)
 {
 	HippoPtr<IWebBrowser2> browser;
-	ui_->launchBrowser(currentSenderUrl_, browser);
+	ui_->launchBrowser(url, browser);
 	return S_OK;
 }
 
 STDMETHODIMP
 HippoBubble::Close()
 {
-	ie_->Release();
 	AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
 	ui_->debugLogU("closing link notification");
 	return S_OK;

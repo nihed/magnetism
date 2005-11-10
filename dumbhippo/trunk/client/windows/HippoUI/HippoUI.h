@@ -68,12 +68,13 @@ public:
 
     void showMenu(UINT buttonFlag);
 	void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
-    void showURL(BSTR postId, BSTR url);
+    void displaySharedLink(BSTR postId, BSTR url);
     void showShareWindow(BSTR title, BSTR url);
 	void HippoUI::showRecent();
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
+	void logLastError(const WCHAR *text);
 
 	void onConnectionChange(bool connected);
     void onAuthFailure();

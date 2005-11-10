@@ -32,11 +32,13 @@ library HippoUtil {
     ]
     interface IHippoBubble : IUnknown
     {
-	[id(120), helpstring("Link Clicked")]
-	HRESULT LinkClicked();
-	[id(121), helpstring("Body Clicked")]
+	[id(120), helpstring("Open an external URL")]
+	HRESULT OpenExternalURL([in] BSTR url);
+	[id(121), helpstring("Close notification window")]
 	HRESULT Close();
-	[id(122), helpstring("Sender Link Clicked")]
-	HRESULT SenderLinkClicked();
+	[id(122), helpstring("Display a shared link")]
+	HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
+	[id(123), helpstring("Debug log")]
+	HRESULT DebugLog([in] BSTR msg);
     }
 }

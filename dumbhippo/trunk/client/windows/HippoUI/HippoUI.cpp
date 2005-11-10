@@ -289,6 +289,8 @@ HippoUI::getPreferences()
 void
 HippoUI::showAppletWindow(BSTR url)
 {
+	long width = 500;
+	long height = 600;
     HippoPtr<IWebBrowser2> webBrowser;
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
 	             IID_IWebBrowser2, (void **)&webBrowser);
@@ -305,13 +307,13 @@ HippoUI::showAppletWindow(BSTR url)
     webBrowser->put_MenuBar(VARIANT_FALSE);
     webBrowser->put_StatusBar(VARIANT_FALSE);
     webBrowser->put_ToolBar(VARIANT_FALSE);
-    webBrowser->put_Width(500);
-    webBrowser->put_Height(500);
+    webBrowser->put_Width(width);
+    webBrowser->put_Height(height);
 
     RECT workArea;
     if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-	webBrowser->put_Left((workArea.left + workArea.right - 500) / 2);
-	webBrowser->put_Top((workArea.bottom + workArea.top - 500) / 2);
+	webBrowser->put_Left((workArea.left + workArea.right - width) / 2);
+	webBrowser->put_Top((workArea.bottom + workArea.top - height) / 2);
     }
 
     HippoPtr<IDispatch> dispDocument;	
@@ -422,7 +424,7 @@ HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 
 // Show a window when the user clicks on a shared link
 void 
-HippoUI::showURL(BSTR postId, BSTR url)
+HippoUI::displaySharedLink(BSTR postId, BSTR url)
 {
     HippoPtr<IWebBrowser2> webBrowser;
 
@@ -504,6 +506,15 @@ HippoUI::debugLogU(const char *format, ...)
     
     g_free(str);
     g_free(strW);
+}
+
+void
+HippoUI::logLastError(const WCHAR *text)
+{
+	HippoBSTR errstr;
+	HRESULT res = GetLastError();
+	hippoHresultToString(res, errstr);
+	debugLogW(L"%S: %S", text, errstr.m_str);
 }
 
 void 

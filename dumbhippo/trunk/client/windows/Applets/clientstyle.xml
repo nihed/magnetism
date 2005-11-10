@@ -3,11 +3,6 @@
 				xmlns:dh="http://dumbhippo.com/schema/clientjs"
 				version="1.0">
 	<xsl:param name="appleturl"/>
-	<xsl:param name="senderPhotoUrl"/>
-	<xsl:param name="senderName"/>
-	<xsl:param name="linkTitle"/>
-	<xsl:param name="linkURL"/>	
-	<xsl:param name="linkDescription"/>	
 	<xsl:output method="html" 
 				encoding="UTF-8"/>
 	<xsl:template match="dh:corescript">
@@ -17,20 +12,8 @@
 		<link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
 	</xsl:template>
 	<xsl:template match="dh:closeButton">
-		<img class="dh-close-button" onclick="dh.notification.handleCloseClicked();" src="{$appleturl}close.png"></img>
-	</xsl:template>
-	<xsl:template match="dh:linkimage">
-		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><img class="dh-notification-sender" src="{$senderPhotoUrl}"></img></a>
-	</xsl:template>
-	<xsl:template match="dh:senderLink">
-		<a onclick="dh.notification.handleSenderLinkClicked();" href=""><span class="dh-notification-sender"><xsl:value-of select="$senderName"/></span></a>
-	</xsl:template>
-	<xsl:template match="dh:link">
-		<a onclick="dh.notification.handleLinkClicked();" href="{$linkURL}"><xsl:value-of select="$linkTitle"/></a>
-	</xsl:template>
-	<xsl:template match="dh:linkDescription">
-		<xsl:value-of select="$linkDescription"/>
-	</xsl:template>			
+		<img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>
+	</xsl:template>	
 	<!-- pass through everything else verbatim -->
 	<xsl:template match="*">
 		<xsl:element name="{name()}">
