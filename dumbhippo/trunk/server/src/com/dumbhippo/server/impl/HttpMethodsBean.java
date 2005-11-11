@@ -390,6 +390,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		bodyHtml.append("</body>\n</html>\n");
 		
 		mailer.setMessageContent(message, "Sign in to DumbHippo", bodyText.toString(), bodyHtml.toString());
+		mailer.sendMessage(message);
 	}
 
 	public void doSendLoginLinkAim(String address) throws IOException, LoginVerifierException {
