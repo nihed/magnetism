@@ -411,7 +411,7 @@ HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 		return;
 	}
 
-	debugLogW(L"launching browser for %S", url);
+	debugLogW(L"launching browser for %s", url);
 
     VARIANT missing;
     missing.vt = VT_EMPTY;
@@ -449,6 +449,7 @@ HippoUI::displaySharedLink(BSTR postId, BSTR url)
 
 	WCHAR *postIdW = postId;
 	char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);
+	debugLogW(L"notifying post clicked: %s", postId);
 	im_.notifyPostClickedU(postIdU);
 	g_free (postIdU);
 }

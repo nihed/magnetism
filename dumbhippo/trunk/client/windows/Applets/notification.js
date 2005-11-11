@@ -85,6 +85,13 @@ dh.util.dom.clearNode = function (elt) {
 	while (elt.firstChild) { elt.removeChild(elt.firstChild); }
 }
 
+dh.util.dom.getClearedElementById = function (id) {
+	var elt = document.getElementById(id)
+	if (elt) 
+		dh.util.dom.clearNode(elt)
+	return elt
+}
+
 // Notification implementation
 
 dh.notification = {}
@@ -106,18 +113,57 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 	this.notifications = []
 	this.position = -1
 	
+	// personId -> name
+	this._nameCache = {}
+	
+	// postId -> int
+	this.swarmPositions = {}
+	// postId -> personId
+	// Used to determine which photo to display
+	this.lastSwarmer = {}
+	// postId -> {person1: true, person2: true, ...}	
+	this.swarmers = {}
+	
 	this.serverUrl = serverUrl
 	this.appletUrl = appletUrl
 	
-	this.addLinkShare = function (share) {
-		dh.util.debug('sharing ' + share + " senderName: " + share["senderName"])
-		this.notifications.push({notificationType: 'linkShare',
-		                         data: share})
+	this.addPersonName = function (personId, name) {
+		this._nameCache[personId] = name
+	}
+	
+	this.getPersonName = function (personId) {
+		var ret = this._nameCache[personId]
+		if (!ret)
+			ret = "(unknown)"
+		return ret;
+	}
+	
+	this._pushNotification = function (nType, data) {
+		this.notifications.push({notificationType: nType,
+		                         data: data})
 		dh.util.debug("position " + this.position + " notifications: " + this.notifications)		                         
 		if (this.position < 0) {
 			this.setPosition(0)
 		}
-		this._insertNavigation()		
+		this._updateNavigation()		
+	}
+	
+	this.addLinkShare = function (share) {
+		this._pushNotification('linkShare', share)
+	}
+	
+	this.addSwarmNotice = function (swarm) {
+		this.lastSwarmer[swarm.postId]	= swarm.swarmerId
+		if (this.swarmPositions[swarm.postId] == undefined) {
+			dh.util.debug('no existing swarm for " + swarm.postId + ", creating new')		
+			this.swarmers[swarm.postId] = {}
+			this.swarmers[swarm.postId][swarm.swarmerId] = true			
+			this._pushNotification('swarm', swarm)			
+		} else {
+			dh.util.debug('found existing swarm for " + swarm.postId + ", redrawing')
+			this.swarmers[swarm.postId][swarm.swarmerId] = true
+			this.setPosition(this.position) // redraws
+		}
 	}
 	
 	this.setPosition = function(pos) {
@@ -129,13 +175,20 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 			return
 		}
 			
-		var notification = this.notifications[pos]
+		dh.util.debug("switching to position " + pos + " from " + this.position)
+		var notification = this.notifications[pos]	
 		this.position = pos
-		dh.util.debug("switching to position " + pos + ", notification type " + notification.notificationType)		
-		if (notification.notificationType == 'linkShare') {	
-			this._displayLinkShare(notification.data);
-		}
-		this._insertNavigation()
+		dh.util.debug("notification type " + notification.notificationType)
+		if (notification.notificationType == 'linkShare')
+			this._display_linkShare(notification.data)
+		else if (notification.notificationType == 'swarm')
+			this._display_swarm(notification.data)
+		else
+			dh.util.debug("unknown notfication type " + notification.notificationType)
+		//var handler = this["_display_" + notification.notificationType]
+		//dh.util.debug("notification handler: " + handler)		
+		//handler(this, notification.data)
+		this._updateNavigation()
 	}
 	
 	this.goPrevious = function () {
@@ -146,143 +199,133 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 		this.setPosition(this.position + 1)
 	}
 	
-	this._insertNavigation = function () {
-		var node = document.getElementById("dh-notification-position")
-		dh.util.dom.clearNode(node)
-		var table = document.createElement("table")
-		var tbody = document.createElement("tbody")
-		table.appendChild(tbody)
-		var tr = document.createElement("tr")
-		tbody.appendChild(tr)
-		var td = document.createElement("td")
-		tr.appendChild(td)
-		var div = document.createElement("div")
-		div.setAttribute("className", "dh-notification-position")
-		td.appendChild(div)
-		div.appendChild(document.createTextNode((this.position+1) + " of " + this.notifications.length))
+	this._updateNavigation = function () {
+		var navText = dh.util.dom.getClearedElementById("dh-notification-navigation-text")
+		navText.appendChild(document.createTextNode((this.position+1) + " of " + this.notifications.length))
 		
-		tr = document.createElement("tr")
-		tbody.appendChild(tr)
-		td = document.createElement("td")
-		tr.appendChild(td)
-		div = document.createElement("div")
-		td.appendChild(div)
-		div.setAttribute("className", "dh-notification-position")
+		var navButtons = dh.util.dom.getClearedElementById("dh-notification-navigation-buttons")
 		var img = dh.util.dom.createHrefImg(this.appletUrl + "activeLeft.png", "")
-		img.firstChild.setAttribute("className", "dh-notification-position")
-		div.appendChild(img)
+		img.firstChild.setAttribute("className", "dh-notification-navigation")
+		navButtons.appendChild(img)
 		var display = this
 		img.onclick = dh.util.dom.stdEventHandler(function (e) {
 			display.goPrevious();
 			return false;
 		})
 		img = dh.util.dom.createHrefImg(this.appletUrl + "activeRight.png", "")
-		img.firstChild.setAttribute("className", "dh-notification-position")		
-		div.appendChild(img)
+		img.firstChild.setAttribute("className", "dh-notification-navigation")		
+		navButtons.appendChild(img)
 		img.onclick = dh.util.dom.stdEventHandler(function (e) {
 			display.goNext();
 			return false;
-		})		
-		node.appendChild(table)
+		})
 	}
 	
-	this._displayLinkShare = function (share) {
-	dh.util.debug("displaying " + share + " senderName: " + typeof(share["senderName"])	+ " " + share["senderName"])	
-    var parent = document.getElementById("dh-notification")
-	dh.util.dom.clearNode(parent)
-	
-	var table = document.createElement("table")
-	var tbody = document.createElement("tbody")
-	table.appendChild(tbody)
-	table.setAttribute("className", "dh-notification")
-	var tr = document.createElement("tr")
-	tbody.appendChild(tr)
-	var td = document.createElement("td")
-	tr.appendChild(td)
-	td.setAttribute("className", "dh-notification-sender")
-	var img = document.createElement("img")
-	img.setAttribute("src", this.serverUrl + "files/headshots/" + share["senderId"])
-	img.setAttribute("className", "dh-notification-sender")
-	var display = this
-	var senderClickHandler = dh.util.dom.stdEventHandler(function(e) {
-		e.stopPropagation();
-		window.external.OpenExternalURL(display.serverUrl + "viewperson?personId=" + share["senderId"])
-		return false;
-	})
-	img.onclick = senderClickHandler
-	td.appendChild(img)	
-	td.appendChild(document.createElement("br"))
-	var a = document.createElement("a")
-	a.setAttribute("href", "")
-	td.appendChild(a)
-	a.onclick = senderClickHandler
-	var span = document.createElement("span")
-	span.setAttribute("className", "dh-notification-sender")
-	span.appendChild(document.createTextNode(share["senderName"]))
-	a.appendChild(span)	
-	
-	td = document.createElement("td")
-	tr.appendChild(td)
-	var div = document.createElement("div")
-	div.setAttribute("className", "dh-link-title")
-	td.appendChild(div)
-	a = document.createElement("a")
-	div.appendChild(a)
-	a.onclick = dh.util.dom.stdEventHandler(function(e) {
+	this._getExternalAnchor = function (href) {
+		var a = document.createElement("a")
+		a.setAttribute("href", "")
+		a.onclick = dh.util.dom.stdEventHandler(function(e) {
 			e.stopPropagation();
-			window.external.OpenExternalURL(share["linkURL"])
+			window.external.OpenExternalURL(href)
 			return false;
-	})
-	a.setAttribute("href", "")
-	a.appendChild(document.createTextNode(share["linkTitle"]))
-	div = document.createElement("div")
-	td.appendChild(div)
-	div.appendChild(document.createTextNode(share["linkDescription"]))
+		})
+		return a	
+	}
+	
+	this._setPhotoUrl = function (src, url) {
+		var imgDiv = dh.util.dom.getClearedElementById("dh-notification-photo")
+		var a = this._getExternalAnchor(url)
+		imgDiv.appendChild(a)
+		var img = document.createElement("img")
+		a.appendChild(img)
+		img.setAttribute("src", src)
+		img.setAttribute("className", "dh-notification-photo")
+	}
+	
+	this._setPhotoLink = function (text, url) {
+		var photoLinkDiv = dh.util.dom.getClearedElementById("dh-notification-photolink")
+		var a = this._getExternalAnchor(url)
+		dh.util.dom.appendSpanText(a, text, "dh-notification-photolink")
+		photoLinkDiv.appendChild(a)
+	}
+	
+	this._display_linkShare = function (share) {
+		dh.util.debug("displaying " + share.postId + " " + share.linkTitle)
 
-	parent.appendChild(table)
+		var personUrl = this.serverUrl + "viewperson?personId=" + share["senderId"]
+		this._setPhotoUrl(this.serverUrl + "files/headshots/" + share["senderId"],
+						  personUrl)
+					  
+		this._setPhotoLink(this.getPersonName(share.senderId), personUrl)
+
+		var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
+		var a = document.createElement("a")
+		a.setAttribute("href", share.linkURL)
+		a.onclick = dh.util.dom.stdEventHandler(function(e) {
+			e.stopPropagation();
+			window.external.DisplaySharedLink(share.postId, share.linkURL)
+			return false;
+		})
+		dh.util.dom.appendSpanText(a, share.linkTitle, "dh-notification-title")
+		titleDiv.appendChild(a)
+
+		var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
+		bodyDiv.appendChild(document.createTextNode(share.linkDescription))
+
+		var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
+		metaDiv.appendChild(document.createTextNode("This was sent to "))
+		var personRecipients = dh.core.adaptExternalArray(share["personRecipients"])
+		var groupRecipients = dh.core.adaptExternalArray(share["groupRecipients"])	
+		// FIXME this is all hostile to i18n
+		dh.util.dom.joinSpannedText(metaDiv, personRecipients, "dh-notification-recipient", ", ")
+		if (personRecipients.length > 0 && groupRecipients.length > 0) {
+			metaDiv.appendChild(document.createTextNode(" and "))
+		}
+		if (groupRecipients.length > 1) {
+			metaDiv.appendChild(document.createTextNode("the groups "))
+			dh.util.dom.joinSpannedText(metaDiv, groupRecipients, "dh-notification-group-recipient", ", ")
+		} else if (groupRecipients.length == 1) {
+			metaDiv.appendChild(document.createTextNode("the "))
+			dh.util.dom.appendSpanText(metaDiv, groupRecipients[0], "dh-notification-group-recipient")
+			metaDiv.appendChild(document.createTextNode(" group"))
+		}
+	}
 	
-	table = document.createElement("table")
-	tbody = document.createElement("tbody")
-	table.appendChild(tbody)	
-	tr = document.createElement("tr")
-	tbody.appendChild(tr)
-	td = document.createElement("td")
-	tr.appendChild(td)
-	div = document.createElement("div")	
-	td.appendChild(div)
-	div.setAttribute("id", "dh-notification-position")	
-	
-	td = document.createElement("td")
-	tr.appendChild(td)
-	div = document.createElement("div")
-	td.appendChild(div)
-	div.setAttribute("className", "dh-notification-meta")
-	div.appendChild(document.createTextNode("This was sent to "))
-	var personRecipients = dh.core.adaptExternalArray(share["personRecipients"])
-	var groupRecipients = dh.core.adaptExternalArray(share["groupRecipients"])	
-	// FIXME this is all hostile to i18n
-	dh.util.dom.joinSpannedText(div, personRecipients, "dh-notification-recipient", ", ")
-	if (personRecipients.length > 0 && groupRecipients.length > 0) {
-		div.appendChild(document.createTextNode(" and "))
-	}
-	if (groupRecipients.length > 1) {
-		div.appendChild(document.createTextNode("the groups "))
-		dh.util.dom.joinSpannedText(div, groupRecipients, "dh-notification-group-recipient", ", ")
-	} else if (groupRecipients.length == 1) {
-		div.appendChild(document.createTextNode("the "))
-		dh.util.dom.appendSpanText(div, groupRecipients[0], "dh-notification-group-recipient")
-		div.appendChild(document.createTextNode(" group"))
-	}
-	parent.appendChild(table)
-	}
+	this._display_swarm = function (swarm) {
+		dh.util.debug("displaying swarm for " + swarm.postId)
+		
+		var lastSwarmer = this.lastSwarmer[swarm.postId]
+		dh.util.debug("last swarmer is " + lastSwarmer)
+
+		var personUrl = this.serverUrl + "viewperson?personId=" + lastSwarmer
+		this._setPhotoUrl(this.serverUrl + "files/headshots/" + lastSwarmer,
+						  personUrl)
+					  
+		var name = this.getPersonName(lastSwarmer)
+		this._setPhotoLink(name, lastSwarmer)
+
+		var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
+		titleDiv.appendChild(document.createTextNode("Swarm for "));
+		dh.util.dom.appendSpanText(titleDiv, swarm.postTitle, "dh-notification-title-post")
+
+		var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
+		for (personId in this.swarmers[swarm.postId]) {
+			dh.util.dom.appendSpanText(bodyDiv, this.getPersonName(personId), "dh-notification-swarmer")
+			bodyDiv.appendChild(document.createTextNode(", "))
+		}
+
+		var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
+		metaDiv.appendChild(document.createTextNode("And 2 trillion other people"))	
+	}	
 }
 
 // Global namespace since it's painful to do anything else from C++
-dhAddLinkShare = function (senderName, senderId, linkTitle,
+dhAddLinkShare = function (senderName, senderId, postId, linkTitle, 
                                linkURL, linkDescription, personRecipients, groupRecipients) {
-	dh.util.debug("in dhAddLinkShare, senderName: " + senderName)                               
-	dh.display.addLinkShare({senderName: senderName,
-	  					    senderId: senderId,
+	dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
+	dh.display.addPersonName(senderId, senderName)                            
+	dh.display.addLinkShare({senderId: senderId,
+							 postId: postId,
 						    linkTitle: linkTitle,
 						    linkURL: linkURL,
 						    linkDescription: linkDescription,
@@ -290,6 +333,11 @@ dhAddLinkShare = function (senderName, senderId, linkTitle,
 						    groupRecipients: groupRecipients})
 }
 
-dhAddSwarmNotice = function (postId, clickerId, postTitle) {
+dhAddSwarmNotice = function (postId, swarmerId, postTitle, swarmerName) {
+	dh.util.debug("in dhAddSwarmNotice, postId: " + postId)
+	dh.display.addPersonName(swarmerId, swarmerName)
+	dh.display.addSwarmNotice({postId: postId,
+							   swarmerId: swarmerId,
+							   postTitle: postTitle})
 }
 

@@ -209,15 +209,21 @@ HippoBubble::appendTransform(BSTR src, BSTR style, ...)
 bool
 HippoBubble::create(void)
 {
+	if (window_ != NULL) {
+		return true;
+	}
 	if (!registerClass()) {
-		hippoDebugLastErr(L"Failed to register window class");
+		ui_->debugLogW(L"Failed to register window class");
 		return false;
 	}
 	if (!createWindow()) {
+		ui_->debugLogW(L"Failed to create window");
 		return false;
 	}
-	if (!embedIE())
+	if (!embedIE()) {
+		ui_->debugLogW(L"Failed to embed IE");
 		return false;
+	}
 	return true;
 }
 
@@ -254,6 +260,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 
 	variant_t senderName(share.senderName);
 	variant_t senderId(share.senderId);
+	variant_t postId(share.postId);
 	variant_t linkTitle(share.title);
 	variant_t linkURL(share.url);
 	variant_t linkDescription(share.description);
@@ -268,8 +275,8 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 
 	VARIANT result;
 	ui_->debugLogW(L"Invoking dhAddLinkShare");
-	invokeJavascript(L"dhAddLinkShare", &result, 7, &senderName,
-		                                 &senderId, &linkTitle, &linkURL, &linkDescription,
+	invokeJavascript(L"dhAddLinkShare", &result, 8, &senderName,
+		                                 &senderId, &postId, &linkTitle, &linkURL, &linkDescription,
 										 &personRecipientsArg, &groupRecipientsArg);
 	SafeArrayDestroy(personRecipients);
 	SafeArrayDestroy(groupRecipients);
@@ -280,7 +287,18 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 void 
 HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
 {
+	if (!create())
+		return;
 
+	variant_t postId(swarm.postId);
+	variant_t swarmerId(swarm.swarmerId);
+	variant_t postTitle(swarm.postTitle);
+	variant_t swarmerName(swarm.swarmerName);
+
+	VARIANT result;
+	ui_->debugLogW(L"Invoking dhAddPostSwarm");
+	invokeJavascript(L"dhAddSwarmNotice", &result, 4, &postId, &swarmerId, &postTitle, &swarmerName);
+	show();
 }
 
 bool

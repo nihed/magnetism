@@ -527,18 +527,25 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
 			const char *postId = lm_message_node_get_attribute(child, "id");
 			if (!postId) {
-				im->ui_->debugLogU("Malformed link message, no post ID");
+				im->ui_->debugLogU("Malformed swarm message, no post ID");
 				continue;
 			}
 			linkswarm.postId.setUTF8(postId);
 
-			LmMessageNode *clickerName = lm_message_node_get_child(child, "clickerName");
-			if (clickerName && clickerName->value)
-				linkswarm.clickerName.setUTF8(clickerName->value);
+			const char *swarmerId = lm_message_node_get_attribute(child, "swarmerId");
+			if (!swarmerId) {
+				im->ui_->debugLogU("Malformed swarm message, no swarmer ID");
+				continue;
+			}
+			linkswarm.swarmerId.setUTF8(swarmerId);
 
-			LmMessageNode *titleNode = lm_message_node_get_child(child, "title");
+			LmMessageNode *clickerName = lm_message_node_get_child(child, "swarmerName");
+			if (clickerName && clickerName->value)
+				linkswarm.swarmerName.setUTF8(clickerName->value);
+
+			LmMessageNode *titleNode = lm_message_node_get_child(child, "postTitle");
 			if (titleNode && titleNode->value)
-				linkswarm.title.setUTF8(titleNode->value);
+				linkswarm.postTitle.setUTF8(titleNode->value);
 
 			im->ui_->onLinkClicked(linkswarm);
 		} else {

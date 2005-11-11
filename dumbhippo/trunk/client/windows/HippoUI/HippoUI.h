@@ -34,8 +34,9 @@ struct HippoLinkShare
 struct HippoLinkSwarm
 {
 	HippoBSTR postId;
-	HippoBSTR clickerName;
-	HippoBSTR title;
+	HippoBSTR postTitle;
+	HippoBSTR swarmerId;
+	HippoBSTR swarmerName;
 };
 
 class HippoUI 

@@ -4,13 +4,13 @@ table.dh-notification * {
 	font-size:				90%;
 	vertical-align:			top;
 }
-td.dh-notification-person {
+span.dh-notification-photolink {
 	text-align:				center;
 	width:					8em;
 	text-overflow:			ellipsis;
 	overflow:				hidden;
 }
-img.dh-notification-person {
+img.dh-notification-photo {
 	margin:					0.3em;
 	/* Right now the Java code scales headshots to a max of 48px in each
 	 * dimension, but preserving aspect ratio. If height < width the below
@@ -26,19 +26,23 @@ img.dh-notification-person {
 	border-style: none;	
 	border:					0;
 }
-div.dh-link-title {
+
+div.dh-notification-title {
 	text-overflow:			ellipsis;
 	overflow:				hidden;
 	font-size:				100%;
-	font-weight:			bold;	
 	padding:				0;
 	margin:					0;
+}
+
+span.dh-notification-title-title 
+{
+	font-weight: bold;
 }
 
 div.dh-notification-meta 
 {
 	color: Gray;
-	font-size: 70%;
 }
 
 span.dh-notification-recipient
@@ -52,13 +56,16 @@ span.dh-notification-group-recipient
 	font-size: larger;
 }
 
-div.dh-notification-position
+div.dh-notification-navigation
 {
-	font-size: small;
+}
+
+div.dh-notification-navigation-text
+{
 	color: Gray;
 }
 
-img.dh-notification-position
+img.dh-notification-navigation
 {
 	border-style: none;
 }
