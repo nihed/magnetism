@@ -158,11 +158,12 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 			dh.util.debug('no existing swarm for " + swarm.postId + ", creating new')		
 			this.swarmers[swarm.postId] = {}
 			this.swarmers[swarm.postId][swarm.swarmerId] = true			
-			this._pushNotification('swarm', swarm)			
+			this._pushNotification('swarm', swarm)
+			this.swarmPositions[swarm.postId] = (this.notifications.length - 1)
 		} else {
-			dh.util.debug('found existing swarm for " + swarm.postId + ", redrawing')
+			dh.util.debug("found existing swarm for " + swarm.postId + ", redrawing")
 			this.swarmers[swarm.postId][swarm.swarmerId] = true
-			this.setPosition(this.position) // redraws
+			this.setPosition(this.position) // redraws (should we set position to the swarm position?)
 		}
 	}
 	
