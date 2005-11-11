@@ -330,11 +330,54 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
+	private static final String GET_USER_FOR_RESOURCE_QUERY = 
+		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
+	
+	public User getUser(Resource resource) {
+		if (resource instanceof Account)
+			return ((Account)resource).getOwner();
+		else {
+			try {
+				return (User)em.createQuery(GET_USER_FOR_RESOURCE_QUERY)
+					.setParameter("resource", resource)
+					.getSingleResult();
+			} catch (EntityNotFoundException e) {
+				return null;
+			}
+		}
+	}
+	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		
 		return new PersonView(p, getUser(p), getEmail(viewpoint, p));
+	}
+
+	public PersonView getPersonView(Viewpoint viewpoint, Resource r) {
+		User user;
+		Contact contact;
+		EmailResource email = null;
+		
+		contact = findContactByResource(viewpoint.getViewer(), r);
+
+		if (r instanceof Account) {
+			user = ((Account)r).getOwner();
+		} else {
+			user = lookupPersonByResource(r);
+		}
+		
+		if (r instanceof EmailResource)
+			email = (EmailResource)r;
+		else {
+			if (contact != null)
+				email = getEmailForContact(contact);
+			if (email == null && user != null)
+				email = getEmailForUser(user);
+		}
+			
+		return new PersonView(contact != null ? contact : user, user, email); 
+					          
 	}
 
 	public PersonView getSystemView(User user) {
@@ -496,5 +539,26 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 			return count.longValue() > 0;
 		}
+	}
+	
+	static final String GET_CONTACT_RESOURCES_QUERY = 
+		"SELECT cc.resource FROM ContactClaim cc WHERE cc.contact = :contact";
+	
+	private Resource getFirstContactResource(Contact contact) {
+		// An invariant we retain in the database is that every contact
+		// has at least one resource, so we don't need to check for 
+		// EntityNotFoundException
+		return (Resource)em.createQuery(GET_CONTACT_RESOURCES_QUERY)
+			.setParameter("contact", contact)
+			.setMaxResults(1)
+			.getSingleResult();
+	}
+	
+	public Resource getBestResource(Person person) {
+		User user = getUser(person);
+		if (user != null)
+			return user.getAccount();
+		
+		return getFirstContactResource ((Contact)person);
 	}
 }

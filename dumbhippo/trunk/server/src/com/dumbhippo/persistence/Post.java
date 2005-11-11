@@ -25,22 +25,22 @@ public class Post extends GuidPersistable {
 	private String explicitTitle;
 	private long postDate;
 	private String text;
-	private Set<Person> personRecipients;
+	private Set<Resource> personRecipients;
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
-	private Set<Person> expandedRecipients;
+	private Set<Resource> expandedRecipients;
 	
 	private void initMissing() {
 		if (visibility == null)
 			visibility = PostVisibility.ANONYMOUSLY_PUBLIC;
 		if (personRecipients == null)
-			personRecipients = new HashSet<Person>();
+			personRecipients = new HashSet<Resource>();
 		if (groupRecipients == null)
 			groupRecipients = new HashSet<Group>();
 		if (resources == null)
 			resources = new HashSet<Resource>();
 		if (expandedRecipients == null)
-			expandedRecipients = new HashSet<Person>();
+			expandedRecipients = new HashSet<Resource>();
 	}
 	
 	protected Post() {
@@ -57,8 +57,8 @@ public class Post extends GuidPersistable {
 	 * @param expandedRecipients
 	 * @param resources
 	 */
-	public Post(User poster, PostVisibility visibility, String explicitTitle, String text, Set<Person> personRecipients,
-			Set<Group> groupRecipients, Set<Person> expandedRecipients, Set<Resource> resources) {
+	public Post(User poster, PostVisibility visibility, String explicitTitle, String text, Set<Resource> personRecipients,
+			Set<Group> groupRecipients, Set<Resource> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.visibility = visibility;
 		this.explicitTitle = explicitTitle;
@@ -90,15 +90,16 @@ public class Post extends GuidPersistable {
 	}
 
 	@ManyToMany
-	public Set<Person> getPersonRecipients() {
+	@JoinTable(table=@Table(name="Post_PersonRecipient"))
+	public Set<Resource> getPersonRecipients() {
 		return personRecipients;
 	}
-	protected void setPersonRecipients(Set<Person> recipients) {
+	protected void setPersonRecipients(Set<Resource> recipients) {
 		if (recipients == null)
 			throw new IllegalArgumentException("null");
 		this.personRecipients = recipients;
 	}
-	public void addPersonRecipients(Set<Person> newRecipients) {
+	public void addPersonRecipients(Set<Resource> newRecipients) {
 		this.personRecipients.addAll(newRecipients);
 	}
 	
@@ -152,12 +153,12 @@ public class Post extends GuidPersistable {
 	}
 
 	@ManyToMany
-	@JoinTable(table=@Table(name="Post_Person_Expanded")) // otherwise conflicts with getRecipients
-	public Set<Person> getExpandedRecipients() {
+	@JoinTable(table=@Table(name="Post_ExpandedRecipient"))
+	public Set<Resource> getExpandedRecipients() {
 		return expandedRecipients;
 	}
 
-	public void setExpandedRecipients(Set<Person> expandedRecipients) {
+	public void setExpandedRecipients(Set<Resource> expandedRecipients) {
 		if (expandedRecipients == null)
 			throw new IllegalArgumentException("null");
 		this.expandedRecipients = expandedRecipients;

@@ -41,19 +41,19 @@ public class ContactClaim extends DBUnique {
 
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	Contact getContact() {
+	public Contact getContact() {
 		return contact;
 	}
 
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	Resource getResource() {
+	public Resource getResource() {
 		return resource;
 	}
 	
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	Account getAccount() {
+	public Account getAccount() {
 		return account;
 	}
 

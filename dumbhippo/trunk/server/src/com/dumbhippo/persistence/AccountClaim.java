@@ -31,13 +31,13 @@ public class AccountClaim extends DBUnique {
 
 	@ManyToOne
 	@JoinColumn(nullable = false)
-	User getowner() {
+	public User getOwner() {
 		return owner;
 	}
 
 	@OneToOne
 	@JoinColumn(nullable = false, unique = true)
-	Resource getResource() {
+	public Resource getResource() {
 		return resource;
 	}
 

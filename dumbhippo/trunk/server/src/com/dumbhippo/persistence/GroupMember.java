@@ -22,16 +22,16 @@ public class GroupMember extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	
 	private Group group;
-	private Person member;
+	private Resource member;
 	private MembershipStatus status;
-	private Person adder;
+	private User adder;
 	
 	protected GroupMember() {}
 	
-	public GroupMember(Group g, Person m, MembershipStatus s) {
-		group = g;
-		member = m;
-		status = s;
+	public GroupMember(Group group, Resource member, MembershipStatus status) {
+		this.group = group;
+		this.member = member;
+		this.status = status;
 	}
 	
 	@ManyToOne
@@ -46,12 +46,12 @@ public class GroupMember extends DBUnique {
 	
 	@ManyToOne
 	@JoinColumn(nullable=false)
-	public Person getMember() {
+	public Resource getMember() {
 		return member;
 	}
 	
-	public void setMember(Person m) {
-		member = m;
+	public void setMember(Resource member) {
+		this.member = member;
 	}
 	
 	@Column(nullable=false)
@@ -64,11 +64,11 @@ public class GroupMember extends DBUnique {
 	}
 	
 	@ManyToOne
-	public Person getAdder() {
+	public User getAdder() {
 		return adder;
 	}
 	
-	public void setAdder(Person p) {
-		adder = p;
+	public void setAdder(User adder) {
+		this.adder = adder;
 	}
 }

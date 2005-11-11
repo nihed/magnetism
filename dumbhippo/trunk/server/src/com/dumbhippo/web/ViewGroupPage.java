@@ -75,7 +75,7 @@ public class ViewGroupPage {
 			
 			// Create a detached GroupMember to avoid null checks 
 			if (groupMember == null)
-				groupMember = new GroupMember(viewedGroup, signin.getUser(), MembershipStatus.NONMEMBER);
+				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
 
 			if (groupMember.getStatus() == MembershipStatus.INVITED &&
 			    groupMember.getAdder() != null) {

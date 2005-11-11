@@ -8,6 +8,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 
 @Local
@@ -16,15 +17,15 @@ public interface GroupSystem {
 	
 	public void deleteGroup(User deleter, Group group);
 	
-	public void addMember(Person adder, Group group, Person person);
+	public void addMember(User adder, Group group, Person person);
 	
-	public void removeMember(Person remover, Group group, Person person);
+	public void removeMember(User remover, Group group, Person person);
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group);
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
-	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, Person member);
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member);
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member);	
 	
@@ -54,5 +55,5 @@ public interface GroupSystem {
 	 * @param groupId group ID of a group
 	 * @return the contacts of owner that aren't already members of the group
 	 */
-	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, Person owner, String groupId);
+	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId);
 }

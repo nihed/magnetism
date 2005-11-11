@@ -46,8 +46,8 @@ public interface PostingBoard {
 	 * @return
 	 */
 	public Post createPost(User poster, PostVisibility visibility, String title, String text,
-			Set<Resource> resources, Set<Person> personRecipients, Set<Group> groupRecipients,
-			Set<Person> expandedRecipients);
+			Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients,
+			Set<Resource> expandedRecipients);
 
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid);
 	

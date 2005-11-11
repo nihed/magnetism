@@ -20,6 +20,8 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -34,7 +36,6 @@ import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.Mailer.NoAddressKnownException;
 
 /**
  * Send out messages when events happen (for now, when a link is shared).
@@ -237,8 +238,8 @@ public class MessageSenderBean implements MessageSender {
 			PersonView recipientView = identitySpider.getPersonView(viewpoint, post.getPoster());
 			String senderName = recipientView.getHumanReadableName();
 			Set<String> recipientNames = new HashSet<String>();
-			for (Person p : post.getPersonRecipients()) {
-				PersonView viewedP = identitySpider.getPersonView(viewpoint, p);
+			for (Resource r : post.getPersonRecipients()) {
+				PersonView viewedP = identitySpider.getPersonView(viewpoint, r);
 				recipientNames.add(viewedP.getHumanReadableName());
 			}
 			Set<String> groupRecipientNames = new HashSet<String>();
@@ -260,10 +261,10 @@ public class MessageSenderBean implements MessageSender {
 		public synchronized void sendPostClickedNotification(Post post, User clicker) {
 			XMPPConnection connection = getConnection();
 
-			for (Person recipientPerson : post.getExpandedRecipients()) {
-				User recipient = identitySpider.getUser(recipientPerson);
+			for (Resource recipientResource : post.getExpandedRecipients()) {
+				User recipient = identitySpider.getUser(recipientResource);
 				if (recipient == null) {
-					logger.debug("No user for " + recipientPerson.getId());
+					logger.debug("No user for " + recipientResource.getId());
 				}
 				
 				StringBuilder recipientJid = new StringBuilder();
@@ -301,7 +302,7 @@ public class MessageSenderBean implements MessageSender {
 
 	private class EmailSender {
 
-		public void sendPostNotification(Person recipient, Post post) throws NoAddressKnownException {
+		public void sendPostNotification(EmailResource recipient, Post post) {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
@@ -394,7 +395,7 @@ public class MessageSenderBean implements MessageSender {
 						XmlBuilder.escape(posterPublicPageUrl),
 						XmlBuilder.escape(posterViewedBySelf.getHumanReadableName()),
 						XmlBuilder.escape(recipientInviteUrl),
-						XmlBuilder.escape(recipient.getName().getFullName()))); // FIXME recipient's Email address instead 
+						XmlBuilder.escape(recipient.getEmail()))); 
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
@@ -424,7 +425,7 @@ public class MessageSenderBean implements MessageSender {
 			messageHtml.append("</div>\n");
 			messageHtml.append("</body>\n</html>\n");
 					
-			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
+			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient.getEmail());
 			
 			mailer.setMessageContent(msg, title, messageText.toString(), messageHtml.toString());
 			
@@ -438,17 +439,14 @@ public class MessageSenderBean implements MessageSender {
 		this.xmppSender = new XMPPSender();
 	}
 	
-	public void sendPostNotification(Person recipient, Post post) {		
-		// in the future the test could be "account != null && logged on to jabber recently" or something
-		User user = identitySpider.getUser(recipient);
-		if (user != null) {
-			xmppSender.sendPostNotification(user, post);
+	public void sendPostNotification(Resource recipient, Post post) {
+		if (recipient instanceof Account) {
+			Account account = (Account)recipient;
+			xmppSender.sendPostNotification(account.getOwner(), post);
+		} else if (recipient instanceof EmailResource) {
+			emailSender.sendPostNotification((EmailResource)recipient, post);
 		} else {
-			try {
-				emailSender.sendPostNotification(recipient, post);
-			} catch (NoAddressKnownException e) {
-				logger.warn("no clue how to send notification to " + recipient + " (we have no email address)");
-			}
+			throw new IllegalStateException("Don't know how to send a notification to resource: " + recipient);
 		}
 	}
 

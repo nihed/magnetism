@@ -45,7 +45,10 @@ public class PersonView {
 		user = u;
 		email = e;
 		
-		FullName name = person.getName();
+		FullName name = null;
+		
+		if (person != null)
+			name = person.getName();
 		if ((name == null || name.isEmpty()) && user != null)
 			name = user.getName();
 		
@@ -66,11 +69,12 @@ public class PersonView {
 	}
 	
 	public String getHumanReadableShortName() {
-		String name;
-		name = person.getNickname();
+		String name= null;
+		if (person != null)
+			name = person.getNickname();
 		if ((name == null || name.length() == 0) && user != null)
 			name = user.getNickname();
-		if (name == null || name.length() == 0)
+		if ((name == null || name.length() == 0) && person != null)
 			name = person.getName().getFirstName();
 		if ((name == null || name.length() == 0) && user != null)
 			name = user.getName().getFirstName();

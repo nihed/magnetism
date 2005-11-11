@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.InvitationSystem;
 
 public class SendInviteServlet extends AbstractServlet {
+	@SuppressWarnings("unused")
 	private static final Log logger = GlobalSetup.getLog(SendInviteServlet.class);
 	
 	static final long serialVersionUID = 1;

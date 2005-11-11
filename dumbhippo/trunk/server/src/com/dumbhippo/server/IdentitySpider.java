@@ -231,6 +231,15 @@ public interface IdentitySpider {
 	 */
 	public PersonView getPersonView(Viewpoint viewpoint, Person p);
 	
+	/**
+	 * Returns an object describing a person from the viewpoint of another person,
+	 *  given a resource owned by the person.
+	 * 
+	 * @param viewpoint the viewpoint of the person who is viewing
+	 * @param resource the person being viewed
+	 * @return a new PersonView object
+	 */
+	public PersonView getPersonView(Viewpoint viewpoint, Resource resource);
 	
 	/**
 	 * 
@@ -250,4 +259,25 @@ public interface IdentitySpider {
 	 * @return the user the contact is associated with, or null
 	 */
 	public User getUser(Person person);
+	
+	/**
+	 * Find the user associated with the resource by the system,
+	 * if any.
+	 * 
+	 * @param the person
+	 * @return the user the contact is associated with, or null
+	 */
+	public User getUser(Resource resource);
+	
+	/**
+	 * Tries to find a good resource to use to represent person.
+	 * If person is a User, returns the user's account. If the
+	 * person is a Contact associated with a user, returns that
+	 * user's account. Otherwise returns the resource that would
+	 * be used to contact the user.
+	 * 
+	 * @param person a User or Contact
+	 * @return a resource that can be used to represent person
+	 */
+	public Resource getBestResource(Person person);
 }

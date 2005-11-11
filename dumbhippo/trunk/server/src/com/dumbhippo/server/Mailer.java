@@ -3,7 +3,6 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 import javax.mail.internet.MimeMessage;
 
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 
 @Local
@@ -25,15 +24,7 @@ public interface Mailer {
 		}
 	};
 	
-	public static class NoAddressKnownException extends Exception {
-		private static final long serialVersionUID = 0L;
-
-		public NoAddressKnownException(String message) {
-			super(message);
-		}
-	}
-	
-	public MimeMessage createMessage(User from, Person to) throws NoAddressKnownException;
+	public MimeMessage createMessage(User from, String to);
 	public MimeMessage createMessage(SpecialSender from, String to);
 	
 	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml);

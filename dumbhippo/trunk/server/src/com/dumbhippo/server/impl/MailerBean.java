@@ -8,6 +8,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -16,7 +17,6 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
@@ -72,10 +72,9 @@ public class MailerBean implements Mailer {
 		}
 	}
 
-	public MimeMessage createMessage(User from, Person to) {
+	public MimeMessage createMessage(User from, String to) {
 		Viewpoint viewpoint = new Viewpoint(from);
 		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, from);
-		PersonView toViewedByFrom = identitySpider.getPersonView(viewpoint, to);
 		
 		InternetAddress fromAddress;
 		InternetAddress toAddress;
@@ -84,9 +83,9 @@ public class MailerBean implements Mailer {
 			String address = fromViewedBySelf.getEmail().getEmail();
 			fromAddress = new InternetAddress(address, niceName);
 			
-			niceName = toViewedByFrom.getHumanReadableName();
-			address = toViewedByFrom.getEmail().getEmail();
-			toAddress = new InternetAddress(address, niceName);
+			toAddress = new InternetAddress(to);
+		} catch (AddressException e) {
+			throw new RuntimeException(e);
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
