@@ -45,7 +45,6 @@ BEGIN
     POPUP "Dummy"
     BEGIN
         MENUITEM "&Recent links...",            IDM_RECENT
-        MENUITEM "Preferences...",              IDM_PREFERENCES
         MENUITEM "Debug Log...",                IDM_DEBUGLOG
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT

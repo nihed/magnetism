@@ -74,6 +74,7 @@ void
 HippoIM::stateChange(State state)
 {
 	state_ = state;
+	ui_->debugLogW(L"IM connection state changed to %d", (int) state);
 	ui_->onConnectionChange(state == AUTHENTICATED);
 }
 
@@ -199,6 +200,8 @@ retry:
 out:
     delete[] allocBuffer;
 
+	ui_->debugLogW(L"authentication information: u=\"%s\" p=\"%s\"", username_.m_str ? username_.m_str : L"(null)",
+		password_.m_str ? password_.m_str : L"(null)");
     return (username_ && password_);
 }
 

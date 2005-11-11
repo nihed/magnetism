@@ -26,10 +26,11 @@
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
-HippoUI::HippoUI(bool debug) : preferences_(debug)
+HippoUI::HippoUI(bool debug, bool launchConfig) : preferences_(debug)
 {
     refCount_ = 1;
     debug_ = debug;
+	initialShowConfig_ = launchConfig;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -263,9 +264,11 @@ HippoUI::create(HINSTANCE instance)
 
     im_.setUI(this);
     if (preferences_.getSignIn()) {
-	if (im_.signIn())
-	    showSignInWindow();
-    }
+		im_.signIn();
+	}
+	if (this->initialShowConfig_) {
+		showPreferences();
+	}
 
     return true;
 }
@@ -371,7 +374,7 @@ HippoUI::showSignInWindow()
 {
     HippoBSTR signInURL;
     
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"signin"), &signInURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"signin?next=close"), &signInURL)))
 	return;
 
     showAppletWindow(signInURL);
@@ -427,8 +430,13 @@ void
 HippoUI::displaySharedLink(BSTR postId, BSTR url)
 {
     HippoPtr<IWebBrowser2> webBrowser;
+    HippoBSTR targetURL;
 
-	launchBrowser(url, webBrowser);
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"frameset?postId="), &targetURL)))
+		return;
+	targetURL.Append(postId);
+
+	launchBrowser(targetURL, webBrowser);
     /* Something like the following should activate a explorer bar,
      * (see Q255920) but doesn't seem to work.
      */
@@ -527,7 +535,7 @@ void
 HippoUI::onAuthFailure()
 {
     updateForgetPassword();
-    showSignInWindow();
+    //showSignInWindow();
 }
 
 void
@@ -861,9 +869,6 @@ HippoUI::processMessage(UINT   message,
 	case IDM_SIGN_OUT:
 	    im_.signOut();
 	    return true;
-	case IDM_PREFERENCES:
-	    showPreferences();
-	    return true;
 	case IDM_RECENT:
 		showRecent();
 		return true;
@@ -1104,6 +1109,7 @@ WinMain(HINSTANCE hInstance,
     char **argv;
 
     static gboolean debug = FALSE;
+	static gboolean configFlag = FALSE;
 
     char *command_line = GetCommandLineA();
     GError *error = NULL;
@@ -1114,6 +1120,7 @@ WinMain(HINSTANCE hInstance,
     }
 
     static const GOptionEntry entries[] = {
+	{ "config", 'c', 0, G_OPTION_ARG_NONE, (gpointer) &configFlag, "Launch developer configuration" },
 	{ "debug", 'd', 0, G_OPTION_ARG_NONE,(gpointer)&debug, "Run in debug mode" },
 	{ NULL }
     };
@@ -1133,7 +1140,7 @@ WinMain(HINSTANCE hInstance,
     if (!initializeWinSock())
 	return 0;
 
-    ui = new HippoUI(debug != FALSE);
+    ui = new HippoUI(debug != FALSE, configFlag != FALSE);
     if (!ui->create(hInstance))
 	return 0;
 
