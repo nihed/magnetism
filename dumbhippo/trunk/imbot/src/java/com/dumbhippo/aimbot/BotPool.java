@@ -199,12 +199,24 @@ public class BotPool implements BotListener {
 	// method works fine for now since this is the only place we mess 
 	// with the bots
 	public synchronized void put(BotTask task) {
-		// for now we always just use the first bot
+		BotQueue queue = null;
 		
-		BotQueue queue;
-		
-		// pick the first bot from the config file
-		queue = bots.iterator().next();
+		if (task.getBotName() != null) {
+			for (BotQueue q : bots) {
+				if (q.getName().equals(task.getBotName())) {
+					queue = q;
+					break;
+				}
+			}
+		} else {
+			// pick the first bot from the config file
+			queue = bots.iterator().next();
+		}
+
+		if (queue == null) {
+			logger.warn("Got task for unknown bot " + task.getBotName() + " (ignoring task)");
+			return;
+		}
 		
 		queue.put(task);
 	}
