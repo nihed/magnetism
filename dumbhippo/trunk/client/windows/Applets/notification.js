@@ -235,7 +235,8 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 	
 	this._setPhotoUrl = function (src, url) {
 		var imgDiv = dh.util.dom.getClearedElementById("dh-notification-photo")
-		var a = this._getExternalAnchor(url)
+		var a = this._getExternalAnchor(url) 
+		a.setAttribute("className", "dh-notification-photo")		
 		var img = document.createElement("img")
 		img.setAttribute("src", src)
 		img.setAttribute("className", "dh-notification-photo")

@@ -97,11 +97,6 @@ HippoBubble::embedIE(void)
 	vempty.vt = VT_EMPTY;
 
 	browser->Navigate2(&url, &vempty, &vempty, &vempty, &vempty);
-
-	browser->put_Left(0);
-	browser->put_Top(0);
-	browser->put_Width(rect.right);
-	browser->put_Height(rect.bottom);
 	browser->put_Resizable(VARIANT_FALSE);
 
 	appendTransform(L"notification.xml", L"clientstyle.xml", NULL);

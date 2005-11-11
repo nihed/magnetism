@@ -1,28 +1,30 @@
-table.dh-notification * {
-	margin:					0;
-	padding:				0;
-	vertical-align:			top;
+body 
+{
+	margin: 0;
+	padding: 0;
+	height: 100%;
 }
 
-div.dh-notification-photo 
+#dh-notification 
+{
+	height: 100%;
+	width: 100%;
+}
+
+.dh-notification
+{
+	height: 100%;
+	width: 100%;
+}
+
+td.dh-notification-photo 
 {
 	text-align: center;
-	max-width: 120px;
 }
 
-#dh-notification-photolink {
-	text-align:				center;
-	width:					8em;
-	text-overflow:			ellipsis;
-	overflow:				hidden;
-	font-size: small;
-}
-
-.dh-notification-photo 
+img.dh-notification-photo,a.dh-notification-photo
 {
 	text-align: center;
-	margin-left: auto;
-	margin-right: auto;
 	/* Right now the Java code scales headshots to a max of 48px in each
 	 * dimension, but preserving aspect ratio. If height < width the below
 	 * will mangle the aspect again. If changing from 48px, also change the 
@@ -38,14 +40,27 @@ div.dh-notification-photo
 	border:					0;
 }
 
-div.dh-notification-title 
+.dh-notification-photolink {
+	text-align:				center;
+	width:					8em;
+	text-overflow:			ellipsis;
+	overflow:				hidden;
+	font-size: x-small;
+}
+
+.dh-notification-title 
 {
-	max-height: 1em;
-	font-size: smaller;
+	height: 1em;
+	vertical-align: top;
 	text-overflow:			ellipsis;
 	overflow:				hidden;
 	padding:				0;
 	margin:					0;
+}
+
+.dh-notification-body
+{
+	vertical-align: top;
 }
 
 span.dh-notification-title-title 
@@ -53,11 +68,24 @@ span.dh-notification-title-title
 	font-weight: bold;
 }
 
-.dh-notification-meta
+.dh-notification-rightside
 {
-	color: Gray;
-	font-size: small;
+	height: 100%;
+	width: 100%;	
+	vertical-align: top;
+}
+
+div.dh-notification-meta 
+{
+	margin-left: 2em;
+}
+
+tr.dh-notification-meta
+{
+	height: 2em;
 	vertical-align: bottom;
+	color: Gray;
+	font-size: x-small;
 }
 
 span.dh-notification-recipient
@@ -88,5 +116,7 @@ img.dh-notification-navigation
 
 img.dh-close-button 
 {
-	float: right;
+	position: absolute;
+	top: 2;
+	right: 2;
 }
