@@ -4,13 +4,13 @@ table.dh-notification * {
 	font-size:				90%;
 	vertical-align:			top;
 }
-td.dh-notification-sender {
+td.dh-notification-person {
 	text-align:				center;
 	width:					8em;
 	text-overflow:			ellipsis;
 	overflow:				hidden;
 }
-img.dh-notification-sender {
+img.dh-notification-person {
 	margin:					0.3em;
 	/* Right now the Java code scales headshots to a max of 48px in each
 	 * dimension, but preserving aspect ratio. If height < width the below
@@ -50,6 +50,17 @@ span.dh-notification-group-recipient
 {
 	font-weight: bold;
 	font-size: larger;
+}
+
+div.dh-notification-position
+{
+	font-size: small;
+	color: Gray;
+}
+
+img.dh-notification-position
+{
+	border-style: none;
 }
 
 img.dh-close-button 

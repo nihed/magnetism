@@ -8,6 +8,7 @@
 <dh:corescript/>
 <body style="overflow: hidden;" onload="dhInit();">
 <dh:closeButton/>
-<div id="dh-notification"></div>
+<div id="dh-notification">
+</div>
 </body>
 </html>

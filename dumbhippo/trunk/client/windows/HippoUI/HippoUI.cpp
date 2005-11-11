@@ -508,13 +508,18 @@ HippoUI::debugLogU(const char *format, ...)
     g_free(strW);
 }
 
+void 
+HippoUI::logError(const WCHAR *text, HRESULT result)
+{
+	HippoBSTR errstr;
+	hippoHresultToString(result, errstr);
+	debugLogW(L"%s: %s", text, errstr.m_str);
+}
+
 void
 HippoUI::logLastError(const WCHAR *text)
 {
-	HippoBSTR errstr;
-	HRESULT res = GetLastError();
-	hippoHresultToString(res, errstr);
-	debugLogW(L"%S: %S", text, errstr.m_str);
+	logError(text, GetLastError());
 }
 
 void 

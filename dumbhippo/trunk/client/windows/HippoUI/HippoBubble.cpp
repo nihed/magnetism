@@ -55,7 +55,7 @@ HippoBubble::createWindow(void)
 {
 	/// TODO make not modal
 	window_ = CreateWindow(CLASS_NAME, L"Hippo Notification", WS_POPUP | WS_EX_TOPMOST,
-		CW_USEDEFAULT, CW_USEDEFAULT, 400, 125, 
+		CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
 		NULL, NULL, instance_, NULL);
 	if (!window_) {
 		hippoDebugLastErr(L"Couldn't create window!");
@@ -201,6 +201,7 @@ HippoBubble::appendTransform(BSTR src, BSTR style, ...)
 	hresult = doc->write(sfArray);
 
 	GlobalFree(hg);
+
 	va_end (vap);
 	return true;
 }
@@ -244,8 +245,11 @@ void
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
 	if (window_ == NULL) {
-		if (!create())
+		ui_->debugLogW(L"Creating new window");
+		if (!create()) {
+			ui_->debugLogW(L"Failed to create window");
 			return;
+		}
 	}
 
 	variant_t senderName(share.senderName);
@@ -263,6 +267,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 	groupRecipientsArg.parray = groupRecipients;
 
 	VARIANT result;
+	ui_->debugLogW(L"Invoking dhAddLinkShare");
 	invokeJavascript(L"dhAddLinkShare", &result, 7, &senderName,
 		                                 &senderId, &linkTitle, &linkURL, &linkDescription,
 										 &personRecipientsArg, &groupRecipientsArg);
@@ -308,7 +313,11 @@ HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, .
 	for (int argc = 0; argc < nargs; argc++) {
 		arg = va_arg (vap, VARIANT *);
 		// This has to be in reverse order for some reason...CRACK
-		args.rgvarg[(nargs-argc)-1] = *arg;
+		VARIANT *destArg = &(args.rgvarg[(nargs-argc)-1]);
+		VariantInit(destArg);
+		result = VariantCopy(destArg, arg);
+		if (FAILED(result))
+			ui_->logError(L"Failed to invoke VariantCopy", result);
 	}
 	args.cArgs = nargs;
 
@@ -317,6 +326,8 @@ HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, .
 	UINT argErr;
 	result = script->Invoke(id, IID_NULL, 0, DISPATCH_METHOD,
 							&args, invokeResult, &excep, &argErr);
+	if (FAILED(result))
+		ui_->logError(L"Failed to invoke javascript method", result);
 	delete [] args.rgvarg;
 	va_end (vap);
 	if (FAILED(result))
@@ -354,7 +365,12 @@ void
 HippoBubble::show(void) 
 {	
 	ui_->debugLogW(L"doing bubble show");
-	AnimateWindow(window_, 400, AW_BLEND);
+	//if (!AnimateWindow(window_, 400, AW_BLEND))
+	//	ui_->logLastError(L"Failed to invoke AnimateWindow");
+	if (!ShowWindow(window_, SW_SHOW))
+		ui_->logLastError(L"Failed to invoke ShowWindow");
+	if (!RedrawWindow(window_, NULL, NULL, RDW_UPDATENOW))
+		ui_->logLastError(L"Failed to invoke RedrawWindow");
 	if (!BringWindowToTop(window_))
 		ui_->logLastError(L"Failed to invoke BringWindowToTop");
 }
@@ -445,6 +461,7 @@ STDMETHODIMP
 HippoBubble::GetExternal(IDispatch **dispatch)
 {
     *dispatch = this;
+	this->AddRef();
     return S_OK;
 }
 
