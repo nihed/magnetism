@@ -236,17 +236,18 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 	this._setPhotoUrl = function (src, url) {
 		var imgDiv = dh.util.dom.getClearedElementById("dh-notification-photo")
 		var a = this._getExternalAnchor(url)
-		imgDiv.appendChild(a)
 		var img = document.createElement("img")
-		a.appendChild(img)
 		img.setAttribute("src", src)
 		img.setAttribute("className", "dh-notification-photo")
+		a.appendChild(img)	
+		imgDiv.appendChild(a)	
 	}
 	
 	this._setPhotoLink = function (text, url) {
 		var photoLinkDiv = dh.util.dom.getClearedElementById("dh-notification-photolink")
 		var a = this._getExternalAnchor(url)
-		dh.util.dom.appendSpanText(a, text, "dh-notification-photolink")
+		a.setAttribute("className", "dh-notification-photolink")
+		a.appendChild(document.createTextNode(text))
 		photoLinkDiv.appendChild(a)
 	}
 	

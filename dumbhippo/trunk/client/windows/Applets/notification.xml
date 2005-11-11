@@ -12,12 +12,12 @@
 			<table class="dh-notification">
 				<tbody>
 					<tr>
-						<td class="dh-notification-person">
-							<div id="dh-notification-photo"></div>
-							<div id="dh-notification-photolink"></div>
+						<td class="dh-notification-photo">
+							<div id="dh-notification-photo" class="dh-notification-photo"></div>
+							<div id="dh-notification-photolink" class="dh-notification-photolink"></div>
 						</td>
 						<td>
-							<div id="dh-notification-title"></div>
+							<div id="dh-notification-title" class="dh-notification-title"></div>
 							<div id="dh-notification-body"></div>
 							<table class="dh-notification-meta">
 								<tbody>
@@ -29,7 +29,7 @@
 											</div>
 										</td>
 										<td>
-											<div id="dh-notification-meta"></div>
+											<div id="dh-notification-meta" class="dh-notification-meta"></div>
 										</td>
 									</tr>
 								</tbody>
