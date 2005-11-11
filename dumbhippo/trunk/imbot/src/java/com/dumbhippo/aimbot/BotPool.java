@@ -202,8 +202,9 @@ public class BotPool implements BotListener {
 		BotQueue queue = null;
 		
 		if (task.getBotName() != null) {
+			ScreenName botName = new ScreenName(task.getBotName());
 			for (BotQueue q : bots) {
-				if (q.getName().equals(task.getBotName())) {
+				if (q.getName().equals(botName)) {
 					queue = q;
 					break;
 				}
