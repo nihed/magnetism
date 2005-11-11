@@ -3,7 +3,6 @@ package com.dumbhippo.aimbot;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
-import javax.jms.TextMessage;
 
 import org.apache.commons.logging.Log;
 
@@ -11,26 +10,11 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTask;
-import com.dumbhippo.botcom.BotTaskInvite;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
 
 public class Main {
 	private static Log logger = GlobalSetup.getLog(Main.class);
-
-	private static void generateTestTasks(String queue) {
-		logger.debug("Sending test tasks");
-		
-		JmsProducer producer = new JmsProducer("FooQueue", false);
-		
-		BotTaskInvite invite = new BotTaskInvite("http://inviteurl", "Some Guy", "someguy21", "hp40000");
-		ObjectMessage message = producer.createObjectMessage(invite);
-		producer.send(message);
-		
-		producer.close();
-		
-		logger.debug("Done sending test tasks");
-	}
 	
 	static class PoolToQueueDispatcher implements Runnable {
 		private String queue;
@@ -70,7 +54,7 @@ public class Main {
 					if (event instanceof BotEventToken) {
 						logger.debug("Sending token event");
 						
-						TextMessage message = producer.createTextMessage(event.toString());
+						ObjectMessage message = producer.createObjectMessage(event);
 						producer.send(message);
 					}
 					

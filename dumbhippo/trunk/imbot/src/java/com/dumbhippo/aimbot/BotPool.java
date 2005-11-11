@@ -11,8 +11,7 @@ import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskFailedException;
-import com.dumbhippo.botcom.BotTaskInvite;
-import com.dumbhippo.botcom.BotTaskNoop;
+import com.dumbhippo.botcom.BotTaskMessage;
 
 public class BotPool implements BotListener {
 	
@@ -55,10 +54,8 @@ public class BotPool implements BotListener {
 					}
 					
 					try {
-						if (task instanceof BotTaskNoop) {
-							// nothing
-						} else if (task instanceof BotTaskInvite) {
-							bot.doInvite((BotTaskInvite) task);
+						if (task instanceof BotTaskMessage) {
+							bot.doMessage((BotTaskMessage) task);
 						} else {
 							throw new RuntimeException("unknown bot task " + task.getClass().getCanonicalName());
 						}

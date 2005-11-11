@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.aim.Buddy;
 import com.dumbhippo.aim.Client;
 import com.dumbhippo.aim.FilterException;
@@ -27,7 +26,7 @@ import com.dumbhippo.aim.TocError;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTaskFailedException;
-import com.dumbhippo.botcom.BotTaskInvite;
+import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.RandomToken;
 
 class Bot implements Runnable {
@@ -380,9 +379,9 @@ class Bot implements Runnable {
 	}
 	
 	// Normally called from a separate thread
-	public void doInvite(BotTaskInvite invite) throws BotTaskFailedException {
+	public void doMessage(BotTaskMessage message) throws BotTaskFailedException {
 		
-		logger.debug("Bot " + name + " got invite task from " + invite.getFromAimName() + " for " + invite.getInviteeAimName());
+		logger.debug("Bot " + name + " got message task for " + message.getRecipient());
 		
 		// we save a reference in case it gets set to null by the main thread
 		Client client = aim;
@@ -391,15 +390,10 @@ class Bot implements Runnable {
 			throw new BotTaskFailedException("bot is not running");
 		}
 		
-		ScreenName recipientName = new ScreenName(invite.getInviteeAimName());
+		ScreenName recipientName = new ScreenName(message.getRecipient());
 		Buddy recipient = client.addBuddy(recipientName);
-		
-		XmlBuilder builder = new XmlBuilder();
-		builder.append("Invitation from ");
-		builder.appendEscaped(invite.getFromAimName());
-		builder.appendTextNode("a", "click here to join", "href", invite.getInviteUrl());
-		
-		client.sendMessage(recipient, builder.toString());
+				
+		client.sendMessage(recipient, message.getHtmlMessage());
 		
 		if (!client.getOnline()) {
 			// most likely this means we failed (there's really no way to know reliably)
