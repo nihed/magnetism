@@ -6,6 +6,7 @@
 <head>
 	<title>Sharing a Link</title>
 	<link rel="stylesheet" href="/css/sharelink.css" type="text/css" />
+	<!--[if IE]><link rel="stylesheet" href="/css/sharelink-iefixes.css" type="text/css" /><![endif]-->
 	<dht:scriptIncludes/>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<script type="text/javascript">
@@ -22,7 +23,7 @@
 		<div id="dhShareLinkForm" class="dhInvisible">
 			<div class="dhVerticalPadding"></div>
 			
-			<table cols="1">
+			<table cols="1" class="url">
 			<tbody>
 			<tr>
 			<td>
@@ -70,9 +71,9 @@
 				
 				<div id="dhCreateGroupPopup" class="dhItemBox dhInvisible">
 					<div class="dhLabel">New <u>G</u>roup Name</div>
-					<input id="dhCreateGroupName"/>
+					<div><input id="dhCreateGroupName"/>
 					<input type="button" accesskey="g" class="dhButton" value="Create" 
-							onclick="dh.sharelink.doCreateGroup();"/>
+							onclick="dh.sharelink.doCreateGroup();"/></div>
 					<p id="dhCreateGroupStatus" class="dhStatusLabel dhInvisible"></p>
 				</div>
 				<a id="dhCreateGroupLink" class="dhActionLink dhInvisible"
@@ -97,7 +98,7 @@
 			<div class="dhVerticalPadding"></div>
 	
 			<input type="button" value="Share" accesskey="s"
-					class="dhButton" onclick="dh.sharelink.submitButtonClicked();"/>
+					class="dhButton share" onclick="dh.sharelink.submitButtonClicked();"/>
 	
 			<div class="dhVerticalPadding"></div>
 	

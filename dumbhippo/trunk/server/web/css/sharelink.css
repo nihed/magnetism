@@ -10,7 +10,9 @@ body {
 	width:							100%;
 	padding:						0;
 }
-
+div.header {
+	width:							100%;
+}
 #dhUrlTitleToShare {
 	font-size:	larger;
 	color:		blue;	
@@ -18,6 +20,9 @@ body {
 
 #dhShareLinkForm {
 	margin: 						1em;	
+}
+#dhShareLinkForm table.url {
+	width:							100%;		
 }
 
 #dhRecipientListArea {
@@ -112,4 +117,7 @@ td.dhRecipientName {
 .dhRecipientNote {
 	font-size:					7pt;
 	font-style:					italic;
+}
+.dhButton.share {
+	float:						right;
 }
