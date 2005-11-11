@@ -24,6 +24,7 @@ import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
+import com.dumbhippo.server.LoginVerifierException;
 import com.dumbhippo.server.RedirectException;
 import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.XmlRpcMethods;
@@ -205,9 +206,17 @@ public class HippoServlet extends AbstractServlet {
 					logger.error(e);
 					throw new RuntimeException(e);
 				} catch (InvocationTargetException e) {
-					logger.debug("Exception thrown by invoked method: " + e.getCause());
-					logger.error(e.getCause());
-					throw new RuntimeException(e);
+					Throwable cause = e.getCause();
+					logger.debug("Exception thrown by invoked method: " + cause);
+					logger.error(cause);
+					
+					if (cause instanceof LoginVerifierException) {
+						// FIXME this should get displayed to the user
+						throw new HttpException(HttpResponseCode.NOT_FOUND,
+								cause.getMessage());
+					} else {					
+						throw new RuntimeException(e);
+					}
 				}
 				
 				if (optionsAnnotation != null && optionsAnnotation.invalidatesSession()) {

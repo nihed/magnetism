@@ -66,6 +66,15 @@ public class Token extends DBUnique {
 		}
 		return authURL.toString();
 	}
+
+	@Transient
+	public String getAuthURL(String prefix) {
+		try {
+			return getAuthURL(new URL(prefix));
+		} catch (MalformedURLException e) {
+			throw new RuntimeException("Bad url", e);
+		}
+	}
 	
 	@Transient
 	protected long getExpirationPeriodInSeconds() {

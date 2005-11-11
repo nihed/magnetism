@@ -81,6 +81,13 @@ public interface HttpMethods {
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, User user, String email) throws IOException;
 
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doSendLoginLinkEmail(String address) throws IOException, LoginVerifierException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doSendLoginLinkAim(String address) throws IOException, LoginVerifierException;
 	
 	/**
 	 * This one is not annotated since it's special-cased in the servlet.

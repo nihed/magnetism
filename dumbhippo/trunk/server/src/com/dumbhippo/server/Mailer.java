@@ -11,6 +11,7 @@ public interface Mailer {
 
 	enum SpecialSender {
 		INVITATION("Dumb Hippo Invitation <invitations@dumbhippo.com>"),
+		LOGIN("Dumb Hippo Login <logins@dumbhippo.com>"),
 		NOBODY("nobody@dumbhippo.com");
 		
 		private String address;
@@ -34,6 +35,8 @@ public interface Mailer {
 	
 	public MimeMessage createMessage(User from, Person to) throws NoAddressKnownException;
 	public MimeMessage createMessage(SpecialSender from, String to);
+	
+	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml);
 	
 	public void sendMessage(MimeMessage message);
 }

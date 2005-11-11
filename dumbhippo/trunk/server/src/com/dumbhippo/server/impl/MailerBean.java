@@ -9,7 +9,9 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.logging.Log;
 
@@ -94,7 +96,32 @@ public class MailerBean implements Mailer {
 	public MimeMessage createMessage(SpecialSender from, String to) {
 		return createMessage(from.toString(), to);
 	}
-
+	
+	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml) {
+		try {
+			message.setSubject(subject);
+			
+			MimeBodyPart textPart = new MimeBodyPart();
+			textPart.setText(bodyText.toString(), "UTF-8");
+			
+			MimeBodyPart htmlPart = new MimeBodyPart();
+			htmlPart.setContent(bodyHtml.toString(), "text/html; charset=UTF-8");
+			
+			MimeMultipart multiPart = new MimeMultipart();
+			// "alternative" means display only one or the other, "mixed" means both
+			multiPart.setSubType("alternative");
+			
+			// I read something on the internet saying to put the text part first
+			// so sucktastic mail clients see it first
+			multiPart.addBodyPart(textPart);
+			multiPart.addBodyPart(htmlPart);
+			
+			message.setContent(multiPart);
+		} catch (MessagingException e) {
+			throw new RuntimeException("failed to put together MIME message", e);
+		}
+	}
+	
 	public void sendMessage(MimeMessage message) {
 		try {
 			Transport.send(message);

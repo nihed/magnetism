@@ -18,12 +18,14 @@ import com.dumbhippo.persistence.Resource;
 @Local
 public interface LoginVerifier {
 	/**
-	 * Get or create a new verifier for the given resource.
+	 * Get or create a new login token to send to the 
+	 * given resource to prove the resource is owned.
 	 * 
 	 * @param resource resource to be proven
-	 * @return new auth key to prove resource ownership
+	 * @return new token for authentication
+	 * @throws LoginVerifierException if resource isn't associated with a user
 	 */
-	public String getAuthKey(Resource resource); 
+	public LoginToken getLoginToken(Resource resource) throws LoginVerifierException;
 	
 	/**
 	 * Try to sign in a login token, returning the person you have successfully 
@@ -36,4 +38,7 @@ public interface LoginVerifier {
 	 * @throws LoginVerifierException if no ownership claim is created
 	 */
 	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws LoginVerifierException;
+	
+	// internal hack to use transaction attribute
+	public LoginToken findOrCreateLoginToken(Resource resource);
 }

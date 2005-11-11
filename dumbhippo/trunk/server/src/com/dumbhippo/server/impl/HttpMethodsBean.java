@@ -10,6 +10,8 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.jms.ObjectMessage;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -18,24 +20,32 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.User;
+import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.InvitationToken;
+import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.LoginVerifier;
+import com.dumbhippo.server.LoginVerifierException;
+import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RedirectException;
@@ -68,6 +78,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private TokenSystem tokenSystem;
+
+	@EJB
+	private LoginVerifier loginVerifier;
+	
+	@EJB
+	private Mailer mailer;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -349,5 +365,42 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} else {
 			logger.debug("not yet handling a merely-invited person hitting the redirect page");
 		}
+	}
+
+	private String getLoginLink(Resource resource) throws LoginVerifierException {
+		LoginToken token = loginVerifier.getLoginToken(resource);
+		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
+	}
+	
+	public void doSendLoginLinkEmail(String address) throws IOException, LoginVerifierException {
+		EmailResource resource = identitySpider.getEmail(address);
+		String link = getLoginLink(resource);
+		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
+		
+		StringBuilder bodyText = new StringBuilder();
+		XmlBuilder bodyHtml = new XmlBuilder();
+		
+		bodyText.append("\n");
+		bodyText.append("Go to: " + link + "\n");
+		bodyText.append("\n");
+		
+		bodyHtml.appendHtmlHead("");
+		bodyHtml.append("<body>\n");
+		bodyHtml.appendTextNode("a", "Click here to sign in", "href", link);
+		bodyHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(message, "Sign in to DumbHippo", bodyText.toString(), bodyHtml.toString());
+	}
+
+	public void doSendLoginLinkAim(String address) throws IOException, LoginVerifierException {
+		AimResource resource = identitySpider.getAim(address);
+		String link = getLoginLink(resource);
+		XmlBuilder bodyHtml = new XmlBuilder();
+		bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
+		
+		BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
+		JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
+		ObjectMessage jmsMessage = producer.createObjectMessage(message);
+		producer.send(jmsMessage);
 	}
 }

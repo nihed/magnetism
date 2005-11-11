@@ -7,10 +7,7 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.logging.Log;
 import org.jivesoftware.smack.XMPPConnection;
@@ -424,29 +421,7 @@ public class MessageSenderBean implements MessageSender {
 					
 			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient);
 			
-			try {
-				msg.setSubject(title);
-				
-				MimeBodyPart textPart = new MimeBodyPart();
-				textPart.setText(messageText.toString(), "UTF-8");
-				
-				MimeBodyPart htmlPart = new MimeBodyPart();
-				htmlPart.setContent(messageHtml.toString(), "text/html; charset=UTF-8");
-				
-				MimeMultipart multiPart = new MimeMultipart();
-				// "alternative" means display only one or the other, "mixed" means both
-				multiPart.setSubType("alternative");
-				
-				// I read something on the internet saying to put the text part first
-				// so sucktastic mail clients see it first
-				multiPart.addBodyPart(textPart);
-				multiPart.addBodyPart(htmlPart);
-				
-				msg.setContent(multiPart);
-				
-			} catch (MessagingException e) {
-				throw new RuntimeException("failed to put together MIME message", e);
-			}
+			mailer.setMessageContent(msg, title, messageText.toString(), messageHtml.toString());
 			
 			logger.debug("Sending mail to " + recipient.toString());
 			mailer.sendMessage(msg);

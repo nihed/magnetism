@@ -53,8 +53,10 @@ public class EmailResource extends Resource {
 	 * @param email
 	 */
 	protected void setEmail(String email) {
-		if (email != null)
+		if (email != null) {
 			validateEmail(email); // in theory the database has nothing that would fail...
+			email = email.trim();
+		}
 		this.email = email;
 	}
 

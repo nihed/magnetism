@@ -56,7 +56,53 @@
 		</table>
 		</td></tr></table>
 		</form>
+		<script type="text/javascript">
+		var dhSendLoginLink = function(address) {	
+			var method;
+			var message;
+			if (address.indexOf("@") < 0) {
+				method = "sendloginlinkaim";
+				message = "IM sent to " + address;
+			} else {
+				method = "sendloginlinkemail";
+				message = "Email sent to " + address;
+			}
+		   	dh.server.doPOST(method,
+						     { "address" : address },
+				  	    	 function(type, data, http) {
+					  	    	var node = document.getElementById("dhSendLinkStatus");
+				  	    		dojo.dom.textContent(node, message);
+				  	    	 	//dh.util.goToNextPage("main", message);
+				  	    	 },
+				  	    	 function(type, error, http) {
+				  	    	 	var node = document.getElementById("dhSendLinkStatus");
+				  	    	 	dojo.dom.textContent(node, "Failed to send link");
+				  	    	 });
+		}
+		</script>
+		<form onsubmit="return false">
+		<p>Send yourself a link to sign in:</p>
+		<table><tr><td>
+		<table align="center">
+			<tr>
+				<td>Email or AIM:</td>
+				<td><input id="dhSendLinkAddress" type="text" /></td>
+			</tr>
+			<tr>	
+				<td colspan="2" align="right">
+				<p id="dhSendLinkStatus"></p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="right">
+				<input type="button" value="Send Link" id="dhSendLinkButton"
+				onclick="dhSendLoginLink(document.getElementById('dhSendLinkAddress').value);">
+				</td>
+			</tr>
+		</table>
+		</td></tr></table>
+		</form>		
 		<div id="dojoDebug"> <!-- where to put dojo debug spew --> </div>
-	</div>
+	</div>	
 </body>
 </html>

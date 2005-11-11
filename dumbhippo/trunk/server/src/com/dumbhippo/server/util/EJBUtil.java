@@ -1,7 +1,11 @@
 package com.dumbhippo.server.util;
 
+import javax.ejb.EJBException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
+import org.hibernate.NonUniqueObjectException;
+import org.hibernate.exception.ConstraintViolationException;
 
 /**
  * Very simple wrapper around InitialContext.lookup.
@@ -26,5 +30,13 @@ public class EJBUtil {
 		} catch (NamingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	// Returns true if this is an exception we would get with a race condition
+	// between two people trying to create the same object at once
+	public static boolean isDuplicateException(Exception e) {
+		return ((e instanceof EJBException &&
+				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
+	            e instanceof NonUniqueObjectException);
 	}
 }

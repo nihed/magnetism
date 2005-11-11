@@ -6,7 +6,6 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.EJBContext;
-import javax.ejb.EJBException;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -16,29 +15,28 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
-import org.hibernate.NonUniqueObjectException;
-import org.hibernate.exception.ConstraintViolationException;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -107,15 +105,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return ret;
 	}
-	
-	// Returns true if this is an exception we would get with a race condition
-	// between two people trying to create the same object at once
-	private boolean isDuplicateException(Exception e) {
-		return ((e instanceof EJBException &&
-				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
-	            e instanceof NonUniqueObjectException);
-	}
-	
+		
 	public EmailResource getEmail(String email) {
 		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
 		int retries = 1;
@@ -124,7 +114,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				return proxy.findOrCreateEmail(email);
 			} catch (Exception e) {
-				if (retries > 0 && isDuplicateException(e)) {
+				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating email resource, retrying");
 					retries--;
 				} else {
@@ -160,7 +150,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				return proxy.findOrCreateAim(screenName);
 			} catch (Exception e) {
-				if (retries > 0 && isDuplicateException(e)) {
+				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating aim resource, retrying");
 					retries--;
 				} else {
@@ -196,7 +186,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				return proxy.findOrCreateLink(link);
 			} catch (Exception e) {
-				if (retries > 0 && isDuplicateException(e)) {
+				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating link resource, retrying");
 					retries--;
 				} else {
@@ -239,7 +229,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				theMan = proxy.findOrCreateTheMan();
 			} catch (Exception e) {
-				if (retries > 0 && isDuplicateException(e)) {
+				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating theMan, retrying");
 					retries--;
 				} else {
