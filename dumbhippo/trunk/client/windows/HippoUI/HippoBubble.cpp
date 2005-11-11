@@ -434,9 +434,9 @@ HippoBubble::DebugLog(BSTR str)
 }
 
 STDMETHODIMP 
-HippoBubble::DisplaySharedLink(BSTR linkId, BSTR url)
+HippoBubble::DisplaySharedLink(BSTR linkId)
 {
-	ui_->displaySharedLink(linkId, url);
+	ui_->displaySharedLink(linkId);
 	return S_OK;
 }
 

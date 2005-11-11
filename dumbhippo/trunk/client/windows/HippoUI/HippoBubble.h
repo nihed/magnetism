@@ -105,7 +105,7 @@ public:
 	
 	// IHippoBubble
 	STDMETHODIMP DebugLog(BSTR str);
-	STDMETHODIMP DisplaySharedLink(BSTR linkId, BSTR url);
+	STDMETHODIMP DisplaySharedLink(BSTR linkId);
 	STDMETHODIMP OpenExternalURL(BSTR url);
 	STDMETHODIMP Close();
 

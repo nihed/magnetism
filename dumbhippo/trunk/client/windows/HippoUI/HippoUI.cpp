@@ -427,7 +427,7 @@ HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 
 // Show a window when the user clicks on a shared link
 void 
-HippoUI::displaySharedLink(BSTR postId, BSTR url)
+HippoUI::displaySharedLink(BSTR postId)
 {
     HippoPtr<IWebBrowser2> webBrowser;
     HippoBSTR targetURL;

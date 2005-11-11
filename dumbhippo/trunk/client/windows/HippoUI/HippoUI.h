@@ -69,7 +69,7 @@ public:
 
     void showMenu(UINT buttonFlag);
 	void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
-    void displaySharedLink(BSTR postId, BSTR url);
+    void displaySharedLink(BSTR postId);
     void showShareWindow(BSTR title, BSTR url);
 	void HippoUI::showRecent();
 
