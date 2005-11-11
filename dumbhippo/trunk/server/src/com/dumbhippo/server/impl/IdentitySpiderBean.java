@@ -118,6 +118,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					logger.debug("Race condition creating email resource, retrying");
 					retries--;
 				} else {
+					logger.error("Couldn't create email resource", e);						
 					throw new RuntimeException("Unexpected error creating email resource", e);
 				}
 			}
@@ -154,6 +155,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					logger.debug("Race condition creating aim resource, retrying");
 					retries--;
 				} else {
+					logger.error("Couldn't create AIM resource", e);					
 					throw new RuntimeException("Unexpected error creating aim resource", e);
 				}
 			}
@@ -190,6 +192,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					logger.debug("Race condition creating link resource, retrying");
 					retries--;
 				} else {
+					logger.error("Couldn't create link resource", e);
 					throw new RuntimeException("Unexpected error creating link resource", e);
 				}
 			}
