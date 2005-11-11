@@ -135,7 +135,7 @@ class Bot implements Runnable {
 			
 			Matcher m = tokenPattern.matcher(messageHtml);
 			if (m.find()) {
-				client.sendMessage(buddy, "Got it!");
+				sayBusyThinking(buddy);
 				sendEvent(new BotEventToken(name.getNormalized(), buddy.getName().getNormalized(), 
 						m.group()));
 			} else {
@@ -206,7 +206,7 @@ class Bot implements Runnable {
 			client.sendMessage(buddy, "You suck");
 			break;
 		case 1:
-			client.sendMessage(buddy, "Mortle frobbles the tib tom");
+			client.sendMessage(buddy, "Blah blah blah blah blah blah blah");
 			break;
 		case 2:
 			client.sendMessage(buddy, "Hippo Hippo Hooray");
@@ -216,6 +216,33 @@ class Bot implements Runnable {
 			break;
 		case 4:
 			client.sendMessage(buddy, "I may be dumb, but I'm not stupid");
+			break;
+		}
+	}
+
+	private void sayBusyThinking(Buddy buddy) {
+		Client client = aim;
+		logger.debug("saying we're thinking to " + buddy.getName());
+		if (client == null)
+			return;
+		switch (random.nextInt(6)) {
+		case 0:
+			client.sendMessage(buddy, "Crunch crunch crunch");
+			break;
+		case 1:
+			client.sendMessage(buddy, "Hmmmm...");
+			break;
+		case 2:
+			client.sendMessage(buddy, "I'll get back to you on that in a minute");
+			break;
+		case 3:
+			client.sendMessage(buddy, "........");
+			break;
+		case 4:
+			client.sendMessage(buddy, "Your feeble commands insult my infinite bot mind");
+			break;
+		case 5:
+			client.sendMessage(buddy, "Got it! Right on it!");
 			break;
 		}
 	}
