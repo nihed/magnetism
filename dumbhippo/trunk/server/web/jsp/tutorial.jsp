@@ -44,7 +44,7 @@
 			<tr>
 			<td class="dh-edit-table-label">
 				<span class="dh-step">2</span>
-				<a href="aim:GoIM?screenname=DumbHippoBot&message=Hello+Bot!+Crunch+this:+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
+				<a href="${tutorial.addAimLink}">
 				IM us your screen name
 				</a>
 			</td>
