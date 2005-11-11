@@ -137,6 +137,7 @@ public class MessageSenderBean implements MessageSender {
 
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
 		
+		private Guid swarmerGuid;
 		private String clickerName;
 
 		private Guid guid;
@@ -145,13 +146,14 @@ public class MessageSenderBean implements MessageSender {
 		
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("linkClicked", "xmlns", NAMESPACE, "id", guid.toString());
-			builder.appendTextNode("clickerName", clickerName, "isCache", "true");	
-			builder.appendTextNode("title", title, "isCache", "true");
+			builder.openElement("linkClicked", "xmlns", NAMESPACE, "id", guid.toString(), "swarmerId", swarmerGuid.toString());
+			builder.appendTextNode("swarmerName", clickerName, "isCache", "true");	
+			builder.appendTextNode("postTitle", title, "isCache", "true");
 			builder.closeElement();
 			return builder.toString();
 		}
-		public LinkClickedExtension(String clickerName, Guid postId, String title) {
+		public LinkClickedExtension(Guid swarmerGuid, String clickerName, Guid postId, String title) {
+			this.swarmerGuid = swarmerGuid;
 			this.clickerName = clickerName;
 			this.guid = postId;
 			this.title = title;
@@ -257,41 +259,44 @@ public class MessageSenderBean implements MessageSender {
 		
 		public synchronized void sendPostClickedNotification(Post post, User clicker) {
 			XMPPConnection connection = getConnection();
-			
-			User poster = post.getPoster();
-			
-			StringBuilder recipientJid = new StringBuilder();
-			recipientJid.append(poster.getId().toString());
-			recipientJid.append("@dumbhippo.com");
 
-			Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
-
-			Set<Resource> resources = post.getResources();
-			
-			Viewpoint viewpoint = new Viewpoint(post.getPoster());
-	
-			PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
-			String senderName = senderView.getHumanReadableName();
-			String title = post.getTitle();
-			if (title == null || title.equals("")) {
-				LinkResource link = null;
-				// FIXME don't assume link resources
-				for (Resource r : resources) {
-					if (r instanceof LinkResource) {
-						link = (LinkResource)r;
-						break;
-					}
+			for (Person recipientPerson : post.getExpandedRecipients()) {
+				User recipient = identitySpider.getUser(recipientPerson);
+				if (recipient == null) {
+					logger.debug("No user for " + recipientPerson.getId());
 				}
-				if (link != null)
-					title = link.getHumanReadableString();
-				else
-					title = "(unknown)";
+				
+				StringBuilder recipientJid = new StringBuilder();
+				recipientJid.append(recipient.getId().toString());
+				recipientJid.append("@dumbhippo.com");
+
+				Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
+
+				Viewpoint viewpoint = new Viewpoint(recipient);
+				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
+				String clickerName = senderView.getHumanReadableName();
+				String title = post.getTitle();
+				if (title == null || title.equals("")) {
+					LinkResource link = null;
+					// FIXME don't assume link resources
+					Set<Resource> resources = post.getResources();					
+					for (Resource r : resources) {
+						if (r instanceof LinkResource) {
+							link = (LinkResource) r;
+							break;
+						}
+					}
+					if (link != null)
+						title = link.getHumanReadableString();
+					else
+						title = "(unknown)";
+				}
+				message.addExtension(new LinkClickedExtension(recipient.getGuid(), clickerName, post.getGuid(), title));
+				message.setBody("");
+				logger.info("Sending jabber message to " + message.getTo());
+				connection.sendPacket(message);
 			}
-			message.addExtension(new LinkClickedExtension(senderName, post.getGuid(), title));
-			message.setBody("");
-			logger.info("Sending jabber message to " + message.getTo());
-			connection.sendPacket(message);
-		}			
+		}
 	}
 
 	private class EmailSender {
