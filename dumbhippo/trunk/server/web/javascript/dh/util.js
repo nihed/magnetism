@@ -129,7 +129,7 @@ dh.util.goToNextPage = function(def, flashMessage) {
 		main.appendChild(messageNode);
 		dh.util.show(main);
 		
-		setTimeout("dh.util.goToNextPage(\"" + def + "\");", 3000); // in 3 seconds, go to next page
+		setTimeout("dh.util.goToNextPage(\"" + def + "\");", 1000); // in 1 second, go to next page
 		return;
 	}
 
