@@ -6,12 +6,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,7 +21,6 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -58,7 +57,7 @@ public class HeadshotServlet extends AbstractServlet {
 	}
 	
 	private void doHeadshot(HttpServletRequest request, HttpServletResponse response, DiskFileUpload upload, List items)
-			throws HttpException, IOException {
+			throws HttpException, IOException, ServletException, ErrorPageException {
 
 		logger.debug("uploading headshot");
 
@@ -78,10 +77,10 @@ public class HeadshotServlet extends AbstractServlet {
 
 				BufferedImage image = ImageIO.read(in);
 				if (image == null) {
-					throw new HttpException(HttpResponseCode.BAD_REQUEST, "Could not load your image");
+					throw new ErrorPageException("Our computer can't load that photo; either it's too dumb, or possibly you uploaded a file that isn't a picture?");
 				}
 				if (image.getWidth() > MAX_IMAGE_DIMENSION || image.getHeight() > MAX_IMAGE_DIMENSION) {
-					throw new HttpException(HttpResponseCode.BAD_REQUEST, "Your image is too big");
+					throw new ErrorPageException("That photo is really huge, which blows our computer's mind. Can you send us a smaller one?");
 				}
 
 				// FIXME It would be nicer to only pad images so they are always square and our 
@@ -116,32 +115,18 @@ public class HeadshotServlet extends AbstractServlet {
 				// which Java tries to save in the JPEG confusing most apps but 
 				// not Java's own JPEG loader - see link on wiki)
 				if (!ImageIO.write(scaled, "png", saveDest)) {
-					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "Failed to save image");
+					throw new ErrorPageException("For some reason our computer couldn't save your photo. It's our fault; trying again later might help. If not, please let us know.");
 				}
 			}
 		}
 
-		response.setContentType("text/html");
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendHtmlHead("Your Photo");
-		xml.append("<body>\n<p>Your new photo looks like this:</p>");
-		xml.append("<img src=\"");
-		xml.appendEscaped("/files");
-		xml.appendEscaped(Configuration.HEADSHOTS_RELATIVE_PATH);
-		xml.appendEscaped("/" + user.getId());
-		xml.append("\"/>\n");
-		xml.append("<p>(If this is your old photo, your browser probably cached it. <a href=\"/home\">Go to your page</a> and then press reload.)</p>");
-		xml.append("<p><a href=\"/home\">Go to your page</a></p>");
-		xml.append("<p><a href=\"/myphoto\">Change to another photo</a></p>");
-		xml.append("</body>\n</html>\n");
-
-		OutputStream out = response.getOutputStream();
-		out.write(xml.toString().getBytes());
-		out.flush();
+		request.setAttribute("photoLocation", Configuration.HEADSHOTS_RELATIVE_PATH);
+		request.setAttribute("photoFilename", user.getId());
+		request.getRequestDispatcher("/newphoto").forward(request, response);
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
+	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, ErrorPageException {
 		DiskFileUpload upload = new DiskFileUpload();
 		upload.setSizeMax(MAX_FILE_SIZE);
 		
@@ -157,7 +142,7 @@ public class HeadshotServlet extends AbstractServlet {
 		} catch (FileUploadException e) {
 			// I don't have any real clue what this exception might be or indicate
 			logger.error("File upload exception", e);
-			throw new HttpException(HttpResponseCode.BAD_REQUEST, "file upload malformed");
+			throw new HttpException(HttpResponseCode.BAD_REQUEST, "file upload malformed somehow; we aren't sure what went wrong");
 		}
 	}
 
