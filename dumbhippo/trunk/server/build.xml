@@ -128,6 +128,8 @@
 				<include name="**/dumbhippo/*.properties" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/identity20/**/*.class" />
+				<include name="**/botcom/**/*.class" />
+				<include name="**/jms/**/*.class" />
 			</fileset>
 		</jar>
 	</target>

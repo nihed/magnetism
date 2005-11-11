@@ -1,6 +1,10 @@
 package com.dumbhippo.botcom;
 
-public class BotEvent {
+import java.io.Serializable;
+
+public class BotEvent implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private String botName;
 	
 	public BotEvent(String botName) {

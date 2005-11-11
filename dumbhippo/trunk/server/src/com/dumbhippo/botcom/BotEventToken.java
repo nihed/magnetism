@@ -1,6 +1,8 @@
 package com.dumbhippo.botcom;
 
 public class BotEventToken extends BotEvent {
+	private static final long serialVersionUID = 1L;
+
 	private String aimName;
 	private String token;
 	
