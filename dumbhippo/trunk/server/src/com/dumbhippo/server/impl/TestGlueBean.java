@@ -14,10 +14,9 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;

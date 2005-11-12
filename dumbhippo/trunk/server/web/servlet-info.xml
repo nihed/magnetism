@@ -18,8 +18,8 @@
     </servlet>   
 
     <servlet>
-      <servlet-name>HeadshotServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.HeadshotServlet</servlet-class>
+      <servlet-name>PhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.PhotoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
@@ -65,8 +65,13 @@
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>HeadshotServlet</servlet-name>
+      <servlet-name>PhotoServlet</servlet-name>
       <url-pattern>/upload/headshots</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>PhotoServlet</servlet-name>
+      <url-pattern>/upload/groupshots</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>
@@ -91,7 +96,7 @@
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,invite,sharelink,tutorial</param-value>
+          <param-value>home,welcome,invite,sharelink,tutorial,myphoto,newphoto,groupphoto</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

@@ -11,8 +11,4 @@ public enum MembershipStatus {
 	REMOVED,   // Was removed (probably by themself), can choose to rejoin
 	INVITED,   // Invited to group, hasn't indicated acceptance
 	ACTIVE;     // Normal member
-	
-	public boolean isMember() {
-		return ordinal() >= INVITED.ordinal();
-	}
 }

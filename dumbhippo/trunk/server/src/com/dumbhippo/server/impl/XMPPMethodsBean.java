@@ -12,7 +12,6 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;

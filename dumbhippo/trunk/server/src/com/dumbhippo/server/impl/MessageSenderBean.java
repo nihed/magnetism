@@ -24,7 +24,6 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;

@@ -37,4 +37,9 @@ public class User extends Person {
 	protected void setAccount(Account account) {
 		this.account = account;
 	}
+	
+	@Override
+	public String toString() {
+		return "{User " + "guid = " + getId() + " name = " + getName() + "}";
+	}
 }

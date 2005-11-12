@@ -35,6 +35,16 @@
 		</c:if>
 	</dht:toolbar>
 
+	<div class="person">
+		<img class="cool-person" src="/files/groupshots/${viewgroup.viewedGroupId}" />
+		<c:out value="${viewgroup.name}"/>
+	</div>
+	<c:if test="${viewgroup.canModify}">
+		<div>
+			<a href="/groupphoto?groupId=${viewgroup.viewedGroupId}">Change group photo</a>
+		</div>
+	</c:if>
+
 	<div id="dhMain">
 		<c:if test="${!empty viewgroup.inviter}">
 			<div>

@@ -50,4 +50,9 @@ public class Contact extends Person {
 	public void setResources(Set<ContactClaim> resources) {
 		this.resources = resources;
 	}
+	
+	@Override
+	public String toString() {
+		return "{Contact " + "guid = " + getId() + " name = " + getName() + " account = " + getAccount() + "}";
+	}
 }

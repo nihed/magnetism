@@ -16,13 +16,15 @@
 	<div id="dhMain">
 		<p>Your new photo looks like this:</p>
 		<img src="/files/${photoLocation}/${photoFilename}"/>
-		<p>(If this is your old photo, your browser probably cached it. <a href="/home">Go to your page</a> and then press reload.)
+		<p>(If this is your old photo, your computer didn't know to load the new one. <c:out value="${homePageLink}" escapeXml="false"/> and then press reload in your browser.)
 		</p>
 
+		<br/>
+		<p><c:out value="${homePageLink}" escapeXml="false"/></p>
+
+		<br/>
 		<p>If you hate this photo, you can try again:</p>
 		<dht:uploadPhoto location="${photoLocation}"/>
-		
-		<p><a href="/home">Go to your page</a></p>
 	</div>
 </body>
 </html>

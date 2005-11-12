@@ -22,8 +22,7 @@
 		<dht:userNameEdit value="${home.person.humanReadableName}"/>
 	</div>
 	<div>
-		<c:url value="myphoto" var="myphoto"/>
-		<a href="${myphoto}">Change my photo</a>
+		<a href="/myphoto">Change my photo</a>
 	</div>
 
 	<div id="dhMain">

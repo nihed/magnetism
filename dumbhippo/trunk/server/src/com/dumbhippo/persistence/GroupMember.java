@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 /**
@@ -70,5 +71,29 @@ public class GroupMember extends DBUnique {
 	
 	public void setAdder(User adder) {
 		this.adder = adder;
+	}
+	
+	/**
+	 * Is the person "in the group" (which means they can see other members,
+	 * posts, etc.)
+	 * @return true if the user is invited or active
+	 */
+	@Transient
+	public boolean isMember() {
+		return getStatus().ordinal() >= MembershipStatus.INVITED.ordinal();
+	}
+	
+	/**
+	 * Can the user change the group photo, etc.
+	 * @return true if the group member can change stuff
+	 */
+	@Transient
+	public boolean canModify() {
+		return getStatus().ordinal() >= MembershipStatus.ACTIVE.ordinal();
+	}
+	
+	@Override
+	public String toString() {
+		return "{GroupMember status = " + getStatus() + " member = " + getMember() + " group = " + getGroup() + "}";
 	}
 }

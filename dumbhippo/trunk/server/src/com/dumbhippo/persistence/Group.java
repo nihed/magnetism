@@ -109,4 +109,9 @@ public class Group extends GuidPersistable {
 		
 		return list;
 	}
+	
+	@Override
+	public String toString() {
+		return "{Group " + "guid = " + getId() + " name = " + getName() + " access = " + getAccess() + "}";
+	}	
 }

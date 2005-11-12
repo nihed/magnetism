@@ -24,7 +24,8 @@ public class Person extends GuidPersistable {
 		super(guid);
 		name = FullName.parseDatabaseString("");
 	}
-	
+
+	@Override
 	public String toString() {
 		return "{Person " + "guid = " + getId() + " name = " + name + "}";
 	}
