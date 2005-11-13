@@ -10,6 +10,8 @@
 	<property name="src.java" value="src/java" />
 	<property name="src.tests.java" value="src/test/java" />
 	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+		<!-- without this ant uses the whole dir apparently -->
+		<include name="nonexistent.jar"/>
 		<!--
 		<include name="jbossall-client.jar"/>
 		<include name="jbossmq-client.jar"/>
