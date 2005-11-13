@@ -454,11 +454,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			// implement spidering) if contacts own the account resource for
 			// users.
 			if (!(resource instanceof Account)) {
-				logger.debug("Adding contact resource pointing to account");
 				User contactUser = lookupPersonByResource(resource);
 				
-				ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());
-				em.persist(cc);
+				if (contactUser != null) {
+					logger.debug("Adding contact resource pointing to account");
+					ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());
+					em.persist(cc);
+				}
 			}
 		}
 			

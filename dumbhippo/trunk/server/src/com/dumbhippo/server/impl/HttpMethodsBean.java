@@ -23,7 +23,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jms.JmsProducer;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -178,7 +177,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, User user,
 			String email) throws IOException {
-
 		XmlBuilder xml = new XmlBuilder();
 		Viewpoint viewpoint = new Viewpoint(user);
 
@@ -260,22 +258,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
 		
-		Account account = user.getAccount();
-		if (account == null) {
-			// probably user was detached, this is sort of a lame hackaround for that;
-			// just making this function take an Account could make more sense...
-			User attachedUser;
-			try {
-				attachedUser = identitySpider.lookupGuid(User.class, user.getGuid());
-				// swap this in so we can use "user" below to addMember
-				user = attachedUser;
-				account = user.getAccount();
-			} catch (GuidNotFoundException e) {
-				throw new RuntimeException("Group creator doesn't exist?", e); // should never happen
-			}
-		}
-		
-		Group group = groupSystem.createGroup(account, name);
+		Group group = groupSystem.createGroup(user, name);
 		for (Person p : memberPeople)
 			groupSystem.addMember(user, group, p);
 		
