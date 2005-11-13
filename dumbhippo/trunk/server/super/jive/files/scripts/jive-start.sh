@@ -1,17 +1,35 @@
 #!/bin/sh
 
 targetdir=@@targetdir@@
-mysqlTargetdir=@@mysqlTargetdir@@
-mysqlOptions=@@mysqlOptions@@
 
 echo "Starting Jive Messenger..."
 
+######################################################################
+
+@@if mysqlEnabled
+mysqlTargetdir="@@mysqlTargetdir@@"
+mysqlOptions="@@mysqlOptions@@"
+dbcommand="/usr/bin/mysql $mysqlOptions jive"
+
 if [ -d $mysqlTargetdir/data/jive ] ; then : ; else
     /usr/bin/mysqladmin $mysqlOptions create jive
-    /usr/bin/mysql $mysqlOptions jive < $targetdir/resources/database/messenger_mysql.sql
+    $dbcommand < $targetdir/resources/database/messenger_mysql.sql
 fi
+@@elif pgsqlEnabled
+pgsqlOptions="@@pgsqlOptions@@"
+dbcommand="/usr/bin/psql $pgsqlOptions jive"
 
-/usr/bin/mysql $mysqlOptions jive <<EOF
+if [ echo "" | $dbcommand > /dev/null 2>&1 ] ; then : ; else
+    /usr/bin/createdb $pgsqlOptions -O dumbhippo jive
+    $dbcommand < $targetdir/resources/database/messenger_mysql.sql
+fi
+@@else
+@@  error "No database"
+@@endif
+
+######################################################################
+
+$dbcommand <<EOF
 DELETE FROM jiveProperty ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.plain.port', @@jivePlainPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.secure.port', @@jiveSecurePort@@ ) ;

@@ -167,7 +167,7 @@ class Config:
             choice = ''
             console_svcs = []
             nuke_svcs = []
-            for svc_name in self.services:
+            for svc_name in services:
                 service = self.services[svc_name]
                 if service.has_console():
                     console_svcs.append(service)
@@ -218,7 +218,11 @@ class Config:
 
     def list_services(self):
         """Return all configured services."""
-        return self.services.keys()
+        result = []
+        for service in self.services.values():
+            if (service.get_enabled()):
+                result.append(service.get_name())
+        return result
 
     #### Parameter handling. The following methods make up a common
     #### interface with Service.
@@ -275,6 +279,25 @@ class Config:
 
         ident = "[a-zA-Z_][a-zA-Z_0-9]*"
         return re.sub('%s|\$%s' % (arithmetic, ident), repl, str)
+
+    def is_true(self, str):
+        """Return whether a string is a true value without expansion"""
+        val = str.strip()
+        
+        if (val == 'yes'):
+            return True
+        elif (val == 'no'):
+            return False
+        else:
+            raise ValueError("Boolean value must be 'yes' or 'no', not '%s'" % val)
+
+    def is_true_expanded(self, str):
+        """Expand string and checks if it is true"""
+        return self.is_true(self.expand(str))
+
+    def is_true_parameter(self, name):
+        """Gets the (expanded) value of a parameter and checks if it is true"""
+        return self.is_true(self.expand_parameter(name))
 
     def _load_config(self, filename, must_exist):
         """Load a single config file and merge it into the existing state.

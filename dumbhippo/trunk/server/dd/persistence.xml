@@ -14,10 +14,16 @@
         <property name="hibernate.hbm2ddl.auto"
               value="update"/>
               
-        <!-- Without this, hbm2ddl will create hosed-up sql 
-             for creating the tables and you'll get bizarre
-             hibernate failures -->
+        <!-- We set this in the ejb3 deployer's persistance.properties
+             so that we can switch between MySQL and PostgreSQL from
+             the super configuration
+	
+	     It's important to set properly: othrewise hbm2ddl will
+	     create hosed-up sql for creating the tables and you'll
+             get bizarre hibernate failures -->
+	<!--
         <property name="hibernate.dialect"
               value="org.hibernate.dialect.MySQLDialect" />
+        -->
   	</properties>
 </entity-manager>

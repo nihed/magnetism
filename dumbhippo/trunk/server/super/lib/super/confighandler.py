@@ -51,7 +51,9 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = PARAMETER
                 return
             elif (name == 'service'):
-                (name, cls) = self._parse_attributes(name, attrs, 'name', True, 'class', False)
+                (name, cls, enabled) = self._parse_attributes(name, attrs, 'name', True,
+                                                                           'class', False,
+                                                                           'enabled', False)
                 if (self.config.has_service(name)):
                     self.service = self.config.get_service(name)
                 else:
@@ -61,6 +63,10 @@ class ConfigHandler (xml.sax.ContentHandler):
                     else:
                         self.service = Service(name, self.config)
                     self.config.add_service(self.service)
+
+                if not enabled is None:
+                    self.service.set_enabled(enabled)
+                    
                 self.state = SERVICE
                 return
         elif (self.state == SERVICE):
@@ -186,11 +192,10 @@ class ConfigHandler (xml.sax.ContentHandler):
         """Parse a boolean attribute value. Default is False."""
         if (val is None):
             return False
-        elif (val == 'yes'):
-            return True
-        elif (val == 'no'):
-            return False
         else:
-            self._report("'%s' must be either 'yes' or 'no'", attr)
+            try:
+                return self.config.is_true(val)
+            except ValueError, e:
+                self._report("%s: %s" % (val, e))
 
     

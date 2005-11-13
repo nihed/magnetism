@@ -5,10 +5,14 @@ targetdir=@@targetdir@@
 jnpPort=@@jnpPort@@
 jdwpPort=@@jdwpPort@@
 
-mysqlTargetdir=@@mysqlTargetdir@@
-mysqlOptions=@@mysqlOptions@@
-
 echo "Starting jboss..."
+
+######################################################################
+
+@@if mysqlEnabled
+mysqlTargetdir="@@mysqlTargetdir@@"
+mysqlOptions="@@mysqlOptions@@"
+dbcommand="/usr/bin/mysql $mysqlOptions jive"
 
 if [ -d $mysqlTargetdir/data/dumbhippo ] ; then : ; else
     echo "... dumbhippo database doesn't exist, creating ..."
@@ -16,6 +20,19 @@ if [ -d $mysqlTargetdir/data/dumbhippo ] ; then : ; else
 create database dumbhippo character set utf8 collate utf8_bin ;
 EOF
 fi
+@@elif pgsqlEnabled
+pgsqlOptions="@@pgsqlOptions@@"
+dbcommand="/usr/bin/psql $pgsqlOptions dumbhippo"
+
+if echo "" | $dbcommand > /dev/null 2>&1 ; then : ; else
+    echo "... dumbhippo database doesn't exist, creating ..."
+    /usr/bin/createdb $pgsqlOptions -O dumbhippo dumbhippo
+fi
+@@else
+@@  error "No database"
+@@endif
+
+######################################################################
 
 JAVA_OPTS="-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
 $jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null &

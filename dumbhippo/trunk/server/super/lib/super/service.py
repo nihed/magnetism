@@ -24,10 +24,21 @@ class Service:
         self.required_services = {}
         self.merges = []
         self.target_attributes = []
+        self.enabled = "yes"
+
+    def set_enabled(self, enabled):
+        """Set whether the service is enabled. A disabled configuration
+           is treated as if it wasn't specified in the config file at
+           all. The value is subject to expansion in the parent scope."""
+        self.enabled = enabled
 
     def get_name(self):
         """Return the name of the service"""
         return self.name
+
+    def get_enabled(self):
+        """Return whether the service is enabled"""
+        return self.config.is_true_expanded(self.enabled)
 
     def add_merge(self, merge):
         """Add a <merge/> element (represented by Merge) to the service."""
@@ -55,7 +66,7 @@ class Service:
 
     #### Parameter handling. The following methods make up a common
     #### interface with Config.
-        
+
     def set_parameter(self, name, value):
         """Set a parameter value."""
         self.params[name] = value
@@ -81,6 +92,18 @@ class Service:
     def expand(self, str):
         """Return the contents of str with embedded parameters expanded."""
         return self.config.expand(str, self)
+
+    def is_true(self, str):
+        """Return whether a string is a true value without expansion"""
+        return self.config.is_true(str)
+
+    def is_true_expanded(self, str):
+        """Expand string and checks if it is true"""
+        return self.config.is_true(self.expand(str))
+
+    def is_true_parameter(self, name):
+        """Gets the (expanded) value of a parameter and checks if it is true"""
+        return self.config.is_true(self.expand_parameter(name))
 
     def create_dirtree(self):
         """Return a DirTree object built for the service"""

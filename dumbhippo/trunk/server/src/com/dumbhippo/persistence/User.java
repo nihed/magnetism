@@ -4,6 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Person;
@@ -15,6 +16,7 @@ import com.dumbhippo.persistence.Person;
  * @author otaylor
  */
 @Entity
+@Table(name="HippoUser") // "User" is reserved in PostgreSQL
 public class User extends Person {
 	private static final long serialVersionUID = 1L;
 	

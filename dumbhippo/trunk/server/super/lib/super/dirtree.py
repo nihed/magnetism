@@ -5,6 +5,7 @@ import stat
 import sys
 
 import super.service
+from super.expander import Expander
 
 def verbose(msg):
 #    print >>sys.stderr, msg
@@ -234,38 +235,18 @@ class DirTree:
         dest = os.path.join(self.target, path)
         os.spawnl(os.P_WAIT, '/bin/cp', 'cp', '-a', src, dest)
 
-    def _compile_expand_line(self):
-        """Return a function that does parameter expansion on
-        a line. We do things this way so that we can compile
-        the regular expression only once per file and still
-        encapsulate the substitution"""
-        
-        subst = re.compile("@@([a-zA-Z_][a-zA-Z0-9_]*)@@")
-        scope = self.scope
-        def repl(m):
-            return scope.expand_parameter(m.group(1))
-        
-        def expand_line(line):
-            return subst.sub(repl, line)
-
-        return expand_line
-        
     def _expand_file(self, path):
         """When writing, copy a file with expansion."""
+        cond_stack = []
+        
         src = self.nodes[path].src
         dest = os.path.join(self.target, path)
         
         f_src = open(src, "r")
         f_dest = open(dest, "w")
 
-        expand_line = self._compile_expand_line()
-
-        while True:
-            line = f_src.readline()
-            if (line == ""):
-                break
-
-            f_dest.write(expand_line(line))
+        for line in Expander(self.scope, f_src, path):
+            f_dest.write(line)
 
         f_src.close()
         f_dest.close()
@@ -387,27 +368,30 @@ class DirTree:
             else:
                 raise
 
-        expand_line = self._compile_expand_line()
-
         fuzzy = self._has_target_attribute(path, target_attributes, super.service.FUZZY)
-            
+
         ok = True
-        while True:
-            src_line = f_src.readline()
+        for src_line in Expander(self.scope, f_src, path):
             dest_line = f_dest.readline()
-            if src_line == "" and dest_line == "":
-                # everything ended in the same place
-                break
             
+            if dest_line == "":  # destination ended early
+                ok = False
+                break
+
             if (fuzzy):
                 src_line = src_line.strip()
                 dest_line = dest_line.strip()
-                
-            src_line = expand_line(src_line)
+
             if src_line != dest_line:
-                verbose("%s doesn't match expanded source" % path)
                 ok = False
                 break
+
+        dest_line = f_dest.readline()
+        if dest_line != "": # source ended early
+            ok = False
+
+        if not ok:
+            verbose("%s doesn't match expanded source" % path)
 
         f_src.close()
         f_dest.close()
