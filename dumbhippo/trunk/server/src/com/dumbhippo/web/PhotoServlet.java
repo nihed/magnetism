@@ -47,9 +47,7 @@ public class PhotoServlet extends AbstractServlet {
 	private Configuration config;
 	private GroupSystem groupSystem;
 	private IdentitySpider identitySpider;
-	private URI headshotSaveUri;
 	private File headshotSaveDir;
-	private URI groupshotSaveUri;
 	private File groupshotSaveDir;
 	
 	@Override
@@ -62,6 +60,8 @@ public class PhotoServlet extends AbstractServlet {
 		String headshotsUrl = filesUrl + Configuration.HEADSHOTS_RELATIVE_PATH;
 		String groupshotsUrl = filesUrl + Configuration.GROUPSHOTS_RELATIVE_PATH;
 		
+		URI headshotSaveUri;
+		URI groupshotSaveUri;
 		try {
 			headshotSaveUri = new URI(headshotsUrl);
 			groupshotSaveUri = new URI(groupshotsUrl);
