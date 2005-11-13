@@ -10,15 +10,18 @@
 	<property name="src.java" value="src/java" />
 	<property name="src.tests.java" value="src/test/java" />
 	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+		<!--
 		<include name="jbossall-client.jar"/>
 		<include name="jbossmq-client.jar"/>
 		<include name="jboss-j2ee.jar"/>
-		<include name="log4j.jar"/>
+		<include name="log4j.jar"/> -->
 	</fileset>
 	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
+		<!--
 		<include name="target/classes/dumbhippo-client.jar"/>
 		<include name="lib/commons-logging-1.0.4.jar"/>
-		<include name="lib/commons-logging-api-1.0.4.jar"/>
+		<include name="lib/commons-logging-api-1.0.4.jar"/> -->
+		<include name="lib/mysql-connector-java-3.1.10-bin.jar"/>
 	</fileset>
     <path id="project.classpath">
         <pathelement location="${build}"/>
@@ -50,7 +53,14 @@
 		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
 			<classpath refid="tests.classpath" />
 		</javac>
-	</target>	
+		<copy todir="${build.tests}">
+			<fileset dir="${src.tests.java}">
+				<patternset>
+					<include name="**/*.properties" />
+				</patternset>
+			</fileset>
+		</copy>
+	</target>
 	
 	<target name="test-readonly" depends="test">
 		<echo message="Running READ-ONLY tests on site" />
