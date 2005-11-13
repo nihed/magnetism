@@ -46,13 +46,14 @@
 		<path refid="project.classpath" />
 	</path>
 
-	<target name="test">
+	<target name="test" depends="init">
 		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
 			<classpath refid="tests.classpath" />
 		</javac>
 	</target>	
 	
 	<target name="test-readonly" depends="test">
+		<echo message="Running READ-ONLY tests on site" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
 			<assertions enableSystemAssertions="true">
@@ -70,6 +71,7 @@
 	</target>
 
 	<target name="test-destructive" depends="test">
+		<echo message="Running DESTRUCTIVE tests on site" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
 			<assertions enableSystemAssertions="true">
@@ -87,6 +89,7 @@
 	</target>
 
 	<target name="test-example" depends="test">
+		<echo message="Running example tests on random web sites" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
 			<assertions enableSystemAssertions="true">
