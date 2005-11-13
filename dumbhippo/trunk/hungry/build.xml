@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="all" name="hungry">
+	<property name="hippo.server.path" value="${basedir}/../server"/>
+	<property name="jboss.path" value="/opt/jboss"/>
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
+	<property name="reports.tests" value="${target}/reports" />
+	<property name="target.lib" value="${target}/lib" />
+	<property name="src.java" value="src/java" />
+	<property name="src.tests.java" value="src/test/java" />
+	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+		<include name="jbossall-client.jar"/>
+		<include name="jbossmq-client.jar"/>
+		<include name="jboss-j2ee.jar"/>
+		<include name="log4j.jar"/>
+	</fileset>
+	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
+		<include name="target/classes/dumbhippo-client.jar"/>
+		<include name="lib/commons-logging-1.0.4.jar"/>
+		<include name="lib/commons-logging-api-1.0.4.jar"/>
+	</fileset>
+    <path id="project.classpath">
+        <pathelement location="${build}"/>
+		<fileset dir="lib" includes="*.jar" />
+    	<fileset refid="dependency.jars.jboss" />
+    	<fileset refid="dependency.jars.server" />
+    </path>
+    <target name="init">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    	<echo message="creating directories..." />
+        <mkdir dir="${build}"/>    	
+        <mkdir dir="${build.tests}"/>    	
+        <mkdir dir="${reports.tests}"/> 
+    	<mkdir dir="${target.lib}"/>
+    </target>
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+
+	<target name="all" depends="test-readonly"/>
+	
+	<!-- test stuff -->
+	<path id="tests.classpath">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.classpath" />
+	</path>
+
+	<target name="test">
+		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.classpath" />
+		</javac>
+	</target>	
+	
+	<target name="test-readonly" depends="test">
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/readonly/ReadonlyTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="test-destructive" depends="test">
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/destructive/DestructiveTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="test-example" depends="test">
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/example/ExampleTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+	
+</project>
