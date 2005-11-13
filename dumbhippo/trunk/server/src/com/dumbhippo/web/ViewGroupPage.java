@@ -105,7 +105,7 @@ public class ViewGroupPage {
 	}
 	
 	public boolean getIsMember() {
-		return getGroupMember().isMember();
+		return getGroupMember().isParticipant();
 	}
 
 	public boolean getCanModify() {

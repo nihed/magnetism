@@ -102,7 +102,7 @@ public class PostingBoardBean implements PostingBoard {
 		expandedRecipients.addAll(personRecipients);
 		for (Group g : groupRecipients) {
 			for (GroupMember groupMember : g.getMembers()) {
-				if (groupMember.isMember())
+				if (groupMember.isParticipant())
 					expandedRecipients.add(groupMember.getMember());
 			}
 		}

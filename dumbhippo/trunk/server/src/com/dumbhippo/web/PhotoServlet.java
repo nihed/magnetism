@@ -60,7 +60,7 @@ public class PhotoServlet extends AbstractServlet {
 		
 		String filesUrl = config.getPropertyFatalIfUnset(HippoProperty.FILES_SAVEURL);
 		String headshotsUrl = filesUrl + Configuration.HEADSHOTS_RELATIVE_PATH;
-		String groupshotsUrl = filesUrl + Configuration.HEADSHOTS_RELATIVE_PATH;
+		String groupshotsUrl = filesUrl + Configuration.GROUPSHOTS_RELATIVE_PATH;
 		
 		try {
 			headshotSaveUri = new URI(headshotsUrl);
@@ -164,7 +164,7 @@ public class PhotoServlet extends AbstractServlet {
 		tx.scale(scaleX, scaleY);
 		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
 		BufferedImage scaled = op.filter(image, null);
-		File saveDest = new File(saveDir, user.getId());
+		File saveDest = new File(saveDir, isGroup ? groupId : user.getId());
 		logger.debug("saving to " + saveDest.getCanonicalPath());
 
 		// FIXME this should be JPEG, but Java appears to fuck that up

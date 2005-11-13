@@ -79,7 +79,7 @@ public class GroupMember extends DBUnique {
 	 * @return true if the user is invited or active
 	 */
 	@Transient
-	public boolean isMember() {
+	public boolean isParticipant() {
 		return getStatus().ordinal() >= MembershipStatus.INVITED.ordinal();
 	}
 	

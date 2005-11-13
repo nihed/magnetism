@@ -205,6 +205,11 @@ public class MessageSenderBean implements MessageSender {
 		public synchronized void sendPostNotification(User recipient, Post post) {
 			XMPPConnection connection = getConnection();
 
+			if (connection == null || !connection.isConnected()) {
+				logger.error("Connection to XMPP is not active, not sending notification");
+				return;
+			}
+			
 			StringBuilder recipientJid = new StringBuilder();
 			recipientJid.append(recipient.getId().toString());
 			recipientJid.append("@dumbhippo.com");

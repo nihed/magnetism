@@ -1,6 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,7 +37,7 @@ import com.dumbhippo.GlobalSetup;
  * 
  */
 @Entity
-public class Account extends Resource implements Serializable {
+public class Account extends Resource {
 
 	private static final Log logger = GlobalSetup.getLog(Account.class);	
 	
@@ -245,6 +244,6 @@ public class Account extends Resource implements Serializable {
 	@Override
 	@Transient
 	public String getHumanReadableString() {
-		return owner.getName().toString();
+		return getOwner().getName().toString();
 	}
 }

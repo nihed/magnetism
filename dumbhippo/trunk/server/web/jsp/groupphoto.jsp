@@ -27,7 +27,7 @@
 	<div id="dhMain">
 		<br/>
 		<br/>
-		<dht:uploadPhoto location="/groupshots?groupId=${groupphoto.viewedGroupId}"/>
+		<dht:uploadPhoto location="/groupshots" groupId="${groupphoto.viewedGroupId}"/>
 	</div>
 </body>
 </html>

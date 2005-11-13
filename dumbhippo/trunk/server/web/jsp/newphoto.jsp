@@ -15,7 +15,7 @@
 
 	<div id="dhMain">
 		<p>Your new photo looks like this:</p>
-		<img src="/files/${photoLocation}/${photoFilename}"/>
+		<img src="/files${photoLocation}/${photoFilename}"/>
 		<p>(If this is your old photo, your computer didn't know to load the new one. <c:out value="${homePageLink}" escapeXml="false"/> and then press reload in your browser.)
 		</p>
 
@@ -24,7 +24,9 @@
 
 		<br/>
 		<p>If you hate this photo, you can try again:</p>
-		<dht:uploadPhoto location="${photoLocation}"/>
+		<!--  groupId gets submitted here along with a person photo, but 
+			the servlet ignores it -->
+		<dht:uploadPhoto location="${photoLocation}" groupId="${photoFilename}"/>
 	</div>
 </body>
 </html>

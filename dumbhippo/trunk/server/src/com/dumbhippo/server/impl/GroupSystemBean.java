@@ -17,7 +17,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
@@ -48,17 +47,21 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public Group createGroup(Account creator, String name) {
+	public Group createGroup(User creator, String name) {
 		if (creator == null)
 			throw new IllegalArgumentException("null group creator");
 		
 		Group g = new Group(name);
-		GroupMember groupMember = new GroupMember(g, creator, MembershipStatus.ACTIVE);
+		
+		em.persist(g);
+		
+		GroupMember groupMember = new GroupMember(g, creator.getAccount(), MembershipStatus.ACTIVE);
+		
+		em.persist(groupMember);
+		
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 
-		em.persist(groupMember);
-		em.persist(g);
 		return g;
 	}
 	
