@@ -37,7 +37,7 @@ HippoBubble::HippoBubble(void)
         typeLib->GetTypeInfoOfGuid(IID_IHippoBubble, &ifaceTypeInfo_);
         typeLib->GetTypeInfoOfGuid(CLSID_HippoBubble, &classTypeInfo_);
     } else
-	hippoDebug(L"Failed to load type lib: %x\n", hr);
+        hippoDebug(L"Failed to load type lib: %x\n", hr);
 }
 
 HippoBubble::~HippoBubble(void)
