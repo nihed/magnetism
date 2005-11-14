@@ -14,10 +14,11 @@ public class DestructiveTests {
     	cs.nukeDatabase();
     	System.out.println("Done.");
   
+    	// bootstrap at least one user
     	WebServices ws = new WebServices();
-		
     	String userId = ws.getTextPOST("/dologin",
-    			"email", "bootstrap@localhost");
+    			"email", "bootstrap@example.com");
+    	System.out.println("Bootstrap user is " + userId);
     	
         TestSuite suite = new PackageSuite("Destructive tests", DestructiveTests.class);
         return suite;

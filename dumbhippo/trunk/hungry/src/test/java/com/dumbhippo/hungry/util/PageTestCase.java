@@ -1,5 +1,9 @@
 package com.dumbhippo.hungry.util;
 
+import java.util.Arrays;
+
+import com.meterware.httpunit.HttpUnitOptions;
+
 import junit.framework.TestCase;
 import net.sourceforge.jwebunit.WebTester;
 
@@ -39,9 +43,20 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 		return Config.getDefault().getValue(ConfigValue.BASEURL);
 	}
 	
+	/**
+	 * Override this to turn off scripting for the page
+	 * @return true if scripting is enabled
+	 */
+	public boolean getScriptEnabled() {
+		return false;
+	}
+	
 	@Override
 	public void setUp() {
 		t.getTestContext().setBaseUrl(getBaseUrl());
+		
+		// this is global, but should be OK if we set it each time
+		HttpUnitOptions.setScriptingEnabled(getScriptEnabled());
 	}
 	
 	/**
@@ -51,5 +66,18 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 	 * when another test case is using us.
 	 */
 	public abstract void testPage();
+	
+	protected void assertSignedIn() {
+		// Bug in jwebunit; t.getTestContext.getWebClient() has the right cookies,
+		// but t.whateverCookieMethod() does not have them
+		//t.assertCookiePresent("auth");
+		String auth = t.getTestContext().getWebClient().getCookieValue("auth");
+		
+		if (auth == null) {
+			System.out.println("Cookies:");
+			System.out.println(Arrays.toString(t.getTestContext().getWebClient().getCookieNames()));
+		}
+		assertNotNull(auth);
+	}
 }
 

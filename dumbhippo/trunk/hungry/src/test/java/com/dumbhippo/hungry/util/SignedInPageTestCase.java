@@ -1,7 +1,5 @@
 package com.dumbhippo.hungry.util;
 
-import com.meterware.httpunit.WebClient;
-
 import net.sourceforge.jwebunit.WebTester;
 
 /**

@@ -5,6 +5,23 @@ don't do a whole lot unless the site is already seeded with data.
 
 the "destructive" package has tests that create and delete stuff.
 
+For load testing we probably want a new "load" package; HttpUnit is useful, but
+most of the tests assume the database doesn't change out from under them, 
+so we can't just use our normal tests for load testing.
+
+Tests for a particular relative url are named after it, e.g. 
+/home = Home.java
+
+Tests that load an url with various parameters are named like HomeAll.java
+(loads Home for each user)
+
+To test a page both readonly and destructively, subclassing the test in the 
+destructive package is one convention.
+
+The tests in each package are partially ordered, using the @OrderAfter annotation.
+The tests in the destructive package build on each other, adding more users and 
+then doing stuff with them.
+
 The tests use HttpUnit and a convenience library on top of it called
 jWebUnit.
 

@@ -3,7 +3,6 @@ package com.dumbhippo.hungry.readonly;
 import net.sourceforge.jwebunit.WebTester;
 
 import com.dumbhippo.hungry.util.PageTestCase;
-import com.meterware.httpunit.HttpUnitOptions;
 
 public class Signin extends PageTestCase {
 
@@ -13,11 +12,6 @@ public class Signin extends PageTestCase {
 	
 	public Signin(WebTester t) {
 		super(t);
-	}
-	
-	public void setUp() {
-		super.setUp();
-		HttpUnitOptions.setScriptingEnabled(false);
 	}
 	
 	@Override
