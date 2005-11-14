@@ -5,7 +5,7 @@
 
 <head>
 	<title>New Photo</title>
-	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
+	<dht:stylesheets />
 </head>
 <body>
 	<dht:header>

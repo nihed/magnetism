@@ -5,7 +5,7 @@
 
 <head>
 	<title><c:out value="${flashMessage}"/></title>
-	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
+	<dht:stylesheets />
 	<dht:scriptIncludes/>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<script type="text/javascript">

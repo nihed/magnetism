@@ -11,7 +11,7 @@
 
 <head>
 	<title><c:out value="${personName}"/></title>
-	<link rel="stylesheet" href="/css/person.css" type="text/css" />
+	<dht:stylesheets href="/css/person.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>
@@ -27,6 +27,11 @@
 			</c:otherwise>
 		</c:choose>
 	</dht:toolbar>
+
+	<div class="person">
+		<dht:png klass="cool-person" src="/files/headshots/${home.person.person.id}" />
+		<c:out value="${personName}"/>
+	</div>
 
 	<div id="dhMain">
 		<table>

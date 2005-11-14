@@ -16,7 +16,7 @@
 
 <head>
 	<title>Changing Photo for <c:out value="${groupphoto.name}"/></title>
-	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
+	<dht:stylesheets />
 </head>
 <body>
 	<dht:header>

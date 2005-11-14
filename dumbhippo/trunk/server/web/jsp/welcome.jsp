@@ -7,7 +7,7 @@
 
 <head>
 	<title>Welcome <c:out value="${welcome.person.humanReadableName}"/>!</title>
-	<link rel="stylesheet" href="/css/welcome.css" type="text/css" />
+	<dht:stylesheets href="/css/welcome.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>

@@ -5,8 +5,7 @@
 
 <head>
 	<title>Sharing a Link</title>
-	<link rel="stylesheet" href="/css/sharelink.css" type="text/css" />
-	<!--[if IE]><link rel="stylesheet" href="/css/sharelink-iefixes.css" type="text/css" /><![endif]-->
+	<dht:stylesheets href="/css/sharelink.css" iehref="/css/sharelink-iefixes.css" />
 	<dht:scriptIncludes/>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<script type="text/javascript">

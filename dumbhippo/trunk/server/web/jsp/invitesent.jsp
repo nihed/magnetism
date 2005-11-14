@@ -5,7 +5,7 @@
 
 <head>
 	<title>Invite Sent</title>
-	<link rel="stylesheet" href="/css/sitewide.css" type="text/css" />
+	<dht:stylesheets />
 	<dht:scriptIncludes/>
 </head>
 <body>

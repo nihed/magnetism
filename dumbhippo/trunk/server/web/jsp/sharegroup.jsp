@@ -11,7 +11,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<link rel="stylesheet" href="css/sharelink.css" type="text/css"></style>
+	<dht:stylesheets />
 	<title>Share <c:out value="${viewgroup.name}"/></title>
 	<script src="javascript/config.js" type="text/javascript"></script>
 	<script src="javascript/dojo/dojo.js" type="text/javascript"></script>

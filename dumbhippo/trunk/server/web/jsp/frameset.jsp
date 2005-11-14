@@ -10,6 +10,7 @@
 
 <head>
         <title><c:out value="${title}"/></title>
+        <dht:stylesheets />
 </head>
 
 <frameset rows="110,*">

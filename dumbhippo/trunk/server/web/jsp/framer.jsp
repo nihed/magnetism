@@ -10,7 +10,7 @@
 
 <head>
 	<title><c:out value="${title}"/></title>
-	<link rel="stylesheet" href="/css/frames.css" type="text/css" />
+	<dht:stylesheets href="/css/frames.css" />
 	<dht:scriptIncludes/>
         <script type="text/javascript">
                 dojo.require("dojo.html");

@@ -7,7 +7,7 @@
 
 <head>
 	<title>Main</title>
-	<link rel="stylesheet" href="/css/group.css" type="text/css" />
+	<dht:stylesheets />
 	<dht:scriptIncludes/>
 </head>
 <body>

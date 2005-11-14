@@ -12,7 +12,7 @@
 
 <head>
 	<title><c:out value="${viewgroup.name}"/></title>
-	<link rel="stylesheet" href="/css/group.css" type="text/css" />
+	<dht:stylesheets href="/css/group.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>
@@ -36,7 +36,7 @@
 	</dht:toolbar>
 
 	<div class="person">
-		<img class="cool-person" src="/files/groupshots/${viewgroup.viewedGroupId}" />
+		<dht:png klass="cool-person" src="/files/groupshots/${viewgroup.viewedGroupId}" />
 		<c:out value="${viewgroup.name}"/>
 	</div>
 	<c:if test="${viewgroup.canModify}">

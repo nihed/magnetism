@@ -7,7 +7,7 @@
 
 <head>
 	<title><c:out value="${home.person.humanReadableName}"/></title>
-	<link rel="stylesheet" href="/css/home.css" type="text/css" />
+	<dht:stylesheets href="/css/home.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>
@@ -18,7 +18,7 @@
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
-		<img class="cool-person" src="/files/headshots/${home.person.person.id}" />
+		<dht:png klass="cool-person" src="/files/headshots/${home.person.person.id}" />
 		<dht:userNameEdit value="${home.person.humanReadableName}"/>
 	</div>
 	<div>
