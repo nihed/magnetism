@@ -3,9 +3,11 @@ package com.dumbhippo.hungry.readonly;
 import java.util.Set;
 
 import com.dumbhippo.hungry.util.CheatSheet;
+import com.dumbhippo.hungry.util.OrderAfter;
 
 import junit.framework.TestCase;
 
+@OrderAfter(Home.class)
 public class HomeAll extends TestCase {
 	public void testAllPages() {
 		CheatSheet cs = CheatSheet.getReadOnly();
