@@ -200,6 +200,18 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 		this.setPosition(this.position + 1)
 	}
 	
+	this.goNextOrClose = function () {
+		if (this.position >= (this.notifications.length-1)) {
+			this.close();
+		} else {
+			this.goNext();
+		}
+	}
+	
+	this.close = function () {
+		window.external.Close();
+	}
+	
 	this._updateNavigation = function () {
 		var navText = dh.util.dom.getClearedElementById("dh-notification-navigation-text")
 		navText.appendChild(document.createTextNode((this.position+1) + " of " + this.notifications.length))
@@ -252,12 +264,14 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 		photoLinkDiv.appendChild(a)
 	}
 	
-	this._createSharedLinkLink = function(linkTitle, postId) {
+	this._createSharedLinkLink = function(linkTitle, postId, hookfn) {
 		var a = document.createElement("a")
 		a.setAttribute("href", "javascript:true")
 		a.onclick = dh.util.dom.stdEventHandler(function(e) {
 			e.stopPropagation();
 			window.external.DisplaySharedLink(postId)
+			if (hookfn)
+				hookfn()
 			return false;
 		})
 		dh.util.dom.appendSpanText(a, linkTitle, "dh-notification-link-title")
@@ -272,9 +286,14 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 						  personUrl)
 					  
 		this._setPhotoLink(this.getPersonName(share.senderId), personUrl)
+		
+		var display = this;
+		var hook = function () {
+			display.goNextOrClose();
+		}
 
 		var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
-		titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId))
+		titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId, hook))
 
 		var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
 		bodyDiv.appendChild(document.createTextNode(share.linkDescription))
@@ -313,7 +332,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 
 		var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
 		titleDiv.appendChild(document.createTextNode("Swarm for "));
-		titleDiv.appendChild(this._createSharedLinkLink(swarm.postTitle, swarm.postId))
+		titleDiv.appendChild(this._createSharedLinkLink(swarm.postTitle, swarm.postId, null))
 
 		var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
 		for (personId in this.swarmers[swarm.postId]) {
