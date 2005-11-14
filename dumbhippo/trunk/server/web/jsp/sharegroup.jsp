@@ -11,11 +11,9 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<dht:stylesheets />
+	<dht:stylesheets href="/css/sharelink.css" />
 	<title>Share <c:out value="${viewgroup.name}"/></title>
-	<script src="javascript/config.js" type="text/javascript"></script>
-	<script src="javascript/dojo/dojo.js" type="text/javascript"></script>
-	<script src="javascript/common.js" type="text/javascript"></script>
+	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.sharegroup");
 		dhShareGroupId = "${viewgroup.viewedGroupId}";
@@ -24,12 +22,16 @@
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 </head>
 <body>
+	<dht:header>
+		Sharing ${viewgroup.name}
+	</dht:header>
+
+<div id="dhMain">
 <!--  invisible at first to avoid flicker while we set up dojo widgets -->
 	<div id="dhShareGroupForm" class="dhInvisible">
 		<div class="dhVerticalPadding"></div>
 
-		<h2>Share <c:out value="${viewgroup.name}"/></span></h2>
-		<p>(<i>Recipients are invited to the group</i>)
+		<h2>Invite friends to <c:out value="${viewgroup.name}"/></span></h2>
 		
 		<div class="dhVerticalPadding"></div>
 		<div class="dhLabel">Share <u>W</u>ith:</div>
@@ -69,5 +71,6 @@
 
 		<div id="dojoDebug"/> <!-- where to put dojo debug spew -->
 	</div><!-- end dhShareGroupForm -->
+<div><!-- end dhMain -->
 </body>
 </html>
