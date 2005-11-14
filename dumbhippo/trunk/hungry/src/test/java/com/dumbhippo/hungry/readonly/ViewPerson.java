@@ -19,10 +19,6 @@ public class ViewPerson extends PageTestCase {
 		this.userId = null;
 	}
 	
-	ViewPerson(String userId) {
-		this.userId = userId;
-	}
-	
 	ViewPerson(WebTester t, String userId) {
 		super(t);
 		this.userId = userId;

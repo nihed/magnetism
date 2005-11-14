@@ -91,6 +91,23 @@ public class CheatSheet {
 		}		
 	}
 	
+	public String getUserAuthKey(String userId) {
+		try {
+			PreparedStatement statement =
+				getConnection().prepareStatement("SELECT User.id, Client.authKey FROM User INNER JOIN Account ON User.id = Account.owner_id LEFT JOIN Client ON Account.id = Client.account_id WHERE User.id = ? LIMIT 1");
+			statement.setString(1, userId);
+			ResultSet rs = statement.executeQuery();
+			String ret = null;
+			while (rs.next()) {
+				ret = rs.getString("authKey");
+			}
+			return ret;
+		} catch (SQLException e) {
+			fatalSqlException(e);
+			return null;
+		}
+	}
+	
 	public void nukeDatabase() {
 		failIfReadOnly();
 	

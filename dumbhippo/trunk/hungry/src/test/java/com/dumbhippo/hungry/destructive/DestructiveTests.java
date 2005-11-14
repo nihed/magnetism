@@ -13,13 +13,12 @@ public class DestructiveTests {
     	System.out.println("Erasing database contents...");
     	cs.nukeDatabase();
     	System.out.println("Done.");
-    	
+  
     	WebServices ws = new WebServices();
-    	String text = ws.getTextPOST("/dologin",
-    			"email", "foo@localhost");
+		
+    	String userId = ws.getTextPOST("/dologin",
+    			"email", "bootstrap@localhost");
     	
-    	System.out.println("got login: " + text);
-        
         TestSuite suite = new PackageSuite("Destructive tests", DestructiveTests.class);
         return suite;
     }

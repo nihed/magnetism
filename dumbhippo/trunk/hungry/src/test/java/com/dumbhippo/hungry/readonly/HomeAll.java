@@ -6,20 +6,19 @@ import com.dumbhippo.hungry.util.CheatSheet;
 
 import junit.framework.TestCase;
 
-public class ViewPersonAll extends TestCase {
+public class HomeAll extends TestCase {
 	public void testAllPages() {
 		CheatSheet cs = CheatSheet.getReadOnly();
 		Set<String> userIds = cs.getAllUserIds();
 		
-		System.out.println("Going over viewperson for all " + userIds.size() + " users");
+		System.out.println("Going over home for all " + userIds.size() + " users");
 		int count = 0;
 		for (String id : userIds) {
-			System.out.println("   User " + count + " viewperson?personId=" + id);
-			ViewPerson vp = new ViewPerson(null, id);
-			vp.setUp();
-			vp.testPage();
+			System.out.println("   User " + count + " id=" + id);
+			Home home = new Home(null, id);
+			home.setUp();
+			home.testPage();
 			++count;
 		}
 	}
 }
-

@@ -13,15 +13,16 @@ import com.meterware.httpunit.WebResponse;
 public class WebServices {
 	
 	private String baseurl;
+	private WebClient webClient;
+	
+	public WebServices(WebClient webClient, String baseurl) {
+		this.webClient = webClient;
+		this.baseurl = baseurl;
+	}
 	
 	public WebServices() {
 		baseurl = Config.getDefault().getValue(ConfigValue.BASEURL);
-	}
-	
-	private WebClient newConversation() {	
-    	WebClient wc = new WebConversation();
-    	
-    	return wc;
+		webClient = new WebConversation();
 	}
 	
 	public String getTextPOST(String relativeUrl, String... parameters) throws WebServicesException {
@@ -31,8 +32,6 @@ public class WebServices {
 		
 		if ((parameters.length % 2) != 0)
     		throw new IllegalArgumentException("parameters come in key-value pairs");
-		
-		WebClient wc = newConversation();
     	 
     	PostMethodWebRequest req = new PostMethodWebRequest(baseurl + "/text" + relativeUrl);
     	
@@ -42,7 +41,7 @@ public class WebServices {
     	
 		WebResponse response;
 		try {
-			response = wc.sendRequest(req);
+			response = webClient.sendRequest(req);
 		} catch (MalformedURLException e) {
 			throw new WebServicesException("error sending request", e);
 		} catch (IOException e) {
@@ -54,7 +53,7 @@ public class WebServices {
 		if (!response.getContentType().equals("text/plain")) {
 			throw new WebServicesException("Wrong content type " + response.getContentType()); 
 		}
-		
+
 		try {
 			return response.getText();
 		} catch (IOException e) {

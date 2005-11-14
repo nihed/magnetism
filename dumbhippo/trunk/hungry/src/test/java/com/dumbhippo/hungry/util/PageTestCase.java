@@ -20,10 +20,12 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 	protected PageTestCase(WebTester t) {
 		super();
 		this.t = t;
+		if (this.t == null)
+			this.t = new WebTester();
 	}
 	
 	protected PageTestCase() {
-		this(new WebTester());
+		this(null);
 	}
 	
 	/**
