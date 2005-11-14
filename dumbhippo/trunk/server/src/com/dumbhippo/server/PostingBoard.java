@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -54,4 +55,13 @@ public interface PostingBoard {
 	public PostView loadPost(Viewpoint viewpoint, Guid guid);
 
 	public void postClickedBy(Post post, User clicker);
+	
+	/**
+	 * Internal implementation detail, public so we can put a transaction annotation
+	 * on it.
+	 * 
+	 * @param user a User
+	 * @param post a Post
+	 */
+	public PersonPostData findOrCreatePersonPostData(User user, Post post);
 }

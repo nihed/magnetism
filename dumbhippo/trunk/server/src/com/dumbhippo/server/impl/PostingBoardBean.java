@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -44,6 +45,7 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class PostingBoardBean implements PostingBoard {
@@ -396,8 +398,54 @@ public class PostingBoardBean implements PostingBoard {
 	public void postClickedBy(Post post, User clicker) {
 		logger.debug("Post " + post + " clicked by " + clicker);
 		messageSender.sendPostClickedNotification(post, clicker);
-		// FIXME should be unique...
-		PersonPostData postData = new PersonPostData(clicker, post);
-		em.persist(postData);
+		
+		getPersonPostData(clicker, post);
+		
+		@SuppressWarnings("unused")
+		PersonPostData postData = getPersonPostData(clicker, post);
+		
+		// If getPersonPostData created a new PersonPostData, then that
+		// will have been created with clickedDate as the current time,
+		// so we don't have anything more. If it returned an existing
+		// PersonPostData, then we don't want to do anything ... leave
+		// the old clicked date.
+	}
+	
+	private PersonPostData getPersonPostData(User user, Post post) {
+		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
+		int retries = 1;
+		
+		while (true) {
+			try {
+				return proxy.findOrCreatePersonPostData(user, post);
+			} catch (Exception e) {
+				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
+					logger.debug("Race condition creating PersonPostData, retrying");
+					retries--;
+				} else {
+					logger.error("Couldn't create PersonPostData resource", e);					
+					throw new RuntimeException("Unexpected error creating PersonPostData", e);
+				}
+			}
+		}		
+		
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public PersonPostData findOrCreatePersonPostData(User user, Post post) {
+		PersonPostData ppd;
+		
+		try {
+			ppd = (PersonPostData)em.createQuery("SELECT ppd FROM PersonPostData ppd " +
+				                                 "WHERE ppd.post = :post AND ppd.person = :user")
+	            .setParameter("post", post)
+	            .setParameter("user", user)
+	            .getSingleResult();
+		} catch (EntityNotFoundException e) {
+			ppd = new PersonPostData(user, post); 
+			em.persist(ppd);
+		}
+	
+		return ppd;
 	}
 }
