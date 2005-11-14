@@ -60,7 +60,8 @@ public class RewriteServlet extends HttpServlet {
 		// so we have to handle javascript/ and css/ URLs here.
 		
 		if (path.startsWith("/javascript/") || 
-			path.startsWith("/css/")) {
+			path.startsWith("/css/") ||
+			path.startsWith("/images/")) {
 			context.getNamedDispatcher("default").forward(request, response);
 			return;
 		}
