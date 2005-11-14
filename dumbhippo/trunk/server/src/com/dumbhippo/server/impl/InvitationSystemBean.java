@@ -67,10 +67,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	public Set<PersonView> findInviters(User invitee) {
 		Query query = em.createQuery("select inviter from " +
-								     "Person inviter, InvitationToken invite, AccountClaim ar " + 
+								     "User inviter, InvitationToken invite, AccountClaim ar " + 
 								     "where inviter member of invite.inviters and " +
 								     "ar.resource = invite.invitee and " +
-								     "ar.claimedOwner = :invitee");
+								     "ar.owner = :invitee");
 		query.setParameter("invitee", invitee);
 		
 		@SuppressWarnings("unchecked")
