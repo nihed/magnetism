@@ -21,12 +21,12 @@ public:
 
     HRESULT registerTypeLib();
     HRESULT registerClassImplCategories(const CLSID &classID, 
-	                                ULONG        cCategories,
-					CATID        categories[]);
+                                        ULONG        cCategories,
+                                        CATID        categories[]);
     HRESULT registerInprocServer(const CLSID &classID,
-				 const WCHAR *title);
+                                 const WCHAR *title);
     HRESULT registerBrowserHelperObject(const CLSID &classID,
-	                                const WCHAR *title);
+                                        const WCHAR *title);
 
 private:
     WCHAR *modulePath_;

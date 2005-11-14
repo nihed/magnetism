@@ -62,12 +62,12 @@ private:
     bool createWindow(HWND parentWindow);
     bool registerWindowClass();
     bool processMessage(UINT   message, 
-	                WPARAM wParam,
-		        LPARAM lParam);
+                        WPARAM wParam,
+                        LPARAM lParam);
     void setHasFocus(bool hasFocus);
     void onPaint();
     static LRESULT CALLBACK windowProc(HWND   window,
-		  	               UINT   message,
-			               WPARAM wParam,
-			               LPARAM lParam);
+                                       UINT   message,
+                                       WPARAM wParam,
+                                       LPARAM lParam);
 };

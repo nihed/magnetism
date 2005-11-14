@@ -18,7 +18,7 @@
        refCount_--;                 \
                                     \
         if (refCount_ != 0)         \
-	    return refCount_;       \
+            return refCount_;       \
                                     \
         delete this;                \
         return 0;                   \
@@ -37,30 +37,30 @@ public:
     HippoPtr() : raw_(0) {
     }
     HippoPtr(T *t) : raw_(t) {
-	if (raw_)
-	    raw_->AddRef();
+        if (raw_)
+            raw_->AddRef();
     }
     ~HippoPtr() {
-	if (raw_) {
-	    raw_->Release();
-	}
+        if (raw_) {
+            raw_->Release();
+        }
     }
     operator T *(){
-	return raw_;
+        return raw_;
     }
     T* operator->() {
-	return raw_;
+        return raw_;
     }
     T **operator&() {
-	assert(raw_ == NULL);
-	return &raw_;
+        assert(raw_ == NULL);
+        return &raw_;
     }
     void operator=(T *t) {
-	if (raw_)
-	    raw_->Release();
-	raw_ = t;
-	if (raw_)
-	    raw_->AddRef();
+        if (raw_)
+            raw_->Release();
+        raw_ = t;
+        if (raw_)
+            raw_->AddRef();
     }
 
 protected:
@@ -72,8 +72,8 @@ class HippoQIPtr : public HippoPtr<T>
 {
 public:
     HippoQIPtr(IUnknown *unknown) : HippoPtr<T>() {
-	if (unknown)
-	    unknown->QueryInterface(*piid, (LPVOID *)&raw_);
+        if (unknown)
+            unknown->QueryInterface(*piid, (LPVOID *)&raw_);
     }
 };
 
@@ -86,73 +86,73 @@ public:
     }
 
     HippoBSTR(const OLECHAR *str) 
-	: m_str(::SysAllocString(str)) {
+        : m_str(::SysAllocString(str)) {
     }
 
     HippoBSTR(unsigned int   len,
-	      const OLECHAR *str) 
-	: m_str(::SysAllocStringLen(str, len)) {
+              const OLECHAR *str) 
+        : m_str(::SysAllocStringLen(str, len)) {
     }
 
     ~HippoBSTR() {
-	if (m_str)
-	    ::SysFreeString(m_str);
+        if (m_str)
+            ::SysFreeString(m_str);
     }
 
     HRESULT Append(const OLECHAR *str) {
-	UINT oldlen = SysStringLen(m_str);
-	size_t appendlen = wcslen(str);
-	
-	if (oldlen + appendlen >= oldlen && // check for overflow
-	    ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen)) {
-	    memcpy(m_str + oldlen, str, sizeof(OLECHAR) * (appendlen + 1));
-	    return S_OK;
-	} else {
-	    return E_OUTOFMEMORY;
-	}
+        UINT oldlen = SysStringLen(m_str);
+        size_t appendlen = wcslen(str);
+        
+        if (oldlen + appendlen >= oldlen && // check for overflow
+            ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen)) {
+            memcpy(m_str + oldlen, str, sizeof(OLECHAR) * (appendlen + 1));
+            return S_OK;
+        } else {
+            return E_OUTOFMEMORY;
+        }
     }
 
     HRESULT CopyTo(BSTR *str) {
-	if (m_str) {
-	    *str = ::SysAllocString(m_str);
-	    return *str ? S_OK : E_OUTOFMEMORY;
-	} else {
-	    *str = NULL;
-	    return S_OK;
-	}
+        if (m_str) {
+            *str = ::SysAllocString(m_str);
+            return *str ? S_OK : E_OUTOFMEMORY;
+        } else {
+            *str = NULL;
+            return S_OK;
+        }
     }
 
     unsigned int Length() {
-	return ::SysStringLen(m_str);
+        return ::SysStringLen(m_str);
     }
 
-	void setUTF8(const char *utf8) {
-		int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
-		if (addlen == 0)
-			return;
-		int reqlen = Length() + addlen;
-		::SysReAllocStringLen(&m_str, m_str, reqlen);
-		int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, m_str, reqlen);
-		if (ret == 0)
-			return;
-	}
+    void setUTF8(const char *utf8) {
+        int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+        if (addlen == 0)
+            return;
+        int reqlen = Length() + addlen;
+        ::SysReAllocStringLen(&m_str, m_str, reqlen);
+        int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, m_str, reqlen);
+        if (ret == 0)
+            return;
+    }
 
     operator BSTR () {
-	return m_str;
+        return m_str;
     }
 
     BSTR *operator&() {
-	assert(m_str == NULL);
-	return &m_str;
+        assert(m_str == NULL);
+        return &m_str;
     }
 
     HippoBSTR & operator=(const OLECHAR *str) {
-	// On memory failure, leaves NULL in the result
-	if (m_str)
-	    ::SysFreeString(m_str);
-	m_str = ::SysAllocString(str);
+        // On memory failure, leaves NULL in the result
+        if (m_str)
+            ::SysFreeString(m_str);
+        m_str = ::SysAllocString(str);
 
-	return *this;
+        return *this;
     }
     
     HippoBSTR & operator=(const HippoBSTR &other) {
@@ -173,17 +173,18 @@ hippoHresultToString(HRESULT hr, HippoBSTR &str)
     WCHAR *buf;
 
     if (!FormatMessageW (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-			 FORMAT_MESSAGE_FROM_SYSTEM,
-			 NULL,
-			 hr,
-			 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-			 (LPWSTR) &buf,
-			 0, NULL)) {
-		return false;
+                         FORMAT_MESSAGE_FROM_SYSTEM,
+                         NULL,
+                         hr,
+                         MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
+                         (LPWSTR) &buf,
+                         0, NULL)) 
+    {
+        return false;
     } else {
-	str = (WCHAR*) buf;
-	LocalFree (buf);
-	return true;
+        str = (WCHAR*) buf;
+        LocalFree (buf);
+        return true;
     }
 }
 
@@ -191,26 +192,26 @@ inline void hippoDebug(WCHAR *format, ...)
 {
     WCHAR buf[1024];
     va_list vap;
-    va_start (vap, format);
+    va_start(vap, format);
     StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
-    va_end (vap);
+    va_end(vap);
     MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
 }
 
 inline void hippoDebugLastErr(WCHAR *fmt, ...) 
 {
-	HippoBSTR str;
-	HippoBSTR errstr;
+    HippoBSTR str;
+    HippoBSTR errstr;
     WCHAR buf[1024];
-	HRESULT res = GetLastError();
+    HRESULT res = GetLastError();
     va_list vap;
-    va_start (vap, fmt);
+    va_start(vap, fmt);
     StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), fmt, vap);
-    va_end (vap);
-	str.Append(buf);
-	hippoHresultToString(res, errstr);
-	str.Append(errstr);
-	MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
+    va_end(vap);
+    str.Append(buf);
+    hippoHresultToString(res, errstr);
+    str.Append(errstr);
+    MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
 }
 
 /* Avoid (incorrect) warnings that you get because SetWindowLongPtr()

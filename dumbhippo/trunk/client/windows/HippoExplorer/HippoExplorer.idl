@@ -11,37 +11,37 @@ import "ocidl.idl";
 ]
 library HippoExplorer {
     [
-	uuid(82344E95-33D8-44e3-A2BF-2E4A0CCC6C95), // IID_IHippoEmbed
-	helpstring("DumbHippo Embedded Object"),
-	dual,
-	oleautomation
+        uuid(82344E95-33D8-44e3-A2BF-2E4A0CCC6C95), // IID_IHippoEmbed
+        helpstring("DumbHippo Embedded Object"),
+        dual,
+        oleautomation
     ]
     interface IHippoEmbed : IDispatch
     {
-	[helpstring("Display message")]
-	HRESULT DisplayMessage([in] BSTR message);
-	[helpstring("Insert debugging information into the element")]
-	HRESULT DebugDump([in] IDispatch *element);
-	[helpstring("Close the browser window; usually used for server side dialogs")]
-	HRESULT CloseWindow(void);
+        [helpstring("Display message")]
+        HRESULT DisplayMessage([in] BSTR message);
+        [helpstring("Insert debugging information into the element")]
+        HRESULT DebugDump([in] IDispatch *element);
+        [helpstring("Close the browser window; usually used for server side dialogs")]
+        HRESULT CloseWindow(void);
     }
     [
-	uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents
-	helpstring("DumbHippo Embedded Object Events"),
-	dual,
-	oleautomation
+        uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents
+        helpstring("DumbHippo Embedded Object Events"),
+        dual,
+        oleautomation
     ]
     interface IHippoEmbedEvents : IDispatch
     {
-	[helpstring("Toplevel location changed")]
-	[id(HIPPO_DISPID_LOCATIONCHANGED)] HRESULT LocationChanged(BSTR locationURL);
+        [helpstring("Toplevel location changed")]
+        [id(HIPPO_DISPID_LOCATIONCHANGED)] HRESULT LocationChanged(BSTR locationURL);
     }
     [
-	uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed
+        uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed
     ]
     coclass HippoEmbed
     {
-	[default] interface IHippoEmbed;
-	[default, source] interface IHippoEmbedEvents;
+        [default] interface IHippoEmbed;
+        [default, source] interface IHippoEmbedEvents;
     }
 }

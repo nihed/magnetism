@@ -26,7 +26,7 @@ public:
 
     //IDispatch methods
    STDMETHOD (GetIDsOfNames) (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
-   STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);			  
+   STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);                    
    STDMETHOD (GetTypeInfoCount) (unsigned int *);
    STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
                        VARIANT *, EXCEPINFO *, unsigned int *);
@@ -47,9 +47,9 @@ private:
     void onUIStarted();
 
     static LRESULT CALLBACK windowProc(HWND   window,
-		  	               UINT   message,
-			               WPARAM wParam,
-			               LPARAM lParam);
+                                       UINT   message,
+                                       WPARAM wParam,
+                                       LPARAM lParam);
 
     HippoPtr<IWebBrowser2> site_;
     HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2

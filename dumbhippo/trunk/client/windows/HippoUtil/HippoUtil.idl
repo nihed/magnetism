@@ -10,35 +10,35 @@ import "exdisp.idl";
 ]
 library HippoUtil {
     [
-	uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
-	helpstring("DumbHippo User Interface"),
-	dual,
-	oleautomation
+        uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
+        helpstring("DumbHippo User Interface"),
+        dual,
+        oleautomation
     ]
     interface IHippoUI : IDispatch
     {
-	[id(100), helpstring("Register a browser")]
-	HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
-	[id(101), helpstring("Unregister a previously registered browser")]
-	HRESULT UnregisterBrowser([in] DWORD cookie);
-	[id(102), helpstring("Update information about a browser")]
-	HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
+        [id(100), helpstring("Register a browser")]
+        HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+        [id(101), helpstring("Unregister a previously registered browser")]
+        HRESULT UnregisterBrowser([in] DWORD cookie);
+        [id(102), helpstring("Update information about a browser")]
+        HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
     }
-   [
-	uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
-	helpstring("DumbHippo Notification Bubble"),
-	dual,
-	oleautomation
+    [
+        uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
+        helpstring("DumbHippo Notification Bubble"),
+        dual,
+        oleautomation
     ]
     interface IHippoBubble : IUnknown
     {
-	[id(120), helpstring("Open an external URL")]
-	HRESULT OpenExternalURL([in] BSTR url);
-	[id(121), helpstring("Close notification window")]
-	HRESULT Close();
-	[id(122), helpstring("Display a shared link")]
-	HRESULT DisplaySharedLink([in] BSTR postId);
-	[id(123), helpstring("Debug log")]
-	HRESULT DebugLog([in] BSTR msg);
+        [id(120), helpstring("Open an external URL")]
+        HRESULT OpenExternalURL([in] BSTR url);
+        [id(121), helpstring("Close notification window")]
+        HRESULT Close();
+        [id(122), helpstring("Display a shared link")]
+        HRESULT DisplaySharedLink([in] BSTR postId);
+        [id(123), helpstring("Debug log")]
+        HRESULT DebugLog([in] BSTR msg);
     }
 }

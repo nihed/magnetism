@@ -26,15 +26,15 @@ ClassFactory::~ClassFactory()
 
 STDMETHODIMP 
 ClassFactory::QueryInterface(const IID &ifaceID, 
-			     void     **result)
+                             void     **result)
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
-	*result = static_cast<IUnknown *>(this);
+        *result = static_cast<IUnknown *>(this);
     else if (IsEqualIID(ifaceID, IID_IClassFactory)) 
-	*result = static_cast<IClassFactory *>(this);
+        *result = static_cast<IClassFactory *>(this);
     else {
-	*result = NULL;
-	return E_NOINTERFACE;
+        *result = NULL;
+        return E_NOINTERFACE;
     }
 
     this->AddRef();
@@ -51,7 +51,7 @@ createInstance(const IID &ifaceID, void **result)
 {
     T *t = new T();
     if (!t)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
 
     HRESULT hr = t->QueryInterface (ifaceID, result);
     t->Release();
@@ -61,20 +61,20 @@ createInstance(const IID &ifaceID, void **result)
 
 STDMETHODIMP 
 ClassFactory::CreateInstance (IUnknown  *outer, 
-			      const IID &ifaceID, 
-			      void     **result)
+                              const IID &ifaceID, 
+                              void     **result)
 {
     if (outer)
-	return CLASS_E_NOAGGREGATION;
+        return CLASS_E_NOAGGREGATION;
 
     if (IsEqualCLSID(classID_, CLSID_HippoExplorerBar)) {
-	return createInstance<HippoExplorerBar>(ifaceID, result);
+        return createInstance<HippoExplorerBar>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoTracker)) {
-	return createInstance<HippoTracker>(ifaceID, result);
+        return createInstance<HippoTracker>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoEmbed)) {
-	return createInstance<HippoEmbed>(ifaceID, result);
+        return createInstance<HippoEmbed>(ifaceID, result);
     } else {
-	return E_UNEXPECTED;
+        return E_UNEXPECTED;
     }
 }
 

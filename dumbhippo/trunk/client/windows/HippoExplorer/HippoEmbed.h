@@ -38,7 +38,7 @@ public:
 
     // IDispatch methods
    STDMETHODIMP GetIDsOfNames (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
-   STDMETHODIMP GetTypeInfo (unsigned int, LCID, ITypeInfo **);			  
+   STDMETHODIMP GetTypeInfo (unsigned int, LCID, ITypeInfo **);                   
    STDMETHODIMP GetTypeInfoCount (unsigned int *);
    STDMETHODIMP Invoke (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
                         VARIANT *, EXCEPINFO *, unsigned int *);

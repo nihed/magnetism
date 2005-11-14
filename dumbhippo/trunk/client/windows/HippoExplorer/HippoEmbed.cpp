@@ -27,14 +27,14 @@ HippoEmbed::HippoEmbed(void)
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoExplorer, 
-				0, 1, /* Version */
-				0,    /* LCID */
-				&typeLib);
+                                0, 1, /* Version */
+                                0,    /* LCID */
+                                &typeLib);
     if (SUCCEEDED (hr)) {
-	typeLib->GetTypeInfoOfGuid(IID_IHippoEmbed, &ifaceTypeInfo_);
-	typeLib->GetTypeInfoOfGuid(CLSID_HippoEmbed, &classTypeInfo_);
+        typeLib->GetTypeInfoOfGuid(IID_IHippoEmbed, &ifaceTypeInfo_);
+        typeLib->GetTypeInfoOfGuid(CLSID_HippoEmbed, &classTypeInfo_);
     } else
-	hippoDebug(L"Failed to load type lib: %x\n", hr);
+        hippoDebug(L"Failed to load type lib: %x\n", hr);
 }
 
 HippoEmbed::~HippoEmbed(void)
@@ -48,29 +48,29 @@ HippoEmbed::~HippoEmbed(void)
 
 STDMETHODIMP 
 HippoEmbed::QueryInterface(const IID &ifaceID, 
-			     void   **result)
+                             void   **result)
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
-	*result = static_cast<IUnknown *>(static_cast<IObjectWithSite *>(this));
+        *result = static_cast<IUnknown *>(static_cast<IObjectWithSite *>(this));
     else if (IsEqualIID(ifaceID, IID_IObjectWithSite)) 
-	*result = static_cast<IObjectWithSite *>(this);
+        *result = static_cast<IObjectWithSite *>(this);
     else if (IsEqualIID(ifaceID, IID_IObjectSafety)) 
-	*result = static_cast<IObjectSafety *>(this);
+        *result = static_cast<IObjectSafety *>(this);
     else if (IsEqualIID(ifaceID, IID_IDispatch)) 
-	*result = static_cast<IDispatch *>(this);
+        *result = static_cast<IDispatch *>(this);
     else if (IsEqualIID(ifaceID, IID_IProvideClassInfo))
-	*result = static_cast<IProvideClassInfo *>(this);
+        *result = static_cast<IProvideClassInfo *>(this);
     else if (IsEqualIID(ifaceID, IID_IHippoEmbed)) 
-	*result = static_cast<IDispatch *>(this);
+        *result = static_cast<IDispatch *>(this);
     else if (IsEqualIID(ifaceID, DIID_DWebBrowserEvents2)) 
-	*result = static_cast<IDispatch *>(this);
+        *result = static_cast<IDispatch *>(this);
     else if (IsEqualIID(ifaceID, IID_IConnectionPointContainer)) 
-	*result = static_cast<IConnectionPointContainer *>(&connectionPointContainer_);
+        *result = static_cast<IConnectionPointContainer *>(&connectionPointContainer_);
     else {
-	// hippoDebug(L"QI for %x", ifaceID.Data1);
+        // hippoDebug(L"QI for %x", ifaceID.Data1);
 
-	*result = NULL;
-	return E_NOINTERFACE;
+        *result = NULL;
+        return E_NOINTERFACE;
     }
 
     this->AddRef();
@@ -88,24 +88,24 @@ HippoEmbed::SetSite(IUnknown *site)
     
     if (site) 
     {
-	if (FAILED(site->QueryInterface<IServiceProvider>(&site_)))
+        if (FAILED(site->QueryInterface<IServiceProvider>(&site_)))
             return E_FAIL;
 
-	site_->QueryService<IWebBrowser2>(SID_SWebBrowserApp, &browser_);
+        site_->QueryService<IWebBrowser2>(SID_SWebBrowserApp, &browser_);
 
-	HippoPtr<IServiceProvider> toplevel;
-	site_->QueryService<IServiceProvider>(SID_STopLevelBrowser, &toplevel);
-	if (toplevel)
-	    toplevel->QueryService<IWebBrowser2>(SID_SWebBrowserApp, &toplevelBrowser_);
+        HippoPtr<IServiceProvider> toplevel;
+        site_->QueryService<IServiceProvider>(SID_STopLevelBrowser, &toplevel);
+        if (toplevel)
+            toplevel->QueryService<IWebBrowser2>(SID_SWebBrowserApp, &toplevelBrowser_);
 
-	if (toplevelBrowser_) {
-	    HippoQIPtr<IConnectionPointContainer> container(toplevelBrowser_);
-	    if (container) {
-		if (SUCCEEDED(container->FindConnectionPoint(DIID_DWebBrowserEvents2,
-		                                             &connectionPoint_))) 
-    		    connectionPoint_->Advise(static_cast<IObjectWithSite *>(this), // Disambiguate
-			                     &connectionCookie_);
-	    }
+        if (toplevelBrowser_) {
+            HippoQIPtr<IConnectionPointContainer> container(toplevelBrowser_);
+            if (container) {
+                if (SUCCEEDED(container->FindConnectionPoint(DIID_DWebBrowserEvents2,
+                                                             &connectionPoint_))) 
+                    connectionPoint_->Advise(static_cast<IObjectWithSite *>(this), // Disambiguate
+                                             &connectionCookie_);
+            }
         }
     }
     
@@ -114,11 +114,11 @@ HippoEmbed::SetSite(IUnknown *site)
 
 STDMETHODIMP 
 HippoEmbed::GetSite(const IID &iid, 
-		    void     **result)
+                    void     **result)
 {
     if (!site_) {
         *result = NULL;
-	return E_FAIL;
+        return E_FAIL;
     }
 
     return site_->QueryInterface(iid, result);
@@ -129,39 +129,39 @@ HippoEmbed::GetSite(const IID &iid,
 
 STDMETHODIMP 
 HippoEmbed::GetInterfaceSafetyOptions (const IID &ifaceID, 
-				       DWORD     *supportedOptions, 
-				       DWORD     *enabledOptions)
+                                       DWORD     *supportedOptions, 
+                                       DWORD     *enabledOptions)
 {
     if (!supportedOptions || !enabledOptions)
-	return E_INVALIDARG;
+        return E_INVALIDARG;
 
     if (IsEqualIID(ifaceID, IID_IDispatch)) {
-	*supportedOptions = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
-	*enabledOptions = safetyOptions_;
+        *supportedOptions = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
+        *enabledOptions = safetyOptions_;
 
-	return S_OK;
+        return S_OK;
     } else {
-	*supportedOptions = 0;
-	*enabledOptions = 0;
+        *supportedOptions = 0;
+        *enabledOptions = 0;
 
-	return E_NOINTERFACE;
+        return E_NOINTERFACE;
     }
 }
 
 STDMETHODIMP 
 HippoEmbed::SetInterfaceSafetyOptions (const IID &ifaceID, 
-				       DWORD      optionSetMask, 
-				       DWORD      enabledOptions)
+                                       DWORD      optionSetMask, 
+                                       DWORD      enabledOptions)
 {
     if (IsEqualIID(ifaceID, IID_IDispatch)) {
-	if ((optionSetMask & ~INTERFACESAFE_FOR_UNTRUSTED_CALLER) != 0)
-	    return E_FAIL;
-	safetyOptions_ = ((safetyOptions_ & ~optionSetMask) |
-		          (enabledOptions & optionSetMask));
+        if ((optionSetMask & ~INTERFACESAFE_FOR_UNTRUSTED_CALLER) != 0)
+            return E_FAIL;
+        safetyOptions_ = ((safetyOptions_ & ~optionSetMask) |
+                          (enabledOptions & optionSetMask));
 
-	return S_OK;
+        return S_OK;
     } else {
-	return E_NOINTERFACE;
+        return E_NOINTERFACE;
     }
 }
 
@@ -171,10 +171,10 @@ STDMETHODIMP
 HippoEmbed::GetClassInfo (ITypeInfo **typeInfo) 
 {
     if (!typeInfo)
-	return E_POINTER;
+        return E_POINTER;
 
     if (!classTypeInfo_)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
 
     classTypeInfo_->AddRef();
     *typeInfo = classTypeInfo_;
@@ -190,7 +190,7 @@ STDMETHODIMP
 HippoEmbed::GetTypeInfoCount(UINT *pctinfo)
 {
     if (pctinfo == NULL)
-	return E_INVALIDARG;
+        return E_INVALIDARG;
 
     *pctinfo = 1;
 
@@ -199,15 +199,15 @@ HippoEmbed::GetTypeInfoCount(UINT *pctinfo)
 
 STDMETHODIMP 
 HippoEmbed::GetTypeInfo(UINT        iTInfo,
-       		        LCID        lcid,
-    		        ITypeInfo **ppTInfo)
+                        LCID        lcid,
+                        ITypeInfo **ppTInfo)
 {
     if (ppTInfo == NULL)
-	return E_INVALIDARG;
+        return E_INVALIDARG;
     if (!ifaceTypeInfo_)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
     if (iTInfo != 0)
-	return DISP_E_BADINDEX;
+        return DISP_E_BADINDEX;
 
     ifaceTypeInfo_->AddRef();
     *ppTInfo = ifaceTypeInfo_;
@@ -217,47 +217,47 @@ HippoEmbed::GetTypeInfo(UINT        iTInfo,
         
 STDMETHODIMP 
 HippoEmbed::GetIDsOfNames (REFIID    riid,
-		           LPOLESTR *rgszNames,
-			   UINT      cNames,
-			   LCID	     lcid,
-			   DISPID   *rgDispId)
+                           LPOLESTR *rgszNames,
+                           UINT      cNames,
+                           LCID      lcid,
+                           DISPID   *rgDispId)
  {
     if (!ifaceTypeInfo_) 
-	 return E_OUTOFMEMORY;
+         return E_OUTOFMEMORY;
     
     return DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
  }
         
 STDMETHODIMP
 HippoEmbed::Invoke (DISPID        member,
-		     const IID    &iid,
-		     LCID          lcid,              
-		     WORD          flags,
-		     DISPPARAMS   *dispParams,
-		     VARIANT      *result,
-		     EXCEPINFO    *excepInfo,  
-		     unsigned int *argErr)
+                    const IID    &iid,
+                    LCID          lcid,              
+                    WORD          flags,
+                    DISPPARAMS   *dispParams,
+                    VARIANT      *result,
+                    EXCEPINFO    *excepInfo,  
+                    unsigned int *argErr)
 {
     if (member == DISPID_DOCUMENTCOMPLETE) {
          if (dispParams->cArgs == 2 &&
-	     dispParams->rgvarg[1].vt == VT_DISPATCH &&
-	      dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
-	 {
-	     if (dispParams->rgvarg[0].pvarVal->vt == VT_BSTR)
-		 onDocumentComplete(dispParams->rgvarg[1].pdispVal,
-		                    dispParams->rgvarg[0].pvarVal->bstrVal);
-	     return S_OK;
-	 } 
-	 else
-	     return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+             dispParams->rgvarg[1].vt == VT_DISPATCH &&
+              dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
+         {
+             if (dispParams->rgvarg[0].pvarVal->vt == VT_BSTR)
+                 onDocumentComplete(dispParams->rgvarg[1].pdispVal,
+                                    dispParams->rgvarg[0].pvarVal->bstrVal);
+             return S_OK;
+         } 
+         else
+             return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
     }
 
     if (!ifaceTypeInfo_) 
-	 return E_OUTOFMEMORY;
+         return E_OUTOFMEMORY;
 
     HippoQIPtr<IHippoEmbed> hippoEmbed(static_cast<IHippoEmbed *>(this));
     HRESULT hr = DispInvoke(hippoEmbed, ifaceTypeInfo_, member, flags, 
-		             dispParams, result, excepInfo, argErr);
+                             dispParams, result, excepInfo, argErr);
 
 #if 0
     hippoDebug(L"Invoke: %#x - result %#x\n", member, hr);
@@ -278,8 +278,8 @@ HippoEmbed::DisplayMessage (BSTR message)
 
 static void
 formatHTML(MSHTML::IHTMLElement *element,
-	   WCHAR *format, 
-	   ...)
+           WCHAR *format, 
+           ...)
 {
     WCHAR buf[1024];
     va_list vap;
@@ -294,21 +294,21 @@ STDMETHODIMP
 HippoEmbed::DebugDump (IDispatch *dispatch)
 {
     if (!dispatch)
-	return E_FAIL;
+        return E_FAIL;
     HippoPtr<MSHTML::IHTMLElement> element;
     HRESULT hr = dispatch->QueryInterface<MSHTML::IHTMLElement>(&element);
     if (!SUCCEEDED(hr))
-	return hr;
+        return hr;
  
     HippoBSTR browserURL, toplevelURL;
     if (browser_)
-	browser_->get_LocationURL(&browserURL);
+        browser_->get_LocationURL(&browserURL);
     if (toplevelBrowser_)
-	toplevelBrowser_->get_LocationURL(&toplevelURL);
+        toplevelBrowser_->get_LocationURL(&toplevelURL);
 
     formatHTML(element, L"Toplevel URL: %ls<br>Browser URL: %ls\n",
-	toplevelURL ? toplevelURL : L"<null>", 
-	browserURL ? browserURL : L"<null>");
+        toplevelURL ? toplevelURL : L"<null>", 
+        browserURL ? browserURL : L"<null>");
 
     return S_OK;
 }
@@ -317,7 +317,7 @@ STDMETHODIMP
 HippoEmbed::CloseWindow()
 {
     if (browser_)
-	browser_->Quit();
+        browser_->Quit();
 
     return S_OK;
 }
@@ -331,57 +331,57 @@ HippoEmbed::clearSite()
 
     if (connectionPoint_) {
         if (connectionCookie_) {
-	    connectionPoint_->Unadvise(connectionCookie_);
-	    connectionCookie_ = 0;
-	}
-	   
-	connectionPoint_ = NULL;
+            connectionPoint_->Unadvise(connectionCookie_);
+            connectionCookie_ = 0;
+        }
+           
+        connectionPoint_ = NULL;
     }
 }
 
 void 
 HippoEmbed::onDocumentComplete(IDispatch *dispatch, 
-			       BSTR       url)
+                               BSTR       url)
 {
     // Only catch DocumentComplete() events that refer to the toplevel frame
     // ignore changes for subframes (<frame> or <iframe>)
     HippoQIPtr<IWebBrowser2> eventBrowser(dispatch);
     if (dispatch != toplevelBrowser_)
-	return;
+        return;
 
     HippoPtr<IConnectionPoint> point;
     if (FAILED(connectionPointContainer_.FindConnectionPoint(IID_IHippoEmbedEvents, &point)))
-	return;
+        return;
 
     HippoPtr<IEnumConnections> e;
     if (FAILED(point->EnumConnections(&e)))
-	return;
+        return;
 
     CONNECTDATA data;
     ULONG fetched;
     while (e->Next(1, &data, &fetched) == S_OK) {
-//	HippoQIPtr<IHippoEmbedEvents> events(data.pUnk);
-//	if (events)
-//	    events->LocationChanged(url);
-	HippoQIPtr<IDispatch> dispatch(data.pUnk);
-	if (dispatch) {
-	    DISPPARAMS dispParams;
-	    VARIANTARG arg;
+//      HippoQIPtr<IHippoEmbedEvents> events(data.pUnk);
+//      if (events)
+//          events->LocationChanged(url);
+        HippoQIPtr<IDispatch> dispatch(data.pUnk);
+        if (dispatch) {
+            DISPPARAMS dispParams;
+            VARIANTARG arg;
 
-	    arg.vt = VT_BSTR;
-	    arg.bstrVal = url;
+            arg.vt = VT_BSTR;
+            arg.bstrVal = url;
 
-	    dispParams.rgvarg = &arg;
-	    dispParams.cArgs = 1;
-	    dispParams.rgvarg[0];
-	    dispParams.cNamedArgs = 0;
-	    dispParams.rgdispidNamedArgs = NULL;
+            dispParams.rgvarg = &arg;
+            dispParams.cArgs = 1;
+            dispParams.rgvarg[0];
+            dispParams.cNamedArgs = 0;
+            dispParams.rgdispidNamedArgs = NULL;
 
-	    HRESULT hr = dispatch->Invoke(HIPPO_DISPID_LOCATIONCHANGED, IID_IHippoEmbedEvents, 0 /* LCID */,
-  	                                  DISPATCH_METHOD, &dispParams, 
-	                                  NULL /* result */, NULL /* exception */, NULL /* argError */);
-	    if (!SUCCEEDED(hr))
-	        hippoDebug(L"Invoke failed %x", hr);
-	}
+            HRESULT hr = dispatch->Invoke(HIPPO_DISPID_LOCATIONCHANGED, IID_IHippoEmbedEvents, 0 /* LCID */,
+                                          DISPATCH_METHOD, &dispParams, 
+                                          NULL /* result */, NULL /* exception */, NULL /* argError */);
+            if (!SUCCEEDED(hr))
+                hippoDebug(L"Invoke failed %x", hr);
+        }
     }
 }

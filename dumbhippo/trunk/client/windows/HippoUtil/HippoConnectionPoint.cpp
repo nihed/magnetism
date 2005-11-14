@@ -8,7 +8,7 @@
 #include "HippoConnectionPoint.h"
 
 HippoConnectionPoint::HippoConnectionPoint(const IID                 &ifaceID,
-					   IConnectionPointContainer *container)
+                                           IConnectionPointContainer *container)
 {
     ifaceID_ = ifaceID;
     refCount_ = 1;
@@ -18,7 +18,7 @@ HippoConnectionPoint::HippoConnectionPoint(const IID                 &ifaceID,
 HippoConnectionPoint::~HippoConnectionPoint()
 {
     for (ULONG i = 0; i < connections_.length(); i++)
-	connections_[i].pUnk->Release();
+        connections_[i].pUnk->Release();
 }
 
 void
@@ -31,17 +31,17 @@ HippoConnectionPoint::containerGone()
 
 STDMETHODIMP 
 HippoConnectionPoint::QueryInterface(const IID &ifaceID, 
-    				     void     **result)
+                                     void     **result)
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
-	*result = static_cast<IUnknown *>(static_cast<IConnectionPoint *>(this));
+        *result = static_cast<IUnknown *>(static_cast<IConnectionPoint *>(this));
     else if (IsEqualIID(ifaceID, IID_IConnectionPoint))
-	*result = static_cast<IConnectionPoint *>(this);
+        *result = static_cast<IConnectionPoint *>(this);
     else if (IsEqualIID(ifaceID, IID_IEnumConnections))
-	*result = static_cast<IEnumConnections *>(this);
+        *result = static_cast<IEnumConnections *>(this);
     else {
-	*result = NULL;
-	return E_NOINTERFACE;
+        *result = NULL;
+        return E_NOINTERFACE;
     }
 
     this->AddRef();
@@ -56,7 +56,7 @@ STDMETHODIMP
 HippoConnectionPoint::GetConnectionPointContainer(IConnectionPointContainer **container)
 {
     if (!container)
-	return E_POINTER;
+        return E_POINTER;
 
     container_->AddRef();
     *container = container_;
@@ -68,7 +68,7 @@ STDMETHODIMP
 HippoConnectionPoint::GetConnectionInterface(IID *ifaceID)
 {
     if (!ifaceID)
-	return E_POINTER;
+        return E_POINTER;
 
     *ifaceID = ifaceID_;
 
@@ -77,19 +77,19 @@ HippoConnectionPoint::GetConnectionInterface(IID *ifaceID)
 
 STDMETHODIMP 
 HippoConnectionPoint::Advise(IUnknown *sink, 
-			     DWORD    *cookie)
+                             DWORD    *cookie)
 {
     CONNECTDATA newData;
 
     if (!cookie)
-	return E_POINTER;
+        return E_POINTER;
 
     newData.pUnk = sink;
     newData.dwCookie = ++nextCookie_;
 
     HRESULT hr = connections_.append(newData);
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     sink->AddRef();
 
@@ -100,10 +100,10 @@ STDMETHODIMP
 HippoConnectionPoint::Unadvise(DWORD cookie)
 {
     for (ULONG i = 0; i < connections_.length(); i++) {
-	if (connections_[i].dwCookie == cookie) {
-	    connections_.remove(i);
-	    return S_OK;
-	}
+        if (connections_[i].dwCookie == cookie) {
+            connections_.remove(i);
+            return S_OK;
+        }
     }
 
     return CONNECT_E_NOCONNECTION;
@@ -119,17 +119,17 @@ HippoConnectionPoint::EnumConnections(IEnumConnections **enumConnections)
 
 STDMETHODIMP 
 HippoConnectionPoint::Next(ULONG        cConnections,
-			   CONNECTDATA *connections,
-			   ULONG       *fetched)
+                           CONNECTDATA *connections,
+                           ULONG       *fetched)
 {
     if (!connections || !fetched)
-	return E_POINTER;
+        return E_POINTER;
 
     for (ULONG i = 0; i < cConnections; i++) {
-	if (curConnection_ == connections_.length())
-	    break;
+        if (curConnection_ == connections_.length())
+            break;
 
-	connections[i] = connections_[curConnection_++];
+        connections[i] = connections_[curConnection_++];
     }
 
     *fetched = i;
@@ -141,11 +141,11 @@ STDMETHODIMP
 HippoConnectionPoint::Skip(ULONG cConnections)
 {
     if (cConnections <= ULONG_MAX - connections_.length()) {
-	curConnection_ += cConnections;
-	return S_OK;
+        curConnection_ += cConnections;
+        return S_OK;
     } else {
-	curConnection_ = connections_.length();
-	return S_FALSE;
+        curConnection_ = connections_.length();
+        return S_FALSE;
     }
 }
 
@@ -163,19 +163,19 @@ HippoConnectionPoint::Clone(IEnumConnections **clone)
     HippoConnectionPoint *tmp;
 
     if (!clone)
-	return E_POINTER;
+        return E_POINTER;
 
     tmp = new HippoConnectionPoint(ifaceID_, NULL);
     if (!tmp)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
 
     HRESULT hr = tmp->connections_.copyFrom(connections_);
     if (FAILED (hr)) {
-	tmp->Release();
-	return E_OUTOFMEMORY;
+        tmp->Release();
+        return E_OUTOFMEMORY;
     }
     for (ULONG i = 0; i < connections_.length(); i++)
-	connections_[i].pUnk->AddRef();
+        connections_[i].pUnk->AddRef();
     
     tmp->curConnection_ = curConnection_;
     tmp->nextCookie_ = nextCookie_;

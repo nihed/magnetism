@@ -17,16 +17,16 @@ HippoRegistrar::HippoRegistrar(const WCHAR *dllName)
 
     HINSTANCE module = GetModuleHandleW(dllName);
     if (!module)
-	return;
+        return;
 
     WCHAR modulePath[MAX_PATH];
     HRESULT hr = GetModuleFileName(module, modulePath, MAX_PATH);
     if (FAILED(hr))
-	return;
+        return;
 
     modulePath_ = (WCHAR *)malloc(sizeof(WCHAR) * (lstrlenW(modulePath) + 1));
     if (!modulePath)
-	return;
+        return;
 
     StringCchCopy(modulePath_, lstrlen(modulePath) + 1, modulePath);
 }
@@ -43,11 +43,11 @@ HippoRegistrar::registerTypeLib()
     HRESULT hr;
 
     if (!modulePath_)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
 
     hr = LoadTypeLib(modulePath_, &typeLib);
     if (!SUCCEEDED (hr)) 
-	return hr;
+        return hr;
 
     hr = RegisterTypeLib(typeLib, modulePath_, NULL);
 
@@ -56,8 +56,8 @@ HippoRegistrar::registerTypeLib()
 
 HRESULT
 HippoRegistrar::registerClassImplCategories(const CLSID &classID, 
-	                                    ULONG        cCategories,
-    					    CATID        categories[])
+                                            ULONG        cCategories,
+                                            CATID        categories[])
 {   
     HippoPtr<ICatRegister> catRegister;
     HRESULT hr;
@@ -65,14 +65,14 @@ HippoRegistrar::registerClassImplCategories(const CLSID &classID,
     CoInitialize(NULL);
 
     hr = CoCreateInstance(CLSID_StdComponentCategoriesMgr,
-	                  NULL,
-		          CLSCTX_ALL,
-		          IID_ICatRegister,
-		          (LPVOID *)&catRegister);
+                          NULL,
+                          CLSCTX_ALL,
+                          IID_ICatRegister,
+                          (LPVOID *)&catRegister);
 
     if (SUCCEEDED (hr))
-	hr = catRegister->RegisterClassImplCategories(classID, cCategories, 
-	                                              categories);
+        hr = catRegister->RegisterClassImplCategories(classID, cCategories, 
+                                                      categories);
 
     CoUninitialize();
 
@@ -82,10 +82,10 @@ HippoRegistrar::registerClassImplCategories(const CLSID &classID,
 // Set a key, using a printf string to define the subkey
 static HRESULT
 setValuePrintf(HKEY         key,
-	       const WCHAR *subkeyFormat,
-	       const WCHAR *value,
-	       const WCHAR *data,
-	       ...)
+               const WCHAR *subkeyFormat,
+               const WCHAR *value,
+               const WCHAR *data,
+               ...)
 {
     va_list vap;
     WCHAR subkey[MAX_PATH];
@@ -98,59 +98,59 @@ setValuePrintf(HKEY         key,
     va_end(vap);
 
     result = RegCreateKeyEx(key, subkey, NULL, NULL, 
-			    REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
-			    &newKey, NULL);
+                            REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
+                            &newKey, NULL);
     if (result != ERROR_SUCCESS)
-	return E_FAIL;
+        return E_FAIL;
 
     len = lstrlen(data);
     if (sizeof(WCHAR) * (len + 1) > UINT_MAX)
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
 
     result = RegSetValueEx(newKey, value, NULL, REG_SZ,
-			   (const BYTE *)data, (DWORD)sizeof(WCHAR) * (len + 1));
+                           (const BYTE *)data, (DWORD)sizeof(WCHAR) * (len + 1));
     if (result != ERROR_SUCCESS)
-	return E_FAIL;
+        return E_FAIL;
 
     RegCloseKey(newKey);
 
     /* We could replace the above with usage of the Shell utility function:
     result = SHSetValueW(key, subkey, value, 
-	               REG_SZ, 
-	               (const void *)data, (DWORD)sizeof(WCHAR) * (len + 1)); */
+                       REG_SZ, 
+                       (const void *)data, (DWORD)sizeof(WCHAR) * (len + 1)); */
 
     return S_OK;
 }
 
 HRESULT
 HippoRegistrar::registerInprocServer(const CLSID &classID,
-				     const WCHAR *title)
+                                     const WCHAR *title)
 {
     WCHAR *classStr;
     HRESULT hr;
 
     hr = StringFromIID(classID, &classStr);
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     hr = setValuePrintf(HKEY_CLASSES_ROOT, 
-	                L"CLSID\\%ls", 
-		        NULL, title,
-		        classStr);
+                        L"CLSID\\%ls", 
+                        NULL, title,
+                        classStr);
     if (FAILED(hr))
-	goto failed;
+        goto failed;
 
     hr = setValuePrintf(HKEY_CLASSES_ROOT, 
-	                L"CLSID\\%ls\\InprocServer32", 
-		        NULL, modulePath_,
-		        classStr);
+                        L"CLSID\\%ls\\InprocServer32", 
+                        NULL, modulePath_,
+                        classStr);
     if (FAILED(hr))
-	goto failed;
+        goto failed;
 
     hr = setValuePrintf(HKEY_CLASSES_ROOT,
-		        L"CLSID\\%ls\\InprocServer32", 
-		        L"ThreadingModel", L"Apartment",
-		        classStr); 
+                        L"CLSID\\%ls\\InprocServer32", 
+                        L"ThreadingModel", L"Apartment",
+                        classStr); 
 
 failed:
     CoTaskMemFree(classStr);
@@ -160,21 +160,21 @@ failed:
 
 HRESULT 
 HippoRegistrar::registerBrowserHelperObject(const CLSID &classID,
-					    const WCHAR *title)
+                                            const WCHAR *title)
 {
     WCHAR *classStr;
     HRESULT hr;
 
     hr = StringFromIID(classID, &classStr);
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     // The value we set here isn't used, but it's useful for debugging
     // to identify our GUID among other BHO's.
     hr = setValuePrintf(HKEY_LOCAL_MACHINE,
-		        L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects\\%ls", 
-		        NULL, title,
-		        classStr); 
+                        L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects\\%ls", 
+                        NULL, title,
+                        classStr); 
 
     CoTaskMemFree(classStr);
 

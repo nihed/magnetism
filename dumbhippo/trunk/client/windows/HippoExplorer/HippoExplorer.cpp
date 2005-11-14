@@ -35,13 +35,13 @@ isExplorer(void)
     WCHAR modulePath[MAX_PATH];
     HRESULT hr = GetModuleFileName(process, modulePath, MAX_PATH);
     if (FAILED(hr))
-	return false;
+        return false;
 
     _wcslwr(modulePath);
     size_t len = wcslen(modulePath);
 
     return (len >= wcslen(suffix) &&
-	    wcscmp(modulePath + len - wcslen(suffix), suffix) == 0);
+            wcscmp(modulePath + len - wcslen(suffix), suffix) == 0);
 }
 
 extern "C" BOOL WINAPI
@@ -54,11 +54,11 @@ DllMain(HINSTANCE hInstance,
     case DLL_PROCESS_ATTACH:
        /* For efficiency reasons (and to make it easier to load new versions
         * when debugging), we want to avoid being loaded into Windows Explorer;
-	* browser helper objects will normally be loaded there, but we are
-	* only interested in web browsing.
+        * browser helper objects will normally be loaded there, but we are
+        * only interested in web browsing.
         */
        if (isExplorer())
-	   return FALSE;
+           return FALSE;
 
        dllInstance = hInstance;
        break;
@@ -82,15 +82,15 @@ DllGetClassObject(const CLSID &classID,
     HRESULT hr;
 
     if (!IsEqualCLSID(classID, CLSID_HippoEmbed) &&
-	!IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
-	!IsEqualCLSID(classID, CLSID_HippoTracker)) {
-	return CLASS_E_CLASSNOTAVAILABLE;
+        !IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
+        !IsEqualCLSID(classID, CLSID_HippoTracker)) {
+        return CLASS_E_CLASSNOTAVAILABLE;
     }
        
     ClassFactory *classFactory = new ClassFactory(classID);
     if (!classFactory) {
         *result = NULL;
-	return E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
     }
        
     hr = classFactory->QueryInterface(ifaceID, result);
@@ -108,33 +108,33 @@ DllRegisterServer(void)
 
     hr  = registrar.registerTypeLib();
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     hr = registrar.registerInprocServer(CLSID_HippoExplorerBar,
-			                TEXT("Hi&ppo Bar"));
+                                        TEXT("Hi&ppo Bar"));
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     catids[0] = CATID_CommBand;
     hr = registrar.registerClassImplCategories(CLSID_HippoExplorerBar,
-	                                       1, catids);
+                                               1, catids);
     if (FAILED (hr))
-	return hr;
+        return hr;
 
     hr = registrar.registerInprocServer(CLSID_HippoTracker,
-			                TEXT("Hippo Tracker"));
+                                        TEXT("Hippo Tracker"));
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     hr = registrar.registerBrowserHelperObject(CLSID_HippoTracker,
-			                       TEXT("Hippo Tracker"));
+                                               TEXT("Hippo Tracker"));
     if (FAILED(hr))
-	return hr;
+        return hr;
     
     hr = registrar.registerInprocServer(CLSID_HippoEmbed,
-			                TEXT("Hippo Embed"));
+                                        TEXT("Hippo Embed"));
     if (FAILED(hr))
-	return hr;
+        return hr;
 
     return S_OK;
 }

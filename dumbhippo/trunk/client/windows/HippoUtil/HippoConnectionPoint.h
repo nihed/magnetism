@@ -15,7 +15,7 @@ class HippoConnectionPoint :
 {
 public:
     HippoConnectionPoint(const IID                 &ifaceID, 
-			 IConnectionPointContainer *container);
+                         IConnectionPointContainer *container);
     ~HippoConnectionPoint(void);
 
     // Called when the container is freed
