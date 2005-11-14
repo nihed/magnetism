@@ -1,7 +1,4 @@
-LIBRARY	HippoUtil
+LIBRARY HippoUtil
 
 EXPORTS
    DllRegisterServer PRIVATE
-   
-   
-   

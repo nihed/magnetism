@@ -1,24 +1,23 @@
 <?xml version="1.0" ?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-				xmlns:dh="http://dumbhippo.com/schema/clientjs"
-				version="1.0">
-	<xsl:param name="appleturl"/>
-	<xsl:output method="html" 
-				encoding="UTF-8"/>
-	<xsl:template match="dh:corescript">
-		<script language="javascript" src="{$appleturl}notification.js"></script>
-	</xsl:template>
-	<xsl:template match="dh:stylesheet">	
-		<link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
-	</xsl:template>
-	<xsl:template match="dh:closeButton">
-		<img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>
-	</xsl:template>	
-	<!-- pass through everything else verbatim -->
-	<xsl:template match="*">
-		<xsl:element name="{name()}">
-			<xsl:copy-of select="@*" />
-			<xsl:apply-templates />
-		</xsl:element>
-	</xsl:template>
+        xmlns:dh="http://dumbhippo.com/schema/clientjs"
+        version="1.0">
+    <xsl:param name="appleturl"/>
+    <xsl:output method="html" encoding="UTF-8"/>
+    <xsl:template match="dh:corescript">
+        <script language="javascript" src="{$appleturl}notification.js"></script>
+    </xsl:template>
+    <xsl:template match="dh:stylesheet">    
+        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
+    </xsl:template>
+    <xsl:template match="dh:closeButton">
+        <img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>
+    </xsl:template> 
+    <!-- pass through everything else verbatim -->
+    <xsl:template match="*">
+        <xsl:element name="{name()}">
+            <xsl:copy-of select="@*" />
+            <xsl:apply-templates />
+        </xsl:element>
+    </xsl:template>
 </xsl:stylesheet>

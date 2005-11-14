@@ -1,102 +1,102 @@
 body 
 {
-	margin: 0;
-	padding: 0;
-	height: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100%;
 }
 
 #dh-notification 
 {
-	height: 100%;
-	width: 100%;
+    height: 100%;
+    width: 100%;
 }
 
 .dh-notification
 {
-	height: 100%;
-	width: 100%;
+    height: 100%;
+    width: 100%;
 }
 
 td.dh-notification-photo 
 {
-	text-align: center;
+    text-align: center;
 }
 
 img.dh-notification-photo,a.dh-notification-photo
 {
-	text-align: center;
-	/* Right now the Java code scales headshots to a max of 48px in each
-	 * dimension, but preserving aspect ratio. If height < width the below
-	 * will mangle the aspect again. If changing from 48px, also change the 
-	 * Java code. We need to fix the Java code to always produce exactly 
-	 * 48x48 images though (i.e. pad images with transparency) since 
-	 * css can't be smart about "max size of largest dimension".
-	 * height is fixed here because for a headshot height>width seems more 
-	 * likely than width>height.
-	 */
-	width: 48px;
-	height:					48px;
-	border-style: none;	
-	border:					0;
+    text-align: center;
+    /* Right now the Java code scales headshots to a max of 48px in each
+     * dimension, but preserving aspect ratio. If height < width the below
+     * will mangle the aspect again. If changing from 48px, also change the 
+     * Java code. We need to fix the Java code to always produce exactly 
+     * 48x48 images though (i.e. pad images with transparency) since 
+     * css can't be smart about "max size of largest dimension".
+     * height is fixed here because for a headshot height>width seems more 
+     * likely than width>height.
+     */
+    width: 48px;
+    height:                 48px;
+    border-style: none; 
+    border:                 0;
 }
 
 .dh-notification-photolink {
-	text-align:				center;
-	width:					8em;
-	text-overflow:			ellipsis;
-	overflow:				hidden;
-	font-size: x-small;
+    text-align:             center;
+    width:                  8em;
+    text-overflow:          ellipsis;
+    overflow:               hidden;
+    font-size: x-small;
 }
 
 .dh-notification-title 
 {
-	height: 1em;
-	vertical-align: top;
-	text-overflow:			ellipsis;
-	overflow:				hidden;
-	padding:				0;
-	margin:					0;
+    height: 1em;
+    vertical-align: top;
+    text-overflow:          ellipsis;
+    overflow:               hidden;
+    padding:                0;
+    margin:                 0;
 }
 
 .dh-notification-body
 {
-	vertical-align: top;
+    vertical-align: top;
 }
 
 span.dh-notification-title-title 
 {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 .dh-notification-rightside
 {
-	height: 100%;
-	width: 100%;	
-	vertical-align: top;
+    height: 100%;
+    width: 100%;    
+    vertical-align: top;
 }
 
 div.dh-notification-meta 
 {
-	margin-left: 2em;
+    margin-left: 2em;
 }
 
 tr.dh-notification-meta
 {
-	height: 2em;
-	vertical-align: bottom;
-	color: Gray;
-	font-size: x-small;
+    height: 2em;
+    vertical-align: bottom;
+    color: Gray;
+    font-size: x-small;
 }
 
 span.dh-notification-recipient
 {
-	font-weight: bold
+    font-weight: bold
 }
 
 span.dh-notification-group-recipient
 {
-	font-weight: bold;
-	font-size: larger;
+    font-weight: bold;
+    font-size: larger;
 }
 
 div.dh-notification-navigation
@@ -105,18 +105,18 @@ div.dh-notification-navigation
 
 div.dh-notification-navigation-text
 {
-	color: Gray;
+    color: Gray;
 }
 
 img.dh-notification-navigation
 {
-	text-align: center;
-	border-style: none;
+    text-align: center;
+    border-style: none;
 }
 
 img.dh-close-button 
 {
-	position: absolute;
-	top: 2;
-	right: 2;
+    position: absolute;
+    top: 2;
+    right: 2;
 }

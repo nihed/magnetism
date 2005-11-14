@@ -1,49 +1,49 @@
 <?xml version="1.0" ?>
 <!-- note this file must actually be XML to make XSLT work -->
 <html xmlns:dh="http://dumbhippo.com/schema/clientjs">
-	<head>
-		<dh:stylesheet />
-		<title>dumbhippo notification</title>
-	</head>
-	<dh:corescript />
-	<body style="overflow: hidden;" onload="dhInit();">
-		<dh:closeButton />
-		<div id="dh-notification">
-			<table class="dh-notification">
-				<tbody>
-					<tr>
-						<td class="dh-notification-photo">
-							<div id="dh-notification-photo" class="dh-notification-photo"></div>
-							<div id="dh-notification-photolink" class="dh-notification-photolink"></div>
-						</td>
-						<td class="dh-notification-rightside">
-							<table class="dh-notification-rightside">
-							<tbody>
-							<tr class="dh-notification-title"><td><div id="dh-notification-title" class="dh-notification-title"></div></td></tr>
-							<tr class="dh-notification-body"><td><div id="dh-notification-body" class="dh-notification-body"></div></td></tr>
-							<tr class="dh-notification-meta"><td>						
-							<table class="dh-notification-meta">
-								<tbody>
-									<tr class="dh-notification-meta">
-										<td>
-											<div id="dh-notification-navigation" class="dh-notification-navigation">
-												<div id="dh-notification-navigation-text" class="dh-notification-navigation-text"></div>
-												<div id="dh-notification-navigation-buttons"></div>
-											</div>
-										</td>
-										<td>
-											<div id="dh-notification-meta" class="dh-notification-meta"></div>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-							</td></tr>
-							</tbody>
-							</table>								
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</body>
+    <head>
+        <dh:stylesheet />
+        <title>dumbhippo notification</title>
+    </head>
+    <dh:corescript />
+    <body style="overflow: hidden;" onload="dhInit();">
+        <dh:closeButton />
+        <div id="dh-notification">
+            <table class="dh-notification">
+                <tbody>
+                    <tr>
+                        <td class="dh-notification-photo">
+                            <div id="dh-notification-photo" class="dh-notification-photo"></div>
+                            <div id="dh-notification-photolink" class="dh-notification-photolink"></div>
+                        </td>
+                        <td class="dh-notification-rightside">
+                            <table class="dh-notification-rightside">
+                            <tbody>
+                            <tr class="dh-notification-title"><td><div id="dh-notification-title" class="dh-notification-title"></div></td></tr>
+                            <tr class="dh-notification-body"><td><div id="dh-notification-body" class="dh-notification-body"></div></td></tr>
+                            <tr class="dh-notification-meta"><td>                       
+                            <table class="dh-notification-meta">
+                                <tbody>
+                                    <tr class="dh-notification-meta">
+                                        <td>
+                                            <div id="dh-notification-navigation" class="dh-notification-navigation">
+                                                <div id="dh-notification-navigation-text" class="dh-notification-navigation-text"></div>
+                                                <div id="dh-notification-navigation-buttons"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div id="dh-notification-meta" class="dh-notification-meta"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            </td></tr>
+                            </tbody>
+                            </table>                                
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
 </html>
