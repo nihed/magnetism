@@ -33,11 +33,11 @@ void
 HippoIcon::setUI(HippoUI *ui)
 {
     ui_ = ui;
-	bubble_.setUI(ui_);
+    bubble_.setUI(ui_);
 }
 
 bool
-HippoIcon::create(HWND window)		  
+HippoIcon::create(HWND window)            
 {
     NOTIFYICONDATA notifyIconData = { 0 };
     HINSTANCE instance = GetModuleHandle(NULL);
@@ -61,13 +61,13 @@ HippoIcon::create(HWND window)
 void
 HippoIcon::destroy(void)
 {
-   NOTIFYICONDATA notifyIconData = { 0 };
+    NOTIFYICONDATA notifyIconData = { 0 };
 
-   notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-   notifyIconData.hWnd = window_;
-   notifyIconData.uID = 0;
+    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+    notifyIconData.hWnd = window_;
+    notifyIconData.uID = 0;
    
-   Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
+    Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 }
 
 void
@@ -78,11 +78,11 @@ HippoIcon::setIcon(HICON icon)
 
 void
 HippoIcon::updateIcon(HICON icon)
-{	
-	setIcon(icon);
+{       
+    setIcon(icon);
     NOTIFYICONDATA notifyIconData = { 0 };
     notifyIconData.uID = 0;
-	notifyIconData.hWnd = window_;
+    notifyIconData.hWnd = window_;
     notifyIconData.uFlags = NIF_ICON;
     notifyIconData.hIcon = icon_;
 
@@ -97,8 +97,8 @@ HippoIcon::getMessage()
 
 void 
 HippoIcon::processMessage(WPARAM wParam,
-			  LPARAM lParam)
-		          
+                          LPARAM lParam)
+                          
 {
     switch (lParam) {
     case WM_LBUTTONDOWN:
@@ -110,12 +110,12 @@ HippoIcon::processMessage(WPARAM wParam,
         ui_->showMenu(TPM_RIGHTBUTTON);
         break;
     case NIN_BALLOONSHOW:
-	break;
+        break;
     case NIN_BALLOONUSERCLICK:
         break;
     case NIN_BALLOONHIDE:
     case NIN_BALLOONTIMEOUT:
-	break;
+        break;
     }
     
 }
@@ -123,12 +123,12 @@ HippoIcon::processMessage(WPARAM wParam,
 void
 HippoIcon::showURL(HippoLinkShare &linkshare)
 {
-	bubble_.setLinkNotification(linkshare);
+    bubble_.setLinkNotification(linkshare);
 }
 
 void
 HippoIcon::showURLClicked(HippoLinkSwarm &linkswarm)
 {
- 	bubble_.setSwarmNotification(linkswarm);
-//	bubble_.show();
+    bubble_.setSwarmNotification(linkswarm);
+    // bubble_.show();
 }

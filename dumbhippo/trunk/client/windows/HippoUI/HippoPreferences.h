@@ -13,7 +13,7 @@ public:
     HRESULT getMessageServer(BSTR *server);
     void setMessageServer(BSTR server);
     void parseMessageServer(char        **nameUTF8,
-	                    unsigned int *port);
+                            unsigned int *port);
 
     HRESULT getWebServer(BSTR *server);
     void setWebServer(BSTR server);
@@ -26,17 +26,17 @@ private:
     void save();
 
     void loadString(HKEY         key,
-	            const WCHAR *valueName,
-		    BSTR        *str);
+                    const WCHAR *valueName,
+                    BSTR        *str);
     void loadBool(HKEY         key,
-	          const WCHAR *valueName,
-	          bool        *result);
+                  const WCHAR *valueName,
+                  bool        *result);
     void saveString(HKEY         key,
-	            const WCHAR *valueName, 
-	            BSTR         str);
+                    const WCHAR *valueName, 
+                    BSTR         str);
     void saveBool(HKEY         key,
-	          const WCHAR *valueName, 
-		  bool         value);
+                  const WCHAR *valueName, 
+                  bool         value);
 
     // Whether to use a separate debug registry section
     bool debug_;

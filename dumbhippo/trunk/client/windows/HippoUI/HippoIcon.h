@@ -18,24 +18,24 @@ public:
 
     void setUI(HippoUI *ui);
     void setIcon(HICON icon);
-	void updateIcon(HICON icon);
+    void updateIcon(HICON icon);
     bool create(HWND window);
     void destroy();
 
     UINT getMessage();
     void processMessage(WPARAM wParam,
-		        LPARAM lParam);
-	                
+                        LPARAM lParam);
+                        
     void showURL(HippoLinkShare &linkshare);
-	void showURLClicked(HippoLinkSwarm &linkswarm);
+    void showURLClicked(HippoLinkSwarm &linkswarm);
 
 private:
     void showMenu(UINT buttonFlag);
 
-	HippoBubble bubble_;
+    HippoBubble bubble_;
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
-	HWND popupWindow_;
+    HWND popupWindow_;
     UINT message_;
     HICON icon_;
 

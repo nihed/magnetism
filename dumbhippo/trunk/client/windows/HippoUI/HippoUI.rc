@@ -30,10 +30,10 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_DUMBHIPPO_DISCONNECTED ICON                    "DumbHippo_Disconnected.ico"
+IDI_DUMBHIPPO_DISCONNECTED ICON                 "DumbHippo_Disconnected.ico"
 IDI_DUMBHIPPO           ICON                    "DumbHippo.ico"
 IDI_DUMBHIPPO_DEBUG     ICON                    "DumbHippoDebug.ico"
-IDI_DUMBHIPPO_DEBUG_DISCONNECTED ICON                    "DumbHippoDebug_Disconnected.ico"
+IDI_DUMBHIPPO_DEBUG_DISCONNECTED ICON           "DumbHippoDebug_Disconnected.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

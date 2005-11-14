@@ -14,13 +14,13 @@ class HippoIM
 {
 public:
     enum State {
-	SIGNED_OUT,     // User hasn't asked to connect
-	SIGN_IN_WAIT,   // Waiting for the user to sign in
-	CONNECTING,     // Waiting for connecting to server
-	RETRYING,       // Connection to server failed, retrying
-	AUTHENTICATING, // Waiting for authentication
-	AUTH_WAIT,      // Authentication failed, waiting for new creds
-	AUTHENTICATED   // Authenticated to server
+        SIGNED_OUT,     // User hasn't asked to connect
+        SIGN_IN_WAIT,   // Waiting for the user to sign in
+        CONNECTING,     // Waiting for connecting to server
+        RETRYING,       // Connection to server failed, retrying
+        AUTHENTICATING, // Waiting for authentication
+        AUTH_WAIT,      // Authentication failed, waiting for new creds
+        AUTHENTICATED   // Authenticated to server
     };
 
     HippoIM();
@@ -29,7 +29,7 @@ public:
     // Set the main UI object. Must be called before use
     void setUI(HippoUI *ui);
 
-	void notifyPostClickedU(const char *postGuid);
+    void notifyPostClickedU(const char *postGuid);
 
     // Try to sign in. Returns TRUE if we need to show a web page where
     // the user can sign in
@@ -50,7 +50,7 @@ public:
 private:
     HRESULT getAuthURL(BSTR *result);
 
-	void stateChange(State state);
+    void stateChange(State state);
 
     bool loadAuth();
     void connect();
@@ -71,21 +71,21 @@ private:
     static gboolean onRetryTimeout(gpointer data);
 
     static void onConnectionOpen(LmConnection *connection,
-				 gboolean      success,
-				 gpointer      userData);
+                                 gboolean      success,
+                                 gpointer      userData);
 
     static void onConnectionAuthenticate(LmConnection *connection,
-				         gboolean      success,
-				         gpointer      userData);
+                                         gboolean      success,
+                                         gpointer      userData);
 
     static void onDisconnect(LmConnection       *connection,
-			     LmDisconnectReason  reason,
-			     gpointer            userData);
+                             LmDisconnectReason  reason,
+                             gpointer            userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
-				     LmConnection     *connection,
-				     LmMessage        *message,
-				     gpointer          userData);
+                                     LmConnection     *connection,
+                                     LmMessage        *message,
+                                     gpointer          userData);
 
 private:
     State state_;

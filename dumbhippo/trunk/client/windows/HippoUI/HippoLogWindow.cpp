@@ -38,10 +38,10 @@ bool
 HippoLogWindow::create()
 {
     if (!registerClass())
-	return false;
+        return false;
 
     if (!createWindow())
-	return false;
+        return false;
 
     return true;
 }
@@ -72,11 +72,11 @@ HippoLogWindow::logString(WCHAR *str)
     WCHAR timebuf[20];
 
     if (!editWindow_)
-	return;
+        return;
 
     GetLocalTime(&localtime);
     StringCchPrintfW(timebuf, sizeof(timebuf) / sizeof(timebuf[0]), 
-	             L"%02d:%02d:%02d ", localtime.wHour, localtime.wMinute, localtime.wSecond);
+                     L"%02d:%02d:%02d ", localtime.wHour, localtime.wMinute, localtime.wSecond);
 
     SendMessage(editWindow_, EM_SCROLLCARET, (WPARAM)-1, (LPARAM)-1);
     SendMessage(editWindow_, EM_REPLACESEL, (WPARAM)FALSE /* not undoable */, (LPARAM)timebuf);
@@ -92,17 +92,17 @@ HippoLogWindow::registerClass()
 
     wcex.cbSize = sizeof(WNDCLASSEX); 
 
-    wcex.style		= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= windowProc;
-    wcex.cbClsExtra	= 0;
-    wcex.cbWndExtra	= 0;
-    wcex.hInstance	= instance_;
-    wcex.hIcon		= bigIcon_;
-    wcex.hCursor	= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASS_NAME;
-    wcex.hIconSm	= smallIcon_;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = windowProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = instance_;
+    wcex.hIcon          = bigIcon_;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASS_NAME;
+    wcex.hIconSm        = smallIcon_;
 
     return RegisterClassEx(&wcex) != 0;
 }
@@ -115,49 +115,49 @@ HippoLogWindow::createWindow(void)
 
     window_ = CreateWindow(CLASS_NAME, title, WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, 400, 500, 
-			   NULL, NULL, instance_, NULL);
+                           NULL, NULL, instance_, NULL);
     if (!window_)
-	return false;
+        return false;
 
     hippoSetWindowData<HippoLogWindow>(window_, this);
 
     editWindow_ = CreateWindow(L"EDIT", NULL,
                                (WS_CHILD | WS_VISIBLE | WS_VSCROLL | 
-				ES_LEFT | ES_MULTILINE | ES_READONLY),
-			       0, 0, 0, 0,  // Size will be set later
- 			       window_, NULL, instance_, NULL);
+                                ES_LEFT | ES_MULTILINE | ES_READONLY),
+                               0, 0, 0, 0,  // Size will be set later
+                               window_, NULL, instance_, NULL);
 
     return true;
 }
 
 bool
 HippoLogWindow::processMessage(UINT   message,
-			       WPARAM wParam,
-			       LPARAM lParam)
+                               WPARAM wParam,
+                               LPARAM lParam)
 {
     switch (message) 
     {
     case WM_CLOSE:
-	hide();
-	return true;
+        hide();
+        return true;
     case WM_SIZE:
-	MoveWindow(editWindow_, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
-	return true;
+        MoveWindow(editWindow_, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+        return true;
     default:
-	return false;
+        return false;
     }
 }
 
 LRESULT CALLBACK 
 HippoLogWindow::windowProc(HWND   window,
-	   	           UINT   message,
-		           WPARAM wParam,
-		           LPARAM lParam)
+                           UINT   message,
+                           WPARAM wParam,
+                           LPARAM lParam)
 {
     HippoLogWindow *logWindow = hippoGetWindowData<HippoLogWindow>(window);
     if (logWindow) {
-	if (logWindow->processMessage(message, wParam, lParam))
-	    return 0;
+        if (logWindow->processMessage(message, wParam, lParam))
+            return 0;
     }
 
     return DefWindowProc(window, message, wParam, lParam);

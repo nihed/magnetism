@@ -24,13 +24,13 @@ private:
     bool createWindow();
 
     bool processMessage(UINT   message,
-	                WPARAM wParam,
-			LPARAM lParam);
+                        WPARAM wParam,
+                        LPARAM lParam);
 
     static LRESULT CALLBACK windowProc(HWND   window,
-    		                       UINT   message,
-		                       WPARAM wParam,
-		                       LPARAM lParam);
+                                       UINT   message,
+                                       WPARAM wParam,
+                                       LPARAM lParam);
 
 private:
     HINSTANCE instance_;

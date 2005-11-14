@@ -21,26 +21,26 @@ struct HippoBrowserInfo
 
 struct HippoLinkShare
 {
-	HippoBSTR postId;
-	HippoBSTR senderId;
-	HippoBSTR senderName;
-	HippoBSTR url;
-	HippoBSTR title;
-	HippoBSTR description;
-	HippoArray<HippoBSTR> personRecipients;
-	HippoArray<HippoBSTR> groupRecipients;
+    HippoBSTR postId;
+    HippoBSTR senderId;
+    HippoBSTR senderName;
+    HippoBSTR url;
+    HippoBSTR title;
+    HippoBSTR description;
+    HippoArray<HippoBSTR> personRecipients;
+    HippoArray<HippoBSTR> groupRecipients;
 };
 
 struct HippoLinkSwarm
 {
-	HippoBSTR postId;
-	HippoBSTR postTitle;
-	HippoBSTR swarmerId;
-	HippoBSTR swarmerName;
+    HippoBSTR postId;
+    HippoBSTR postTitle;
+    HippoBSTR swarmerId;
+    HippoBSTR swarmerName;
 };
 
 class HippoUI 
-    : public IHippoUI 
+: public IHippoUI 
 {
 public:
     HippoUI(bool debug, bool initialShowConfig);
@@ -68,23 +68,23 @@ public:
     HippoPreferences *getPreferences();
 
     void showMenu(UINT buttonFlag);
-	void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
+    void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
     void displaySharedLink(BSTR postId);
     void showShareWindow(BSTR title, BSTR url);
-	void HippoUI::showRecent();
+    void HippoUI::showRecent();
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
-	void logError(const WCHAR *text, HRESULT result);
-	void logLastError(const WCHAR *text);
+    void logError(const WCHAR *text, HRESULT result);
+    void logLastError(const WCHAR *text);
 
-	void onConnectionChange(bool connected);
+    void onConnectionChange(bool connected);
     void onAuthFailure();
     void onAuthSuccess();
     void onLinkMessage(HippoLinkShare &link);
     void onLinkClicked(HippoLinkSwarm &swarm);
 
-	HRESULT getRemoteURL(BSTR appletName, BSTR *result);
+    HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
 
 private:
@@ -92,40 +92,40 @@ private:
     bool registerClass();
     bool createWindow();
     void updateMenu();
-	void updateIcons();
+    void updateIcons();
 
     void showSignInWindow();
     void showPreferences();
     void updateForgetPassword();
 
     bool processMessage(UINT   message,
-	                WPARAM wParam,
-			LPARAM lParam);
+                        WPARAM wParam,
+                        LPARAM lParam);
 
     void revokeActive();
 
     void showAppletWindow(BSTR url);
 
     static LRESULT CALLBACK windowProc(HWND   window,
-    		                       UINT   message,
-		                       WPARAM wParam,
-		                       LPARAM lParam);
+                                       UINT   message,
+                                       WPARAM wParam,
+                                       LPARAM lParam);
     static INT_PTR CALLBACK loginProc(HWND   window,
-    		                      UINT   message,
-		                      WPARAM wParam,
-		                      LPARAM lParam);
+                                      UINT   message,
+                                      WPARAM wParam,
+                                      LPARAM lParam);
     static INT_PTR CALLBACK preferencesProc(HWND   window,
-    		                            UINT   message,
-		                            WPARAM wParam,
-		                            LPARAM lParam);
+                                            UINT   message,
+                                            WPARAM wParam,
+                                            LPARAM lParam);
 
 
 private:
     // If true, this is a debug instance, acts as a separate global
     // singleton and has a separate registry namespace
     bool debug_;
-	bool initialShowConfig_;
-	bool connected_;
+    bool initialShowConfig_;
+    bool connected_;
 
     DWORD refCount_;
     HINSTANCE instance_;
