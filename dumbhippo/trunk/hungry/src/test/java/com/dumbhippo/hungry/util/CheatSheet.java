@@ -65,8 +65,12 @@ public class CheatSheet {
 	public String getOneSampleUserId() {
 		try {
 			PreparedStatement statement =
-				getConnection().prepareStatement("SELECT id FROM User LIMIT 1");
+				getConnection().prepareStatement("SELECT id FROM HippoUser LIMIT 1");
 			ResultSet rs = statement.executeQuery();
+			if (!rs.isBeforeFirst()) {
+				System.err.println("At this point in the tests, we need at least one user in the database (readonly tests don't work with an empty db)");
+				System.exit(1);
+			}
 			rs.next();
 			return rs.getString("id");
 		} catch (SQLException e) {
@@ -78,7 +82,7 @@ public class CheatSheet {
 	public Set<String> getAllUserIds() {
 		try {
 			PreparedStatement statement =
-				getConnection().prepareStatement("SELECT id FROM User");
+				getConnection().prepareStatement("SELECT id FROM HippoUser");
 			ResultSet rs = statement.executeQuery();
 			Set<String> ret = new HashSet<String>();
 			while (rs.next()) {
@@ -94,11 +98,11 @@ public class CheatSheet {
 	public String getUserAuthKey(String userId) {
 		try {
 			PreparedStatement statement =
-				getConnection().prepareStatement("SELECT User.id, Client.authKey "
-						+ "FROM User "
-						+ "INNER JOIN Account ON User.id = Account.owner_id "
+				getConnection().prepareStatement("SELECT HippoUser.id, Client.authKey "
+						+ "FROM HippoUser "
+						+ "INNER JOIN Account ON HippoUser.id = Account.owner_id "
 						+ "LEFT JOIN Client ON Account.id = Client.account_id "
-						+ "WHERE User.id = ? LIMIT 1");
+						+ "WHERE HippoUser.id = ? LIMIT 1");
 			statement.setString(1, userId);
 			ResultSet rs = statement.executeQuery();
 			String ret = null;

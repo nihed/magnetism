@@ -70,17 +70,18 @@ public class PackageSuite extends TestSuite {
 				
 				int i = sortedTests.indexOf(before);
 				if (i >= 0) {
+					//System.out.println("  adding " + c.getName() + " at " + (i+1) + " after " + before.getName());
 					sortedTests.add(i+1, c);
 				} else {
 					i = tests.indexOf(before);
 					if (i < 0) {
 						throw new RuntimeException("Class " + c.getName() + " ordered after " + before.getName() + " but " + before.getName() + " is not in the test suite");
-					}
-					tests.remove(i);
-					sortedTests.add(before);
-					sortedTests.add(c);
+					} 
+					//System.out.println("  putting " + c.getName() + " back in tests after " + before.getName() + " at " + i);
+					tests.add(i+1, c);
 				}
 			} else {
+				//System.out.println("  appending " + c.getName() + " at end " + sortedTests.size());
 				sortedTests.add(c);
 			}
 		}
@@ -108,5 +109,7 @@ public class PackageSuite extends TestSuite {
 				throw new NullPointerException("null class in sortedTests");
 			addTest(new TestSuite(c));
 		}
+		
+		System.out.println("Tests in order are: " + sortedTests);
 	}
 }
