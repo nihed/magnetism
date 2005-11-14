@@ -91,43 +91,22 @@ public class CheatSheet {
 		}		
 	}
 	
-	private void nukeDatabaseRealDatabase() {
+	public void nukeDatabase() {
+		failIfReadOnly();
+	
 		try {
 			DatabaseMetaData md = getConnection().getMetaData();
-			ResultSet schemas = md.getSchemas();
-			System.out.println("Going over each schema in database");
-			while (schemas.next()) {
-				String schemaName = schemas.getString("TABLE_SCHEM");
-				String schemaCatalog = schemas.getString("TABLE_CATALOG");
-				System.out.println("  Got schema " + schemaName + " catalog = " + schemaCatalog);
-				ResultSet tables = md.getTables(schemaCatalog, schemaName, "%", null);
-				while (tables.next()) {
-					System.out.println("  Got table: " + 
-							tables.getString("TABLE_CAT"));
-				}
+			ResultSet tables = md.getTables(null, null, null, null);
+			
+			while (tables.next()) {
+				String table = tables.getString("TABLE_NAME");
+				System.out.println("  Emptying table: " + table);
+				PreparedStatement truncate = getConnection().prepareStatement("truncate " + table);
+				truncate.execute();
 			}
 		} catch (SQLException e) {
 			fatalSqlException(e);
 		}
-	}
-	
-	private void nukeDatabaseToyDatabase() {
-		try {
-			PreparedStatement drop = getConnection().prepareStatement("drop database dumbhippo");
-			PreparedStatement recreate = getConnection().prepareStatement("create database dumbhippo character set utf8 collate utf8_bin");
-			
-			drop.execute();
-			recreate.execute();
-			
-		} catch (SQLException e) {
-			fatalSqlException(e);
-		}
-	}
-	
-	public void nukeDatabase() {
-		failIfReadOnly();
-		
-		nukeDatabaseToyDatabase();
 	}
 	
 	private Connection getConnection() {		

@@ -1,6 +1,7 @@
 package com.dumbhippo.hungry.util;
 
 public enum ConfigValue {
+	BASEURL("baseurl"),
 	DATABASE_URL("database.url"),
 	DATABASE_DRIVER("database.driver"),
 	DATABASE_USER("database.user"),

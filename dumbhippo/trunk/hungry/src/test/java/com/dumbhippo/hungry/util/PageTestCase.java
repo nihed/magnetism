@@ -34,7 +34,7 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 	 * @return base url for this case
 	 */
 	public String getBaseUrl() {
-		return "http://localhost:8080";
+		return Config.getDefault().getValue(ConfigValue.BASEURL);
 	}
 	
 	@Override
