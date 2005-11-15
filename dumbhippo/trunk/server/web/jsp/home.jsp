@@ -9,6 +9,9 @@
 	<title><c:out value="${home.person.humanReadableName}"/></title>
 	<dht:stylesheets href="/css/home.css" />
 	<dht:scriptIncludes/>
+	<script type="text/javascript">
+	        dojo.require("dh.util");
+	</script>
 </head>
 <body>
     <c:url value="viewperson?personId=${home.signin.user.id}" var="publicurl"/>
@@ -22,7 +25,8 @@
 		<dht:userNameEdit value="${home.person.humanReadableName}"/>
 	</div>
 	<div>
-		<a href="/myphoto">Change my photo</a>
+		<dht:uploadPhoto location="/headshots"/>
+		<a id="dhChangeMyPhotoLink" href="javascript:void(0);" onClick="dh.util.swapElements('dhPhotoUploadFileEntry','dhChangeMyPhotoLink')">Change my photo</a>
 	</div>
 
 	<div id="dhMain">
@@ -31,8 +35,11 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared With You</strong>
-				<c:forEach items="${home.receivedPosts}" var="post">
+				<c:forEach items="${home.receivedPosts}" var="post" varStatus="status">
 					<dht:postBubble post="${post}"/>
+					  <c:if test="${status.last}">
+			    <div style="text-align:right"><input style="width:7em;border:1px solid black;" type="text" value="Search"/> the <a href="/shares">other shares</a> sent to you.</div>
+					  </c:if>  
 				</c:forEach>
 			</div>
 		</td>

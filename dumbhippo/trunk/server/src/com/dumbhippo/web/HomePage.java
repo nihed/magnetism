@@ -48,7 +48,7 @@ public class HomePage {
 	
 	public List<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
+		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 4);
 	}
 	
 	public List<GroupView> getGroups() {

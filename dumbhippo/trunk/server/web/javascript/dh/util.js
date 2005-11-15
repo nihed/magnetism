@@ -224,3 +224,9 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 		}
 	}
 }
+
+// Show hidden element and hide shown element
+dh.util.swapElements = function(hiddenId, shownId) {
+	dh.util.hideId(shownId);
+	dh.util.showId(hiddenId);
+}
