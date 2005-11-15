@@ -49,8 +49,12 @@ HippoIcon::create(HWND window)
     notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
     notifyIconData.hWnd = window_;
     notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE;
+    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     notifyIconData.uCallbackMessage = message_;
+    StringCchCopyW(notifyIconData.szTip, 
+                   sizeof(notifyIconData.szTip) / sizeof(notifyIconData.szTip[0]),
+                   L"DumbHippo");
+    notifyIconData.szTip;
     notifyIconData.hIcon = icon_;
 
     Shell_NotifyIcon(NIM_ADD, &notifyIconData);

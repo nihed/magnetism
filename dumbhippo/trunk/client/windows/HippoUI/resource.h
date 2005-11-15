@@ -3,12 +3,12 @@
 // Used by HippoUI.rc
 //
 #define IDC_MYICON                      2
-#define IDI_DUMBHIPPO_DISCONNECTED      5
+#define IDI_DUMBHIPPO                   5
+#define IDI_DUMBHIPPO_DISCONNECTED      6
 #define IDD_HIPPOUI_DIALOG              102
 #define IDD_PREFERENCES                 102
 #define IDS_APP_TITLE                   103
 #define IDM_ABOUT                       104
-#define IDI_DUMBHIPPO                   104
 #define IDM_EXIT                        105
 #define IDC_HIPPOUI                     109
 #define IDM_SHARE0                      110

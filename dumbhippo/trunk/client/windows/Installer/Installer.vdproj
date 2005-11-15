@@ -89,6 +89,20 @@
     {
         "CustomAction"
         {
+            "{0C9D821E-95BB-411F-BE03-2864360EBF94}:_B2145CAF2C6D453CB8A913DE3F73105C"
+            {
+            "Name" = "8:Primary Output from HippoUI (Active)"
+            "Condition" = "8:"
+            "Object" = "8:_DB2D193C931940DA8F0B5E15E3701772"
+            "FileType" = "3:2"
+            "InstallAction" = "3:2"
+            "Arguments" = "8:--install-launch"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_913F2CE0_78E1_412A_881A_E64B8699A6E8"
+            "InstallerClass" = "11:FALSE"
+            "CustomActionData" = "8:"
+            }
         }
         "DefaultFeature"
         {
@@ -196,17 +210,6 @@
             "Property" = "8:ProgramMenuFolder"
                 "Folders"
                 {
-                    "{F27BD5C5-A65D-4608-96D4-7C5DA1F76302}:_3DF58BEC2DE8432B8422981DA670ED73"
-                    {
-                    "Name" = "8:DumbHippo"
-                    "AlwaysCreate" = "11:FALSE"
-                    "Condition" = "8:"
-                    "Transitive" = "11:FALSE"
-                    "Property" = "8:_786B3233976341FB84E7A246032FC4E6"
-                        "Folders"
-                        {
-                        }
-                    }
                 }
             }
         }
@@ -224,13 +227,13 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DumbHippo"
-        "ProductCode" = "8:{82AB8BF9-25CA-4AE3-AE0A-C7F7AFDD52E3}"
-        "PackageCode" = "8:{E318FD9F-CD71-415B-9593-69347D1389A7}"
+        "ProductCode" = "8:{95932C25-6FAE-4957-A189-486C0AA17CEF}"
+        "PackageCode" = "8:{B5D925CB-1960-40A9-A5AB-F0F2690EB68D}"
         "UpgradeCode" = "8:{9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "ProductVersion" = "8:0.1.14"
+        "ProductVersion" = "8:0.1.16"
         "Manufacturer" = "8:Red Hat"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -240,8 +243,8 @@
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:dumbhippo.com client"
         "ARPURLINFOABOUT" = "8:http://dumbhippo.com"
-        "ARPPRODUCTICON" = "8:"
-        "ARPIconIndex" = "3:0"
+        "ARPPRODUCTICON" = "8:_DB2D193C931940DA8F0B5E15E3701772"
+        "ARPIconIndex" = "3:5"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
         }
@@ -341,16 +344,16 @@
         {
             "{478F747B-8505-45D1-9AAE-8C3B645C26E3}:_DA0DDFC3995E4EAB8964279CAF566843"
             {
-            "Name" = "8:Add DumbHippo Icon"
+            "Name" = "8:DumbHippo"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
+            "IconIndex" = "3:5"
             "Transitive" = "11:FALSE"
             "Target" = "8:_DB2D193C931940DA8F0B5E15E3701772"
-            "Folder" = "8:_3DF58BEC2DE8432B8422981DA670ED73"
+            "Folder" = "8:_C79BA906783A42FB8C072FA86DFB3C83"
             "WorkingFolder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
-            "Icon" = "8:"
+            "Icon" = "8:_DB2D193C931940DA8F0B5E15E3701772"
             "Feature" = "8:"
             }
         }
@@ -638,7 +641,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:You can start using DumbHippo by choosing \"Add DumbHippo Icon\" under DumbHippo in the Start menu."
+                            "Value" = "8:"
                             "DefaultValue" = "8:#1258"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -741,7 +744,7 @@
         {
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_47A4F6AE1DA44BD599132EFC9C5399CA"
             {
-            "SourcePath" = "8:..\\Debug\\HippoExplorer.dll"
+            "SourcePath" = "8:..\\debug\\HippoExplorer.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -769,7 +772,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_898A262762AC42C68A8A5BC2F01E4593"
             {
-            "SourcePath" = "8:..\\Debug\\loudmouth-1.dll"
+            "SourcePath" = "8:..\\debug\\loudmouth-1.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -790,6 +793,34 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{E02F6EA7-65C3-4D2A-919F-D022D6C26DFA}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_B0B1BFC159EA488B9662F42A887BFC84"
+            {
+            "SourcePath" = "8:"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{A0F265E0-4510-4178-B365-A4581C74EA51}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
@@ -825,7 +856,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_DB2D193C931940DA8F0B5E15E3701772"
             {
-            "SourcePath" = "8:..\\Debug\\HippoUI.exe"
+            "SourcePath" = "8:..\\debug\\HippoUI.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -853,7 +884,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_E44DB7AA67204C17B340781D98D865CB"
             {
-            "SourcePath" = "8:..\\Debug\\HippoUtil.dll"
+            "SourcePath" = "8:..\\debug\\HippoUtil.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"

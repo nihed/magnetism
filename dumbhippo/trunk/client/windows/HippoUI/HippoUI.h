@@ -43,7 +43,7 @@ class HippoUI
 : public IHippoUI 
 {
 public:
-    HippoUI(bool debug, bool initialShowConfig, bool initialDebugShare);
+    HippoUI(bool debug, bool initialShowConfig, bool replaceExisting, bool initialDebugShare);
     ~HippoUI();
 
     //IUnknown methods
@@ -61,6 +61,8 @@ public:
     STDMETHODIMP RegisterBrowser(IWebBrowser2 *, DWORD *);
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
+    STDMETHODIMP Quit();
+    STDMETHODIMP ShowRecent();
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -71,7 +73,6 @@ public:
     void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
     void displaySharedLink(BSTR postId);
     void showShareWindow(BSTR title, BSTR url);
-    void HippoUI::showRecent();
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
@@ -106,6 +107,8 @@ private:
 
     void showAppletWindow(BSTR url);
 
+    static int doQuit(gpointer data);
+
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,
                                        WPARAM wParam,
@@ -124,9 +127,14 @@ private:
     // If true, this is a debug instance, acts as a separate global
     // singleton and has a separate registry namespace
     bool debug_;
+    // If true, then on startup if another instance is already running,
+    // tell it to exit rather than erroring out.
+    bool replaceExisting_;
     bool initialShowConfig_;
     bool initialShowDebugShare_;
     bool connected_;
+    // Whether we are registered as the active HippoUI object
+    bool registered_; 
 
     DWORD refCount_;
     HINSTANCE instance_;

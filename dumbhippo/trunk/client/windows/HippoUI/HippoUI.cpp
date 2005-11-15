@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "HippoUI.h"
 #include <stdio.h>
+#include <process.h>
 #include <strsafe.h>
 #include <exdisp.h>
 #include <HippoUtil.h>
@@ -26,11 +27,12 @@
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
-HippoUI::HippoUI(bool debug, bool launchConfig, bool initialDebugShare) 
+HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initialDebugShare) 
     : preferences_(debug)
 {
     refCount_ = 1;
     debug_ = debug;
+    replaceExisting_ = replaceExisting;
     initialShowConfig_ = launchConfig;
     initialShowDebugShare_ = initialDebugShare;
 
@@ -49,6 +51,7 @@ HippoUI::HippoUI(bool debug, bool launchConfig, bool initialDebugShare)
     preferencesDialog_ = NULL;
 
     connected_ = false;
+    registered_ = false;
 
     nextBrowserCookie_ = 0;
 
@@ -193,6 +196,56 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
     }
 
     return E_FAIL;
+}
+
+int
+HippoUI::doQuit(gpointer data) 
+{
+    HippoUI *ui = (HippoUI *)data;
+    DestroyWindow(ui->window_);
+
+    return FALSE;
+}
+
+STDMETHODIMP
+HippoUI::Quit()
+{
+    // We need to unregister ourself as the active HippoUI implementation before
+    // we return, but we need to return to the caller, not just exit immediately.
+
+    revokeActive();
+    g_idle_add(doQuit, this);
+
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoUI::ShowRecent()
+{
+    HippoBSTR recentURL;
+
+    HippoPtr<IWebBrowser2> webBrowser;
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+                     IID_IWebBrowser2, (void **)&webBrowser);
+
+    if (!webBrowser) {
+        hippoDebug(L"Couldn't create web browser, we lose");
+        return E_FAIL;
+    }
+    
+    HRESULT hr = getRemoteURL(HippoBSTR(L"home"), &recentURL);
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+
+    webBrowser->Navigate(recentURL,
+                         &missing, &missing, &missing, &missing);
+
+    webBrowser->put_Visible(VARIANT_TRUE);
+
+    return S_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -478,33 +531,6 @@ HippoUI::displaySharedLink(BSTR postId)
     g_free (postIdU);
 }
 
-// Show a window when the user clicks on a shared link
-void 
-HippoUI::showRecent(void)
-{
-    HippoBSTR recentURL;
-
-    HippoPtr<IWebBrowser2> webBrowser;
-    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
-                     IID_IWebBrowser2, (void **)&webBrowser);
-
-    if (!webBrowser) {
-        hippoDebug(L"Couldn't create web browser, we lose");
-        return;
-    }
-    
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"home"), &recentURL)))
-        return;
-
-    VARIANT missing;
-    missing.vt = VT_EMPTY;
-
-    webBrowser->Navigate(recentURL,
-                         &missing, &missing, &missing, &missing);
-
-    webBrowser->put_Visible(VARIANT_TRUE);
-}
-
 void
 HippoUI::debugLogW(const WCHAR *format, ...)
 {
@@ -576,9 +602,10 @@ HippoUI::onLinkClicked(HippoLinkSwarm &linkswarm)
 bool 
 HippoUI::registerActive()
 {
+    int retryCount = 2; // No infinite loops
+RETRY_REGISTER:
     IHippoUI *pHippoUI;
 
- 
     QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
     HRESULT hr = RegisterActiveObject(pHippoUI, 
                                       debug_ ? CLSID_HippoUI_Debug : CLSID_HippoUI,
@@ -589,11 +616,37 @@ HippoUI::registerActive()
         MessageBox(NULL, TEXT("Error registering Dumb Hippo"), NULL, MB_OK);
         return false;
     } else if (hr == MK_S_MONIKERALREADYREGISTERED) {
-        // Duplicates are actually succesfully registered them, so have to be removed
+        // Duplicates are actually succesfully registered, so we have to remove
+        // ourself before exiting, or alternatively, before telling the old copy to
+        // remove itself then retrying.
+        registered_ = true;
         revokeActive();
-        MessageBox(NULL, TEXT("Dumb Hippo is already running"), NULL, MB_OK);
+
+        // If we were launched with the --replace flag, then if an existing instance
+        // was already running, we tell it to exit, and run ourself. Otherwise, we
+        // tell the old copy to show recently shared URLs.
+
+        HippoPtr<IUnknown> unknown;
+        HippoPtr<IHippoUI> oldUI;
+        if (SUCCEEDED (GetActiveObject(debug_ ? CLSID_HippoUI_Debug : CLSID_HippoUI, NULL, &unknown)))
+            unknown->QueryInterface<IHippoUI>(&oldUI);
+
+        if (replaceExisting_) {
+            if (retryCount-- > 0) {
+                if (oldUI)
+                    oldUI->Quit();
+
+                goto RETRY_REGISTER;
+            }
+        } else {
+            if (oldUI)
+                oldUI->ShowRecent();
+        }
+
         return false;
     }
+
+    registered_ = true;
     
     // There might already be explorer windows open, so broadcast a message
     // that causes HippoTracker to recheck the active object table
@@ -607,7 +660,11 @@ HippoUI::registerActive()
 void
 HippoUI::revokeActive()
 {
-    RevokeActiveObject(registerHandle_, NULL);
+    if (registered_) {
+        RevokeActiveObject(registerHandle_, NULL);
+
+        registered_ = false;
+    }
 }
 
 bool
@@ -888,7 +945,7 @@ HippoUI::processMessage(UINT   message,
             im_.signOut();
             return true;
         case IDM_RECENT:
-            showRecent();
+            ShowRecent();
             return true;
         case IDM_DEBUGLOG:
             logWindow_.show();
@@ -1113,6 +1170,16 @@ initializeWinSock(void)
     return true;
 }
 
+static void
+installLaunch(HINSTANCE instance)
+{
+    WCHAR fileBuf[MAX_PATH];
+    if (!GetModuleFileName(instance, fileBuf, sizeof(fileBuf) / sizeof(fileBuf[0])))
+        return;
+
+    _wspawnl(_P_NOWAIT, fileBuf, L"DumbHippo", L"--replace", NULL);
+}
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -1128,6 +1195,8 @@ WinMain(HINSTANCE hInstance,
 
     static gboolean debug = FALSE;
     static gboolean configFlag = FALSE;
+    static gboolean doInstallLaunch = NULL;
+    static gboolean replaceExisting = NULL;
     static gboolean initialDebugShare = FALSE;
 
     char *command_line = GetCommandLineA();
@@ -1139,8 +1208,10 @@ WinMain(HINSTANCE hInstance,
     }
 
     static const GOptionEntry entries[] = {
-        { "config", 'c', 0, G_OPTION_ARG_NONE, (gpointer) &configFlag, "Launch developer configuration" },
-        { "debug", 'd', 0, G_OPTION_ARG_NONE,(gpointer)&debug, "Run in debug mode" },
+        { "config", 'c', 0, G_OPTION_ARG_NONE, (gpointer)&configFlag, "Launch developer configuration" },
+        { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
+        { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doInstallLaunch, "Run appropriately at the end of the install" },
+        { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replaceExisting, "Replace existing instance, if any" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initialDebugShare, "Show an initial dummy debug share" },
         { NULL }
     };
@@ -1154,13 +1225,20 @@ WinMain(HINSTANCE hInstance,
         return 1;
     }
 
+    // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
+    if (doInstallLaunch) {
+        installLaunch(hInstance);
+        return 0;
+    }
+
     // Initialize COM
     CoInitialize(NULL);
 
     if (!initializeWinSock())
         return 0;
 
-    ui = new HippoUI(debug != FALSE, configFlag != FALSE, initialDebugShare != FALSE);
+    ui = new HippoUI(debug != FALSE, configFlag != FALSE, 
+                     replaceExisting != FALSE, initialDebugShare != FALSE);
     if (!ui->create(hInstance))
         return 0;
 

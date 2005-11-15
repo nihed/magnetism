@@ -23,6 +23,11 @@ library HippoUtil {
         HRESULT UnregisterBrowser([in] DWORD cookie);
         [id(102), helpstring("Update information about a browser")]
         HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
+        [id(103), helpstring("Unregister and exit")]
+        HRESULT Quit();
+        [id(104), helpstring("Show recently shared links")]
+        HRESULT ShowRecent();
+
     }
     [
         uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
