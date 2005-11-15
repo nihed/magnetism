@@ -76,10 +76,27 @@
 							onclick="dh.sharelink.doCreateGroup();"/>
 					</div>
 					<div id="dhCreateGroupAccessButtons">
-						<input type="radio" id="dhCreateGroupPrivateRadio" name="groupAccess" value="private"/>Private
-						<input type="radio" id="dhCreateGroupPublicRadio" name="groupAccess" value="public" checked="checked"/>Public
+						<input type="radio" id="dhCreateGroupPrivateRadio" name="groupAccess" />
+						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPrivateRadio');dh.sharelink.updateAccessTip();">Private</a>
+						<input type="radio" id="dhCreateGroupPublicRadio" name="groupAccess" checked="checked"/>
+						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
+			
+						<div id="dhPrivateGroupAccessTip" class="dh-help-bubble">
+							<img style="left:27px;" class="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<div class="dh-help-bubble-message">
+								Private groups are for <strong>families</strong> and super secret CIA agents
+								<a href="/privacy" target="_blank">privacy</a>
+							</div><!-- help bubble message -->
+						</div><!-- help bubble -->
+						<div id="dhPublicGroupAccessTip" class="dh-help-bubble">
+							<img style="left:110px;" class="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<div class="dh-help-bubble-message">
+								Public groups are for <strong>friends</strong>, <strong>co-workers</strong>, and others who don't
+								mind people seeing the links they are sharing.
+								<a href="/privacy" target="_blank">privacy</a>
+							</div><!-- help bubble message -->
+						</div><!-- help bubble -->
 					</div>
-					<p id="dhCreateGroupAccessTip" class="dhStatusLabel"></p>
 					<p id="dhCreateGroupStatus" class="dhStatusLabel dhInvisible"></p>
 				</div>
 				<a id="dhCreateGroupLink" class="dhActionLink dhInvisible"

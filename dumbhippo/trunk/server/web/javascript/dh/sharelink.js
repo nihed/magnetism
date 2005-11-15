@@ -16,18 +16,18 @@ dh.sharelink.createGroupNameEntry = null;
 dh.sharelink.createGroupLink = null;
 dh.sharelink.createGroupPrivateRadio = null;
 dh.sharelink.createGroupPublicRadio = null;
-dh.sharelink.createGroupAccessTip = null;
 dh.sharelink.addMemberLink = null;
 dh.sharelink.addMemberDescription = null;
 dh.sharelink.addMemberGroup = null;
 dh.sharelink.highlightingGroup = false;
 
 dh.sharelink.updateAccessTip = function() {
-	var tip = dh.sharelink.createGroupAccessTip;
 	if (dh.sharelink.createGroupPrivateRadio.checked) {
-		dojo.dom.textContent(tip, "For family matters (and secret CIA agents)");
+		dh.util.showId('dhPrivateGroupAccessTip');
+		dh.util.hideId('dhPublicGroupAccessTip');
 	} else {
-		dojo.dom.textContent(tip, "For friends and coworkers");
+		dh.util.hideId('dhPrivateGroupAccessTip');
+		dh.util.showId('dhPublicGroupAccessTip');
 	}
 }
 
@@ -325,7 +325,6 @@ dh.sharelink.init = function() {
 						dj_global, "dhCreateGroupAccessChanged");
 	dojo.event.connect(dh.sharelink.createGroupPublicRadio, "onchange",
 						dj_global, "dhCreateGroupAccessChanged");
-	dh.sharelink.createGroupAccessTip = document.getElementById("dhCreateGroupAccessTip");
 	dh.sharelink.updateAccessTip();
 	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");
 	dh.sharelink.addMemberLink = document.getElementById("dhAddMemberLink");

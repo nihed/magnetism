@@ -246,3 +246,35 @@ div.toolbar * {
 div.toolbar a {
 	color:					steelblue;
 }
+
+.dh-help-bubble {
+	width:				200px;
+	height:				75px;
+	position:			absolute;
+}
+.dh-help-bubble-triangle {
+	position:		relative;
+	display:		block;
+	top:			1px;
+	z-index:		2; /* on top */
+}
+.dh-help-bubble-message {
+	position:			relative;
+	padding:			7px;
+	font-size:			small;
+	background-color:	#a773fb;
+	color:				white;
+	border:				1px solid black;
+}
+.dh-help-bubble a {
+	font-size:			small;
+	color:				yellow;
+	text-decoration:	none;
+	margin:				7px;
+}
+.dh-help-bubble a:link {
+	color:				yellow;
+}
+.dh-help-bubble a:hover {
+	text-decoration:	underline;
+}

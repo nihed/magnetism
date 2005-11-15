@@ -205,3 +205,22 @@ dh.util.getTextFromRichText = function(richtext) {
 	// yet (probably overkill too since we offer no styled text toolbar)
 	return dh.util.getTextFromHtmlNode(richtext.editNode);
 }
+
+dh.util.toggleCheckBox = function(boxNameOrNode) {
+	var node = boxNameOrNode;
+	if (dojo.lang.isString(boxNameOrNode)) {
+		node = document.getElementById(boxNameOrNode);
+	}
+	node.checked = !node.checked;
+	
+	// fixup the radio group
+	if (node.type == "radio") {
+		var allInputs = document.getElementsByTagName("input");
+		for (var i = 0; i < allInputs.length; ++i) {
+			var n = allInputs[i];
+			if (n != node && n.name == node.name) {
+				n.checked = !node.checked;
+			}
+		}
+	}
+}
