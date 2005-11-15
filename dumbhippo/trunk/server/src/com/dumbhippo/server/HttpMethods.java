@@ -37,8 +37,8 @@ public interface HttpMethods {
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "name", "members" })
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String memberIds)
+	@HttpParams( { "name", "members", "secret" })
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String memberIds, boolean secret)
 			throws IOException, ParseException, GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)

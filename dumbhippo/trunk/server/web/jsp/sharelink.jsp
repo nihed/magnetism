@@ -70,9 +70,16 @@
 				
 				<div id="dhCreateGroupPopup" class="dhItemBox dhInvisible">
 					<div class="dhLabel">New <u>G</u>roup Name</div>
-					<div><input id="dhCreateGroupName"/>
-					<input type="button" accesskey="g" class="dhButton" value="Create" 
-							onclick="dh.sharelink.doCreateGroup();"/></div>
+					<div>
+						<input id="dhCreateGroupName"/>
+						<input type="button" accesskey="g" class="dhButton" value="Create" 
+							onclick="dh.sharelink.doCreateGroup();"/>
+					</div>
+					<div id="dhCreateGroupAccessButtons">
+						<input type="radio" id="dhCreateGroupPrivateRadio" name="groupAccess" value="private"/>Private
+						<input type="radio" id="dhCreateGroupPublicRadio" name="groupAccess" value="public" checked="checked"/>Public
+					</div>
+					<p id="dhCreateGroupAccessTip" class="dhStatusLabel"></p>
 					<p id="dhCreateGroupStatus" class="dhStatusLabel dhInvisible"></p>
 				</div>
 				<a id="dhCreateGroupLink" class="dhActionLink dhInvisible"

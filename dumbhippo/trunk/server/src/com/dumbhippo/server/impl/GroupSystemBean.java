@@ -47,11 +47,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public Group createGroup(User creator, String name) {
+	public Group createGroup(User creator, String name, GroupAccess access) {
 		if (creator == null)
 			throw new IllegalArgumentException("null group creator");
 		
-		Group g = new Group(name);
+		Group g = new Group(name, access);
 		
 		em.persist(g);
 		

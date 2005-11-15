@@ -253,12 +253,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		attachedUser.setName(fullname);
 	}
 	
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members) throws IOException, ParseException, GuidNotFoundException {
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members, boolean secret) throws IOException, ParseException, GuidNotFoundException {
 		Set<String> memberGuids = splitIdList(members);
 		
 		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
 		
-		Group group = groupSystem.createGroup(user, name);
+		Group group = groupSystem.createGroup(user, name, secret ? GroupAccess.PUBLIC_INVITE : GroupAccess.SECRET);
 		for (Person p : memberPeople)
 			groupSystem.addMember(user, group, p);
 		

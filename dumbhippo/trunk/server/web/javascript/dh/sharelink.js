@@ -14,10 +14,22 @@ dh.sharelink.secretCheckbox = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
 dh.sharelink.createGroupLink = null;
+dh.sharelink.createGroupPrivateRadio = null;
+dh.sharelink.createGroupPublicRadio = null;
+dh.sharelink.createGroupAccessTip = null;
 dh.sharelink.addMemberLink = null;
 dh.sharelink.addMemberDescription = null;
 dh.sharelink.addMemberGroup = null;
 dh.sharelink.highlightingGroup = false;
+
+dh.sharelink.updateAccessTip = function() {
+	var tip = dh.sharelink.createGroupAccessTip;
+	if (dh.sharelink.createGroupPrivateRadio.checked) {
+		dojo.dom.textContent(tip, "For family matters (and secret CIA agents)");
+	} else {
+		dojo.dom.textContent(tip, "For friends and coworkers");
+	}
+}
 
 dh.sharelink.highlightPossibleGroup = function() {
 	dh.share.forEachPossibleGroupMember(function(node) {
@@ -41,8 +53,12 @@ dh.sharelink.toggleCreateGroup = function() {
 	var popup = dh.sharelink.createGroupPopup;
 	dh.util.toggleShowing(popup);
 	
-	if (!dh.util.isShowing(popup))
+	if (dh.util.isShowing(popup)) {
+		dojo.dom.textContent(dh.sharelink.createGroupLink, "Cancel");
+	} else {
+		dojo.dom.textContent(dh.sharelink.createGroupLink, "Create Group from These");
 		dh.sharelink.unhighlightPossibleGroup();
+	}
 }
 
 dh.sharelink.inAction = false;
@@ -68,10 +84,13 @@ dh.sharelink.doCreateGroup = function() {
 	}
 	var commaMembers = dh.util.join(groupMembers, ",", "id");
 		
+	var secret = dh.sharelink.createGroupPrivateRadio.checked;
+		
 	dh.server.getXmlPOST("creategroup",
 					{ 
 						"name" : name, 
-						"members" : commaMembers
+						"members" : commaMembers,
+						"secret" : secret
 					},
 					function(type, data, http) {
 						dojo.debug("got back a new group " + data);
@@ -108,6 +127,10 @@ dhDoCreateGroupKeyUp = function(event) {
 	if (event.keyCode == 13) {
 		dh.sharelink.doCreateGroup();
 	}
+}
+
+dhCreateGroupAccessChanged = function() {
+	dh.sharelink.updateAccessTip();
 }
 
 dh.sharelink.doAddMembers = function() {
@@ -295,6 +318,15 @@ dh.sharelink.init = function() {
 	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
 	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
 						dj_global, "dhDoCreateGroupKeyUp");
+	dh.sharelink.createGroupPrivateRadio = document.getElementById("dhCreateGroupPrivateRadio");
+	dh.sharelink.createGroupPublicRadio = document.getElementById("dhCreateGroupPublicRadio");
+	// HTML is stupid; you only get the signal on the one that changed, not the whole group
+	dojo.event.connect(dh.sharelink.createGroupPrivateRadio, "onchange",
+						dj_global, "dhCreateGroupAccessChanged");
+	dojo.event.connect(dh.sharelink.createGroupPublicRadio, "onchange",
+						dj_global, "dhCreateGroupAccessChanged");
+	dh.sharelink.createGroupAccessTip = document.getElementById("dhCreateGroupAccessTip");
+	dh.sharelink.updateAccessTip();
 	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");
 	dh.sharelink.addMemberLink = document.getElementById("dhAddMemberLink");
 	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");

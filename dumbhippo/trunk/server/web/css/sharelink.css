@@ -79,13 +79,7 @@ div.header {
 	width:						23em; /* a bit larger than the input inside it */
 }
 
-/* have to do this since type=text doesn't work if 
- * the type=text is implicit in the html
- */
-#dhCreateGroupPopup input[type="button"] {
-	width:						auto;
-}
-#dhCreateGroupPopup input {
+#dhCreateGroupName {
 	width:						20em;
 }
 #dhCreateGroupStatus {

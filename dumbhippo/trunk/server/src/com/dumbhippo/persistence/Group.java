@@ -34,8 +34,9 @@ public class Group extends GuidPersistable {
 		initMissing();
 	}
 	
-	public Group(String name) {
+	public Group(String name, GroupAccess access) {
 		this.name = name;
+		this.access = access;
 		initMissing();
 	}
 	
