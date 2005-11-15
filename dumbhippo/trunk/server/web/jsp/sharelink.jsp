@@ -82,14 +82,14 @@
 						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
 			
 						<div id="dhPrivateGroupAccessTip" class="dh-help-bubble">
-							<img style="left:27px;" class="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<dht:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/triangle.png"/>
 							<div class="dh-help-bubble-message">
 								Private groups are for <strong>families</strong> and super secret CIA agents
 								<a href="/privacy" target="_blank">privacy</a>
 							</div><!-- help bubble message -->
 						</div><!-- help bubble -->
 						<div id="dhPublicGroupAccessTip" class="dh-help-bubble">
-							<img style="left:110px;" class="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<dht:png style="left:110px;" klass="dh-help-bubble-triangle" src="/images/triangle.png"/>
 							<div class="dh-help-bubble-message">
 								Public groups are for <strong>friends</strong>, <strong>co-workers</strong>, and others who don't
 								mind people seeing the links they are sharing.
