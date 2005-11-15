@@ -55,15 +55,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private AccountSystem accountSystem;
 	
-	public User lookupPersonByEmail(String email) {
+	public User lookupUserByEmail(String email) {
 		EmailResource res = getEmail(email);
-		return lookupPersonByResource(res);
+		return lookupUserByResource(res);
 	}
 
 	private static final String LOOKUP_PERSON_BY_RESOURCE_QUERY =
 		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
 	
-	public User lookupPersonByResource(Resource resource) {
+	public User lookupUserByResource(Resource resource) {
 		try {
 			return (User) em.createQuery(LOOKUP_PERSON_BY_RESOURCE_QUERY)
 			.setParameter("resource", resource)
@@ -351,7 +351,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		
-		return new PersonView(p, getUser(p), getEmail(viewpoint, p));
+		Contact contact = p instanceof Contact ? (Contact) p : null;
+		User user = getUser(p); // user for contact, or p itself if it's already a user
+		
+		PersonView pv = new PersonView(contact, user);
+		pv.addPrimaryEmail(getEmail(viewpoint, p));
+		return pv;
 	}
 
 	public PersonView getPersonView(Viewpoint viewpoint, Resource r) {
@@ -364,7 +369,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (r instanceof Account) {
 			user = ((Account)r).getOwner();
 		} else {
-			user = lookupPersonByResource(r);
+			user = lookupUserByResource(r);
 		}
 		
 		if (r instanceof EmailResource)
@@ -376,12 +381,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				email = getEmailForUser(user);
 		}
 			
-		return new PersonView(contact != null ? contact : user, user, email); 
-					          
+		PersonView pv = new PersonView(contact, user);
+		pv.addPrimaryEmail(email);
+		return pv;
 	}
 
 	public PersonView getSystemView(User user) {
-		return new PersonView(user, user, getEmailForUser(user));
+		PersonView pv = new PersonView(null, user);
+		pv.addPrimaryEmail(getEmailForUser(user));
+		return pv;
 	}
 	
 	public void setName(Person person, FullName name) {
@@ -454,7 +462,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			// implement spidering) if contacts own the account resource for
 			// users.
 			if (!(resource instanceof Account)) {
-				User contactUser = lookupPersonByResource(resource);
+				User contactUser = lookupUserByResource(resource);
 				
 				if (contactUser != null) {
 					logger.debug("Adding contact resource pointing to account");

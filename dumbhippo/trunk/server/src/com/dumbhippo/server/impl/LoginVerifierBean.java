@@ -48,7 +48,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		if (resource == null)
 			throw new IllegalArgumentException("null resource");
 
-		User user = spider.lookupPersonByResource(resource);
+		User user = spider.lookupUserByResource(resource);
 		if (user == null) {
 			throw new LoginVerifierException("That address hasn't been added to any account");
 		}
@@ -98,7 +98,7 @@ public class LoginVerifierBean implements LoginVerifier {
 			throw new LoginVerifierException("The link you followed has expired; you'll need to start over.");
 		
 		Resource resource = token.getResource();
-		Person person = spider.lookupPersonByResource(resource);
+		Person person = spider.lookupUserByResource(resource);
 		Account account;
 		
 		if (person != null)

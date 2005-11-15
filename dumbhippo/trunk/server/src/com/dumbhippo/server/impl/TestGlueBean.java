@@ -105,7 +105,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 	}
 
 	public Account findOrCreateAccountFromEmail(String email) {
-		User user = identitySpider.lookupPersonByEmail(email);
+		User user = identitySpider.lookupUserByEmail(email);
 		if (user != null) {
 			Account account = accountSystem.lookupAccountByPerson(user); 
 			if (account != null) {

@@ -20,7 +20,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
-import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -293,8 +292,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				members.put(cc.getResource(), identitySpider.getPersonView(viewpoint, cc.getContact()));
 		}
 		for (Resource r : resourceMembers) {
-			if (r instanceof EmailResource && !members.containsKey(r))
-				members.put(r, new PersonView(null, null, (EmailResource)r));
+			PersonView pv = new PersonView(null, null);
+			pv.addPrimaryResource(r);
 		}
 		
 		Set<PersonView> result = new HashSet<PersonView>();

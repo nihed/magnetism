@@ -112,7 +112,7 @@ public interface IdentitySpider {
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
 	 */
-	public User lookupPersonByEmail(String email);
+	public User lookupUserByEmail(String email);
 	
 	//public Person lookupPersonByAim(String aim);
 	//public Person lookupPersonByAim(Person viewpoint, String aim);
@@ -125,7 +125,7 @@ public interface IdentitySpider {
 	 * @param resource the possibly-owned resource
 	 * @return the owning person, or null if none
 	 */
-	public User lookupPersonByResource(Resource resource);
+	public User lookupUserByResource(Resource resource);
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException;
