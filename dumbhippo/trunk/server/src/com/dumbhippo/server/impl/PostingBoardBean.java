@@ -20,12 +20,11 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;

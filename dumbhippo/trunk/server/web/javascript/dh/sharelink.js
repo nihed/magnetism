@@ -72,8 +72,9 @@ dh.sharelink.doCreateGroup = function() {
 	dh.sharelink.inAction = true;
 		
 	var statusNode = document.getElementById("dhCreateGroupStatus");
-	dojo.dom.textContent(statusNode, "Please wait...");
-	dh.util.show(statusNode);
+	// this makes things jump around and look ugly, disable for now
+	//dojo.dom.textContent(statusNode, "Please wait...");
+	//dh.util.show(statusNode);
 	
 	var groupMembers = [];
 	for (var i = 0; i < dh.share.selectedRecipients.length; ++i) {

@@ -440,6 +440,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// the interception on getResources().
 		
 		Contact contact = new Contact(user.getAccount());
+		// call the contact whatever resource we used to create it
+		contact.setNickname(resource.getHumanReadableString());
 		em.persist(contact);
 		
 		ContactClaim cc = new ContactClaim(contact, resource);

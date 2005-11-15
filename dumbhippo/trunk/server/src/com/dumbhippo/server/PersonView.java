@@ -173,7 +173,7 @@ public class PersonView {
 			name = getHumanReadableName();
 
 		if (name.length() > MAX_SHORT_NAME_LENGTH) {
-			return name.substring(0, MAX_SHORT_NAME_LENGTH);
+			return name.substring(0, MAX_SHORT_NAME_LENGTH) + "...";
 		} else {
 			return name;
 		}

@@ -133,6 +133,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						break;
 					} 
 					
+					User user = member.getUser(); // can return null
+					if (user != null && viewpoint.getViewer().equals(user))
+						continue; // skip ourselves
+					
 					if (sampleMembers.length() > 0)
 						sampleMembers.append(" ");
 				
@@ -140,7 +144,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					sampleMembers.append(shortName);
 				}
 				
-				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName(), "sampleMembers", sampleMembers.toString());
+				xml.appendTextNode("group", null, "id", g.getId(), "display", g.getName(), "sampleMembers", sampleMembers.toString(), "count", Integer.toString(members.size()));
 			}
 		}
 	}
