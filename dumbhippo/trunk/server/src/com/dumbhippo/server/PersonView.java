@@ -213,7 +213,7 @@ public class PersonView {
 		else if (getExtra(PersonViewExtra.PRIMARY_AIM))
 			return getAim();
 		else
-			return null;
+			return getOne(PersonViewExtra.PRIMARY_RESOURCE, Resource.class);
 	}
 	
 	public EmailResource getEmail() {
