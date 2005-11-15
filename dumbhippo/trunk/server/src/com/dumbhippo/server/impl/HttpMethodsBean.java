@@ -206,6 +206,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
+		// FIXME if sending to a public group with secret=true, we want to expand the group instead of 
+		// sending to the group ...
 		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
 		// this is what can throw ParseException

@@ -18,7 +18,7 @@
 	<dht:header>
 	</dht:header>
 
-	<div id="main">
+	<div id="dhMain">
 		<c:out value="${flashMessage}"/>
 	</div>
 </body>
