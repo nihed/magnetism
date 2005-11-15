@@ -107,6 +107,7 @@ public:
     STDMETHODIMP DebugLog(BSTR str);
     STDMETHODIMP DisplaySharedLink(BSTR linkId);
     STDMETHODIMP OpenExternalURL(BSTR url);
+    STDMETHODIMP GetXmlHttp(IXMLHttpRequest **request);
     STDMETHODIMP Close();
 
     // IDocHostUIHandler

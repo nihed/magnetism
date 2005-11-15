@@ -4,8 +4,8 @@
     <head>
         <dh:stylesheet />
         <title>dumbhippo notification</title>
+        <dh:corescript />        
     </head>
-    <dh:corescript />
     <body style="overflow: hidden;" onload="dhInit();">
         <dh:closeButton />
         <div id="dh-notification">

@@ -451,6 +451,14 @@ HippoBubble::Close()
     return S_OK;
 }
 
+STDMETHODIMP 
+HippoBubble::GetXmlHttp(IXMLHttpRequest **request)
+{
+    CoCreateInstance(CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC,
+        IID_IXMLHTTPRequest, (void**) request);
+    return S_OK;
+}
+
 // IDocHostUIExternal
 STDMETHODIMP 
 HippoBubble::EnableModeless(BOOL enable)

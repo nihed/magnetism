@@ -43,7 +43,7 @@ class HippoUI
 : public IHippoUI 
 {
 public:
-    HippoUI(bool debug, bool initialShowConfig);
+    HippoUI(bool debug, bool initialShowConfig, bool initialDebugShare);
     ~HippoUI();
 
     //IUnknown methods
@@ -125,6 +125,7 @@ private:
     // singleton and has a separate registry namespace
     bool debug_;
     bool initialShowConfig_;
+    bool initialShowDebugShare_;
     bool connected_;
 
     DWORD refCount_;

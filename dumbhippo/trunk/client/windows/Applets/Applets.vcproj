@@ -50,6 +50,14 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\core.js"
+			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath=".\flickr.js"
+			DeploymentContent="TRUE">
+		</File>
+		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File

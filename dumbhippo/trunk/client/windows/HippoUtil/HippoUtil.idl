@@ -40,5 +40,7 @@ library HippoUtil {
         HRESULT DisplaySharedLink([in] BSTR postId);
         [id(123), helpstring("Debug log")]
         HRESULT DebugLog([in] BSTR msg);
+        [id(124), helpstring("Get xmlhttp")]
+        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
 }

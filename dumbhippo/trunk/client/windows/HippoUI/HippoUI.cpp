@@ -26,12 +26,13 @@
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
-HippoUI::HippoUI(bool debug, bool launchConfig) 
+HippoUI::HippoUI(bool debug, bool launchConfig, bool initialDebugShare) 
     : preferences_(debug)
 {
     refCount_ = 1;
     debug_ = debug;
     initialShowConfig_ = launchConfig;
+    initialShowDebugShare_ = initialDebugShare;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -269,6 +270,20 @@ HippoUI::create(HINSTANCE instance)
     }
     if (this->initialShowConfig_) {
         showPreferences();
+    }
+
+    if (this->initialShowDebugShare_) {
+        HippoLinkShare linkshare;
+
+        linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
+        linkshare.postId.setUTF8("2");
+        linkshare.title.setUTF8("funny photo");
+        linkshare.senderName.setUTF8("debug user");
+        linkshare.senderId.setUTF8("3");
+        linkshare.description.setUTF8("debug share");
+        HippoBSTR recipient(L"debug recipient");
+        linkshare.personRecipients.append(recipient);
+        onLinkMessage(linkshare);        
     }
 
     return true;
@@ -1113,6 +1128,7 @@ WinMain(HINSTANCE hInstance,
 
     static gboolean debug = FALSE;
     static gboolean configFlag = FALSE;
+    static gboolean initialDebugShare = FALSE;
 
     char *command_line = GetCommandLineA();
     GError *error = NULL;
@@ -1125,6 +1141,7 @@ WinMain(HINSTANCE hInstance,
     static const GOptionEntry entries[] = {
         { "config", 'c', 0, G_OPTION_ARG_NONE, (gpointer) &configFlag, "Launch developer configuration" },
         { "debug", 'd', 0, G_OPTION_ARG_NONE,(gpointer)&debug, "Run in debug mode" },
+        { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initialDebugShare, "Show an initial dummy debug share" },
         { NULL }
     };
 
@@ -1143,7 +1160,7 @@ WinMain(HINSTANCE hInstance,
     if (!initializeWinSock())
         return 0;
 
-    ui = new HippoUI(debug != FALSE, configFlag != FALSE);
+    ui = new HippoUI(debug != FALSE, configFlag != FALSE, initialDebugShare != FALSE);
     if (!ui->create(hInstance))
         return 0;
 
