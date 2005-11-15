@@ -53,10 +53,9 @@ HippoBubble::setUI(HippoUI *ui)
 bool
 HippoBubble::createWindow(void)
 {
-    /// TODO make not modal
-    window_ = CreateWindow(CLASS_NAME, L"Hippo Notification", WS_POPUP | WS_EX_TOPMOST,
-                           CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
-                           NULL, NULL, instance_, NULL);
+    window_ = CreateWindowEx(WS_EX_TOPMOST, CLASS_NAME, L"Hippo Notification", WS_POPUP,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
+                             NULL, NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
         return false;
