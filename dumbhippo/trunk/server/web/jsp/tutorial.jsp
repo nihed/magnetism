@@ -74,7 +74,7 @@
 		</div>
 		
 		<p>
-		All done? <a href="home">Return to your page.</a>
+		All done? <a href="home" target="_top">Return to your page.</a>
 		</p>
 		
 	</div>
