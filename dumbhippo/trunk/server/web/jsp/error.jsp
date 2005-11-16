@@ -18,7 +18,7 @@
 		
 		<p><c:out value="${errorText}"/></p>
 		
-		<p><a href="home">Home</a></p>
+		<p><a href="/home">Home</a></p>
 		
 	</div>
 	
