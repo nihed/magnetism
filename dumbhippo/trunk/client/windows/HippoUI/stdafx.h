@@ -8,6 +8,7 @@
 #define UNICODE
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 #define _WIN32_IE 0x0600                // Get newest shell icon API
+#define _WIN32_WINNT 0x0500             // For GetLastInputInfo
 
 // Windows Header Files:
 #include <windows.h>

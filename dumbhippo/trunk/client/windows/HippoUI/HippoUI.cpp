@@ -27,6 +27,12 @@
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 
+// If this long elapses since the last activity, count the user as idle (in ms)
+static const int USER_IDLE_TIME = 30 * 1000;
+
+// How often to check if the user is idle (in ms)
+static const int CHECK_IDLE_TIME = 5 * 1000;
+
 HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initialDebugShare) 
     : preferences_(debug)
 {
@@ -47,6 +53,7 @@ HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initi
         hippoDebug(L"Failed to load type lib: %x\n", hr);
 
     notificationIcon_.setUI(this);
+    bubble_.setUI(this);
 
     preferencesDialog_ = NULL;
 
@@ -60,6 +67,9 @@ HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initi
 
     smallIcon_ = NULL;
     bigIcon_ = NULL;
+
+    idle_ = FALSE;
+    checkIdleTimeoutId_ = 0;
 }
 
 HippoUI::~HippoUI()
@@ -321,6 +331,9 @@ HippoUI::create(HINSTANCE instance)
     if (preferences_.getSignIn()) {
         im_.signIn();
     }
+
+    checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
+
     if (this->initialShowConfig_) {
         showPreferences();
     }
@@ -345,6 +358,9 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
+    if (checkIdleTimeoutId_)
+        g_source_remove(checkIdleTimeoutId_);
+
     notificationIcon_.destroy();
     
     revokeActive();
@@ -589,13 +605,13 @@ HippoUI::onAuthSuccess()
 void 
 HippoUI::onLinkMessage(HippoLinkShare &linkshare)
 {
-    notificationIcon_.showURL(linkshare);
+    bubble_.setLinkNotification(linkshare);
 }
 
 void 
 HippoUI::onLinkClicked(HippoLinkSwarm &linkswarm)
 {
-    notificationIcon_.showURLClicked(linkswarm);
+    bubble_.setSwarmNotification(linkswarm);
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
@@ -737,6 +753,43 @@ HippoUI::updateForgetPassword()
     HWND forgetPassButton = GetDlgItem(preferencesDialog_, IDC_FORGETPASSWORD);
     if (forgetPassButton)
         EnableWindow(forgetPassButton, im_.hasAuth());
+}
+
+gboolean
+HippoUI::checkIdle(gpointer data) 
+{
+    HippoUI *ui = (HippoUI *)data;
+    LASTINPUTINFO lastInput;
+    DWORD currentTime;
+
+    /* GetLastInputInfo is only available on Windows 2000 and newer. To handle
+     * detection of user idle on older systems, the best approach seems to be
+     * to use SetWindowsHookEx() with WH_MOUSE and WH_KEYBOARD to create 
+     * global hooks. In addition to the (slight) performance impact that would
+     * cause, it's a little bit of a pain to program: the hook needs to be
+     * in a DLL (presumably, for us, HippoUtil.dll) and probably needs to 
+     * run in its own thread so that it gets called and returns as fast as
+     * possible even if we are busy doing something else.
+     */
+    ZeroMemory(&lastInput, sizeof(LASTINPUTINFO));
+    lastInput.cbSize = sizeof(LASTINPUTINFO);
+    GetLastInputInfo(&lastInput);
+
+    currentTime = GetTickCount();
+
+    if (currentTime - lastInput.dwTime > USER_IDLE_TIME) {
+        if (!ui->idle_) {
+            ui->idle_ = TRUE;
+            ui->bubble_.setIdle(TRUE);
+        }
+    } else {
+        if (ui->idle_) {
+            ui->idle_ = FALSE;
+            ui->bubble_.setIdle(FALSE);
+        }
+    }
+
+    return true;
 }
 
 static bool

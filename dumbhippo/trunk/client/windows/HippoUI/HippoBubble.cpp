@@ -27,6 +27,7 @@ HippoBubble::HippoBubble(void)
     refCount_ = 1;
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
+    idle_ = FALSE;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -109,6 +110,10 @@ HippoBubble::embedIE(void)
     variant_t appletUrl(appletURLStr.m_str);
     variant_t result;
     invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
+
+    // Set the initial value of the idle state
+    setIdle(idle_);
+
     return true;
 }
 
@@ -293,6 +298,23 @@ HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
     ui_->debugLogW(L"Invoking dhAddPostSwarm");
     invokeJavascript(L"dhAddSwarmNotice", &result, 4, &postId, &swarmerId, &postTitle, &swarmerName);
     show();
+}
+
+void 
+HippoBubble::setIdle(bool idle)
+{
+    // Note that we count on this not short-circuiting at window creation time,
+    // where we call it with idle_ as the parameter to pass the value to the
+    // Javascript
+
+    idle_ = idle;
+
+    if (window_) {
+        variant_t idleVariant(idle);
+        variant_t result;
+    
+        invokeJavascript(HippoBSTR(L"dhSetIdle"), &result, 1, &idleVariant);
+    }
 }
 
 bool

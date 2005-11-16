@@ -6,6 +6,7 @@
 
 #include <HippoUtil.h>
 #include <HippoArray.h>
+#include "HippoBubble.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
 #include "HippoPreferences.h"
@@ -99,6 +100,8 @@ private:
     void showPreferences();
     void updateForgetPassword();
 
+    static int checkIdle(gpointer data);
+
     bool processMessage(UINT   message,
                         WPARAM wParam,
                         LPARAM lParam);
@@ -106,6 +109,7 @@ private:
     void revokeActive();
 
     void showAppletWindow(BSTR url);
+
 
     static int doQuit(gpointer data);
 
@@ -146,6 +150,7 @@ private:
 
     HippoBSTR currentURL_;
 
+    HippoBubble bubble_;
     HippoPreferences preferences_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
@@ -159,4 +164,7 @@ private:
 
     bool rememberPassword_;
     bool passwordRemembered_;
+
+    bool idle_;
+    unsigned checkIdleTimeoutId_;
 };

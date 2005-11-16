@@ -5,10 +5,8 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include "HippoBubble.h"
 
 class HippoUI;
-struct HippoLinkShare;
 
 class HippoIcon
 {
@@ -26,13 +24,9 @@ public:
     void processMessage(WPARAM wParam,
                         LPARAM lParam);
                         
-    void showURL(HippoLinkShare &linkshare);
-    void showURLClicked(HippoLinkSwarm &linkswarm);
-
 private:
     void showMenu(UINT buttonFlag);
 
-    HippoBubble bubble_;
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
     HWND popupWindow_;

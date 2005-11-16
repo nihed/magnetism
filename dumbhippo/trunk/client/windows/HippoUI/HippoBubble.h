@@ -33,6 +33,7 @@ public:
     void setLinkNotification(HippoLinkShare &share);
     void setSwarmNotification(HippoLinkSwarm &swarm);
     void show(void);
+    void setIdle(bool idle);
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -138,6 +139,8 @@ private:
     HippoBSTR currentLink_;
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;
+
+    bool idle_;
 
     bool embedIE(void);
     bool appendTransform(BSTR src, BSTR style, ...);

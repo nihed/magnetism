@@ -1,8 +1,7 @@
-// Notification implementation
+// Notification implemefntation
 
 dh.notification = {}
 dh.notification.extension = {}
-
 
 dh.display = null;
 dh.notification.extensions = {}
@@ -19,23 +18,20 @@ var dhInit = function(serverUrl, appletUrl) {
 }
 
 dh.notification.Display = function (serverUrl, appletUrl) {
-    this.notifications = []
-    this.position = -1
+    // Whether the user is currently using the computer
+    this._idle = false
+    
+    // Whether the bubble is showing
+    this._visible = false
     
     // personId -> name
     this._nameCache = {}
     
-    // postId -> int
-    this.swarmPositions = {}
-    // postId -> personId
-    // Used to determine which photo to display
-    this.lastSwarmer = {}
-    // postId -> {person1: true, person2: true, ...}    
-    this.swarmers = {}
-    
     this.serverUrl = serverUrl
     this.appletUrl = appletUrl
     
+    this._pageTimeoutId = null
+
     this.addPersonName = function (personId, name) {
         this._nameCache[personId] = name
     }
@@ -46,6 +42,21 @@ dh.notification.Display = function (serverUrl, appletUrl) {
             ret = "(unknown)"
         return ret;
     }
+    
+    this._initNotifications = function() {
+        this.notifications = []
+        this.position = -1
+       
+        // postId -> int
+        this.swarmPositions = {}
+        // postId -> personId
+        // Used to determine which photo to display
+        this.lastSwarmer = {}
+        // postId -> {person1: true, person2: true, ...}    
+        this.swarmers = {}
+    }
+    
+    this._initNotifications() // And do it initially
     
     this._pushNotification = function (nType, data) {
         this.notifications.push({notificationType: nType,
@@ -76,6 +87,23 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         }
     }
     
+    this._clearPageTimeout = function() {
+        if (this._pageTimeoutId != null) {
+            window.clearTimeout(this._pageTimeoutId)
+            this._pageTimeoutId = null
+        }
+    }
+    
+    this._resetPageTimeout = function() {
+        if (!this._idle) {
+            this._clearPageTimeout();
+            this._pageTimeoutId = window.setTimeout(
+                function() {
+                    dh.display.goNextOrClose()
+                }, 7 * 1000); // 7 seconds
+        }
+    }
+    
     this.setPosition = function(pos) {
         if (pos < 0) {
             dh.util.debug("negative position specified")
@@ -99,6 +127,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         //dh.util.debug("notification handler: " + handler)     
         //handler(this, notification.data)
         this._updateNavigation()
+        this._resetPageTimeout()
     }
     
     this.goPrevious = function () {
@@ -118,9 +147,25 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     }
     
     this.close = function () {
-        window.external.Close();
+        this.setVisible(false)
+        this._clearPageTimeout()
+        window.external.Close()
+        this._initNotifications()
     }
     
+    this.setIdle = function() {
+        dh.util.debug("Idle status is now " + idle)
+        this._idle = idle
+        if (this._idle)
+            this._clearPageTimeout()
+        else if (this._visible)
+            this._resetPageTimeout()
+    }
+    
+    this.setVisible = function(visible) {
+        this._visible = visible
+    }
+
     this._updateNavigation = function () {
         var navText = dh.util.dom.getClearedElementById("dh-notification-navigation-text")
         navText.appendChild(document.createTextNode((this.position+1) + " of " + this.notifications.length))
@@ -267,6 +312,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 dhAddLinkShare = function (senderName, senderId, postId, linkTitle, 
                            linkURL, linkDescription, personRecipients, groupRecipients) {
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
+    dh.display.setVisible(true)
     dh.display.addPersonName(senderId, senderName)                            
     dh.display.addLinkShare({senderId: senderId,
                              postId: postId,
@@ -278,9 +324,14 @@ dhAddLinkShare = function (senderName, senderId, postId, linkTitle,
 }
 
 dhAddSwarmNotice = function (postId, swarmerId, postTitle, swarmerName) {
+    dh.display.setVisible(true)
     dh.util.debug("in dhAddSwarmNotice, postId: " + postId)
     dh.display.addPersonName(swarmerId, swarmerName)
     dh.display.addSwarmNotice({postId: postId,
                                swarmerId: swarmerId,
                                postTitle: postTitle})
+}
+
+dhSetIdle = function(idle) {
+    dh.display.setIdle(idle)
 }

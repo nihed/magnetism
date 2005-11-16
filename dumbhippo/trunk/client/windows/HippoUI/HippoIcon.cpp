@@ -33,7 +33,6 @@ void
 HippoIcon::setUI(HippoUI *ui)
 {
     ui_ = ui;
-    bubble_.setUI(ui_);
 }
 
 bool
@@ -121,18 +120,4 @@ HippoIcon::processMessage(WPARAM wParam,
     case NIN_BALLOONTIMEOUT:
         break;
     }
-    
-}
-
-void
-HippoIcon::showURL(HippoLinkShare &linkshare)
-{
-    bubble_.setLinkNotification(linkshare);
-}
-
-void
-HippoIcon::showURLClicked(HippoLinkSwarm &linkswarm)
-{
-    bubble_.setSwarmNotification(linkswarm);
-    // bubble_.show();
 }
