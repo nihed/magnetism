@@ -14,6 +14,9 @@
 	<title><c:out value="${viewgroup.name}"/></title>
 	<dht:stylesheets href="/css/group.css" />
 	<dht:scriptIncludes/>
+        <script type="text/javascript">
+                dojo.require("dh.util");
+        </script>
 </head>
 <body>
 	<dht:header><c:out value="${viewgroup.name}"/></dht:header>
@@ -41,7 +44,8 @@
 	</div>
 	<c:if test="${viewgroup.canModify}">
 		<div>
-			<a href="/groupphoto?groupId=${viewgroup.viewedGroupId}">Change group photo</a>
+			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}"/>
+	                <a id="dhChangeGroupPhotoLink" href="javascript:void(0);" onClick="dh.util.swapElements('dhPhotoUploadFileEntry','dhChangeGroupPhotoLink')">Change Group Photo</a>
 		</div>
 	</c:if>
 
