@@ -18,13 +18,13 @@
 		<div class="cool-link">
 			<c:choose>
 				<c:when test="${post.viewerHasViewed}">
-					<c:set var="linkcss" value="cool-link-viewed" scope="page"/>
+					<c:set var="linkcss" value="viewed-link" scope="page"/>
 				</c:when>
 				<c:otherwise>
-					<c:set var="linkcss" value="cool-link" scope="page"/>
+					<c:set var="linkcss" value="" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.title}"/></a>
+			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.title}"/></a>
 		</div>
 	</td>
 	</tr>
