@@ -29,7 +29,7 @@
 	</dht:toolbar>
 
 	<div class="person">
-		<dht:png klass="cool-person" src="/files/headshots/${home.person.person.id}" />
+		<dht:png klass="cool-person" src="/files/headshots/${personId}" />
 		<c:out value="${personName}"/>
 	</div>
 
@@ -39,8 +39,12 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool Shared Links</strong>
-				<c:forEach items="${viewperson.posts}" var="post">
+				<c:forEach items="${viewperson.posts}" var="post" varStatus="status">
 					<dht:postBubble post="${post}"/>
+					<c:if test="${status.last}">
+					<div style="text-align:right"><input style="width:7em;border:1px solid black;" type="text" value="Search"/> the <a href="/shares">other shares</a> <c:out value="${personName}"/> shared.</div>
+                                        </c:if>
+
 				</c:forEach>
 			</div>
 		</td>

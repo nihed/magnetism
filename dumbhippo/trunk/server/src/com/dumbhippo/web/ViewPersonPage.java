@@ -43,7 +43,7 @@ public class ViewPersonPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedPerson != null;
-		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0);
+		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 10);
 	}
 	
 	public SigninBean getSignin() {

@@ -42,7 +42,7 @@ public class ViewGroupPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedGroup != null;
-		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 0);
+		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 10);
 	}
 	
 	public SigninBean getSignin() {
