@@ -153,7 +153,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         this._initNotifications()
     }
     
-    this.setIdle = function() {
+    this.setIdle = function(idle) {
         dh.util.debug("Idle status is now " + idle)
         this._idle = idle
         if (this._idle)

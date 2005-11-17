@@ -66,4 +66,7 @@ private:
 
     HWND window_;
     UINT uiStartedMessage_;
+
+    HippoBSTR lastUrl_;
+    HippoBSTR lastName_;
 };

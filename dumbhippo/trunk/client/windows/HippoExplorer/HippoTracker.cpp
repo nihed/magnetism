@@ -174,11 +174,36 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
                        EXCEPINFO    *excepInfo,  
                        unsigned int *argErr)
  {
+      /* There are various events that occur as the user navigates to a
+       * new page. While DocumentComplete is most authoritative, it
+       * can take a very long time to occur - it won't happen until
+       * all images in the page have been loaded, and so forth. On
+       * the other hand, BeginNavigate2 is too early; the navigation
+       * could be blocked, handled in a new window, and so forth.
+       * What we do is look for DocumentComplete, but also check for
+       * a change (for title *and* URL) when we get a TitleChange 
+       * notification. The assumption is that the title will change
+       * briefly even if we are navigating to a page with the same
+       * title. If it doesn't, then we'll eventually get DocumentComplete
+       * anyways.
+       */
       switch (member) {
         case DISPID_DOCUMENTCOMPLETE:
              if (dispParams->cArgs == 2 &&
                  dispParams->rgvarg[1].vt == VT_DISPATCH &&
                  dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
+             {
+                 registerBrowser();
+                 updateBrowser();
+
+                 return S_OK;
+             } else {
+                 return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+             }
+             break;
+        case DISPID_TITLECHANGE:
+             if (dispParams->cArgs == 1 &&
+                 dispParams->rgvarg[0].vt == VT_BSTR)
              {
                  registerBrowser();
                  updateBrowser();
@@ -239,6 +264,14 @@ HippoTracker::updateBrowser()
         SUCCEEDED(site_->get_LocationName(&name)) &&
         url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
     {
+        if (lastUrl_ && lastName_ &&
+            wcscmp(lastUrl_, url) == 0 &&
+            wcscmp(lastName_, name) == 0)
+            return;
+
+        lastUrl_ = url;
+        lastName_ = name;
+
         if (registered_)
             ui_->UpdateBrowser(registerCookie_, url, name);
         if (debugRegistered_)
