@@ -12,6 +12,7 @@
 	</target>
 	
 	<target name="update">
+		<exec dir="../super" executable="svn"><arg value="update"/></exec>
 		<exec dir="../server" executable="svn"><arg value="update"/></exec>
 		<exec dir="../jive_messenger" executable="svn"><arg value="update"/></exec>		
 		<exec dir="../imbot" executable="svn"><arg value="update"/></exec>		
