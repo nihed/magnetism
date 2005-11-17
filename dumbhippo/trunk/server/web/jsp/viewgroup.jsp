@@ -63,8 +63,12 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool New Links</strong>
-				<c:forEach items="${viewgroup.posts}" var="post">
+				<c:forEach items="${viewgroup.posts}" var="post" varStatus="status">
 					<dht:postBubble post="${post}"/>
+					<c:if test="${status.last}">
+		                            <div style="text-align:right"><input style="width:7em;border:1px solid black;" type="text" value="Search"/> the <a href="/viewgroup?groupId=${viewgroup.viewedGroupId}&skip=10">other shares</a> sent to the <c:out value="${viewgroup.name}"/> group.</div>
+                                        </c:if>
+
 				</c:forEach>
 			</div>
 		</td>
