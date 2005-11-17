@@ -3,7 +3,7 @@ REM // $Revision: 1650 $
 REM // $Date: 2005-07-19 23:18:17 -0400 (Tue, 19 Jul 2005) $
 
 CREATE TABLE jiveUser (
-  username              VARCHAR2(32)     NOT NULL,
+  username              VARCHAR2(48)     NOT NULL,
   password              VARCHAR2(32)    NOT NULL,
   name                  VARCHAR2(100),
   email                 VARCHAR2(100),
@@ -15,7 +15,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate ASC);
 
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
   propValue             VARCHAR2(1024)  NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
@@ -23,7 +23,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
   namespace             VARCHAR2(200)   NOT NULL,
   value                 LONG            NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   jid                   VARCHAR2(1024)  NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -65,7 +65,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   value                 LONG            NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
 );
@@ -85,7 +85,7 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupName             VARCHAR(50)     NOT NULL,
-  username              VARCHAR2(32)    NOT NULL,
+  username              VARCHAR2(48)    NOT NULL,
   administrator         INTEGER         NOT NULL,
   CONSTRAINT jiveGroupUser PRIMARY KEY (groupName, username, administrator)
 );

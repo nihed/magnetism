@@ -3,7 +3,7 @@
 # $Date: 2005-07-19 23:18:17 -0400 (Tue, 19 Jul 2005) $
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   password              VARCHAR(32)     NOT NULL,
   name                  VARCHAR(100),
   email                 VARCHAR(100),
@@ -14,7 +14,7 @@ CREATE TABLE jiveUser (
 );
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (username, name)
@@ -35,13 +35,13 @@ CREATE TABLE jiveGroupProp (
 
 CREATE TABLE jiveGroupUser (
   groupName             VARCHAR(50)     NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   administrator         TINYINT         NOT NULL,
   PRIMARY KEY (groupName, username, administrator)
 );
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE jivePrivate (
 );
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE jiveOffline (
 
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   jid                   TEXT            NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE jiveRosterGroups (
 );
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(48)     NOT NULL,
   value                 TEXT            NOT NULL,
   PRIMARY KEY (username)
 );
