@@ -172,6 +172,14 @@ public class MessageSenderBean implements MessageSender {
 
 		private XMPPConnection connection;
 		
+		private String makeJid(User recipient) {
+			StringBuilder recipientJid = new StringBuilder();
+			recipientJid.append(recipient.getId().toString());
+			recipientJid.append("@dumbhippo.com");
+			
+			return recipientJid.toString();
+		}
+		
 		private synchronized XMPPConnection getConnection() {
 			if (connection != null && !connection.isConnected()) {
 				logger.debug("got disconnected from XMPP server");
@@ -210,11 +218,7 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 			
-			StringBuilder recipientJid = new StringBuilder();
-			recipientJid.append(recipient.getId().toString());
-			recipientJid.append("@dumbhippo.com");
-
-			Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
+			Message message = new Message(makeJid(recipient), Message.Type.HEADLINE);
 
 			String title = post.getTitle();
 			Set<Resource> resources = post.getResources();
@@ -271,11 +275,7 @@ public class MessageSenderBean implements MessageSender {
 					logger.debug("No user for " + recipientResource.getId());
 				}
 				
-				StringBuilder recipientJid = new StringBuilder();
-				recipientJid.append(recipient.getId().toString());
-				recipientJid.append("@dumbhippo.com");
-
-				Message message = new Message(recipientJid.toString(), Message.Type.HEADLINE);
+				Message message = new Message(makeJid(recipient), Message.Type.HEADLINE);
 
 				Viewpoint viewpoint = new Viewpoint(recipient);
 				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
