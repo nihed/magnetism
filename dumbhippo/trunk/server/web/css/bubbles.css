@@ -1,17 +1,16 @@
 @CHARSET "UTF-8";
 
 div.cool-bubble-shadow {
-	margin:					0.5em;
-	background-color:			black;
-	width:					30em;
+	margin:					10px;
+	background-color:			#303030;
+	width:					400px;
 	position:				relative;
 	-moz-border-radius:			7px;
 }
 table.cool-bubble {
-	border:					1px solid black;
+	border:					1px solid #404040;
 	-moz-border-radius:			7px;
-	width:					30em;
-	max-width:				30em;
+	width:					400px;
 	background-color:			white;
 	position:				relative;
 	right:					1px;
@@ -20,7 +19,7 @@ table.cool-bubble {
 table.cool-bubble * {
 	margin:					0;
 	padding:				0;
-	font-size:				90%;
+	font-size:				9pt;
 	vertical-align:				top;
 }
 table.cool-bubble tbody {
@@ -29,20 +28,19 @@ table.cool-bubble tbody {
 }
 td.cool-person {
 	text-align:				center;
-	width:					50px;
+	width:					60px;
 	text-overflow:				ellipsis;
 	overflow:				hidden;
 	vertical-align:				middle;
 }
 a.cool-person, a.cool-group {
 	display:				block;
-	width:					50px;
+	width:					60px;
 	text-align:				center;
 	float:					left;
-	margin:					0.3em;
 }
 div.cool-person, div.cool-group {
-	width:					50px;
+	width:					60px;
 	overflow:				hidden;
 	text-overflow:				ellipsis;
 	font-size:				x-small;
@@ -64,39 +62,36 @@ img.cool-person, img.cool-group {
 	border:					0;
 }
 td.cool-link {
-	padding-top:				0.3em;
-	padding-bottom:				0.3em;
+	padding-top:				3px;
+	padding-bottom:				3px;
 	font-size:				100%;
 	font-weight:				bold;
-	width:					22em;
-	max-width:				22em;
+	width:					340px;
 }
 div.cool-link {
-	width:					22em;
+	width:					340px;
 	text-overflow:				ellipsis;
 	overflow:				hidden;
 	padding:				0;
 	margin:					0;
+	font-weight:				bold;
 }
-div.cool-link-viewed {
-	width:					22em;
-	text-overflow:				ellipsis;
-	overflow:				hidden;
-	padding:				0;
-	margin:					0;
-	color:					gray;
-}
-
 a.cool-link {
-	text-decoration:			underline;
-	
+	font-weight:				bold;
+	color:					blue;
+	background-color:			inherit;
+	text-decoration:			none;
 }
 a.cool-link:hover {
 
 }
+a.link-viewed {
+	width:					340px;
+	color:					grey;
+}
 td.cool-link-desc {
-	padding-top:				0.3em;
-	padding-bottom:				0.3em;
+	padding-top:				7px;
+	padding-bottom:				7px;
 }
 td.cool-link-meta {
 	text-align:				right;

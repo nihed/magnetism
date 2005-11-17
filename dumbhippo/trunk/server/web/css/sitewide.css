@@ -40,7 +40,7 @@ body {
 	max-width:						90%;
 
 	/* Page-wide defaults to be inherited by child nodes */
-	font-family:					Verdana, sans;
+	font-family:					Bitstream Vera Sans, Verdana, sans;
 	color:							#505050;
 	background-color: 				#fff;
 }

@@ -1,0 +1,21 @@
+@CHARSET "UTF-8";
+
+table.cool-bubble * {
+	margin:					0;
+	padding:				0;
+	font-size:				10pt;
+	vertical-align:				top;
+}
+a.cool-link {
+	font-weight:				bold;
+	color:					blue;
+	background-color:			inherit;
+	text-decoration:			none;
+	text-size:				12pt;
+}
+div.cool-link-date {
+	font-size:				8pt;
+}
+div.cool-link-to {
+	font-size:				8pt;
+}
