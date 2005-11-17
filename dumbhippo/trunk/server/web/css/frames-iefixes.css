@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+
+body {
+	height:			100px;
+	overflow:		hidden;
+	padding:		0;
+	margin:			0;
+	width:			100%;
+}
+
+div.cool-link-desc {
+	overflow:		hidden;
+}
+div.cool-link-desc {
+	height:			40px;
+	overflow:		hidden;
+}

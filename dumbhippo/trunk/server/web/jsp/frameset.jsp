@@ -13,9 +13,10 @@
         <dht:stylesheets />
 </head>
 
-<frameset rows="110,*">
-    <frame name="top" src="framer?postId=${framer.postId}">
-    <frame name="bottom" src="${framer.post.url}">
+<frameset rows="*,110">
+    <frame name="top" src="${framer.post.url}">
+    <frame name="bottom" src="framer?postId=${framer.postId}" scrolling=no noresize bordercolor=#cccccc marginwidth=0 marginheight=0>
+
 </frameset>
 <noframes>
 Your browser does not support frames.  <a href="${framer.post.url}">Click here</a> for page.
