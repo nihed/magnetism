@@ -166,9 +166,9 @@ public class PostingBoardBean implements PostingBoard {
 	// according to the EJB3 persistance spec, but that results in
 	// garbage SQL
 	
-	static final String VISIBLE_GROUP =
+	static final String AUTH_GROUP =
         "g MEMBER OF post.groupRecipients AND " + 
-		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
+		" (g.access >= " + GroupAccess.PUBLIC.ordinal() + " OR " +
           "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
           "WHERE vgm.group = g AND vgm.member = ac.resource AND ac.owner = :viewer AND " +
                 "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
@@ -188,15 +188,19 @@ public class PostingBoardBean implements PostingBoard {
         "g MEMBER OF post.groupRecipients AND " + 
 		"g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
 	
+	static final String AUTH_GROUP_ANONYMOUS =
+        "g MEMBER OF post.groupRecipients AND " + 
+		"g.access >= " + GroupAccess.PUBLIC.ordinal();
+	
 	static final String CAN_VIEW = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
               "EXISTS (SELECT ac FROM AccountClaim ac WHERE ac.owner = :viewer " +
               "        AND ac.resource MEMBER OF post.personRecipients) OR " +
-              "EXISTS (SELECT g FROM Group g WHERE " + VISIBLE_GROUP + "))";
+              "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP + "))";
 	
 	static final String CAN_VIEW_ANONYMOUS = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
-              "EXISTS (SELECT g FROM Group g WHERE " + VISIBLE_GROUP_ANONYMOUS + "))";
+              "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP_ANONYMOUS + "))";
 	
 	static final String VIEWER_RECEIVED = 
 		" EXISTS(SELECT ac FROM AccountClaim ac " +
@@ -206,7 +210,7 @@ public class PostingBoardBean implements PostingBoard {
 	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 
 	// If we wanted to indicate undisclosed recipients, we would just omit
-	// the VISIBLE_GROUP_WITH_MEMBER then compute visibility by hand on
+	// the VISIBLE_GROUP_FOR_POST then compute visibility by hand on
 	// the returned groups; this is cheap since we have the GroupMember
 	// for the viewer already
 	//
