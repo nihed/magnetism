@@ -232,7 +232,7 @@
 	<target name="build" depends="test,ear,clientjar" />
 
         <target name="reload" depends="build">
-                <exec executable="super/super">
+                <exec executable="../super/super">
                      <arg line="reload all"/>
                 </exec>
         </target>
