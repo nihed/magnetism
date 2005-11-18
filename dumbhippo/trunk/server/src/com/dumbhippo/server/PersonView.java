@@ -143,9 +143,18 @@ public class PersonView {
 		
 		if ((name == null || name.length() == 0) && contact != null)
 			name = contact.getNickname();	
+
+		// if both user/contact are null then this is a "resources only" person
+		// used when returning lists of group members for example
+		if ((name == null || name.length() == 0) && 
+			(contact == null && user == null)) {
+			Resource r = getPrimaryResource();
+			name = r.getHumanReadableString();
+		}
 		
-		if (name == null || name.length() == 0)
-			return "<Unknown>";
+		if (name == null || name.length() == 0) {
+				return "<Unknown>";
+		}	
 
 		return name;
 	}

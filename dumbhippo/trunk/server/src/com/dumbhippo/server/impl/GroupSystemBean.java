@@ -294,7 +294,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		for (Resource r : resourceMembers) {
 			PersonView pv = new PersonView(null, null);
-			pv.addPrimaryResource(r);
+			// this covers any "extras" that may have been requested
+			pv.addAllResources(Collections.singleton(r));
 		}
 		
 		Set<PersonView> result = new HashSet<PersonView>();
