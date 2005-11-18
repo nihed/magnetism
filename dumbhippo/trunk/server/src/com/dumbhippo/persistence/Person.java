@@ -6,7 +6,7 @@ import com.dumbhippo.identity20.Guid;
 
 
 @Entity
-public class Person extends GuidPersistable {
+public abstract class Person extends GuidPersistable {
 
 	private static final long serialVersionUID = 0L;
 

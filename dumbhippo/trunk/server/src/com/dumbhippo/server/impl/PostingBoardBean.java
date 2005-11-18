@@ -296,9 +296,11 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, int max) {
+	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, int start, int max) {
 		if (max > 0)
 			q.setMaxResults(max);
+		
+		q.setFirstResult(start);
 
 		@SuppressWarnings("unchecked")		
 		List<Post> posts = q.getResultList();	
@@ -314,7 +316,7 @@ public class PostingBoardBean implements PostingBoard {
 	static final String GET_POSTS_FOR_QUERY =
 		"SELECT post FROM Post post WHERE post.poster = :poster";
 	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int max) {
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
@@ -327,10 +329,10 @@ public class PostingBoardBean implements PostingBoard {
 		
 		q.setParameter("poster", poster);
 		
-		return getPostViews(viewpoint, q, max);
+		return getPostViews(viewpoint, q, start, max);
 	}
 	
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int max) {
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -344,13 +346,13 @@ public class PostingBoardBean implements PostingBoard {
 		
 		q.setParameter("viewer", recipient);
 
-		return getPostViews(viewpoint, q, max);
+		return getPostViews(viewpoint, q, start, max);
 	}
 	
 	static final String GET_GROUP_POSTS_QUERY = 
 		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
 	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max) {
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 
@@ -363,10 +365,10 @@ public class PostingBoardBean implements PostingBoard {
 		
 		q.setParameter("recipient", recipient);
 		
-		return getPostViews(viewpoint, q, max);
+		return getPostViews(viewpoint, q, start, max);
 	}
 	
-	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max) {
+	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max) {
 		if (!user.equals(viewpoint.getViewer()))
 			return Collections.emptyList();
 		
@@ -386,7 +388,7 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("account", account);
 		q.setParameter("viewer", user);		
 		
-		return getPostViews(viewpoint, q, max);
+		return getPostViews(viewpoint, q, start, max);
 	}
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) {

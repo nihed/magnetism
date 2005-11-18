@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -15,7 +14,6 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 public class ViewGroupPage {
 	@SuppressWarnings("unused")
@@ -42,7 +40,7 @@ public class ViewGroupPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedGroup != null;
-		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 10);
+		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 0, 10);
 	}
 	
 	public SigninBean getSignin() {
@@ -57,7 +55,7 @@ public class ViewGroupPage {
 		return viewedGroup.getName();
 	}
 
-	public void setViewedGroupId(String groupId) throws ParseException, GuidNotFoundException {
+	public void setViewedGroupId(String groupId) {
 		viewedGroupId = groupId;
 		
 		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that

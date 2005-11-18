@@ -323,9 +323,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (person instanceof User)
 			return (User)person;
 		else {
+			logger.debug("getUser: contact = " + person);
+			
 			User user = getUserForContact((Contact)person);
 			
-			logger.debug("getUserForContact: contact = " + person.getId() + " user = " + user);
+			logger.debug("getUserForContact: user = " + user);
 			
 			return user;
 		}

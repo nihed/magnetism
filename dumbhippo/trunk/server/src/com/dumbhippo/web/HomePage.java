@@ -49,7 +49,7 @@ public class HomePage {
 	
 	public List<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 4);
+		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, 4);
 	}
 	
 	public List<GroupView> getGroups() {
@@ -61,6 +61,6 @@ public class HomePage {
 	}
 	
 	public List<PostView> getContactPosts() {
-		return postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0);
+		return postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0, 0);
 	}
 }

@@ -19,13 +19,13 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 @Local
 public interface PostingBoard {
 
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int max);
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int max);
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max);
 
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int max);
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
-	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int max);
+	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max);
 
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
 		throws GuidNotFoundException;

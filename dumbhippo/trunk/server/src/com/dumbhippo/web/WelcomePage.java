@@ -55,7 +55,7 @@ public class WelcomePage {
 	
 	public List<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0);
+		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, 0);
 	}
 	
 	public List<GroupView> getGroups() {

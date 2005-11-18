@@ -44,7 +44,7 @@ public class ViewPersonPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedPerson != null;
-		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 10);
+		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0, 10);
 	}
 	
 	public SigninBean getSignin() {
@@ -65,12 +65,18 @@ public class ViewPersonPage {
 		return viewedPerson.getNickname();
 	}
 
-	public void setViewedPersonId(String personId) throws ParseException, GuidNotFoundException {
+	public void setViewedPersonId(String personId) {
 		if (personId == null) {
 			logger.debug("no viewed person");
 			return;
 		} else {
-			setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
+			try {
+				setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
+			} catch (ParseException e) {
+				logger.debug("bad personId as viewperson parameter " + personId);
+			} catch (GuidNotFoundException e) {
+				logger.debug("bad personId as viewperson parameter " + personId);
+			}
 		}
 	}
 	
@@ -81,11 +87,23 @@ public class ViewPersonPage {
 		return person;
 	}
 	
-	public boolean getIsContact() {
+	public boolean isContact() {
 		if (signin.isValid())
 			return identitySpider.isContact(signin.getViewpoint(), signin.getUser(), viewedPerson);
 		else
 			return false;
+	}
+	
+	public boolean isSelf() {
+		if (signin.isValid() && viewedPerson != null) {
+			return signin.getUser().equals(viewedPerson);
+		} else {
+			return false;
+		}
+	}
+	
+	public boolean isValid() {
+		return viewedPerson != null;
 	}
 	
 	// We don't show group's you haven't accepted the invitation for on your public page

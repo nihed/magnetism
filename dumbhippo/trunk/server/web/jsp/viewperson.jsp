@@ -6,6 +6,10 @@
 <dh:bean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
 <jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
 
+<c:if test="${!viewperson.valid}">
+	<dht:errorPage>There's nobody here!</dht:errorPage>
+</c:if>
+
 <c:set var="personName" value="${viewperson.person.name}" scope="page"/>
 <c:set var="personId" value="${viewperson.person.person.id}" scope="page"/>
 
@@ -17,12 +21,16 @@
 <body>
     <dht:header><c:out value="${personName}"/></dht:header>
     
-    <dht:toolbar> &#151;
+    <dht:toolbar>
     	<c:choose>
-    		<c:when test="${viewperson.isContact}">
+    		<c:when test="${viewperson.self}">
+    		</c:when>
+    		<c:when test="${viewperson.contact}">
+    			&#151;
     			<a href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contact list</a>
 	    	</c:when>
     		<c:otherwise>
+	    		&#151;
 				<a href='javascript:dh.actions.addContact("${personId}")'>I know <c:out value="${personName}"/></a>
 			</c:otherwise>
 		</c:choose>
