@@ -32,6 +32,7 @@ import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -183,8 +184,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
                   "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
 	static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group) {
-		return getMembers(viewpoint, group, null);
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
+		return getMembers(viewpoint, group, null, extras);
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
@@ -267,7 +268,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;
 	}
 
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras) {
 		Map<Resource,PersonView> members = new HashMap<Resource,PersonView>();
 		
 		// If EJB-QL was more advanced, we could do this as a single query, but
@@ -285,11 +286,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return Collections.emptySet();
 		
 		for (AccountClaim ac : getAccountMembers(viewpoint, group, status)) {
-			members.put(ac.getResource(), identitySpider.getPersonView(viewpoint, ac.getOwner()));
+			members.put(ac.getResource(), identitySpider.getPersonView(viewpoint, ac.getOwner(), extras));
 		}
 		for (ContactClaim cc : getContactMembers(viewpoint, group, status)) {
 			if (!members.containsKey(cc.getResource()))
-				members.put(cc.getResource(), identitySpider.getPersonView(viewpoint, cc.getContact()));
+				members.put(cc.getResource(), identitySpider.getPersonView(viewpoint, cc.getContact(), extras));
 		}
 		for (Resource r : resourceMembers) {
 			PersonView pv = new PersonView(null, null);
@@ -437,7 +438,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				         "WHERE gm.group = :groupid AND " + CONTACT_IS_MEMBER + " AND " +
 				               "gm.status >= " + MembershipStatus.INVITED.ordinal() + ")";
 
-	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId) {
+	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras) {
 		Person viewer = viewpoint.getViewer();
 		
 		if (!owner.equals(viewer))
@@ -450,7 +451,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Set<PersonView> result = new HashSet<PersonView>();
 
 		for (Object o: q.getResultList())
-			result.add(identitySpider.getPersonView(viewpoint, (Person)o));
+			result.add(identitySpider.getPersonView(viewpoint, (Person)o, extras));
 		
 		return result;
 	}

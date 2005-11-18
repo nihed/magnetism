@@ -21,9 +21,9 @@ public interface GroupSystem {
 	
 	public void removeMember(User remover, Group group, Person person);
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group);
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras);
 	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member);
 	
@@ -53,7 +53,8 @@ public interface GroupSystem {
 	 * @param viewpoint viewpoint from which we are viewing the setup
 	 * @param owner account owner (must equal viewpoint.getViewer() currently)
 	 * @param groupId group ID of a group
+	 * @param extras info to put in each PersonView
 	 * @return the contacts of owner that aren't already members of the group
 	 */
-	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId);
+	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
 }

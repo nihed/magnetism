@@ -16,10 +16,13 @@ dh.model.GuidPersistable = function(id, displayName) {
 }
 dojo.inherits(dh.model.GuidPersistable, Object);
 
-dh.model.Person = function(id, displayName, email, hasAccount) {
+dh.model.Person = function(id, displayName, email, aim, emails, aims, hasAccount) {
 	this.id = id;
 	this.displayName = displayName;
 	this.email = email; // can be null
+	this.aim = aim; // can be null
+	this.emails = emails ? emails : []; // array of string, can be empty
+	this.aims = aims ? aims : []; // array of string, can be empty
 	this.hasAccount = hasAccount;
 	this.kind = "person";
 }
@@ -33,6 +36,10 @@ dh.model.Group = function(id, displayName, sampleMembers) {
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
 
+dh.model.splitCommaString = function(str) {
+	return str.split(",");
+}
+
 dh.model.personFromXmlNode = function(element) {
 	if (element.nodeName != "person")
 		dojo.raise("not a person element");
@@ -40,7 +47,15 @@ dh.model.personFromXmlNode = function(element) {
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
 	var email = element.getAttribute("email");
+	var aim = element.getAttribute("aim");
+	var emails = element.getAttribute("emails");
+	var aims = element.getAttribute("aims");
 	var hasAccount = element.getAttribute("hasAccount");
+
+	if (emails)
+		emails = dh.model.splitCommaString(emails);
+	if (aims)
+		aims = dh.model.splitCommaString(aims);
 
 	// note, empty string is "false"	
 	if (!id)
@@ -48,7 +63,8 @@ dh.model.personFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <person> node");
 	
-	return new dh.model.Person(id, displayName, email, hasAccount == "true" ? true : false);
+	return new dh.model.Person(id, displayName, email, aim, emails, aims, 
+		hasAccount == "true" ? true : false);
 }
 
 dh.model.groupFromXmlNode = function(element) {

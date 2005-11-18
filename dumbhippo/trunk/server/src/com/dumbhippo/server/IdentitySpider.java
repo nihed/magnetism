@@ -186,9 +186,10 @@ public interface IdentitySpider {
 	 *          a user can see their contacts, so if viewpoint.getviewer()
 	 *          doesn't match user, the result will be empty)    
 	 * @param user who to get contacts of
+	 * @param extras info to stuff into the PersonView objects
 	 * @return their contacts
 	 */
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user);
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, PersonViewExtra... extras);
 	
 	/**
 	 * Checks whether a person has another other as a contact
@@ -227,28 +228,33 @@ public interface IdentitySpider {
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param p the person being viewed
+	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return a new PersonView object
 	 */
-	public PersonView getPersonView(Viewpoint viewpoint, Person p);
+	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras);
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person,
-	 *  given a resource owned by the person.
+	 *  given a resource owned by the person. Note that the returned person view 
+	 *  does NOT treat this resource specially and may not even contain the resource
+	 *  you passed in; the resource is just a "search handle"
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param resource the person being viewed
+	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return a new PersonView object
 	 */
-	public PersonView getPersonView(Viewpoint viewpoint, Resource resource);
+	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra... extras);
 	
 	/**
 	 * 
 	 * Returns an object describing a person from the global viewpoint.
 	 * 
 	 * @param user the person being viewed. Always an account holder
+	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return new PersonView object
 	 */
-	public PersonView getSystemView(User user);
+	public PersonView getSystemView(User user, PersonViewExtra... extras);
 	
 	/**
 	 * If person is a User, returns person. If it is an Contact

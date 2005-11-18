@@ -69,7 +69,7 @@ public class XmlBuilder {
 	 * Add new open element to stream; must be paired with a closeElement()
 	 * 
 	 * @param elementName name of element to append
-	 * @param attributes list of key value pair
+	 * @param attributes list of key value pairs; if value is null, the pair is ignored
 	 */
 	public void openElement(String elementName, String... attributes) {
 		append("<");
@@ -81,11 +81,14 @@ public class XmlBuilder {
 		}
 		
 		for (int i = 0; i < attributes.length; i += 2) {
-			append(" ");
-			append(attributes[i]);
-			append("=\"");
-			appendEscaped(attributes[i+1]);
-			append("\"");	
+			// ignore attrs with null value
+			if (attributes[i+1] != null) {
+				append(" ");
+				append(attributes[i]);
+				append("=\"");
+				appendEscaped(attributes[i+1]);
+				append("\"");	
+			}
 		}
 		currentOpenFinished = false;
 	}
@@ -111,7 +114,7 @@ public class XmlBuilder {
 	 * 
 	 * @param elementName name of element
 	 * @param content content inside element or null
-	 * @param attributes list of key value pair of attributes
+	 * @param attributes list of key value pair of attributes; if value is null, the pair is ignored
 	 */
 	public void appendTextNode(String elementName, String content, String... attributes) {
 		openElement(elementName, attributes);

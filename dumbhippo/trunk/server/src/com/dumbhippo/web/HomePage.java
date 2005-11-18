@@ -9,6 +9,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
@@ -41,7 +42,7 @@ public class HomePage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}

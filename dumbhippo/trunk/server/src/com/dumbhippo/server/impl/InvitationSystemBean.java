@@ -33,6 +33,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -65,7 +66,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ret;
 	}
 	
-	public Set<PersonView> findInviters(User invitee) {
+	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras) {
 		Query query = em.createQuery("select inviter from " +
 								     "User inviter, InvitationToken invite, AccountClaim ar " + 
 								     "where inviter member of invite.inviters and " +
@@ -80,7 +81,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (Person p : inviters)
-			result.add(spider.getPersonView(viewpoint, p));
+			result.add(spider.getPersonView(viewpoint, p, extras));
 		
 		return result; 
 	}

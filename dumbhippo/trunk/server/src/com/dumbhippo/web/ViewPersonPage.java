@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
@@ -75,7 +76,7 @@ public class ViewPersonPage {
 	
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), viewedPerson);
+			person = identitySpider.getPersonView(signin.getViewpoint(), viewedPerson, PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}

@@ -33,6 +33,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
@@ -312,7 +313,8 @@ public class MessageSenderBean implements MessageSender {
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
 			PersonView posterViewedBySelf = identitySpider.getPersonView(new Viewpoint(post.getPoster()), 
-					                                                     post.getPoster());
+					                                                     post.getPoster(),
+					                                                     PersonViewExtra.PRIMARY_EMAIL);
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();

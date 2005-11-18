@@ -8,6 +8,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 
 /**
  * @author hp
@@ -39,7 +40,7 @@ public class TutorialPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}

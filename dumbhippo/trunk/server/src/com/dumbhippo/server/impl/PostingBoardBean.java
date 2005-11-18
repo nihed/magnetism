@@ -40,6 +40,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -285,10 +286,10 @@ public class PostingBoardBean implements PostingBoard {
 			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
 		
 		try {
-		return new PostView(post, 
-					        identitySpider.getPersonView(viewpoint, post.getPoster()),
-					        getPersonPostData(viewpoint, post),
-					        recipients);
+			return new PostView(post, 
+					identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES),
+					getPersonPostData(viewpoint, post),
+					recipients);
 		} catch (Exception e) {
 			logger.debug("The exception was: " + e);
 			throw new RuntimeException(e);

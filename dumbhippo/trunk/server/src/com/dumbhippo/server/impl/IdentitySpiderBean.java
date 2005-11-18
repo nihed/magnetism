@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -18,6 +19,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
@@ -35,6 +37,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -265,42 +268,41 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	private static final String GET_EMAIL_FOR_USER_QUERY = 
-		"SELECT e FROM EmailResource e, AccountClaim ac " +
-		    "WHERE e.id = ac.resource and ac.owner = :user ";
+	private static final String GET_RESOURCES_FOR_USER_QUERY = 
+		"SELECT r FROM Resource r, AccountClaim ac " +
+		    "WHERE r.id = ac.resource and ac.owner = :person ";
+	private static final String GET_RESOURCES_FOR_CONTACT_QUERY = 
+		"SELECT r FROM Resource r, ContactClaim cc " +
+		    "WHERE r.id = cc.resource and cc.contact = :person ";
 	
-	private EmailResource getEmailForUser(User user) {
+	private Set<Resource> getResourcesForPerson(Person person) {
+		Set<Resource> resources = new HashSet<Resource>();
 		try {
-			return (EmailResource)em.createQuery(GET_EMAIL_FOR_USER_QUERY)
-				.setParameter("user", user)
-				.setMaxResults(1)
-				.getSingleResult();
+			String query;
+			if (person instanceof User) {
+				query = GET_RESOURCES_FOR_USER_QUERY;
+			} else if (person instanceof Contact){
+				query = GET_RESOURCES_FOR_CONTACT_QUERY;
+			} else {
+				throw new IllegalArgumentException("person is not User or Contact: " + person);
+			}
+			
+			List results = em.createQuery(query).setParameter("person", person).getResultList();
+			
+			for (Object r : results) {
+				if (r instanceof EmailResource)
+					resources.add((Resource) r);
+				else if (r instanceof AimResource)
+					resources.add((Resource) r);
+				// we filter out any non-email/aim resources for now
+			}
 		} catch (EntityNotFoundException e) {
-			return null;
+			// this should not happen I don't think ... but I'm not 
+			// quite sure enough to throw an exception so we just return an empty set
+			logger.error("No resources for person " + person, e);
 		}
-	}
-	
-	private static final String GET_EMAIL_FOR_CONTACT_QUERY = 
-		"SELECT e FROM EmailResource e, ContactClaim cc " +
-		    "WHERE e.id = cc.resource and cc.contact = :contact ";
-	
-	private EmailResource getEmailForContact(Contact contact) {
-		try {
-			return (EmailResource)em.createQuery(GET_EMAIL_FOR_CONTACT_QUERY)
-				.setParameter("contact", contact)
-				.setMaxResults(1)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
-		}		
-	}
-	
-	private EmailResource getEmail(Viewpoint viewpoint, Person person) {
-		if (person instanceof User)
-			return getEmailForUser((User)person);
-		else {
-			return getEmailForContact((Contact)person);
-		}
+		
+		return resources;		
 	}
 	
 	private static final String GET_USER_FOR_CONTACT_QUERY = 
@@ -324,7 +326,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		else {
 			User user = getUserForContact((Contact)person);
 			
-			logger.debug("getUserForContact: contact = " + person.getId() + "user = " + user);
+			logger.debug("getUserForContact: contact = " + person.getId() + " user = " + user);
 			
 			return user;
 		}
@@ -347,7 +349,74 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	public PersonView getPersonView(Viewpoint viewpoint, Person p) {
+	private void addPersonViewExtras(PersonView pv, PersonViewExtra... extras) {
+		
+		// we implement this in kind of a lame way right now where we always do 
+		// all the work database work, even though we only return the requested information to keep 
+		// other code honest
+		
+		Set<Resource> contactResources = null;
+		Set<Resource> userResources = null;
+		Set<Resource> resources = null;
+		
+		if (pv.getContact() != null)
+			contactResources = getResourcesForPerson(pv.getContact());
+		if (pv.getUser() != null)
+			userResources = getResourcesForPerson(pv.getUser());
+		
+		if (contactResources != null) {
+			resources = contactResources;
+			if (userResources != null)
+				resources.addAll(userResources); // contactResources won't be overwritten in case of conflict
+		} else if (userResources != null) {
+			resources = userResources;
+		} else {
+			resources = Collections.emptySet();
+		}
+		
+		// this does extra work right now (adding some things more than once)
+		// but just not worth the complexity to avoid since we'll probably change
+		// all this anyway and most callers won't be silly (won't ask for both ALL_ and 
+		// PRIMARY_ for example)
+		for (PersonViewExtra e : extras) {
+			if (e == PersonViewExtra.ALL_RESOURCES) {
+				pv.addAllResources(resources);
+			} else if (e == PersonViewExtra.ALL_EMAILS) {
+				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
+			} else if (e == PersonViewExtra.ALL_AIMS) {
+				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
+			} else {
+				EmailResource email = null;
+				AimResource aim = null;
+				
+				for (Resource r : resources) {
+					if (email == null && r instanceof EmailResource) {
+						email = (EmailResource) r;
+					} else if (aim == null && r instanceof AimResource) {
+						aim = (AimResource) r;
+					} else if (email != null && aim != null) {
+						break;
+					}
+				}
+				
+				if (e == PersonViewExtra.PRIMARY_RESOURCE) {
+					if (email != null)
+						pv.addPrimaryResource(email);
+					else if (aim != null)
+						pv.addPrimaryResource(aim);
+					else {
+						pv.addPrimaryResource(null);
+					}
+				} else if (e == PersonViewExtra.PRIMARY_EMAIL) {
+					pv.addPrimaryEmail(email); // can be null
+				} else if (e == PersonViewExtra.PRIMARY_AIM) {
+					pv.addPrimaryAim(aim); // can be null
+				}
+			}
+		}
+	}
+	
+	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		
@@ -355,14 +424,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		User user = getUser(p); // user for contact, or p itself if it's already a user
 		
 		PersonView pv = new PersonView(contact, user);
-		pv.addPrimaryEmail(getEmail(viewpoint, p));
+		
+		addPersonViewExtras(pv, extras);
+		
 		return pv;
 	}
 
-	public PersonView getPersonView(Viewpoint viewpoint, Resource r) {
+	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra... extras) {
 		User user;
 		Contact contact;
-		EmailResource email = null;
 		
 		contact = findContactByResource(viewpoint.getViewer(), r);
 
@@ -372,23 +442,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			user = lookupUserByResource(r);
 		}
 		
-		if (r instanceof EmailResource)
-			email = (EmailResource)r;
-		else {
-			if (contact != null)
-				email = getEmailForContact(contact);
-			if (email == null && user != null)
-				email = getEmailForUser(user);
-		}
-			
 		PersonView pv = new PersonView(contact, user);
-		pv.addPrimaryEmail(email);
+		
+		addPersonViewExtras(pv, extras);
+
 		return pv;
 	}
 
-	public PersonView getSystemView(User user) {
+	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
-		pv.addPrimaryEmail(getEmailForUser(user));
+		addPersonViewExtras(pv, extras);
 		return pv;
 	}
 	
@@ -515,13 +578,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return account.getContacts();
 	}
 	
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user) {
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, PersonViewExtra... extras) {
 		if (!user.equals(viewpoint.getViewer()))
 				return Collections.emptySet();
 		
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (Person p : getRawContacts(user)) 
-			result.add(getPersonView(viewpoint, p));
+			result.add(getPersonView(viewpoint, p, extras));
 		
 		return result;
 	}

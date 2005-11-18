@@ -8,7 +8,6 @@
 <head>
 	<title>Welcome <c:out value="${welcome.person.humanReadableName}"/>!</title>
 	<dht:stylesheets href="/css/welcome.css" />
-	<dht:scriptIncludes/>
 </head>
 <body>
     <c:url value="viewperson?personId=${welcome.signin.user.id}" var="publicurl"/>

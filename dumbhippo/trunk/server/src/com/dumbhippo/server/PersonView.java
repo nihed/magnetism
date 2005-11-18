@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.dumbhippo.FullName;
+import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -36,7 +37,6 @@ public class PersonView {
 	private Contact contact;
 	private User user;
 	private Set<Resource> resources;
-	private String cachedHumanReadableName;
 	private BitSet extras;
 	
 	private void setExtra(PersonViewExtra extra) {
@@ -101,32 +101,30 @@ public class PersonView {
 	}
 
 	public void addPrimaryEmail(EmailResource resource) {
-		if (resource == null)
-			throw new IllegalArgumentException("null resource to PersonView");
 		setExtra(PersonViewExtra.PRIMARY_EMAIL);
 		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
-		this.getResources().add(resource);
+		if (resource != null)
+			this.getResources().add(resource);
 	}
 	
 	public void addPrimaryAim(AimResource resource) {
-		if (resource == null)
-			throw new IllegalArgumentException("null resource to PersonView");
 		setExtra(PersonViewExtra.PRIMARY_AIM);
 		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
-		this.getResources().add(resource);
+		if (resource != null)
+			this.getResources().add(resource);
 	}
 	
 	public void addPrimaryResource(Resource resource) {
-		if (resource == null)
-			throw new IllegalArgumentException("null resource to PersonView");
-
+		// resource can be null
+		
 		if (resource instanceof AimResource)
 			addPrimaryAim((AimResource) resource);
 		else if (resource instanceof AimResource)
 			addPrimaryEmail((EmailResource) resource);
 		else {
 			setExtra(PersonViewExtra.PRIMARY_RESOURCE);
-			this.getResources().add(resource);
+			if (resource != null)
+				this.getResources().add(resource);
 		}
 	}
 	
@@ -134,30 +132,23 @@ public class PersonView {
 		return contact != null ? contact : user;
 	}
 	
-	public String getHumanReadableName() {
-		if (cachedHumanReadableName == null) {
-			FullName name = null;
-			
-			if (contact != null)
-				name = contact.getName();
-			if ((name == null || name.isEmpty()) && user != null)
-				name = user.getName();
-			
-			if (name != null && !name.isEmpty())
-				cachedHumanReadableName = name.getFullName();
-			// FIXME we want to get rid of this
-			else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE))
-				cachedHumanReadableName = getPrimaryResource().getHumanReadableString();
-			else
-				cachedHumanReadableName = "<Unknown>";
-		}
+	// get full name, never returning an empty string
+	private String getFullName() {
+		FullName name = null;
 		
-		return cachedHumanReadableName;
+		if (contact != null)
+			name = contact.getName();
+		if ((name == null || name.isEmpty()) && user != null)
+			name = user.getName();
+		
+		if (name != null && !name.isEmpty())
+			return name.getFullName();
+		else
+			return null;
 	}
-	
-	public String getHumanReadableShortName() {
-		// prefer contact nick, user nick, contact full name, user full name
-		
+
+	// get nickname or first name, never returning an empty string
+	private String getShortName() {
 		String name = null;
 		if (contact != null)
 			name = contact.getNickname();	
@@ -168,15 +159,60 @@ public class PersonView {
 			name = contact.getName().getFirstName();
 		if ((name == null || name.length() == 0) && user != null)
 			name = user.getName().getFirstName();
-		
-		if (name == null || name.length() == 0)
-			name = getHumanReadableName();
 
+		if (name == null || name.length() == 0)
+			return null;
+		
+		return name;
+	}
+	
+	private String getName(boolean preferLong) {
+		String name = null;
+		
+		if (preferLong) {
+			name = getFullName();
+			if (name == null)
+				name = getShortName();
+		} else {
+			name = getShortName();
+			if (name == null)
+				name = getFullName();
+		}
+				
+		if (name == null) {
+			// FIXME we want to get rid of this
+			if (getExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
+				name = getPrimaryResource().getHumanReadableString();
+				if (name.length() == 0)
+					name = null;
+			}
+		}
+		
+		if (name == null)
+			name = "<Unknown>";
+		
+		if (name != null && name.length() == 0)
+			throw new RuntimeException("Empty name, preferLong = " + preferLong);
+		
+		return name;
+	}
+	
+	public String getHumanReadableName() {
+		return getName(true);
+	}
+	
+	public String getHumanReadableShortName() {
+		String name = getName(false);
+		
 		if (name.length() > MAX_SHORT_NAME_LENGTH) {
 			return name.substring(0, MAX_SHORT_NAME_LENGTH) + "...";
 		} else {
 			return name;
 		}
+	}
+	
+	public Contact getContact() {
+		return contact;
 	}
 	
 	public User getUser() {
@@ -194,17 +230,11 @@ public class PersonView {
 		return null;
 	}
 	
-	private <T extends Resource> Set<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
+	private <T extends Resource> Collection<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
 		if (!getExtra(extra))
 			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that");
 		
-		Set<T> ret = new HashSet<T>();
-		for (Resource r : getResources()) {
-			if (resourceClass.isAssignableFrom(r.getClass())) {
-				ret.add(resourceClass.cast(r));
-			}
-		}
-		return ret;
+		return new TypeFilteredCollection<Resource,T>(getResources(), resourceClass);
 	}
 	
 	public Resource getPrimaryResource() {
@@ -224,15 +254,15 @@ public class PersonView {
 		return getOne(PersonViewExtra.PRIMARY_AIM, AimResource.class);
 	}
 	
-	public Set<EmailResource> getAllEmails() {
+	public Collection<EmailResource> getAllEmails() {
 		return getMany(PersonViewExtra.ALL_EMAILS, EmailResource.class);
 	}
 	
-	public Set<AimResource> getAllAims() {
+	public Collection<AimResource> getAllAims() {
 		return getMany(PersonViewExtra.ALL_AIMS, AimResource.class);
 	}
 	
-	public Set<Resource> getAllResources() {
+	public Collection<Resource> getAllResources() {
 		return getMany(PersonViewExtra.ALL_RESOURCES, Resource.class);
 	}
 	

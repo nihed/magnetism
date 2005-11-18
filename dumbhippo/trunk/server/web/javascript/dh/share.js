@@ -317,6 +317,14 @@ dh.share.loadContacts = function() {
 			});
 }
 
+dh.share.findInStringArray = function(strings, func, data) {
+	for (var i = 0; i < strings.length; ++i) {
+		if (func(strings[i], data))
+			return strings[i];
+	}
+	return null;
+}
+
 dh.share.FriendListProvider = function() {
 
 	this.lastSearchProvided = null;
@@ -355,6 +363,33 @@ dh.share.FriendListProvider = function() {
 			} else if (obj.email && matchFunc(obj.email, searchStr)) {
 				found = obj;
 				matchedStr = obj.email;
+			} else if (obj.aim && matchFunc(obj.aim, searchStr)) {
+				found = obj;
+				matchedStr = obj.aim;
+			} else {
+				// look in all emails and aims; but checking primary
+				// email and aim first was deliberate, even though 
+				// we'll check them again here
+				if (obj.emails) {
+					var s = dh.share.findInStringArray(obj.emails, matchFunc, searchStr);
+					if (s) {
+						found = obj;
+						matchedStr = s;
+					}
+				}
+				if (!found && obj.aims) {
+					var s = dh.share.findInStringArray(obj.aims, matchFunc, searchStr);
+					if (s) {
+						found = obj;
+						matchedStr = s;
+					}
+				}
+			}
+			
+			if (found && found.isPerson() && !found.hasAccount && !found.email) {
+				// we can't share with someone who is only an aim address
+				found = null;
+				matchedStr = null;
 			}
 			
 			if (found) {

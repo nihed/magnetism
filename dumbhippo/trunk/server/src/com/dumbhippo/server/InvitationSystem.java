@@ -19,10 +19,11 @@ public interface InvitationSystem {
 	 * Find all inviters for resources provably owned by a person.
 	 * 
 	 * @param invitee The person that was invited
+	 * @param extras info to stuff in the PersonView objects
 	 * @return a set of all the inviters for the invitee; the
 	 *   resulting PersonView use invitee as the viewpoint.
 	 */
-	public Set<PersonView> findInviters(User invitee);
+	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras);
 	
 	/**
 	 * Add inviter as a person wanting to invite the owner

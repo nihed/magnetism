@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,6 +48,7 @@ import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.LoginVerifierException;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RedirectException;
 import com.dumbhippo.server.TokenSystem;
@@ -102,17 +104,46 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private void returnPersonsXml(XmlBuilder xml, Set<PersonView> persons) {
 		if (persons != null) {
-			for (PersonView p : persons) {
-				EmailResource email = p.getEmail();
-				String hasAccount = p.getUser() != null ? "true" : "false";
-				if (email != null) {
-					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
-							"hasAccount", hasAccount,
-							"email", email.getEmail());
-				} else {
-					xml.appendTextNode("person", null, "id", p.getPerson().getId(), "display", p.getHumanReadableName(),
-							"hasAccount", hasAccount);
+			for (PersonView p : persons) {				
+
+				StringBuilder sb = new StringBuilder();
+
+				String emailsStr = null;
+				Collection<EmailResource> emails = p.getAllEmails();
+
+				for (EmailResource e : emails) {
+					sb.append(e.getEmail());
+					sb.append(",");
 				}
+				if (sb.length() > 0) {
+					sb.deleteCharAt(sb.length() - 1);
+					emailsStr = sb.toString();
+				}
+				
+				sb.setLength(0);
+				
+				String aimsStr = null;
+				Collection<AimResource> aims = p.getAllAims();
+				for (AimResource a : aims) {
+					sb.append(a.getScreenName());
+					sb.append(",");
+				}
+				if (sb.length() > 0) {
+					sb.deleteCharAt(sb.length() - 1);
+					aimsStr = sb.toString();
+				}
+				
+				EmailResource primaryEmail = p.getEmail();
+				AimResource primaryAim = p.getAim();
+				
+				String hasAccount = p.getUser() != null ? "true" : "false";
+				xml.appendTextNode("person", null, "id", p.getPerson().getId(),
+						"display", p.getHumanReadableName(),
+						"hasAccount", hasAccount,
+						"email", primaryEmail != null ? primaryEmail.getEmail() : null,
+						"aim", primaryAim != null ? primaryAim.getScreenName() : null,
+						"emails", emailsStr,
+						"aims", aimsStr);
 			}
 		}
 	}
@@ -157,7 +188,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (persons != null)
 			returnPersonsXml(xml, persons);
 		if (groups != null)
-		returnGroupsXml(xml, viewpoint, groups);
+			returnGroupsXml(xml, viewpoint, groups);
 		
 		endReturnObjectsXml(out, xml);
 	}
@@ -165,7 +196,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getAddableContacts(OutputStream out, HttpResponseData contentType, User user, String groupId) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
-		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint, user, groupId);
+		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint, user, groupId, PersonViewExtra.ALL_RESOURCES);
 		
 		returnObjects(out, contentType, viewpoint, persons, null);
 	}
@@ -173,7 +204,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, User user) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
-		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user);
+		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, user);
 		
 		returnObjects(out, contentType, viewpoint, persons, groups);
@@ -188,7 +219,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		EmailResource resource = identitySpider.getEmail(email);
 		Person contact = identitySpider.createContact(user, resource);
-		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
+		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.ALL_RESOURCES);
 		returnPersonsXml(xml, Collections.singleton(contactView));
 		
 		endReturnObjectsXml(out, xml);
@@ -293,7 +324,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		EmailResource emailResource = identitySpider.getEmail(email);
 		Contact contact = identitySpider.createContact(user, emailResource);
 		Viewpoint viewpoint = new Viewpoint(user);
-		PersonView contactView = identitySpider.getPersonView(viewpoint, contact);
+		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.ALL_RESOURCES);
 
 		returnObjects(out, contentType, viewpoint, Collections.singleton(contactView), null);
 	}

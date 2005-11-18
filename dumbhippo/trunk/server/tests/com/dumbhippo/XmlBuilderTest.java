@@ -22,7 +22,7 @@ public class XmlBuilderTest extends TestCase {
 	public void testAppendElement() {
 		XmlBuilder builder = new XmlBuilder();
 		
-		builder.appendTextNode("elemname", "some > content", "attr1", "val1&<", "attr2", "val2");
+		builder.appendTextNode("elemname", "some > content", "attr1", "val1&<", "attr2", "val2", "hasnullvalue", null);
 		
 		assertEquals(builder.toString(), "<elemname attr1=\"val1&amp;&lt;\" attr2=\"val2\">some &gt; content</elemname>");
 
