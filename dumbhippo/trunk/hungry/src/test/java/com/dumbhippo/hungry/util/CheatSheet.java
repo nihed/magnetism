@@ -62,27 +62,15 @@ public class CheatSheet {
 			throw new IllegalStateException("attempt to do write operation on read-only " + getClass().getName());
 	}
 	
-	public String getOneSampleUserId() {
+	public Set<String> getSampleUserIds(int max) {
+		// FIXME would improve the tests if we randomized the order so
+		// when getting a fixed number we got different users each time
 		try {
+			String query = "SELECT id FROM HippoUser";
+			if (max > 0)
+				query = query + " LIMIT " + max;
 			PreparedStatement statement =
-				getConnection().prepareStatement("SELECT id FROM HippoUser LIMIT 1");
-			ResultSet rs = statement.executeQuery();
-			if (!rs.isBeforeFirst()) {
-				System.err.println("At this point in the tests, we need at least one user in the database (readonly tests don't work with an empty db)");
-				System.exit(1);
-			}
-			rs.next();
-			return rs.getString("id");
-		} catch (SQLException e) {
-			fatalSqlException(e);
-			return null;
-		}
-	}
-	
-	public Set<String> getAllUserIds() {
-		try {
-			PreparedStatement statement =
-				getConnection().prepareStatement("SELECT id FROM HippoUser");
+				getConnection().prepareStatement(query);
 			ResultSet rs = statement.executeQuery();
 			Set<String> ret = new HashSet<String>();
 			while (rs.next()) {
@@ -93,6 +81,19 @@ public class CheatSheet {
 			fatalSqlException(e);
 			return null;
 		}		
+	}
+	
+	public String getOneSampleUserId() {
+		Set<String> ret = getSampleUserIds(1);
+		if (ret.size() == 0) {
+			System.err.println("At this point in the tests, we need at least one user in the database (readonly tests don't work with an empty db)");
+			System.exit(1);
+		}
+		return ret.iterator().next();
+	}
+	
+	public Set<String> getAllUserIds() {
+		return getSampleUserIds(0); // 0 = unlimited
 	}
 	
 	public String getUserAuthKey(String userId) {
