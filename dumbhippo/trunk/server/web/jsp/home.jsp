@@ -17,7 +17,7 @@
     <c:url value="viewperson?personId=${home.signin.user.id}" var="publicurl"/>
 	<dht:header>
 		This is You!<br/>
-		<a style="font-size:8pt"href="${publicurl}">(your public page)</a>
+		<a style="font-size:8pt;" href="${publicurl}">(your public page)</a>
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
