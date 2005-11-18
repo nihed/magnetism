@@ -424,6 +424,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		PersonView pv = new PersonView(contact, user);
 		
+		// FIXME we need to filter this - resources from the viewed User 
+		// should not be offered if viewpoint is not a contact of user
 		addPersonViewExtras(pv, extras);
 		
 		return pv;
