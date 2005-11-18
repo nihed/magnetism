@@ -110,7 +110,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			
-			logger.debug("--attr " + name + " = " + request.getAttribute(name));
+			logger.debug("request attr " + name + " = " + request.getAttribute(name));
 		}
 		
 		names = request.getParameterNames();		
@@ -123,7 +123,7 @@ public abstract class AbstractServlet extends HttpServlet {
 			}
 			builder.deleteCharAt(builder.length() - 1); // drop comma
 			
-			logger.debug("--param " + name + " = " + builder.toString());
+			logger.debug("param " + name + " = " + builder.toString());
 		}
 	}
 	

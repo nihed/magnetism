@@ -29,6 +29,28 @@
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
+    <servlet>
+      <servlet-name>AbnormalErrorServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.AbnormalErrorServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+	<!--  I can't figure out how to handle "all error codes" - "*" doesn't work afaict -->
+	<error-page>
+      <error-code>404</error-code>
+      <location>/unknownlink</location>
+	</error-page>
+
+	<error-page>
+      <error-code>500</error-code>
+      <location>/abnormalerror</location>
+	</error-page>
+
+	<error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/abnormalerror</location>
+	</error-page>
+
    <servlet-mapping>
       <servlet-name>HippoServlet</servlet-name>
       <url-pattern>/xmlrpc/*</url-pattern>
@@ -87,6 +109,11 @@
    <servlet-mapping>
       <servlet-name>VerifyServlet</servlet-name>
       <url-pattern>/verify</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>AbnormalErrorServlet</servlet-name>
+      <url-pattern>/abnormalerror</url-pattern>
    </servlet-mapping>
 
    <!-- Map everything else to our URL-Rewriting servlet -->  
