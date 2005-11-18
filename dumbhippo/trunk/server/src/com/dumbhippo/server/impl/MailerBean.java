@@ -80,7 +80,7 @@ public class MailerBean implements Mailer {
 		InternetAddress fromAddress;
 		InternetAddress toAddress;
 		try {
-			String niceName = fromViewedBySelf.getHumanReadableName();
+			String niceName = fromViewedBySelf.getName();
 			String address = fromViewedBySelf.getEmail().getEmail();
 			fromAddress = new InternetAddress(address, niceName);
 			

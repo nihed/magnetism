@@ -6,7 +6,7 @@
 <dh:bean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
 <jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
 
-<c:set var="personName" value="${viewperson.person.humanReadableName}" scope="page"/>
+<c:set var="personName" value="${viewperson.person.name}" scope="page"/>
 <c:set var="personId" value="${viewperson.person.person.id}" scope="page"/>
 
 <head>

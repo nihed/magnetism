@@ -42,6 +42,6 @@ public class User extends Person {
 	
 	@Override
 	public String toString() {
-		return "{User " + "guid = " + getId() + " name = " + getName() + "}";
+		return "{User " + "guid = " + getId() + " nick = " + getNickname() + "}";
 	}
 }

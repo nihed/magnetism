@@ -34,7 +34,7 @@
 				Your name is:
 			</td>
 			<td class="dh-edit-table-control">
-				<dht:userNameEdit value="${tutorial.person.humanReadableName}"/>
+				<dht:userNameEdit value="${tutorial.person.name}"/>
 			</td>
 			</tr>
 			<tr>

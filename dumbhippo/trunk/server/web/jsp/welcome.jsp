@@ -6,7 +6,7 @@
 <dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
 
 <head>
-	<title>Welcome <c:out value="${welcome.person.humanReadableName}"/>!</title>
+	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
 	<dht:stylesheets href="/css/welcome.css" />
 </head>
 <body>

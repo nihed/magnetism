@@ -6,7 +6,7 @@
 <dh:bean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
 
 <head>
-	<title><c:out value="${home.person.humanReadableName}"/></title>
+	<title><c:out value="${home.person.name}"/></title>
 	<dht:stylesheets href="/css/home.css" iehref="/css/home-iefixes.css" />
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
@@ -22,7 +22,7 @@
 	<dht:toolbar/>
 	<div class="person">
 		<dht:png klass="cool-person" src="/files/headshots/${home.person.person.id}" />
-		<dht:userNameEdit value="${home.person.humanReadableName}"/>
+		<dht:userNameEdit value="${home.person.name}"/>
 	</div>
 	<div>
 		<dht:uploadPhoto location="/headshots"/>

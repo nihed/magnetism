@@ -23,14 +23,14 @@ public class EntityTag extends SimpleTagSupport {
 			Person person = view.getPerson();
 			if (person != null)
 				link = "viewperson?personId=" + person.getId();
-			body = view.getHumanReadableName();
+			body = view.getName();
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
 			Group group = groupView.getGroup();
 			PersonView inviter = groupView.getInviter();
 			link = "viewgroup?groupId=" + group.getId();
 			if (inviter != null)
-				body = group.getName() + " (invited by " + inviter.getHumanReadableName() + ")";
+				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
 				body = group.getName();
 		} else if (o instanceof Group) {

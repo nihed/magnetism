@@ -79,7 +79,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		PersonView view = identitySpider.getSystemView(account.getOwner());
 		
-		JabberUser user = new JabberUser(username, account.getOwner().getName().getFullName(), view.getEmail().getEmail());
+		JabberUser user = new JabberUser(username, account.getOwner().getNickname(), view.getEmail().getEmail());
 	
 		return user;
 	}

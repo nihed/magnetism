@@ -12,7 +12,6 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 
-import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
@@ -81,7 +80,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 				throw new Error("null account");
 			}
 			
-			account.getOwner().setName(FullName.parseHumanString(n));
+			account.getOwner().setNickname(n);
 		}
 		
 		

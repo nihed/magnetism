@@ -17,7 +17,6 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
-import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
@@ -453,11 +452,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		PersonView pv = new PersonView(null, user);
 		addPersonViewExtras(pv, extras);
 		return pv;
-	}
-	
-	public void setName(Person person, FullName name) {
-		person.setName(name);
-		em.persist(person);
 	}
 	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {

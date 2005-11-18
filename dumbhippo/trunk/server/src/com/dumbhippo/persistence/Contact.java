@@ -53,6 +53,6 @@ public class Contact extends Person {
 	
 	@Override
 	public String toString() {
-		return "{Contact " + "guid = " + getId() + " name = " + getName() + " account = " + getAccount() + "}";
+		return "{Contact " + "guid = " + getId() + " nick = " + getNickname() + " account = " + getAccount() + "}";
 	}
 }

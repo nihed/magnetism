@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.dumbhippo.FullName;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
@@ -131,78 +130,32 @@ public class PersonView {
 	public Person getPerson() {
 		return contact != null ? contact : user;
 	}
-	
-	// get full name, never returning an empty string
-	private String getFullName() {
-		FullName name = null;
-		
-		if (contact != null)
-			name = contact.getName();
-		if ((name == null || name.isEmpty()) && user != null)
-			name = user.getName();
-		
-		if (name != null && !name.isEmpty())
-			return name.getFullName();
-		else
-			return null;
-	}
 
-	// get nickname or first name, never returning an empty string
-	private String getShortName() {
+	private String getNickname() {
 		String name = null;
-		if (contact != null)
-			name = contact.getNickname();	
-		if ((name == null || name.length() == 0) && user != null)
+		
+		// we prefer the user name, then the contact alias for now;
+		// eventually we might get more sophisticated and just drop 
+		// the contact alias "one time" when the user first appears
+
+		if (user != null)
 			name = user.getNickname();
 		
 		if ((name == null || name.length() == 0) && contact != null)
-			name = contact.getName().getFirstName();
-		if ((name == null || name.length() == 0) && user != null)
-			name = user.getName().getFirstName();
-
+			name = contact.getNickname();	
+		
 		if (name == null || name.length() == 0)
-			return null;
-		
+			return "<Unknown>";
+
 		return name;
 	}
 	
-	private String getName(boolean preferLong) {
-		String name = null;
-		
-		if (preferLong) {
-			name = getFullName();
-			if (name == null)
-				name = getShortName();
-		} else {
-			name = getShortName();
-			if (name == null)
-				name = getFullName();
-		}
-				
-		if (name == null) {
-			// FIXME we want to get rid of this
-			if (getExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
-				name = getPrimaryResource().getHumanReadableString();
-				if (name.length() == 0)
-					name = null;
-			}
-		}
-		
-		if (name == null)
-			name = "<Unknown>";
-		
-		if (name != null && name.length() == 0)
-			throw new RuntimeException("Empty name, preferLong = " + preferLong);
-		
-		return name;
+	public String getName() {
+		return getNickname();
 	}
 	
-	public String getHumanReadableName() {
-		return getName(true);
-	}
-	
-	public String getHumanReadableShortName() {
-		String name = getName(false);
+	public String getShortName() {
+		String name = getNickname();
 		
 		if (name.length() > MAX_SHORT_NAME_LENGTH) {
 			return name.substring(0, MAX_SHORT_NAME_LENGTH) + "...";
@@ -282,7 +235,7 @@ public class PersonView {
 		final Collator collator = Collator.getInstance();
 		Collections.sort(list, new Comparator<PersonView>() {
 			public int compare (PersonView v1, PersonView v2) {
-				return collator.compare(v1.getHumanReadableName(), v2.getHumanReadableName());
+				return collator.compare(v1.getName(), v2.getName());
 			}
 		});
 		

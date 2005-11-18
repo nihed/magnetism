@@ -244,6 +244,6 @@ public class Account extends Resource {
 	@Override
 	@Transient
 	public String getHumanReadableString() {
-		return getOwner().getName().toString();
+		return getOwner().getNickname().toString();
 	}
 }

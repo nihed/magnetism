@@ -245,11 +245,11 @@ public class MessageSenderBean implements MessageSender {
 			Viewpoint viewpoint = new Viewpoint(recipient);
 
 			PersonView recipientView = identitySpider.getPersonView(viewpoint, post.getPoster());
-			String senderName = recipientView.getHumanReadableName();
+			String senderName = recipientView.getName();
 			Set<String> recipientNames = new HashSet<String>();
 			for (Resource r : post.getPersonRecipients()) {
 				PersonView viewedP = identitySpider.getPersonView(viewpoint, r);
-				recipientNames.add(viewedP.getHumanReadableName());
+				recipientNames.add(viewedP.getName());
 			}
 			Set<String> groupRecipientNames = new HashSet<String>();
 			for (Group g : post.getGroupRecipients()) {
@@ -280,7 +280,7 @@ public class MessageSenderBean implements MessageSender {
 
 				Viewpoint viewpoint = new Viewpoint(recipient);
 				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
-				String clickerName = senderView.getHumanReadableName();
+				String clickerName = senderView.getName();
 				String title = post.getTitle();
 				if (title == null || title.equals("")) {
 					LinkResource link = null;
@@ -385,7 +385,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// TEXT: "link shared by"
 			
-			messageText.append("  (Link shared by " + posterViewedBySelf.getHumanReadableName() + ")");
+			messageText.append("  (Link shared by " + posterViewedBySelf.getName() + ")");
 			
 			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getPerson().getId();
 			String recipientInviteUrl = baseurl; // FIXME invite url for recipient
@@ -399,13 +399,13 @@ public class MessageSenderBean implements MessageSender {
 				+ "</div>\n";
 			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedBySelf.getEmail().getEmail()),
 						XmlBuilder.escape(posterPublicPageUrl),
-						XmlBuilder.escape(posterViewedBySelf.getHumanReadableName()),
+						XmlBuilder.escape(posterViewedBySelf.getName()),
 						XmlBuilder.escape(recipientInviteUrl),
 						XmlBuilder.escape(recipient.getEmail()))); 
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
-			messageText.append("      " + posterViewedBySelf.getHumanReadableShortName()
+			messageText.append("      " + posterViewedBySelf.getName()
 					+ " created an invitation for you: " + recipientInviteUrl + "\n");
 			messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			
@@ -417,7 +417,7 @@ public class MessageSenderBean implements MessageSender {
 				+ "</div>\n";
 			messageHtml.append(String.format(format, 
 					XmlBuilder.escape(posterPublicPageUrl),
-					XmlBuilder.escape(posterViewedBySelf.getHumanReadableShortName()),
+					XmlBuilder.escape(posterViewedBySelf.getName()),
 					XmlBuilder.escape(recipientInviteUrl),
 					XmlBuilder.escape(baseurl)));
 

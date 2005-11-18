@@ -112,7 +112,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
 		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);
-		String inviterName = viewedInviter.getHumanReadableName();
+		String inviterName = viewedInviter.getName();
 		
 		URL url;
 		try {
@@ -172,7 +172,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		Set<String> names = new HashSet<String>();  
 		for (User inviter : invite.getInviters()) {
 			PersonView view = spider.getSystemView(inviter);
-	        String readable = view.getHumanReadableName();
+	        String readable = view.getName();
 	        if (readable != null) {    
 	        	names.add(readable);
 	        }

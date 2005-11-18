@@ -62,7 +62,7 @@ public class ViewPersonPage {
 	}
 	
 	public String getName() {
-		return viewedPerson.getName().toString();
+		return viewedPerson.getNickname();
 	}
 
 	public void setViewedPersonId(String personId) throws ParseException, GuidNotFoundException {

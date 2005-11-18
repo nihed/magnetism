@@ -88,8 +88,8 @@ public class ClaimVerifierBean implements ClaimVerifier {
 				Viewpoint viewpoint = new Viewpoint(user);
 				PersonView self = identitySpider.getPersonView(viewpoint, user);
 				PersonView other = identitySpider.getPersonView(viewpoint, token.getUser());
-				throw new ClaimVerifierException("You are signed in as " + self.getHumanReadableName() 
-						+ " but trying to change the account " + other.getHumanReadableName());
+				throw new ClaimVerifierException("You are signed in as " + self.getName() 
+						+ " but trying to change the account " + other.getName());
 			}
 		} else {
 			user = token.getUser();

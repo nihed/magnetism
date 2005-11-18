@@ -182,10 +182,10 @@ public class TestClient {
 				
 			} catch (XMPPException e) {
 				e.printStackTrace();
-				throw new Error("Could not login as " + account.getOwner().getName().getFullName(), e);
+				throw new Error("Could not login as " + account.getOwner().getNickname(), e);
 			}
 		
-			System.out.println("Successfully sent login as " + account.getOwner().getName().getFullName());
+			System.out.println("Successfully sent login as " + account.getOwner().getNickname());
 			return connection;
 		}
 

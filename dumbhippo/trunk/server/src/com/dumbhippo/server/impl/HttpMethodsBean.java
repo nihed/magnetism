@@ -18,7 +18,6 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 
-import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskMessage;
@@ -138,7 +137,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				
 				String hasAccount = p.getUser() != null ? "true" : "false";
 				xml.appendTextNode("person", null, "id", p.getPerson().getId(),
-						"display", p.getHumanReadableName(),
+						"display", p.getName(),
 						"hasAccount", hasAccount,
 						"email", primaryEmail != null ? primaryEmail.getEmail() : null,
 						"aim", primaryAim != null ? primaryAim.getScreenName() : null,
@@ -171,7 +170,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					if (sampleMembers.length() > 0)
 						sampleMembers.append(" ");
 				
-					String shortName = member.getHumanReadableShortName();
+					String shortName = member.getShortName();
 					sampleMembers.append(shortName);
 				}
 				
@@ -274,7 +273,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String url = baseurl + "/viewgroup?groupId=" + group.getId();
 		
 		PersonView selfView = identitySpider.getPersonView(viewpoint, user);
-		String title = group.getName() + " (invitation from " + selfView.getHumanReadableName() + ")";
+		String title = group.getName() + " (invitation from " + selfView.getName() + ")";
 			
 		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
@@ -286,8 +285,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// and the inverse side of a OneToOne relationship.
 		// http://opensource2.atlassian.com/projects/hibernate/browse/HHH-1004
 		User attachedUser = em.find(User.class, user.getId());
-		FullName fullname = FullName.parseHumanString(name);
-		attachedUser.setName(fullname);
+		attachedUser.setNickname(name);
 	}
 	
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members, boolean secret) throws IOException, ParseException, GuidNotFoundException {
