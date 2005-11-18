@@ -6,6 +6,15 @@ table.cool-bubble * {
 	font-size:				10pt;
 	vertical-align:				top;
 }
+td.cool-person {
+	text-overflow:				ellipsis;
+}
+div.cool-person, div.cool-group {
+	text-overflow:				ellipsis;
+}
+div.cool-link {
+	text-overflow:				ellipsis;
+}
 a.cool-link {
 	font-weight:				bold;
 	color:					blue;

@@ -29,7 +29,6 @@ table.cool-bubble tbody {
 td.cool-person {
 	text-align:				center;
 	width:					60px;
-	text-overflow:				ellipsis;
 	overflow:				hidden;
 	vertical-align:				middle;
 }
@@ -42,9 +41,8 @@ a.cool-person, a.cool-group {
 div.cool-person, div.cool-group {
 	width:					60px;
 	overflow:				hidden;
-	text-overflow:				ellipsis;
 	font-size:				x-small;
-	cursor:					hand;
+	cursor:					pointer;
 }
 img.cool-person, img.cool-group {
 	margin:					auto;
@@ -70,7 +68,6 @@ td.cool-link {
 }
 div.cool-link {
 	width:					340px;
-	text-overflow:				ellipsis;
 	overflow:				hidden;
 	padding:				0;
 	margin:					0;
