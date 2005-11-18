@@ -170,7 +170,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					if (sampleMembers.length() > 0)
 						sampleMembers.append(" ");
 				
-					String shortName = member.getShortName();
+					String shortName = member.getTruncatedName();
 					sampleMembers.append(shortName);
 				}
 				

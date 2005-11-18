@@ -154,7 +154,7 @@ public class PersonView {
 		return getNickname();
 	}
 	
-	public String getShortName() {
+	public String getTruncatedName() {
 		String name = getNickname();
 		
 		if (name.length() > MAX_SHORT_NAME_LENGTH) {
