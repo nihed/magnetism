@@ -22,7 +22,8 @@
 	<table class="dhFramer">
 	<tr>
 	<td class="cool-person" rowSpan="3">
-	    <dh:entityImage value="${framer.post.poster}"/>
+		<!--  not in subversion at the moment? -->
+	    <!-- <dh:entityImage value="${framer.post.poster}"/> -->
 	</td>
 	<td class="cool-link-desc">
 	     <div class="cool-link"><c:out value="${title}" /></div>
