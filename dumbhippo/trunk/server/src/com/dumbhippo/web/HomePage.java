@@ -1,7 +1,5 @@
 package com.dumbhippo.web;
 
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
@@ -31,6 +29,11 @@ public class HomePage {
 	private PersonView person;
 	private GroupSystem groupSystem;
 	
+	private ListBean<PostView> receivedPosts;
+	private ListBean<PostView> contactPosts;
+	private ListBean<GroupView> groups;
+	private ListBean<PersonView> contacts;
+	
 	public HomePage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -48,22 +51,34 @@ public class HomePage {
 		return person;
 	}
 	
-	public List<PostView> getReceivedPosts() {
-		logger.debug("Getting received posts for " + signin.getUser().getId());
-		// + 1 as a marker for whether there are more
-		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1);
+	public ListBean<PostView> getReceivedPosts() {
+		if (receivedPosts == null) {
+			logger.debug("Getting received posts for " + signin.getUser().getId());
+			// + 1 as a marker for whether there are more
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
+		}
+		return receivedPosts;
 	}
 	
-	public List<GroupView> getGroups() {
-		return GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
+	public ListBean<GroupView> getGroups() {
+		if (groups == null) {
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser())));
+		}
+		return groups;
 	}
 	
-	public List<PersonView> getContacts() {
-		return PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser()));
+	public ListBean<PersonView> getContacts() {
+		if (contacts == null) {
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser())));
+		}
+		return contacts;
 	}
 	
-	public List<PostView> getContactPosts() {
-		return postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0, 0);
+	public ListBean<PostView> getContactPosts() {
+		if (contactPosts == null) {
+			contactPosts = new ListBean<PostView>(postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0, 0));
+		}
+		return contactPosts;
 	}
 	
 	public int getMaxReceivedPostsShown() {

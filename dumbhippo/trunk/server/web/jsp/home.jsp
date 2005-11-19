@@ -32,32 +32,40 @@
 		<table>
 		<tr>
 		<td>
-			<div class="shared-links">	
-				<strong>Links Shared With You</strong>
-				<dht:postList posts="${home.receivedPosts}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
-			</div>
+			<c:if test="${home.receivedPosts.size > 0}">
+				<div class="shared-links">	
+					<strong>Links Shared With You</strong>
+					<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
+				</div>
+			</c:if>
 		</td>
 		<td>
-			<div class="shared-links">	
-				<strong>Links Shared By Your Friends</strong>
-				<c:forEach items="${home.contactPosts}" var="post">
-					<dht:postBubble post="${post}"/>
-				</c:forEach>
-			</div>
+			<c:if test="${home.contactPosts.size > 0}">
+				<div class="shared-links">
+					<strong>Links Shared By Your Friends</strong>
+					<c:forEach items="${home.contactPosts.list}" var="post">
+						<dht:postBubble post="${post}"/>
+					</c:forEach>
+				</div>
+			</c:if>
 		</td>
 		</tr>
 		</tr>
 		<td>
-			<div class="groups">
-				<strong>Groups You're In</strong>
-				<br/>
-				<dh:entityList value="${home.groups}"/>
-			</div>
-			<div class="friends">
-				<strong>People You Know</strong>
-				<br/>
-				<dh:entityList value="${home.contacts}"/>
-			</div>
+			<c:if test="${home.groups.size > 0}">
+				<div class="groups">
+					<strong>Groups You're In</strong>
+					<br/>
+					<dh:entityList value="${home.groups.list}"/>
+				</div>
+			</c:if>
+			<c:if test="${home.contacts.size > 0}">
+				<div class="friends">
+					<strong>People You Know</strong>
+					<br/>
+					<dh:entityList value="${home.contacts.list}"/>
+				</div>
+			</c:if>
 		</td>
 		</tr>
 		</table>
