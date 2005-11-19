@@ -181,7 +181,7 @@ public class PhotoServlet extends AbstractServlet {
 		request.setAttribute("photoFilename", isGroup ? groupId : user.getId());
 		XmlBuilder link = new XmlBuilder();
 		if (isGroup)
-			link.appendTextNode("a", "Go to " + groupName, "href", "/viewgroup?groupId=" + groupId);
+			link.appendTextNode("a", "Go to group " + groupName, "href", "/viewgroup?groupId=" + groupId);
 		else
 			link.appendTextNode("a", "Go to your page", "href", "/home");
 		request.setAttribute("homePageLink", link.toString());

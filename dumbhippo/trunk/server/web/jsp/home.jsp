@@ -25,8 +25,7 @@
 		<dht:userNameEdit value="${home.person.name}"/>
 	</div>
 	<div>
-		<dht:uploadPhoto location="/headshots"/>
-		<a id="dhChangeMyPhotoLink" href="javascript:void(0);" onClick="dh.util.swapElements('dhPhotoUploadFileEntry','dhChangeMyPhotoLink')">Change my photo</a>
+		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
 	</div>
 
 	<div id="dhMain">

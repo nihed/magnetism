@@ -14,8 +14,7 @@
 	<dht:toolbar/>
 
 	<div id="dhMain">
-		<br/>
-		<br/>
+		<p>Choose a new photo file:</p>
 		<dht:uploadPhoto location="/headshots"/>
 	</div>
 </body>

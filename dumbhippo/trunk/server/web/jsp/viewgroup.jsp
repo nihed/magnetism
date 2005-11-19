@@ -44,8 +44,7 @@
 	</div>
 	<c:if test="${viewgroup.canModify}">
 		<div>
-			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}"/>
-	                <a id="dhChangeGroupPhotoLink" href="javascript:void(0);" onClick="dh.util.swapElements('dhPhotoUploadFileEntry','dhChangeGroupPhotoLink')">Change Group Photo</a>
+			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="Change Group Photo"/>
 		</div>
 	</c:if>
 
