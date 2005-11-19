@@ -3,17 +3,21 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView"%>
+<%@ attribute name="hidePoster" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="hideRecipientId" required="false" type="java.lang.String"%>
 
 <div class="cool-bubble-shadow">		
 	<table class="cool-bubble">
 	<tr>
-	<td class="cool-person" rowSpan="3">
-		<a class="cool-person" href="">
-			<img class="cool-person" src="/files/headshots/${post.poster.viewPersonPageId}" />
-			<br/>
-			<dh:entity value="${post.poster}"/>
-		</a>
-	</td>
+	<c:if test="${!hidePoster}">
+		<td class="cool-person" rowSpan="3">
+			<a class="cool-person" href="">
+				<img class="cool-person" src="/files/headshots/${post.poster.viewPersonPageId}" />
+				<br/>
+				<dh:entity value="${post.poster}"/>
+			</a>
+		</td>
+	</c:if>
 	<td class="cool-link">
 		<div class="cool-link">
 			<c:choose>
@@ -39,7 +43,7 @@
 		(<fmt:formatDate value="${post.post.postDate}" type="both"/>)
 		</div>
 		<div class="cool-link-to">
-			<dh:entityList value="${post.recipients}"/>
+			<dh:entityList value="${post.recipients}" skipRecipientId="${hideRecipientId}"/>
 		</div>
 	</td>
 	</tr>

@@ -8,6 +8,7 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 public class EntityListTag extends SimpleTagSupport {
 	List<Object> entities;
+	private String skipRecipientId;
 	
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
@@ -17,10 +18,14 @@ public class EntityListTag extends SimpleTagSupport {
 		
 		boolean first = true;
 		for (Object o : entities) {
+			String html = EntityTag.entityHTML(o, skipRecipientId);
+			if (html == null)
+				continue;
+			
 			if (!first)
 				writer.print(", ");
 			
-			writer.print(EntityTag.entityHTML(o));
+			writer.print(html);
 			
 			first = false;
 		}
@@ -28,5 +33,9 @@ public class EntityListTag extends SimpleTagSupport {
 	
 	public void setValue(List<Object> value) {
 		entities = value;
+	}
+	
+	public void setSkipRecipientId(String skipRecipientId) {
+		this.skipRecipientId = skipRecipientId;
 	}
 }

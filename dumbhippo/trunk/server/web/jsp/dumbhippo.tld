@@ -48,5 +48,10 @@
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+        <attribute>
+           <name>skipRecipientId</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
     </tag>
 </taglib>

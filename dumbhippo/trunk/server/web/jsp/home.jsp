@@ -40,7 +40,7 @@
 		</td>
 		<td>
 			<div class="shared-links">	
-				<strong>Links Shared By your friends</strong>
+				<strong>Links Shared By Your Friends</strong>
 				<c:forEach items="${home.contactPosts}" var="post">
 					<dht:postBubble post="${post}"/>
 				</c:forEach>

@@ -41,7 +41,21 @@
 			</div>
 		</c:when>
 		<c:otherwise>
-			<dht:postBubble post="${post}"/>
+			<!-- don't display info that is already apparent from context -->
+			<c:choose>
+				<c:when test="${!empty posterId}">
+					<dht:postBubble post="${post}" hidePoster="true"/>
+				</c:when>
+				<c:when test="${!empty recipientId}">
+					<dht:postBubble post="${post}" hideRecipientId="${recipientId}"/>
+				</c:when>
+				<c:when test="${!empty groupId}">
+					<dht:postBubble post="${post}" hideRecipientId="${groupId}"/>
+				</c:when>
+				<c:otherwise>
+					<dht:postBubble post="${post}"/>
+				</c:otherwise>
+			</c:choose>
 		</c:otherwise>
 	</c:choose>
 </c:forEach>
