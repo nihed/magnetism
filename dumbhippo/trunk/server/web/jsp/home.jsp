@@ -35,7 +35,7 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared With You</strong>
-				<dht:postList posts="${home.receivedPosts}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" personName="${home.person.name}"/>
+				<dht:postList posts="${home.receivedPosts}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
 			</div>
 		</td>
 		<td>

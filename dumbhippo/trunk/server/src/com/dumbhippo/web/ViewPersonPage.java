@@ -25,7 +25,7 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 public class ViewPersonPage {
 	static private final Log logger = GlobalSetup.getLog(ViewPersonPage.class);	
 
-	static private final int MAX_POSTS_SHOWN = 2;
+	static private final int MAX_POSTS_SHOWN = 10;
 	
 	private Person viewedPerson;
 	private String viewedPersonId;

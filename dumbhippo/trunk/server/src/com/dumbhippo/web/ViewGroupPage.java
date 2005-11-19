@@ -19,7 +19,7 @@ public class ViewGroupPage {
 	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(ViewGroupPage.class);	
 	
-	static private final int MAX_POSTS_SHOWN = 2;
+	static private final int MAX_POSTS_SHOWN = 10;
 	
 	private Group viewedGroup;
 	private String viewedGroupId;

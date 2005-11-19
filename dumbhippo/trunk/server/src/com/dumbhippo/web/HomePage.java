@@ -21,7 +21,7 @@ import com.dumbhippo.server.PostingBoard;
  */
 public class HomePage {
 	static private final Log logger = GlobalSetup.getLog(HomePage.class);
-	static private final int MAX_RECEIVED_POSTS_SHOWN = 2;
+	static private final int MAX_RECEIVED_POSTS_SHOWN = 4;
 	
 	@Signin
 	private SigninBean signin;

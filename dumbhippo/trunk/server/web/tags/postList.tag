@@ -3,7 +3,8 @@
 
 <%@ attribute name="posts" required="true" type="java.util.List"%>
 <%@ attribute name="maxPosts" required="true" type="java.lang.Integer"%>
-<%@ attribute name="personName" required="false" type="java.lang.String"%>
+<%@ attribute name="posterName" required="false" type="java.lang.String"%>
+<%@ attribute name="recipientName" required="false" type="java.lang.String"%>
 <%@ attribute name="groupName" required="false" type="java.lang.String"%>
 <%@ attribute name="posterId" required="false" type="java.lang.String"%>
 <%@ attribute name="recipientId" required="false" type="java.lang.String"%>
@@ -25,11 +26,14 @@
 				</form>
 				the <a href="/search?start=${maxPosts}&count=${maxPosts}&posterId=${posterId}&recipientId=${recipientId}&groupId=${groupId}">other shares</a>
 				<c:choose>
-					<c:when test="${!empty personName}">
-						<c:out value="${personName}"/> shared.
+					<c:when test="${!empty posterName}">
+						<c:out value="${posterName}"/> shared.
 					</c:when>
 					<c:when test="${!empty groupName}">
 						sent to the <c:out value="${groupName}"/> group.
+					</c:when>
+					<c:when test="${!empty recipientName}">
+						you received.
 					</c:when>
 					<c:otherwise>
 					</c:otherwise>

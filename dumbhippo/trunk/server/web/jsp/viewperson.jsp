@@ -47,7 +47,7 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool Shared Links</strong>
-				<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" personName="${personName}"/>
+				<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
 			</div>
 		</td>
 		<td>
