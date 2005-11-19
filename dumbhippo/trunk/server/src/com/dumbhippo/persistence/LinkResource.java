@@ -49,4 +49,10 @@ public class LinkResource extends Resource {
 	public String getHumanReadableString() {
 		return getUrl();
 	}
+	
+	@Override
+	@Transient
+	public String getDerivedNickname() {
+		return getHumanReadableString();
+	}
 }

@@ -21,7 +21,7 @@
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
-		<dht:png klass="cool-person" src="/files/headshots/${home.person.person.id}" />
+		<dht:png klass="cool-person" src="/files/headshots/${home.person.viewPersonPageId}" />
 		<dht:userNameEdit value="${home.person.name}"/>
 	</div>
 	<div>
@@ -35,12 +35,7 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Links Shared With You</strong>
-				<c:forEach items="${home.receivedPosts}" var="post" varStatus="status">
-					<dht:postBubble post="${post}"/>
-					  <c:if test="${status.last}">
-			    <div style="text-align:right"><input style="width:7em;border:1px solid black;" type="text" value="Search"/> the <a href="/shares">other shares</a> sent to you.</div>
-					  </c:if>  
-				</c:forEach>
+				<dht:postList posts="${home.receivedPosts}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" personName="${home.person.name}"/>
 			</div>
 		</td>
 		<td>

@@ -387,7 +387,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			messageText.append("  (Link shared by " + posterViewedBySelf.getName() + ")");
 			
-			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getPerson().getId();
+			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getViewPersonPageId();
 			String recipientInviteUrl = baseurl; // FIXME invite url for recipient
 			String recipientStopUrl = baseurl;   // FIXME stop getting mail url for recipient
 			

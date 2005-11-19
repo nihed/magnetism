@@ -11,7 +11,7 @@
 </c:if>
 
 <c:set var="personName" value="${viewperson.person.name}" scope="page"/>
-<c:set var="personId" value="${viewperson.person.person.id}" scope="page"/>
+<c:set var="personId" value="${viewperson.person.viewPersonPageId}" scope="page"/>
 
 <head>
 	<title><c:out value="${personName}"/></title>
@@ -47,13 +47,7 @@
 		<td>
 			<div class="shared-links">	
 				<strong>Cool Shared Links</strong>
-				<c:forEach items="${viewperson.posts}" var="post" varStatus="status">
-					<dht:postBubble post="${post}"/>
-					<c:if test="${status.last}">
-					<div style="text-align:right"><input style="width:7em;border:1px solid black;" type="text" value="Search"/> the <a href="/shares">other shares</a> <c:out value="${personName}"/> shared.</div>
-                                        </c:if>
-
-				</c:forEach>
+				<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" personName="${personName}"/>
 			</div>
 		</td>
 		<td>

@@ -71,4 +71,10 @@ public class AimResource extends Resource {
 	public String getHumanReadableString() {
 		return screenName;
 	}
+	
+	@Override
+	@Transient
+	public String getDerivedNickname() {
+		return getHumanReadableString();
+	}
 }

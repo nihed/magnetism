@@ -136,7 +136,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				AimResource primaryAim = p.getAim();
 				
 				String hasAccount = p.getUser() != null ? "true" : "false";
-				xml.appendTextNode("person", null, "id", p.getPerson().getId(),
+				xml.appendTextNode("person", null,
+						"id", p.getContact() != null ? p.getContact().getId() : p.getUser().getId(),
 						"display", p.getName(),
 						"hasAccount", hasAccount,
 						"email", primaryEmail != null ? primaryEmail.getEmail() : null,

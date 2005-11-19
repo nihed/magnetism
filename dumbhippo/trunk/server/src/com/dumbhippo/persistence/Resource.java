@@ -35,6 +35,14 @@ public abstract class Resource extends GuidPersistable {
 	@Transient
 	public abstract String getHumanReadableString();
 	
+	
+	/**
+	 * Get a default nickname derived from this resource.
+	 * @return the derived nickname
+	 */
+	@Transient
+	public abstract String getDerivedNickname();
+	
 	@Override
 	public String toString() {
 		// this is for debug spew, getHumanReadableString() is for showing to humans

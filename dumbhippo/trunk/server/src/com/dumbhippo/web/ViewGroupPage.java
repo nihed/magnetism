@@ -19,6 +19,8 @@ public class ViewGroupPage {
 	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(ViewGroupPage.class);	
 	
+	static private final int MAX_POSTS_SHOWN = 2;
+	
 	private Group viewedGroup;
 	private String viewedGroupId;
 
@@ -40,7 +42,9 @@ public class ViewGroupPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedGroup != null;
-		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 0, 10);
+		
+		// we ask for 1 extra post to see if we need a "more posts" link
+		return postBoard.getGroupPosts(signin.getViewpoint(), viewedGroup, 0, MAX_POSTS_SHOWN + 1);
 	}
 	
 	public SigninBean getSignin() {
@@ -122,5 +126,9 @@ public class ViewGroupPage {
 	
 	public PersonView getInviter() {
 		return inviter;
+	}
+	
+	public int getMaxPostsShown() {
+		return MAX_POSTS_SHOWN;
 	}
 }

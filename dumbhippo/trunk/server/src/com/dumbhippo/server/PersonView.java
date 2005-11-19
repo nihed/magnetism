@@ -14,7 +14,6 @@ import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 
@@ -127,10 +126,21 @@ public class PersonView {
 		}
 	}
 	
-	public Person getPerson() {
-		return contact != null ? contact : user;
+	/**
+	 * Gets the id that should be used with viewperson.jsp, which is 
+	 * the User if any else the contact else null.
+	 * 
+	 * @return the id or null
+	 */
+	public String getViewPersonPageId() {
+		if (user != null)
+			return user.getId();
+		else if (contact != null)
+			return contact.getId();
+		else
+			return null;
 	}
-
+	
 	private String getNickname() {
 		String name = null;
 		

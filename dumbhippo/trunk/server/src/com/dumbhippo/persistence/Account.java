@@ -246,4 +246,10 @@ public class Account extends Resource {
 	public String getHumanReadableString() {
 		return getOwner().getNickname().toString();
 	}
+	
+	@Override
+	@Transient
+	public String getDerivedNickname() {
+		return getHumanReadableString();
+	}
 }

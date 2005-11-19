@@ -24,6 +24,8 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 public class ViewPersonPage {
 	static private final Log logger = GlobalSetup.getLog(ViewPersonPage.class);	
+
+	static private final int MAX_POSTS_SHOWN = 2;
 	
 	private Person viewedPerson;
 	private String viewedPersonId;
@@ -44,7 +46,9 @@ public class ViewPersonPage {
 	
 	public List<PostView> getPosts() {
 		assert viewedPerson != null;
-		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0, 10);
+		
+		// always ask for max posts shown + 1 as a marker for whether to show the More link
+		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0, MAX_POSTS_SHOWN + 1);
 	}
 	
 	public SigninBean getSignin() {
@@ -109,5 +113,9 @@ public class ViewPersonPage {
 	// We don't show group's you haven't accepted the invitation for on your public page
 	public List<Group> getGroups() {
 		return Group.sortedList(groupSystem.findRawGroups(signin.getViewpoint(), viewedPerson, MembershipStatus.ACTIVE));
+	}
+	
+	public int getMaxPostsShown() {
+		return MAX_POSTS_SHOWN;
 	}
 }

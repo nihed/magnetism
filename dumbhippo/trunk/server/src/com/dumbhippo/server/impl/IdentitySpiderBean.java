@@ -502,7 +502,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		Contact contact = new Contact(user.getAccount());
 		// call the contact whatever resource we used to create it
-		contact.setNickname(resource.getHumanReadableString());
+		contact.setNickname(resource.getDerivedNickname());
 		em.persist(contact);
 		
 		ContactClaim cc = new ContactClaim(contact, resource);

@@ -65,4 +65,16 @@ public class EmailResource extends Resource {
 	public String getHumanReadableString() {
 		return getEmail();
 	}
+	
+	@Override
+	@Transient
+	public String getDerivedNickname() {
+		String withAt = getEmail();
+		int atIndex = withAt.indexOf('@');
+		if (atIndex > 0) {
+			return withAt.substring(0, atIndex);
+		} else {
+			return withAt; // something invalid, maybe nothing before the @
+		}
+	}
 }

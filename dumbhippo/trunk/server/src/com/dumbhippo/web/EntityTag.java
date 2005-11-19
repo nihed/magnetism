@@ -7,7 +7,6 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
@@ -20,9 +19,9 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
-			Person person = view.getPerson();
-			if (person != null)
-				link = "viewperson?personId=" + person.getId();
+			String id = view.getViewPersonPageId();
+			if (id != null)
+				link = "viewperson?personId=" + id;
 			body = view.getName();
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
