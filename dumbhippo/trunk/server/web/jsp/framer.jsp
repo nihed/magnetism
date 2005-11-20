@@ -10,11 +10,16 @@
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
 
+<c:url var="forwardUrl" value="/sharelink">
+	<c:param name="url" value="${url}"/>
+	<c:param name="title" value="${title}"/>
+</c:url>
+
 <head>
 	<dht:stylesheets href="/css/frames.css" iehref="/css/frames-iefixes.css" />
 	<dht:scriptIncludes/>
-        <script type="text/javascript">
-                dojo.require("dojo.html");
+    <script type="text/javascript">
+    	dojo.require("dojo.html");
 	</script>
 </head>
 <body>
@@ -40,8 +45,8 @@
 	       <td class="action" nowrap><a class="action" href="/home" target=_top>Back Home</a></td>       
 	   </tr>
 	   <tr>
-	       <td class="action" nowrap><a class="action action-box highlight-action" href="javascript:alert('Open Javascript Share Link');">&#187</a></td>
-	       <td class="action" nowrap><a class="action highlight-action" href="javascript:alert('Open Javascript Share Link');">Forward To Others</a></td>
+	       <td class="action" nowrap><a class="action action-box highlight-action" href="${forwardUrl}" target="_blank">&#187</a></td>
+	       <td class="action" nowrap><a class="action highlight-action" href="${forwardUrl}" target="_blank">Forward To Others</a></td>
 	    </tr>
 	    </table>
 	</td>
