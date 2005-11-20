@@ -115,3 +115,8 @@ td.dhRecipientName {
 .dhButton.share {
 	float:						right;
 }
+
+#dhShareLinkDescription {
+	min-height:					2em;
+}
+

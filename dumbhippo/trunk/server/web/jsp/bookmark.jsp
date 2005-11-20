@@ -28,4 +28,17 @@ String port = (_port == 80)? "" : ":" + _port;
 &nbsp;
 </p>
 
-<p><a href="javascript:window.open('http://<%= hostname + port %>/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));void(0);">Dumb Hippo It!</a></p>
+<p>
+	<a href="javascript:window.open('http://<%= hostname + port %>/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));void(0);">Dumb Hippo It!</a>
+</p>
+
+<p>
+&nbsp;
+</p>
+
+<p><b>Tip:</b> To bookmark the link, click it with the <b>right</b> mouse button and choose Bookmark This Link from the menu.
+In Firefox, you can then go to the Manage Bookmarks item in the Bookmarks menu, and move the link 
+onto your Personal Toolbar.
+</p>
+
+</body>

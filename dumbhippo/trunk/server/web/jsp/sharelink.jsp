@@ -116,7 +116,8 @@
 			<div class="dhVerticalPadding"></div>
 	
 			<div class="dhLabel"><u>D</u>escription:</div>
-			<div class="dhTextArea" id="dhShareLinkDescription" /></div>
+			<div class="dhTextArea" id="dhShareLinkDescription">
+			</div>
 	
 			<div class="dhVerticalPadding"></div>
 	
