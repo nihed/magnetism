@@ -34,7 +34,11 @@
 						Search stuff from group ${search.group.name}:
 					</c:when>
 					<c:otherwise>
-						Search:
+						<c:if test="${!search.signin.valid}">
+							<dht:errorPage>Not signed in</dht:errorPage>
+						</c:if>
+						<jsp:setProperty name="search" property="recipientId" value="${search.signin.user.id}"/>
+						Search stuff shared with you:
 					</c:otherwise>
 				</c:choose>
 				<input style="width:7em;border:1px solid black;" type="text" name="searchText" value="${search.searchText}"/>
