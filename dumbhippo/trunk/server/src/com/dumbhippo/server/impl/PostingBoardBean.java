@@ -296,7 +296,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, int start, int max) {
+	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, String search, int start, int max) {
 		if (max > 0)
 			q.setMaxResults(max);
 		
@@ -306,33 +306,55 @@ public class PostingBoardBean implements PostingBoard {
 		List<Post> posts = q.getResultList();	
 		
 		List<PostView> result = new ArrayList<PostView>();
-		for (Post p : posts) {				
-			result.add(getPostView(viewpoint, p));
+		for (Post p : posts) {
+			PostView pv = getPostView(viewpoint, p);
+			if (search != null)
+				pv.setSearch(search);
+			result.add(pv);
 		}
 		
 		return result;		
 	}
 	
+	private void appendPostLikeClause(StringBuilder queryText, String search) {
+		if (search != null) {
+			String likeClause = EJBUtil.likeClauseFromUserSearch(search, "post.text", "post.explicitTitle");
+			if (likeClause != null) {
+				queryText.append(" AND ");
+				queryText.append(likeClause);
+			}
+		}
+	}
+	
 	static final String GET_POSTS_FOR_QUERY =
 		"SELECT post FROM Post post WHERE post.poster = :poster";
 	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 		
+		StringBuilder queryText = new StringBuilder(GET_POSTS_FOR_QUERY + " AND ");
 		if (viewer == null) {
-			q = em.createQuery(GET_POSTS_FOR_QUERY + " AND " + CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+			queryText.append(CAN_VIEW_ANONYMOUS);
 		} else {
-			q = em.createQuery(GET_POSTS_FOR_QUERY + " AND " + CAN_VIEW + ORDER_RECENT);
-			q.setParameter("viewer", viewer);
+			queryText.append(CAN_VIEW);
 		}
 		
-		q.setParameter("poster", poster);
+		appendPostLikeClause(queryText, search);
 		
-		return getPostViews(viewpoint, q, start, max);
+		queryText.append(ORDER_RECENT);
+		
+		logger.debug("Full getPostsFor search query is: '" + queryText.toString() + "'");
+		
+		q = em.createQuery(queryText.toString());
+		q.setParameter("poster", poster);
+		if (viewer != null)
+			q.setParameter("viewer", viewer);
+		
+		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max) {
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, String search, int start, int max) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -341,31 +363,48 @@ public class PostingBoardBean implements PostingBoard {
 			throw new IllegalArgumentException();
 		
 		Query q;
-		q = em.createQuery("SELECT post FROM Post post " +
-				           "WHERE " + VIEWER_RECEIVED + ORDER_RECENT);
+		
+		StringBuilder queryText = new StringBuilder("SELECT post FROM Post post " +
+		           "WHERE " + VIEWER_RECEIVED);
+		
+		appendPostLikeClause(queryText, search);
+
+		queryText.append(ORDER_RECENT);
+		
+		logger.debug("Full getReceivedPosts search query is: '" + queryText.toString() + "'");
+		
+		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("viewer", recipient);
 
-		return getPostViews(viewpoint, q, start, max);
+		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
 	static final String GET_GROUP_POSTS_QUERY = 
 		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
 	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max) {
 		Person viewer = viewpoint.getViewer();
 		Query q;
 
+		StringBuilder queryText = new StringBuilder(GET_GROUP_POSTS_QUERY + " AND ");
+		
 		if (viewer == null) {
-			q = em.createQuery(GET_GROUP_POSTS_QUERY + " AND " + CAN_VIEW_ANONYMOUS + ORDER_RECENT);
+			queryText.append(CAN_VIEW_ANONYMOUS);
 		} else {
-			q = em.createQuery(GET_GROUP_POSTS_QUERY + " AND " + CAN_VIEW + ORDER_RECENT);
-			q.setParameter("viewer", viewer);
+			queryText.append(CAN_VIEW);
 		}
 		
-		q.setParameter("recipient", recipient);
+		appendPostLikeClause(queryText, search);
 		
-		return getPostViews(viewpoint, q, start, max);
+		queryText.append(ORDER_RECENT);
+		
+		q = em.createQuery(queryText.toString());
+		
+		q.setParameter("recipient", recipient);
+		if (viewer != null)
+			q.setParameter("viewer", viewer);
+		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max) {
@@ -388,7 +427,7 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("account", account);
 		q.setParameter("viewer", user);		
 		
-		return getPostViews(viewpoint, q, start, max);
+		return getPostViews(viewpoint, q, null, start, max);
 	}
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) {
@@ -454,4 +493,17 @@ public class PostingBoardBean implements PostingBoard {
 	
 		return ppd;
 	}
+
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {
+		return getPostsFor(viewpoint, poster, null, start, max);
+	}
+
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max) {
+		return getReceivedPosts(viewpoint, recipient, null, start, max);
+	}
+
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
+		return getGroupPosts(viewpoint, recipient, null, start, max);
+	}
 }
+

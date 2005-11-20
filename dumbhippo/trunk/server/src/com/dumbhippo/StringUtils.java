@@ -34,4 +34,11 @@ public class StringUtils {
 		}
 		return builder.toString();
 	}
+	
+	public static String[] splitWords(String text) {
+		text = text.trim();
+		if (text.length() == 0)
+			return new String[0];
+		return text.split("\\s");
+	}
 }

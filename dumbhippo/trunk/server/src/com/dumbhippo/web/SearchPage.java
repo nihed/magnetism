@@ -35,6 +35,12 @@ public class SearchPage {
 	private String recipientId;
 	private String groupId;
 	
+	private ListBean<PostView> posts;
+	private Person recipient;
+	private Person poster;
+	private Group group;
+
+	
 	public SearchPage() {
 		searchText = "";
 		start = 0;
@@ -43,65 +49,76 @@ public class SearchPage {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 
-	public List<PostView> getPosts() {
-		Person recipientPerson = null;
-		Person posterPerson = null;
-		Group group = null;
-		
-		if (recipientId != null && recipientId.length() > 0) {
-			try {
-				recipientPerson = identitySpider.lookupGuidString(Person.class, recipientId);
-			} catch (ParseException e) {
-				logger.trace("bad recipientId", e);
-			} catch (GuidNotFoundException e) {
-				logger.trace("bad recipientId", e);
+	public Person getRecipient() {
+		if (recipient == null) {
+			if (recipientId != null && recipientId.length() > 0) {
+				try {
+					recipient = identitySpider.lookupGuidString(Person.class, recipientId);
+				} catch (ParseException e) {
+					logger.trace("bad recipientId", e);
+				} catch (GuidNotFoundException e) {
+					logger.trace("bad recipientId", e);
+				}
 			}
 		}
-		
-		if (posterId != null && posterId.length() > 0) {
-			try {
-				posterPerson = identitySpider.lookupGuidString(Person.class, posterId);
-			} catch (ParseException e) {
-				logger.trace("bad posterId", e);
-			} catch (GuidNotFoundException e) {
-				logger.trace("bad posterId", e);
+		return recipient;
+	}
+	
+	public Person getPoster() {
+		if (poster == null) {
+			if (posterId != null && posterId.length() > 0) {
+				try {
+					poster = identitySpider.lookupGuidString(Person.class, posterId);
+				} catch (ParseException e) {
+					logger.trace("bad posterId", e);
+				} catch (GuidNotFoundException e) {
+					logger.trace("bad posterId", e);
+				}
 			}
 		}
-		
-		if (groupId != null && groupId.length() > 0) {
-			try {
-				group = identitySpider.lookupGuidString(Group.class, groupId);
-			} catch (ParseException e) {
-				logger.trace("bad groupId", e);
-			} catch (GuidNotFoundException e) {
-				logger.trace("bad groupId", e);
+		return poster;
+	}
+	
+	public Group getGroup() {
+		if (group == null) {
+			if (groupId != null && groupId.length() > 0) {
+				try {
+					group = identitySpider.lookupGuidString(Group.class, groupId);
+				} catch (ParseException e) {
+					logger.trace("bad groupId", e);
+				} catch (GuidNotFoundException e) {
+					logger.trace("bad groupId", e);
+				}
 			}
 		}
+		return group;
+	}
+	
+	public ListBean<PostView> getPosts() {
 		
-		List<PostView> results = null;
+		if (posts != null)
+			return posts;	
 		
-		if (false && searchText != null && searchText.length() > 0) {
-			// we have a real search term
-		} else {
-			// we want "all posts" since the searchText is empty
-			
-			// FIXME rather than putting these in a priority order we could merge them someway, 
-			// but who wants to think about that...
-			// we always ask for getCount() + 1 so we can tell if we got them all
-			if (posterPerson != null)
-				results = postBoard.getPostsFor(signin.getViewpoint(), posterPerson, getStart(), getCount() + 1);
-			else if (recipientPerson != null)
-				results = postBoard.getReceivedPosts(signin.getViewpoint(), recipientPerson, getStart(), getCount() + 1);
-			else if (group != null)
-				results = postBoard.getGroupPosts(signin.getViewpoint(), group, getStart(), getCount() + 1);
-			else
-				results = new ArrayList<PostView>(); // FIXME some kind of global search
-		}
+		List<PostView> results;
+		
+		// FIXME rather than putting these in a priority order we could merge them someway, 
+		// but who wants to think about that...
+		// we always ask for getCount() + 1 so we can tell if we got them all
+		if (getPoster() != null)
+			results = postBoard.getPostsFor(signin.getViewpoint(), getPoster(), searchText, getStart(), getCount() + 1);
+		else if (getRecipient() != null)
+			results = postBoard.getReceivedPosts(signin.getViewpoint(), getRecipient(), searchText, getStart(), getCount() + 1);
+		else if (getGroup() != null)
+			results = postBoard.getGroupPosts(signin.getViewpoint(), getGroup(), searchText, getStart(), getCount() + 1);
+		else
+			results = new ArrayList<PostView>(); // FIXME some kind of global search
 		
 		if (results == null)
 			throw new IllegalStateException("should not have gotten null results in search");
 		
-		return results;
+		posts = new ListBean<PostView>(results);
+		
+		return posts;
 	}
 	
 	private String urlEncode(String in) {

@@ -2,6 +2,8 @@ package com.dumbhippo.server;
 
 import java.util.List;
 
+import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
@@ -21,6 +23,7 @@ public class PostView {
 	private boolean viewerHasViewed;
 	private PersonView posterView;
 	private List<Object> recipients;
+	private String search;
 	
 	/**
 	 * Create a new PostView object.
@@ -71,5 +74,33 @@ public class PostView {
 
 	public boolean isViewerHasViewed() {
 		return viewerHasViewed;
+	}
+	
+	public void setSearch(String search) {
+		this.search = search;
+	}
+	
+	private String highlightSearchWords(String html) {
+		if (search == null)
+			return html;
+	
+		String[] terms = StringUtils.splitWords(search);
+		if (terms.length == 0)
+			return html;
+		
+		for (String t : terms) {
+			html = html.replace(t, "<span style=\"font-weight: bold; color: red;\">" + t + "</span>");
+		}
+		return html;
+	}
+	
+	public String getTitleAsHtml() {
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendEscaped(getTitle());
+		return highlightSearchWords(xml.toString());
+	}
+	
+	public String getTextAsHtml() {
+		return highlightSearchWords(getPost().getTextAsHtml());		
 	}
 }

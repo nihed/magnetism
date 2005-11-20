@@ -28,13 +28,13 @@
 					<c:set var="linkcss" value="" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.title}"/></a>
+			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
 		</div>
 	</td>
 	</tr>
 	<tr>
 	<td class="cool-link-desc">
-		<c:out value="${post.post.textAsHtml}" escapeXml="false"/>
+		<c:out value="${post.textAsHtml}" escapeXml="false"/>
 	</td>
 	</tr>
 	<tr>

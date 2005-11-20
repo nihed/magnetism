@@ -27,6 +27,12 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max);
 
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
+
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, String search, int start, int max);
+
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
+	
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
 		throws GuidNotFoundException;
 
