@@ -89,7 +89,13 @@
 		<include name="**/*.properties" />
 	</patternset>
 
-	<target name="setupmetadata" depends="copyproperties">
+	<target name="setupmetadata" depends="copyproperties,makebuildstamp">
+	</target>
+
+	<target name="makebuildstamp" depends="init">
+		<exec executable="/bin/date" output="${build}/com/dumbhippo/server/impl/dumbhippo.properties">
+		      <arg line="+dumbhippo.server.buildstamp=%s"/>
+		</exec>
 	</target>
 
 	<target name="copyproperties" depends="init">

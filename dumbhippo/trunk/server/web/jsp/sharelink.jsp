@@ -5,7 +5,7 @@
 
 <head>
 	<title>Sharing a Link</title>
-	<dht:stylesheets href="/css/sharelink.css" iehref="/css/sharelink-iefixes.css" />
+	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
 	<dht:scriptIncludes/>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<script type="text/javascript">
@@ -82,14 +82,14 @@
 						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
 			
 						<div id="dhPrivateGroupAccessTip" class="dh-help-bubble">
-							<dht:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<dht:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
 							<div class="dh-help-bubble-message">
 								Private groups are for <strong>families</strong> and super secret CIA agents
 								<a href="/privacy" target="_blank">privacy</a>
 							</div><!-- help bubble message -->
 						</div><!-- help bubble -->
 						<div id="dhPublicGroupAccessTip" class="dh-help-bubble">
-							<dht:png style="left:110px;" klass="dh-help-bubble-triangle" src="/images/triangle.png"/>
+							<dht:png style="left:110px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
 							<div class="dh-help-bubble-message">
 								Public groups are for <strong>friends</strong>, <strong>co-workers</strong>, and others who don't
 								mind people seeing the links they are sharing.

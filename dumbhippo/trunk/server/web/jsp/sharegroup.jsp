@@ -11,7 +11,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<dht:stylesheets href="/css/sharelink.css" />
+	<dht:stylesheets href="sharelink.css" />
 	<title>Share <c:out value="${viewgroup.name}"/></title>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">

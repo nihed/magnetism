@@ -15,7 +15,7 @@
 
 <head>
 	<title><c:out value="${personName}"/></title>
-	<dht:stylesheets href="/css/person.css" />
+	<dht:stylesheets href="person.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>

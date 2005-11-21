@@ -7,7 +7,7 @@
 <%@ attribute name="style" required="false" type="java.lang.String"%>
 
 <!--[if lt IE 7]>
-	<img id="${id}" class="${klass}" style="filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='${src}', sizingMethod='scale');${style}" src="/images/blank.gif"/>
+	<img id="${id}" class="${klass}" style="filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='${src}', sizingMethod='scale');${style}" src="/images/${buildStamp}/blank.gif"/>
 <![endif]-->
 
 <!-- this is display:none if IE lt 7 -->

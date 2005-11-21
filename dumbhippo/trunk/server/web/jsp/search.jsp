@@ -13,7 +13,7 @@
 
 <head>
 	<title>Search</title>
-	<dht:stylesheets href="/css/search.css" />
+	<dht:stylesheets href="search.css" />
 </head>
 <body>
     <dht:header>Search</dht:header>

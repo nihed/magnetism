@@ -12,7 +12,7 @@
 
 <head>
 	<title><c:out value="${viewgroup.name}"/></title>
-	<dht:stylesheets href="/css/group.css" />
+	<dht:stylesheets href="group.css" />
 	<dht:scriptIncludes/>
         <script type="text/javascript">
                 dojo.require("dh.util");

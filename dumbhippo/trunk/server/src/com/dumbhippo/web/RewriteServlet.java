@@ -1,8 +1,12 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -14,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 
 public class RewriteServlet extends HttpServlet {
 	@SuppressWarnings("unused")
@@ -24,20 +30,41 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> requiresSignin;
 	private Set<String> jspPages;
 	private Set<String> htmlPages;
+	private String buildStamp;
 	
 	private ServletContext context;
-	
+
+	protected static final SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+	protected final static TimeZone gmtZone = TimeZone.getTimeZone("GMT");
+
+	static {
+		format.setTimeZone(gmtZone);
+	}
+		
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
 	}
 	
+    private String checkBuildStamp(String relativePath) {
+		int firstSlash = relativePath.indexOf('/', 1);
+		if (firstSlash < 0)
+			return null;
+
+		int buildStampLength = buildStamp.length();
+		if (relativePath.regionMatches(firstSlash + 1, buildStamp, 0, buildStampLength)) {
+			return (relativePath.substring(0, firstSlash) + relativePath.substring(firstSlash + 1 + buildStampLength));
+		} else {
+			return null;
+		}
+	}
+    
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException { 
 		String newPath = null;
 		
 		String path = request.getServletPath();
 		
-		// logger.debug("Handling request for " + path);
+		logger.debug("Handling request for " + path);
 		
 		// The root URL is special-cased
 		
@@ -55,14 +82,34 @@ public class RewriteServlet extends HttpServlet {
 		//    <url-pattern>/javascript/*</url-pattern>
 		// </servlet-mapping>
 		//
-		// But that won't work since the Tomcat default servlet looks up the resource
-		// based on servlet-path, which in the above will be missing /javascript
-		// so we have to handle javascript/ and css/ URLs here.
+		// But that won't work since the Tomcat default servlet (and our modified version)
+		// looks up the resource based on servlet-path, which in the above will be missing 
+		// /javascript so we have to handle javascript/ and css/ URLs here. We could
+		// hack StaticServlet further from the original code to avoid this.
 		
 		if (path.startsWith("/javascript/") || 
 			path.startsWith("/css/") ||
 			path.startsWith("/images/")) {
-			context.getNamedDispatcher("default").forward(request, response);
+			
+			newPath = checkBuildStamp(path);
+			if (newPath != null) {
+				// According to to HTTP spec we shouldn't set a date more than 1 year in advance
+				String expires = format.format(new Date(System.currentTimeMillis() + (364 * 24 * 60 * 60 * 1000l)));
+				response.setHeader("Expires", expires);
+				
+				path = newPath;
+			}
+			
+			if (path.equals("/javascript/config.js")) {
+				// config.js is special and handled by a JSP
+				context.getRequestDispatcher("/jsp/configjs.jsp").forward(request, response);
+			} else if (newPath != null) {
+				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
+				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
+			} else {
+				context.getNamedDispatcher("default").forward(request, response);
+			}
+			
 			return;
 		}
 		
@@ -130,5 +177,11 @@ public class RewriteServlet extends HttpServlet {
 					htmlPages.add(path.substring(6, path.length() - 5));
 			}
 		}		
+		
+        Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
+        buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);
+        
+        // We store the builtstamp in the servlet context so we can reference it from JSP pages
+        getServletContext().setAttribute("buildStamp", buildStamp);
 	}
 }

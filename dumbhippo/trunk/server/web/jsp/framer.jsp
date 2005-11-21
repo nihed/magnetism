@@ -16,7 +16,7 @@
 </c:url>
 
 <head>
-	<dht:stylesheets href="/css/frames.css" iehref="/css/frames-iefixes.css" />
+	<dht:stylesheets href="frames.css" iehref="frames-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">
     	dojo.require("dojo.html");

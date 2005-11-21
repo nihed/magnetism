@@ -1,3 +1,4 @@
+<%@page contentType="text/javascript" %>
 // config.js runs before we load dojo.js
 
 // Rather than turning this on globally, it's probably better to
@@ -5,7 +6,7 @@
 // immediately after including config.js
 var dhDebug = false;
 var dhServerUri = "/";
-var dhScriptRoot = dhServerUri + "javascript/";
+var dhScriptRoot = dhServerUri + "javascript/${buildStamp}/";
 if (dhDebug && document.location.toString().substring(0,5) == "file:") {
 	// typical developer setup would use this
 	dhServerUri = "http://127.0.0.1:8080/";

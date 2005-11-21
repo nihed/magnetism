@@ -7,7 +7,7 @@
 
 <head>
 	<title>How To Share a Link</title>
-	<dht:stylesheets href="/css/tutorial.css" />
+	<dht:stylesheets href="tutorial.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>

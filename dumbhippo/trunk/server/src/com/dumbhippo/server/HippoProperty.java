@@ -9,7 +9,8 @@ public enum HippoProperty {
 	XMPP_ADMINUSER("dumbhippo.server.xmpp.adminuser", null),
 	XMPP_PASSWORD("dumbhippo.server.xmpp.password", null),
 	FILES_SAVEURL("dumbhippo.server.files.saveurl", null),
-	AIMBOT_NAME("dumbhippo.server.aimbot.name", null);
+	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
+	BUILDSTAMP("dumbhippo.server.buildstamp", "0");
 	
 	private String key;
 	private String def;

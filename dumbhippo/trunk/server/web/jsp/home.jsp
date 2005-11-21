@@ -7,7 +7,7 @@
 
 <head>
 	<title><c:out value="${home.person.name}"/></title>
-	<dht:stylesheets href="/css/home.css" iehref="/css/home-iefixes.css" />
+	<dht:stylesheets href="home.css" iehref="home-iefixes.css" />
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 	        dojo.require("dh.util");

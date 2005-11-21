@@ -7,7 +7,7 @@
 
 <head>
 	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
-	<dht:stylesheets href="/css/welcome.css" />
+	<dht:stylesheets href="welcome.css" />
 </head>
 <body>
     <c:url value="viewperson?personId=${welcome.signin.user.id}" var="publicurl"/>
