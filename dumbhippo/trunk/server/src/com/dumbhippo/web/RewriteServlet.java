@@ -64,7 +64,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		String path = request.getServletPath();
 		
-		logger.debug("Handling request for " + path);
+		// logger.debug("Handling request for " + path);
 		
 		// The root URL is special-cased
 		
