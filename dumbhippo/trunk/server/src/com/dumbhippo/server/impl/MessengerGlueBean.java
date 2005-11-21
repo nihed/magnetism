@@ -14,6 +14,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 
 @Stateless
@@ -77,7 +78,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		Account account = accountFromUsername(username);
 		
-		PersonView view = identitySpider.getSystemView(account.getOwner());
+		PersonView view = identitySpider.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
 		
 		JabberUser user = new JabberUser(username, account.getOwner().getNickname(), view.getEmail().getEmail());
 	
