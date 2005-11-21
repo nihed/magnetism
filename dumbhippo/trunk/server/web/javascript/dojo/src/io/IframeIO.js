@@ -15,7 +15,7 @@ dojo.io.createIFrame = function(fname){
 		setAttribute("name", fname);
 		id = fname;
 	}
-	dojo.html.body().appendChild(cframe);
+	(document.body||document.getElementsByTagName("body")[0]).appendChild(cframe);
 	window[fname] = cframe;
 	with(cframe.style){
 		position = "absolute";
