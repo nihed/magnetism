@@ -144,6 +144,21 @@ class DirTree:
         """Do a hot update based on the files returned from check()"""
         for path in hot_files:
             self._copy_file(path)
+
+    def list_sources(self, path=''):
+        """Return an array of files (excluding directories, and symlinked
+        files) that are sources for the directory tree"""
+        result = []
+        
+        if self._test_flag(path, SYMLINK):
+            pass
+        elif self._test_flag(path, DIR):
+            for f in self.nodes[path].children:
+                result.extend(self.list_sources(f))
+        else:
+            result.append(self.nodes[path].src)
+
+        return result
     
     def _add_as_child(self, path):
         """Add the node given by path to the parent's list of children.

@@ -6,6 +6,7 @@ import sys
 import xml.sax
 
 from super.confighandler import ConfigHandler;
+from super.deployer import Deployer;
 import super.service
 
 class Config:
@@ -16,11 +17,13 @@ class Config:
     been parsed.
     """
     
-    def __init__(self, superdir, conffile):
+    def __init__(self, superdir, conffile, init_params):
         """Create a new config object, loading in config files.
 
         superdir -- the directory in which the 'super' script is located
         conffile -- config file passed as --conf= on the command line
+        init_params -- dictionary of extra parameter settings.
+           Use servicename.foo as the key to set a service-specific settings
         """
         self.params= { 'superdir' : superdir }
         self.services={}
@@ -31,6 +34,8 @@ class Config:
         elif (os.environ['HOME']):
             self.params['home'] = os.environ['HOME'];
             self._load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
+        for (name, value) in init_params.items():
+            self._set_init_parameter(name, value)
 
     def run_action(self, action, services):
         """Run an action on a set of services."""
@@ -46,6 +51,12 @@ class Config:
             for service_name in services:
                 print >>sys.stderr, "Building", service_name
                 self.services[service_name].build()
+        elif action == 'deploy':
+            deployer = Deployer(self)
+            for service_name in services:
+                service = self.services[service_name]
+                deployer.add_dirtree(service.create_dirtree())
+            deployer.write()
         elif action == 'start':
             for service_name in services:
                 print >>sys.stderr, "Checking tree for:", service_name
@@ -330,3 +341,16 @@ class Config:
         super.service.sort(services)
         return map(lambda x: x.name, services)
     
+    def _set_init_parameter(self, name, value):
+        """Set a parameter passed on the commandline. Honors servicename.foo
+        as a parameter name"""
+        m = re.match('([^.]+)\.(.+)', name)
+        if m:
+            service_name = m.group(1)
+            param_name = m.group(2)
+            if not self.services.has_key(service_name):
+                print >>sys.stderr, "Unknown service", service_name
+                sys.exit(1)
+            self.services[service_name].set_parameter(param_name, value)
+        else:
+            self.set_parameter(name, value)
