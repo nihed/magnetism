@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.InvitationSystem;
 
@@ -19,7 +18,8 @@ public class SendInviteServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 
-	private void doSendInvite(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException{
+	private void doSendInvite(HttpServletRequest request, HttpServletResponse response)
+	throws HttpException, ErrorPageException, IOException, ServletException {
 		User user = doLogin(request, response, false);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
@@ -32,18 +32,24 @@ public class SendInviteServlet extends AbstractServlet {
 		if (email != null)
 			email = email.trim();
 		
-		// FIXME: We shouldn't throw here, we should redirect back with a validation message
+		// the error page redirect kind of sucks, but if we do inline javascript 
+		// validation it would only happen in weird manual-url-typing cases
 		if (fullName == null || fullName.equals("") || email == null || email.equals("")) 
-			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Name and email must be provided");
+			throw new ErrorPageException("Missing either a name or email address");
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		InvitationToken invitation = invitationSystem.createEmailInvitation(user, email);
-		invitationSystem.sendEmailNotification(invitation, user);
+		// one last check, because createEmailInvitation doesn't check it
+		if (invitationSystem.getInvitations(user) < 1) {
+			throw new ErrorPageException("You can't invite anyone else for now");
+		}
+		
+		String note = invitationSystem.sendEmailInvitation(user, email);
 		
 		request.setAttribute("fullName", fullName);
 		request.setAttribute("email", email);
-		request.setAttribute("authKey", invitation.getAuthKey());
+		request.setAttribute("remaining", invitationSystem.getInvitations(user));
+		request.setAttribute("note", note);
 		request.getRequestDispatcher("/invitesent").forward(request, response);
 	}
 	

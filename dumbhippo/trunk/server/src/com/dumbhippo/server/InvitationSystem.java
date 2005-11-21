@@ -27,21 +27,39 @@ public interface InvitationSystem {
 	
 	/**
 	 * Add inviter as a person wanting to invite the owner
-	 * of an email address.  @see createGetInvitation
+	 * of an email address.  Adds invitee as contact of inviter 
+	 * if they aren't already; sends out the invite. Doesn't do 
+	 * anything if the inviter has already invited the invitee.
+	 * @see createGetInvitation
 	 * 
 	 * @param inviter
 	 * @param email
-	 * @return
+	 * @returns note for the user or null
 	 */
-	public InvitationToken createEmailInvitation(User inviter, String email);
+	public String sendEmailInvitation(User inviter, String email);
 	
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
+	 * Adds the invitee as a contact if they weren't already. Sends out
+	 * the invitation to the resource if needed.
+	 * 
 	 * @param inviter the person doing the inviting
 	 * @param invitee the person being invited
-	 * @return an invitation object describing the Multiple Invite Group
+	 * @returns note for the user or null
 	 */
-	public InvitationToken createGetInvitation(User inviter, Resource invitee);
+	public String sendInvitation(User inviter, Resource invitee);
+	
+	
+	/**
+	 * If invitee has already been invited, ensures inviter is 
+	 * in the inviter set and returns the invitation url.
+	 * Else returns null.
+	 * 
+	 * @param inviter possible inviter
+	 * @param invitee possible invitee
+	 * @return invitation url if any, or null
+	 */
+	public String getInvitationUrl(User inviter, Resource invitee);
 	
 	/**
 	 * Mark an invitation as viewed; this creates an initial Account
@@ -65,11 +83,9 @@ public interface InvitationSystem {
 	public Collection<String> getInviterNames(InvitationToken invite);
 	
 	/**
-	 * Send an email to the invitee that inviter has requested them
-	 * to join.
-	 * @param spider
-	 * @param invite
-	 * @param inviter
+	 * Return number of invitations the user has left to send.
+	 * @param user user
+	 * @return number of invitations
 	 */
-	public void sendEmailNotification(InvitationToken invite, User inviter);
+	public int getInvitations(User user);
 }

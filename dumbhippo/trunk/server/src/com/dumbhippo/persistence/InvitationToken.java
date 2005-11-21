@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,6 +25,7 @@ public class InvitationToken extends Token {
 	 * When an invitation goes through, a person is created.
 	 */
 	// FIXME is OneToOne correct?
+	// FIXME should be User
 	@OneToOne
 	public Person getResultingPerson() {
 		return resultingPerson;
@@ -33,13 +35,8 @@ public class InvitationToken extends Token {
 		this.resultingPerson = resultingPerson;
 	}
 
-	private void initMissing() {
-		if (inviters == null)
-			inviters = new HashSet<User>();
-	}
-	
 	protected InvitationToken() {
-		initMissing();
+		this(null, null);
 	}
 
 	public InvitationToken(Resource invitee, User inviter) {
@@ -47,9 +44,23 @@ public class InvitationToken extends Token {
 		this.viewed = false;
 		this.invitee = invitee;
 		this.inviters = new HashSet<User>();
-		this.inviters.add(inviter);
+		if (inviter != null)
+			this.inviters.add(inviter);
 	}
 
+	/**
+	 * Copy an invitation token with a new auth key and creation date, usually
+	 * because the old one was expired.
+	 * 
+	 * @param original the old token
+	 */
+	public InvitationToken(InvitationToken original) {
+		super(true);
+		this.viewed = original.viewed;
+		this.invitee = original.invitee;
+		this.inviters = new HashSet<User>(original.inviters);
+	}
+	
 	@OneToOne
 	@JoinColumn(nullable=false,unique=true)
 	public Resource getInvitee() {
@@ -62,7 +73,17 @@ public class InvitationToken extends Token {
 	}
 
 	public void addInviter(User inviter) {
-		this.inviters.add(inviter);
+		if (!inviters.contains(inviter)) {
+			inviters.add(inviter);
+			// extend expiration period if not expired; normally 
+			// the caller will have already checked isExpired() 
+			// and created a new token, so this is just paranoia
+			// to be sure we don't get a super-old invitation 
+			// reactivated
+			if (!isExpired()) {
+				setCreationDate(new Date());
+			}
+		}
 	}
 
 	protected void setInvitee(Resource invitee) {

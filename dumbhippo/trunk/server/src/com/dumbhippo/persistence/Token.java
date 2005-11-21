@@ -41,7 +41,7 @@ public class Token extends DBUnique {
 	protected void setAuthKey(String authKey) {
 		this.authKey = authKey;
 	}
-
+	
 	@Column(nullable=false)
 	public Date getCreationDate() {
 		return new Date(creationDate);

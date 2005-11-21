@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,6 +48,9 @@ public class Account extends Resource {
 	
 	private Set<Contact> contacts;
 	
+	private long creationDate;
+	private int invitations;
+	
 	private boolean wasSentShareLinkTutorial = false;
 	private boolean hasDoneShareLinkTutorial = false;
 	
@@ -57,23 +61,18 @@ public class Account extends Resource {
 	 */
 	private Set<Client> clients;
 	
-	private void initMissing() {
-		if (clients == null)
-			clients = new HashSet<Client>();
-		if (contacts == null)
-			contacts = new HashSet<Contact>();
-	}
-	
 	/**
 	 * Used only for Hibernate 
 	 */
 	protected Account() {
-		initMissing();
+		this(null);
 	}
 	
 	public Account(User owner) {	
 		this.owner = owner;
-		initMissing();
+		clients = new HashSet<Client>();
+		contacts = new HashSet<Contact>();
+		creationDate = -1;
 	}
 	
 	public String toString() {
@@ -223,6 +222,41 @@ public class Account extends Resource {
 		contacts.removeAll(contacts);
 	}
 
+	@Column(nullable=false)
+	public Date getCreationDate() {
+		if (creationDate < 0) {
+			creationDate = System.currentTimeMillis();
+		}
+		return new Date(creationDate);
+	}
+
+	// only hibernate should call
+	protected void setCreationDate(Date creationDate) {
+		this.creationDate = creationDate.getTime();
+	}
+
+	@Column(nullable = false)
+	public int getInvitations() {
+		return invitations;
+	}
+
+	public void setInvitations(int invitations) {
+		if (invitations < 0)
+			throw new IllegalArgumentException("attempt to set negative invitation count: " + invitations);
+		this.invitations = invitations;
+	}
+	
+	public boolean canSendInvitations(int count) {
+		return count <= invitations;
+	}
+	
+	public void deductInvitations(int count) {
+		if (count > invitations)
+			throw new IllegalStateException("attempt to deduct more invitations than exist " + count + " from " + invitations);
+		
+		setInvitations(invitations - count);
+	}
+	
 	@Column(nullable=false)
 	public boolean getHasDoneShareLinkTutorial() {
 		return hasDoneShareLinkTutorial;

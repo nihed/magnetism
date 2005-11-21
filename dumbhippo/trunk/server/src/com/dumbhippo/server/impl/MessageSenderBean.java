@@ -30,6 +30,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
@@ -64,6 +65,9 @@ public class MessageSenderBean implements MessageSender {
 
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private InvitationSystem invitationSystem;
 	
 	// Our delegates
 	
@@ -388,44 +392,57 @@ public class MessageSenderBean implements MessageSender {
 			messageText.append("  (Link shared by " + posterViewedBySelf.getName() + ")");
 			
 			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getViewPersonPageId();
-			String recipientInviteUrl = baseurl; // FIXME invite url for recipient
 			String recipientStopUrl = baseurl;   // FIXME stop getting mail url for recipient
+
+			// may be null!
+			String recipientInviteUrl = invitationSystem.getInvitationUrl(post.getPoster(), recipient);
 			
 			// HTML: "link shared by"
+			String recipientLink;
+			if (recipientInviteUrl != null) {
+				recipientLink = String.format("<a href=\"%s\">%s</a>",
+						XmlBuilder.escape(recipientInviteUrl),
+						XmlBuilder.escape(recipient.getEmail())); 
+			} else {
+				recipientLink = XmlBuilder.escape(recipient.getEmail());
+			}
 			messageHtml.append("<div style=\"margin:0.2em;font-style:italic;text-align:right;font-size:small;vertical-align:bottom;\">");
 			String format = "(Link shared from "
 				+ "<a title=\"%s\" href=\"%s\">%s</a> "
-				+ "to <a href=\"%s\">%s</a>)\n"
+				+ "to %s)\n"
 				+ "</div>\n";
 			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedBySelf.getEmail().getEmail()),
 						XmlBuilder.escape(posterPublicPageUrl),
 						XmlBuilder.escape(posterViewedBySelf.getName()),
-						XmlBuilder.escape(recipientInviteUrl),
-						XmlBuilder.escape(recipient.getEmail()))); 
+						recipientLink)); 
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
-			messageText.append("      " + posterViewedBySelf.getName()
-					+ " created an invitation for you: " + recipientInviteUrl + "\n");
+			if (recipientInviteUrl != null) {
+				messageText.append("      " + posterViewedBySelf.getName()
+						+ " created an invitation for you: " + recipientInviteUrl + "\n");
+			}
 			messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			
 			// HTML: append footer
 			
-			format = "<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n"
-				+ "<a href=\"%s\">%s</a> created an open "
-				+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Dumb Hippo</a>\n"
-				+ "</div>\n";
-			messageHtml.append(String.format(format, 
-					XmlBuilder.escape(posterPublicPageUrl),
-					XmlBuilder.escape(posterViewedBySelf.getName()),
-					XmlBuilder.escape(recipientInviteUrl),
-					XmlBuilder.escape(baseurl)));
-
+			if (recipientInviteUrl != null) {
+				format = "<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n"
+					+ "<a href=\"%s\">%s</a> created an open "
+					+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Dumb Hippo</a>\n"
+					+ "</div>\n";
+				messageHtml.append(String.format(format, 
+						XmlBuilder.escape(posterPublicPageUrl),
+						XmlBuilder.escape(posterViewedBySelf.getName()),
+						XmlBuilder.escape(recipientInviteUrl),
+						XmlBuilder.escape(baseurl)));
+			}
+			
 			format = "<div style=\"text-align:center;margin-top:1em;font-size:8pt;\">\n" 
 				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's DumbHippo?</a> | <a style=\"font-size:8pt;\" href=\"%s\">Stop Getting These Mails</a>\n"
 				+ "</div>\n";
 			messageHtml.append(String.format(format,
-					XmlBuilder.escape(recipientInviteUrl),
+					recipientInviteUrl != null ? XmlBuilder.escape(recipientInviteUrl) : XmlBuilder.escape(baseurl),
 					XmlBuilder.escape(recipientStopUrl)));
  			
 			messageHtml.append("</div>\n");

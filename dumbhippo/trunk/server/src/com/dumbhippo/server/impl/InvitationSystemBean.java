@@ -57,9 +57,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	protected InvitationToken lookupInvitationFor(Resource invitee) {
 		InvitationToken ret;
 		try {
-			ret = (InvitationToken) em.createQuery(
-				"from InvitationToken as iv where iv.invitee = :resource")
-				.setParameter("resource", invitee).getSingleResult();
+			// we get the newest invitation token, sort by date in descending order
+			Query q = em.createQuery(
+				"FROM InvitationToken AS iv WHERE iv.invitee = :resource ORDER BY iv.creationDate DESC");
+			q.setParameter("resource", invitee);
+			q.setMaxResults(1); // only need the first one
+			ret = (InvitationToken) q.getSingleResult();
+			
 		} catch (EntityNotFoundException e) {
 			ret = null;
 		}
@@ -67,6 +71,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras) {
+		// FIXME this is slightly odd since it merges the inviter lists for all 
+		// invitations to the resource ever, instead of using the newest InvitationToken
+		// (right now, all InvitationToken after the earliest are based on the old 
+		// ones, so it makes no difference however)
 		Query query = em.createQuery("select inviter from " +
 								     "User inviter, InvitationToken invite, AccountClaim ar " + 
 								     "where inviter member of invite.inviters and " +
@@ -86,26 +94,90 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public InvitationToken createGetInvitation(User inviter, Resource invitee) {
-		InvitationToken iv = lookupInvitationFor(invitee);
-		if (iv == null) {
-			iv = new InvitationToken(invitee, inviter);
-			em.persist(iv);
-		} else {
-			iv.addInviter(inviter);
-		}
-
-		return iv;
+	private Account getAccount(User inviter) {
+		Account account = inviter.getAccount();
+		if (account == null || !em.contains(account))
+			account = accounts.lookupAccountByPerson(inviter);
+		if (account == null)
+			throw new RuntimeException("user " + inviter + " with no account???");
+		return account;
 	}
 
-	public InvitationToken createEmailInvitation(User inviter, String email) {
+	// this gets the invitation url only if it already exists, but may 
+	// update the expiration date and add a new inviter
+	public String getInvitationUrl(User inviter, Resource invitee) {
+		InvitationToken iv = lookupInvitationFor(invitee);
+		if (iv == null)
+			return null;
+		iv.addInviter(inviter); // no-op if already added
+		return iv.getAuthURL(configuration.getProperty(HippoProperty.BASEURL));
+	}
+	
+	public String sendInvitation(User inviter, Resource invitee) {
+		
+		// FIXME we do nothing to stop you from inviting yourself, not that 
+		// it hurts anything, but you end up in your own contact list and it's weird
+		
+		// be sure the invitee is our contact
+		spider.createContact(inviter, invitee);
+		
+		boolean needSendNotification = false;
+		String ret = null;
+		
+		InvitationToken iv = lookupInvitationFor(invitee);
+		if (iv == null || iv.isExpired()) {
+			needSendNotification = true; // always send if expired, since it's been a while
+			if (iv != null) {
+				// create a new auth key that isn't expired,
+				// preserving current inviter list etc.
+				iv = new InvitationToken(iv);
+				iv.addInviter(inviter);
+			} else {
+				iv = new InvitationToken(invitee, inviter);
+			}
+			em.persist(iv);
+			
+			Account account = getAccount(inviter);
+			
+			// if we messed up and let them send too many invitations,
+			// we just live with it here; we should have blocked
+			// it or displayed an error in the UI before now.
+			// Yes this is a race that could let someone send more 
+			// invitations than they were allowed to, but that's 
+			// better than throwing a mysterious error at this stage.
+			// I can't figure out how you'd exploit it to 
+			// go crazy and send hundreds of extra invitations.
+			if (account.canSendInvitations(1))
+				account.deductInvitations(1);
+		} else {
+			if (!iv.getInviters().contains(inviter))
+				needSendNotification = true;
+			
+			// this changes the creation date, extending the expiration 
+			// time limit
+			iv.addInviter(inviter);
+			// we don't deduct an invitation from your account if you just "pile on" to an existing one
+		}
+		
+		if (needSendNotification) {
+			if (invitee instanceof EmailResource) {
+				sendEmailNotification(iv, inviter);
+			} else {
+				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
+			}
+		} else {
+			ret = "You had already invited " + invitee.getHumanReadableString() + " so we didn't send them another mail.";
+		}
+		
+		return ret;
+	}
+
+	public String sendEmailInvitation(User inviter, String email) {
 		Resource emailRes = spider.getEmail(email);
-		return createGetInvitation(inviter, emailRes);
+		return sendInvitation(inviter, emailRes);
 	}	
 	
-	protected static final String invitationFromAddress = "Dumb Hippo Invitation <invitations@dumbhippo.com>";
-	
-	public void sendEmailNotification(InvitationToken invite, User inviter) {
+	private void sendEmailNotification(InvitationToken invite, User inviter) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		String inviteeEmail = invitee.getEmail();
 
@@ -135,9 +207,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 	protected void notifyInvitationViewed(InvitationToken invite) {
 		// adding @suppresswarnings here makes javac crash, whee
-		for (Person inviter : invite.getInviters()) {
-			// TODO send notification via xmpp to inviter that invitee viewed
-		}
+		//for (Person inviter : invite.getInviters()) {
+		// TODO send notification via xmpp to inviter that invitee viewed
+		//}
 	}
 	
 	public Pair<Client,Person> viewInvitation(InvitationToken invite, String firstClientName) {
@@ -178,5 +250,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	        }
 		}
 		return Collections.unmodifiableCollection(names);
+	}
+
+	public int getInvitations(User user) {
+		Account account = getAccount(user);
+		return account.getInvitations();
 	}
 }
