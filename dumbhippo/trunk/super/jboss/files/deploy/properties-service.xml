@@ -16,6 +16,7 @@
 
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
     <attribute name="Properties">
+	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
 		dumbhippo.server.xmpp.address=@@jiveHost@@
 		dumbhippo.server.xmpp.port=@@jivePlainPort@@
 		dumbhippo.server.xmpp.adminuser=admin
