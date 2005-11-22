@@ -92,7 +92,7 @@ textarea, .dhTextArea, .dojoComboBox, .dhText {
 
 /* Styles for text areas only, not one-line text input */
 textarea, .dhTextArea {
-	width:							25em;
+	width:						25em;
 }
 
 a.editLabel {

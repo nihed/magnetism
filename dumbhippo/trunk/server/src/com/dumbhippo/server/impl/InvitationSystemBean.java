@@ -214,7 +214,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	public Pair<Client,Person> viewInvitation(InvitationToken invite, String firstClientName) {
 		if (invite.isViewed()) {
-			throw new IllegalArgumentException("InvitationToken " + invite + "has already been viewed");
+			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
 		
 		Resource invitationResource = invite.getInvitee();

@@ -30,6 +30,12 @@
     </servlet>   
 
     <servlet>
+      <servlet-name>WantsInServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.WantsInServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet> 
+
+    <servlet>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.AbnormalErrorServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -114,6 +120,11 @@
    <servlet-mapping>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <url-pattern>/abnormalerror</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>WantsInServlet</servlet-name>
+      <url-pattern>/wantsin</url-pattern>
    </servlet-mapping>
 
    <!-- Map everything else to our URL-Rewriting servlet -->  
