@@ -16,7 +16,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TestGlue;
@@ -101,17 +100,5 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
 		logger.debug("added client authKey = " + client.getAuthKey() + " client works = " + persistedAccount.checkClientCookie(client.getAuthKey()));
 		return client.getAuthKey();
-	}
-
-	public Account findOrCreateAccountFromEmail(String email) {
-		User user = identitySpider.lookupUserByEmail(email);
-		if (user != null) {
-			Account account = accountSystem.lookupAccountByPerson(user); 
-			if (account != null) {
-				return account;
-			}
-		}
-			
-		return accountSystem.createAccountFromEmail(email);
 	}
 }

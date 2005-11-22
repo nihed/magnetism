@@ -16,7 +16,6 @@ import org.apache.xmlrpc.XmlRpcServer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HttpContentTypes;
@@ -24,9 +23,7 @@ import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
-import com.dumbhippo.server.LoginVerifierException;
-import com.dumbhippo.server.RedirectException;
-import com.dumbhippo.server.TestGlue;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.XmlRpcMethods;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -116,7 +113,7 @@ public class HippoServlet extends AbstractServlet {
 	}
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
-			throws IOException, HttpException {
+			throws IOException, HttpException, HumanVisibleException {
 		
 		String requestUri = request.getRequestURI();
 		Class<?>[] interfaces = object.getClass().getInterfaces();
@@ -210,10 +207,8 @@ public class HippoServlet extends AbstractServlet {
 					logger.debug("Exception thrown by invoked method: " + cause);
 					logger.error(cause);
 					
-					if (cause instanceof LoginVerifierException) {
-						// FIXME this should get displayed to the user
-						throw new HttpException(HttpResponseCode.NOT_FOUND,
-								cause.getMessage());
+					if (cause instanceof HumanVisibleException) {
+						throw (HumanVisibleException) cause;
 					} else {					
 						throw new RuntimeException(e);
 					}
@@ -300,7 +295,7 @@ public class HippoServlet extends AbstractServlet {
 				out.write(("<p>Go to <a href=\"" + escapedUrl + "\">" + escapedUrl + "</a></p>\n").getBytes());
 				out.write("</body>\n".getBytes());
 				out.flush();
-			} catch (RedirectException e) {
+			} catch (HumanVisibleException e) {
 				response.setContentType("text/html");
 				OutputStream out = response.getOutputStream();
 				writeHtmlHeaderBoilerplate(out);
@@ -319,59 +314,17 @@ public class HippoServlet extends AbstractServlet {
 		return true;
 	}
 	
-	// FIXME this should go away
-	public static LoginCookie addNewClientForEmail(String email, HttpServletRequest request, HttpServletResponse response) {
-		TestGlue testGlue = WebEJBUtil.defaultLookup(TestGlue.class);
-		Account account = testGlue.findOrCreateAccountFromEmail(email);
-		String authKey = testGlue.authorizeNewClient(account.getId(), SigninBean.computeClientIdentifier(request));
-		LoginCookie loginCookie = new LoginCookie(account.getOwner().getId(), authKey);
-		response.addCookie(loginCookie.getCookie());
-		HttpSession sess = request.getSession(false);
-		if (sess != null)
-			sess.invalidate();
-		return loginCookie;
-	}
-	
 	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
 		// special method that magically causes us to look at your cookie and log you 
 		// in if it's set, then return person you're logged in as or "false"
-		// if you use /text/dologin instead of /text/checklogin, and are using
-		// POST, then it will also add the account (insecure temporary test feature)
 		
-		boolean addAccount = request.getRequestURI().equals("/text/dologin") &&
-					request.getMethod().toUpperCase().equals("POST");
-		
-		if (!addAccount && !request.getRequestURI().equals("/text/checklogin")) {
+		if (!(request.getRequestURI().equals("/text/dologin") &&
+				request.getMethod().toUpperCase().equals("POST"))
+				&& !request.getRequestURI().equals("/text/checklogin")) {
 			return false;
 		}
-		
-		Person user;	
-		if (addAccount) {
-			logger.debug("Adding account");
 			
-			String email = request.getParameter("email");
-			if (email == null) {
-				throw new HttpException(HttpResponseCode.BAD_REQUEST, "No email address provided");
-			}
-
-			LoginCookie loginCookie = addNewClientForEmail(email, request, response);
-			
-			try {
-				user = CookieAuthentication.authenticate(loginCookie);
-			} catch (BadTastingException e) {
-				logger.error("Cookie we just added failed to log in ", e);
-				throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR,
-						"Login failed because our system did not work correctly. Apologies.");
-			} catch (NotLoggedInException e) {
-				logger.error("Cookie we just added failed to log in ", e);
-				throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR,
-						"Login failed because our system did not work correctly. Apologies.");
-			}
-			
-			logger.debug("account added");
-		} else {
-			user = doLogin(request, response, false);
-		}
+		User user = doLogin(request, response, false);
 		
 		logger.debug("sending checklogin reply");
 			
@@ -406,7 +359,7 @@ public class HippoServlet extends AbstractServlet {
 	
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			IOException {
+			IOException, HumanVisibleException {
 		if (tryRedirectRequests(request, response) ||
 		    tryLoginRequests(request, response) ||
 		    trySignoutRequest(request, response)) {
@@ -433,7 +386,7 @@ public class HippoServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
+	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, HumanVisibleException {
 		if (tryRedirectRequests(request, response)) {
 			return;
 		} else {

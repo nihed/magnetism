@@ -20,7 +20,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.server.ClaimVerifier;
-import com.dumbhippo.server.ClaimVerifierException;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TokenSystem;
 
@@ -45,12 +45,16 @@ public class AimQueueConsumerBean implements MessageListener {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	private void sendReplyMessage(BotEvent event, String aimName, String textMessage) {
-		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, XmlBuilder.escape(textMessage));
+	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
+		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
 		JmsProducer producer = new JmsProducer(OUTGOING_QUEUE, true);
 		ObjectMessage jmsMessage = producer.createObjectMessage(message);
 		logger.debug("Sending JMS message to " + OUTGOING_QUEUE + ": " + jmsMessage);
 		producer.send(jmsMessage);
+	}
+	
+	private void sendReplyMessage(BotEvent event, String aimName, String textMessage) {
+		sendHtmlReplyMessage(event, aimName, XmlBuilder.escape(textMessage));
 	}
 	
 	private void processTokenEvent(BotEventToken event) {
@@ -66,9 +70,9 @@ public class AimQueueConsumerBean implements MessageListener {
 			try {
 				claimVerifier.verify(null, claim, resource);
 				sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your account");
-			} catch (ClaimVerifierException e) {
+			} catch (HumanVisibleException e) {
 				logger.debug("exception verifying claim", e);
-				sendReplyMessage(event, event.getAimName(), e.getMessage());
+				sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
 			}
 		}
 	}

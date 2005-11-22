@@ -25,7 +25,7 @@ public interface LoginVerifier {
 	 * @return new token for authentication
 	 * @throws LoginVerifierException if resource isn't associated with a user
 	 */
-	public LoginToken getLoginToken(Resource resource) throws LoginVerifierException;
+	public LoginToken getLoginToken(Resource resource) throws HumanVisibleException;
 	
 	/**
 	 * Try to sign in a login token, returning the person you have successfully 
@@ -37,7 +37,7 @@ public interface LoginVerifier {
 	 * @returns new cookie and logged-in user
 	 * @throws LoginVerifierException if no ownership claim is created
 	 */
-	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws LoginVerifierException;
+	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException;
 	
 	// internal hack to use transaction attribute
 	public LoginToken findOrCreateLoginToken(Resource resource);

@@ -36,6 +36,12 @@
     </servlet> 
 
     <servlet>
+      <servlet-name>SigninServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.SigninServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet> 
+
+    <servlet>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.AbnormalErrorServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -125,6 +131,11 @@
    <servlet-mapping>
       <servlet-name>WantsInServlet</servlet-name>
       <url-pattern>/wantsin</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>SigninServlet</servlet-name>
+      <url-pattern>/signinpost</url-pattern>
    </servlet-mapping>
 
    <!-- Map everything else to our URL-Rewriting servlet -->  

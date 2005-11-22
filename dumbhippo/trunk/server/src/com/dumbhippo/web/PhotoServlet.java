@@ -29,6 +29,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Viewpoint;
 
@@ -73,7 +74,7 @@ public class PhotoServlet extends AbstractServlet {
 	}
 	
 	private void doPhoto(HttpServletRequest request, HttpServletResponse response, boolean isGroup, DiskFileUpload upload, List items)
-			throws HttpException, IOException, ServletException, ErrorPageException {
+			throws HttpException, IOException, ServletException, HumanVisibleException {
 
 		FileItem photo = null;
 		String groupId = null;
@@ -120,11 +121,11 @@ public class PhotoServlet extends AbstractServlet {
 			Viewpoint viewpoint = new Viewpoint(u);
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 			if (group == null) {
-				throw new ErrorPageException("It looks like you can't change the photo for this group; maybe you are not in the group or there's no such group anymore?");
+				throw new HumanVisibleException("It looks like you can't change the photo for this group; maybe you are not in the group or there's no such group anymore?");
 			}
 			GroupMember member = groupSystem.getGroupMember(viewpoint, group, u);
 			if (!member.canModify()) {
-				throw new ErrorPageException("You can't change the photo for a group unless you're in the group");
+				throw new HumanVisibleException("You can't change the photo for a group unless you're in the group");
 			}
 			groupName = group.getName();
 		}
@@ -136,10 +137,10 @@ public class PhotoServlet extends AbstractServlet {
 
 		BufferedImage image = ImageIO.read(in);
 		if (image == null) {
-			throw new ErrorPageException("Our computer can't load that photo; either it's too dumb, or possibly you uploaded a file that isn't a picture?");
+			throw new HumanVisibleException("Our computer can't load that photo; either it's too dumb, or possibly you uploaded a file that isn't a picture?");
 		}
 		if (image.getWidth() > MAX_IMAGE_DIMENSION || image.getHeight() > MAX_IMAGE_DIMENSION) {
-			throw new ErrorPageException("That photo is really huge, which blows our computer's mind. Can you send us a smaller one?");
+			throw new HumanVisibleException("That photo is really huge, which blows our computer's mind. Can you send us a smaller one?");
 		}
 
 		// FIXME It would be nicer to only pad images so they are always square and our 
@@ -174,7 +175,7 @@ public class PhotoServlet extends AbstractServlet {
 		// which Java tries to save in the JPEG confusing most apps but 
 		// not Java's own JPEG loader - see link on wiki)
 		if (!ImageIO.write(scaled, "png", saveDest)) {
-			throw new ErrorPageException("For some reason our computer couldn't save your photo. It's our fault; trying again later might help. If not, please let us know.");
+			throw new HumanVisibleException("For some reason our computer couldn't save your photo. It's our fault; trying again later might help. If not, please let us know.");
 		}
 		
 		request.setAttribute("photoLocation", location);
@@ -189,7 +190,7 @@ public class PhotoServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, ErrorPageException {
+	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, HumanVisibleException {
 		DiskFileUpload upload = new DiskFileUpload();
 		upload.setSizeMax(MAX_FILE_SIZE);
 		

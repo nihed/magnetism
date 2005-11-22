@@ -124,6 +124,7 @@ public class MailerBean implements Mailer {
 	
 	public void sendMessage(MimeMessage message) {
 		try {
+			logger.debug("Sending email...");
 			Transport.send(message);
 		} catch (MessagingException e) {
 			throw new RuntimeException(e);

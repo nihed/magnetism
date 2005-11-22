@@ -21,6 +21,4 @@ public interface TestGlue {
 	public Set<Account> getActiveAccounts();
 	
 	public String authorizeNewClient(String accountId, String name);
-	
-	public Account findOrCreateAccountFromEmail(String email);
 }

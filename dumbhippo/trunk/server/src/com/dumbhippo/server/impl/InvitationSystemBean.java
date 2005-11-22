@@ -212,7 +212,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		//}
 	}
 	
-	public Pair<Client,Person> viewInvitation(InvitationToken invite, String firstClientName) {
+	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
@@ -237,7 +237,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		notifyInvitationViewed(invite);
 		
-		return new Pair<Client,Person>(client, invite.getResultingPerson());
+		// FIXME this cast is just laziness to avoid changing the db schema of InvitationToken
+		return new Pair<Client,User>(client, (User) invite.getResultingPerson());
 	}
 
 	public Collection<String> getInviterNames(InvitationToken invite) {

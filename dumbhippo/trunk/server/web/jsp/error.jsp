@@ -16,9 +16,23 @@
 		
 		<h2>Oops!</h2>
 		
-		<p><c:out value="${errorText}"/></p>
-		
-		<p><a href="/home">Home</a></p>
+		<c:choose>
+			<c:when test="${!empty errorHtml}">
+				<p><c:out value="${errorHtml}" escapeXml="false"/></p>
+			</c:when>
+			<c:otherwise>
+				<p><c:out value="${errorText}"/></p>
+			</c:otherwise>
+		</c:choose>
+
+		<c:choose>
+			<c:when test="${!empty suggestionHtml}">
+				<p><c:out value="${suggestionHtml}" escapeXml="false"/></p>
+			</c:when>
+			<c:otherwise>
+				<p><a href="/home">Home</a></p>
+			</c:otherwise>
+		</c:choose>
 		
 	</div>
 	

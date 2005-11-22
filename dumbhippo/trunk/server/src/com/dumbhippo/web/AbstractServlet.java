@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.HumanVisibleException;
 
 public abstract class AbstractServlet extends HttpServlet {
 
@@ -70,22 +71,12 @@ public abstract class AbstractServlet extends HttpServlet {
 			httpResponseCode.send(response, getMessage());
 		}	
 	}
-	
-	/**
-	 * This exception will be shown to the user on an error page.
-	 * Don't put technobabble in the message.
-	 */
-	static class ErrorPageException extends Exception {
-		private static final long serialVersionUID = 0L;
-		
-		ErrorPageException(String message) {
-			super(message);
-		}
-	}
 
-	protected void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response, String errorText)
+	protected void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response, HumanVisibleException e)
 		throws ServletException, IOException {
-		request.setAttribute("errorText", errorText);
+		request.setAttribute("errorHtml", e.getHtmlMessage());
+		if (e.getHtmlSuggestion() != null)
+			request.setAttribute("suggestionHtml", e.getHtmlSuggestion());
 		request.getRequestDispatcher("/error").forward(request, response);
 	}
 	
@@ -133,12 +124,12 @@ public abstract class AbstractServlet extends HttpServlet {
 	}	
 
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-		  	ErrorPageException, IOException, ServletException {
+		  	HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "POST not implemented");				 
 	}
 
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			ErrorPageException, IOException, ServletException {
+			HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
 
@@ -158,9 +149,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);
-		} catch (ErrorPageException e) {
+		} catch (HumanVisibleException e) {
 			logger.debug(e);
-			forwardToErrorPage(request, response, e.getMessage());
+			forwardToErrorPage(request, response, e);
 		}
 	}
 	
@@ -173,9 +164,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (HttpException e) {
 			logger.debug(e);
 			e.send(response);
-		} catch (ErrorPageException e) {
+		} catch (HumanVisibleException e) {
 			logger.debug(e);
-			forwardToErrorPage(request, response, e.getMessage());
+			forwardToErrorPage(request, response, e);
 		}
 	}
 }

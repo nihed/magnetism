@@ -31,11 +31,11 @@
 					<table>
 						<tr>
 							<td>Name:</td>
-							<td><input name="fullName"></td>
+							<td><input name="fullName" class="dhText"></td>
 						</tr>
 						<tr>
 							<td>Email:</td>
-							<td><input name="email"></td>
+							<td><input name="email" class="dhText"></td>
 						</tr>
 					</table>
 					<input type="submit" value="Invite"/>

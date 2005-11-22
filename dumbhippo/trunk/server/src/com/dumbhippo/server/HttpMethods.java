@@ -83,11 +83,11 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkEmail(String address) throws IOException, LoginVerifierException;
+	public void doSendLoginLinkEmail(String address) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkAim(String address) throws IOException, LoginVerifierException;
+	public void doSendLoginLinkAim(String address) throws IOException, HumanVisibleException;
 	
 	/**
 	 * This one is not annotated since it's special-cased in the servlet.
@@ -98,5 +98,5 @@ public interface HttpMethods {
 	 * @param inviteKey invitation key or null if person is registered
 	 * @throws RedirectException if the ids are invalid for example
 	 */
-	public void handleRedirect(User user, String url, String postId, String inviteKey) throws RedirectException;
+	public void handleRedirect(User user, String url, String postId, String inviteKey) throws HumanVisibleException;
 }

@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.InvitationSystem;
 
 public class SendInviteServlet extends AbstractServlet {
@@ -19,7 +20,7 @@ public class SendInviteServlet extends AbstractServlet {
 	static final long serialVersionUID = 1;
 
 	private void doSendInvite(HttpServletRequest request, HttpServletResponse response)
-	throws HttpException, ErrorPageException, IOException, ServletException {
+	throws HttpException, HumanVisibleException, IOException, ServletException {
 		User user = doLogin(request, response, false);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
@@ -35,13 +36,13 @@ public class SendInviteServlet extends AbstractServlet {
 		// the error page redirect kind of sucks, but if we do inline javascript 
 		// validation it would only happen in weird manual-url-typing cases
 		if (fullName == null || fullName.equals("") || email == null || email.equals("")) 
-			throw new ErrorPageException("Missing either a name or email address");
+			throw new HumanVisibleException("Missing either a name or email address");
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
 		// one last check, because createEmailInvitation doesn't check it
 		if (invitationSystem.getInvitations(user) < 1) {
-			throw new ErrorPageException("You can't invite anyone else for now");
+			throw new HumanVisibleException("You can't invite anyone else for now");
 		}
 		
 		String note = invitationSystem.sendEmailInvitation(user, email);
@@ -55,7 +56,7 @@ public class SendInviteServlet extends AbstractServlet {
 	
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException, HttpException, ErrorPageException {
+			IOException, HttpException, HumanVisibleException {
 		doSendInvite(request, response);
 	}
 }

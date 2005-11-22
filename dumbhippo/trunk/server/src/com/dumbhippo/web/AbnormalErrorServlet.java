@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.HumanVisibleException;
 
 /**
  * 
@@ -40,7 +41,7 @@ public class AbnormalErrorServlet extends AbstractServlet {
 	}
     
     private void handleRequest(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-		ErrorPageException, IOException, ServletException {
+		HumanVisibleException, IOException, ServletException {
     	try {
     		logger.error("Abnormal error occurred");
     		for (String var : errorVars) {
@@ -56,20 +57,20 @@ public class AbnormalErrorServlet extends AbstractServlet {
     		logger.trace("Backtrace:", t);
     	}
     	// now redirect to error page
-    	throw new ErrorPageException("There was an unexpected problem with the site. Please try again; " 
+    	throw new HumanVisibleException("There was an unexpected problem with the site. Please try again; " 
     			+ "or if you can describe the situation causing the error and when it occurred, mail us at "
     			+ config.getProperty(HippoProperty.FEEDBACK_EMAIL) + " and we'll investigate as soon as we can.");
     }
     
     @Override
     protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-    	ErrorPageException, IOException, ServletException {
+    	HumanVisibleException, IOException, ServletException {
     	handleRequest(request, response);
     }
     
     @Override
     protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-    	ErrorPageException, IOException, ServletException {
+    	HumanVisibleException, IOException, ServletException {
     	handleRequest(request, response);				 
     }
 }

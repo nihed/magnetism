@@ -17,7 +17,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
-import com.dumbhippo.server.ClaimVerifierException;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Viewpoint;
@@ -82,13 +82,13 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		return token.getAuthKey();	
 	}
 	
-	public void verify(User user, ResourceClaimToken token, Resource resource) throws ClaimVerifierException {
+	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException {
 		if (user != null) {
 			if (!user.equals(token.getUser())) {
 				Viewpoint viewpoint = new Viewpoint(user);
 				PersonView self = identitySpider.getPersonView(viewpoint, user);
 				PersonView other = identitySpider.getPersonView(viewpoint, token.getUser());
-				throw new ClaimVerifierException("You are signed in as " + self.getName() 
+				throw new HumanVisibleException("You are signed in as " + self.getName() 
 						+ " but trying to change the account " + other.getName());
 			}
 		} else {
@@ -100,7 +100,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		if (resource != null) {
 			Resource tokenResource = token.getResource();
 			if (tokenResource != null && !tokenResource.equals(resource)) {
-				throw new ClaimVerifierException(tokenResource.getHumanReadableString() + " should match " + resource.getHumanReadableString());
+				throw new HumanVisibleException(tokenResource.getHumanReadableString() + " should match " + resource.getHumanReadableString());
 			}
 		} else {
 			resource = token.getResource();
@@ -109,7 +109,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		if (resource == null) {
 			// this should be a RuntimeException I guess since for a given resource type, we should guarantee
 			// that we either have a trusted sender or that we recorded the resource prior to sending
-			throw new ClaimVerifierException("Something went wrong; could not figure out what address you are trying to add");
+			throw new HumanVisibleException("Something went wrong; could not figure out what address you are trying to add");
 		}
 		
 		identitySpider.addVerifiedOwnershipClaim(user, resource);

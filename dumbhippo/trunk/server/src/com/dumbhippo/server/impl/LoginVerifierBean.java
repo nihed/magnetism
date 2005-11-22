@@ -21,9 +21,9 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
-import com.dumbhippo.server.LoginVerifierException;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
@@ -43,14 +43,14 @@ public class LoginVerifierBean implements LoginVerifier {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
-	public LoginToken getLoginToken(Resource resource) throws LoginVerifierException {
+	public LoginToken getLoginToken(Resource resource) throws HumanVisibleException {
 		
 		if (resource == null)
 			throw new IllegalArgumentException("null resource");
 
 		User user = spider.lookupUserByResource(resource);
 		if (user == null) {
-			throw new LoginVerifierException("That address hasn't been added to any account");
+			throw new HumanVisibleException("That address hasn't been added to any account");
 		}
 		
 		LoginVerifier proxy = (LoginVerifier) ejbContext.lookup(LoginVerifier.class.getCanonicalName());
@@ -92,10 +92,10 @@ public class LoginVerifierBean implements LoginVerifier {
 		return token;	
 	}
 	
-	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws LoginVerifierException {
+	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException {
 		
 		if (token.isExpired())
-			throw new LoginVerifierException("The link you followed has expired; you'll need to start over.");
+			throw new HumanVisibleException("The link you followed has expired; you'll need to start over.");
 		
 		Resource resource = token.getResource();
 		Person person = spider.lookupUserByResource(resource);
@@ -107,7 +107,7 @@ public class LoginVerifierBean implements LoginVerifier {
 			account = null;
 		
 		if (account == null)
-			throw new LoginVerifierException("We don't have an account associated with '" + resource.getHumanReadableString() + "'");
+			throw new HumanVisibleException("We don't have an account associated with '" + resource.getHumanReadableString() + "'");
 		
 		Client client = accounts.authorizeNewClient(account, clientName);
 		

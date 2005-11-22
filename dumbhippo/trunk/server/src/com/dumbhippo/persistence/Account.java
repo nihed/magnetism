@@ -54,6 +54,8 @@ public class Account extends Resource {
 	private boolean wasSentShareLinkTutorial = false;
 	private boolean hasDoneShareLinkTutorial = false;
 	
+	private String password;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -275,6 +277,27 @@ public class Account extends Resource {
 		this.wasSentShareLinkTutorial = wasSentShareLinkTutorial;
 	}
 
+	/**
+	 * This IS nullable.
+	 * @return password if any or null
+	 */
+	protected String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		if (password != null)
+			password = password.trim(); // paranoia
+		this.password = password;
+	}
+
+	public boolean checkPassword(String attempt) {
+		String correct = getPassword();
+		if (correct == null)
+			return false;
+		return attempt.trim().equals(correct);
+	}
+	
 	@Override
 	@Transient
 	public String getHumanReadableString() {

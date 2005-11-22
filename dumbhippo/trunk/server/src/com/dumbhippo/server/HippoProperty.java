@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 public enum HippoProperty {
 	BASEURL("dumbhippo.server.baseurl", "http://dumbhippo.com"),
+	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@dumbhippo.com"),
 	DOWNLOADURL_WINDOWS("dumbhippo.server.downloadurl.windows", "http://devel.dumbhippo.com/download/DumbHippo-current.msi"),
 	XMPP_ADDRESS("dumbhippo.server.xmpp.address", null),

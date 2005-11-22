@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.WantsInSystem;
 
 public class WantsInServlet extends AbstractServlet {
@@ -28,12 +29,12 @@ public class WantsInServlet extends AbstractServlet {
 	
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException, HttpException, ErrorPageException {
+			IOException, HttpException, HumanVisibleException {
 		String address = request.getParameter("address");
 		if (address != null)
 			address = address.trim();
 		if (address == null || address.length() == 0 || address.indexOf('@') < 1 || address.equals("let@me.in.please")) {
-			throw new ErrorPageException("You have to put in an email address");
+			throw new HumanVisibleException("You have to put in an email address").setHtmlSuggestion("<a href=\"/comingsoon\">Try again</a>");
 		}
 		
 		wantsInSystem.addWantsIn(address);

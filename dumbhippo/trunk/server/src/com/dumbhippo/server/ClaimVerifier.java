@@ -41,7 +41,7 @@ public interface ClaimVerifier {
 	 * @param resource resource, or null
 	 * @throws ClaimVerifierException if no ownership claim is created
 	 */
-	public void verify(User user, ResourceClaimToken token, Resource resource) throws ClaimVerifierException;
+	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException;
 	
 	
 	// internal implementation hack to get a transaction attribute, ignore

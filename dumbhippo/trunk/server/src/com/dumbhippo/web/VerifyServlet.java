@@ -16,11 +16,11 @@ import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
-import com.dumbhippo.server.ClaimVerifierException;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.LoginVerifier;
-import com.dumbhippo.server.LoginVerifierException;
 import com.dumbhippo.server.TokenSystem;
 
 public class VerifyServlet extends AbstractServlet {
@@ -34,43 +34,35 @@ public class VerifyServlet extends AbstractServlet {
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		Pair<Client,Person> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request));
+		Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request));
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
 		redirectToNextPage(request, response, "/welcome", null);
 	}
 	
-	private void doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws ErrorPageException, ServletException, IOException {
+	private void doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws HumanVisibleException, ServletException, IOException {
 		
 		logger.debug("Processing resource claim token " + token);
 		
 		ClaimVerifier verifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		
-		try {
-			verifier.verify(null, token, null);
-		} catch (ClaimVerifierException e) {
-			throw new ErrorPageException(e.getMessage());
-		}
+		verifier.verify(null, token, null);
 		redirectToNextPage(request, response, "/home", "Added address '" + token.getResource().getHumanReadableString() + "' to your account.");
 	}
 
-	private void doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws ErrorPageException, ServletException, IOException {
+	private void doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws HumanVisibleException, ServletException, IOException {
 		
 		logger.debug("Processing login token " + token);
 		
 		LoginVerifier verifier = WebEJBUtil.defaultLookup(LoginVerifier.class);		
 		
 		Pair<Client, Person> result;
-		try {
-			result = verifier.signIn(token, SigninBean.computeClientIdentifier(request));
-		} catch (LoginVerifierException e) {
-			throw new ErrorPageException(e.getMessage());
-		}
+		result = verifier.signIn(token, SigninBean.computeClientIdentifier(request));
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
 		redirectToNextPage(request, response, "/home", null);
 	}
 	
 	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ErrorPageException, HttpException, ServletException {
+	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException {
 		String authKey = request.getParameter("authKey");
 		if (authKey != null)
 			authKey = authKey.trim();
@@ -89,7 +81,7 @@ public class VerifyServlet extends AbstractServlet {
 			doResourceClaimToken(request, response, (ResourceClaimToken) token);
 		} else {
 			// token == null or we aren't handling a token subclass
-			throw new ErrorPageException("The link you followed has expired. You'll need to send a new one.");
-		}	
+			throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/signin\">Go here</a>");
+		}
 	}
 }
