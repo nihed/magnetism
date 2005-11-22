@@ -3,11 +3,11 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="tutorial" class="com.dumbhippo.web.TutorialPage" scope="request"/>
+<dh:bean id="account" class="com.dumbhippo.web.AccountPage" scope="request"/>
 
 <head>
-	<title>How To Share a Link</title>
-	<dht:stylesheets href="tutorial.css" />
+	<title>Your Account Setup</title>
+	<dht:stylesheets href="account.css" />
 	<dht:scriptIncludes/>
 </head>
 <body>
@@ -19,8 +19,8 @@
 
 	<div id="dhMain">
 	
-		<div class="dh-tutorial-movie-area">
-			<div class="dh-tutorial-movie">Tutorial Movie Here</div>
+		<div class="dh-account-movie-area">
+			<div class="dh-account-movie">account Movie Here</div>
 		</div>
 	
 		<div class="dhBackgroundBox">
@@ -34,7 +34,7 @@
 				Your name is:
 			</td>
 			<td class="dh-edit-table-control">
-				<dht:userNameEdit value="${tutorial.person.name}"/>
+				<dht:userNameEdit value="${account.person.name}"/>
 			</td>
 			</tr>
 			<tr>
@@ -44,7 +44,7 @@
 			<tr>
 			<td class="dh-edit-table-label">
 				<span class="dh-step">2</span>
-				<a href="${tutorial.addAimLink}">
+				<a href="${account.addAimLink}">
 				IM us your screen name
 				</a>
 			</td>

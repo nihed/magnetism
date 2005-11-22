@@ -119,12 +119,12 @@ public class PostingBoardBean implements PostingBoard {
 	public void doShareLinkTutorialPost(Person recipient) {
 
 		User poster = identitySpider.getTheMan();
-		LinkResource link = identitySpider.getLink(configuration.getProperty(HippoProperty.BASEURL) + "/tutorial");
+		LinkResource link = identitySpider.getLink(configuration.getProperty(HippoProperty.BASEURL) + "/account");
 		Set<Group> emptyGroups = Collections.emptySet();
 		Set<Resource> recipientSet = Collections.singleton(identitySpider.getBestResource(recipient));
 
 		Post post = createPostViaProxy(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
-				"Learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet);
+				"Set up your account and learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet);
 
 		sendPostNotifications(post, recipientSet);
 	}

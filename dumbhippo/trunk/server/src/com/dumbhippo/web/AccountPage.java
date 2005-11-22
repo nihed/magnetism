@@ -13,12 +13,11 @@ import com.dumbhippo.server.PersonViewExtra;
 /**
  * @author hp
  *
- * Shows a tutorial on how to share a link, and lets you put in some of your 
- * personal information.
+ * Has fun tutorials and lets you set up personal information.
  */
-public class TutorialPage {
+public class AccountPage {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(TutorialPage.class);
+	static private final Log logger = GlobalSetup.getLog(AccountPage.class);
 
 	@Signin
 	private SigninBean signin;
@@ -28,7 +27,7 @@ public class TutorialPage {
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
 	
-	public TutorialPage() {
+	public AccountPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
