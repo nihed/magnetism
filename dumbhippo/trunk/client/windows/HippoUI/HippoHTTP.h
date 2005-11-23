@@ -16,7 +16,7 @@ public:
     HippoHTTP(void);
     ~HippoHTTP(void);
 
-    void doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler, void *data);
+    void doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler);
 
     void shutdown(void);
 private:

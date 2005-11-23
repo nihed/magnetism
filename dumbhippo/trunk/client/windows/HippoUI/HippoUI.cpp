@@ -383,7 +383,7 @@ HippoUI::create(HINSTANCE instance)
 
     //HippoHTTP *http = new HippoHTTP();;
     //HippoHTTPAsyncHandler *handler = new TestAsyncHandler(this);
-    //http->doAsync(L"192.168.1.77", 8080, L"GET", L"/", NULL, NULL, 0, handler, NULL);
+    //http->doAsync(L"192.168.1.77", 8080, L"GET", L"/", NULL, NULL, 0, handler);
 
     return true;
 }

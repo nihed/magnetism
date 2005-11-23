@@ -24,7 +24,6 @@ public:
     DWORD readerThreadId;
 
     HippoHTTPAsyncHandler *handler;
-    void *userData;
 
     ~HippoHTTPContext() {
         if (responseBuffer)
@@ -183,14 +182,13 @@ HippoHTTP::shutdown(void)
 }
 
 void
-HippoHTTP::doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler, void *data)
+HippoHTTP::doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler)
 {
     HippoHTTPContext *context;
 
     context = new HippoHTTPContext;
     ZeroMemory(context, sizeof(*context));
     context->handler = handler;
-    context->userData = data;
     context->op = op;
     context->target = target;
     context->responseSize = -1;
