@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+
 import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -13,12 +15,14 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.server.ChatRoomStatusCache;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
@@ -85,6 +89,16 @@ public class AimQueueConsumerBean implements MessageListener {
 		}
 	}
 	
+	private void processChatRoomRosterEvent(BotEventChatRoomRoster event) {
+		String chatRoomName = event.getChatRoomName();
+		ArrayList<String> chatRoomRoster = event.getChatRoomRoster();
+		
+		logger.debug("processing chat room roster event for '" + chatRoomName + "' with " + chatRoomRoster);
+		
+		// currently chat room status is cached in a single static object
+		ChatRoomStatusCache.putChatRoomStatus(chatRoomName, chatRoomRoster);
+	}
+	
 	public void onMessage(Message message) {
 		try {
 			logger.debug("Got message from " + INCOMING_QUEUE + ": " + message);
@@ -96,8 +110,10 @@ public class AimQueueConsumerBean implements MessageListener {
 				
 				if (obj instanceof BotEventToken) {
 					BotEventToken event = (BotEventToken) obj;
-					
 					processTokenEvent(event);
+				} else if (obj instanceof BotEventChatRoomRoster) {
+					BotEventChatRoomRoster event = (BotEventChatRoomRoster) obj;
+					processChatRoomRosterEvent(event);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}

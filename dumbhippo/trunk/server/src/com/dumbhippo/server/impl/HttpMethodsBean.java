@@ -11,6 +11,7 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.jms.ObjectMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -18,7 +19,9 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.botcom.BotTaskJoinRoom;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -400,6 +403,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doSetAccountDisabled(User user, boolean disabled) throws IOException, HumanVisibleException {
 		identitySpider.setAccountDisabled(user, disabled);
+	}
+	
+	public void doRequestJoinRoom(String chatRoomName) throws IOException {	
+		// TODO: specify a specific bot to handle request, or somehow make sure that 
+		//  all join requests for a particular room get directed to the same bot.  
+		//  Otherwise the bots will take over and humans with perish from the earth.
+		BotTaskJoinRoom joinTask = new BotTaskJoinRoom(null, chatRoomName);
+		JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
+		ObjectMessage jmsMessage = producer.createObjectMessage(joinTask);
+		producer.send(jmsMessage);
 	}
 
 	public void doSetPassword(User user, String password) throws IOException, HumanVisibleException {

@@ -2,6 +2,17 @@ dojo.provide("dh.actions");
 
 dojo.require("dh.server");
 
+dh.actions.requestJoinRoom = function(chatRoomName) {
+   	dh.server.doPOST("requestjoinroom",
+				     { "chatRoomName" : chatRoomName },
+		  	    	 function(type, data, http) {
+		  	    	 	 window.setTimeout('document.location.reload()', 5000);
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't request to join room");
+		  	    	 });
+}
+
 dh.actions.addContact = function(contactId) {
    	dh.server.doPOST("addcontactperson",
 				     { "contactId" : contactId },

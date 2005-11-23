@@ -97,6 +97,10 @@ public interface HttpMethods {
 	@HttpParams( { "password" })
 	public void doSetPassword(User user, String password) throws IOException, HumanVisibleException;
 	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "chatRoomName" })
+	public void doRequestJoinRoom(String chatRoomName) throws IOException;
+	
 	/**
 	 * This one is not annotated since it's special-cased in the servlet.
 	 * 

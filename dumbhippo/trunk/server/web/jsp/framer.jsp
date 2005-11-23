@@ -52,11 +52,11 @@
 	</td>
 	</tr>
 	<tr>
-	   <td><div class="join-chat"><a class="join-chat" href="aim:GoChat?RoomName=${framer.chatRoom}&Exchange=5">Join Chat Room</a></div></td>
+	   <td><div class="join-chat"><a class="join-chat" onClick='dh.actions.requestJoinRoom("${framer.chatRoom}")' href="aim:GoChat?RoomName=${framer.chatRoom}&Exchange=5">Join Chat Room</a></div></td>
 
 	   <td class="cool-link-meta">
-	     <div class="cool-link-date">Lots of people are here!!</div>
-	     <div class="cool-link-to">This was sent to you by someone else</div>
+	     <div class="cool-link-date">${framer.chatRoomMembers}</div>
+	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}"/></div>
 	   </td>
 	</tr>
 	</table>
