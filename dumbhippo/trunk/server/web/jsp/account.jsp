@@ -85,9 +85,24 @@
 				Set a password:
 			</td>
 			<td class="dh-edit-table-control">
-				<input type="text" class="dhText"/>
+				<input type="password" class="dhText"/>
 			</td>
 			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+				Type the same password again:
+			</td>
+			<td class="dh-edit-table-control">
+				<input type="password" class="dhText"/>
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+			</td>
+			<td class="dh-edit-table-control">
+				<input type="button" value="Set Password"/>
+			</td>
+			</tr>			
 			<tr>
 			<td colspan="2" class="dh-explanation">You can email or IM yourself a sign-in link at any time, so a password is optional.
 			</td>

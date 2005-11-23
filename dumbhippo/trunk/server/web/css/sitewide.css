@@ -74,7 +74,7 @@ table, tbody, tr, td {
 }
 
 /* Style of the text being typed by the user */
-textarea, .dhTextArea, .dojoComboBox .comboBoxInput, input[type=text] {
+textarea, .dhTextArea, .dojoComboBox .comboBoxInput, input[type=text], input[type=password] {
 	font-size:						small;
 	font-family:					Monospaced, mono;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
