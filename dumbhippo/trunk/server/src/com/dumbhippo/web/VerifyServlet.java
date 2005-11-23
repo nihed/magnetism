@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.TokenSystem;
@@ -40,8 +41,25 @@ public class VerifyServlet extends AbstractServlet {
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request), disable);
-		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
+		if (invite.isViewed()) {
+			// have been to the link before, nothing to do unless we need to disable
+			if (disable) {
+				SigninBean signin = SigninBean.getForRequest(request);
+				if (signin.isValid()) {
+					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+					spider.setAccountDisabled(signin.getUser(), true);
+					// now on to /welcome as normal
+				} else {
+					// just send them to the /account page where they can disable, not
+					// worth some complicated solution; this will require a signin first
+					redirectToNextPage(request, response, "/account", null);
+				}
+			}
+		} else {
+			// first time we've gone to the invite link
+			Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request), disable);
+			SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
+		}
 		
 		// this forwards to welcomedisabled.jsp if the account is disabled
 		redirectToNextPage(request, response, "/welcome", null);
