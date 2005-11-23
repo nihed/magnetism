@@ -361,7 +361,7 @@ public class PostingBoardBean implements PostingBoard {
 		// to the recipient; we don't bother implementing the other case for
 		// now.
 		if (!recipient.equals(viewpoint.getViewer()))
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("recipient isn't the viewer");
 		
 		Query q;
 		

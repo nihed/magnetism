@@ -137,7 +137,7 @@ public class SigninBean implements Serializable {
 	
 	public Viewpoint getViewpoint() {
 		// FIXME: would it be better to cache the result? 
-		return new Viewpoint(user);
+		return new Viewpoint(getUser());
 	}
 	
 	public boolean isDisabled() {
