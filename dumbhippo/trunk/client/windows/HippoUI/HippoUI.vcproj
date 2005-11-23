@@ -32,7 +32,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib glib-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib"
+				AdditionalDependencies="shlwapi.lib glib-2.0.lib gthread-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib"
 				OutputFile="$(OutDir)/HippoUI.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"
@@ -122,6 +122,9 @@
 				RelativePath=".\HippoBubble.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoHTTP.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoIcon.cpp">
 			</File>
 			<File
@@ -161,6 +164,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoBubble.h">
+			</File>
+			<File
+				RelativePath=".\HippoHTTP.h">
 			</File>
 			<File
 				RelativePath=".\HippoIcon.h">

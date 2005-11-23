@@ -4,18 +4,9 @@
 #include <wininet.h>
 #include <HippoUtil.h>
 
-typedef enum {
-        HIPPO_HTTP_STATE_CONNECTING,
-        HIPPO_HTTP_STATE_REQUESTING,
-        HIPPO_HTTP_STATE_OPERATING,
-        HIPPO_HTTP_STATE_COMPLETE,
-        HIPPO_HTTP_STATE_ERROR
-} HippoHTTPState; 
-
-typedef struct
+class HippoHTTPContext
 {
-    HippoHTTPState state;
-
+public:
     HINTERNET requestOpenHandle;
 
     HippoBSTR op;
@@ -24,110 +15,109 @@ typedef struct
 
     void *inputData;
     long inputLen;
+
     long responseSize;
-    INTERNET_BUFFERS requestOutputBuffer;
+    long responseBytesRead;
+    void *responseBuffer;
+
+    HANDLE readerThread;
+    DWORD readerThreadId;
 
     HippoHTTPAsyncHandler *handler;
     void *userData;
-} HippoHTTPContext;
+
+    ~HippoHTTPContext() {
+        if (responseBuffer)
+            free(responseBuffer);
+    }
+};
 
 static gboolean
-idleInvokeComplete(gpointer data)
+idleEmitComplete(gpointer data)
 {
     HippoHTTPContext *ctx = (HippoHTTPContext*)data;
 
-    ctx->handler->handleComplete(NULL);
+    ctx->handler->handleComplete(ctx->responseBuffer, ctx->responseBytesRead);
 
     delete ctx;
 
     return FALSE;
 }
 
-static void
-handleHandleCreated(HINTERNET ictx, HippoHTTPContext *ctx)
+typedef struct {
+    HRESULT res;
+    HippoHTTPContext *ctx;
+} HippoIdleEmitErrorContext;
+
+static gboolean
+idleEmitError(gpointer data)
 {
-    switch (ctx->state) {
-        case HIPPO_HTTP_STATE_CONNECTING:
-            {
-            ctx->state = HIPPO_HTTP_STATE_REQUESTING;
-            if (!HttpOpenRequest(ictx, ctx->op, ctx->target, NULL, NULL, NULL,
-                                INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI | INTERNET_FLAG_CACHE_IF_NET_FAIL,
-                                (DWORD_PTR) ctx)) {
-                ctx->state = HIPPO_HTTP_STATE_ERROR;
-                ctx->handler->handleError(GetLastError());
+    HippoIdleEmitErrorContext *ctx = (HippoIdleEmitErrorContext*)data;
+    ctx->ctx->handler->handleError(ctx->res);
+    delete ctx->ctx;
+    delete ctx;
+    return FALSE;
+}
+
+static void
+enqueueError(HippoHTTPContext *ctx, HRESULT err)
+{
+    HippoIdleEmitErrorContext *ictx = new HippoIdleEmitErrorContext;
+    ictx->ctx = ctx;
+    ictx->res = err;
+    g_idle_add (idleEmitError, ictx);
+}
+
+static void
+readerThreadMain(void *threadContext)
+{
+    HippoHTTPContext *ctx = (HippoHTTPContext*) threadContext;
+    while ((ctx->responseSize - ctx->responseBytesRead) != 0) {
+        DWORD bytesRead;
+        if (!InternetReadFile(ctx->requestOpenHandle, ((char*)ctx->responseBuffer) + ctx->responseBytesRead, 
+                              ctx->responseSize - ctx->responseBytesRead,
+                              &bytesRead)) {
+            if (GetLastError() != ERROR_IO_PENDING) {
+                enqueueError(ctx, GetLastError());
+                return;
             }
-            }
-            break;
-        case HIPPO_HTTP_STATE_REQUESTING:
-            {
-            ctx->requestOpenHandle = ictx;
-            if (ctx->contentType) {
-                WCHAR buf[1024];    
-                StringCchPrintf(buf, sizeof(buf)/sizeof(buf[0]), L"Content-Type: %s\r\n", ctx->contentType);
-                HttpAddRequestHeaders(ctx->requestOpenHandle, buf, -1, HTTP_ADDREQ_FLAG_REPLACE);
-            }
-            ctx->state = HIPPO_HTTP_STATE_OPERATING;
-            if (!HttpSendRequest(ctx->requestOpenHandle, NULL, 0, ctx->inputData, ctx->inputLen)) {
-                ctx->state = HIPPO_HTTP_STATE_ERROR;
-                ctx->handler->handleError(GetLastError());
-            }
-            }
-            break;
-        default:
-            g_assert (FALSE);
+        }
+        ctx->responseBytesRead += bytesRead;
+        if (bytesRead == 0)
             break;
     }
+    if (ctx->responseSize - ctx->responseBytesRead != 0) { 
+        // Invalid Content-Length
+        ctx->responseSize = ctx->responseBytesRead;
+    }
+    g_idle_add (idleEmitComplete, ctx);
+    return;
 }
 
 static void
 handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOID statusInfo, 
                       DWORD statusLength)
 {
-    switch (ctx->state) 
-    {
-    case HIPPO_HTTP_STATE_CONNECTING:
-        assert (FALSE);
-        break;
-    case HIPPO_HTTP_STATE_REQUESTING: 
-        assert (FALSE);
-        break;
-    case HIPPO_HTTP_STATE_OPERATING:
-        {
-            DWORD headerIndex = 0;
-            DWORD responseDatumSize = sizeof(ctx->responseSize);
-            if (ctx->responseSize < 0) {
-                if (!HttpQueryInfo(ctx->requestOpenHandle, HTTP_QUERY_CONTENT_LENGTH,
-                                   &(ctx->responseSize), &responseDatumSize, 
-                                   &headerIndex)) {
-                                        ctx->state = HIPPO_HTTP_STATE_ERROR;
-                                        ctx->handler->handleError(GetLastError());
-                                        break;
-                                   }
-                ctx->requestOutputBuffer.dwStructSize = sizeof(ctx->requestOutputBuffer);
-                ctx->requestOutputBuffer.dwBufferLength = (2 * ctx->responseSize) + 1;
-                ctx->requestOutputBuffer.dwBufferTotal = 0;
-                ctx->requestOutputBuffer.lpvBuffer = malloc (ctx->requestOutputBuffer.dwBufferLength);
-            } else {
-                while (ctx->requestOutputBuffer.dwBufferLength != 0) {
-                    BOOL status = InternetReadFileEx(ctx->requestOpenHandle, &(ctx->requestOutputBuffer), 
-                                                     IRF_ASYNC, (DWORD_PTR) ctx);
-                    if(!status && GetLastError() == ERROR_IO_PENDING)
-                        break;
-                }
+    WCHAR responseSize[80];
+    long maxSize = 5 * 1024 * 1024;
+    DWORD responseDatumSize = sizeof(responseSize);
+    if (ctx->responseSize < 0) {
+        if (!HttpQueryInfo(ctx->requestOpenHandle, HTTP_QUERY_CONTENT_LENGTH,
+            &responseSize, &responseDatumSize, 
+            NULL)) {
+                enqueueError(ctx, GetLastError());
+                return;
             }
-            if (ctx->requestOutputBuffer.dwBufferLength == 0) {
-                char * buf = (char*) ctx->requestOutputBuffer.lpvBuffer;
-                buf[ctx->requestOutputBuffer.dwBufferTotal] = 0;
-                ctx->state = HIPPO_HTTP_STATE_COMPLETE;
-            }
-        }
-        break;
-    case HIPPO_HTTP_STATE_COMPLETE:
-        {
-        }
-        break;
-    case HIPPO_HTTP_STATE_ERROR:
-        break;
+            ctx->responseSize = wcstoul(responseSize, NULL, 10);
+            if (ctx->responseSize < 0)
+                ctx->responseSize = 0;
+            else if (ctx->responseSize > maxSize)
+                ctx->responseSize = maxSize;
+            ctx->responseBytesRead = 0;
+            ctx->responseBuffer = malloc (ctx->responseSize);
+            ctx->readerThread = CreateThread(NULL, 0,
+                (LPTHREAD_START_ROUTINE)readerThreadMain, (void *) ctx, 0,
+                &ctx->readerThreadId);
     }
 }
 
@@ -139,55 +129,37 @@ asyncStatusUpdate(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInf
 
     switch (status) {
         case INTERNET_STATUS_CLOSING_CONNECTION:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_CONNECTION_CLOSED:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_HANDLE_CLOSING:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_HANDLE_CREATED:
-            {
-                INTERNET_ASYNC_RESULT *res = (INTERNET_ASYNC_RESULT *) statusInfo;
-                handleHandleCreated((HINTERNET) (res->dwResult), ctx);
-            }
             break;
         case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_NAME_RESOLVED:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_RECEIVING_RESPONSE:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_REDIRECT:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_REQUEST_COMPLETE:
             handleCompleteRequest(ictx, ctx, status, statusInfo, statusLength);
             break;
         case INTERNET_STATUS_REQUEST_SENT:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_RESOLVING_NAME:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_SENDING_REQUEST:
-            ctx->handler->handleError(0);
             break;
         case INTERNET_STATUS_STATE_CHANGE:
-            ctx->handler->handleError(0);
             break;
     }
 }
@@ -195,7 +167,7 @@ asyncStatusUpdate(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInf
 HippoHTTP::HippoHTTP(void)
 {
     inetHandle_ = InternetOpen(L"DumbHippo Client/1.0", INTERNET_OPEN_TYPE_PRECONFIG,
-                                      NULL, NULL, INTERNET_FLAG_ASYNC);
+                               NULL, NULL, INTERNET_FLAG_ASYNC);
     InternetSetStatusCallback(inetHandle_, asyncStatusUpdate);
 }
 
@@ -221,9 +193,28 @@ HippoHTTP::doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WC
     context->userData = data;
     context->op = op;
     context->target = target;
+    context->responseSize = -1;
     context->inputData = requestInput;
     context->inputLen = len;
     
-    context->state = HIPPO_HTTP_STATE_CONNECTING;
-    InternetConnect(inetHandle_, host, port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR) context);
+    HINTERNET handle = InternetConnect(inetHandle_, host, port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR) context);
+
+    context->requestOpenHandle = HttpOpenRequest(handle, context->op, context->target, NULL, NULL, NULL,
+                                                 INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI | INTERNET_FLAG_CACHE_IF_NET_FAIL,
+                                                 (DWORD_PTR) context);
+    if (!context->requestOpenHandle) {
+        context->handler->handleError(GetLastError());
+        return;
+    }
+
+    if (context->contentType) {
+        WCHAR buf[1024];    
+        StringCchPrintf(buf, sizeof(buf)/sizeof(buf[0]), L"Content-Type: %s\r\n", context->contentType);
+        HttpAddRequestHeaders(context->requestOpenHandle, buf, -1, HTTP_ADDREQ_FLAG_REPLACE);
+    }
+
+    if (!HttpSendRequest(context->requestOpenHandle, NULL, 0, context->inputData, context->inputLen) &&
+        GetLastError() != ERROR_IO_PENDING) {
+        context->handler->handleError(GetLastError());
+    }
 }

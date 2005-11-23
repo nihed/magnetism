@@ -10,6 +10,7 @@
 #include <exdisp.h>
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
+#include "HippoHTTP.h"
 #include <Winsock2.h>
 #include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
@@ -293,6 +294,34 @@ HippoUI::onConnectionChange(bool connected)
     notificationIcon_.updateIcon(smallIcon_);
 }
 
+static void
+testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInfo, 
+                  DWORD statusLength)
+{
+    HippoUI *ui = (HippoUI*) uctx;
+}
+
+class TestAsyncHandler : public HippoHTTPAsyncHandler
+{
+    HippoUI *ui_;
+public:
+    TestAsyncHandler(HippoUI *ui) {ui_ = ui;}
+    ~TestAsyncHandler() {}
+    virtual void handleError(HRESULT result) {
+        ui_->logError(L"failed http test", result);
+    }
+    virtual void handleComplete(void *responseData, long responseBytes) {
+        int addlen = MultiByteToWideChar(CP_UTF8, 0, (char*)responseData, responseBytes, NULL, 0);
+        if (addlen == 0)
+            return;
+        BSTR str;
+        str = ::SysAllocStringLen(L"", addlen);
+        int ret = MultiByteToWideChar(CP_UTF8, 0, (char*)responseData, responseBytes, str, addlen);
+        if (ret == 0)
+            return;
+    }
+};
+
 bool
 HippoUI::create(HINSTANCE instance)
 {
@@ -351,6 +380,10 @@ HippoUI::create(HINSTANCE instance)
         linkshare.personRecipients.append(recipient);
         onLinkMessage(linkshare);        
     }
+
+    //HippoHTTP *http = new HippoHTTP();;
+    //HippoHTTPAsyncHandler *handler = new TestAsyncHandler(this);
+    //http->doAsync(L"192.168.1.77", 8080, L"GET", L"/", NULL, NULL, 0, handler, NULL);
 
     return true;
 }
@@ -1268,6 +1301,8 @@ WinMain(HINSTANCE hInstance,
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initialDebugShare, "Show an initial dummy debug share" },
         { NULL }
     };
+
+    g_thread_init(NULL);
 
     GOptionContext *context = g_option_context_new("The dumbhippo.com notification icon");
     g_option_context_add_main_entries(context, entries, NULL);

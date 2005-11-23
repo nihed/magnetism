@@ -7,7 +7,7 @@ class HippoHTTPAsyncHandler
 {
 public:
     virtual void handleError(HRESULT result) = 0;
-    virtual void handleComplete(BSTR *responseText) = 0;
+    virtual void handleComplete(void *responseData, long responseBytes) = 0;
 };
 
 class HippoHTTP
