@@ -401,4 +401,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetAccountDisabled(User user, boolean disabled) throws IOException, HumanVisibleException {
 		identitySpider.setAccountDisabled(user, disabled);
 	}
+
+	public void doSetPassword(User user, String password) throws IOException, HumanVisibleException {
+		password = password.trim();
+		if (password.length() == 0) {
+			password = null;
+		}
+		signinSystem.setPassword(user, password);
+	}
 }

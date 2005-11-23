@@ -14,6 +14,7 @@
 	<title>Your Account Setup</title>
 	<dht:stylesheets href="account.css" />
 	<dht:scriptIncludes/>
+	<script type="text/javascript">dojo.require("dh.password");</script>
 </head>
 <body>
     <dht:header>
@@ -88,7 +89,7 @@
 						Set a password:
 					</td>
 					<td class="dh-edit-table-control">
-						<input type="password" class="dhText"/>
+						<input type="password" class="dhText" id="dhPasswordEntry"/>
 					</td>
 					</tr>
 					<tr>
@@ -96,14 +97,14 @@
 						Type the same password again:
 					</td>
 					<td class="dh-edit-table-control">
-						<input type="password" class="dhText"/>
+						<input type="password" class="dhText" id="dhPasswordAgainEntry"/>
 					</td>
 					</tr>
 					<tr>
 					<td class="dh-edit-table-label">
 					</td>
 					<td class="dh-edit-table-control">
-						<input type="button" value="Set Password"/>
+						<input type="button" value="Set Password" id="dhSetPasswordButton"/>
 					</td>
 					</tr>			
 					<tr>

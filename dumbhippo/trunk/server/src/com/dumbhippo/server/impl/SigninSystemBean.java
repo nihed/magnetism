@@ -133,4 +133,18 @@ public class SigninSystemBean implements SigninSystem {
 					+ "set a password yet? Try sending yourself a sign-in link if you can't remember your password.").setHtmlSuggestion("<a href=\"/signin\">Try again</a>");
 		}
 	}
+
+	public void setPassword(User user, String password) throws HumanVisibleException {
+		// password may be null
+		
+		if (password != null && password.length() < 4) {
+			// last-ditch check for reasonable password, a full check would go 
+			// elsewhere
+			throw new HumanVisibleException("That password is too short, anyone could guess it");
+		}
+		
+		// be sure we get a new account so it's attached
+		Account account = accountSystem.lookupAccountByUser(user);
+		account.setPassword(password);
+	}
 }
