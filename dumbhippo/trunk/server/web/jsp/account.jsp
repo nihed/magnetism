@@ -35,6 +35,17 @@
 				<div class="dhBackgroundBox">
 					<b>Help your friends find you</b>
 					
+					<div class="dh-right-box dhItemBox">
+						<p class="dh-right-box-section">Email Addresses</p>
+						<c:forEach items="${account.person.allEmails}" var="email">
+							<p><c:out value="${email.humanReadableString}"/></p>
+						</c:forEach>
+						<p class="dh-right-box-section">Screen Names</p>
+						<c:forEach items="${account.person.allAims}" var="aim">
+							<p><c:out value="${aim.humanReadableString}"/></p>
+						</c:forEach>
+					</div>
+					
 					<table class="dh-edit-table">
 					<tr>
 					<td class="dh-edit-table-label">

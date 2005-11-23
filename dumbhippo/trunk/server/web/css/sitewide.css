@@ -161,6 +161,7 @@ form.inlineEditBox input[type=text] {
 	background-color:			#fff;
 	border:						1px solid black;
 	-moz-border-radius:			5px;
+	padding:					0.5em;
 }
 
 /* Right now, gray background box */
