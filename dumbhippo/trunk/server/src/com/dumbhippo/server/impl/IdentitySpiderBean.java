@@ -575,7 +575,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public Set<Contact> getRawContacts(User user) {
 		// We call lookupAccountByPerson to deal with possibly detached users
-		Account account = accountSystem.lookupAccountByPerson(user);
+		Account account = accountSystem.lookupAccountByUser(user);
 		return account.getContacts();
 	}
 	
@@ -636,5 +636,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return user.getAccount();
 		
 		return getFirstContactResource ((Contact)person);
+	}
+
+	public boolean getAccountDisabled(User user) {
+		Account account = user.getAccount();
+		if (account == null) // must have been detached
+			account = accountSystem.lookupAccountByUser(user);
+		return account.isDisabled();
+	}
+	
+	public void setAccountDisabled(User user, boolean disabled) {
+		Account account = user.getAccount();
+		if (account == null || !em.contains(account))
+			account = accountSystem.lookupAccountByUser(user); // get attached account
+		logger.debug("New disabled = " + disabled + " for account " + account);
+		account.setDisabled(disabled);
 	}
 }

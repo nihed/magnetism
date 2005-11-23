@@ -57,6 +57,17 @@ dh.actions.signOut = function() {
 		  	    	 });
 }
 
+dh.actions.setAccountDisabled = function(disabled) {
+   	dh.server.doPOST("setaccountdisabled",
+   					{ "disabled" : disabled ? "true" : "false" },
+		  	    	 function(type, data, http) {
+			  	    	 document.location.reload();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't disable account");
+		  	    	 });
+}
+
 // This handler function gets stuffed as the a member function of
 // a dojo.widget.HtmlInlineEditBox
 dh.actions.renamePersonHandler = function(value, oldValue) {

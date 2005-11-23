@@ -4,10 +4,10 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 
 @BanFromWebTier
 @Local
@@ -51,7 +51,7 @@ public interface AccountSystem {
 	 * @param authKey their auth cookie
 	 * @return true if authenticated
 	 */
-	public boolean checkClientCookie(Person user, String authKey);
+	public boolean checkClientCookie(User user, String authKey);
 	
 	/** 
 	 * Gets the number of active accounts.
@@ -68,16 +68,16 @@ public interface AccountSystem {
 	public Set<Account> getActiveAccounts();
 	
 	/**
-	 * Looks up an account by the Person it's associated with. 
-	 * If this function returns non-null, then a Person is 
-	 * registered with our system. If it returns null, then 
-	 * a person is an implicit person we think is out there,
-	 * but hasn't signed up.
+	 * Looks up an account by the User it's associated with.
+	 * Throws a fatal runtime exception if no Account (should not happen)
 	 * 
-	 * @param person the person
-	 * @return their account or null if they don't have one
+	 * This method is useless if the user is attached, 
+	 * because you can just user.getAccount()
+	 * 
+	 * @param user the user
+	 * @return their account
 	 */
-	public Account lookupAccountByPerson(Person person);
+	public Account lookupAccountByUser(User user);
 	
 	/**
 	 * Lookup an account by the GUID of the person who owns it.

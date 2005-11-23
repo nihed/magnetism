@@ -8,8 +8,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
@@ -25,19 +28,39 @@ public class SigninBean implements Serializable {
 
 	private static final Log logger = GlobalSetup.getLog(SigninBean.class);
 	
-	private User user;
+	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
+	private static final String SIGNIN_BEAN_KEY = "dumbhippo.signin";
+	
+	private Guid userGuid;
+	private User user; // lazily initialized
 	
 	private SigninBean(HttpServletRequest request) {
-		try {
-			user = CookieAuthentication.authenticate(request);
-		} catch (BadTastingException e) {
-			user = null;
-		} catch (NotLoggedInException e) {
-			user = null;
+
+		// We can't cache the User or Account objects in session scope since we won't notice if 
+		// there are changes to them. So we cache SigninBean only with request scope and put 
+		// only the guid in session scope. This also nicely dodges threading issues since 
+		// Guid is immutable.
+		userGuid = (Guid) request.getSession().getAttribute(USER_ID_KEY);
+				
+		if (userGuid == null) {
+			try {
+				user = CookieAuthentication.authenticate(request);
+				userGuid = user.getGuid();
+				request.getSession().setAttribute(USER_ID_KEY, userGuid);
+				logger.debug("storing authenticated user ID " + user + " in session");
+			} catch (BadTastingException e) {
+				userGuid = null;
+				user = null;
+			} catch (NotLoggedInException e) {
+				userGuid = null;
+				user = null;
+			}
+		} else {
+			logger.debug("loaded authenticated user ID " + userGuid + " from session");
 		}
 		
-		request.getSession().setAttribute("dumbhippo.signin", this);
-		logger.debug("storing SigninBean in session, valid = " + isValid());
+		logger.debug("storing SigninBean on request, valid = " + isValid());
+		request.setAttribute(SIGNIN_BEAN_KEY, this);
 	}
 
 	public static SigninBean getForRequest(HttpServletRequest request) {
@@ -47,7 +70,7 @@ public class SigninBean implements Serializable {
 			throw new NullPointerException("null request");
 		
 		try {
-			result = (SigninBean) request.getSession().getAttribute("dumbhippo.signin");
+			result = (SigninBean) request.getAttribute(SIGNIN_BEAN_KEY);
 		} catch (ClassCastException e) {
 			logger.debug("Value of dumbhippo.signin wasn't a SigninBean");
 			result = null;
@@ -58,7 +81,7 @@ public class SigninBean implements Serializable {
 				
 		return result;
 	}
-		
+	
 	public static String computeClientIdentifier(HttpServletRequest request) {
 		StringBuilder ret = new StringBuilder();
 		ret.append(request.getRemoteAddr());
@@ -83,10 +106,20 @@ public class SigninBean implements Serializable {
 	}
 
 	public boolean isValid() {
-		return user != null;
+		return userGuid != null;
 	}
 	
 	public User getUser() {
+		if (userGuid != null && user == null) {
+			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+			try {
+				user = spider.lookupGuid(User.class, userGuid);
+			} catch (GuidNotFoundException e) {
+				user = null;
+				userGuid = null;
+			}
+		}
+
 		return user;
 	}
 	

@@ -88,6 +88,10 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
 	public void doSendLoginLinkAim(String address) throws IOException, HumanVisibleException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "disabled" })
+	public void doSetAccountDisabled(User user, boolean disabled) throws IOException, HumanVisibleException;
 	
 	/**
 	 * This one is not annotated since it's special-cased in the servlet.

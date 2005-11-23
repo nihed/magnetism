@@ -109,14 +109,30 @@
 			</tr>
 			<tr>
 			<td class="dh-edit-table-label">
-				<a href="">Disable Account</a>
+				<c:choose>
+					<c:when test="${account.disabled}">
+						<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
+					</c:when>
+					<c:otherwise>
+						<a href="javascript:dh.actions.setAccountDisabled(true);">Disable Account</a>
+					</c:otherwise>
+				</c:choose>
 			</td>
 			<td>
 			</td>
 			</tr>
 			<tr>
-			<td colspan="2" class="dh-explanation">Disabling your account means you have no 
-				public page and we will never send you email for any reason.
+			<td colspan="2" class="dh-explanation">
+				<c:choose>
+					<c:when test="${account.disabled}">
+						Enabling your account will give you a public page and let you 
+						share links and photos with other people.
+					</c:when>
+					<c:otherwise>
+						Disabling your account means you have no 
+						public page and we will never send you email for any reason.			
+					</c:otherwise>
+				</c:choose>
 				<a href="/privacy" target="_blank">Our privacy policy</a>
 			</td>
 			</tr>

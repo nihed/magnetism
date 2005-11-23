@@ -288,4 +288,8 @@ public interface IdentitySpider {
 	 * @return a resource that can be used to represent person
 	 */
 	public Resource getBestResource(Person person);
+	
+	public boolean getAccountDisabled(User user);
+	
+	public void setAccountDisabled(User user, boolean disabled);
 }

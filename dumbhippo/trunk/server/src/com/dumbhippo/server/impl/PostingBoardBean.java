@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -407,13 +408,18 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
-	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max) {
-		if (!user.equals(viewpoint.getViewer()))
+	public List<PostView> getContactPosts(Viewpoint viewpoint, Person person, boolean include_received, int start, int max) {
+		if (!person.equals(viewpoint.getViewer()))
 			return Collections.emptyList();
 		
-		Account account = accountSystem.lookupAccountByPerson(user); 
-		if (account == null)
+		if (person instanceof Contact)
 			return Collections.emptyList();
+		
+		User user = (User) person;
+		
+		Account account = accountSystem.lookupAccountByUser(user); 
+		
+		assert account != null;
 		
 		String recipient_clause = include_received ? "" : "NOT " + VIEWER_RECEIVED; 
 

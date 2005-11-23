@@ -97,7 +97,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	private Account getAccount(User inviter) {
 		Account account = inviter.getAccount();
 		if (account == null || !em.contains(account))
-			account = accounts.lookupAccountByPerson(inviter);
+			account = accounts.lookupAccountByUser(inviter);
 		if (account == null)
 			throw new RuntimeException("user " + inviter + " with no account???");
 		return account;

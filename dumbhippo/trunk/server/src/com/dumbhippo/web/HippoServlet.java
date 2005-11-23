@@ -25,8 +25,6 @@ import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.XmlRpcMethods;
-import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
-import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class HippoServlet extends AbstractServlet {
 
@@ -235,20 +233,14 @@ public class HippoServlet extends AbstractServlet {
 	}
 	
 	private User getLoggedInUser(HttpServletRequest request) throws HttpException {
-		try {
-			return CookieAuthentication.authenticate(request);
-		} catch (BadTastingException e) {
-			// In an HTML servlet, we would redirect to a login page; but in this
-			// servlet we can't do much, we have no UI
-
-			logger.debug(e);
-			throw new HttpException(HttpResponseCode.FORBIDDEN, "Authorization failed, please log in again (bad cookie)", e);
-		} catch (NotLoggedInException e1) {
-			// In an HTML servlet, we would redirect to a login page; but in this
-			// servlet we can't do much, we have no UI
-			logger.debug(e1);
-			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in", e1);
+		SigninBean signin = SigninBean.getForRequest(request);
+		User user = signin.getUser();
+		if (user == null) {
+			// we have no UI so the user is pretty much jacked at this stage; but it 
+			// should not happen in any non-broken situation
+			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in");
 		}
+		return user;
 	}
 		
 	private void writeHtmlHeaderBoilerplate(OutputStream out) throws IOException {

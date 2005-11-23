@@ -51,8 +51,10 @@ public class Account extends Resource {
 	private long creationDate;
 	private int invitations;
 	
-	private boolean wasSentShareLinkTutorial = false;
-	private boolean hasDoneShareLinkTutorial = false;
+	private boolean wasSentShareLinkTutorial;
+	private boolean hasDoneShareLinkTutorial;
+	
+	private boolean disabled;
 	
 	private String password;
 	
@@ -75,6 +77,9 @@ public class Account extends Resource {
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		creationDate = -1;
+		wasSentShareLinkTutorial = false;
+		hasDoneShareLinkTutorial = false;
+		disabled = false;
 	}
 	
 	public String toString() {
@@ -84,6 +89,10 @@ public class Account extends Resource {
 			builder.append(owner.toString());
 		else 
 			builder.append("null");
+		
+		builder.append(" disabled = " + disabled);
+		
+		builder.append("}");
 		// Don't dump clients/contacts here - otherwise we won't be
 		// able to toString() a detached account
 		
@@ -296,6 +305,15 @@ public class Account extends Resource {
 		if (correct == null)
 			return false;
 		return attempt.trim().equals(correct);
+	}
+	
+	@Column(nullable=false)
+	public boolean isDisabled() {
+		return disabled;
+	}
+
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
 	
 	@Override

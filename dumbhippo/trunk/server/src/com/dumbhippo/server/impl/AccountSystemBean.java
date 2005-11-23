@@ -11,11 +11,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 
@@ -51,17 +50,17 @@ public class AccountSystemBean implements AccountSystem {
 		return c;
 	}
 	
-	public boolean checkClientCookie(Person user, String authKey) {
-		Account account = lookupAccountByPerson(user);
+	public boolean checkClientCookie(User user, String authKey) {
+		Account account = lookupAccountByUser(user);
 		return account.checkClientCookie(authKey);
 	}
 
-	public Account lookupAccountByPerson(Person person) {
+	public Account lookupAccountByUser(User user) {
 		Account ret;
 		try {
-			ret = (Account) em.createQuery("from Account a where a.owner = :person").setParameter("person", person).getSingleResult();
+			ret = (Account) em.createQuery("from Account a where a.owner = :person").setParameter("person", user).getSingleResult();
 		} catch (EntityNotFoundException e) {
-			ret = null;
+			throw new RuntimeException("User has no account!", e);
 		}
 		return ret;
 	}

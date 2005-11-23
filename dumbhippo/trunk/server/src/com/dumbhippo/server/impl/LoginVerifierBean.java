@@ -98,11 +98,11 @@ public class LoginVerifierBean implements LoginVerifier {
 			throw new HumanVisibleException("The link you followed has expired; you'll need to start over.");
 		
 		Resource resource = token.getResource();
-		Person person = spider.lookupUserByResource(resource);
+		User user = spider.lookupUserByResource(resource);
 		Account account;
 		
-		if (person != null)
-			account = accounts.lookupAccountByPerson(person);
+		if (user != null)
+			account = accounts.lookupAccountByUser(user);
 		else
 			account = null;
 		
@@ -111,6 +111,6 @@ public class LoginVerifierBean implements LoginVerifier {
 		
 		Client client = accounts.authorizeNewClient(account, clientName);
 		
-		return new Pair<Client,Person>(client, person);
+		return new Pair<Client,Person>(client, user);
 	}
 }

@@ -397,4 +397,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSendLoginLinkAim(String address) throws IOException, HumanVisibleException {
 		signinSystem.sendSigninLink(address);
 	}
+
+	public void doSetAccountDisabled(User user, boolean disabled) throws IOException, HumanVisibleException {
+		identitySpider.setAccountDisabled(user, disabled);
+	}
 }

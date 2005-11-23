@@ -3,6 +3,9 @@ package com.dumbhippo.web;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
@@ -11,6 +14,8 @@ import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {
+	
+	private static final Log logger = GlobalSetup.getLog(CookieAuthentication.class);
 	
 	@SuppressWarnings("serial")
 	public static class NotLoggedInException extends Exception {
@@ -79,10 +84,11 @@ public class CookieAuthentication {
 		User user;		
 		try {
 			user = identitySpider.lookupGuidString(User.class, userId);
+			logger.debug("Loaded new user in authenticate(): " + user);
 		} catch (GuidNotFoundException e) {
 			throw new BadTastingException("Cookie had unknown person ID '" + userId + "'");
 		} catch (ParseException e) {
-			throw new BadTastingException("Cookie had malformded person ID '" + userId + "'");
+			throw new BadTastingException("Cookie had malformed person ID '" + userId + "'");
 		}
 		if (!accountSystem.checkClientCookie(user, authKey)) {
 			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");

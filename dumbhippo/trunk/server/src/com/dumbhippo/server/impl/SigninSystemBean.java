@@ -121,7 +121,7 @@ public class SigninSystemBean implements SigninSystem {
 			throw new HumanVisibleException("Hmm, there doesn't seem to be an account with the "
 					+ ((resource instanceof EmailResource) ? " email address '" : " screen name '") + address + "'");
 		} else {
-			account = accountSystem.lookupAccountByPerson(user);
+			account = accountSystem.lookupAccountByUser(user);
 			assert account != null;
 		}
 		
