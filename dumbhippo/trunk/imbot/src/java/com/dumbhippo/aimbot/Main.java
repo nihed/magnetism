@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.jms.JmsConsumer;
@@ -57,6 +58,14 @@ public class Main {
 						ObjectMessage message = producer.createObjectMessage(event);
 						producer.send(message);
 					}
+					
+					if (event instanceof BotEventChatRoomRoster) {
+						logger.debug("Sending room roster event");
+						
+						ObjectMessage message = producer.createObjectMessage(event);
+						producer.send(message);
+					}
+					
 					
 				} catch (InterruptedException e) {
 					// will check the quit flag now

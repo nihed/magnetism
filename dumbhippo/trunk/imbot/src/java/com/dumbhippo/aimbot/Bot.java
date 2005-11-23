@@ -1,5 +1,6 @@
 package com.dumbhippo.aimbot;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Random;
@@ -24,9 +25,11 @@ import com.dumbhippo.aim.RawListenerAdapter;
 import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTaskFailedException;
 import com.dumbhippo.botcom.BotTaskMessage;
+import com.dumbhippo.botcom.BotTaskJoinRoom;
 import com.dumbhippo.identity20.RandomToken;
 
 class Bot implements Runnable {
@@ -68,6 +71,10 @@ class Bot implements Runnable {
 	    				logger.debug("filtering out " + PING);
 	    				throw new FilterException();
 	    			}
+	    		}
+	    		public void handleChatRoomRosterChange(String s1, String s2, ArrayList<String> al){
+	    			// do nothing ??
+	    			;
 	    		}
 	    	});
 	    }
@@ -126,6 +133,11 @@ class Bot implements Runnable {
 			logger.info(name + " disconnected");
 		}
 		
+		/* 
+		 * handle a one-to-one IM message
+		 * 
+		 * @see com.dumbhippo.aim.Listener#handleMessage(com.dumbhippo.aim.Buddy, java.lang.String)
+		 */
 		public void handleMessage(Buddy buddy, String messageHtml) {
 			logger.info(name + " message from " + buddy.getName() + ": " + messageHtml);
 			
@@ -139,8 +151,34 @@ class Bot implements Runnable {
 				sendEvent(new BotEventToken(name.getNormalized(), buddy.getName().getNormalized(), 
 						m.group()));
 			} else {
-				saySomethingRandom(buddy);
+				saySomethingRandom(buddy, null);
 			}
+		}
+		
+		/* 
+		 * handle a chat room message
+		 */
+		public void handleChatMessage(Buddy buddy, String chatRoomId, String messageHtml) {
+			logger.info(name + " message from " + buddy.getName() + " in room " + chatRoomId + ": " + messageHtml);
+			
+			Client client = aim;
+			if (client == null)
+				return;		
+			
+			// in a chat room, things that we say get echoed back to us
+			// so check if the sender is our screen name, and if so ignore the message
+			if (buddy.getName() == name) {
+				logger.info("Ignoring echoed chat room message from this bot!");
+				return;
+			}
+			
+			// TODO: disable hippo blabbering in chat rooms where he gets in the way
+			saySomethingRandom(buddy, chatRoomId);
+		}
+		
+		public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {			
+			// send the event to the main server over JMS connection
+			sendEvent(new BotEventChatRoomRoster(name.getNormalized(), chatRoomName, chatRoomId, chatRoomRoster));
 		}
 		
 		public void handleWarning(Buddy buddy, int amount) {
@@ -196,26 +234,26 @@ class Bot implements Runnable {
 		this.listeners = new HashSet<BotListener>();
 	}
 
-	private void saySomethingRandom(Buddy buddy) {
+	private void saySomethingRandom(Buddy buddy, String chatRoomId) {
 		Client client = aim;
 		logger.debug("saying something random to " + buddy.getName());
 		if (client == null)
 			return;
 		switch (random.nextInt(5)) {
 		case 0:
-			client.sendMessage(buddy, "You suck");
+			client.sendMessage(buddy, chatRoomId, "You suck");
 			break;
 		case 1:
-			client.sendMessage(buddy, "Blah blah blah blah blah blah blah");
+			client.sendMessage(buddy, chatRoomId, "Blah blah blah blah blah blah blah");
 			break;
 		case 2:
-			client.sendMessage(buddy, "Hippo Hippo Hooray");
+			client.sendMessage(buddy, chatRoomId, "Hippo Hippo Hooray");
 			break;
 		case 3:
-			client.sendMessage(buddy, "Do I repeat myself often?");
+			client.sendMessage(buddy, chatRoomId, "Do I repeat myself often?");
 			break;
 		case 4:
-			client.sendMessage(buddy, "I may be dumb, but I'm not stupid");
+			client.sendMessage(buddy, chatRoomId, "I may be dumb, but I'm not stupid");
 			break;
 		}
 	}
@@ -227,22 +265,22 @@ class Bot implements Runnable {
 			return;
 		switch (random.nextInt(6)) {
 		case 0:
-			client.sendMessage(buddy, "Crunch crunch crunch");
+			client.sendMessage(buddy, null, "Crunch crunch crunch");
 			break;
 		case 1:
-			client.sendMessage(buddy, "Hmmmm...");
+			client.sendMessage(buddy, null, "Hmmmm...");
 			break;
 		case 2:
-			client.sendMessage(buddy, "I'll get back to you on that in a minute");
+			client.sendMessage(buddy, null, "I'll get back to you on that in a minute");
 			break;
 		case 3:
-			client.sendMessage(buddy, "........");
+			client.sendMessage(buddy, null, "........");
 			break;
 		case 4:
-			client.sendMessage(buddy, "Your feeble commands insult my infinite bot mind");
+			client.sendMessage(buddy, null, "Your feeble commands insult my infinite bot mind");
 			break;
 		case 5:
-			client.sendMessage(buddy, "Got it! Right on it!");
+			client.sendMessage(buddy, null, "Got it! Right on it!");
 			break;
 		}
 	}
@@ -420,12 +458,34 @@ class Bot implements Runnable {
 		ScreenName recipientName = new ScreenName(message.getRecipient());
 		Buddy recipient = client.addBuddy(recipientName);
 				
-		client.sendMessage(recipient, message.getHtmlMessage());
+		client.sendMessage(recipient, null, message.getHtmlMessage());
 		
 		if (!client.getOnline()) {
 			// most likely this means we failed (there's really no way to know reliably)
 			throw new BotTaskFailedException("offline right when we sent the message");
 		}
+	}
+	
+	public void doJoinRoom(BotTaskJoinRoom request) throws BotTaskFailedException {
+		logger.debug("Bot " + name + " got join room task for " + request.getChatRoomName());
+		
+		// we save a reference in case it gets set to null by the main thread
+		Client client = aim;
+		
+		if (client == null) {
+			throw new BotTaskFailedException("bot is not running");
+		}
+		
+		String chatRoomName = request.getChatRoomName();
+			
+		// join the specified room
+		client.joinRoom(chatRoomName);
+		
+		if (!client.getOnline()) {
+			// most likely this means we failed (there's really no way to know reliably)
+			throw new BotTaskFailedException("offline right when we tried to join room");
+		}
+		
 	}
 	
 	public void addListener(BotListener listener) {

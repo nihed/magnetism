@@ -43,8 +43,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 
@@ -57,6 +59,12 @@ public class RawConnection {
     // private static final String REVISION = "\"TIC:\\Revision: 1.61 \" 160 US
     // \"\" \"\" 3 0 30303 -kentucky -utf8 94791632";
     private static final String REVISION = "\"TIC:TOC2\" 160";
+    
+    // Online docs of TOC protocol says "currently exchange should always be 4,
+    // however this may change in the future".
+    // Rumor has it that 4 is "private chats" and 5 is "public chats".
+    // Needs to match exchange used in aim launch URL in web UI
+    private static final int AIM_CHAT_ROOM_EXCHANGE = 5;
 
     private String loginServer = "toc.oscar.aol.com";
 
@@ -84,6 +92,9 @@ public class RawConnection {
     
     private int warnAmount;
     
+    private HashMap chatRoomNamesById;
+    private HashMap chatRoomRosterById;
+    
     public RawConnection(ScreenName name, String pass, String info, RawListener listener) {
 
     	setWarnAmount(0);
@@ -93,6 +104,13 @@ public class RawConnection {
         this.pass = pass;
         this.info = info;
         this.listener = listener;
+        
+        // create a HashMap for keeping a cached mapping of chat room id -> chat room names
+        //  for rooms this connection is currently in
+        this.chatRoomNamesById = new HashMap();
+        
+        // create a HashMap for keeping track of users currently in each chat room
+        this.chatRoomRosterById = new HashMap();
     }
     
     public void signOn() {
@@ -240,6 +258,64 @@ public class RawConnection {
         frameSend(work);
     }
     
+    /*
+     * toc_chat_join <Exchange> <Chat Room Name>
+     */
+    public void chatJoin(String chatRoomName) {
+    	frameSend("toc_chat_join " + AIM_CHAT_ROOM_EXCHANGE + " " + chatRoomName + "\0");
+    }
+    
+    /*
+     * toc_chat_leave <Chat Room ID>
+     */
+    public void chatLeave(String chatRoomId) {
+    	frameSend("toc_chat_leave " + chatRoomId +  "\0");
+    }
+    
+    /*
+     * toc_chat_accept <Chat Room ID>
+     * accept a CHAT_INVITE.  server will respond with a CHAT_JOIN.
+     */
+    public void chatAccept(String chatRoomId) {
+    	frameSend("toc_chat_accept " + chatRoomId + "\0");
+    }
+
+    /*
+     * toc_chat_send <Chat Room ID> <Message>
+     */
+    
+    public void chatSend(String chatRoomId, String html) {
+    	if (html.length() >= 1024) {
+    		html = html.substring(0, 1024);
+    	}
+    	logger.debug("Sending Chat Message " + chatRoomId + " > " + html);
+    	
+    	String work = "toc_chat_send ";
+    	work = work.concat(chatRoomId);
+    	work = work.concat(" \"");
+    	for (int i = 0; i < html.length(); i++) {
+    		switch (html.charAt(i)) {
+    		case '$' :
+    		case '{' :
+    		case '}' :
+    		case '[' :
+    		case ']' :
+    		case '(' :
+    		case ')' :
+    		case '\"' :
+    		case '\\' :
+    			work = work.concat("\\" + html.charAt(i));
+    			break;
+    		default :
+    			work = work.concat("" + html.charAt(i));
+    		break;
+    		}
+    	}
+    	
+    	work = work.concat("\"\0");
+    	frameSend(work);
+    }
+    	
     public void sendGetStatus(ScreenName buddy) {
     	frameSend("toc_get_status " + buddy + "\0");
     }
@@ -359,6 +435,16 @@ public class RawConnection {
             	command_ERROR(inToken);
             } else if (command.equals("NICK")) {
             	command_NICK(inToken);
+            } else if (command.equals("CHAT_INVITE")) {
+            	command_CHAT_INVITE(inToken);
+            } else if (command.equals("CHAT_JOIN")) {
+            	command_CHAT_JOIN(inToken);
+            } else if (command.equals("CHAT_IN")) {
+            	command_CHAT_IN(inToken);
+            } else if (command.equals("CHAT_UPDATE_BUDDY")) {
+            	command_CHAT_UPDATE_BUDDY(inToken);
+            } else if (command.equals("CHAT_LEFT")) {
+            	command_CHAT_LEFT(inToken);
             } else {
             	// log this but don't crash, probably it's harmless
             	logger.error("unknown AIM command '" + toDebugAscii(command) + "'");
@@ -477,6 +563,139 @@ public class RawConnection {
     	}
     }
     
+    /*
+     * CHAT_INVITE:<Chat Room Name>:<Chat Room Id>:<Invite Sender>:<Message>
+     * Server is inviting us to a chat room.
+     */
+    // TODO: may want to disable this so that random people can't invite our bot to chat rooms,
+    //  it is not needed for joins requested by our EJB server
+    private void command_CHAT_INVITE(StringTokenizer inToken) {
+    	String chatRoomName = inToken.nextToken();
+    	String chatRoomId = inToken.nextToken();
+    	String inviteSender = inToken.nextToken();
+    	String message = inToken.nextToken();
+    	
+        logger.debug("CHAT_INVITE room_name=" + chatRoomName + 
+        			 " room_id=" + chatRoomId +
+        			 " inviteSender=" + inviteSender + 
+        			 " message=" + message);
+        
+        // respond with a toc_chat_accept
+        chatAccept(chatRoomId);
+        
+        // The server will send a CHAT_JOIN in response
+	}
+    
+    /*
+     * CHAT_JOIN:<Chat Room Id>:<Chat Room Name>
+     * Succesfully joined a chat room, now we get the ID as well.
+     */
+    private void command_CHAT_JOIN(StringTokenizer inToken) {
+    	String chatRoomId = inToken.nextToken();
+    	String chatRoomName = inToken.nextToken();
+    	
+    	// add the mapping id->name to this connection's table of chat rooms
+    	chatRoomNamesById.put(chatRoomId, chatRoomName);
+    	
+        logger.debug("CHAT_JOIN room_id=" + chatRoomId + " room_name=" + chatRoomName);
+    }
+    
+    /*
+	 * CHAT_IN:<Chat Room Id>:<Source User>:<Whisper? T/F>:<Message>
+	 * Someone sent a chat message in a room (possibly us).
+	 */
+    private void command_CHAT_IN(StringTokenizer inToken) {
+    	String chatRoomId = inToken.nextToken();
+    	ScreenName from = new ScreenName(inToken.nextToken());
+    	String whisper = inToken.nextToken();
+    	String mesg = inToken.nextToken();
+    	while (inToken.hasMoreTokens()) {
+             mesg = mesg + ":" + inToken.nextToken();
+        }
+   
+        lastMessageTimestamp = System.currentTimeMillis();
+        
+        logger.debug("CHAT_IN room_id=" + chatRoomId +
+        		 " from=" + from +
+    			 " whisper=" + whisper + 
+    			 " message=" + mesg);
+
+        generateChatMessage(from, chatRoomId, mesg);
+    }
+    
+    /*
+     * CHAT_UPDATE_BUDDY:<Chat Room Id>:<Inside? T/F>:<User 1>:<User 2>...
+     * Someone arrived/departed a room, or initial room roster list.
+     */
+    private void command_CHAT_UPDATE_BUDDY(StringTokenizer inToken) {
+    	String chatRoomId = inToken.nextToken();
+    	String inside = inToken.nextToken();
+    	
+    	// get the current roster for the room from hashmap, or create a new one
+    	// TODO: synchronize access to chat room rosters?
+    	ArrayList<String> roster = (ArrayList<String>)(chatRoomRosterById.get(chatRoomId));
+    	if (roster == null) {
+    		roster = new ArrayList<String>();
+    	}
+    	
+    	String userListStr = "";
+    	while (inToken.hasMoreTokens()) {
+    		String s = inToken.nextToken();
+    		ScreenName sn = new ScreenName(s);
+    		
+    		userListStr = userListStr + s + ":";
+    		// leave this bot off of roster actions
+    		if (!sn.equals(name)) {
+    			if (inside.equals("T")) {
+    				if (roster.indexOf(s) < 0) {
+    					roster.add(s);
+    					logger.debug("Added " + s + " to roster for " + chatRoomId);
+    				} else {
+    					logger.debug("Keeping " + s + " on roster for " + chatRoomId);
+    				}
+    			} else { 
+    				roster.remove(s);
+    				logger.debug("Removed " + s + " from roster for " + chatRoomId);
+    			}
+    		}
+        }
+
+    	// put the updated roster back into the hashmap
+    	chatRoomRosterById.put(chatRoomId, roster);
+    	
+        logger.debug("CHAT_UPDATE_BUDDY room_id=" + chatRoomId +
+        		 " inside=" + inside +
+    			 " user_list=" + userListStr);
+        
+        logger.debug("Current roster for room_id=" + chatRoomId + " is " + roster);
+    	
+        lastMessageTimestamp = System.currentTimeMillis();
+        
+        // get chat room name for this id
+        String chatRoomName = (String)chatRoomNamesById.get(chatRoomId);
+        
+        // relay room members (sans this bot) to dumbhippo server
+        generateChatRoomRosterChange(chatRoomName, chatRoomId, roster);
+        
+        // if this bot is the only user left in the room, then depart the room
+        if (roster.size() == 0) {
+        	logger.debug("Room " + chatRoomId + " empty except this bot, so departing...");
+        	chatLeave(chatRoomId);
+        }
+    }
+
+    /*
+     * CHAT_LEFT:<Chat Room Id>
+     * We successfully left a chat room.
+     */
+    private void command_CHAT_LEFT(StringTokenizer inToken) {
+      	String chatRoomId = inToken.nextToken();
+      	logger.debug("CHAT_LEFT room_id=" + chatRoomId);
+      	 
+      	// remove the mapping id->name to this connection's table of chat rooms
+     	chatRoomNamesById.remove(chatRoomId);
+    }    
+    
     private void processConfig(String config) {
         PermitDenyMode newPermitMode = PermitDenyMode.PERMIT_ALL;
         BufferedReader br = new BufferedReader(new StringReader(config));
@@ -562,6 +781,22 @@ public class RawConnection {
     		} catch (FilterException e) {
     			
     		}
+    	}
+    }
+    
+    private void generateChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage) {
+    	if (listener != null) {
+    		try {
+    			listener.handleChatMessage(buddy, chatRoomId, htmlMessage);
+    		} catch (FilterException e) {
+    			
+    		}
+    	}
+    }
+    
+    private void generateChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+    	if (listener != null) {
+    		listener.handleChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
     	}
     }
     

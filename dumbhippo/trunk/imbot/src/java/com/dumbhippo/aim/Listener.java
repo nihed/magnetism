@@ -33,6 +33,8 @@
 
 package com.dumbhippo.aim;
 
+import java.util.ArrayList;
+
 
 /**
  * Interface for AIM service requestor
@@ -44,7 +46,8 @@ package com.dumbhippo.aim;
 public interface Listener extends BaseListener {
 
     public void handleMessage(Buddy buddy, String messageHtml);
-
+    public void handleChatMessage(Buddy buddy, String chatRoomId, String messageHtml);
+    public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster);
 
     public void handleWarning(Buddy whoEviledUs, int amount);
 

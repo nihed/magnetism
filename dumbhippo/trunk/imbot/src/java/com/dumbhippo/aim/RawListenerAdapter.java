@@ -5,6 +5,10 @@ public abstract class RawListenerAdapter implements RawListener {
 	public void handleMessage(ScreenName buddy, String htmlMessage)
 			throws FilterException {
 	}
+	
+	public void handleChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage)
+			throws FilterException {
+	}
 
 	public void handleSetEvilAmount(ScreenName whoEviledUs, int amount) {
 	}

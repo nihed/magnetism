@@ -1,8 +1,12 @@
 package com.dumbhippo.aim;
 
+import java.util.ArrayList;
+
 public interface RawListener extends BaseListener {
     public void handleMessage(ScreenName buddy, String htmlMessage) throws FilterException;
-
+    public void handleChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage) throws FilterException;
+    public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster);
+    
     public void handleSetEvilAmount(ScreenName whoEviledUs, int amount);
 
     public void handleBuddySignOn(ScreenName buddy, String htmlInfo);

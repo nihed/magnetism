@@ -157,15 +157,26 @@ public class Client {
     	connection.sendMessage(buddy, html);
     }
     
-    // this is often called from another thread
-    public void sendMessage(Buddy buddy, String html) {
+   
+    /**
+     * This is often called from another thread
+     * 
+     * @param buddy Buddy to send to
+     * @param chatRoomId ID of chat room, or null if IM and not chat room
+     * @param html HTML String to send
+     */
+    public void sendMessage(Buddy buddy, String chatRoomId, String html) {
     	if (buddy == null)
     		throw new IllegalArgumentException("null buddy");
     	if (buddy.isBanned())
     		return;
 
         if (buddy.isOnline()) {
-        	connection.sendMessage(buddy.getName(), html);
+        	if (chatRoomId != null) {
+        		connection.chatSend(chatRoomId, html);
+        	} else {
+        		connection.sendMessage(buddy.getName(), html);
+        	}
         } else {
             // for some reason we are sending a message to an offline buddy,
         	// generate a status update
@@ -232,6 +243,10 @@ public class Client {
         connection.sendDeny(buddy.getName());
     }
 
+    public void joinRoom(String chatRoomName) {
+    	connection.chatJoin(chatRoomName);
+    }
+    
     private void generateMessage(ScreenName from, String htmlMessage) {
         Buddy aimbud = getBuddy(from);
         if (aimbud == null) {
@@ -261,6 +276,46 @@ public class Client {
         }
     }
 
+	private void generateChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+		for (Listener l : aimListeners) {
+            try {
+            	l.handleChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
+            } catch (Exception e) {
+                logger.error(e);
+            }
+        }
+	}
+
+
+    private void generateChatMessage(ScreenName from, String chatRoomId, String htmlMessage) {
+        Buddy aimbud = getBuddy(from);
+        if (aimbud == null) {
+            if (autoAddUsers) {
+                addBuddy(from);
+                aimbud.setOnline(true);
+            } else {
+                logger.info("MESSAGE FROM A NON BUDDY(" + from + ")");
+                // only send a response if a non-empty one is configured
+                if ((nonUserResponse != null) && !nonUserResponse.equals("")) {
+                    connection.sendMessage(from, nonUserResponse);
+                }
+                return;
+            }
+        }
+
+        if (aimbud.isBanned()) {
+            logger.debug("Ignoring message from banned user (" + from + "):" + htmlMessage);
+        } else {
+        	for (Listener l : aimListeners) {
+                try {
+                	l.handleChatMessage(aimbud, chatRoomId, htmlMessage);
+                } catch (Exception e) {
+                    logger.error(e);
+                }
+            }
+        }
+    }
+    
     private void generateWarning(ScreenName from, int amount) {
         Buddy aimbud = getBuddy(from);
         for (Listener l : aimListeners) {
@@ -452,6 +507,9 @@ public class Client {
 	
 	private class ClientListener implements RawListener {
 
+		/**
+		 * Handles on-to-one IMs
+		 */
 		public void handleMessage(ScreenName buddy, String htmlMessage) {
 			boolean filtered = false;
 			for (RawListener l : rawListeners) {
@@ -472,6 +530,34 @@ public class Client {
 			}
 		}
 
+		/**
+		 * Handles messages in chat rooms
+		 */
+		public void handleChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage) {
+			boolean filtered = false;
+			for (RawListener l : rawListeners) {
+				try {
+					l.handleChatMessage(buddy, chatRoomId, htmlMessage);
+				} catch (FilterException e) {
+					filtered = true;
+					break;
+				} catch (Exception e2) {
+					logger.error(e2);
+				}
+			}
+			
+			if (filtered) {
+				logger.debug("--message was filtered out");
+			} else {
+				generateChatMessage(buddy, chatRoomId, htmlMessage);
+			}
+		}
+		
+		public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+			generateChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
+		}
+
+		
 		public void handleSetEvilAmount(ScreenName whoEviledUs, int amount) {
 			for (RawListener l : rawListeners) {
 				try {
