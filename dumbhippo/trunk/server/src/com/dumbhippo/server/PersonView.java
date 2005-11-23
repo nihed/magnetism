@@ -159,7 +159,8 @@ public class PersonView {
 		if ((name == null || name.length() == 0) && 
 			(contact == null && user == null)) {
 			Resource r = getPrimaryResource();
-			name = r.getHumanReadableString();
+			if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
+				name = r.getHumanReadableString();
 		}
 		
 		if (name == null || name.length() == 0) {

@@ -5,6 +5,11 @@
 
 <dh:bean id="account" class="com.dumbhippo.web.AccountPage" scope="request"/>
 
+<c:if test="${!account.signin.valid}">
+	<!-- this is a bad error message but should never happen since we require signin to get here -->
+	<dht:errorPage>Not signed in</dht:errorPage>
+</c:if>
+
 <head>
 	<title>Your Account Setup</title>
 	<dht:stylesheets href="account.css" />
@@ -12,7 +17,7 @@
 </head>
 <body>
     <dht:header>
-		Learn to share a link
+		Account Setup
 	</dht:header>
 
 	<dht:toolbar/>
@@ -29,8 +34,6 @@
 			<table class="dh-edit-table">
 			<tr>
 			<td class="dh-edit-table-label">
-				<!-- don't try to use css counters, firefox no like -->
-				<span class="dh-step">1</span>
 				Your name is:
 			</td>
 			<td class="dh-edit-table-control">
@@ -43,7 +46,6 @@
 			</tr>
 			<tr>
 			<td class="dh-edit-table-label">
-				<span class="dh-step">2</span>
 				<a href="${account.addAimLink}">
 				IM us your screen name
 				</a>
@@ -58,16 +60,60 @@
 			</tr>
 			<tr>
 			<td class="dh-edit-table-label">
-				<span class="dh-step">3</span>
 				Add an email address:
 			</td>
 			<td class="dh-edit-table-control">
-				<input id="dhExtraEmailAddress"/>
+				<input id="dhExtraEmailAddress" class="dhText"/>
 				<input type="button" value="Send Verification"/>
 			</td>
 			</tr>
 			<tr>
 			<td colspan="2" class="dh-explanation">Click on the link you get in the mail.
+			</td>
+			</tr>
+			</table>
+		</div>
+
+		<br/>
+
+		<div class="dhBackgroundBox">
+			<b>Security and privacy</b>
+			
+			<table class="dh-edit-table">
+			<tr>
+			<td class="dh-edit-table-label">
+				Set a password:
+			</td>
+			<td class="dh-edit-table-control">
+				<input type="text" class="dhText"/>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">You can email or IM yourself a sign-in link at any time, so a password is optional.
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+				<a href="">Disable Account</a>
+			</td>
+			<td>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">Disabling your account means you have no 
+				public page and we will never send you email for any reason.
+				<a href="/privacy" target="_blank">Our privacy policy</a>
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-edit-table-label">
+				<a href="javascript:dh.actions.signOut();">Sign Out</a>
+			</td>
+			<td>
+			</td>
+			</tr>
+			<tr>
+			<td colspan="2" class="dh-explanation">Sign out to keep other people on this computer from using your account.
 			</td>
 			</tr>
 			</table>
@@ -78,7 +124,6 @@
 		</p>
 		
 	</div>
-	
 	
 </body>
 </html>

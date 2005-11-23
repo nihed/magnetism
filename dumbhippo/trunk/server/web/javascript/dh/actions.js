@@ -49,7 +49,8 @@ dh.actions.leaveGroup = function(groupId) {
 dh.actions.signOut = function() {
    	dh.server.doPOST("signout", { },
 		  	    	 function(type, data, http) {
-		  	    	 	 document.location.reload();
+		  	    	 	// don't reload the current page since often it will require signin
+			  	    	 window.open("/main", "_self");
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't sign out");

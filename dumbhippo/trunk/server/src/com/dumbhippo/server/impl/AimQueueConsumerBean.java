@@ -19,6 +19,7 @@ import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
@@ -65,7 +66,14 @@ public class AimQueueConsumerBean implements MessageListener {
 		} else {
 			ResourceClaimToken claim = (ResourceClaimToken) token;
 		
-			AimResource resource = identitySpider.getAim(event.getAimName());
+			AimResource resource;
+			try {
+				resource = identitySpider.getAim(event.getAimName());
+			} catch (ValidationException e) {
+				logger.trace(e);
+				logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'");
+				throw new RuntimeException("broken, invalid screen name from AIM bot", e);
+			}
 			
 			try {
 				claimVerifier.verify(null, claim, resource);

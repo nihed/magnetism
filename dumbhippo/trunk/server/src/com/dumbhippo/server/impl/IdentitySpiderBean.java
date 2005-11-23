@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
@@ -145,13 +146,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return res;	
 	}
 	
-	public AimResource getAim(String screenName) {
+	public AimResource getAim(String screenName) throws ValidationException {
 		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
 		int retries = 1;
 		
 		while (true) {
 			try {
 				return proxy.findOrCreateAim(screenName);
+			} catch (ValidationException e) {
+				throw e;
 			} catch (Exception e) {
 				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating aim resource, retrying");
@@ -165,7 +168,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public AimResource findOrCreateAim(String screenName) {
+	public AimResource findOrCreateAim(String screenName) throws ValidationException {
 		Query q;
 		
 		q = em.createQuery("from AimResource a where a.screenName = :name");

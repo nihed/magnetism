@@ -9,7 +9,7 @@ public class AimResource extends Resource {
 	private static final long serialVersionUID = 0L;
 	
 	private String screenName;
-
+	
 	/**
 	 * AIM addresses have this idea of "normalization" where you can 
 	 * type them with spaces and caps, but they get normalized before 
@@ -18,18 +18,18 @@ public class AimResource extends Resource {
 	 * 
 	 * @param str the name to validate and normalize
 	 * @return normalized version
-	 * @throws IllegalArgumentException
+	 * @throws ValidationException
 	 */
-	private String filterName(String str) throws IllegalArgumentException {
+	private String filterName(String str) throws ValidationException {
 		if (str == null)
 			return null;
 		
 		str = str.replaceAll(" ", "");
 		
 		if (str.length() > 16)
-			throw new IllegalArgumentException("AIM name too long: " + str);
+			throw new ValidationException("'" + str + "' is too long to be an AIM screen name");
 		if (str.length() < 3)
-			throw new IllegalArgumentException("AIM name too short: " + str);
+			throw new ValidationException("'" + str + "' is too short to be an AIM screen name");
 		
 	    str = str.toLowerCase();
 	    
@@ -41,18 +41,18 @@ public class AimResource extends Resource {
 	    for (char c : chars) {
 	    	// FIXME I bet AOL only allows ASCII, but this checks unicode
 	    	if (!Character.isLetterOrDigit(c))
-	    		throw new IllegalArgumentException("Invalid char in AIM name: " + str);
+	    		throw new ValidationException("'" + c + "' isn't allowed in an AIM screen name (you typed '" + str + "')");
 	    }
 	    if (!Character.isLetter(str.charAt(0)))
-	    	throw new IllegalArgumentException("AIM address starts with nonletter: " + str);
+	    	throw new ValidationException("AIM screen names have to start with a letter (you typed '" + str + "')");
 	    
 	    return str;
 	}
 	
 	protected AimResource() {}
 
-	public AimResource(String screenName) {
-		setScreenName(screenName);
+	public AimResource(String screenName) throws ValidationException {
+		internalSetScreenName(screenName);
 	}
 	
 	@Column(unique=true, nullable=false)
@@ -60,10 +60,19 @@ public class AimResource extends Resource {
 		return screenName;
 	}
 
-	protected void setScreenName(String screenName) {
-		if (screenName != null)
+	private void internalSetScreenName(String screenName) throws ValidationException {
+		if (screenName != null) {
 			screenName = filterName(screenName);
+		}
 		this.screenName = screenName;
+	}
+	
+	protected void setScreenName(String screenName) {
+		try {
+			internalSetScreenName(screenName);
+		} catch (ValidationException e) {
+			throw new RuntimeException("Database contained invalid screen name", e);
+		}
 	}
 
 	@Override

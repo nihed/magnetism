@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.ValidationException;
 
 /*
  * This class represents the interface to the "Identity Spider",
@@ -74,8 +75,9 @@ public interface IdentitySpider {
 	 * 
 	 * @param screenName the address
 	 * @return a resource for the address
+	 * @throws ValidationException if the AIM address is bogus
 	 */
-	public AimResource getAim(String screenName);
+	public AimResource getAim(String screenName) throws ValidationException;
 	
 	/**
 	 * This is an internal detail used in implementing getAim(); getAim
@@ -84,7 +86,7 @@ public interface IdentitySpider {
 	 * @param screenName the address
 	 * @return a resource for the address
 	 */
-	public AimResource findOrCreateAim(String screenName);
+	public AimResource findOrCreateAim(String screenName) throws ValidationException;
 	
 	/**
 	 * Gets a Resource object for the given URL, creating

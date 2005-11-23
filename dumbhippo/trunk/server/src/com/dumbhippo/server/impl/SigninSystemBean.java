@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -74,7 +75,12 @@ public class SigninSystemBean implements SigninSystem {
 			mailer.setMessageContent(message, "Sign in to DumbHippo", bodyText.toString(), bodyHtml.toString());
 			mailer.sendMessage(message);
 		} else {
-			AimResource resource = identitySpider.getAim(address);
+			AimResource resource;
+			try {
+				resource = identitySpider.getAim(address);
+			} catch (ValidationException e) {
+				throw new HumanVisibleException(e.getMessage());
+			}
 			String link = getLoginLink(resource);
 			XmlBuilder bodyHtml = new XmlBuilder();
 			bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
@@ -97,7 +103,11 @@ public class SigninSystemBean implements SigninSystem {
 		if (address.contains("@")) {
 			resource = identitySpider.getEmail(address);
 		} else {
-			resource = identitySpider.getAim(address);
+			try {
+				resource = identitySpider.getAim(address);
+			} catch (ValidationException e) {
+				throw new HumanVisibleException(e.getMessage());
+			}
 		}
 		
 		Account account;

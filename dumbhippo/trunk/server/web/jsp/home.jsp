@@ -5,6 +5,11 @@
 
 <dh:bean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
 
+<c:if test="${!home.signin.valid}">
+	<!-- this is a bad error message but should never happen since we require signin to get here -->
+	<dht:errorPage>Not signed in</dht:errorPage>
+</c:if>
+
 <head>
 	<title><c:out value="${home.person.name}"/></title>
 	<dht:stylesheets href="home.css" iehref="home-iefixes.css" />
