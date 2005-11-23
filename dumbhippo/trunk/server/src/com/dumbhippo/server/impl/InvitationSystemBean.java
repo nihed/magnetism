@@ -17,6 +17,9 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
@@ -39,6 +42,8 @@ import com.dumbhippo.server.Viewpoint;
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
 
+	static private final Log logger = GlobalSetup.getLog(InvitationSystemBean.class);
+	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 
@@ -115,11 +120,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	public String sendInvitation(User inviter, Resource invitee) {
 		
-		// FIXME we do nothing to stop you from inviting yourself, not that 
-		// it hurts anything, but you end up in your own contact list and it's weird
-		
-		// be sure the invitee is our contact
+		// be sure the invitee is our contact (even if we 
+		// end up not sending the invite)
 		spider.createContact(inviter, invitee);
+		
+		// this also catches inviting yourself and keeps us from 
+		// sending mail to disabled accounts
+		User user = spider.lookupUserByResource(invitee);
+		if (user != null) {
+			logger.debug("not inviting '" + invitee + "' due to existing account " + user);
+			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
+		}
 		
 		boolean needSendNotification = false;
 		String ret = null;
@@ -212,13 +223,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		//}
 	}
 	
-	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName) {
+	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
 		
 		Resource invitationResource = invite.getInvitee();
 		Account acct = accounts.createAccountFromResource(invitationResource);
+		if (disable)
+			acct.setDisabled(true);
 		
 		Client client = null;
 		if (firstClientName != null) {
@@ -235,7 +248,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			invite = persisted;
 		}
 
-		notifyInvitationViewed(invite);
+		if (!disable)
+			notifyInvitationViewed(invite);
 		
 		// FIXME this cast is just laziness to avoid changing the db schema of InvitationToken
 		return new Pair<Client,User>(client, (User) invite.getResultingPerson());

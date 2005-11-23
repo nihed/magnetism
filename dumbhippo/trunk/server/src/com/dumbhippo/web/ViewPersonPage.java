@@ -9,6 +9,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
@@ -29,7 +30,8 @@ public class ViewPersonPage {
 	
 	private Person viewedPerson;
 	private String viewedPersonId;
-
+	private boolean disabled;
+	
 	@Signin
 	private SigninBean signin;
 	
@@ -59,10 +61,20 @@ public class ViewPersonPage {
 		return viewedPersonId;
 	}
 	
+	public boolean isDisabled() {
+		return disabled;
+	}
+	
 	protected void setViewedPerson(Person person) {
 		this.viewedPerson = person;
 		this.viewedPersonId = person.getId();
-		logger.debug("viewing person: " + this.viewedPersonId);
+		
+		if (person instanceof User &&
+				identitySpider.getAccountDisabled((User) person)) {
+				this.disabled = true;
+		}
+		
+		logger.debug("viewing person: " + this.viewedPerson + " disabled = " + disabled);
 	}
 	
 	public String getName() {

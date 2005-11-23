@@ -29,7 +29,7 @@
 		</div>
 		
 		<c:choose>
-			<c:when test="${!account.disabled}">
+			<c:when test="${!account.signin.disabled}">
 				
 				<div class="dhBackgroundBox">
 					<b>Help your friends find you</b>
@@ -162,6 +162,9 @@
 					</tr>
 					</table>
 				</div>
+				<p>
+					<a href="javascript:dh.actions.signOut();">Sign Out</a>
+				</p>
 			</c:otherwise>
 		</c:choose>		
 	</div>	

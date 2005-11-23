@@ -314,6 +314,18 @@ public class MessageSenderBean implements MessageSender {
 		public void sendPostNotification(EmailResource recipient, Post post) {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
+			// may be null!
+			String recipientInviteUrl = invitationSystem.getInvitationUrl(post.getPoster(), recipient);
+			String recipientStopUrl;
+			
+			if (recipientInviteUrl == null) {
+				recipientStopUrl = null; // FIXME
+				logger.error("email to someone with no account, without inviting them; we can't do that just yet");
+				return;
+			} else {
+				recipientStopUrl = recipientInviteUrl + "&disable=true";
+			}
+			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
 			PersonView posterViewedBySelf = identitySpider.getPersonView(new Viewpoint(post.getPoster()), 
@@ -392,11 +404,7 @@ public class MessageSenderBean implements MessageSender {
 			messageText.append("  (Link shared by " + posterViewedBySelf.getName() + ")");
 			
 			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getViewPersonPageId();
-			String recipientStopUrl = baseurl;   // FIXME stop getting mail url for recipient
-
-			// may be null!
-			String recipientInviteUrl = invitationSystem.getInvitationUrl(post.getPoster(), recipient);
-			
+						
 			// HTML: "link shared by"
 			String recipientLink;
 			if (recipientInviteUrl != null) {
@@ -421,8 +429,8 @@ public class MessageSenderBean implements MessageSender {
 			if (recipientInviteUrl != null) {
 				messageText.append("      " + posterViewedBySelf.getName()
 						+ " created an invitation for you: " + recipientInviteUrl + "\n");
+				messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			}
-			messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			
 			// HTML: append footer
 			
@@ -438,12 +446,19 @@ public class MessageSenderBean implements MessageSender {
 						XmlBuilder.escape(baseurl)));
 			}
 			
+			String stopLink;
+			if (recipientStopUrl != null)
+				stopLink = String.format("| <a style=\"font-size:8pt;\" href=\"%s\">Stop Getting These Mails</a>",
+						XmlBuilder.escape(recipientStopUrl));
+			else
+				stopLink = "";
+			
 			format = "<div style=\"text-align:center;margin-top:1em;font-size:8pt;\">\n" 
-				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's DumbHippo?</a> | <a style=\"font-size:8pt;\" href=\"%s\">Stop Getting These Mails</a>\n"
+				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's DumbHippo?</a> %s\n"
 				+ "</div>\n";
 			messageHtml.append(String.format(format,
 					recipientInviteUrl != null ? XmlBuilder.escape(recipientInviteUrl) : XmlBuilder.escape(baseurl),
-					XmlBuilder.escape(recipientStopUrl)));
+					stopLink));
  			
 			messageHtml.append("</div>\n");
 			messageHtml.append("</body>\n</html>\n");

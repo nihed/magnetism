@@ -32,10 +32,18 @@ public class VerifyServlet extends AbstractServlet {
 		
 		logger.debug("Processing invitation token " + invite);
 		
+		boolean disable = false;
+		String disableParam = request.getParameter("disable");
+		if (disableParam != null && disableParam.equals("true")) {
+			disable = true;
+		}
+		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request));
+		Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request), disable);
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
+		
+		// this forwards to welcomedisabled.jsp if the account is disabled
 		redirectToNextPage(request, response, "/welcome", null);
 	}
 	

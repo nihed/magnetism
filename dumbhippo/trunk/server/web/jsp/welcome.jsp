@@ -5,12 +5,16 @@
 
 <dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
 
+<c:if test="${welcome.signin.disabled}">
+	<jsp:forward page="/jsp/welcomedisabled.jsp"/>
+</c:if>
+
 <head>
 	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
 	<dht:stylesheets href="welcome.css" />
 </head>
 <body>
-    <c:url value="viewperson?personId=${welcome.signin.user.id}" var="publicurl"/>
+    <c:url value="viewperson?personId=${welcome.signin.userId}" var="publicurl"/>
     <dht:header>
 		Welcome!
 	</dht:header>

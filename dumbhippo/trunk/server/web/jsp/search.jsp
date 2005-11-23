@@ -37,7 +37,7 @@
 						<c:if test="${!search.signin.valid}">
 							<dht:errorPage>Not signed in</dht:errorPage>
 						</c:if>
-						<jsp:setProperty name="search" property="recipientId" value="${search.signin.user.id}"/>
+						<jsp:setProperty name="search" property="recipientId" value="${search.signin.userId}"/>
 						Search stuff shared with you:
 					</c:otherwise>
 				</c:choose>

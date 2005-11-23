@@ -19,45 +19,68 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
-    <dht:header><c:out value="${personName}"/></dht:header>
+    <dht:header>
+    	<c:choose>
+    		<c:when test="${viewperson.disabled}">
+    			Account not active
+    		</c:when>
+    		<c:otherwise>
+		    	<c:out value="${personName}"/>
+		    </c:otherwise>
+		</c:choose>
+    </dht:header>
     
     <dht:toolbar>
-    	<c:choose>
-    		<c:when test="${viewperson.self}">
-    		</c:when>
-    		<c:when test="${viewperson.contact}">
-    			&#151;
-    			<a href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contact list</a>
-	    	</c:when>
-    		<c:otherwise>
-	    		&#151;
-				<a href='javascript:dh.actions.addContact("${personId}")'>I know <c:out value="${personName}"/></a>
-			</c:otherwise>
-		</c:choose>
+    	<c:if test="${!viewperson.disabled}">
+	    	<c:choose>
+	    		<c:when test="${viewperson.self}">
+	    		</c:when>
+	    		<c:when test="${viewperson.contact}">
+	    			&#151;
+	    			<a href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contact list</a>
+		    	</c:when>
+	    		<c:otherwise>
+		    		&#151;
+					<a href='javascript:dh.actions.addContact("${personId}")'>I know <c:out value="${personName}"/></a>
+				</c:otherwise>
+			</c:choose>
+		</c:if>
 	</dht:toolbar>
 
-	<div class="person">
-		<dht:png klass="cool-person" src="/files/headshots/${personId}" />
-		<c:out value="${personName}"/>
-	</div>
-
+	<c:if test="${!viewperson.disabled}">
+		<div class="person">
+			<dht:png klass="cool-person" src="/files/headshots/${personId}" />
+			<c:out value="${personName}"/>
+		</div>
+	</c:if>
+	
 	<div id="dhMain">
-		<table>
-		<tr>
-		<td>
-			<div class="shared-links">	
-				<strong>Cool Shared Links</strong>
-				<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
-			</div>
-		</td>
-		<td>
-			<div class="groups">
-				<strong>Groups:</strong><br/>
-				<dh:entityList value="${viewperson.groups}"/>
-			</div>
-		</td>
-		</tr>
-		</table>
+		<c:choose>
+			<c:when test="${viewperson.disabled}">
+				This page is disabled.
+				<c:if test="${viewperson.self}">
+					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable it again</a>
+				</c:if>
+			</c:when>
+			<c:otherwise>
+				<table>
+				<tr>
+				<td>
+					<div class="shared-links">	
+						<strong>Cool Shared Links</strong>
+						<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
+					</div>
+				</td>
+				<td>
+					<div class="groups">
+						<strong>Groups:</strong><br/>
+						<dh:entityList value="${viewperson.groups}"/>
+					</div>
+				</td>
+				</tr>
+				</table>
+			</c:otherwise>
+		</c:choose>
 	</div>
 </body>
 </html>

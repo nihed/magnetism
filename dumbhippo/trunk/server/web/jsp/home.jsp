@@ -19,10 +19,17 @@
 	</script>
 </head>
 <body>
-    <c:url value="viewperson?personId=${home.signin.user.id}" var="publicurl"/>
+    <c:url value="viewperson?personId=${home.signin.userId}" var="publicurl"/>
 	<dht:header>
 		This is You!<br/>
-		<a style="font-size:8pt;" href="${publicurl}">(your public page)</a>
+		<c:choose>
+			<c:when test="${home.signin.disabled}">
+				<a href="/account">(re-enable your account)</a>
+			</c:when>
+			<c:otherwise>
+				<a href="${publicurl}">(your public page)</a>
+			</c:otherwise>
+		</c:choose>
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">

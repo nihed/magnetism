@@ -199,38 +199,41 @@ div.comboBoxOptions {
 body {
 	margin:					0;
 	padding:				4em;
-	padding-top:				0;
+	padding-top:			0;
 	color:					#505050;
-	background-color:			white;
+	background-color:		white;
 }
 body div {
 	width:					100%;
 }
-div.header {
-	background-color:			#efefef;
+div.dh-header {
+	background-color:		#efefef;
 	color:					inherit;
 	margin:					0;
 }
-div.header table {
+div.dh-header table {
 	width:					100%;
 	padding:				0;
 }
+.dh-header-right a {
+	font-size:				8pt;
+}
+.dh-header-right {
+	text-align:				right;
+}
 span.dh {
-	font-weight:				bold;
+	font-weight:			bold;
 	font-size:				16pt;
 }
 span.first-letter {
 	color:					steelblue;
-	background-color:			inherit;
+	background-color:		inherit;
 }
 a, div.dhUrl *, dhUrl {
 	color:					blue;
 }
 a:hover {
 	
-}
-td.right {
-	text-align:				right;
 }
 div.toolbar {
 	font-size:				10pt;

@@ -33,6 +33,7 @@ public class SigninBean implements Serializable {
 	
 	private Guid userGuid;
 	private User user; // lazily initialized
+	private Boolean disabled; // lazily initialized
 	
 	private SigninBean(HttpServletRequest request) {
 
@@ -123,8 +124,28 @@ public class SigninBean implements Serializable {
 		return user;
 	}
 	
+	public String getUserId() {
+		if (userGuid != null)
+			return userGuid.toString();
+		else
+			return null;
+	}
+	
+	public Guid getUserGuid() {
+		return userGuid;
+	}
+	
 	public Viewpoint getViewpoint() {
 		// FIXME: would it be better to cache the result? 
 		return new Viewpoint(user);
+	}
+	
+	public boolean isDisabled() {
+		if (disabled == null) {
+			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+			disabled = Boolean.valueOf(identitySpider.getAccountDisabled(getUser()));
+			logger.debug("AccountPage loaded disabled = " + disabled);
+		}
+		return disabled;
 	}
 }

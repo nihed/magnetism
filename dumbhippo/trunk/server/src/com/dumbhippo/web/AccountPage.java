@@ -26,7 +26,6 @@ public class AccountPage {
 	private PersonView person;
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
-	private Boolean disabled;
 	
 	public AccountPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
@@ -49,13 +48,5 @@ public class AccountPage {
 		String token = claimVerifier.getAuthKey(signin.getUser(), null); 
 		return "aim:GoIM?screenname=" + config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME) 
 		+ "&message=Hey+Bot!+Crunch+this:+" + token;
-	}
-	
-	public boolean getDisabled() {
-		if (disabled == null) {
-			disabled = Boolean.valueOf(identitySpider.getAccountDisabled(signin.getUser()));
-			logger.debug("AccountPage loaded disabled = " + disabled);
-		}
-		return disabled;
 	}
 }
