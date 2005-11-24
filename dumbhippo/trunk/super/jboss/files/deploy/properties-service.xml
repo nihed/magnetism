@@ -24,6 +24,10 @@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
+		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
+		dumbhippo.server.ebay.devid=@@ebayDevId@@
+		dumbhippo.server.ebay.appid=@@ebayAppId@@
+		dumbhippo.server.ebay.certid=@@ebayCertId@@
     </attribute>
   </mbean>
   
