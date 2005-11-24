@@ -11,6 +11,7 @@ public enum HippoProperty {
 	XMPP_PASSWORD("dumbhippo.server.xmpp.password", null),
 	FILES_SAVEURL("dumbhippo.server.files.saveurl", null),
 	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
+	AMAZON_ACCESS_KEY_ID("dumbhippo.server.amazon.accesskeyid", null),
 	BUILDSTAMP("dumbhippo.server.buildstamp", "0");
 	
 	private String key;

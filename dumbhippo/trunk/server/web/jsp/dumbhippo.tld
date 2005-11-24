@@ -54,4 +54,16 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag>
+        <name>favicon</name>
+        <tagclass>com.dumbhippo.web.FaviconTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Favicon image for the given link</info>
+	    <attribute>
+           <name>link</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    
 </taglib>

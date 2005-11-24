@@ -29,6 +29,7 @@
 				</c:otherwise>
 			</c:choose>
 			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
+			<dh:favicon link="${post.url}"/>
 		</div>
 	</td>
 	</tr>

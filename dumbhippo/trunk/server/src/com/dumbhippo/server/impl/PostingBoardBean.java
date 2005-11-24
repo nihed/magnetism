@@ -42,6 +42,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostRewriterFactory;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -67,6 +68,9 @@ public class PostingBoardBean implements PostingBoard {
 
 	@EJB
 	private Configuration configuration;
+	
+	@EJB
+	private PostRewriterFactory rewriterFactory;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -285,6 +289,9 @@ public class PostingBoardBean implements PostingBoard {
 		// Person recipients are visible only if the viewer is also a person recipient
 		for (Resource recipient : getVisiblePersonRecipients(viewpoint, post))
 			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
+	
+		// load a rewriter if any
+		rewriterFactory.loadRewriter(viewpoint, post);
 		
 		try {
 			return new PostView(post, 

@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.net.URL;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +21,7 @@ public class Post extends GuidPersistable {
 
 	private static final long serialVersionUID = 0L;
 
+	transient private PostRewriter rewriter;
 	private User poster;
 	private PostVisibility visibility;
 	private String explicitTitle;
@@ -166,7 +168,9 @@ public class Post extends GuidPersistable {
 	
 	@Transient
 	public String getTitle() {
-		if (explicitTitle != null)
+		if (rewriter != null) {
+			return rewriter.getTitle();
+		} else if (explicitTitle != null)
 			return explicitTitle;
 		else if (resources != null && !resources.isEmpty()) {
 			// FIXME look for an url and use its title
@@ -179,9 +183,13 @@ public class Post extends GuidPersistable {
 
 	@Transient
 	public String getTextAsHtml() {
-		XmlBuilder builder = new XmlBuilder();
-		builder.appendTextAsHtml(getText());
-		return builder.toString();
+		if (rewriter != null) {
+			return rewriter.getTextAsHtml();
+		} else {
+			XmlBuilder builder = new XmlBuilder();
+			builder.appendTextAsHtml(getText());
+			return builder.toString();
+		}
 	}
 	
 	@Column(nullable=false)
@@ -191,6 +199,17 @@ public class Post extends GuidPersistable {
 
 	protected void setPostDate(Date postDate) {
 		this.postDate = postDate.getTime();
+	}
+	
+	public void bindRewriter(PostRewriter rewriter, URL url) {
+		// the url param is provided for two reasons:
+		// - efficiency; several different places need to 
+		//   parse out the url components
+		// - if we keep the Set<Resource> crack, we need to 
+		//   know which link we're using
+		this.rewriter = rewriter;
+		if (rewriter != null)
+			rewriter.bind(this, url);
 	}
 	
 	public String toString() {

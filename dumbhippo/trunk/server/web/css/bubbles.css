@@ -101,3 +101,7 @@ div.cool-link-date {
 div.cool-link-to {
 
 }
+.cool-link .dh-favicon {
+	display:		inline;
+	margin-left:	2em;
+}

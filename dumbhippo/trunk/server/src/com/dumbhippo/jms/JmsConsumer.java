@@ -5,8 +5,6 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.naming.NamingException;
 
-import com.dumbhippo.jms.JmsQueue.Init;
-
 
 /**
  * 

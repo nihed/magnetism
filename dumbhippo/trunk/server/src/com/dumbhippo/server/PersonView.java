@@ -2,10 +2,10 @@ package com.dumbhippo.server;
 
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,18 +35,19 @@ public class PersonView {
 	private Contact contact;
 	private User user;
 	private Set<Resource> resources;
-	private BitSet extras;
+	private EnumSet<PersonViewExtra> extras;
 	
-	private void setExtra(PersonViewExtra extra) {
+	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
-			this.extras = new BitSet();
-		extras.set(extra.ordinal());
+			this.extras = more;
+		else 
+			this.extras.addAll(more);
 	}
 	
 	private boolean getExtra(PersonViewExtra extra) {
 		if (extras == null)
 			return false;
-		return extras.get(extra.ordinal());
+		return extras.contains(extra);
 	}
 	
 	/**
@@ -75,39 +76,34 @@ public class PersonView {
 	}
 	
 	public void addAllResources(Collection<Resource> resources) {
-		setExtra(PersonViewExtra.ALL_RESOURCES);
-		setExtra(PersonViewExtra.ALL_EMAILS);
-		setExtra(PersonViewExtra.ALL_AIMS);
-		setExtra(PersonViewExtra.PRIMARY_EMAIL);
-		setExtra(PersonViewExtra.PRIMARY_AIM);
-		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+		addExtras(EnumSet.allOf(PersonViewExtra.class));
 		this.getResources().addAll(resources);
 	}
 	
 	public void addAllEmails(Collection<EmailResource> resources) {
-		setExtra(PersonViewExtra.ALL_EMAILS);
-		setExtra(PersonViewExtra.PRIMARY_EMAIL);
-		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+		addExtras(EnumSet.of(PersonViewExtra.ALL_EMAILS,
+				PersonViewExtra.PRIMARY_EMAIL,
+				PersonViewExtra.PRIMARY_RESOURCE));
 		this.getResources().addAll(resources);
 	}
 
 	public void addAllAims(Collection<AimResource> resources) {
-		setExtra(PersonViewExtra.ALL_AIMS);
-		setExtra(PersonViewExtra.PRIMARY_AIM);
-		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+		addExtras(EnumSet.of(PersonViewExtra.ALL_AIMS,
+				PersonViewExtra.PRIMARY_AIM,
+				PersonViewExtra.PRIMARY_RESOURCE));
 		this.getResources().addAll(resources);
 	}
 
 	public void addPrimaryEmail(EmailResource resource) {
-		setExtra(PersonViewExtra.PRIMARY_EMAIL);
-		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+		addExtras(EnumSet.of(PersonViewExtra.PRIMARY_EMAIL,
+				PersonViewExtra.PRIMARY_RESOURCE));
 		if (resource != null)
 			this.getResources().add(resource);
 	}
 	
 	public void addPrimaryAim(AimResource resource) {
-		setExtra(PersonViewExtra.PRIMARY_AIM);
-		setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+		addExtras(EnumSet.of(PersonViewExtra.PRIMARY_AIM,
+				PersonViewExtra.PRIMARY_RESOURCE));
 		if (resource != null)
 			this.getResources().add(resource);
 	}
@@ -120,7 +116,7 @@ public class PersonView {
 		else if (resource instanceof AimResource)
 			addPrimaryEmail((EmailResource) resource);
 		else {
-			setExtra(PersonViewExtra.PRIMARY_RESOURCE);
+			addExtras(EnumSet.of(PersonViewExtra.PRIMARY_RESOURCE));
 			if (resource != null)
 				this.getResources().add(resource);
 		}
