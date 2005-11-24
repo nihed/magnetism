@@ -14,7 +14,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.dumbhippo.GlobalSetup;
 
-class AmazonSaxHandler extends DefaultHandler {
+class AmazonSaxHandler extends DefaultHandler implements AmazonItemData {
 	
 	static private final Log logger = GlobalSetup.getLog(AmazonSaxHandler.class);
 	
@@ -146,35 +146,35 @@ class AmazonSaxHandler extends DefaultHandler {
 		smallImageWidth > 0 && smallImageHeight > 0;
 	}
 	
-	String getASIN() {
+	public String getASIN() {
 		return ASIN;
 	}
 
-	String getNewPrice() {
+	public String getNewPrice() {
 		return prices.get(Element.LowestNewPrice);
 	}
 
-	String getUsedPrice() {
+	public String getUsedPrice() {
 		return prices.get(Element.LowestUsedPrice);
 	}
 
-	String getCollectiblePrice() {
+	public String getCollectiblePrice() {
 		return prices.get(Element.LowestCollectiblePrice);
 	}
 
-	String getRefurbishedPrice() {
+	public String getRefurbishedPrice() {
 		return prices.get(Element.LowestRefurbishedPrice);
 	}
 	
-	String getSmallImageUrl() {
+	public String getSmallImageUrl() {
 		return smallImageUrl;
 	}
 
-	int getSmallImageWidth() {
+	public int getSmallImageWidth() {
 		return smallImageWidth;
 	}
 
-	int getSmallImageHeight() {
+	public int getSmallImageHeight() {
 		return smallImageHeight;
 	}
 }
