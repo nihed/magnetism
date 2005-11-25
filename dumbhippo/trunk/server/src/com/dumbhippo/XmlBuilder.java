@@ -6,6 +6,7 @@ package com.dumbhippo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class XmlBuilder {
 	}
 	
 	public void appendStandaloneFragmentHeader() {
-		append("<?xml version=\"1.0\" ?>");
+		append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	}
 
 	public void appendHtmlHead(String title) {
@@ -176,6 +177,14 @@ public class XmlBuilder {
 			closeElement();
 		}
 		return builder.toString();
+	}
+	
+	public byte[] getBytes() {
+		try {
+			return toString().getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("no utf8", e);
+		}
 	}
 	
 	public static String escape(String text) {

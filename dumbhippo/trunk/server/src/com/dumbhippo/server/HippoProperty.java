@@ -12,6 +12,9 @@ public enum HippoProperty {
 	FILES_SAVEURL("dumbhippo.server.files.saveurl", null),
 	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
 	AMAZON_ACCESS_KEY_ID("dumbhippo.server.amazon.accesskeyid", null),
+	EBAY_DEVID("dumbhippo.server.ebay.devid", null),
+	EBAY_APPID("dumbhippo.server.ebay.appid", null),
+	EBAY_CERTID("dumbhippo.server.ebay.certid", null),
 	BUILDSTAMP("dumbhippo.server.buildstamp", "0");
 	
 	private String key;

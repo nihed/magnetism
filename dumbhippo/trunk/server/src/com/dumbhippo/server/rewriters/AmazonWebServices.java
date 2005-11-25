@@ -69,7 +69,6 @@ class AmazonWebServices {
 		
 		AmazonSaxHandler handler = parseUrl(wsUrl);
 		
-		
 		return handler;
 	}
 	
@@ -117,6 +116,7 @@ class AmazonWebServices {
 			// then we give up and just don't display the post in a 
 			// special amazon-specific way
 			connection.setReadTimeout(1000 * 6);
+			connection.setAllowUserInteraction(false);
 			
 			parser.parse(connection.getInputStream(), handler);
 		} catch (SAXException e) {
@@ -127,11 +127,6 @@ class AmazonWebServices {
 			return null;
 		}
 		
-		if (handler.isValid()) {
-			return handler;
-		} else {
-			logger.warn("Did not successfully parse all fields from Amazon");
-			return null;
-		}
+		return handler;
 	}
 }

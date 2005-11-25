@@ -3,23 +3,20 @@
  */
 package com.dumbhippo.server.rewriters;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import com.dumbhippo.GlobalSetup;
 
-class AmazonSaxHandler extends DefaultHandler implements AmazonItemData {
+class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implements AmazonItemData {
 	
 	static private final Log logger = GlobalSetup.getLog(AmazonSaxHandler.class);
 	
 	// The enum names should match the xml element names (including case)
-	enum Element { Item, ASIN,
+	enum Element {
+		Item, ASIN,
 		SmallImage, URL, Height, Width,
 		OfferSummary,
 		LowestNewPrice, LowestUsedPrice,
@@ -27,91 +24,39 @@ class AmazonSaxHandler extends DefaultHandler implements AmazonItemData {
 		FormattedPrice,
 		Error, Code, Message,
 		IGNORED // an element we don't care about
-	};
-	
-	private List<AmazonSaxHandler.Element> stack;
-	private StringBuilder content;
+	};	
 
 	String ASIN;
 	String smallImageUrl;
 	int smallImageWidth;
 	int smallImageHeight;
-	private EnumMap<AmazonSaxHandler.Element,String> prices;
+	private EnumMap<Element,String> prices;
 	
 	AmazonSaxHandler() {
-		stack = new ArrayList<AmazonSaxHandler.Element>();
-		content = new StringBuilder();
-	}
-	
-	private AmazonSaxHandler.Element current() {
-		if (stack.size() > 0)
-			return stack.get(stack.size() - 1);
-		else
-			return null;
+		super(Element.class, Element.IGNORED);
 	}
 
-	private AmazonSaxHandler.Element parent() {
-		if (stack.size() > 1)
-			return stack.get(stack.size() - 2);
-		else
-			return null;
-	}
-	
-	private AmazonSaxHandler.Element parseElementName(String name) {
-		 AmazonSaxHandler.Element element;
-		 try {
-			 element = Element.valueOf(name);
-		 } catch (IllegalArgumentException e) {
-			 element = Element.IGNORED;
-		 }
-		 assert element != null;
-		 return element;
-	}
-	
-	private void push(String name) {
-		 AmazonSaxHandler.Element element = parseElementName(name);
-		 stack.add(element);			
-	}
-	
-	private void pop(String name) throws SAXException {
-		 AmazonSaxHandler.Element element = parseElementName(name);
-		 AmazonSaxHandler.Element c = current();
-		 if (c == null)
-			 throw new SAXException("popped " + name + " when not in an element");
-		 if (c != element)
-			 throw new SAXException("unmatched close to element " + name + " we were expecting " + c.name());
-		 stack.remove(stack.size() - 1);
-		 content.setLength(0);
-	}
-	
 	@Override
-	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 //logger.debug("start element " + qName);
-		 push(qName);
-	}
-	
-	@Override
-	public void endElement(String uri, String localName, String qName) throws SAXException {
-		AmazonSaxHandler.Element c = current();
+	protected void handleElement(Element c) throws SAXException {
 		
 		if (c == Element.ASIN) {
-			ASIN = content.toString();
+			ASIN = getCurrentContent();
 		} else if (parent() == Element.SmallImage) {
 			if (c == Element.URL) {
-				smallImageUrl = content.toString();
+				smallImageUrl = getCurrentContent();
 			} else if (c == Element.Width) {
-				String v = content.toString();
+				String v = getCurrentContent();
 				smallImageWidth = Integer.parseInt(v);
 			} else if (c == Element.Height) {
-				String v = content.toString();
+				String v = getCurrentContent();
 				smallImageHeight = Integer.parseInt(v);					
 			}
 		} else if (c == Element.FormattedPrice) {
-			AmazonSaxHandler.Element p = parent();
+			Element p = parent();
 			if (p != null) {
-				String price = content.toString();
+				String price = getCurrentContent();
 				if (prices == null) {
-					prices = new EnumMap<AmazonSaxHandler.Element,String>(AmazonSaxHandler.Element.class);
+					prices = new EnumMap<Element,String>(Element.class);
 				}
 				logger.debug("saving price " + price + " for " + p);
 				prices.put(p, price);
@@ -121,27 +66,21 @@ class AmazonSaxHandler extends DefaultHandler implements AmazonItemData {
 			// will be absent and thus isValid() will return false,
 			// assuming the error was fatal at least
 			if (c == Element.Code) {
-				logger.warn("Amazon error code " + content.toString());
+				logger.warn("Amazon error code " + getCurrentContent());
 			} else if (c == Element.Message) {
-				logger.warn("Amazon error message " + content.toString());
+				logger.warn("Amazon error message " + getCurrentContent());
 			}
-		}
-		
-		pop(qName);
-		
-		if (current() == null) {
-			logger.debug("Parsed ASIN = " + ASIN + " prices = " + prices + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
 		}
 	}
 	
-	@Override
-	public void characters(char[] ch, int start, int length) throws SAXException {
-		AmazonSaxHandler.Element c = current();
-		if (c != Element.IGNORED)
-			content.append(ch, start, length);
+	@Override 
+	public void endDocument() throws SAXException {
+		logger.debug("Parsed ASIN = " + ASIN + " prices = " + prices + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
+		if (!isValid())
+			throw new SAXException("Missing needed amazon fields");
 	}
-
-	boolean isValid() {
+	
+	private boolean isValid() {
 		return ASIN != null && prices != null && smallImageUrl != null && 
 		smallImageWidth > 0 && smallImageHeight > 0;
 	}
