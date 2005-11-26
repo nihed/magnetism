@@ -14,6 +14,12 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	// The enum names should match the xml element names (including case).
 	// indentation matches xml nesting ;-)
 	enum Element {
+		RuName,
+		Errors,
+			ShortMessage,
+			LongMessage,
+			SeverityCode,
+			ErrorClassification,
 		Item,
 			ListingDetails,
 				ConvertedBuyItNowPrice,
@@ -57,6 +63,11 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 		} else if (parent() == Element.VendorHostedPicture) {
 			if (c != Element.IGNORED)
 				values.put(c, getCurrentContent());	
+		} else if (parent() == Element.Errors) {
+			if (c != Element.IGNORED)
+				logger.debug("eBay error:" + c + ": '" + getCurrentContent() + "'");
+		} else if (c == Element.RuName) {
+			logger.debug("RuName = " + getCurrentContent());
 		}
 	}
 	

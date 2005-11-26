@@ -31,7 +31,8 @@ public class ConfigurationBean implements Configuration {
 		props = new Properties(System.getProperties());
 		try {
 			InputStream str = ConfigurationBean.class.getResourceAsStream("dumbhippo.properties");
-			props.load(str);			
+			if (str != null)
+				props.load(str);			
 		} catch (IOException e) {
 			logger.warn("Exception reading dumbhippo.properties", e);
 		}

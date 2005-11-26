@@ -47,7 +47,18 @@ class EbayWebServices {
 		}
 	}
 	
-	private InputStream ebayRequest(String callName) {
+	/**
+	 * Makes a request to eBay, jumping through all their weird hoops.
+	 * 
+	 * @param callName the request name
+	 * @param username username of a user you made up just to do auth calls
+	 * @param password password of said made-up user
+	 * @param userToken required for all calls except auth calls, token of an actual user
+	 * @param requestBody the xml for the body
+	 * @return the input stream or null
+	 */
+	private InputStream ebayRequest(String callName, String username, String password,
+			String userToken, String requestBody) {
 		URL url;
 		try {
 			// real API URL:    https://api.ebay.com/ws/api.dll
@@ -73,8 +84,17 @@ class EbayWebServices {
 			xml.openElement(callName + "Request",
 					"xmlns", "urn:ebay:apis:eBLBaseComponents");
 			xml.openElement("RequesterCredentials");
-			xml.appendTextNode("eBayAuthToken", "foo");
+			if (userToken != null) {
+				xml.appendTextNode("eBayAuthToken", userToken);
+			} else {
+				if (username == null || password == null)
+					throw new IllegalArgumentException("missing username/password/token");
+				xml.appendTextNode("Username", username);
+				xml.appendTextNode("Password", password);
+			}
 			xml.closeElement();
+			if (requestBody != null)
+				xml.append(requestBody);
 			xml.closeElement();
 			xml.append("\n");
 
@@ -92,8 +112,9 @@ class EbayWebServices {
 			os.close();
 		
 			logger.debug("Reading reply");
-			logger.debug("result code " + connection.getResponseCode());
-			logger.debug("result message " + connection.getResponseMessage());
+			// we block at this point to get response code...
+			logger.debug("Result code " + connection.getResponseCode());
+			logger.debug("Result message " + connection.getResponseMessage());
 			logger.debug("Content length " + connection.getContentLength());
 			logger.debug("Content type " + connection.getContentType());
 			return connection.getInputStream();
@@ -103,8 +124,8 @@ class EbayWebServices {
 		}
 	}
 	
-	EbayItemData frobate() {
-		InputStream is = ebayRequest("GeteBayOfficialTime");
+	EbaySaxHandler ebayParsedRequest(String callName, String username, String password, String userToken) {
+		InputStream is = ebayRequest(callName, username, password, userToken, null);
 		if (is == null)
 			return null;
 		
@@ -115,30 +136,40 @@ class EbayWebServices {
 			parser.parse(is, handler);
 		} catch (SAXException e) {
 			logger.trace(e);
-			throw new RuntimeException(e);
+			return null;
 		} catch (IOException e) {
 			logger.trace(e);
-			throw new RuntimeException(e);
+			return null;
 		}
 		
-		/*
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		
-		String line;
-		try {
-			while ((line = reader.readLine()) != null) {
-				System.out.println(line);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		*/
 		logger.debug("eBay request complete");
+		return handler;		
+	}
+	
+	String getRuName(String username, String password) {
+		EbaySaxHandler handler =
+			ebayParsedRequest("SetRuName",
+								username, password, null);
+		return null;
+	}
+	
+	EbayItemData frobate() {
+		EbaySaxHandler handler = ebayParsedRequest("GeteBayOfficialTime",
+				null, null, null);
 		return handler;
 	}
 	
 	static public final void main(String[] args) {
-		EbayWebServices webServices = new EbayWebServices("","","");
-		webServices.frobate();
+		EbayWebServices webServices =
+			new EbayWebServices("",
+					"",
+					"");
+		String ruName = webServices.getRuName("", "");
+		/*EbayItemData item = webServices.frobate();
+		if (item != null)
+			System.out.println("Picture url is " + item.getPictureUrl());
+		else
+			System.out.println("failed to load item");
+			*/
 	}
 }
