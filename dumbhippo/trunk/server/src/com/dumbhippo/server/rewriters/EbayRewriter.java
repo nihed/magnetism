@@ -94,7 +94,7 @@ public class EbayRewriter extends AbstractRewriter {
 		xml.append("<p class=\"dh-ebay-description\">");
 		xml.appendTextAsHtml(boundPost.getText());
 		xml.append("</p>");
-		return xml.toString();		
+		return xml.toString();
 	}
 
 	public String getTitle() {

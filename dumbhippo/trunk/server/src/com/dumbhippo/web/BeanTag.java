@@ -69,6 +69,12 @@ public class BeanTag extends SimpleTagSupport {
 		return SigninBean.getForRequest((HttpServletRequest)context.getRequest());
 	}
 	
+	private BrowserBean getBrowserBean() {
+		PageContext context = (PageContext)getJspContext();
+		
+		return BrowserBean.getForRequest((HttpServletRequest)context.getRequest());
+	}
+	
 	private Object instantiateObject() {
 		logger.debug("Instantiating " + clazz.getName());
 		// We special-case the SigninBean
@@ -94,6 +100,16 @@ public class BeanTag extends SimpleTagSupport {
 					f.set(o, getSigninBean());
 				} catch (IllegalAccessException e) {
 					throw new RuntimeException("Error injecting SigninBean", e);
+				}
+			} else if (f.isAnnotationPresent(Browser.class) &&
+				f.getType().isAssignableFrom(BrowserBean.class)) {
+				logger.debug("Injecting BrowserBean into " + f.getName());
+				try {
+					// Like EJB3, we support private-field injection
+					f.setAccessible(true);
+					f.set(o, getBrowserBean());
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException("Error injecting BrowserBean", e);
 				}
 			}
 		}
