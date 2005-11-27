@@ -26,6 +26,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PostRewriterFactory;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.rewriters.AmazonRewriter;
+import com.dumbhippo.server.rewriters.EbayRewriter;
 
 @Stateless
 public class PostRewriterFactoryBean implements PostRewriterFactory {
@@ -56,7 +57,8 @@ public class PostRewriterFactoryBean implements PostRewriterFactory {
 		logger.debug("loading post rewriters");
 		
 		final Class<?> rewriters[] = {
-				AmazonRewriter.class
+				AmazonRewriter.class,
+				EbayRewriter.class
 		};
 		
 		factoryMethods = new HashMap<String,Method>();

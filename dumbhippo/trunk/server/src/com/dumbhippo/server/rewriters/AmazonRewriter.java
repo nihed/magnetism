@@ -25,11 +25,10 @@ public class AmazonRewriter extends AbstractRewriter {
 		return new AmazonRewriter(config);
 	}
 	
-	private AmazonWebServices webServices;
+	private String amazonAccessKeyId;
 	private AmazonItemData itemData;
 	
 	private AmazonRewriter(Configuration config) {
-		String amazonAccessKeyId;
 		try {
 			amazonAccessKeyId = config.getPropertyNoDefault(HippoProperty.AMAZON_ACCESS_KEY_ID);
 			if (amazonAccessKeyId.trim().length() == 0)
@@ -40,18 +39,18 @@ public class AmazonRewriter extends AbstractRewriter {
 		
 		if (amazonAccessKeyId == null)
 			logger.warn("Amazon web services access key is not set");
-		else
-			webServices = new AmazonWebServices(amazonAccessKeyId);
 	}
 	
 	@Override
 	public void bind(Post post, URL url) {
 		super.bind(post, url);
-		if (webServices != null) {
+		if (amazonAccessKeyId != null) {
 			setAsyncTask(new Runnable() {
 	
 				public void run() {
 					try {
+						AmazonWebServices webServices = new AmazonWebServices(amazonAccessKeyId);
+
 						itemData = webServices.getItemForUrl(boundUrl);
 					} finally {
 						notifyAsyncTask();
@@ -87,7 +86,9 @@ public class AmazonRewriter extends AbstractRewriter {
 		addPrice(xml, "Refurbished", itemData.getRefurbishedPrice());
 		addPrice(xml, "Collectible", itemData.getCollectiblePrice());
 		xml.append("<br/></div>");
-		xml.appendTextNode("p", boundPost.getText(), "class", "dh-amazon-description");
+		xml.append("<p class=\"dh-amazon-description\">");
+		xml.appendTextAsHtml(boundPost.getText());
+		xml.append("</p>");
 		return xml.toString();
 	}
 
