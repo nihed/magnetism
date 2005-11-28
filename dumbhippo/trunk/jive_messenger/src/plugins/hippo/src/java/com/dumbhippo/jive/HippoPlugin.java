@@ -7,7 +7,6 @@ import org.jivesoftware.messenger.SessionManager;
 import org.jivesoftware.messenger.XMPPServer;
 import org.jivesoftware.messenger.container.Plugin;
 import org.jivesoftware.messenger.container.PluginManager;
-import org.jivesoftware.messenger.handler.IQHandler;
 import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.MessengerGlueRemote;
@@ -26,9 +25,9 @@ public class HippoPlugin implements Plugin {
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 		glue.serverStartup(System.currentTimeMillis());
 		
-		IQHandler myHandler = new ClientMethodIQHandler();
 		IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
-		iqRouter.addHandler(myHandler);		
+		iqRouter.addHandler(new ClientMethodIQHandler());		
+		iqRouter.addHandler(new ClientInfoIQHandler());		
 	
 		SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 		sessionManager.registerListener(new PresenceMonitor());

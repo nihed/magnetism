@@ -52,7 +52,7 @@ public class ClientMethodIQHandler extends IQHandler {
 	public ClientMethodIQHandler() {
 		super("Dumbhippo IQ Method Handler");
 		Log.debug("creating ClientMethodIQHandler");
-		info = new IQHandlerInfo("dhmethod", "http://dumbhippo.com/protocol/servermethod");
+		info = new IQHandlerInfo("method", "http://dumbhippo.com/protocol/servermethod");
 	}
 
 	@Override
