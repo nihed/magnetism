@@ -7,8 +7,12 @@
 #include "HippoLogWindow.h"
 #include "resource.h"
 
+#include <glib.h>
+
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoLogWindowClass");
+
+static HippoLogWindow *theLogWindow = NULL;
 
 HippoLogWindow::HippoLogWindow()
 {
@@ -43,12 +47,15 @@ HippoLogWindow::create()
     if (!createWindow())
         return false;
 
+    theLogWindow = this;
+
     return true;
 }
 
 void
 HippoLogWindow::destroy()
 {
+    theLogWindow = NULL;
     DestroyWindow(window_);
 }
 
@@ -161,4 +168,55 @@ HippoLogWindow::windowProc(HWND   window,
     }
 
     return DefWindowProc(window, message, wParam, lParam);
+}
+
+
+static gboolean
+doDebugLog(gpointer data)
+{
+    WCHAR *strW = (WCHAR *)data;
+
+    if (theLogWindow)
+        theLogWindow->logString(strW);
+
+    g_free(data);
+
+    return FALSE;
+}
+
+
+static void
+hippoDebugLogAsync(WCHAR *strW)
+{
+    g_idle_add(doDebugLog, strW);
+}
+
+void 
+hippoDebugLogW(const WCHAR *format, ...) 
+{
+    WCHAR buf[1024];
+    va_list vap;
+    va_start (vap, format);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
+    va_end (vap);
+
+    size_t bufsize = wcslen(buf) + 1;
+    WCHAR *strW = g_new(WCHAR, bufsize);
+    StringCchCopy(strW, bufsize, buf);
+
+    hippoDebugLogAsync(strW);
+}
+
+void 
+hippoDebugLogU(const char *format, ...)
+{
+    va_list vap;
+    va_start (vap, format);
+    char *str = g_strdup_vprintf(format, vap);
+    va_end (vap);
+
+    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);    
+    g_free(str);
+
+    hippoDebugLogAsync(strW);
 }

@@ -122,6 +122,36 @@ setValuePrintf(HKEY         key,
     return S_OK;
 }
 
+// Delete a key, using a printf string to define the subkey
+static HRESULT
+deleteValuePrintf(HKEY         key,
+                  const WCHAR *subkeyFormat,
+                  const WCHAR *value,
+                  ...)
+{
+    va_list vap;
+    WCHAR subkey[MAX_PATH];
+    LONG result;
+    HKEY newKey;
+
+    va_start(vap, value);
+    StringCchVPrintf(subkey, MAX_PATH, subkeyFormat, vap);
+    va_end(vap);
+
+    result = RegOpenKeyEx(key, subkey, 0,KEY_WRITE, &newKey);
+    // We assume that if we can't open the key, we don't need to delete the value
+    if (result != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    result = RegDeleteValue(newKey, value);
+    if (result != ERROR_SUCCESS)
+        return E_FAIL;
+
+    RegCloseKey(newKey);
+
+    return S_OK;
+}
+
 HRESULT
 HippoRegistrar::registerInprocServer(const CLSID &classID,
                                      const WCHAR *title)
@@ -179,4 +209,21 @@ HippoRegistrar::registerBrowserHelperObject(const CLSID &classID,
     CoTaskMemFree(classStr);
 
     return hr;
+}
+
+HRESULT
+HippoRegistrar::registerStartupProgram(const WCHAR *key,
+                                       const WCHAR *commandline)
+{
+    return setValuePrintf(HKEY_CURRENT_USER,
+                          L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 
+                          key, commandline);         
+}
+
+HRESULT
+HippoRegistrar::unregisterStartupProgram(const WCHAR *key)
+{
+    return deleteValuePrintf(HKEY_CURRENT_USER,
+                             L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 
+                             key);
 }

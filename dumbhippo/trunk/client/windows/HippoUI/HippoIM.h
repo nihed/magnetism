@@ -56,13 +56,13 @@ private:
     void connect();
     void disconnect();
     void authenticate();
+    void getClientInfo();
 
     void startSignInTimeout();
     void stopSignInTimeout();
 
     void startRetryTimeout();
     void stopRetryTimeout();
-
 
     void connectFailure(char *message);
     void authFailure(char *message);
@@ -81,6 +81,11 @@ private:
     static void onDisconnect(LmConnection       *connection,
                              LmDisconnectReason  reason,
                              gpointer            userData);
+
+    static LmHandlerResult onClientInfoReply(LmMessageHandler *handler,
+                                             LmConnection     *connection,
+                                             LmMessage        *message,
+                                             gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,

@@ -5,6 +5,7 @@
 
 #include "stdafx.h"
 #include "HippoPreferences.h"
+#include <HippoRegKey.h>
 #include <limits.h>
 #include <glib.h>
 
@@ -108,105 +109,30 @@ HippoPreferences::setSignIn(bool signIn)
 }
 
 void
-HippoPreferences::loadString(HKEY         key,
-                             const WCHAR *valueName,
-                             BSTR        *str)
-{
-    long result;
-    BYTE buf[1024];
-    DWORD bufSize = sizeof(buf) / sizeof(buf[0]);
-    DWORD type;
-
-    result = RegQueryValueEx(key, valueName, NULL, 
-                             &type, buf, &bufSize);
-    if (result == ERROR_SUCCESS && type == REG_SZ)
-        HippoBSTR((WCHAR *)buf).CopyTo(str);
-}
-
-void
-HippoPreferences::loadBool(HKEY         key,
-                           const WCHAR *valueName,
-                           bool        *value)
-{
-    long result;
-    DWORD tmp;
-    DWORD bufSize = sizeof(DWORD);
-    DWORD type;
-
-    result = RegQueryValueEx(key, valueName, NULL, 
-                             &type, (BYTE *)&tmp, &bufSize);
-    if (result == ERROR_SUCCESS && type == REG_DWORD)
-        *value = tmp != 0;
-}
-
-void
 HippoPreferences::load()
 {
-    LONG result;
-    HKEY key;
-
-    result = RegOpenKeyEx(HKEY_CURRENT_USER, 
-                          debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY,
-                          0, KEY_READ, 
-                          &key);
-    if (result != ERROR_SUCCESS)
-        return;
+    HippoRegKey key(HKEY_CURRENT_USER, 
+                    debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY,
+                    false);
 
     messageServer_ = NULL;
-    loadString(key, L"MessageServer", &messageServer_);
+    key.loadString(L"MessageServer", &messageServer_);
+
     webServer_ = NULL;
-    loadString(key, L"WebServer", &webServer_);
+    key.loadString(L"WebServer", &webServer_);
+
     signIn_ = true;
-    loadBool(key, L"SignIn", &signIn_);
-
-    RegCloseKey(key);
-}
-
-void
-HippoPreferences::saveString(HKEY         key,
-                             const WCHAR *valueName, 
-                             BSTR         str)
-{
-    if (str) {
-        unsigned int len = ::SysStringLen(str);
-        if (sizeof(WCHAR) * (len + 1) > UINT_MAX)
-            return;
-
-        RegSetValueEx(key, valueName, NULL, REG_SZ,
-                      (const BYTE *)str, (DWORD)sizeof(WCHAR) * (len + 1));
-    } else {
-        RegDeleteValue(key, valueName);
-    }
-}
-
-void
-HippoPreferences::saveBool(HKEY         key,
-                           const WCHAR *valueName, 
-                           bool         value)
-{
-    DWORD tmp = value;
-
-    RegSetValueEx(key, valueName, NULL, REG_SZ,
-                  (const BYTE *)&tmp, sizeof(DWORD));
+    key.loadBool(L"SignIn", &signIn_);
 }
 
 void
 HippoPreferences::save(void)
 {
-    LONG result;
-    HKEY key;
+    HippoRegKey key(HKEY_CURRENT_USER, 
+                    debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY,
+                    true);
 
-    result = RegCreateKeyEx(HKEY_CURRENT_USER, 
-                            debug_ ? DUMBHIPPO_SUBKEY_DEBUG : DUMBHIPPO_SUBKEY, 
-                            NULL, NULL, 
-                            REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
-                            &key, NULL);
-    if (result != ERROR_SUCCESS)
-        return;
-
-    saveString(key, L"MessageServer", messageServer_);
-    saveString(key, L"WebServer", webServer_);
-    saveBool(key, L"SignIn", signIn_);
-
-    RegCloseKey(key);
+    key.saveString(L"MessageServer", messageServer_);
+    key.saveString(L"WebServer", webServer_);
+    key.saveBool(L"SignIn", signIn_);
 }

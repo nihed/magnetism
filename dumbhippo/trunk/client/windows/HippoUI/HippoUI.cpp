@@ -9,12 +9,13 @@
 #include <strsafe.h>
 #include <exdisp.h>
 #include <HippoUtil.h>
+#include <HippoRegistrar.h>
 #include <HippoUtil_i.c>
-#include "HippoHTTP.h"
 #include <Winsock2.h>
 #include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
+#include "HippoHTTP.h"
 
 #include <glib.h>
 
@@ -55,6 +56,7 @@ HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initi
 
     notificationIcon_.setUI(this);
     bubble_.setUI(this);
+    upgrader_.setUI(this);
 
     preferencesDialog_ = NULL;
 
@@ -301,27 +303,6 @@ testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusIn
     HippoUI *ui = (HippoUI*) uctx;
 }
 
-class TestAsyncHandler : public HippoHTTPAsyncHandler
-{
-    HippoUI *ui_;
-public:
-    TestAsyncHandler(HippoUI *ui) {ui_ = ui;}
-    ~TestAsyncHandler() {}
-    virtual void handleError(HRESULT result) {
-        ui_->logError(L"failed http test", result);
-    }
-    virtual void handleComplete(void *responseData, long responseBytes) {
-        int addlen = MultiByteToWideChar(CP_UTF8, 0, (char*)responseData, responseBytes, NULL, 0);
-        if (addlen == 0)
-            return;
-        BSTR str;
-        str = ::SysAllocStringLen(L"", addlen);
-        int ret = MultiByteToWideChar(CP_UTF8, 0, (char*)responseData, responseBytes, str, addlen);
-        if (ret == 0)
-            return;
-    }
-};
-
 bool
 HippoUI::create(HINSTANCE instance)
 {
@@ -380,10 +361,6 @@ HippoUI::create(HINSTANCE instance)
         linkshare.personRecipients.append(recipient);
         onLinkMessage(linkshare);        
     }
-
-    //HippoHTTP *http = new HippoHTTP();;
-    //HippoHTTPAsyncHandler *handler = new TestAsyncHandler(this);
-    //http->doAsync(L"192.168.1.77", 8080, L"GET", L"/", NULL, NULL, 0, handler);
 
     return true;
 }
@@ -636,6 +613,24 @@ HippoUI::onAuthSuccess()
 }
 
 void 
+HippoUI::setClientInfo(const char *minVersion,
+                       const char *currentVersion,
+                       const char *downloadUrl)
+{
+    upgrader_.setUpgradeInfo(minVersion, currentVersion, downloadUrl);
+}
+
+void 
+HippoUI::onUpgradeReady()
+{
+    if (MessageBox(NULL, 
+                   L"A new version of the DumbHippo client has been downloaded. Install now?",
+                   L"DumbHippo upgrade ready", 
+                   MB_OKCANCEL | MB_DEFBUTTON1) == IDOK)
+        upgrader_.performUpgrade();
+}
+
+void 
 HippoUI::onLinkMessage(HippoLinkShare &linkshare)
 {
     bubble_.setLinkNotification(linkshare);
@@ -713,6 +708,29 @@ HippoUI::revokeActive()
         RevokeActiveObject(registerHandle_, NULL);
 
         registered_ = false;
+    }
+}
+
+// We register ourself as a startup program each time we run; if we are already registered
+// we'll just write over the old copy
+void 
+HippoUI::registerStartup()
+{
+    if (!debug_) {
+        WCHAR commandLine[MAX_PATH];
+        GetModuleFileName(instance_, commandLine, sizeof(commandLine) / sizeof(commandLine[0]));
+        HippoRegistrar registrar(NULL);
+        registrar.registerStartupProgram(L"DumbHippo", commandLine);
+    }
+}
+
+// We unregister as a startup program when the user selects Exit explicitely
+void
+HippoUI::unregisterStartup()
+{
+    if (!debug_) {
+        HippoRegistrar registrar(NULL);
+        registrar.unregisterStartupProgram(L"DumbHippo");
     }
 }
 
@@ -1037,6 +1055,7 @@ HippoUI::processMessage(UINT   message,
             logWindow_.show();
             return true;
         case IDM_EXIT:
+            unregisterStartup();
             DestroyWindow(window_);
             return true;
         }

@@ -1,0 +1,32 @@
+/* HippoRegKey: Utility class for loading or saving to a single registry key
+ *
+ * Copyright Red Hat, Inc. 2005
+ **/
+
+#pragma once
+
+#ifdef BUILDING_HIPPO_UTIL
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT __declspec(dllimport)
+#endif
+
+class DLLEXPORT HippoRegKey
+{
+public:
+    HippoRegKey(HKEY         parentKey,
+                const WCHAR *subKey,
+                bool         writable);
+    ~HippoRegKey(void);
+
+    bool loadString(const WCHAR *valueName,
+                    BSTR        *str);
+    bool loadBool(const WCHAR *valueName,
+                  bool        *result);
+    bool saveString(const WCHAR *valueName, 
+                    BSTR         str);
+    bool saveBool(const WCHAR *valueName, 
+                  bool         value);
+private:
+    HKEY key_;
+};

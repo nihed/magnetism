@@ -104,7 +104,7 @@ HippoIM::notifyPostClickedU(const char *postGuid)
     GError *error = NULL;
     lm_connection_send(lmConnection_, message, &error);
     if (error) {
-        hippoDebug(L"Failed to send presence: %s", error->message);
+        hippoDebug(L"Failed to send post clicked notification: %s", error->message);
         g_error_free(error);
     }
     lm_message_unref(message);
@@ -279,6 +279,30 @@ HippoIM::authenticate()
     }
 }
 
+void
+HippoIM::getClientInfo()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    lm_message_node_set_attribute(node, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
+
+    LmMessageNode *child = lm_message_node_add_child (node, "clientInfo", NULL);
+    lm_message_node_set_attribute(child, "platform", "windows");
+    LmMessageHandler *handler = lm_message_handler_new(onClientInfoReply, this, NULL);
+
+    GError *error = NULL;
+    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+    if (error) {
+        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for clientInfo");
+}
+
 void 
 HippoIM::startSignInTimeout()
 {
@@ -421,6 +445,7 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
         }
         lm_message_unref(message);
         im->stateChange(AUTHENTICATED);
+        im->getClientInfo();
         im->ui_->onAuthSuccess();
     } else {
         im->authFailure(NULL);
@@ -438,7 +463,44 @@ HippoIM::onDisconnect(LmConnection       *connection,
     im->connectFailure("Lost connection to server");
 }
 
-    
+LmHandlerResult
+HippoIM::onClientInfoReply(LmMessageHandler *handler,
+                           LmConnection     *connection,
+                           LmMessage        *message,
+                           gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+    const char *ns;
+    if (child)
+        ns = lm_message_node_get_attribute(child, "xmlns");
+
+    if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
+        lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
+        !child || child->next ||
+        !ns || strcmp(ns, "http://dumbhippo.com/protocol/clientinfo") != 0 ||
+        strcmp(child->name, "clientInfo") != 0)
+    {
+        im->ui_->debugLogU("Got a bad reply to clientInfo IQ");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    const char *minimum = lm_message_node_get_attribute(child, "minimum");
+    const char *current = lm_message_node_get_attribute(child, "current");
+    const char *download = lm_message_node_get_attribute(child, "download");
+
+    if (!minimum || !current || !download) {
+        im->ui_->debugLogU("clientInfo reply missing attributes");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    im->ui_->debugLogU("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
+    im->ui_->setClientInfo(minimum, current, download);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+   
 LmHandlerResult 
 HippoIM::onMessage (LmMessageHandler *handler,
                     LmConnection     *connection,

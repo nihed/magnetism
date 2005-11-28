@@ -140,6 +140,9 @@
 				RelativePath=".\HippoUI.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoUpgrader.cpp">
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -184,10 +187,16 @@
 				RelativePath=".\HippoUI.h">
 			</File>
 			<File
+				RelativePath=".\HippoUpgrader.h">
+			</File>
+			<File
 				RelativePath=".\Resource.h">
 			</File>
 			<File
 				RelativePath=".\stdafx.h">
+			</File>
+			<File
+				RelativePath=".\Version.h">
 			</File>
 		</Filter>
 		<Filter

@@ -10,6 +10,7 @@
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
 #include "HippoPreferences.h"
+#include "HippoUpgrader.h"
 #include "HippoIM.h"
 
 struct HippoBrowserInfo
@@ -83,6 +84,10 @@ public:
     void onConnectionChange(bool connected);
     void onAuthFailure();
     void onAuthSuccess();
+    void setClientInfo(const char *minVersion,
+                       const char *currentVersion,
+                       const char *downloadUrl);
+    void onUpgradeReady();
     void onLinkMessage(HippoLinkShare &link);
     void onLinkClicked(HippoLinkSwarm &swarm);
 
@@ -107,6 +112,9 @@ private:
                         LPARAM lParam);
 
     void revokeActive();
+
+    void registerStartup();
+    void unregisterStartup();
 
     void showAppletWindow(BSTR url);
 
@@ -155,6 +163,7 @@ private:
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
     HippoIM im_;
+    HippoUpgrader upgrader_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject

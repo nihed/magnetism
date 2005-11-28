@@ -27,6 +27,9 @@ public:
                                  const WCHAR *title);
     HRESULT registerBrowserHelperObject(const CLSID &classID,
                                         const WCHAR *title);
+    HRESULT registerStartupProgram(const WCHAR *key,
+                                   const WCHAR *commandline);
+    HRESULT unregisterStartupProgram(const WCHAR *key);
 
 private:
     WCHAR *modulePath_;

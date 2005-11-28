@@ -39,3 +39,7 @@ private:
     HWND window_;
     HWND editWindow_;
 };
+
+
+void hippoDebugLogW(const WCHAR *format, ...); // UTF-16
+void hippoDebugLogU(const char *format, ...);  // UTF-8
