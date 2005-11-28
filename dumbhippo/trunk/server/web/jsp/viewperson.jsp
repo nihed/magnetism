@@ -66,16 +66,20 @@
 				<table>
 				<tr>
 				<td>
-					<div class="shared-links">	
-						<strong>Cool Shared Links</strong>
-						<dht:postList posts="${viewperson.posts}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
-					</div>
+					<c:if test="${viewperson.posts.size > 0}">
+						<div class="shared-links">	
+							<strong>Cool Shared Links</strong>
+							<dht:postList posts="${viewperson.posts.list}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
+						</div>
+					</c:if>
 				</td>
 				<td>
-					<div class="groups">
-						<strong>Groups:</strong><br/>
-						<dh:entityList value="${viewperson.groups}"/>
-					</div>
+					<c:if test="${viewperson.groups.size > 0}">
+						<div class="groups">
+							<strong>Groups:</strong><br/>
+							<dh:entityList value="${viewperson.groups.list}"/>
+						</div>
+					</c:if>
 				</td>
 				</tr>
 				</table>

@@ -40,17 +40,23 @@ public class ViewPersonPage {
 	private PostingBoard postBoard;
 	private PersonView person;
 	
+	private ListBean<PostView> posts;
+	private ListBean<Group> groups;
+	
 	public ViewPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
-	public List<PostView> getPosts() {
+	public ListBean<PostView> getPosts() {
 		assert viewedPerson != null;
-		
-		// always ask for max posts shown + 1 as a marker for whether to show the More link
-		return postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0, MAX_POSTS_SHOWN + 1);
+	
+		if (posts == null) {
+			// always ask for max posts shown + 1 as a marker for whether to show the More link
+			posts = new ListBean<PostView>(postBoard.getPostsFor(signin.getViewpoint(), viewedPerson, 0, MAX_POSTS_SHOWN + 1));
+		}
+		return posts;
 	}
 	
 	public SigninBean getSignin() {
@@ -123,8 +129,11 @@ public class ViewPersonPage {
 	}
 	
 	// We don't show group's you haven't accepted the invitation for on your public page
-	public List<Group> getGroups() {
-		return Group.sortedList(groupSystem.findRawGroups(signin.getViewpoint(), viewedPerson, MembershipStatus.ACTIVE));
+	public ListBean<Group> getGroups() {
+		if (groups == null) {
+			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(signin.getViewpoint(), viewedPerson, MembershipStatus.ACTIVE)));
+		}
+		return groups;
 	}
 	
 	public int getMaxPostsShown() {
