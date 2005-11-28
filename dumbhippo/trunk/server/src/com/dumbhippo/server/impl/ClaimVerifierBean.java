@@ -1,10 +1,9 @@
 package com.dumbhippo.server.impl;
 
+import java.util.concurrent.Callable;
+
 import javax.annotation.EJB;
-import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -20,12 +19,13 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class ClaimVerifierBean implements ClaimVerifier {
 
+	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(ClaimVerifier.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
@@ -34,54 +34,44 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	@javax.annotation.Resource
-	private EJBContext ejbContext;
+	@EJB
+	private TransactionRunner runner;
 	
 	public String getAuthKey(User user, Resource resource) {
 		
 		if (user == null && resource == null)
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
 		
-		ClaimVerifier proxy = (ClaimVerifier) ejbContext.lookup(ClaimVerifier.class.getCanonicalName());
-		int retries = 1;
+		final User user_ = user;
+		final Resource resource_ = resource;
 		
-		while (true) {
-			try {
-				return proxy.findOrCreateAuthKey(user, resource);
-			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating ResourceClaimToken, retrying");
-					retries--;
-				} else {
-					throw new RuntimeException("Unexpected error creating ResourceClaimToken", e);
+		return runner.runTaskRetryingOnConstraintViolation(new Callable<String>() {
+			
+			public String call() throws Exception {
+				Query q;
+				
+				q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
+				q.setParameter("user", user_);
+				q.setParameter("resource", resource_);
+				
+				ResourceClaimToken token;
+				try {
+					token = (ResourceClaimToken) q.getSingleResult();
+					if (token.isExpired()) {
+						em.remove(token);
+						throw new EntityNotFoundException("found expired token, making a new one");
+					}
+				} catch (EntityNotFoundException e) {
+					token = new ResourceClaimToken(user_, resource_);
+					em.persist(token);
 				}
+				
+				return token.getAuthKey();
 			}
-		}
+			
+		});
 	}
 
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public String findOrCreateAuthKey(User user, Resource resource) {
-		Query q;
-		
-		q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
-		q.setParameter("user", user);
-		q.setParameter("resource", resource);
-		
-		ResourceClaimToken token;
-		try {
-			token = (ResourceClaimToken) q.getSingleResult();
-			if (token.isExpired()) {
-				em.remove(token);
-				throw new EntityNotFoundException("found expired token, making a new one");
-			}
-		} catch (EntityNotFoundException e) {
-			token = new ResourceClaimToken(user, resource);
-			em.persist(token);
-		}
-		
-		return token.getAuthKey();	
-	}
-	
 	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException {
 		if (user != null) {
 			if (!user.equals(token.getUser())) {

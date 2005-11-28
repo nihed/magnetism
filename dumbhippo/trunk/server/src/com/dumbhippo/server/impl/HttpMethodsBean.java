@@ -45,7 +45,9 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
+import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -363,9 +365,20 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		InvitationToken invitation = null;
 		
 		if (user == null && inviteKey != null) {
-			Token token = tokenSystem.lookupTokenByKey(inviteKey);
-			if (token != null && token instanceof InvitationToken)
-				invitation = (InvitationToken) token; 
+			Token token = null;
+			try {
+				token = tokenSystem.getTokenByKey(inviteKey);
+			} catch (TokenExpiredException e) {
+				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
+			} catch (TokenUnknownException e) {
+				throw new HumanVisibleException("We can't find a valid invitation to DumbHippo for you. Ask a friend to invite you!");
+			}
+			assert token != null;
+			if (token instanceof InvitationToken)
+				invitation = (InvitationToken) token;
+			else
+				throw new HumanVisibleException("We can't find a valid invitation to DumbHippo for you. Ask a friend to invite you!");
+			assert invitation != null;
 		}
 		
 		// FIXME obviously we should redirect you to login and then come back...

@@ -33,6 +33,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
@@ -68,6 +69,9 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	private InvitationSystem invitationSystem;
+
+	@EJB
+	private NoMailSystem noMail;
 	
 	// Our delegates
 	
@@ -312,6 +316,12 @@ public class MessageSenderBean implements MessageSender {
 	private class EmailSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post) {
+			
+			if (!noMail.getMailEnabled(recipient)) {
+				logger.debug("Mail is disabled to " + recipient + " not sending post notification");
+				return;
+			}
+			
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
 			// may be null!
@@ -319,9 +329,7 @@ public class MessageSenderBean implements MessageSender {
 			String recipientStopUrl;
 			
 			if (recipientInviteUrl == null) {
-				recipientStopUrl = null; // FIXME
-				logger.error("email to someone with no account, without inviting them; we can't do that just yet");
-				return;
+				recipientStopUrl = noMail.getNoMailUrl(recipient, NoMailSystem.Action.NO_MAIL_PLEASE);
 			} else {
 				recipientStopUrl = recipientInviteUrl + "&disable=true";
 			}
@@ -429,6 +437,8 @@ public class MessageSenderBean implements MessageSender {
 			if (recipientInviteUrl != null) {
 				messageText.append("      " + posterViewedBySelf.getName()
 						+ " created an invitation for you: " + recipientInviteUrl + "\n");
+			}
+			if (recipientStopUrl != null) {
 				messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
 			}
 			

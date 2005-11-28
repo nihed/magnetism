@@ -7,11 +7,13 @@ import java.lang.annotation.Target;
 
 /**
  * If this annotation is set on a field of a class instantiated with
- * <dh:bean> then the field will be filled in with the BrowserBean
- * from the session or a newly created BrowserBean.
+ * <dh:bean> then the field will be filled in with the requested 
+ * attribute from the given scope.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-public @interface Browser {
+public @interface FromJspContext {
+	public String value();
+	public Scope scope();
 }

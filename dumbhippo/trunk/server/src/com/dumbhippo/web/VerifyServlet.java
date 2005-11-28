@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 
@@ -15,6 +16,7 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.ResourceClaimToken;
+import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
@@ -22,7 +24,10 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.LoginVerifier;
+import com.dumbhippo.server.NoMailSystem;
+import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
+import com.dumbhippo.server.TokenUnknownException;
 
 public class VerifyServlet extends AbstractServlet {
 	private static final Log logger = GlobalSetup.getLog(VerifyServlet.class);
@@ -87,6 +92,32 @@ public class VerifyServlet extends AbstractServlet {
 		redirectToNextPage(request, response, "/home", null);
 	}
 	
+	private void doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
+		logger.debug("Processing toggle email token " + token);
+		
+		NoMailSystem.Action action = NoMailSystem.Action.TOGGLE_MAIL;
+		String actionParam = request.getParameter("action");
+		if (actionParam != null) {
+			if (actionParam.equals("enable"))
+				action = NoMailSystem.Action.WANTS_MAIL;
+			else if (actionParam.equals("disable"))
+				action = NoMailSystem.Action.NO_MAIL_PLEASE;
+			else
+				logger.warn("Unknown action on email toggle '" + actionParam + "'");
+		}
+		NoMailSystem noMail = WebEJBUtil.defaultLookup(NoMailSystem.class);
+		
+		noMail.processAction(token.getEmail(), action);
+		
+		// store it in the session so we'll make a reasonable effort to 
+		// not forget it; it's essential to re-set this every time 
+		// so it doesn't get a stale auth key or enabled/disabled flag
+		HttpSession session = request.getSession();
+		session.setAttribute("dumbhippo.toggleNoMailToken", token);
+		
+		redirectToNextPage(request, response, "/mailsettings", null);
+	}
+	
 	@Override
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException {
 		String authKey = request.getParameter("authKey");
@@ -97,7 +128,26 @@ public class VerifyServlet extends AbstractServlet {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Authentication key not provided");
 		
 		TokenSystem tokenSystem = WebEJBUtil.defaultLookup(TokenSystem.class);
-		Token token = tokenSystem.lookupTokenByKey(authKey);
+		Token token;
+		try {
+			token = tokenSystem.getTokenByKey(authKey);
+		} catch (TokenExpiredException e) {
+			if (e.getTokenClass() == InvitationToken.class)
+				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
+			else if (e.getTokenClass() == LoginToken.class)
+				throw new HumanVisibleException("The sign-in link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/signin\">Go here</a>");
+			else if (e.getTokenClass() == ResourceClaimToken.class)
+				throw new HumanVisibleException("This verification link has expired. You'll need to add this address again.").setHtmlSuggestion("<a href=\"/account\">Go here</a>");
+			else if (e.getTokenClass() == ToggleNoMailToken.class)
+				throw new HumanVisibleException("For your security, the verification link for enabling or disabling email has expired after " + ToggleNoMailToken.getExpirationInDays() 
+						+ " days. If you ever get mail from us again, it will have a new link valid for " + ToggleNoMailToken.getExpirationInDays() + " days.");
+			else
+				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
+		} catch (TokenUnknownException e) {
+			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
+		}
+		
+		assert token != null;
 		
 		if (token instanceof InvitationToken) {
 			doInvitationToken(request, response, (InvitationToken) token);
@@ -105,9 +155,11 @@ public class VerifyServlet extends AbstractServlet {
 			doLoginToken(request, response, (LoginToken) token);
 		} else if (token instanceof ResourceClaimToken) {
 			doResourceClaimToken(request, response, (ResourceClaimToken) token);
+		} else if (token instanceof ToggleNoMailToken) {
+			doToggleNoMailToken(request, response, (ToggleNoMailToken) token);
 		} else {
-			// token == null or we aren't handling a token subclass
-			throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/signin\">Go here</a>");
+			// missing handling of some token subclass
+			throw new RuntimeException("VerifyServlet not handling token type " + token.getClass().getName());
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package com.dumbhippo.server.impl;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
@@ -22,12 +22,14 @@ import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
-import com.dumbhippo.server.ChatRoomStatusCache;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.ChatRoomStatusCache;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
+import com.dumbhippo.server.TokenUnknownException;
 
 @MessageDriven(activateConfig =
  {
@@ -63,35 +65,45 @@ public class AimQueueConsumerBean implements MessageListener {
 	}
 	
 	private void processTokenEvent(BotEventToken event) {
-		Token token = tokenSystem.lookupTokenByKey(event.getToken()); 
-		if (token == null || !(token instanceof ResourceClaimToken)) {
-			logger.debug("Event token was expired or bogus");
+		Token token;
+		try {
+			token = tokenSystem.getTokenByKey(event.getToken());
+		} catch (TokenExpiredException e) {
 			sendReplyMessage(event, event.getAimName(), "It looks like your code has expired!");
-		} else {
-			ResourceClaimToken claim = (ResourceClaimToken) token;
+			return;
+		} catch (TokenUnknownException e) {
+			sendReplyMessage(event, event.getAimName(), "Hmm, the code you gave me doesn't look right. Try again?");
+			return;
+		} 
+		if (!(token instanceof ResourceClaimToken)) {
+			logger.debug("Event token was of the wrong type");
+			sendReplyMessage(event, event.getAimName(), "It looks like your code has expired!");
+			return;
+		}
 		
-			AimResource resource;
-			try {
-				resource = identitySpider.getAim(event.getAimName());
-			} catch (ValidationException e) {
-				logger.trace(e);
-				logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'");
-				throw new RuntimeException("broken, invalid screen name from AIM bot", e);
-			}
-			
-			try {
-				claimVerifier.verify(null, claim, resource);
-				sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your account");
-			} catch (HumanVisibleException e) {
-				logger.debug("exception verifying claim", e);
-				sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
-			}
+		ResourceClaimToken claim = (ResourceClaimToken) token;
+		
+		AimResource resource;
+		try {
+			resource = identitySpider.getAim(event.getAimName());
+		} catch (ValidationException e) {
+			logger.trace(e);
+			logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'");
+			throw new RuntimeException("broken, invalid screen name from AIM bot", e);
+		}
+		
+		try {
+			claimVerifier.verify(null, claim, resource);
+			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your account");
+		} catch (HumanVisibleException e) {
+			logger.debug("exception verifying claim", e);
+			sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
 		}
 	}
 	
 	private void processChatRoomRosterEvent(BotEventChatRoomRoster event) {
 		String chatRoomName = event.getChatRoomName();
-		ArrayList<String> chatRoomRoster = event.getChatRoomRoster();
+		List<String> chatRoomRoster = event.getChatRoomRoster();
 		
 		logger.debug("processing chat room roster event for '" + chatRoomName + "' with " + chatRoomRoster);
 		

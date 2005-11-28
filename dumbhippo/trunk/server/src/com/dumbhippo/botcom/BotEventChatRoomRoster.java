@@ -1,6 +1,6 @@
 package com.dumbhippo.botcom;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * BotEventChatRoomRoster encapsulates a change in the roster, or current members
@@ -14,9 +14,9 @@ public class BotEventChatRoomRoster extends BotEvent {
 
 	private String chatRoomName;
 	private String chatRoomId;
-	private ArrayList<String> chatRoomRoster;	
+	private List<String> chatRoomRoster;	
 	
-	public BotEventChatRoomRoster(String botName, String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+	public BotEventChatRoomRoster(String botName, String chatRoomName, String chatRoomId, List<String> chatRoomRoster) {
 		super(botName);
 		this.chatRoomName = chatRoomName;
 		this.chatRoomId = chatRoomId;
@@ -36,7 +36,7 @@ public class BotEventChatRoomRoster extends BotEvent {
 		return chatRoomName;
 	}
 
-	public ArrayList getChatRoomRoster() {
+	public List<String> getChatRoomRoster() {
 		return chatRoomRoster;
 	}
 }

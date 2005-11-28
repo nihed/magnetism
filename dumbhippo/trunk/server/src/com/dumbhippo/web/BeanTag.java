@@ -16,32 +16,29 @@ import com.dumbhippo.GlobalSetup;
 public class BeanTag extends SimpleTagSupport {
 	private static final Log logger = GlobalSetup.getLog(BeanTag.class);
 	
-	enum Scope {
-		PAGE,
-		REQUEST,
-		SESSION,
-		APPLICATION
-	}
-	
 	String id;
 	Scope scope;
 	Class clazz;
-	
-	private Object findObject() {
+
+	private Object findInScope(Scope s, String key) {
 		PageContext context = (PageContext)getJspContext();
 		
-		switch (scope) {
+		switch (s) {
 		case PAGE:
-			return context.getAttribute(id);
+			return context.getAttribute(key);
 		case REQUEST:
-			return context.getRequest().getAttribute(id);
+			return context.getRequest().getAttribute(key);
 		case SESSION:
-			return context.getSession().getAttribute(id);
+			return context.getSession().getAttribute(key);
 		case APPLICATION:
-			return context.getServletContext().getAttribute(id);
+			return context.getServletContext().getAttribute(key);
 		}
 		
-		throw new IllegalStateException();
+		throw new IllegalArgumentException("bad scope value");
+	}
+	
+	private Object findObject() {
+		return findInScope(scope, id);
 	}
 	
 	public void storeObject(Object o) {
@@ -75,6 +72,18 @@ public class BeanTag extends SimpleTagSupport {
 		return BrowserBean.getForRequest((HttpServletRequest)context.getRequest());
 	}
 	
+	private void setField(Object o, Field f, Object value) {
+		logger.debug("injecting value of type " + (value != null ? value.getClass().getName() : "null")
+				+ " into field " + f.getName() + " of object " + o.getClass().getName());
+		try {
+			// Like EJB3, we support private-field injection
+			f.setAccessible(true);
+			f.set(o, value);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error injecting object", e);
+		}
+	}
+	
 	private Object instantiateObject() {
 		logger.debug("Instantiating " + clazz.getName());
 		// We special-case the SigninBean
@@ -93,24 +102,22 @@ public class BeanTag extends SimpleTagSupport {
 		for (Field f : clazz.getDeclaredFields()) {
 			if (f.isAnnotationPresent(Signin.class) &&
 				f.getType().isAssignableFrom(SigninBean.class)) {
-				logger.debug("Injecting SigninBean into " + f.getName());
-				try {
-					// Like EJB3, we support private-field injection
-					f.setAccessible(true);
-					f.set(o, getSigninBean());
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException("Error injecting SigninBean", e);
-				}
+				setField(o, f, getSigninBean());
 			} else if (f.isAnnotationPresent(Browser.class) &&
 				f.getType().isAssignableFrom(BrowserBean.class)) {
-				logger.debug("Injecting BrowserBean into " + f.getName());
-				try {
-					// Like EJB3, we support private-field injection
-					f.setAccessible(true);
-					f.set(o, getBrowserBean());
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException("Error injecting BrowserBean", e);
-				}
+				setField(o, f, getBrowserBean());
+			} else if (f.isAnnotationPresent(FromJspContext.class)) {
+				FromJspContext a = f.getAnnotation(FromJspContext.class);
+				String key = a.value();
+				Scope s = a.scope();
+				if (s == null)
+					s = scope; // default to scope of the page
+				
+				Object toInject = findInScope(s, key);
+				if (toInject != null)
+					setField(o, f, toInject);
+				else
+					logger.debug("no value " + key + " found in scope " + s + " not injecting into " + o.getClass().getName());
 			}
 		}
 		

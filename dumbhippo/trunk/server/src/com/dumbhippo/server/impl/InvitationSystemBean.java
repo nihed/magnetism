@@ -35,6 +35,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.Mailer;
+import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
@@ -58,6 +59,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private Configuration configuration;
+	
+	@EJB
+	private NoMailSystem noMail;
 	
 	protected InvitationToken lookupInvitationFor(Resource invitee) {
 		InvitationToken ret;
@@ -190,8 +194,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	private void sendEmailNotification(InvitationToken invite, User inviter) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
+		
+		if (!noMail.getMailEnabled(invitee)) {
+			logger.debug("Mail is disabled to " + invitee + " not sending invitation");
+			return;
+		}
+		
 		String inviteeEmail = invitee.getEmail();
-
+		
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
 		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);

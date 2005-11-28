@@ -12,6 +12,6 @@ public interface TokenSystem {
 	 * @param authKey potential authentication key
 	 * @return the corresponding token, or null if none
 	 */
-	public Token lookupTokenByKey(String authKey);
+	public Token getTokenByKey(String authKey) throws TokenExpiredException, TokenUnknownException;
 	
 }
