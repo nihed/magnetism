@@ -2,6 +2,7 @@
 
 <div class="toolbar">
 	<c:url value="/home" var="home"/>
-	Do It: <a href="${home}">&#187; Home</a>
+	<c:url value="/account" var="account"/>
+	Do It: <a href="${home}">&#187; Home</a> &#151; <a href="${account}">Your Account</a>
 	<jsp:doBody/>
 </div>
