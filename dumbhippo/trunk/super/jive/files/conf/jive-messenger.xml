@@ -4,6 +4,13 @@
   <dumbhippo>
     <adminuser>admin</adminuser>
     <adminpassword>@@jivePassword@@</adminpassword>
+    <client>
+      <windows>
+        <minimum>@@clientWindowsMinimum@@</minimum>
+        <current>@@clientWindowsCurrent@@</current>
+        <download>@@clientWindowsDownload@@</download>
+      </windows>
+    </client>
   </dumbhippo>
   <adminConsole> 
     <!-- Disable either port by setting the value to -1 -->  
