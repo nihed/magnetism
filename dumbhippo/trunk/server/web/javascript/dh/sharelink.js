@@ -333,7 +333,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
 				
 	// set default focus
-	dh.share.recipientComboBox.textInputNode.focus();
+	dh.share.recipientComboBox.focus();
 	
 	// load up your contacts
 	dh.share.loadContacts();

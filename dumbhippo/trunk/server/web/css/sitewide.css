@@ -282,3 +282,32 @@ div.toolbar a {
 .dh-help-bubble a:hover {
 	text-decoration:	underline;
 }
+/* Autosuggest stuff */
+.dh-suggestion-list {
+	z-index:	2; /* on top */
+	background: white;
+	border: 	1px solid;
+ 	padding: 	4px;
+}
+.dh-suggestion-list ul
+{
+	padding: 			0;
+	margin: 			0;
+	list-style-type: 	none;
+}
+.dh-suggestion-list a
+{
+	text-decoration: 	none;
+	color: 				navy;
+}
+.dh-suggestion-list .dh-selected
+{
+	background: navy;
+ 	color: 		white;
+}
+.dh-suggestion-list .dh-selected a
+{
+	color: 	white;
+}
+
+

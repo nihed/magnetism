@@ -9,6 +9,7 @@ dojo.require("dojo.widget.HtmlComboBox");
 dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.model");
+dojo.require("dh.autosuggest");
 
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;
@@ -19,6 +20,7 @@ dh.share.selectedRecipients = [];
 
 dh.share.recipientComboBox = null;
 dh.share.descriptionRichText = null;
+dh.share.autoSuggest = null;
 
 //
 // Some callbacks when things happen; really, we should use dojo signal
@@ -142,8 +144,7 @@ dhRemoveRecipientClicked = function(event) {
 
 // called when user presses Enter or the Add button
 dh.share.doAddRecipientFromCombo = function(createContact) {
-	var cb = dh.share.recipientComboBox;
-	var email = cb.textInputNode.value;
+	var email = dh.share.autoSuggest.inputText;
 	
 	if (email.length == 0 || email.indexOf("@") < 0) {
 		dojo.debug("invalid email address: " + email);
@@ -173,17 +174,9 @@ dh.share.doAddRecipientFromCombo = function(createContact) {
 				// FIXME display
 			});
 }
-
-dhComboBoxOptionSelected = function() {
-	// combo box does not reliably fill in selectedResult I 
-	// don't think, but it should in selectOption which we are the handler
-	// for.
-	if (!dh.share.recipientComboBox.selectedResult) {
-		dojo.debug("no result selected");
-		return;
-	}
-	var id = dh.share.recipientComboBox.selectedResult[1];
-
+	
+dh.share.recipientSelected = function(selectedId) {
+	// FIXME outdated comment - does autosuggest.js still do this?
 	// Unfortunately dojo calls this 
 	// callback twice when you click a recipient, and we don't
 	// want to flash the recipient on the second time. 
@@ -191,8 +184,8 @@ dhComboBoxOptionSelected = function() {
 	// if it's already added normally, so no effect on normal behavior
 	// if we do noFlash = true
 
-	dojo.debug("adding recipient since selected = " + id);
-	dh.share.doAddRecipient(id, true);
+	dojo.debug("adding recipient since selected = " + selectedId);
+	dh.share.doAddRecipient(selectedId, true);
 }
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	
@@ -282,12 +275,8 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 			dh.util.flash(dh.share.findIdNode(obj.id));
 	}
 	
-	// clear the combo again
-	dh.share.recipientComboBox.textInputNode.value = "";
-	if (dh.share.recipientComboBox._result_list_open)
-		dh.share.recipientComboBox.hideResultList();
-	dh.share.recipientComboBox.dataProvider.lastSearchProvided = null;
-	dh.share.recipientComboBox.dataProvider.singleCompletionId = null;
+	// clear the combo again // Our new autosuggest.js does this for us
+	//	dh.share.recipientComboBox.value = "";
 }
 
 dhDoAddRecipientKeyUp = function(event) {
@@ -317,162 +306,140 @@ dh.share.loadContacts = function() {
 			});
 }
 
+dh.share.makeHighlightNode = function(word, match, type) {
+	var index = word.toLowerCase().indexOf(match.toLowerCase());
+
+	var elem = type || 'li';
+
+	var obj = document.createElement(elem);
+
+	var preText = word.substring(0,index);
+	var preSpan = document.createElement("span");
+	preSpan.appendChild(document.createTextNode(preText));
+
+	var matchText = word.substring(index, index + match.length);
+	var matchStrong = document.createElement("strong");
+	matchStrong.appendChild(document.createTextNode(matchText));
+
+	var postText = word.substring(index + match.length,word.length);
+	var postSpan = document.createElement("span");
+	postSpan.appendChild(document.createTextNode(postText));
+
+	obj.appendChild(preSpan);
+	obj.appendChild(matchStrong);
+	obj.appendChild(postSpan);
+
+	return obj;
+}
+
 dh.share.findInStringArray = function(strings, func, data) {
 	for (var i = 0; i < strings.length; ++i) {
 		if (func(strings[i], data))
-			return strings[i];
+			return dh.share.makeHighlightNode(strings[i], data);
 	}
 	return null;
 }
 
-dh.share.FriendListProvider = function() {
+dh.share.getEligibleRecipients = function() {
 
-	this.lastSearchProvided = null;
-	this.singleCompletionId = null;
+	var results = new Array();
 
-	// type is a string "STARTSTRING", "SUBSTRING", "STARTWORD" which we ignore for now
-	this.startSearch = function(searchStr, type, ignoreLimit) {
-		//dojo.debug("friend startSearch");
-		
-		var st = type || "startstring";
-		
-		// not case-sensitive
-		searchStr = searchStr.toLowerCase();
-		
-		var matchFunc;
-		if (st.toLowerCase() == "substring") {
-			matchFunc = function(text, searchStr) {
-				return text.toLowerCase().indexOf(searchStr) >= 0;
-			}
+	var matchNameFunc = function (word, match) {
+		// Check whole word first
+		if (word.toLowerCase().indexOf(match.toLowerCase()) == 0) {
+			return true;
 		} else {
-			matchFunc = function(text, searchStr) {
-				return text.toLowerCase().substr(0, searchStr.length) == searchStr;
-			}
-		}
-		
-		var completions = [];
-		
-		for (var id in dh.share.allKnownIds) {
-			var obj = dh.share.allKnownIds[id];
-			
-			var found = null;
-			var matchedStr = null;
-			if (matchFunc(obj.displayName, searchStr)) {
-				found = obj;
-				matchedStr = obj.displayName;
-			} else if (obj.email && matchFunc(obj.email, searchStr)) {
-				found = obj;
-				matchedStr = obj.email;
-			} else if (obj.aim && matchFunc(obj.aim, searchStr)) {
-				found = obj;
-				matchedStr = obj.aim;
-			} else {
-				// look in all emails and aims; but checking primary
-				// email and aim first was deliberate, even though 
-				// we'll check them again here
-				if (obj.emails) {
-					var s = dh.share.findInStringArray(obj.emails, matchFunc, searchStr);
-					if (s) {
-						found = obj;
-						matchedStr = s;
-					}
-				}
-				if (!found && obj.aims) {
-					var s = dh.share.findInStringArray(obj.aims, matchFunc, searchStr);
-					if (s) {
-						found = obj;
-						matchedStr = s;
-					}
-				}
-			}
-			
-			if (found && found.isPerson() && !found.hasAccount && !found.email) {
-				// we can't share with someone who is only an aim address
-				found = null;
-				matchedStr = null;
-			}
-			
-			if (found) {
-				if (!dh.share.findGuid(dh.share.selectedRecipients,
-							               found.id)) {
-					completions.push([matchedStr, found.id]);
+			// Now split the word up on spaces so we match
+			// second half of the word just like the first half
+			var splitSuggestion = word.split(' ');
+			for (j in splitSuggestion) {
+				var sug = splitSuggestion[j].toLowerCase();
+				if (sug.indexOf(match.toLowerCase()) == 0) {
+					return true;
 				}
 			}
 		}
+		return false;
+	}
+	
+	var matchEmailFunc = function (word, match) {
+		//Check whole email first
+		if (word.toLowerCase().indexOf(match.toLowerCase()) == 0) {
+			return true;
+		} else {
+			// Now split the email up on the @ so we match
+			// second half of the word just like the first half
+			var splitEmail = word.split('@')[0].split('.');
+			for (j in splitEmail) {
+				var sug = splitEmail[j].toLowerCase();
+				if(sug.indexOf(match.toLowerCase()) == 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	var searchStr = dh.share.autoSuggest.inputText;
+
+	for (var id in dh.share.allKnownIds) {
+		var obj = dh.share.allKnownIds[id];
 		
-		this.emitProvideSearchResults(completions, searchStr);
-	}
-
-	// a "signal", pass it an array of 2-item arrays, where the pairs
-	// are usercompletion+ourselectionid ; BEWARE dojo destroys this array so pass it a copy
-	// if you are also keeping a reference
-	this.provideSearchResults = function(resultsDataPairs) {
-		dojo.debug("friend provideSearchResults results = " + resultsDataPairs);
-	}
-	
-	this.emitProvideSearchResults = function(resultsDataPairs, forSearchStr) {
-	
-		// HtmlComboBox should probably do this itself... working around it
-	
-		dojo.debug("lastSearchProvided -" + this.lastSearchProvided + "- forSearchStr -" + forSearchStr + "-");
-	
-		if (resultsDataPairs.length == 1) {
-			this.singleCompletionId = resultsDataPairs[0][1];
-			dojo.debug("single completion is " + this.singleCompletionId);
+		var found = null;
+		var matchedNode = null;
+		if (matchNameFunc(obj.displayName, searchStr)) {
+			found = obj;
+			matchedNode = dh.share.makeHighlightNode(obj.displayName, searchStr);
+		} else if (obj.email && matchEmailFunc(obj.email, searchStr)) {
+			found = obj;
+			matchedNode = dh.share.makeHighlightNode(obj.email, searchStr);
+		} else if (obj.aim && matchNameFunc(obj.aim, searchStr)) {
+			found = obj;
+			matchedNode = dh.share.makeHighlightNode(obj.aim, searchStr);
 		} else {
-			this.singleCompletionId = null;
-			dojo.debug("there are " + resultsDataPairs.length + " completions");
+			// look in all emails and aims; but checking primary
+			// email and aim first was deliberate, even though 
+			// we'll check them again here
+			if (obj.emails) {
+				var n = dh.share.findInStringArray(obj.emails, matchEmailFunc, searchStr);
+				if (n) {
+					found = obj;
+					matchedNode = n;
+				}
+			}
+			if (!found && obj.aims) {
+				var n = dh.share.findInStringArray(obj.aims, matchNameFunc, searchStr);
+				if (n) {
+					found = obj;
+					matchedNode = n;
+				}
+			}
 		}
-	
-		if (this.lastSearchProvided == forSearchStr) {
-			// just show the list.
-			dh.share.recipientComboBox.showResultList(); // is a no-op if already showing
-		} else {
-			dojo.debug("providing search results to the combo for '" + forSearchStr + "' results are " + resultsDataPairs);
-			this.lastSearchProvided = forSearchStr;
-			this.provideSearchResults(resultsDataPairs);
+		
+		if (found && found.isPerson() && !found.hasAccount && !found.email) {
+			// we can't share with someone who is only an aim address
+			found = null;
+			matchedNode = null;
 		}
-
-		// This code adds the recipient if there is only a single one. It's
-		// from experience, a really bad idea to do this; it's unpredictable
-		// for the user, and often does something they don't want.
-
-//		if (this.singleCompletionId && forSearchStr.length > 0) {
-//			dojo.debug("adding single completion as recipient " + this.singleCompletionId);
-//			dh.share.doAddRecipient(this.singleCompletionId);
-//		} else {
-//			dojo.debug("don't have single completion");
-//		}
+		
+		if (found) {
+			if (!dh.share.findGuid(dh.share.selectedRecipients,
+						               found.id)) {
+				results.push([matchedNode, found.id]);
+			}
+		}
 	}
+	
+	return results;
 }
-dojo.inherits(dh.share.FriendListProvider, Object);
-
-dh.share.HtmlFriendComboBox = function(){
-	// dojo.debug("creating HtmlFriendComboBox");
-	dojo.widget.HtmlComboBox.call(this);
-	
-	this.widgetType = "FriendComboBox";
-	
-	this.fillInTemplate = function(args, frag){
-		// override the default provider
-		this.dataProvider = new dh.share.FriendListProvider();
-		// DEBUG - put data in the default provider
-		//this.dataProvider = new dojo.widget.ComboBoxDataProvider();
-		//this.dataProvider.setData(dh.share.stateNames);
-    }
-}
-
-dojo.inherits(dh.share.HtmlFriendComboBox, dojo.widget.HtmlComboBox);
-
-dojo.widget.manager.registerWidgetPackage("dh.share");
-dojo.widget.tags.addParseTreeHandler("dojo:friendcombobox");
 
 dh.share.init = function() {
 	dojo.debug("dh.share.init");
 			
-	dh.share.recipientComboBox = dojo.widget.manager.getWidgetById("dhRecipientComboBox");
-	dojo.event.connect(dh.share.recipientComboBox.textInputNode, "onkeyup", dj_global, "dhDoAddRecipientKeyUp");
-	dojo.event.connect(dh.share.recipientComboBox, "selectOption", dj_global, "dhComboBoxOptionSelected");
+	dh.share.recipientComboBox = document.getElementById('dhRecipientComboBox');
+	dh.share.autoSuggest = new dh.autosuggest.AutoSuggest(dh.share.recipientComboBox);
+	dh.share.autoSuggest.setOnSelectedFunc(dh.share.recipientSelected);
+	dh.share.autoSuggest.setGetEligibleFunc(dh.share.getEligibleRecipients);
 	
 	// rich text areas can't exist when display:none, so we have to create it after showing
 	dh.share.descriptionRichText = dojo.widget.fromScript("richtext", 

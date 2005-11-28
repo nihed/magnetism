@@ -51,8 +51,9 @@
 			<table>
 			<tr>
 			<td>
-				<input dojoType="FriendComboBox" autocomplete="off" accesskey="w"
-						type="text" id="dhRecipientComboBox"/>
+				<input autocomplete="off" accesskey="w"
+						type="text" id="dhRecipientComboBox" class="dhText"/>
+				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div><!-- this could be anywhere in the document really -->
 			</td>
 			<td>
 				<input type="button" value="Add" accesskey="a" class="dhButton" 
