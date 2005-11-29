@@ -498,7 +498,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	********************************************************/
 	this.shiftKey = function(ev)
 	{
-		if (ev.modifiers)	//Moz
+		if (typeof ev.modifiers != "undefined")	//Moz
 		{
 			return (ev.modifiers & Event.SHIFT_MASK);
 		}
