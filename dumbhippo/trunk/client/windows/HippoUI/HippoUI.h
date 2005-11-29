@@ -45,7 +45,7 @@ class HippoUI
 : public IHippoUI 
 {
 public:
-    HippoUI(bool debug, bool initialShowConfig, bool replaceExisting, bool initialDebugShare);
+    HippoUI(bool debug, bool replaceExisting, bool initialDebugShare);
     ~HippoUI();
 
     //IUnknown methods
@@ -142,7 +142,6 @@ private:
     // If true, then on startup if another instance is already running,
     // tell it to exit rather than erroring out.
     bool replaceExisting_;
-    bool initialShowConfig_;
     bool initialShowDebugShare_;
     bool connected_;
     // Whether we are registered as the active HippoUI object
@@ -154,6 +153,7 @@ private:
     HICON bigIcon_;
     HICON smallIcon_;
     HMENU menu_;
+    HMENU debugMenu_;
     HWND preferencesDialog_;
 
     HippoBSTR currentURL_;

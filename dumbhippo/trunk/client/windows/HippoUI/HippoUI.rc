@@ -31,9 +31,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_DUMBHIPPO           ICON                    "DumbHippo.ico"
-IDI_DUMBHIPPO_DISCONNECTED ICON                 "DumbHippo_Disconnected.ico"
+IDI_DUMBHIPPO_DISCONNECTED ICON                    "DumbHippo_Disconnected.ico"
 IDI_DUMBHIPPO_DEBUG     ICON                    "DumbHippoDebug.ico"
-IDI_DUMBHIPPO_DEBUG_DISCONNECTED ICON           "DumbHippoDebug_Disconnected.ico"
+IDI_DUMBHIPPO_DEBUG_DISCONNECTED ICON                    "DumbHippoDebug_Disconnected.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -45,9 +45,17 @@ BEGIN
     POPUP "Dummy"
     BEGIN
         MENUITEM "&Recent links...",            IDM_RECENT
-        MENUITEM "Debug Log...",                IDM_DEBUGLOG
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT
+    END
+END
+
+IDR_DEBUG MENU 
+BEGIN
+    POPUP "Dummy"
+    BEGIN
+        MENUITEM "&Debug Log...",               IDM_DEBUGLOG
+        MENUITEM "&Preferences...",             IDM_PREFERENCES
     END
 END
 

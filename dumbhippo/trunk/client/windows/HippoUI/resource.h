@@ -30,6 +30,7 @@
 #define IDD_LOGIN                       137
 #define IDI_DUMBHIPPO_DEBUG_DISCONNECTED 140
 #define IDR_HTML1                       142
+#define IDR_DEBUG                       144
 #define IDI_DUMBHIPPO_DEBUG             204
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
@@ -51,8 +52,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        144
-#define _APS_NEXT_COMMAND_VALUE         32782
+#define _APS_NEXT_RESOURCE_VALUE        145
+#define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124
 #endif

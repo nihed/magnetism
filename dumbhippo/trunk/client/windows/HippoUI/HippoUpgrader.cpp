@@ -93,7 +93,7 @@ HippoUpgrader::HippoUpgrader()
     state_ = STATE_UNKNOWN;
     currentVersion_ = NULL;
     minVersion_ = NULL;
-
+    downloadFile_ = NULL;
  }
 
 HippoUpgrader::~HippoUpgrader()

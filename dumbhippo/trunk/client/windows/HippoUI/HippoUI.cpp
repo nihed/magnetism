@@ -35,13 +35,12 @@ static const int USER_IDLE_TIME = 30 * 1000;
 // How often to check if the user is idle (in ms)
 static const int CHECK_IDLE_TIME = 5 * 1000;
 
-HippoUI::HippoUI(bool debug, bool launchConfig, bool replaceExisting, bool initialDebugShare) 
+HippoUI::HippoUI(bool debug, bool replaceExisting, bool initialDebugShare) 
     : preferences_(debug)
 {
     refCount_ = 1;
     debug_ = debug;
     replaceExisting_ = replaceExisting;
-    initialShowConfig_ = launchConfig;
     initialShowDebugShare_ = initialDebugShare;
 
     HippoPtr<ITypeLib> typeLib;
@@ -310,6 +309,7 @@ HippoUI::create(HINSTANCE instance)
    
     updateIcons();
     menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
+    debugMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_DEBUG));
 
     if (!registerClass())
         return false;
@@ -343,10 +343,6 @@ HippoUI::create(HINSTANCE instance)
     }
 
     checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
-
-    if (this->initialShowConfig_) {
-        showPreferences();
-    }
 
     if (this->initialShowDebugShare_) {
         HippoLinkShare linkshare;
@@ -479,9 +475,15 @@ void
 HippoUI::showMenu(UINT buttonFlag)
 {
     POINT pt;
+    HMENU menu;
     HMENU popupMenu;
 
-    updateMenu();
+    if (buttonFlag == TPM_RIGHTBUTTON && GetAsyncKeyState(VK_CONTROL)) {
+        menu = debugMenu_;
+    } else {
+        updateMenu();
+        menu = menu_;
+    }
 
     // We:
     //  - Set the foreground window to our (non-shown) window so that clicking
@@ -490,7 +492,7 @@ HippoUI::showMenu(UINT buttonFlag)
     // See Microsoft knowledgebase Q135788
 
     GetCursorPos(&pt);
-    popupMenu = GetSubMenu(menu_, 0);
+    popupMenu = GetSubMenu(menu, 0);
 
     SetForegroundWindow(window_);
     TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, window_, NULL);
@@ -1051,6 +1053,9 @@ HippoUI::processMessage(UINT   message,
         case IDM_RECENT:
             ShowRecent();
             return true;
+        case IDM_PREFERENCES:
+            showPreferences();
+            return true;
         case IDM_DEBUGLOG:
             logWindow_.show();
             return true;
@@ -1313,7 +1318,6 @@ WinMain(HINSTANCE hInstance,
     }
 
     static const GOptionEntry entries[] = {
-        { "config", 'c', 0, G_OPTION_ARG_NONE, (gpointer)&configFlag, "Launch developer configuration" },
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doInstallLaunch, "Run appropriately at the end of the install" },
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replaceExisting, "Replace existing instance, if any" },
@@ -1344,7 +1348,7 @@ WinMain(HINSTANCE hInstance,
     if (!initializeWinSock())
         return 0;
 
-    ui = new HippoUI(debug != FALSE, configFlag != FALSE, 
+    ui = new HippoUI(debug != FALSE,
                      replaceExisting != FALSE, initialDebugShare != FALSE);
     if (!ui->create(hInstance))
         return 0;
