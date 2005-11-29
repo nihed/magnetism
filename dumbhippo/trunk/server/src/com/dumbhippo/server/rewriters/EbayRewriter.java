@@ -11,6 +11,8 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostRewriter;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.services.EbayItemData;
+import com.dumbhippo.services.EbayScreenScraper;
 
 public class EbayRewriter extends AbstractRewriter {
 

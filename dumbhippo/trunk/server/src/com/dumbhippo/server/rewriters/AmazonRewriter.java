@@ -11,6 +11,8 @@ import com.dumbhippo.persistence.PostRewriter;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.services.AmazonItemData;
+import com.dumbhippo.services.AmazonWebServices;
 
 public class AmazonRewriter extends AbstractRewriter {
 	static private final Log logger = GlobalSetup.getLog(AmazonRewriter.class);

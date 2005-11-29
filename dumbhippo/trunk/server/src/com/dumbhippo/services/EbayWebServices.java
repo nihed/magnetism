@@ -1,4 +1,4 @@
-package com.dumbhippo.server.rewriters;
+package com.dumbhippo.services;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,7 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 
-class EbayWebServices {
+public class EbayWebServices {
 	static private final Log logger = GlobalSetup.getLog(EbayWebServices.class);
 	
 	private SAXParserFactory saxFactory;

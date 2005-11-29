@@ -1,4 +1,4 @@
-package com.dumbhippo.server.rewriters;
+package com.dumbhippo.services;
 
 public interface EbayItemData {
 

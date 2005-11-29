@@ -1,4 +1,4 @@
-package com.dumbhippo.server.rewriters;
+package com.dumbhippo.services;
 
 import java.io.IOException;
 import java.net.URL;
@@ -13,14 +13,14 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
 
-class AmazonWebServices {
+public class AmazonWebServices {
 
 	static private final Log logger = GlobalSetup.getLog(AmazonWebServices.class);
 	
 	private SAXParserFactory saxFactory;
 	private String amazonAccessKeyId;
 	
-	AmazonWebServices(String amazonAccessKeyId) {
+	public AmazonWebServices(String amazonAccessKeyId) {
 		this.amazonAccessKeyId = amazonAccessKeyId;
 	}
 	
@@ -72,7 +72,7 @@ class AmazonWebServices {
 		return handler;
 	}
 	
-	AmazonItemData getItemForUrl(URL url) {
+	public AmazonItemData getItemForUrl(URL url) {
 		String itemId = parseItemIdFromUrl(url);
 		if (itemId == null) {
 			logger.debug("could not extract item ID from amazon url " + url);

@@ -1,4 +1,4 @@
-package com.dumbhippo.server.rewriters;
+package com.dumbhippo.services;
 
 import java.io.IOException;
 import java.net.URL;
@@ -71,7 +71,7 @@ public class EbayScreenScraper {
 		}
 	}
 	
-	EbayScreenScraper() {
+	public EbayScreenScraper() {
 		
 	}
 	
@@ -206,7 +206,7 @@ public class EbayScreenScraper {
 		return best.url;
 	}
 	
-	EbayItemData getItem(String itemId) {
+	public EbayItemData getItem(String itemId) {
 		String html;
 		try {
 			URL url = new URL("http://cgi.ebay.com/ws/eBayISAPI.dll?ViewItem&item=" + itemId);
