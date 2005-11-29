@@ -107,7 +107,6 @@ dh.autosuggest.AutoSuggest = function(elem)
 	this.inputText = null;
 
 	//A pointer to the index of the highlighted eligible item. -1 means nothing highlighted.
-	// We pick 0 for now so something is always highlighted, but eventually we should highlight the best match?
 	this.highlighted = 0;
 
 	//A div to use to create the dropdown.
@@ -133,7 +132,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	if(!elem.id)
 	{
 		var id = "autosuggest" + dh.autosuggest.idCounter;
-		idCounter++;
+		dh.autosuggest.idCounter++;
 
 		elem.id = id;
 	}
@@ -151,11 +150,37 @@ dh.autosuggest.AutoSuggest = function(elem)
 		switch(key)
 		{
 			case TAB:
-			if (me.inputText.length > 0) {
-				me.useSuggestion(true);
+			var eligible = me.getEligible();
+			if (! me.shiftKey(ev))  //DOWN
+			{
+				if (me.highlighted < (eligible.length - 1))
+				{
+					me.highlighted++;
+				}
+				else if (me.highlighted > 0)
+				{
+					me.highlighted--;
+				}
+			} 
+			else //UP
+			{
+				if (me.highlighted > 0)
+				{
+					me.highlighted--;
+				}
+				else if (me.highlighted < (eligible.length - 1))
+				{
+					me.highlighted++;
+				}
 			}
+			//It's impossible to cancel the Tab key's default behavior. 
+			//So this undoes it by moving the focus back to our field 
+			//right after the event completes.
+			setTimeout("document.getElementById('" + elem.id + "').focus()",0);
+			me.changeHighlight(key);
+			break;
 			case ENTER:
-			me.useSuggestion(false);
+			me.useSuggestion();
 			break;
 
 			case ESC:
@@ -226,18 +251,15 @@ dh.autosuggest.AutoSuggest = function(elem)
 	Insert the highlighted suggestion into the input box, and 
 	remove the suggestion dropdown.
 	********************************************************/
-	this.useSuggestion = function(tab)
+	this.useSuggestion = function()
 	{
 		if (this.highlighted > -1)
 		{
+			var selectedId = this.getSelected();
+
 			this.elem.value = ''; //this.eligible[this.highlighted];
 			this.hideDiv();
-			//It's impossible to cancel the Tab key's default behavior. 
-			//So this undoes it by moving the focus back to our field right after
-			//the event completes.
-			if (tab) 
-				setTimeout("document.getElementById('" + this.elem.id + "').focus()",0);
-			var selectedId = this.getSelected();
+
 			if (selectedId)
 				this.onSelected(selectedId);
 		}
@@ -258,6 +280,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	this.showDiv = function()
 	{
 		this.div.style.display = 'block';
+		this.highlighted = 0;
 	};
 
 	/********************************************************
@@ -278,6 +301,8 @@ dh.autosuggest.AutoSuggest = function(elem)
 		for (i in lis)
 		{
 			var li = lis[i];
+
+			if ( ! li ) continue;
 
 			if (this.highlighted == i)
 			{
@@ -321,12 +346,17 @@ dh.autosuggest.AutoSuggest = function(elem)
 	{
 		var ul = document.createElement('ul');
 
+		if (me.highlighted < 0) 
+			me.highlighted = 0;
+
 		//Append array of LI's to list for the matched words.
 		var eligible = me.getEligible();
 		for (i in eligible)
 		{
 			var li = eligible[i][0];
-			
+
+			if (! li ) continue;
+
 			if (me.highlighted == i)
 			{
 				li.className = "dh-selected";
@@ -360,7 +390,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 			for (i in lis)
 			{
 				var li = lis[i];
-				if(li == target)
+				if(target == li)
 				{
 					me.highlighted = i;
 					break;
@@ -378,6 +408,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 			me.useSuggestion();
 			me.hideDiv();
 			me.cancelEvent(ev);
+			setTimeout("document.getElementById('" + elem.id + "').focus()",0);
 			return false;
 		};
 	
@@ -409,7 +440,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	this.setGetEligibleFunc = function(func)
 	{
 		this.getEligible = func;
-	}
+	};
 	/********************************************************
 	Helper function to determine the keycode pressed in a 
 	browser-independent manner.
@@ -459,6 +490,23 @@ dh.autosuggest.AutoSuggest = function(elem)
 		{
 			window.event.returnValue = false;
 		}
-	}
+	};
+
+	/********************************************************
+	Helper function to detect a shift key from an event in a
+	browser-independent manner.
+	********************************************************/
+	this.shiftKey = function(ev)
+	{
+		if (ev.modifiers)	//Moz
+		{
+			return (ev.modifiers & Event.SHIFT_MASK);
+		}
+
+		if (typeof ev.shiftKey != "undefined") //IE
+		{
+			return ev.shiftKey;
+		}
+	};
 }
 

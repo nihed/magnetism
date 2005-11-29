@@ -284,30 +284,35 @@ div.toolbar a {
 }
 /* Autosuggest stuff */
 .dh-suggestion-list {
-	z-index:	2; /* on top */
-	background: white;
-	border: 	1px solid;
- 	padding: 	4px;
+	z-index:			2; /* on top */
+	font-family: 			Bitstream Vera Sans, sans;
+	font-size:			10pt;
+	background: 			lightsteelblue;
+	padding: 			2px;
+	max-width:			20em;
 }
 .dh-suggestion-list ul
 {
 	padding: 			0;
 	margin: 			0;
-	list-style-type: 	none;
+	list-style-type: 		none;
 }
 .dh-suggestion-list a
 {
-	text-decoration: 	none;
+	text-decoration: 		none;
 	color: 				navy;
 }
 .dh-suggestion-list .dh-selected
 {
-	background: navy;
- 	color: 		white;
+	background: 			#bcd1ed;
+ 	color: 				white;
 }
 .dh-suggestion-list .dh-selected a
 {
-	color: 	white;
+	color: 				white;
 }
 
-
+#dhAutoSuggest {
+	display: 			none;
+	cursor: 			pointer;	
+}
