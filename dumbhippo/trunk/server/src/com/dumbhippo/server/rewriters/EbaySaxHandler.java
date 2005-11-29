@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import org.apache.commons.logging.Log;
 import org.xml.sax.SAXException;
 
+import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 
 public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> implements EbayItemData {
@@ -48,7 +49,7 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	}
 
 	@Override
-	protected void handleElement(Element c) throws SAXException {
+	protected void closeElement(Element c) throws SAXException {
 		if (c == Element.Title) {
 			values.put(c, getCurrentContent());
 		} else if (c == Element.TimeLeft) {

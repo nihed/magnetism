@@ -5,7 +5,7 @@ import junit.framework.TestSuite;
 
 public class AllTests {
     public static Test suite() {
-        TestSuite suite = new TestSuite("Persistance tests");
+        TestSuite suite = new TestSuite("Persistence tests");
         suite.addTest(new TestSuite(GuidPersistableTest.class));
         return suite;
     }

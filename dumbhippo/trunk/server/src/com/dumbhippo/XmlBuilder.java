@@ -35,7 +35,7 @@ public class XmlBuilder {
 	}
 	
 	public void appendStandaloneFragmentHeader() {
-		append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	}
 
 	public void appendHtmlHead(String title) {

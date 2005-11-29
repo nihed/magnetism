@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import org.apache.commons.logging.Log;
 import org.xml.sax.SAXException;
 
+import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 
 class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implements AmazonItemData {
@@ -37,7 +38,7 @@ class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implemen
 	}
 
 	@Override
-	protected void handleElement(Element c) throws SAXException {
+	protected void closeElement(Element c) throws SAXException {
 		
 		if (c == Element.ASIN) {
 			ASIN = getCurrentContent();

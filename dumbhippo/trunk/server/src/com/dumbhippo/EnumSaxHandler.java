@@ -1,4 +1,4 @@
-package com.dumbhippo.server.rewriters;
+package com.dumbhippo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
+public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	private Class<E> enumClass;
 	private E ignoredValue;
 	
@@ -34,7 +34,7 @@ abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	
 	private void push(String name) {
 		 E value = parseElementName(name);
-		 stack.add(value);			
+		 stack.add(value);
 	}
 	
 	private void pop(String name) throws SAXException {
@@ -52,13 +52,15 @@ abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		 //logger.debug("start E " + qName);
 		 push(qName);
+		 
+		 openElement(current());
 	}
 	
 	@Override
 	public final void endElement(String uri, String localName, String qName) throws SAXException {
 		E c = current();
 
-		handleElement(c);
+		closeElement(c);
 		
 		pop(qName);
 	}
@@ -87,6 +89,14 @@ abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	protected String getCurrentContent() {
 		return content.toString();
 	}
+
+	protected void clearContent() {
+		content.setLength(0);
+	}
 	
-	protected abstract void handleElement(E element) throws SAXException;
+	protected void openElement(E element) throws SAXException {
+		
+	}
+	
+	protected abstract void closeElement(E element) throws SAXException;
 }

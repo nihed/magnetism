@@ -89,10 +89,8 @@ class AmazonWebServices {
 	}
 
 	private SAXParser newSAXParser() {
-		synchronized (AmazonRewriter.class) {
-			if (saxFactory == null)
-				saxFactory = SAXParserFactory.newInstance();
-		}
+		if (saxFactory == null)
+			saxFactory = SAXParserFactory.newInstance();
 		try {
 			return saxFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
