@@ -159,7 +159,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 				}
 				else if (me.highlighted > 0)
 				{
-					me.highlighted--;
+					me.highlighted = 0;
 				}
 			} 
 			else //UP
@@ -170,7 +170,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 				}
 				else if (me.highlighted < (eligible.length - 1))
 				{
-					me.highlighted++;
+					me.highlighted = (eligible.length - 1);
 				}
 			}
 			//It's impossible to cancel the Tab key's default behavior. 
@@ -253,16 +253,15 @@ dh.autosuggest.AutoSuggest = function(elem)
 	********************************************************/
 	this.useSuggestion = function()
 	{
-		if (this.highlighted > -1)
-		{
-			var selectedId = this.getSelected();
+		var selectedId = this.getSelected();
 
-			this.elem.value = ''; //this.eligible[this.highlighted];
-			this.hideDiv();
+		if (selectedId)
+			this.onSelected(selectedId);
+		else
+			dh.share.doAddRecipientFromCombo(this.elem.value);
 
-			if (selectedId)
-				this.onSelected(selectedId);
-		}
+		this.elem.value = ''; //this.eligible[this.highlighted];
+		this.hideDiv();
 	};
 	
 	this.getSelected = function() 
