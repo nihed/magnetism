@@ -41,6 +41,10 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Installer", "Installer\Inst
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HippoShellExt", "HippoShellExt\HippoShellExt.vcproj", "{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -81,6 +85,10 @@ Global
 		{052AC7BA-BF8B-4EDC-8E1B-6A54D1C6F206}.Release.Build.0 = Release|Win32
 		{987FD7BC-2B60-46D8-9A78-D4D6C78EFFE5}.Debug.ActiveCfg = Debug
 		{987FD7BC-2B60-46D8-9A78-D4D6C78EFFE5}.Release.ActiveCfg = Release
+		{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}.Debug.ActiveCfg = Debug|Win32
+		{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}.Debug.Build.0 = Debug|Win32
+		{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}.Release.ActiveCfg = Release|Win32
+		{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

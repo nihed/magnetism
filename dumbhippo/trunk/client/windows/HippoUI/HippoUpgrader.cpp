@@ -319,7 +319,7 @@ HippoUpgrader::startDownload()
         ui_->debugLogW(L"Downloading %ls to %ls", downloadUrl_, filename);
 
         http_ = new HippoHTTP();
-        http_->doGet(downloadUrl_, NULL, this);
+        http_->doGet(downloadUrl_, this);
 
         progressUrl_ = downloadUrl_;
         g_free(progressVersion_);

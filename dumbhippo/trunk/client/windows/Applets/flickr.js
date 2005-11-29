@@ -2,7 +2,7 @@ dh.notification.extension.Flickr = function () {
     this._singlePhotoURL = /flickr\.com\/photos\/([A-Za-z0-9_]+)\/([0-9]+)\//
     this._flickrRESTEndpoint = 'http://www.flickr.com/services/rest/'
     
-    this._authKey = '0e96a6f88118ed4d866a0651e45383c1'
+    this._apiKey = '0e96a6f88118ed4d866a0651e45383c1'
 
     this._parseRestResponse = function (respDoc) {
         var top = respDoc.documentElement
@@ -34,7 +34,7 @@ dh.notification.extension.Flickr = function () {
             modifiedArgs[arg] = args[arg]
         }
         modifiedArgs.method = methodName
-        modifiedArgs.api_key = this._authKey
+        modifiedArgs.api_key = this._apiKey
         var url = this._flickrRESTEndpoint + dh.util.encodeQueryString(modifiedArgs)
         dh.util.debug("using flickr url " + url)        
         var flickr = this

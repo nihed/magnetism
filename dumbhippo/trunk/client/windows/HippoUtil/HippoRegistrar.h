@@ -30,6 +30,8 @@ public:
     HRESULT registerStartupProgram(const WCHAR *key,
                                    const WCHAR *commandline);
     HRESULT unregisterStartupProgram(const WCHAR *key);
+    HRESULT registerGlobalShellCtxMenu(const CLSID &classID,
+                                       const WCHAR *title);
 
 private:
     WCHAR *modulePath_;

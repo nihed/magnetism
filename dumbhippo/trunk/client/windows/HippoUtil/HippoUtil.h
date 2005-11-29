@@ -127,12 +127,16 @@ public:
     }
 
     void setUTF8(const char *utf8) {
-        int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+        setUTF8(utf8, -1);
+    }
+
+    void setUTF8(const char *utf8, unsigned int len) {
+        int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
         if (addlen == 0)
             return;
         int reqlen = Length() + addlen;
         ::SysReAllocStringLen(&m_str, m_str, reqlen);
-        int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, m_str, reqlen);
+        int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, len, m_str, reqlen);
         if (ret == 0)
             return;
     }

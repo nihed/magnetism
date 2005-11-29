@@ -227,3 +227,24 @@ HippoRegistrar::unregisterStartupProgram(const WCHAR *key)
                              L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 
                              key);
 }
+
+HRESULT
+HippoRegistrar::registerGlobalShellCtxMenu(const CLSID &classID,
+                                           const WCHAR *title)
+{
+    WCHAR *classStr;
+    HRESULT hr;
+
+    hr = StringFromIID(classID, &classStr);
+    if (FAILED(hr))
+        return hr;
+
+    hr = setValuePrintf(HKEY_CLASSES_ROOT,
+        L"*\\shellex\\ContextMenuHandlers\\%ls", 
+        NULL, classStr,
+        title); 
+
+    CoTaskMemFree(classStr);
+
+    return hr;
+}

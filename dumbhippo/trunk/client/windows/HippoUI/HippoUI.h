@@ -11,6 +11,7 @@
 #include "HippoLogWindow.h"
 #include "HippoPreferences.h"
 #include "HippoUpgrader.h"
+#include "HippoFlickr.h"
 #include "HippoIM.h"
 
 struct HippoBrowserInfo
@@ -65,6 +66,7 @@ public:
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
     STDMETHODIMP Quit();
     STDMETHODIMP ShowRecent();
+    STDMETHODIMP BeginFlickrShare(BSTR filePath);
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -163,6 +165,7 @@ private:
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
     HippoIM im_;
+    HippoFlickr flickr_;
     HippoUpgrader upgrader_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch

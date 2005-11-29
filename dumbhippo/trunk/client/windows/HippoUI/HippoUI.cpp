@@ -342,6 +342,8 @@ HippoUI::create(HINSTANCE instance)
         im_.signIn();
     }
 
+    flickr_.setUI(this);
+
     checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
 
     if (this->initialShowDebugShare_) {
@@ -355,7 +357,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.description.setUTF8("debug share");
         HippoBSTR recipient(L"debug recipient");
         linkshare.personRecipients.append(recipient);
-        onLinkMessage(linkshare);        
+        onLinkMessage(linkshare);
     }
 
     return true;
@@ -458,6 +460,14 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
 
     debugLogW(L"sharing URL %s", shareURL);
     showAppletWindow(shareURL);
+}
+
+STDMETHODIMP 
+HippoUI::BeginFlickrShare(BSTR filePath)
+{
+    debugLogW(L"sharing photo path %s", filePath);
+    flickr_.uploadPhoto(filePath);
+    return S_OK;
 }
 
 void

@@ -7,7 +7,7 @@ class HippoHTTPAsyncHandler
 {
 public:
     virtual void handleError(HRESULT result) = 0;
-    virtual void handleBytesRead(void *responseData, long responseBytes) = 0;
+    virtual void handleBytesRead(void *responseData, long responseBytes) { };
     virtual void handleComplete(void *responseData, long responseBytes) = 0;
     
 };
@@ -18,13 +18,22 @@ public:
     HippoHTTP(void);
     ~HippoHTTP(void);
 
-    void doGet(WCHAR *url, WCHAR *contentType, HippoHTTPAsyncHandler *handler);
+    void doGet(WCHAR *url, HippoHTTPAsyncHandler *handler);
     void doPost(WCHAR *url, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler);
+    void doMultipartFormPost(WCHAR *url, HippoHTTPAsyncHandler *handler, WCHAR *name, bool binary, void *data, ...);
 
     void shutdown(void);
 private:
     HINTERNET inetHandle_;
 
     bool parseURL(WCHAR *url, BSTR *host, INTERNET_PORT *port, BSTR *target);
+    bool writeAllToStream(IStream *stream, void *data, ULONG bytesTotal, HippoHTTPAsyncHandler *handler);
+    bool writeToStreamAsUTF8(IStream *stream,
+                             WCHAR   *str,
+                             HippoHTTPAsyncHandler *handler);
+    bool writeToStreamAsUTF8Printf(IStream *stream,
+                                     WCHAR   *fmt,
+                                     HippoHTTPAsyncHandler *handler,
+                                     ...);
     void doAsync(WCHAR *host, INTERNET_PORT port, WCHAR *op, WCHAR *target, WCHAR *contentType, void *requestInput, long len, HippoHTTPAsyncHandler *handler);
 };

@@ -140,6 +140,15 @@
 				RelativePath=".\HippoUtil.idl">
 			</File>
 			<File
+				RelativePath=".\md5.c">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -170,6 +179,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUtil.h">
+			</File>
+			<File
+				RelativePath=".\md5.h">
 			</File>
 			<File
 				RelativePath=".\resource.h">

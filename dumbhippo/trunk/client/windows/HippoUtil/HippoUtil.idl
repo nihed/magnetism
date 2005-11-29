@@ -27,7 +27,8 @@ library HippoUtil {
         HRESULT Quit();
         [id(104), helpstring("Show recently shared links")]
         HRESULT ShowRecent();
-
+        [id(105), helpstring("Upload a photo file to flickr and share link to it")]
+        HRESULT BeginFlickrShare([in] BSTR path);
     }
     [
         uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble

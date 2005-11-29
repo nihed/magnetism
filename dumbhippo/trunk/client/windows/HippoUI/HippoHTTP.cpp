@@ -65,12 +65,14 @@ HippoHTTPContext::doResponseIdle()
 {
     HippoHTTPContext::ResponseState state;
     
-    EnterCriticalSection(&criticalSection_);
+    if (criticalSectionInitialized_)
+        EnterCriticalSection(&criticalSection_);
     state = responseState_;
     long oldResponseBytesSeen = responseBytesSeen_;
     long newResponseBytesSeen = responseBytesSeen_ = responseBytesRead_;
     responseIdle_ = 0;
-    LeaveCriticalSection(&criticalSection_);
+    if (criticalSectionInitialized_)
+        LeaveCriticalSection(&criticalSection_);
 
     switch (state) {
     case RESPONSE_STATE_READING:
@@ -113,11 +115,13 @@ HippoHTTPContext::enqueueError(HRESULT error)
     InternetCloseHandle(connectionHandle);
     connectionHandle = NULL;
 
-    EnterCriticalSection(&criticalSection_);
+    if (criticalSectionInitialized_)
+        EnterCriticalSection(&criticalSection_);
     responseError_ = error;
     responseState_ = RESPONSE_STATE_ERROR;
     ensureResponseIdle();
-    LeaveCriticalSection(&criticalSection_);
+    if (criticalSectionInitialized_)
+        LeaveCriticalSection(&criticalSection_);
 }
 
 static void
@@ -216,7 +220,14 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
             &responseSize, &responseDatumSize, 
             NULL)) 
         {
-            ctx->enqueueError(GetLastError());
+            InternetCloseHandle(ctx->requestOpenHandle);
+            ctx->requestOpenHandle = NULL;
+            InternetCloseHandle(ctx->connectionHandle);
+            ctx->connectionHandle = NULL;
+            ctx->responseBytesRead_ = 0;
+            ctx->responseBuffer = NULL;
+            ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
+            ctx->ensureResponseIdle();
             return;
         }
         ctx->responseSize = wcstoul(responseSize, NULL, 10);
@@ -334,7 +345,6 @@ HippoHTTP::parseURL(WCHAR         *url,
 
 void
 HippoHTTP::doGet(WCHAR                 *url, 
-                 WCHAR                 *contentType, 
                  HippoHTTPAsyncHandler *handler)
 {
     HippoBSTR host;
@@ -344,7 +354,7 @@ HippoHTTP::doGet(WCHAR                 *url,
     if (!parseURL(url, &host, &port, &target))
         return;
 
-    doAsync(host, port, L"GET", target, contentType, NULL, 0, handler);
+    doAsync(host, port, L"GET", target, NULL, NULL, 0, handler);
 }
 
 void
@@ -361,7 +371,142 @@ HippoHTTP::doPost(WCHAR                 *url,
     if (!parseURL(url, &host, &port, &target))
         return;
 
-    doAsync(host, port, L"POST", target, contentType, NULL, 0, handler);
+    doAsync(host, port, L"POST", target, contentType, requestInput, len, handler);
+}
+
+bool
+HippoHTTP::writeAllToStream(IStream *stream, void *data, ULONG bytesTotal, HippoHTTPAsyncHandler *handler)
+{
+    ULONG bytesWritten = 0;
+    HRESULT res;
+    while (((res = stream->Write(((char*)data) + bytesWritten, bytesTotal, &bytesWritten)) == S_OK)
+        && bytesWritten > 0) {
+        bytesTotal -= bytesWritten;
+    }
+    if (FAILED(res)) {
+        handler->handleError(res);
+        return false;
+    }
+    return true;
+}
+
+bool
+HippoHTTP::writeToStreamAsUTF8(IStream *stream,
+                               WCHAR   *str,
+                               HippoHTTPAsyncHandler *handler)
+{
+
+    char *utf = g_utf16_to_utf8(str, -1, NULL, NULL, NULL);
+    long bytesTotal = (long) strlen(utf);
+    bool ret = writeAllToStream(stream, utf, bytesTotal, handler);
+    g_free (utf);
+    return ret;
+}
+
+bool
+HippoHTTP::writeToStreamAsUTF8Printf(IStream *stream,
+                                     WCHAR   *fmt,
+                                     HippoHTTPAsyncHandler *handler,
+                                     ...)
+{
+    va_list args;
+    va_start(args, handler);
+    long bufSize = 1024;
+    WCHAR *buf = (WCHAR*)g_malloc(bufSize);
+    HRESULT res;
+
+    while ((res = StringCchVPrintf(buf, bufSize/2, fmt, args)) == STRSAFE_E_INSUFFICIENT_BUFFER) {
+        bufSize *= 2;
+        buf = (WCHAR*)g_realloc(buf, bufSize);
+    }
+    bool ret = writeToStreamAsUTF8(stream, buf, handler);
+
+    g_free (buf);
+    va_end(args);
+    
+    return ret;
+}
+
+void
+HippoHTTP::doMultipartFormPost(WCHAR     *url,
+                               HippoHTTPAsyncHandler *handler,
+                               WCHAR     *name,
+                               bool       binary,
+                               void      *data,
+                               ...)
+{
+    va_list args;
+
+    va_start (args, data);
+
+    HippoBSTR boundary(L"----------------------------------dh-form-boundary-");
+    int suffix = rand();
+    WCHAR suffixBuf[120];
+
+    StringCchPrintf(suffixBuf, sizeof(suffixBuf)/sizeof(suffixBuf[0]), L"%d", suffix);
+    boundary.Append(suffixBuf);
+
+    IStream *formBuf;
+    CreateStreamOnHGlobal(NULL,TRUE,&formBuf);
+    
+    if (!writeToStreamAsUTF8(formBuf, boundary, handler))
+        return;
+    if (!writeToStreamAsUTF8(formBuf, L"\r\n", handler))
+        return;
+    while (name) {    
+        if (!writeToStreamAsUTF8(formBuf, L"Content-Disposition: form-data; name=\"", handler))
+            break;
+        if (!writeToStreamAsUTF8(formBuf, name, handler))
+            break;
+        if (!writeToStreamAsUTF8(formBuf, L"\"", handler))
+            break;
+        if (binary) {
+            const ULONG dataLen = va_arg(args, ULONG);
+            const WCHAR *contentType = va_arg(args, WCHAR*);
+            const WCHAR *filename = va_arg(args, WCHAR*);
+
+            if (!writeToStreamAsUTF8Printf(formBuf, L"; filename=\"%s\"\r\nContent-Type: %s\r\n\r\n", handler,
+                                           filename, contentType))
+                break;
+            if (!writeAllToStream(formBuf, data, dataLen, handler))
+                break;
+
+        } else {
+            if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n%s", handler, (WCHAR*)data))
+                break;
+        }
+        if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n%s\r\n", handler, boundary))
+            break;
+        name = va_arg(args, WCHAR *);
+        if (name) {
+            binary = va_arg(args, bool);
+            data = va_arg(args, void *);
+        }
+    }
+    
+    va_end (args);
+
+    WCHAR contentTypeBuf[1024];
+    StringCchPrintfW(contentTypeBuf, sizeof(contentTypeBuf)/sizeof(contentTypeBuf[0]),
+                     L"multipart/form-data; boundary=%s", boundary);
+    void *buf;
+    ULONG size;
+    {
+        HGLOBAL hg = NULL;
+        STATSTG formBufStats;
+        HRESULT res;
+
+        GetHGlobalFromStream(formBuf, &hg);
+        buf = GlobalLock(hg);
+        res = formBuf->Stat(&formBufStats, 0);
+        if (FAILED(res)) {
+            handler->handleError(res);
+            return;
+        }
+        size = (ULONG) formBufStats.cbSize.LowPart;
+    }
+
+    doPost(url, contentTypeBuf, buf, size, handler);
 }
 
 void
@@ -381,6 +526,7 @@ HippoHTTP::doAsync(WCHAR                 *host,
     context->handler = handler;
     context->op = op;
     context->target = target;
+    context->contentType = contentType;
     context->responseState_ = HippoHTTPContext::RESPONSE_STATE_STARTING;
     context->responseSize = -1;
     context->inputData = requestInput;
@@ -405,7 +551,7 @@ HippoHTTP::doAsync(WCHAR                 *host,
     if (context->contentType) {
         WCHAR buf[1024];    
         StringCchPrintf(buf, sizeof(buf)/sizeof(buf[0]), L"Content-Type: %s\r\n", context->contentType);
-        HttpAddRequestHeaders(context->requestOpenHandle, buf, -1, HTTP_ADDREQ_FLAG_REPLACE);
+        HttpAddRequestHeaders(context->requestOpenHandle, buf, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
 
     if (!HttpSendRequest(context->requestOpenHandle, NULL, 0, context->inputData, context->inputLen) &&
