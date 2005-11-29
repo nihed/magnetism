@@ -39,6 +39,7 @@ public enum NodeName {
 	Type,
 	Generic,
 	// type-specific sections
+	Error,
 	Amazon,
 	eBay,
 	// nodes underneath one of the above sections

@@ -15,6 +15,11 @@ import java.util.List;
 public class Node {
 	
 	private NodeName name;
+	
+	// Invariants:
+	// - 0 or 1 of content,children can be non-null, but not both
+	// - the string can't be empty and the list can't be empty; they have to be null instead
+	
 	private String content;
 	private List<Node> children;
 	
@@ -42,12 +47,33 @@ public class Node {
 		}
 	}
 	
-	public boolean hasChildren() {
-		return children != null;
+	/** 
+	 * Returns true if the node is empty; which means it is indeterminate in 
+	 * type, you can treat it as either content or container node.
+	 * It will have content = empty string and children = empty list.
+	 * @return true if the node is empty
+	 */
+	public boolean isEmpty() {
+		return (children == null && content == null);
 	}
 	
+	/**
+	 * Find out of if you can call getChildren(); node may still have 
+	 * zero children if this returns true.
+	 * 
+	 * @return true if node can be treated as a container node
+	 */
+	public boolean hasChildren() {
+		return children != null || (children == null && content == null);
+	}
+	
+	/**
+	 * Find out if you can call getContent(); node may contain the 
+	 * empty string though.
+	 * @return if node can be treated as a content node
+	 */
 	public boolean hasContent() {
-		return content != null;
+		return content != null || (content == null && children == null);
 	}
 	
 	public boolean hasChild(NodeName... path) {
@@ -61,9 +87,14 @@ public class Node {
 	}
 	
 	public List<Node> getChildren() {
-		if (children == null)
-			throw new NodeContentException(name, "no children");
-		return Collections.unmodifiableList(children);
+		if (children == null) {
+			if (content != null)
+				throw new NodeContentException(name, "no children, this is a text content node");
+			else
+				return Collections.emptyList();
+		} else {
+			return Collections.unmodifiableList(children);
+		}
 	}
 
 	/**
@@ -75,7 +106,7 @@ public class Node {
 	 * @param children the new child nodes or null
 	 */
 	public void setChildren(List<Node> children) {
-		if (children != null)
+		if (children != null && !children.isEmpty())
 			this.children = new ArrayList<Node>(children);	
 		else
 			this.children = null;
@@ -85,12 +116,16 @@ public class Node {
 	/**
 	 * Not strictly needed since we have the varargs
 	 * version, but maybe avoids an array creation or something. 
-	 * @return the content
-	 * @throws NodeContentException if node has no content
+	 * @return the content (always non-null)
+	 * @throws NodeContentException if node has children instead of content
 	 */
 	public String getContent() {
-		if (content == null)
-			throw new NodeContentException(name, "no text content");
+		if (content == null) {
+			if (children != null)
+				throw new NodeContentException(name, "no text content, this is a container node");
+			else
+				return "";
+		}
 		return content;
 	}
 
@@ -98,11 +133,15 @@ public class Node {
 	 * Sets the text content of the node, replacing any 
 	 * existing content or existing child nodes.
 	 * Setting content to null deletes both content and 
-	 * children.
+	 * children. Empty string is the same as null; it puts 
+	 * the node in an indeterminate state where you can either 
+	 * get the content (as empty string) or the children (as empty list)
 	 * 
 	 * @param content the new content or null
 	 */
 	public void setContent(String content) {
+		if (content.length() == 0)
+			content = null;
 		this.content = content;
 		this.children = null;
 	}

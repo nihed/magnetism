@@ -11,6 +11,7 @@ package com.dumbhippo.postinfo;
  */
 public enum PostInfoType {
 	GENERIC,
+	ERROR,
 	EBAY,
 	AMAZON,
 	FLICKR

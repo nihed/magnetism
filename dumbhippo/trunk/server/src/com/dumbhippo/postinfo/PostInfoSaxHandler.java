@@ -48,7 +48,7 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 		// note that whitespace is significant for content nodes
 		// but gets dropped for container nodes
 		if (content.trim().length() > 0) {
-			if (node.hasChildren())
+			if (!node.isEmpty() && node.hasChildren())
 				throw new SAXException("node " + node.getName() + " has both text content and child nodes");
 			node.setContent(content);
 		}

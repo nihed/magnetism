@@ -33,6 +33,15 @@ public class PostInfoTest extends TestCase {
 		assertTrue(root.hasChild(NodeName.Generic));
 		assertEquals(root.resolvePath(NodeName.Generic, NodeName.Favicon), favicon);
 		assertTrue(root.hasChild(NodeName.Generic, NodeName.Favicon));
+		
+		// a node without content or children set is in an "indeterminate" state
+		// where it can be treated as either a content node or container node
+		Node empty = new Node(NodeName.PostInfo);
+		assertTrue(empty.hasChildren());
+		assertTrue(empty.hasContent());
+		assertTrue(empty.getContent() != null);
+		assertTrue(empty.getContent().length() == 0);
+		assertTrue(empty.getChildren().size() == 0);
 	}
 	
 	public void testPostInfo() {
