@@ -42,6 +42,14 @@ public class PostInfoTest extends TestCase {
 		assertTrue(empty.getContent() != null);
 		assertTrue(empty.getContent().length() == 0);
 		assertTrue(empty.getChildren().size() == 0);
+		
+		// an all-whitespace node is similar but the content is the whitespace
+		Node whitespace = new Node(NodeName.PostInfo, "   ");
+		assertTrue(whitespace.hasChildren());
+		assertTrue(whitespace.hasContent());
+		assertTrue(whitespace.getContent() != null);
+		assertTrue(whitespace.getContent().length() == 3);
+		assertTrue(whitespace.getChildren().size() == 0);
 	}
 	
 	public void testPostInfo() {
@@ -60,7 +68,13 @@ public class PostInfoTest extends TestCase {
 		+ "  <Favicon>  http://example.com/favicon.ico  </Favicon>\n"
 		+ "</Generic>\n"
 		+ "</PostInfo>\n";
-		
+		String document3 = xmlHeader
+		+ "<PostInfo>\n" 
+		+ "<Type>GENERIC</Type>\n"
+		+ "<Generic>\n"
+		+ "  <Favicon>    </Favicon>\n"
+		+ "</Generic>\n"
+		+ "</PostInfo>\n";
 	
 		PostInfo postInfo1 = parseSuccessfully(document1);
 		
@@ -79,6 +93,23 @@ public class PostInfoTest extends TestCase {
 		assertEquals(postInfo2.getContent(NodeName.Generic, NodeName.Favicon),
 		"  http://example.com/favicon.ico  ");
 
-		TestUtils.testEqualsImplementation(postInfo1, postInfo2);
+		PostInfo postInfo3 = parseSuccessfully(document3);
+		assertEquals(postInfo3.getContent(NodeName.Generic, NodeName.Favicon),
+		"    ");
+		assertTrue(postInfo3.getTree().resolvePath(NodeName.Generic, NodeName.Favicon).hasChildren());
+		assertTrue(postInfo3.getTree().resolvePath(NodeName.Generic, NodeName.Favicon).getChildren().size() == 0);
+		
+		String document3Rewritten = postInfo3.toXml();
+		
+		PostInfo postInfo4 = parseSuccessfully(document3Rewritten);
+		
+		assertEquals(postInfo4.getContent(NodeName.Generic, NodeName.Favicon),
+		"    ");
+		assertTrue(postInfo4.getTree().resolvePath(NodeName.Generic, NodeName.Favicon).hasChildren());
+		assertTrue(postInfo4.getTree().resolvePath(NodeName.Generic, NodeName.Favicon).getChildren().size() == 0);
+		
+		assertEquals(postInfo3, postInfo4);
+		
+		TestUtils.testEqualsImplementation(postInfo1, postInfo2, postInfo3, postInfo4);
 	}
 }

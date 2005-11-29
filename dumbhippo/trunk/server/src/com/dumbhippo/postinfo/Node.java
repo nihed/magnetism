@@ -18,7 +18,7 @@ public class Node {
 	
 	// Invariants:
 	// - 0 or 1 of content,children can be non-null, but not both
-	// - the string can't be empty and the list can't be empty; they have to be null instead
+	// - the list can't be empty; it has to be null instead
 	
 	private String content;
 	private List<Node> children;
@@ -50,11 +50,11 @@ public class Node {
 	/** 
 	 * Returns true if the node is empty; which means it is indeterminate in 
 	 * type, you can treat it as either content or container node.
-	 * It will have content = empty string and children = empty list.
+	 * It will have content = all-whitespace string and children = empty list.
 	 * @return true if the node is empty
 	 */
 	public boolean isEmpty() {
-		return (children == null && content == null);
+		return (children == null && content == null) || (children == null && content.trim().length() == 0);
 	}
 	
 	/**
@@ -64,7 +64,7 @@ public class Node {
 	 * @return true if node can be treated as a container node
 	 */
 	public boolean hasChildren() {
-		return children != null || (children == null && content == null);
+		return children != null || isEmpty();
 	}
 	
 	/**
@@ -73,7 +73,7 @@ public class Node {
 	 * @return if node can be treated as a content node
 	 */
 	public boolean hasContent() {
-		return content != null || (content == null && children == null);
+		return content != null || isEmpty();
 	}
 	
 	public boolean hasChild(NodeName... path) {
@@ -87,11 +87,10 @@ public class Node {
 	}
 	
 	public List<Node> getChildren() {
-		if (children == null) {
-			if (content != null)
-				throw new NodeContentException(name, "no children, this is a text content node");
-			else
-				return Collections.emptyList();
+		if (isEmpty()) {
+			return Collections.emptyList();
+		} else if (content != null) {
+			throw new NodeContentException(name, "this is a text content node, no children");
 		} else {
 			return Collections.unmodifiableList(children);
 		}

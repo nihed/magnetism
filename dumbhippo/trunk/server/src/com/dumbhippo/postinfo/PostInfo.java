@@ -107,12 +107,15 @@ public class PostInfo {
 	
 	private void appendNodeXml(XmlBuilder xml, Node node, int depth) {
 		xml.openElement(node.getName().name());
-		if (node.hasChildren()) {
+		// if the node has both content and children then it's 
+		// empty/indeterminate and we want to be sure to write out
+		// any whitespace content in case the whitespace is significant
+		if (node.hasContent()) {
+			xml.appendEscaped(node.getContent());
+		} else if (node.hasChildren()) {
 			for (Node c : node.getChildren()) {
 				appendNodeXml(xml, c, depth + 1);
 			}
-		} else if (node.hasContent()) {
-			xml.appendEscaped(node.getContent());
 		}
 		xml.closeElement();
 	}
@@ -122,5 +125,28 @@ public class PostInfo {
 		xml.appendStandaloneFragmentHeader();
 		appendNodeXml(xml, tree, 0);
 		return xml.toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (!(obj instanceof PostInfo))
+			return false;
+		PostInfo other = (PostInfo) obj;
+		if ((other.tree != null) != (this.tree != null)) {
+			return false;
+		}
+		if (other.tree != null && !other.tree.equals(this.tree))
+			return false;
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		if (tree == null)
+			return 17;
+		else 
+			return tree.hashCode();
 	}
 }

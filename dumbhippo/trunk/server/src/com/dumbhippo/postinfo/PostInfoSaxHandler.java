@@ -45,13 +45,13 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 		
 		Node node = stack.get(stack.size() - 1);
 		String content = getCurrentContent();
-		// note that whitespace is significant for content nodes
-		// but gets dropped for container nodes
-		if (content.trim().length() > 0) {
-			if (!node.isEmpty() && node.hasChildren())
-				throw new SAXException("node " + node.getName() + " has both text content and child nodes");
+
+		System.out.println("closing " + element + " content ='" + content + "'");
+		
+		// don't set content if we already have children
+		if (node.isEmpty())
 			node.setContent(content);
-		}
+
 		stack.remove(stack.size() - 1);
 		
 		if (stack.isEmpty() && node.getName() == NodeName.PostInfo)
