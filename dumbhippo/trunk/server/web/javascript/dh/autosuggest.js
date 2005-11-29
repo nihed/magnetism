@@ -232,16 +232,22 @@ dh.autosuggest.AutoSuggest = function(elem)
 			return;
 		default:
 
+			var update = false;
 			if (this.value != me.inputText && this.value.length > 0)
 			{
-				me.inputText = this.value;
-				me.createDiv();
-				me.positionDiv();
-				me.showDiv();
+				update = true;
 			}
-			else
-			{
-				me.hideDiv();
+			me.inputText = this.value;
+			if (update) {
+				var eligible = me.getEligible();
+
+				if (eligible.length > 0) {
+					me.createDiv();
+					me.positionDiv();
+					me.showDiv();
+				} else {
+					me.hideDiv();
+				}
 			}
 		}
 	};

@@ -147,8 +147,7 @@ dh.share.doAddRecipientFromCombo = function() {
 	var email = dh.share.autoSuggest.inputText;
 	
 	if (email.length == 0 || email.indexOf("@") < 0) {
-		dojo.debug("invalid email address: " + email);
-		// FIXME display something
+		alert("invalid email address: '" + email + "'");
 		return;
 	}
 	
