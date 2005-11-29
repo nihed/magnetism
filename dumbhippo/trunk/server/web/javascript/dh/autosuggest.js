@@ -255,10 +255,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	{
 		var selectedId = this.getSelected();
 
-		if (selectedId)
-			this.onSelected(selectedId);
-		else
-			dh.share.doAddRecipientFromCombo(this.elem.value);
+		this.onSelected(selectedId);
 
 		this.elem.value = ''; //this.eligible[this.highlighted];
 		this.hideDiv();
@@ -427,6 +424,8 @@ dh.autosuggest.AutoSuggest = function(elem)
 	
 	/********************************************************
 	Function will be called upon selection of a completion element
+	or on "activate" (enter is pressed), can be passed a null selectedId
+	in that case
 	********************************************************/
 	this.setOnSelectedFunc = function(func)
 	{

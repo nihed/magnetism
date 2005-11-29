@@ -285,9 +285,9 @@ div.toolbar a {
 /* Autosuggest stuff */
 .dh-suggestion-list {
 	z-index:			2; /* on top */
-	font-family: 			Bitstream Vera Sans, sans;
+	font-family: 		Bitstream Vera Sans, sans;
 	font-size:			10pt;
-	background: 			lightsteelblue;
+	background: 		lightsteelblue;
 	padding: 			2px;
 	max-width:			20em;
 }

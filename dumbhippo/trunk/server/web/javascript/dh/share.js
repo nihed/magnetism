@@ -143,7 +143,7 @@ dhRemoveRecipientClicked = function(event) {
 }
 
 // called when user presses Enter or the Add button
-dh.share.doAddRecipientFromCombo = function(createContact) {
+dh.share.doAddRecipientFromCombo = function() {
 	var email = dh.share.autoSuggest.inputText;
 	
 	if (email.length == 0 || email.indexOf("@") < 0) {
@@ -185,7 +185,10 @@ dh.share.recipientSelected = function(selectedId) {
 	// if we do noFlash = true
 
 	dojo.debug("adding recipient since selected = " + selectedId);
-	dh.share.doAddRecipient(selectedId, true);
+	if (selectedId)
+		dh.share.doAddRecipient(selectedId, true);
+	else
+		dh.share.doAddRecipientFromCombo();
 }
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	
@@ -277,12 +280,6 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 	
 	// clear the combo again // Our new autosuggest.js does this for us
 	//	dh.share.recipientComboBox.value = "";
-}
-
-dhDoAddRecipientKeyUp = function(event) {
-	if (event.keyCode == 13) {
-		dh.share.doAddRecipientFromCombo(true);
-	}
 }
 
 dh.share.loadContacts = function() {
