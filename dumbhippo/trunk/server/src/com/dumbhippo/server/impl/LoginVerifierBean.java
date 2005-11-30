@@ -82,6 +82,7 @@ public class LoginVerifierBean implements LoginVerifier {
 			token = (LoginToken) q.getSingleResult();
 			if (token.isExpired()) {
 				em.remove(token);
+				em.flush();
 				throw new EntityNotFoundException("found expired token, making a new one");
 			}
 		} catch (EntityNotFoundException e) {
