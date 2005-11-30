@@ -151,27 +151,15 @@ dh.autosuggest.AutoSuggest = function(elem)
 		{
 			case TAB:
 			var eligible = me.getEligible();
-			if (! me.shiftKey(ev))  //DOWN
+			//Go down to the next eligible
+			if (me.highlighted < (eligible.length - 1))
 			{
-				if (me.highlighted < (eligible.length - 1))
-				{
-					me.highlighted++;
-				}
-				else if (me.highlighted > 0)
-				{
-					me.highlighted = 0;
-				}
-			} 
-			else //UP
+				me.highlighted++;
+			}
+			//Wrap around if we hit the end
+			else if (me.highlighted > 0)
 			{
-				if (me.highlighted > 0)
-				{
-					me.highlighted--;
-				}
-				else if (me.highlighted < (eligible.length - 1))
-				{
-					me.highlighted = (eligible.length - 1);
-				}
+				me.highlighted = 0;
 			}
 			//It's impossible to cancel the Tab key's default behavior. 
 			//So this undoes it by moving the focus back to our field 
@@ -493,23 +481,6 @@ dh.autosuggest.AutoSuggest = function(elem)
 		if(window.event)	//IE
 		{
 			window.event.returnValue = false;
-		}
-	};
-
-	/********************************************************
-	Helper function to detect a shift key from an event in a
-	browser-independent manner.
-	********************************************************/
-	this.shiftKey = function(ev)
-	{
-		if (typeof ev.modifiers != "undefined")	//Moz
-		{
-			return (ev.modifiers & Event.SHIFT_MASK);
-		}
-
-		if (typeof ev.shiftKey != "undefined") //IE
-		{
-			return ev.shiftKey;
 		}
 	};
 }
