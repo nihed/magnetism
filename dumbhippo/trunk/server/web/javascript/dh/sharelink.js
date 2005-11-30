@@ -10,7 +10,7 @@ dojo.require("dh.util");
 
 dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.urlTitleToShareEditBox = null;
-dh.sharelink.secretCheckbox = null;
+//dh.sharelink.secretCheckbox = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
 dh.sharelink.createGroupLink = null;
@@ -256,8 +256,9 @@ dh.sharelink.submitButtonClicked = function() {
 	
 	var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 	
-	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
-	
+//	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
+	var secret = "false";
+
 	dojo.debug("url = " + url);
 	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
@@ -305,7 +306,8 @@ dh.sharelink.init = function() {
 		dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 	}
 
-	dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
+	// The secret checkbox is stupid, we can't explain it well so we should automate it instead
+	//dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
 
 	// most of the dojo is set up now, so show the widgets
 	dh.util.showId("dhShareLinkForm");

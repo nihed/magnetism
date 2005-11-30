@@ -37,11 +37,13 @@
 				<div id="dhTitleError" class="dhValidityError"></div>
 			</td>
 			</tr>
+<!-- Getting rid of this item for the short term as it's useless
 			<tr>
 			<td style="text-align: right;">
 				<input type="checkbox" id="dhSecretCheckbox"/>Secret
 			</td>
 			</tr>
+-->
 			</tbody>
 			</table>
 			
