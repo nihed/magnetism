@@ -150,6 +150,10 @@ dh.autosuggest.AutoSuggest = function(elem)
 		switch(key)
 		{
 			case TAB:
+			if (this.value.length == 0) {
+				me.hideDiv();
+				return;
+			}
 			var eligible = me.getEligible();
 			//Go down to the next eligible
 			if (me.highlighted < (eligible.length - 1))
@@ -167,6 +171,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 			setTimeout("document.getElementById('" + elem.id + "').focus()",0);
 			me.changeHighlight(key);
 			break;
+
 			case ENTER:
 			me.useSuggestion();
 			break;
