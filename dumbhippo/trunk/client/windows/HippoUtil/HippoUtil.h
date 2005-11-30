@@ -89,6 +89,10 @@ public:
         : m_str(::SysAllocString(str)) {
     }
 
+    HippoBSTR(const HippoBSTR &str)
+        : m_str(::SysAllocString(str.m_str)){
+    }
+
     HippoBSTR(unsigned int   len,
               const OLECHAR *str) 
         : m_str(::SysAllocStringLen(str, len)) {

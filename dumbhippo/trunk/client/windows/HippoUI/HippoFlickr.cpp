@@ -12,10 +12,11 @@ extern "C" {
 
 HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
                                  authServiceUrl_(L"http://flickr.com/services/auth/"),
+                                 uploadServiceUrl_(L"http://www.flickr.com/services/upload/"),
                                  sharedSecret_(L"a31c67baceb0761e"),
                                  apiKey_(L"0e96a6f88118ed4d866a0651e45383c1")
 {
-    state_ = UNINITIALIZED;
+    state_ = REQUIRE_FROB;
 }
 
 HippoFlickr::~HippoFlickr(void)
@@ -28,8 +29,8 @@ HippoFlickr::setUI(HippoUI *ui)
     ui_ = ui;
 }
 
-static void
-sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
+void
+HippoFlickr::sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                 HippoArray<HippoBSTR> &sortedParamNames,
                 HippoArray<HippoBSTR> &sortedParamValues)
 {
@@ -52,14 +53,13 @@ sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramV
 }
 
 void
-HippoFlickr::appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues)
+HippoFlickr::computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
+                           HippoBSTR &sigMd5)
 {
+    HippoBSTR sig(sharedSecret_);
     unsigned char *utf;
-    HippoBSTR sig;
     HippoArray<HippoBSTR> sortedParamNames;
     HippoArray<HippoBSTR> sortedParamValues;
-
-    sig = sharedSecret_;
 
     sortParamArrays(paramNames, paramValues, sortedParamNames, sortedParamValues);
 
@@ -82,8 +82,16 @@ HippoFlickr::appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBST
     }
     digestStr[sizeof(digestStr)/sizeof(digestStr[0]) - 1] = 0;
 
+    sigMd5 = digestStr;
+}
+
+void
+HippoFlickr::appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues)
+{
+    HippoBSTR sig;
+    computeAPISig(paramNames, paramValues, sig);
     paramNames.append(HippoBSTR(L"api_sig"));
-    paramValues.append(digestStr);
+    paramValues.append(sig);
 }
 
 static void
@@ -130,8 +138,6 @@ HippoFlickr::invokeMethod(HippoFlickr::HippoFlickrInvocation *invocation, WCHAR 
         paramValues.append(argValue);
     }
 
-    va_end(args);
-
     appendApiSig(paramNames, paramValues);
 
     encodeQueryString(query, paramNames, paramValues);
@@ -140,13 +146,23 @@ HippoFlickr::invokeMethod(HippoFlickr::HippoFlickrInvocation *invocation, WCHAR 
 
     HippoHTTP *http = new HippoHTTP();
     http->doGet(url, invocation);
+    va_end(args);
     return http;
 }
 
 void 
 HippoFlickr::HippoFlickrRESTInvocation::handleError(HRESULT result)
 {
-    flickr_->ui_->logError(L"failed REST invocation", result);
+    HippoBSTR str;
+    hippoHresultToString(result, str);
+    handleError(str);
+}
+
+void 
+HippoFlickr::HippoFlickrRESTInvocation::handleError(WCHAR *text)
+{
+    flickr_->ui_->debugLogW(L"HippoFlickr failure: %s", text);
+    this->onError();
 }
 
 void 
@@ -181,20 +197,46 @@ HippoFlickr::HippoFlickrRESTInvocation::handleComplete(void *responseData, long 
         return;
     }
     if (resp.vt == VT_NULL) {
-        this->handleError(ERROR_SUCCESS);
+        this->handleError(L"no stat attribute in REST response");
         return;
     }
     assert(resp.vt == VT_BSTR);
     if (wcscmp (resp.bstrVal, L"ok")) {
-        this->handleError(ERROR_SUCCESS);
+        HippoBSTR msg(L"got error code in REST response");
+
+        IXMLDOMNodeList *children;
+        long nChildren;
+
+        hr = top->get_childNodes(&children);
+        if (SUCCEEDED(hr)) {
+            children->get_length(&nChildren);
+            for (long i = 0; i < nChildren; i++) {
+                IXMLDOMNode *node;
+                DOMNodeType nodeType;
+                children->get_item(i, &node);
+                node->get_nodeType(&nodeType);
+                if (nodeType == NODE_ELEMENT) {
+                    HippoQIPtr<IXMLDOMElement> elt(node);
+                    variant_t errMsg;
+                    elt->getAttribute(bstr_t(L"msg"), &errMsg);
+                    if (errMsg.vt == VT_BSTR) {
+                        msg.Append(L": ");
+                        msg.Append(errMsg.bstrVal);
+                        break;
+                    }
+                }
+            }
+        }
+        this->handleError(msg);
         return;
     }
 
     handleCompleteXML(top);
 }
 
-void 
-HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *top) {
+bool
+HippoFlickr::HippoFlickrRESTInvocation::findFirstNamedChild(IXMLDOMElement *top, WCHAR *expectedName, HippoPtr<IXMLDOMElement> &eltRet)
+{
     HRESULT hr;
     IXMLDOMNodeList *children;
     long nChildren;
@@ -210,6 +252,44 @@ HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *top) {
         node->get_nodeType(&nodeType);
         if (nodeType == NODE_ELEMENT) { // <frob>
             HippoQIPtr<IXMLDOMElement> elt(node);
+            BSTR name;
+            elt->get_nodeName(&name);
+            if (wcscmp(name, expectedName))
+                continue;
+            eltRet = elt;
+            return TRUE;
+        }
+    }
+    this->handleError(L"failed to find element in response");
+    return FALSE;
+lose:
+    this->handleError(hr);
+    return FALSE;
+}
+
+bool
+HippoFlickr::HippoFlickrRESTInvocation::findFirstNamedChildTextValue(IXMLDOMElement *top, WCHAR *expectedName, HippoBSTR &ret)
+{
+    HRESULT hr;
+    IXMLDOMNodeList *children;
+    long nChildren;
+    HippoPtr<IXMLDOMElement> child;
+
+    hr = top->get_childNodes(&children);
+    if (FAILED(hr))
+        goto lose;
+    children->get_length(&nChildren);
+    for (long i = 0; i < nChildren; i++) {
+        IXMLDOMNode *node;
+        DOMNodeType nodeType;
+        children->get_item(i, &node);
+        node->get_nodeType(&nodeType);
+        if (nodeType == NODE_ELEMENT) { // <frob>
+            HippoQIPtr<IXMLDOMElement> elt(node);
+            BSTR name;
+            elt->get_nodeName(&name);
+            if (wcscmp(name, expectedName))
+                continue;
             elt->normalize();
             IXMLDOMNode *text;
             hr = elt->get_firstChild(&text);
@@ -224,22 +304,44 @@ HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *top) {
             variant_t textValue;
             text->get_nodeValue(&textValue);
             assert (textValue.vt = VT_BSTR);
-            this->flickr_->setFrob(textValue.bstrVal);
+            ret = textValue.bstrVal;
+            return TRUE;
         }
     }
-
-    return;
+    this->handleError(L"failed to find element in response");
+    return FALSE;
 lose:
     this->handleError(hr);
+    return FALSE;
 }
 
 void
-HippoFlickr::setFrob(BSTR frob)
+HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *doc)
+{
+    HippoBSTR frob;
+
+    if (!findFirstNamedChildTextValue(doc, L"frob", frob))
+        return;
+    this->flickr_->setFrob(frob);
+    delete this;
+}
+
+void
+HippoFlickr::HippoFlickrFrobInvocation::onError()
+{
+    this->flickr_->state_ = REQUIRE_FROB;
+    delete this;
+}
+
+void
+HippoFlickr::setFrob(WCHAR *frob)
 {
     HippoBSTR authURL;
     HippoBSTR authQuery;
     HippoArray<HippoBSTR> paramNames;
     HippoArray<HippoBSTR> paramValues;
+
+    ui_->debugLogW(L"got Flickr auth frob %s", frob);
 
     state_ = REQUESTING_AUTH;
     authFrob_ = frob;
@@ -258,6 +360,9 @@ HippoFlickr::setFrob(BSTR frob)
     authURL.Append(authQuery);
 
     ui_->launchBrowser(authURL, authBrowser_);
+
+    delete frobRequest_;
+    frobRequest_ = NULL;
 }
 
 void
@@ -269,19 +374,174 @@ HippoFlickr::getFrob()
 }
 
 void
+HippoFlickr::HippoFlickrTokenInvocation::handleCompleteXML(IXMLDOMElement *doc)
+{
+    HippoBSTR token;
+    HippoPtr<IXMLDOMElement> authNode;
+
+    if (!findFirstNamedChild(doc, L"auth", authNode))
+        return;
+    if (!findFirstNamedChildTextValue(authNode, L"token", token))
+        return;
+
+    this->flickr_->setToken(token);
+    delete this;
+}
+
+void
+HippoFlickr::HippoFlickrTokenInvocation::onError() {
+    this->flickr_->state_ = REQUIRE_TOKEN;
+    delete this;
+}
+
+void
+HippoFlickr::setToken(WCHAR *token)
+{
+    delete tokenRequest_;
+    tokenRequest_ = NULL;
+    state_ = IDLE;
+    authToken_= token;
+    ui_->debugLogW(L"got Flickr auth token %s", authToken_.m_str);
+    processUploads();
+}
+
+void
+HippoFlickr::getToken()
+{
+    HippoFlickr::HippoFlickrTokenInvocation *invocation = new HippoFlickr::HippoFlickrTokenInvocation(this);
+    tokenRequest_ = invokeMethod(invocation, L"flickr.auth.getToken", L"frob", authFrob_.m_str, NULL);
+    state_ = REQUESTING_TOKEN;
+}
+
+void
 HippoFlickr::enqueueUpload(BSTR filename)
 {
     pendingUploads_.append(HippoBSTR(filename));
 }
 
+void
+HippoFlickr::HippoFlickrUploadInvocation::handleCompleteXML(IXMLDOMElement *top)
+{
+    HippoBSTR photoId;
+
+    if (!findFirstNamedChildTextValue(top, L"photoid", photoId))
+        return;
+    
+    this->flickr_->onUploadComplete(photoId);
+    delete this;
+}
+
+void
+HippoFlickr::onUploadComplete(WCHAR *photoId)
+{
+    assert(state_ == UPLOADING);
+    completedUploads_.append(photoId);
+    delete activeUploadRequest_;
+    free(activeUploadBuf_);
+    activeUploadRequest_ = NULL;
+
+    state_ = IDLE;
+    processUploads();
+}
+
+void
+HippoFlickr::HippoFlickrUploadInvocation::onError() {
+    this->flickr_->state_ = IDLE;
+    delete this;
+}
+
+bool
+HippoFlickr::readPhoto(WCHAR *filename, void **bufRet, DWORD *lenRet)
+{
+    HANDLE fd = CreateFile(filename, FILE_READ_DATA, 0, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (fd == INVALID_HANDLE_VALUE) {
+        ui_->logLastError(L"Couldn't open photo");
+        return FALSE;
+    }
+    DWORD size = GetFileSize(fd, NULL);
+    if (size == INVALID_FILE_SIZE) {
+        ui_->logLastError(L"failed to get photo size");
+        CloseHandle(fd);
+        return FALSE;
+    }
+    void *buf = malloc(size);
+    DWORD totalBytesRead = 0;
+    DWORD bytesRead = 0;
+    BOOL ret;
+    while (totalBytesRead < size && (ret = ReadFile(fd, ((char*)buf) + totalBytesRead, size - totalBytesRead, &bytesRead, NULL))) {
+        if (!ret) {
+            ui_->logLastError(L"failed to read from photo");
+            free(buf);
+            CloseHandle(fd);
+            return FALSE;
+        }
+        totalBytesRead += bytesRead;
+        if (bytesRead == 0)
+            break;
+    }
+    if (totalBytesRead != size) {
+        ui_->debugLogW(L"short read on photo");
+    }
+    CloseHandle(fd);
+    *bufRet = buf;
+    *lenRet = totalBytesRead;
+    return TRUE;
+}
+
+void 
+HippoFlickr::processUploads()
+{
+    if (state_ == IDLE && pendingUploads_.length() > 0) {
+        HippoBSTR filename = pendingUploads_[0];
+        pendingUploads_.remove(0);
+        void *buf;
+        DWORD len;
+        WCHAR *mimeType;
+        HRESULT res;
+
+        if (!readPhoto(filename, &buf, &len))
+            return;
+        res = FindMimeFromData(NULL, NULL, buf, len, NULL, 0, &mimeType, 0);
+        if (FAILED(res)) {
+            ui_->logError(L"couldn't determine mime type for photo", res);
+            free(buf);
+            return;
+        }
+        
+        state_ = UPLOADING;
+        HippoFlickr::HippoFlickrUploadInvocation *invocation = new HippoFlickr::HippoFlickrUploadInvocation(this);
+
+        activeUploadRequest_ = new HippoHTTP();
+        HippoBSTR apiSig;
+        HippoArray<HippoBSTR> paramNames;
+        HippoArray<HippoBSTR> paramValues;
+
+        paramNames.append(HippoBSTR(L"api_key"));
+        paramValues.append(HippoBSTR(apiKey_));
+        paramNames.append(HippoBSTR(L"auth_token"));
+        paramValues.append(HippoBSTR(authToken_));
+        computeAPISig(paramNames, paramValues, apiSig);
+        
+        activeUploadRequest_->doMultipartFormPost(uploadServiceUrl_, invocation, 
+                                                  L"api_key", FALSE, apiKey_.m_str,
+                                                  L"auth_token", FALSE, authToken_.m_str,
+                                                  L"api_sig", FALSE, apiSig.m_str,
+                                                  L"photo", TRUE, buf, len, mimeType, filename, NULL);                        
+    }
+}
+
 void 
 HippoFlickr::uploadPhoto(BSTR filename)
 {
-    if (state_ == UNINITIALIZED) {
+    // temporary hack until we watch for when browser closes
+    if (state_ == REQUESTING_AUTH)
+        state_ = REQUIRE_TOKEN;
+
+    if (state_ == REQUIRE_FROB) {
         getFrob();
+    } else if (state_ == REQUIRE_TOKEN) {
+        getToken();
     }
-    if (state_ != IDLE) {
-        enqueueUpload(filename);
-        return;
-    }
+    enqueueUpload(filename);
+    processUploads();
 }

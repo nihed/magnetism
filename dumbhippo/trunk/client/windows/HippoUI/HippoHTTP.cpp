@@ -439,7 +439,7 @@ HippoHTTP::doMultipartFormPost(WCHAR     *url,
 
     va_start (args, data);
 
-    HippoBSTR boundary(L"----------------------------------dh-form-boundary-");
+    HippoBSTR boundary(L"dhform----------boundary--");
     int suffix = rand();
     WCHAR suffixBuf[120];
 
@@ -449,7 +449,7 @@ HippoHTTP::doMultipartFormPost(WCHAR     *url,
     IStream *formBuf;
     CreateStreamOnHGlobal(NULL,TRUE,&formBuf);
     
-    if (!writeToStreamAsUTF8(formBuf, boundary, handler))
+    if (!writeToStreamAsUTF8Printf(formBuf, L"--%s", handler, boundary))
         return;
     if (!writeToStreamAsUTF8(formBuf, L"\r\n", handler))
         return;
@@ -472,16 +472,21 @@ HippoHTTP::doMultipartFormPost(WCHAR     *url,
                 break;
 
         } else {
-            if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n%s", handler, (WCHAR*)data))
+            if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n\r\n%s", handler, (WCHAR*)data))
                 break;
         }
-        if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n%s\r\n", handler, boundary))
+        if (!writeToStreamAsUTF8Printf(formBuf, L"\r\n--%s", handler, boundary))
             break;
         name = va_arg(args, WCHAR *);
         if (name) {
             binary = va_arg(args, bool);
             data = va_arg(args, void *);
+        } else {
+            if (!writeToStreamAsUTF8(formBuf, L"--", handler))
+                break;
         }
+        if (!writeToStreamAsUTF8(formBuf, L"\r\n", handler))
+            break;
     }
     
     va_end (args);
