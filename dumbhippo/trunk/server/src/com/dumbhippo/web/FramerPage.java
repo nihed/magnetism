@@ -105,6 +105,9 @@ public class FramerPage {
 		this.post = post;
 		this.postId = post.getPost().getId();
 		logger.debug("viewing post: " + this.postId);
+		if (signin.isValid()) {
+			postBoard.postViewedBy(this.postId, signin.getUser());
+		}
     }
 
     public void setPostId(String postId) throws ParseException, GuidNotFoundException {

@@ -2,7 +2,9 @@ package com.dumbhippo.server.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -98,6 +100,39 @@ public class MessageSenderBean implements MessageSender {
 		private String description;
 
 		private Set<String> groupRecipients;
+		
+		private List<String> viewers;
+
+		public LinkExtension() {
+		}
+		
+		public void setSenderName(String senderName) {
+			this.senderName = senderName;
+		}
+		public void setSenderGuid(Guid senderGuid) {
+			this.senderGuid = senderGuid;
+		}
+		public void setPostId(Guid postId) {
+			this.guid = postId;
+		}
+		public void setRecipientNames(Set<String> recipientNames) {
+			this.recipientNames = recipientNames;
+		}
+		public void setGroupRecipients(Set<String> groupRecipients) {
+			this.groupRecipients = groupRecipients;
+		}
+		public void setUrl(String url) {
+			this.url = url;
+		}
+		public void setTitle(String title) {
+			this.title = title;
+		}
+		public void setDescription(String description) {
+			this.description = description;
+		}
+		public void setViewers(List<String> viewers) {
+			this.viewers = viewers;
+		}
 
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
@@ -115,22 +150,17 @@ public class MessageSenderBean implements MessageSender {
 			for (String recipient : groupRecipients) {
 				builder.appendTextNode("recipient", recipient);
 			}
-			builder.closeElement();					
+			builder.closeElement();
+			if (viewers != null) {
+				builder.openElement("viewers");
+				for (String recipient : viewers) {
+					builder.appendTextNode("viewer", recipient);
+				}
+				builder.closeElement();					
+			}
 			builder.closeElement();
 			return builder.toString();
 		}
-		public LinkExtension(String senderName, Guid senderGuid, 
-				Guid postId, Set<String> recipientNames, Set<String> groupRecipients, String url, String title, String description) {
-			this.senderName = senderName;
-			this.senderGuid = senderGuid;
-			this.guid = postId;
-			this.recipientNames = recipientNames;
-			this.groupRecipients = groupRecipients;
-			this.url = url;
-			this.title = title;
-			this.description = description;
-		}
-
 		public String getElementName() {
 			return ELEMENT_NAME;
 		}
@@ -219,7 +249,7 @@ public class MessageSenderBean implements MessageSender {
 			return connection;
 		}
 
-		public synchronized void sendPostNotification(User recipient, Post post) {
+		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers) {
 			XMPPConnection connection = getConnection();
 
 			if (connection == null || !connection.isConnected()) {
@@ -259,15 +289,32 @@ public class MessageSenderBean implements MessageSender {
 				PersonView viewedP = identitySpider.getPersonView(viewpoint, r);
 				recipientNames.add(viewedP.getName());
 			}
+			
 			Set<String> groupRecipientNames = new HashSet<String>();
 			for (Group g : post.getGroupRecipients()) {
 				groupRecipientNames.add(g.getName());
 			}
 			
-			message.addExtension(new LinkExtension(senderName,
-					post.getPoster().getGuid(),
-					post.getGuid(), recipientNames, groupRecipientNames, 
-					url, title, post.getText()));
+			LinkExtension extension = new LinkExtension();
+			extension.setPostId(post.getGuid());
+			extension.setSenderName(senderName);
+			extension.setSenderGuid(post.getPoster().getGuid());
+			extension.setRecipientNames(recipientNames);
+			extension.setGroupRecipients(groupRecipientNames);
+			extension.setUrl(url);
+			extension.setTitle(title);
+			extension.setDescription(post.getText());
+			
+			if (viewers != null) {
+				List<String> viewerNames = new ArrayList<String>();
+				for (User u : viewers) {
+					PersonView viewedP = identitySpider.getPersonView(viewpoint, u);
+					viewerNames.add(viewedP.getName());
+				}
+				extension.setViewers(viewerNames);
+			}
+			
+			message.addExtension(extension);
 
 			message.setBody(String.format("%s\n%s", title, url));
 
@@ -495,7 +542,7 @@ public class MessageSenderBean implements MessageSender {
 	public void sendPostNotification(Resource recipient, Post post) {
 		if (recipient instanceof Account) {
 			Account account = (Account)recipient;
-			xmppSender.sendPostNotification(account.getOwner(), post);
+			xmppSender.sendPostNotification(account.getOwner(), post, null);
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post);
 		} else {
@@ -503,7 +550,21 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	public void sendPostClickedNotification(Post post, User clicker) {
-		xmppSender.sendPostClickedNotification(post, clicker);
+	public void sendPostClickedNotification(Post post, List<User> viewers, User clicker) {
+		boolean seenPoster = false;
+		
+		for (Resource recipientResource : post.getExpandedRecipients()) {
+			User recipient = identitySpider.getUser(recipientResource);
+			if (recipient != null) {
+				if (!recipient.equals(clicker))
+					xmppSender.sendPostNotification(recipient, post, viewers);
+				if (recipient.equals(post.getPoster()))
+					seenPoster = true;
+			}
+		}
+		
+		// Send to the poster, but not if they were in expandedRecipients
+		if (!seenPoster)
+			xmppSender.sendPostNotification(post.getPoster(), post, viewers);
 	}
 }

@@ -10,7 +10,6 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -60,7 +59,11 @@ public interface PostingBoard {
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid);
 
-	public void postClickedBy(Post post, User clicker);
+	/**
+	 * @param postId the ID of the post that was clicked
+	 * @param clicker
+	 */
+	public void postViewedBy(String postId, User clicker);
 	
 	/**
 	 * Internal implementation detail, public so we can put a transaction annotation
@@ -68,6 +71,7 @@ public interface PostingBoard {
 	 * 
 	 * @param user a User
 	 * @param post a Post
+	 * @return true if a new PersonPostData object was created for the pair
 	 */
-	public PersonPostData findOrCreatePersonPostData(User user, Post post);
+	public boolean updatePersonPostDataInternal(User user, Post post);
 }

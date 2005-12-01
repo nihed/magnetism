@@ -467,29 +467,48 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-	public void postClickedBy(Post post, User clicker) {
-		logger.debug("Post " + post + " clicked by " + clicker);
-		messageSender.sendPostClickedNotification(post, clicker);
+	public void postViewedBy(String postId, User clicker) {
+		logger.debug("Post " + postId + " clicked by " + clicker);
 		
-		getPersonPostData(clicker, post);
+		Post post;
 		
-		@SuppressWarnings("unused")
-		PersonPostData postData = getPersonPostData(clicker, post);
+		try {
+			Guid postGuid = new Guid(postId);
+			post = loadRawPost(new Viewpoint(clicker), postGuid);
+		} catch (Guid.ParseException e) {
+			throw new RuntimeException(e);
+		}
+			
+		if (!updatePersonPostData(clicker, post))
+			return;
+				
+		// We send out notifications afterwards, so that the new clicker
+		// is included in the list of viewers
+		@SuppressWarnings("unchecked")
+		List<User> viewers = em.createQuery("SELECT ppd.person FROM PersonPostData ppd " +
+				   						    "WHERE ppd.post = :post ORDER BY clickedDate DESC")
+					   			 .setParameter("post", post)
+					   			 .getResultList();
 		
-		// If getPersonPostData created a new PersonPostData, then that
-		// will have been created with clickedDate as the current time,
-		// so we don't have anything more. If it returned an existing
-		// PersonPostData, then we don't want to do anything ... leave
-		// the old clicked date.
+		
+		messageSender.sendPostClickedNotification(post, viewers, clicker);
 	}
 	
-	private PersonPostData getPersonPostData(User user, Post post) {
+	/**
+	 * Creates a PersonPostData to indicate that the user has viewed the post
+	 * if no such object previously existed. Otherwise does nothing 
+	 * 
+	 * @param user a User
+	 * @param post a Post
+	 * @return true if the user had not previously viewed the post
+	 */
+	private boolean updatePersonPostData(User user, Post post) {
 		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
 		int retries = 1;
 		
 		while (true) {
 			try {
-				return proxy.findOrCreatePersonPostData(user, post);
+				return proxy.updatePersonPostDataInternal(user, post);
 			} catch (Exception e) {
 				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Race condition creating PersonPostData, retrying");
@@ -504,7 +523,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public PersonPostData findOrCreatePersonPostData(User user, Post post) {
+	public boolean updatePersonPostDataInternal(User user, Post post) {
 		PersonPostData ppd;
 		
 		try {
@@ -513,12 +532,12 @@ public class PostingBoardBean implements PostingBoard {
 	            .setParameter("post", post)
 	            .setParameter("user", user)
 	            .getSingleResult();
+			return false;
 		} catch (EntityNotFoundException e) {
 			ppd = new PersonPostData(user, post); 
 			em.persist(ppd);
+			return true;
 		}
-	
-		return ppd;
 	}
 
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {

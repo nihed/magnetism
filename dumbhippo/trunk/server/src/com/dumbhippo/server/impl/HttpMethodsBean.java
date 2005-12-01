@@ -400,7 +400,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		if (user != null) {
-			postingBoard.postClickedBy(post, user);
+			postingBoard.postViewedBy(post.getId(), user);
 		} else {
 			logger.debug("not yet handling a merely-invited person hitting the redirect page");
 		}
