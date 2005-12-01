@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 #include "HippoUI.h"
+#include "HippoIE.h"
 #include <HippoUtil.h>
 #include "HippoBubble.h"
 #include "Guid.h"
@@ -83,12 +84,12 @@ HippoBubble::embedIE(void)
     RECT rect;
     GetClientRect(window_,&rect);
     OleCreate(CLSID_WebBrowser,IID_IOleObject,OLERENDER_DRAW,0,this,this,(void**)&ie_);
+    HippoQIPtr<IWebBrowser2> browser(ie_);
+    browser_ = browser;
     ie_->SetHostNames(L"Web Host",L"Web View");
     OleSetContainedObject(ie_,TRUE);
 
     ie_->DoVerb(OLEIVERB_SHOW,NULL,this,-1,window_,&rect);
-
-    HippoQIPtr<IWebBrowser2> browser(ie_);
 
     VARIANT url;
     url.vt = VT_BSTR;
@@ -300,6 +301,19 @@ HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
     show();
 }
 
+bool
+HippoBubble::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
+{
+    va_list args;
+    va_start (args, nargs);
+    HRESULT result = HippoIE::invokeJavascript(browser_, funcName, invokeResult, nargs, args);
+    bool ret = SUCCEEDED(result);
+    if (!ret)
+        ui_->logError(L"failed to invoke javascript", result);
+    va_end (args);
+    return ret;
+}
+
 void 
 HippoBubble::setIdle(bool idle)
 {
@@ -313,60 +327,8 @@ HippoBubble::setIdle(bool idle)
         variant_t idleVariant(idle);
         variant_t result;
     
-        invokeJavascript(HippoBSTR(L"dhSetIdle"), &result, 1, &idleVariant);
+        HippoIE::invokeJavascript(browser_, HippoBSTR(L"dhSetIdle"), &result, 1, &idleVariant);
     }
-}
-
-bool
-HippoBubble::invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, ...)
-{
-    va_list vap;
-    VARIANT *arg;
-    int argc;
-
-    va_start (vap, nargs);
-
-    HippoQIPtr<IWebBrowser2> browser(ie_);
-    IDispatch *docDispatch;
-    browser->get_Document(&docDispatch);
-    HippoQIPtr<IHTMLDocument2> doc(docDispatch);
-    IDispatch *script;
-    doc->get_Script(&script);
-
-    DISPID id = NULL;
-    HRESULT result = script->GetIDsOfNames(IID_NULL,&funcName,1,LOCALE_SYSTEM_DEFAULT,&id);
-    if (FAILED(result))
-        return false;
-
-    DISPPARAMS args;
-    ZeroMemory(&args, sizeof(args));
-    args.rgvarg = new VARIANT[nargs];
-    args.cNamedArgs = 0;
-
-    argc = 0;
-    for (int argc = 0; argc < nargs; argc++) {
-        arg = va_arg (vap, VARIANT *);
-        // This has to be in reverse order for some reason...CRACK
-        VARIANT *destArg = &(args.rgvarg[(nargs-argc)-1]);
-        VariantInit(destArg);
-        result = VariantCopy(destArg, arg);
-        if (FAILED(result))
-            ui_->logError(L"Failed to invoke VariantCopy", result);
-    }
-    args.cArgs = nargs;
-
-    EXCEPINFO excep;
-    ZeroMemory(&excep, sizeof(excep));
-    UINT argErr;
-    result = script->Invoke(id, IID_NULL, 0, DISPATCH_METHOD,
-                            &args, invokeResult, &excep, &argErr);
-    if (FAILED(result))
-        ui_->logError(L"Failed to invoke javascript method", result);
-    delete [] args.rgvarg;
-    va_end (vap);
-    if (FAILED(result))
-        return false;
-    return true;
 }
 
 bool

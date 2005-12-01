@@ -9,8 +9,9 @@
         <script language="javascript" src="{$appleturl}notification.js"></script>
         <script language="javascript" src="{$appleturl}flickr.js"></script>
     </xsl:template>
-    <xsl:template match="dh:stylesheet">    
-        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>
+    <xsl:template match="dh:stylesheet">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    
+        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>     
     </xsl:template>
     <xsl:template match="dh:closeButton">
         <img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>

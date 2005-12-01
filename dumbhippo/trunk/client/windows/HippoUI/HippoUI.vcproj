@@ -131,6 +131,9 @@
 				RelativePath=".\HippoIcon.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoIE.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoIM.cpp">
 			</File>
 			<File
@@ -179,6 +182,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoIcon.h">
+			</File>
+			<File
+				RelativePath=".\HippoIE.h">
 			</File>
 			<File
 				RelativePath=".\HippoIM.h">

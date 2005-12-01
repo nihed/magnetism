@@ -2,6 +2,7 @@
 #include ".\hippoflickr.h"
 #include "HippoUI.h"
 #include <HippoRegKey.h>
+#include "HippoIE.h"
 extern "C" {
 #include <md5.h>
 }
@@ -31,6 +32,30 @@ void
 HippoFlickr::setUI(HippoUI *ui)
 {
     ui_ = ui;
+}
+
+bool
+HippoFlickr::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
+{
+    va_list args;
+    va_start (args, nargs);
+    HRESULT result = HippoIE::invokeJavascript(statusDisplay_, funcName, invokeResult, nargs, args);
+    bool ret = SUCCEEDED(result);
+    if (!ret)
+        ui_->logError(L"failed to invoke javascript", result);
+    va_end (args);
+    return ret;
+}
+
+void
+HippoFlickr::ensureStatusWindow()
+{
+    if (statusDisplayVisible_)
+        return;
+    BSTR url;
+    ui_->getAppletURL(L"flickrstatus.html", &url);
+    ui_->showAppletWindow(url, statusDisplay_);
+    statusDisplayVisible_ = true;
 }
 
 void
@@ -503,6 +528,10 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
 {
     assert(state_ == UPLOADING);
     completedUploads_.append(photoId);
+    VARIANT result;
+    HippoBSTR str(photoId);
+    variant_t vPhotoId(str.m_str);
+    invokeJavascript(L"dhFlickrPhotoUploadComplete", &result, 1, &vPhotoId);
     state_ = IDLE;
     processUploads();
 }
@@ -596,17 +625,6 @@ HippoFlickr::processUploads()
                                                   L"api_sig", FALSE, apiSig.m_str,
                                                   L"photo", TRUE, activeUploadBuf_, activeUploadLen_, mimeType, filename, NULL);                        
     }
-}
-
-void
-HippoFlickr::ensureStatusWindow()
-{
-    if (statusDisplayVisible_)
-        return;
-    BSTR url;
-    ui_->getAppletURL(L"flickrstatus.html", &url);
-    ui_->showAppletWindow(url, statusDisplay_);
-    statusDisplayVisible_ = true;
 }
 
 void 

@@ -133,6 +133,7 @@ private:
     HWND window_;
 
     IOleObject* ie_;
+    HippoPtr<IWebBrowser2> browser_;
 
     HippoUI* ui_;
 
@@ -144,7 +145,7 @@ private:
 
     bool embedIE(void);
     bool appendTransform(BSTR src, BSTR style, ...);
-    bool invokeJavascript(BSTR funcName, VARIANT *invokeResult, int nargs, ...);
+    bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
     bool create(void);
     bool createWindow(void);
     bool registerClass();

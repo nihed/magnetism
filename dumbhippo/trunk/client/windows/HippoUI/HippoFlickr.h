@@ -113,9 +113,13 @@ private:
     HippoBSTR authFrob_;
     HippoBSTR authToken_;
 
+    void ensureStatusWindow();
+    bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
+
     void sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                 HippoArray<HippoBSTR> &sortedParamNames,
                 HippoArray<HippoBSTR> &sortedParamValues);
+
     HippoHTTP *invokeMethod(HippoFlickrInvocation *invocation, WCHAR *methodName, ...);
     void computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                        HippoBSTR &sigMd5);
@@ -127,7 +131,6 @@ private:
     void onUploadComplete(WCHAR *photoId);
     void setToken(WCHAR *token);
     void setFrob(WCHAR *frob);
-    void ensureStatusWindow();
     void enqueueUpload(BSTR filename);
     void processUploads();
 
