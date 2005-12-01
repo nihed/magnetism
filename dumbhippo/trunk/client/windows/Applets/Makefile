@@ -10,7 +10,7 @@ all: *.xml *.css *.png *.js
     copy close.png $(OUTDIR)\applets
     copy activeLeft.png $(OUTDIR)\applets
     copy activeRight.png $(OUTDIR)\applets
-    copy flickrstatus.html $(OUTDIR)\applets
+    copy flickrstatus.xml $(OUTDIR)\applets
     copy flickrstatus.js $(OUTDIR)\applets    
 
 clean:

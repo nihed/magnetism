@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<html xmlns:dh="http://dumbhippo.com/schema/clientjs">
+    <head>
+        <title>Photo upload status</title>
+        <dh:stylesheet/>
+        <dh:corescript/>
+        <dh:flickrScript/>                      
+    </head>
+    <body style="overflow: hidden;">
+        <div id="dh-dialog">
+        </div>
+    </body>
+</html>

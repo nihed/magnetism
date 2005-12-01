@@ -18,6 +18,7 @@ HippoIM::HippoIM()
     signInTimeoutID_ = 0;
     signInTimeoutCount_ = 0;
     retryTimeoutID_ = 0;
+    state_ = SIGNED_OUT;
 }
 
 HippoIM::~HippoIM()

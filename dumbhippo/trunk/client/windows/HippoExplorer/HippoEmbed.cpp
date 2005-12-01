@@ -13,6 +13,15 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 
+// We redefine these here to avoid a dependency on the HippoUI project
+static const CLSID CLSID_HippoUI = {
+    0xfd2d3bee, 0x477e, 0x4625, 0xb3, 0x5f, 0xbf, 0x49, 0x7f, 0xf6, 0x1, 0xd9
+};
+
+static const CLSID CLSID_HippoUI_Debug = {
+    0xee8e46eb, 0xcdc7, 0x4f89, 0xa8, 0xae, 0xaf, 0x9, 0x94, 0x6c, 0x96, 0x85
+};
+
 HippoEmbed::HippoEmbed(void)
 {
     refCount_ = 1;
@@ -241,7 +250,7 @@ HippoEmbed::Invoke (DISPID        member,
     if (member == DISPID_DOCUMENTCOMPLETE) {
          if (dispParams->cArgs == 2 &&
              dispParams->rgvarg[1].vt == VT_DISPATCH &&
-              dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
+              dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
          {
              if (dispParams->rgvarg[0].pvarVal->vt == VT_BSTR)
                  onDocumentComplete(dispParams->rgvarg[1].pdispVal,
@@ -320,6 +329,21 @@ HippoEmbed::CloseWindow()
         browser_->Quit();
 
     return S_OK;
+}
+
+STDMETHODIMP 
+HippoEmbed::GetUI(IDispatch **ui)
+{
+    HippoPtr<IUnknown> unknown;
+
+    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown))) {
+        return unknown->QueryInterface<IDispatch>(ui);
+    } else if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown))) {
+        return unknown->QueryInterface<IDispatch>(ui);
+    } else {
+        *ui = NULL;
+        return E_NOINTERFACE;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////

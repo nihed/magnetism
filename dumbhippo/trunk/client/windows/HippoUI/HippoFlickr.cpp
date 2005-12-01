@@ -13,6 +13,7 @@ extern "C" {
 #include <wincrypt.h>
 
 static const WCHAR *DUMBHIPPO_SUBKEY_FLICKR = L"Software\\DumbHippo\\Flickr";
+static const WCHAR *CLASS_NAME = L"HippoFlickrClass";
 
 HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
                                  authServiceUrl_(L"http://flickr.com/services/auth/"),
@@ -22,6 +23,7 @@ HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/service
 {
     state_ = UNINITIALIZED;
     statusDisplayVisible_ = false;
+    instance_ = GetModuleHandle(NULL);
 }
 
 HippoFlickr::~HippoFlickr(void)
@@ -32,6 +34,13 @@ void
 HippoFlickr::setUI(HippoUI *ui)
 {
     ui_ = ui;
+    registerClass();
+}
+
+void
+HippoFlickr::HippoFlickrIECallback::onError(WCHAR *text) 
+{
+    flickr_->ui_->debugLogW(L"HippoIE error: %s", text);
 }
 
 bool
@@ -39,12 +48,70 @@ HippoFlickr::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs,
 {
     va_list args;
     va_start (args, nargs);
-    HRESULT result = HippoIE::invokeJavascript(statusDisplay_, funcName, invokeResult, nargs, args);
+    HRESULT result = ie_->invokeJavascript(funcName, invokeResult, nargs, args);
     bool ret = SUCCEEDED(result);
     if (!ret)
         ui_->logError(L"failed to invoke javascript", result);
     va_end (args);
     return ret;
+    return true;
+}
+
+bool
+HippoFlickr::registerClass()
+{
+    WNDCLASSEX wcex;
+
+    ZeroMemory(&wcex, sizeof(WNDCLASSEX));
+    wcex.cbSize = sizeof(WNDCLASSEX); 
+
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = windowProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance  = instance_;
+    wcex.hCursor    = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASS_NAME;
+
+    if (RegisterClassEx(&wcex) == 0) {
+        if (GetClassInfoEx(instance_, CLASS_NAME, &wcex) != 0)
+            return true;
+        return false;
+    }
+    return true;
+}
+
+bool
+HippoFlickr::processMessage(UINT   message,
+                            WPARAM wParam,
+                            LPARAM lParam)
+{
+    switch (message) 
+    {
+    case WM_CLOSE:
+        // FIXME handle this, need to display status in tray
+        // somehow?
+        AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
+        return true;
+    default:
+        return false;
+    }
+}
+
+LRESULT CALLBACK 
+HippoFlickr::windowProc(HWND   window,
+                        UINT   message,
+                        WPARAM wParam,
+                        LPARAM lParam)
+{
+    HippoFlickr *flickr = hippoGetWindowData<HippoFlickr>(window);
+    if (flickr) {
+        if (flickr->processMessage(message, wParam, lParam))
+            return 0;
+    }
+    return DefWindowProc(window, message, wParam, lParam);
 }
 
 void
@@ -52,10 +119,26 @@ HippoFlickr::ensureStatusWindow()
 {
     if (statusDisplayVisible_)
         return;
-    BSTR url;
-    ui_->getAppletURL(L"flickrstatus.html", &url);
-    ui_->showAppletWindow(url, statusDisplay_);
+    ui_->debugLogW(L"creating Flickr status window");
+    window_ = CreateWindow(CLASS_NAME, L"Sharing Photos", WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU, 
+                           CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
+                           NULL, NULL, instance_, NULL);
+    hippoSetWindowData<HippoFlickr>(window_, this);
+    HippoBSTR appletURL;
+    ui_->getAppletURL(L"", &appletURL);
+    HippoBSTR srcUrl;
+    ui_->getAppletURL(L"flickrstatus.xml", &srcUrl);
+    HippoBSTR styleUrl;
+    ui_->getAppletURL(L"clientstyle.xml", &styleUrl);
+    ie_ = new HippoIE(window_, srcUrl, ieCallback_, NULL);
+    ie_->setXsltTransform(styleUrl, L"appleturl", appletURL.m_str, NULL);
+    ie_->create();
+    browser_ = ie_->getBrowser();
+    AnimateWindow(window_, 400, AW_BLEND);
     statusDisplayVisible_ = true;
+
+    VARIANT result;
+    invokeJavascript(L"dhFlickrInit", &result, 0);
 }
 
 void
@@ -529,9 +612,9 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
     assert(state_ == UPLOADING);
     completedUploads_.append(photoId);
     VARIANT result;
-    HippoBSTR str(photoId);
-    variant_t vPhotoId(str.m_str);
-    invokeJavascript(L"dhFlickrPhotoUploadComplete", &result, 1, &vPhotoId);
+    variant_t vFilename(activeUploadFilename_.m_str);
+    variant_t vPhotoId(HippoBSTR(photoId).m_str);
+    invokeJavascript(L"dhFlickrPhotoUploadComplete", &result, 2, &vFilename, &vPhotoId);
     state_ = IDLE;
     processUploads();
 }
@@ -591,12 +674,12 @@ void
 HippoFlickr::processUploads()
 {
     if (state_ == IDLE && pendingUploads_.length() > 0) {
-        HippoBSTR filename = pendingUploads_[0];
+        activeUploadFilename_ = pendingUploads_[0];
         pendingUploads_.remove(0);
         WCHAR *mimeType;
         HRESULT res;
 
-        if (!readPhoto(filename, &activeUploadBuf_, &activeUploadLen_))
+        if (!readPhoto(activeUploadFilename_, &activeUploadBuf_, &activeUploadLen_))
             return;
         res = FindMimeFromData(NULL, NULL, activeUploadBuf_, activeUploadLen_, NULL, 0, &mimeType, 0);
         if (FAILED(res)) {
@@ -619,11 +702,14 @@ HippoFlickr::processUploads()
         paramValues.append(HippoBSTR(authToken_));
         computeAPISig(paramNames, paramValues, apiSig);
         
+        VARIANT vResult;
+        variant_t vFilename(activeUploadFilename_);
+        invokeJavascript(L"dhFlickrPhotoUploadStarted", &vResult, 1, &vFilename);
         activeUploadRequest_->doMultipartFormPost(uploadServiceUrl_, invocation, 
                                                   L"api_key", FALSE, apiKey_.m_str,
                                                   L"auth_token", FALSE, authToken_.m_str,
                                                   L"api_sig", FALSE, apiSig.m_str,
-                                                  L"photo", TRUE, activeUploadBuf_, activeUploadLen_, mimeType, filename, NULL);                        
+                                                  L"photo", TRUE, activeUploadBuf_, activeUploadLen_, mimeType, activeUploadFilename_, NULL);                        
     }
 }
 

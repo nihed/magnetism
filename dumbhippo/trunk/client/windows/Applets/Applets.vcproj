@@ -50,20 +50,23 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\dh.css">
+			RelativePath=".\dh.css"
+			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\dh.js">
+			RelativePath=".\dh.js"
+			DeploymentContent="TRUE">
 		</File>
 		<File
 			RelativePath=".\flickr.js"
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\flickrstatus.html">
+			RelativePath=".\flickrstatus.js"
+			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\flickrstatus.js"
+			RelativePath=".\flickrstatus.xml"
 			DeploymentContent="TRUE">
 		</File>
 		<File

@@ -6,12 +6,17 @@
     <xsl:output method="html" encoding="UTF-8"/>
     <xsl:template match="dh:corescript"> 
         <script language="javascript" src="{$appleturl}dh.js"></script>
-        <script language="javascript" src="{$appleturl}notification.js"></script>
-        <script language="javascript" src="{$appleturl}flickr.js"></script>
     </xsl:template>
+    <xsl:template match="dh:notificationScript">
+        <script language="javascript" src="{$appleturl}notification.js"></script>
+        <script language="javascript" src="{$appleturl}flickr.js"></script>        
+    </xsl:template>
+    <xsl:template match="dh:flickrScript">
+        <script language="javascript" src="{$appleturl}flickrstatus.js"></script>
+    </xsl:template>    
     <xsl:template match="dh:stylesheet">
         <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    
-        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>     
+        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>    
     </xsl:template>
     <xsl:template match="dh:closeButton">
         <img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>

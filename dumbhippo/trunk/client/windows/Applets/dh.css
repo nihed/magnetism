@@ -5,12 +5,7 @@ body
     height: 100%;
 }
 
-div.dh-progress
-{
-}
-
-div.dh-progress-text
+span.dh-filename
 {
     font-weight: bold;
-    font-size: larger;
 }

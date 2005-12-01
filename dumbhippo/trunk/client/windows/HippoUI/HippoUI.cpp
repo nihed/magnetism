@@ -614,7 +614,7 @@ void
 HippoUI::onAuthFailure()
 {
     updateForgetPassword();
-    //showSignInWindow();
+    showSignInWindow();
 }
 
 void

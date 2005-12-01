@@ -3,6 +3,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoHTTP.h"
+#include "HippoIE.h"
 #include <exdisp.h>
 
 class HippoUI;
@@ -95,8 +96,22 @@ private:
 
     HippoUI *ui_;
 
+    class HippoFlickrIECallback : public HippoIECallback
+    {
+    public:
+        HippoFlickrIECallback(HippoFlickr *f) {
+            flickr_ = f;
+        }
+        HippoFlickr *flickr_;
+        void onError(WCHAR *text);
+    };
+    HippoFlickrIECallback *ieCallback_;
+
     bool statusDisplayVisible_;
-    HippoPtr<IWebBrowser2> statusDisplay_;
+    HINSTANCE instance_;
+    HWND window_;
+    HippoIE *ie_;
+    HippoPtr<IWebBrowser2> browser_;
 
     HippoHTTP *frobRequest_;
     HippoHTTP *tokenRequest_;
@@ -105,6 +120,7 @@ private:
     HippoArray<HippoBSTR> pendingUploads_;
 
     HippoHTTP *activeUploadRequest_;
+    HippoBSTR activeUploadFilename_;
     void *activeUploadBuf_;
     DWORD activeUploadLen_;
 
@@ -113,6 +129,14 @@ private:
     HippoBSTR authFrob_;
     HippoBSTR authToken_;
 
+    bool processMessage(UINT   message,
+                            WPARAM wParam,
+                            LPARAM lParam);
+    static LRESULT CALLBACK windowProc(HWND   window,
+                        UINT   message,
+                        WPARAM wParam,
+                        LPARAM lParam);
+    bool registerClass();
     void ensureStatusWindow();
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
 
