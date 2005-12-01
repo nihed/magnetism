@@ -43,10 +43,19 @@ private:
         virtual void handleCompleteXML(IXMLDOMElement *doc) = 0;
         virtual void onError() = 0;
     };
+    class HippoFlickrCheckTokenInvocation : public HippoFlickrRESTInvocation {
+    public:
+        HippoFlickrCheckTokenInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
+        }
+        ~HippoFlickrCheckTokenInvocation();
+        void handleCompleteXML(IXMLDOMElement *doc);
+        void onError();
+    };
     class HippoFlickrFrobInvocation : public HippoFlickrRESTInvocation {
     public:
         HippoFlickrFrobInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
+        ~HippoFlickrFrobInvocation();
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
     };
@@ -54,6 +63,7 @@ private:
     public:
         HippoFlickrTokenInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
+        ~HippoFlickrTokenInvocation();
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
     };
@@ -61,6 +71,7 @@ private:
     public:
         HippoFlickrUploadInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
+        ~HippoFlickrUploadInvocation();
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
     };
@@ -73,16 +84,19 @@ private:
     HippoBSTR apiKey_;
 
     enum {
-        REQUIRE_FROB,
+        UNINITIALIZED,
+        CHECKING_TOKEN,
         REQUESTING_FROB,
         REQUESTING_AUTH,
-        REQUIRE_TOKEN,
         REQUESTING_TOKEN,
         IDLE,
         UPLOADING
     } state_;
 
     HippoUI *ui_;
+
+    bool statusDisplayVisible_;
+    HippoPtr<IWebBrowser2> statusDisplay_;
 
     HippoHTTP *frobRequest_;
     HippoHTTP *tokenRequest_;
@@ -107,11 +121,13 @@ private:
                        HippoBSTR &sigMd5);
     void appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues);
     bool readPhoto(WCHAR *filename, void **bufRet, DWORD *lenRet);
+    void checkToken();
     void getFrob();
     void getToken();
     void onUploadComplete(WCHAR *photoId);
     void setToken(WCHAR *token);
     void setFrob(WCHAR *frob);
+    void ensureStatusWindow();
     void enqueueUpload(BSTR filename);
     void processUploads();
 

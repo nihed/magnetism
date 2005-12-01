@@ -96,6 +96,8 @@ public:
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
 
+    void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
+
 private:
     bool registerActive();
     bool registerClass();
@@ -117,9 +119,6 @@ private:
 
     void registerStartup();
     void unregisterStartup();
-
-    void showAppletWindow(BSTR url);
-
 
     static int doQuit(gpointer data);
 

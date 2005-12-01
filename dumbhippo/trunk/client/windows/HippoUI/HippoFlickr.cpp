@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include ".\hippoflickr.h"
 #include "HippoUI.h"
+#include <HippoRegKey.h>
 extern "C" {
 #include <md5.h>
 }
@@ -10,13 +11,16 @@ extern "C" {
 
 #include <wincrypt.h>
 
+static const WCHAR *DUMBHIPPO_SUBKEY_FLICKR = L"Software\\DumbHippo\\Flickr";
+
 HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
                                  authServiceUrl_(L"http://flickr.com/services/auth/"),
                                  uploadServiceUrl_(L"http://www.flickr.com/services/upload/"),
                                  sharedSecret_(L"a31c67baceb0761e"),
                                  apiKey_(L"0e96a6f88118ed4d866a0651e45383c1")
 {
-    state_ = REQUIRE_FROB;
+    state_ = UNINITIALIZED;
+    statusDisplayVisible_ = false;
 }
 
 HippoFlickr::~HippoFlickr(void)
@@ -124,6 +128,8 @@ HippoFlickr::invokeMethod(HippoFlickr::HippoFlickrInvocation *invocation, WCHAR 
     HippoBSTR query;
     HippoBSTR url;
     WCHAR *argName;
+
+    ui_->debugLogW(L"async invoking Flickr method %s", methodName);
 
     paramNames.append(HippoBSTR(L"method"));
     paramValues.append(HippoBSTR(methodName));
@@ -316,6 +322,52 @@ lose:
 }
 
 void
+HippoFlickr::HippoFlickrCheckTokenInvocation::handleCompleteXML(IXMLDOMElement *doc)
+{
+    HippoBSTR token;
+    HippoPtr<IXMLDOMElement> authNode;
+
+    if (!findFirstNamedChild(doc, L"auth", authNode))
+        return;
+    if (!findFirstNamedChildTextValue(authNode, L"token", token))
+        return;
+
+    this->flickr_->state_ = IDLE;
+    this->flickr_->authToken_ = token;
+    this->flickr_->processUploads();
+    delete this;
+}
+
+void
+HippoFlickr::HippoFlickrCheckTokenInvocation::onError()
+{
+    this->flickr_->getFrob();
+    delete this;
+}
+
+HippoFlickr::HippoFlickrCheckTokenInvocation::~HippoFlickrCheckTokenInvocation()
+{
+    delete this->flickr_->tokenRequest_;
+    this->flickr_->tokenRequest_ = NULL;
+}
+
+void 
+HippoFlickr::checkToken()
+{
+    HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
+                               DUMBHIPPO_SUBKEY_FLICKR,
+                               false);
+    HippoBSTR token;
+    if (hippoFlickrReg.loadString(L"token", &token)) {
+        HippoFlickr::HippoFlickrCheckTokenInvocation *invocation = new HippoFlickr::HippoFlickrCheckTokenInvocation(this);
+        tokenRequest_ = invokeMethod(invocation, L"flickr.auth.checkToken", L"auth_token", token.m_str, NULL);
+        state_ = CHECKING_TOKEN;
+    } else {
+        getFrob();
+    }
+}
+
+void
 HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *doc)
 {
     HippoBSTR frob;
@@ -329,8 +381,14 @@ HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *doc)
 void
 HippoFlickr::HippoFlickrFrobInvocation::onError()
 {
-    this->flickr_->state_ = REQUIRE_FROB;
+    this->flickr_->state_ = UNINITIALIZED;
     delete this;
+}
+
+HippoFlickr::HippoFlickrFrobInvocation::~HippoFlickrFrobInvocation()
+{
+    delete this->flickr_->frobRequest_;
+    this->flickr_->frobRequest_ = NULL;
 }
 
 void
@@ -390,18 +448,27 @@ HippoFlickr::HippoFlickrTokenInvocation::handleCompleteXML(IXMLDOMElement *doc)
 
 void
 HippoFlickr::HippoFlickrTokenInvocation::onError() {
-    this->flickr_->state_ = REQUIRE_TOKEN;
+    this->flickr_->state_ = UNINITIALIZED;
     delete this;
+}
+
+HippoFlickr::HippoFlickrTokenInvocation::~HippoFlickrTokenInvocation()
+{
+    delete this->flickr_->tokenRequest_;
+    this->flickr_->tokenRequest_ = NULL;
 }
 
 void
 HippoFlickr::setToken(WCHAR *token)
 {
-    delete tokenRequest_;
-    tokenRequest_ = NULL;
     state_ = IDLE;
     authToken_= token;
     ui_->debugLogW(L"got Flickr auth token %s", authToken_.m_str);
+    HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
+                               DUMBHIPPO_SUBKEY_FLICKR,
+                               true);
+    hippoFlickrReg.saveString(L"token", authToken_);
+
     processUploads();
 }
 
@@ -436,12 +503,15 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
 {
     assert(state_ == UPLOADING);
     completedUploads_.append(photoId);
-    delete activeUploadRequest_;
-    free(activeUploadBuf_);
-    activeUploadRequest_ = NULL;
-
     state_ = IDLE;
     processUploads();
+}
+
+HippoFlickr::HippoFlickrUploadInvocation::~HippoFlickrUploadInvocation()
+{
+    delete this->flickr_->activeUploadRequest_;
+    this->flickr_->activeUploadRequest_ = NULL;
+    free(this->flickr_->activeUploadBuf_);
 }
 
 void
@@ -494,17 +564,15 @@ HippoFlickr::processUploads()
     if (state_ == IDLE && pendingUploads_.length() > 0) {
         HippoBSTR filename = pendingUploads_[0];
         pendingUploads_.remove(0);
-        void *buf;
-        DWORD len;
         WCHAR *mimeType;
         HRESULT res;
 
-        if (!readPhoto(filename, &buf, &len))
+        if (!readPhoto(filename, &activeUploadBuf_, &activeUploadLen_))
             return;
-        res = FindMimeFromData(NULL, NULL, buf, len, NULL, 0, &mimeType, 0);
+        res = FindMimeFromData(NULL, NULL, activeUploadBuf_, activeUploadLen_, NULL, 0, &mimeType, 0);
         if (FAILED(res)) {
             ui_->logError(L"couldn't determine mime type for photo", res);
-            free(buf);
+            free(activeUploadBuf_);
             return;
         }
         
@@ -526,20 +594,30 @@ HippoFlickr::processUploads()
                                                   L"api_key", FALSE, apiKey_.m_str,
                                                   L"auth_token", FALSE, authToken_.m_str,
                                                   L"api_sig", FALSE, apiSig.m_str,
-                                                  L"photo", TRUE, buf, len, mimeType, filename, NULL);                        
+                                                  L"photo", TRUE, activeUploadBuf_, activeUploadLen_, mimeType, filename, NULL);                        
     }
+}
+
+void
+HippoFlickr::ensureStatusWindow()
+{
+    if (statusDisplayVisible_)
+        return;
+    BSTR url;
+    ui_->getAppletURL(L"flickrstatus.html", &url);
+    ui_->showAppletWindow(url, statusDisplay_);
+    statusDisplayVisible_ = true;
 }
 
 void 
 HippoFlickr::uploadPhoto(BSTR filename)
 {
-    // temporary hack until we watch for when browser closes
-    if (state_ == REQUESTING_AUTH)
-        state_ = REQUIRE_TOKEN;
+    ensureStatusWindow();
 
-    if (state_ == REQUIRE_FROB) {
-        getFrob();
-    } else if (state_ == REQUIRE_TOKEN) {
+    if (state_ == UNINITIALIZED) {
+        checkToken();
+    } else if (state_ == REQUESTING_AUTH) {
+        // temporary hack until we watch for when browser closes
         getToken();
     }
     enqueueUpload(filename);

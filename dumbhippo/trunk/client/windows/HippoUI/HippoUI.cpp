@@ -380,14 +380,11 @@ HippoUI::getPreferences()
     return &preferences_;
 }
 
-
-
 void
-HippoUI::showAppletWindow(BSTR url)
+HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 {
     long width = 500;
     long height = 600;
-    HippoPtr<IWebBrowser2> webBrowser;
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
                      IID_IWebBrowser2, (void **)&webBrowser);
 
@@ -459,7 +456,8 @@ HippoUI::showShareWindow(BSTR title, BSTR url)
         return;
 
     debugLogW(L"sharing URL %s", shareURL);
-    showAppletWindow(shareURL);
+    HippoPtr<IWebBrowser2> webBrowser;
+    showAppletWindow(shareURL, webBrowser);
 }
 
 STDMETHODIMP 
@@ -478,7 +476,8 @@ HippoUI::showSignInWindow()
     if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"signin?next=close"), &signInURL)))
         return;
 
-    showAppletWindow(signInURL);
+    HippoPtr<IWebBrowser2> webBrowser;
+    showAppletWindow(signInURL, webBrowser);
 }
 
 void
@@ -952,6 +951,9 @@ HippoUI::updateMenu()
     }
 }
 
+// Find the pathname for a local HTML file, based on the location of the .exe
+// We could alternatively use res: URIs and embed the HTML files in the
+// executable, but this is probably more flexible
 HRESULT
 HippoUI::getAppletURL(BSTR  filename, 
                       BSTR *url)
@@ -992,9 +994,7 @@ HippoUI::getAppletURL(BSTR  filename,
     return *url ? S_OK : E_OUTOFMEMORY;
 }
 
-// Find the pathname for a HTML file, based on the location of the .exe
-// We could alternatively use res: URIs and embed the HTML files in the
-// executable, but this is probably more flexible
+// Get the URL of a file on the web server
 HRESULT
 HippoUI::getRemoteURL(BSTR  appletName, 
                       BSTR *result)
