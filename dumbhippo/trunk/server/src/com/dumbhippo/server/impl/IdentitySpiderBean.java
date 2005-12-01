@@ -36,6 +36,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
@@ -57,6 +58,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private AccountSystem accountSystem;
+	
+	@EJB
+	private InvitationSystem invitationSystem;
 	
 	public User lookupUserByEmail(String email) {
 		EmailResource res = getEmail(email);
@@ -353,7 +357,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	private void addPersonViewExtras(PersonView pv, PersonViewExtra... extras) {
+	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, PersonViewExtra... extras) {
 		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the work database work, even though we only return the requested information to keep 
@@ -367,7 +371,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			contactResources = getResourcesForPerson(pv.getContact());
 		if (pv.getUser() != null)
 			userResources = getResourcesForPerson(pv.getUser());
-		
 		if (contactResources != null) {
 			resources = contactResources;
 			if (userResources != null)
@@ -383,7 +386,21 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// all this anyway and most callers won't be silly (won't ask for both ALL_ and 
 		// PRIMARY_ for example)
 		for (PersonViewExtra e : extras) {
-			if (e == PersonViewExtra.ALL_RESOURCES) {
+			if (e == PersonViewExtra.INVITED_STATUS) {
+				if (viewpoint == null) {
+					// in this case we're doing a system view, invited
+					// flag really doesn't make sense ...
+					pv.addInvitedStatus(true);
+				} else if (pv.getUser() != null) {
+					pv.addInvitedStatus(true); // they already have an account
+				} else {
+					boolean invited = false;
+					for (Resource r : resources) {
+						invited = invitationSystem.hasInvited(viewpoint.getViewer(), r);
+					}
+					pv.addInvitedStatus(invited);
+				}
+			} else if (e == PersonViewExtra.ALL_RESOURCES) {
 				pv.addAllResources(resources);
 			} else if (e == PersonViewExtra.ALL_EMAILS) {
 				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
@@ -431,7 +448,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		// FIXME we need to filter this - resources from the viewed User 
 		// should not be offered if viewpoint is not a contact of user
-		addPersonViewExtras(pv, extras);
+		addPersonViewExtras(viewpoint, pv, extras);
 		
 		return pv;
 	}
@@ -450,14 +467,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		PersonView pv = new PersonView(contact, user);
 		
-		addPersonViewExtras(pv, extras);
+		addPersonViewExtras(viewpoint, pv, extras);
 
 		return pv;
 	}
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
-		addPersonViewExtras(pv, extras);
+		addPersonViewExtras(null, pv, extras);
 		return pv;
 	}
 	

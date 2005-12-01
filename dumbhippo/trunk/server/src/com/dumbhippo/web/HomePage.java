@@ -6,6 +6,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
@@ -28,16 +29,21 @@ public class HomePage {
 	private PostingBoard postBoard;
 	private PersonView person;
 	private GroupSystem groupSystem;
-	
+	private InvitationSystem invitationSystem;
+
 	private ListBean<PostView> receivedPosts;
 	private ListBean<PostView> contactPosts;
 	private ListBean<GroupView> groups;
-	private ListBean<PersonView> contacts;
-	
+	private ListBean<PersonView> contacts;	
+	private int invitations;
+
+
 	public HomePage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		invitations = -1;
 	}
 	
 	public SigninBean getSignin() {
@@ -69,7 +75,7 @@ public class HomePage {
 	
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser())));
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL)));
 		}
 		return contacts;
 	}
@@ -83,5 +89,12 @@ public class HomePage {
 	
 	public int getMaxReceivedPostsShown() {
 		return MAX_RECEIVED_POSTS_SHOWN;
+	}
+	
+	public int getInvitations() {
+		if (invitations < 0) {
+			invitations = invitationSystem.getInvitations(signin.getUser()); 
+		}
+		return invitations;
 	}
 }

@@ -4,6 +4,8 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="invite" class="com.dumbhippo.web.InvitePage" scope="request"/>
+<jsp:setProperty name="invite" property="fullName" param="fullName"/>
+<jsp:setProperty name="invite" property="email" param="email"/>
 
 <head>
 	<title>Invite a Friend</title>
@@ -31,11 +33,11 @@
 					<table>
 						<tr>
 							<td>Name:</td>
-							<td><input name="fullName" class="dhText"></td>
+							<td><input name="fullName" class="dhText" value="${invite.fullName}"></td>
 						</tr>
 						<tr>
 							<td>Email:</td>
-							<td><input name="email" class="dhText"></td>
+							<td><input name="email" class="dhText" value="${invite.email}"></td>
 						</tr>
 					</table>
 					<input type="submit" value="Invite"/>

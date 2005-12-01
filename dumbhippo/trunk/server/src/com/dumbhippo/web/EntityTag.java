@@ -1,6 +1,8 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
@@ -11,9 +13,19 @@ import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
 public class EntityTag extends SimpleTagSupport {
-	Object entity;
+	private Object entity;
+	private boolean showInviteLinks;
 	
-	static String entityHTML(Object o, String skipId) {
+	private static String urlEncode(String in) {
+		try {
+			return URLEncoder.encode(in, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// it's ridiculous that this is a checked exception
+			throw new RuntimeException(e);
+		}
+	}
+	
+	static String entityHTML(Object o, String skipId, boolean showInviteLinks) {
 		String link = null;
 		String body;
 		
@@ -47,18 +59,31 @@ public class EntityTag extends SimpleTagSupport {
 			body = "???";
 		}
 		
+		XmlBuilder xml = new XmlBuilder();
 		if (link != null)
-			return "<a href='" + link + "\' target=_top>" + XmlBuilder.escape(body) + "</a>";  
-		else  
-			return body;
+			xml.appendTextNode("a", body, "href", link, "target", "_top");
+		else
+			xml.appendEscaped(body);
+		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
+			PersonView view = (PersonView)o;
+			xml.append(" (");
+			String inviteUrl = "/invite?fullName=" + urlEncode(view.getName()) + "&email=" + urlEncode(view.getEmail().getEmail()); 
+			xml.appendTextNode("a", "invite", "href", inviteUrl);
+			xml.append(")");
+		}
+		return xml.toString();
 	}
 	
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
-		writer.print(entityHTML(entity, null));
+		writer.print(entityHTML(entity, null, showInviteLinks));
 	}
 	
 	public void setValue(Object value) {
 		entity = value;
+	}
+	
+	public void setShowInviteLinks(boolean showInviteLinks) {
+		this.showInviteLinks = showInviteLinks;
 	}
 }

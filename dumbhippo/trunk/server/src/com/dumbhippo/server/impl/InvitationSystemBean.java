@@ -63,13 +63,27 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	@EJB
 	private NoMailSystem noMail;
 	
-	protected InvitationToken lookupInvitationFor(Resource invitee) {
+	/**
+	 * The inviter argument is optional and means we only return an invitation token if this inviter is
+	 * among the inviters.
+	 * 
+	 * @param inviter only return non-null if this inviter is already in the inviters; null to always return invitation
+	 * @param invitee the invitee
+	 * @return invitation token or null
+	 */
+	protected InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
 		InvitationToken ret;
 		try {
+			String inviterClause = "";
+			if (inviter != null)
+				inviterClause = "AND :inviter MEMBER OF iv.inviters";
+			
 			// we get the newest invitation token, sort by date in descending order
 			Query q = em.createQuery(
-				"FROM InvitationToken AS iv WHERE iv.invitee = :resource ORDER BY iv.creationDate DESC");
+				"FROM InvitationToken AS iv WHERE iv.invitee = :resource " + inviterClause + " ORDER BY iv.creationDate DESC");
 			q.setParameter("resource", invitee);
+			if (inviter != null)
+				q.setParameter("inviter", inviter);
 			q.setMaxResults(1); // only need the first one
 			ret = (InvitationToken) q.getSingleResult();
 			
@@ -115,7 +129,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	// this gets the invitation url only if it already exists, but may 
 	// update the expiration date and add a new inviter
 	public String getInvitationUrl(User inviter, Resource invitee) {
-		InvitationToken iv = lookupInvitationFor(invitee);
+		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null)
 			return null;
 		iv.addInviter(inviter); // no-op if already added
@@ -139,7 +153,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		boolean needSendNotification = false;
 		String ret = null;
 		
-		InvitationToken iv = lookupInvitationFor(invitee);
+		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null || iv.isExpired()) {
 			needSendNotification = true; // always send if expired, since it's been a while
 			if (iv != null) {
@@ -280,5 +294,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	public int getInvitations(User user) {
 		Account account = getAccount(user);
 		return account.getInvitations();
+	}
+
+	public boolean hasInvited(User user, Resource invitee) {
+		if (user == null)
+			throw new IllegalArgumentException("null user to hasInvited");
+		
+		// iv will be null if user is not among the inviters
+		InvitationToken iv = lookupInvitationFor(user, invitee);
+		if (iv != null && !iv.isExpired())
+			return true;
+		else 
+			return false;
 	}
 }

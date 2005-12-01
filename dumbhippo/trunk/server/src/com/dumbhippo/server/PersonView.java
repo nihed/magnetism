@@ -36,6 +36,7 @@ public class PersonView {
 	private User user;
 	private Set<Resource> resources;
 	private EnumSet<PersonViewExtra> extras;
+	private boolean invited; 
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -122,19 +123,28 @@ public class PersonView {
 		}
 	}
 	
+	public void addInvitedStatus(boolean invited) {
+		addExtras(EnumSet.of(PersonViewExtra.INVITED_STATUS));
+		this.invited = invited;
+	}
+	
 	/**
 	 * Gets the id that should be used with viewperson.jsp, which is 
-	 * the User if any else the contact else null.
+	 * the User if any else null. Contacts without accounts don't have a public page.
 	 * 
 	 * @return the id or null
 	 */
 	public String getViewPersonPageId() {
 		if (user != null)
 			return user.getId();
-		else if (contact != null)
-			return contact.getId();
 		else
 			return null;
+	}
+	
+	public boolean isInvited() {
+		if (!getExtra(PersonViewExtra.INVITED_STATUS))
+			throw new IllegalStateException("asked for " + PersonViewExtra.INVITED_STATUS + " but this PersonView wasn't created with that");
+		return invited;
 	}
 	
 	private String getNickname() {

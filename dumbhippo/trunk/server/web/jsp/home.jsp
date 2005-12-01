@@ -75,7 +75,11 @@
 				<div class="friends">
 					<strong>People You Know</strong>
 					<br/>
-					<dh:entityList value="${home.contacts.list}"/>
+					<c:if test="${home.invitations > 0}">
+						You can <a href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
+						<br/>
+					</c:if>
+					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}"/>
 				</div>
 			</c:if>
 		</td>

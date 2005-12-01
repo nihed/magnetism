@@ -37,6 +37,11 @@
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+        <attribute>
+           <name>showInviteLinks</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
     </tag>
     <tag>
         <name>entityList</name>
@@ -50,6 +55,11 @@
         </attribute>
         <attribute>
            <name>skipRecipientId</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>showInviteLinks</name>
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>

@@ -88,4 +88,12 @@ public interface InvitationSystem {
 	 * @return number of invitations
 	 */
 	public int getInvitations(User user);
+	
+	/** 
+	 * See if user has invited the resource.
+	 * @param user the user
+	 * @param invitee invitee resource
+	 * @return true if this user has invited this invitee
+	 */
+	public boolean hasInvited(User user, Resource invitee);
 }

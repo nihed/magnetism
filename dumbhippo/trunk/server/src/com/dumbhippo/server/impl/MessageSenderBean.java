@@ -411,7 +411,10 @@ public class MessageSenderBean implements MessageSender {
 			
 			messageText.append("  (Link shared by " + posterViewedBySelf.getName() + ")");
 			
-			String posterPublicPageUrl = baseurl + "/viewperson?personId=" + posterViewedBySelf.getViewPersonPageId();
+			String viewPersonPageId = posterViewedBySelf.getViewPersonPageId();
+			String posterPublicPageUrl = null;
+			if (viewPersonPageId != null)
+				posterPublicPageUrl = baseurl + "/viewperson?personId=" + viewPersonPageId;
 						
 			// HTML: "link shared by"
 			String recipientLink;
@@ -428,6 +431,7 @@ public class MessageSenderBean implements MessageSender {
 				+ "to %s)\n"
 				+ "</div>\n";
 			messageHtml.append(String.format(format, XmlBuilder.escape(posterViewedBySelf.getEmail().getEmail()),
+					// FIXME posterPublicPageUrl in theory could be null (not actually right now afaik)
 						XmlBuilder.escape(posterPublicPageUrl),
 						XmlBuilder.escape(posterViewedBySelf.getName()),
 						recipientLink)); 
@@ -450,6 +454,7 @@ public class MessageSenderBean implements MessageSender {
 					+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Dumb Hippo</a>\n"
 					+ "</div>\n";
 				messageHtml.append(String.format(format, 
+						// FIXME handle null public page url
 						XmlBuilder.escape(posterPublicPageUrl),
 						XmlBuilder.escape(posterViewedBySelf.getName()),
 						XmlBuilder.escape(recipientInviteUrl),
