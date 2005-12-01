@@ -11,6 +11,7 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 
 	private Node tree;
 	private List<Node> stack;
+	private PostInfoType type;
 	
 	PostInfoSaxHandler() {
 		super(NodeName.class, NodeName.IGNORED);
@@ -19,6 +20,10 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 
 	public Node getTree() {
 		return tree;
+	}
+	
+	public PostInfoType getPostInfoType() {
+		return type;
 	}
 	
 	@Override
@@ -54,23 +59,38 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 
 		stack.remove(stack.size() - 1);
 		
-		if (stack.isEmpty() && node.getName() == NodeName.PostInfo)
+		if (stack.isEmpty() && node.getName() == NodeName.postInfo)
 			tree = node;
+	
+		// replace type if we found a more specific one; PostInfo can have 0-2 children,
+		// where the two allowed children are <generic> and a more specific type
+		if (parent() == NodeName.postInfo) {
+			PostInfoType t = PostInfoType.fromNodeName(element);
+			if (t == null) {
+				throw new SAXException("Node " + element + " not allowed underneath " + parent());
+			} else if (t == PostInfoType.GENERIC) {
+				if (type == null) // don't override a more-specific type
+					type = t;
+			} else {
+				// t is a specific type
+				if (type == null || type == PostInfoType.GENERIC)
+					type = t; // specific type wins over null or generic
+				else
+					throw new SAXException("Node " + element + " seen but we already had a type-specific node indicating type " + type);
+			}
+		}
 	}
 	
-	@Override 
+	@Override
 	public void endDocument() throws SAXException {
 		if (!stack.isEmpty())
 			throw new SAXException("unbalanced tag " + stack.get(stack.size() - 1).getName());
 		
 		if (tree == null)
 			throw new SAXException("no PostInfo root node found");
-
-		if (!tree.hasChildren())
-			throw new SAXException("PostInfo does not have any child nodes");
-		
-		if (!tree.hasChild(NodeName.Type))
-			throw new SAXException("PostInfo has no Type child node");
+	
+		if (type == null)
+			type = PostInfoType.GENERIC; // no child nodes found
 		
 		// further validation depends on the type
 	}

@@ -203,6 +203,8 @@
 	<target name="ejb3jar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
 			<fileset dir="${build}">
+				<include name="**/postinfo/*.class" />
+				<include name="**/services/*.class" />
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />
 			</fileset>

@@ -9,24 +9,22 @@ package com.dumbhippo.postinfo;
  * the actual names in the XML format, case sensitive.
  * 
  * The XML format we parse this from looks something like:
- * &lt;PostInfo&gt;
- *   &lt;Type&gt;AMAZON&lt;/Type&gt;
- *   &lt;Generic&gt;
- *   	&lt;Favicon&gt;http://blahblah/favicon.ico&lt;/Favicon&gt;
- *   &lt;/Generic&gt;
- *   &lt;Amazon&gt;
- *   	&lt;SmallPhoto&gt;
- *   		&lt;Url&gt;http://blah/blah.png&lt;/Url&gt;
- *          &lt;Width&gt;48&lt;/Width&gt;
- *          &lt;Height&gt;48&lt;/Height&gt;
- *   	&lt;/SmallPhoto&gt;
- *   &lt;/Amazon&gt;
- * &lt;/PostInfo&gt;
+ * &lt;postInfo&gt;
+ *   &lt;generic&gt;
+ *   	&lt;favicon&gt;http://blahblah/favicon.ico&lt;/favicon&gt;
+ *   &lt;/generic&gt;
+ *   &lt;amazon&gt;
+ *   	&lt;smallPhoto&gt;
+ *   		&lt;url&gt;http://blah/blah.png&lt;/url&gt;
+ *          &lt;width&gt;48&lt;/width&gt;
+ *          &lt;height&gt;48&lt;/height&gt;
+ *   	&lt;/smallPhoto&gt;
+ *   &lt;/amazon&gt;
+ * &lt;/postInfo&gt;
  * 
  * The basic format of the entire document in other words is:
- *   1 type tag
- *   1 generic section
- *   1 type-specific section
+ *   1 optional generic section
+ *   1 optional type-specific section
  * 
  * There's no arbitrarily-deep inheritance or anything like that.
  * There are no attributes on elements either, only nodes.
@@ -35,19 +33,25 @@ package com.dumbhippo.postinfo;
  */
 public enum NodeName {
 	// nodes in all post info documents
-	PostInfo,
-	Type,
-	Generic,
+	postInfo,
+	generic,
 	// type-specific sections
-	Error,
-	Amazon,
+	amazon,
 	eBay,
 	// nodes underneath one of the above sections
-	Favicon,
-	SmallPhoto,
-	Url,
-	Width,
-	Height,
+	favicon,
+	itemId,
+	smallPhoto,
+	url,
+	width,
+	height,
+	newPrice,
+	usedPrice,
+	refurbishedPrice,
+	collectiblePrice,
+	timeLeft,
+	startPrice,
+	buyItNowPrice,
 	//	a node we don't know about, used in parsing only
 	IGNORED 
 }

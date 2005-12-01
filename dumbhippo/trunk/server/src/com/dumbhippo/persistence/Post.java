@@ -1,6 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.net.URL;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,19 +13,28 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import com.dumbhippo.XmlBuilder;
+import org.apache.commons.logging.Log;
+import org.xml.sax.SAXException;
+
+import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
 public class Post extends GuidPersistable {
-
+	
+	static private final Log logger = GlobalSetup.getLog(Post.class);
+	static public final int MAX_INFO_LENGTH = 2048;
+	
 	private static final long serialVersionUID = 0L;
 
-	transient private PostRewriter rewriter;
 	private User poster;
 	private PostVisibility visibility;
 	private String explicitTitle;
 	private long postDate;
 	private String text;
+	private String info;
+	private long infoDate;
+	transient private PostInfo cachedPostInfo;
 	private Set<Resource> personRecipients;
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
@@ -168,9 +176,7 @@ public class Post extends GuidPersistable {
 	
 	@Transient
 	public String getTitle() {
-		if (rewriter != null) {
-			return rewriter.getTitle();
-		} else if (explicitTitle != null)
+		if (explicitTitle != null)
 			return explicitTitle;
 		else if (resources != null && !resources.isEmpty()) {
 			// FIXME look for an url and use its title
@@ -178,17 +184,6 @@ public class Post extends GuidPersistable {
 			return "";
 		} else {
 			return "";
-		}
-	}
-
-	@Transient
-	public String getTextAsHtml() {
-		if (rewriter != null) {
-			return rewriter.getTextAsHtml();
-		} else {
-			XmlBuilder builder = new XmlBuilder();
-			builder.appendTextAsHtml(getText());
-			return builder.toString();
 		}
 	}
 	
@@ -201,15 +196,86 @@ public class Post extends GuidPersistable {
 		this.postDate = postDate.getTime();
 	}
 	
-	public void bindRewriter(PostRewriter rewriter, URL url) {
-		// the url param is provided for two reasons:
-		// - efficiency; several different places need to 
-		//   parse out the url components
-		// - if we keep the Set<Resource> crack, we need to 
-		//   know which link we're using
-		this.rewriter = rewriter;
-		if (rewriter != null)
-			rewriter.bind(this, url);
+	@Column(nullable=true,length=MAX_INFO_LENGTH)
+	public String getInfo() {
+		return info;
+	}
+
+	protected void setInfo(String info) {
+		logger.debug(this + " setting info: " + info + " was: " + this.info);
+		
+		// we probably need some better way to handle this, but 
+		// we definitely don't want to let the database to silently truncate it
+		// producing corrupt xml
+		if (info != null && info.length() > MAX_INFO_LENGTH)
+			throw new IllegalArgumentException("info XML string exceeds max length");
+		
+		if (this.info != null && info != null && this.info.equals(info))
+			return;
+		
+		this.info = info;
+		
+		cachedPostInfo = null;
+	}
+
+	@Column(nullable=true)
+	public Date getInfoDate() {
+		if (infoDate < 0)
+			return null;
+		else
+			return new Date(infoDate);
+	}
+
+	public void setInfoDate(Date infoDate) {
+		if (infoDate == null)
+			this.infoDate = -1;
+		else
+			this.infoDate = infoDate.getTime();
+	}
+	
+	@Transient
+	public PostInfo getPostInfo() {
+		
+		if (cachedPostInfo != null)
+			return cachedPostInfo;
+		
+		String info = getInfo();
+		if (info != null) {
+			try {
+				cachedPostInfo = PostInfo.parse(info);
+				cachedPostInfo.makeImmutable();
+				return cachedPostInfo;
+			} catch (SAXException e) {
+				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string");
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	public void setPostInfo(PostInfo postInfo) {
+		if (postInfo != null) {
+			
+			if (cachedPostInfo == postInfo)
+				throw new RuntimeException("Don't modify the post info from Post.getPostInfo() and then set it back. Make a copy.");
+			
+			if (cachedPostInfo != null && cachedPostInfo.equals(postInfo)) {
+				logger.debug("Cached post info is the same as new post info, doing nothing. old: " + cachedPostInfo + " new: " + postInfo);
+				return; // nothing to do
+			}
+			
+			setInfo(postInfo.toXml());
+		} else {
+			setInfo(null);
+		}
+		// note that setInfo just set cachedPostInfo = null
+		
+		// not copying this is probably going to cause a bug, but 
+		// for now it seems like a worthwhile efficiency hack
+		cachedPostInfo = postInfo;
+		if (cachedPostInfo != null)
+			cachedPostInfo.makeImmutable();
 	}
 	
 	public String toString() {

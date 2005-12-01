@@ -34,7 +34,7 @@ public class PostInfo {
 		SAXParser parser = newSAXParser();
 		PostInfoSaxHandler handler = new PostInfoSaxHandler();
 		parser.parse(is, handler);
-		return newInstance(handler.getTree()); 
+		return newInstance(handler.getTree(), handler.getPostInfoType()); 
 	}
 	
 	public static PostInfo parse(String s) throws SAXException {
@@ -45,53 +45,79 @@ public class PostInfo {
 		}
 	}
 	
-	private static PostInfoType parseType(String s) {
-		PostInfoType t;
-		try {
-			t = Enum.valueOf(PostInfoType.class, s);
-		} catch (IllegalArgumentException e) {
-			// we can still read the generic portion
-			t = PostInfoType.GENERIC;
-		}
-		return t;
-	}
-	
 	/**
 	 * Create a new PostInfo of the appropriate subclass for this node tree.
 	 * 
-	 * @param tree a node tree
+	 * @param tree a node tree which will now be owned by this PostInfo
+	 * @param type the type of post info
 	 * @return a new PostInfo of the right subclass
 	 * @throws IllegalArgumentException if the tree doesn't have a type node
 	 */
-	public static PostInfo newInstance(Node tree) {
+	private static PostInfo newInstance(Node tree, PostInfoType type) {
 		if (tree == null)
 			throw new IllegalArgumentException("null tree for PostInfo.newInstance");
-		if (!tree.hasChild(NodeName.Type))
-			throw new IllegalArgumentException("tree doesn't have a Type node");
-		
-		PostInfoType t = parseType(tree.getContent(NodeName.Type));
-		// FIXME create an AmazonPostInfo, etc.
-		
-		return new PostInfo(tree);
+		if (type == null)
+			throw new IllegalArgumentException("null type for new PostInfo");
+	
+		Class<? extends PostInfo> subClass = type.getSubClass();
+		if (subClass != null) {
+			PostInfo p;
+			try {
+				p = subClass.newInstance();
+			} catch (InstantiationException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+			p.tree = tree;
+			if (p.type != type)
+				throw new RuntimeException("subclass of PostInfo " + subClass.getName() + " did not init type field to " + type);
+			return p;
+		} else {
+			return new PostInfo(tree, type);
+		}
+	}
+	
+	public static PostInfo newInstance(PostInfo original, PostInfoType newType) {
+		Node tree = new Node(original.getTree());
+		if (original.getType() != PostInfoType.GENERIC && 
+				original.getType() != newType) {
+			// Drop data for the old type
+			tree.removeChildIfExists(original.getType().getNodeName());
+		}
+		return newInstance(tree, newType);
+	}
+	
+	public static PostInfo newInstance(PostInfoType type) {
+		Node root = new Node(NodeName.postInfo);
+		root.appendChild(new Node(type.getNodeName()));
+		return newInstance(root, type);
 	}
 	
 	private Node tree;
+	private PostInfoType type;
 	
 	/**
 	 * Use newInstance() instead so you get the right subclass
-	 * @param tree the node tree to initialize with
+	 * @param tree the node tree to initialize with or null to fill in postconstruct
+	 * @param type the type of PostInfo
 	 */
-	protected PostInfo(Node tree) {
+	protected PostInfo(Node tree, PostInfoType type) {
 		this.tree = tree;
+		this.type = type;
 	}
 	
 	public PostInfoType getType() {
-		String s = tree.getContent(NodeName.Type);
-		return parseType(s);
+		return type;
 	}
 	
 	public Node getTree() {
 		return tree;
+	}
+	
+	public void makeImmutable() {
+		// there's no setter for "type"
+		tree.makeImmutable();
 	}
 	
 	/**
@@ -128,12 +154,20 @@ public class PostInfo {
 	}
 
 	@Override
+	public String toString() {
+		// FIXME this is pretty expensive, should disable once stuff is working nicely
+		return type + ": " + toXml().replace("\n", "");
+	}
+	
+	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
 		if (!(obj instanceof PostInfo))
 			return false;
 		PostInfo other = (PostInfo) obj;
+		if (other.type != this.type)
+			return false;
 		if ((other.tree != null) != (this.tree != null)) {
 			return false;
 		}
@@ -144,9 +178,11 @@ public class PostInfo {
 
 	@Override
 	public int hashCode() {
+		int result;
 		if (tree == null)
-			return 17;
+			result = 17;
 		else 
-			return tree.hashCode();
+			result = tree.hashCode();
+		return result + type.hashCode() * 37;
 	}
 }

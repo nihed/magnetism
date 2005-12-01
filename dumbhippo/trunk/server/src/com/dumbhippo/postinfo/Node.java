@@ -22,6 +22,7 @@ public class Node {
 	
 	private String content;
 	private List<Node> children;
+	private boolean immutable;
 	
 	public Node(NodeName name) {
 		setName(name);
@@ -38,12 +39,24 @@ public class Node {
 	}
 	
 	public Node(Node original) {
+		// this deliberately doesn't copy the "immutable" flag since 
+		// getting a mutable copy is the main point of copying
 		setName(original.name);
 		if (original.content != null)
 			setContent(original.content);
 		else if (original.children != null) {
 			for (Node c : original.children)
-				appendChild(c);	
+				appendChild(new Node(c));	
+		}
+	}
+	
+	public void makeImmutable() {
+		if (immutable)
+			return; // no children could have been added, so no need to recurse
+		immutable = true;
+		if (children != null) {
+			for (Node c : children)
+				c.makeImmutable();
 		}
 	}
 	
@@ -105,6 +118,8 @@ public class Node {
 	 * @param children the new child nodes or null
 	 */
 	public void setChildren(List<Node> children) {
+		if (immutable)
+			throw new IllegalStateException("immutable node");
 		if (children != null && !children.isEmpty())
 			this.children = new ArrayList<Node>(children);	
 		else
@@ -139,6 +154,8 @@ public class Node {
 	 * @param content the new content or null
 	 */
 	public void setContent(String content) {
+		if (immutable)
+			throw new IllegalStateException("immutable node");
 		if (content.length() == 0)
 			content = null;
 		this.content = content;
@@ -154,12 +171,16 @@ public class Node {
 	 * @param name the new name of the node
 	 */
 	public void setName(NodeName name) {
+		if (immutable)
+			throw new IllegalStateException("immutable node");
 		if (name == null || name == NodeName.IGNORED)
 			throw new IllegalArgumentException("null or IGNORED node name");
 		this.name = name;
 	}
 	
 	public void appendChild(Node node) {
+		if (immutable)
+			throw new IllegalStateException("immutable node");
 		if (this.children == null) {
 			this.content = null; // children or content, not both
 			this.children = new ArrayList<Node>();
@@ -172,6 +193,37 @@ public class Node {
 			return null;
 		else
 			return this.children.get(i);
+	}
+	
+	private Node resolveOrCreatePath(boolean create, int depth, NodeName... path) {
+		if (create && immutable)
+			throw new IllegalStateException("immutable node");
+		Node current = this;
+		if (depth < 0)
+			depth = path.length;
+		for (int i = 0; i < depth; ++i) {
+			NodeName component = path[i];
+			Node newCurrent = null;
+			if (current.children != null) {
+				for (Node child : current.children) {
+					if (child.name == component) {
+						newCurrent = child;
+						break;
+					}
+				}
+			}
+			
+			if (newCurrent != null) {
+				current = newCurrent;
+			} else if (create) {
+				newCurrent = new Node(component);
+				current.appendChild(newCurrent);
+				current = newCurrent;
+			} else {
+				throw new NoSuchNodeException(this.name, path);
+			}
+		}
+		return current;
 	}
 	
 	/**
@@ -188,31 +240,24 @@ public class Node {
 	 * @throws NoSuchNodeException if child node not found
 	 */
 	public Node resolvePath(NodeName... path) {
-		Node current = this;
-		for (NodeName component : path) {
-			
-			if (current.children == null)
-				throw new NoSuchNodeException(this.name, path);
+		return resolveOrCreatePath(false, -1, path);
+	}
 	
-			Node newCurrent = null;
-			for (Node child : current.children) {
-				if (child.name == component) {
-					newCurrent = child;
-					break;
-				}
-			}
-			
-			if (newCurrent != null)
-				current = newCurrent;
-			else
-				throw new NoSuchNodeException(this.name, path);
-		}
-		return current;
+	public Node resolveOrCreatePath(NodeName... path) {
+		return resolveOrCreatePath(true, -1, path);
 	}
 	
 	public String getContent(NodeName... path) {
 		Node node = resolvePath(path);
 		return node.getContent();
+	}
+	
+	public String getContentIfExists(NodeName... path) {
+		try {
+			return getContent(path);
+		} catch (NoSuchNodeException e) {
+			return null;
+		}
 	}
 
 	public List<Node> getChildren(NodeName... path) {
@@ -220,6 +265,42 @@ public class Node {
 		return node.getChildren();
 	}
 
+	public void removeChild(Node child) {
+		if (immutable)
+			throw new IllegalStateException("immutable node");
+		int i = getChildren().indexOf(child);
+		if (i < 0)
+			throw new NoSuchNodeException(this.getName(), child.getName());
+		children.remove(i);
+	}
+	
+	public void removeChild(NodeName... path) {
+		Node parent = resolveOrCreatePath(false, path.length - 1, path);
+		Node child = parent.resolvePath(path[path.length - 1]);
+		parent.removeChild(child);
+	}
+	
+	public void removeChildIfExists(NodeName... path) {
+		try {
+			removeChild(path);
+		} catch (NoSuchNodeException e) {
+		}
+	}
+	
+	public void removeChildIfNoChildren(NodeName... path) {
+		Node parent = resolveOrCreatePath(false, path.length - 1, path);
+		Node child = parent.resolvePath(path[path.length - 1]);
+		if (child.isEmpty())
+			parent.removeChild(child);
+	}
+	
+	public void updateContentChild(String content, NodeName... path) {
+		if (content != null)
+			resolveOrCreatePath(path).setContent(content);
+		else
+			removeChildIfExists(path);
+	}
+	
 	public void setBoolean(boolean value) {
 		setContent(Boolean.toString(value));
 	}
@@ -259,6 +340,8 @@ public class Node {
 	
 	@Override
 	public boolean equals(Object obj) {
+		// do not include the "immutable" flag
+		
 		if (this == obj)
 			return true;
 		if (!(obj instanceof Node))
@@ -285,6 +368,8 @@ public class Node {
 
 	@Override
 	public int hashCode() {
+		// do not include the "immutable" flag
+		
 		// eh, this sucks
 		int result = 17 + (name.ordinal() * (Integer.MAX_VALUE / NodeName.values().length));
 		if (content != null) {

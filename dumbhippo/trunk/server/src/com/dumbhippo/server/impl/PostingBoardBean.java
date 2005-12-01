@@ -42,7 +42,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.server.PostRewriterFactory;
+import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -70,7 +70,7 @@ public class PostingBoardBean implements PostingBoard {
 	private Configuration configuration;
 	
 	@EJB
-	private PostRewriterFactory rewriterFactory;
+	private PostInfoSystem infoSystem;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -290,8 +290,17 @@ public class PostingBoardBean implements PostingBoard {
 		for (Resource recipient : getVisiblePersonRecipients(viewpoint, post))
 			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
 	
-		// load a rewriter if any
-		rewriterFactory.loadRewriter(viewpoint, post);
+		if (!em.contains(post))
+			throw new RuntimeException("can't update post info if Post is not attached");
+		
+		// Ensure we're updated (potentially blocks for a while)
+		infoSystem.updatePostInfo(post);
+		
+		String info = post.getInfo();
+		if (info != null)
+			logger.debug("Updated, post info now: " + info.replace("\n",""));
+		else
+			logger.debug("Updated, post info now null");
 		
 		try {
 			return new PostView(post, 
@@ -312,6 +321,11 @@ public class PostingBoardBean implements PostingBoard {
 
 		@SuppressWarnings("unchecked")		
 		List<Post> posts = q.getResultList();	
+
+		// parallelize all the post updaters
+		for (Post p : posts) {
+			infoSystem.hintWillUpdateSoon(p);
+		}
 		
 		List<PostView> result = new ArrayList<PostView>();
 		for (Post p : posts) {

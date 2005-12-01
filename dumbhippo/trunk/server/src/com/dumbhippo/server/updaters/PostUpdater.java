@@ -19,7 +19,8 @@ public interface PostUpdater {
 
 	/**
 	 * Whether it's necessary to call getUpdate() and get new PostInfo
-	 * for this post. Call bind() before calling this.
+	 * for this post. Call bind() before calling this. If this returns
+	 * true then getUpdate() can't block.
 	 * 
 	 * @return true if no update is required
 	 */

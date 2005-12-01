@@ -70,9 +70,11 @@ public class EbayScreenScraper {
 			return "{url=" + url + " score=" + score + " order=" + order + "}";
 		}
 	}
+
+	private int timeoutMilliseconds;
 	
-	public EbayScreenScraper() {
-		
+	public EbayScreenScraper(int timeoutMilliseconds) {
+		this.timeoutMilliseconds = timeoutMilliseconds;
 	}
 	
 	private String scrapePictureUrl(String html) {
@@ -213,7 +215,8 @@ public class EbayScreenScraper {
 			logger.debug("loading ebay url " + url);
 
 			URLConnection connection = url.openConnection();
-			connection.setReadTimeout(1000*6);
+			connection.setConnectTimeout(timeoutMilliseconds);
+			connection.setReadTimeout(timeoutMilliseconds);
 			html = StreamUtils.readStreamUTF8(connection.getInputStream());
 		
 		} catch (IOException e) {
@@ -230,7 +233,7 @@ public class EbayScreenScraper {
 	}
 	
 	static public final void main(String[] args) {
-		EbayScreenScraper scraper = new EbayScreenScraper();
+		EbayScreenScraper scraper = new EbayScreenScraper(10000);
 		
 		//String itemId = "5059205542";
 		//String itemId = "4799641609";	

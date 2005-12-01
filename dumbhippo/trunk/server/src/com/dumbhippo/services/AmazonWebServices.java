@@ -19,9 +19,11 @@ public class AmazonWebServices {
 	
 	private SAXParserFactory saxFactory;
 	private String amazonAccessKeyId;
+	private int timeoutMilliseconds;
 	
-	public AmazonWebServices(String amazonAccessKeyId) {
+	public AmazonWebServices(String amazonAccessKeyId, int timeoutMilliseconds) {
 		this.amazonAccessKeyId = amazonAccessKeyId;
+		this.timeoutMilliseconds = timeoutMilliseconds;
 	}
 	
 	String parseItemIdFromUrl(URL url) {
@@ -65,7 +67,7 @@ public class AmazonWebServices {
 		sb.append(itemId);
 
 		String wsUrl = sb.toString();
-		logger.debug("Starting AmazonRewriter async task " + wsUrl);
+		logger.debug("Loading amazon web services url " + wsUrl);
 		
 		AmazonSaxHandler handler = parseUrl(wsUrl);
 		
@@ -108,12 +110,9 @@ public class AmazonWebServices {
 		try {
 			URL u = new URL(url);
 			URLConnection connection = u.openConnection();
-		
-			// amazon when working usually replies in under 100 milliseconds,
-			// so this is a very generous timeout. If the timeout expires 
-			// then we give up and just don't display the post in a 
-			// special amazon-specific way
-			connection.setReadTimeout(1000 * 6);
+
+			connection.setConnectTimeout(timeoutMilliseconds);
+			connection.setReadTimeout(timeoutMilliseconds);
 			connection.setAllowUserInteraction(false);
 			
 			parser.parse(connection.getInputStream(), handler);

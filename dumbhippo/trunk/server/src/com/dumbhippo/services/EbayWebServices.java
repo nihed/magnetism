@@ -24,11 +24,13 @@ public class EbayWebServices {
 	private String devId;
 	private String appId;
 	private String certId;
+	private int timeoutMilliseconds;
 	
-	EbayWebServices(String devId, String appId, String certId) {
+	EbayWebServices(String devId, String appId, String certId, int timeoutMilliseconds) {
 		this.devId = devId;
 		this.appId = appId;
 		this.certId = certId;
+		this.timeoutMilliseconds = timeoutMilliseconds;
 	}
 	
 	private SAXParser newSAXParser() {
@@ -63,7 +65,8 @@ public class EbayWebServices {
 			// sandbox API URL: https://api.sandbox.ebay.com/ws/api.dll
 			url = new URL("https://api.sandbox.ebay.com/ws/api.dll");
 			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-			connection.setConnectTimeout(1000 * 6); // don't block very long
+			connection.setConnectTimeout(timeoutMilliseconds);
+			connection.setReadTimeout(timeoutMilliseconds);
 			connection.setRequestMethod("POST");
 			connection.setAllowUserInteraction(false);
 			connection.setDoOutput(true);
@@ -161,7 +164,7 @@ public class EbayWebServices {
 		EbayWebServices webServices =
 			new EbayWebServices("",
 					"",
-					"");
+					"", 10000);
 		String ruName = webServices.getRuName("", "");
 		/*EbayItemData item = webServices.frobate();
 		if (item != null)

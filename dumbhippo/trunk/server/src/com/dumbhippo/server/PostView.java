@@ -3,11 +3,16 @@ package com.dumbhippo.server;
 import java.util.List;
 
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.postinfo.PostInfoType;
+import com.dumbhippo.server.formatters.AmazonFormatter;
+import com.dumbhippo.server.formatters.DefaultFormatter;
+import com.dumbhippo.server.formatters.EbayFormatter;
+import com.dumbhippo.server.formatters.PostFormatter;
 
 /**
  * @author otaylor
@@ -24,6 +29,7 @@ public class PostView {
 	private PersonView posterView;
 	private List<Object> recipients;
 	private String search;
+	private PostFormatter formatter;
 	
 	/**
 	 * Create a new PostView object.
@@ -46,6 +52,26 @@ public class PostView {
 				break;
 			}
 		}
+	}
+	
+	private PostFormatter getFormatter() {
+		if (formatter != null)
+			return formatter;
+		
+		PostInfo postInfo = post.getPostInfo();
+		PostInfoType type = postInfo != null ? postInfo.getType() : PostInfoType.GENERIC;
+		
+		// FIXME the formatters are stateless so we could share the instances
+		if (type == PostInfoType.AMAZON) {
+			formatter = new AmazonFormatter();
+		} else if (type == PostInfoType.EBAY) {
+			formatter = new EbayFormatter();
+		} else {
+			formatter = new DefaultFormatter();
+		}
+		
+		assert formatter != null;
+		return formatter;
 	}
 	
 	public String getTitle() {
@@ -80,7 +106,7 @@ public class PostView {
 		this.search = search;
 	}
 	
-	private String highlightSearchWords(String html) {
+	public String highlightSearchWords(String html) {
 		if (search == null)
 			return html;
 	
@@ -95,12 +121,10 @@ public class PostView {
 	}
 	
 	public String getTitleAsHtml() {
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendEscaped(getTitle());
-		return highlightSearchWords(xml.toString());
+		return getFormatter().getTitleAsHtml(this);
 	}
 	
 	public String getTextAsHtml() {
-		return highlightSearchWords(getPost().getTextAsHtml());		
+		return getFormatter().getTextAsHtml(this);		
 	}
 }

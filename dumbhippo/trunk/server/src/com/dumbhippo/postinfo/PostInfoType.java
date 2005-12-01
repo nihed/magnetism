@@ -7,12 +7,41 @@ package com.dumbhippo.postinfo;
  * you would add a value like "AMAZON2" including
  * a version number to indicate the new format.
  * 
+ * This is a type tag instead of just using subclasses because
+ * we may have multiple types mapping to one subclass and 
+ * a subclass isn't necessary for simple cases. Also, the static
+ * information is a pain in the ass with subclasses since you 
+ * can't have "static interfaces" (you would need a subclass instance
+ * or reflection of static fields to get at the NodeName for the type)
+ * 
  * @author hp
  */
 public enum PostInfoType {
-	GENERIC,
-	ERROR,
-	EBAY,
-	AMAZON,
-	FLICKR
+	GENERIC(NodeName.generic, null),
+	EBAY(NodeName.eBay, EbayPostInfo.class),
+	AMAZON(NodeName.amazon, AmazonPostInfo.class);
+	
+	private NodeName nodeName;
+	private Class<? extends PostInfo> subClass;
+	
+	private PostInfoType(NodeName nodeName, Class<? extends PostInfo> subClass) {
+		this.nodeName = nodeName;
+		this.subClass = subClass;
+	}
+	
+	public NodeName getNodeName() {
+		return nodeName;
+	}
+	
+	public Class<? extends PostInfo> getSubClass() {
+		return subClass;
+	}
+	
+	static public PostInfoType fromNodeName(NodeName nodeName) {
+		for (PostInfoType t : values()) {
+			if (t.getNodeName() == nodeName)
+				return t;
+		}
+		return null;
+	}
 }
