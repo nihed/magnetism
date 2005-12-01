@@ -24,6 +24,9 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     // Whether the bubble is showing
     this._visible = false
     
+    // Whether we're reserving space for viewer information
+    this._showViewers = false
+    
     // personId -> name
     this._nameCache = {}
     
@@ -46,14 +49,6 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     this._initNotifications = function() {
         this.notifications = []
         this.position = -1
-       
-        // postId -> int
-        this.swarmPositions = {}
-        // postId -> personId
-        // Used to determine which photo to display
-        this.lastSwarmer = {}
-        // postId -> {person1: true, person2: true, ...}    
-        this.swarmers = {}
     }
     
     this._initNotifications() // And do it initially
@@ -65,26 +60,23 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         if (this.position < 0) {
             this.setPosition(0)
         }
-        this._updateNavigation()        
+        this._updateNavigation()
     }
     
     this.addLinkShare = function (share) {
-        this._pushNotification('linkShare', share)
-    }
-    
-    this.addSwarmNotice = function (swarm) {
-        this.lastSwarmer[swarm.postId]  = swarm.swarmerId
-        if (this.swarmPositions[swarm.postId] == undefined) {
-            dh.util.debug('no existing swarm for " + swarm.postId + ", creating new')       
-            this.swarmers[swarm.postId] = {}
-            this.swarmers[swarm.postId][swarm.swarmerId] = true         
-            this._pushNotification('swarm', swarm)
-            this.swarmPositions[swarm.postId] = (this.notifications.length - 1)
-        } else {
-            dh.util.debug("found existing swarm for " + swarm.postId + ", redrawing")
-            this.swarmers[swarm.postId][swarm.swarmerId] = true
-            this.setPosition(this.position) // redraws (should we set position to the swarm position?)
+        // If we already have a notification for the same post, replace it
+        for (var i = 0; i < this.notifications.length; i++) {
+            if (notifications[i].notificationType == 'linkShare' &&
+                notifications[i].data.postId == share.postId) {
+                this.notifications[i].data = share;
+                if (i == this.position)
+                    this._display_linkShare(share)
+                return;
+            }
         }
+        
+        // Otherwise, add a new notification page
+        this._pushNotification('linkShare', share)
     }
     
     this._clearPageTimeout = function() {
@@ -103,6 +95,26 @@ dh.notification.Display = function (serverUrl, appletUrl) {
                 }, 7 * 1000); // 7 seconds
         }
     }
+
+    this._setShowViewers = function(showViewers) {
+        showViewers = !!showViewers
+        if (this.showViewers != showViewers) {
+            this.showViewers = showViewers
+            
+            var viewersDiv = document.getElementById("dh-notification-viewers")
+            var space
+            
+            if (showViewers) {
+                viewersDiv.style.display = "block"
+                space = 40
+            } else {
+                viewersDiv.style.display = "none"
+                space = 0
+            }
+            
+            window.external.SetViewerSpace(space)
+        }
+    }
     
     this.setPosition = function(pos) {
         if (pos < 0) {
@@ -119,8 +131,6 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         dh.util.debug("notification type " + notification.notificationType)
         if (notification.notificationType == 'linkShare')
             this._display_linkShare(notification.data)
-        else if (notification.notificationType == 'swarm')
-            this._display_swarm(notification.data)
         else
             dh.util.debug("unknown notfication type " + notification.notificationType)
         //var handler = this["_display_" + notification.notificationType]
@@ -278,39 +288,23 @@ dh.notification.Display = function (serverUrl, appletUrl) {
             dh.util.dom.appendSpanText(metaDiv, groupRecipients[0], "dh-notification-group-recipient")
             metaDiv.appendChild(document.createTextNode(" group"))
         }
-    }
-    
-    this._display_swarm = function (swarm) {
-        dh.util.debug("displaying swarm for " + swarm.postId)
         
-        var lastSwarmer = this.lastSwarmer[swarm.postId]
-        dh.util.debug("last swarmer is " + lastSwarmer)
-
-        var personUrl = this.serverUrl + "viewperson?personId=" + lastSwarmer
-        this._setPhotoUrl(this.serverUrl + "files/headshots/" + lastSwarmer,
-                          personUrl)
-                      
-        var name = this.getPersonName(lastSwarmer)
-        this._setPhotoLink(name, lastSwarmer)
-
-        var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
-        titleDiv.appendChild(document.createTextNode("Swarm for "));
-        titleDiv.appendChild(this._createSharedLinkLink(swarm.postTitle, swarm.postId, null))
-
-        var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
-        for (personId in this.swarmers[swarm.postId]) {
-            dh.util.dom.appendSpanText(bodyDiv, this.getPersonName(personId), "dh-notification-swarmer")
-            bodyDiv.appendChild(document.createTextNode(", "))
+        
+        var viewers = dh.core.adaptExternalArray(share["viewers"])
+        if (viewers.length > 0) {
+            var viewersDiv = dh.util.dom.getClearedElementById("dh-notification-viewers")
+            viewersDiv.appendChild(document.createTextNode("Viewed by: "))
+            dh.util.dom.joinSpannedText(viewersDiv, viewers, "dh-notification-viewer", ", ")
+            this._setShowViewers(true)
+        } else {
+            this._setShowViewers(false)
         }
-
-        var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
-        metaDiv.appendChild(document.createTextNode("And 2 trillion other people")) 
-    }   
+    }    
 }
 
 // Global namespace since it's painful to do anything else from C++
 dhAddLinkShare = function (senderName, senderId, postId, linkTitle, 
-                           linkURL, linkDescription, personRecipients, groupRecipients) {
+                           linkURL, linkDescription, personRecipients, groupRecipients, viewers) {
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
     dh.display.setVisible(true)
     dh.display.addPersonName(senderId, senderName)                            
@@ -320,16 +314,8 @@ dhAddLinkShare = function (senderName, senderId, postId, linkTitle,
                             linkURL: linkURL,
                             linkDescription: linkDescription,
                             personRecipients: personRecipients,
-                            groupRecipients: groupRecipients})
-}
-
-dhAddSwarmNotice = function (postId, swarmerId, postTitle, swarmerName) {
-    dh.display.setVisible(true)
-    dh.util.debug("in dhAddSwarmNotice, postId: " + postId)
-    dh.display.addPersonName(swarmerId, swarmerName)
-    dh.display.addSwarmNotice({postId: postId,
-                               swarmerId: swarmerId,
-                               postTitle: postTitle})
+                            groupRecipients: groupRecipients,
+                            viewers: viewers})
 }
 
 dhSetIdle = function(idle) {

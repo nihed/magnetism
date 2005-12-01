@@ -12,7 +12,6 @@
 
 class HippoUI;
 struct HippoLinkShare;
-struct HippoLinkSwarm;
 
 class HippoBubble :
     public IHippoBubble,
@@ -31,7 +30,6 @@ public:
     void setUI(HippoUI *ui);
 
     void setLinkNotification(HippoLinkShare &share);
-    void setSwarmNotification(HippoLinkSwarm &swarm);
     void show(void);
     void setIdle(bool idle);
 
@@ -110,6 +108,7 @@ public:
     STDMETHODIMP OpenExternalURL(BSTR url);
     STDMETHODIMP GetXmlHttp(IXMLHttpRequest **request);
     STDMETHODIMP Close();
+    STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
 
     // IDocHostUIHandler
     STDMETHODIMP EnableModeless(BOOL enable);
@@ -142,12 +141,14 @@ private:
     HippoBSTR currentSenderUrl_;
 
     bool idle_;
+    DWORD viewerSpace_;
 
     bool embedIE(void);
     bool appendTransform(BSTR src, BSTR style, ...);
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
     bool create(void);
     bool createWindow(void);
+    void moveResizeWindow(void);
     bool registerClass();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;

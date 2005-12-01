@@ -94,9 +94,9 @@ HippoIM::notifyPostClickedU(const char *postGuid)
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     LmMessageNode *node = lm_message_get_node(message);
-    lm_message_node_set_attribute(node, "xmlns", "http://dumbhippo.com/protocol/servermethod");
 
     LmMessageNode *method = lm_message_node_add_child (node, "method", NULL);
+    lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/servermethod");
     lm_message_node_set_attribute(method, "name", "postClicked");
     LmMessageNode *guidArg = lm_message_node_add_child (method, "arg", NULL);
     lm_message_node_set_value (guidArg, postGuid);
@@ -286,9 +286,9 @@ HippoIM::getClientInfo()
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     LmMessageNode *node = lm_message_get_node(message);
-    lm_message_node_set_attribute(node, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
-
+    
     LmMessageNode *child = lm_message_node_add_child (node, "clientInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
     lm_message_node_set_attribute(child, "platform", "windows");
     LmMessageHandler *handler = lm_message_handler_new(onClientInfoReply, this, NULL);
 
@@ -552,9 +552,12 @@ HippoIM::onMessage (LmMessageHandler *handler,
                 linkshare.senderId.setUTF8(node->value);
 
                 node = lm_message_node_get_child (child, "description");
-                if (!(node && node->value))
+                if (!(node))
                     continue;
-                linkshare.description.setUTF8(node->value);
+                if (node->value)
+                    linkshare.description.setUTF8(node->value);
+                else
+                    linkshare.description = L"";
 
                 node = lm_message_node_get_child (child, "recipients");
                 if (!node)
@@ -581,38 +584,20 @@ HippoIM::onMessage (LmMessageHandler *handler,
                     str.setUTF8(subchild->value);
                     linkshare.groupRecipients.append(str);
                 }
+                node = lm_message_node_get_child (child, "viewers");
+                if (node) {
+                    for (subchild = node->children; subchild; subchild = subchild->next) {
+                        if (strcmp (subchild->name, "viewer") != 0)
+                            continue;
+                        if (!subchild->value)
+                            continue;
+                        HippoBSTR str;
+                        str.setUTF8(subchild->value);
+                        linkshare.viewers.append(str);
+                    }
+                }
 
                 im->ui_->onLinkMessage(linkshare);
-            }
-            else if (strcmp (child->name, "linkClicked") == 0)
-            {
-                HippoLinkSwarm linkswarm;
-
-                im->ui_->debugLogU("Got link clicked");
-
-                const char *postId = lm_message_node_get_attribute(child, "id");
-                if (!postId) {
-                    im->ui_->debugLogU("Malformed swarm message, no post ID");
-                    continue;
-                }
-                linkswarm.postId.setUTF8(postId);
-
-                const char *swarmerId = lm_message_node_get_attribute(child, "swarmerId");
-                if (!swarmerId) {
-                    im->ui_->debugLogU("Malformed swarm message, no swarmer ID");
-                    continue;
-                }
-                linkswarm.swarmerId.setUTF8(swarmerId);
-
-                LmMessageNode *clickerName = lm_message_node_get_child(child, "swarmerName");
-                if (clickerName && clickerName->value)
-                    linkswarm.swarmerName.setUTF8(clickerName->value);
-
-                LmMessageNode *titleNode = lm_message_node_get_child(child, "postTitle");
-                if (titleNode && titleNode->value)
-                    linkswarm.postTitle.setUTF8(titleNode->value);
-
-                im->ui_->onLinkClicked(linkswarm);
             } else {
                 im->ui_->debugLogU("Unknown message \"%s\", delegating to next handler", child->name ? child->name : "(null)");
             }

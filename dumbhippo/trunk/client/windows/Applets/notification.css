@@ -107,6 +107,15 @@ img.dh-notification-navigation
     border-style: none;
 }
 
+div.dh-notification-viewers
+{
+    background-color: #aabbcc;
+    height: 40px;
+    width: 100%;    
+    vertical-align: top;
+    font-size: x-small;
+}
+
 img.dh-close-button 
 {
     position: absolute;

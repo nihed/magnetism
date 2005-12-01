@@ -32,14 +32,7 @@ struct HippoLinkShare
     HippoBSTR description;
     HippoArray<HippoBSTR> personRecipients;
     HippoArray<HippoBSTR> groupRecipients;
-};
-
-struct HippoLinkSwarm
-{
-    HippoBSTR postId;
-    HippoBSTR postTitle;
-    HippoBSTR swarmerId;
-    HippoBSTR swarmerName;
+    HippoArray<HippoBSTR> viewers;
 };
 
 class HippoUI 
@@ -91,7 +84,6 @@ public:
                        const char *downloadUrl);
     void onUpgradeReady();
     void onLinkMessage(HippoLinkShare &link);
-    void onLinkClicked(HippoLinkSwarm &swarm);
 
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);

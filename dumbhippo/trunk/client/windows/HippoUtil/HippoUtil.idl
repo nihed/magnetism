@@ -48,5 +48,7 @@ library HippoUtil {
         HRESULT DebugLog([in] BSTR msg);
         [id(124), helpstring("Get xmlhttp")]
         HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
+        [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
+        HRESULT SetViewerSpace([in] DWORD viewerSpace);
     }
 }

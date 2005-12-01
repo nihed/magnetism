@@ -647,12 +647,6 @@ HippoUI::onLinkMessage(HippoLinkShare &linkshare)
     bubble_.setLinkNotification(linkshare);
 }
 
-void 
-HippoUI::onLinkClicked(HippoLinkSwarm &linkswarm)
-{
-    bubble_.setSwarmNotification(linkswarm);
-}
-
 // Tries to register as the singleton HippoUI, returns true on success
 bool 
 HippoUI::registerActive()

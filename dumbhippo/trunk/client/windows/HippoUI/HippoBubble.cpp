@@ -18,6 +18,8 @@
 #include "Guid.h"
 
 static const TCHAR *CLASS_NAME = TEXT("HippoBubbleClass");
+static const int BASE_WIDTH = 400;
+static const int BASE_HEIGHT = 150;
 
 using namespace MSXML2;
 
@@ -29,6 +31,8 @@ HippoBubble::HippoBubble(void)
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
     idle_ = FALSE;
+    viewerSpace_ = 0;
+    ie_ = NULL;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -56,7 +60,7 @@ bool
 HippoBubble::createWindow(void)
 {
     window_ = CreateWindowEx(WS_EX_TOPMOST, CLASS_NAME, L"Hippo Notification", WS_POPUP,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
+                             CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
                              NULL, NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
@@ -64,18 +68,38 @@ HippoBubble::createWindow(void)
     }
     EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
-    RECT rect;
-    GetClientRect(window_,&rect);
-
-    RECT desktopRect;
-    HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
-
-    MoveWindow(window_, (desktopRect.right - rect.right), (desktopRect.bottom - rect.bottom), 
-               rect.right, rect.bottom, TRUE);
+    moveResizeWindow();
 
     hippoSetWindowData<HippoBubble>(window_, this);
 
     return true;
+}
+
+void
+HippoBubble::moveResizeWindow() 
+{
+    int width = BASE_WIDTH;
+    int height = BASE_HEIGHT + viewerSpace_;
+
+    RECT desktopRect;
+    HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
+
+    MoveWindow(window_, 
+               (desktopRect.right - width), (desktopRect.bottom - height), 
+               width, height, 
+               TRUE);
+
+    if (ie_) {
+        RECT rect;
+
+        rect.top = 0;
+        rect.left = 0;
+        rect.bottom = height;
+        rect.right = width;
+
+        HippoQIPtr<IOleInPlaceObject> inPlace = ie_;
+        inPlace->SetObjectRects(&rect, &rect);
+    }
 }
 
 bool
@@ -272,32 +296,19 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     VARIANT groupRecipientsArg;
     groupRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
     groupRecipientsArg.parray = groupRecipients;
+    SAFEARRAY *viewers = hippoStrArrayToSafeArray(share.viewers);
+    VARIANT viewersArg;
+    viewersArg.vt = VT_ARRAY | VT_VARIANT;
+    viewersArg.parray = viewers;
 
     VARIANT result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
-    invokeJavascript(L"dhAddLinkShare", &result, 8, &senderName,
+    invokeJavascript(L"dhAddLinkShare", &result, 9, &senderName,
                      &senderId, &postId, &linkTitle, &linkURL, &linkDescription,
-                     &personRecipientsArg, &groupRecipientsArg);
+                     &personRecipientsArg, &groupRecipientsArg, &viewersArg);
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);
 
-    show();
-}
-
-void 
-HippoBubble::setSwarmNotification(HippoLinkSwarm &swarm)
-{
-    if (!create())
-        return;
-
-    variant_t postId(swarm.postId);
-    variant_t swarmerId(swarm.swarmerId);
-    variant_t postTitle(swarm.postTitle);
-    variant_t swarmerName(swarm.swarmerName);
-
-    VARIANT result;
-    ui_->debugLogW(L"Invoking dhAddPostSwarm");
-    invokeJavascript(L"dhAddSwarmNotice", &result, 4, &postId, &swarmerId, &postTitle, &swarmerName);
     show();
 }
 
@@ -431,6 +442,18 @@ HippoBubble::Close()
 {
     AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
     ui_->debugLogU("closing link notification");
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoBubble::SetViewerSpace(DWORD viewerSpace)
+{
+    if (viewerSpace != viewerSpace_) {
+        viewerSpace_ = viewerSpace;
+        if (window_)
+            moveResizeWindow();
+    }
+
     return S_OK;
 }
 
