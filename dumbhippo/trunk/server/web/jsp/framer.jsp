@@ -16,6 +16,7 @@
 </c:url>
 
 <head>
+	<title><c:out value="${title}"/></title>
 	<dht:stylesheets href="frames.css" iehref="frames-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">

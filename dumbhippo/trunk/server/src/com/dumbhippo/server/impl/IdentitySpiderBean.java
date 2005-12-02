@@ -228,6 +228,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	private transient User theMan;
 	
+	private static final String theManNickname = "The Man";
 	private static final String theManGuid = "8716baa63bef600797fbc59e06010000a35ad1637e6a7f87";
 	private static final String theManEmail = "theman@dumbhippo.com";
 
@@ -266,7 +267,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		} catch (GuidNotFoundException e) {
 			logger.debug("Creating theman@dumbhippo.com");
 			EmailResource resource = getEmail(theManEmail);
-			result = new User(guid);		
+			result = new User(guid);
+			result.setNickname(theManNickname);
 			em.persist(result);
 			addVerifiedOwnershipClaim(result, resource);
 		}
