@@ -215,8 +215,6 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         a.setAttribute("className", "dh-notification-photo")
         var img = document.createElement("div")
         img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale')"
-        img.style.width = "48px"
-        img.style.height = "48px"
         img.setAttribute("className", "dh-notification-photo")
         a.appendChild(img)  
         imgDiv.appendChild(a)   

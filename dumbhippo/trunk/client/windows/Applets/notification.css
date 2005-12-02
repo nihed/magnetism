@@ -15,7 +15,7 @@ td.dh-notification-photo
     text-align: center;
 }
 
-img.dh-notification-photo,a.dh-notification-photo
+div.dh-notification-photo,a.dh-notification-photo
 {
     text-align: center;
     /* Right now the Java code scales headshots to a max of 48px in each
