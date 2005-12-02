@@ -12,7 +12,7 @@
 
 <head>
 	<title>Your Account Setup</title>
-	<dht:stylesheets href="account.css" />
+	<dht:stylesheets href="account.css" iehref="account-iefixes.css" />
 	<dht:scriptIncludes/>
 	<script type="text/javascript">dojo.require("dh.password");</script>
 </head>
@@ -35,6 +35,16 @@
 				<div class="dhBackgroundBox">
 					<b>Help your friends find you</b>
 					
+				
+					<table class="dh-edit-table">
+					<tr>
+					<td class="dh-edit-table-label">
+						Your name is:
+					</td>
+					<td class="dh-edit-table-control">
+						<dht:userNameEdit value="${account.person.name}"/>
+					</td>
+					<td rowSpan="6">
 					<div class="dh-right-box dhItemBox">
 						<p class="dh-right-box-section">Email Addresses</p>
 						<c:forEach items="${account.person.allEmails}" var="email">
@@ -45,34 +55,29 @@
 							<p><c:out value="${aim.humanReadableString}"/></p>
 						</c:forEach>
 					</div>
-					
-					<table class="dh-edit-table">
-					<tr>
-					<td class="dh-edit-table-label">
-						Your name is:
-					</td>
-					<td class="dh-edit-table-control">
-						<dht:userNameEdit value="${account.person.name}"/>
 					</td>
 					</tr>
+
 					<tr>
 					<td colspan="2" class="dh-explanation">Click on the name to change it.
 					</td>
 					</tr>
+
 					<tr>
 					<td class="dh-edit-table-label">
 						<a href="${account.addAimLink}">
-						IM us your screen name
+						AIM us your screen name
 						</a>
 					</td>
 					<td>
 					</td>
 					</tr>
+
 					<tr>
-					<td colspan="2" class="dh-explanation">Will not be seen by 
-						strangers or used for spam.
+					<td colspan="2" class="dh-explanation">You can use it to login, we'll keep it private (just between us).
 					</td>
 					</tr>
+
 					<tr>
 					<td class="dh-edit-table-label">
 						Add an email address:
@@ -82,6 +87,7 @@
 						<input type="button" value="Send Verification"/>
 					</td>
 					</tr>
+
 					<tr>
 					<td colspan="2" class="dh-explanation">Click on the link you get in the mail.
 					</td>
