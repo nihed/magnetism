@@ -25,18 +25,22 @@ public class SendInviteServlet extends AbstractServlet {
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
 		
-		String fullName = request.getParameter("fullName");
-		if (fullName != null)
-			fullName = fullName.trim();
+		String message = request.getParameter("message");
+		if (message != null)
+			message = message.trim() + "\n";
 
+		String subject = request.getParameter("subject");
+		if (subject != null)
+			subject = subject.trim();
+		
 		String email = request.getParameter("email");
 		if (email != null)
 			email = email.trim();
 		
 		// the error page redirect kind of sucks, but if we do inline javascript 
 		// validation it would only happen in weird manual-url-typing cases
-		if (fullName == null || fullName.equals("") || email == null || email.equals("")) 
-			throw new HumanVisibleException("Missing either a name or email address");
+		if (email == null || email.equals("") || !email.contains("@")) 
+			throw new HumanVisibleException("Missing or invalid email address");
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
@@ -45,9 +49,8 @@ public class SendInviteServlet extends AbstractServlet {
 			throw new HumanVisibleException("You can't invite anyone else for now");
 		}
 		
-		String note = invitationSystem.sendEmailInvitation(user, email);
+		String note = invitationSystem.sendEmailInvitation(user, email, subject, message);
 		
-		request.setAttribute("fullName", fullName);
 		request.setAttribute("email", email);
 		request.setAttribute("remaining", invitationSystem.getInvitations(user));
 		request.setAttribute("note", note);

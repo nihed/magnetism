@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -21,6 +20,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
@@ -136,7 +136,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv.getAuthURL(configuration.getProperty(HippoProperty.BASEURL));
 	}
 	
-	public String sendInvitation(User inviter, Resource invitee) {
+	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {
 		
 		// be sure the invitee is our contact (even if we 
 		// end up not sending the invite)
@@ -190,7 +190,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		if (needSendNotification) {
 			if (invitee instanceof EmailResource) {
-				sendEmailNotification(iv, inviter);
+				sendEmailNotification(iv, inviter, subject, message);
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -201,12 +201,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ret;
 	}
 
-	public String sendEmailInvitation(User inviter, String email) {
+	public String sendEmailInvitation(User inviter, String email, String subject, String message) {
 		Resource emailRes = spider.getEmail(email);
-		return sendInvitation(inviter, emailRes);
-	}	
+		return sendInvitation(inviter, emailRes, subject, message);
+	}
 	
-	private void sendEmailNotification(InvitationToken invite, User inviter) {
+	private void sendEmailNotification(InvitationToken invite, User inviter, String subject, String message) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
 		if (!noMail.getMailEnabled(invitee)) {
@@ -221,21 +221,59 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);
 		String inviterName = viewedInviter.getName();
 		
-		URL url;
+		String baseurl;
+		URL baseurlObject;
 		try {
-			String baseurl = configuration.getProperty(HippoProperty.BASEURL);
-			url = new URL(baseurl);
+			baseurl = configuration.getProperty(HippoProperty.BASEURL);
+			baseurlObject = new URL(baseurl);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 		
-		try {
-			msg.setSubject("Invitation from " + inviterName + " to join Dumb Hippo");
-			msg.setText("Moo!\n\nYou've been invited by " + inviterName + " to join Dumb Hippo!\n\n"
-					+ "Follow this link to see what the mooing's about:\n" + invite.getAuthURL(url));
-		} catch (MessagingException e) {
-			throw new RuntimeException(e);
+		if (subject == null || subject.trim().length() == 0)
+			subject = "Invitation from " + inviterName + " to join Dumb Hippo";
+		
+		StringBuilder messageText = new StringBuilder();
+		XmlBuilder messageHtml = new XmlBuilder();
+		
+		messageHtml.appendHtmlHead("");
+		messageHtml.append("<body>\n");
+		
+		messageHtml.append("<div style=\"padding: 1em;\">\n");
+		messageHtml.appendTextNode("a", "Click here to start using Dumb Hippo", "href", invite.getAuthURL(baseurlObject));
+		messageHtml.append("</div>\n");
+
+		messageText.append("\nFollow this link to start using Dumb Hippo:\n      ");
+		messageText.append(invite.getAuthURL(baseurlObject));
+		messageText.append("\n\n");
+		
+		if (message != null && message.trim().length() > 0) {
+			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
+			messageHtml.appendTextAsHtml(message);
+			messageHtml.append("</div>\n");
+			
+			messageText.append(message);
+			messageText.append("\n\n");
 		}
+		
+		messageHtml.append("<div style=\"padding: 1em;\">\n");
+		messageHtml.append("This was sent to you by <a href=\"");
+		messageHtml.appendEscaped(baseurl + "/viewperson?personId=" + inviter.getId());
+		messageHtml.append("\">");
+		messageHtml.appendEscaped(inviterName);
+		messageHtml.append("</a> using ");
+		messageHtml.appendTextNode("a", "Dumb Hippo", "href", baseurl);
+		messageHtml.append("</div>\n");
+		
+		messageText.append("This was sent to you by ");
+		messageText.append(inviterName);
+		messageText.append(" using Dumb Hippo at ");
+		messageText.append(baseurl);
+		messageText.append("\n");
+		
+		messageHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
 
 		mailer.sendMessage(msg);
 	}

@@ -33,9 +33,11 @@ public interface InvitationSystem {
 	 * 
 	 * @param inviter
 	 * @param email
+	 * @param message 
+	 * @param subject 
 	 * @returns note for the user or null
 	 */
-	public String sendEmailInvitation(User inviter, String email);
+	public String sendEmailInvitation(User inviter, String email, String subject, String message);
 	
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
@@ -44,9 +46,11 @@ public interface InvitationSystem {
 	 * 
 	 * @param inviter the person doing the inviting
 	 * @param invitee the person being invited
+	 * @param subject subject for the email, text format
+	 * @param message message to send (from the inviter to invitee), text format
 	 * @returns note for the user or null
 	 */
-	public String sendInvitation(User inviter, Resource invitee);
+	public String sendInvitation(User inviter, Resource invitee, String subject, String message);
 	
 	
 	/**

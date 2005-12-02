@@ -17,8 +17,7 @@
 
 		<h3>
 			Congratulations, the invitation to 
-		    <c:out value="${fullName}"/>
-		    (<c:out value="${email}"/>) was sent.
+		    <c:out value="${email}"/> was sent.
 		</h3>
 
 		<c:if test="${!empty note}">

@@ -1,6 +1,9 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 
 /**
  * InvitePage corresponds to invite.jsp
@@ -10,30 +13,32 @@ import com.dumbhippo.server.InvitationSystem;
  */
 
 public class InvitePage {
-	private String fullName;
-
+	// Information about person to invite
 	private String email;
 	
 	@Signin
 	private SigninBean signin;
 
 	private InvitationSystem invitationSystem;
+	private IdentitySpider identitySpider;
 	
+	// information about person doing the inviting
 	private int invitations;
+	private PersonView person;
 
 	public InvitePage() {
 		invitations = -1;
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	}
 	
-	public String getFullName() {
-		return fullName;
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.PRIMARY_EMAIL);
+		
+		return person;
 	}
-
-	public void setFullName(String newValue) {
-		fullName = newValue;
-	}
-
+	
 	public String getEmail() {
 		return email;
 	}

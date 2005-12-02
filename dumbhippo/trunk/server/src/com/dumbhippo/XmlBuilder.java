@@ -58,7 +58,7 @@ public class XmlBuilder {
 			else if (c == '>')
 				append("&gt;");
 			else if (c == '\'')
-				append("&apos;");
+				append("&#39;"); // &apos; is valid XML but not valid HTML
 			else if (c == '"')
 				append("&quot;");
 			else

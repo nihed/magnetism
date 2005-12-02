@@ -1,0 +1,13 @@
+@CHARSET "UTF-8";
+
+@import "sitewide.css";
+
+.dh-invite-mail-header {
+	padding:				1em;
+	border:					1px solid #404040;
+}
+
+.dh-invite-mail-body {
+	padding:				1em;
+	border:					1px solid #404040;
+}

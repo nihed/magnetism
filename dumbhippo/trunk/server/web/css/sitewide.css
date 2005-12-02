@@ -230,8 +230,9 @@ span.first-letter {
 	color:					steelblue;
 	background-color:		inherit;
 }
-a, div.dhUrl *, dhUrl {
+a, div.dhUrl *, dhUrl, .dh-url {
 	color:					blue;
+	text-decoration:		underline;
 }
 a:hover {
 	
