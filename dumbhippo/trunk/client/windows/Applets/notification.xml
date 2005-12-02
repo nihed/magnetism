@@ -22,30 +22,20 @@
                             <tbody>
                             <tr class="dh-notification-title"><td><div id="dh-notification-title" class="dh-notification-title"></div></td></tr>
                             <tr class="dh-notification-body"><td><div id="dh-notification-body" class="dh-notification-body"></div></td></tr>
-                            <tr class="dh-notification-meta"><td>                       
-                            <table class="dh-notification-meta">
-                                <tbody>
-                                    <tr class="dh-notification-meta">
-                                        <td>
-                                            <div id="dh-notification-navigation" class="dh-notification-navigation">
-                                                <div id="dh-notification-navigation-text" class="dh-notification-navigation-text"></div>
-                                                <div id="dh-notification-navigation-buttons"></div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div id="dh-notification-meta" class="dh-notification-meta"></div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            </td></tr>
+                            <tr class="dh-notification-viewers"><td><div id="dh-notification-viewers" class="dh-notification-viewers"></div></td></tr>
                             </tbody>
-                            </table>                                
+                            </table>
                         </td>
                     </tr>
-                    <tr class="dh-notification-viewers">
-                        <td colspan="2">
-                            <div id="dh-notification-viewers" class="dh-notification-viewers"></div>
+                    <tr>
+                         <td class="dh-notification-navigation">
+                            <div id="dh-notification-navigation" class="dh-notification-navigation">
+                                <div id="dh-notification-navigation-text" class="dh-notification-navigation-text"></div>
+                                <div id="dh-notification-navigation-buttons"></div>
+                            </div>
+                        </td>
+                        <td class="dh-notification-meta">
+                            <div id="dh-notification-meta" class="dh-notification-meta"></div>
                         </td>
                     </tr>
                 </tbody>

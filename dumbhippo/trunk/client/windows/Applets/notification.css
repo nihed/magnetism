@@ -68,12 +68,31 @@ span.dh-notification-title-title
     vertical-align: top;
 }
 
-div.dh-notification-meta 
+td.dh-notification-navigation
 {
-    margin-left: 2em;
+    text-align: center;
 }
 
-tr.dh-notification-meta
+div.dh-notification-navigation
+{
+}
+
+div.dh-notification-navigation-text
+{
+    color: Gray;
+}
+
+img.dh-notification-navigation
+{
+    text-align: center;
+    border-style: none;
+}
+
+div.dh-notification-meta 
+{
+}
+
+td.dh-notification-meta
 {
     height: 2em;
     vertical-align: bottom;
@@ -92,27 +111,12 @@ span.dh-notification-group-recipient
     font-size: larger;
 }
 
-div.dh-notification-navigation
-{
-}
-
-div.dh-notification-navigation-text
-{
-    color: Gray;
-}
-
-img.dh-notification-navigation
-{
-    text-align: center;
-    border-style: none;
-}
-
 div.dh-notification-viewers
 {
-    background-color: #aabbcc;
+    background-color: #88ff66;
     height: 40px;
     width: 100%;    
-    vertical-align: top;
+    vertical-align: bottom;
     font-size: x-small;
 }
 
