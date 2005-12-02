@@ -17,22 +17,22 @@
 	<classpathentry kind="lib" path="lib/dom4j-1.6.jar"/>
 	<classpathentry sourcepath="/smack/source" kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
-	<classpathentry sourcepath="/home/hp/Desktop/Downloads/jboss-4.0.3RC2-src/ejb3/src/main" kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
 	<classpathentry kind="lib" path="lib/jstl.jar"/>
 	<classpathentry kind="lib" path="lib/standard.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/client/activation.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/client/jbossall-client.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
 	<classpathentry kind="lib" path="lib/jboss-remoting.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-httpclient-2.0.2.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/client/log4j.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/client/mail.jar"/>
-	<classpathentry kind="lib" path="/opt/jboss/server/default/lib/javax.servlet.jsp.jar"/>
 	<classpathentry kind="lib" path="lib/commons-fileupload-1.0.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/mail.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/log4j.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/activation.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/javax.servlet.jsp.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/jbossall-client.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
