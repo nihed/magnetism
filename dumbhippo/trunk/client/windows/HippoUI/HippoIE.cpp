@@ -21,8 +21,6 @@ HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *extern
     docSrc_ = src;
     callback_ = cb;
     external_ = external;
-
-    ie_ = NULL;
 }
 
 HippoIE::~HippoIE(void)
@@ -45,10 +43,10 @@ HippoIE::invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, va
     HippoBSTR funcNameStr(funcName);
     VARIANT *arg;
     int argc;
-    IDispatch *docDispatch;
+    HippoPtr<IDispatch> docDispatch;
     browser_->get_Document(&docDispatch);
     HippoQIPtr<IHTMLDocument2> doc(docDispatch);
-    IDispatch *script;
+    HippoPtr<IDispatch> script;
     doc->get_Script(&script);
 
     DISPID id = NULL;

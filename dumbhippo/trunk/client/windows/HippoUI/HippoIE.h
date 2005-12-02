@@ -117,7 +117,7 @@ public:
 private:
     HippoIECallback *callback_;
     HWND window_;
-    IOleObject* ie_;
+    HippoPtr<IOleObject> ie_;
     IDispatch *external_;
     HippoPtr<IWebBrowser2> browser_;
 

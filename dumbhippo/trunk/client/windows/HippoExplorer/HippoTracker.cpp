@@ -228,6 +228,10 @@ HippoTracker::registerBrowser()
         HRESULT hr = ui_->RegisterBrowser(site_, &registerCookie_); // may reenter
         if (FAILED (hr))
             registered_ = false;
+        else {
+            lastUrl_ = NULL;
+            lastName_ = NULL;
+        }
     }
 
 
@@ -236,6 +240,10 @@ HippoTracker::registerBrowser()
         HRESULT hr = debugUi_->RegisterBrowser(site_, &debugRegisterCookie_); // may reenter
         if (FAILED (hr))
             debugRegistered_ = false;
+        else {
+            lastUrl_ = NULL;
+            lastName_ = NULL;
+        }
     }
 }
 
