@@ -16,7 +16,7 @@ public class XmlBuilderTest extends TestCase {
 		builder.getStringBuilder().setLength(0);
 		assertEquals(builder.toString(), "");
 		builder.appendEscaped("\"'&<>");
-		assertEquals(builder.toString(), "&quot;&apos;&amp;&lt;&gt;");
+		assertEquals(builder.toString(), "&quot;&#39;&amp;&lt;&gt;");
 	}
 
 	public void testAppendElement() {

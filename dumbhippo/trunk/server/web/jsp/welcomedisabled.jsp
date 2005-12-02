@@ -26,7 +26,7 @@
 		We've disabled your account and will not send 
 		further invitation emails or shared items to <c:out value="${welcomedisabled.person.email}"/>.
 		If you do receive more unwanted items at this address, please let us know 
-		at <c:out value="${welcomedisabled.feedbackEmail}"/> and we will address the 
+		at <a href="mailto:${welcomedisabled.feedbackEmail}"><c:out value="${welcomedisabled.feedbackEmail}"/></a> and we will address the 
 		issue as soon as we possibly can.
 		</p>
 	

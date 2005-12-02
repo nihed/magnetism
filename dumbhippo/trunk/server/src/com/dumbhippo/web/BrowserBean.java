@@ -124,6 +124,10 @@ public class BrowserBean implements Serializable {
 		return os == OS.Windows;
 	}
 
+	public boolean isSupported() {
+		return isIeAtLeast55() || isGeckoAtLeast10();
+	}
+	
 	@Override
 	public String toString() {
 		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + "}";

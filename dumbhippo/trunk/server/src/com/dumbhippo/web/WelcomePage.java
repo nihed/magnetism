@@ -27,12 +27,18 @@ public class WelcomePage {
 	@Signin
 	private SigninBean signin;
 	
+	@Browser
+	private BrowserBean browser;
+	
 	private Configuration configuration;
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private PersonView person;
 	private GroupSystem groupSystem;
 	private InvitationSystem invitationSystem;
+	
+	private ListBean<PostView> receivedPosts;
+	private ListBean<GroupView> groups;
 	
 	public WelcomePage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
@@ -46,6 +52,10 @@ public class WelcomePage {
 		return signin;
 	}
 
+	public BrowserBean getBrowser() {
+		return browser;
+	}
+	
 	public PersonView getPerson() {
 		if (person == null)
 			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser());
@@ -53,13 +63,17 @@ public class WelcomePage {
 		return person;
 	}
 	
-	public List<PostView> getReceivedPosts() {
+	public ListBean<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
-		return postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, 0);
+		if (receivedPosts == null)
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, 0));
+		return receivedPosts;
 	}
 	
-	public List<GroupView> getGroups() {
-		return GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser()));
+	public ListBean<GroupView> getGroups() {
+		if (groups == null)
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser())));
+		return groups;
 	}
 	
 	public String getDownloadUrlWindows() {
@@ -68,5 +82,9 @@ public class WelcomePage {
 	
 	public List<PersonView> getInviters() {
 		return PersonView.sortedList(invitationSystem.findInviters(signin.getUser()));
+	}
+	
+	public String getFeedbackEmail() {
+		return configuration.getProperty(HippoProperty.FEEDBACK_EMAIL);
 	}
 }
