@@ -47,7 +47,6 @@ public:
    STDMETHODIMP DisplayMessage (BSTR message);
    STDMETHODIMP DebugDump (IDispatch *element);
    STDMETHODIMP CloseWindow (void);
-   STDMETHODIMP GetUI(IDispatch **ui);
 
 private:
     void clearSite();
