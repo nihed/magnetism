@@ -2,12 +2,23 @@
 
 @import "sitewide.css";
 
-.dh-invite-mail-header {
+.dh-invite-mail-body, .dh-invite-mail-header {
 	padding:				1em;
 	border:					1px solid #404040;
+	width:					28em;
+}
+.dh-invite-mail-header {
+	border-bottom:				0;
 }
 
 .dh-invite-mail-body {
-	padding:				1em;
-	border:					1px solid #404040;
+
+}
+
+.dhText {
+	width:					25em;
+}
+
+.dhTextArea {
+	width:					25em;
 }
