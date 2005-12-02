@@ -38,7 +38,7 @@
 							</tr>
 							<tr>
 								<td>To:</td>
-								<td><input name="email" class="dhText" value="${invite.email}">
+								<td><input name="email" class="dhText" autocomplete="off" value="${invite.email}">
 								</td>
 							</tr>
 							<tr>
