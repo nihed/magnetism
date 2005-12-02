@@ -6,6 +6,7 @@
 extern "C" {
 #include <md5.h>
 }
+#include <gdiplus.h>
 
 #import <msxml3.dll>  named_guids
 #include <mshtml.h>
@@ -121,7 +122,7 @@ HippoFlickr::ensureStatusWindow()
         return;
     ui_->debugLogW(L"creating Flickr status window");
     window_ = CreateWindow(CLASS_NAME, L"Sharing Photos", WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU, 
-                           CW_USEDEFAULT, CW_USEDEFAULT, 400, 150, 
+                           CW_USEDEFAULT, CW_USEDEFAULT, 400, 400, 
                            NULL, NULL, instance_, NULL);
     hippoSetWindowData<HippoFlickr>(window_, this);
     HippoBSTR appletURL;
@@ -623,7 +624,10 @@ HippoFlickr::HippoFlickrUploadInvocation::~HippoFlickrUploadInvocation()
 {
     delete this->flickr_->activeUploadRequest_;
     this->flickr_->activeUploadRequest_ = NULL;
-    free(this->flickr_->activeUploadBuf_);
+    HGLOBAL hg = NULL;
+    GetHGlobalFromStream(this->flickr_->activeUploadStream_, &hg);
+    GlobalUnlock(hg); // locked for upload
+    this->flickr_->activeUploadStream_->Release();
 }
 
 void
@@ -633,7 +637,7 @@ HippoFlickr::HippoFlickrUploadInvocation::onError() {
 }
 
 bool
-HippoFlickr::readPhoto(WCHAR *filename, void **bufRet, DWORD *lenRet)
+HippoFlickr::readPhoto(WCHAR *filename, IStream **bufRet, DWORD *lenRet)
 {
     HANDLE fd = CreateFile(filename, FILE_READ_DATA, 0, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if (fd == INVALID_HANDLE_VALUE) {
@@ -646,28 +650,50 @@ HippoFlickr::readPhoto(WCHAR *filename, void **bufRet, DWORD *lenRet)
         CloseHandle(fd);
         return FALSE;
     }
-    void *buf = malloc(size);
+
+    CreateStreamOnHGlobal(NULL, TRUE, bufRet);
+    IStream *retStream = *bufRet;
+    char buf[4096];
     DWORD totalBytesRead = 0;
     DWORD bytesRead = 0;
     BOOL ret;
-    while (totalBytesRead < size && (ret = ReadFile(fd, ((char*)buf) + totalBytesRead, size - totalBytesRead, &bytesRead, NULL))) {
+    while (totalBytesRead < size && (ret = ReadFile(fd, buf, sizeof(buf), &bytesRead, NULL))) {
         if (!ret) {
             ui_->logLastError(L"failed to read from photo");
-            free(buf);
+            retStream->Release();
             CloseHandle(fd);
             return FALSE;
         }
         totalBytesRead += bytesRead;
         if (bytesRead == 0)
             break;
+        retStream->Write(buf, bytesRead, NULL);
     }
     if (totalBytesRead != size) {
         ui_->debugLogW(L"short read on photo");
     }
     CloseHandle(fd);
-    *bufRet = buf;
     *lenRet = totalBytesRead;
     return TRUE;
+}
+
+static void
+findImageEncoder(WCHAR *fmt, CLSID &clsId)
+{
+    UINT nEncoders;
+    UINT nEncodersBytes;
+    Gdiplus::ImageCodecInfo *info;
+
+    Gdiplus::GetImageEncodersSize(&nEncoders, &nEncodersBytes);
+    info = (Gdiplus::ImageCodecInfo*) malloc(nEncodersBytes);
+    Gdiplus::GetImageEncoders(nEncoders, nEncodersBytes, info);
+    for (UINT i = 0; i < nEncoders; i++) {
+        if(wcscmp(info[i].MimeType, fmt) == 0){ 
+         clsId = info[i].Clsid;
+         break;
+      }
+    }
+    free(info);
 }
 
 void 
@@ -679,13 +705,42 @@ HippoFlickr::processUploads()
         WCHAR *mimeType;
         HRESULT res;
 
-        if (!readPhoto(activeUploadFilename_, &activeUploadBuf_, &activeUploadLen_))
+        if (!readPhoto(activeUploadFilename_, &activeUploadStream_, &activeUploadLen_))
             return;
-        res = FindMimeFromData(NULL, NULL, activeUploadBuf_, activeUploadLen_, NULL, 0, &mimeType, 0);
+        HGLOBAL hg = NULL;
+        void *buf;
+        GetHGlobalFromStream(activeUploadStream_, &hg);
+        buf = GlobalLock(hg);
+        res = FindMimeFromData(NULL, NULL, buf, activeUploadLen_, NULL, 0, &mimeType, 0);
         if (FAILED(res)) {
             ui_->logError(L"couldn't determine mime type for photo", res);
-            free(activeUploadBuf_);
+            GlobalUnlock(hg);
+            activeUploadStream_->Release();
             return;
+        }
+        GlobalUnlock(hg);
+
+        Gdiplus::Image img(activeUploadStream_);
+        Gdiplus::Status st = img.GetLastStatus();
+        if (st == Gdiplus::Ok) {
+            Gdiplus::Image* thumbnail = img.GetThumbnailImage(100, 100, NULL, NULL);
+            CLSID pngClsid;
+            findImageEncoder(L"image/png", pngClsid);
+            WCHAR tempPath[MAX_PATH];
+            WCHAR tempFilenameBuf[MAX_PATH];
+            GetTempPath(sizeof(tempPath)/sizeof(tempPath[0]), tempPath);
+            GetTempFileName(tempPath, L"dhThumbnail", 0, tempFilenameBuf);
+            HippoBSTR tempFilename(tempFilenameBuf);
+            tempFilename.Append(L".png");
+            thumbnail->Save(tempFilename.m_str, &pngClsid);
+            if ((st = thumbnail->GetLastStatus()) != Gdiplus::Ok) {
+                ui_->debugLogW(L"failed to save png thumbnail to %s", tempFilename.m_str);
+                activeUploadStream_->Release();
+                delete thumbnail;
+                return;
+            }
+            delete thumbnail;
+            activeUploadThumbnailFilename_ = tempFilename;
         }
         
         state_ = UPLOADING;
@@ -702,14 +757,17 @@ HippoFlickr::processUploads()
         paramValues.append(HippoBSTR(authToken_));
         computeAPISig(paramNames, paramValues, apiSig);
         
+        buf = GlobalLock(hg);
+    
         VARIANT vResult;
         variant_t vFilename(activeUploadFilename_);
-        invokeJavascript(L"dhFlickrPhotoUploadStarted", &vResult, 1, &vFilename);
+        variant_t vThumbnailFilename(activeUploadThumbnailFilename_);
+        invokeJavascript(L"dhFlickrPhotoUploadStarted", &vResult, 2, &vFilename, &vThumbnailFilename);
         activeUploadRequest_->doMultipartFormPost(uploadServiceUrl_, invocation, 
                                                   L"api_key", FALSE, apiKey_.m_str,
                                                   L"auth_token", FALSE, authToken_.m_str,
                                                   L"api_sig", FALSE, apiSig.m_str,
-                                                  L"photo", TRUE, activeUploadBuf_, activeUploadLen_, mimeType, activeUploadFilename_, NULL);                        
+                                                  L"photo", TRUE, buf, activeUploadLen_, mimeType, activeUploadFilename_, NULL);                        
     }
 }
 

@@ -202,7 +202,7 @@ HippoIE::create()
     // Append the transformed XML to the document
     hresult = doc->write(sfArray);
 
-    GlobalFree(hg);
+    iceCream->Release();
 }
 
 void

@@ -12,6 +12,7 @@
 #include <HippoRegistrar.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
+#include <gdiplus.h>
 #include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
@@ -1351,6 +1352,11 @@ WinMain(HINSTANCE hInstance,
 
     if (!initializeWinSock())
         return 0;
+
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+   
+    Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     ui = new HippoUI(debug != FALSE,
                      replaceExisting != FALSE, initialDebugShare != FALSE);

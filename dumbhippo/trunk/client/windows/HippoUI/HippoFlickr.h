@@ -121,7 +121,8 @@ private:
 
     HippoHTTP *activeUploadRequest_;
     HippoBSTR activeUploadFilename_;
-    void *activeUploadBuf_;
+    HippoBSTR activeUploadThumbnailFilename_;
+    IStream *activeUploadStream_;
     DWORD activeUploadLen_;
 
     HippoArray<HippoBSTR> completedUploads_;
@@ -148,7 +149,7 @@ private:
     void computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                        HippoBSTR &sigMd5);
     void appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues);
-    bool readPhoto(WCHAR *filename, void **bufRet, DWORD *lenRet);
+    bool readPhoto(WCHAR *filename, IStream **bufRet, DWORD *lenRet);
     void checkToken();
     void getFrob();
     void getToken();

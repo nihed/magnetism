@@ -1,9 +1,11 @@
 dhFlickrInit = function () {
 }
 
-dhFlickrPhotoUploadStarted = function (filename) {
+dhFlickrPhotoUploadStarted = function (filename, thumbnailFilename) {
     var dlg = document.getElementById('dh-dialog')
-    var dlg = document.getElementById('dh-dialog')
+    var img = document.createElement("img")
+    img.setAttribute("src", thumbnailFilename)
+    dlg.appendChild(img)
     dlg.appendChild(document.createTextNode("upload of "))
     dh.util.dom.appendSpanText(dlg, filename, "dh-filename")
     dlg.appendChild(document.createTextNode(" started"))
