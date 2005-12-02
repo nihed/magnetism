@@ -56,6 +56,10 @@
 				RelativePath=".\libglib-2.0-0.dll"
 				DeploymentContent="TRUE">
 			</File>
+			<File
+				RelativePath=".\libgthread-2.0-0.dll"
+				DeploymentContent="TRUE">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\COPYING.txt"

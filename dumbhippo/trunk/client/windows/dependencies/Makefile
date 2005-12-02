@@ -5,7 +5,7 @@ all:
 	copy asprintf.dll $(OUTDIR)
 	copy intl.dll $(OUTDIR)
 	copy libglib-2.0-0.dll $(OUTDIR)
-    copy libgthread-2.0-0.dll $(OUTDIR)
+	copy libgthread-2.0-0.dll $(OUTDIR)
 
 clean:
 	del $(OUTDIR)\charset.dll

@@ -66,8 +66,8 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     this.addLinkShare = function (share) {
         // If we already have a notification for the same post, replace it
         for (var i = 0; i < this.notifications.length; i++) {
-            if (notifications[i].notificationType == 'linkShare' &&
-                notifications[i].data.postId == share.postId) {
+            if (this.notifications[i].notificationType == 'linkShare' &&
+                this.notifications[i].data.postId == share.postId) {
                 this.notifications[i].data = share;
                 if (i == this.position)
                     this._display_linkShare(share)
