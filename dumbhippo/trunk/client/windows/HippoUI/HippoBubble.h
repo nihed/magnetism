@@ -70,6 +70,8 @@ private:
     HippoBSTR currentSenderUrl_;
 
     bool idle_;
+    bool haveMouse_;
+    bool effectiveIdle_;
     DWORD viewerSpace_;
 
     bool embedIE(void);
@@ -79,6 +81,9 @@ private:
     bool createWindow(void);
     void moveResizeWindow(void);
     bool registerClass();
+    void checkMouse();
+    void updateIdle();
+    void doSetIdle();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     HippoPtr<ITypeInfo> classTypeInfo_;

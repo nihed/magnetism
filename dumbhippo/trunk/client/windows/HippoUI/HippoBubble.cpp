@@ -20,6 +20,7 @@
 static const TCHAR *CLASS_NAME = TEXT("HippoBubbleClass");
 static const int BASE_WIDTH = 400;
 static const int BASE_HEIGHT = 150;
+static const UINT_PTR CHECK_MOUSE = 1;
 
 using namespace MSXML2;
 
@@ -31,6 +32,8 @@ HippoBubble::HippoBubble(void)
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
     idle_ = FALSE;
+    haveMouse_ = FALSE;
+    effectiveIdle_ = FALSE;
     viewerSpace_ = 0;
     ie_ = NULL;
 
@@ -138,7 +141,7 @@ HippoBubble::embedIE(void)
     ie_->invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
 
     // Set the initial value of the idle state
-    setIdle(idle_);
+    doSetIdle();
 
     return true;
 }
@@ -241,14 +244,25 @@ HippoBubble::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs,
 void 
 HippoBubble::setIdle(bool idle)
 {
-    // Note that we count on this not short-circuiting at window creation time,
-    // where we call it with idle_ as the parameter to pass the value to the
-    // Javascript
-
     idle_ = idle;
+    updateIdle();
+}
 
+void
+HippoBubble::updateIdle()
+{
+    bool effectiveIdle = idle_ || haveMouse_;
+    if (effectiveIdle_ != effectiveIdle) {
+        effectiveIdle_ = effectiveIdle;
+        doSetIdle();
+    }
+}
+
+void
+HippoBubble::doSetIdle()
+{
     if (window_) {
-        variant_t idleVariant(idle);
+        variant_t idleVariant(effectiveIdle_);
         variant_t result;
     
         ie_->invokeJavascript(L"dhSetIdle", &result, 1, &idleVariant);
@@ -293,8 +307,45 @@ HippoBubble::show(void)
         ui_->logLastError(L"Failed to invoke RedrawWindow");
     if (!BringWindowToTop(window_))
         ui_->logLastError(L"Failed to invoke BringWindowToTop");
+
+    SetTimer(window_, CHECK_MOUSE, 250 /* 0.25 second */, NULL);
+    checkMouse();
 }
 
+/* We want to detect when the mouse pointer is over the bubble; this
+ * is used to suspend the handling of the paging timeout; if
+ * the mouse is over the bubble we keep the bubble up indefinitely
+ * to let the user interact with it. As far as I know there is no
+ * way to detect enters and leaves that go directly to a subwindow
+ * (virtual enters/leaves in X terminology), so we check by simply
+ * installing a timeout when the bubble is up.
+ */
+void
+HippoBubble::checkMouse()
+{
+    POINT pt;
+    RECT rect;
+
+    GetCursorPos(&pt);
+    ScreenToClient(window_, &pt);
+    GetClientRect(window_, &rect);
+
+    if (pt.x > 0 && pt.x < rect.right &&
+        pt.y > 0 && pt.y < rect.bottom) 
+    {
+        if (!haveMouse_) {
+            haveMouse_ = TRUE;
+            updateIdle();
+        }
+    } 
+    else
+    {
+        if (haveMouse_) {
+            haveMouse_ = FALSE;
+            updateIdle();
+        }
+    }
+}
 
 bool
 HippoBubble::processMessage(UINT   message,
@@ -303,6 +354,13 @@ HippoBubble::processMessage(UINT   message,
 {
     switch (message) 
     {
+    case WM_TIMER:
+        if (wParam == CHECK_MOUSE) {
+            checkMouse();
+            return true;
+        } else {
+            return false;
+        }
     case WM_CLOSE:
         Close();
         return true;
@@ -353,6 +411,12 @@ HippoBubble::OpenExternalURL(BSTR url)
 STDMETHODIMP
 HippoBubble::Close()
 {
+    KillTimer(window_, CHECK_MOUSE);
+    if (haveMouse_) {
+        haveMouse_ = FALSE;
+        updateIdle();
+    }
+
     AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
     ui_->debugLogU("closing link notification");
     return S_OK;
