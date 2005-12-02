@@ -347,6 +347,8 @@ HippoUI::create(HINSTANCE instance)
 
     checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
 
+    registerStartup();
+
     if (this->initialShowDebugShare_) {
         HippoLinkShare linkshare;
 
@@ -358,6 +360,8 @@ HippoUI::create(HINSTANCE instance)
         linkshare.description.setUTF8("debug share");
         HippoBSTR recipient(L"debug recipient");
         linkshare.personRecipients.append(recipient);
+        HippoBSTR viewer(L"A Viewer");
+        linkshare.viewers.append(viewer);
         onLinkMessage(linkshare);
     }
 
@@ -544,20 +548,21 @@ HippoUI::displaySharedLink(BSTR postId)
     targetURL.Append(postId);
 
     launchBrowser(targetURL, webBrowser);
-    /* Something like the following should activate a explorer bar,
-     * (see Q255920) but doesn't seem to work.
-     */
+    
 #if 0
-    HippoBSTR barIDString(L"{A65AC703-C186-4e93-9022-AF8B92C726C8}");
+    HippoBSTR barIDString(L"{4D5C8C25-D075-11d0-B416-00C04FB90376}");
     VARIANT barID;
     barID.vt = VT_BSTR;
     barID.bstrVal = barIDString;
  
     VARIANT show;
-    barID.vt = VT_BOOL;
-    barID.boolVal = VARIANT_TRUE;
+    show.vt = VT_BOOL;
+    show.boolVal = VARIANT_TRUE;
 
-    hr = webBrowser->ShowBrowserBar(&barID, &show, 0);
+    VARIANT unused;
+    unused.vt = VT_EMPTY;
+
+    HRESULT hr = webBrowser->ShowBrowserBar(&barID, &show, &unused);
     if (!SUCCEEDED (hr)) 
         hippoDebug(L"Couldn't show browser bar: %X", hr);
 #endif
