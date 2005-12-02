@@ -1,7 +1,15 @@
 .editLabel {
-	font-size : small;
+	font-family:		Bitstream Vera Sans Mono, mono;
+	font-size : 		xx-small;
 	padding : 0 5px;
-	display : none;
+	display:		inline;
+	color:			#9b99ff !important;
+	background-color:	inherit;
+	text-decoration:	none;
+}
+a.editLabel:link {
+	color:			#9b99ff !important;
+	background-color : 	inherit;
 }
 
 .editableRegion {
@@ -12,6 +20,8 @@
 
 .editableRegion .editLabel {
 	display : inline;
+	color: 			blue !important;
+	background-color : 	#ffc !important;
 }
 
 .editableTextareaRegion .editLabel {
