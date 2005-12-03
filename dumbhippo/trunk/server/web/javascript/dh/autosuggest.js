@@ -224,27 +224,34 @@ dh.autosuggest.AutoSuggest = function(elem)
 		case ALT:
 			return;
 		default:
-
-			var update = false;
-			if (this.value != me.inputText && this.value.length > 0)
-			{
-				update = true;
-			}
-			me.inputText = this.value;
-			if (update) {
-				var eligible = me.getEligible();
-
-				if (eligible.length > 0) {
-					me.createDiv();
-					me.positionDiv();
-					me.showDiv();
-				} else {
-					me.hideDiv();
-				}
-			}
+			me.checkUpdate(false);
 		}
 	};
 
+	// see if we need to update the dropdown
+	this.checkUpdate = function(eligibleChanged) {
+		var update = false;
+		if (me.elem.value != me.inputText && me.elem.value.length > 0)
+		{
+			update = true;
+		}
+		if (eligibleChanged)
+			update = true;
+
+		me.inputText = me.elem.value;
+
+		if (update) {
+			var eligible = me.getEligible();
+
+			if (eligible.length > 0) {
+				me.createDiv();
+				me.positionDiv();
+				me.showDiv();
+			} else {
+				me.hideDiv();
+			}
+		}
+	};
 
 	/********************************************************
 	Insert the highlighted suggestion into the input box, and 

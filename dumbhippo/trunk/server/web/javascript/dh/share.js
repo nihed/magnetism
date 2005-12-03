@@ -69,6 +69,10 @@ dh.share.mergeObjectsDocument = function(doc) {
 		    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
 		}
 	}
+	
+	// update the autocompletions
+	dh.share.autoSuggest.checkUpdate(true);
+	
 	return retval;
 }
 
