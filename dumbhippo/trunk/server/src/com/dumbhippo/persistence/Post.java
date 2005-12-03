@@ -1,5 +1,7 @@
 package com.dumbhippo.persistence;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -39,6 +41,8 @@ public class Post extends GuidPersistable {
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
 	private Set<Resource> expandedRecipients;
+	transient private boolean cachedUrlUpdated;
+	transient private URL cachedUrl;
 	
 	private void initMissing() {
 		if (visibility == null)
@@ -276,6 +280,32 @@ public class Post extends GuidPersistable {
 		cachedPostInfo = postInfo;
 		if (cachedPostInfo != null)
 			cachedPostInfo.makeImmutable();
+	}
+	
+	@Transient
+	public URL getUrl() {
+		if (!cachedUrlUpdated) {
+			String link = null;
+			Set<Resource> resources = getResources();
+			if (resources != null) {
+				for (Resource r : resources) {
+					if (r instanceof LinkResource) {
+						link = ((LinkResource)r).getUrl();
+						break;
+					}
+				}
+			}
+			cachedUrl = null;
+			if (link != null) {
+				try {
+					cachedUrl = new URL(link);
+				} catch (MalformedURLException e) {
+					logger.debug("Invalid link in database: " + link);
+				}
+			}
+			cachedUrlUpdated = true;
+		}
+		return cachedUrl;
 	}
 	
 	public String toString() {

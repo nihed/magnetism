@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView"%>
 <%@ attribute name="hidePoster" required="false" type="java.lang.Boolean"%>
@@ -12,9 +13,9 @@
 	<c:if test="${!hidePoster}">
 		<td class="cool-person" rowSpan="3">
 			<a class="cool-person" href="">
-				<img class="cool-person" src="/files/headshots/${post.poster.viewPersonPageId}" />
+				<dht:headshot personId="${post.poster.viewPersonPageId}" />
 				<br/>
-				<dh:entity value="${post.poster}"/>
+				<dh:entity value="${post.poster}" photo="false"/>
 			</a>
 		</td>
 	</c:if>

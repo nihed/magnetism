@@ -33,7 +33,7 @@
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
-		<dht:png klass="cool-person" src="/files/headshots/${home.person.viewPersonPageId}" />
+		<dht:headshot personId="${home.person.viewPersonPageId}" />
 		<dht:userNameEdit value="${home.person.name}"/>
 	</div>
 	<div>
@@ -68,7 +68,7 @@
 				<div class="groups">
 					<strong>Groups You're In</strong>
 					<br/>
-					<dh:entityList value="${home.groups.list}"/>
+					<dh:entityList value="${home.groups.list}" photos="true"/>
 				</div>
 			</c:if>
 			<c:if test="${home.contacts.size > 0}">
@@ -79,7 +79,7 @@
 						You can <a href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
 						<br/>
 					</c:if>
-					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}"/>
+					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
 				</div>
 			</c:if>
 		</td>

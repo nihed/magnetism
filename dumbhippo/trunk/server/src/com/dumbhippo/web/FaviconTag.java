@@ -1,6 +1,7 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.servlet.jsp.JspWriter;
@@ -27,7 +28,12 @@ public class FaviconTag extends SimpleTagSupport {
 				+ "    <div style=\"background: url(%s); position: absolute; width: 16; height: 16; z-index: 2;\"></div>\n"
 				+ "</div>";
 		
-		URL url = new URL(link);
+		URL url;
+		try {
+			url = new URL(link);
+		} catch (MalformedURLException e) {
+			return;
+		}
 		URL images = new URL(url.getProtocol(), url.getHost(), url.getPort(), "/images/favicon.ico");
 		URL base = new URL(url.getProtocol(), url.getHost(), url.getPort(), "/favicon.ico");
 		String path = url.getPath();

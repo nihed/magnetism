@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 public class EntityListTag extends SimpleTagSupport {
 	private List<Object> entities;
 	private String skipRecipientId;
 	private boolean showInviteLinks;
+	private boolean photos;
 	
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
@@ -17,9 +19,16 @@ public class EntityListTag extends SimpleTagSupport {
 		if (entities == null)
 			return;
 		
+		String buildStamp;
+		try {
+			buildStamp = (String) getJspContext().getVariableResolver().resolveVariable("buildStamp");
+		} catch (ELException e) {
+			throw new RuntimeException(e);
+		}
+		
 		boolean first = true;
 		for (Object o : entities) {
-			String html = EntityTag.entityHTML(o, skipRecipientId, showInviteLinks);
+			String html = EntityTag.entityHTML(o, buildStamp, skipRecipientId, showInviteLinks, photos);
 			if (html == null)
 				continue;
 			
@@ -42,5 +51,9 @@ public class EntityListTag extends SimpleTagSupport {
 	
 	public void setShowInviteLinks(boolean showInviteLinks) {
 		this.showInviteLinks = showInviteLinks;
+	}
+	
+	public void setPhotos(boolean photos) {
+		this.photos = photos;
 	}
 }

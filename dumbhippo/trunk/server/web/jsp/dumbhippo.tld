@@ -42,6 +42,11 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+        <attribute>
+           <name>photo</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
     </tag>
     <tag>
         <name>entityList</name>
@@ -63,6 +68,11 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+        <attribute>
+           <name>photos</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
     </tag>
     <tag>
         <name>favicon</name>
@@ -75,5 +85,26 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
-    
+    <tag>
+        <name>png</name>
+        <tagclass>com.dumbhippo.web.PngTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>A png that works in both firefox and IE</info>
+	    <attribute>
+           <name>src</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>style</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>klass</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>        
+        <dynamic-attributes>true</dynamic-attributes>
+    </tag>    
 </taglib>

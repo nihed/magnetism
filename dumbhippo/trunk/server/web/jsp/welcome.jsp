@@ -95,12 +95,12 @@
 			<c:if test="${welcome.groups.size > 0}">
 				<div class="groups">
 					<strong>Groups You're In</strong><br/>
-					<dh:entityList value="${welcome.groups.list}"/>
+					<dh:entityList value="${welcome.groups.list}" photos="true"/>
 				</div>
 			</c:if>
 			<div class="friends">
 				<strong>People who invited you</strong><br/>
-				<dh:entityList value="${welcome.inviters}"/>
+				<dh:entityList value="${welcome.inviters}" photos="true"/>
 			</div>
 		</td>
 		</tr>

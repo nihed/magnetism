@@ -39,7 +39,7 @@
 	</dht:toolbar>
 
 	<div class="person">
-		<dht:png klass="cool-person" src="/files/groupshots/${viewgroup.viewedGroupId}" />
+		<dht:groupshot groupId="${viewgroup.viewedGroupId}"/>
 		<c:out value="${viewgroup.name}"/>
 	</div>
 	<c:if test="${viewgroup.canModify}">
@@ -51,7 +51,7 @@
 	<div id="dhMain">
 		<c:if test="${!empty viewgroup.inviter}">
 			<div>
-				You were invited to this group by <dh:entity value="${viewgroup.inviter}"/><br/>
+				You were invited to this group by <dh:entity value="${viewgroup.inviter}" photo="true"/><br/>
 				<a href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Accept invitation</a>&nbsp
 				<a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Remove me</a>
 			</div>
@@ -71,13 +71,13 @@
 				<c:choose>
 					<c:when test="${!empty invitedMembers}">
 						<strong>Active members:</strong><br/>
-						<dh:entityList value="${viewgroup.activeMembers}"/><br/>
+						<dh:entityList value="${viewgroup.activeMembers}" photos="true"/><br/>
 						<strong>Invited Members:</strong><br/>
-						<dh:entityList value="${invitedMembers}"/>
+						<dh:entityList value="${invitedMembers}" photos="true"/>
 					</c:when>
 					<c:otherwise>
 						<strong>Members:</strong><br/>
-						<dh:entityList value="${viewgroup.activeMembers}"/>
+						<dh:entityList value="${viewgroup.activeMembers}" photos="true"/>
 					</c:otherwise>
 				</c:choose>
 			</div>

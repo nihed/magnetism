@@ -49,7 +49,7 @@
 
 	<c:if test="${!viewperson.disabled}">
 		<div class="person">
-			<dht:png klass="cool-person" src="/files/headshots/${personId}" />
+			<dht:headshot personId="${personId}" />
 			<c:out value="${personName}"/>
 		</div>
 	</c:if>
@@ -77,7 +77,7 @@
 					<c:if test="${viewperson.groups.size > 0}">
 						<div class="groups">
 							<strong>Groups:</strong><br/>
-							<dh:entityList value="${viewperson.groups.list}"/>
+							<dh:entityList value="${viewperson.groups.list}" photos="true"/>
 						</div>
 					</c:if>
 				</td>

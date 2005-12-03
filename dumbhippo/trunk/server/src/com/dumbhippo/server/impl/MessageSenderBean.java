@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -260,19 +261,8 @@ public class MessageSenderBean implements MessageSender {
 			Message message = new Message(makeJid(recipient), Message.Type.HEADLINE);
 
 			String title = post.getTitle();
-			Set<Resource> resources = post.getResources();
 			
-			// FIXME - don't hardcode to "find the first url we see"
-			
-			String url = null;
-			if (!resources.isEmpty()) {
-				for (Resource r : resources) {
-					if (r instanceof LinkResource) {
-						url = ((LinkResource)r).getUrl();
-						break;
-					}
-				}
-			}
+			String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
 			
 			if (url == null) {
 				// this particular jabber message protocol has no point without an url

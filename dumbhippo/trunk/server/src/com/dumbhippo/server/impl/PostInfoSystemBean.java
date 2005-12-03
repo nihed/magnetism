@@ -191,33 +191,16 @@ public class PostInfoSystemBean implements PostInfoSystem {
 			logger.debug("Post was updated in the last " + MAX_UPDATE_RATE / 1000 / 60 + " minutes, not updating");
 			return null; // nothing to do
 		}
-		
-		Set<Resource> resources = post.getResources();
 
-		String link = null;
-		if (!resources.isEmpty()) {
-			for (Resource r : resources) {
-				if (r instanceof LinkResource) {
-					link = ((LinkResource)r).getUrl();
-					break;
-				}
-			}
-		}
-		
-		if (link == null)
-			return null;
-		
-		URL url;
-		try {
-			url = new URL(link);
-		} catch (MalformedURLException e) {
-			logger.debug("Not analyzing malformed url " + link, e);
+		URL url = post.getUrl();
+		if (url == null) {
+			logger.debug("post has no url");
 			return null;
 		}
 		
 		String domain = getDomain(url.getHost());
 		
-		logger.debug("matching updater on '" + domain + "' from link '" + link + "'");
+		logger.debug("matching updater on '" + domain + "' from link '" + url + "'");
 		
 		Method factoryMethod = factoryMethods.get(domain);
 		if (factoryMethod == null)

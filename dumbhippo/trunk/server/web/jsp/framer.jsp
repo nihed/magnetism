@@ -27,9 +27,8 @@
    <div id="dhMain">
 	<table class="dhFramer">
 	<tr>
-	<td class="cool-person" rowSpan="3">
-		<!--  not in subversion at the moment? -->
-	    <!-- dh:entityImage value="${framer.post.poster}" -->
+	<td rowSpan="3">
+		<dht:headshot personId="${framer.post.poster.viewPersonPageId}"/>
 	</td>
 	<td class="cool-link-desc">
 	     <div class="cool-link"><c:out value="${title}" /></div>
@@ -57,7 +56,7 @@
 
 	   <td class="cool-link-meta">
 	     <div class="cool-link-date">${framer.chatRoomMembers}</div>
-	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}"/></div>
+	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}" photo="false"/></div>
 	   </td>
 	</tr>
 	</table>

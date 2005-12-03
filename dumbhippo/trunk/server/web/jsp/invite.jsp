@@ -55,7 +55,7 @@
 						</div>
 						<br/>
 						<div>
-							This was sent to you by <dh:entity value="${invite.person}"/> using <a href="/">Dumb Hippo</a>.
+							This was sent to you by <dh:entity value="${invite.person}" photo="false"/> using <a href="/">Dumb Hippo</a>.
 						</div>
 					</div>
 					<input type="submit" value="Send Invite"/>
