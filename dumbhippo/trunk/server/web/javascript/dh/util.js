@@ -224,3 +224,15 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 		}
 	}
 }
+
+dh.util.createPngElement = function(src) {
+	var img = document.createElement("img");
+	if (dojo.render.html.ie) {
+		img.setAttribute("style",
+		"filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');");
+		img.setAttribute("src", dhImageRoot + "blank.gif");
+	} else {
+		img.setAttribute("src", src);
+	}
+	return img;
+}

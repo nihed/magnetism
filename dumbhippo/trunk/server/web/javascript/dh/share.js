@@ -222,11 +222,14 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		var td = document.createElement("td");
 		dojo.html.addClass(td, "dhHeadShot");
 		tr1.appendChild(td);
-		var img = document.createElement("img");
+		
+		var imgSrc;
 		if (obj.isPerson())
-			img.setAttribute("src", dhHeadshotsRoot + obj.id);
+			imgSrc = dhHeadshotsRoot + obj.id;
 		else
-			img.setAttribute("src", dhGroupshotsRoot + obj.id);
+			imgSrc = dhGroupshotsRoot + obj.id;
+		
+		var img = dh.util.createPngElement(imgSrc);
 		td.appendChild(img);
 		
 		var td = document.createElement("td");
