@@ -21,6 +21,7 @@ HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *extern
     docSrc_ = src;
     callback_ = cb;
     external_ = external;
+    haveTransform_ = false;
 }
 
 HippoIE::~HippoIE(void)
@@ -91,6 +92,8 @@ HippoIE::setXsltTransform(WCHAR *stylesrc, ...)
     va_list vap;
     va_start(vap, stylesrc);
 
+    haveTransform_ = true;
+
     styleSrc_ = stylesrc;
     {
         WCHAR* key;
@@ -130,15 +133,19 @@ HippoIE::create()
     HippoQIPtr<IWebBrowser2> browser(ie_);
     browser_ = browser;
 
-    HippoBSTR blankURL(L"about:blank");
-    VARIANT url;
-    url.vt = VT_BSTR;
-    url.bstrVal = blankURL;
-    VARIANT vempty;
-    vempty.vt = VT_EMPTY;
-
-    browser->Navigate2(&url, &vempty, &vempty, &vempty, &vempty);
+    HippoBSTR targetUrl;
+    if (!haveTransform_)
+        targetUrl = docSrc_;
+    else
+        targetUrl = L"about:blank";
+    variant_t vTargetUrl(targetUrl.m_str);
+    variant_t vEmpty;
+    vEmpty.vt = VT_EMPTY;
+    browser->Navigate2(&vTargetUrl, &vEmpty, &vEmpty, &vEmpty, &vEmpty);
     browser->put_Resizable(VARIANT_FALSE);
+
+    if (!haveTransform_)
+        return;
 
     variant_t xmlResult;
     MSXML2::IXMLDOMDocumentPtr xmlsrc(MSXML2::CLSID_DOMDocument);
@@ -245,7 +252,7 @@ HippoIE::GetExternal(IDispatch **dispatch)
 STDMETHODIMP 
 HippoIE::GetHostInfo(DOCHOSTUIINFO *info)
 {
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 STDMETHODIMP 

@@ -134,6 +134,9 @@
 				RelativePath=".\HippoIE.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoIEWindow.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoIM.cpp">
 			</File>
 			<File
@@ -141,6 +144,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoPreferences.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoRemoteWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoUI.cpp">
@@ -187,6 +193,9 @@
 				RelativePath=".\HippoIE.h">
 			</File>
 			<File
+				RelativePath=".\HippoIEWindow.h">
+			</File>
+			<File
 				RelativePath=".\HippoIM.h">
 			</File>
 			<File
@@ -194,6 +203,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoPreferences.h">
+			</File>
+			<File
+				RelativePath=".\HippoRemoteWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoUI.h">

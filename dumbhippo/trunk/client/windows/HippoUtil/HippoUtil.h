@@ -240,3 +240,10 @@ inline T *hippoGetWindowData(HWND window)
     return (T *)GetWindowLongPtr(window, GWLP_USERDATA);
 }
 #pragma warning(pop)
+
+// Put here to avoid circular references between HippoUI and HippoIEWindow
+class HippoMessageHook
+{
+public:
+    virtual bool hookMessage(MSG *msg) = 0;
+};

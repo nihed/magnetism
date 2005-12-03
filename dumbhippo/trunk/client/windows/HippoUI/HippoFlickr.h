@@ -1,10 +1,10 @@
 #pragma once
 
+#include <exdisp.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoHTTP.h"
-#include "HippoIE.h"
-#include <exdisp.h>
+#include "HippoRemoteWindow.h"
 
 class HippoUI;
 
@@ -109,7 +109,7 @@ private:
 
     bool statusDisplayVisible_;
     HINSTANCE instance_;
-    HWND window_;
+    HippoRemoteWindow *shareWindow_;
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
 
@@ -130,14 +130,6 @@ private:
     HippoBSTR authFrob_;
     HippoBSTR authToken_;
 
-    bool processMessage(UINT   message,
-                            WPARAM wParam,
-                            LPARAM lParam);
-    static LRESULT CALLBACK windowProc(HWND   window,
-                        UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
-    bool registerClass();
     void ensureStatusWindow();
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
 

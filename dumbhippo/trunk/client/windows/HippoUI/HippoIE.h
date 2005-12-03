@@ -13,6 +13,21 @@ public:
     virtual void onError(WCHAR *errText) = 0;
 };
 
+/*
+ DANGER DANGER DANGER
+ This class displays content in the Local Machine IE security zone; this
+ means the content can do almost anything, like reading local files
+ and instantiating random COM components.  AT NO POINT SHOULD IT READ UNTRUSTED
+ CONTENT.  This means for example that not only can you not point it at
+ http://randomsite.com, you can't do http://randomsite.com in a frame either.
+ External images should be fine though.
+
+ Currently using this on remote trusted sites is a lot like downloading a .exe
+ from that site and executing it on the fly.  This means it's vulnerable to 
+ MITM attacks without some external integrity mechanism such as SSL or 
+ SHA1 sum checking.
+ DANGER DANGER DANGER
+*/
 class HippoIE :
     public IDocHostUIHandler,
     public IStorage,
@@ -23,17 +38,25 @@ class HippoIE :
 {
 public:
 
+    // Only sets up object
     HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *external);
-    ~HippoIE(void);
 
+    // Optional, apply an XSLT stylesheet to source
     void setXsltTransform(WCHAR *styleSrc, ...);
+
+    // Actually instantiate
     void create();
+
+    // Return IWebBrowser2 interface, not reffed
     IWebBrowser2 *getBrowser();
 
     void resize(RECT *rect);
-
     HRESULT invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, ...);
     HRESULT invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, va_list args);
+
+    ~HippoIE(void);
+
+    // Following is the not useful stuff
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -123,6 +146,7 @@ private:
 
     HippoBSTR docSrc_;
 
+    bool haveTransform_;
     HippoBSTR styleSrc_;
     HippoArray<HippoBSTR> styleParamNames_;
     HippoArray<HippoBSTR> styleParamValues_;

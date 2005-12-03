@@ -4,6 +4,7 @@
  **/
 #pragma once
 
+#include <glib.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoBubble.h"
@@ -13,6 +14,8 @@
 #include "HippoUpgrader.h"
 #include "HippoFlickr.h"
 #include "HippoIM.h"
+#include "HippoRemoteWindow.h"
+
 
 struct HippoBrowserInfo
 {
@@ -90,6 +93,9 @@ public:
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 
+    void registerWindowMsgHook(HWND window, HippoMessageHook *hook);
+    void unregisterWindowMsgHook(HWND window);
+
 private:
     bool registerActive();
     bool registerClass();
@@ -158,6 +164,8 @@ private:
     HippoIM im_;
     HippoFlickr flickr_;
     HippoUpgrader upgrader_;
+
+    HippoRemoteWindow *currentShare_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject

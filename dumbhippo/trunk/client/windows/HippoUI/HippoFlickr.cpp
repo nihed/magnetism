@@ -2,7 +2,7 @@
 #include ".\hippoflickr.h"
 #include "HippoUI.h"
 #include <HippoRegKey.h>
-#include "HippoIE.h"
+#include "HippoRemoteWindow.h"
 extern "C" {
 #include <md5.h>
 }
@@ -14,7 +14,6 @@ extern "C" {
 #include <wincrypt.h>
 
 static const WCHAR *DUMBHIPPO_SUBKEY_FLICKR = L"Software\\DumbHippo\\Flickr";
-static const WCHAR *CLASS_NAME = L"HippoFlickrClass";
 
 HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
                                  authServiceUrl_(L"http://flickr.com/services/auth/"),
@@ -24,7 +23,6 @@ HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/service
 {
     state_ = UNINITIALIZED;
     statusDisplayVisible_ = false;
-    instance_ = GetModuleHandle(NULL);
 }
 
 HippoFlickr::~HippoFlickr(void)
@@ -35,7 +33,6 @@ void
 HippoFlickr::setUI(HippoUI *ui)
 {
     ui_ = ui;
-    registerClass();
 }
 
 void
@@ -58,84 +55,15 @@ HippoFlickr::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs,
     return true;
 }
 
-bool
-HippoFlickr::registerClass()
-{
-    WNDCLASSEX wcex;
-
-    ZeroMemory(&wcex, sizeof(WNDCLASSEX));
-    wcex.cbSize = sizeof(WNDCLASSEX); 
-
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = windowProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance  = instance_;
-    wcex.hCursor    = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = CLASS_NAME;
-
-    if (RegisterClassEx(&wcex) == 0) {
-        if (GetClassInfoEx(instance_, CLASS_NAME, &wcex) != 0)
-            return true;
-        return false;
-    }
-    return true;
-}
-
-bool
-HippoFlickr::processMessage(UINT   message,
-                            WPARAM wParam,
-                            LPARAM lParam)
-{
-    switch (message) 
-    {
-    case WM_CLOSE:
-        // FIXME handle this, need to display status in tray
-        // somehow?
-        AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
-        return true;
-    default:
-        return false;
-    }
-}
-
-LRESULT CALLBACK 
-HippoFlickr::windowProc(HWND   window,
-                        UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam)
-{
-    HippoFlickr *flickr = hippoGetWindowData<HippoFlickr>(window);
-    if (flickr) {
-        if (flickr->processMessage(message, wParam, lParam))
-            return 0;
-    }
-    return DefWindowProc(window, message, wParam, lParam);
-}
-
 void
 HippoFlickr::ensureStatusWindow()
 {
     if (statusDisplayVisible_)
         return;
-    ui_->debugLogW(L"creating Flickr status window");
-    window_ = CreateWindow(CLASS_NAME, L"Sharing Photos", WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU, 
-                           CW_USEDEFAULT, CW_USEDEFAULT, 400, 400, 
-                           NULL, NULL, instance_, NULL);
-    hippoSetWindowData<HippoFlickr>(window_, this);
-    HippoBSTR appletURL;
-    ui_->getAppletURL(L"", &appletURL);
-    HippoBSTR srcUrl;
-    ui_->getAppletURL(L"flickrstatus.xml", &srcUrl);
-    HippoBSTR styleUrl;
-    ui_->getAppletURL(L"clientstyle.xml", &styleUrl);
-    ie_ = new HippoIE(window_, srcUrl, ieCallback_, NULL);
-    ie_->setXsltTransform(styleUrl, L"appleturl", appletURL.m_str, NULL);
-    ie_->create();
-    browser_ = ie_->getBrowser();
-    AnimateWindow(window_, 400, AW_BLEND);
+    ui_->debugLogW(L"creating Flickr share window");
+    shareWindow_ = new HippoRemoteWindow(ui_, L"Share Photos", NULL);
+    shareWindow_->showShare(L"http://flickr.com/", L"photoset");
+    ie_ = shareWindow_->getIE();
     statusDisplayVisible_ = true;
 
     VARIANT result;

@@ -17,6 +17,7 @@
 #include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
 #include "HippoHTTP.h"
+#include "HippoRemoteWindow.h"
 
 #include <glib.h>
 
@@ -73,6 +74,8 @@ HippoUI::HippoUI(bool debug, bool replaceExisting, bool initialDebugShare)
 
     idle_ = FALSE;
     checkIdleTimeoutId_ = 0;
+
+    currentShare_ = NULL;
 }
 
 HippoUI::~HippoUI()
@@ -434,35 +437,10 @@ HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 void 
 HippoUI::showShareWindow(BSTR title, BSTR url)
 {
-    HippoBSTR shareURL;
-
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"sharelink"), &shareURL)))
-        return;
-
-    if (!SUCCEEDED (shareURL.Append(L"?next=close&url=")))
-        return;
-
-    wchar_t encoded[1024] = {0}; 
-    DWORD len = sizeof(encoded)/sizeof(encoded[0]);
-
-    if (!SUCCEEDED (UrlEscape(url, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
-        return;
-    if (!SUCCEEDED (shareURL.Append(encoded)))
-        return;
-
-    if (!SUCCEEDED (shareURL.Append(L"&title=")))
-        return;
-
-    encoded[0] = 0;
-    len = sizeof(encoded)/sizeof(encoded[0]);
-    if (!SUCCEEDED (UrlEscape(title, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
-        return;
-    if (!SUCCEEDED (shareURL.Append(encoded)))
-        return;
-
-    debugLogW(L"sharing URL %s", shareURL);
-    HippoPtr<IWebBrowser2> webBrowser;
-    showAppletWindow(shareURL, webBrowser);
+    if (currentShare_)
+        delete currentShare_;
+    currentShare_ = new HippoRemoteWindow(this, L"Share Link", NULL);
+    currentShare_->showShare(url, title);
 }
 
 STDMETHODIMP 
@@ -1188,6 +1166,27 @@ findExplorerWindows()
 }
 #endif
 
+static HippoArray<HWND> *windowHookKeys = NULL;
+static HippoArray<HippoMessageHook*> *windowHookValues = NULL;
+
+void 
+HippoUI::registerWindowMsgHook(HWND window, HippoMessageHook *hook)
+{
+    if (!windowHookKeys) {
+        windowHookKeys = new HippoArray<HWND>;
+        windowHookValues = new HippoArray<HippoMessageHook*>;
+    }
+    
+    windowHookKeys->append(window);
+    windowHookValues->append(hook);
+}
+
+void 
+HippoUI::unregisterWindowMsgHook(HWND window)
+{
+    // fixme
+}
+
 /* Define a custom main loop source for integrating the Glib main loop with Win32
  * message handling; this isn't very generalized, since we hardcode the handling
  * of a FALSE return from GetMessage() to call g_main_loop_quit() on a particular
@@ -1225,6 +1224,7 @@ win32SourceDispatch(GSource     *source,
                     gpointer     userData)
 {
     MSG msg;
+    HippoMessageHook *hook;
 
     if (!GetMessage(&msg, NULL, 0, 0)) {
         Win32Source *win32Source = (Win32Source *)(source);
@@ -1234,6 +1234,23 @@ win32SourceDispatch(GSource     *source,
         g_main_context_remove_poll (NULL, &win32Source->pollFD);
         g_main_loop_quit(win32Source->loop);
         return FALSE;
+    }
+
+    if ((msg.message >= WM_KEYFIRST && msg.message <= WM_KEYDOWN)
+        || msg.message == WM_MBUTTONDOWN
+        || msg.message == WM_MBUTTONUP) 
+    {
+        hippoDebugLogW(L"message %u for window %p", msg.message, msg.hwnd);
+    }
+
+    if (windowHookKeys) {
+        for (UINT i = 0; i < windowHookKeys->length(); i++) {
+            HWND hookWin = (*windowHookKeys)[i];
+            if (hookWin == msg.hwnd) {
+                if ((*windowHookValues)[i]->hookMessage(&msg))
+                    return TRUE;
+            }
+        }
     }
 
     TranslateMessage(&msg);
