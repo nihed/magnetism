@@ -112,6 +112,13 @@ dh.autosuggest.AutoSuggest = function(elem)
 	//A div to use to create the dropdown.
 	this.div = document.getElementById("dhAutoSuggest");
 
+	// save previous body onclick event handler if any, just to 
+	// try to avoid breaking the rest of the page; not very robust
+	// since we can't grab the pointer
+	this.oldBodyOnClick = null;
+
+	this.showing = false;
+
 	//Do you want to remember what keycode means what? Me neither.
 	var TAB = 9;
 	var ESC = 27;
@@ -235,10 +242,11 @@ dh.autosuggest.AutoSuggest = function(elem)
 		{
 			update = true;
 		}
-		if (eligibleChanged)
-			update = true;
-
+		
 		me.inputText = me.elem.value;
+		
+		if (eligibleChanged && me.inputText.length > 0)
+			update = true;
 
 		if (update) {
 			var eligible = me.getEligible();
@@ -281,8 +289,16 @@ dh.autosuggest.AutoSuggest = function(elem)
 	********************************************************/
 	this.showDiv = function()
 	{
-		this.div.style.display = 'block';
-		this.highlighted = 0;
+		if (!this.showing) {
+			this.div.style.display = 'block';
+			this.highlighted = 0;
+			
+			this.oldBodyOnClick = document.body.onclick;
+			document.body.onclick = function(ev) {
+				me.hideDiv();
+			}
+			this.showing = true;
+		}
 	};
 
 	/********************************************************
@@ -290,8 +306,12 @@ dh.autosuggest.AutoSuggest = function(elem)
 	********************************************************/
 	this.hideDiv = function()
 	{
-		this.div.style.display = 'none';
-		this.highlighted = -1;
+		if (this.showing) {
+			this.div.style.display = 'none';
+			this.highlighted = -1;
+			document.body.onclick = this.oldBodyOnClick;
+			this.showing = false;
+		}
 	};
 
 	/********************************************************

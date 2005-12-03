@@ -37,6 +37,7 @@ public class Post extends GuidPersistable {
 	private String info;
 	private long infoDate;
 	transient private PostInfo cachedPostInfo;
+	transient private boolean leaveInfoUnmodified;
 	private Set<Resource> personRecipients;
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
@@ -217,9 +218,16 @@ public class Post extends GuidPersistable {
 		if (this.info != null && info != null && this.info.equals(info))
 			return;
 		
+		cachedPostInfo = null;
+		
+		// silently don't change it... probably the XML parser is broken
+		if (leaveInfoUnmodified) {
+			return;
+		}
+		
 		this.info = info;
 		
-		cachedPostInfo = null;
+		
 	}
 
 	@Column(nullable=true)
@@ -250,7 +258,16 @@ public class Post extends GuidPersistable {
 				cachedPostInfo.makeImmutable();
 				return cachedPostInfo;
 			} catch (SAXException e) {
-				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string");
+				logger.trace(e);
+				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string: " + e.getMessage());
+				
+				// We enter a "do no harm" mode when this happens; it's probably some bug
+				// in our XML parser and we don't want to lose any data from the PostInfo
+				// because we wouldn't be able to get it back; if we can't parse the 
+				// info we can't round trip the data
+				
+				leaveInfoUnmodified = true;
+				
 				return null;
 			}
 		} else {
