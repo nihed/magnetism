@@ -26,6 +26,7 @@ public class XMPPMethodsBean implements XMPPMethods, Serializable {
 	
 	private static final long serialVersionUID = 0L;
 	
+	@SuppressWarnings("unused")
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 

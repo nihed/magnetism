@@ -2,12 +2,10 @@ package com.dumbhippo.server.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -24,9 +22,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PostInfoSystem;

@@ -38,12 +38,12 @@ public class ConfigurationBean implements Configuration {
 		}
 		// put in our hardcoded defaults if no other defaults were found
 		for (HippoProperty prop : HippoProperty.values()) {
-			logger.debug("--system property was " + prop.getKey() + "=" + System.getProperties().getProperty(prop.getKey()));
+			//logger.debug("--system property was " + prop.getKey() + "=" + System.getProperties().getProperty(prop.getKey()));
 			if (prop.getDefault() != null && props.getProperty(prop.getKey()) == null) {
-				logger.debug("--loading hardcoded default " + prop.getKey() + "=" + prop.getDefault());
+				//logger.debug("--loading hardcoded default " + prop.getKey() + "=" + prop.getDefault());
 				props.put(prop.getKey(), prop.getDefault());
 			} else {
-				logger.debug("--using property " + prop.getKey() + "=" + props.getProperty(prop.getKey()));
+				//logger.debug("--using property " + prop.getKey() + "=" + props.getProperty(prop.getKey()));
 			}
 		}
 	}

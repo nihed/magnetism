@@ -18,3 +18,7 @@
 	<link rel="stylesheet" href="/css/${buildStamp}/${iehref}" type="text/css" />
 </c:if>
 <![endif]-->
+
+<!-- using a "permalink" on purpose here (no build stamp) -->
+<link rel="icon" href="/images/favicon.ico" />
+<link rel="shortcut icon" href="/images/favicon.ico" />

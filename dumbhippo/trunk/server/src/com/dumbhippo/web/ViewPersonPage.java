@@ -1,7 +1,5 @@
 package com.dumbhippo.web;
 
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;

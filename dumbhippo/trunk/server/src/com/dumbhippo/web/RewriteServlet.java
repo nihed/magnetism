@@ -87,7 +87,14 @@ public class RewriteServlet extends HttpServlet {
 		// /javascript so we have to handle javascript/ and css/ URLs here. We could
 		// hack StaticServlet further from the original code to avoid this.
 		
-		if (path.startsWith("/javascript/") || 
+		if (path.equals("/favicon.ico")) {
+			// there are some cases where we aren't serving html so there's no 
+			// <link type="icon"/> - we normally point browsers to /images/favicon.ico 
+			// in the html itself, but we need this for when we don't
+			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, "/images/favicon.ico");
+			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
+			return;
+		} else if (path.startsWith("/javascript/") || 
 			path.startsWith("/css/") ||
 			path.startsWith("/images/")) {
 			
