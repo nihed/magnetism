@@ -355,16 +355,30 @@ HippoUI::create(HINSTANCE instance)
     if (this->initialShowDebugShare_) {
         HippoLinkShare linkshare;
 
+        linkshare.url.setUTF8("http://www.gnome.org");
+        linkshare.postId.setUTF8("42");
+        linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
+        linkshare.senderName.setUTF8("Owen Taylor");
+        linkshare.senderId.setUTF8("1327573584f715a1fbae7f2807010000c9bdb4786d081e58");
+        linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
+                                      "we can see wrapping and all sorts of fun things like that which will "
+                                      "cause differences from what we would have if we had a short title without "
+                                      "the kind of excessive length that you see here.");
+        linkshare.personRecipients.append(HippoBSTR(L"Some Person"));
+        linkshare.groupRecipients.append(HippoBSTR(L"Some Group"));
+        onLinkMessage(linkshare);
+
+        linkshare.postId.setUTF8("24");
+        linkshare.viewers.append(HippoBSTR(L"A Viewer"));
+        linkshare.viewers.append(HippoBSTR(L"Owen Taylor"));
+        linkshare.viewers.append(HippoBSTR(L"Colin Walters"));
+        linkshare.viewers.append(HippoBSTR(L"Bryan Clark"));
+        onLinkMessage(linkshare);
+
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
         linkshare.postId.setUTF8("2");
         linkshare.title.setUTF8("funny photo");
-        linkshare.senderName.setUTF8("debug user");
-        linkshare.senderId.setUTF8("3");
-        linkshare.description.setUTF8("debug share");
-        HippoBSTR recipient(L"debug recipient");
-        linkshare.personRecipients.append(recipient);
-        HippoBSTR viewer(L"A Viewer");
-        linkshare.viewers.append(viewer);
+        linkshare.description.setUTF8("Wow, this photo is funny");
         onLinkMessage(linkshare);
     }
 

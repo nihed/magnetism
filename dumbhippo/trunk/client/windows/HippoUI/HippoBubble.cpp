@@ -177,7 +177,7 @@ hippoStrArrayToSafeArray(HippoArray<HippoBSTR> &args)
     SAFEARRAY *ret = SafeArrayCreate(VT_VARIANT, 1, dim);
     for (unsigned int i = 0; i < args.length(); i++) {
         VARIANT *data;
-        _variant_t argv;
+        VARIANT argv;
         SafeArrayAccessData(ret, (void**)&data);
         argv.vt = VT_BSTR;
         argv.bstrVal = args[i];

@@ -101,12 +101,12 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         if (this.showViewers != showViewers) {
             this.showViewers = showViewers
             
-            var viewersDiv = document.getElementById("dh-notification-viewers")
+            var viewersDiv = document.getElementById("dh-notification-viewers-outer")
             var space
             
             if (showViewers) {
                 viewersDiv.style.display = "block"
-                space = 40
+                space = viewersDiv.offsetHeight
             } else {
                 viewersDiv.style.display = "none"
                 space = 0
@@ -218,6 +218,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         img.setAttribute("className", "dh-notification-photo")
         a.appendChild(img)  
         imgDiv.appendChild(a)   
+        dh.util.debug("Src = " + src)
     }
     
     this._setPhotoLink = function (text, url) {
@@ -240,6 +241,32 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         })
         dh.util.dom.appendSpanText(a, linkTitle, "dh-notification-link-title")
         return a
+    }
+
+    // This function adjusts various sizes that we can't make the CSS handle
+    this._fixupLayout = function() {
+    
+        // First make the title ellipsize before it runs over the close button
+        var rightsideDiv = document.getElementById("dh-notification-rightside")
+        var titleDiv = document.getElementById("dh-notification-title")
+        var closeButton = document.getElementById("dh-close-button")
+        
+        titleDiv.style.width = (rightsideDiv.clientWidth - closeButton.offsetWidth) + "px"
+        
+        // Now set the height of the body element to be fixed to the remaining space
+        var bodyElement = document.body
+        var bottomrightDiv = document.getElementById("dh-notification-bottomright")
+        var desiredHeight = bodyElement.clientHeight - titleDiv.offsetHeight - bottomrightDiv.offsetHeight
+        
+        // Hack - we don't want partial lines to be shown, so compute how many 
+        // full lines fit. We do this by knowing that titleDiv is one line high
+        // this will break if the title is changed to a different font, etc.
+        var lineHeight = titleDiv.clientHeight
+        if (lineHeight > 0)
+            desiredHeight = Math.floor(desiredHeight / lineHeight) * lineHeight
+
+        var bodyDiv = document.getElementById("dh-notification-body")
+        bodyDiv.style.height = desiredHeight + "px"
     }
     
     this._display_linkShare = function (share) {
@@ -289,16 +316,22 @@ dh.notification.Display = function (serverUrl, appletUrl) {
             metaDiv.appendChild(document.createTextNode(" group"))
         }
         
-        
         var viewers = dh.core.adaptExternalArray(share["viewers"])
         if (viewers.length > 0) {
             var viewersDiv = dh.util.dom.getClearedElementById("dh-notification-viewers")
-            viewersDiv.appendChild(document.createTextNode("Viewed by: "))
+            dh.util.dom.appendSpanText(viewersDiv, "Viewed by: ", "dh-notification-viewers-label")
             dh.util.dom.joinSpannedText(viewersDiv, viewers, "dh-notification-viewer", ", ")
+            
+            // Need to pass in the viewer ID as well as name to here to display
+            var viewersPhotoDiv = document.getElementById("dh-notification-viewers-photo")
+            viewersPhotoDiv.style.display = "None"
+
             this._setShowViewers(true)
         } else {
             this._setShowViewers(false)
         }
+        
+        this._fixupLayout()
     }    
 }
 

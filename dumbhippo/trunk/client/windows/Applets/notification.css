@@ -1,23 +1,29 @@
-#dh-notification 
+body
 {
     height: 100%;
     width: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
-.dh-notification
+#dh-close-button 
 {
+    position: absolute;
+    margin: 2px;
+    top: 0px;
+    right: 0px;
+}
+
+#dh-notification-leftside
+{
+    position: absolute;
+    width: 6em;
     height: 100%;
-    width: 100%;
-}
-
-td.dh-notification-photo 
-{
     text-align: center;
 }
 
-div.dh-notification-photo,a.dh-notification-photo
+#dh-notification-photo 
 {
-    text-align: center;
     /* Right now the Java code scales headshots to a max of 48px in each
      * dimension, but preserving aspect ratio. If height < width the below
      * will mangle the aspect again. If changing from 48px, also change the 
@@ -28,56 +34,31 @@ div.dh-notification-photo,a.dh-notification-photo
      * likely than width>height.
      */
     width: 48px;
-    height:                 48px;
+    height: 48px;
     border-style: none; 
-    border:                 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1em;
 }
 
-.dh-notification-photolink {
+#dh-notification-photolink {
     text-align:             center;
-    width:                  8em;
+    width:                  100%;
     text-overflow:          ellipsis;
     overflow:               hidden;
     font-size: x-small;
 }
 
-.dh-notification-title 
+#dh-notification-navigation
 {
-    height: 1em;
-    vertical-align: top;
-    text-overflow:          ellipsis;
-    overflow:               hidden;
-    padding:                0;
-    margin:                 0;
-}
-
-.dh-notification-body
-{
-    vertical-align: top;
-}
-
-span.dh-notification-title-title 
-{
-    font-weight: bold;
-}
-
-.dh-notification-rightside
-{
-    height: 100%;
-    width: 100%;    
-    vertical-align: top;
-}
-
-td.dh-notification-navigation
-{
+    position: absolute;
     text-align: center;
+    left: 0px;
+    width: 100%;
+    bottom: 0px;
 }
 
-div.dh-notification-navigation
-{
-}
-
-div.dh-notification-navigation-text
+#dh-notification-navigation-text
 {
     color: Gray;
 }
@@ -88,15 +69,80 @@ img.dh-notification-navigation
     border-style: none;
 }
 
-div.dh-notification-meta 
+#dh-notification-rightside
 {
+    position: absolute;
+    top: 0em;
+    left: 6em;
+    right: 0px;
+    height: 100%;
 }
 
-td.dh-notification-meta
+/* See comment in dh.notification.display._fixupLayout() if you change this */
+#dh-notification-title 
 {
-    height: 2em;
-    vertical-align: bottom;
-    color: Gray;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-size: small;
+    width: 100%;
+}
+
+#dh-notification-body
+{
+    width: 100%;
+    vertical-align: top;
+    overflow: hidden;
+    font-size: small;
+}
+
+#dh-notification-bottomright
+{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+}
+
+#dh-notification-viewers-outer
+{
+    margin: 0.25em;
+}
+
+#dh-notification-viewers-bubble
+{
+    background-color: #88cc66;
+    line-height: 1.2;
+    height: 2.9em; /* Should be 2.4em in standards mode */
+    overflow: hidden;
+    font-size: x-small;
+    padding: 0.25em;
+}
+
+#dh-notification-viewers-photo
+{
+    float: left;
+    width: 2.4em;
+    height: 2.4em;
+}
+
+span.dh-notification-viewers-label
+{
+    color: White;
+}
+
+#dh-notification-meta-outer
+{
+    font-size: small;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+#dh-notification-meta
+{
     font-size: x-small;
 }
 
@@ -108,21 +154,5 @@ span.dh-notification-recipient
 span.dh-notification-group-recipient
 {
     font-weight: bold;
-    font-size: larger;
-}
-
-div.dh-notification-viewers
-{
-    background-color: #88ff66;
-    height: 40px;
-    width: 100%;    
-    vertical-align: bottom;
-    font-size: x-small;
-}
-
-img.dh-close-button 
-{
-    position: absolute;
-    top: 2;
-    right: 2;
+    font-size: 120%;
 }
