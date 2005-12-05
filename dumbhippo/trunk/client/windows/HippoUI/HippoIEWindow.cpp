@@ -32,8 +32,8 @@ HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, int width, int height, W
 HippoIEWindow::~HippoIEWindow(void)
 {
     ui_->unregisterWindowMsgHook(window_);
-    CloseWindow(window_);
-    delete ie_;
+    DestroyWindow(window_);
+    ie_->Release();
     delete ieCb_;
 }
 
