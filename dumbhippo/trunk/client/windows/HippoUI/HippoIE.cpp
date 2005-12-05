@@ -300,7 +300,7 @@ HippoIE::ShowUI(DWORD id, IOleInPlaceActiveObject *activeObject, IOleCommandTarg
 STDMETHODIMP 
 HippoIE::TranslateAccelerator(LPMSG msg, const GUID *guidCmdGroup, DWORD cmdID)
 {
-    return S_OK;
+    return S_FALSE;
 }
 
 STDMETHODIMP 

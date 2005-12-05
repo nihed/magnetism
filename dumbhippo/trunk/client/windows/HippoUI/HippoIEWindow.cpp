@@ -88,9 +88,7 @@ HippoIEWindow::registerClass()
 bool
 HippoIEWindow::hookMessage(MSG *msg)
 {
-    if ((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYDOWN)
-        || msg->message == WM_MBUTTONDOWN
-        || msg->message == WM_MBUTTONUP)
+    if ((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST))
     {
         HippoPtr<IWebBrowser> browser(ie_->getBrowser());
         HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());

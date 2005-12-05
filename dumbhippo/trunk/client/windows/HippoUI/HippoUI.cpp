@@ -1260,7 +1260,7 @@ win32SourceDispatch(GSource     *source,
     if (windowHookKeys) {
         for (UINT i = 0; i < windowHookKeys->length(); i++) {
             HWND hookWin = (*windowHookKeys)[i];
-            if (hookWin == msg.hwnd) {
+            if (IsChild(hookWin, msg.hwnd)) {
                 if ((*windowHookValues)[i]->hookMessage(&msg))
                     return TRUE;
             }
