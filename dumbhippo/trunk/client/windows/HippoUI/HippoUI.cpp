@@ -1238,7 +1238,6 @@ win32SourceDispatch(GSource     *source,
                     gpointer     userData)
 {
     MSG msg;
-    HippoMessageHook *hook;
 
     if (!GetMessage(&msg, NULL, 0, 0)) {
         Win32Source *win32Source = (Win32Source *)(source);
