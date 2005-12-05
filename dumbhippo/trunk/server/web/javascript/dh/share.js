@@ -233,7 +233,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		else
 			imgSrc = dhGroupshotsRoot + obj.id;
 		
-		var img = dh.util.createPngElement(imgSrc);
+		var img = dh.util.createPngElement(imgSrc, 48, 48);
 		td.appendChild(img);
 		
 		var td = document.createElement("td");

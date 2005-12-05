@@ -136,8 +136,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					groupMember.setAdder(adder); // Mark adder for "please come back"
 				break;
 			case INVITED:
-				if (!selfAdd)
-					return; // already invited, do nothing
+				if (selfAdd) {
+					// accepting an invitation, add our inviter as a contact
+					User previousAdder = groupMember.getAdder();
+					identitySpider.addContactPerson(adder, previousAdder);
+				} else {
+					// already invited, do nothing
+					return;
+				}
 				break;
 			case ACTIVE:
 				return; // Nothing to do
@@ -396,7 +402,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			PersonView inviter  = null;
 			
 			if (groupMember.getStatus() == MembershipStatus.INVITED) {
-				Person adder = groupMember.getAdder();
+				User adder = groupMember.getAdder();
 				if (adder != null)
 					inviter = identitySpider.getPersonView(viewpoint, adder);
 			}

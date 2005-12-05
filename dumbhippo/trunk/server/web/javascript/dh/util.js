@@ -225,14 +225,16 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 	}
 }
 
-dh.util.createPngElement = function(src) {
-	var img = document.createElement("img");
+dh.util.createPngElement = function(src, width, height) {
+	// don't try to use <img> or <span>, it won't work; the <div> is why you have to provide width/height
+	var img = document.createElement("div");
 	if (dojo.render.html.ie) {
-		img.setAttribute("style",
-		"filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');");
-		img.setAttribute("src", dhImageRoot + "blank.gif");
+		// don't try to use setAttribute(), it won't work
+		img.style.width = width;
+		img.style.height = height;
+		img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
 	} else {
-		img.setAttribute("src", src);
+		img.setAttribute("style", "background-image: url( " + src + " ); width: " + width + "; height: " + height + ";");
 	}
 	return img;
 }
