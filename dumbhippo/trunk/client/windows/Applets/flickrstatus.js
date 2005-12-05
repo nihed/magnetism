@@ -12,6 +12,9 @@ dhFlickrPhotoUploadStarted = function (filename, thumbnailFilename) {
     dlg.appendChild(document.createElement("br"))    
 }
 
+dhFlickrAddPhoto = function (filename, thumbnailFilename) {
+}
+
 dhFlickrPhotoUploadComplete = function (filename, photoId) {
     var dlg = document.getElementById('dh-dialog')
     dlg.appendChild(document.createTextNode("upload of "))
