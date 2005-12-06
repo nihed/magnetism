@@ -22,7 +22,7 @@
 	</script>
 </head>
 
-<body>
+<body scroll="no">
 	<dht:header>
 		Sharing ${viewgroup.name}
 	</dht:header>

@@ -12,7 +12,7 @@
 		dojo.require("dh.sharelink");
 	</script>
 </head>
-<body>
+<body scroll="no">
 	<dht:header>
 		Sharing a Link
 	</dht:header>
