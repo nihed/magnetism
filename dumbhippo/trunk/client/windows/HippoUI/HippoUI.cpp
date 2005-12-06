@@ -448,13 +448,15 @@ HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
 }
 
 // Show a window offering to share the given URL
-void 
-HippoUI::showShareWindow(BSTR title, BSTR url)
+HRESULT
+HippoUI::ShareLink(BSTR url, BSTR title)
 {
     if (currentShare_)
         delete currentShare_;
     currentShare_ = new HippoRemoteWindow(this, L"Share Link", NULL);
     currentShare_->showShare(url, title);
+
+    return S_OK;
 }
 
 STDMETHODIMP 
@@ -1039,7 +1041,7 @@ HippoUI::processMessage(UINT   message,
         if (wmId >= IDM_SHARE0 && wmId <= IDM_SHARE9) {
             UINT i = wmId - IDM_SHARE0;
             if (i < browsers_.length() && browsers_[i].url)
-                showShareWindow(browsers_[i].title, browsers_[i].url);
+                ShareLink(browsers_[i].url, browsers_[i].title);
             return true;
         }
 
@@ -1327,7 +1329,7 @@ installLaunch(HINSTANCE instance)
     if (!GetModuleFileName(instance, fileBuf, sizeof(fileBuf) / sizeof(fileBuf[0])))
         return;
 
-    _wspawnl(_P_NOWAIT, fileBuf, L"DumbHippo", L"--replace", NULL);
+    _wspawnl(_P_NOWAIT, fileBuf, L"HippoUI", L"--replace", NULL);
 }
 
 int APIENTRY 

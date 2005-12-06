@@ -63,6 +63,7 @@ public:
     STDMETHODIMP Quit();
     STDMETHODIMP ShowRecent();
     STDMETHODIMP BeginFlickrShare(BSTR filePath);
+    STDMETHODIMP ShareLink(BSTR url, BSTR title);
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -72,7 +73,6 @@ public:
     void showMenu(UINT buttonFlag);
     void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
     void displaySharedLink(BSTR postId);
-    void showShareWindow(BSTR title, BSTR url);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8

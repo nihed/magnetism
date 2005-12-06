@@ -15,8 +15,9 @@ class DLLEXPORT HippoRegKey
 {
 public:
     HippoRegKey(HKEY         parentKey,
-                const WCHAR *subKey,
-                bool         writable);
+                const WCHAR *subkeyFormat,
+                bool         writable,
+                ...);
     ~HippoRegKey(void);
 
     bool loadString(const WCHAR *valueName,
@@ -24,7 +25,7 @@ public:
     bool loadBool(const WCHAR *valueName,
                   bool        *result);
     bool saveString(const WCHAR *valueName, 
-                    BSTR         str);
+                    const WCHAR *str);
     bool saveBool(const WCHAR *valueName, 
                   bool         value);
 private:

@@ -4,23 +4,32 @@
  **/
 #include "stdafx.h"
 #include <limits.h>
+#include <stdarg.h>
 #include "HippoUtil.h"
 #include "HippoRegKey.h"
 
 HippoRegKey::HippoRegKey(HKEY         parentKey,
-                         const WCHAR *subKey,
-                         bool         writable)
+                         const WCHAR *subkeyFormat,
+                         bool         writable,
+                         ...)
 {
+    WCHAR subkey[MAX_PATH];
+    va_list vap;
+
+    va_start(vap, writable);
+    StringCchVPrintf(subkey, MAX_PATH, subkeyFormat, vap);
+    va_end(vap);
+
     key_ = NULL;
     if (writable) {
-        RegCreateKeyEx(HKEY_CURRENT_USER, 
-                       subKey,
-                       NULL, NULL, 
-                       REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL,
-                       &key_, NULL);
+        LONG result = RegCreateKeyEx(parentKey, 
+                                     subkey,
+                                     NULL, NULL, 
+                                     REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL,
+                                     &key_, NULL);
     } else {
-        RegOpenKeyEx(HKEY_CURRENT_USER, 
-                     subKey,
+        RegOpenKeyEx(parentKey, 
+                     subkey,
                      0, KEY_READ, 
                      &key_);
     }
@@ -78,13 +87,13 @@ HippoRegKey::~HippoRegKey(void)
 
 bool 
 HippoRegKey::saveString(const WCHAR *valueName, 
-                        BSTR         str)
+                        const WCHAR *str)
 {
     if (!key_)
         return false;
 
     if (str) {
-        unsigned int len = ::SysStringLen(str);
+        size_t len = wcslen(str);
         if (sizeof(WCHAR) * (len + 1) > UINT_MAX)
             return false;
 

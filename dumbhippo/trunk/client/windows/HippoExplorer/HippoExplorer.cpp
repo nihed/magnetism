@@ -7,10 +7,12 @@
 #include "stdafx.h"
 #include "ClassFactory.h"
 #include "Globals.h"
+#include "Resource.h"
 
 #include <HippoUtil.h>
 #include <HippoUtil_i.c>
 #include <HippoRegistrar.h>
+#include <HippoRegKey.h>
 #include "HippoExplorer_h.h"
 #include "HippoExplorer_i.c"
 
@@ -83,6 +85,7 @@ DllGetClassObject(const CLSID &classID,
 
     if (!IsEqualCLSID(classID, CLSID_HippoEmbed) &&
         !IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
+        !IsEqualCLSID(classID, CLSID_HippoToolbarAction) &&
         !IsEqualCLSID(classID, CLSID_HippoTracker)) {
         return CLASS_E_CLASSNOTAVAILABLE;
     }
@@ -95,6 +98,70 @@ DllGetClassObject(const CLSID &classID,
        
     hr = classFactory->QueryInterface(ifaceID, result);
     classFactory->Release();
+
+    return hr;
+}
+
+static HRESULT
+registerToolbarAction(HippoRegistrar *registrar)
+{
+    WCHAR iconPath[MAX_PATH];
+    WCHAR *extensionStr = NULL;
+    WCHAR *classStr = NULL;
+    HRESULT hr;
+
+    // See http://msdn.microsoft.com/workshop/browser/ext/tutorials/button.asp; Note that the
+    // the Icon/HotIcon strings there are buggy - there must be no comma after the space
+    // to point to an embedded resource
+
+#define CHECK_BOOL(expr)        \
+    do {                        \
+        if (!expr) {            \
+            hr = E_FAIL;        \
+            goto out;           \
+        }                       \
+    } while (0)
+    
+    hr = registrar->registerInprocServer(CLSID_HippoToolbarAction,
+                                         TEXT("Hippo Toolbar Action"));
+    if (FAILED(hr))
+        return hr;
+
+    hr = StringFromIID(GUID_HippoToolbarButton, &extensionStr);
+    if (FAILED(hr))
+        return hr;
+
+    HippoRegKey key(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Internet Explorer\\Extensions\\%s", TRUE,
+                    extensionStr);
+    CHECK_BOOL(key.saveString(L"Default Visible", L"Yes"));
+    CHECK_BOOL(key.saveString(L"ButtonText", L"Share Link"));
+    CHECK_BOOL(key.saveString(L"MenuText", L"Share Link..."));
+    CHECK_BOOL(key.saveString(L"MenuStatusBar", L"Share the current web page via DumbHippo"));
+
+    hr = StringCchPrintf(iconPath, MAX_PATH, L"%s,%d", registrar->getModulePath(), IDI_DUMBHIPPO_HOT);
+    if (FAILED(hr))
+        goto out;
+    CHECK_BOOL(key.saveString(L"HotIcon", iconPath));
+
+    hr = StringCchPrintf(iconPath, MAX_PATH, L"%s,%d", registrar->getModulePath(), IDI_DUMBHIPPO);
+    if (FAILED(hr))
+        goto out;
+    CHECK_BOOL(key.saveString(L"Icon", iconPath));
+
+    CHECK_BOOL(key.saveString(L"CLSID", L"{1FBA04EE-3024-11d2-8F1F-0000F87ABD16}"));
+    
+    hr = StringFromIID(CLSID_HippoToolbarAction, &classStr);
+    if (FAILED(hr))
+        goto out;
+    CHECK_BOOL(key.saveString(L"ClsidExtension", classStr));
+
+#undef CHECK_BOOL
+
+out:
+    if (classStr)
+        CoTaskMemFree(classStr);
+    if (extensionStr)
+        CoTaskMemFree(extensionStr);
 
     return hr;
 }
@@ -135,6 +202,8 @@ DllRegisterServer(void)
                                         TEXT("Hippo Embed"));
     if (FAILED(hr))
         return hr;
+
+    registerToolbarAction(&registrar);
 
     return S_OK;
 }

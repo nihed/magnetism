@@ -36,6 +36,12 @@ HippoRegistrar::~HippoRegistrar()
     free(modulePath_);
 }
 
+WCHAR *
+HippoRegistrar::getModulePath()
+{
+    return modulePath_;
+}
+
 HRESULT
 HippoRegistrar::registerTypeLib()
 {

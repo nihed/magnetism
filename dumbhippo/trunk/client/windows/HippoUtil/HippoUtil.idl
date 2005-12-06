@@ -29,6 +29,8 @@ library HippoUtil {
         HRESULT ShowRecent();
         [id(105), helpstring("Upload a photo file to flickr and share link to it")]
         HRESULT BeginFlickrShare([in] BSTR path);
+        [id(106), helpstring("Share a specific URL")]
+        HRESULT ShareLink([in] BSTR url, [in] BSTR title);
     }
     [
         uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble

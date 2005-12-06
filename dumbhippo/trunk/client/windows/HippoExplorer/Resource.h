@@ -10,6 +10,7 @@
 #define IDC_HIPPOEXPLORER               109
 #define IDR_MAINFRAME                   128
 #define IDI_DUMBHIPPO                   130
+#define IDI_DUMBHIPPO_HOT               131
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

@@ -137,6 +137,9 @@
 				RelativePath=".\HippoExplorerBar.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoToolbarAction.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoTracker.cpp">
 			</File>
 			<File
@@ -182,6 +185,9 @@
 				RelativePath=".\HippoExplorerBar.h">
 			</File>
 			<File
+				RelativePath=".\HippoToolbarAction.h">
+			</File>
+			<File
 				RelativePath=".\HippoTracker.h">
 			</File>
 			<File
@@ -197,6 +203,9 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
 				RelativePath=".\DumbHippo.ico">
+			</File>
+			<File
+				RelativePath=".\DumbHippoHot.ico">
 			</File>
 			<File
 				RelativePath=".\HippoExplorer.rc">

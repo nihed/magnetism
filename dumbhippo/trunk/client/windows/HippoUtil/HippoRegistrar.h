@@ -19,6 +19,7 @@ public:
     HippoRegistrar(const WCHAR *dllName);
     ~HippoRegistrar();
 
+    WCHAR *getModulePath();
     HRESULT registerTypeLib();
     HRESULT registerClassImplCategories(const CLSID &classID, 
                                         ULONG        cCategories,
