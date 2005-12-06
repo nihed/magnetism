@@ -42,7 +42,8 @@ HippoUIUtil::splitString(const HippoBSTR       &str,
         if (!item)
             break;
 
-        result.append(HippoBSTR(item - strData, strData));
+        unsigned len = item - strData > UINT_MAX ? UINT_MAX : item - strData;
+        result.append(HippoBSTR(len, strData));
         strData = item + 1;
     }
 

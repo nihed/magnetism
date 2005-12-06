@@ -219,7 +219,7 @@ HippoIE::create()
     GetHGlobalFromStream(iceCream, &hg);
     buf = GlobalLock(hg);
 
-    IDispatch *docDispatch;
+    HippoPtr<IDispatch> docDispatch;
     browser->get_Document(&docDispatch);
     HippoQIPtr<IHTMLDocument2> doc(docDispatch);
     HRESULT hresult = S_OK;
