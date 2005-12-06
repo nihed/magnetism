@@ -39,6 +39,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -72,6 +73,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private PostInfoSystem infoSystem;
 	
+	@EJB
+	private InvitationSystem invitationSystem;
+	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
@@ -83,7 +87,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients) throws GuidNotFoundException {
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients) throws GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// for each recipient, if it's a group we want to explode it into persons
@@ -96,7 +100,14 @@ public class PostingBoardBean implements PostingBoard {
 		// sort into persons and groups
 		for (GuidPersistable r : recipients) {
 			if (r instanceof Person) {
-				personRecipients.add(identitySpider.getBestResource((Person) r));
+				Person p = (Person) r;
+				Resource bestResource = identitySpider.getBestResource(p);
+				personRecipients.add(bestResource);
+				if (inviteRecipients) {
+					// this is smart about doing nothing if the person is already invited
+					// or already has an account (it's also very cheap if bestResource is an Account)
+					invitationSystem.createInvitation(poster, bestResource);
+				}
 			} else if (r instanceof Group) {
 				groupRecipients.add((Group) r);
 			} else {

@@ -24,11 +24,7 @@
 	float:						left;
 	margin:						0.5em;
 	width:						150px;
-	height:						
 }
 .dhButton.share {
 	margin:						0.75em;	
-}
-.comboBoxOptions, table.dojoComboBox {
-	z-index:					2;
 }

@@ -242,7 +242,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
 		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, false);
 	}
 
 	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
@@ -272,7 +272,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients);		
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, true);		
 	}
 	
 	public void doRenamePerson(User user, String name) {

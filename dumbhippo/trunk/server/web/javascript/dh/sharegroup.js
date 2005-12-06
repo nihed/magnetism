@@ -25,7 +25,7 @@ dh.sharegroup.submitButtonClicked = function() {
 						{ 
 							"groupId" : dhShareGroupId,
 						  	"description" : descriptionHtml,
-						  	"recipients" : commaRecipients,
+						  	"recipients" : commaRecipients
 						},
 						function(type, data, http) {
 							dojo.debug("sharegroup got back data " + dhAllPropsAsString(data));
@@ -55,22 +55,22 @@ dh.sharegroup.loadContacts = function() {
 			},
 			function(type, error, http) {
 				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
+				alert("could not get your contacts: " + error);
 				
 				// note that we don't cache an empty result set, we will retry instead...
 			});
 }
 
-
 dh.sharegroup.init = function() {
 	dojo.debug("dh.sharegroup.init");
 			
 	// most of the dojo is set up now, so show the widgets
-	dh.util.showId("dhShareGroupForm");
+	dh.util.showId("dhShareForm");
 	
 	dh.share.init();
 	
 	// set default focus
-	dh.share.recipientComboBox.textInputNode.focus();
+	dh.share.recipientComboBox.focus();
 	
 	// load up your contacts
 	dh.sharegroup.loadContacts();

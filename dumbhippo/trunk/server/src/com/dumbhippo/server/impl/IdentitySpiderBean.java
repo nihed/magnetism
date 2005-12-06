@@ -71,6 +71,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
 	
 	public User lookupUserByResource(Resource resource) {
+		if (resource instanceof Account)
+			return ((Account)resource).getOwner();
+		
 		try {
 			return (User) em.createQuery(LOOKUP_PERSON_BY_RESOURCE_QUERY)
 			.setParameter("resource", resource)

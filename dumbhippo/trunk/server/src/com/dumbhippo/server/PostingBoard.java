@@ -32,7 +32,7 @@ public interface PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients)
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients, boolean inviteRecipients)
 		throws GuidNotFoundException;
 
 	public void doShareLinkTutorialPost(Person recipient);

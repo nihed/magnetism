@@ -18,10 +18,10 @@ div.header {
 	color:		blue;	
 }
 
-#dhShareLinkForm {
+#dhShareForm {
 	margin: 						1em;	
 }
-#dhShareLinkForm table.url {
+#dhShareForm table.url {
 	width:							100%;		
 }
 
@@ -116,7 +116,7 @@ td.dhRecipientName {
 	float:						right;
 }
 
-#dhShareLinkDescription {
+#dhShareDescription {
 	min-height:					2em;
 }
 

@@ -45,10 +45,6 @@ body {
 	background-color: 				#fff;
 }
 
-div {
-
-}
-
 form {
 	margin:							0;
 }
@@ -143,7 +139,13 @@ form.inlineEditBox input[type=text] {
 }
 
 /* Used to hide elements */
-.dhInvisible, .dhInvisible * {
+/* The rule used to apply to children like this: 
+  .dhInvisible, .dhInvisible * { 
+   which hopefully wasn't important, because it seems to cause 
+   IE to not re-show tables in unexplained/unreproducible situations
+   when you remove dhInvisible again
+  */
+.dhInvisible {
 	display:	none;
 }
 
@@ -182,13 +184,6 @@ form.inlineEditBox input[type=text] {
 #dojoDebug {
 	font-size:	small;
 	font-style: italic;
-}
-
-/* This is a dojo workaround; without it, combo box dropdown gets underneath our 
- * relative/absolute elements.  Doesn't work in IE yet
- */
-div.comboBoxOptions {
-	z-index: 3;
 }
 
 /*

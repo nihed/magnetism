@@ -447,5 +447,5 @@ dh.share.init = function() {
 	// rich text areas can't exist when display:none, so we have to create it after showing
 	dh.share.descriptionRichText = dojo.widget.fromScript("richtext", 
 															 {}, // props,
-															 document.getElementById("dhShareLinkDescription"));
+															 document.getElementById("dhShareDescription"));
 }

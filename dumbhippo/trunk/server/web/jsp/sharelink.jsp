@@ -19,7 +19,7 @@
 
 	<div id="dhMain">
 		<!--  invisible at first to avoid flicker while we set up dojo widgets -->
-		<div id="dhShareLinkForm" class="dhInvisible">
+		<div id="dhShareForm" class="dhInvisible">
 			<div class="dhVerticalPadding"></div>
 			
 			<table cols="1" class="url">
@@ -51,17 +51,19 @@
 			<div class="dhLabel">Share <u>W</u>ith:</div>
 			
 			<table>
+			<tbody>
 			<tr>
 			<td>
 				<input autocomplete="off" accesskey="w"
 						type="text" id="dhRecipientComboBox" class="dhText"/>
-				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div><!-- this could be anywhere in the document really -->
+				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div>
 			</td>
 			<td>
 				<input type="button" value="Add" accesskey="a" class="dhButton" 
 						onclick="dh.share.doAddRecipientFromCombo();"/>
 			</td>
 			</tr>
+			</tbody>
 			</table>
 			
 			<div id="dhRecipientsError" class="dhValidityError"></div>
@@ -119,7 +121,7 @@
 			<div class="dhVerticalPadding"></div>
 	
 			<div class="dhLabel"><u>D</u>escription:</div>
-			<div class="dhTextArea" id="dhShareLinkDescription">
+			<div class="dhTextArea" id="dhShareDescription">
 			</div>
 	
 			<div class="dhVerticalPadding"></div>
@@ -129,8 +131,8 @@
 	
 			<div class="dhVerticalPadding"></div>
 	
-			<div id="dojoDebug"/> <!-- where to put dojo debug spew -->
-		</div><!-- end dhShareLinkForm -->
+			<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
+		</div><!-- end dhShareForm -->
 
 	</div>
 </body>

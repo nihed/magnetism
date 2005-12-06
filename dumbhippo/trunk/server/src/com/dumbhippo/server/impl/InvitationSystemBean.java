@@ -30,6 +30,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -136,8 +137,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv.getAuthURL(configuration.getProperty(HippoProperty.BASEURL));
 	}
 	
-	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {
-		
+	public Pair<CreateInvitationResult,InvitationToken> createInvitation(User inviter, Resource invitee) {
 		// be sure the invitee is our contact (even if we 
 		// end up not sending the invite)
 		spider.createContact(inviter, invitee);
@@ -147,15 +147,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		User user = spider.lookupUserByResource(invitee);
 		if (user != null) {
 			logger.debug("not inviting '" + invitee + "' due to existing account " + user);
-			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
+			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
 		}
 		
-		boolean needSendNotification = false;
-		String ret = null;
+		boolean created = false;
 		
 		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null || iv.isExpired()) {
-			needSendNotification = true; // always send if expired, since it's been a while
+			created = true; // renewing an expiration counts as creating (causes us to send new email)
 			if (iv != null) {
 				// create a new auth key that isn't expired,
 				// preserving current inviter list etc.
@@ -180,7 +179,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				account.deductInvitations(1);
 		} else {
 			if (!iv.getInviters().contains(inviter))
-				needSendNotification = true;
+				created = true; // adding you as an inviter counts as creating
 			
 			// this changes the creation date, extending the expiration 
 			// time limit
@@ -188,17 +187,33 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// we don't deduct an invitation from your account if you just "pile on" to an existing one
 		}
 		
-		if (needSendNotification) {
+		if (created) {
+			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.INVITE_CREATED, iv);
+		} else {
+			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_INVITED, iv);
+		}
+	}
+	
+	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {	
+		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, invitee);
+		CreateInvitationResult result = p.getFirst();
+		InvitationToken iv = p.getSecond();
+		
+		if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
+			User user = spider.lookupUserByResource(invitee);
+			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
+		} else if (result == CreateInvitationResult.INVITE_CREATED) {
 			if (invitee instanceof EmailResource) {
 				sendEmailNotification(iv, inviter, subject, message);
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
+			return null;
+		} else if (result == CreateInvitationResult.ALREADY_INVITED){
+			return "You had already invited " + invitee.getHumanReadableString() + " so we didn't send them another mail.";
 		} else {
-			ret = "You had already invited " + invitee.getHumanReadableString() + " so we didn't send them another mail.";
+			return null;
 		}
-		
-		return ret;
 	}
 
 	public String sendEmailInvitation(User inviter, String email, String subject, String message) {

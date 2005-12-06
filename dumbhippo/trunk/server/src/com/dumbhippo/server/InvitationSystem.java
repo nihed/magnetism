@@ -25,9 +25,24 @@ public interface InvitationSystem {
 	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras);
 	
 	/**
+	 * Ensure the invitation from inviter to invitee exists, if it makes sense. 
+	 * Returns the current status of that invitation, and the created invitation token 
+	 * if any (this will be null if none was created or exists).
+	 * Does not send out any invitation emails or anything.
+	 * 
+	 * Use this for "implicit invitation" when sharing something with someone.
+	 * 
+	 * @param inviter the inviter
+	 * @param invitee who to invite
+	 * @return the outcome
+	 */
+	public Pair<CreateInvitationResult,InvitationToken> createInvitation(User inviter, Resource invitee);
+	
+	/**
+	 * Does an "explicit invitation"
 	 * Add inviter as a person wanting to invite the owner
 	 * of an email address.  Adds invitee as contact of inviter 
-	 * if they aren't already; sends out the invite. Doesn't do 
+	 * if they aren't already; sends out the invite via email. Doesn't do 
 	 * anything if the inviter has already invited the invitee.
 	 * @see createGetInvitation
 	 * 
@@ -42,7 +57,7 @@ public interface InvitationSystem {
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
 	 * Adds the invitee as a contact if they weren't already. Sends out
-	 * the invitation to the resource if needed.
+	 * the invitation to the resource if needed. This is an "explicit invitation"
 	 * 
 	 * @param inviter the person doing the inviting
 	 * @param invitee the person being invited
