@@ -152,6 +152,9 @@
 				RelativePath=".\HippoUI.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoUIUtil.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoUpgrader.cpp">
 			</File>
 			<File
@@ -209,6 +212,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUI.h">
+			</File>
+			<File
+				RelativePath=".\HippoUIUtil.h">
 			</File>
 			<File
 				RelativePath=".\HippoUpgrader.h">

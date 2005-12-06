@@ -8,6 +8,7 @@ class HippoUI;
 class HippoIEWindowCallback
 {
 public:
+    virtual void onDocumentComplete() = 0;
     // Return TRUE to allow close, FALSE to disallow
     virtual bool onClose(HWND window) {
         return TRUE;
@@ -34,6 +35,10 @@ private:
         HippoIEWindow *win_;
         HippoIEWindowIECallback(HippoIEWindow *win) {
             win_ = win;
+        }
+        void onDocumentComplete(void) {
+            if (win_->cb_)
+                win_->cb_->onDocumentComplete();
         }
         void onError(WCHAR *errText);
     };

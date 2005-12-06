@@ -22,10 +22,23 @@ HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *extern
     callback_ = cb;
     external_ = external;
     haveTransform_ = false;
+
+    HippoPtr<ITypeLib> typeLib;
+    if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
+        typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
+
 }
 
 HippoIE::~HippoIE(void)
 {
+    if (connectionPoint_) {
+        if (connectionCookie_) {
+            connectionPoint_->Unadvise(connectionCookie_);
+            connectionCookie_ = 0;
+        }
+        connectionPoint_ = NULL;
+    }
+    ie_->Release();
 }
 
 HRESULT
@@ -46,9 +59,12 @@ HippoIE::invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, va
     int argc;
     HippoPtr<IDispatch> docDispatch;
     browser_->get_Document(&docDispatch);
+    assert(docDispatch != NULL);
     HippoQIPtr<IHTMLDocument2> doc(docDispatch);
+    assert(doc != NULL);
     HippoPtr<IDispatch> script;
     doc->get_Script(&script);
+    assert(script != NULL);
 
     DISPID id = NULL;
     HRESULT result = script->GetIDsOfNames(IID_NULL,&(funcNameStr.m_str),1,LOCALE_SYSTEM_DEFAULT,&id);
@@ -143,6 +159,17 @@ HippoIE::create()
     vEmpty.vt = VT_EMPTY;
     browser->Navigate2(&vTargetUrl, &vEmpty, &vEmpty, &vEmpty, &vEmpty);
     browser->put_Resizable(VARIANT_FALSE);
+
+    HippoQIPtr<IConnectionPointContainer> container(ie_);
+    if (container)
+    {
+        if (SUCCEEDED(container->FindConnectionPoint(DIID_DWebBrowserEvents2,
+            &connectionPoint_))) 
+        {
+            HippoQIPtr<IUnknown> unknown(static_cast<DWebBrowserEvents2 *>(this));
+            connectionPoint_->Advise(unknown, &connectionCookie_);
+        }
+    }
 
     if (!haveTransform_)
         return;
@@ -627,6 +654,8 @@ HippoIE::QueryInterface(const IID &ifaceID,
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
         *result = static_cast<IUnknown *>(static_cast<IDocHostUIHandler*>(this));
+    else if (IsEqualIID(ifaceID, IID_IDispatch))
+        *result = static_cast<IDispatch*>(this);
     else if (IsEqualIID(ifaceID, IID_IDocHostUIHandler))
         *result = static_cast<IDocHostUIHandler*>(this);
     else if (IsEqualIID(ifaceID, IID_IOleClientSite))
@@ -643,3 +672,73 @@ HippoIE::QueryInterface(const IID &ifaceID,
 }                                             
 
 HIPPO_DEFINE_REFCOUNTING(HippoIE)
+
+
+//////////////////////// IDispatch implementation ///////////////////
+
+STDMETHODIMP
+HippoIE::GetIDsOfNames (const IID   &iid,
+                             OLECHAR    **names,  
+                             unsigned int cNames,          
+                             LCID         lcid,                   
+                             DISPID *     dispID)
+{
+    return DispGetIDsOfNames(eventsTypeInfo_, names, cNames, dispID);
+}
+
+STDMETHODIMP
+HippoIE::GetTypeInfo (unsigned int infoIndex,  
+                           LCID         lcid,                  
+                           ITypeInfo  **ppTInfo)
+{
+   if (ppTInfo == NULL)
+      return E_INVALIDARG;
+
+   *ppTInfo = NULL;
+
+   if (infoIndex != 0)
+      return DISP_E_BADINDEX;
+
+   eventsTypeInfo_->AddRef();
+   *ppTInfo = eventsTypeInfo_;
+
+   return S_OK;
+}
+
+ STDMETHODIMP 
+ HippoIE::GetTypeInfoCount (unsigned int *pcTInfo)
+ {
+    if (pcTInfo == NULL)
+      return E_INVALIDARG;
+
+    *pcTInfo = 1;
+
+    return S_OK;
+ }
+  
+ STDMETHODIMP
+HippoIE::Invoke (DISPID        member,
+                      const IID    &iid,
+                      LCID          lcid,              
+                      WORD          flags,
+                      DISPPARAMS   *dispParams,
+                      VARIANT      *result,
+                      EXCEPINFO    *excepInfo,  
+                      unsigned int *argErr)
+ {
+     switch (member) {
+        case DISPID_DOCUMENTCOMPLETE:
+            if (dispParams->cArgs == 2 &&
+                dispParams->rgvarg[1].vt == VT_DISPATCH &&
+                dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
+            {
+                callback_->onDocumentComplete();
+                return S_OK;
+            } else {
+                return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+            }
+            break;
+        default:
+            return DISP_E_MEMBERNOTFOUND; // Or S_OK
+     }
+ }

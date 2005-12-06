@@ -56,6 +56,7 @@ private:
             bubble_ = bubble;
         }
         HippoBubble *bubble_;
+        void onDocumentComplete();
         void onError(WCHAR *text);
     };
     HippoBubbleIECallback *ieCallback_;

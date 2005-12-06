@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "HippoUI.h"
+#include "HippoUIUtil.h"
 #include ".\hipporemotewindow.h"
 #include <wininet.h>
 
@@ -25,30 +26,34 @@ HippoRemoteWindow::navigate(WCHAR *url)
 void
 HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare)
 {
+    showShare(urlToShare, titleOfShare, L"url");
+}
+
+void
+HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare, WCHAR *shareType)
+{
+    HippoArray<HippoBSTR> queryParamNames;
+    HippoArray<HippoBSTR> queryParamValues;
+
+    queryParamNames.append(HippoBSTR(L"next"));
+    queryParamValues.append(HippoBSTR(L"close"));
+    queryParamNames.append(HippoBSTR(L"url"));
+    queryParamValues.append(HippoBSTR(urlToShare));
+    queryParamNames.append(HippoBSTR(L"title"));
+    queryParamValues.append(HippoBSTR(titleOfShare));
+    queryParamNames.append(HippoBSTR(L"shareType"));
+    queryParamValues.append(HippoBSTR(shareType)); 
+
+    HippoBSTR queryString;
+    HippoUIUtil::encodeQueryString(queryString, queryParamNames, queryParamValues);
+
     HippoBSTR shareURL;
-
-    if (!SUCCEEDED (ui_->getRemoteURL(HippoBSTR(L"sharelink"), &shareURL)))
+    if (!SUCCEEDED (ui_->getRemoteURL(HippoBSTR(L"sharelink"), &shareURL))) {
         ui_->debugLogW(L"out of memory");
-    if (!SUCCEEDED (shareURL.Append(L"?next=close&url=")))
-        ui_->debugLogW(L"out of memory");
-
-    wchar_t encoded[1024] = {0}; 
-    DWORD len = sizeof(encoded)/sizeof(encoded[0]);
-
-    if (!SUCCEEDED (UrlEscape(urlToShare, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
-        ui_->debugLogW(L"out of memory");
-    if (!SUCCEEDED (shareURL.Append(encoded)))
-        ui_->debugLogW(L"out of memory");
-
-    if (!SUCCEEDED (shareURL.Append(L"&title=")))
-        ui_->debugLogW(L"out of memory");
-
-    encoded[0] = 0;
-    len = sizeof(encoded)/sizeof(encoded[0]);
-    if (!SUCCEEDED (UrlEscape(titleOfShare, encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
-        ui_->debugLogW(L"out of memory");
-    if (!SUCCEEDED (shareURL.Append(encoded)))
-        ui_->debugLogW(L"out of memory");
+        return;
+    }
+            
+    shareURL.Append(queryString);
 
     navigate(shareURL);
 }

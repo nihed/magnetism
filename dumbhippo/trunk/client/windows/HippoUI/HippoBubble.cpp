@@ -107,6 +107,11 @@ HippoBubble::moveResizeWindow()
     }
 }
 
+void HippoBubble::HippoBubbleIECallback::onDocumentComplete()
+{
+    bubble_->ui_->debugLogW(L"HippoBubble document complete");
+}
+
 void
 HippoBubble::HippoBubbleIECallback::onError(WCHAR *text) 
 {

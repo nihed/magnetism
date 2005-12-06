@@ -10,6 +10,7 @@
 class HippoIECallback
 {
 public:
+    virtual void onDocumentComplete() = 0;
     virtual void onError(WCHAR *errText) = 0;
 };
 
@@ -34,7 +35,8 @@ class HippoIE :
     public IOleInPlaceFrame,
     public IOleClientSite,
     public IOleInPlaceSite,
-    public IOleContainer
+    public IOleContainer,
+    public DWebBrowserEvents2
 {
 public:
 
@@ -62,6 +64,13 @@ public:
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
     STDMETHODIMP_(DWORD) AddRef();
     STDMETHODIMP_(DWORD) Release();
+
+    //IDispatch methods
+   STDMETHOD (GetIDsOfNames) (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
+   STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);                    
+   STDMETHOD (GetTypeInfoCount) (unsigned int *);
+   STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
+                       VARIANT *, EXCEPINFO *, unsigned int *);
 
     // IStorage
     STDMETHODIMP CreateStream(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStream ** ppstm);
@@ -145,6 +154,11 @@ private:
     HippoPtr<IWebBrowser2> browser_;
 
     HippoBSTR docSrc_;
+
+    HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2
+    DWORD connectionCookie_; // cookie for DWebBrowserEvents2 connection
+
+    HippoPtr<ITypeInfo> eventsTypeInfo_;
 
     bool haveTransform_;
     HippoBSTR styleSrc_;
