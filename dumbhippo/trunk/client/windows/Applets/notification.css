@@ -22,7 +22,15 @@ body
     text-align: center;
 }
 
-#dh-notification-photo 
+#dh-notification-photo
+{
+    border-style: none; 
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1em;
+}
+
+.dh-notification-photo
 {
     /* Right now the Java code scales headshots to a max of 48px in each
      * dimension, but preserving aspect ratio. If height < width the below
@@ -35,10 +43,6 @@ body
      */
     width: 48px;
     height: 48px;
-    border-style: none; 
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 1em;
 }
 
 #dh-notification-photolink {
@@ -121,6 +125,10 @@ img.dh-notification-navigation
 #dh-notification-viewers-photo
 {
     float: left;
+}
+
+.dh-notification-viewers-photo
+{
     width: 2.4em;
     height: 2.4em;
 }
