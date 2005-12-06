@@ -21,11 +21,11 @@ public:
             delete[] elements_;
     }
 
-    T& operator[](ULONG i) {
+    T& operator[](ULONG i) const {
         return elements_[i];
     }
 
-    ULONG length() {
+    ULONG length() const {
         return length_;
     }
 

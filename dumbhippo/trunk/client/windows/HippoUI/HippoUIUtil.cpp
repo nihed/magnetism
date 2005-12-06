@@ -1,11 +1,19 @@
+/* HippoUIUtil.cpp: Some useful string and URL manipulation functions
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
-#include ".\hippouiutil.h"
+#include "HippoUIUtil.h"
 
 void 
-HippoUIUtil::encodeQueryString(HippoBSTR &url, HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues)
+HippoUIUtil::encodeQueryString(HippoBSTR                   &url, 
+                               const HippoArray<HippoBSTR> &paramNames, 
+                               const HippoArray<HippoBSTR> &paramValues)
 {
     url = L"?";
     bool first = TRUE;
+
+    assert(paramNames.length() == paramValues.length());
 
     for (unsigned int i = 0; i < paramNames.length(); i++) {
         if (i > 0)
@@ -23,17 +31,20 @@ HippoUIUtil::encodeQueryString(HippoBSTR &url, HippoArray<HippoBSTR> &paramNames
 }
 
 void 
-HippoUIUtil::splitString(HippoBSTR str, WCHAR separator, HippoArray<HippoBSTR> &result) {
-    WCHAR *strData = str.m_str;
-    WCHAR *item = wcschr(strData, separator);
+HippoUIUtil::splitString(const HippoBSTR       &str, 
+                         WCHAR                  separator, 
+                         HippoArray<HippoBSTR> &result) 
+{
+    const WCHAR *strData = str.m_str;
+    
+    while (true) {
+        const WCHAR *item = wcschr(strData, separator);
+        if (!item)
+            break;
 
-    while (item) {
-        size_t count = item - strData;
-        HippoBSTR subStr(count, L"");
-        wcsncpy(subStr.m_str, item, count);
-        result.append(subStr);
+        result.append(HippoBSTR(item - strData, strData));
         strData = item + 1;
-        item = wcschr(strData, separator);
     }
+
     result.append(HippoBSTR(strData));
 }

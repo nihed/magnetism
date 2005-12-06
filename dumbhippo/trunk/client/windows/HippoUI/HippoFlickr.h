@@ -1,3 +1,7 @@
+/* HippoFlickr.cpp: Integration with Flickr services
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #pragma once
 
 #include <exdisp.h>

@@ -1,7 +1,12 @@
+/* HippoRemoteWindow.cpp: Wrapper class around HippoIEWindow with application specific
+ * knowledge about particular DumbHippo URLs.
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
 #include "HippoUI.h"
 #include "HippoUIUtil.h"
-#include ".\hipporemotewindow.h"
+#include "HippoRemoteWindow.h"
 #include <wininet.h>
 
 HippoRemoteWindow::HippoRemoteWindow(HippoUI *ui, WCHAR *title, HippoIEWindowCallback *ieCb)

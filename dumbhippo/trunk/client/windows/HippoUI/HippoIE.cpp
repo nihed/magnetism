@@ -1,5 +1,9 @@
+/* HippoIE.cpp: Embed an instance if the IE web browser control
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
-#include ".\hippoie.h"
+#include "HippoIE.h"
 #include <mshtml.h>
 
 #import <msxml3.dll>  named_guids

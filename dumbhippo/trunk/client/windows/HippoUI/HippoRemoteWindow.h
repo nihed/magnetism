@@ -1,5 +1,10 @@
+/* HippoRemoteWindow.h: Wrapper class around HippoIEWindow with application specific
+ * knowledge about particular DumbHippo URLs.
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #pragma once
-#include "hippoiewindow.h"
+#include "HippoIEWindow.h"
 
 class HippoUI;
 

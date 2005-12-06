@@ -1,5 +1,9 @@
+/* HippoIEWindow.cpp: Toplevel window with an embedded IE web browser control
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
-#include ".\hippoiewindow.h"
+#include "HippoIEWindow.h"
 #include "HippoUI.h"
 
 static const WCHAR *CLASS_NAME = L"HippoIEWindow";

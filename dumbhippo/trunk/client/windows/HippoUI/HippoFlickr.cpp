@@ -1,5 +1,9 @@
+/* HippoFlickr.cpp: Integration with Flickr services
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
-#include ".\hippoflickr.h"
+#include "HippoFlickr.h"
 #include "HippoUI.h"
 #include <HippoRegKey.h>
 #include "HippoRemoteWindow.h"

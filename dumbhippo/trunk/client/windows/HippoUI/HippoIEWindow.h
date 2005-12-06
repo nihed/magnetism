@@ -1,3 +1,7 @@
+/* HippoIEWindow.h: Toplevel window with an embedded IE web browser control
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #pragma once
 
 #include <HippoUtil.h>

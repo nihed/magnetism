@@ -1,3 +1,7 @@
+/* HippoIE.h: Embed an instance if the IE web browser control
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #pragma once
 
 #include "stdafx.h"

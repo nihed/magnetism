@@ -1,3 +1,7 @@
+/* HippoHTTP.cpp: Wrapper class around WinINET for HTTP operation
+ *
+ * Copyright Red Hat, Inc. 2005
+ */
 #include "StdAfx.h"
 #include "HippoHTTP.h"
 #include <glib.h>
