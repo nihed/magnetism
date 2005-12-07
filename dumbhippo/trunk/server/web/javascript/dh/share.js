@@ -19,6 +19,7 @@ dh.share.allKnownIds = {};
 dh.share.selectedRecipients = [];
 
 dh.share.recipientComboBox = null;
+dh.share.recipientComboBoxButton = null;
 dh.share.descriptionRichText = null;
 dh.share.autoSuggest = null;
 
@@ -347,6 +348,18 @@ dh.share.getEligibleRecipients = function() {
 
 	var results = new Array();
 
+	if (dh.share.autoSuggest.menuMode) {
+		// in menu mode, we just show everyone according to their name
+		for (var id in dh.share.allKnownIds) {
+			var obj = dh.share.allKnownIds[id];
+			var node = document.createElement("li");
+			node.appendChild(document.createTextNode(obj.displayName));
+			results.push([node, obj.id]);			
+		}
+		
+		return results;
+	}
+
 	var matchNameFunc = function (word, match) {
 		// Check whole word first
 		if (word.toLowerCase().indexOf(match.toLowerCase()) == 0) {
@@ -384,6 +397,9 @@ dh.share.getEligibleRecipients = function() {
 	}
 
 	var searchStr = dh.share.autoSuggest.inputText;
+
+	if (searchStr.length == 0)
+		return results; // no eligible when the input is empty
 
 	for (var id in dh.share.allKnownIds) {
 		var obj = dh.share.allKnownIds[id];
@@ -440,7 +456,8 @@ dh.share.init = function() {
 	dojo.debug("dh.share.init");
 			
 	dh.share.recipientComboBox = document.getElementById('dhRecipientComboBox');
-	dh.share.autoSuggest = new dh.autosuggest.AutoSuggest(dh.share.recipientComboBox);
+	dh.share.recipientComboBoxButton = document.getElementById('dhRecipientComboBoxButton');
+	dh.share.autoSuggest = new dh.autosuggest.AutoSuggest(dh.share.recipientComboBox, dh.share.recipientComboBoxButton);
 	dh.share.autoSuggest.setOnSelectedFunc(dh.share.recipientSelected);
 	dh.share.autoSuggest.setGetEligibleFunc(dh.share.getEligibleRecipients);
 	

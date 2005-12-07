@@ -93,18 +93,24 @@ email to joekepley at yahoo (dot) com
 //counter to help create unique ID's
 dh.autosuggest.idCounter = 0;
 
-dh.autosuggest.AutoSuggest = function(elem)
+dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 {
 
 	//The 'me' variable allow you to access the AutoSuggest object
 	//from the elem's event handlers defined below.
 	var me = this;
 
-	//A reference to the element we're binding the list to.
-	this.elem = elem;
+	//A reference to the input element we're binding the list to.
+	this.elem = entryNode;
+
+	// A reference to the button for showing the full list; optional, may be null
+	this.button = buttonNode;
 
 	//The text input by the user.
 	this.inputText = null;
+
+	// true if the dropdown is currently based on clicking the button
+	this.menuMode = false;
 
 	//A pointer to the index of the highlighted eligible item. -1 means nothing highlighted.
 	this.highlighted = 0;
@@ -115,7 +121,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	// save previous body onclick event handler if any, just to 
 	// try to avoid breaking the rest of the page; not very robust
 	// since we can't grab the pointer
-	this.oldBodyOnClick = null;
+	this.oldBodyOnMouseDown = null;
 
 	this.showing = false;
 
@@ -133,15 +139,15 @@ dh.autosuggest.AutoSuggest = function(elem)
 	//The browsers' own autocomplete feature can be problematic, since it will 
 	//be making suggestions from the users' past input.
 	//Setting this attribute should turn it off.
-	elem.setAttribute("autocomplete","off");
+	this.elem.setAttribute("autocomplete","off");
 
 	//We need to be able to reference the elem by id. If it doesn't have an id, set one.
-	if(!elem.id)
+	if(!this.elem.id)
 	{
 		var id = "autosuggest" + dh.autosuggest.idCounter;
 		dh.autosuggest.idCounter++;
 
-		elem.id = id;
+		this.elem.id = id;
 	}
 
 	/********************************************************
@@ -150,8 +156,10 @@ dh.autosuggest.AutoSuggest = function(elem)
 	Esc key = get rid of the autosuggest dropdown
 	Up/down arrows = Move the highlight up and down in the suggestions.
 	********************************************************/
-	elem.onkeydown = function(ev)
+	this.elem.onkeydown = function(ev)
 	{
+		me.menuMode = false;
+	
 		var key = me.getKeyCode(ev);
 
 		switch(key)
@@ -175,7 +183,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 			//It's impossible to cancel the Tab key's default behavior. 
 			//So this undoes it by moving the focus back to our field 
 			//right after the event completes.
-			setTimeout("document.getElementById('" + elem.id + "').focus()",0);
+			setTimeout("document.getElementById('" + me.elem.id + "').focus()",0);
 			me.changeHighlight(key);
 			break;
 
@@ -212,7 +220,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 	If the text is of sufficient length, and has been changed, 
 	then display a list of eligible suggestions.
 	********************************************************/
-	elem.onkeyup = function(ev) 
+	this.elem.onkeyup = function(ev) 
 	{
 		var key = me.getKeyCode(ev);
 		switch(key)
@@ -235,17 +243,43 @@ dh.autosuggest.AutoSuggest = function(elem)
 		}
 	};
 
+	if (this.button) {
+		this.button.onmousedown = function(ev) {
+			me.cancelEvent(ev);
+		
+			if (me.menuMode)
+				me.menuMode = false;
+			else
+				me.menuMode = true;
+
+			// changing to menu mode effectively means "eligibleChanged"
+			me.checkUpdate(true);
+			
+			return false;
+		}
+
+		var cancel = function(ev) {
+			me.cancelEvent(ev);
+			return false;
+		}
+
+		// try to kill other actions
+		this.button.onclick = cancel;
+		this.button.ondblclick = cancel;
+		this.button.onmouseup = cancel;
+	}
+
 	// see if we need to update the dropdown
 	this.checkUpdate = function(eligibleChanged) {
 		var update = false;
-		if (me.elem.value != me.inputText && me.elem.value.length > 0)
+		if (me.elem.value != me.inputText)
 		{
 			update = true;
 		}
 		
 		me.inputText = me.elem.value;
 		
-		if (eligibleChanged && me.inputText.length > 0)
+		if (eligibleChanged)
 			update = true;
 
 		if (update) {
@@ -293,9 +327,10 @@ dh.autosuggest.AutoSuggest = function(elem)
 			this.div.style.display = 'block';
 			this.highlighted = 0;
 			
-			this.oldBodyOnClick = document.body.onclick;
-			document.body.onclick = function(ev) {
+			this.oldBodyOnMouseDown = document.body.onclick;
+			document.body.onmousedown = function(ev) {
 				me.hideDiv();
+				return true;
 			}
 			this.showing = true;
 		}
@@ -309,7 +344,8 @@ dh.autosuggest.AutoSuggest = function(elem)
 		if (this.showing) {
 			this.div.style.display = 'none';
 			this.highlighted = -1;
-			document.body.onclick = this.oldBodyOnClick;
+			this.menuMode = false;
+			document.body.onmousedown = this.oldBodyOnMouseDown;
 			this.showing = false;
 		}
 	};
@@ -337,26 +373,53 @@ dh.autosuggest.AutoSuggest = function(elem)
 		}
 	};
 
+	this.getElementPosition = function(el) {
+		var point = { "x" : 0, "y" : 0 };
+		
+		while (el.offsetParent && el.tagName.toUpperCase() != 'BODY')
+		{
+			point.x += el.offsetLeft;
+			point.y += el.offsetTop;
+			el = el.offsetParent;
+		}
+
+		point.x += el.offsetLeft;
+		point.y += el.offsetTop;
+	
+		return point;
+	}
+
 	/********************************************************
 	Position the dropdown div below the input text field.
 	********************************************************/
 	this.positionDiv = function()
 	{
-		var el = this.elem;
-		var x = 0;
-		var y = el.offsetHeight;
-	
-		//Walk up the DOM and add up all of the offset positions.
-		while (el.offsetParent && el.tagName.toUpperCase() != 'BODY')
-		{
-			x += el.offsetLeft;
-			y += el.offsetTop;
-			el = el.offsetParent;
+		var x;
+		var y;
+		var entryPos = this.getElementPosition(this.elem);
+		var buttonPos;
+		if (this.button)
+			buttonPos = this.getElementPosition(this.button);
+		else
+			buttonPos = entryPos;
+		
+		x = entryPos.x;
+		y = entryPos.y + this.elem.offsetHeight;
+		// position under lowest of the two
+		var underButton = buttonPos.y + this.button.offsetHeight;
+		if (underButton > y)
+			y = underButton;
+		
+		if (this.menuMode) {
+			// shift it over under the button
+					
+			// hack assumes we're about to show the div...
+			// need to display before offsetWidth is usable
+			// doesn't flicker since browsers have async repaint
+			this.div.style.display = 'block';
+			x = buttonPos.x + this.button.offsetWidth - this.div.offsetWidth;
 		}
-
-		x += el.offsetLeft;
-		y += el.offsetTop;
-
+		
 		this.div.style.left = x + 'px';
 		this.div.style.top = y + 'px';
 	};
@@ -430,7 +493,7 @@ dh.autosuggest.AutoSuggest = function(elem)
 			me.useSuggestion();
 			me.hideDiv();
 			me.cancelEvent(ev);
-			setTimeout("document.getElementById('" + elem.id + "').focus()",0);
+			setTimeout("document.getElementById('" + me.elem.id + "').focus()",0);
 			return false;
 		};
 	
@@ -512,7 +575,10 @@ dh.autosuggest.AutoSuggest = function(elem)
 		}
 		if(window.event)	//IE
 		{
+			// stop default action of the node
 			window.event.returnValue = false;
+			// stop bubbling
+			window.event.cancelBubble = true;
 		}
 	};
 }

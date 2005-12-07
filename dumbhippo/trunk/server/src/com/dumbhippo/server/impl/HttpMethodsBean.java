@@ -95,7 +95,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(xml.toString().getBytes());
 	}
 	
-	private void returnPersonsXml(XmlBuilder xml, Set<PersonView> persons) {
+	private void returnPersonsXml(XmlBuilder xml, Viewpoint viewpoint, Set<PersonView> persons) {
 		if (persons != null) {
 			for (PersonView p : persons) {				
 
@@ -130,9 +130,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				AimResource primaryAim = p.getAim();
 				
 				String hasAccount = p.getUser() != null ? "true" : "false";
+				
+				String display = p.getName();
+				if (p.getUser() != null && p.getUser().equals(viewpoint.getViewer())) {
+					display = display + " (myself)";
+				}
+				
 				xml.appendTextNode("person", null,
 						"id", p.getContact() != null ? p.getContact().getId() : p.getUser().getId(),
-						"display", p.getName(),
+						"display", display,
 						"hasAccount", hasAccount,
 						"email", primaryEmail != null ? primaryEmail.getEmail() : null,
 						"aim", primaryAim != null ? primaryAim.getScreenName() : null,
@@ -180,7 +186,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		startReturnObjectsXml(contentType, xml);
 		
 		if (persons != null)
-			returnPersonsXml(xml, persons);
+			returnPersonsXml(xml, viewpoint, persons);
 		if (groups != null)
 			returnGroupsXml(xml, viewpoint, groups);
 		
@@ -198,7 +204,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, User user) throws IOException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
-		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user, true, PersonViewExtra.ALL_RESOURCES);
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, user);
 		
 		returnObjects(out, contentType, viewpoint, persons, groups);
@@ -214,7 +220,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		EmailResource resource = identitySpider.getEmail(email);
 		Person contact = identitySpider.createContact(user, resource);
 		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.ALL_RESOURCES);
-		returnPersonsXml(xml, Collections.singleton(contactView));
+		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 		
 		endReturnObjectsXml(out, xml);
 	}

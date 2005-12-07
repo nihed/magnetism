@@ -316,9 +316,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return resources;		
 	}
 	
+	// this can return multiple accounts, one for each resource 
+	// associated with the contact; in that case we pick an account
+	// arbitrarily
 	private static final String GET_USER_FOR_CONTACT_QUERY = 
-		"SELECT a.owner FROM Account a, ContactClaim cc " +
-		    "WHERE a = cc.resource and cc.contact = :contact ";
+		"SELECT ac.owner FROM ContactClaim cc, AccountClaim ac " +
+		    "WHERE cc.contact = :contact AND ac.resource = cc.resource";
 	
 	private User getUserForContact(Contact contact) {
 		try {
@@ -336,7 +339,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return (User)person;
 		else {
 			logger.debug("getUser: contact = " + person);
-			
+
 			User user = getUserForContact((Contact)person);
 			
 			logger.debug("getUserForContact: user = " + user);
@@ -365,7 +368,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, PersonViewExtra... extras) {
 		
 		// we implement this in kind of a lame way right now where we always do 
-		// all the work database work, even though we only return the requested information to keep 
+		// all the database work, even though we only return the requested information to keep 
 		// other code honest
 		
 		Set<Resource> contactResources = null;
@@ -527,7 +530,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		Contact contact = new Contact(user.getAccount());
 		// call the contact whatever resource we used to create it
-		contact.setNickname(resource.getDerivedNickname());
+		// Don't use resource.getDerivedNickname() here, because 
+		// only the account holder who typed in the email address will 
+		// see it, so no need to munge it - we want what they typed in
+		contact.setNickname(resource.getHumanReadableString());
 		em.persist(contact);
 		
 		ContactClaim cc = new ContactClaim(contact, resource);
@@ -601,13 +607,33 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return account.getContacts();
 	}
 	
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, PersonViewExtra... extras) {
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras) {
 		if (!user.equals(viewpoint.getViewer()))
 				return Collections.emptySet();
 		
+		// there are various ways to get yourself in your own contact list;
+		// we make includeSelf work in both cases (where you are or are not in there)
+		
+		boolean sawSelf = false;
 		Set<PersonView> result = new HashSet<PersonView>();
-		for (Person p : getRawContacts(user)) 
-			result.add(getPersonView(viewpoint, p, extras));
+		for (Person p : getRawContacts(user)) {
+			PersonView pv = getPersonView(viewpoint, p, extras);
+			
+			if (pv.getUser() != null && pv.getUser().equals(user)) {
+				// FIXME the concept here (one contact displayed per User) could 
+				// be generalized, i.e. we should probably nuke all but one PersonView
+				// for each User...
+				if (includeSelf && !sawSelf)
+					result.add(pv);
+				sawSelf = true;
+			} else {
+				result.add(pv);
+			}
+		}
+		
+		if (includeSelf && !sawSelf) {
+			result.add(getPersonView(viewpoint, user, extras));
+		}
 		
 		return result;
 	}

@@ -315,16 +315,24 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			client = accounts.authorizeNewClient(acct, firstClientName);
 		}
 
-		invite.setViewed(true);
-		invite.setResultingPerson(acct.getOwner());
+		User newUser = acct.getOwner();
+		
 		if (!em.contains (invite)) {
-			// we have to modify a persisted copy also...
-			InvitationToken persisted = em.find(InvitationToken.class, invite.getId());
-			persisted.setViewed(true);
-			persisted.setResultingPerson(acct.getOwner());
-			invite = persisted;
+			// re-attach
+			invite = em.find(InvitationToken.class, invite.getId());
 		}
-
+		invite.setViewed(true);
+		invite.setResultingPerson(newUser);
+		
+		// needed to fix newUser.getAccount() returning null inside identitySpider
+		em.flush();
+		
+		// add all inviters as our contacts
+		for (User inviter : invite.getInviters()) {
+			Account inviterAccount = inviter.getAccount();
+			spider.createContact(newUser, inviterAccount);
+		}
+		
 		if (!disable)
 			notifyInvitationViewed(invite);
 		

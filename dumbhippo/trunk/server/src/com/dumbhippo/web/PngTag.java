@@ -52,7 +52,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		}	
 		xml.append("src=\"/images/");
 		xml.append(buildStamp);
-		xml.append("/blank.gif\"");
+		xml.append("/blank.gif\" ");
 		appendExtraAttributes(xml, extraAttributes);
 		xml.append("/>\n");
 		xml.append("<![endif]-->\n");

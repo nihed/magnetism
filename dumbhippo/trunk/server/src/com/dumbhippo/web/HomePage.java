@@ -75,7 +75,7 @@ public class HomePage {
 	
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL)));
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL)));
 		}
 		return contacts;
 	}

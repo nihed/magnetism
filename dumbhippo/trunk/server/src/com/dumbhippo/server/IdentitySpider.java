@@ -188,10 +188,11 @@ public interface IdentitySpider {
 	 *          a user can see their contacts, so if viewpoint.getviewer()
 	 *          doesn't match user, the result will be empty)    
 	 * @param user who to get contacts of
+	 * @param includeSelf whether to include the user in the list
 	 * @param extras info to stuff into the PersonView objects
 	 * @return their contacts
 	 */
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, PersonViewExtra... extras);
+	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras);
 	
 	/**
 	 * Checks whether a person has another other as a contact
