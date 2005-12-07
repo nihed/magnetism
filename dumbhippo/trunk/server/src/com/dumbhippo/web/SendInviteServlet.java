@@ -21,7 +21,7 @@ public class SendInviteServlet extends AbstractServlet {
 
 	private void doSendInvite(HttpServletRequest request, HttpServletResponse response)
 	throws HttpException, HumanVisibleException, IOException, ServletException {
-		User user = doLogin(request, response, false);
+		User user = doLogin(request);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
 		

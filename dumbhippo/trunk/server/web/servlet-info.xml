@@ -11,11 +11,23 @@
    
    <!-- URLs hard-coded to go to our custom servlets -->
     
-   <servlet>
-      <servlet-name>HippoServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.HippoServlet</servlet-class>
+    <servlet>
+      <servlet-name>HttpMethodsServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.HttpMethodsServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
+
+    <servlet>
+      <servlet-name>XmlRpcServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.XmlRpcServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+    <servlet>
+      <servlet-name>RedirectServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.RedirectServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
 
     <servlet>
       <servlet-name>PhotoServlet</servlet-name>
@@ -47,6 +59,11 @@
       <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+      <servlet-name>SendInviteServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.SendInviteServlet</servlet-class>
+    </servlet>    
+
 	<!--  I can't figure out how to handle "all error codes" - "*" doesn't work afaict -->
 	<error-page>
       <error-code>404</error-code>
@@ -64,34 +81,29 @@
 	</error-page>
 
    <servlet-mapping>
-      <servlet-name>HippoServlet</servlet-name>
+      <servlet-name>XmlRpcServlet</servlet-name>
       <url-pattern>/xmlrpc/*</url-pattern>
    </servlet-mapping>
     
    <servlet-mapping>
-      <servlet-name>HippoServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet</servlet-name>
       <url-pattern>/xml/*</url-pattern>
    </servlet-mapping>
    
    <servlet-mapping>
-      <servlet-name>HippoServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet</servlet-name>
       <url-pattern>/text/*</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>HippoServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet</servlet-name>
       <url-pattern>/action/*</url-pattern>
    </servlet-mapping>
    
    <servlet-mapping>
-      <servlet-name>HippoServlet</servlet-name>
+      <servlet-name>RedirectServlet</servlet-name>
       <url-pattern>/redirect</url-pattern>
    </servlet-mapping>
-   
-   <servlet>
-      <servlet-name>SendInviteServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.SendInviteServlet</servlet-class>
-   </servlet>   
    
    <servlet-mapping>
       <servlet-name>SendInviteServlet</servlet-name>

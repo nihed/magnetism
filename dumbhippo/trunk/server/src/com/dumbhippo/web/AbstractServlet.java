@@ -118,10 +118,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 	}
 	
-	protected User doLogin(HttpServletRequest request, HttpServletResponse response, boolean log) throws IOException, HttpException {
-		// FIXME what is the "log" parameter about?
+	protected User doLogin(HttpServletRequest request) throws IOException, HttpException {
 		return SigninBean.getForRequest(request).getUser();
-	}	
+	}
 
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 		  	HumanVisibleException, IOException, ServletException {

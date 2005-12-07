@@ -92,7 +92,7 @@ public class PhotoServlet extends AbstractServlet {
 		
 		logger.debug("uploading photo to " + saveDir);
 
-		Person user = doLogin(request, response, true);
+		Person user = doLogin(request);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in to change a photo");
 
