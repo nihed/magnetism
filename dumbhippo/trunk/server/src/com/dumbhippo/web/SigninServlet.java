@@ -74,7 +74,13 @@ public class SigninServlet extends AbstractServlet {
 			
 			redirectToNextPage(request, response, next, null);
 		} else {
-			signinSystem.sendSigninLink(address);
+			try {
+				signinSystem.sendSigninLink(address);
+			} catch (HumanVisibleException e) {
+				if (e.getHtmlSuggestion() == null)
+					e.setHtmlSuggestion("<a href=\"/signin\">Try again</a>");
+				throw e;
+			}
 			request.setAttribute("address", address);
 			request.getRequestDispatcher("/signinsent").forward(request, response);
 		}

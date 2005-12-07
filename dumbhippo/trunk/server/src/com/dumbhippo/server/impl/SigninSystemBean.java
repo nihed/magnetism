@@ -130,7 +130,7 @@ public class SigninSystemBean implements SigninSystem {
 			return new Pair<Client,User>(client, user);
 		} else {
 			throw new HumanVisibleException("You seem to have mistyped your password; or maybe you haven't "
-					+ "set a password yet? Try sending yourself a sign-in link if you can't remember your password.").setHtmlSuggestion("<a href=\"/signin\">Try again</a>");
+					+ "set a password yet? Try sending yourself a sign-in link if you can't remember your password.");
 		}
 	}
 
