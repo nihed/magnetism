@@ -261,5 +261,10 @@
                      <arg line="reload all"/>
                 </exec>
         </target>
+        <target name="restart" depends="build">
+                <exec executable="../super/super">
+                     <arg line="restart all"/>
+                </exec>
+        </target>
 	
 </project>
