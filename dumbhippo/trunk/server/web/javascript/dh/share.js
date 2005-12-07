@@ -147,8 +147,7 @@ dhRemoveRecipientClicked = function(event) {
 	dh.share.removeRecipient(idToRemove, node);
 }
 
-// called when user presses Enter or the Add button
-dh.share.doAddRecipientFromCombo = function() {
+dh.share.createNewContactFromCombo = function() {
 	var email = dh.share.autoSuggest.inputText;
 	
 	if (email.length == 0 || email.indexOf("@") < 0) {
@@ -180,19 +179,12 @@ dh.share.doAddRecipientFromCombo = function() {
 }
 	
 dh.share.recipientSelected = function(selectedId) {
-	// FIXME outdated comment - does autosuggest.js still do this?
-	// Unfortunately dojo calls this 
-	// callback twice when you click a recipient, and we don't
-	// want to flash the recipient on the second time. 
-	// Conveniently, a selected recipient won't be in the dropdown
-	// if it's already added normally, so no effect on normal behavior
-	// if we do noFlash = true
 
 	dojo.debug("adding recipient since selected = " + selectedId);
 	if (selectedId)
 		dh.share.doAddRecipient(selectedId, true);
 	else
-		dh.share.doAddRecipientFromCombo();
+		dh.share.createNewContactFromCombo();
 }
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	
@@ -344,6 +336,26 @@ dh.share.findInStringArray = function(strings, func, data) {
 	return null;
 }
 
+dh.share.sortEligibleCompare = function(a, b) {
+	var aText = a[0].innerText.toLowerCase();
+	var bText = b[0].innerText.toLowerCase();
+	if (aText.localeCompare) // don't trust this to exist...
+		return aText.localeCompare(bText);
+	else {
+		if (aText < bText)
+			return -1;
+		else if (aText > bText)
+			return 1;
+		else
+			return 0;
+	}
+}
+
+dh.share.sortEligible = function(array) {
+	array.sort(dh.share.sortEligibleCompare);
+	return array;
+}
+
 dh.share.getEligibleRecipients = function() {
 
 	var results = new Array();
@@ -357,7 +369,7 @@ dh.share.getEligibleRecipients = function() {
 			results.push([node, obj.id]);			
 		}
 		
-		return results;
+		return dh.share.sortEligible(results);
 	}
 
 	var matchNameFunc = function (word, match) {
@@ -449,7 +461,7 @@ dh.share.getEligibleRecipients = function() {
 		}
 	}
 	
-	return results;
+	return dh.share.sortEligible(results);
 }
 
 dh.share.init = function() {

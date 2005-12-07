@@ -188,7 +188,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			break;
 
 			case ENTER:
-			me.useSuggestion();
+			me.activate();
 			break;
 
 			case ESC:
@@ -295,6 +295,16 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		}
 	};
 
+	/* "activate" the combo, on Enter or the Add button. 
+	 * Uses the suggestion if there is one and div is showing, otherwise emits onSelected
+	 * with an empty selection. Does not show the div or use suggestion if div is not showing,
+	 * since then you couldn't put in a new value that was a substring of an existing value,
+	 * it would always end up choosing the existing value.
+	 */ 
+	this.activate = function() {
+		this.useSuggestion();
+	}
+
 	/********************************************************
 	Insert the highlighted suggestion into the input box, and 
 	remove the suggestion dropdown.
@@ -311,7 +321,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	
 	this.getSelected = function() 
 	{
-		if (this.highlighted < 0)
+		if (!this.showing || this.highlighted < 0)
 			return null;
 			
 		var eligible = this.getEligible();
@@ -419,6 +429,9 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			this.div.style.display = 'block';
 			x = buttonPos.x + this.button.offsetWidth - this.div.offsetWidth;
 		}
+
+		if (x < 0) // stay onscreen...
+			x = 0;
 		
 		this.div.style.left = x + 'px';
 		this.div.style.top = y + 'px';
