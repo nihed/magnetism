@@ -352,6 +352,9 @@ public class HippoServlet extends AbstractServlet {
 	@Override
 	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException, HumanVisibleException {
+		
+		setNoCache(response);
+		
 		if (tryRedirectRequests(request, response) ||
 		    tryLoginRequests(request, response) ||
 		    trySignoutRequest(request, response)) {
@@ -379,6 +382,8 @@ public class HippoServlet extends AbstractServlet {
 	
 	@Override
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, HumanVisibleException {
+		setNoCache(response);
+		
 		if (tryRedirectRequests(request, response)) {
 			return;
 		} else {

@@ -133,6 +133,11 @@ public abstract class AbstractServlet extends HttpServlet {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
 
+	protected void setNoCache(HttpServletResponse response) {
+		response.setHeader("Cache-Control", "no-cache");
+		response.setHeader("Pragma", "no-cache");
+	}
+	
 	/*
 	 * In doPost/doGet if we throw ServletException it shows the user a
 	 * backtrace. We can also do UnavailableException which I think sends the
