@@ -327,7 +327,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			this.div.style.display = 'block';
 			this.highlighted = 0;
 			
-			this.oldBodyOnMouseDown = document.body.onclick;
+			this.oldBodyOnMouseDown = document.body.onmousedown;
 			document.body.onmousedown = function(ev) {
 				me.hideDiv();
 				return true;
@@ -488,7 +488,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		click handler for the dropdown ul
 		insert the clicked suggestion into the input
 		********************************************************/
-		ul.onclick = function(ev)
+		ul.onmousedown = function(ev)
 		{
 			me.useSuggestion();
 			me.hideDiv();
