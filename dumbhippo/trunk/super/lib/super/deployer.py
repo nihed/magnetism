@@ -29,6 +29,17 @@ class Deployer:
 
         self._add_file("super", self.superdir, "super")
         self._add_file("super", self.superdir, "base.conf")
+
+        # Hacky - add all files that end in .exclude in subdirs of super. We
+        # really should record the exclude files we need when creating the
+        # directory tree
+        for e in os.listdir(self.superdir):
+            e_path = os.path.join(self.superdir, e)
+            e_stat = os.stat(e_path)
+            if stat.S_ISDIR(e_stat.st_mode):
+                for f in os.listdir(e_path):
+                    if f.endswith(".exclude") and not f.startswith("."):
+                        self._add_file("super", self.superdir, os.path.join(e, f))
         
         for f in os.listdir(os.path.join(self.superdir, "lib", "super")):
             if f.endswith(".py") and not f.startswith("."):
