@@ -146,18 +146,19 @@ class DirTree:
             self._copy_file(path)
 
     def list_sources(self, path=''):
-        """Return an array of files (excluding directories, and symlinked
+        """Return an array of files and directories (excluding symlinked
         files) that are sources for the directory tree"""
         result = []
         
         if self._test_flag(path, SYMLINK):
             pass
-        elif self._test_flag(path, DIR):
-            for f in self.nodes[path].children:
-                result.extend(self.list_sources(f))
         else:
-            result.append(self.nodes[path].src)
-
+            if self.nodes[path].src:
+                result.append(self.nodes[path].src)
+            if self._test_flag(path, DIR):
+                for f in self.nodes[path].children:
+                    result.extend(self.list_sources(f))
+                
         return result
     
     def _add_as_child(self, path):

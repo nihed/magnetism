@@ -3,6 +3,7 @@
 import os
 import re
 import socket
+import stat
 import tempfile
 import time
 
@@ -39,9 +40,9 @@ class Deployer:
         """Add a Dirtree object into the output of the deployer"""
         for source in dirtree.list_sources():
             if (source.startswith(self.svndir)):
-                self._add_file(None, self.svndir, source[len(self.svndir) + 1:])
+                self._add_source(None, self.svndir, source[len(self.svndir) + 1:])
             elif (source.startswith(self.superdir)):
-                self._add_file("super", self.superdir, source[len(self.superdir) + 1:])
+                self._add_source("super", self.superdir, source[len(self.superdir) + 1:])
 
     def write(self):
         """Finish writing out the deployement archive"""
@@ -79,6 +80,22 @@ class Deployer:
         if not self.files.has_key(target):
             os.spawnl(os.P_WAIT, "/bin/cp", "cp", "-a", os.path.join(sourcedir, filename), os.path.join(self.outdir, target))
             self.files[target] = 1
+
+    def _add_source(self, targetdir, sourcedir, filename):
+        """Add a source file or directory to the temporary output directory"""
+        src_path = os.path.join(sourcedir, filename)
+        src_stat = os.stat(src_path)
+        src_is_dir = stat.S_ISDIR(src_stat.st_mode)
+
+        if src_is_dir:
+            if targetdir == None:
+                target = filename
+            else:
+                target = os.path.join(targetdir, filename)
+                
+            self._add_directory(target)
+        else:
+            self._add_file(targetdir, sourcedir, filename)
 
     def _write_info(self):
         """Write a file META-INFO/dumbhippo.info containing information about the deployment archive"""
