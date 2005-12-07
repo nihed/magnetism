@@ -2,7 +2,8 @@
 	
 	<!-- after doing "ant checkout", typical usage is:
 	ant update build -->
-	
+
+        <property file="${user.home}/.dhbuild.properties"/>
 	<property name="svnroot" value="svn+ssh://devel.dumbhippo.com/svn"/>
 	
 	<target name="checkout">
