@@ -48,7 +48,7 @@ class Deployer:
         topfiles = self.topfiles.keys()
         topfiles.sort()
         filestr = " ".join(topfiles)
-        os.spawnl(os.P_WAIT, "/bin/sh", "sh", "-c", "(cd %s && jar -c %s) > %s" % (self.outdir, filestr, self.darfile))
+        os.spawnl(os.P_WAIT, "/bin/sh", "sh", "-c", "(cd %s && tar cfz - %s) > %s" % (self.outdir, filestr, self.darfile))
         os.spawnl(os.P_WAIT, "/bin/rm", "rm", "-rf", self.outdir)
 
     def _add_directory(self, directory):
