@@ -238,3 +238,10 @@ dh.util.createPngElement = function(src, width, height) {
 	}
 	return img;
 }
+
+dh.util.openShareGroupWindow = function(groupId) {
+	var url = dhServerUri + 'sharegroup?groupId=' + groupId + '&v=1&next=close';
+	window.open(url,
+	'_NEW',
+	'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));
+}

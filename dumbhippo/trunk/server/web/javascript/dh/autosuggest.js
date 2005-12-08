@@ -415,10 +415,12 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		
 		x = entryPos.x;
 		y = entryPos.y + this.elem.offsetHeight;
-		// position under lowest of the two
-		var underButton = buttonPos.y + this.button.offsetHeight;
-		if (underButton > y)
-			y = underButton;
+		if (this.button) {
+			// position under lowest of the two
+			var underButton = buttonPos.y + this.button.offsetHeight;
+			if (underButton > y)
+				y = underButton;
+		}
 		
 		if (this.menuMode) {
 			// shift it over under the button
