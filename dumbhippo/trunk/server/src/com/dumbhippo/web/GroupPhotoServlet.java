@@ -30,7 +30,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 	}
 
 	public String getRelativePath() {
-		return Configuration.HEADSHOTS_RELATIVE_PATH;
+		return Configuration.GROUPSHOTS_RELATIVE_PATH;
 	}
 
 	protected void doUpload(HttpServletRequest request, HttpServletResponse response, Person person,
