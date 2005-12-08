@@ -5,6 +5,8 @@ import java.io.OutputStream;
 
 import javax.ejb.Local;
 
+import org.xml.sax.SAXException;
+
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
@@ -47,9 +49,9 @@ public interface HttpMethods {
 			throws IOException, ParseException, GuidNotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "title", "url", "recipients", "description", "secret" })
-	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException,
-			GuidNotFoundException;
+	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
+			GuidNotFoundException, SAXException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })

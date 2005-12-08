@@ -16,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
+import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
@@ -34,6 +35,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -238,17 +240,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret) throws ParseException, GuidNotFoundException {
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException, GuidNotFoundException, SAXException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		// FIXME if sending to a public group with secret=true, we want to expand the group instead of 
 		// sending to the group ...
 		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
+		PostInfo info = PostInfo.parse(postInfoXml);
+		
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
 		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, false);
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, false, info);
 	}
 
 	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
@@ -278,7 +282,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, true);		
+		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, true, null);		
 	}
 	
 	public void doRenamePerson(User user, String name) {

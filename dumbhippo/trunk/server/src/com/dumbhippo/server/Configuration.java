@@ -14,6 +14,7 @@ public interface Configuration {
 
 	static final public String HEADSHOTS_RELATIVE_PATH = "/headshots";
 	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
+	static final public String POSTINFO_RELATIVE_PATH = "/postinfo";	
 	
 	@ApplicationException
 	public class PropertyNotFoundException extends Exception {

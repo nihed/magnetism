@@ -17,7 +17,24 @@
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
+   <servlet>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.PostThumbnailServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+   <servlet>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.PersonPhotoServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
     <servlet>
+      <servlet-name>GroupPhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.GroupPhotoServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
       <servlet-name>XmlRpcServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.XmlRpcServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -28,18 +45,6 @@
       <servlet-class>com.dumbhippo.web.RedirectServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>
-
-    <servlet>
-      <servlet-name>PhotoServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.PhotoServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>   
-
-    <servlet>
-      <servlet-name>FileServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.FileServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>   
 
     <servlet>
       <servlet-name>WantsInServlet</servlet-name>
@@ -111,19 +116,34 @@
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>PhotoServlet</servlet-name>
-      <url-pattern>/upload/headshots</url-pattern>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+      <url-pattern>/upload/headshots</url-pattern>    
    </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+	  <url-pattern>/files/headshots/*</url-pattern>      
+   </servlet-mapping>   
 
    <servlet-mapping>
-      <servlet-name>PhotoServlet</servlet-name>
+      <servlet-name>GroupPhotoServlet</servlet-name>
       <url-pattern>/upload/groupshots</url-pattern>
    </servlet-mapping>
-
+   
    <servlet-mapping>
-      <servlet-name>FileServlet</servlet-name>
-      <url-pattern>/files/*</url-pattern>
-   </servlet-mapping>
+      <servlet-name>GroupPhotoServlet</servlet-name>
+      <url-pattern>/files/groupshots/*</url-pattern>
+   </servlet-mapping>   
+   
+   <servlet-mapping>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <url-pattern>/upload/postinfo</url-pattern>
+   </servlet-mapping>      
+   
+   <servlet-mapping>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <url-pattern>/files/postinfo/*</url-pattern>
+   </servlet-mapping>   
 
    <servlet>
       <servlet-name>VerifyServlet</servlet-name>
@@ -157,7 +177,7 @@
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,invite,sharelink,account,myphoto,newphoto,groupphoto,viewperson,viewgroup</param-value>
+          <param-value>home,welcome,invite,sharelink,sharephoto,account,myphoto,newphoto,groupphoto,viewperson,viewgroup</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

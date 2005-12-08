@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Local
@@ -32,7 +33,7 @@ public interface PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
 		throws GuidNotFoundException;
 
 	public void doShareLinkTutorialPost(Person recipient);
@@ -53,7 +54,7 @@ public interface PostingBoard {
 	 */
 	public Post createPost(User poster, PostVisibility visibility, String title, String text,
 			Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients,
-			Set<Resource> expandedRecipients);
+			Set<Resource> expandedRecipients, PostInfo postInfo);
 
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid);
 	

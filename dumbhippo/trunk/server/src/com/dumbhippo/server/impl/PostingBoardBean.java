@@ -34,6 +34,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
@@ -87,7 +88,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients) throws GuidNotFoundException {
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws GuidNotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// for each recipient, if it's a group we want to explode it into persons
@@ -126,7 +127,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPostViaProxy(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients);
+		Post post = createPostViaProxy(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
 		sendPostNotifications(post, expandedRecipients);
 		return post;
@@ -140,20 +141,21 @@ public class PostingBoardBean implements PostingBoard {
 		Set<Resource> recipientSet = Collections.singleton(identitySpider.getBestResource(recipient));
 
 		Post post = createPostViaProxy(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
-				"Set up your account and learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet);
+				"Set up your account and learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet, null);
 
 		sendPostNotifications(post, recipientSet);
 	}
 	
-	private Post createPostViaProxy(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients) {
+	private Post createPostViaProxy(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients, PostInfo postInfo) {
 		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
 		
-		return proxy.createPost(poster, visibility, title, text, resources, personRecipients, groupRecipients, expandedRecipients);
+		return proxy.createPost(poster, visibility, title, text, resources, personRecipients, groupRecipients, expandedRecipients, postInfo);
 	}
 	
 	// internal function that is public only because of TransactionAttribute; use createPostViaProxy
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients) {
+	public Post createPost(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, 
+			               Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients, PostInfo postInfo) {
 		
 		logger.debug("saving new Post");
 		Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);

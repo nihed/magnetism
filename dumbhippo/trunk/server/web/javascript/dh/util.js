@@ -239,6 +239,10 @@ dh.util.createPngElement = function(src, width, height) {
 	return img;
 }
 
+dh.util.clearNode = function (node) {
+	while (node.firstChild) { node.removeChild(node.firstChild) }
+}
+
 dh.util.openShareGroupWindow = function(groupId) {
 	var url = dhServerUri + 'sharegroup?groupId=' + groupId + '&v=1&next=close';
 	window.open(url,

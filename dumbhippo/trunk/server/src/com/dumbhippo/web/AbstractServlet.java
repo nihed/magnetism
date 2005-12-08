@@ -1,6 +1,10 @@
 package com.dumbhippo.web;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Enumeration;
 
 import javax.servlet.ServletException;
@@ -130,6 +134,28 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
+	}
+	
+	private void copy(InputStream in, OutputStream out) throws IOException {
+		byte[] buffer = new byte[256];
+        int bytesRead;
+
+        for (;;) {
+        	bytesRead = in.read(buffer, 0, buffer.length);
+        	if (bytesRead == -1)
+        		break; // all done (NOT an error, that throws IOException)
+
+            out.write(buffer, 0, bytesRead);
+        }
+	}	
+	
+	void sendFile(HttpServletRequest request, HttpServletResponse response, String contentType, File file) throws IOException {
+		logger.debug("sending file " + file.getCanonicalPath());
+		response.setContentType(contentType);
+		InputStream in = new FileInputStream(file);
+		OutputStream out = response.getOutputStream();
+		copy(in, out);
+		out.flush();		
 	}
 
 	protected void setNoCache(HttpServletResponse response) {

@@ -1,5 +1,6 @@
 dojo.provide("dh.sharelink");
 
+dojo.require("dojo.dom");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
@@ -8,8 +9,11 @@ dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
 
+dh.sharelink.extHooks = [];
 dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.urlTitleToShareEditBox = null;
+dh.sharelink.favicon = null;
+dh.sharelink.postInfo = null;
 //dh.sharelink.secretCheckbox = null;
 dh.sharelink.createGroupPopup = null;
 dh.sharelink.createGroupNameEntry = null;
@@ -249,21 +253,22 @@ dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
 	
 	var title = dh.sharelink.urlTitleToShareEditBox.textValue;
-	
-	var url = dh.sharelink.urlToShareEditBox.value;
-	
+
 	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText);
 	
 	var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 	
 //	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
 	var secret = "false";
+	
+	var postInfoXml = dojo.dom.innerXML(dh.sharelink.postInfo);
 
 	dojo.debug("url = " + url);
 	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
 	dojo.debug("rcpts = " + commaRecipients);
 	dojo.debug("secret = " + secret);
+	dojo.debug("postInfo = " + postInfoXml);
 	
 	// double-check that we're logged in
 	dh.server.doPOST("sharelink",
@@ -272,7 +277,8 @@ dh.sharelink.submitButtonClicked = function() {
 							"title" : title, 
 						  	"description" : descriptionHtml,
 						  	"recipients" : commaRecipients,
-						  	"secret" : secret
+						  	"secret" : secret,
+							"postInfoXml" : postInfoXml
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
@@ -284,7 +290,17 @@ dh.sharelink.submitButtonClicked = function() {
 						});
 }
 
+// Invoked from native client
+dhShareLinkSetPostInfo = function (xmlText) {
+	try {
+	dh.sharelink.postInfo = dojo.dom.createDocumentFromText(xmlText);
+	} catch (e) {
+		dojo.debug("error in dhShareLinkSetPostInfo: " + e.message);
+	}
+}
+
 dh.sharelink.init = function() {
+	try {
 	dojo.debug("dh.sharelink.init");
 			
 	var params = dh.util.getParamsFromLocation();
@@ -294,7 +310,7 @@ dh.sharelink.init = function() {
 	var urlParam = params["url"]
 	if (urlParam) {
 		dh.sharelink.urlToShareEditBox.value = urlParam;
-	} else {
+	} else if (dh.sharelink.urlToShareEditBox) {
 		dh.sharelink.urlToShareEditBox.value = "(enter link to share)";
 		var urlDiv = document.getElementById("dhUrlToShareDiv");
 		dh.util.show(urlDiv);
@@ -333,12 +349,29 @@ dh.sharelink.init = function() {
 	dh.sharelink.addMemberLink = document.getElementById("dhAddMemberLink");
 	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");
 	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
+	
+	dh.sharelink.postInfo = dojo.dom.createDocumentFromText("<postInfo/>");
+	if (dojo.lang.has(params, "favicon")) {
+		var faviconUrl = params["favicon"];
+		var generic = dh.sharelink.postInfo.createElement("generic");
+		dh.sharelink.postInfo.documentElement.appendChild(generic);	
+		var favicon = sharelink.postInfo.createElement("favicon");
+		generic.appendChild(favicon);
+		generic.appendChild(dh.sharelink.postInfo.createTextNode(faviconUrl));
+	}
 				
 	// set default focus
 	dh.share.recipientComboBox.focus();
 	
 	// load up your contacts
 	dh.share.loadContacts();
+
+	for (var i = 0; i < dh.sharelink.extHooks.length; i++) {
+		dh.sharelink.extHooks[i]()
+	}
+	} catch (e) {
+		dojo.debug("error in dh.sharelink.init: " + e.message)
+	}	
 }
 
 dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
