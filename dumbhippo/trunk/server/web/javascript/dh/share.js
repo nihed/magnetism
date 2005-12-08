@@ -36,6 +36,10 @@ dh.share.recipientCreatedCallback = null;
 //   recipientsChangedCallback(newNode)
 dh.share.recipientsChangedCallback = null;
 
+// Called to see if we can add a particular recipient
+//  canAddRecipientCallback(personOrGroupObj)
+dh.share.canAddRecipientCallback = null;
+
 dh.share.findGuid = function(set, id) {
 	// set can be an array or a hash
 	for (var prop in set) {
@@ -201,6 +205,11 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 	var obj = dh.share.allKnownIds[objKey];
 	
 	if (!dh.share.findGuid(dh.share.selectedRecipients, obj.id)) {
+		
+		if (dh.share.canAddRecipientCallback && 
+			!dh.share.canAddRecipientCallback(obj)) {
+			return;
+		}
 		
 		dh.share.selectedRecipients.push(obj);
 		

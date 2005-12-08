@@ -164,6 +164,10 @@ public class PersonView {
 		// used when returning lists of group members for example
 		if ((name == null || name.length() == 0) && 
 			(contact == null && user == null)) {
+			
+			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE))
+				throw new RuntimeException("PersonView has no User, Contact, or Resource; totally useless: " + this);
+			
 			Resource r = getPrimaryResource();
 			if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
 				name = r.getHumanReadableString();
@@ -200,7 +204,7 @@ public class PersonView {
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {
 		if (!getExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that");
+			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that: " + this);
 		
 		for (Resource r : getResources()) {
 			if (resourceClass.isAssignableFrom(r.getClass()))
@@ -211,7 +215,7 @@ public class PersonView {
 	
 	private <T extends Resource> Collection<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
 		if (!getExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that");
+			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that: " + this);
 		
 		return new TypeFilteredCollection<Resource,T>(getResources(), resourceClass);
 	}
@@ -243,6 +247,11 @@ public class PersonView {
 	
 	public Collection<Resource> getAllResources() {
 		return getMany(PersonViewExtra.ALL_RESOURCES, Resource.class);
+	}
+	
+	@Override
+	public String toString() {
+		return "{PersonView " + contact + " " + user + " invited = " + invited + " extras = " + extras + " resources = " + resources + "}";
 	}
 	
 	/**

@@ -7,6 +7,38 @@ dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
 
+dh.sharegroup.inviteCountMessage = null;
+
+dh.sharegroup.invitesRemaining = function() {
+	var count = 0;
+	for (var i = 0; i < dh.share.selectedRecipients.length; ++i) {
+		var r = dh.share.selectedRecipients[i];
+		if (r.isPerson() && !r.hasAccount) {
+			count = count + 1;
+		}
+	}
+	return dhShareGroupInvitationCount - count;
+}
+
+dh.sharegroup.updateInvitations = function() {
+
+	var remaining = dh.sharegroup.invitesRemaining();
+	var message;
+	if (remaining > 1)
+		message = "You can invite " + remaining + " more people via email";
+	else if (remaining == 1)
+		message = "You can invite one more person via email";
+	else
+		message = "No more email invitations! You can only share this group with existing DumbHippo users";
+
+	dh.sharegroup.inviteCountMessage.innerText = message;
+
+	if (dhShareGroupIsForum)
+		dh.sharegroup.inviteCountMessage.style.display = 'none';
+	else
+		dh.sharegroup.inviteCountMessage.style.display = 'inline';
+}
+
 dh.sharegroup.submitButtonClicked = function() {
 	dojo.debug("clicked share link button");
 	
@@ -69,11 +101,31 @@ dh.sharegroup.loadContacts = function() {
 
 dh.sharegroup.init = function() {
 	dojo.debug("dh.sharegroup.init");
+
+	dh.sharegroup.inviteCountMessage = document.getElementById('dhInvitationsRemainingMessage');
 			
 	// most of the dojo is set up now, so show the widgets
 	dh.util.showId("dhShareForm");
 	
 	dh.share.init();
+
+	dh.sharegroup.updateInvitations();
+	
+	dh.share.recipientsChangedCallback = function() {
+		dh.sharegroup.updateInvitations();
+	}
+
+	dh.share.canAddRecipientCallback = function(recipient) {
+		if (recipient.hasAccount)
+			return true;
+		else {
+			if (dh.sharegroup.invitesRemaining() > 0)
+				return true;
+			else {
+				dh.util.flash(dh.sharegroup.inviteCountMessage);	
+			}
+		}
+	}
 	
 	// set default focus
 	dh.share.recipientComboBox.focus();

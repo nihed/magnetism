@@ -365,7 +365,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, PersonViewExtra... extras) {
+	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {
 		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the database work, even though we only return the requested information to keep 
@@ -386,7 +386,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		} else if (userResources != null) {
 			resources = userResources;
 		} else {
-			resources = Collections.emptySet();
+			if (fromResource != null)
+				resources = Collections.singleton(fromResource);
+			else
+				resources = Collections.emptySet();
 		}
 		
 		// this does extra work right now (adding some things more than once)
@@ -456,7 +459,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		// FIXME we need to filter this - resources from the viewed User 
 		// should not be offered if viewpoint is not a contact of user
-		addPersonViewExtras(viewpoint, pv, extras);
+		addPersonViewExtras(viewpoint, pv, null, extras);
 		
 		return pv;
 	}
@@ -464,6 +467,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra... extras) {
 		User user;
 		Contact contact;
+		
+		if (extras.length == 0) {
+			throw new RuntimeException("creating a resource-only person view without any attached resources is not useful");
+		}
 		
 		contact = findContactByResource(viewpoint.getViewer(), r);
 
@@ -475,14 +482,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		PersonView pv = new PersonView(contact, user);
 		
-		addPersonViewExtras(viewpoint, pv, extras);
-
+		addPersonViewExtras(viewpoint, pv, r, extras);
+		
 		return pv;
 	}
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
-		addPersonViewExtras(null, pv, extras);
+		addPersonViewExtras(null, pv, null, extras);
 		return pv;
 	}
 	

@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -30,14 +31,18 @@ public class ViewGroupPage {
 	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
-	private PersonView inviter;
+	private InvitationSystem invitationSystem;
 	
+	private int invitations;
+	private PersonView inviter;
 	private GroupMember groupMember;
 	
 	public ViewGroupPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		invitations = -1;
 	}
 	
 	public List<PostView> getPosts() {
@@ -130,5 +135,12 @@ public class ViewGroupPage {
 	
 	public int getMaxPostsShown() {
 		return MAX_POSTS_SHOWN;
+	}
+	
+	public int getInvitations() {
+		if (invitations < 0) {
+			invitations = invitationSystem.getInvitations(signin.getUser()); 
+		}
+		return invitations;
 	}
 }

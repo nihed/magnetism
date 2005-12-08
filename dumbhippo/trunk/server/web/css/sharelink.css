@@ -120,3 +120,6 @@ td.dhRecipientName {
 	min-height:					2em;
 }
 
+#dhInvitationsRemainingMessage {
+	float:						right;
+}

@@ -19,6 +19,8 @@
 		dojo.require("dh.sharegroup");
 		dhShareGroupId = "${viewgroup.viewedGroupId}";
 		dhShareGroupName = "${viewgroup.name}";
+		dhShareGroupInvitationCount = "${viewgroup.invitations}";
+		dhShareGroupIsForum = ${viewgroup.isForum};
 	</script>
 </head>
 
@@ -62,6 +64,8 @@
 			
 			<div id="dhRecipientListArea" class="dhBackgroundBox">		
 				<div id="dhRecipientList"> </div>
+				
+				<span id="dhInvitationsRemainingMessage" style="display: none;"></span>
 			</div>
 	
 			<div class="dhVerticalPadding"></div>

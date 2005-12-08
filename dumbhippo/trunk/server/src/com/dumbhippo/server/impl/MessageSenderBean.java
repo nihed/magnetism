@@ -275,7 +275,7 @@ public class MessageSenderBean implements MessageSender {
 			String senderName = recipientView.getName();
 			Set<String> recipientNames = new HashSet<String>();
 			for (Resource r : post.getPersonRecipients()) {
-				PersonView viewedP = identitySpider.getPersonView(viewpoint, r);
+				PersonView viewedP = identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE);
 				recipientNames.add(viewedP.getName());
 			}
 			
@@ -352,7 +352,6 @@ public class MessageSenderBean implements MessageSender {
 	private class EmailSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post) {
-			
 			if (!noMail.getMailEnabled(recipient)) {
 				logger.debug("Mail is disabled to " + recipient + " not sending post notification");
 				return;
