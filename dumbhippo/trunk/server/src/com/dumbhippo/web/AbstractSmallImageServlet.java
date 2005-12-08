@@ -155,7 +155,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
 		String defaultFilename = getDefaultFilename();
-		String noPrefix = request.getRequestURI().replaceFirst("\\/files", "");
+		String noPrefix = request.getPathInfo().substring(1); // Skip the leading slash
 		File toServe = new File(saveDir, noPrefix);
 		if (!toServe.exists())
 			toServe = new File(saveDir, defaultFilename);
