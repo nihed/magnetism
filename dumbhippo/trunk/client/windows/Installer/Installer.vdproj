@@ -21,6 +21,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_272D3F1469534F489B4E421C42C1399C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_47A4F6AE1DA44BD599132EFC9C5399CA"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -227,13 +233,13 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DumbHippo"
-        "ProductCode" = "8:{4FD79B35-FFC9-459E-B59C-A811F0C21879}"
-        "PackageCode" = "8:{85E93F5E-64BC-478F-9D0E-8F70F6962CE3}"
+        "ProductCode" = "8:{B92753A3-36C5-4DFD-9EDD-204BB8FF5F04}"
+        "PackageCode" = "8:{BCD9E052-2E00-4328-926D-839D312C6B1C}"
         "UpgradeCode" = "8:{9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "ProductVersion" = "8:0.1.18"
+        "ProductVersion" = "8:0.1.19"
         "Manufacturer" = "8:Red Hat"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -742,6 +748,34 @@
         }
         "ProjectOutput"
         {
+            "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_272D3F1469534F489B4E421C42C1399C"
+            {
+            "SourcePath" = "8:..\\debug\\HippoShellExt.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:4"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{AE309CA4-B4AA-44A8-99D9-CA840CBFF055}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_47A4F6AE1DA44BD599132EFC9C5399CA"
             {
             "SourcePath" = "8:..\\debug\\HippoExplorer.dll"
