@@ -468,10 +468,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		User user;
 		Contact contact;
 		
-		if (extras.length == 0) {
-			throw new RuntimeException("creating a resource-only person view without any attached resources is not useful");
-		}
-		
 		contact = findContactByResource(viewpoint.getViewer(), r);
 
 		if (r instanceof Account) {
