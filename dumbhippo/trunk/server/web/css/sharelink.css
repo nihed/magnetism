@@ -8,6 +8,7 @@
 body {
 	margin:							0;
 	width:							100%;
+	max-width:						100%;
 	padding:						0;
 }
 div.header {
@@ -19,6 +20,7 @@ div.header {
 }
 
 #dhShareForm {
+	position:						relative;
 	margin: 						1em;	
 }
 #dhShareForm table.url {
@@ -26,6 +28,7 @@ div.header {
 }
 
 #dhRecipientListArea {
+	width:							100%;
 	/* designed to avoid resize on adding first recipient */
 	min-height:						7em;
 	/* we have to float so we expand to hold the floated 
@@ -40,6 +43,7 @@ div.header {
 
 /* list of people who will receive the link */
 #dhRecipientList {
+	width: 							100%;
 	margin:							.5em;
 	/* we have to float so we expand to hold the floated 
 	 * recipients

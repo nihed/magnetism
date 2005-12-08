@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import javax.servlet.jsp.JspContext;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
@@ -28,7 +29,7 @@ public class EntityTag extends SimpleTagSupport {
 		}
 	}
 	
-	static String entityHTML(Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo) {
+	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo) {
 		String link = null;
 		String body;
 		String photoUrl = null;
@@ -71,7 +72,7 @@ public class EntityTag extends SimpleTagSupport {
 		if (photo && photoUrl != null) {
 			if (link != null)
 				xml.openElement("a", "href", link);
-			PngTag.pngHtml(xml, photoUrl, buildStamp, "cool-person", null);
+			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "cool-person", null);
 			if (link != null)
 				xml.closeElement();
 		}
@@ -99,7 +100,7 @@ public class EntityTag extends SimpleTagSupport {
 		} catch (ELException e) {
 			throw new RuntimeException(e);
 		}
-		writer.print(entityHTML(entity, buildStamp, null, showInviteLinks, photo));
+		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo));
 	}
 	
 	public void setValue(Object value) {

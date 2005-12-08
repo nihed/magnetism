@@ -41,9 +41,9 @@
 	</div>
 
 	<div id="dhMain">
-		<table>
+		<table class="dh-main-table">
 		<tr>
-		<td>
+		<td class="dh-post-list-td">
 			<c:if test="${home.receivedPosts.size > 0}">
 				<div class="shared-links">	
 					<strong>Links Shared With You</strong>
@@ -51,7 +51,7 @@
 				</div>
 			</c:if>
 		</td>
-		<td>
+		<td class="dh-post-list-td">
 			<c:if test="${home.contactPosts.size > 0}">
 				<div class="shared-links">
 					<strong>Links Shared By Your Friends</strong>
@@ -62,8 +62,8 @@
 			</c:if>
 		</td>
 		</tr>
-		</tr>
-		<td>
+		<tr>
+		<td colspan="2">
 			<c:if test="${home.groups.size > 0}">
 				<div class="groups">
 					<strong>Groups You're In</strong>
@@ -86,5 +86,6 @@
 		</tr>
 		</table>
 	</div>
+</pre>
 </body>
 </html>

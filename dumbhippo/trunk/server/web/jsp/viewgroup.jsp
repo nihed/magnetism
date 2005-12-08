@@ -56,9 +56,9 @@
 			</div>
 		</c:if>
 			
-		<table>
+		<table class="dh-main-table">
 		<tr>
-		<td>
+		<td class="dh-post-list-td">
 			<div class="shared-links">	
 				<strong>Cool New Links</strong>
 				<dht:postList posts="${viewgroup.posts}" maxPosts="${viewgroup.maxPostsShown}" groupId="${viewgroup.viewedGroupId}" groupName="${viewgroup.name}"/>

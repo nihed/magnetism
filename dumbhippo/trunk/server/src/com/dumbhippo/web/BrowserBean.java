@@ -76,8 +76,13 @@ public class BrowserBean implements Serializable {
 	}
 	
 	public static BrowserBean getForRequest(HttpServletRequest request) {
-		// seems to be little point in caching a singleton
-		return new BrowserBean(request);
+		BrowserBean bean = (BrowserBean)request.getAttribute("browser");
+		if (bean == null) {
+			bean = new BrowserBean(request);
+			request.setAttribute("browser", bean);
+		}
+		
+		return bean;
 	}
 
 	public boolean isGecko() {
@@ -126,6 +131,10 @@ public class BrowserBean implements Serializable {
 
 	public boolean isSupported() {
 		return isIeAtLeast55() || isGeckoAtLeast10();
+	}
+	
+	public boolean getIeAlphaImage() {
+		return isIeAtLeast55() && browserVersion < 70;
 	}
 	
 	@Override

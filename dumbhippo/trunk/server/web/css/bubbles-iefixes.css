@@ -1,10 +1,11 @@
 @CHARSET "UTF-8";
 
+table.cool-bubble {
+	width:				402px;
+}
+
 table.cool-bubble * {
-	margin:					0;
-	padding:				0;
 	font-size:				10pt;
-	vertical-align:				top;
 }
 td.cool-person {
 	text-overflow:				ellipsis;

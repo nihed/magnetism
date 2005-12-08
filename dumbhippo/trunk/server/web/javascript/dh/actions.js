@@ -94,3 +94,9 @@ dh.actions.renamePersonHandler = function(value, oldValue) {
 		  	    	 });
 	    }
 
+dh.actions.fillAlphaPng = function(image) {
+    var span = image.parentNode
+    var src = image.src
+    span.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
+    span.style.background = "transparent";
+}

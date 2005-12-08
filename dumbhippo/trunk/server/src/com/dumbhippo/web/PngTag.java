@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspContext;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.DynamicAttributes;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
@@ -37,44 +40,47 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		}
 	}
 	
-	static void pngHtml(XmlBuilder xml, String src, String buildStamp, String klass, String style, List<String> extraAttributes) {
-		xml.append("\n<!--[if lt IE 7]>\n");
-		xml.append("<img style=\"filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='");
-		xml.append(src);
-		xml.append("', sizingMethod='scale');");
-		if (style != null)
-			xml.append(style);
-		xml.append("\" ");
-		if (klass != null) {
-			xml.append("class=\"");
-			xml.append(klass);
+	static void pngHtml(JspContext context, XmlBuilder xml, String src, String buildStamp, String klass, String style, List<String> extraAttributes) {
+		HttpServletRequest request = (HttpServletRequest)((PageContext)context).getRequest();
+		BrowserBean browser = BrowserBean.getForRequest(request);
+		
+		if (browser.getIeAlphaImage()) {
+			xml.append("<span style=\"background:#bbbbbb\"");
+			if (klass != null) {
+				xml.append("class=\"");
+				xml.append(klass);
+				xml.append("\" ");
+			}
+			if (style != null) {
+				xml.append("style=\"");
+				xml.append(style);
+				xml.append("\" ");
+			}
+			xml.append("><img src=\"");
+			xml.append(src);
+			xml.append("\" style=\"visibility:hidden\" onload=\"dh.actions.fillAlphaPng(this)\"/></span>");
+		} else {
+			xml.append("<img ");
+			if (klass != null) {
+				xml.append("class=\"");
+				xml.append(klass);
+				xml.append("\" ");
+			}
+			xml.append("src=\"");
+			xml.append(src);
 			xml.append("\" ");
-		}	
-		xml.append("src=\"/images/");
-		xml.append(buildStamp);
-		xml.append("/blank.gif\" ");
-		appendExtraAttributes(xml, extraAttributes);
-		xml.append("/>\n");
-		xml.append("<![endif]-->\n");
-
-		// this is display:none if IE lt 7
-		xml.append("<img class=\"dh-non-ie-png ");
-		if (klass != null)
-			xml.append(klass);
-		xml.append("\" src=\"");
-		xml.append(src);
-		xml.append("\" ");
-		if (style != null) {
-			xml.append("style=\"");
-			xml.append(style);
-			xml.append("\" ");
+			if (style != null) {
+				xml.append("style=\"");
+				xml.append(style);
+				xml.append("\" ");
+			}
+			appendExtraAttributes(xml, extraAttributes);
+			xml.append("/>");
 		}
-		appendExtraAttributes(xml, extraAttributes);
-		xml.append("/>");
 	}
 	
-	static void pngHtml(XmlBuilder xml, String src, String buildStamp, String klass, String style, String... extraAttributes) {
-		pngHtml(xml, src, buildStamp, klass, style, Arrays.asList(extraAttributes));
+	static void pngHtml(JspContext context, XmlBuilder xml, String src, String buildStamp, String klass, String style, String... extraAttributes) {
+		pngHtml(context, xml, src, buildStamp, klass, style, Arrays.asList(extraAttributes));
 	}
 	
 	public void doTag() throws IOException {
@@ -86,7 +92,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			throw new RuntimeException(e);
 		}
 		XmlBuilder xml = new XmlBuilder();
-		pngHtml(xml, src, buildStamp, klass, style, dynamicAttributes);
+		pngHtml(getJspContext(), xml, src, buildStamp, klass, style, dynamicAttributes);
 		writer.print(xml.toString());
 	}
 

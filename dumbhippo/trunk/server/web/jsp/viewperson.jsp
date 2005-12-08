@@ -63,9 +63,9 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
-				<table>
+				<table class="dh-main-table">
 				<tr>
-				<td>
+				<td class="dh-post-list-td">
 					<c:if test="${viewperson.posts.size > 0}">
 						<div class="shared-links">	
 							<strong>Cool Shared Links</strong>

@@ -1,24 +1,29 @@
 @CHARSET "UTF-8";
 
+.dh-post-list-td {
+	width:					422px;
+}
 div.cool-bubble-shadow {
 	margin:					10px;
-	background-color:			#303030;
-	width:					400px;
+	background-color:		#303030;
+	width:					402px;
+	-moz-border-radius:		7px;
 	position:				relative;
-	-moz-border-radius:			7px;
 }
 table.cool-bubble {
+	border-spacing:			0px;
 	border:					1px solid #404040;
-	-moz-border-radius:			7px;
 	width:					400px;
-	background-color:			white;
+	-moz-border-radius:		7px;
+	background-color:		white;
 	position:				relative;
 	right:					1px;
 	bottom:					1px;
 }
 table.cool-bubble * {
-	margin:					0;
-	padding:				0;
+	margin:					0px;
+	padding:				0px;
+	border:					0px;
 	font-size:				9pt;
 	vertical-align:				top;
 }
@@ -44,7 +49,7 @@ div.cool-person, div.cool-group {
 	font-size:				x-small;
 	cursor:					pointer;
 }
-img.cool-person, img.cool-group {
+img.cool-person, img.cool-group, span.cool-person, span.cool-group {
 	margin:					auto;
 	/* Right now the Java code scales headshots to a max of 48px in each
 	 * dimension, but preserving aspect ratio. If height < width the below
@@ -55,7 +60,7 @@ img.cool-person, img.cool-group {
 	 * height is fixed here because for a headshot height>width seems more 
 	 * likely than width>height.
 	 */
-	max-width:				48px;
+	max-width:			    48px;
 	height:					48px;
 	border:					0;
 }

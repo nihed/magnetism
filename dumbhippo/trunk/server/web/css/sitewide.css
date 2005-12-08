@@ -199,9 +199,6 @@ body {
 	color:					#505050;
 	background-color:		white;
 }
-body div {
-	width:					100%;
-}
 div.dh-header {
 	background-color:		#efefef;
 	color:					inherit;
@@ -246,7 +243,9 @@ div.toolbar * {
 div.toolbar a {
 	color:					steelblue;
 }
-
+.dh-main-table {
+	table-layout:			fixed;
+}
 .dh-help-bubble {
 	width:				200px;
 	height:				75px;

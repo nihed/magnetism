@@ -28,7 +28,7 @@ public class EntityListTag extends SimpleTagSupport {
 		
 		boolean first = true;
 		for (Object o : entities) {
-			String html = EntityTag.entityHTML(o, buildStamp, skipRecipientId, showInviteLinks, photos);
+			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos);
 			if (html == null)
 				continue;
 			
