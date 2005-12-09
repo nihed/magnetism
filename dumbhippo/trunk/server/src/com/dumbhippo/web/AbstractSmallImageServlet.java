@@ -160,6 +160,5 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		if (!toServe.exists())
 			toServe = new File(saveDir, defaultFilename);
 		sendFile(request, response, "image/png", toServe);
-		try { Thread.sleep(1000); } catch (InterruptedException e) {}
 	}
 }
