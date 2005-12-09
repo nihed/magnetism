@@ -53,4 +53,15 @@ library HippoUtil {
         [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
         HRESULT SetViewerSpace([in] DWORD viewerSpace);
     }
+    [
+        uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr
+        helpstring("DumbHippo Flickr Uploader"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoFlickr : IUnknown
+    {
+        [id(150), helpstring("Create a photoset from current photos")]
+        HRESULT CreatePhotoset([in] BSTR title, [in] BSTR descriptionHtml);
+    }
 }
