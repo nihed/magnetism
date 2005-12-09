@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
@@ -301,7 +302,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		// Person recipients are visible only if the viewer is also a person recipient
 		for (Resource recipient : getVisiblePersonRecipients(viewpoint, post))
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient));
+			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE));
 	
 		if (!em.contains(post))
 			throw new RuntimeException("can't update post info if Post is not attached");
@@ -485,13 +486,19 @@ public class PostingBoardBean implements PostingBoard {
 		
 		Post post;
 		
+		Guid postGuid;
 		try {
-			Guid postGuid = new Guid(postId);
-			post = loadRawPost(new Viewpoint(clicker), postGuid);
-		} catch (Guid.ParseException e) {
-			throw new RuntimeException(e);
+			postGuid = new Guid(postId);
+		} catch (ParseException e) {
+			logger.warn("postViewedBy, bad post ID: " + postId);
+			return;
 		}
-			
+		post = loadRawPost(new Viewpoint(clicker), postGuid);
+		if (post == null) {
+			logger.warn("postViewedBy, nonexistent post ID: " + postGuid);
+			return;
+		}
+		
 		if (!updatePersonPostData(clicker, post))
 			return;
 				

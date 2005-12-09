@@ -464,7 +464,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return pv;
 	}
 
-	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra... extras) {
+	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra firstExtra, PersonViewExtra... extras) {
 		User user;
 		Contact contact;
 		
@@ -478,7 +478,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		PersonView pv = new PersonView(contact, user);
 		
-		addPersonViewExtras(viewpoint, pv, r, extras);
+		PersonViewExtra allExtras[] = new PersonViewExtra[extras.length + 1];
+		allExtras[0] = firstExtra;
+		for (int i = 0; i < extras.length ; ++i) {
+			allExtras[i+1] = extras[i];
+		}
+		addPersonViewExtras(viewpoint, pv, r, allExtras);
 		
 		return pv;
 	}

@@ -35,8 +35,10 @@ public class InvitationToken extends Token {
 		this.resultingPerson = resultingPerson;
 	}
 
+	// for hibernate to use
 	protected InvitationToken() {
-		this(null, null);
+		super(false);
+		this.inviters = new HashSet<User>();
 	}
 
 	public InvitationToken(Resource invitee, User inviter) {

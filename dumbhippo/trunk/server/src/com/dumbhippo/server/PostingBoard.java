@@ -61,8 +61,11 @@ public interface PostingBoard {
 	public PostView loadPost(Viewpoint viewpoint, Guid guid);
 
 	/**
+	 * Notifies system that the post was viewed by the given person.
+	 * If the postId is bad, silently does nothing.
+	 * 
 	 * @param postId the ID of the post that was clicked
-	 * @param clicker
+	 * @param clicker person who clicked on the post
 	 */
 	public void postViewedBy(String postId, User clicker);
 	

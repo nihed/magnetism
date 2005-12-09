@@ -38,7 +38,7 @@ public class User extends Person {
 		return account;
 	}
 	
-	protected void setAccount(Account account) {
+	void setAccount(Account account) {
 		this.account = account;
 	}
 	

@@ -9,7 +9,10 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
@@ -24,7 +27,7 @@ public class ViewGroupPage {
 	
 	private Group viewedGroup;
 	private String viewedGroupId;
-
+	
 	@Signin
 	private SigninBean signin;
 	
@@ -32,16 +35,24 @@ public class ViewGroupPage {
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
 	private InvitationSystem invitationSystem;
+	private Configuration configuration;
 	
 	private int invitations;
+	// fromInvite is whether we got here after just joining DumbHippo
+	private boolean fromInvite;
+	// the inviter here though is to the group, not necessarily to the site
+	private User adder;
 	private PersonView inviter;
 	private GroupMember groupMember;
 	
 	public ViewGroupPage() {
+		logger.debug("Constructing ViewGroupPage");
+		
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		invitations = -1;
 	}
 	
@@ -70,7 +81,7 @@ public class ViewGroupPage {
 	
 	public void setViewedGroupId(String groupId) {
 		viewedGroupId = groupId;
-		
+				
 		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that
 		// we only do one lookup in the database. Careful: need to propagate
 		// the handling of REMOVED members from lookupGroupById to getGroupMember
@@ -82,16 +93,19 @@ public class ViewGroupPage {
 		}
 		
 		if (viewedGroup != null) {
+			// kind of a hack, but when people just accepted
+			// the invitation we want to put them right in the group.
+			if (fromInvite) {
+				groupSystem.addMember(signin.getUser(), viewedGroup, signin.getUser());
+			}
+			
 			groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
 			
 			// Create a detached GroupMember to avoid null checks 
 			if (groupMember == null)
 				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
 
-			if (groupMember.getStatus() == MembershipStatus.INVITED &&
-			    groupMember.getAdder() != null) {
-				inviter = identitySpider.getPersonView(signin.getViewpoint(), getGroupMember().getAdder());	
-			}
+			adder = groupMember.getAdder();
 		}
 	}
 	
@@ -115,7 +129,7 @@ public class ViewGroupPage {
 		return groupMember;
 	}
 	
-	public boolean getIsMember() {
+	public boolean isMember() {
 		return getGroupMember().isParticipant();
 	}
 
@@ -124,16 +138,32 @@ public class ViewGroupPage {
 	}
 	
 	public boolean getCanJoin() {
-		return !getIsMember() && 
+		return !isMember() && 
 		       (viewedGroup.getAccess() == GroupAccess.PUBLIC ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
 	}
 	
-	public boolean getIsForum() {
+	public boolean getCanLeave() {
+		return isMember() || isInvitedNotAccepted();
+	}
+	
+	public boolean getCanShare() {
+		return isMember() && !isForum();
+	}
+	
+	public boolean isForum() {
 		return viewedGroup.getAccess() == GroupAccess.PUBLIC;
+	}
+
+	public boolean isInvitedNotAccepted() {
+		return getGroupMember().getStatus() == MembershipStatus.INVITED;
 	}
 	
 	public PersonView getInviter() {
+		if (inviter == null && adder != null) {
+			inviter = identitySpider.getPersonView(signin.getViewpoint(), adder);	
+		}
+		
 		return inviter;
 	}
 	
@@ -146,5 +176,22 @@ public class ViewGroupPage {
 			invitations = invitationSystem.getInvitations(signin.getUser()); 
 		}
 		return invitations;
+	}
+
+	public boolean isFromInvite() {
+		return fromInvite;
+	}
+
+	public void setFromInvite(boolean fromInvite) {
+		
+		if (viewedGroup != null) {
+			throw new RuntimeException("setViewedGroupId needs to be called after setFromInvite");
+		}
+		
+		this.fromInvite = fromInvite;
+	}
+	
+	public String getDownloadUrlWindows() {
+		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
 	}
 }

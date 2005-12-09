@@ -11,7 +11,9 @@ public class LoginToken extends Token {
 	
 	private Resource resource;
 	
+	// hibernate constructor
 	protected LoginToken() {
+		super(false);
 	}
 	
 	public LoginToken(Resource resource) {

@@ -6,12 +6,19 @@ import java.io.OutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.PostingBoard;
 
 public class RedirectServlet extends AbstractServlet {
+	
+	@SuppressWarnings("unused")
+	private static final Log logger = GlobalSetup.getLog(RedirectServlet.class);
 	
 	private static final long serialVersionUID = 1L;
 
@@ -22,8 +29,19 @@ public class RedirectServlet extends AbstractServlet {
 				+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
 				+ "</head><body>").getBytes());		
 	}
+
+	private String getUrlFromInviteKey(String inviteKey, String origUrl, String postId) throws HumanVisibleException {
+		StringBuilder sb = new StringBuilder();
+		sb.append("/verify?authKey=");
+		sb.append(StringUtils.urlEncode(inviteKey));
+		sb.append("&url=");
+		sb.append(StringUtils.urlEncode(origUrl));
+		sb.append("&viewedPostId=");
+		sb.append(StringUtils.urlEncode(postId));
+		return sb.toString();
+	}
 	
-	private boolean tryRedirectRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
+	private boolean tryRedirectRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException, HumanVisibleException {
 		if (!request.getRequestURI().equals("/redirect")) {
 			return false;
 		}
@@ -39,40 +57,54 @@ public class RedirectServlet extends AbstractServlet {
 			out.write("This page forwards you to a shared link, and tells the friend who shared the link that you're going to look at it.\n".getBytes());
 			out.write("It isn't doing that right now though, because it didn't receive the right parameters.\n".getBytes());
 			out.flush();
-		} else {
-			HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
-			User user;
-			try {
-				user = doLogin(request);
-			} catch (HttpException e) {
-				user = null; // not fatal as it usually is
+			return true;
+		} 
+		
+		try {
+			if (inviteKey != null) {
+				// change the url to be the new verify url if 
+				// we have an invite key. VerifyServlet will do the 
+				// postViewedBy
+				url = getUrlFromInviteKey(inviteKey, url, postId);
+				// this is a redirect to ourselves so we need this
+				// to get the jsessionid, at least in theory
+				url = response.encodeRedirectURL(url);
+			} else {
+				User user;
+				try {
+					user = doLogin(request);
+				} catch (HttpException e) {
+					// if we can't log in, we just don't send the post notification... 
+					// big deal.
+					user = null;
+				}
+				if (user != null) {
+					PostingBoard postingBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+					postingBoard.postViewedBy(postId, user);
+				}
 			}
-			try { 
-				glue.handleRedirect(user, url, postId, inviteKey);
-				
-				// If "url" were on our own site, we would need to call encodeRedirectURL to be sure it had the jsessionid in it
-				response.sendRedirect(url);
-				response.setContentType("text/html");
-				OutputStream out = response.getOutputStream();
-				writeHtmlHeaderBoilerplate(out);
-				String escapedUrl = XmlBuilder.escape(url);
-				out.write(("<p>Go to <a href=\"" + escapedUrl + "\">" + escapedUrl + "</a></p>\n").getBytes());
-				out.write("</body>\n".getBytes());
-				out.flush();
-			} catch (HumanVisibleException e) {
-				response.setContentType("text/html");
-				OutputStream out = response.getOutputStream();
-				writeHtmlHeaderBoilerplate(out);
-				
-				out.write("<p>Oops! Could not send you to your link automatically.</p>".getBytes());
-				out.write(("<p><i>" + e.getHtmlMessage() + "</i></p>").getBytes());
-				
-				String escapedUrl = XmlBuilder.escape(url);
-				out.write(("<p style=\"font-size: larger;\">Try <a href=\"" + escapedUrl + "\">clicking here</a></p>\n").getBytes());
-				
-				out.write("</body>\n".getBytes());
-				out.flush();
-			}
+			
+			// If "url" were on our own site, we would need to call encodeRedirectURL to be sure it had the jsessionid in it
+			response.sendRedirect(url);
+			response.setContentType("text/html");
+			OutputStream out = response.getOutputStream();
+			writeHtmlHeaderBoilerplate(out);
+			String escapedUrl = XmlBuilder.escape(url);
+			out.write(("<p>Go to <a href=\"" + escapedUrl + "\">" + escapedUrl + "</a></p>\n").getBytes());
+			out.write("</body>\n".getBytes());
+			out.flush();
+		} catch (HumanVisibleException e) {
+			
+			// rewrite to be mildly more helpful
+			
+			HumanVisibleException ePrime = new HumanVisibleException(
+			"<p>Could not send you to your link automatically.</p>" +
+			"<p><i>" + e.getHtmlMessage() + "</i></p>", true);
+			
+			String escapedUrl = XmlBuilder.escape(url);
+			ePrime.setHtmlSuggestion("<p style=\"font-size: larger;\">Try <a href=\"" + escapedUrl + "\">clicking here</a></p>\n");
+			
+			throw ePrime;
 		}
 		
 		return true;

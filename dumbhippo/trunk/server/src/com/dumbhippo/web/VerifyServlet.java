@@ -1,6 +1,8 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -20,11 +22,14 @@ import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.NoMailSystem;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
@@ -44,15 +49,22 @@ public class VerifyServlet extends AbstractServlet {
 			disable = true;
 		}
 		
+		// these two are used if we got here via RedirectServlet
+		String urlParam = request.getParameter("url");
+		String viewedPostId = request.getParameter("viewedPostId");
+		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		
+		User user = null;
 		
 		if (invite.isViewed()) {
 			// have been to the link before, nothing to do unless we need to disable
 			if (disable) {
 				SigninBean signin = SigninBean.getForRequest(request);
 				if (signin.isValid()) {
+					user = signin.getUser();
 					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-					spider.setAccountDisabled(signin.getUser(), true);
+					spider.setAccountDisabled(user, true);
 					// now on to /welcome as normal
 				} else {
 					// just send them to the /account page where they can disable, not
@@ -63,11 +75,38 @@ public class VerifyServlet extends AbstractServlet {
 		} else {
 			// first time we've gone to the invite link
 			Pair<Client,User> result = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request), disable);
-			SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
+			user = result.getSecond();
+			SigninBean.setCookie(response, user.getId(), result.getFirst().getAuthKey());
 		}
 		
-		// this forwards to welcomedisabled.jsp if the account is disabled
-		redirectToNextPage(request, response, "/welcome", null);
+		if (viewedPostId != null && user != null) {
+			PostingBoard postingBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+			postingBoard.postViewedBy(viewedPostId, user);
+		}
+		
+		if (urlParam != null) {
+			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+			
+			// if the redirect url is to ourself (normally a viewgroup page) then 
+			// we want to tell the page we're sending to that it's from here
+			if (urlParam.startsWith(config.getPropertyFatalIfUnset(HippoProperty.BASEURL))) {
+				try {
+					URL url = new URL(urlParam);
+					if (url.getQuery() == null)
+						urlParam = urlParam + "?fromInvite=true";
+					else
+						urlParam = urlParam + "&fromInvite=true";
+				} catch (MalformedURLException e) {
+					// eh, just proceed, the redirect will fail maybe
+					logger.debug("bad url redirect after invite: " + urlParam);
+				}
+			}
+			
+			response.sendRedirect(urlParam);
+		} else {
+			// this forwards to welcomedisabled.jsp if the account is disabled
+			redirectToNextPage(request, response, "/welcome", null);
+		}
 	}
 	
 	private void doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws HumanVisibleException, ServletException, IOException {
@@ -132,6 +171,7 @@ public class VerifyServlet extends AbstractServlet {
 		try {
 			token = tokenSystem.getTokenByKey(authKey);
 		} catch (TokenExpiredException e) {
+			logger.trace(e);
 			if (e.getTokenClass() == InvitationToken.class)
 				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
@@ -144,6 +184,7 @@ public class VerifyServlet extends AbstractServlet {
 			else
 				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		} catch (TokenUnknownException e) {
+			logger.trace(e);
 			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		}
 		

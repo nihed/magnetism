@@ -73,13 +73,21 @@ public class Account extends Resource {
 	}
 	
 	public Account(User owner) {	
-		this.owner = owner;
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		creationDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
+		
+		if (owner != null) {
+			this.owner = owner;
+			if (owner.getAccount() == null) {
+				owner.setAccount(this);
+			} else {
+				throw new RuntimeException("creating an account with User that already has one: " + owner);
+			}
+		}
 	}
 	
 	public String toString() {
@@ -319,7 +327,7 @@ public class Account extends Resource {
 	@Override
 	@Transient
 	public String getHumanReadableString() {
-		return getOwner().getNickname().toString();
+		return getOwner().getNickname();
 	}
 	
 	@Override

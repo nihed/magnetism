@@ -238,16 +238,28 @@ public interface IdentitySpider {
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person,
-	 *  given a resource owned by the person. Note that the returned person view 
-	 *  does NOT treat this resource specially and may not even contain the resource
-	 *  you passed in; the resource is just a "search handle"
+	 * given a resource owned by the person. If a Contact or User exists for the 
+	 * resource, the resource is not treated specially; it's just a "search handle."
+	 * If no Contact or User exists, then the PersonView will contain *only* the
+	 * passed-in resource. This latter case is why at least one PersonViewExtra is required,
+	 * so the PersonView is guaranteed to have some information in it. Otherwise
+	 * no methods on the PersonView returned by this method would be safe to call.
+	 * 
+	 * FIXME A better approach might be that PersonView can have an implicit extra
+	 * "NAME" which is always available, and for a resource-only PersonView we 
+	 * return the empty set / null for getResources(), getPrimaryResource() but still
+	 * have a working getName() where the name is resource.getHumanReadableString().
+	 * The thing to avoid is that a different set of PersonView methods is valid depending
+	 * on whether a Resource passed to getPersonView() has associated Contact/User, since
+	 * that creates corner-case-only bugs.
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param resource the person being viewed
+	 * @param firstExtra at least one extra is mandatory when creating a resource
 	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return a new PersonView object
 	 */
-	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra... extras);
+	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra firstExtra, PersonViewExtra... extras);
 	
 	/**
 	 * 

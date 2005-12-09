@@ -70,14 +70,14 @@ public interface InvitationSystem {
 	
 	/**
 	 * If invitee has already been invited, ensures inviter is 
-	 * in the inviter set and returns the invitation url.
+	 * in the inviter set and returns the invitation.
 	 * Else returns null.
 	 * 
 	 * @param inviter possible inviter
 	 * @param invitee possible invitee
-	 * @return invitation url if any, or null
+	 * @return invitation if any, or null
 	 */
-	public String getInvitationUrl(User inviter, Resource invitee);
+	public InvitationToken getInvitation(User inviter, Resource invitee);
 	
 	/**
 	 * Mark an invitation as viewed; this creates an initial Account

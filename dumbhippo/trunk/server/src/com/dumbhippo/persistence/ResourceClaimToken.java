@@ -18,7 +18,9 @@ public class ResourceClaimToken extends Token {
 	private User user;
 	private Resource resource;
 	
+	// hibernate constructor
 	protected ResourceClaimToken() {
+		super(false);
 	}
 	
 	public ResourceClaimToken(User user, Resource resource) {

@@ -1,13 +1,12 @@
 package com.dumbhippo.web;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
@@ -121,15 +120,6 @@ public class SearchPage {
 		return posts;
 	}
 	
-	private String urlEncode(String in) {
-		try {
-			return URLEncoder.encode(in, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// it's ridiculous that this is a checked exception
-			throw new RuntimeException(e);
-		}
-	}
-	
 	private String getParams(int start) {
 		if (start < 0)
 			start = 0;
@@ -143,17 +133,17 @@ public class SearchPage {
 		
 		if (groupId != null && groupId.length() > 0) {
 			sb.append("&groupId=");
-			sb.append(urlEncode(groupId));
+			sb.append(StringUtils.urlEncode(groupId));
 		}
 	
 		if (posterId != null && posterId.length() > 0) {
 			sb.append("&posterId=");
-			sb.append(urlEncode(posterId));
+			sb.append(StringUtils.urlEncode(posterId));
 		}
 
 		if (recipientId != null && recipientId.length() > 0) {
 			sb.append("&recipientId=");
-			sb.append(urlEncode(recipientId));
+			sb.append(StringUtils.urlEncode(recipientId));
 		}
 		
 		return sb.toString();

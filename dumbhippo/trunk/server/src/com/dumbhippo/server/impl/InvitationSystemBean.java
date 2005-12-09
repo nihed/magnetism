@@ -127,14 +127,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return account;
 	}
 
-	// this gets the invitation url only if it already exists, but may 
+	// this gets the invitation only if it already exists, but may 
 	// update the expiration date and add a new inviter
-	public String getInvitationUrl(User inviter, Resource invitee) {
+	public InvitationToken getInvitation(User inviter, Resource invitee) {
 		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null)
 			return null;
 		iv.addInviter(inviter); // no-op if already added
-		return iv.getAuthURL(configuration.getProperty(HippoProperty.BASEURL));
+		return iv;
 	}
 	
 	public Pair<CreateInvitationResult,InvitationToken> createInvitation(User inviter, Resource invitee) {
@@ -324,7 +324,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		invite.setViewed(true);
 		invite.setResultingPerson(newUser);
 		
-		// needed to fix newUser.getAccount() returning null inside identitySpider
+		// needed to fix newUser.getAccount() returning null inside identitySpider?
 		em.flush();
 		
 		// add all inviters as our contacts

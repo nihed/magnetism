@@ -2,6 +2,8 @@ package com.dumbhippo;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
 
@@ -16,6 +18,14 @@ public class StringUtils {
 		}
 		
 		return str.toString();
+	}
+	
+	public static String urlEncode(String str) {
+		try {
+			return URLEncoder.encode(str, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("broken Java implementation", e);
+		}
 	}
 	
 	public static String join(List<String> strings, String separator) {

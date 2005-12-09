@@ -11,7 +11,9 @@ public class ToggleNoMailToken extends Token {
 	
 	private EmailResource email;
 	
+	// hibernate constructor
 	protected ToggleNoMailToken() {
+		super(false);
 	}
 	
 	public ToggleNoMailToken(EmailResource email) {

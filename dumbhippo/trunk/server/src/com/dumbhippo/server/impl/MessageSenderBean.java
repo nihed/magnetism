@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +23,7 @@ import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -360,7 +359,13 @@ public class MessageSenderBean implements MessageSender {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
 			// may be null!
-			String recipientInviteUrl = invitationSystem.getInvitationUrl(post.getPoster(), recipient);
+			InvitationToken invitation = invitationSystem.getInvitation(post.getPoster(), recipient); 
+			String recipientInviteUrl;
+			if (invitation != null) 
+				recipientInviteUrl = invitation.getAuthURL(config.getProperty(HippoProperty.BASEURL)); 
+			else
+				recipientInviteUrl = null;
+				
 			String recipientStopUrl;
 			
 			if (recipientInviteUrl == null) {
@@ -401,19 +406,17 @@ public class MessageSenderBean implements MessageSender {
 					StringBuilder redirectUrl = new StringBuilder();
 					redirectUrl.append(baseurl);
 					redirectUrl.append("/redirect?url=");
-					try {
-						redirectUrl.append(URLEncoder.encode(url, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException("This should not be a checked exception, sheesh", e);
-					}
+					redirectUrl.append(StringUtils.urlEncode(url));
 					redirectUrl.append("&postId=");
 					redirectUrl.append(post.getId()); // no need to encode, we know it is OK
 
-					// FIXME we'll put in the inviteKey= param here also 
+					if (invitation != null) {
+						redirectUrl.append("&inviteKey=");
+						redirectUrl.append(invitation.getAuthKey());
+					}
 					
 					messageText.append(url);
 					messageText.append("\n");
-					
 					
 			        String format = "<div style=\"margin:0.3em;\">\n" 
 			        + "<a style=\"font-weight:bold;font-size:150%%;\" title=\"%s\" href=\"%s\">%s</a>\n"

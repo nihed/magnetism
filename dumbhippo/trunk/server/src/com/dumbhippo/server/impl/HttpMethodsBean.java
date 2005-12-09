@@ -29,11 +29,8 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
-import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Configuration;
@@ -47,9 +44,6 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SigninSystem;
-import com.dumbhippo.server.TokenExpiredException;
-import com.dumbhippo.server.TokenSystem;
-import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
@@ -75,9 +69,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private Configuration configuration;
-
-	@EJB
-	private TokenSystem tokenSystem;
 	
 	@EJB
 	private SigninSystem signinSystem;
@@ -367,52 +358,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Bad Guid", e);
 		} catch (IdentitySpider.GuidNotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
-		}
-	}
-
-	public void handleRedirect(User user, String url, String postId, String inviteKey) throws HumanVisibleException {
-		
-		InvitationToken invitation = null;
-		
-		if (user == null && inviteKey != null) {
-			Token token = null;
-			try {
-				token = tokenSystem.getTokenByKey(inviteKey);
-			} catch (TokenExpiredException e) {
-				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
-			} catch (TokenUnknownException e) {
-				throw new HumanVisibleException("We can't find a valid invitation to DumbHippo for you. Ask a friend to invite you!");
-			}
-			assert token != null;
-			if (token instanceof InvitationToken)
-				invitation = (InvitationToken) token;
-			else
-				throw new HumanVisibleException("We can't find a valid invitation to DumbHippo for you. Ask a friend to invite you!");
-			assert invitation != null;
-		}
-		
-		// FIXME obviously we should redirect you to login and then come back...
-		if (user == null && invitation == null) {
-			throw new HumanVisibleException("Do you need to <a href=\"/home\">log in</a>?", true);
-		}
-
-		Post post;
-		try {
-			post = identitySpider.lookupGuidString(Post.class, postId);
-		} catch (ParseException e) {
-			throw new HumanVisibleException("Which post did you come from? (post's ID was \"" + XmlBuilder.escape(postId) + "\")", true);
-		} catch (GuidNotFoundException e) {
-			throw new HumanVisibleException("Which post did you come from? (post's ID was \"" + XmlBuilder.escape(postId) + "\")", true);
-		}
-		
-		if (user != null) {
-			
-		}
-		
-		if (user != null) {
-			postingBoard.postViewedBy(post.getId(), user);
-		} else {
-			logger.debug("not yet handling a merely-invited person hitting the redirect page");
 		}
 	}
 

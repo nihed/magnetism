@@ -102,15 +102,4 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "chatRoomName" })
 	public void doRequestJoinRoom(String chatRoomName) throws IOException;
-	
-	/**
-	 * This one is not annotated since it's special-cased in the servlet.
-	 * 
-	 * @param user the logged-in user or null if not logged in
-	 * @param url url to redirect to
-	 * @param postId post the person found the url on
-	 * @param inviteKey invitation key or null if person is registered
-	 * @throws RedirectException if the ids are invalid for example
-	 */
-	public void handleRedirect(User user, String url, String postId, String inviteKey) throws HumanVisibleException;
 }
