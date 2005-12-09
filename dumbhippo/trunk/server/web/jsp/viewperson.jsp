@@ -49,7 +49,7 @@
 
 	<c:if test="${!viewperson.disabled}">
 		<div class="person">
-			<dht:headshot personId="${personId}" />
+			<dht:headshot person="${viewperson.person}" />
 			<c:out value="${personName}"/>
 		</div>
 	</c:if>

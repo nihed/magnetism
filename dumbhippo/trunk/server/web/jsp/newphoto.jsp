@@ -6,6 +6,7 @@
 <head>
 	<title>New Photo</title>
 	<dht:stylesheets />
+	<dht:scriptIncludes/>	
 </head>
 <body>
 	<dht:header>
@@ -15,9 +16,7 @@
 
 	<div id="dhMain">
 		<p>Your new photo looks like this:</p>
-		<dh:png klass="cool-person" src="/files${photoLocation}/${photoFilename}"/>
-		<p>(If this is your old photo, your computer didn't know to load the new one. <c:out value="${homePageLink}" escapeXml="false"/> and then press reload in your browser.)
-		</p>
+		<dh:png klass="dh-headshot" src="/files${photoLocation}/${photoFilename}?v=${photoVersion}"/>
 
 		<br/>
 		<p><c:out value="${homePageLink}" escapeXml="false"/></p>

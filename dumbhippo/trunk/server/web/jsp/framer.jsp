@@ -28,7 +28,7 @@
 	<table class="dhFramer">
 	<tr>
 	<td rowSpan="3">
-		<dht:headshot personId="${framer.post.poster.viewPersonPageId}"/>
+		<dht:headshot person="${framer.post.poster}"/>
 	</td>
 	<td class="cool-link-desc">
 	     <div class="cool-link"><c:out value="${title}" /></div>

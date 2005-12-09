@@ -13,7 +13,7 @@
 	<c:if test="${!hidePoster}">
 		<td class="cool-person" rowSpan="3">
 			<a class="cool-person" href="">
-				<dht:headshot personId="${post.poster.viewPersonPageId}" />
+				<dht:headshot person="${post.poster}" />
 				<br/>
 				<dh:entity value="${post.poster}" photo="false"/>
 			</a>

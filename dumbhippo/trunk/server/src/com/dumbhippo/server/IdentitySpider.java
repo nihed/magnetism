@@ -293,4 +293,22 @@ public interface IdentitySpider {
 	public boolean getAccountDisabled(User user);
 	
 	public void setAccountDisabled(User user, boolean disabled);
+	
+	/**
+	 * Increase the version number of the user; increasing the user version means
+	 * any cached resources for the user (currently, just the headshot) are
+	 * no longer valid and must be reloaded. 
+	 * 
+	 * You must call this function after the corresponding changes are committed;
+	 * calling it first could result in stale versions of the resources being
+	 * received and cached.
+	 * 
+	 * Note that if you have a user object around and call this function with
+	 * user.getId(), the version field of the user won't be updated.
+	 * 
+	 * @param userId user ID of a user
+	 * @return the new version
+	 */
+	public int incrementUserVersion(String userId);
+
 }

@@ -55,12 +55,12 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		return op.filter(image, null);		
 	}
 
-	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response, String filename, String title, String url) throws ServletException, IOException, HumanVisibleException {
+	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response, String filename, int version, String title, String url) throws ServletException, IOException, HumanVisibleException {
 		request.setAttribute("photoFilename", filename);		
+		request.setAttribute("photoVersion", version);		
 		XmlBuilder link = new XmlBuilder();
 		link.appendTextNode("a", title, "href", url);
 		request.setAttribute("homePageLink", link.toString());
 		request.getRequestDispatcher("/newphoto").forward(request, response);			
 	}
-
 }

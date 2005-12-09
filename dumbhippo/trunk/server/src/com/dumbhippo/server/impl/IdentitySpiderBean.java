@@ -703,4 +703,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		logger.debug("New disabled = " + disabled + " for account " + account);
 		account.setDisabled(disabled);
 	}
+	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)	
+	public int incrementUserVersion(String userId) {
+//		While it isn't a big deal in practice, the implementation below is slightly
+//		racy. The following would be better, but triggers a hibernate bug.
+//
+//		em.createQuery("UPDATE User u set u.version = u.version + 1 WHERE u.id = :id")
+//		.setParameter("id", userId)
+//		.executeUpdate();
+//		
+//		return em.find(User.class, userId).getVersion();
+		User user = em.find(User.class, userId);
+		int newVersion = user.getVersion() + 1;
+
+		user.setVersion(newVersion);
+		
+		return newVersion;
+	}	
 }

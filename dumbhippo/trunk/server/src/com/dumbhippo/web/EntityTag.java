@@ -11,6 +11,7 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
@@ -36,12 +37,13 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
-			String id = view.getViewPersonPageId();
-			if (id != null) {
+			User user = view.getUser();
+			if (user != null) {
+				String id = user.getId();
 				if (skipId != null && skipId.equals(id))
 					return null;
 				link = "/viewperson?personId=" + id;
-				photoUrl = "/files" + Configuration.HEADSHOTS_RELATIVE_PATH + "/" + id;
+				photoUrl = "/files" + Configuration.HEADSHOTS_RELATIVE_PATH + "/" + id + "?v=" + user.getVersion();
 			}
 			body = view.getName();
 		} else if (o instanceof GroupView) {
@@ -55,14 +57,14 @@ public class EntityTag extends SimpleTagSupport {
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
 				body = group.getName();
-			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId();
+			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId() + "?v=" + group.getVersion();
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			link = "/viewgroup?groupId=" + group.getId();
 			body = group.getName();
-			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId();
+			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId() + "?v=" + group.getVersion();
 		} else {
 			body = "???";
 		}
@@ -72,7 +74,7 @@ public class EntityTag extends SimpleTagSupport {
 		if (photo && photoUrl != null) {
 			if (link != null)
 				xml.openElement("a", "href", link);
-			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "cool-person", null);
+			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", null);
 			if (link != null)
 				xml.closeElement();
 		}

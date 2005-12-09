@@ -159,6 +159,13 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		File toServe = new File(saveDir, noPrefix);
 		if (!toServe.exists())
 			toServe = new File(saveDir, defaultFilename);
+
+		// If the requester passes a version with the URL, that's a signal that
+		// it can be cached without checking for up-to-dateness. There's no
+		// point in actually checking the version, so we don't
+		if (request.getParameter("v") != null)
+			setInfiniteExpires(response);
+		
 		sendFile(request, response, "image/png", toServe);
 	}
 }

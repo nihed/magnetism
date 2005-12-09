@@ -9,6 +9,8 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -411,6 +413,25 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;	
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)	
+	public int incrementGroupVersion(String groupId) {
+//		While it isn't a big deal in practice, the implementation below is slightly
+//		racy. The following would be better, but triggers a hibernate bug.
+//
+//		em.createQuery("UPDATE Group g set g.version = g.version + 1 WHERE g.id = :id")
+//		.setParameter("id", groupId)
+//		.executeUpdate();
+//		
+//		return em.find(Group.class, groupId).getVersion();
+//
+		Group group = em.find(Group.class, groupId);
+		int newVersion = group.getVersion() + 1;
+
+		group.setVersion(newVersion);
+		
+		return newVersion;
+		
+	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";

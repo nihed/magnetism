@@ -33,7 +33,7 @@
 	</dht:header>
 	<dht:toolbar/>
 	<div class="person">
-		<dht:headshot personId="${home.person.viewPersonPageId}" />
+		<dht:headshot person="${home.person}" />
 		<dht:userNameEdit value="${home.person.name}"/>
 	</div>
 	<div>

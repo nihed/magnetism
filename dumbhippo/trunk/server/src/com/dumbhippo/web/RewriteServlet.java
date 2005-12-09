@@ -34,13 +34,6 @@ public class RewriteServlet extends HttpServlet {
 	
 	private ServletContext context;
 
-	protected static final SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-	protected final static TimeZone gmtZone = TimeZone.getTimeZone("GMT");
-
-	static {
-		format.setTimeZone(gmtZone);
-	}
-		
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
 	}
@@ -100,10 +93,7 @@ public class RewriteServlet extends HttpServlet {
 			
 			newPath = checkBuildStamp(path);
 			if (newPath != null) {
-				// According to to HTTP spec we shouldn't set a date more than 1 year in advance
-				String expires = format.format(new Date(System.currentTimeMillis() + (364 * 24 * 60 * 60 * 1000l)));
-				response.setHeader("Expires", expires);
-				
+				AbstractServlet.setInfiniteExpires(response);
 				path = newPath;
 			}
 			

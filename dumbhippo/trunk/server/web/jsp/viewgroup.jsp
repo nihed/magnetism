@@ -38,7 +38,7 @@
 	</dht:toolbar>
 
 	<div class="person">
-		<dht:groupshot groupId="${viewgroup.viewedGroupId}"/>
+		<dht:groupshot group="${viewgroup.viewedGroup}"/>
 		<c:out value="${viewgroup.name}"/>
 	</div>
 	<c:if test="${viewgroup.canModify}">

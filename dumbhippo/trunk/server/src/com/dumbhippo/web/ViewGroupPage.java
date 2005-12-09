@@ -56,6 +56,10 @@ public class ViewGroupPage {
 		return signin;
 	}
 
+	public Group getViewedGroup() {
+		return viewedGroup;
+	}
+	
 	public String getViewedGroupId() {
 		return viewedGroupId;
 	}
@@ -63,7 +67,7 @@ public class ViewGroupPage {
 	public String getName() {
 		return viewedGroup.getName();
 	}
-
+	
 	public void setViewedGroupId(String groupId) {
 		viewedGroupId = groupId;
 		

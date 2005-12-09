@@ -12,6 +12,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.Version;
 
 @Entity
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
@@ -20,6 +22,7 @@ public class Group extends GuidPersistable {
 	
 	private GroupAccess access;
 	private String name;
+	private int version;
 	private Set<GroupMember> members;
 	private boolean markedForDelete;
 		
@@ -86,6 +89,15 @@ public class Group extends GuidPersistable {
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	@Column(nullable=false)
+	public int getVersion() {
+		return version;
+	}
+	
+	public void setVersion(int version) {
+		this.version = version;
 	}
 	
 	/**

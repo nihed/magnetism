@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
@@ -21,6 +22,7 @@ public class User extends Person {
 	private static final long serialVersionUID = 1L;
 	
 	private Account account;
+	private int version;
 	
 	public User() {}
 	
@@ -38,6 +40,15 @@ public class User extends Person {
 	
 	protected void setAccount(Account account) {
 		this.account = account;
+	}
+	
+	@Column(nullable=false)
+	public int getVersion() {
+		return version;
+	}
+	
+	public void setVersion(int version) {
+		this.version = version;
 	}
 	
 	@Override

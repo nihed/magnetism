@@ -5,7 +5,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -161,6 +165,26 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void setNoCache(HttpServletResponse response) {
 		response.setHeader("Cache-Control", "no-cache");
 		response.setHeader("Pragma", "no-cache");
+	}
+	
+	protected static final SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+	protected final static TimeZone gmtZone = TimeZone.getTimeZone("GMT");
+
+	static {
+		format.setTimeZone(gmtZone);
+	}
+	
+	/**
+	 * Set headers on a response indicating that the response data never expires.
+	 * This is typically used in conjunction for a resource pointed to with a 
+	 * versioned URL.
+	 * 
+	 * @param response the response object 
+	 */
+	public static void setInfiniteExpires(HttpServletResponse response) {
+		// According to to HTTP spec we shouldn't set a date more than 1 year in advance
+		String expires = format.format(new Date(System.currentTimeMillis() + (364 * 24 * 60 * 60 * 1000l)));
+		response.setHeader("Expires", expires);	
 	}
 	
 	/*

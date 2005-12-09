@@ -29,7 +29,24 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member);	
 	
-	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status);	
+	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status);
+
+	/**
+	 * Increase the version number of the group; increasing the group version means
+	 * any cached resources for the group (currently, just the group photo) are
+	 * no longer valid and must be reloaded. 
+	 * 
+	 * You must call this function after the corresponding changes are committed;
+	 * calling it first could result in stale versions of the resources being
+	 * received and cached.
+	 * 
+	 * Note that if you have a Group object around and call this function with
+	 * group.getId(), the version field of the group won't be updated.
+	 * 
+	 * @param groupId group ID of a group
+	 * @return the new version
+	 */
+	public int incrementGroupVersion(String groupId);
 
 	/**
 	 * Find the groups that member is in. Currently, only the case

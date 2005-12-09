@@ -58,6 +58,9 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		BufferedImage scaled = readScaledPhoto(photo);
 		String filename = groupId;
 		writePhoto(scaled, filename, true);
-		doFinalRedirect(request, response, filename, "Go to group " + groupName, "/viewgroup?groupId=" + groupId);
+		
+		int newVersion = groupSystem.incrementGroupVersion(group.getId());
+		
+		doFinalRedirect(request, response, filename, newVersion, "Go to group " + groupName, "/viewgroup?groupId=" + groupId);
 	}
 }
