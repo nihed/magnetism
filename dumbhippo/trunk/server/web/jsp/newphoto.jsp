@@ -15,7 +15,7 @@
 
 	<div id="dhMain">
 		<p>Your new photo looks like this:</p>
-		<dht:png klass="cool-person" src="/files${photoLocation}/${photoFilename}"/>
+		<dh:png klass="cool-person" src="/files${photoLocation}/${photoFilename}"/>
 		<p>(If this is your old photo, your computer didn't know to load the new one. <c:out value="${homePageLink}" escapeXml="false"/> and then press reload in your browser.)
 		</p>
 
