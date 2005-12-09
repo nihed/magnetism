@@ -207,6 +207,14 @@ dojo.dom.innerXML = function(node){
 	}
 }
 
+dojo.dom.toText = function (doc) {
+	if (doc.xml) {
+		return doc.xml
+	} else {
+		return dojo.dom.innerXML(doc)
+	}
+}
+
 dojo.dom.createDocumentFromText = function(str, mimetype){
 	if(!mimetype) { mimetype = "text/xml"; }
 	if(typeof DOMParser != "undefined") {

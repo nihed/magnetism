@@ -9,7 +9,7 @@ dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
 
-dh.sharelink.extHooks = [];
+dh.sharelink.extensions = [];
 dh.sharelink.urlToShareEditBox = null;
 dh.sharelink.urlTitleToShareEditBox = null;
 dh.sharelink.favicon = null;
@@ -262,8 +262,8 @@ dh.sharelink.submitButtonClicked = function() {
 	
 //	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
 	var secret = "false";
-	
-	var postInfoXml = dojo.dom.innerXML(dh.sharelink.postInfo);
+
+	var postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
 
 	dojo.debug("url = " + url);
 	dojo.debug("title = " + title);
@@ -368,8 +368,8 @@ dh.sharelink.init = function() {
 	// load up your contacts
 	dh.share.loadContacts();
 
-	for (var i = 0; i < dh.sharelink.extHooks.length; i++) {
-		dh.sharelink.extHooks[i]()
+	for (var i = 0; i < dh.sharelink.extensions.length; i++) {
+		dh.sharelink.extensions[i].render()
 	}
 	} catch (e) {
 		dojo.debug("error in dh.sharelink.init: " + e.message)
