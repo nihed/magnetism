@@ -346,8 +346,8 @@ dh.share.findInStringArray = function(strings, func, data) {
 }
 
 dh.share.sortEligibleCompare = function(a, b) {
-	var aText = a[0].innerText.toLowerCase();
-	var bText = b[0].innerText.toLowerCase();
+	aText = dojo.dom.textContent(a[0])
+	bText = dojo.dom.textContent(b[0])	
 	if (aText.localeCompare) // don't trust this to exist...
 		return aText.localeCompare(bText);
 	else {

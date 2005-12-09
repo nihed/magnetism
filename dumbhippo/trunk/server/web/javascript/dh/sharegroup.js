@@ -31,7 +31,7 @@ dh.sharegroup.updateInvitations = function() {
 	else
 		message = "No more email invitations! You can only share this group with existing DumbHippo users";
 
-	dh.sharegroup.inviteCountMessage.innerText = message;
+	dojo.dom.textContent(dh.sharegroup.inviteCountMessage, innerText)
 
 	if (dhShareGroupIsForum)
 		dh.sharegroup.inviteCountMessage.style.display = 'none';
