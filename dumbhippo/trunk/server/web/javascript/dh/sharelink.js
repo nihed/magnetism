@@ -59,6 +59,7 @@ dh.sharelink.toggleCreateGroup = function() {
 	
 	if (dh.util.isShowing(popup)) {
 		dojo.dom.textContent(dh.sharelink.createGroupLink, "Cancel");
+		dh.sharelink.createGroupNameEntry.focus();
 	} else {
 		dojo.dom.textContent(dh.sharelink.createGroupLink, "Create Group from These");
 		dh.sharelink.unhighlightPossibleGroup();
