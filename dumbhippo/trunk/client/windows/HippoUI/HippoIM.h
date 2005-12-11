@@ -64,6 +64,8 @@ private:
     void startRetryTimeout();
     void stopRetryTimeout();
 
+    void clearConnection();
+
     void connectFailure(char *message);
     void authFailure(char *message);
 

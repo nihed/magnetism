@@ -11,6 +11,8 @@ static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
 static const int SIGN_IN_INITIAL_COUNT = 60;     /* 5 minutes */
 static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000; /* 30 seconds */
 
+static int KEEP_ALIVE_RATE = 60;        /* 1 minute; 0 disables */
+
 static const int RETRY_TIMEOUT = 60000; /* 1 minute */
 
 HippoIM::HippoIM()
@@ -19,6 +21,8 @@ HippoIM::HippoIM()
     signInTimeoutCount_ = 0;
     retryTimeoutID_ = 0;
     state_ = SIGNED_OUT;
+    lmConnection_ = NULL;
+    ui_ = NULL;
 }
 
 HippoIM::~HippoIM()
@@ -60,9 +64,9 @@ HippoIM::signOut()
 {
     ui_->getPreferences()->setSignIn(false);
 
-    disconnect();
-
     stateChange(SIGNED_OUT);
+
+    disconnect();
 }
 
 HippoIM::State
@@ -213,9 +217,15 @@ HippoIM::connect()
     unsigned int port;
 
     ui_->getPreferences()->parseMessageServer(&messageServer, &port);
+    
+    if (lmConnection_) {
+        hippoDebug(L"connect() called when there is an existing connection");
+        return;
+    }
 
     lmConnection_ = lm_connection_new(messageServer);
     lm_connection_set_port(lmConnection_, port);
+    lm_connection_set_keep_alive_rate(lmConnection_, KEEP_ALIVE_RATE);
 
     ui_->debugLogU("Connecting to %s:%d", messageServer, port);
 
@@ -342,6 +352,13 @@ HippoIM::stopRetryTimeout()
 }
 
 void
+HippoIM::clearConnection()
+{  
+    lm_connection_unref(lmConnection_);
+    lmConnection_ = NULL;
+}
+
+void
 HippoIM::connectFailure(char *message)
 {
     if (message)
@@ -349,8 +366,7 @@ HippoIM::connectFailure(char *message)
     else
         ui_->debugLogU("Disconnected from server");
 
-    lm_connection_unref(lmConnection_);
-    lmConnection_ = NULL;
+    clearConnection();
     startRetryTimeout();
     stateChange(RETRYING);
 }
@@ -461,7 +477,11 @@ HippoIM::onDisconnect(LmConnection       *connection,
 {
     HippoIM *im = (HippoIM *)userData;
 
-    im->connectFailure("Lost connection to server");
+    if (im->state_ == SIGNED_OUT) {
+        im->clearConnection();
+    } else {
+        im->connectFailure("Lost connection to server");
+    }
 }
 
 LmHandlerResult
