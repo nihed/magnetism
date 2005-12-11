@@ -14,7 +14,7 @@ HippoIEWindow::HippoIEWindowIECallback::onError(WCHAR *errText)
     this->win_->ui_->debugLogW(L"HippoIEWindow error: %s", errText);
 }
 
-HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, int width, int height, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb)
+HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb)
 {
     ui_ = ui;
     cb_ = cb;
@@ -23,7 +23,7 @@ HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, int width, int height, W
     if (title == NULL)
         title = L"Loading...";
     window_ = CreateWindow(CLASS_NAME, title, WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU, 
-                           CW_USEDEFAULT, CW_USEDEFAULT, width, height, 
+                           CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, 
                            NULL, NULL, instance_, NULL);
     hippoSetWindowData<HippoIEWindow>(window_, this);
     ieCb_ = new HippoIEWindowIECallback(this);
@@ -45,6 +45,28 @@ HippoIE *
 HippoIEWindow::getIE()
 {
     return ie_;
+}
+
+void
+HippoIEWindow::moveResize(int x, int y, int width, int height)
+{
+    if (x == CW_DEFAULT || y == CW_DEFAULT) {
+        RECT workArea;
+        int centerX = 0;
+        int centerY = 0;
+     
+        if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
+            centerX = (workArea.left + workArea.right - width) / 2;
+            centerY = (workArea.bottom + workArea.top - height) / 2;
+        }
+        
+        if (x == CW_DEFAULT)
+            x = centerX;
+        if (y == CW_DEFAULT)
+            y = centerY;
+    }
+
+    MoveWindow(window_, x, y, width, height, TRUE);
 }
 
 void

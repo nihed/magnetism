@@ -22,13 +22,22 @@ public:
 class HippoIEWindow : public HippoMessageHook
 {
 public:
-    HippoIEWindow(HippoUI *ui, WCHAR *title, int width, int height, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb);
+    HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb);
     ~HippoIEWindow(void);
 
     HippoIE *getIE();
 
+    /***
+     * Move and resize the window to the given size and position
+     * @param x X position. CW_DEAULT means center horizontally
+     * @param y Y position. CW_DEAULT means center vertically
+     * @param width the new width, including window decorations
+     * @param height the new height, including window decorations
+     **/
+    void moveResize(int x, int y, int width, int height);
     void show();
     void hide();
+
 
     bool hookMessage(MSG *msg);
 

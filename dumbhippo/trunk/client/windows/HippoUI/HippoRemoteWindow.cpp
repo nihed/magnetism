@@ -24,7 +24,8 @@ HippoRemoteWindow::~HippoRemoteWindow(void)
 void
 HippoRemoteWindow::navigate(WCHAR *url)
 {
-    ieWindow_ = new HippoIEWindow(ui_, title_, 500, 600, url, NULL, ieCb_);
+    ieWindow_ = new HippoIEWindow(ui_, title_, url, NULL, ieCb_);
+    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 500, 600);
     ieWindow_->show();
 }
 
