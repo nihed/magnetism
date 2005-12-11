@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+
+.dh-slideshow-player {
+	/* you want to float or absolute-position it so it shrinks to fit contents */
+	float:		left;
+	border:		3px solid green;
+	padding:	6px;
+}
+
+.dh-slideshow-screen {
+	position:	relative;
+	border: 	1px solid black;
+}
+
+.dh-slideshow-control-area {
+	margin:		3px;
+}
+
+.dh-slideshow-control {
+	border: 			1px solid gray;
+	margin:				3px;
+	text-decoration: 	none;
+}
+
+.dh-slideshow-control-restart:before {
+	content: 	"Restart";
+}
+
+.dh-slideshow-control-pause:before {
+	content: 	"Pause";
+}
+
+.dh-slideshow-control-play:before {
+	content: 	"Play";
+}
+
+.dh-slideshow-slide {
+	position:	absolute;
+}
+	
+img.dh-slideshow-slide {
+	/* background ensures other slides don't show through */
+	background: #2222FF;
+}
+
+.dh-slideshow-where {
+	margin-left:	20px;
+}
