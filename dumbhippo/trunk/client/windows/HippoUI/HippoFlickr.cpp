@@ -111,7 +111,8 @@ HippoFlickr::ensureStatusWindow()
         ui_->debugLogW(L"out of memory");
         return;
     }
-    shareWindow_ = new HippoIEWindow(ui_, L"Share Photos", 600, 600, shareURL, this, ieWindowCallback_);
+    shareWindow_ = new HippoIEWindow(ui_, L"Share Photos", shareURL, this, ieWindowCallback_);
+	shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 600, 600);
     shareWindow_->show();
     ie_ = shareWindow_->getIE();
     statusDisplayVisible_ = true;
