@@ -1,5 +1,6 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
@@ -9,6 +10,7 @@
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
+<c:set var="chatmessages" value="${framer.post.lastFewChatRoomMessages}" scope="page"/>
 
 <c:url var="forwardUrl" value="/sharelink">
 	<c:param name="url" value="${url}"/>
@@ -31,8 +33,25 @@
 		<dht:headshot person="${framer.post.poster}"/>
 	</td>
 	<td class="cool-link-desc">
-	     <div class="cool-link"><c:out value="${title}" /></div>
+	     <div class="cool-link"><c:out value="${title}" />&nbsp;<dh:presence value="${framer.post}"/></div>
 	     <div class="cool-link-desc"><c:out value="${description}" /></div>
+	     <div class="cool-link-chat">
+	     <c:choose>
+	       <c:when test="${fn:length(chatmessages) > 0}">
+	         What's going on in the chat:
+	         <c:forEach items="${chatmessages}" var="chatmessage" varStatus="status">
+	           <div class="cool-link-chat-mesg">
+	             <% /*  truncating this is a pain because the message text from AIM includes HTML markup */ %>
+	             ${chatmessage.fromScreenName}: ${chatmessage.messageText}
+	           </div>
+	         </c:forEach>
+	       </c:when>
+	       <c:otherwise>
+	         <div class="cool-link-chat-none">No chat messages.</div>
+	       </c:otherwise>
+	     </c:choose>
+	     <a class="join-chat" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">Join</a>
+    	 </div>
 	</td>
 	<td class="action-area">
 	   <table class="action-area" cellspacing="2px">
@@ -52,11 +71,11 @@
 	</td>
 	</tr>
 	<tr>
-	   <td><div class="join-chat"><a class="join-chat" onClick='dh.actions.requestJoinRoom("${framer.chatRoom}")' href="aim:GoChat?RoomName=${framer.chatRoom}&Exchange=5">Join Chat Room</a></div></td>
-
+	   <td> 
+	   </td>
 	   <td class="cool-link-meta">
-	     <div class="cool-link-date">${framer.chatRoomMembers}</div>
-	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}" photo="false"/></div>
+	     <div class="cool-link-date"><a onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">${framer.post.chatRoomMembers}</a></div>
+	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}" photo="false"/>&nbsp;<dh:presence value="${post.poster}"/></div>
 	   </td>
 	</tr>
 	</table>

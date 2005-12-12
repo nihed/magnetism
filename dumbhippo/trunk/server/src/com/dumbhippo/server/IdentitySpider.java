@@ -6,7 +6,6 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -14,6 +13,7 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 
 /*
@@ -89,6 +89,16 @@ public interface IdentitySpider {
 	public AimResource findOrCreateAim(String screenName) throws ValidationException;
 	
 	/**
+	 * Returns the AimResource for a given screen name, or null if there is none.
+	 * Does not create a new AimResource if it's not there already.
+	 * 
+	 * @param screenName
+	 * @return AimResource object, or null if it doesn't exist in the database
+	 * @throws ValidationException
+	 */
+	public AimResource lookupAim(String screenName) throws ValidationException;
+		
+	/**
 	 * Gets a Resource object for the given URL, creating
 	 * it if necessary. Note that the result is a detached entity.
 	 * 
@@ -115,7 +125,7 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */
 	public User lookupUserByEmail(String email);
-	
+		
 	//public Person lookupPersonByAim(String aim);
 	//public Person lookupPersonByAim(Person viewpoint, String aim);
 

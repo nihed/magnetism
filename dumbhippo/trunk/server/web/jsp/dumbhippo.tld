@@ -49,6 +49,17 @@
         </attribute>
     </tag>
     <tag>
+        <name>presence</name>
+        <tagclass>com.dumbhippo.web.PresenceTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Taggified presence info about a person, group, or post</info>
+	    <attribute>
+           <name>value</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
         <name>entityList</name>
         <tagclass>com.dumbhippo.web.EntityListTag</tagclass>
         <bodycontent>empty</bodycontent>

@@ -29,8 +29,14 @@ public class EntityListTag extends SimpleTagSupport {
 		boolean first = true;
 		for (Object o : entities) {
 			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos);
+			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
+		
 			if (html == null)
 				continue;
+			
+			if (presenceHtml != null) {
+				html = html + "&nbsp;" + presenceHtml;
+			}
 			
 			if (!first)
 				writer.print(", ");

@@ -21,9 +21,11 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskJoinRoom;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.ChatRoom;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -32,7 +34,9 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.ChatRoomSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -72,6 +76,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private SigninSystem signinSystem;
+
+	@EJB
+	private ChatRoomSystem chatRoomSystem;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -373,14 +380,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setAccountDisabled(user, disabled);
 	}
 	
-	public void doRequestJoinRoom(String chatRoomName) throws IOException {	
-		// TODO: specify a specific bot to handle request, or somehow make sure that 
-		//  all join requests for a particular room get directed to the same bot.  
-		//  Otherwise the bots will take over and humans with perish from the earth.
-		BotTaskJoinRoom joinTask = new BotTaskJoinRoom(null, chatRoomName);
-		JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
-		ObjectMessage jmsMessage = producer.createObjectMessage(joinTask);
-		producer.send(jmsMessage);
+	public void doRequestJoinRoom(String postId) throws IOException {
+		try {
+			Guid postIdGuid = new Guid(postId);
+			
+			// get or create a chatRoom object corresponding to the given postid
+			ChatRoom chatRoom = chatRoomSystem.getChatRoom(postIdGuid);
+			String chatRoomName = chatRoom.getName();
+			
+			// TODO: specify a specific bot to handle request, or somehow make sure that 
+			//  all join requests for a particular room get directed to the same bot.  
+			//  Otherwise the bots will take over and humans with perish from the earth.
+			BotTaskJoinRoom joinTask = new BotTaskJoinRoom(null, chatRoomName);
+			JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
+			ObjectMessage jmsMessage = producer.createObjectMessage(joinTask);
+			producer.send(jmsMessage);
+		} catch (ParseException pe) {
+			throw new RuntimeException("bad Guid in doRequestJoinRoom for " + postId, pe);
+		} catch (ValidationException ve) {
+			throw new RuntimeException("validatino error in doRequestJoinRoom for " + postId, ve);	
+		}
 	}
 
 	public void doSetPassword(User user, String password) throws IOException, HumanVisibleException {

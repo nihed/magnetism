@@ -22,6 +22,9 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.ChatRoom;
+import com.dumbhippo.persistence.ChatRoomMessage;
+import com.dumbhippo.persistence.ChatRoomScreenName;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -181,6 +184,57 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
+	
+	/**
+	 * Get the ChatRoom object associated with this post, if any
+	 * 
+	 * @param post
+	 * @return
+	 */
+	private ChatRoom getChatRoom(Post post) {
+		
+		Post attachedPost = em.find(Post.class, post.getId());
+		ChatRoom chatRoom = attachedPost.getChatRoom();
+		
+		if (chatRoom != null) {
+			// preload the chat room roster so that we have it later
+			String screenNames = "";
+			List<ChatRoomScreenName> roster = chatRoom.getRoster();
+			for (ChatRoomScreenName sn: roster) {
+				logger.debug("Got screen name: " + sn.getScreenName());
+				screenNames = screenNames + sn.getScreenName() + " ";
+			}
+		} else {
+			logger.debug("chat room was null in PostingBoardBean.getChatRoom");
+		}
+		
+		return chatRoom;
+	}
+	
+	/**
+	 * Get just the last few messages for inclusion in a PostView; not the whole message
+	 * history for a chat room.
+	 * 
+	 * @param chatRoom
+	 * @return List of ChatRoomMessage objects, or null
+	 */
+	private List<ChatRoomMessage> getLastFewMessages(ChatRoom chatRoom) {
+		Query q = em.createQuery("SELECT crm FROM ChatRoomMessage crm " +
+		                         "WHERE crm.chatRoom = :chatRoom ORDER BY timestamp DESC");
+		q.setParameter("chatRoom", chatRoom);
+		q.setMaxResults(ChatRoom.getPreviewMessageCount());
+		
+		@SuppressWarnings("unchecked")
+		List<ChatRoomMessage> lastFewMessages = q.getResultList();
+		
+		// reverse the order of the list so they're in ascending chronological time
+		if (lastFewMessages != null) {
+			Collections.reverse(lastFewMessages);
+		}
+		
+		return lastFewMessages;	
+	}
+	
 	// Hibernate bug: I think we should be able to write
 	// EXISTS (SELECT g FROM IN(post.groupRecipients) g WHERE [..])
 	// according to the EJB3 persistance spec, but that results in
@@ -302,7 +356,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		// Person recipients are visible only if the viewer is also a person recipient
 		for (Resource recipient : getVisiblePersonRecipients(viewpoint, post))
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE));
+			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
 	
 		if (!em.contains(post))
 			throw new RuntimeException("can't update post info if Post is not attached");
@@ -317,9 +371,15 @@ public class PostingBoardBean implements PostingBoard {
 			logger.debug("Updated, post info now null");
 		
 		try {
+			
+			ChatRoom chatRoom = getChatRoom(post);
+			List<ChatRoomMessage> lastFewMessages= getLastFewMessages(chatRoom);
+			
 			return new PostView(post, 
 					identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES),
 					getPersonPostData(viewpoint, post),
+					chatRoom,
+					lastFewMessages,
 					recipients);
 		} catch (Exception e) {
 			logger.debug("The exception was: " + e);

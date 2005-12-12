@@ -2,7 +2,13 @@ package com.dumbhippo.server;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.persistence.ChatRoom;
+import com.dumbhippo.persistence.ChatRoomMessage;
+import com.dumbhippo.persistence.ChatRoomScreenName;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
@@ -27,8 +33,11 @@ public class PostView {
 	private String url;
 	private boolean viewerHasViewed;
 	private PersonView posterView;
+	private ChatRoom chatRoom;
+	private List<ChatRoomMessage> lastFewMessages;
 	private List<Object> recipients;
 	private String search;
+	private static final Log logger = GlobalSetup.getLog(PostView.class);
 	private PostFormatter formatter;
 	
 	/**
@@ -37,13 +46,17 @@ public class PostView {
 	 * @param p the post to view
 	 * @param poster the person who posted the post
 	 * @param ppd information about the relationship of the viewer to the post, may be null
+	 * @param chatRoom the associated chatRoom, or null
+	 * @param lastFewMessages the last few chat room messages, or null
 	 * @param recipientList the list of (visible) recipients of the post
 	 */
-	public PostView(Post p, PersonView poster, PersonPostData ppd, List<Object>recipientList) {
+	public PostView(Post p, PersonView poster, PersonPostData ppd, ChatRoom chatRoom, List<ChatRoomMessage> lastFewMessages, List<Object>recipientList) {
 		post = p;
 		posterView = poster;
 		viewerHasViewed = ppd != null;
 		recipients = recipientList;
+		this.chatRoom = chatRoom;
+		this.lastFewMessages = lastFewMessages;
 		
 		for (Resource r : post.getResources()) {
 			if (r instanceof LinkResource) {
@@ -127,4 +140,51 @@ public class PostView {
 	public String getTextAsHtml() {
 		return getFormatter().getTextAsHtml(this);		
 	}
+	
+	public String getChatRoomName() {
+		if (chatRoom != null) {
+			return chatRoom.getName();
+		} else {
+			return ChatRoom.createChatRoomNameStringFor(this.post);
+		}
+	}
+	
+	public boolean isChatRoomActive() {
+		if (chatRoom == null) {
+			logger.debug("chatroom is null on isChatRoomActive()");
+			return false;
+		} else {
+			logger.debug("chatroom size on isChatRoomActive() is " + chatRoom.getRoster().size());
+			return (chatRoom.getRoster().size() > 0);
+		}
+	}
+	
+	public String getChatRoomMembers() {
+		if (chatRoom == null) {
+			logger.debug("chatroom is null");
+			return "Start a new chat!";
+		} else {
+			List<ChatRoomScreenName> members = chatRoom.getRoster();
+			if ((members == null) || (members.size() == 0)) {
+				logger.debug("chatroom is empty");
+				if (members == null) {
+					logger.debug("members is null");
+				} else {
+					logger.debug("members size is zero");
+				}
+				return "Start a new chat!";
+			} else {	
+				String memberlist = "Join chat with ";
+				for (ChatRoomScreenName mem: members) {
+					memberlist = memberlist + mem.getScreenName() + " ";
+				}
+				return memberlist;
+			}
+		}
+	}
+
+	public List<ChatRoomMessage> getLastFewChatRoomMessages() {
+		return lastFewMessages;
+	}
+	
 }

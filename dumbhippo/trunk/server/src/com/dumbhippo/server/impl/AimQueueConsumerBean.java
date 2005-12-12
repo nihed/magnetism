@@ -1,6 +1,8 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
@@ -15,15 +17,19 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventChatRoomMessage;
 import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
+import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.ChatRoom;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
-import com.dumbhippo.server.ChatRoomStatusCache;
+import com.dumbhippo.server.ChatRoomSystem;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
@@ -51,6 +57,9 @@ public class AimQueueConsumerBean implements MessageListener {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private ChatRoomSystem chatRoomSystem;
 	
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
@@ -104,12 +113,96 @@ public class AimQueueConsumerBean implements MessageListener {
 	private void processChatRoomRosterEvent(BotEventChatRoomRoster event) {
 		String chatRoomName = event.getChatRoomName();
 		List<String> chatRoomRoster = event.getChatRoomRoster();
+		String botName = event.getBotName();
 		
 		logger.debug("processing chat room roster event for '" + chatRoomName + "' with " + chatRoomRoster);
+			
+		ChatRoom chatRoom = chatRoomSystem.lookupChatRoom(chatRoomName);
 		
-		// currently chat room status is cached in a single static object
-		ChatRoomStatusCache.putChatRoomStatus(chatRoomName, chatRoomRoster);
+		if (chatRoom == null) {
+			logger.error("Couldn't find ChatRoom entity for " + chatRoomName);
+			return;
+		}
+		
+		if (!botName.equals(chatRoom.getBotName())) {
+			logger.warn("Message received from " + botName + " doesn't match expected bot name " + chatRoom.getBotName());
+		}
+		
+		// add and persist the chatRoomMessage
+		chatRoomSystem.updateChatRoomRoster(chatRoom, chatRoomRoster);
+		
 	}
+	
+	/*
+	 * Handle an event from the bot specifying the online/offline status of
+	 * one or more screen names.
+	 * 
+	 * @param event
+	 */
+	private void processUserPresence(BotEventUserPresence event) {
+		
+		logger.debug("processing user presence event " + event.toString());
+		
+		Map<String,Boolean> userOnlineMap = event.getUserOnlineMap();
+		
+		for (String screenName: userOnlineMap.keySet()) {
+			Boolean isOnline = (Boolean)userOnlineMap.get(screenName);
+			
+			logger.debug("processing user presence event part for '" + screenName + "' of " + (isOnline.booleanValue() ? "online" : "offline"));
+			
+			AimResource aimResource;
+			try {
+				
+				// map screenname -> user
+				aimResource = identitySpider.lookupAim(screenName);
+				if (aimResource == null) {
+					logger.debug("no AimResource found for screen name '" + screenName + "'");
+				} else {
+					logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
+					
+					User user = identitySpider.getUser(aimResource);
+					
+					if (user == null) {
+						logger.debug("didn't find a matching user for " + aimResource.getId());
+						return;
+					}
+				
+					logger.debug("matching user for screen name '" + screenName + "' is " + user.getNickname() + "/" + user.getGuid().toString());
+				}
+			} catch (ValidationException e) {
+				logger.trace(e);
+				logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + screenName + "'");
+				// seems a little excessive to throw a RuntimeException because of this
+				//throw new RuntimeException("broken, invalid screen name from AIM bot", e);
+			}
+		}	
+		
+	}
+	
+	private void processChatRoomMessageEvent(BotEventChatRoomMessage event) {
+		String chatRoomName = event.getChatRoomName();
+		String fromScreenName = event.getFromScreenName();
+		String messageText = event.getMessageText();
+		Date timestamp = event.getTimestamp();
+		String botName = event.getBotName();
+		
+		logger.debug("processing chat room message event from " + fromScreenName + " in room "  + chatRoomName + ": " + messageText);
+		
+		ChatRoom chatRoom = chatRoomSystem.lookupChatRoom(chatRoomName);
+	
+		if (chatRoom == null) {
+			logger.error("Couldn't find ChatRoom entity for " + chatRoomName);
+			return;
+		}
+		
+		if (!botName.equals(chatRoom.getBotName())) {
+			logger.warn("Message received from " + botName + " doesn't match expected bot name " + chatRoom.getBotName());
+		}
+	
+		// add and persist the chatRoomMessage
+		chatRoomSystem.addChatRoomMessage(chatRoom, fromScreenName, messageText, timestamp);
+	}
+	
 	
 	public void onMessage(Message message) {
 		try {
@@ -126,6 +219,12 @@ public class AimQueueConsumerBean implements MessageListener {
 				} else if (obj instanceof BotEventChatRoomRoster) {
 					BotEventChatRoomRoster event = (BotEventChatRoomRoster) obj;
 					processChatRoomRosterEvent(event);
+				} else if (obj instanceof BotEventChatRoomMessage) {
+					BotEventChatRoomMessage event = (BotEventChatRoomMessage) obj;
+					processChatRoomMessageEvent(event);
+				} else if (obj instanceof BotEventUserPresence) {
+					BotEventUserPresence event = (BotEventUserPresence) obj;
+					processUserPresence(event);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}

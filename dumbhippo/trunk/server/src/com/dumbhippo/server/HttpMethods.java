@@ -101,5 +101,5 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "chatRoomName" })
-	public void doRequestJoinRoom(String chatRoomName) throws IOException;
+	public void doRequestJoinRoom(String postId) throws IOException;
 }

@@ -22,6 +22,6 @@ public class BotEventToken extends BotEvent {
 	
 	@Override
 	public String toString() {
-		return "BotEventToken from bot " + getBotName() + " from AIM user " + getAimName() + " token is " + getToken();
+		return this.getClass().getName() + " from bot " + getBotName() + " from AIM user " + getAimName() + " token is " + getToken();
 	}
 }

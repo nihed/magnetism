@@ -6,12 +6,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -42,6 +44,7 @@ public class Post extends GuidPersistable {
 	private Set<Group> groupRecipients;
 	private Set<Resource> resources;
 	private Set<Resource> expandedRecipients;
+	private ChatRoom chatRoom;
 	transient private boolean cachedUrlUpdated;
 	transient private URL cachedUrl;
 	
@@ -201,6 +204,16 @@ public class Post extends GuidPersistable {
 		this.postDate = postDate.getTime();
 	}
 	
+	@OneToOne(cascade = { CascadeType.ALL }, mappedBy="post")
+	@JoinColumn(nullable=true)
+	public ChatRoom getChatRoom() {
+		return chatRoom;
+	}
+
+	public void setChatRoom(ChatRoom chatRoom) {
+		this.chatRoom = chatRoom;
+	}
+
 	@Column(nullable=true,length=MAX_INFO_LENGTH)
 	public String getInfo() {
 		return info;

@@ -204,7 +204,8 @@ public class PersonView {
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {
 		if (!getExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that: " + this);
+			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
+
 		
 		for (Resource r : getResources()) {
 			if (resourceClass.isAssignableFrom(r.getClass()))
@@ -215,8 +216,8 @@ public class PersonView {
 	
 	private <T extends Resource> Collection<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
 		if (!getExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that: " + this);
-		
+			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
+
 		return new TypeFilteredCollection<Resource,T>(getResources(), resourceClass);
 	}
 	
@@ -275,5 +276,16 @@ public class PersonView {
 		});
 		
 		return list;
+	}
+	
+	/**
+	 * Is this user currently online?
+	 * 
+	 * @return true if user is online, false otherwise
+	 */
+	public boolean isOnline() {
+		//return ChatRoomStatusCache.isOnline(this.getViewPersonPageId());
+		// TODO: implement this without using a global static class variable
+		return false;
 	}
 }

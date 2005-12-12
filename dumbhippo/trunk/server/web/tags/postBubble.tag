@@ -15,7 +15,7 @@
 			<a class="cool-person" href="">
 				<dht:headshot person="${post.poster}" />
 				<br/>
-				<dh:entity value="${post.poster}" photo="false"/>
+				<dh:entity value="${post.poster}" photo="false"/>&nbsp;<dh:presence value="${post.poster}"/>
 			</a>
 		</td>
 	</c:if>
@@ -29,7 +29,7 @@
 					<c:set var="linkcss" value="" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
+			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>&nbsp;<dh:presence value="${post}"/>
 			<dh:favicon link="${post.url}"/>
 		</div>
 	</td>
@@ -37,10 +37,12 @@
 	<tr>
 	<td class="cool-link-desc">
 		<c:out value="${post.textAsHtml}" escapeXml="false"/>
+		<% /* <iframe src="chatroom?postId=${post.post.id}" width=300 height=50></iframe> */ %>
 	</td>
 	</tr>
 	<tr>
 	<td class="cool-link-meta">
+		<div class="cool-link-date"><a onClick='dh.actions.requestJoinRoom("${post.post.id}")' href="aim:GoChat?RoomName=${post.chatRoomName}&Exchange=5">${post.chatRoomMembers}</a></div>
 		<div class="cool-link-date">
 		(<fmt:formatDate value="${post.post.postDate}" type="both"/>)
 		</div>

@@ -63,6 +63,11 @@ div.cool-link {
 	margin:					0;
 	font-weight:				bold;
 }
+div.cool-link-chat {
+	text-align:				left;
+	font-size:				8pt;
+	vertical-align:			top;
+}
 a.cool-link {
 	font-weight:				bold;
 	color:					blue;

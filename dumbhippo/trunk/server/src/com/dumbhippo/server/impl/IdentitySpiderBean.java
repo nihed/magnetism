@@ -191,6 +191,21 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		return res;	
 	}
+
+	public AimResource lookupAim(String screenName) throws ValidationException {
+		Query q;
+		
+		q = em.createQuery("from AimResource a where a.screenName = :name");
+		q.setParameter("name", screenName);
+		
+		AimResource res = null;
+		try {
+			res = (AimResource) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			;
+		}
+		return res;
+	}
 	
 	public LinkResource getLink(String link) {
 		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
