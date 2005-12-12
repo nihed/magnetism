@@ -12,6 +12,7 @@
 <head>
 	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
 	<dht:stylesheets href="welcome.css" />
+	<dht:scriptIncludes/>
 </head>
 <body>
     <c:url value="viewperson?personId=${welcome.signin.userId}" var="publicurl"/>
