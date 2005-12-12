@@ -43,10 +43,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 
@@ -65,6 +67,10 @@ public class RawConnection {
     // Rumor has it that 4 is "private chats" and 5 is "public chats".
     // Needs to match exchange used in aim launch URL in web UI
     private static final int AIM_CHAT_ROOM_EXCHANGE = 5;
+    
+    // Number of milliseconds that a bot will wait around for someone else
+    // to join an empty chatroom before it leaves itself.
+    private static final long CHAT_ROOM_LONELY_BOT_TIMEOUT = 60000;
 
     private String loginServer = "toc.oscar.aol.com";
 
@@ -92,9 +98,12 @@ public class RawConnection {
     
     private int warnAmount;
     
-    private HashMap chatRoomNamesById;
-    private HashMap chatRoomRosterById;
-    
+    /**
+     * Map of chat room ID to instances of static inner class ChatRoomInfo that contains
+     * chat room name, roster of screen names, and room idle times.
+     */
+    private Map<String,ChatRoomInfo> chatRoomInfoById;
+   
     public RawConnection(ScreenName name, String pass, String info, RawListener listener) {
 
     	setWarnAmount(0);
@@ -105,12 +114,7 @@ public class RawConnection {
         this.info = info;
         this.listener = listener;
         
-        // create a HashMap for keeping a cached mapping of chat room id -> chat room names
-        //  for rooms this connection is currently in
-        this.chatRoomNamesById = new HashMap();
-        
-        // create a HashMap for keeping track of users currently in each chat room
-        this.chatRoomRosterById = new HashMap();
+        this.chatRoomInfoById = new HashMap<String,ChatRoomInfo>();
     }
     
     public void signOn() {
@@ -449,6 +453,11 @@ public class RawConnection {
             	// log this but don't crash, probably it's harmless
             	logger.error("unknown AIM command '" + toDebugAscii(command) + "'");
             }
+            
+            // check if there are any bots alone in chat rooms for longer than
+            //  the configured timeout
+            checkForLonelyBots();
+            
         } catch (Exception e) {
             logger.error("exception handling incoming command: ", e);
         }
@@ -595,7 +604,12 @@ public class RawConnection {
     	String chatRoomName = inToken.nextToken();
     	
     	// add the mapping id->name to this connection's table of chat rooms
-    	chatRoomNamesById.put(chatRoomId, chatRoomName);
+    	ChatRoomInfo chatRoomInfo = chatRoomInfoById.get(chatRoomId);
+    	if (chatRoomInfo == null) {
+    		chatRoomInfo = new ChatRoomInfo();
+    	}
+    	chatRoomInfo.setChatRoomName(chatRoomName);
+    	chatRoomInfoById.put(chatRoomId, chatRoomInfo);
     	
         logger.debug("CHAT_JOIN room_id=" + chatRoomId + " room_name=" + chatRoomName);
     }
@@ -619,8 +633,15 @@ public class RawConnection {
         		 " from=" + from +
     			 " whisper=" + whisper + 
     			 " message=" + mesg);
-
-        generateChatMessage(from, chatRoomId, mesg);
+        
+        // get chat room name for this id
+        ChatRoomInfo chatRoomInfo = chatRoomInfoById.get(chatRoomId);
+        if (chatRoomInfo != null) {
+        	String chatRoomName = chatRoomInfo.getChatRoomName();
+        	generateChatMessage(from, chatRoomName, chatRoomId, mesg);
+        } else {
+        	logger.warn("Unknown chat room id received in CHAT_IN");
+        }
     }
     
     /*
@@ -632,10 +653,17 @@ public class RawConnection {
     	String inside = inToken.nextToken();
     	
     	// get the current roster for the room from hashmap, or create a new one
-    	// TODO: synchronize access to chat room rosters?
-    	ArrayList<String> roster = (ArrayList<String>)(chatRoomRosterById.get(chatRoomId));
+    	
+    	ChatRoomInfo chatRoomInfo = chatRoomInfoById.get(chatRoomId);
+    	if (chatRoomInfo == null) {
+    		chatRoomInfo = new ChatRoomInfo();
+    		chatRoomInfoById.put(chatRoomId, chatRoomInfo);
+    	}
+    	List<String> roster = chatRoomInfo.getChatRoomRoster();
+    	
     	if (roster == null) {
     		roster = new ArrayList<String>();
+    		chatRoomInfo.setChatRoomRoster(roster);
     	}
     	
     	String userListStr = "";
@@ -647,7 +675,7 @@ public class RawConnection {
     		// leave this bot off of roster actions
     		if (!sn.equals(name)) {
     			if (inside.equals("T")) {
-    				if (roster.indexOf(s) < 0) {
+    				if (!roster.contains(s)) {
     					roster.add(s);
     					logger.debug("Added " + s + " to roster for " + chatRoomId);
     				} else {
@@ -659,9 +687,6 @@ public class RawConnection {
     			}
     		}
         }
-
-    	// put the updated roster back into the hashmap
-    	chatRoomRosterById.put(chatRoomId, roster);
     	
         logger.debug("CHAT_UPDATE_BUDDY room_id=" + chatRoomId +
         		 " inside=" + inside +
@@ -671,19 +696,55 @@ public class RawConnection {
     	
         lastMessageTimestamp = System.currentTimeMillis();
         
-        // get chat room name for this id
-        String chatRoomName = (String)chatRoomNamesById.get(chatRoomId);
-        
         // relay room members (sans this bot) to dumbhippo server
-        generateChatRoomRosterChange(chatRoomName, chatRoomId, roster);
+        generateChatRoomRosterChange(chatRoomInfo.getChatRoomName(), chatRoomId, roster);
         
-        // if this bot is the only user left in the room, then depart the room
+        // if this bot is the only user left in the room, and we've allowed
+    	//  enough time for others to join, then depart the room
         if (roster.size() == 0) {
-        	logger.debug("Room " + chatRoomId + " empty except this bot, so departing...");
-        	chatLeave(chatRoomId);
+        	
+        	Long roomJoinTimeObj = chatRoomInfo.getLonelyBotTime();
+        	if (roomJoinTimeObj == null) {
+        		// bot alone counter wasn't started, so start it now
+        		chatRoomInfo.setLonelyBotTime(System.currentTimeMillis());
+        	} else {
+        		// otherwise we don't need to do anything, checkForLonelyBots will test next time
+        		//  it is invoked
+        	}
+        } else {
+        	// bot isn't alone in room currently, so remove from lonely bot list if it was on there
+        	chatRoomInfo.setLonelyBotTime(null);
         }
     }
 
+    /**
+     * Iterate through the Map of bots alone in chat rooms, and tell the bots
+     * to leave if they've been alone for longer than the set timeout.
+     * 
+     * Invoked in fromAIM() whenever we receive a message from the AIM service.
+     */
+    private void checkForLonelyBots() {
+    	logger.debug("checking for lonely bots...");
+     	for (String chatRoomId: chatRoomInfoById.keySet()) {
+     		// check each room with a lonely bot, and leave only if the bot has been
+     		//  alone for more than the timeout period
+     		ChatRoomInfo chatRoomInfo = chatRoomInfoById.get(chatRoomId);
+     		
+     		Long lonelyPeriodStartObj = chatRoomInfo.getLonelyBotTime();
+     		long lonelyPeriodStart = System.currentTimeMillis();
+     		if (lonelyPeriodStartObj != null) {
+     			lonelyPeriodStart = lonelyPeriodStartObj.longValue();
+     		}
+     		long timeSinceLonelyPeriodStart = (System.currentTimeMillis() - lonelyPeriodStart);
+     		if (timeSinceLonelyPeriodStart > CHAT_ROOM_LONELY_BOT_TIMEOUT) {
+     			logger.debug("Room " + chatRoomId + " empty except this bot, time elapsed since got lonely " + timeSinceLonelyPeriodStart + ", so departing...");
+     			chatLeave(chatRoomId);
+     		} else {
+     			logger.debug("Room " + chatRoomId + " empty except this bot, time elapsed since join " + timeSinceLonelyPeriodStart + ", so waiting around...");
+     		}	
+     	}
+    }
+    
     /*
      * CHAT_LEFT:<Chat Room Id>
      * We successfully left a chat room.
@@ -693,7 +754,7 @@ public class RawConnection {
       	logger.debug("CHAT_LEFT room_id=" + chatRoomId);
       	 
       	// remove the mapping id->name to this connection's table of chat rooms
-     	chatRoomNamesById.remove(chatRoomId);
+      	chatRoomInfoById.remove(chatRoomId);
     }    
     
     private void processConfig(String config) {
@@ -784,19 +845,19 @@ public class RawConnection {
     	}
     }
     
-    private void generateChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage) {
+    private void generateChatMessage(ScreenName buddy, String chatRoomName, String chatRoomId, String htmlMessage) {
     	if (listener != null) {
     		try {
-    			listener.handleChatMessage(buddy, chatRoomId, htmlMessage);
+    			listener.handleChatMessage(buddy, chatRoomName, chatRoomId, htmlMessage);
     		} catch (FilterException e) {
     			
     		}
     	}
     }
     
-    private void generateChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+    private void generateChatRoomRosterChange(String chatRoomName, String chatRoomId, List<String> chatRoomRoster) {
     	if (listener != null) {
-    		listener.handleChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
+    		listener.handleChatRoomRosterChange(chatRoomName, chatRoomRoster);
     	}
     }
     
@@ -1262,4 +1323,40 @@ public class RawConnection {
             }
         }
     }
+    /**
+     * Inner class ChatRoomInfo holds information about an active chat room.
+     */
+    private static class ChatRoomInfo {
+    	private String chatRoomName;
+    	private List<String> chatRoomRoster;
+        /**
+         * First timestamp when a bot noticed itself alone in a chat room, 
+         * or null if the bot was not alone last time it checked.
+         */
+    	private Long lonelyBotTime;
+
+		public String getChatRoomName() {
+			return chatRoomName;
+		}
+
+		public void setChatRoomName(String chatRoomName) {
+			this.chatRoomName = chatRoomName;
+		}
+
+		public List<String> getChatRoomRoster() {
+			return chatRoomRoster;
+		}
+
+		public void setChatRoomRoster(List<String> chatRoomRoster) {
+			this.chatRoomRoster = chatRoomRoster;
+		}
+
+		public Long getLonelyBotTime() {
+			return lonelyBotTime;
+		}
+
+		public void setLonelyBotTime(Long lonelyBotTime) {
+			this.lonelyBotTime = lonelyBotTime;
+		}
+    }    
 }

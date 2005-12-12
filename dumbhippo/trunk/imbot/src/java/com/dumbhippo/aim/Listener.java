@@ -33,7 +33,7 @@
 
 package com.dumbhippo.aim;
 
-import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -46,8 +46,8 @@ import java.util.ArrayList;
 public interface Listener extends BaseListener {
 
     public void handleMessage(Buddy buddy, String messageHtml);
-    public void handleChatMessage(Buddy buddy, String chatRoomId, String messageHtml);
-    public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster);
+    public void handleChatMessage(Buddy buddy, String chatRoomName, String chatRoomId, String messageHtml);
+    public void handleChatRoomRosterChange(String chatRoomName, List<String> chatRoomRoster);
 
     public void handleWarning(Buddy whoEviledUs, int amount);
 

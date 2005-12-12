@@ -276,10 +276,10 @@ public class Client {
         }
     }
 
-	private void generateChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
+	private void generateChatRoomRosterChange(String chatRoomName, List<String> chatRoomRoster) {
 		for (Listener l : aimListeners) {
             try {
-            	l.handleChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
+            	l.handleChatRoomRosterChange(chatRoomName, chatRoomRoster);
             } catch (Exception e) {
                 logger.error(e);
             }
@@ -287,7 +287,7 @@ public class Client {
 	}
 
 
-    private void generateChatMessage(ScreenName from, String chatRoomId, String htmlMessage) {
+    private void generateChatMessage(ScreenName from, String chatRoomName, String chatRoomId, String htmlMessage) {
         Buddy aimbud = getBuddy(from);
         if (aimbud == null) {
             if (autoAddUsers) {
@@ -308,7 +308,7 @@ public class Client {
         } else {
         	for (Listener l : aimListeners) {
                 try {
-                	l.handleChatMessage(aimbud, chatRoomId, htmlMessage);
+                	l.handleChatMessage(aimbud, chatRoomName, chatRoomId, htmlMessage);
                 } catch (Exception e) {
                     logger.error(e);
                 }
@@ -533,11 +533,11 @@ public class Client {
 		/**
 		 * Handles messages in chat rooms
 		 */
-		public void handleChatMessage(ScreenName buddy, String chatRoomId, String htmlMessage) {
+		public void handleChatMessage(ScreenName buddy, String chatRoomName, String chatRoomId, String htmlMessage) {
 			boolean filtered = false;
 			for (RawListener l : rawListeners) {
 				try {
-					l.handleChatMessage(buddy, chatRoomId, htmlMessage);
+					l.handleChatMessage(buddy, chatRoomName, chatRoomId, htmlMessage);
 				} catch (FilterException e) {
 					filtered = true;
 					break;
@@ -549,12 +549,12 @@ public class Client {
 			if (filtered) {
 				logger.debug("--message was filtered out");
 			} else {
-				generateChatMessage(buddy, chatRoomId, htmlMessage);
+				generateChatMessage(buddy, chatRoomName, chatRoomId, htmlMessage);
 			}
 		}
 		
-		public void handleChatRoomRosterChange(String chatRoomName, String chatRoomId, ArrayList<String> chatRoomRoster) {
-			generateChatRoomRosterChange(chatRoomName, chatRoomId, chatRoomRoster);
+		public void handleChatRoomRosterChange(String chatRoomName, List<String> chatRoomRoster) {
+			generateChatRoomRosterChange(chatRoomName, chatRoomRoster);
 		}
 
 		
