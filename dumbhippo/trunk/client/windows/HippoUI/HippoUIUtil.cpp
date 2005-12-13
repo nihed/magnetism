@@ -24,7 +24,7 @@ HippoUIUtil::encodeQueryString(HippoBSTR                   &url,
         WCHAR encoded[1024] = {0}; 
         DWORD len = sizeof(encoded)/sizeof(encoded[0]);
 
-        if (!SUCCEEDED (UrlEscape(paramValues[i], encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
+        if (!SUCCEEDED (UrlEscape(const_cast<HippoBSTR&>(paramValues[i]), encoded, &len, URL_ESCAPE_UNSAFE | URL_ESCAPE_SEGMENT_ONLY)))
             return;
         url.Append(encoded);
     }

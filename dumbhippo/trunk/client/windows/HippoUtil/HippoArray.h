@@ -21,7 +21,11 @@ public:
             delete[] elements_;
     }
 
-    T& operator[](ULONG i) const {
+    const T& operator[](ULONG i) const {
+        return elements_[i];
+    }
+
+    T& operator[](ULONG i) {
         return elements_[i];
     }
 
@@ -37,6 +41,10 @@ private:
     T *elements_;
     ULONG length_;
     ULONG maxLength_;
+
+	// kill default copying
+	HippoArray(const HippoArray &other);
+	HippoArray& operator=(const HippoArray &other);
 };
 
 template <class T>

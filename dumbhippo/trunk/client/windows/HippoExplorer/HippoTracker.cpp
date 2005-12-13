@@ -182,7 +182,7 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
         case DISPID_DOCUMENTCOMPLETE:
              if (dispParams->cArgs == 2 &&
                  dispParams->rgvarg[1].vt == VT_DISPATCH &&
-                 dispParams->rgvarg[0].vt == VT_BYREF | VT_VARIANT) 
+                 dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
              {
                  registerBrowser();
                  updateBrowser();

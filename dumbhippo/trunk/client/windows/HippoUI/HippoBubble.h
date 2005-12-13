@@ -98,4 +98,8 @@ private:
                                        WPARAM wParam,
                                        LPARAM lParam);
     DWORD refCount_;
+
+	// private so they aren't used
+	HippoBubble(const HippoBubble &other);
+	HippoBubble& operator=(const HippoBubble &other);
 };

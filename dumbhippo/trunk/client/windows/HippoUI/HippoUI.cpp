@@ -736,7 +736,7 @@ HippoUI::registerStartup()
     }
 }
 
-// We unregister as a startup program when the user selects Exit explicitely
+// We unregister as a startup program when the user selects Exit explicitly
 void
 HippoUI::unregisterStartup()
 {
@@ -818,7 +818,7 @@ HippoUI::updateForgetPassword()
         EnableWindow(forgetPassButton, im_.hasAuth());
 }
 
-gboolean
+int
 HippoUI::checkIdle(gpointer data) 
 {
     HippoUI *ui = (HippoUI *)data;
@@ -852,7 +852,7 @@ HippoUI::checkIdle(gpointer data)
         }
     }
 
-    return true;
+    return TRUE;
 }
 
 static bool
@@ -1293,7 +1293,7 @@ static const GSourceFuncs win32SourceFuncs = {
     win32SourceFinalize
 };
 
-GSource *
+static GSource *
 win32SourceNew(GMainLoop *loop)
 {
     GSource *source = g_source_new((GSourceFuncs *)&win32SourceFuncs, sizeof(Win32Source));

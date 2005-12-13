@@ -40,6 +40,9 @@ public:
         if (raw_)
             raw_->AddRef();
     }
+	HippoPtr(const HippoPtr &other) : raw_(0) {
+		assign(other.raw_);
+	}
     ~HippoPtr() {
         if (raw_) {
             raw_->Release();
@@ -55,16 +58,27 @@ public:
         assert(raw_ == NULL);
         return &raw_;
     }
-    void operator=(T *t) {
-        if (raw_)
-            raw_->Release();
-        raw_ = t;
-        if (raw_)
-            raw_->AddRef();
+    HippoPtr& operator=(T *t) {
+		assign(t);
+		return *this;
+    }
+    HippoPtr& operator=(const HippoPtr &other) {
+		assign(other.raw_);
+		return *this;
     }
 
 protected:
     T *raw_;
+
+private:
+	void assign(T *t) {
+		// ref first to protect against self-assignment
+		if (t)
+			t->AddRef();
+        if (raw_)
+            raw_->Release();
+        raw_ = t;
+	}
 };
 
 template<class T, const IID *piid = &__uuidof(T)>
@@ -116,6 +130,10 @@ public:
         }
     }
 
+	HRESULT Append(const HippoBSTR &str) {
+		return Append(str.m_str);
+	}
+
     HRESULT CopyTo(BSTR *str) {
         if (m_str) {
             *str = ::SysAllocString(m_str);
@@ -164,10 +182,12 @@ public:
     }
     
     HippoBSTR & operator=(const HippoBSTR &other) {
-        // On memory failure, leaves NULL in the result
-        if (m_str)
-            ::SysFreeString(m_str);
-         m_str = ::SysAllocString(other.m_str);
+		if (this != &other) {
+			// On memory failure, leaves NULL in the result
+			if (m_str)
+				::SysFreeString(m_str);
+			m_str = ::SysAllocString(other.m_str);
+		}
 
          return *this;
     }

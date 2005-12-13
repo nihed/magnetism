@@ -17,8 +17,8 @@ class HippoFlickr :
     public IHippoFlickr
 {
 public:
-    HippoFlickr(void);
-    ~HippoFlickr(void);
+    HippoFlickr();
+    ~HippoFlickr();
 
     void setUI(HippoUI *ui);
 
@@ -254,4 +254,8 @@ private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     HippoPtr<ITypeInfo> classTypeInfo_;
     DWORD refCount_;
+
+	// private so they aren't used
+	HippoFlickr(const HippoFlickr &other);
+	HippoFlickr& operator=(const HippoFlickr &other);
 };
