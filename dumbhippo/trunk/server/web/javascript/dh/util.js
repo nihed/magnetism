@@ -57,11 +57,21 @@ dh.util.closeWindow = function() {
 	// actually loaded.
 	var embed = document.getElementById("dhEmbedObject");
 	if (embed && embed.readyState && embed.readyState >= 3) {
-		embed.CloseWindow(); // this never returns though, I don't think
-		return true;
+		try {
+			embed.CloseWindow(); // this never returns though, I don't think
+			return true;
+		} catch(e) {
+			// Hmm, that didn't work. That probably means we are in
+			// one of our embedded IE instances. In this case we can simply
+			//  window.close()
+			window.close();
+			return true;
+		}
+	}
+
 	// In a javascript popup window from the javascript.open function
 	//   window.opener will be defined as the parent window object
-	} else if (window.opener) {
+	if (window.opener) {
 		window.close();
 		return true;
 	} else {

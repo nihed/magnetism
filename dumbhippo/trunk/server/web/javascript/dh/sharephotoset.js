@@ -376,7 +376,7 @@ dh.sharephotoset.submitButtonClicked = function() {
 	dh.sharephotoset.instance = new dh.flickrupload.UploadStatus(currentPhotos, userId, title, descriptionHtml)
 	dojo.debug("rendering UploadStatus")	
 	dh.sharephotoset.instance.render()
-	window.external.CreatePhotoset(title)
+	window.external.application.CreatePhotoset(title)
 	} catch (e) {
 		dojo.debug("error in submitButtonClicked:" + e.message)
 	}
