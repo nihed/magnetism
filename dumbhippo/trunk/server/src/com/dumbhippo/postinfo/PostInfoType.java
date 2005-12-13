@@ -19,7 +19,8 @@ package com.dumbhippo.postinfo;
 public enum PostInfoType {
 	GENERIC(NodeName.generic, null),
 	EBAY(NodeName.eBay, EbayPostInfo.class),
-	AMAZON(NodeName.amazon, AmazonPostInfo.class);
+	AMAZON(NodeName.amazon, AmazonPostInfo.class),
+	FLICKR(NodeName.flickr, FlickrPostInfo.class);	
 	
 	private NodeName nodeName;
 	private Class<? extends PostInfo> subClass;

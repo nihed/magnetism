@@ -18,6 +18,7 @@ import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.formatters.AmazonFormatter;
 import com.dumbhippo.server.formatters.DefaultFormatter;
 import com.dumbhippo.server.formatters.EbayFormatter;
+import com.dumbhippo.server.formatters.FlickrFormatter;
 import com.dumbhippo.server.formatters.PostFormatter;
 
 /**
@@ -79,6 +80,8 @@ public class PostView {
 			formatter = new AmazonFormatter();
 		} else if (type == PostInfoType.EBAY) {
 			formatter = new EbayFormatter();
+		} else if (type == PostInfoType.FLICKR) {
+			formatter = new FlickrFormatter();
 		} else {
 			formatter = new DefaultFormatter();
 		}

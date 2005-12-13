@@ -163,6 +163,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		logger.debug("saving new Post");
 		Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
+		post.setPostInfo(postInfo);
 		em.persist(post);
 	
 		return post;

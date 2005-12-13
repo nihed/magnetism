@@ -25,18 +25,24 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 			text = "Uploading, " + this.progress + "% complete"
 		else if (this.state == 'uploaded')
 			text = "Processing..."
-		else if (this.state == 'added')
+		else if (this.state == 'pending') // All upload is done, just need to add to photoset
+			text = "Complete"
+		else if (this.state == 'complete')
 			text = "Complete"
 		else
 			text = "(error)"
 		this.textSpan.appendChild(document.createTextNode(text))
 		return this.div
 	}
-	
-	this.isComplete = function () {
-		return this.state == 'added'
+
+	this.isPending = function () {
+		return this.state == 'pending'
 	}
 	
+	this.isComplete = function () {
+		return this.state == 'complete'
+	}
+
 	this.getId = function() {
 		return this.filename
 	}
@@ -55,8 +61,14 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 		this.flickrId = flickrId
 	}
 	
+	this.setComplete = function () {
+		if (this.state != 'pending')
+			throw new Error("got setComplete in invalid state " + this.state)
+		this.state = 'complete'
+	}
+	
 	this.setThumbnailUrl = function (thumbnailUrl) {
-		this.state = 'added'
+		this.state = 'pending'
 		this.thumbnailUrl = thumbnailUrl
 	}
 	
@@ -69,6 +81,15 @@ dojo.inherits(dh.flickrupload.Photo, Object);
 dh.flickrupload.PhotoContainer = function () {
 	dojo.debug("instantiating PhotoContainer")
 	this.photos = []
+	this.userId = null
+	
+	this.setUserId = function (userId) {
+		this.userId = userId
+	}
+	
+	this.getUserId = function () {
+		return this.userId
+	}
 	
 	this.uploadProgress = function (photoId, progress) {
 		this.invokeAndRedraw(photoId, function (photo) { photo.uploadProgress(progress) })
@@ -81,6 +102,10 @@ dh.flickrupload.PhotoContainer = function () {
 	this.thumbnailUploadComplete = function (photoId, thumbnailUrl) {
 		this.invokeAndRedraw(photoId, function (photo) { photo.setThumbnailUrl(thumbnailUrl) })
 	}	
+	
+	this.photoComplete = function (photoId) {
+		this.invokeAndRedraw(photoId, function (photo) { photo.setComplete(); })
+	}
 
 	this.findPhotoIndexForId = function (id) {
 		var i;
@@ -97,18 +122,24 @@ dh.flickrupload.PhotoContainer = function () {
 	}
 }
 
-dh.flickrupload.UploadStatus = function(photos, photosetId, photosetUrl) {
+dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionHtml) {
 	dojo.debug("creating UploadStatus")
 	dh.flickrupload.PhotoContainer.call(this)
 	this.photos = photos
-	this.photosetId = photosetId
-	this.photosetUrl = photosetUrl
+	this.userId = userId
+	this.photoTitle = photoTitle
+	this.tagName = null
+	this.descriptionHtml = descriptionHtml
 	this.div = document.createElement("div")
 	this.title = document.createElement("div")
 	this.div.appendChild(this.title)
 	this.photoDisplay = document.createElement("div")
 	this.div.appendChild(this.photoDisplay)
 	dojo.debug("done creating UploadStatus")
+		
+	this.setTagName = function (tagName) {
+		this.tagName = tagName
+	}
 		
 	this.analyzeState = function () {
 		this.state = 'complete'
@@ -190,28 +221,31 @@ dh.flickrupload.UploadStatus = function(photos, photosetId, photosetUrl) {
 	this.startShare = function () {
 		dojo.debug("starting link share");
 	
-		var title = dh.sharelink.urlTitleToShareEditBox.textValue;
-
-		var url = this.photosetUrl
-
-		var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText);
+		var url = "http://www.flickr.com/photos/" + this.userId + "/tags/" + this.tagName
 	
 		var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 
 		var postInfoDoc = dh.sharelink.postInfo
 		var flickrElt = postInfoDoc.createElement("flickr")
+		var photosetElt = postInfoDoc.createElement("photos")
+		flickrElt.appendChild(photosetElt)
 		postInfoDoc.documentElement.appendChild(flickrElt)
 		for (var i = 0; i < this.photos.length; i++) {
 			var photo = this.photos[i]
 			var photoElt = postInfoDoc.createElement("photo")
-			photoElt.setAttribute("flickrId", photo.getFlickrId())
-			photoElt.setAttribute("thumbnailUrl", photo.getThumbnailUrl())
+			photosetElt.appendChild(photoElt)
+			var photoUrlElt = postInfoDoc.createElement("photoUrl")
+			photoElt.appendChild(photoUrlElt)
+			photoUrlElt.appendChild(postInfoDoc.createTextNode(photo.getThumbnailUrl()))			
+			var photoIdElt = postInfoDoc.createElement("photoId")
+			photoElt.appendChild(photoIdElt)			
+			photoIdElt.appendChild(postInfoDoc.createTextNode(photo.getFlickrId()))
 		}
 
 		var postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
 
 		dojo.debug("url = " + url);
-		dojo.debug("title = " + title);
+		dojo.debug("title = " + this.photoTitle);
 		dojo.debug("desc = " + descriptionHtml);
 		dojo.debug("rcpts = " + commaRecipients);
 		dojo.debug("postInfo = " + postInfoXml);
@@ -219,8 +253,8 @@ dh.flickrupload.UploadStatus = function(photos, photosetId, photosetUrl) {
 		dh.server.doPOST("sharelink",
 						{ 
 							"url" : url,
-							"title" : title, 
-						  	"description" : descriptionHtml,
+							"title" : this.photoTitle, 
+						  	"description" : this.descriptionHtml,
 						  	"recipients" : commaRecipients,
 						  	"secret" : "false",
 							"postInfoXml" : postInfoXml
@@ -331,13 +365,39 @@ dojo.debug("creating photoset instance");
 dh.sharephotoset.instance = new dh.flickrupload.UploadSet()
 
 dh.sharephotoset.submitButtonClicked = function() {
+	try {
 	dojo.debug("clicked share photo button");
 	var title = dh.sharelink.urlTitleToShareEditBox.textValue
-	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText)
 	dojo.debug("title = " + title)
-	dojo.debug("description = " + descriptionHtml)		
-	window.external.CreatePhotoset(title, descriptionHtml)
-	
+	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText)
+	var currentPhotos = dh.sharephotoset.instance.getPhotos()
+	var userId = dh.sharephotoset.instance.getUserId()
+	dojo.debug("userid = " + userId)	
+	dh.sharephotoset.instance = new dh.flickrupload.UploadStatus(currentPhotos, userId, title, descriptionHtml)
+	dojo.debug("rendering UploadStatus")	
+	dh.sharephotoset.instance.render()
+	window.external.CreatePhotoset(title)
+	} catch (e) {
+		dojo.debug("error in submitButtonClicked:" + e.message)
+	}
+}
+
+dhFlickrSetUserId = function (userId) {
+	try {
+	dojo.debug("setting userId " + userId)
+	dh.sharephotoset.instance.setUserId(userId);
+	} catch (e) {
+		dojo.debug("dhFlickrSetUserid failed:" + e.message)
+	}		
+}
+
+dhFlickrSetTagName = function (tagName) {
+	try {
+	dojo.debug("setting tag name " + tagName)
+	dh.sharephotoset.instance.setTagName(tagName);
+	} catch (e) {
+		dojo.debug("dhFlickrSetTagName failed:" + e.message)
+	}	
 }
 
 // These functions are invoked from the client directly; they're
@@ -379,13 +439,13 @@ dhFlickrPhotoThumbnailUploadComplete = function (filename, thumbnailUrl) {
 	}		
 }
 
-dhFlickrPhotosetCreated = function (photosetId, photosetUrl) {
-	dojo.debug("photoset creation complete, id=" + photosetId + " url=" + photosetUrl)
-	var currentPhotos = dh.sharephotoset.instance.getPhotos()
-	dojo.debug("photos=" + currentPhotos)	
-	dh.sharephotoset.instance = new dh.flickrupload.UploadStatus(currentPhotos, photosetId, photosetUrl)
-	dojo.debug("rendering UploadStatus")	
-	dh.sharephotoset.instance.render()
+dhFlickrPhotoComplete = function (filename) {
+	try {
+	dojo.debug("got photo complete for " + filename)
+	dh.sharephotoset.instance.photoComplete(filename)
+	} catch (e) {
+		dojo.debug("dhFlickrPhotoComplete failed:" + e.message)
+	}	
 }
 
 dhFlickrError = function (text) {

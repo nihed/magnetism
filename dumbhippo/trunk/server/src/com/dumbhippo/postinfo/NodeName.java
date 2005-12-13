@@ -38,6 +38,7 @@ public enum NodeName {
 	// type-specific sections
 	amazon,
 	eBay,
+	flickr,
 	// nodes underneath one of the above sections
 	favicon,
 	itemId,
@@ -52,6 +53,10 @@ public enum NodeName {
 	timeLeft,
 	startPrice,
 	buyItNowPrice,
+	photos,
+	photo,
+	photoUrl,
+	photoId,
 	//	a node we don't know about, used in parsing only
 	IGNORED 
 }
