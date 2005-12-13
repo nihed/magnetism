@@ -29,7 +29,7 @@
 					<c:set var="linkcss" value="" scope="page"/>
 				</c:otherwise>
 			</c:choose>
-			<a class="cool-link ${linkcss}" onMouseOver="self.status='${post.url}';return true;" onMouseOut="self.status='';return true;" title="${post.url}" href="frameset?postId=${post.post.id}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>&nbsp;<dh:presence value="${post}"/>
+			<a class="cool-link ${linkcss}" onClick="return dh.util.openFrameSet(window,event,this,'${post.post.id}');" title="${post.url}" href="${post.url}"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>&nbsp;<dh:presence value="${post}"/>
 			<dh:favicon link="${post.url}"/>
 		</div>
 	</td>

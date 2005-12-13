@@ -259,3 +259,8 @@ dh.util.openShareGroupWindow = function(groupId) {
 	'_NEW',
 	'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));
 }
+
+dh.util.openFrameSet = function(window, event, obj, postID) {
+	top.window.location.href = "frameset?postId=" + postID;
+	return false;
+}
