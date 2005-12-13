@@ -14,6 +14,20 @@ HippoIEWindow::HippoIEWindowIECallback::onError(WCHAR *errText)
     this->win_->ui_->debugLogW(L"HippoIEWindow error: %s", errText);
 }
 
+void
+HippoIEWindow::HippoIEWindowIECallback::onDocumentComplete()
+{
+    if (win_->cb_)
+        win_->cb_->onDocumentComplete();
+}
+
+void
+HippoIEWindow::HippoIEWindowIECallback::onClose()
+{
+    if (win_->cb_ == NULL || win_->cb_->onClose(win_->window_))
+        win_->hide();
+}
+
 HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb)
 {
     ui_ = ui;

@@ -14,18 +14,25 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 #include <HippoUtil.h>
+#include "HippoExternal.h"
+#include "HippoLogWindow.h"
 
 using namespace MSXML2;
 
 #define NOTIMPLEMENTED assert(0); return E_NOTIMPL
 
-HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *external)
+HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
 {
     window_ = window;
     docSrc_ = src;
     callback_ = cb;
-    external_ = external;
     haveTransform_ = false;
+
+    HippoExternal *external = new HippoExternal();
+    if (external)
+        external->setApplication(application);
+    external_ = external;
+    external->Release();
 
     HippoPtr<ITypeLib> typeLib;
     if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
@@ -276,8 +283,9 @@ HippoIE::GetExternal(IDispatch **dispatch)
     if (*dispatch) {
         (*dispatch)->AddRef();
         return S_OK;
+    } else {
+        return E_OUTOFMEMORY;
     }
-    return E_NOTIMPL;
 }
 
 STDMETHODIMP 
@@ -654,19 +662,52 @@ HippoIE::LockContainer(BOOL fLock)
 
 STDMETHODIMP 
 HippoIE::QueryInterface(const IID &ifaceID, 
-                            void   **result)
+                        void    **result)
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
         *result = static_cast<IUnknown *>(static_cast<IDocHostUIHandler*>(this));
     else if (IsEqualIID(ifaceID, IID_IDispatch))
-        *result = static_cast<IDispatch*>(this);
-    else if (IsEqualIID(ifaceID, IID_IDocHostUIHandler))
-        *result = static_cast<IDocHostUIHandler*>(this);
+        *result = static_cast<IDispatch *>(this);
+    else if (IsEqualIID(ifaceID, IID_IStorage))
+        *result = static_cast<IStorage *>(this);
+    else if (IsEqualIID(ifaceID, IID_IOleWindow))
+        *result = static_cast<IOleWindow *>(static_cast<IOleInPlaceSite *>(this));
+    else if (IsEqualIID(ifaceID, IID_IOleInPlaceUIWindow))
+        *result = static_cast<IOleInPlaceUIWindow *>(this);
+    else if (IsEqualIID(ifaceID, IID_IOleInPlaceFrame))
+        *result = static_cast<IOleInPlaceFrame *>(this);
     else if (IsEqualIID(ifaceID, IID_IOleClientSite))
-        *result = static_cast<IOleClientSite*>(this);
+        *result = static_cast<IOleClientSite *>(this);
     else if (IsEqualIID(ifaceID, IID_IOleInPlaceSite)) // || riid == IID_IOleInPlaceSiteEx || riid == IID_IOleInPlaceSiteWindowless)
-        *result = static_cast<IOleInPlaceSite*>(this);
+        *result = static_cast<IOleInPlaceSite *>(this);
+    else if (IsEqualIID(ifaceID, IID_IParseDisplayName))
+        *result = static_cast<IParseDisplayName *>(this);
+    else if (IsEqualIID(ifaceID, IID_IOleContainer))
+        *result = static_cast<IOleContainer *>(this);
+    else if (IsEqualIID(ifaceID, IID_IDocHostUIHandler))
+        *result = static_cast<IDocHostUIHandler *>(this);
+    else if (IsEqualIID(ifaceID, DIID_DWebBrowserEvents2))
+        *result = static_cast<IDispatch *>(this);
+#if 0
+    else if (IsEqualIID(ifaceID, IID_IServiceProvider))
+        *result = static_cast<IServiceProvider *>(this);
+    else if (IsEqualIID(ifaceID, IID_IOleCommandTarget))
+        *result = static_cast<IOleCommandTarget *>(this);
+#endif
     else {
+#if 0
+        // Can be used to print out interfaces that are being
+        // queried for that we don't implement; some known
+        // interfaces that are queried for against this object
+        // are IServiceProvider, IOleCommandTarget, and 
+        // IOleControlSite
+
+        WCHAR *ifaceStr;
+        if (SUCCEEDED(StringFromIID(ifaceID, &ifaceStr))) {
+            hippoDebugLogW(L"QI for interface: %s\n", ifaceStr);
+            CoTaskMemFree(ifaceStr);
+        }
+#endif
         *result = NULL;
         return E_NOINTERFACE;
     }
@@ -709,18 +750,18 @@ HippoIE::GetTypeInfo (unsigned int infoIndex,
    return S_OK;
 }
 
- STDMETHODIMP 
- HippoIE::GetTypeInfoCount (unsigned int *pcTInfo)
- {
+STDMETHODIMP 
+HippoIE::GetTypeInfoCount (unsigned int *pcTInfo)
+{
     if (pcTInfo == NULL)
-      return E_INVALIDARG;
+        return E_INVALIDARG;
 
     *pcTInfo = 1;
 
     return S_OK;
- }
+}
   
- STDMETHODIMP
+STDMETHODIMP
 HippoIE::Invoke (DISPID        member,
                       const IID    &iid,
                       LCID          lcid,              
@@ -741,8 +782,117 @@ HippoIE::Invoke (DISPID        member,
             } else {
                 return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
             }
-            break;
+        case DISPID_WINDOWCLOSING:
+            if (dispParams->cArgs == 2 &&
+                dispParams->rgvarg[1].vt == VT_BOOL &&
+                dispParams->rgvarg[0].vt == (VT_BYREF | VT_BOOL))
+            {
+                // window.close() was called from a script; storing TRUE
+                // in the out parameter means "cancel", and then we handle
+                // it ourselves by hiding the window. If we stored FALSE,
+                // IE would ask the user whether they wanted to close the
+                // window, then (AFAIK) do nothing, since the web browser
+                // control doesn't have any ability to "quit".
+                *dispParams->rgvarg[0].pboolVal = VARIANT_TRUE;
+
+                callback_->onClose();                
+
+                return S_OK;
+            } else {
+                return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+            }
         default:
             return DISP_E_MEMBERNOTFOUND; // Or S_OK
      }
  }
+
+#if 0
+////////////////// IServiceProvider implementation ///////////////////
+
+STDMETHODIMP 
+HippoIE::QueryService(const GUID &serviceID, 
+                      const IID  &ifaceID, 
+                      void      **result)
+{
+    // Query service is called on the HTML with a wide range of 
+    // Service ID's .... IID_IHttpNegiotiate2, IID_ITargetFrame2,
+    // SID_STopLevelBrowser, and many others. We don't need to
+    // handle any of them currently.
+
+    WCHAR *serviceStr;
+
+    if (SUCCEEDED(StringFromIID(serviceID, &serviceStr))) {
+        hippoDebugLogW(L"QueryService for:%s\n", serviceStr);
+        CoTaskMemFree(serviceStr);
+    }
+
+    return E_UNEXPECTED;
+}
+
+/////////////////// IOleCommandTarget implementation ///////////////////
+
+/* We implement IOleCommandTarget to handle requests that the control
+ * (or Javascript in the control) makes of the target, like "close
+ * the window". The set of possible commands isn't really documented
+ * very well; we can get some of the standard OLE commands, like 
+ * OLECMD_ID ... in the default group represented by commandGroup === NULL
+ * but we may also get explorer-specific commands with 
+ * commandGroup == CGID_Explorer. We hope that we can get away with
+ * simply not supporting these commands, since they aren't documented.
+ */
+
+// Query for information about a particular command. It's very unlikely
+// this is needed, but we provide an implementation anyways for
+// correctness sake.
+STDMETHODIMP
+HippoIE::QueryStatus (const GUID *commandGroup,
+                      ULONG       nCommands,
+                      OLECMD     *commands,
+                      OLECMDTEXT *commandText)
+{
+    for (ULONG i = 0; i < nCommands; i++) {
+        if (commandGroup == NULL && commands[i].cmdID == OLECMDID_CLOSE) {
+            commands[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+
+            if (commandText) {
+                if ((commandText->cmdtextf & OLECMDTEXTF_NAME) != 0) {
+                    commandText->cwActual = (ULONG)wcslen(L"Close");
+                    StringCchCopy(commandText->rgwz, commandText->cwBuf, L"Close");
+                } else if ((commandText->cmdtextf & OLECMDTEXTF_STATUS) != 0) {
+                    commandText->cwActual = (ULONG)wcslen(L"");
+                    StringCchCopy(commandText->rgwz, commandText->cwBuf, L"");
+                }
+
+                commandText = NULL; // the text result is for the first supported command
+            }
+        } else {
+            commands[i].cmdf = 0;
+        }
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoIE::Exec (const GUID *commandGroup,
+               DWORD       commandId,
+               DWORD       nCommandExecOptions,
+               VARIANTARG *commandInput,
+               VARIANTARG *commandOutput)
+{
+    // OLECMDID_CLOSE isn't actually invoked, even when IWebBrowser2->Quit()
+    // is called; we leave it in here as a stub; quite a few other commands
+    // are invoked, such as OLECMDID_UPDATECOMMANDS
+    //
+    if (commandGroup == NULL) {
+        if (commandId == OLECMDID_CLOSE) {
+            hippoDebug(L"Close the window, it's cold in here");
+            return S_OK;
+        } else {
+            return OLECMDERR_E_NOTSUPPORTED;
+        }
+    } else {
+        return OLECMDERR_E_UNKNOWNGROUP;
+    }
+}
+#endif

@@ -49,10 +49,8 @@ private:
         HippoIEWindowIECallback(HippoIEWindow *win) {
             win_ = win;
         }
-        void onDocumentComplete(void) {
-            if (win_->cb_)
-                win_->cb_->onDocumentComplete();
-        }
+        void onDocumentComplete();
+        void onClose();
         void onError(WCHAR *errText);
     };
 

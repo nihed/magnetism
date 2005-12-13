@@ -317,9 +317,9 @@ STDMETHODIMP
 HippoEmbed::CloseWindow()
 {
     if (browser_)
-        browser_->Quit();
-
-    return S_OK;
+        return browser_->Quit();
+    else
+        return E_FAIL;
 }
 
 /////////////////////////////////////////////////////////////////////

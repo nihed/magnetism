@@ -15,6 +15,7 @@ class HippoIECallback
 {
 public:
     virtual void onDocumentComplete() = 0;
+    virtual void onClose() = 0; // window.close called
     virtual void onError(WCHAR *errText) = 0;
 };
 
@@ -34,18 +35,22 @@ public:
  DANGER DANGER DANGER
 */
 class HippoIE :
-    public IDocHostUIHandler,
     public IStorage,
-    public IOleInPlaceFrame,
+    public IOleInPlaceFrame, // <- IOleInplaceUIWindow <- IOleWindow
     public IOleClientSite,
-    public IOleInPlaceSite,
-    public IOleContainer,
-    public DWebBrowserEvents2
+    public IOleInPlaceSite, // <- IOleWindow
+    public IOleContainer, // <- IParseDisplayName
+    public IDocHostUIHandler,
+    public DWebBrowserEvents2 // <- IDispatch
+#if 0
+    public IServiceProvider,
+    public IOleCommandTarget,
+#endif
 {
 public:
 
     // Only sets up object
-    HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *external);
+    HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application);
 
     // Optional, apply an XSLT stylesheet to source
     void setXsltTransform(WCHAR *styleSrc, ...);
@@ -69,12 +74,12 @@ public:
     STDMETHODIMP_(DWORD) AddRef();
     STDMETHODIMP_(DWORD) Release();
 
-    //IDispatch methods
-   STDMETHOD (GetIDsOfNames) (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
-   STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);                    
-   STDMETHOD (GetTypeInfoCount) (unsigned int *);
-   STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
-                       VARIANT *, EXCEPINFO *, unsigned int *);
+    // IDispatch methods
+    STDMETHOD (GetIDsOfNames) (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
+    STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);                    
+    STDMETHOD (GetTypeInfoCount) (unsigned int *);
+    STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
+                        VARIANT *, EXCEPINFO *, unsigned int *);
 
     // IStorage
     STDMETHODIMP CreateStream(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStream ** ppstm);
@@ -127,6 +132,7 @@ public:
     STDMETHODIMP DiscardUndoState();
     STDMETHODIMP DeactivateAndUndo();
     STDMETHODIMP OnPosRectChange(LPCRECT lprcPosRect);
+
     // IParseDisplayName
     STDMETHODIMP ParseDisplayName(IBindCtx *pbc,LPOLESTR pszDisplayName,ULONG *pchEaten,IMoniker **ppmkOut);
     // IOleContainer
@@ -150,11 +156,31 @@ public:
     STDMETHODIMP TranslateUrl(DWORD translate, OLECHAR *chURLIn, OLECHAR **chURLOut);
     STDMETHODIMP UpdateUI(VOID);
 
+#if 0
+    // We don't have a use for the following two interfaces at the current
+    // time, but keeping the skeleton code around in case we need to implement
+    // them later.
+
+    // IServiceProvider methods
+    STDMETHODIMP QueryService(const GUID &, const IID &, void **);
+
+    // IOleCommandTarget methods
+    STDMETHODIMP QueryStatus (const GUID *commandGroup,
+                              ULONG nCommands,
+                              OLECMD *commands,
+                              OLECMDTEXT *commandText);
+    STDMETHODIMP Exec (const GUID *commandGroup,
+                       DWORD       commandId,
+                       DWORD       nCommandExecOptions,
+                       VARIANTARG *commandInput,
+                       VARIANTARG *commandOutput);
+#endif
+
 private:
     HippoIECallback *callback_;
     HWND window_;
     HippoPtr<IOleObject> ie_;
-    IDispatch *external_;
+    HippoPtr<IDispatch> external_;
     HippoPtr<IWebBrowser2> browser_;
 
     HippoBSTR docSrc_;

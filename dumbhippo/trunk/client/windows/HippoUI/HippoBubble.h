@@ -41,7 +41,6 @@ public:
     STDMETHODIMP DebugLog(BSTR str);
     STDMETHODIMP DisplaySharedLink(BSTR linkId);
     STDMETHODIMP OpenExternalURL(BSTR url);
-    STDMETHODIMP GetXmlHttp(IXMLHttpRequest **request);
     STDMETHODIMP Close();
     STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
 
@@ -58,6 +57,7 @@ private:
         HippoBubble *bubble_;
         void onDocumentComplete();
         void onError(WCHAR *text);
+        void onClose() {}
     };
     HippoBubbleIECallback *ieCallback_;
 

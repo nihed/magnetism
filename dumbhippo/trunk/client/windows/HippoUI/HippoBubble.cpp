@@ -4,8 +4,6 @@
  */
 #include "stdafx.h"
 
-#import <msxml3.dll>  named_guids
-
 #include <mshtml.h>
 #include "exdisp.h"
 #include <strsafe.h>
@@ -21,8 +19,6 @@ static const TCHAR *CLASS_NAME = TEXT("HippoBubbleClass");
 static const int BASE_WIDTH = 400;
 static const int BASE_HEIGHT = 150;
 static const UINT_PTR CHECK_MOUSE = 1;
-
-using namespace MSXML2;
 
 #define NOTIMPLEMENTED assert(0); return E_NOTIMPL
 
@@ -436,14 +432,6 @@ HippoBubble::SetViewerSpace(DWORD viewerSpace)
             moveResizeWindow();
     }
 
-    return S_OK;
-}
-
-STDMETHODIMP 
-HippoBubble::GetXmlHttp(IXMLHttpRequest **request)
-{
-    CoCreateInstance(CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC,
-        IID_IXMLHTTPRequest, (void**) request);
     return S_OK;
 }
 

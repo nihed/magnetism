@@ -48,10 +48,23 @@ library HippoUtil {
         HRESULT DisplaySharedLink([in] BSTR postId);
         [id(123), helpstring("Debug log")]
         HRESULT DebugLog([in] BSTR msg);
-        [id(124), helpstring("Get xmlhttp")]
-        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
         [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
         HRESULT SetViewerSpace([in] DWORD viewerSpace);
+    }
+    [
+        uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
+        helpstring("DumbHippo Javascript external object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoExternal : IUnknown
+    {
+        [id(130), propget, helpstring("Get the application object")]
+        HRESULT Application([out, retval] IDispatch **application);
+        [id(135), helpstring("Log to the debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(136), helpstring("Create an xmlhttp object")]
+        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
     [
         uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr

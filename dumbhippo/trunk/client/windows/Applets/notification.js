@@ -11,7 +11,7 @@ var dhInit = function(serverUrl, appletUrl) {
     var closeButton = document.getElementById("dh-close-button")
     closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
             e.stopPropagation();
-            window.external.Close();
+            window.external.application.Close();
             return false;
     })
     dh.display = new dh.notification.Display(serverUrl, appletUrl); 
@@ -112,7 +112,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
                 space = 0
             }
             
-            window.external.SetViewerSpace(space)
+            window.external.application.SetViewerSpace(space)
         }
     }
     
@@ -159,7 +159,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     this.close = function () {
         this.setVisible(false)
         this._clearPageTimeout()
-        window.external.Close()
+        window.external.application.Close()
         this._initNotifications()
     }
     
@@ -203,7 +203,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         a.setAttribute("href", "")
         a.onclick = dh.util.dom.stdEventHandler(function(e) {
             e.stopPropagation();
-            window.external.OpenExternalURL(href)
+            window.external.application.OpenExternalURL(href)
             return false;
         })
         return a    
@@ -234,7 +234,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         a.setAttribute("href", "javascript:true")
         a.onclick = dh.util.dom.stdEventHandler(function(e) {
             e.stopPropagation();
-            window.external.DisplaySharedLink(postId)
+            window.external.application.DisplaySharedLink(postId)
             if (hookfn)
                 hookfn()
             return false;
