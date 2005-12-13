@@ -24,6 +24,8 @@ public:
 
     void uploadPhoto(BSTR filename);
 
+    bool isCommitted() { return state_ > ADDING_TAGS; }
+
     //IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
     STDMETHODIMP_(DWORD) AddRef();
@@ -36,7 +38,7 @@ public:
     STDMETHODIMP Invoke(DISPID, REFIID, LCID, WORD, DISPPARAMS *, VARIANT *, EXCEPINFO *, UINT *);
 
     // IHippoFlickr methods
-    STDMETHODIMP CreatePhotoset(BSTR title, BSTR descriptionHtml);
+    STDMETHODIMP CreatePhotoset(BSTR title);
 
 private:
     class HippoFlickrInvocation : public HippoHTTPAsyncHandler
@@ -71,11 +73,18 @@ private:
         virtual void handleCompleteXML(IXMLDOMElement *doc) = 0;
         virtual void onError() = 0;
     };
-    class HippoFlickrCheckTokenInvocation : public HippoFlickrRESTInvocation {
+    class HippoFlickrAbstractAuthInvocation : public HippoFlickrRESTInvocation {
     public:
-        HippoFlickrCheckTokenInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
+        HippoFlickrAbstractAuthInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
+        virtual void handleAuth(WCHAR *token, WCHAR *userId) = 0;
+    };
+    class HippoFlickrCheckTokenInvocation : public HippoFlickrAbstractAuthInvocation {
+    public:
+        HippoFlickrCheckTokenInvocation(HippoFlickr *flickr) : HippoFlickrAbstractAuthInvocation(flickr) {
+        }
+        void handleAuth(WCHAR *token, WCHAR *userId);
         void onError();
     };
     class HippoFlickrFrobInvocation : public HippoFlickrRESTInvocation {
@@ -85,11 +94,11 @@ private:
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
     };
-    class HippoFlickrTokenInvocation : public HippoFlickrRESTInvocation {
+    class HippoFlickrTokenInvocation : public HippoFlickrAbstractAuthInvocation {
     public:
-        HippoFlickrTokenInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
+        HippoFlickrTokenInvocation(HippoFlickr *flickr) : HippoFlickrAbstractAuthInvocation(flickr) {
         }
-        void handleCompleteXML(IXMLDOMElement *doc);
+        void handleAuth(WCHAR *token, WCHAR *userId);
         void onError();
     };
     class HippoFlickrAbstractUploadInvocation : public HippoFlickrRESTInvocation {
@@ -115,16 +124,9 @@ private:
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
     };
-    class HippoFlickrCreatePhotosetInvocation : public HippoFlickrRESTInvocation {
+    class HippoFlickrTagPhotoInvocation : public HippoFlickrRESTInvocation {
     public:
-        HippoFlickrCreatePhotosetInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
-        }
-        void handleCompleteXML(IXMLDOMElement *doc);
-        void onError();
-    };
-    class HippoFlickrAddPhotoInvocation : public HippoFlickrRESTInvocation {
-    public:
-        HippoFlickrAddPhotoInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
+        HippoFlickrTagPhotoInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
         void onError();
@@ -170,9 +172,8 @@ private:
         IDLE,
         UPLOADING,
         UPLOADING_THUMBNAIL,
-        CREATING_PHOTOSET,
-        POPULATING_PHOTOSET,
-        PHOTOSET_POPULATED
+        ADDING_TAGS,
+        COMPLETE
     } state_;
 
     enum {
@@ -214,9 +215,9 @@ private:
 
     HippoBSTR authFrob_;
     HippoBSTR authToken_;
+    HippoBSTR userId_;
 
-    HippoBSTR photoSetId_;
-    HippoBSTR photoSetUrl_;
+    HippoBSTR tagTitle_;
 
     void ensureStatusWindow();
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
@@ -235,15 +236,15 @@ private:
     void getToken();
     void onUploadComplete(WCHAR *photoId);
     void onUploadThumbnailComplete(WCHAR *url);
-    void setToken(WCHAR *token);
+    void setToken(WCHAR *token, WCHAR *userId);
     void setFrob(WCHAR *frob);
-    void onPhotosetCreated(WCHAR *photoId, WCHAR *photoUrl);
-    void onPhotosetPopulated();
     void processPhotoset();
 
+    void notifyUserId();
     void notifyPhotoAdded(HippoFlickrPhoto *photo);
     void notifyPhotoUploading(HippoFlickrPhoto *photo);
     void notifyPhotoThumbnailUploaded(HippoFlickrPhoto *photo);
+    void notifyPhotoUploaded(HippoFlickrPhoto *photo);
     void notifyPhotoComplete(HippoFlickrPhoto *photo);
     void enqueueUpload(BSTR filename);
     void processUploads();

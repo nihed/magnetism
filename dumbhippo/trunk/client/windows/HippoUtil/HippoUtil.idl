@@ -62,6 +62,6 @@ library HippoUtil {
     interface IHippoFlickr : IUnknown
     {
         [id(150), helpstring("Create a photoset from current photos")]
-        HRESULT CreatePhotoset([in] BSTR title, [in] BSTR descriptionHtml);
+        HRESULT CreatePhotoset([in] BSTR title);
     }
 }

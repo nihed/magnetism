@@ -64,6 +64,8 @@ HippoUI::HippoUI(bool debug, bool replaceExisting, bool initialDebugShare)
     connected_ = false;
     registered_ = false;
 
+    flickr_ = NULL;
+
     nextBrowserCookie_ = 0;
 
     rememberPassword_ = FALSE;
@@ -346,8 +348,6 @@ HippoUI::create(HINSTANCE instance)
         im_.signIn();
     }
 
-    flickr_.setUI(this);
-
     checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
 
     registerStartup();
@@ -462,8 +462,15 @@ HippoUI::ShareLink(BSTR url, BSTR title)
 STDMETHODIMP 
 HippoUI::BeginFlickrShare(BSTR filePath)
 {
-    debugLogW(L"sharing photo path %s", filePath);
-    flickr_.uploadPhoto(filePath);
+    debugLogW(L"sharing photo zpath %s", filePath);
+
+    if (flickr_ == NULL || flickr_->isCommitted()) {
+        if (flickr_ != NULL)
+            flickr_->Release();
+        flickr_ = new HippoFlickr();
+        flickr_->setUI(this);
+    }
+    flickr_->uploadPhoto(filePath);
     return S_OK;
 }
 

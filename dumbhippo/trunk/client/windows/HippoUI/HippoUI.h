@@ -162,7 +162,7 @@ private:
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
     HippoIM im_;
-    HippoFlickr flickr_;
+    HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
 
     HippoRemoteWindow *currentShare_;

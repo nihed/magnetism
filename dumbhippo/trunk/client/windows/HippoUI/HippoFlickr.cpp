@@ -31,6 +31,7 @@ HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/service
     statusDisplayState_ = STATUS_DISPLAY_INITIAL;
     statusDisplayVisible_ = false;
     activeUploadPhoto_ = NULL;
+    shareWindow_ = NULL;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -46,6 +47,14 @@ HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/service
 
 HippoFlickr::~HippoFlickr(void)
 {
+    for (UINT i = 0; i < pendingUploads_.length(); i++)
+        delete pendingUploads_[i];
+    if (activeUploadPhoto_)
+        delete activeUploadPhoto_;
+    for (UINT i = 0; i < completedUploads_.length(); i++)
+        delete completedUploads_[i];
+    if (shareWindow_)
+        delete shareWindow_;
 }
 
 void
@@ -77,6 +86,7 @@ HippoFlickr::HippoFlickrIEWindowCallback::onDocumentComplete()
     if (flickr_->statusDisplayState_ == HippoFlickr::STATUS_DISPLAY_AWAITING_DOCUMENT) {
         flickr_->ui_->debugLogW(L"got flickr document complete");
         flickr_->statusDisplayState_ = HippoFlickr::STATUS_DISPLAY_DOCUMENT_LOADED;
+        flickr_->notifyUserId();
         for (UINT i = 0; i < flickr_->pendingUploads_.length(); i++) {
             flickr_->notifyPhotoAdded(flickr_->pendingUploads_[i]);
         }
@@ -91,7 +101,7 @@ HippoFlickr::HippoFlickrIEWindowCallback::onDocumentComplete()
             HippoFlickrPhoto *photo = flickr_->completedUploads_[i];
             flickr_->notifyPhotoAdded(photo);
             flickr_->notifyPhotoUploading(photo);
-            flickr_->notifyPhotoComplete(photo);
+            flickr_->notifyPhotoUploaded(photo);
             flickr_->notifyPhotoThumbnailUploaded(photo);
         }
     }
@@ -112,7 +122,7 @@ HippoFlickr::ensureStatusWindow()
         return;
     }
     shareWindow_ = new HippoIEWindow(ui_, L"Share Photos", shareURL, this, ieWindowCallback_);
-	shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 600, 600);
+	shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 650, 600);
     shareWindow_->show();
     ie_ = shareWindow_->getIE();
     statusDisplayVisible_ = true;
@@ -397,20 +407,13 @@ lose:
 }
 
 void
-HippoFlickr::HippoFlickrCheckTokenInvocation::handleCompleteXML(IXMLDOMElement *doc)
+HippoFlickr::HippoFlickrCheckTokenInvocation::handleAuth(WCHAR *token, WCHAR *userId)
 {
-    HippoBSTR token;
-    HippoPtr<IXMLDOMElement> authNode;
-
-    if (!findFirstNamedChild(doc, L"auth", authNode))
-        return;
-    if (!findFirstNamedChildTextValue(authNode, L"token", token))
-        return;
-
     this->flickr_->state_ = IDLE;
     this->flickr_->authToken_ = token;
+    this->flickr_->userId_ = userId;
+    this->flickr_->notifyUserId();
     this->flickr_->processUploads();
-    delete this;
 }
 
 void
@@ -492,17 +495,31 @@ HippoFlickr::getFrob()
 }
 
 void
-HippoFlickr::HippoFlickrTokenInvocation::handleCompleteXML(IXMLDOMElement *doc)
+HippoFlickr::HippoFlickrAbstractAuthInvocation::handleCompleteXML(IXMLDOMElement *doc)
 {
     HippoBSTR token;
     HippoPtr<IXMLDOMElement> authNode;
+    HippoPtr<IXMLDOMElement> userNode;
+    HRESULT hr;
 
     if (!findFirstNamedChild(doc, L"auth", authNode))
         return;
     if (!findFirstNamedChildTextValue(authNode, L"token", token))
         return;
+    if (!findFirstNamedChild(authNode, L"user", userNode))
+        return;
+    _variant_t vUserId(L"");
+    hr = userNode->getAttribute(_bstr_t(L"nsid"), &vUserId);
+    if (FAILED(hr)) {
+        this->handleError(hr);
+        return;
+    }
+    if (vUserId.vt != VT_BSTR) {
+        this->handleError(L"couldn't find nsid");
+        return;
+    }
 
-    this->flickr_->setToken(token);
+    this->handleAuth(token, vUserId.bstrVal);
     delete this;
 }
 
@@ -513,17 +530,20 @@ HippoFlickr::HippoFlickrTokenInvocation::onError() {
 }
 
 void
-HippoFlickr::setToken(WCHAR *token)
+HippoFlickr::HippoFlickrTokenInvocation::handleAuth(WCHAR *token, WCHAR *nsid)
 {
-    state_ = IDLE;
-    authToken_= token;
-    ui_->debugLogW(L"got Flickr auth token %s", authToken_.m_str);
+    flickr_->state_ = IDLE;
+    flickr_->authToken_= token;
+    flickr_->userId_ = nsid;
+    this->flickr_->notifyUserId();
+    flickr_->ui_->debugLogW(L"got Flickr auth token %s, userid %s", flickr_->authToken_.m_str, flickr_->userId_.m_str);
     HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
                                DUMBHIPPO_SUBKEY_FLICKR,
                                true);
-    hippoFlickrReg.saveString(L"token", authToken_);
+    hippoFlickrReg.saveString(L"token", flickr_->authToken_);
+    hippoFlickrReg.saveString(L"userId", flickr_->userId_);
 
-    processUploads();
+    flickr_->processUploads();
 }
 
 void
@@ -556,7 +576,7 @@ HippoFlickr::enqueueUpload(BSTR filename)
 }
 
 void
-HippoFlickr::notifyPhotoComplete(HippoFlickrPhoto *photo)
+HippoFlickr::notifyPhotoUploaded(HippoFlickrPhoto *photo)
 {
     if (statusDisplayState_ < STATUS_DISPLAY_DOCUMENT_LOADED)
         return;
@@ -571,7 +591,7 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
 {
     assert(state_ == UPLOADING);
     activeUploadPhoto_->setFlickrId(photoId);
-    notifyPhotoComplete(activeUploadPhoto_);
+    notifyPhotoUploaded(activeUploadPhoto_);
 
     HGLOBAL hg = NULL;
     void *buf;
@@ -772,111 +792,87 @@ HippoFlickr::notifyPhotoUploading(HippoFlickrPhoto *photo)
 }
 
 void
-HippoFlickr::HippoFlickrCreatePhotosetInvocation::handleCompleteXML(IXMLDOMElement *top)
+HippoFlickr::notifyUserId() 
 {
-    HippoBSTR photoId;
-    HippoPtr<IXMLDOMElement> photosetNode;
-    variant_t vPhotosetId;
-    variant_t vPhotosetUrl;
-    HRESULT result;
-
-    if (!findFirstNamedChild(top, L"photoset", photosetNode))
+    if (statusDisplayState_ < STATUS_DISPLAY_DOCUMENT_LOADED)
         return;
-
-    result = photosetNode->getAttribute(_bstr_t(L"id"), &vPhotosetId);
-    if (FAILED(result))
-        return;
-    result = photosetNode->getAttribute(_bstr_t(L"url"), &vPhotosetUrl);
-    if (FAILED(result))
-        return;
-    
-    this->flickr_->onPhotosetCreated(vPhotosetId.bstrVal, vPhotosetUrl.bstrVal);
-    delete this;
-}
-
-void
-HippoFlickr::HippoFlickrCreatePhotosetInvocation::onError()
-{
-    delete this;
-}
-
-void 
-HippoFlickr::onPhotosetCreated(WCHAR *photoId, WCHAR *photoUrl)
-{
-    assert(state_ == CREATING_PHOTOSET);
-    photoSetId_ = photoId;
-    photoSetUrl_ = photoUrl;
-    this->state_ = POPULATING_PHOTOSET;
-
     variant_t vResult;
-    variant_t vPhotosetId(photoSetId_);
-    variant_t vPhotosetUrl(photoSetUrl_);
-    invokeJavascript(L"dhFlickrPhotosetCreated", &vResult, 2, &vPhotosetId, &vPhotosetUrl);
-
-    processPhotoset();
+    variant_t vUserId(userId_.m_str);
+    invokeJavascript(L"dhFlickrSetUserId", &vResult, 1, &vUserId);
 }
 
 STDMETHODIMP
-HippoFlickr::CreatePhotoset(BSTR title, BSTR descriptionHtml) 
+HippoFlickr::CreatePhotoset(BSTR title) 
 {
     if (state_ != IDLE) {
-        ui_->debugLogW(L"got createPhotoset in unexpected state");
+        ui_->debugLogW(L"got CreatePhotoset in unexpected state");
         return E_FAIL;
     }
 
-    HippoFlickrPhoto *primaryPhoto = completedUploads_[0];
-    completedUploads_.remove(0);
-    photosetAddedPhotos_.append(primaryPhoto);
+    UINT len = ::SysStringLen(title);
 
-    state_ = CREATING_PHOTOSET;
-    HippoFlickr::HippoFlickrCreatePhotosetInvocation *invocation = new HippoFlickr::HippoFlickrCreatePhotosetInvocation(this);
-    invokeMethod(invocation, L"flickr.photosets.create",  
-                                             L"auth_token", authToken_.m_str, 
-                                             L"title", title,
-                                             L"description", descriptionHtml,
-                                             L"primary_photo_id", primaryPhoto->getFlickrId(),
-                                             NULL);
+    if (len == 0)
+        return E_FAIL;
+
+
+    tagTitle_ = L"";
+    for (UINT i = 0; i < len; i++) {
+        if (iswalnum(title[i])) {
+            WCHAR substr[2];
+            substr[0] = title[i];
+            substr[1] = 0;
+            tagTitle_.Append(substr);
+        }
+    }
+
+    variant_t vResult;
+    variant_t vTagName(tagTitle_.m_str);
+    invokeJavascript(L"dhFlickrSetTagName", &vResult, 1, &vTagName);
+
+    state_ = ADDING_TAGS;
+    processPhotoset();
     return S_OK;
 }
 
 void
-HippoFlickr::HippoFlickrAddPhotoInvocation::handleCompleteXML(IXMLDOMElement *top)
+HippoFlickr::notifyPhotoComplete(HippoFlickrPhoto *photo)
+{
+    variant_t vResult;
+    variant_t vFilename(photo->getFilename());
+    invokeJavascript(L"dhFlickrPhotoComplete", &vResult, 1, &vFilename);
+}
+
+void
+HippoFlickr::HippoFlickrTagPhotoInvocation::handleCompleteXML(IXMLDOMElement *top)
 {
     flickr_->photosetAddedPhotos_.append(flickr_->activePhotosetPhoto_);
+    flickr_->notifyPhotoComplete(flickr_->activePhotosetPhoto_);
     flickr_->activePhotosetPhoto_ = NULL;
+    flickr_->processPhotoset();
     delete this;
 }
 
 void
-HippoFlickr::HippoFlickrAddPhotoInvocation::onError()
+HippoFlickr::HippoFlickrTagPhotoInvocation::onError()
 {
     delete this;
-}
-
-void
-HippoFlickr::onPhotosetPopulated()
-{
-    assert(state_ == PHOTOSET_POPULATED);
-    VARIANT vResult;
-    invokeJavascript(L"dhFlickrPhotosetPopulated", &vResult, 0);    
 }
 
 void
 HippoFlickr::processPhotoset()
 {
-    assert (state_ == POPULATING_PHOTOSET);
+    assert (state_ == ADDING_TAGS);
     if (completedUploads_.length() > 0) {
         activePhotosetPhoto_ = completedUploads_[0];
         completedUploads_.remove(0);
-        HippoFlickr::HippoFlickrAddPhotoInvocation *invocation = new HippoFlickr::HippoFlickrAddPhotoInvocation(this);
-        invokeMethod(invocation, L"flickr.photosets.addPhoto",  
+        HippoFlickr::HippoFlickrTagPhotoInvocation *invocation = new HippoFlickr::HippoFlickrTagPhotoInvocation(this);
+        invokeMethod(invocation, L"flickr.photos.addTags",  
                                              L"auth_token", authToken_.m_str, 
-                                             L"photoset_id", photoSetId_.m_str,
-                                             L"photo_id", activePhotosetPhoto_->getFlickrId,
+                                             L"photo_id", activePhotosetPhoto_->getFlickrId(),
+                                             L"tags", tagTitle_.m_str,
                                              NULL);
     } else {
-        state_ = PHOTOSET_POPULATED;
-        onPhotosetPopulated();
+        state_ = COMPLETE;
     }
 }
 
