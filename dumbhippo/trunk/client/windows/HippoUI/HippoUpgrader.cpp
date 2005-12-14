@@ -117,7 +117,7 @@ HippoUpgrader::setUpgradeInfo(const char *minVersion,
                               const char *currentVersion,
                               const char *downloadUrl)
 {
-    if (state == STATE_DOWNLOADING || state == STATE_DOWNLOADED) {
+    if (state_ == STATE_DOWNLOADING || state_ == STATE_DOWNLOADED) {
         // We got another version response while we were downloading;
         // it's probably the same version as last time, and caused
         // by a temporary interruption, but even if it is something
