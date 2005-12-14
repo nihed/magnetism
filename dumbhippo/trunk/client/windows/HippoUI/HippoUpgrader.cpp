@@ -117,6 +117,19 @@ HippoUpgrader::setUpgradeInfo(const char *minVersion,
                               const char *currentVersion,
                               const char *downloadUrl)
 {
+    if (state == STATE_DOWNLOADING || state == STATE_DOWNLOADED) {
+        // We got another version response while we were downloading;
+        // it's probably the same version as last time, and caused
+        // by a temporary interruption, but even if it is something
+        // new trying to get it will mess us up. Just ignore the 
+        // new version information; cancelling is especially difficult
+        // in the STATE_DOWNLOADED version, since the HippoUI is
+        // displaying a dialog to the user. We'll pick up the version
+        // the next time the user reconnects.
+
+        return;
+    }
+
     minVersion_ = g_strdup(minVersion);
     currentVersion_ = g_strdup(currentVersion);
     downloadUrl_.setUTF8(downloadUrl);

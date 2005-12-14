@@ -233,13 +233,13 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DumbHippo"
-        "ProductCode" = "8:{2FE5DEF8-941C-4EAC-947A-E2C519E48037}"
-        "PackageCode" = "8:{9558AFC8-03AF-4FE1-9199-C913C2303C4B}"
+        "ProductCode" = "8:{4339AEED-3C70-469F-8E47-BECBAACAF1F1}"
+        "PackageCode" = "8:{D9A95B4A-A4BC-425E-AE69-1AF566771926}"
         "UpgradeCode" = "8:{9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "ProductVersion" = "8:0.1.21"
+        "ProductVersion" = "8:1.0.0"
         "Manufacturer" = "8:Red Hat"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -750,7 +750,7 @@
         {
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_272D3F1469534F489B4E421C42C1399C"
             {
-            "SourcePath" = "8:..\\Debug\\HippoShellExt.dll"
+            "SourcePath" = "8:..\\debug\\HippoShellExt.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -778,7 +778,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_47A4F6AE1DA44BD599132EFC9C5399CA"
             {
-            "SourcePath" = "8:..\\Debug\\HippoExplorer.dll"
+            "SourcePath" = "8:..\\debug\\HippoExplorer.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -806,7 +806,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_898A262762AC42C68A8A5BC2F01E4593"
             {
-            "SourcePath" = "8:..\\Debug\\loudmouth-1.dll"
+            "SourcePath" = "8:..\\debug\\loudmouth-1.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -890,7 +890,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_DB2D193C931940DA8F0B5E15E3701772"
             {
-            "SourcePath" = "8:..\\Debug\\HippoUI.exe"
+            "SourcePath" = "8:..\\debug\\HippoUI.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"
@@ -918,7 +918,7 @@
             }
             "{8062640A-2EEE-46E9-AB67-688E9A886E9F}:_E44DB7AA67204C17B340781D98D865CB"
             {
-            "SourcePath" = "8:..\\Debug\\HippoUtil.dll"
+            "SourcePath" = "8:..\\debug\\HippoUtil.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_AC4B14D1CFFA41418AB25C0A54906790"

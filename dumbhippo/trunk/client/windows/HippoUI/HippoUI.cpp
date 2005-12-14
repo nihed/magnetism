@@ -644,8 +644,19 @@ HippoUI::onUpgradeReady()
     if (MessageBox(NULL, 
                    L"A new version of the DumbHippo client has been downloaded. Install now?",
                    L"DumbHippo upgrade ready", 
-                   MB_OKCANCEL | MB_DEFBUTTON1) == IDOK)
+                   MB_OKCANCEL | MB_DEFBUTTON1) == IDOK) 
+    {
         upgrader_.performUpgrade();
+
+        // performUpgrade launches the installer asynchronously. We want to quit before the 
+        // installer gets very far along, to minimize problems with in-use files. Since
+        // the Microsoft installer doesn't ask the user to quit applications without a 
+        // toplevel window, if we are still running, the end effect will be that the
+        // user is told they need to reboot. The main problem with quitting here is that
+        // if the user cancel's the install, then we aren't running anymore. (But we
+        // will still be set to auto-start.)
+        PostQuitMessage(0);
+    }
 }
 
 void 
