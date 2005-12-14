@@ -1,12 +1,8 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -27,7 +23,10 @@ public class RewriteServlet extends HttpServlet {
 	
 	static final long serialVersionUID = 1;
 	
+	private boolean stealthMode;
 	private Set<String> requiresSignin;
+	private Set<String> requiresSigninStealth;
+	private Set<String> noSignin;
 	private Set<String> jspPages;
 	private Set<String> htmlPages;
 	private String buildStamp;
@@ -52,7 +51,8 @@ public class RewriteServlet extends HttpServlet {
 	}
     
 	@Override
-	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException { 
+	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
+		
 		String newPath = null;
 		
 		String path = request.getServletPath();
@@ -117,7 +117,7 @@ public class RewriteServlet extends HttpServlet {
 		// destination in the query string. This only works for GET, since we'd
 		// have to save the POST parameters somewhere.
 		
-		if (requiresSignin.contains(afterSlash) && 
+		if ((requiresSignin.contains(afterSlash) || (stealthMode && requiresSigninStealth.contains(afterSlash))) && 
 			!hasSignin(request) && 
 			request.getMethod().toUpperCase().equals("GET")) {
 			String url = response.encodeRedirectURL("/signin?next=" + afterSlash);
@@ -144,16 +144,28 @@ public class RewriteServlet extends HttpServlet {
 		}
 	}
 	
+	static private Set<String> getStringSet(ServletConfig config, String param) {
+		Set<String> set = new HashSet<String>();
+		String s = config.getInitParameter(param);
+		if (s != null)
+			for (String m : s.split(","))
+				set.add(m.trim());
+		return set;
+	}
+	
 	@Override
 	public void init() throws ServletException {
 		ServletConfig config = getServletConfig();
 		context = config.getServletContext();
+
+		stealthMode = true;
+		String stealthModeString = config.getInitParameter("stealthMode");
+		if (stealthModeString != null)
+			stealthMode = Boolean.parseBoolean(stealthModeString);
 		
-		requiresSignin = new HashSet<String>();
-		String requiresSigninString = config.getInitParameter("requiresSignin");
-		if (requiresSigninString != null)
-			for (String page : requiresSigninString.split(","))
-				requiresSignin.add(page);
+		requiresSignin = getStringSet(config, "requiresSignin");
+		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
+		noSignin = getStringSet(config, "noSignin");
 		
 		jspPages = new HashSet<String>();
 		Set jspPaths = context.getResourcePaths("/jsp/");
@@ -174,6 +186,30 @@ public class RewriteServlet extends HttpServlet {
 					htmlPages.add(path.substring(6, path.length() - 5));
 			}
 		}		
+	
+		Set<String> withSigninRequirements = new HashSet<String>(requiresSignin);
+		withSigninRequirements.addAll(requiresSigninStealth);
+		withSigninRequirements.addAll(noSignin);
+		
+		for (String p : jspPages) {
+			if (!withSigninRequirements.contains(p)) {
+				logger.warn(".jsp " + p + " does not have its signin requirements specified");
+				requiresSigninStealth.add(p);
+			}
+		}
+
+		for (String p : htmlPages) {
+			if (!withSigninRequirements.contains(p)) {
+				logger.warn(".html " + p + " does not have its signin requirements specified");
+				requiresSigninStealth.add(p);
+			}
+		}
+		
+		for (String p : withSigninRequirements) {
+			if (!jspPages.contains(p) && !htmlPages.contains(p)) {
+				logger.warn("Page '" + p + "' in servlet config is not a .jsp or .html we know about");
+			}
+		}
 		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);

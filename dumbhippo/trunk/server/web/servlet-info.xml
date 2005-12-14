@@ -176,8 +176,20 @@
       <servlet-name>RewriteServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
       <init-param>
+          <param-name>stealthMode</param-name>
+          <param-value>true</param-value>
+      </init-param>
+      <init-param>
+          <param-name>noSignin</param-name>
+          <param-value>signin,signinsent,error,comingsoon,mailsettings,configjs,flash,privacy,unknownlink</param-value>
+      </init-param>
+      <init-param>
+          <param-name>requiresSigninStealth</param-name>
+          <param-value>viewperson,viewgroup,main,search</param-value>
+      </init-param>
+      <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,invite,sharelink,sharephoto,account,myphoto,newphoto,groupphoto,viewperson,viewgroup</param-value>
+          <param-value>home,welcome,welcomedisabled,invite,invitesent,sharelink,sharephotoset,sharegroup,bookmark,account,myphoto,newphoto,groupphoto,framer,frameset</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   
