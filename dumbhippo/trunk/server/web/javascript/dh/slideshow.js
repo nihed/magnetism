@@ -13,7 +13,7 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	this.height = 0;
 	this.player = null;
 	this.screen = null;
-	this.current = -1;
+	this.current = -2;
 	this.timer = null;
 	this.playing = false;
 	
@@ -49,11 +49,15 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 				var slide = this.slides[i];
 				if (!slide.node) {
 					slide.node = document.createElement("img");
+					slide.node.style.display = "none";
 					slide.node.setAttribute("src", slide.src);
 				}
-				slide.node.setAttribute("style", "visibility: hidden;");
+				slide.node.style.display = "none";
 				// FIXME dojo.html.addClass probably
-				slide.node.setAttribute("class", "dh-slideshow-slide");
+				var clazz = slide.node.getAttribute("class");
+				if (!clazz)
+					clazz="";
+				slide.node.setAttribute("class", clazz + " " + "dh-slideshow-slide");
 				this.screen.appendChild(slide.node);
 		}
 	}
@@ -85,16 +89,24 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	}
 
 	this.updateControls = function() {
-		if (this.playing) {				
-			this.pauseControl.style.visibility = 'visible';
-			this.playControl.style.visibility = 'hidden';
+		if (this.playing) {	
+			setText(this.playPauseControl, "||");
+			this.playPauseControl.setAttribute("active", "false");
+
 		} else {
-			this.pauseControl.style.visibility = 'hidden';
-			if ((this.current + 1) == this.slides.length)
-				this.playControl.style.visibility = 'hidden';
-			else
-				this.playControl.style.visibility = 'visible';
+			setText(this.playPauseControl, ">|");
+			this.playPauseControl.setAttribute("active", "true");
 		}
+
+		if (this.current < 1)
+			this.back.setAttribute("active", "false");
+		else
+			this.back.setAttribute("active", "true");
+
+		if (this.current == this.slides.length - 1) 
+			this.forward.setAttribute("active", "false");
+		else
+			this.forward.setAttribute("active", "true");
 	}
 	
 	this.setPlaying = function(play) {
@@ -127,21 +139,25 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 		}
 
 		this.current = slideIndex;
+
 		if (this.current >= 0) {
 			var slide = this.slides[slideIndex];
 			this.current = slideIndex;
 			
-			slide.node.style.visibility = 'visible';
+			slide.node.style.display = 'block';
 		}
-		
+
 		if (this.current >= 0) {
 			setText(this.where, (this.current + 1) + "/" + this.slides.length);
+
 		} else {
-			setText(this.where, "-");
+			return;
 		}
 		
+		this.updateControls();
+
 		if (oldNode)
-			oldNode.style.visibility = 'hidden';				
+			oldNode.style.display = 'none';				
 	}
 	
 	this.play = function() {
@@ -163,25 +179,35 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	this.player.style.display = 'none';
 	
 	this.screen = createElemWithClass("div", this.player, "dh-slideshow-screen");
-	
+
 	this.controlArea = createElemWithClass("div", this.player, "dh-slideshow-control-area");
-	this.restartControl = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-restart");
-	this.pauseControl = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-pause");
-	this.playControl = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-play");
 	
-	this.restartControl.onclick = function(ev) {
-		me.restart();
+	this.back = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-back");
+	this.back.appendChild(document.createTextNode("<<"));
+	this.back.onclick = function(ev) {
+		me.setCurrent(me.current - 1);
+		me.setPlaying(false);
 	}
-	
-	this.pauseControl.onclick = function(ev) {
-		me.pause();
+
+	this.playPauseControl = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-pause");
+
+	this.playPauseControl.onclick = function(ev) {
+		if (me.playing)
+			me.pause();
+		else {
+			me.setCurrent(me.current + 1);
+			me.play();
+		}
 	}
-	
-	this.playControl.onclick = function(ev) {
-		me.play();
-	}
-	
+
 	this.where = createElemWithClass("span", this.controlArea, "dh-slideshow-where");
+
+	this.forward = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-forward");
+	this.forward.appendChild(document.createTextNode(">>"));
+	this.forward.onclick = function(ev) {
+		me.setCurrent(me.current + 1);
+		me.setPlaying(false);
+	}
 	
 	this.setSize(width, height);
 	this.setSlides(slides);
@@ -191,4 +217,6 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	
 	// show everything
 	this.player.style.display = 'block';
+
+	this.play();
 }

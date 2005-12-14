@@ -184,6 +184,7 @@
 			<fileset dir="${web}" includes="images/*.gif" />
 			<fileset dir="${web}" includes="images/*.png" />
 			<fileset dir="${web}" includes="images/*.ico" />
+			<fileset dir="${web}" includes="images/tpfd-slides/*.jpg" />
 			<fileset dir="${web}" includes="jsp/*.jsp" />
 			<fileset dir="${web}" includes="jsp/*.tld" />
 			<fileset dir="${web}" includes="css/*.css" />

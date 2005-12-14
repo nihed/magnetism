@@ -1,37 +1,67 @@
 @CHARSET "UTF-8";
 
-.dh-slideshow-player {
+#dhAccountSlideshow, .dh-slideshow-player {
 	/* you want to float or absolute-position it so it shrinks to fit contents */
-	float:		left;
-	border:		3px solid green;
 	padding:	6px;
+	width:		450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
+	margin:		auto;
 }
 
 .dh-slideshow-screen {
-	position:	relative;
-	border: 	1px solid black;
+	position:		relative;
+	border: 		1px solid black;
+}
+
+div.dh-slideshow-spacer {
+	text-align:			center;
+	width:				100%;
 }
 
 .dh-slideshow-control-area {
-	margin:		3px;
+	text-align:			center;
+	float:				left;
+	height:				2em;
+	vertical-align:			middle;
 }
 
-.dh-slideshow-control {
-	border: 			1px solid gray;
+a.dh-slideshow-control {
 	margin:				3px;
-	text-decoration: 	none;
+	padding:			3px;
+	text-decoration: 		none;
+	color:				white;
+	font-weight:			bold;
+	background-color:		steelblue;
+	cursor:				pointer;
+	border:				2px outset lightsteelblue;
+	display:			block;
+	float:				left;
+	width:				2em;
+}
+a.dh-slideshow-control:link {
+	text-decoration: 		none;
+	color:				white;
+	font-weight:			bold;
+	cursor:				pointer;
+}
+a.dh-slideshow-control[active=false] {
+	background-color:		gray;
+	border:				2px outset gray;
+}
+a.dh-slideshow-control[active=true] {
+	background-color:		steelblue;
+	border:				2px outset lightsteelblue;
 }
 
-.dh-slideshow-control-restart:before {
-	content: 	"Restart";
+a.dh-slideshow-control-pause[active=false] {
+	background-color:		lightsteelblue;
+	color:				black;
 }
 
-.dh-slideshow-control-pause:before {
-	content: 	"Pause";
-}
-
-.dh-slideshow-control-play:before {
-	content: 	"Play";
+.dh-slideshow-where {
+	display:			block;
+	float:				left;
+	margin:				3px;
+	padding:			4px;
 }
 
 .dh-slideshow-slide {
@@ -43,6 +73,18 @@ img.dh-slideshow-slide {
 	background: #2222FF;
 }
 
-.dh-slideshow-where {
-	margin-left:	20px;
+#dhSlideshowTextarea {
+	vertical-align:			middle;
+	height:				100%;
+	width:				100%;
+	padding:			7px;
+}
+
+#dhSlideshowTextarea, .dh-slideshow-text, .dh-slideshow-link {
+	text-align:			center;
+	margin:				auto;
+}
+
+.dh-slideshow-text {
+	margin-top:			4em;
 }

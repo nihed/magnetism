@@ -14,7 +14,49 @@
 	<title>Your Account Setup</title>
 	<dht:stylesheets href="account.css" iehref="account-iefixes.css" />
 	<dht:scriptIncludes/>
-	<script type="text/javascript">dojo.require("dh.password");</script>
+	<script type="text/javascript">
+		dojo.require("dh.password");
+		dojo.require("dh.slideshow");
+	</script>
+	<script type="text/javascript">	
+	
+		var slideNode = document.createElement("div");
+		slideNode.setAttribute("id", "dhSlideshowTextarea");
+		var p = document.createElement("p");
+		p.appendChild(document.createTextNode("Then share that link with yourself, go on do it!!"));
+		p.setAttribute("class", "dh-slideshow-text");
+		var link = document.createElement("a");
+		link.setAttribute("href", "/home");
+		link.setAttribute("target", "_new");
+		link.setAttribute("class", "dh-slideshow-link");
+		link.appendChild(document.createTextNode("Open This Link To Your Home Page"));
+		slideNode.appendChild(link);
+		slideNode.appendChild(p);
+	
+		window.onload = function() {
+			var slides = [
+				{ 	"time" : 4500, 
+					"src" : "/images/tpfd-slides/001.jpg" },
+				{ 	"time" : 7000,
+					"src" : "/images/tpfd-slides/002.jpg" },
+				{ 	"time" : 6000,
+					"src" : "/images/tpfd-slides/003.jpg" },
+				{ 	"time" : 6000,
+					"src" : "/images/tpfd-slides/004.jpg" },
+				{ 	"time" : 7000,
+					"src" : "/images/tpfd-slides/005.jpg" },
+				{ 	"time" : 6000,
+					"src" : "/images/tpfd-slides/006.jpg" },
+				{ 	"time" : 1500,
+					"src" : "/images/tpfd-slides/007.jpg" },
+				{ 	"time" : 0,
+					"node" : slideNode }
+			];
+		
+			var node = document.getElementById('dhAccountSlideshow');
+			var slideshow = new dh.slideshow.Slideshow(node, 420, 300, slides);
+		}
+	</script>
 </head>
 <body>
     <dht:header>
@@ -26,8 +68,9 @@
 	<div id="dhMain">
 	
 		<div class="dh-account-movie-area">
-			<div class="dh-account-movie">Fun Movie Here</div>
+			<div id="dhAccountSlideshow"></div>
 		</div>
+		<div style="clear:left;text-align:center;"><a style="font-size:xx-small;font-style:italic;color:black;text-decoration:none;" target="_blank" href="http://www.toothpastefordinner.com/">temporary comics based on the awesome toothpastefordinner characters</a></div>
 		
 		<c:choose>
 			<c:when test="${!account.signin.disabled}">
