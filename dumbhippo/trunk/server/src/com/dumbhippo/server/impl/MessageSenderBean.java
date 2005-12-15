@@ -91,6 +91,7 @@ public class MessageSenderBean implements MessageSender {
 		private Set<String> recipientNames;
 		
 		private String url;
+		private String postInfo;
 
 		private Guid guid;
 
@@ -140,6 +141,7 @@ public class MessageSenderBean implements MessageSender {
 			builder.appendTextNode("senderGuid", senderGuid.toString());			
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
+			builder.appendTextNode("postInfo", postInfo);
 			builder.openElement("recipients");
 			for (String recipient : recipientNames) {
 				builder.appendTextNode("recipient", recipient);
@@ -166,6 +168,14 @@ public class MessageSenderBean implements MessageSender {
 
 		public String getNamespace() {
 			return NAMESPACE;
+		}
+
+		public String getPostInfo() {
+			return postInfo;
+		}
+
+		public void setPostInfo(String postInfo) {
+			this.postInfo = postInfo;
 		}
 	}
 	
@@ -292,6 +302,7 @@ public class MessageSenderBean implements MessageSender {
 			extension.setUrl(url);
 			extension.setTitle(title);
 			extension.setDescription(post.getText());
+			extension.setPostInfo(post.getInfo());
 			
 			if (viewers != null) {
 				List<String> viewerNames = new ArrayList<String>();

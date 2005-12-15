@@ -10,6 +10,7 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 	this.thumbnailUrl = null
 	this.state = 'queued'
 	this.flickrId = null
+	this.infoXml = null
 	
 	this.render = function() {
 		this.div = document.createElement("div")	
@@ -75,6 +76,14 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 	this.getThumbnailUrl = function () {
 		return this.thumbnailUrl
 	}
+	
+	this.setInfoXml = function (xml) {
+		this.infoXml = xml
+	}
+	
+	this.getInfoXml = function () {
+		return this.infoXml
+	}
 }
 dojo.inherits(dh.flickrupload.Photo, Object);
 
@@ -106,6 +115,10 @@ dh.flickrupload.PhotoContainer = function () {
 	this.photoComplete = function (photoId) {
 		this.invokeAndRedraw(photoId, function (photo) { photo.setComplete(); })
 	}
+	
+	this.setInfoXml = function (photoId, infoXml) {
+		this.invokeAndRedraw(photoId, function (photo) { photo.setInfoXml(infoXml); })
+	}	
 
 	this.findPhotoIndexForId = function (id) {
 		var i;
@@ -232,6 +245,8 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 		postInfoDoc.documentElement.appendChild(flickrElt)
 		for (var i = 0; i < this.photos.length; i++) {
 			var photo = this.photos[i]
+			var infoXml = photo.getInfoXml()
+			var secret = infoXml.documentElement.getAttribute("secret")
 			var photoElt = postInfoDoc.createElement("photo")
 			photosetElt.appendChild(photoElt)
 			var photoUrlElt = postInfoDoc.createElement("photoUrl")
@@ -240,6 +255,11 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 			var photoIdElt = postInfoDoc.createElement("photoId")
 			photoElt.appendChild(photoIdElt)			
 			photoIdElt.appendChild(postInfoDoc.createTextNode(photo.getFlickrId()))
+			if (secret) {
+				var photoSecretElt = postInfoDoc.createElement("secret")
+				photoSecretElt.appendChild(postInfoDoc.createTextNode(secret))
+				photoElt.appendChild(photoSecretElt)
+			}
 		}
 
 		var postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
@@ -436,6 +456,17 @@ dhFlickrPhotoThumbnailUploadComplete = function (filename, thumbnailUrl) {
 	dh.sharephotoset.instance.thumbnailUploadComplete(filename, thumbnailUrl)
 	} catch (e) {
 		dojo.debug("dhFlickrPhotoThumbnailUploadComplete failed:" + e.message)
+	}		
+}
+
+dhFlickrPhotoSetInfoXml = function (filename, xml) {
+	try {
+	dojo.debug("got xml info for photo " + filename + " :" + xml)
+	var doc = dojo.dom.createDocumentFromText(xml)
+	dojo.debug("parsed into doc: " + doc)
+	dh.sharephotoset.instance.setInfoXml(filename, doc)
+	} catch (e) {
+		dojo.debug("dhFlickrPhotoSetInfoXml failed:" + e.message)
 	}		
 }
 

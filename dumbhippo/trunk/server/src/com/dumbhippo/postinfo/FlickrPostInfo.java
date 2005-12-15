@@ -11,11 +11,18 @@ public class FlickrPostInfo extends PostInfo implements FlickrPhotosetData {
 		super(null, PostInfoType.FLICKR);
 	}
 
-	public List<String> getThumbnailUrls() {
-		List<String> ret = new ArrayList<String>();
+	public List<PhotoData> getPhotoData() {
+		List<PhotoData> ret = new ArrayList<PhotoData>();
 		for (Node child : getTree().getChildren(NodeName.flickr, NodeName.photos)) {
-			ret.add(child.getContent(NodeName.photoUrl));
+				PhotoData data = new PhotoData();
+				data.setThumbnailUrl(child.getContent(NodeName.photoUrl));
+				try {				
+					data.setPageUrl(child.getContent(NodeName.photoPageUrl));				
+				} catch (NoSuchNodeException e) {
+					// Ancient metadata version
+				}
+				ret.add(data);					
 		}
-		return ret;
+		return ret;				
 	}
 }

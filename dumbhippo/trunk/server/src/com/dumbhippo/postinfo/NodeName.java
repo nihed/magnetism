@@ -55,6 +55,7 @@ public enum NodeName {
 	buyItNowPrice,
 	photos,
 	photo,
+	photoPageUrl,
 	photoUrl,
 	photoId,
 	//	a node we don't know about, used in parsing only
