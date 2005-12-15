@@ -65,7 +65,8 @@ HippoFlickr::setUI(HippoUI *ui)
 void 
 HippoFlickr::setState(State newState)
 {
-    if (newState != FATAL_ERROR) {
+    // Allow entry into these two states from any state
+    if (newState != FATAL_ERROR && newState != CANCELLED) {
     switch (state_) {
         case UNINITIALIZED:
             assert(newState == LOADING_STATUSDISPLAY);
@@ -104,6 +105,9 @@ HippoFlickr::setState(State newState)
             assert(newState == COMPLETE);
             break;
         case FATAL_ERROR:
+            assert(FALSE);
+            break;
+        case CANCELLED:
             assert(FALSE);
             break;
         default:
@@ -151,6 +155,7 @@ HippoFlickr::HippoFlickrIEWindowCallback::onDocumentComplete()
 bool
 HippoFlickr::HippoFlickrIEWindowCallback::onClose(HWND window)
 {
+    flickr_->setState(HippoFlickr::State::CANCELLED);
     return TRUE;
 }
 
@@ -289,6 +294,8 @@ HippoFlickr::HippoFlickrRESTInvocation::handleError(WCHAR *text)
     HippoBSTR textStr(text);
     variant_t vText(textStr.m_str);
     flickr_->invokeJavascript(L"dhFlickrError", NULL, 1, &vText);
+    if (flickr_->state_ == HippoFlickr::State::CANCELLED)
+        return;
     this->onError();
 }
 
@@ -299,6 +306,8 @@ HippoFlickr::HippoFlickrRESTInvocation::handleComplete(void *responseData, long 
     VARIANT_BOOL successful;
 
     flickr_->ui_->debugLogW(L"got REST method response");
+    if (flickr_->state_ == HippoFlickr::State::CANCELLED)
+        return;
     hr = CoCreateInstance(CLSID_DOMDocument, NULL, CLSCTX_INPROC,
         IID_IXMLDOMDocument, (void**) &doc);
     if (FAILED(hr)) {

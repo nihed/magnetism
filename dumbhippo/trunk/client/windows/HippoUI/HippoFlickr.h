@@ -197,7 +197,8 @@ private:
         PROCESSING_UPLOADING,
         PROCESSING_FINALIZING, //10
         COMPLETE,
-        FATAL_ERROR
+        FATAL_ERROR,
+        CANCELLED
     } State;
     
     State state_;
