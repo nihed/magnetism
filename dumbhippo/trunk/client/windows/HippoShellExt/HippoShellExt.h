@@ -1,5 +1,8 @@
 #pragma once
 
+#include <HippoUtil.h>
+#include <HippoArray.h>
+
 class HippoShellExt : 
     public IShellExtInit,
     public IContextMenu3
@@ -27,7 +30,7 @@ private:
     int refCount_;
 
     LPITEMIDLIST folderId_;
-    TCHAR fileName_[MAX_PATH];
+    HippoArray<HippoBSTR> fileNames_;
     HippoPtr<IDataObject> fileData_;
     HKEY fileRegKey_;
 

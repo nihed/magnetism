@@ -26,6 +26,12 @@ static const CLSID CLSID_HippoUI_Debug = {
     0xee8e46eb, 0xcdc7, 0x4f89, 0xa8, 0xae, 0xaf, 0x9, 0x94, 0x6c, 0x96, 0x85
 };
 
+static const WCHAR *knownFlickrPhotoTypes[] = {
+    L"png",
+    L"jpeg",
+    L"jpg"
+};
+
 HINSTANCE dllInstance;
 UINT dllRefCount;
 
@@ -67,12 +73,16 @@ STDMETHODIMP
 HippoShellExt::Initialize(LPCITEMIDLIST folderId, IDataObject *dataObj, HKEY regKey)
 {
     HippoPtr<IUnknown> unknown;
+    ui_ = NULL;
     if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
         unknown->QueryInterface<IHippoUI>(&ui_);
-    else if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)))
-        unknown->QueryInterface<IHippoUI>(&ui_);
-    else
-        return S_OK;
+    else {
+        unknown = NULL;
+        if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)))
+            unknown->QueryInterface<IHippoUI>(&ui_);
+        else
+            return S_OK;
+    }
 
     ILFree(folderId_);
     folderId_ = NULL;
@@ -89,9 +99,25 @@ HippoShellExt::Initialize(LPCITEMIDLIST folderId, IDataObject *dataObj, HKEY reg
 
         if (SUCCEEDED(fileData_->GetData(&fe, &medium))) {
             count = DragQueryFile((HDROP)medium.hGlobal, (UINT)-1, NULL, 0);
-            if (count > 0)
-                DragQueryFile((HDROP)medium.hGlobal, 0, fileName_, 
-                              sizeof(fileName_)/sizeof(fileName_[0]));
+            for (UINT i = 0; i < count; i++) {
+                UINT bufsize = DragQueryFile((HDROP)medium.hGlobal, i, NULL, 0);
+                if (bufsize > 0) {
+                    UINT totalBuf = bufsize+1;
+                    HippoBSTR fileName(totalBuf, L"");
+                    DragQueryFile((HDROP)medium.hGlobal, i, fileName.m_str, 
+                                  totalBuf);
+                    WCHAR *suffix = wcsrchr(fileName.m_str, '.');
+                    if (!suffix)
+                        continue;
+                    suffix++;
+                    for (UINT j = 0; j < sizeof(knownFlickrPhotoTypes)/sizeof(knownFlickrPhotoTypes[0]); j++) {
+                        if (wcsicmp(suffix, knownFlickrPhotoTypes[j]) == 0) {
+                            fileNames_.append(fileName);
+                            break;
+                        }
+                    }
+                }
+            }
 
             ReleaseStgMedium(&medium);
         }
@@ -109,11 +135,16 @@ STDMETHODIMP
 HippoShellExt::QueryContextMenu(HMENU menu, UINT indexMenu, UINT cmdFirst, UINT cmdLast, UINT flags)
 {
     if ((flags & CMF_DEFAULTONLY)
-        || !ui_ || !fileData_)
+        || !ui_ || !fileData_ || fileNames_.length() == 0)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
+    WCHAR *text;
+    if (fileNames_.length() > 1) // needs i18n
+        text = L"Share photos via Flickr";
+    else 
+        text = L"Share photo via Flickr";
     InsertMenu(menu, indexMenu, MF_STRING | MF_BYPOSITION,
-               cmdFirst + 0, L"Share photo via Flickr");
+               cmdFirst + 0, text);
 
     return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0 + 1);
 }
@@ -121,8 +152,8 @@ HippoShellExt::QueryContextMenu(HMENU menu, UINT indexMenu, UINT cmdFirst, UINT 
 STDMETHODIMP 
 HippoShellExt::InvokeCommand(LPCMINVOKECOMMANDINFO cmi)
 {
-    HippoBSTR fileName(fileName_);
-    ui_->BeginFlickrShare(fileName);
+    for (UINT i = 0; i < fileNames_.length(); i++)
+        ui_->BeginFlickrShare(fileNames_[i]);
     return S_OK;
 }
 

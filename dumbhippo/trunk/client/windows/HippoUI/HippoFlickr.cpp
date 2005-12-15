@@ -763,7 +763,7 @@ HippoFlickr::HippoFlickrPhoto::HippoFlickrPhoto(HippoFlickr *flickr, WCHAR *file
         delete thumbnail;
         thumbnailFilename_ = tempFilename;
     } else {
-        flickr_->ui_->debugLogW(L"failed to read photo thumbnail");
+        flickr_->ui_->debugLogW(L"failed to read photo, error code %d", st);
     }
 }
 
