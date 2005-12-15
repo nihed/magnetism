@@ -217,12 +217,13 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     VARIANT viewersArg;
     viewersArg.vt = VT_ARRAY | VT_VARIANT;
     viewersArg.parray = viewers;
+    variant_t infoArg(share.info);
 
-    VARIANT result;
+    variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
-    invokeJavascript(L"dhAddLinkShare", &result, 9, &senderName,
+    invokeJavascript(L"dhAddLinkShare", &result, 10, &senderName,
                      &senderId, &postId, &linkTitle, &linkURL, &linkDescription,
-                     &personRecipientsArg, &groupRecipientsArg, &viewersArg);
+                     &personRecipientsArg, &groupRecipientsArg, &viewersArg, &infoArg);
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);
 
@@ -404,8 +405,16 @@ HippoBubble::DisplaySharedLink(BSTR linkId)
 STDMETHODIMP
 HippoBubble::OpenExternalURL(BSTR url)
 {
-    HippoPtr<IWebBrowser2> browser;
-    ui_->launchBrowser(url, browser);
+    ui_->launchBrowser(url);
+    return S_OK;
+}
+
+HRESULT
+HippoBubble::GetServerBaseUrl(BSTR *ret)
+{
+    HippoBSTR temp;
+    ui_->getRemoteURL(L"", &temp);
+    *ret = ::SysAllocString(temp.m_str);
     return S_OK;
 }
 

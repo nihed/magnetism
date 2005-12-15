@@ -241,28 +241,10 @@ STDMETHODIMP
 HippoUI::ShowRecent()
 {
     HippoBSTR recentURL;
-
-    HippoPtr<IWebBrowser2> webBrowser;
-    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
-                     IID_IWebBrowser2, (void **)&webBrowser);
-
-    if (!webBrowser) {
-        hippoDebug(L"Couldn't create web browser, we lose");
-        return E_FAIL;
-    }
-    
     HRESULT hr = getRemoteURL(HippoBSTR(L"home"), &recentURL);
     if (!SUCCEEDED(hr))
         return hr;
-
-    VARIANT missing;
-    missing.vt = VT_EMPTY;
-
-    webBrowser->Navigate(recentURL,
-                         &missing, &missing, &missing, &missing);
-
-    webBrowser->put_Visible(VARIANT_TRUE);
-
+    launchBrowser(recentURL);
     return S_OK;
 }
 
@@ -515,58 +497,26 @@ HippoUI::showMenu(UINT buttonFlag)
     PostMessage(window_, WM_NULL, 0, 0);
 }
 
-void
-HippoUI::launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
+HippoExternalBrowser *
+HippoUI::launchBrowser(BSTR url)
 {
-    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
-                     IID_IWebBrowser2, (void **)&webBrowser);
-
-    if (!webBrowser) {
-        hippoDebug(L"Couldn't create web browser, we lose");
-        return;
-    }
-
-    debugLogW(L"launching browser for %s", url);
-
-    VARIANT missing;
-    missing.vt = VT_EMPTY;
-
-    webBrowser->Navigate(url,
-                         &missing, &missing, &missing, &missing);
-
-    webBrowser->put_Visible(VARIANT_TRUE);
+    HippoExternalBrowser *browser = new HippoExternalBrowser(url, FALSE, NULL);
+    internalBrowsers_.append(HippoPtr<HippoExternalBrowser>(browser));
+    return browser;
 }
 
 // Show a window when the user clicks on a shared link
 void 
 HippoUI::displaySharedLink(BSTR postId)
 {
-    HippoPtr<IWebBrowser2> webBrowser;
     HippoBSTR targetURL;
 
     if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"frameset?postId="), &targetURL)))
         return;
     targetURL.Append(postId);
 
-    launchBrowser(targetURL, webBrowser);
-    
-#if 0
-    HippoBSTR barIDString(L"{4D5C8C25-D075-11d0-B416-00C04FB90376}");
-    VARIANT barID;
-    barID.vt = VT_BSTR;
-    barID.bstrVal = barIDString;
- 
-    VARIANT show;
-    show.vt = VT_BOOL;
-    show.boolVal = VARIANT_TRUE;
-
-    VARIANT unused;
-    unused.vt = VT_EMPTY;
-
-    HRESULT hr = webBrowser->ShowBrowserBar(&barID, &show, &unused);
-    if (!SUCCEEDED (hr)) 
-        hippoDebug(L"Couldn't show browser bar: %X", hr);
-#endif
+    HippoExternalBrowser *browser = launchBrowser(targetURL);
+    browser->injectBrowserBar();
 
     WCHAR *postIdW = postId;
     char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);

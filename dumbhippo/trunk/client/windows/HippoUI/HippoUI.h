@@ -14,8 +14,8 @@
 #include "HippoUpgrader.h"
 #include "HippoFlickr.h"
 #include "HippoIM.h"
+#include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
-
 
 struct HippoBrowserInfo
 {
@@ -36,6 +36,7 @@ struct HippoLinkShare
     HippoArray<HippoBSTR> personRecipients;
     HippoArray<HippoBSTR> groupRecipients;
     HippoArray<HippoBSTR> viewers;
+    HippoBSTR info;
 };
 
 class HippoUI 
@@ -71,7 +72,7 @@ public:
     HippoPreferences *getPreferences();
 
     void showMenu(UINT buttonFlag);
-    void launchBrowser(BSTR url, HippoPtr<IWebBrowser2> &browser);
+    HippoExternalBrowser *launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
@@ -106,6 +107,11 @@ private:
     void showSignInWindow();
     void showPreferences();
     void updateForgetPassword();
+
+    // Register an "internal" browser instance that we don't want
+    // to allow sharing of, and that we quit when the HippoUI
+    // instance exits
+    void addInternalBrowser(HippoExternalBrowser *browser, bool closeOnQuit);
 
     static int checkIdle(gpointer data);
 
@@ -170,6 +176,7 @@ private:
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject
 
+    HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
     DWORD nextBrowserCookie_;
 

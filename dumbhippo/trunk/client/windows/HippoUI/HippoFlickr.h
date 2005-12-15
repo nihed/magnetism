@@ -9,6 +9,7 @@
 #include <HippoArray.h>
 #include "HippoHTTP.h"
 #include "HippoIEWindow.h"
+#include "HippoExternalBrowser.h"
 
 class HippoUI;
 
@@ -24,7 +25,7 @@ public:
 
     void uploadPhoto(BSTR filename);
 
-    bool isCommitted() { return state_ > ADDING_TAGS; }
+    bool isCommitted() { return state_ > PROCESSING_UPLOADING; }
 
     //IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -71,7 +72,7 @@ private:
         bool findFirstNamedChildTextValue(IXMLDOMElement *top, WCHAR *expectedName, HippoBSTR &ret);
 
         virtual void handleCompleteXML(IXMLDOMElement *doc) = 0;
-        virtual void onError() = 0;
+        virtual void onError() { flickr_->state_ = HippoFlickr::State::FATAL_ERROR; delete this; }
     };
     class HippoFlickrAbstractAuthInvocation : public HippoFlickrRESTInvocation {
     public:
@@ -92,14 +93,12 @@ private:
         HippoFlickrFrobInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
-        void onError();
     };
     class HippoFlickrTokenInvocation : public HippoFlickrAbstractAuthInvocation {
     public:
         HippoFlickrTokenInvocation(HippoFlickr *flickr) : HippoFlickrAbstractAuthInvocation(flickr) {
         }
         void handleAuth(WCHAR *token, WCHAR *userId);
-        void onError();
     };
     class HippoFlickrAbstractUploadInvocation : public HippoFlickrRESTInvocation {
     public:
@@ -115,26 +114,42 @@ private:
         HippoFlickrUploadInvocation(HippoFlickr *flickr, IStream *uploadStream) : HippoFlickrAbstractUploadInvocation(flickr, uploadStream) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
-        void onError();
     };
     class HippoFlickrUploadThumbnailInvocation : public HippoFlickrAbstractUploadInvocation {
     public:
         HippoFlickrUploadThumbnailInvocation(HippoFlickr *flickr, IStream *uploadStream) : HippoFlickrAbstractUploadInvocation(flickr, uploadStream) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
-        void onError();
     };
     class HippoFlickrTagPhotoInvocation : public HippoFlickrRESTInvocation {
     public:
         HippoFlickrTagPhotoInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
         }
         void handleCompleteXML(IXMLDOMElement *doc);
-        void onError();
+    };
+    class HippoFlickrGetInfoInvocation : public HippoFlickrRESTInvocation {
+    public:
+        HippoFlickrGetInfoInvocation(HippoFlickr *flickr) : HippoFlickrRESTInvocation(flickr) {
+        }
+        void handleCompleteXML(IXMLDOMElement *doc);
     };
 
     class HippoFlickrPhoto {
     public:
+        typedef enum {
+            INITIAL,
+            UPLOADING,
+            UPLOADING_THUMBNAIL,
+            REQUESTING_INFO,
+            PRESHARE,
+            ADDING_TAGS,
+            COMPLETE
+        } PhotoState;
+       
         HippoFlickrPhoto(HippoFlickr *flickr, WCHAR *filename);
+
+        PhotoState getState() { return state_; }
+        void setState(PhotoState newState) { state_ = newState; }
 
         bool getStream(IStream **bufRet, DWORD *lenRet);
         bool getThumbnailStream(IStream **bufRet, DWORD *lenRet);
@@ -143,14 +158,20 @@ private:
         WCHAR *getThumbnailUrl() { return thumbnailUrl_; }
         void setThumbnailUrl(WCHAR *url) { thumbnailUrl_ = url; }
 
+        BSTR getInfoXml() { return infoXml_; }
+        void setInfoXml(WCHAR *xml) { infoXml_ = xml; }
+
         WCHAR *getFlickrId() { return flickrId_; }
         void setFlickrId(WCHAR *flickrId) { flickrId_ = flickrId; }
     private:
+        PhotoState state_;
         HippoFlickr *flickr_;
         HippoBSTR filename_;
         HippoBSTR thumbnailFilename_;
         HippoBSTR flickrId_;
         HippoBSTR thumbnailUrl_;
+
+        HippoBSTR infoXml_;
 
         void findImageEncoder(WCHAR *fmt, CLSID &clsId);
         bool genericGetStream(WCHAR *filename, IStream **bufRet, DWORD *lenRet);
@@ -163,24 +184,25 @@ private:
     HippoBSTR sharedSecret_;
     HippoBSTR apiKey_;
 
-    enum {
-        UNINITIALIZED,
+    typedef enum {
+        UNINITIALIZED = 0,
+        LOADING_STATUSDISPLAY,
+        PREPARING_THUMBNAILS,
         CHECKING_TOKEN,
         REQUESTING_FROB,
-        REQUESTING_AUTH,
+        REQUESTING_AUTH, //5 
         REQUESTING_TOKEN,
-        IDLE,
-        UPLOADING,
-        UPLOADING_THUMBNAIL,
-        ADDING_TAGS,
-        COMPLETE
-    } state_;
+        IDLE_AWAITING_SHARE,
+        UPLOADING_AWAITING_SHARE,
+        PROCESSING_UPLOADING,
+        PROCESSING_FINALIZING, //10
+        COMPLETE,
+        FATAL_ERROR
+    } State;
+    
+    State state_;
 
-    enum {
-        STATUS_DISPLAY_INITIAL,
-        STATUS_DISPLAY_AWAITING_DOCUMENT,
-        STATUS_DISPLAY_DOCUMENT_LOADED
-    } statusDisplayState_;
+    void setState(State newState);
 
     HippoUI *ui_;
 
@@ -189,6 +211,17 @@ private:
     public:
         HippoFlickrIEWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
         virtual void onDocumentComplete();
+        virtual bool onClose(HWND window);
+    private:
+        HippoFlickr *flickr_;
+    };
+
+    class HippoFlickrAuthBrowserCallback : public HippoExternalBrowserEvents
+    {
+    public:
+        HippoFlickrAuthBrowserCallback(HippoFlickr *flickr) { flickr_ = flickr; }
+        virtual void onDocumentComplete(HippoExternalBrowser *browser);
+        virtual void onQuit(HippoExternalBrowser *browser);
     private:
         HippoFlickr *flickr_;
     };
@@ -200,7 +233,10 @@ private:
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
 
-    HippoPtr<IWebBrowser2> authBrowser_;
+    HippoFlickr::HippoFlickrAuthBrowserCallback *authCb_;
+    HippoPtr<HippoExternalBrowser> authBrowser_;
+
+    HippoArray<HippoBSTR> pendingDisplay_;
 
     HippoArray<HippoFlickrPhoto *> pendingUploads_;
 
@@ -210,8 +246,9 @@ private:
 
     HippoArray<HippoFlickrPhoto *> completedUploads_;
 
-    HippoFlickrPhoto *activePhotosetPhoto_;
-    HippoArray<HippoFlickrPhoto *> photosetAddedPhotos_;
+    HippoFlickrPhoto *activeTaggingPhoto_;
+
+    HippoArray<HippoFlickrPhoto *> processed_;
 
     HippoBSTR authFrob_;
     HippoBSTR authToken_;
@@ -230,19 +267,20 @@ private:
     void computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                        HippoBSTR &sigMd5);
     void appendApiSig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues);
+    void prepareUpload(BSTR filename);
     bool readPhoto(WCHAR *filename);
     void checkToken();
     void getFrob();
     void getToken();
     void onUploadComplete(WCHAR *photoId);
     void onUploadThumbnailComplete(WCHAR *url);
+    void onGetInfoComplete(IXMLDOMElement *photo);
     void setToken(WCHAR *token, WCHAR *userId);
     void setFrob(WCHAR *frob);
     void processPhotoset();
 
     void notifyUserId();
     void notifyPhotoAdded(HippoFlickrPhoto *photo);
-    void notifyPhotoUploading(HippoFlickrPhoto *photo);
     void notifyPhotoThumbnailUploaded(HippoFlickrPhoto *photo);
     void notifyPhotoUploaded(HippoFlickrPhoto *photo);
     void notifyPhotoComplete(HippoFlickrPhoto *photo);

@@ -125,6 +125,9 @@
 				RelativePath=".\HippoExternal.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoExternalBrowser.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoFlickr.cpp">
 			</File>
 			<File
@@ -188,6 +191,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoExternal.h">
+			</File>
+			<File
+				RelativePath=".\HippoExternalBrowser.h">
 			</File>
 			<File
 				RelativePath=".\HippoFlickr.h">

@@ -18,6 +18,10 @@ dh.core.adaptExternalArray = function (arr) {
     return arr;
 }
 
+dh.core.getServerBaseUrl = function () {
+    return window.external.application.GetServerBaseUrl()
+}
+
 // Parse query parameters, sucked from dh.util in server
 dh.util.getParamsFromLocation = function() {
     var query = window.location.search.substring(1);
@@ -107,6 +111,14 @@ dh.util.dom.getClearedElementById = function (id) {
     return elt
 }
 
+dh.util.dom.selectNode = function (doc, path) {
+    return doc.selectSingleNode(path)
+}
+
+dh.util.dom.selectNodes = function (doc, path) {
+    return doc.selectNodes(path)
+}
+
 dh.getXmlHttp = function () {
     var xmlhttp = false
     try {
@@ -143,6 +155,7 @@ dh.parseXML = function(xml){
     }catch(e){
         try{//to get the MS XML parser
             obj = new ActiveXObject("Msxml2.DomDocument.4.0"); 
+            obj.setProperty("SelectionLanguage", "XPath")            
             isIE=true;
         }catch(e){
             try{//to get the MS XML parser

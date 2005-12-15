@@ -31,6 +31,7 @@ library HippoUtil {
         HRESULT BeginFlickrShare([in] BSTR path);
         [id(106), helpstring("Share a specific URL")]
         HRESULT ShareLink([in] BSTR url, [in] BSTR title);
+        // up to 120
     }
     [
         uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
@@ -50,6 +51,9 @@ library HippoUtil {
         HRESULT DebugLog([in] BSTR msg);
         [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
         HRESULT SetViewerSpace([in] DWORD viewerSpace);
+        [id(126), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        // up to 130
     }
     [
         uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal

@@ -62,14 +62,6 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\flickrstatus.js"
-			DeploymentContent="TRUE">
-		</File>
-		<File
-			RelativePath=".\flickrstatus.xml"
-			DeploymentContent="TRUE">
-		</File>
-		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File

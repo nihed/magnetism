@@ -1,4 +1,4 @@
-// Notification implemefntation
+// Notification implementation
 
 dh.notification = {}
 dh.notification.extension = {}
@@ -24,8 +24,9 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     // Whether the bubble is showing
     this._visible = false
     
-    // Whether we're reserving space for viewer information
-    this._showViewers = false
+    // Whether we're reserving space for viewer information 
+    // (should be true or false, we reserve null for "uninitialized")
+    this._showViewers = null
     
     // personId -> name
     this._nameCache = {}
@@ -98,8 +99,8 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 
     this._setShowViewers = function(showViewers) {
         showViewers = !!showViewers
-        if (this.showViewers != showViewers) {
-            this.showViewers = showViewers
+        if (this._showViewers != showViewers) {
+            this._showViewers = showViewers
             
             var viewersDiv = document.getElementById("dh-notification-viewers-outer")
             var space
@@ -111,6 +112,8 @@ dh.notification.Display = function (serverUrl, appletUrl) {
                 viewersDiv.style.display = "none"
                 space = 0
             }
+            
+            dh.util.debug("showing viewers area: " + showViewers + ", reserving " + space + " additional pixels of height")
             
             window.external.application.SetViewerSpace(space)
         }
@@ -291,7 +294,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         
         for (extension in dh.notification.extensions) {
             var ext = dh.notification.extensions[extension]
-            dh.util.debug("got extension: " + extension + " (" + ext + ")")
+            dh.util.debug("using notification extension: " + extension + " (" + ext + ")")
             if (ext.accept(share)) {
                 dh.util.debug("drawing content for " + extension)
                 ext.drawContent(share, bodyDiv)
@@ -337,8 +340,9 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 
 // Global namespace since it's painful to do anything else from C++
 dhAddLinkShare = function (senderName, senderId, postId, linkTitle, 
-                           linkURL, linkDescription, personRecipients, groupRecipients, viewers) {
+                           linkURL, linkDescription, personRecipients, groupRecipients, viewers, postInfo) {
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
+    dh.util.debug("postinfo: " + postInfo)    
     dh.display.setVisible(true)
     dh.display.addPersonName(senderId, senderName)                            
     dh.display.addLinkShare({senderId: senderId,
@@ -348,7 +352,8 @@ dhAddLinkShare = function (senderName, senderId, postId, linkTitle,
                             linkDescription: linkDescription,
                             personRecipients: personRecipients,
                             groupRecipients: groupRecipients,
-                            viewers: viewers})
+                            viewers: viewers,
+                            info: dh.parseXML(postInfo)})
 }
 
 dhSetIdle = function(idle) {

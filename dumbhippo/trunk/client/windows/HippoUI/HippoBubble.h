@@ -40,6 +40,7 @@ public:
     // IHippoBubble
     STDMETHODIMP DebugLog(BSTR str);
     STDMETHODIMP DisplaySharedLink(BSTR linkId);
+    STDMETHODIMP GetServerBaseUrl(BSTR *ret);
     STDMETHODIMP OpenExternalURL(BSTR url);
     STDMETHODIMP Close();
     STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
