@@ -451,7 +451,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// HTML: append post text
 			messageHtml.append("<div style=\"font-size:120%;margin:0.5em;\">\n");
-			messageHtml.appendTextAsHtml(post.getText());
+			messageHtml.appendTextAsHtml(post.getText(), null);
 			messageHtml.append("</div>\n");
 
 			messageHtml.append("  </div><!-- close bubble div -->\n");

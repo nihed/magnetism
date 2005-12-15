@@ -35,7 +35,7 @@ public class FlickrFormatter extends DefaultFormatter {
 			}
 		}
 		xml.append("<p class=\"dh-flickr-description\">");
-		xml.appendTextAsHtml(postView.getPost().getText());
+		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
 		xml.append("</p>");		
 		return xml.toString();
 	}

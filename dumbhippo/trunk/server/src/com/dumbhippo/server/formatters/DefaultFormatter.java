@@ -7,14 +7,13 @@ public class DefaultFormatter implements PostFormatter {
 	
 	public String getTitleAsHtml(PostView postView) {
 		XmlBuilder xml = new XmlBuilder();
-		xml.appendEscaped(postView.getTitle());
-		return postView.highlightSearchWords(xml.toString());
+		xml.appendEscaped(postView.getTitle(), postView.getSearchTerms());
+		return xml.toString();
 	}
 
 	public String getTextAsHtml(PostView postView) {
 		XmlBuilder xml = new XmlBuilder();
-		xml.appendTextAsHtml(postView.getPost().getText());
-		return postView.highlightSearchWords(xml.toString());
+		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
+		return xml.toString();
 	}
-
 }

@@ -14,6 +14,7 @@
 <head>
 	<title>Search</title>
 	<dht:stylesheets href="search.css" />
+	<dht:scriptIncludes/>
 </head>
 <body>
     <dht:header>Search</dht:header>

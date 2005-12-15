@@ -27,7 +27,7 @@ public class EbayFormatter extends DefaultFormatter {
 		xml.append("\"/> ");
 		xml.append("</div>");
 		xml.append("<p class=\"dh-ebay-description\">");
-		xml.appendTextAsHtml(postView.getPost().getText());
+		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
 		xml.append("</p>");
 		return xml.toString();
 	}

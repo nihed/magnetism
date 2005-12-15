@@ -264,7 +264,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		if (message != null && message.trim().length() > 0) {
 			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
-			messageHtml.appendTextAsHtml(message);
+			messageHtml.appendTextAsHtml(message, null);
 			messageHtml.append("</div>\n");
 			
 			messageText.append(message);

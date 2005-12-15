@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,7 +50,10 @@ public class XmlBuilder {
 		append("</title>\n</head>\n");
 	}
 	
-	public void appendEscaped(String text) {
+	public void appendEscaped(String text, Collection<String> searchTerms) {
+		
+		int start = builder.length();
+		
 		for (char c : text.toCharArray()){
 			if (c == '&')
 				append("&amp;");
@@ -64,6 +68,23 @@ public class XmlBuilder {
 			else
 				append(c);
 		}
+		
+		int end = builder.length();
+		
+		if (searchTerms != null && end > start) {
+			for (String t : searchTerms) {
+				String tHtml = XmlBuilder.escape(t);
+				
+				String highlighted = builder.substring(start, end).replace(tHtml,
+						"<span style=\"font-weight: bold; color: red;\">" + tHtml + "</span>");
+				
+				builder.replace(start, end, highlighted);
+			}
+		}
+	}
+	
+	public void appendEscaped(String text) {
+		appendEscaped(text, null);
 	}
 	
 	/**
@@ -132,7 +153,7 @@ public class XmlBuilder {
 	 * 
 	 * @param text the text to convert and append
 	 */
-	public void appendTextAsHtml(String text) {	
+	public void appendTextAsHtml(String text, Collection<String> searchTerms) {	
 		append("<p>\n");
 		// I suppose this is a wasteful way to be able to use getLine()
 		BufferedReader reader = new BufferedReader(new StringReader(text));
@@ -145,7 +166,7 @@ public class XmlBuilder {
 					}
 					lastLineEmpty = true;
 				} else {
-					appendEscaped(line);
+					appendEscaped(line, searchTerms);
 					lastLineEmpty = false;
 				}
 			}

@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -122,20 +125,6 @@ public class PostView {
 		this.search = search;
 	}
 	
-	public String highlightSearchWords(String html) {
-		if (search == null)
-			return html;
-	
-		String[] terms = StringUtils.splitWords(search);
-		if (terms.length == 0)
-			return html;
-		
-		for (String t : terms) {
-			html = html.replace(t, "<span style=\"font-weight: bold; color: red;\">" + t + "</span>");
-		}
-		return html;
-	}
-	
 	public String getTitleAsHtml() {
 		return getFormatter().getTitleAsHtml(this);
 	}
@@ -189,5 +178,13 @@ public class PostView {
 	public List<ChatRoomMessage> getLastFewChatRoomMessages() {
 		return lastFewMessages;
 	}
-	
+
+	public Collection<String> getSearchTerms() {
+		if (search != null) {
+			String[] terms = StringUtils.splitWords(search);
+			return Arrays.asList(terms);
+		} else {
+			return Collections.emptyList();
+		}
+	}
 }

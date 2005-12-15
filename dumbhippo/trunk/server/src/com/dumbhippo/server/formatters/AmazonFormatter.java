@@ -38,7 +38,7 @@ public class AmazonFormatter extends DefaultFormatter {
 		addPrice(xml, "Collectible", itemData.getCollectiblePrice());
 		xml.append("<br/></div>");
 		xml.append("<p class=\"dh-amazon-description\">");
-		xml.appendTextAsHtml(postView.getPost().getText());
+		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
 		xml.append("</p>");
 		return xml.toString();
 	}
