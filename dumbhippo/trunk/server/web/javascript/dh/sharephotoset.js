@@ -234,7 +234,18 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 	this.startShare = function () {
 		dojo.debug("starting link share");
 	
-		var url = "http://www.flickr.com/photos/" + this.userId + "/tags/" + this.tagName
+		var url;
+		if (this.photos.length > 1) {
+			url = "http://www.flickr.com/photos/" + this.userId + "/tags/" + this.tagName
+		} else {
+			var photo = this.photos[0]
+			var infoXml = photo.getInfoXml()
+			var photoUrls = infoXml.selectNodes("/photo/urls/url")
+			if (photoUrls.length == 0) { throw new Error("Couldn't find url in photo metadata"); }
+			var urlText = photoUrls[0].firstChild
+			if (!urlText) { throw new Error("Couldn't find text value for url"); }
+			url = urlText.nodeValue
+		}
 	
 		var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 
@@ -462,7 +473,7 @@ dhFlickrPhotoThumbnailUploadComplete = function (filename, thumbnailUrl) {
 dhFlickrPhotoSetInfoXml = function (filename, xml) {
 	try {
 	dojo.debug("got xml info for photo " + filename + " :" + xml)
-	var doc = dojo.dom.createDocumentFromText(xml)
+	var doc = dh.util.getMSXML(xml)
 	dojo.debug("parsed into doc: " + doc)
 	dh.sharephotoset.instance.setInfoXml(filename, doc)
 	} catch (e) {

@@ -235,6 +235,16 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 	}
 }
 
+// Yes, this is IE specific.  It's used on pages
+// which can only be viewed from IE currently.
+dh.util.getMSXML = function (text) {
+	var domDoc = new ActiveXObject("Microsoft.XMLDOM");
+	domDoc.async = false;
+	domDoc.loadXML(text);
+	domDoc.setProperty("SelectionLanguage", "XPath")
+	return domDoc;
+}
+
 dh.util.createPngElement = function(src, width, height) {
 	// don't try to use <img> or <span>, it won't work; the <div> is why you have to provide width/height
 	var img = document.createElement("div");
