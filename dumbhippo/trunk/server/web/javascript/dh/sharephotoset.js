@@ -337,8 +337,16 @@ dh.flickrupload.UploadSet = function() {
 		var i = this.findPhotoIndexForId(photoId)
 		var photo = this.photos[i]
 		cb(photo)
-		if (this.currentPhoto == i)
-			this.setPhoto(this.currentPhoto) // redraws	
+		if (this.currentPhoto == i) {
+			// If this photo is complete, scroll to next photo if we have one
+			var targetPhoto
+			if (this.currentPhoto+1 < this.photos.length
+				&& photo.isPending())
+				targetPhoto = this.currentPhoto+1
+			else
+				targetPhoto = this.currentPhoto
+			this.setPhoto(targetPhoto) // redraws	
+		}
 	}	
 	
 	this.getUrl = function () {
