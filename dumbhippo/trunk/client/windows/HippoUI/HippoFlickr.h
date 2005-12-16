@@ -18,10 +18,8 @@ class HippoFlickr :
     public IHippoFlickr
 {
 public:
-    HippoFlickr();
+    HippoFlickr(HippoUI *ui);
     ~HippoFlickr();
-
-    void setUI(HippoUI *ui);
 
     void uploadPhoto(BSTR filename);
 
@@ -40,6 +38,7 @@ public:
 
     // IHippoFlickr methods
     STDMETHODIMP CreatePhotoset(BSTR title);
+    STDMETHODIMP HaveFlickrAccount(BOOL haveAccount);
 
 private:
     class HippoFlickrInvocation : public HippoHTTPAsyncHandler
@@ -179,6 +178,7 @@ private:
 
     // constants
     HippoBSTR authServiceUrl_;
+    HippoBSTR signupUrl_;
     HippoBSTR baseServiceUrl_;
     HippoBSTR uploadServiceUrl_;
     HippoBSTR sharedSecret_;
@@ -186,16 +186,19 @@ private:
 
     typedef enum {
         UNINITIALIZED = 0,
+        LOADING_FIRSTTIME,
+        DISPLAYING_FIRSTTIME,
+        CREATING_ACCOUNT,
         LOADING_STATUSDISPLAY,
         PREPARING_THUMBNAILS,
         CHECKING_TOKEN,
         REQUESTING_FROB,
-        REQUESTING_AUTH, //5 
+        REQUESTING_AUTH, 
         REQUESTING_TOKEN,
         IDLE_AWAITING_SHARE,
         UPLOADING_AWAITING_SHARE,
         PROCESSING_UPLOADING,
-        PROCESSING_FINALIZING, //10
+        PROCESSING_FINALIZING,
         COMPLETE,
         FATAL_ERROR,
         CANCELLED
@@ -207,10 +210,20 @@ private:
 
     HippoUI *ui_;
 
-    class HippoFlickrIEWindowCallback : public HippoIEWindowCallback
+    class HippoFlickrStatusWindowCallback : public HippoIEWindowCallback
     {
     public:
-        HippoFlickrIEWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
+        HippoFlickrStatusWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
+        virtual void onDocumentComplete();
+        virtual bool onClose(HWND window);
+    private:
+        HippoFlickr *flickr_;
+    };
+
+    class HippoFlickrFirstTimeWindowCallback : public HippoIEWindowCallback
+    {
+    public:
+        HippoFlickrFirstTimeWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
         virtual void onDocumentComplete();
         virtual bool onClose(HWND window);
     private:
@@ -221,18 +234,20 @@ private:
     {
     public:
         HippoFlickrAuthBrowserCallback(HippoFlickr *flickr) { flickr_ = flickr; }
+        virtual void onNavigate(HippoExternalBrowser *browser, BSTR url);
         virtual void onDocumentComplete(HippoExternalBrowser *browser);
         virtual void onQuit(HippoExternalBrowser *browser);
     private:
         HippoFlickr *flickr_;
     };
 
-    bool statusDisplayVisible_;
     HINSTANCE instance_;
     HippoIEWindow *shareWindow_;
-    HippoFlickrIEWindowCallback *ieWindowCallback_;
+    HippoIEWindowCallback *ieWindowCallback_;
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
+    
+    bool haveAccount_;
 
     HippoFlickr::HippoFlickrAuthBrowserCallback *authCb_;
     HippoPtr<HippoExternalBrowser> authBrowser_;
@@ -257,7 +272,8 @@ private:
 
     HippoBSTR tagTitle_;
 
-    void ensureStatusWindow();
+    void showIEWindow(WCHAR *title, WCHAR *relUrl, HippoIEWindowCallback *cb);
+    void showShareWindow(void);
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
 
     void sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
@@ -271,6 +287,7 @@ private:
     void prepareUpload(BSTR filename);
     bool readPhoto(WCHAR *filename);
     void checkToken();
+    void getAuthUrl(HippoBSTR &authUrl);
     void getFrob();
     void getToken();
     void onUploadComplete(WCHAR *photoId);

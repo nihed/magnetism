@@ -34,16 +34,42 @@ HippoExternalBrowser::HippoExternalBrowser(const WCHAR *url, bool quitOnDelete, 
 
 HippoExternalBrowser::~HippoExternalBrowser(void)
 {
-    if (quitOnDelete_) {
-        if (ie_ != NULL)
-            ie_->Quit();
-    }
+    disconnect();
+    if (quitOnDelete_)
+        quit();
+}
+
+void
+HippoExternalBrowser::disconnect()
+{
     if (connectionPoint_) {
         if (connectionCookie_) {
             connectionPoint_->Unadvise(connectionCookie_);
             connectionCookie_ = 0;
         }
         connectionPoint_ = NULL;
+    }
+}
+
+void
+HippoExternalBrowser::quit()
+{
+    if (ie_ != NULL) {
+        disconnect();
+        ie_->Quit();
+        ie_->Release();
+        ie_ = NULL;
+    }
+}
+
+void
+HippoExternalBrowser::navigate(WCHAR * url)
+{
+    if (ie_) {
+        HippoBSTR urlStr(url);
+        VARIANT missing;
+        missing.vt = VT_EMPTY;
+        ie_->Navigate(urlStr, &missing, &missing, &missing, &missing);
     }
 }
 
@@ -147,6 +173,19 @@ HippoExternalBrowser::Invoke (DISPID        member,
      if (events_ == NULL)
          return S_OK;
      switch (member) {
+         case DISPID_NAVIGATECOMPLETE2:
+            if (dispParams->cArgs == 2 &&
+                dispParams->rgvarg[1].vt == VT_DISPATCH &&
+                dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT)) {
+                    HippoQIPtr<IDispatch> dispatch(ie_);
+                    if (dispatch == dispParams->rgvarg[1].pdispVal) {
+                        VARIANT *refvar = dispParams->rgvarg[0].pvarVal;
+                        events_->onNavigate(this, refvar->bstrVal);
+                    }
+                    return S_OK;
+                } else {
+                    return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+                }
         case DISPID_DOCUMENTCOMPLETE:
             if (dispParams->cArgs == 2 &&
                 dispParams->rgvarg[1].vt == VT_DISPATCH &&

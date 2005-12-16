@@ -24,6 +24,7 @@ class HippoExternalBrowser;
 class HippoExternalBrowserEvents
 {
 public:
+    virtual void onNavigate(HippoExternalBrowser *browser, BSTR url) {}
     virtual void onDocumentComplete(HippoExternalBrowser *browser) = 0;
     virtual void onQuit(HippoExternalBrowser *browser) = 0;
 };
@@ -35,6 +36,8 @@ public:
     HippoExternalBrowser(const WCHAR *url, bool quitOnDelete, HippoExternalBrowserEvents *events);
     ~HippoExternalBrowser(void);
 
+    void quit();
+    void navigate(WCHAR * url);
     void injectBrowserBar();
 
    // IUnknown methods
@@ -50,6 +53,8 @@ public:
                         VARIANT *, EXCEPINFO *, unsigned int *);
 
 private:
+    void disconnect();
+
     bool quitOnDelete_;
     HippoExternalBrowserEvents *events_;
     DWORD refCount_;

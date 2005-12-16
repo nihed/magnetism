@@ -21,16 +21,20 @@ extern "C" {
 
 static const WCHAR *DUMBHIPPO_SUBKEY_FLICKR = L"Software\\DumbHippo\\Flickr";
 
-HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
-                                 authServiceUrl_(L"http://flickr.com/services/auth/"),
-                                 uploadServiceUrl_(L"http://www.flickr.com/services/upload/"),
-                                 sharedSecret_(L"a31c67baceb0761e"),
-                                 apiKey_(L"0e96a6f88118ed4d866a0651e45383c1")
+HippoFlickr::HippoFlickr(HippoUI *ui) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
+                                        authServiceUrl_(L"http://flickr.com/services/auth/"),
+                                        signupUrl_(L"http://www.flickr.com/signup/"),
+                                        uploadServiceUrl_(L"http://www.flickr.com/services/upload/"),
+                                        sharedSecret_(L"a31c67baceb0761e"),
+                                        apiKey_(L"0e96a6f88118ed4d866a0651e45383c1")
 {
     state_ = UNINITIALIZED;
     activeUploadPhoto_ = NULL;
     activeTaggingPhoto_ = NULL;
     shareWindow_ = NULL;
+    ieWindowCallback_ = NULL;
+    ui_ = ui;
+    authBrowser_ = NULL;
 
     HippoPtr<ITypeLib> typeLib;
     HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
@@ -42,6 +46,20 @@ HippoFlickr::HippoFlickr(void) : baseServiceUrl_(L"http://www.flickr.com/service
         typeLib->GetTypeInfoOfGuid(CLSID_HippoFlickr, &classTypeInfo_);
     } else
         hippoDebug(L"Failed to load type lib: %x\n", hr);
+
+    HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
+                               DUMBHIPPO_SUBKEY_FLICKR,
+                               false);
+    HippoBSTR userId;
+    if (hippoFlickrReg.loadString(L"userId", &userId)) {
+        haveAccount_ = TRUE;
+        showShareWindow();
+    } else {
+        ui_->debugLogW(L"creating Flickr first time window");
+        haveAccount_ = FALSE;
+        setState(LOADING_FIRSTTIME);
+        showIEWindow(L"Sharing Photos Setup", L"sharephotoset-first", new HippoFlickrFirstTimeWindowCallback(this));
+    }
 }
 
 HippoFlickr::~HippoFlickr(void)
@@ -52,14 +70,12 @@ HippoFlickr::~HippoFlickr(void)
         delete activeUploadPhoto_;
     for (UINT i = 0; i < completedUploads_.length(); i++)
         delete completedUploads_[i];
+    if (ieWindowCallback_)
+        delete ieWindowCallback_;
     if (shareWindow_)
         delete shareWindow_;
-}
-
-void
-HippoFlickr::setUI(HippoUI *ui)
-{
-    ui_ = ui;
+    if (authBrowser_)
+        delete authBrowser_;
 }
 
 void 
@@ -69,6 +85,15 @@ HippoFlickr::setState(State newState)
     if (newState != FATAL_ERROR && newState != CANCELLED) {
     switch (state_) {
         case UNINITIALIZED:
+            assert(newState == LOADING_STATUSDISPLAY || newState == LOADING_FIRSTTIME);
+            break;
+        case LOADING_FIRSTTIME:
+            assert(newState == DISPLAYING_FIRSTTIME);
+            break;
+        case DISPLAYING_FIRSTTIME:
+            assert(newState == CREATING_ACCOUNT || newState == LOADING_STATUSDISPLAY);
+            break;
+        case CREATING_ACCOUNT:
             assert(newState == LOADING_STATUSDISPLAY);
             break;
         case LOADING_STATUSDISPLAY:
@@ -138,7 +163,21 @@ HippoFlickr::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs,
 }
 
 void
-HippoFlickr::HippoFlickrIEWindowCallback::onDocumentComplete() 
+HippoFlickr::HippoFlickrFirstTimeWindowCallback::onDocumentComplete() 
+{
+    if (flickr_->state_ != HippoFlickr::State::DISPLAYING_FIRSTTIME)
+        flickr_->setState(HippoFlickr::State::DISPLAYING_FIRSTTIME);
+}
+
+bool
+HippoFlickr::HippoFlickrFirstTimeWindowCallback::onClose(HWND window)
+{
+    flickr_->setState(HippoFlickr::State::CANCELLED);
+    return TRUE;
+}
+
+void
+HippoFlickr::HippoFlickrStatusWindowCallback::onDocumentComplete() 
 {
     // We need to wait until the link share display is fully loaded before doing
     // much
@@ -153,28 +192,35 @@ HippoFlickr::HippoFlickrIEWindowCallback::onDocumentComplete()
 }
 
 bool
-HippoFlickr::HippoFlickrIEWindowCallback::onClose(HWND window)
+HippoFlickr::HippoFlickrStatusWindowCallback::onClose(HWND window)
 {
     flickr_->setState(HippoFlickr::State::CANCELLED);
     return TRUE;
 }
 
-void
-HippoFlickr::ensureStatusWindow()
+void 
+HippoFlickr::showIEWindow(WCHAR *title, WCHAR *relUrl, HippoIEWindowCallback *cb)
 {
-    ui_->debugLogW(L"creating Flickr share window");
-    ieWindowCallback_ = new HippoFlickrIEWindowCallback(this);
+    if (shareWindow_ != NULL)
+        delete shareWindow_;
+    if (ieWindowCallback_ != NULL)
+        delete ieWindowCallback_;
 
-    HippoBSTR shareURL;
-    if (!SUCCEEDED (ui_->getRemoteURL(HippoBSTR(L"sharephotoset?next=close"), &shareURL))) {
-        ui_->debugLogW(L"out of memory");
-        return;
-    }
-    setState(LOADING_STATUSDISPLAY);
-    shareWindow_ = new HippoIEWindow(ui_, L"Share Photos", shareURL, this, ieWindowCallback_);
+    HippoBSTR url;
+    ui_->getRemoteURL(HippoBSTR(relUrl), &url);
+    ieWindowCallback_ = cb;
+    shareWindow_ = new HippoIEWindow(ui_, title, url, this, ieWindowCallback_);
 	shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 650, 600);
     shareWindow_->show();
     ie_ = shareWindow_->getIE();
+}
+
+void
+HippoFlickr::showShareWindow(void)
+{
+    ui_->debugLogW(L"creating Flickr share window");
+    setState(LOADING_STATUSDISPLAY);
+    showIEWindow(L"Share Photos", L"sharephotoset?next=close", new HippoFlickrStatusWindowCallback(this));
 }
 
 void
@@ -501,6 +547,17 @@ HippoFlickr::HippoFlickrFrobInvocation::handleCompleteXML(IXMLDOMElement *doc)
 }
 
 void 
+HippoFlickr::HippoFlickrAuthBrowserCallback::onNavigate(HippoExternalBrowser *browser, BSTR url)
+{
+    flickr_->ui_->debugLogW(L"got navigate for auth browser, url=%s", url);
+    if (flickr_->state_ == HippoFlickr::State::CREATING_ACCOUNT &&
+        wcscmp(L"http://www.flickr.com/", url) == 0) 
+    {
+        flickr_->showShareWindow();
+    }
+}
+
+void 
 HippoFlickr::HippoFlickrAuthBrowserCallback::onDocumentComplete(HippoExternalBrowser *browser)
 {
     flickr_->ui_->debugLogW(L"got document complete for auth browser");
@@ -510,26 +567,28 @@ void
 HippoFlickr::HippoFlickrAuthBrowserCallback::onQuit(HippoExternalBrowser *browser)
 {
     flickr_->ui_->debugLogW(L"got onQuit for auth browser");
-    assert(flickr_->state_ == HippoFlickr::State::REQUESTING_AUTH);
-    flickr_->getToken();
+    if (flickr_->state_ == HippoFlickr::State::REQUESTING_AUTH) {
+        flickr_->invokeJavascript(L"dhFlickrAuthComplete", NULL, 0);
+        flickr_->getToken();
+    } else if (flickr_->state_ == HippoFlickr::State::CREATING_ACCOUNT) {
+        flickr_->showShareWindow();
+    } else {
+        // Shouldn't get here
+        return;
+    }
     delete flickr_->authCb_;
     flickr_->authCb_ = NULL;
+    flickr_->authBrowser_->Release();
+    flickr_->authBrowser_ = NULL;
 }
 
 void
-HippoFlickr::setFrob(WCHAR *frob)
+HippoFlickr::getAuthUrl(HippoBSTR &authUrl)
 {
-    HippoBSTR authURL;
-    HippoBSTR authQuery;
     HippoArray<HippoBSTR> paramNames;
     HippoArray<HippoBSTR> paramValues;
+    authUrl = authServiceUrl_;
 
-    ui_->debugLogW(L"got Flickr auth frob %s", frob);
-
-    setState(REQUESTING_AUTH);
-    authFrob_ = frob;
-
-    authURL = authServiceUrl_;
     paramNames.append(HippoBSTR(L"api_key"));
     paramValues.append(HippoBSTR(apiKey_));
     paramNames.append(HippoBSTR(L"perms"));
@@ -539,11 +598,32 @@ HippoFlickr::setFrob(WCHAR *frob)
 
     appendApiSig(paramNames, paramValues);
 
+    HippoBSTR authQuery;
     HippoUIUtil::encodeQueryString(authQuery, paramNames, paramValues);
-    authURL.Append(authQuery);
+    authUrl.Append(authQuery);
+}
 
-    authCb_ = new HippoFlickrAuthBrowserCallback(this);
-    authBrowser_ = new HippoExternalBrowser(authURL, FALSE, authCb_);
+void
+HippoFlickr::setFrob(WCHAR *frob)
+{
+    HippoBSTR authURL;
+    HippoBSTR partialAuthQuery;
+
+    ui_->debugLogW(L"got Flickr auth frob %s", frob);
+
+    setState(REQUESTING_AUTH);
+    authFrob_ = frob;
+
+    getAuthUrl(authURL);
+
+    invokeJavascript(L"dhFlickrAwaitingAuth", NULL, 0);
+    if (authBrowser_ != NULL) {
+        // We already have a browser open for the account creation, reuse it
+        authBrowser_->navigate(authURL);
+    } else {
+        authCb_ = new HippoFlickrAuthBrowserCallback(this);
+        authBrowser_ = new HippoExternalBrowser(authURL, TRUE, authCb_);
+    }
 }
 
 void
@@ -846,6 +926,30 @@ HippoFlickr::notifyUserId()
     invokeJavascript(L"dhFlickrSetUserId", NULL, 1, &vUserId);
 }
 
+// IHippoFlickr implementation
+
+STDMETHODIMP
+HippoFlickr::HaveFlickrAccount(BOOL haveAccount) 
+{
+    if (state_ != HippoFlickr::State::DISPLAYING_FIRSTTIME) {
+        ui_->debugLogW(L"got HaveFlickrAccount in invalid state");
+        return E_FAIL;
+    }
+    ui_->debugLogW(L"have flickr account: %s", haveAccount ? L"TRUE" : L"FALSE");
+    haveAccount_ = !!haveAccount;
+    if (haveAccount) {
+        delete shareWindow_;
+        shareWindow_ = NULL;
+        showShareWindow();
+    } else {
+        setState(HippoFlickr::State::CREATING_ACCOUNT);
+        authCb_ = new HippoFlickrAuthBrowserCallback(this);
+        authBrowser_ = new HippoExternalBrowser(signupUrl_, TRUE, authCb_);
+        invokeJavascript(L"dhFlickrAwaitingAccount", NULL, 0);
+    }
+    return S_OK;
+}
+
 STDMETHODIMP
 HippoFlickr::CreatePhotoset(BSTR title) 
 {
@@ -1001,8 +1105,6 @@ HippoFlickr::processUploads()
 void 
 HippoFlickr::uploadPhoto(BSTR filename)
 {
-    if (state_ == UNINITIALIZED)
-        ensureStatusWindow();
     enqueueUpload(filename);
 }
 

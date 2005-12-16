@@ -444,13 +444,12 @@ HippoUI::ShareLink(BSTR url, BSTR title)
 STDMETHODIMP 
 HippoUI::BeginFlickrShare(BSTR filePath)
 {
-    debugLogW(L"sharing photo zpath %s", filePath);
+    debugLogW(L"sharing photo: path=%s", filePath);
 
     if (flickr_ == NULL || flickr_->isCommitted()) {
         if (flickr_ != NULL)
             flickr_->Release();
-        flickr_ = new HippoFlickr();
-        flickr_->setUI(this);
+        flickr_ = new HippoFlickr(this);
     }
     flickr_->uploadPhoto(filePath);
     return S_OK;

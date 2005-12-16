@@ -80,5 +80,7 @@ library HippoUtil {
     {
         [id(150), helpstring("Create a photoset from current photos")]
         HRESULT CreatePhotoset([in] BSTR title);
+        [id(151), helpstring("Signal whether or not user has a Flickr account")]
+        HRESULT HaveFlickrAccount([in] BOOL haveAccount);
     }
 }
