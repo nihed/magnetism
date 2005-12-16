@@ -24,10 +24,14 @@ public:
                     BSTR        *str);
     bool loadBool(const WCHAR *valueName,
                   bool        *result);
+    bool loadLong(const WCHAR *valueName,
+                  long        *result);
     bool saveString(const WCHAR *valueName, 
                     const WCHAR *str);
     bool saveBool(const WCHAR *valueName, 
                   bool         value);
+    bool saveLong(const WCHAR *valueName, 
+                  long         value);
 private:
     HKEY key_;
 };

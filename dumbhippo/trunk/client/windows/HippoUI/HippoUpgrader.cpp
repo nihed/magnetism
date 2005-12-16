@@ -185,18 +185,29 @@ HippoUpgrader::handleComplete(void *responseData, long responseBytes)
     downloadFile_ = NULL;
 
     if (state_ != STATE_ERROR) {
-        ui_->debugLogW(L"Successfully downloaded upgrade");
-        state_ = STATE_DOWNLOADED;
-
-        progressCompleted_ = true;
-        saveProgress();
+        if (responseBytes != progressSize_) {
+            hippoDebugLogW(L"Upgrader: bad response, only received %ld bytes", responseBytes);
+            state_ = STATE_ERROR;
+        } else  {
+            ui_->debugLogW(L"Successfully downloaded upgrade");
+            state_ = STATE_DOWNLOADED;
+    
+            progressCompleted_ = true;
+            saveProgress();
         
-        ui_->onUpgradeReady();
-    } else {
+            ui_->onUpgradeReady();
+        }
     }
 
     delete http_;  
     http_ = NULL;
+}
+
+void
+HippoUpgrader::handleGotSize(long responseSize) {
+    hippoDebugLogW(L"Upgrader: Content-Length is %ld", responseSize);
+    progressSize_ = responseSize;
+    saveProgress();
 }
 
 static void
@@ -272,6 +283,9 @@ HippoUpgrader::loadProgress()
     progressModified_ = NULL;
     key.loadString(L"DownloadModified", &progressModified_);
 
+    progressSize_ = -1;
+    key.loadLong(L"DownloadSize", &progressSize_);
+
     progressCompleted_ = FALSE;
     key.loadBool(L"DownloadCompleted", &progressCompleted_);
 }
@@ -290,6 +304,7 @@ HippoUpgrader::saveProgress()
     key.saveString(L"DownloadVersion", tmp);
     key.saveString(L"DownloadFilename", progressFilename_);
     key.saveString(L"DownloadModified", progressModified_);
+    key.saveLong(L"DownloadSize", progressSize_);
     key.saveBool(L"DownloadCompleted", progressCompleted_);
 }
 
@@ -310,9 +325,20 @@ HippoUpgrader::startDownload()
             progressBase && wcscmp(progressBase, downloadBase) == 0) 
         {
             if (progressCompleted_) {
-                state_ = STATE_DOWNLOADED;
-                ui_->onUpgradeReady();
-                return;
+                WIN32_FILE_ATTRIBUTE_DATA fileAttributeData;
+                if (GetFileAttributesEx(progressFilename_, GetFileExInfoStandard, &fileAttributeData) &&
+                    fileAttributeData.nFileSizeHigh == 0 &&
+                    fileAttributeData.nFileSizeLow == progressSize_) 
+                {
+                    state_ = STATE_DOWNLOADED;
+                    ui_->onUpgradeReady();
+
+                    return;
+                }
+
+                // Either the downloaded file doesn't exist or it has the wrong
+                // size, try downloading again.
+
             } else {
                 if (resumeDownload())
                     return;
@@ -332,13 +358,14 @@ HippoUpgrader::startDownload()
         ui_->debugLogW(L"Downloading %ls to %ls", downloadUrl_, filename);
 
         http_ = new HippoHTTP();
-        http_->doGet(downloadUrl_, this);
+        http_->doGet(downloadUrl_, false, this);
 
         progressUrl_ = downloadUrl_;
         g_free(progressVersion_);
         progressVersion_ = g_strdup(currentVersion_);
         progressFilename_ = filename;
         progressModified_ = NULL;
+        progressSize_ = -1;
         progressCompleted_ = false;
         saveProgress();
 

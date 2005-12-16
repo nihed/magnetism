@@ -35,6 +35,7 @@ public:
     void handleError(HRESULT result);
     void handleBytesRead(void *responseData, long responseBytes);
     void handleComplete(void *responseData, long responseBytes);
+    void handleGotSize(long responseSize);
 
 private:
     bool openDownloadFile(BSTR  basename,
@@ -59,5 +60,6 @@ private:
     char *progressVersion_;
     HippoBSTR progressFilename_;
     HippoBSTR progressModified_;
+    long progressSize_;
     bool progressCompleted_;
 };

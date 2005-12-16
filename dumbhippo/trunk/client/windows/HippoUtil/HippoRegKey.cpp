@@ -86,6 +86,28 @@ HippoRegKey::~HippoRegKey(void)
  }
 
 bool 
+HippoRegKey::loadLong(const WCHAR *valueName,
+                      long        *value)
+ {
+    if (!key_)
+        return false;
+
+    long result;
+    DWORD tmp;
+    DWORD bufSize = sizeof(DWORD);
+    DWORD type;
+
+    result = RegQueryValueEx(key_, valueName, NULL, 
+                             &type, (BYTE *)&tmp, &bufSize);
+    if (result == ERROR_SUCCESS && type == REG_DWORD) {
+        *value = (long)tmp;
+        return true;
+    } else {
+        return false;
+    }
+ }
+ 
+ bool 
 HippoRegKey::saveString(const WCHAR *valueName, 
                         const WCHAR *str)
 {
@@ -112,6 +134,20 @@ HippoRegKey::saveBool(const WCHAR *valueName,
         return false;
 
     DWORD tmp = value;
+
+    return RegSetValueEx(key_, valueName, NULL, REG_DWORD,
+                         (const BYTE *)&tmp, sizeof(DWORD)) == ERROR_SUCCESS;
+
+}
+
+bool 
+HippoRegKey::saveLong(const WCHAR *valueName, 
+                      long         value)
+{
+    if (!key_)
+        return false;
+
+    DWORD tmp = (DWORD)value;
 
     return RegSetValueEx(key_, valueName, NULL, REG_DWORD,
                          (const BYTE *)&tmp, sizeof(DWORD)) == ERROR_SUCCESS;

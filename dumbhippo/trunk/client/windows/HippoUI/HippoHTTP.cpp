@@ -19,17 +19,17 @@ public:
         RESPONSE_STATE_ERROR
     };
 
-    HINTERNET connectionHandle;
-    HINTERNET requestOpenHandle;
+    HINTERNET connectionHandle_;
+    HINTERNET requestOpenHandle_;
 
-    HippoBSTR op;
-    HippoBSTR target;
-    HippoBSTR contentType;
+    HippoBSTR op_;
+    HippoBSTR target_;
+    HippoBSTR contentType_;
 
-    void *inputData;
-    long inputLen;
+    void *inputData_;
+    long inputLen_;
 
-    long responseSize;
+    long responseSize_;
 
     // -----------------------------------------------------------------------------
     // These following items are shared between the read thread and response idle
@@ -37,6 +37,7 @@ public:
     bool criticalSectionInitialized_;
 
     ResponseState responseState_;
+    bool seenResponseSize_;
     long responseBytesRead_;
     long responseBytesSeen_;
     unsigned responseIdle_;
@@ -44,23 +45,22 @@ public:
 
     // -----------------------------------------------------------------------------
 
-    void *responseBuffer;
+    void *responseBuffer_;
 
-    HANDLE readerThread;
-    DWORD readerThreadId;
-
-    HippoHTTPAsyncHandler *handler;
+    HippoHTTPAsyncHandler *handler_;
 
     ~HippoHTTPContext() {
         if (criticalSectionInitialized_)
             DeleteCriticalSection(&criticalSection_);
-        if (responseBuffer)
-            free(responseBuffer);
+        if (responseBuffer_)
+            free(responseBuffer_);
     }
 
     void ensureResponseIdle();
     void doResponseIdle();
     void enqueueError(HRESULT error);
+    void readData();
+    void closeHandles();
 };
 
 
@@ -68,29 +68,35 @@ void
 HippoHTTPContext::doResponseIdle()
 {
     HippoHTTPContext::ResponseState state;
-    
+
     if (criticalSectionInitialized_)
         EnterCriticalSection(&criticalSection_);
     state = responseState_;
+    bool oldSeenResponseSize = seenResponseSize_;
+    seenResponseSize_ = true;
     long oldResponseBytesSeen = responseBytesSeen_;
     long newResponseBytesSeen = responseBytesSeen_ = responseBytesRead_;
     responseIdle_ = 0;
     if (criticalSectionInitialized_)
         LeaveCriticalSection(&criticalSection_);
 
-    switch (state) {
-    case RESPONSE_STATE_READING:
-        handler->handleBytesRead((char *)responseBuffer + oldResponseBytesSeen, 
-                                 newResponseBytesSeen - oldResponseBytesSeen);
-        break;
-    case RESPONSE_STATE_DONE:
-        handler->handleComplete(responseBuffer, responseBytesRead_);
+    if (state == RESPONSE_STATE_ERROR) {
+        handler_->handleError(responseError_);
         delete this;
-        break;
-    case RESPONSE_STATE_ERROR:
-        handler->handleError(responseError_);
+        return;
+    }
+    
+    if (!oldSeenResponseSize)
+        handler_->handleGotSize(responseSize_);
+
+    if (oldResponseBytesSeen != newResponseBytesSeen) {
+        handler_->handleBytesRead((char *)responseBuffer_ + oldResponseBytesSeen, 
+                                  newResponseBytesSeen - oldResponseBytesSeen);
+    }
+
+    if (state == RESPONSE_STATE_DONE) {
+        handler_->handleComplete(responseBuffer_, responseBytesRead_);
         delete this;
-        break;
     }
 }
 
@@ -112,12 +118,18 @@ HippoHTTPContext::ensureResponseIdle()
 }
 
 void
+HippoHTTPContext::closeHandles()
+{
+    InternetCloseHandle(requestOpenHandle_);
+    requestOpenHandle_ = NULL;
+    InternetCloseHandle(connectionHandle_);
+    connectionHandle_ = NULL;
+}
+
+void
 HippoHTTPContext::enqueueError(HRESULT error)
 {
-    InternetCloseHandle(requestOpenHandle);
-    requestOpenHandle = NULL;
-    InternetCloseHandle(connectionHandle);
-    connectionHandle = NULL;
+    closeHandles();
 
     if (criticalSectionInitialized_)
         EnterCriticalSection(&criticalSection_);
@@ -128,86 +140,73 @@ HippoHTTPContext::enqueueError(HRESULT error)
         LeaveCriticalSection(&criticalSection_);
 }
 
-static void
-readerThreadMain(void *threadContext)
+void
+HippoHTTPContext::readData()
 {
-    HippoHTTPContext *ctx = (HippoHTTPContext*) threadContext;
+    if (!requestOpenHandle_) {
+        hippoDebugLogW(L"readData called with closed handle");
+        return;
+    }
 
-    InitializeCriticalSection(&ctx->criticalSection_);
-    ctx->criticalSectionInitialized_ = true;
-
-    ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_READING;
-        
-    while ((ctx->responseSize - ctx->responseBytesRead_) != 0) {
+    while ((responseSize_ - responseBytesRead_) != 0) {
         DWORD bytesRead;
-
-        if (!ctx->requestOpenHandle) {
-            hippoDebugLogW(L"Reader thread with closed handle!");
-            return;
-        }
 
         // Things seem to work badly if we call neglect to call InternetQueryDataAvailable() 
         // before trying to read
         DWORD bytesAvailable;
-        while (TRUE) {
-            if (InternetQueryDataAvailable(ctx->requestOpenHandle, &bytesAvailable, 0, 0)) {
-                break;
-            } else {
-                if (GetLastError() != ERROR_IO_PENDING)
-                    goto error;
-                Sleep(500); // 0.5 seconds
-            }
+        if (!InternetQueryDataAvailable(requestOpenHandle_, &bytesAvailable, 0, 0)) {
+            // ERROR_IO_PENDING means no data currently available; return and we'll get
+            // called again later
+            if (GetLastError() != ERROR_IO_PENDING)
+                enqueueError(GetLastError());
+
+            return;
         }
 
-        EnterCriticalSection(&ctx->criticalSection_);
+        EnterCriticalSection(&criticalSection_);
 
-        DWORD toRead = ctx->responseSize - ctx->responseBytesRead_;
+        DWORD toRead = responseSize_ - responseBytesRead_;
         void *readLocation;
 
-        readLocation = ((char*)ctx->responseBuffer) + ctx->responseBytesRead_;
+        readLocation = ((char*)responseBuffer_) + responseBytesRead_;
         if (toRead > bytesAvailable)
             toRead = bytesAvailable;
 
-        LeaveCriticalSection(&ctx->criticalSection_);
+        LeaveCriticalSection(&criticalSection_);
 
-        if (!InternetReadFile(ctx->requestOpenHandle,
+        if (!InternetReadFile(requestOpenHandle_,
                               readLocation, toRead, &bytesRead)) 
         {    
+            // ERROR_IO_PENDING really shouldn't happen here since 
+            // InternetQueryDataAvailable told us there was data available
+            // before.
             if (GetLastError() != ERROR_IO_PENDING)
-                goto error;
+                enqueueError(GetLastError());
 
-            // This really should never happen, since InternetQueryDataAvailable()
-            // has told us that data *is* available
-            Sleep(500);
+            return;
         } else {
-            EnterCriticalSection(&ctx->criticalSection_);
-            ctx->responseBytesRead_ += bytesRead;
-            ctx->ensureResponseIdle();
-            LeaveCriticalSection(&ctx->criticalSection_);
+            EnterCriticalSection(&criticalSection_);
+            responseBytesRead_ += bytesRead;
+            ensureResponseIdle();
+            LeaveCriticalSection(&criticalSection_);
 
             if (bytesRead == 0)
                 break;
         }
     }
 
-    InternetCloseHandle(ctx->requestOpenHandle);
-    ctx->requestOpenHandle = NULL;
-    InternetCloseHandle(ctx->connectionHandle);
-    ctx->connectionHandle = NULL;
+    closeHandles();
 
-    EnterCriticalSection(&ctx->criticalSection_);
-    if (ctx->responseSize - ctx->responseBytesRead_ != 0) { 
+    EnterCriticalSection(&criticalSection_);
+    if (responseSize_ - responseBytesRead_ != 0) { 
         // Invalid Content-Length
-        ctx->responseSize = ctx->responseBytesRead_;
+        responseSize_ = responseBytesRead_;
     }
-    ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
-    ctx->ensureResponseIdle();
-    LeaveCriticalSection(&ctx->criticalSection_);
+    responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
+    ensureResponseIdle();
+    LeaveCriticalSection(&criticalSection_);
 
     return;
-
-error:    
-    ctx->enqueueError(GetLastError());
 }
 
 
@@ -215,36 +214,44 @@ static void
 handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOID statusInfo, 
                       DWORD statusLength)
 {
-    if (ctx->responseSize < 0) {
+    if (ctx->responseSize_ < 0) {
+        DWORD statusCode;
+        DWORD statusCodeSize = sizeof(statusCode);
+
+        if (!HttpQueryInfo(ctx->requestOpenHandle_, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
+            (void *)&statusCode, &statusCodeSize, 0) || statusCode != 200)
+        {
+            ctx->enqueueError(E_FAIL);
+            return;
+        }
+
         WCHAR responseSize[80];
         static const long MAX_SIZE = 16 * 1024 * 1024;
         DWORD responseDatumSize = sizeof(responseSize);
 
-        if (!HttpQueryInfo(ctx->requestOpenHandle, HTTP_QUERY_CONTENT_LENGTH,
+        if (!HttpQueryInfo(ctx->requestOpenHandle_, HTTP_QUERY_CONTENT_LENGTH,
             &responseSize, &responseDatumSize, 
             NULL)) 
         {
-            InternetCloseHandle(ctx->requestOpenHandle);
-            ctx->requestOpenHandle = NULL;
-            InternetCloseHandle(ctx->connectionHandle);
-            ctx->connectionHandle = NULL;
-            ctx->responseBytesRead_ = 0;
-            ctx->responseBuffer = NULL;
-            ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
-            ctx->ensureResponseIdle();
+            ctx->enqueueError(E_FAIL);
             return;
         }
-        ctx->responseSize = wcstoul(responseSize, NULL, 10);
-        if (ctx->responseSize < 0)
-            ctx->responseSize = 0;
-        else if (ctx->responseSize > MAX_SIZE)
-            ctx->responseSize = MAX_SIZE;
+        ctx->ensureResponseIdle(); // To report that we have the size
+        ctx->responseSize_ = wcstoul(responseSize, NULL, 10);
+        if (ctx->responseSize_ < 0)
+            ctx->responseSize_ = 0;
+        else if (ctx->responseSize_ > MAX_SIZE)
+            ctx->responseSize_ = MAX_SIZE;
         ctx->responseBytesRead_ = 0;
-        ctx->responseBuffer = malloc (ctx->responseSize);
-        ctx->readerThread = CreateThread(NULL, 0,
-            (LPTHREAD_START_ROUTINE)readerThreadMain, (void *) ctx, 0,
-            &ctx->readerThreadId);
+        ctx->responseBuffer_ = malloc (ctx->responseSize_);
+
+        InitializeCriticalSection(&ctx->criticalSection_);
+        ctx->criticalSectionInitialized_ = true;
+
+        ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_READING;
     }
+
+    ctx->readData();
 }
 
 static void CALLBACK
@@ -349,6 +356,7 @@ HippoHTTP::parseURL(WCHAR         *url,
 
 void
 HippoHTTP::doGet(WCHAR                 *url, 
+                 bool                   useCache,
                  HippoHTTPAsyncHandler *handler)
 {
     HippoBSTR host;
@@ -358,7 +366,7 @@ HippoHTTP::doGet(WCHAR                 *url,
     if (!parseURL(url, &host, &port, &target))
         return;
 
-    doAsync(host, port, L"GET", target, NULL, NULL, 0, handler);
+    doAsync(host, port, L"GET", target, useCache, NULL, NULL, 0, handler);
 }
 
 void
@@ -375,7 +383,7 @@ HippoHTTP::doPost(WCHAR                 *url,
     if (!parseURL(url, &host, &port, &target))
         return;
 
-    doAsync(host, port, L"POST", target, contentType, requestInput, len, handler);
+    doAsync(host, port, L"POST", target, false, contentType, requestInput, len, handler);
 }
 
 bool
@@ -523,8 +531,9 @@ HippoHTTP::doAsync(WCHAR                 *host,
                    INTERNET_PORT          port, 
                    WCHAR                 *op,
                    WCHAR                 *target, 
+                   bool                   useCache,
                    WCHAR                 *contentType, 
-                   void                  *requestInput, 
+                   void                  *requestInput,
                    long                   len, 
                    HippoHTTPAsyncHandler *handler)
 {
@@ -532,38 +541,49 @@ HippoHTTP::doAsync(WCHAR                 *host,
 
     context = new HippoHTTPContext;
     ZeroMemory(context, sizeof(*context));
-    context->handler = handler;
-    context->op = op;
-    context->target = target;
-    context->contentType = contentType;
+    context->handler_ = handler;
+    context->op_ = op;
+    context->target_ = target;
+    context->contentType_ = contentType;
     context->responseState_ = HippoHTTPContext::RESPONSE_STATE_STARTING;
-    context->responseSize = -1;
-    context->inputData = requestInput;
-    context->inputLen = len;
+    context->responseSize_ = -1;
+    context->seenResponseSize_ = false;
+    context->inputData_ = requestInput;
+    context->inputLen_ = len;
     
-    context->connectionHandle = InternetConnect(inetHandle_, host, port, NULL, NULL, 
-                                                INTERNET_SERVICE_HTTP, 0, (DWORD_PTR) context);
-    if (!context->connectionHandle) {
+    context->connectionHandle_ = InternetConnect(inetHandle_, host, port, NULL, NULL, 
+                                                 INTERNET_SERVICE_HTTP, 0, (DWORD_PTR) context);
+    if (!context->connectionHandle_) {
         context->enqueueError(GetLastError());
         return;
     }
 
-    context->requestOpenHandle = HttpOpenRequest(context->connectionHandle, context->op, context->target, 
-                                                 NULL, NULL, NULL,
-                                                 INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI | INTERNET_FLAG_CACHE_IF_NET_FAIL,
-                                                 (DWORD_PTR) context);
-    if (!context->requestOpenHandle) {
+    // Asking the user for authentication would be weird in most cases, and shouldn't
+    // happen anyways. We'd rather just get an error.
+    DWORD flags = INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI;
+
+    // RELOAD means to ignore any cached content; NO_CACHE_WRITE means don't cache
+    // the result either. We use these when downloading new versions of the client;
+    // since caching isn't useful, and might conceivably cause a bad download
+    // to be sticky and not work on the next retry.
+    if (!useCache) 
+        flags |= INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE;
+
+    context->requestOpenHandle_ = HttpOpenRequest(context->connectionHandle_, context->op_, context->target_, 
+                                                  NULL, NULL, NULL,
+                                                  flags, (DWORD_PTR) context);
+    if (!context->requestOpenHandle_) {
         context->enqueueError(GetLastError());
         return;
     }
 
-    if (context->contentType) {
+    if (context->contentType_) {
         WCHAR buf[1024];    
-        StringCchPrintf(buf, sizeof(buf)/sizeof(buf[0]), L"Content-Type: %s\r\n", context->contentType);
-        HttpAddRequestHeaders(context->requestOpenHandle, buf, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        StringCchPrintf(buf, sizeof(buf)/sizeof(buf[0]), L"Content-Type: %s\r\n", context->contentType_);
+        HttpAddRequestHeaders(context->requestOpenHandle_, buf, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
 
-    if (!HttpSendRequest(context->requestOpenHandle, NULL, 0, context->inputData, context->inputLen) &&
+    if (!HttpSendRequest(context->requestOpenHandle_, NULL, 0, context->inputData_, context->inputLen_) &&
         GetLastError() != ERROR_IO_PENDING) 
     {
         context->enqueueError(GetLastError());

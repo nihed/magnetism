@@ -274,7 +274,7 @@ HippoFlickr::invokeMethod(HippoFlickr::HippoFlickrInvocation *invocation, WCHAR 
     url.Append(query);
 
     HippoHTTP *http = new HippoHTTP();
-    http->doGet(url, invocation);
+    http->doGet(url, false, invocation);
     va_end(args);
     invocation->setRequest(http);
 }

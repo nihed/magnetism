@@ -594,7 +594,7 @@ HippoUI::onUpgradeReady()
     if (MessageBox(NULL, 
                    L"A new version of the DumbHippo client has been downloaded. Install now?",
                    L"DumbHippo upgrade ready", 
-                   MB_OKCANCEL | MB_DEFBUTTON1) == IDOK) 
+                   MB_OKCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_SETFOREGROUND) == IDOK) 
     {
         upgrader_.performUpgrade();
 
@@ -1217,13 +1217,6 @@ win32SourceDispatch(GSource     *source,
         g_main_context_remove_poll (NULL, &win32Source->pollFD);
         g_main_loop_quit(win32Source->loop);
         return FALSE;
-    }
-
-    if ((msg.message >= WM_KEYFIRST && msg.message <= WM_KEYDOWN)
-        || msg.message == WM_MBUTTONDOWN
-        || msg.message == WM_MBUTTONUP) 
-    {
-        hippoDebugLogW(L"message %u for window %p", msg.message, msg.hwnd);
     }
 
     if (windowHookKeys) {
