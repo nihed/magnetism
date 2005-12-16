@@ -23,7 +23,8 @@
 		<div id="dhShareForm" class="dhInvisible">
 			<div class="dhVerticalPadding"></div>
 					
-			<div id="dhFlickrError" class="dhValidityError"></div>			
+			<div id="dhFlickrError" class="dhValidityError"></div>	
+			<div id="dhFlickrNotice" class="dhFlickrNotice"></div>						
 			<table cols="2">
 			<tbody>
 			<tr>
@@ -32,7 +33,7 @@
 			<tbody>
 			<tr>
 			<td>
-				<div dojoType="InlineEditBox" id="dhUrlTitleToShare">Untitled Photos</div>
+				<div dojoType="InlineEditBox" id="dhUrlTitleToShare"></div>
 			</td>
 			</tr>
 			<tr>

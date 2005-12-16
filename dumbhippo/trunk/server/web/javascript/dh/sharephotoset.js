@@ -446,6 +446,15 @@ dhFlickrAddPhoto = function (filename, thumbnailFilename) {
 	try {
 	dojo.debug("adding photo " + filename)
 	dh.sharephotoset.instance.addPhoto(filename, thumbnailFilename)
+	var titleValue = dh.sharelink.urlTitleToShareEditBox.textValue
+	if (titleValue == "" || !titleValue) {
+		var idx = filename.lastIndexOf('.')
+		var title;
+		if (idx > 0) {
+			title = filename.substring(0, idx)
+			dh.sharelink.urlTitleToShareEditBox.setText(title)			
+		}	
+	}
 	} catch (e) {
 		dojo.debug("dhFlickrAddPhoto failed:" + e.message)
 	}
@@ -496,6 +505,25 @@ dhFlickrPhotoComplete = function (filename) {
 	} catch (e) {
 		dojo.debug("dhFlickrPhotoComplete failed:" + e.message)
 	}	
+}
+
+dhFlickrSetNoticeText = function (text, desc) {
+	var notice = document.getElementById("dhFlickrNotice")
+	dh.util.clearNode(notice)
+	if (text) {
+		var h4 = document.createElement("h4")
+		notice.appendChild(h4)
+		h4.appendChild(document.createTextNode(text))
+		notice.appendChild(document.createTextNode(desc))
+	}
+}
+
+dhFlickrAwaitingAuth = function () {
+	dhFlickrSetNoticeText("Waiting for you to authorize", "Close the browser window when you are done.")
+}
+
+dhFlickrAuthComplete = function () {
+	dhFlickrSetNoticeText(null, null)
 }
 
 dhFlickrError = function (text) {
