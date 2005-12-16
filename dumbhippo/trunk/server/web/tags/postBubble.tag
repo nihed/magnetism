@@ -42,14 +42,9 @@
 	</tr>
 	<tr>
 	<td class="cool-link-meta">
-	    <c:choose>
-	      <c:when test="${post.chatRoomActive}">
-	         <div class="cool-link-date"><a onClick='dh.actions.requestJoinRoom("${post.post.id}")' href="aim:GoChat?RoomName=${post.chatRoomName}&Exchange=5">${post.chatRoomMembers}</a></div>
-	      </c:when>
-	      <c:otherwise>
-	      </c:otherwise>
-	    </c:choose>
-	
+	    <c:if test="${post.chatRoomActive}">
+          <div class="cool-link-date"><a onClick='dh.actions.requestJoinRoom("${post.post.id}")' href="aim:GoChat?RoomName=${post.chatRoomName}&Exchange=5">${post.chatRoomMembers}</a></div>
+        </c:if>
 		<div class="cool-link-date">
 		(<fmt:formatDate value="${post.post.postDate}" type="both"/>)
 		</div>
