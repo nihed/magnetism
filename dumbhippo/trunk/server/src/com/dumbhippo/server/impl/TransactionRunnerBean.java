@@ -22,7 +22,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 	private EJBContext ejbContext;
 	
 	public <T> T runTaskInNewTransaction(Callable<T> callable) {
-		TransactionRunner proxy = (TransactionRunner) ejbContext.lookup(TransactionRunner.class.getCanonicalName());
+		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
 		return proxy.internalRunTaskInNewTransaction(callable);
 	}
 	

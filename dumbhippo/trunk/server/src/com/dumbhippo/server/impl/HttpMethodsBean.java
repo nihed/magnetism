@@ -37,19 +37,17 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.ChatRoomSystem;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -71,9 +69,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private GroupSystem groupSystem;
 
-	@EJB
-	private Configuration configuration;
-	
 	@EJB
 	private SigninSystem signinSystem;
 
@@ -238,7 +233,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException, GuidNotFoundException, SAXException {
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException, NotFoundException, SAXException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		// FIXME if sending to a public group with secret=true, we want to expand the group instead of 
@@ -253,7 +248,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, false, info);
 	}
 
-	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, GuidNotFoundException {
+	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, NotFoundException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<String> recipientGuids = splitIdList(recipientIds);
@@ -265,22 +260,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
 		
-		for (GuidPersistable r : recipients) {
-			if (r instanceof Person)
-				groupSystem.addMember(user, group, (Person)r);
-			else
-				throw new GuidNotFoundException(r.getId());
-		}
-
-		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
-		String url = baseurl + "/viewgroup?groupId=" + group.getId();
-		
-		PersonView selfView = identitySpider.getPersonView(viewpoint, user);
-		String title = group.getName() + " (invitation from " + selfView.getName() + ")";
-			
-		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
-		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, true, null);		
+		postingBoard.doShareGroupPost(user, group, description, recipients, true);
 	}
 	
 	public void doRenamePerson(User user, String name) {
@@ -291,7 +271,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		attachedUser.setNickname(name);
 	}
 	
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members, boolean secret) throws IOException, ParseException, GuidNotFoundException {
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String members, boolean secret) throws IOException, ParseException, NotFoundException {
 		Set<String> memberGuids = splitIdList(members);
 		
 		Set<Person> memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
@@ -305,7 +285,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doAddMembers(OutputStream out, HttpResponseData contentType, User user, String groupId, String memberIds)
-			throws IOException, ParseException, GuidNotFoundException {
+			throws IOException, ParseException, NotFoundException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
 		Set<String> memberGuids = splitIdList(memberIds);
@@ -332,18 +312,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doJoinGroup(User user, String groupId) {
 		Viewpoint viewpoint = new Viewpoint(user);
-		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-		if (group == null)
-			throw new RuntimeException("No such group");
-		groupSystem.addMember(user, group, user);
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			groupSystem.addMember(user, group, user);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public void doLeaveGroup(User user, String groupId) {
 		Viewpoint viewpoint = new Viewpoint(user);
-		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-		if (group == null)
-			throw new RuntimeException("No such group");
-		groupSystem.removeMember(user, group, user);
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			groupSystem.removeMember(user, group, user);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public void doAddContactPerson(User user, String contactId) {
@@ -352,7 +336,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			identitySpider.addContactPerson(user, contact);
 		} catch (ParseException e) {
 			throw new RuntimeException("Bad Guid", e);
-		} catch (IdentitySpider.GuidNotFoundException e) {
+		} catch (NotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
 		}
 	}
@@ -363,7 +347,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			identitySpider.removeContactPerson(user, contact);
 		} catch (ParseException e) {
 			throw new RuntimeException("Bad Guid", e);
-		} catch (IdentitySpider.GuidNotFoundException e) {
+		} catch (NotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
 		}
 	}

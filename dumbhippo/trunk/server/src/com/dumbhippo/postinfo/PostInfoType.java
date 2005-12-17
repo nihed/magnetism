@@ -17,7 +17,8 @@ package com.dumbhippo.postinfo;
  * @author hp
  */
 public enum PostInfoType {
-	GENERIC(NodeName.generic, null),
+	GENERIC(NodeName.generic, PostInfo.class),
+	SHARE_GROUP(NodeName.shareGroup, ShareGroupPostInfo.class),
 	EBAY(NodeName.eBay, EbayPostInfo.class),
 	AMAZON(NodeName.amazon, AmazonPostInfo.class),
 	FLICKR(NodeName.flickr, FlickrPostInfo.class);	
@@ -25,7 +26,7 @@ public enum PostInfoType {
 	private NodeName nodeName;
 	private Class<? extends PostInfo> subClass;
 	
-	private PostInfoType(NodeName nodeName, Class<? extends PostInfo> subClass) {
+	private <T extends PostInfo> PostInfoType(NodeName nodeName, Class<T> subClass) {
 		this.nodeName = nodeName;
 		this.subClass = subClass;
 	}

@@ -10,7 +10,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {
@@ -85,7 +85,7 @@ public class CookieAuthentication {
 		try {
 			user = identitySpider.lookupGuidString(User.class, userId);
 			logger.debug("Loaded new user in authenticate(): " + user);
-		} catch (GuidNotFoundException e) {
+		} catch (NotFoundException e) {
 			throw new BadTastingException("Cookie had unknown person ID '" + userId + "'");
 		} catch (ParseException e) {
 			throw new BadTastingException("Cookie had malformed person ID '" + userId + "'");

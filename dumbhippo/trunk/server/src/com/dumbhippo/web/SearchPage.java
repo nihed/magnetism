@@ -11,9 +11,9 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 public class SearchPage {
 	static private final Log logger = GlobalSetup.getLog(SearchPage.class);
@@ -55,7 +55,7 @@ public class SearchPage {
 					recipient = identitySpider.lookupGuidString(Person.class, recipientId);
 				} catch (ParseException e) {
 					logger.trace("bad recipientId", e);
-				} catch (GuidNotFoundException e) {
+				} catch (NotFoundException e) {
 					logger.trace("bad recipientId", e);
 				}
 			}
@@ -70,7 +70,7 @@ public class SearchPage {
 					poster = identitySpider.lookupGuidString(Person.class, posterId);
 				} catch (ParseException e) {
 					logger.trace("bad posterId", e);
-				} catch (GuidNotFoundException e) {
+				} catch (NotFoundException e) {
 					logger.trace("bad posterId", e);
 				}
 			}
@@ -85,7 +85,7 @@ public class SearchPage {
 					group = identitySpider.lookupGuidString(Group.class, groupId);
 				} catch (ParseException e) {
 					logger.trace("bad groupId", e);
-				} catch (GuidNotFoundException e) {
+				} catch (NotFoundException e) {
 					logger.trace("bad groupId", e);
 				}
 			}

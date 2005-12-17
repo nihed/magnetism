@@ -12,8 +12,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.Version;
 
 @Entity
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things

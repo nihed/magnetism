@@ -8,13 +8,12 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.EbayPostInfo;
-import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.services.EbayItemData;
 import com.dumbhippo.services.EbayScreenScraper;
 
-public class EbayUpdater extends AbstractUpdater {
+public class EbayUpdater extends AbstractUpdater<EbayPostInfo> {
 	static private final Log logger = GlobalSetup.getLog(EbayUpdater.class);
 	
 	static private final String[] domains = { "ebay.com" };
@@ -30,6 +29,7 @@ public class EbayUpdater extends AbstractUpdater {
 	
 	
 	public EbayUpdater(Configuration config) {
+		super(EbayPostInfo.class);
 	}
 
 	@Override
@@ -43,7 +43,8 @@ public class EbayUpdater extends AbstractUpdater {
 		return PostInfoType.EBAY;
 	}
 	
-	protected void update(PostInfo postInfo, URL url) {
+	@Override
+	protected void update(EbayPostInfo postInfo, URL url) {
 		String itemId = extractItemId(url);
 		if (itemId == null) {
 			logger.debug("no item id found in ebay url: " + url);
@@ -54,8 +55,7 @@ public class EbayUpdater extends AbstractUpdater {
 		
 		// if we fail to load info, just stick with whatever old information we had
 		if (itemData != null) {
-			EbayPostInfo ebayPostInfo = (EbayPostInfo) postInfo;
-			ebayPostInfo.merge(itemData);
+			postInfo.merge(itemData);
 		}
 	}
 	

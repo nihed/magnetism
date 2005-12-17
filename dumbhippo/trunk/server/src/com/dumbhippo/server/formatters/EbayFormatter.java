@@ -3,22 +3,21 @@ package com.dumbhippo.server.formatters;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.postinfo.EbayPostInfo;
 import com.dumbhippo.postinfo.PostInfo;
-import com.dumbhippo.server.PostView;
 
 public class EbayFormatter extends DefaultFormatter {
 	
 	@Override
-	public String getTextAsHtml(PostView postView) {
+	public String getTextAsHtml() {
 		PostInfo postInfo = postView.getPost().getPostInfo();
 
 		if (postInfo == null)
-			return super.getTextAsHtml(postView);
+			return super.getTextAsHtml();
 		
 		EbayPostInfo itemData = (EbayPostInfo) postInfo;
 		
 		String pictureUrl = itemData.getPictureUrl();
 		if (pictureUrl == null)
-			return super.getTextAsHtml(postView);
+			return super.getTextAsHtml();
 		
 		XmlBuilder xml = new XmlBuilder();
 		xml.append("<div class=\"dh-ebay-item\">");
@@ -26,9 +25,9 @@ public class EbayFormatter extends DefaultFormatter {
 		xml.appendEscaped(pictureUrl);
 		xml.append("\"/> ");
 		xml.append("</div>");
-		xml.append("<p class=\"dh-ebay-description\">");
+		xml.append("<div class=\"dh-ebay-description\">");
 		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
-		xml.append("</p>");
+		xml.append("</div>");
 		return xml.toString();
 	}
 }

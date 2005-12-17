@@ -11,8 +11,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
@@ -115,7 +115,7 @@ public class SigninBean implements Serializable {
 			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 			try {
 				user = spider.lookupGuid(User.class, userGuid);
-			} catch (GuidNotFoundException e) {
+			} catch (NotFoundException e) {
 				user = null;
 				userGuid = null;
 			}

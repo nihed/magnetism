@@ -3,7 +3,6 @@ package com.dumbhippo.server.formatters;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.postinfo.AmazonPostInfo;
 import com.dumbhippo.postinfo.PostInfo;
-import com.dumbhippo.server.PostView;
 
 public class AmazonFormatter extends DefaultFormatter {
 
@@ -15,11 +14,11 @@ public class AmazonFormatter extends DefaultFormatter {
 	}
 	
 	@Override
-	public String getTextAsHtml(PostView postView) {
+	public String getTextAsHtml() {
 		PostInfo postInfo = postView.getPost().getPostInfo();
 
 		if (postInfo == null)
-			return super.getTextAsHtml(postView);
+			return super.getTextAsHtml();
 		
 		AmazonPostInfo itemData = (AmazonPostInfo) postInfo;
 		
@@ -37,9 +36,9 @@ public class AmazonFormatter extends DefaultFormatter {
 		addPrice(xml, "Refurbished", itemData.getRefurbishedPrice());
 		addPrice(xml, "Collectible", itemData.getCollectiblePrice());
 		xml.append("<br/></div>");
-		xml.append("<p class=\"dh-amazon-description\">");
+		xml.append("<div class=\"dh-amazon-description\">");
 		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
-		xml.append("</p>");
+		xml.append("</div>");
 		return xml.toString();
 	}
 }

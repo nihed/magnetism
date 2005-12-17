@@ -1,11 +1,18 @@
 package com.dumbhippo.server.formatters;
 
+import javax.ejb.EJBContext;
+
 import com.dumbhippo.server.PostView;
 
 public interface PostFormatter {
 
-	public String getTitleAsHtml(PostView postView);
+	public void init(PostView postView, EJBContext ejbContext);
 	
-	public String getTextAsHtml(PostView postView);
+	public String getTitleAsText();
 	
+	public String getTextAsText();
+	
+	public String getTitleAsHtml();
+	
+	public String getTextAsHtml();
 }

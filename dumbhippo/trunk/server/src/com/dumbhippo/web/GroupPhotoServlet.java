@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
 
 public class GroupPhotoServlet extends AbstractPhotoServlet {
@@ -46,12 +47,19 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		// doLogin return a viewpoint/user thingy
 		User u = identitySpider.getUser(person);
 		Viewpoint viewpoint = new Viewpoint(u);
-		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-		if (group == null) {
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
 			throw new HumanVisibleException("It looks like you can't change the photo for this group; maybe you are not in the group or there's no such group anymore?");
 		}
-		GroupMember member = groupSystem.getGroupMember(viewpoint, group, u);
-		if (!member.canModify()) {
+		GroupMember member;
+		try {
+			member = groupSystem.getGroupMember(viewpoint, group, u);
+		} catch (NotFoundException e) {
+			member = null;
+		}
+		if (member == null || !member.canModify()) {
 			throw new HumanVisibleException("You can't change the photo for a group unless you're in the group");
 		}
 		groupName = group.getName();

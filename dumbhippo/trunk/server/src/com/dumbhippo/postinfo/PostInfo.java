@@ -34,7 +34,7 @@ public class PostInfo {
 		SAXParser parser = newSAXParser();
 		PostInfoSaxHandler handler = new PostInfoSaxHandler();
 		parser.parse(is, handler);
-		return newInstance(handler.getTree(), handler.getPostInfoType()); 
+		return newInstance(handler.getTree(), handler.getPostInfoType(), handler.getPostInfoType().getSubClass()); 
 	}
 	
 	public static PostInfo parse(String s) throws SAXException {
@@ -50,48 +50,46 @@ public class PostInfo {
 	 * 
 	 * @param tree a node tree which will now be owned by this PostInfo
 	 * @param type the type of post info
+	 * @param subClass this is just type.getSubClass(), it's a hack to pass it in
 	 * @return a new PostInfo of the right subclass
 	 * @throws IllegalArgumentException if the tree doesn't have a type node
 	 */
-	private static PostInfo newInstance(Node tree, PostInfoType type) {
+	private static <T extends PostInfo> T newInstance(Node tree, PostInfoType type, Class<T> subClass) {
 		if (tree == null)
 			throw new IllegalArgumentException("null tree for PostInfo.newInstance");
 		if (type == null)
 			throw new IllegalArgumentException("null type for new PostInfo");
-	
-		Class<? extends PostInfo> subClass = type.getSubClass();
-		if (subClass != null) {
-			PostInfo p;
-			try {
-				p = subClass.newInstance();
-			} catch (InstantiationException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			}
-			p.tree = tree;
-			if (p.type != type)
-				throw new RuntimeException("subclass of PostInfo " + subClass.getName() + " did not init type field to " + type);
-			return p;
-		} else {
-			return new PostInfo(tree, type);
+		if (!(type.getSubClass().equals(subClass)))
+			throw new IllegalArgumentException("PostInfoType subclass does not match expected class");
+		
+		T p;
+		try {
+			p = subClass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
+		p.tree = tree;
+		if (p.type != type)
+			throw new RuntimeException("subclass of PostInfo " + subClass.getName() + " did not init type field to " + type);
+		return p;
 	}
 	
-	public static PostInfo newInstance(PostInfo original, PostInfoType newType) {
+	public static <T extends PostInfo> T newInstance(PostInfo original, PostInfoType newType, Class<T> subClass) {
 		Node tree = new Node(original.getTree());
 		if (original.getType() != PostInfoType.GENERIC && 
 				original.getType() != newType) {
 			// Drop data for the old type
 			tree.removeChildIfExists(original.getType().getNodeName());
 		}
-		return newInstance(tree, newType);
+		return newInstance(tree, newType, subClass);
 	}
 	
-	public static PostInfo newInstance(PostInfoType type) {
+	public static <T extends PostInfo> T newInstance(PostInfoType type, Class<T> subClass) {
 		Node root = new Node(NodeName.postInfo);
 		root.appendChild(new Node(type.getNodeName()));
-		return newInstance(root, type);
+		return newInstance(root, type, subClass);
 	}
 	
 	private Node tree;

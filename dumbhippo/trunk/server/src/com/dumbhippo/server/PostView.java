@@ -1,9 +1,12 @@
 package com.dumbhippo.server;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.ejb.EJBContext;
 
 import org.apache.commons.logging.Log;
 
@@ -12,10 +15,10 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.ChatRoom;
 import com.dumbhippo.persistence.ChatRoomMessage;
 import com.dumbhippo.persistence.ChatRoomScreenName;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.formatters.AmazonFormatter;
@@ -23,6 +26,7 @@ import com.dumbhippo.server.formatters.DefaultFormatter;
 import com.dumbhippo.server.formatters.EbayFormatter;
 import com.dumbhippo.server.formatters.FlickrFormatter;
 import com.dumbhippo.server.formatters.PostFormatter;
+import com.dumbhippo.server.formatters.ShareGroupFormatter;
 
 /**
  * @author otaylor
@@ -33,6 +37,9 @@ import com.dumbhippo.server.formatters.PostFormatter;
  * properties and methods are safe to access at any point.
  */
 public class PostView {
+	private static final Log logger = GlobalSetup.getLog(PostView.class);
+	
+	private Context context;
 	private Post post;
 	private String url;
 	private boolean viewerHasViewed;
@@ -41,64 +48,109 @@ public class PostView {
 	private List<ChatRoomMessage> lastFewMessages;
 	private List<Object> recipients;
 	private String search;
-	private static final Log logger = GlobalSetup.getLog(PostView.class);
 	private PostFormatter formatter;
+	private Resource mailRecipient;
+	private Viewpoint viewpoint;
+	
+	public enum Context {
+		MAIL_NOTIFICATION,
+		WEB_BUBBLE
+	};
+	
+	private PostView(Post p, Context context) {
+		this.post = p;
+		
+		URL u = post.getUrl();
+		if (u != null)
+			url = u.toExternalForm();
+		
+		this.context = context;
+	}
 	
 	/**
-	 * Create a new PostView object.
+	 * Create a new PostView object for display on the web site.
 	 * 
+	 * @param ejbContext current EJB context (only accessed inside constructor)
 	 * @param p the post to view
 	 * @param poster the person who posted the post
 	 * @param ppd information about the relationship of the viewer to the post, may be null
 	 * @param chatRoom the associated chatRoom, or null
 	 * @param lastFewMessages the last few chat room messages, or null
 	 * @param recipientList the list of (visible) recipients of the post
+	 * @param viewpoint who is looking at the post
 	 */
-	public PostView(Post p, PersonView poster, PersonPostData ppd, ChatRoom chatRoom, List<ChatRoomMessage> lastFewMessages, List<Object>recipientList) {
-		post = p;
+	public PostView(EJBContext ejbContext, Post p, PersonView poster, PersonPostData ppd, ChatRoom chatRoom, List<ChatRoomMessage> lastFewMessages, List<Object>recipientList, Viewpoint viewpoint) {
+		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
 		viewerHasViewed = ppd != null;
 		recipients = recipientList;
 		this.chatRoom = chatRoom;
 		this.lastFewMessages = lastFewMessages;
+		this.viewpoint = viewpoint;
 		
-		for (Resource r : post.getResources()) {
-			if (r instanceof LinkResource) {
-				LinkResource link = (LinkResource)r;
-				url = link.getUrl();
-				break;
-			}
-		}
+		initFormatter(ejbContext);
+	}
+	
+	public PostView(EJBContext ejbContext, Post p, Resource mailRecipient) {
+		this(p, Context.MAIL_NOTIFICATION);
+		this.mailRecipient = mailRecipient;
+
+		if (this.mailRecipient == null)
+			throw new IllegalArgumentException("must specify mail recipient for mail notification PostView");
+		
+		initFormatter(ejbContext);
 	}
 	
 	private PostFormatter getFormatter() {
-		if (formatter != null)
-			return formatter;
-		
-		PostInfo postInfo = post.getPostInfo();
-		PostInfoType type = postInfo != null ? postInfo.getType() : PostInfoType.GENERIC;
-		
-		// FIXME the formatters are stateless so we could share the instances
-		if (type == PostInfoType.AMAZON) {
-			formatter = new AmazonFormatter();
-		} else if (type == PostInfoType.EBAY) {
-			formatter = new EbayFormatter();
-		} else if (type == PostInfoType.FLICKR) {
-			formatter = new FlickrFormatter();
-		} else {
-			formatter = new DefaultFormatter();
-		}
-		
-		assert formatter != null;
 		return formatter;
 	}
 	
+	private void initFormatter(EJBContext ejbContext) {
+		PostInfo postInfo = post.getPostInfo();
+		PostInfoType type = postInfo != null ? postInfo.getType() : PostInfoType.GENERIC;
+		
+		switch (type) {
+		case AMAZON:
+			formatter = new AmazonFormatter();
+			break;
+		case EBAY:
+			formatter = new EbayFormatter();
+			break;
+		case FLICKR:
+			formatter = new FlickrFormatter();
+			break;
+		case SHARE_GROUP:
+			formatter = new ShareGroupFormatter();
+			break;
+		default:
+			formatter = new DefaultFormatter();
+			break;
+		}
+		
+		assert formatter != null;
+		
+		// bind formatter to this PostView
+		formatter.init(this, ejbContext);
+	}
+	
+	public Viewpoint getViewpoint() {
+		return viewpoint;
+	}
+	
+	public Context getContext() {
+		return context;
+	}
+	
+	public Resource getMailRecipient() {
+		return mailRecipient;
+	}
+	
 	public String getTitle() {
-		String title = post.getExplicitTitle();
-		if (title != null && !title.equals(""))
-			return title;
-		else
-			return url;
+		return getFormatter().getTitleAsText();
+	}
+
+	public String getText() {
+		return getFormatter().getTextAsText();
 	}
 	
 	public String getUrl() {
@@ -126,11 +178,11 @@ public class PostView {
 	}
 	
 	public String getTitleAsHtml() {
-		return getFormatter().getTitleAsHtml(this);
+		return getFormatter().getTitleAsHtml();
 	}
 	
 	public String getTextAsHtml() {
-		return getFormatter().getTextAsHtml(this);		
+		return getFormatter().getTextAsHtml();		
 	}
 	
 	public String getChatRoomName() {

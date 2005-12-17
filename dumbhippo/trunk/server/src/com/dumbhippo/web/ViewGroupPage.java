@@ -15,6 +15,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -87,9 +88,11 @@ public class ViewGroupPage {
 		// the handling of REMOVED members from lookupGroupById to getGroupMember
 		
 		if (groupId != null) {
-			viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
-			if (viewedGroup == null)
+			try {
+				viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
+			} catch (NotFoundException e) {
 				viewedGroupId = null;
+			}
 		}
 		
 		if (viewedGroup != null) {
@@ -99,11 +102,11 @@ public class ViewGroupPage {
 				groupSystem.addMember(signin.getUser(), viewedGroup, signin.getUser());
 			}
 			
-			groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
-			
-			// Create a detached GroupMember to avoid null checks 
-			if (groupMember == null)
+			try {
+				groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+			} catch (NotFoundException e) {
 				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+			}
 
 			adder = groupMember.getAdder();
 		}

@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.AmazonPostInfo;
-import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -14,7 +13,7 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.services.AmazonItemData;
 import com.dumbhippo.services.AmazonWebServices;
 
-public class AmazonUpdater extends AbstractUpdater {
+public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 	static private final Log logger = GlobalSetup.getLog(AmazonUpdater.class);
 	
 	static private final String[] domains = { "amazon.com" };
@@ -30,6 +29,7 @@ public class AmazonUpdater extends AbstractUpdater {
 	private String amazonAccessKeyId;
 	
 	public AmazonUpdater(Configuration config) {
+		super(AmazonPostInfo.class);
 		try {
 			amazonAccessKeyId = config.getPropertyNoDefault(HippoProperty.AMAZON_ACCESS_KEY_ID);
 			if (amazonAccessKeyId.trim().length() == 0)
@@ -53,7 +53,8 @@ public class AmazonUpdater extends AbstractUpdater {
 		return PostInfoType.AMAZON;
 	}
 	
-	protected void update(PostInfo postInfo, URL url) {
+	@Override
+	protected void update(AmazonPostInfo postInfo, URL url) {
 		if (amazonAccessKeyId == null)
 			return;
 		AmazonWebServices webServices = new AmazonWebServices(amazonAccessKeyId, getUpdateTimeoutMilliseconds());
@@ -61,8 +62,7 @@ public class AmazonUpdater extends AbstractUpdater {
 		
 		// if the update fails, just stick with whatever old information we had
 		if (itemData != null) {
-			AmazonPostInfo amazonPostInfo = (AmazonPostInfo) postInfo;
-			amazonPostInfo.merge(itemData);
+			postInfo.merge(itemData);
 		}
 	}
 }

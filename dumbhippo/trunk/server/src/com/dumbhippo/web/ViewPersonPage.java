@@ -10,11 +10,11 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
  * Displays a list of posts from a person
@@ -94,7 +94,7 @@ public class ViewPersonPage {
 				setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
 			} catch (ParseException e) {
 				logger.debug("bad personId as viewperson parameter " + personId);
-			} catch (GuidNotFoundException e) {
+			} catch (NotFoundException e) {
 				logger.debug("bad personId as viewperson parameter " + personId);
 			}
 		}

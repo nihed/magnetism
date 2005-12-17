@@ -29,21 +29,6 @@ import com.dumbhippo.persistence.ValidationException;
 @Local
 public interface IdentitySpider {
 	
-	static class GuidNotFoundException extends Exception {
-		private static final long serialVersionUID = 0L;
-		private String guid;
-		public GuidNotFoundException(Guid guid) {
-			super("Guid " + guid + " was not in the database");
-			this.guid = guid.toString();
-		}
-		public GuidNotFoundException(String guidString) {
-			super("Guid " + guidString + " was not in the database");
-			this.guid = guidString;
-		}
-		public String getGuid() {
-			return guid;
-		}
-	}
 	
 	/**
 	 * Gets a Resource object for the given email address, creating
@@ -139,11 +124,11 @@ public interface IdentitySpider {
 	 */
 	public User lookupUserByResource(Resource resource);
 	
-	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException;
-	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException;
+	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException;
+	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException;
 	
-	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, GuidNotFoundException;
-	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws GuidNotFoundException;
+	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, NotFoundException;
+	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws NotFoundException;
 	
 	/**
 	 * Record an assertion that we have (at least weakly) verified the person has control of

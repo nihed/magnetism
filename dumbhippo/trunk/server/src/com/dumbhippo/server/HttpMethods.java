@@ -9,7 +9,6 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -41,22 +40,22 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "name", "members", "secret" })
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String memberIds, boolean secret)
-			throws IOException, ParseException, GuidNotFoundException;
+			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "members" })
 	public void doAddMembers(OutputStream out, HttpResponseData contentType, User user, String groupId, String memberIds)
-			throws IOException, ParseException, GuidNotFoundException;
+			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
 	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
-			GuidNotFoundException, SAXException;
+			NotFoundException, SAXException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })
 	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException,
-			GuidNotFoundException;
+			NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })

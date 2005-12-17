@@ -1,5 +1,6 @@
 package com.dumbhippo.server.util;
 
+import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -39,6 +40,17 @@ public class EJBUtil {
 		} catch (NamingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public static <T> T contextLookup(EJBContext ejbContext, Class<T> clazz) {
+		if (clazz == null)
+			throw new IllegalArgumentException("Class passed to contextLookup() is null");
+		
+		String name = clazz.getCanonicalName();		
+		if (!clazz.isInterface())
+			throw new IllegalArgumentException("Class passed to contextLookup() has to be an interface, not " + name);
+
+		return clazz.cast(ejbContext.lookup(name));
 	}
 	
 	// Returns true if this is an exception we would get with a race condition

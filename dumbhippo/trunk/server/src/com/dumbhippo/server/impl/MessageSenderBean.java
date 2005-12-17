@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
@@ -37,6 +38,7 @@ import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
@@ -73,6 +75,9 @@ public class MessageSenderBean implements MessageSender {
 
 	@EJB
 	private NoMailSystem noMail;
+	
+	@javax.annotation.Resource
+	private EJBContext ejbContext;
 	
 	// Our delegates
 	
@@ -400,58 +405,45 @@ public class MessageSenderBean implements MessageSender {
 			messageHtml.append("<div style=\"width:500px\">\n");
 			messageHtml.append("  <div style=\"border:1px solid black;min-height:100px;\"><!-- bubble div -->\n");
 			
-			Set<Resource> resources = post.getResources();
+			PostView postView = new PostView(ejbContext, post, recipient);
 			
-			String title = post.getTitle();
-			if (title.length() == 0) {
-				title = null;
-			}
+			String url = postView.getUrl();
+
+			// TEXT: put in the link
 			
-			for (Resource r : resources) {
-				if (r instanceof LinkResource) {
-					String url = ((LinkResource)r).getUrl();
-					
-					if (title == null)
-						title = url;
-					
-					StringBuilder redirectUrl = new StringBuilder();
-					redirectUrl.append(baseurl);
-					redirectUrl.append("/redirect?url=");
-					redirectUrl.append(StringUtils.urlEncode(url));
-					redirectUrl.append("&postId=");
-					redirectUrl.append(post.getId()); // no need to encode, we know it is OK
-
-					if (invitation != null) {
-						redirectUrl.append("&inviteKey=");
-						redirectUrl.append(invitation.getAuthKey());
-					}
-					
-					messageText.append(url);
-					messageText.append("\n");
-					
-			        String format = "<div style=\"margin:0.3em;\">\n" 
-			        + "<a style=\"font-weight:bold;font-size:150%%;\" title=\"%s\" href=\"%s\">%s</a>\n"
-			        + "</div>\n";
-
-			        // FIXME we repeat the post title for every link, if we ever really support multiple links 
-			        messageHtml.append(String.format(format, XmlBuilder.escape(url),
-			        		XmlBuilder.escape(redirectUrl.toString()), XmlBuilder.escape(title)));
-				}
-			}
-
-			if (title == null) {
-				// uhhhh....
-				title = "Untitled Post";
-			}
-			
+			messageText.append(url);
 			messageText.append("\n");
 			
+			// HTML: put in the link, with redirect url stuff
+			
+			StringBuilder redirectUrl = new StringBuilder();
+			redirectUrl.append(baseurl);
+			redirectUrl.append("/redirect?url=");
+			redirectUrl.append(StringUtils.urlEncode(url));
+			redirectUrl.append("&postId=");
+			redirectUrl.append(post.getId()); // no need to encode, we know it is OK
+
+			if (invitation != null) {
+				redirectUrl.append("&inviteKey=");
+				redirectUrl.append(invitation.getAuthKey());
+			}
+			
+			String f = "<div style=\"margin:0.3em;\">\n" 
+				+ "<a style=\"font-weight:bold;font-size:150%%;\" title=\"%s\" href=\"%s\">%s</a>\n"
+				+ "</div>\n";
+			 
+			messageHtml.append(String.format(f, XmlBuilder.escape(url),
+					XmlBuilder.escape(redirectUrl.toString()),
+					postView.getTitleAsHtml()));
+
 			// TEXT: append post text
-			messageText.append(post.getText());
+			messageText.append("\n");
+			messageText.append(postView.getText());
+			messageText.append("\n");
 			
 			// HTML: append post text
 			messageHtml.append("<div style=\"font-size:120%;margin:0.5em;\">\n");
-			messageHtml.appendTextAsHtml(post.getText(), null);
+			messageHtml.append(postView.getTextAsHtml());
 			messageHtml.append("</div>\n");
 
 			messageHtml.append("  </div><!-- close bubble div -->\n");
@@ -529,7 +521,7 @@ public class MessageSenderBean implements MessageSender {
 					
 			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient.getEmail());
 			
-			mailer.setMessageContent(msg, title, messageText.toString(), messageHtml.toString());
+			mailer.setMessageContent(msg, postView.getTitle(), messageText.toString(), messageHtml.toString());
 			
 			logger.debug("Sending mail to " + recipient.toString());
 			mailer.sendMessage(msg);

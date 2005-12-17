@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 
 @Local
@@ -25,7 +26,9 @@ public interface GroupSystem {
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras);
 	
-	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member);
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException;
+	
+	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException;
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member);	
 	
@@ -61,7 +64,7 @@ public interface GroupSystem {
 	 */
 	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member);	
 	
-	public Group lookupGroupById(Viewpoint viewpoint, String groupId);
+	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
 	/**
 	 * Finds the set of contacts of an account owner that aren't already

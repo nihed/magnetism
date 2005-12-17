@@ -10,15 +10,17 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 
-abstract public class AbstractUpdater implements PostUpdater {
+abstract public class AbstractUpdater<T extends PostInfo> implements PostUpdater {
 
 	static private final Log logger = GlobalSetup.getLog(AbstractUpdater.class);
 	
-	private PostInfo postInfo;
+	private Class<T> postInfoClass;
+	private T postInfo;
 	private URL boundUrl;
 	private boolean updated;
 	
-	protected AbstractUpdater() {
+	protected AbstractUpdater(Class<T> postInfoClass) {
+		this.postInfoClass = postInfoClass;
 	}
 
 	/**
@@ -50,9 +52,9 @@ abstract public class AbstractUpdater implements PostUpdater {
 	public void bind(Post post, URL url) {
 		PostInfo old = post.getPostInfo();
 		if (old != null) {
-			postInfo = PostInfo.newInstance(old, getType());
+			postInfo = PostInfo.newInstance(old, getType(), postInfoClass);
 		} else {
-			postInfo = PostInfo.newInstance(getType());
+			postInfo = PostInfo.newInstance(getType(), postInfoClass);
 		}
 		
 		logger.debug("Old post info: " + old + " new post info base: " + postInfo);
@@ -76,9 +78,9 @@ abstract public class AbstractUpdater implements PostUpdater {
 		return updated;
 	}
 	
-	abstract protected void update(PostInfo postInfo, URL url);
+	abstract protected void update(T postInfo, URL url);
 
-	public PostInfo getUpdate() {
+	public T getUpdate() {
 		if (!updated) {
 			update(postInfo, boundUrl);
 			postInfo.makeImmutable();

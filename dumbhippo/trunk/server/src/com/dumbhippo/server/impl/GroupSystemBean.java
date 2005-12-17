@@ -33,6 +33,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
@@ -94,7 +95,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"SELECT gm FROM GroupMember gm, ContactClaim cc " +
 		"WHERE gm.group = :group AND cc.resource = gm.member AND cc.contact = :contact";
 	
-	private GroupMember getGroupMemberForContact(Group group, Contact contact) {
+	private GroupMember getGroupMemberForContact(Group group, Contact contact) throws NotFoundException {
 		try {
 			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_CONTACT_QUERY)
 				.setParameter("group", group)
@@ -102,19 +103,40 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				.setMaxResults(1)
 				.getSingleResult();
 		} catch (EntityNotFoundException e) {
-			return null;
+			throw new NotFoundException("GroupMember for contact " + contact + " not found", e);
 		}
 	}
 	
-	private GroupMember getGroupMember(Group group, Person person) {
+	private GroupMember getGroupMember(Group group, Person person) throws NotFoundException {
 		if (person instanceof User)
 			return getGroupMemberForUser(group, (User)person);
 		else
 			return getGroupMemberForContact(group, (Contact)person);
 	}
 
+	static final String GET_GROUP_MEMBER_FOR_RESOURCE_QUERY =
+		"SELECT gm FROM GroupMember gm " +
+		"WHERE gm.group = :group AND gm.member = :resource";
+	
+	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException {
+		try {
+			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_RESOURCE_QUERY)
+				.setParameter("group", group)
+				.setParameter("resource", member)
+				.setMaxResults(1)
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
+		}
+	}
+	
 	public void addMember(User adder, Group group, Person person) {
-		GroupMember groupMember = getGroupMember(group, person);
+		GroupMember groupMember;
+		try {
+			groupMember = getGroupMember(group, person);
+		} catch (NotFoundException e) {
+			groupMember = null;
+		}
 		boolean selfAdd = adder.equals(person); 
 		
 		MembershipStatus newStatus;
@@ -124,10 +146,13 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			newStatus = MembershipStatus.INVITED;
 
 		if (!(groupMember != null && selfAdd) &&
-			group.getAccess() != GroupAccess.PUBLIC &&
-			getGroupMember(group, adder) == null) {
-			throw new IllegalArgumentException("invalid person adding member to group");
-		}	
+			group.getAccess() != GroupAccess.PUBLIC) {
+			try {
+				@SuppressWarnings("unused") GroupMember adderMember = getGroupMember(group, adder);
+			} catch (NotFoundException e) {
+				throw new IllegalArgumentException("invalid person adding member to group", e);
+			}
+		}
 				
 		if (groupMember != null) {
 			switch (groupMember.getStatus()) {
@@ -167,9 +192,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (!remover.equals(person))
 			throw new IllegalArgumentException("a group member can only be removed by themself");
 		
-		GroupMember groupMember = getGroupMember(group, person);
-		if (groupMember != null)
+		try {
+			GroupMember groupMember = getGroupMember(group, person);
 			groupMember.setStatus(MembershipStatus.REMOVED);
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
 	}
 	
 	// We might want to allow REMOVED members full visibility, to give a 
@@ -436,7 +464,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
 
-	public Group lookupGroupById(Viewpoint viewpoint, String groupId) {
+	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
 		Person viewer = viewpoint.getViewer();
 		Query query;
 		
@@ -451,7 +479,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		try {
 			return (Group)query.getSingleResult();
 		} catch (EntityNotFoundException e) {
-			return null;
+			throw new NotFoundException("No such group with ID " + groupId + " for the given viewpoint", e);
 		}
 	}
 	

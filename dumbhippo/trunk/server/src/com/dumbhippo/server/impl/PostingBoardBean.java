@@ -38,21 +38,25 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.postinfo.NodeName;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.postinfo.PostInfoType;
+import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
@@ -81,6 +85,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private InvitationSystem invitationSystem;
 	
+	@EJB
+	private GroupSystem groupSystem;
+	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
@@ -92,7 +99,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws GuidNotFoundException {
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// for each recipient, if it's a group we want to explode it into persons
@@ -117,7 +124,7 @@ public class PostingBoardBean implements PostingBoard {
 				groupRecipients.add((Group) r);
 			} else {
 				// wtf
-				throw new GuidNotFoundException(r.getId());
+				throw new NotFoundException("recipient not found " + r.getId());
 			}
 		}
 		
@@ -135,6 +142,30 @@ public class PostingBoardBean implements PostingBoard {
 		
 		sendPostNotifications(post, expandedRecipients);
 		return post;
+	}
+	
+	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	throws NotFoundException {
+		
+		for (GuidPersistable r : recipients) {
+			if (r instanceof Person)
+				groupSystem.addMember(poster, group, (Person)r);
+			else
+				throw new NotFoundException("No recipient found for id " + r.getId());
+		}
+
+		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
+		String url = baseurl + "/viewgroup?groupId=" + group.getId();
+		
+		String title = group.getName();
+			
+		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
+		
+		ShareGroupPostInfo postInfo = PostInfo.newInstance(PostInfoType.SHARE_GROUP, ShareGroupPostInfo.class);
+		postInfo.getTree().updateContentChild(group.getId(), NodeName.shareGroup, NodeName.groupId);
+		postInfo.makeImmutable();
+		
+		return doLinkPost(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo);			
 	}
 	
 	public void doShareLinkTutorialPost(Person recipient) {
@@ -376,12 +407,13 @@ public class PostingBoardBean implements PostingBoard {
 			ChatRoom chatRoom = getChatRoom(post);
 			List<ChatRoomMessage> lastFewMessages= getLastFewMessages(chatRoom);
 			
-			return new PostView(post, 
+			return new PostView(ejbContext, post, 
 					identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES),
 					getPersonPostData(viewpoint, post),
 					chatRoom,
 					lastFewMessages,
-					recipients);
+					recipients,
+					viewpoint);
 		} catch (Exception e) {
 			logger.debug("The exception was: " + e);
 			throw new RuntimeException(e);

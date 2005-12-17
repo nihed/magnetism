@@ -24,7 +24,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ChatRoomSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
@@ -84,7 +84,7 @@ public class ChatRoomSystemBean implements ChatRoomSystem {
 		Post p = null;
 		try {
 			p = identitySpider.lookupGuid(Post.class, postId);
-		} catch (GuidNotFoundException e) {
+		} catch (NotFoundException e) {
 			logger.warn("Couldn't find post with ID " + postId + " to find or create chatRoom", e);
 			throw new RuntimeException("Couldn't find post with ID " + postId + " to find or create chatRoom", e);
 		}

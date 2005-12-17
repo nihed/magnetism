@@ -5,17 +5,16 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.postinfo.FlickrPostInfo;
 import com.dumbhippo.postinfo.PostInfo;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.services.FlickrPhotosetData.PhotoData;
 
 public class FlickrFormatter extends DefaultFormatter {
 	
 	@Override
-	public String getTextAsHtml(PostView postView) {
+	public String getTextAsHtml() {
 		PostInfo postInfo = postView.getPost().getPostInfo();
 
 		if (postInfo == null)
-			return super.getTextAsHtml(postView);
+			return super.getTextAsHtml();
 		
 		FlickrPostInfo itemData = (FlickrPostInfo) postInfo;
 		
@@ -34,9 +33,9 @@ public class FlickrFormatter extends DefaultFormatter {
 				xml.append("</a>");
 			}
 		}
-		xml.append("<p class=\"dh-flickr-description\">");
+		xml.append("<div class=\"dh-flickr-description\">");
 		xml.appendTextAsHtml(postView.getPost().getText(), postView.getSearchTerms());
-		xml.append("</p>");		
+		xml.append("</div>");		
 		return xml.toString();
 	}
 }

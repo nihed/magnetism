@@ -36,10 +36,12 @@ public enum NodeName {
 	postInfo,
 	generic,
 	// type-specific sections
+	shareGroup,
 	amazon,
 	eBay,
 	flickr,
 	// nodes underneath one of the above sections
+	groupId,
 	favicon,
 	itemId,
 	smallPhoto,

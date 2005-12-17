@@ -7,9 +7,9 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
 
 /**
  * Displays a post in a frame with information about how it was shared
@@ -49,7 +49,7 @@ public class FramerPage {
 		}
     }
 
-    public void setPostId(String postId) throws ParseException, GuidNotFoundException {
+    public void setPostId(String postId) throws ParseException, NotFoundException {
 		if (postId == null) {
 			logger.debug("no post id");
 			return;

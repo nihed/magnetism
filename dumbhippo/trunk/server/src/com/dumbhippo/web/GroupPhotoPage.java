@@ -8,7 +8,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.IdentitySpider.GuidNotFoundException;
+import com.dumbhippo.server.NotFoundException;
 
 public class GroupPhotoPage {
 	@SuppressWarnings("unused")
@@ -39,7 +39,7 @@ public class GroupPhotoPage {
 		return viewedGroup.getName();
 	}
 
-	public void setViewedGroupId(String groupId) throws ParseException, GuidNotFoundException {
+	public void setViewedGroupId(String groupId) throws ParseException, NotFoundException {
 		viewedGroupId = groupId;
 		
 		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that

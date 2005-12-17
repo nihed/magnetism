@@ -37,6 +37,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
@@ -62,6 +63,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private InvitationSystem invitationSystem;
 	
+	private static class GuidNotFoundException extends NotFoundException {
+		private static final long serialVersionUID = 0L;
+		private String guid;
+		public GuidNotFoundException(Guid guid) {
+			super("Guid " + guid + " was not in the database");
+			this.guid = guid.toString();
+		}
+		public GuidNotFoundException(String guidString) {
+			super("Guid " + guidString + " was not in the database");
+			this.guid = guidString;
+		}
+		public String getGuid() {
+			return guid;
+		}
+	}
+	
 	public User lookupUserByEmail(String email) {
 		EmailResource res = getEmail(email);
 		return lookupUserByResource(res);
@@ -83,7 +100,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, GuidNotFoundException {
+	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException {
 		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid
 		T obj = em.find(klass, id);
 		if (obj == null)
@@ -91,14 +108,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return obj;
 	}
 
-	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws GuidNotFoundException {
+	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException {
 		T obj = em.find(klass, id.toString());
 		if (obj == null)
 			throw new GuidNotFoundException(id);
 		return obj;
 	}
 
-	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, GuidNotFoundException {
+	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, NotFoundException {
 		Set<T> ret = new HashSet<T>();
 		for (String s : ids) {
 			T obj = lookupGuidString(klass, s);
@@ -107,7 +124,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ret;
 	}
 
-	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws GuidNotFoundException {
+	public <T extends GuidPersistable> Set<T> lookupGuids(Class<T> klass, Set<Guid> ids) throws NotFoundException {
 		Set<T> ret = new HashSet<T>();
 		for (Guid id : ids) {
 			T obj = lookupGuid(klass, id);
@@ -282,7 +299,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		try {
 			result = lookupGuid(User.class, guid);
-		} catch (GuidNotFoundException e) {
+		} catch (NotFoundException e) {
 			logger.debug("Creating theman@dumbhippo.com");
 			EmailResource resource = getEmail(theManEmail);
 			result = new User(guid);
