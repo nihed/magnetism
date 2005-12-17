@@ -44,8 +44,10 @@ dojo.widget.HtmlInlineEditBox = function() {
 
 		dojo.widget.buildAndAttachTemplate(this);
 		
-		// It had better be a text node...
-		var initialText = node.firstChild.nodeValue
+		var initialText = ""
+		// It had better be a text node...		
+		if (node.firstChild)
+			initialText = node.firstChild.nodeValue
 		while (node.firstChild) {
 		  node.removeChild(node.firstChild)
 		}

@@ -126,3 +126,11 @@ td.dhRecipientName {
 #dhInvitationsRemainingMessage {
 	float:						right;
 }
+
+div.dhFlickrPhotoStatus {
+	text-align: center;
+}
+
+div.dhFlickrPhotoUploadMeta {
+	text-align: center;
+}

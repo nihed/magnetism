@@ -13,10 +13,12 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 	this.infoXml = null
 	
 	this.render = function() {
-		this.div = document.createElement("div")	
+		this.div = document.createElement("div")
+		dojo.html.addClass(this.div, "dhFlickrPhotoStatus")
 		this.img = document.createElement("img")
 		this.img.setAttribute("src", thumbnailPath)
 		this.div.appendChild(this.img)
+		this.div.appendChild(document.createElement("br"))
 		this.textSpan = document.createElement("span")
 		this.div.appendChild(this.textSpan)
 		var text;
@@ -308,8 +310,11 @@ dh.flickrupload.UploadSet = function() {
 	this.div = document.createElement("div")
 	this.photoDiv = document.createElement("div")
 	this.div.appendChild(this.photoDiv)
+	this.metaDiv = document.createElement("div")
+	this.div.appendChild(this.metaDiv)
+	dojo.html.addClass(this.metaDiv, "dhFlickrPhotoUploadMeta")
 	this.statusText = document.createElement("span")
-	this.div.appendChild(this.statusText)
+	this.metaDiv.appendChild(this.statusText)
 	this.flickrUrl = null
 	
 	this.createNavigationLink = function (text, cb) {
@@ -323,9 +328,9 @@ dh.flickrupload.UploadSet = function() {
 	var uploadset = this
 	this.next = this.createNavigationLink("Next", function() { uploadset.doNext(); })
 	this.prev = this.createNavigationLink("Previous", function() { uploadset.doPrev(); })
-	this.div.appendChild(document.createElement("br"))
-	this.div.appendChild(this.prev)	
-	this.div.appendChild(this.next)
+	this.metaDiv.appendChild(document.createElement("br"))
+	this.metaDiv.appendChild(this.prev)	
+	this.metaDiv.appendChild(this.next)
 	
 	this.render = function () {
 		var parent = document.getElementById("dhFlickrPhotoUpload")
@@ -386,7 +391,22 @@ dh.flickrupload.UploadSet = function() {
 		this.currentPhoto = i
 		dh.util.clearNode(this.photoDiv)
 		this.photoDiv.appendChild(photo.render())
-		this.redrawStatusText()		
+		this.redrawStatusText()
+		var textBox = dh.sharelink.urlTitleToShareEditBox
+		if (textBox) { // Handle being called before sharelink init
+			var curTitle = textBox.textValue
+			if (curTitle == null || curTitle == "") {
+				var filename = photo.getId()
+				var idx = filename.lastIndexOf('.')
+				if (idx > 0) {
+					var slash = filename.lastIndexOf('\\') // Yeah, this is hackish
+					// Note we handle not finding the slash, since -1 + 1 == 0
+					var title = filename.substring(slash+1, idx)
+					if (title.length > 0)
+						textBox.setText(title)
+				}
+			}
+		}
 	}
 
 	this.redrawStatusText = function () {
@@ -446,15 +466,6 @@ dhFlickrAddPhoto = function (filename, thumbnailFilename) {
 	try {
 	dojo.debug("adding photo " + filename)
 	dh.sharephotoset.instance.addPhoto(filename, thumbnailFilename)
-	var titleValue = dh.sharelink.urlTitleToShareEditBox.textValue
-	if (titleValue == "" || !titleValue) {
-		var idx = filename.lastIndexOf('.')
-		var title;
-		if (idx > 0) {
-			title = filename.substring(0, idx)
-			dh.sharelink.urlTitleToShareEditBox.setText(title)			
-		}	
-	}
 	} catch (e) {
 		dojo.debug("dhFlickrAddPhoto failed:" + e.message)
 	}
