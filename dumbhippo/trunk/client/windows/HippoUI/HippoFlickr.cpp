@@ -219,8 +219,19 @@ void
 HippoFlickr::showShareWindow(void)
 {
     ui_->debugLogW(L"creating Flickr share window");
+
     setState(LOADING_STATUSDISPLAY);
-    showIEWindow(L"Share Photos", L"sharephotoset?next=close", new HippoFlickrStatusWindowCallback(this));
+
+    HippoArray<HippoBSTR> queryParamNames;
+    HippoArray<HippoBSTR> queryParamValues;
+    queryParamNames.append(HippoBSTR(L"next"));
+    queryParamValues.append(HippoBSTR(L"close"));
+    HippoBSTR queryString;
+    HippoUIUtil::encodeQueryString(queryString, queryParamNames, queryParamValues);
+    HippoBSTR url(L"sharephotoset");
+    url.Append(queryString);
+
+    showIEWindow(L"Share Photos", url, new HippoFlickrStatusWindowCallback(this));
 }
 
 void
@@ -390,7 +401,7 @@ HippoFlickr::HippoFlickrRESTInvocation::handleComplete(void *responseData, long 
     }
     assert(resp.vt == VT_BSTR);
     if (wcscmp (resp.bstrVal, L"ok")) {
-        HippoBSTR msg(L"got error code in REST response");
+        HippoBSTR msg(L"Flickr error");
 
         IXMLDOMNodeList *children;
         long nChildren;
@@ -713,6 +724,7 @@ HippoFlickr::enqueueUpload(BSTR filename)
 void
 HippoFlickr::onUploadComplete(WCHAR *photoId)
 {
+    ui_->debugLogW(L"got upload complete for photo %s", photoId);
     activeUploadPhoto_->setFlickrId(photoId);
     variant_t vFilename(activeUploadPhoto_->getFilename());
     variant_t vPhotoId(HippoBSTR(activeUploadPhoto_->getFlickrId()));
@@ -737,6 +749,7 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
 
     HippoHTTP *request = new HippoHTTP();
     invocation->setRequest(request); // takes ownership
+    ui_->debugLogW(L"doing POST to %s", postThumbnailUrl.m_str);
     request->doMultipartFormPost(postThumbnailUrl, invocation, 
         L"thumbnail", TRUE, buf, len, L"image/png", activeUploadPhoto_->getFilename(), NULL);
 }
@@ -1095,6 +1108,7 @@ HippoFlickr::processUploads()
 
     variant_t vFilename(activeUploadPhoto_->getFilename());
     invokeJavascript(L"dhFlickrPhotoUploadStarted", NULL, 1, &vFilename);
+    ui_->debugLogW(L"doing POST to %s", uploadServiceUrl_.m_str);
     request->doMultipartFormPost(uploadServiceUrl_, invocation, 
         L"api_key", FALSE, apiKey_.m_str,
         L"auth_token", FALSE, authToken_.m_str,
