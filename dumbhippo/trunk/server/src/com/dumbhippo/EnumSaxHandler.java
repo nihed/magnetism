@@ -3,11 +3,15 @@ package com.dumbhippo;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
+	@SuppressWarnings("unused")
+	static private final Log logger = GlobalSetup.getLog(EnumSaxHandler.class);
+	
 	private Class<E> enumClass;
 	private E ignoredValue;
 	
@@ -41,16 +45,16 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		 E value = parseElementName(name);
 		 E c = current();
 		 if (c == null)
-			 throw new SAXException("popped " + name + " when not in an E");
+			 throw new SAXException("popped " + name + " when not in an element");
 		 if (c != value)
-			 throw new SAXException("unmatched close to E " + name + " we werE valuexpecting " + c.name());
+			 throw new SAXException("unmatched close to element " + name + " we were expecting " + c.name());
 		 stack.remove(stack.size() - 1);
 		 content.setLength(0);
 	}
 	
 	@Override
 	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 //logger.debug("start E " + qName);
+		 //logger.debug("start element " + qName);
 		 push(qName);
 		 
 		 openElement(current());
@@ -58,8 +62,11 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	
 	@Override
 	public final void endElement(String uri, String localName, String qName) throws SAXException {
+		
 		E c = current();
 
+		//logger.debug("end element " + c + " content = '" + getCurrentContent() + "'");
+		
 		closeElement(c);
 		
 		pop(qName);

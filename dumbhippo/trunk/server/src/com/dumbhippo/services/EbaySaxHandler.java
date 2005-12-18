@@ -1,6 +1,11 @@
 package com.dumbhippo.services;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.EnumMap;
+import java.util.TimeZone;
 
 import org.apache.commons.logging.Log;
 import org.xml.sax.SAXException;
@@ -13,8 +18,10 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	static private final Log logger = GlobalSetup.getLog(EbaySaxHandler.class);
 	
 	// The enum names should match the xml element names (including case).
-	// indentation matches xml nesting ;-)
+	// indentation roughly matches xml nesting ;-)
 	enum Element {
+		Ack,
+		Timestamp,
 		RuName,
 		Errors,
 			ShortMessage,
@@ -42,6 +49,7 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	};	
 
 	private EnumMap<Element,String> values;
+	private Date cachedTimestamp;
 	
 	EbaySaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -69,13 +77,14 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 				logger.debug("eBay error:" + c + ": '" + getCurrentContent() + "'");
 		} else if (c == Element.RuName) {
 			logger.debug("RuName = " + getCurrentContent());
+		} else if (c == Element.Timestamp) {
+			values.put(c, getCurrentContent());
 		}
 	}
 	
 	private boolean isValid() {
-		// the other stuff can all be null if it 
-		// doesn't apply to the item 
-		return getPictureUrl() != null;
+		// strict validation, yeehaw
+		return !values.isEmpty();
 	}
 	
 	@Override 
@@ -104,5 +113,22 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 
 	public String getStartPrice() {
 		return values.get(Element.ConvertedStartPrice);
+	}
+	
+	public Date getTimestamp() {
+		if (cachedTimestamp == null) {
+			String s = values.get(Element.Timestamp);
+			if (s != null) {
+				try {
+					DateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+					TimeZone tz = TimeZone.getTimeZone("UTC");
+					parser.setTimeZone(tz);
+					cachedTimestamp = parser.parse(s);
+				} catch (ParseException e) {
+					logger.warn("Could not parse ebay date '" + s + "': " + e.getMessage());
+				}
+			}
+		}
+		return cachedTimestamp;
 	}
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,12 +26,19 @@ public class EbayWebServices {
 	private String appId;
 	private String certId;
 	private int timeoutMilliseconds;
+	private String username;
+	private String password;
+	private String userToken;
 	
-	EbayWebServices(String devId, String appId, String certId, int timeoutMilliseconds) {
+	EbayWebServices(String devId, String appId, String certId, int timeoutMilliseconds,
+			String username, String password, String userToken) {
 		this.devId = devId;
 		this.appId = appId;
 		this.certId = certId;
 		this.timeoutMilliseconds = timeoutMilliseconds;
+		this.username = username;
+		this.password = password;
+		this.userToken = userToken;
 	}
 	
 	private SAXParser newSAXParser() {
@@ -51,14 +59,10 @@ public class EbayWebServices {
 	 * Makes a request to eBay, jumping through all their weird hoops.
 	 * 
 	 * @param callName the request name
-	 * @param username username of a user you made up just to do auth calls
-	 * @param password password of said made-up user
-	 * @param userToken required for all calls except auth calls, token of an actual user
 	 * @param requestBody the xml for the body
 	 * @return the input stream or null
 	 */
-	private InputStream ebayRequest(String callName, String username, String password,
-			String userToken, String requestBody) {
+	private InputStream ebayRequest(String callName, String requestBody) {
 		URL url;
 		try {
 			// real API URL:    https://api.ebay.com/ws/api.dll
@@ -125,8 +129,8 @@ public class EbayWebServices {
 		}
 	}
 	
-	EbaySaxHandler ebayParsedRequest(String callName, String username, String password, String userToken) {
-		InputStream is = ebayRequest(callName, username, password, userToken, null);
+	EbaySaxHandler ebayParsedRequest(String callName, String requestBody) {
+		InputStream is = ebayRequest(callName, requestBody);
 		if (is == null)
 			return null;
 		
@@ -146,31 +150,41 @@ public class EbayWebServices {
 		logger.debug("eBay request complete");
 		return handler;		
 	}
-	
-	String getRuName(String username, String password) {
-		EbaySaxHandler handler =
-			ebayParsedRequest("SetRuName",
-								username, password, null);
-		return null;
-	}
-	
-	EbayItemData frobate() {
-		EbaySaxHandler handler = ebayParsedRequest("GeteBayOfficialTime",
-				null, null, null);
-		return handler;
+		
+	Date geteBayOfficialTime() {
+		EbaySaxHandler handler = ebayParsedRequest("GeteBayOfficialTime", null);
+		Date ret = null;
+		if (handler != null)
+			ret = handler.getTimestamp();
+		
+		if (ret != null) {
+			// sanity-check this thing to catch timezone, 
+			// daylight savings, server misconfiguration mistakes
+			long t = ret.getTime();
+			long now = System.currentTimeMillis();
+			
+			if (Math.abs(t - now) > (1000 * 60 * 59)) {
+				logger.error("eBay is more than an hour out of sync with our time; something is going very wrong");
+				logger.error("eBay time is: " + ret);
+				logger.error("our time is: " + new Date(now));
+				ret = null;
+			}
+		}
+		
+		return ret;
 	}
 	
 	static public final void main(String[] args) {
 		EbayWebServices webServices =
 			new EbayWebServices("",
 					"",
-					"", 10000);
-		String ruName = webServices.getRuName("", "");
-		/*EbayItemData item = webServices.frobate();
-		if (item != null)
-			System.out.println("Picture url is " + item.getPictureUrl());
+					"", 10000,
+					null, null, 
+					"");
+		Date eBayTime = webServices.geteBayOfficialTime();
+		if (eBayTime != null)
+			System.out.println("eBay time is: " + eBayTime);
 		else
-			System.out.println("failed to load item");
-			*/
+			System.out.println("failed to load eBay time");
 	}
 }
