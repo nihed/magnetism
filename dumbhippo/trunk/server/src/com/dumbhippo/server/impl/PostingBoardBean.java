@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -99,8 +101,8 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
-		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
+		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
 		
 		// for each recipient, if it's a group we want to explode it into persons
 		// (but also keep the group itself), if it's a person we just add it
@@ -155,7 +157,12 @@ public class PostingBoardBean implements PostingBoard {
 		}
 
 		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
-		String url = baseurl + "/viewgroup?groupId=" + group.getId();
+		URL url;
+		try {
+			url = new URL(baseurl + "/viewgroup?groupId=" + group.getId());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException("We created an invalid url for a group", e);
+		}
 		
 		String title = group.getName();
 			

@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -48,8 +49,13 @@ public class AbnormalErrorServlet extends AbstractServlet {
     			logger.error(var + " = " + request.getAttribute(var));
     		}
     		Throwable t = (Throwable) request.getAttribute("javax.servlet.error.exception");
-    		if (t != null)
+    		if (t != null) {
     			logger.trace("Backtrace:", t);
+    			Throwable root = ExceptionUtils.getRootCause(t);
+    			if (root != t) {
+    				logger.error("Root cause is " + root.getClass().getName() + " message: " + root.getMessage());
+    			}
+    		}
     	} catch (Throwable t) {
     		// not sure what happens if the error servlet throws an error, but it can't be good, so 
     		// we unconditionally eat it here

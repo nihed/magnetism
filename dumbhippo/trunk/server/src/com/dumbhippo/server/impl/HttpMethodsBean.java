@@ -3,6 +3,8 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -233,7 +235,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 	
-	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException, NotFoundException, SAXException {
+	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException, NotFoundException, SAXException, MalformedURLException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		// FIXME if sending to a public group with secret=true, we want to expand the group instead of 
@@ -245,7 +247,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);
 		
-		postingBoard.doLinkPost(user, visibility, title, description, url, recipients, false, info);
+		URL urlObject = new URL(url);
+		
+		postingBoard.doLinkPost(user, visibility, title, description, urlObject, recipients, false, info);
 	}
 
 	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException, NotFoundException {

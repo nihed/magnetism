@@ -8,8 +8,8 @@ package com.dumbhippo.postinfo;
  * a version number to indicate the new format.
  * 
  * This is a type tag instead of just using subclasses because
- * we may have multiple types mapping to one subclass and 
- * a subclass isn't necessary for simple cases. Also, the static
+ * we may have multiple types mapping to one subclass in theory.
+ * But mostly the static
  * information is a pain in the ass with subclasses since you 
  * can't have "static interfaces" (you would need a subclass instance
  * or reflection of static fields to get at the NodeName for the type)
@@ -17,7 +17,7 @@ package com.dumbhippo.postinfo;
  * @author hp
  */
 public enum PostInfoType {
-	GENERIC(NodeName.generic, PostInfo.class),
+	GENERIC(NodeName.generic, GenericPostInfo.class),
 	SHARE_GROUP(NodeName.shareGroup, ShareGroupPostInfo.class),
 	EBAY(NodeName.eBay, EbayPostInfo.class),
 	AMAZON(NodeName.amazon, AmazonPostInfo.class),

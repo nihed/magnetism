@@ -8,11 +8,16 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.logging.Log;
 import org.xml.sax.SAXException;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 
 public class PostInfo {
+	
+	@SuppressWarnings("unused")
+	private static final Log logger = GlobalSetup.getLog(PostInfo.class);
 	
 	static private SAXParserFactory saxFactory;
 	
@@ -61,6 +66,8 @@ public class PostInfo {
 			throw new IllegalArgumentException("null type for new PostInfo");
 		if (!(type.getSubClass().equals(subClass)))
 			throw new IllegalArgumentException("PostInfoType subclass does not match expected class");
+		if (subClass.equals(PostInfo.class))
+			throw new IllegalArgumentException("PostInfo can't be instantiated, make a subclass");
 		
 		T p;
 		try {

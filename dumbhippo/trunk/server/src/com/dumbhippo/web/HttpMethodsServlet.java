@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
@@ -48,7 +49,9 @@ public class HttpMethodsServlet extends AbstractServlet {
 		return new String[] { ret[1], ret[2] };
 	}
 	
-	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out, HttpResponseData replyContentType, HttpParams paramsAnnotation, Method m) throws HttpException {
+	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out,
+			HttpResponseData replyContentType, HttpParams paramsAnnotation, HttpOptions optionsAnnotation,
+			Method m) throws HttpException {
 		Class<?> args[] = m.getParameterTypes();
 
 		ArrayList<Object> toPassIn = new ArrayList<Object>();
@@ -83,14 +86,26 @@ public class HttpMethodsServlet extends AbstractServlet {
 			String s = request.getParameter(pname);
 			
 			if (s == null) {
-				throw new HttpException(HttpResponseCode.BAD_REQUEST,
-						"Parameter " + pname + " not provided to method " + m.getName());
+				String[] optional = optionsAnnotation.optionalParams();
+				boolean isOptional = false;
+				for (String o : optional) {
+					if (o.equals(pname)) {
+						isOptional = true;
+						break;
+					}
+				}
+
+				if (!isOptional)
+					throw new HttpException(HttpResponseCode.BAD_REQUEST,
+							"Parameter " + pname + " not provided to method " + m.getName());
 			}
 			
 			if(String.class.isAssignableFrom(args[i])) {
 				toPassIn.add(s);
 			} else if (boolean.class.isAssignableFrom(args[i])) {
-				if (s.equals("true")) {
+				if (s == null) {
+					toPassIn.add(false); // default to false on optional bool args
+				} else if (s.equals("true")) {
 					toPassIn.add(true);
 				} else if (s.equals("false")) {
 					toPassIn.add(false);
@@ -182,8 +197,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 				}
 
 				OutputStream out = response.getOutputStream();
-				Object[] methodArgs = marshalHttpRequestParams(request, out, requestedContentType, paramsAnnotation, m);
-				
+				Object[] methodArgs = marshalHttpRequestParams(request, out, requestedContentType,
+						paramsAnnotation, optionsAnnotation, m);
 
 				if (requestedContentType != HttpResponseData.NONE)
 					response.setContentType(requestedContentType.getMimeType());
@@ -199,8 +214,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 					throw new RuntimeException(e);
 				} catch (InvocationTargetException e) {
 					Throwable cause = e.getCause();
-					logger.debug("Exception thrown by invoked method: " + cause);
-					logger.error(cause);
+					Throwable rootCause = ExceptionUtils.getRootCause(e);
+					logger.error("Exception root cause " + rootCause.getClass().getName() + " thrown by invoked method: " + rootCause.getMessage(), rootCause);
 					
 					if (cause instanceof HumanVisibleException) {
 						throw (HumanVisibleException) cause;

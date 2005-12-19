@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ public interface PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, String link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 
 	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)

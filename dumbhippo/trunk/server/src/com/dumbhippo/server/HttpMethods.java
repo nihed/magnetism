@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 
 import javax.ejb.Local;
 
@@ -49,8 +50,9 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
+	@HttpOptions( optionalParams = { "postInfoXml" } )
 	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
-			NotFoundException, SAXException;
+			NotFoundException, SAXException, MalformedURLException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })
