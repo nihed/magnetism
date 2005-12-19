@@ -562,7 +562,8 @@ HippoFlickr::HippoFlickrAuthBrowserCallback::onNavigate(HippoExternalBrowser *br
 {
     flickr_->ui_->debugLogW(L"got navigate for auth browser, url=%s", url);
     if (flickr_->state_ == HippoFlickr::State::CREATING_ACCOUNT &&
-        wcscmp(L"http://www.flickr.com/", url) == 0) 
+        (wcscmp(L"http://www.flickr.com/", url) == 0
+         || wcscmp(L"http://www.flickr.com/welcome/hello/", url) == 0))
     {
         flickr_->showShareWindow();
     }
