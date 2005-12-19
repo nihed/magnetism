@@ -34,7 +34,6 @@ public:
     // -----------------------------------------------------------------------------
     // These following items are shared between the read thread and response idle
     CRITICAL_SECTION criticalSection_;
-    bool criticalSectionInitialized_;
 
     ResponseState responseState_;
     bool seenResponseSize_;
@@ -50,8 +49,7 @@ public:
     HippoHTTPAsyncHandler *handler_;
 
     ~HippoHTTPContext() {
-        if (criticalSectionInitialized_)
-            DeleteCriticalSection(&criticalSection_);
+        DeleteCriticalSection(&criticalSection_);
         if (responseBuffer_)
             free(responseBuffer_);
     }
@@ -69,16 +67,14 @@ HippoHTTPContext::doResponseIdle()
 {
     HippoHTTPContext::ResponseState state;
 
-    if (criticalSectionInitialized_)
-        EnterCriticalSection(&criticalSection_);
+    EnterCriticalSection(&criticalSection_);
     state = responseState_;
     bool oldSeenResponseSize = seenResponseSize_;
     seenResponseSize_ = true;
     long oldResponseBytesSeen = responseBytesSeen_;
     long newResponseBytesSeen = responseBytesSeen_ = responseBytesRead_;
     responseIdle_ = 0;
-    if (criticalSectionInitialized_)
-        LeaveCriticalSection(&criticalSection_);
+    LeaveCriticalSection(&criticalSection_);
 
     if (state == RESPONSE_STATE_ERROR) {
         handler_->handleError(responseError_);
@@ -131,13 +127,11 @@ HippoHTTPContext::enqueueError(HRESULT error)
 {
     closeHandles();
 
-    if (criticalSectionInitialized_)
-        EnterCriticalSection(&criticalSection_);
+    EnterCriticalSection(&criticalSection_);
     responseError_ = error;
     responseState_ = RESPONSE_STATE_ERROR;
     ensureResponseIdle();
-    if (criticalSectionInitialized_)
-        LeaveCriticalSection(&criticalSection_);
+    LeaveCriticalSection(&criticalSection_);
 }
 
 void
@@ -236,7 +230,6 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
             ctx->enqueueError(E_FAIL);
             return;
         }
-        ctx->ensureResponseIdle(); // To report that we have the size
         ctx->responseSize_ = wcstoul(responseSize, NULL, 10);
         if (ctx->responseSize_ < 0)
             ctx->responseSize_ = 0;
@@ -244,11 +237,10 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
             ctx->responseSize_ = MAX_SIZE;
         ctx->responseBytesRead_ = 0;
         ctx->responseBuffer_ = malloc (ctx->responseSize_);
-
-        InitializeCriticalSection(&ctx->criticalSection_);
-        ctx->criticalSectionInitialized_ = true;
-
         ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_READING;
+        EnterCriticalSection(&(ctx->criticalSection_));
+        ctx->ensureResponseIdle(); // To report that we have the size
+        LeaveCriticalSection(&(ctx->criticalSection_));
     }
 
     ctx->readData();
@@ -550,6 +542,7 @@ HippoHTTP::doAsync(WCHAR                 *host,
     context->seenResponseSize_ = false;
     context->inputData_ = requestInput;
     context->inputLen_ = len;
+    InitializeCriticalSection(&(context->criticalSection_));
     
     context->connectionHandle_ = InternetConnect(inetHandle_, host, port, NULL, NULL, 
                                                  INTERNET_SERVICE_HTTP, 0, (DWORD_PTR) context);
