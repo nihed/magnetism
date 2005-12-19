@@ -275,21 +275,26 @@ class Config:
         
         def repl(m):
             match_str = m.group(0)
-            arithmetic_m = re.match(arithmetic, match_str)
-            if arithmetic_m:
-                param_name = arithmetic_m.group(1)
-                increment = arithmetic_m.group(2)
-
-                param = self.expand_parameter(param_name, scope)
-
-                return "%d" % (string.atoi(param) + string.atoi(increment))
+            if match_str == '\x5C$':
+                return '$';
             else:
-                param_name = match_str[1:]
-                
-                return self.expand_parameter(param_name, scope)
+                arithmetic_m = re.match(arithmetic, match_str)
+                if arithmetic_m:
+                    param_name = arithmetic_m.group(1)
+                    increment = arithmetic_m.group(2)
+
+                    param = self.expand_parameter(param_name, scope)
+
+                    return "%d" % (string.atoi(param) + string.atoi(increment))
+                else:
+                    param_name = match_str[1:]
+
+                    return self.expand_parameter(param_name, scope)
 
         ident = "[a-zA-Z_][a-zA-Z_0-9]*"
-        return re.sub('%s|\$%s' % (arithmetic, ident), repl, str)
+        # \x5C = backslash, trying to avoid "\\\\\\\\\\\\" syndrome
+        expr = '\x5C\x5C\x5C$|%s|\$%s' % (arithmetic, ident)
+        return re.sub(expr, repl, str)
 
     def is_true(self, str):
         """Return whether a string is a true value without expansion"""
