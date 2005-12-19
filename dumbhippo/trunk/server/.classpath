@@ -6,6 +6,9 @@
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
 			<accessrule kind="accessible" pattern="**/awt/geom/**"/>
+			<accessrule kind="accessible" pattern="**/awt/Graphics2D"/>
+			<accessrule kind="accessible" pattern="**/awt/AlphaComposite"/>
+			<accessrule kind="accessible" pattern="**/awt/Rectangle"/>
 			<accessrule kind="discouraged" pattern="**/awt/**"/>
 		</accessrules>
 	</classpathentry>

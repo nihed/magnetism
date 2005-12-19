@@ -36,13 +36,18 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 		String filename = StringUtils.hexEncode(sum);
 		logger.debug("computed sha1=" + filename + " for uploaded object");
 		BufferedImage image = readPhoto(photo);
+		
+		/* FIXME there's no check on the size of this image, we're just 
+		 * trusting the client, but the UI all assumes it's thumbnail-size
+		 */
+		
 		writePhoto(image, filename, true);
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("rsp", "stat", "ok");
 		xml.appendTextNode("url", "/files" + getRelativePath() + "/" + filename); 
 		response.setContentType("text/xml; charset=UTF-8");
-		response.getOutputStream().write(xml.toString().getBytes("UTF-8"));
+		response.getOutputStream().write(xml.getBytes());
 	}
 
 	@Override
@@ -50,4 +55,8 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 		return Configuration.POSTINFO_RELATIVE_PATH;
 	}
 	
+	@Override
+	protected String getDefaultFilename() {
+		return null;
+	}
 }

@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -33,12 +34,13 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 	protected void doUpload(HttpServletRequest request, HttpServletResponse response, Person person,
 			Map<String, String> formParameters, FileItem photo) throws HttpException, IOException, ServletException,
 			HumanVisibleException {
-		BufferedImage scaled = readScaledPhoto(photo);
-		String filename = person.getId();
-		writePhoto(scaled, filename, true);
+		Collection<BufferedImage> scaled = readScaledPhotos(photo);
+		String personId = person.getId();
+		writePhotos(scaled, personId, true);
 		
 		int newVersion = identitySpider.incrementUserVersion(person.getId());
 				
-		doFinalRedirect(request, response, filename, newVersion, "Go to your page", "/home");
+		doFinalRedirect(request, response, LARGEST_PHOTO_DIMENSION + "/" + personId, 
+				newVersion, "Go to your page", "/home");
 	}
 }

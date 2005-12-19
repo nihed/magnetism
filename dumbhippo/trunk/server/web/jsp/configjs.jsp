@@ -19,8 +19,8 @@ var dhTextRoot = dhServerUri + "text/";
 var dhPostRoot = dhServerUri + "action/";
 var dhUploadRoot = dhServerUri + "upload/";
 var dhFilesRoot = dhServerUri + "files/";
-var dhHeadshotsRoot = dhFilesRoot + "headshots/";
-var dhGroupshotsRoot = dhFilesRoot + "groupshots/";
+var dhHeadshotsRoot = dhFilesRoot + "headshots/48/";
+var dhGroupshotsRoot = dhFilesRoot + "groupshots/48/";
 
 // configure Dojo; don't put anything here we expect to change, instead make a 
 // dh variable above then slave djConfig to it.

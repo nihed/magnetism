@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,21 +37,15 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	private static final int MAX_FILE_SIZE = 1024 * 1024 * 5; // 5M is huge, but photos can be big...
 	// scaling something huge is probably bad, but allowing a typical desktop background is 
 	// good if we can handle it...
-	private static final int MAX_IMAGE_DIMENSION = getMaxImageDimension();
+	private static final int MAX_IMAGE_DIMENSION = 2048;
 	
 	protected Configuration config;
 	protected IdentitySpider identitySpider;
 	protected File saveDir;
 	
-	protected static int getMaxImageDimension() {
-		return 2048;		
-	}
-	
 	protected abstract String getRelativePath();
 	
-	protected String getDefaultFilename() {
-		return null;
-	}
+	protected abstract String getDefaultFilename();
 	
 	@Override
 	public void init() {
@@ -100,6 +95,14 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		if (!ImageIO.write(scaled, "png", saveDest)) {
 			throw new HumanVisibleException("For some reason our computer couldn't save your photo. It's our fault; trying again later might help. If not, please let us know.");
 		}		
+	}
+	
+	protected void writePhotos(Collection<BufferedImage> photos, String filename, boolean overwrite) throws IOException, HumanVisibleException {
+		for (BufferedImage img : photos) {
+			int size = img.getWidth(); // it's square, so w/h same difference
+			String sizedName = size + "/" + filename;
+			writePhoto(img, sizedName, true);
+		}
 	}
 	
 	private void startUpload(HttpServletRequest request, HttpServletResponse response, DiskFileUpload upload, List items)
@@ -154,12 +157,30 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	@Override
 	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
+		
+		/* This is a little confusing. The web request is for something like 
+		 *  /files/headshots/48/userid
+		 * The filename on the server is saveDir/files/headshots/48/userid
+		 * The default file is saveDir/files/headshots/48/default for example
+		 */
+		
 		String defaultFilename = getDefaultFilename();
 		String noPrefix = request.getPathInfo().substring(1); // Skip the leading slash
 		File toServe = new File(saveDir, noPrefix);
-		if (!toServe.exists())
-			toServe = new File(saveDir, defaultFilename);
+		if (!toServe.exists()) {
+			String parent = toServe.getParent();
+			toServe = null;
+			if (defaultFilename != null) {
+				toServe = new File(parent, defaultFilename);
+				if (!toServe.exists())
+					toServe = null;
+			}
+		}
 
+		if (toServe == null) {
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "No such image");
+		}
+		
 		// If the requester passes a version with the URL, that's a signal that
 		// it can be cached without checking for up-to-dateness. There's no
 		// point in actually checking the version, so we don't

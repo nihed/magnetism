@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -63,12 +64,12 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 			throw new HumanVisibleException("You can't change the photo for a group unless you're in the group");
 		}
 		groupName = group.getName();
-		BufferedImage scaled = readScaledPhoto(photo);
-		String filename = groupId;
-		writePhoto(scaled, filename, true);
+		Collection<BufferedImage> scaled = readScaledPhotos(photo);
+		writePhotos(scaled, groupId, true);
 		
 		int newVersion = groupSystem.incrementGroupVersion(group.getId());
 		
-		doFinalRedirect(request, response, filename, newVersion, "Go to group " + groupName, "/viewgroup?groupId=" + groupId);
+		doFinalRedirect(request, response, LARGEST_PHOTO_DIMENSION + "/" + groupId,
+				newVersion, "Go to group " + groupName, "/viewgroup?groupId=" + groupId);
 	}
 }

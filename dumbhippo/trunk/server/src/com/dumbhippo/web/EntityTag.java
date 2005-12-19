@@ -11,7 +11,6 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
@@ -33,7 +32,7 @@ public class EntityTag extends SimpleTagSupport {
 				if (skipId != null && skipId.equals(id))
 					return null;
 				link = "/viewperson?personId=" + id;
-				photoUrl = "/files" + Configuration.HEADSHOTS_RELATIVE_PATH + "/" + id + "?v=" + user.getVersion();
+				photoUrl = AbstractPhotoServlet.getPersonSmallPhotoUrl(id, user.getVersion());
 			}
 			body = view.getName();
 		} else if (o instanceof GroupView) {
@@ -47,14 +46,14 @@ public class EntityTag extends SimpleTagSupport {
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
 				body = group.getName();
-			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId() + "?v=" + group.getVersion();
+			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			link = "/viewgroup?groupId=" + group.getId();
 			body = group.getName();
-			photoUrl = "/files" + Configuration.GROUPSHOTS_RELATIVE_PATH + "/" + group.getId() + "?v=" + group.getVersion();
+			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
 		} else {
 			body = "???";
 		}

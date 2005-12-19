@@ -162,7 +162,12 @@ public abstract class AbstractServlet extends HttpServlet {
 		out.flush();		
 	}
 
-	protected void setNoCache(HttpServletResponse response) {
+	/** 
+	 * Set headers on a response indicating that the response 
+	 * data should not be cached.
+	 * @param response the response object
+	 */
+	public static void setNoCache(HttpServletResponse response) {
 		response.setHeader("Cache-Control", "no-cache");
 		response.setHeader("Pragma", "no-cache");
 	}

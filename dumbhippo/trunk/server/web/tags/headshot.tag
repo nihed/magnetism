@@ -2,8 +2,12 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 
 <%@ attribute name="person" required="true" type="com.dumbhippo.server.PersonView"%>
+<%@ attribute name="size" required="false" type="java.lang.String" %>
+<c:if test="${empty size}">
+	<c:set var="size" value="48"/>
+</c:if>
 <c:if test="${!empty person.user}">
-<a href="/viewperson?personId=${person.user.id}" style="text-decoration: none;"><dh:png klass="dh-headshot" src="/files/headshots/${person.user.id}?v=${person.user.version}"/></a>
+<a href="/viewperson?personId=${person.user.id}" style="text-decoration: none;"><dh:png klass="dh-headshot" src="/files/headshots/${size}/${person.user.id}?v=${person.user.version}" width="${size}" height="${size}"/></a>
 </c:if>
 
 

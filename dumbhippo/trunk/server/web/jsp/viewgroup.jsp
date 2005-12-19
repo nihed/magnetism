@@ -60,7 +60,7 @@
 	</c:if>
 
 	<div class="person">
-		<dht:groupshot group="${viewgroup.viewedGroup}"/>
+		<dht:groupshot group="${viewgroup.viewedGroup}" size="128"/>
 		<c:out value="${viewgroup.name}"/>
 	</div>
 	<c:if test="${viewgroup.canModify}">
