@@ -308,7 +308,6 @@ private:
     void uploadComplete(long reqPosition);
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
-    HippoPtr<ITypeInfo> classTypeInfo_;
     DWORD refCount_;
 
 	// private so they aren't used

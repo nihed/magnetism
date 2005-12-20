@@ -35,16 +35,7 @@ HippoBubble::HippoBubble(void)
 
     ieCallback_ = new HippoBubbleIECallback(this);
 
-    HippoPtr<ITypeLib> typeLib;
-    HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
-                                0, 1, /* Version */
-                                0,    /* LCID */
-                                &typeLib);
-    if (SUCCEEDED (hr)) {
-        typeLib->GetTypeInfoOfGuid(IID_IHippoBubble, &ifaceTypeInfo_);
-        typeLib->GetTypeInfoOfGuid(CLSID_HippoBubble, &classTypeInfo_);
-    } else
-        hippoDebug(L"Failed to load type lib: %x\n", hr);
+    hippoLoadTypeInfo(L"HippoUtil.dll", &IID_IHippoBubble, &ifaceTypeInfo_, NULL);
 }
 
 HippoBubble::~HippoBubble(void)

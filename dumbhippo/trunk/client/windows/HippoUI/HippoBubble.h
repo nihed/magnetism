@@ -88,7 +88,6 @@ private:
     void doSetIdle();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
-    HippoPtr<ITypeInfo> classTypeInfo_;
 
     bool processMessage(UINT   message,
                         WPARAM wParam,

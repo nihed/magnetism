@@ -36,16 +36,9 @@ HippoFlickr::HippoFlickr(HippoUI *ui) : baseServiceUrl_(L"http://www.flickr.com/
     ui_ = ui;
     authBrowser_ = NULL;
 
-    HippoPtr<ITypeLib> typeLib;
-    HRESULT hr = LoadRegTypeLib(LIBID_HippoUtil, 
-                                0, 1, /* Version */
-                                0,    /* LCID */
-                                &typeLib);
-    if (SUCCEEDED (hr)) {
-        typeLib->GetTypeInfoOfGuid(IID_IHippoFlickr, &ifaceTypeInfo_);
-        typeLib->GetTypeInfoOfGuid(CLSID_HippoFlickr, &classTypeInfo_);
-    } else
-        hippoDebug(L"Failed to load type lib: %x\n", hr);
+    hippoLoadTypeInfo(L"HippoUtil.dll",
+                      &IID_IHippoFlickr, &ifaceTypeInfo_,
+                      NULL);
 
     HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
                                DUMBHIPPO_SUBKEY_FLICKR,

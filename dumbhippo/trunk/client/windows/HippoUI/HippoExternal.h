@@ -36,5 +36,4 @@ private:
     HippoPtr<IDispatch> application_;
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
-    HippoPtr<ITypeInfo> classTypeInfo_;
 };

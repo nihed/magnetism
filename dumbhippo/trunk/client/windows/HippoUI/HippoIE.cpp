@@ -34,10 +34,9 @@ HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *applic
     external_ = external;
     external->Release();
 
-    HippoPtr<ITypeLib> typeLib;
-    if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
-        typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
-
+    hippoLoadRegTypeInfo(LIBID_SHDocVw, 1, 1,
+                         &DIID_DWebBrowserEvents2, &eventsTypeInfo_, 
+                         NULL);
 }
 
 HippoIE::~HippoIE(void)

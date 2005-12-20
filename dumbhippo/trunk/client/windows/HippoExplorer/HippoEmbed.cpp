@@ -25,16 +25,10 @@ HippoEmbed::HippoEmbed(void)
     // the constructor. We'd need to rework ClassFactory to handle this
     connectionPointContainer_.addConnectionPoint(IID_IHippoEmbedEvents);
 
-    HippoPtr<ITypeLib> typeLib;
-    HRESULT hr = LoadRegTypeLib(LIBID_HippoExplorer, 
-                                0, 1, /* Version */
-                                0,    /* LCID */
-                                &typeLib);
-    if (SUCCEEDED (hr)) {
-        typeLib->GetTypeInfoOfGuid(IID_IHippoEmbed, &ifaceTypeInfo_);
-        typeLib->GetTypeInfoOfGuid(CLSID_HippoEmbed, &classTypeInfo_);
-    } else
-        hippoDebug(L"Failed to load type lib: %x\n", hr);
+    hippoLoadTypeInfo(L"HippoExplorer.dll",
+                      &IID_IHippoEmbed, &ifaceTypeInfo_,
+                      &CLSID_HippoEmbed, &classTypeInfo_,
+                      NULL);
 }
 
 HippoEmbed::~HippoEmbed(void)

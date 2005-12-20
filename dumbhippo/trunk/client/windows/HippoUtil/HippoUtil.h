@@ -5,6 +5,12 @@
 #include <strsafe.h>
 #include "HippoUtil_h.h"
 
+#ifdef BUILDING_HIPPO_UTIL
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT __declspec(dllimport)
+#endif
+
 #define HIPPO_DEFINE_REFCOUNTING(C) \
    STDMETHODIMP_(DWORD)             \
    C::AddRef()                      \
@@ -267,3 +273,11 @@ class HippoMessageHook
 public:
     virtual bool hookMessage(MSG *msg) = 0;
 };
+
+DLLEXPORT HRESULT hippoLoadTypeInfo(const WCHAR *libraryName, 
+                                    ...);
+
+DLLEXPORT HRESULT  hippoLoadRegTypeInfo(const GUID    &libraryId, 
+                                        unsigned short majorVersion, 
+                                        unsigned short minorVersion 
+                                        ...);

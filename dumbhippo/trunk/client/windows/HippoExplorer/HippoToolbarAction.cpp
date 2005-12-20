@@ -276,6 +276,8 @@ HippoToolbarAction::spawnUI()
 {
     HINSTANCE module = GetModuleHandle(L"HippoExplorer.dll");
     if (!module)
+        module = GetModuleHandle(L"HIPPOE~1.DLL");
+    if (!module)
         return false;
 
     WCHAR fileBuf[MAX_PATH];

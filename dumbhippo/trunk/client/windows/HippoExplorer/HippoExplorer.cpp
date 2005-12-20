@@ -177,6 +177,7 @@ DllRegisterServer(void)
     if (FAILED(hr))
         return hr;
 
+#if 0
     hr = registrar.registerInprocServer(CLSID_HippoExplorerBar,
                                         TEXT("Hi&ppo Bar"));
     if (FAILED(hr))
@@ -187,6 +188,7 @@ DllRegisterServer(void)
                                                1, catids);
     if (FAILED (hr))
         return hr;
+#endif
 
     hr = registrar.registerInprocServer(CLSID_HippoTracker,
                                         TEXT("Hippo Tracker"));

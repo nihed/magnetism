@@ -9,9 +9,10 @@ HippoExternalBrowser::HippoExternalBrowser(const WCHAR *url, bool quitOnDelete, 
     events_ = events;
 
     // IE specific code
-    HippoPtr<ITypeLib> typeLib;
-    if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
-        typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
+    hippoLoadRegTypeInfo(LIBID_SHDocVw, 1, 1,
+                         &DIID_DWebBrowserEvents2, &eventsTypeInfo_, 
+                         NULL);
+
     CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
                      IID_IWebBrowser2, (void **)&ie_);
     HippoBSTR urlStr(url);

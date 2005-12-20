@@ -18,9 +18,9 @@ HippoTracker::HippoTracker(void)
     refCount_ = 1;
     dllRefCount++;
 
-    HippoPtr<ITypeLib> typeLib;
-    if (SUCCEEDED (LoadRegTypeLib(LIBID_SHDocVw, 1, 1, 0, &typeLib)))
-        typeLib->GetTypeInfoOfGuid(DIID_DWebBrowserEvents2, &eventsTypeInfo_);
+    hippoLoadRegTypeInfo(LIBID_SHDocVw, 1, 1,
+                         &DIID_DWebBrowserEvents2, &eventsTypeInfo_, 
+                         NULL);
 
     registered_ = false;
     debugRegistered_ = false;

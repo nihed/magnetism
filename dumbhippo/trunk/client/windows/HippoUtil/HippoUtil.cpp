@@ -40,3 +40,124 @@ DllRegisterServer(void)
     HippoRegistrar registrar(L"HippoUtil.dll");
     return registrar.registerTypeLib();
 }
+
+static HRESULT
+loadTypeInfoFromTypelib(ITypeLib *typeLib, va_list vap)
+{
+    HRESULT hr = S_OK;
+
+    while (true) {
+        const GUID *guid = va_arg(vap, const GUID *);
+        if (!guid)
+            return hr;
+
+        ITypeInfo **info = va_arg(vap, ITypeInfo **);
+        hr = typeLib->GetTypeInfoOfGuid(*guid, info);
+        if (!SUCCEEDED(hr))
+            return hr;
+    }
+}
+
+static void
+clearArgs(va_list vap)
+{
+    while (true) {
+        const GUID *guid = va_arg(vap, const GUID *);
+        if (!guid)
+            return;
+        ITypeInfo **info = va_arg(vap, ITypeInfo **);
+        *info = NULL;
+    }
+}
+
+static void
+freeArgs(va_list vap)
+{
+    while (true) {
+        const GUID *guid = va_arg(vap, const GUID *);
+        if (!guid)
+            return;
+        ITypeInfo **info = va_arg(vap, ITypeInfo **);
+        if (*info) {
+            (*info)->Release();
+            *info = NULL;
+        }
+    }
+}
+
+HRESULT 
+hippoLoadTypeInfo(const WCHAR *libraryName, ...)
+{
+    HippoPtr<ITypeLib> typeLib;
+    va_list vap;
+    HRESULT hr;            
+
+    HMODULE module = GetModuleHandle(libraryName);
+    if (!module)
+        return E_FAIL;
+
+    WCHAR moduleFile[MAX_PATH];
+    DWORD length = GetModuleFileName(module, moduleFile, MAX_PATH);
+    if (length == 0 || length > MAX_PATH - 1)
+        return E_FAIL;
+
+    va_start(vap, libraryName);
+    clearArgs(vap);
+    va_end(vap);
+
+    hr = LoadTypeLib(moduleFile, &typeLib);
+    if (FAILED(hr))
+        goto out;
+
+    va_start(vap, libraryName);
+    hr = loadTypeInfoFromTypelib(typeLib, vap);
+    va_end(vap);
+
+out:
+    if (FAILED(hr)) {
+        va_start(vap, libraryName);
+        freeArgs(vap);
+        va_end(vap);
+
+        hippoDebug(L"Failed to load type info from %ls (%x)", libraryName, hr);
+    }
+
+    return hr;
+}
+
+HRESULT 
+hippoLoadRegTypeInfo(const GUID    &libraryId, 
+                     unsigned short majorVersion, 
+                     unsigned short minorVersion 
+                     ...)
+{
+    HippoPtr<ITypeLib> typeLib;
+    va_list vap;
+    HRESULT hr;
+    
+    va_start(vap, minorVersion);
+    clearArgs(vap);
+    va_end(vap);
+
+    hr = LoadRegTypeLib(libraryId, 
+                        majorVersion, minorVersion,
+                        0,    /* LCID */
+                        &typeLib);
+    if (FAILED(hr))
+        goto out;
+    
+    va_start(vap, minorVersion);
+    hr = loadTypeInfoFromTypelib(typeLib, vap);
+    va_end(vap);
+
+out:
+    if (FAILED(hr)) {
+        va_start(vap, minorVersion);
+        freeArgs(vap);
+        va_end(vap);
+
+        hippoDebug(L"Failed to load type info (%x)", hr);
+    }
+
+    return hr;
+}
