@@ -242,7 +242,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// sending to the group ...
 		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
-		PostInfo info = PostInfo.parse(postInfoXml);
+		PostInfo info;
+		if (postInfoXml != null)
+			info = PostInfo.parse(postInfoXml);
+		else
+			info = null;
 		
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(GuidPersistable.class, recipientGuids);

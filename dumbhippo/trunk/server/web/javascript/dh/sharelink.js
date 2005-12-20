@@ -263,8 +263,10 @@ dh.sharelink.submitButtonClicked = function() {
 	
 //	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
 	var secret = "false";
-
-	var postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
+	
+	var postInfoXml = null;
+	if (dh.sharelink.postInfo)
+		postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
 
 	dojo.debug("url = " + url);
 	dojo.debug("title = " + title);
@@ -273,16 +275,19 @@ dh.sharelink.submitButtonClicked = function() {
 	dojo.debug("secret = " + secret);
 	dojo.debug("postInfo = " + postInfoXml);
 	
+	var args = 	{ 	"url" : url,
+					"title" : title, 
+					"description" : descriptionHtml,
+					"recipients" : commaRecipients,
+					"secret" : secret 
+				};
+	
+	if (postInfoXml)
+		args["postInfoXml"] = postInfoXml;
+	
 	// double-check that we're logged in
 	dh.server.doPOST("sharelink",
-						{ 
-							"url" : url,
-							"title" : title, 
-						  	"description" : descriptionHtml,
-						  	"recipients" : commaRecipients,
-						  	"secret" : secret,
-							"postInfoXml" : postInfoXml
-						},
+						args,
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
 							dh.util.goToNextPage("home", "You've been shared!");
@@ -296,7 +301,7 @@ dh.sharelink.submitButtonClicked = function() {
 // Invoked from native client
 dhShareLinkSetPostInfo = function (xmlText) {
 	try {
-	dh.sharelink.postInfo = dojo.dom.createDocumentFromText(xmlText);
+		dh.sharelink.postInfo = dojo.dom.createDocumentFromText(xmlText);
 	} catch (e) {
 		dojo.debug("error in dhShareLinkSetPostInfo: " + e.message);
 	}
@@ -353,12 +358,12 @@ dh.sharelink.init = function() {
 	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");
 	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
 	
-	dh.sharelink.postInfo = dojo.dom.createDocumentFromText("<postInfo/>");
 	if (dojo.lang.has(params, "favicon")) {
 		var faviconUrl = params["favicon"];
+		dh.sharelink.postInfo = dojo.dom.createDocumentFromText("<postInfo/>");
 		var generic = dh.sharelink.postInfo.createElement("generic");
 		dh.sharelink.postInfo.documentElement.appendChild(generic);	
-		var favicon = sharelink.postInfo.createElement("favicon");
+		var favicon = dh.sharelink.postInfo.createElement("favicon");
 		generic.appendChild(favicon);
 		generic.appendChild(dh.sharelink.postInfo.createTextNode(faviconUrl));
 	}
