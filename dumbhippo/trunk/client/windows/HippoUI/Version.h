@@ -1,2 +1,2 @@
 // Always change this and the installer in sync
-static const char *VERSION = "1.0.2";
+static const char *VERSION = "1.0.3";
