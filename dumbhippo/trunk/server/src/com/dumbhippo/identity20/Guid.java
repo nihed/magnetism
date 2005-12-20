@@ -1,7 +1,8 @@
 package com.dumbhippo.identity20;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,30 +14,10 @@ import java.util.Set;
  * 
  * This class is immutable with the advantages that entails.
  * 
- * @author hp
+ * @author hp, otaylor
  * 
  */
-final public class Guid implements Serializable {
-	
-	private static final long serialVersionUID = 1L;  
-
-	private static java.util.Random rng1;
-
-	private static java.util.Random rng2;
-
-	private static final int NUM_COMPONENTS = 3;
-
-	private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5',
-			'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
-	// e.g. "ff" or "3c" or whatever
-	private static final int CHARS_PER_LONG = 2 * Long.SIZE / 8;
-
-	// 2 hex digits per byte, 3 longs * 8 bytes
-	public static final int STRING_LENGTH = CHARS_PER_LONG * NUM_COMPONENTS;
-
-	transient private long[] components;
-
+final public class Guid {
 	public static class ParseException extends Exception {
 		private static final long serialVersionUID = 0L;
 		public ParseException(String message, Throwable cause) {
@@ -46,12 +27,117 @@ final public class Guid implements Serializable {
 			super(message);
 		}
 	}
+	// We use 80 bits of randomness to generate our GUIDs, which
+	// are simply strings. Because they occur in URLs, exotic
+	// characters in our GUIDs are troublesome, so we encode
+	// them *base53*. While this means that generation requires
+	// big integer arithmetic, that's not a big deal, after
+	// generation, we can just treat things as a 14 character
+	// string.
 	
+	private static final int NUM_BYTES = 10;
+	private static final int NUM_CHARS = 14;
+
+    public static final int STRING_LENGTH = NUM_CHARS;
+
+	private static final BigInteger MODULUS = new BigInteger("418195493"); // 53 ^ 5
+
+	// We exclude all vowels but 'A' to reduce the 
+	// possibility of meaningful-looking words
+	private static final char[] ENCODE = {
+		'A', 'B', 'C', 'D', 'F', 'G', 'H', 
+		'J', 'K', 'L', 'M', 'N', 'P', 'Q', 
+		'R', 'S', 'T', 'V', 'W', 'X', 'Y', 
+		'Z',
+	    'b', 'c', 'd', 'f', 'g', 'h', 'j', 
+	    'k', 'l', 'm', 'n', 'p', 'q', 'r', 
+	    's', 't', 'v', 'w', 'x', 'y', 'z',
+	    '0', '1', '2', '3', '4', '5',
+	    '6', '7', '8', '9'
+    };
+
+    private static java.security.SecureRandom rng;
+	
+    private String str;
+    
+    private static SecureRandom makeRng() {
+		SecureRandom r = new SecureRandom();
+			
+        // Seed manually out of distrust of the builtin
+        // facilities; GNU classPath has bad seeding and
+        // the Sun implementation isn't checkable.
+        byte[] seed = new byte[20];
+        try {
+            FileInputStream f = new FileInputStream("/dev/random");
+            int numRead = 0;
+            while (numRead < seed.length)
+            	numRead += f.read(seed, numRead, seed.length - numRead);
+            f.close();
+        } catch (IOException e) {
+        	throw new RuntimeException("Error reading from /dev/random");
+        }	
+
+        r.setSeed(seed);
+        
+        return r;
+    }
+    
+    private static String encodeBase53(byte[] bytes) {
+        // Use the signum constructor so that our input isn't construed
+        // as two's complement
+        BigInteger v = new BigInteger(1, bytes);
+
+        char[] buf = new char[NUM_CHARS];
+
+        // Chunk out 5 "digits" at a time with big integer arithmetic
+        // and then use integer arithmetic to split them up; it's
+        // possibly over-optimization, but it is about 4 times as fast
+        // as going digit by digit.
+        for (int i = 0; i < NUM_CHARS; i += 5) {
+            BigInteger n[] = v.divideAndRemainder(MODULUS);
+            v = n[0];
+            int m = n[1].intValue();
+            for (int j = 0; j < 5 && i + j < NUM_CHARS; j++) {
+                buf[i + j] = ENCODE[m % 53];
+                m /= 53;
+            }
+        }
+        
+        return new String(buf);
+    }
+    
+	private static String generate() {
+		if (rng == null)
+			rng = makeRng();
+
+        byte[] random = new byte[NUM_BYTES];
+        rng.nextBytes(random);
+
+        return encodeBase53(random);
+    }
+	
+	public static void validate(String guid) throws ParseException {
+        // Validation is just that everything is alphanumeric
+        // and of the right length; this should guard against
+		// cross-site-scripting or whatever. We actually only
+		// generate a subset of these values, but don't check that.
+		if (guid.length() != NUM_CHARS)
+			throw new ParseException("GUID has wrong length");
+		
+		for (int i = 0; i < NUM_CHARS; i++) {
+			char c = guid.charAt(i);
+			if (!((c >= 'A' && c <= 'Z') ||
+		          (c >= 'a' && c <= 'z') ||
+		          (c >= '0' && c <= '9')))
+				throw new ParseException("GUID has bad characters");
+		}
+	}
+		
 	private void writeObject(java.io.ObjectOutputStream out)
     	throws IOException {
 		out.defaultWriteObject();
 		
-		out.writeUTF(toString());
+		out.writeUTF(str);
 	}
 	
 	private void readObject(java.io.ObjectInputStream in)
@@ -67,65 +153,22 @@ final public class Guid implements Serializable {
 	}
 	
 	public static Guid createNew() {
-		long random1, random2;
-		synchronized (Guid.class) {
-			if (rng1 == null) {
-				/*
-				 * Use two different random number generators because otherwise
-				 * one random is predictable from the other and having two is
-				 * pointless, right?
-				 */
-				rng1 = new SecureRandom();
-				assert (rng2 == null);
-				rng2 = new SecureRandom();
-			}
-			random1 = rng1.nextLong();
-			random2 = rng2.nextLong();
-		}
-		long time = System.currentTimeMillis();
-
-		/*
-		 * sandwiching the time between two randoms should keep it from largely
-		 * determining the sort order, i.e. keep random distribution
-		 */
-		return new Guid(random1, time, random2);
+		Guid result = new Guid();
+		result.str = generate();
+		
+		return result;
 	}
-
+	
 	private Guid() {
-		components = null;
-	}
-	
-	/**
-	 * Internal constructor for copying/creating by component
-	 * 
-	 */
-	private Guid(long first, long second, long third) {
-		components = new long[NUM_COMPONENTS];
-		components[0] = first;
-		components[1] = second;
-		components[2] = third;
 	}
 
-	public Guid(Guid source) {
-		components = source.components.clone();
+	public Guid(Guid other) {
+		str = other.str;
 	}
 
-	static private long[] parseFromString(long[] components, String string) throws ParseException {
-		if (string.length() != STRING_LENGTH)
-			throw new ParseException(String.format(
-					"String form of GUID must have %d characters but this string has %d",
-					STRING_LENGTH, string.length()));
-
-		return hexDecode(components, string);
-	}
-	
-	public static void validate(String string) throws ParseException {
-		parseFromString(null, string);
-	}
-	
 	private void initFromString(String string) throws ParseException {
-		components = parseFromString(new long[STRING_LENGTH/CHARS_PER_LONG],
-				string);
+		validate(string);
+		str = string;
 	}
 	
 	public Guid(String string) throws ParseException {
@@ -133,31 +176,20 @@ final public class Guid implements Serializable {
 	}
 
 	public String toString() {
-		String s = hexEncode(components);
-		assert (s.length() == STRING_LENGTH);
-		return s;
+		return str;
 	}
 
 	public int hashCode() {
-		int result = 17;
-		for (int i = 0; i < NUM_COMPONENTS; ++i) {
-			int c = (int) (components[i] ^ (components[i] >>> 32));
-			result = 37 * result + c;
-		}
-		return result;
+		// We could just hash the first 6 characters, but
+		// what we save in computation, we probably lose
+		// compared to the optimization of String.hashCode()
+		return str.hashCode();
 	}
 
 	public boolean equals(Object other) {
-		if (this == other)
-			return true;
 		if (!(other instanceof Guid))
 			return false;
-		Guid otherGuid = (Guid) other;
-		for (int i = 0; i < NUM_COMPONENTS; ++i) {
-			if (components[i] != otherGuid.components[i])
-				return false;
-		}
-		return true;
+		return str.equals(((Guid)other).str);
 	}
 
 	public static Set<Guid> parseStrings(Set<String> strs) throws ParseException {
@@ -166,69 +198,5 @@ final public class Guid implements Serializable {
 			guids.add(new Guid(str));
 		}
 		return guids;
-	}	
-	
-	static private void hexEncode(long value, char[] hex, int start) {
-		for (int count = 0; count < Long.SIZE / 8; ++count) {
-			int b = (int) (value >>> count * 8) & 0xff;
-
-			hex[start] = hexdigits[(b >>> 4)];
-			++start;
-			hex[start] = hexdigits[(b & 0x0f)];
-			++start;
-		}
-	}
-
-	static private String hexEncode(long[] components) {
-
-		// two hex chars per byte, e.g. "ff"
-		char[] hex = new char[components.length * CHARS_PER_LONG];
-		int next = 0;
-
-		for (int i = 0; i < components.length; ++i) {
-			hexEncode(components[i], hex, next);
-			next += CHARS_PER_LONG;
-		}
-		assert (next == hex.length);
-		assert (next == STRING_LENGTH);
-
-		return new String(hex);
-	}
-
-	static private long[] hexDecode(long[] components, String s) throws ParseException {
-		if ((s.length() % CHARS_PER_LONG) != 0)
-			throw new ParseException(
-					"Bad string length passed to hexDecode");
-
-		//		 two hex chars per byte, e.g. "ff"
-		int nLongs = s.length() / CHARS_PER_LONG;
-		if (components != null && components.length < nLongs)
-			throw new IllegalArgumentException("Buffer too short");
-		
-		int next = 0;
-
-		for (int i = 0; i < nLongs; ++i) {
-			long value = 0;
-			for (int j = 0; j < Long.SIZE / 8; ++j) {
-				long b;
-				try {
-					b = Integer.parseInt(s.substring(next + j * 2, next + j * 2
-							+ 2), 16);
-					assert (b <= 0xff); // shouldn't be possible to put more in
-										// 2 chars
-				} catch (NumberFormatException e) {
-					throw new ParseException(
-							"Could not parse byte in GUID", e);
-				}
-				value = value | (b << (j * 8));
-			}
-
-			next += CHARS_PER_LONG;
-
-			if (components != null)
-				components[i] = value;
-		}
-
-		return components;
-	}
+	}		
 }

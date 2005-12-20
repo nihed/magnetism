@@ -2,6 +2,9 @@ package com.dumbhippo.web;
 
 import javax.servlet.http.Cookie;
 
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
+
 /**
  * Represents the persistent login information stored on a client for a
  * particular user.
@@ -53,9 +56,9 @@ public class LoginCookie {
 		StringBuilder val;
 		val = new StringBuilder();
 		try {
-			validateHex(personId);
-		} catch (BadTastingException e) {
-			throw new RuntimeException("Bug! ID of account owner is invalid hex?", e);
+			Guid.validate(personId);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bug! ID of account owner is invalid", e);
 		}
 		val.append(COOKIE_NAME_HEADER);
 		val.append(personId);
@@ -124,7 +127,11 @@ public class LoginCookie {
 		if (!personIdStr.startsWith(COOKIE_NAME_HEADER))
 			throw new BadTastingException("invalid cookie value, missing " + COOKIE_NAME_HEADER);
 		personId = personIdStr.substring(COOKIE_NAME_HEADER.length());
-		validateHex(personId);
+		try {
+			Guid.validate(personId);
+		} catch (ParseException e) {
+			throw new BadTastingException("Bad personId");
+		}
 		String authKeyStr = val.substring(ampIdx + 1);
 		if (!authKeyStr.startsWith(COOKIE_PASSWORD_HEADER))
 			throw new BadTastingException("invalid cookie value, missing " + COOKIE_PASSWORD_HEADER);		
