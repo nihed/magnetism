@@ -34,3 +34,4 @@ dirs:
 
 clean:
     -del $(OUTDIR)\DumbHippo.msi
+    -del $(INTDIR)\*.wixobj

@@ -590,15 +590,6 @@ HippoUI::onUpgradeReady()
                    MB_OKCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_SETFOREGROUND) == IDOK) 
     {
         upgrader_.performUpgrade();
-
-        // performUpgrade launches the installer asynchronously. We want to quit before the 
-        // installer gets very far along, to minimize problems with in-use files. Since
-        // the Microsoft installer doesn't ask the user to quit applications without a 
-        // toplevel window, if we are still running, the end effect will be that the
-        // user is told they need to reboot. The main problem with quitting here is that
-        // if the user cancel's the install, then we aren't running anymore. (But we
-        // will still be set to auto-start.)
-        PostQuitMessage(0);
     }
 }
 
@@ -1286,6 +1277,18 @@ installLaunch(HINSTANCE instance)
     _wspawnl(_P_NOWAIT, fileBuf, L"HippoUI", L"--replace", NULL);
 }
 
+static void
+quitExisting(bool debug)
+{
+    HippoPtr<IUnknown> unknown;
+    HippoPtr<IHippoUI> oldUI;
+    if (SUCCEEDED (GetActiveObject(debug ? CLSID_HippoUI_Debug : CLSID_HippoUI, NULL, &unknown)))
+       unknown->QueryInterface<IHippoUI>(&oldUI);
+
+    if (oldUI)
+        oldUI->Quit();
+}
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -1301,8 +1304,9 @@ WinMain(HINSTANCE hInstance,
 
     static gboolean debug = FALSE;
     static gboolean configFlag = FALSE;
-    static gboolean doInstallLaunch = NULL;
-    static gboolean replaceExisting = NULL;
+    static gboolean doInstallLaunch = FALSE;
+    static gboolean replaceExisting = FALSE;
+    static gboolean doQuitExisting = FALSE;
     static gboolean initialDebugShare = FALSE;
 
     char *command_line = GetCommandLineA();
@@ -1317,6 +1321,7 @@ WinMain(HINSTANCE hInstance,
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doInstallLaunch, "Run appropriately at the end of the install" },
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replaceExisting, "Replace existing instance, if any" },
+        { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doQuitExisting, "Tell any existing instances to quit" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initialDebugShare, "Show an initial dummy debug share" },
         { NULL }
     };
@@ -1335,6 +1340,13 @@ WinMain(HINSTANCE hInstance,
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (doInstallLaunch) {
         installLaunch(hInstance);
+        return 0;
+    }
+
+    if (doQuitExisting) {
+        CoInitialize(NULL);
+        quitExisting(debug);
+        CoUninitialize();
         return 0;
     }
 

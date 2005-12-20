@@ -14,4 +14,4 @@ all: *.xml *.css *.png *.js
     copy flickrstatus.js $(OUTDIR)\applets    
 
 clean:
-	deltree $(OUTDIR)\applets
+	-deltree $(OUTDIR)\applets
