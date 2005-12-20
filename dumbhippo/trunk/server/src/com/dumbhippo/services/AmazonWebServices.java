@@ -34,6 +34,7 @@ public class AmazonWebServices {
 		// http://www.amazon.com/gp/product/cast-crew/B000A0GP4K/...
 		// http://www.amazon.com/gp/product/fun-facts/B000A0GP4K/...
 		// http://www.amazon.com/exec/obidos/tg/detail/-/B000BJS4OY/...
+		// http://www.amazon.com/exec/obidos/ASIN/B00083HIL8
 		// there are probably others...
 		String path = url.getPath();
 		String[] components = path.split("\\/");
@@ -48,6 +49,7 @@ public class AmazonWebServices {
 					s.equals("obidos") ||
 					s.equals("tg") ||
 					s.equals("detail") ||
+					s.equals("ASIN") ||
 					s.equals("-") ||
 					s.equals("")) {
 				continue;

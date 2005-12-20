@@ -35,6 +35,7 @@ class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implemen
 	
 	AmazonSaxHandler() {
 		super(Element.class, Element.IGNORED);
+		prices = new EnumMap<Element,String>(Element.class);
 	}
 
 	@Override
@@ -56,9 +57,6 @@ class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implemen
 			Element p = parent();
 			if (p != null) {
 				String price = getCurrentContent();
-				if (prices == null) {
-					prices = new EnumMap<Element,String>(Element.class);
-				}
 				logger.debug("saving price " + price + " for " + p);
 				prices.put(p, price);
 			}
@@ -82,7 +80,9 @@ class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implemen
 	}
 	
 	private boolean isValid() {
-		return ASIN != null && prices != null && smallImageUrl != null && 
+		// prices can all be absent if the product is sold out, so we don't 
+		// validate that we have prices.
+		return ASIN != null && smallImageUrl != null && 
 		smallImageWidth > 0 && smallImageHeight > 0;
 	}
 	
