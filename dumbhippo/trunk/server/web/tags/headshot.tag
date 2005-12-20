@@ -7,7 +7,7 @@
 	<c:set var="size" value="48"/>
 </c:if>
 <c:if test="${!empty person.user}">
-<a href="/viewperson?personId=${person.user.id}" style="text-decoration: none;"><dh:png klass="dh-headshot" src="/files/headshots/${size}/${person.user.id}?v=${person.user.version}" width="${size}" height="${size}"/></a>
+<a href="/viewperson?personId=${person.user.id}" style="text-decoration: none;"><dh:png klass="dh-headshot" src="/files/headshots/${size}/${person.user.id}?v=${person.user.version}" style="width: ${size}; height: ${size};"/></a>
 </c:if>
 
 

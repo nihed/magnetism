@@ -22,7 +22,7 @@
 						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
 			
 						<div id="dhPrivateGroupAccessTip" class="dh-help-bubble">
-							<dh:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
+							<dh:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/>
 							<div class="dh-help-bubble-message">
 								Private groups are for <strong>families</strong> and super secret CIA agents
 								<a href="/privacy" target="_blank">privacy</a>

@@ -16,7 +16,7 @@
 
 	<div id="dhMain">
 		<p>Your new photo looks like this:</p>
-		<dh:png klass="dh-headshot" src="/files${photoLocation}/${photoFilename}?v=${photoVersion}"/>
+		<dh:png klass="dh-headshot" src="/files${photoLocation}/${photoFilename}?v=${photoVersion}" style="width: 48; height: 48;"/>
 
 		<br/>
 		<p><c:out value="${homePageLink}" escapeXml="false"/></p>

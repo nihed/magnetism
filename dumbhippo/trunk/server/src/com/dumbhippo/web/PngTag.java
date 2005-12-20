@@ -14,10 +14,15 @@ import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.DynamicAttributes;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 
 public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 
+	static private final Log logger = GlobalSetup.getLog(PngTag.class);
+	
 	private String src;
 	private String klass;
 	private String style;
@@ -33,6 +38,11 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			String key = extraAttributes.get(i);
 			String value = extraAttributes.get(i+1);
 			
+			if (key.equals("width") || key.equals("height")) {
+				logger.warn("width/height attributes on dh:png won't work in IE since it's a span not an img, use style= instead");
+				continue; // so the bug shows in firefox too
+			}
+			
 			xml.append(key);
 			xml.append("=\"");
 			xml.append(value);
@@ -45,7 +55,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		BrowserBean browser = BrowserBean.getForRequest(request);
 		
 		if (browser.getIeAlphaImage()) {
-			xml.append("<span style=\"background:#bbbbbb\"");
+			xml.append("<span ");
 			if (klass != null) {
 				xml.append("class=\"");
 				xml.append(klass);
@@ -53,9 +63,13 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			}
 			if (style != null) {
 				xml.append("style=\"");
+				xml.append("background:#bbbbbb; ");
 				xml.append(style);
 				xml.append("\" ");
+			} else {
+				xml.append("style=\"background:#bbbbbb;\" ");
 			}
+			appendExtraAttributes(xml, extraAttributes);
 			xml.append("><img src=\"");
 			xml.append(src);
 			xml.append("\" style=\"visibility:hidden\" onload=\"dh.actions.fillAlphaPng(this)\"/></span>");

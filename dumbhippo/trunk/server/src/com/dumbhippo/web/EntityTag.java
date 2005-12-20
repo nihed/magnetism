@@ -11,6 +11,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
@@ -63,7 +64,8 @@ public class EntityTag extends SimpleTagSupport {
 		if (photo && photoUrl != null) {
 			if (link != null)
 				xml.openElement("a", "href", link);
-			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", null);
+			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
+			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
 			if (link != null)
 				xml.closeElement();
 		}
