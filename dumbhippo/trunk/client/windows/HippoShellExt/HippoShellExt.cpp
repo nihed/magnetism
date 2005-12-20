@@ -140,9 +140,9 @@ HippoShellExt::QueryContextMenu(HMENU menu, UINT indexMenu, UINT cmdFirst, UINT 
 
     WCHAR *text;
     if (fileNames_.length() > 1) // needs i18n
-        text = L"Share photos via Flickr";
+        text = L"Share Pictures";
     else 
-        text = L"Share photo via Flickr";
+        text = L"Share Picture";
     InsertMenu(menu, indexMenu, MF_STRING | MF_BYPOSITION,
                cmdFirst + 0, text);
 
