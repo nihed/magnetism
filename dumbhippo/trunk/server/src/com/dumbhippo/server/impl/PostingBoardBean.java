@@ -1,7 +1,9 @@
 package com.dumbhippo.server.impl;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -101,7 +103,69 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
+	/**
+	 * If someone shares a link that's already been shared, we want to strip out the
+	 * noise we added with the frameset/redirect stuff
+	 * 
+	 * @param original the original url
+	 * @return either the same url or a fixed-up one
+	 */
+	private URL removeFrameset(URL original) {
+		logger.debug(String.format("do we remove frameset with path %s host %s query %s",
+				original.getPath(), original.getHost(), original.getQuery()));
+		
+		if (!original.getPath().equals("/frameset"))
+			return original;
+		 
+		URL baseurl = configuration.getBaseUrl();
+		if (!original.getHost().equals(baseurl.getHost()))
+			return original;
+		String q = original.getQuery();
+		if (q == null)
+			return original;
+
+		int i = q.indexOf("postId=");
+		if (i < 0)
+			return original;
+		i += "postId=".length();
+		String postId;
+		try {
+			String decoded = URLDecoder.decode(q.substring(i), "UTF-8");
+			postId = decoded.substring(0, Guid.STRING_LENGTH);
+		} catch (UnsupportedEncodingException e) {
+			logger.error("should not be a checked exception, bad encoding", e);
+			return original;
+		} catch (IndexOutOfBoundsException e) {
+			logger.warn("Failed to parse query string on frameset (too short postId): " + q, e);
+			return original;
+		}
+		
+		Post post;
+		try {
+			post = identitySpider.lookupGuidString(Post.class, postId);
+		} catch (ParseException e) {
+			logger.warn("Failed to parse postId from frameset: " + postId, e);
+			return original;
+		} catch (NotFoundException e) {
+			logger.warn("Failed to parse postId from frameset: " + postId, e);
+			return original;
+		}
+		
+		URL replacement = post.getUrl();
+		if (replacement == null) {
+			logger.warn("Old post does not have an URL: " + post);
+			return original;
+		}
+		
+		logger.debug("Changing URL to '" + replacement.toExternalForm() + "'");
+		
+		return replacement;
+	}
+	
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
+		
+		url = removeFrameset(url);
+		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
 		
 		// for each recipient, if it's a group we want to explode it into persons

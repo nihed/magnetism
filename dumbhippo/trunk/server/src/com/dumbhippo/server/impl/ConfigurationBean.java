@@ -2,6 +2,8 @@ package com.dumbhippo.server.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 
 import javax.ejb.PostConstruct;
@@ -22,7 +24,9 @@ public class ConfigurationBean implements Configuration {
 	
 	static private final Log logger = GlobalSetup.getLog(ConfigurationBean.class);		
 	
-	Properties props;
+	private Properties props;
+
+	private URL baseurl;
 	
 	@PostConstruct
 	public void init() {
@@ -78,6 +82,18 @@ public class ConfigurationBean implements Configuration {
 		} catch (PropertyNotFoundException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public URL getBaseUrl() {
+		if (baseurl == null) {		
+			String s = getPropertyFatalIfUnset(HippoProperty.BASEURL);
+			try {
+				baseurl = new URL(s);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+			}
+		}
+		return baseurl;
 	}
 }
 

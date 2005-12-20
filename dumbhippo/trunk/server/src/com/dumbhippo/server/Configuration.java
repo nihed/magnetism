@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import java.net.URL;
+
 import javax.ejb.ApplicationException;
 import javax.ejb.Local;
 
@@ -71,4 +73,10 @@ public interface Configuration {
 	 * @return value of the property
 	 */
 	public String getPropertyFatalIfUnset(HippoProperty name);
+	
+	/**
+	 * Gets our base URL parsed into an URL object.
+	 * @return the base URL for this server
+	 */
+	public URL getBaseUrl();
 }
