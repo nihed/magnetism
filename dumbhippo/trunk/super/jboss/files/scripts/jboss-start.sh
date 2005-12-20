@@ -4,6 +4,7 @@ jbossdir=@@jbossdir@@
 targetdir=@@targetdir@@
 jnpPort=@@jnpPort@@
 jdwpPort=@@jdwpPort@@
+javaMaxHeap=@@javaMaxHeap@@
 
 echo "Starting jboss..."
 
@@ -34,7 +35,7 @@ fi
 
 ######################################################################
 
-JAVA_OPTS="-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
+JAVA_OPTS="-Xmx${javaMaxHeap}m -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
 $jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null &
 pid=$!
 started=false
