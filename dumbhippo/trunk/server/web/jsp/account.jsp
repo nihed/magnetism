@@ -19,21 +19,21 @@
 		dojo.require("dh.slideshow");
 	</script>
 	<script type="text/javascript">	
-	
-		var slideNode = document.createElement("div");
-		slideNode.setAttribute("id", "dhSlideshowTextarea");
-		var p = document.createElement("p");
-		p.appendChild(document.createTextNode("Then share that link with yourself, go on do it!!"));
-		p.setAttribute("class", "dh-slideshow-text");
-		var link = document.createElement("a");
-		link.setAttribute("href", "/home");
-		link.setAttribute("target", "_new");
-		link.setAttribute("class", "dh-slideshow-link");
-		link.appendChild(document.createTextNode("Open This Link To Your Home Page"));
-		slideNode.appendChild(link);
-		slideNode.appendChild(p);
-	
-		window.onload = function() {
+		var accountSlideshowInit = function() {
+		
+			var slideNode = document.createElement("div");
+			slideNode.setAttribute("id", "dhSlideshowTextarea");
+			var p = document.createElement("p");
+			p.appendChild(document.createTextNode("Then share that link with yourself, go on do it!!"));
+			p.setAttribute("class", "dh-slideshow-text");
+			var link = document.createElement("a");
+			link.setAttribute("href", "/home");
+			link.setAttribute("target", "_new");
+			link.setAttribute("class", "dh-slideshow-link");
+			link.appendChild(document.createTextNode("Open This Link To Your Home Page"));
+			slideNode.appendChild(link);
+			slideNode.appendChild(p);
+			
 			var slides = [
 				{ 	"time" : 4500, 
 					"src" : "/images/tpfd-slides/001.jpg" },
@@ -56,6 +56,8 @@
 			var node = document.getElementById('dhAccountSlideshow');
 			var slideshow = new dh.slideshow.Slideshow(node, 420, 300, slides);
 		}
+		
+		dojo.event.connect(dojo, "loaded", dj_global, "accountSlideshowInit");	
 	</script>
 </head>
 <body>
