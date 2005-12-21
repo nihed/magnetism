@@ -209,9 +209,7 @@
 </div>
 
 <div id="dhOTP">
-Suckers!!<br/>
-Precious Roy, Precious Roy, Making lots of suckers out of girls and boys<br/>
-DING!
+<dht:rightColumn/>
 </div>
 
 </body>
