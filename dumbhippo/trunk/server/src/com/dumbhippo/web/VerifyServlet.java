@@ -154,7 +154,7 @@ public class VerifyServlet extends AbstractServlet {
 		HttpSession session = request.getSession();
 		session.setAttribute("dumbhippo.toggleNoMailToken", token);
 		
-		redirectToNextPage(request, response, "/mailsettings", null);
+		redirectToNextPage(request, response, "/mail", null);
 	}
 	
 	@Override

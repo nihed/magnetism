@@ -181,7 +181,7 @@
       </init-param>
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>signin,signinsent,error,comingsoon,mailsettings,configjs,flash,privacy,unknownlink</param-value>
+          <param-value>signin,signinsent,error,comingsoon,mail,configjs,flash,privacy,unknownlink</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
