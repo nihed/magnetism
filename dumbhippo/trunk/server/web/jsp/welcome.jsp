@@ -6,7 +6,7 @@
 <dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
 
 <c:if test="${welcome.signin.disabled}">
-	<jsp:forward page="/jsp/welcomedisabled.jsp"/>
+	<jsp:forward page="/jsp/we-miss-you.jsp"/>
 </c:if>
 
 <head>

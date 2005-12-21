@@ -189,7 +189,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,welcomedisabled,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,newphoto,framer,visit</param-value>
+          <param-value>home,welcome,we-miss-you,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,newphoto,framer,visit</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

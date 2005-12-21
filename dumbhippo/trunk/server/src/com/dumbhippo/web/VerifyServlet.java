@@ -104,7 +104,7 @@ public class VerifyServlet extends AbstractServlet {
 			
 			response.sendRedirect(urlParam);
 		} else {
-			// this forwards to welcomedisabled.jsp if the account is disabled
+			// this forwards to we-miss-you.jsp if the account is disabled
 			redirectToNextPage(request, response, "/welcome", null);
 		}
 	}
