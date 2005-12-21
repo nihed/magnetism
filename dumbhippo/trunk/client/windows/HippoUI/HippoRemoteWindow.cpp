@@ -68,7 +68,7 @@ void
 HippoRemoteWindow::showSignin()
 {
     HippoBSTR signinUrl;
-    ui_->getRemoteURL(L"signin", &signinUrl);
+    ui_->getRemoteURL(L"who-are-you", &signinUrl);
     navigate(signinUrl);
 }
 

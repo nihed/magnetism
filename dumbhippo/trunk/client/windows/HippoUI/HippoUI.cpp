@@ -454,7 +454,7 @@ HippoUI::showSignInWindow()
 {
     HippoBSTR signInURL;
     
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"signin?next=close"), &signInURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"who-are-you?next=close"), &signInURL)))
         return;
 
     HippoPtr<IWebBrowser2> webBrowser;
