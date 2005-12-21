@@ -30,9 +30,23 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	@EJB
 	private PostingBoard postingBoard;
+	
+	private String jiveUserNameToGuid(String username) {
+		StringBuilder transformedName = new StringBuilder();
+		for (int i = 0; i < username.length(); i++) {
+			if (i+1 < username.length() && username.charAt(i+1) == '_') {
+				transformedName.append(Character.toLowerCase(username.charAt(i)));
+				i++;
+			} else {
+				transformedName.append(Character.toUpperCase(username.charAt(i)));
+			}
+		}
+		return transformedName.toString();
+	}
 		
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
-		Account account = accountSystem.lookupAccountByPersonId(username);
+		String guidUsername = jiveUserNameToGuid(username);
+		Account account = accountSystem.lookupAccountByPersonId(guidUsername);
 		if (account == null)
 			throw new JabberUserNotFoundException("username does not exist");
 		
