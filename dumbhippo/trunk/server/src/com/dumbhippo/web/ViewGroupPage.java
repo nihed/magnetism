@@ -41,6 +41,8 @@ public class ViewGroupPage {
 	private int invitations;
 	// fromInvite is whether we got here after just joining DumbHippo
 	private boolean fromInvite;
+	// were we just added on this visit
+	private boolean justAdded;
 	// the inviter here though is to the group, not necessarily to the site
 	private User adder;
 	private PersonView inviter;
@@ -114,6 +116,8 @@ public class ViewGroupPage {
 				} catch (NotFoundException e) {
 					groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
 				}
+
+				justAdded = true;
 			}
 
 			adder = groupMember.getAdder();
@@ -170,6 +174,10 @@ public class ViewGroupPage {
 		return getGroupMember().getStatus() == MembershipStatus.INVITED;
 	}
 	
+	public boolean isJustAdded() {
+		return justAdded;
+	}
+
 	public PersonView getInviter() {
 		if (inviter == null && adder != null) {
 			inviter = identitySpider.getPersonView(signin.getViewpoint(), adder);	

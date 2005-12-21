@@ -24,7 +24,7 @@
 <div id="dhContainer">
 
 	<div id="dhMainArea">
-		<img src="/images/dh-logo.jpg"/>
+		<dht:logo/>
 
 		<dht:toolbar>
 			<c:if test="${viewgroup.canShare}">
@@ -41,7 +41,7 @@
 		</dht:toolbar>
 
 		<c:choose>
-			<c:when test="${viewgroup.invitedNotAccepted}">
+			<c:when test="${viewgroup.justAdded}">
 				<!-- FIXME: Need to be auto-added to group and only show this message on first load -->
 				<div id="dhInformationBar"><dh:entity value="${viewgroup.inviter}" photo="true"/><p> invited you to this group, you can <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave</a> it any time.</p></div>
 			</c:when>
