@@ -183,6 +183,7 @@
 			<fileset dir="${web}" includes="html/*.html" />
 			<fileset dir="${web}" includes="images/*.gif" />
 			<fileset dir="${web}" includes="images/*.png" />
+			<fileset dir="${web}" includes="images/*.jpg" />
 			<fileset dir="${web}" includes="images/*.ico" />
 			<fileset dir="${web}" includes="images/tpfd-slides/*.jpg" />
 			<fileset dir="${web}" includes="jsp/*.jsp" />
