@@ -48,7 +48,7 @@
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
 		<dht:headshot person="${home.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="change hoto"/>
+		<dht:uploadPhoto location="/headshots" linkText="change photo"/>
 		<div id="dhName"><dht:userNameEdit value="${home.person.name}"/></div>
 		</div>
 
