@@ -113,14 +113,14 @@ public class RewriteServlet extends HttpServlet {
 		String afterSlash = path.substring(1);
 		
 		// If this is a request to one of the pages configured as requiresLogin,
-		// and the user isn't signed in, go to /signin, storing the real
+		// and the user isn't signed in, go to /who-are-you, storing the real
 		// destination in the query string. This only works for GET, since we'd
 		// have to save the POST parameters somewhere.
 		
 		if ((requiresSignin.contains(afterSlash) || (stealthMode && requiresSigninStealth.contains(afterSlash))) && 
 			!hasSignin(request) && 
 			request.getMethod().toUpperCase().equals("GET")) {
-			String url = response.encodeRedirectURL("/signin?next=" + afterSlash);
+			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
 			response.sendRedirect(url);
 			return;
 		}

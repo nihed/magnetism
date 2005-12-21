@@ -175,7 +175,7 @@ public class VerifyServlet extends AbstractServlet {
 			if (e.getTokenClass() == InvitationToken.class)
 				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
-				throw new HumanVisibleException("The sign-in link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/signin\">Go here</a>");
+				throw new HumanVisibleException("The sign-in link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here</a>");
 			else if (e.getTokenClass() == ResourceClaimToken.class)
 				throw new HumanVisibleException("This verification link has expired. You'll need to add this address again.").setHtmlSuggestion("<a href=\"/account\">Go here</a>");
 			else if (e.getTokenClass() == ToggleNoMailToken.class)

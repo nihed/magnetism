@@ -25,7 +25,7 @@
 			<p><a href="javascript:dh.actions.signOut()">Sign out</a></p>
 	  	</c:when>
 		<c:otherwise>
-	 		<c:url value="signin?next=home" var="signinurl"/>
+	 		<c:url value="who-are-you?next=home" var="signinurl"/>
 	  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
 		</c:otherwise>
 	</c:choose>

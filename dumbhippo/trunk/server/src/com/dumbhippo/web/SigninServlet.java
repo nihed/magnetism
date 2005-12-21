@@ -52,7 +52,7 @@ public class SigninServlet extends AbstractServlet {
 			next = "/home";
 		
 		if (address == null) {
-			throw new HumanVisibleException("Please enter an email or AIM address you use with your DumbHippo account").setHtmlSuggestion("<a href=\"/signin\">Go back</a>");
+			throw new HumanVisibleException("Please enter an email or AIM address you use with your DumbHippo account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
 		}
 		
 		if (!(sendlink || checkpassword) || (sendlink && checkpassword)) {
@@ -78,7 +78,7 @@ public class SigninServlet extends AbstractServlet {
 				signinSystem.sendSigninLink(address);
 			} catch (HumanVisibleException e) {
 				if (e.getHtmlSuggestion() == null)
-					e.setHtmlSuggestion("<a href=\"/signin\">Try again</a>");
+					e.setHtmlSuggestion("<a href=\"/who-are-you\">Try again</a>");
 				throw e;
 			}
 			request.setAttribute("address", address);
