@@ -33,27 +33,169 @@
 	opacity:						inherit;
 	*/
 }
-
 body {
 	/* Properties of body */
 	margin:							0;
-	max-width:						90%;
+	padding:						0;
 
 	/* Page-wide defaults to be inherited by child nodes */
 	font-family:					Bitstream Vera Sans, Verdana, sans;
-	color:							#505050;
-	background-color: 				#fff;
+	color:							#000000;
+	background-color:				#626262;
 }
-
 form {
 	margin:							0;
 }
-
-table, tbody, tr, td {
+div {
 	margin:							0;
 	padding:						0;
-	vertical-align:					top;
 }
+img {
+	border:							0;
+}
+#dhMainArea {
+	min-height:						1080px;
+	max-width:						422px;
+	border:							10px solid #bababa;
+	padding:						2px;
+	background-color:				#ffffff;
+	position:						absolute;
+	left:							70px;
+}
+#dhPersonalArea {
+	min-height:						1080px;
+	max-width:						196px;
+	border:							10px solid #bababa;
+	background-color:				#bababa;
+	position:						absolute;
+	left:							531px;
+}
+a.dh-upload-photo {
+	font-size:						small;
+}
+
+input.dh-upload-photo {
+	font-size:						small;
+}
+/* ------------ LEFT SIDE ------------ */
+#dhToolbar {
+	color:					#000000;
+	background-color:		#628200;
+	font-size:				x-small;
+	padding:				5px;
+}
+a.dh-toolbar-item {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+a.dh-toolbar-item:link {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+a.dh-toolbar-item:visited {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+#dhInformationBar {
+	color:					#ffb979;
+	background-color:		#944e0f;
+	margin-top:				3px;
+	margin-bottom:			20px;
+	font-size:				x-small;
+	padding:				5px;
+	text-align:				center;
+}
+
+h2.dh-title {
+	color:					#3399ff;
+	margin:					0;
+	margin-top:				18px;
+	margin-bottom:			6px;
+	text-align:				left;
+}
+
+.dh-title {
+	color:					#3399ff;
+	margin:					0;
+	margin-bottom:			3px;
+	text-align:				left;
+}
+
+#dhSharesArea {
+	position:				absolute;
+	width:					500px;
+	left:					-45px;
+}
+/* ------------ RIGHT SIDE ------------ */
+#dhPhotoNameArea {
+	position:				relative;
+	background-color:		white;
+	border:					2px solid white;
+	border-top:				3px solid white;;
+	border-bottom:			3px solid white;;
+	padding:				0;
+}
+#dhPhotoNameArea img.dh-headshot {
+	position:				relative;
+	width:					192px;
+	background-color:		white;
+	color:					inherit;
+	margin:					0;
+	border:					0;
+	margin-bottom:			2px;
+	border:					0;
+}
+#dhName {
+	color:					#ffffff;
+	background-color:		#944e0f;
+	font-size:				x-large;
+	font-weight:			bold;
+	padding:				5px;
+	margin:					0;
+}
+a.dh-name-edit {
+	color:					#ffb979;
+	background-color:		inherit;
+	font-size:				x-small;
+	font-weight:			normal;
+	font-family:			Bitstream Vera Sans Mono, mono;
+}
+.dh-right-box-area {
+	color:					#ffffff;
+	background-color:		inherit;
+	position:				relative;
+	height:					900px;
+	margin:					0;
+	margin-top:				3px;
+	border:					2px solid white;
+	border-top-size:		3px;
+	border-bottom-size:		3px;
+	background-color:		#626262;
+}
+.dh-right-box-area a {
+	color:							#fff500;
+	background-color:				inherit;
+}
+.dh-right-box {
+	position:				relative;
+	border-bottom:			2px solid #bababa;
+	background-color:		#626262;
+	padding:				3px;
+	padding-top:			10px;
+}
+.dh-right-box-last {
+	border-bottom:			0;
+}
+#dhOTP {
+	position:						fixed;
+	right:							0;
+	top:							30px;
+	background-color:				#626262;
+	color:							#919191;
+	width:							150px;
+}
+
+/* ------------ LEGACY IMPORTING ------------ */
 
 .dhLabel {
 	/* be careful with this relative size; it is relative 
@@ -186,132 +328,3 @@ form.inlineEditBox input[type=text] {
 	font-style: italic;
 }
 
-/*
- *
- * Starting Site Project here
- *
- *
- */
-body {
-	margin:					0;
-	padding:				4em;
-	padding-top:			0;
-	color:					#505050;
-	background-color:		white;
-}
-div.dh-header {
-	background-color:		#efefef;
-	color:					inherit;
-	margin:					0;
-}
-div.dh-header table {
-	width:					100%;
-	padding:				0;
-}
-.dh-header-right a {
-	font-size:				8pt;
-}
-.dh-header-right {
-	text-align:				right;
-}
-span.dh {
-	font-weight:			bold;
-	font-size:				16pt;
-}
-span.first-letter {
-	color:					steelblue;
-	background-color:		inherit;
-}
-a, div.dhUrl *, dhUrl, .dh-url {
-	color:					blue;
-	text-decoration:		underline;
-}
-a:hover {
-	
-}
-div.toolbar {
-	font-size:				10pt;
-	color:					#909090;
-	margin-bottom:				1em;
-}
-div.toolbar * {
-	font-size:				10pt;
-	margin:					0;
-	padding:				0;
-	border:					0;
-}
-div.toolbar a {
-	color:					steelblue;
-}
-.dh-main-table {
-	table-layout:			fixed;
-}
-.dh-help-bubble {
-	width:				200px;
-	height:				75px;
-	position:			absolute;
-}
-.dh-help-bubble-triangle {
-	position:		relative;
-	display:		block;
-	top:			1px;
-	z-index:		2; /* on top */
-}
-.dh-help-bubble-message {
-	position:			relative;
-	padding:			7px;
-	font-size:			small;
-	background-color:	#a773fb;
-	color:				white;
-	border:				1px solid black;
-}
-.dh-help-bubble a {
-	font-size:			small;
-	color:				yellow;
-	text-decoration:	none;
-	margin:				7px;
-}
-.dh-help-bubble a:link {
-	color:				yellow;
-}
-.dh-help-bubble a:hover {
-	text-decoration:	underline;
-}
-/* Autosuggest stuff */
-.dh-suggestion-list {
-	z-index:			2; /* on top */
-	font-family: 		Bitstream Vera Sans, sans;
-	font-size:			10pt;
-	background: 		lightsteelblue;
-	padding: 			2px;
-	max-width:			20em;
-}
-.dh-suggestion-list ul
-{
-	padding: 			0;
-	margin: 			0;
-	list-style-type: 		none;
-}
-.dh-suggestion-list a
-{
-	text-decoration: 		none;
-	color: 				navy;
-}
-.dh-suggestion-list .dh-selected
-{
-	background: 			#bcd1ed;
- 	color: 				white;
-}
-.dh-suggestion-list .dh-selected a
-{
-	color: 				white;
-}
-
-#dhAutoSuggest {
-	display: 			none;
-	cursor: 			pointer;	
-}
-.dh-headshot {
-	margin:					auto;
-	border:					0;
-}

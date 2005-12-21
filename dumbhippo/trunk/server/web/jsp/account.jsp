@@ -17,6 +17,7 @@
 	<script type="text/javascript">
 		dojo.require("dh.password");
 		dojo.require("dh.slideshow");
+        dojo.require("dh.util");
 	</script>
 	<script type="text/javascript">	
 		var accountSlideshowInit = function() {
@@ -61,26 +62,29 @@
 	</script>
 </head>
 <body>
-    <dht:header>
-		Account Setup
-	</dht:header>
 
-	<dht:toolbar/>
+<div id="dhContainer">
 
-	<div id="dhMain">
-	
-		<div class="dh-account-movie-area">
-			<div id="dhAccountSlideshow"></div>
-		</div>
-		<div style="clear:left;text-align:center;"><a style="font-size:xx-small;font-style:italic;color:black;text-decoration:none;" target="_blank" href="http://www.toothpastefordinner.com/">temporary comics based on the awesome toothpastefordinner characters</a></div>
-		
+	<div id="dhMainArea">
+		<img src="/images/dh-logo.jpg"/>
+
+		<div id="dhToolbar">Do It: <a class="dh-toolbar-item" href="/home">Home</a> - <a class="dh-toolbar-item" href="/account">Your Account</a></div>
+
+		<h2 class="dh-title">Comics!</h2>
+
+		<div style="overflow:hidden;">
+
+			<div class="dh-account-movie-area">
+				<div id="dhAccountSlideshow"></div>
+			</div>
+			<div style="clear:left;text-align:center;"><a style="font-size:xx-small;font-style:italic;color:black;text-decoration:none;" target="_blank" href="http://www.toothpastefordinner.com/">temporary comics based on the awesome toothpastefordinner characters</a></div>
+
 		<c:choose>
 			<c:when test="${!account.signin.disabled}">
 				
 				<div class="dhBackgroundBox">
 					<b>Help your friends find you</b>
-					
-				
+			
 					<table class="dh-edit-table">
 					<tr>
 					<td class="dh-edit-table-label">
@@ -89,52 +93,10 @@
 					<td class="dh-edit-table-control">
 						<dht:userNameEdit value="${account.person.name}"/>
 					</td>
-					<td rowSpan="6">
-					<div class="dh-right-box dhItemBox">
-						<p class="dh-right-box-section">Email Addresses</p>
-						<c:forEach items="${account.person.allEmails}" var="email">
-							<p><c:out value="${email.humanReadableString}"/></p>
-						</c:forEach>
-						<p class="dh-right-box-section">Screen Names</p>
-						<c:forEach items="${account.person.allAims}" var="aim">
-							<p><c:out value="${aim.humanReadableString}"/></p>
-						</c:forEach>
-					</div>
-					</td>
 					</tr>
 
 					<tr>
 					<td colspan="2" class="dh-explanation">Click on the name to change it.
-					</td>
-					</tr>
-
-					<tr>
-					<td class="dh-edit-table-label">
-						<a href="${account.addAimLink}">
-						AIM us your screen name
-						</a>
-					</td>
-					<td>
-					</td>
-					</tr>
-
-					<tr>
-					<td colspan="2" class="dh-explanation">You can use it to login, we'll keep it private (just between us).
-					</td>
-					</tr>
-
-					<tr>
-					<td class="dh-edit-table-label">
-						Add an email address:
-					</td>
-					<td class="dh-edit-table-control">
-						<input id="dhExtraEmailAddress" class="dhText"/>
-						<input type="button" value="Send Verification"/>
-					</td>
-					</tr>
-
-					<tr>
-					<td colspan="2" class="dh-explanation">Click on the link you get in the mail.
 					</td>
 					</tr>
 					</table>
@@ -173,63 +135,84 @@
 					<td colspan="2" class="dh-explanation">You can email or IM yourself a sign-in link at any time, so a password is optional.
 					</td>
 					</tr>
-					<tr>
-					<td class="dh-edit-table-label">
-						<a href="javascript:dh.actions.setAccountDisabled(true);">Disable Account</a>
-					</td>
-					<td>
-					</td>
-					</tr>
-					<tr>
-					<td colspan="2" class="dh-explanation">
-						Disabling your account means you have no 
-						public page and we will never send you email for any reason.			
-						<a href="/privacy" target="_blank">Our privacy policy</a>
-					</td>
-					</tr>
-					<tr>
-					<td class="dh-edit-table-label">
-						<a href="javascript:dh.actions.signOut();">Sign Out</a>
-					</td>
-					<td>
-					</td>
-					</tr>
-					<tr>
-					<td colspan="2" class="dh-explanation">Sign out to keep other people on this computer from using your account.
-					</td>
-					</tr>
 					</table>
 				</div>
-				<p>
-				All done? <a href="home" target="_top">Return to your page.</a>
-				</p>
 			</c:when>
 			<c:otherwise>
-				<div class="dhBackgroundBox">
-					<b>Account currently disabled</b>
-					
-					<table class="dh-edit-table">
-					<tr>
-					<td class="dh-edit-table-label">
-						<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
-					</td>
-					<td class="dh-edit-table-control">
-					</td>
-					</tr>
-					<tr>
-					<td colspan="2" class="dh-explanation">
-						Enabling your account will give you a public page and let you 
-						share links and photos with other people.
-						<a href="/privacy" target="_blank">Our privacy policy</a>			
-					</td>
-					</tr>
-					</table>
+				<div>				
+					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
+
+					<p>Enabling your account will give you a public page and let you share links and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
 				</div>
-				<p>
+				<div>
 					<a href="javascript:dh.actions.signOut();">Sign Out</a>
-				</p>
+				</div>
 			</c:otherwise>
 		</c:choose>		
-	</div>	
+
+		</div>
+	</div>
+
+	<div id="dhPersonalArea">
+		<div id="dhPhotoNameArea">
+		<dht:headshot person="${account.person}" size="192" />
+		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
+		<div id="dhName"><c:out value="${account.person.name}"/></div>
+		</div>
+
+		<div class="dh-right-box-area">
+		<c:if test="${!account.signin.disabled}">
+			<div class="dh-right-box">
+				<h5 class="dh-title">Email Addresses</h5>
+					<c:forEach items="${account.person.allEmails}" var="email">
+						<p><c:out value="${email.humanReadableString}"/></p>
+					</c:forEach>	
+					<p><input id="dhExtraEmailAddress" class="dhText"/><input type="button" value="Add Email Address"/></p>
+					<p class="dh-explanation">Click on the link you get in the mail.</p>
+			</div>
+			<div class="dh-right-box">
+				<h5 class="dh-title">Screen Names</h5>
+					<c:forEach items="${account.person.allAims}" var="aim">
+						<p><c:out value="${aim.humanReadableString}"/></p>
+					</c:forEach>
+					<p><a href="${account.addAimLink}">AIM us your screen name</a></p>
+					<p class="dh-explanation">You can use it to login, we'll keep it private (just between us).</p>
+			</div>
+		</c:if>
+			<div class="dh-right-box">
+				<h5 class="dh-title">Account Options</h5>
+			<c:choose>
+				<c:when test="${!account.signin.disabled}">
+				<div>
+				<a href="javascript:dh.actions.signOut();">Sign Out</a>
+				<p>Sign out to keep other people on this computer from using your account.</p>
+				</div>
+				<div>
+				<a href="javascript:dh.actions.setAccountDisabled(true);">Disable Account</a>
+				<p>Disabling your account means you have no public page and we will never send you email for any reason.	<a href="/privacy" target="_blank">Our privacy policy</a></p>
+				</div>
+				</c:when>
+				<c:otherwise>
+				<div>
+					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
+					<p>Enabling your account will give you a public page and let you share links and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
+				</div>
+				<div>
+					<a href="javascript:dh.actions.signOut();">Sign Out</a>
+				</div>
+				</c:otherwise>
+			</c:choose>		
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<div id="dhOTP">
+Suckers!!<br/>
+Precious Roy, Precious Roy, Making lots of suckers out of girls and boys<br/>
+DING!
+</div>
+
 </body>
 </html>

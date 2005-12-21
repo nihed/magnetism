@@ -17,7 +17,7 @@ public class FaviconTag extends SimpleTagSupport {
 		// this craziness is in order to first try 
 		// foo.com/bar/baz/favicon.ico and then foo.com/favicon.ico
 		// div instead of img is to avoid the broken image icon
-		String template = "<div class=\"dh-favicon\" style=\"position: relative; width: 16; height: 16;\">\n"
+		String template = "<div class=\"dh-favicon\" style=\"width: 16; height: 16;\">\n"
 			// on the bottom /images/favicon.ico, a popular choice but requires a <link>
 			// tag pointing to it (there isn't a convention here) so we really shouldn't
 			// use this without parsing the page

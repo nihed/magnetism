@@ -19,73 +19,87 @@
 	</script>
 </head>
 <body>
-    <c:url value="viewperson?personId=${home.signin.userId}" var="publicurl"/>
-	<dht:header>
-		This is You!<br/>
+
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<img src="/images/dh-logo.jpg"/>
+
+		<dht:toolbar/>
+
 		<c:choose>
 			<c:when test="${home.signin.disabled}">
-				<a href="/account">(re-enable your account)</a>
+				<!-- FIXME: Seems ridiculous to show this instead of just forward them to the account page -->
+				<div id="dhInformationBar"><a class="dh-information" href="/account">(re-enable your account)</a></div>
 			</c:when>
 			<c:otherwise>
-				<a href="${publicurl}">(your public page)</a>
+				<!-- FIXME: Leaving this option in case we want other messages -->
 			</c:otherwise>
 		</c:choose>
-	</dht:header>
-	<dht:toolbar/>
-	<div class="person">
-		<dht:headshot person="${home.person}" size="128" />
-		<dht:userNameEdit value="${home.person.name}"/>
-	</div>
-	<div>
-		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
+
+		<h2 class="dh-title">Links Shared With You</h2>
+
+		<div id="dhSharesArea">
+			<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
+		</div>
+		<div style="position:absolute;bottom:60px;right:30px;"><input style="width:5em;text-align:center;border:1px solid black;padding:0;"type="text" value="Search"> More Shares</div>
 	</div>
 
-	<div id="dhMain">
-		<table class="dh-main-table">
-		<tr>
-		<td class="dh-post-list-td">
-			<c:if test="${home.receivedPosts.size > 0}">
-				<div class="shared-links">	
-					<strong>Links Shared With You</strong>
-					<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
-				</div>
-			</c:if>
-		</td>
-		<td class="dh-post-list-td">
-			<c:if test="${home.contactPosts.size > 0}">
-				<div class="shared-links">
-					<strong>Links Shared By Your Friends</strong>
-					<c:forEach items="${home.contactPosts.list}" var="post">
-						<dht:postBubble post="${post}"/>
-					</c:forEach>
-				</div>
-			</c:if>
-		</td>
-		</tr>
-		<tr>
-		<td colspan="2">
-			<c:if test="${home.groups.size > 0}">
-				<div class="groups">
-					<strong>Groups You're In</strong>
-					<br/>
+	<div id="dhPersonalArea">
+		<div id="dhPhotoNameArea">
+		<dht:headshot person="${home.person}" size="192" />
+		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
+		<div id="dhName"><dht:userNameEdit value="${home.person.name}"/></div>
+		</div>
+
+		<div class="dh-right-box-area">
+		<div class="dh-right-box">
+			<h5 class="dh-title">Groups You're In</h5>
+			<div class="dh-groups">
+			<c:choose>
+				<c:when test="${home.groups.size > 0}">
 					<dh:entityList value="${home.groups.list}" photos="true"/>
-				</div>
+				</c:when>
+				<c:otherwise>
+					<!-- FIXME: need class definition for this -->
+					<div class="dh-groups-none">You Need Groups!!</div>
+				</c:otherwise>
+			</c:choose>
+			</div>
+		</div>
+		<div class="dh-right-box dh-right-box-last">
+			<h5 class="dh-title">People You Know</h5>
+			<p class="dh-invites">
+			<c:if test="${home.invitations > 0}">
+			You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
 			</c:if>
-			<c:if test="${home.contacts.size > 0}">
-				<div class="friends">
-					<strong>People You Know</strong>
-					<br/>
-					<c:if test="${home.invitations > 0}">
-						You can <a href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
-						<br/>
-					</c:if>
+			</p>
+			<div class="dh-people">
+			<c:choose>
+				<c:when test="${home.contacts.size > 0}">
 					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
-				</div>
-			</c:if>
-		</td>
-		</tr>
-		</table>
+				</c:when>
+				<c:otherwise>
+					<!-- FIXME: need class definition for this -->
+					<div class="dh-people-none">You Need Peeps!!</div>
+				</c:otherwise>
+			</c:choose>
+			</div>
+		</div>
+		</div>
 	</div>
-</pre>
+
+</div>
+
+<div id="dhOTP">
+Suckers!!<br/>
+Precious Roy, Precious Roy, Making lots of suckers out of girls and boys<br/>
+DING!
+</div>
+
+<script>
+
+</script>
+
 </body>
 </html>

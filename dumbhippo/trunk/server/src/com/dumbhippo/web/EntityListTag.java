@@ -35,12 +35,9 @@ public class EntityListTag extends SimpleTagSupport {
 				continue;
 			
 			if (presenceHtml != null) {
-				html = html + "&nbsp;" + presenceHtml;
+				html = html + presenceHtml;
 			}
-			
-			if (!first)
-				writer.print(", ");
-			
+				
 			writer.print(html);
 			
 			first = false;

@@ -24,7 +24,8 @@ public class EntityTag extends SimpleTagSupport {
 		String link = null;
 		String body;
 		String photoUrl = null;
-		
+		String className = "dh-headshot";
+
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
 			User user = view.getUser();
@@ -36,6 +37,7 @@ public class EntityTag extends SimpleTagSupport {
 				photoUrl = AbstractPhotoServlet.getPersonSmallPhotoUrl(id, user.getVersion());
 			}
 			body = view.getName();
+			className = "dh-person";
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
 			Group group = groupView.getGroup();
@@ -48,6 +50,7 @@ public class EntityTag extends SimpleTagSupport {
 			else
 				body = group.getName();
 			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
+			className = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
 			if (skipId != null && skipId.equals(group.getId()))
@@ -55,6 +58,7 @@ public class EntityTag extends SimpleTagSupport {
 			link = "/viewgroup?groupId=" + group.getId();
 			body = group.getName();
 			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
+			className = "dh-group";
 		} else {
 			body = "???";
 		}
@@ -63,17 +67,16 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (photo && photoUrl != null) {
 			if (link != null)
-				xml.openElement("a", "href", link);
+				xml.openElement("a", "href", link, "target", "_top", "class", className);
+
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
 			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
-			if (link != null)
-				xml.closeElement();
-		}
-		
-		if (link != null)
-			xml.appendTextNode("a", body, "href", link, "target", "_top");
-		else
 			xml.appendEscaped(body);
+		}
+		else {
+			/** For Listing Recipients in comma separated list  **/
+			xml.appendTextNode("a", body, "href", link, "target", "_top");
+		}
 		
 		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
 			PersonView view = (PersonView)o;
@@ -82,6 +85,10 @@ public class EntityTag extends SimpleTagSupport {
 			xml.appendTextNode("a", "invite", "href", inviteUrl);
 			xml.append(")");
 		}
+
+		if (photo && photoUrl != null && link != null)
+			xml.closeElement();
+
 		return xml.toString();
 	}
 	

@@ -3,10 +3,66 @@
 /* CSS file included only if IE 5.5 or 6 */
 
 /* Most other fonts look nasty on IE, but look good in everything else */
-body {
-	font-family:	Verdana, sans;
+html, body {
+	height:					100%;
+	overflow:				hidden;
+}
+body {	
+	font-family:			Verdana, sans;
+}
+.dh-non-ie-png {
+	display: 				none;
+}
+.dh-share-shadow {
+	width:					480px;
+	position:				relative;
+	left:					-10px;
+	top:					10px;
+}
+.dh-share {	/* this is to counter the shadow code */
+	left:					10px;
+	top:					-0px;
+}
+.dh-share-shadow {
+   	height:  				150px;
+	background-image:		none;
+/*	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src="/images/ie-shadow.png", sizingMethod="scale"); */
 }
 
-.dh-non-ie-png {
-	display: 	none;
+
+#dhContainer {
+	height:					100%;
+	overflow:				auto;
+	position:				relative;
+	z-index:				1;
+}
+#dhMainArea {
+	height:					1080px;
+}
+#dhToolbar {
+	font-size:				xx-small;
+}
+a.dh-toolbar-item {
+	font-size:				xx-small;
+}
+a.dh-toolbar-item:link {
+	font-size:				xx-small;
+}
+#dhPersonalArea {
+	height:					1080px;
+	width:					216px;
+}
+.dh-title {
+	font-size:				normal;
+}
+
+#dhName {
+	font-size:				large;
+}
+.dh-group, .dh-person {
+	font-size:				x-small;
+}
+#dhOTP {
+	position:				absolute;
+	z-index:				-1;
 }

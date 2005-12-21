@@ -1,102 +1,94 @@
 @CHARSET "UTF-8";
 
-.dh-post-list-td {
-	width:					422px;
-}
-div.cool-bubble-shadow {
-	margin:					10px;
-	background-color:		#303030;
-	width:					402px;
-	-moz-border-radius:		7px;
+/* ------------ SHARE BUBBLES ------------ */
+
+.dh-share-shadow {
 	position:				relative;
+	background: 			url('/images/shadow.png') no-repeat bottom center;
+	left:					-5px;
+	top:					15px;
 }
-table.cool-bubble {
-	border-spacing:			0px;
-	border:					1px solid #404040;
-	width:					400px;
-	-moz-border-radius:		7px;
-	background-color:		white;
+.dh-share {	/* this is to counter the shadow code */
+	left:					5px;
+	top:					-15px;
+}
+.dh-share {
+	width:					458px;
 	position:				relative;
-	right:					1px;
-	bottom:					1px;
+	color:					white;
+	background-color:		#3399ff;
+	min-height:				150px;
+	border:					3px solid white;
+	-moz-border-radius:		10px;
+	margin-bottom:			10px;
 }
-table.cool-bubble * {
-	margin:					0px;
-	padding:				0px;
-	border:					0px;
-	font-size:				9pt;
-	vertical-align:				top;
-}
-table.cool-bubble tbody {
-	width:					100%;
-	height:					100%;
-}
-td.cool-person {
+.dh-share-from {
+	position:				absolute;
+	left:					0;
+	width:					85px;
+	min-height:				140px;
+	padding-top:			24px;
 	text-align:				center;
-	width:					60px;
-	overflow:				hidden;
-	vertical-align:				middle;
 }
-a.cool-person, a.cool-group {
+div.dh-share-from img.dh-person {
+	width:					48px;
+	height:					48px;
+	border:					0;
+}
+div.dh-share a.dh-person {
 	display:				block;
-	width:					60px;
-	text-align:				center;
-	float:					left;
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
+	float:					none;
 }
-div.cool-person, div.cool-group {
-	width:					60px;
+a.dh-headshot:link {
+	color:					#e5e920;
+	background-color:		inherit;
+}
+.dh-share-text {
+	width:					375px;
+	position:				absolute;
+	right:					0;
+	padding-top:			12px;
+}
+a.dh-share-link {
+	font-weight:			bold;
+	color:					white;
+	background-color:		inherit;
+	position:				relative;
+	display:				block;
+	height:					1.4em;
 	overflow:				hidden;
-	font-size:				x-small;
-	cursor:					pointer;
 }
-td.cool-link {
-	padding-top:				3px;
-	padding-bottom:				3px;
-	font-size:				100%;
-	font-weight:				bold;
-	width:					340px;
+a.dh-share-link:link {
+	color:					white;
+	background-color:		inherit;
 }
-div.cool-link {
-	width:					340px;
-	overflow:				hidden;
-	padding:				0;
+.dh-favicon {
+	position:				absolute;
+	right:					6px;
+	top:					12px;	
+}
+.dh-share-description {
+	font-size:				smaller;
+	height:					65px;
+	margin-top:				12px;
+}
+.dh-share-description p {
 	margin:					0;
-	font-weight:				bold;
 }
-div.cool-link-chat {
-	text-align:				left;
-	font-size:				8pt;
-	vertical-align:			top;
+div.dh-share-to {
+	position:				absolute;
+	bottom:					4px;
+	right:					12px;
+	display:				block;
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
 }
-a.cool-link {
-	font-weight:				bold;
-	color:					blue;
-	background-color:			inherit;
-	text-decoration:			none;
-}
-a.cool-link:hover {
-
-}
-a.link-viewed {
-	width:					340px;
-	color:					grey;
-}
-td.cool-link-desc {
-	padding-top:				7px;
-	padding-bottom:				7px;
-}
-td.cool-link-meta {
-	text-align:				right;
-	font-size:				8pt;
-	vertical-align:				bottom;
-}
-div.cool-link-date {
-
-}
-div.cool-link-to {
-
-}
-.cool-link .dh-favicon {
-	display:		inline;
-	margin-left:	2em;
+div.dh-share-to a {
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
 }

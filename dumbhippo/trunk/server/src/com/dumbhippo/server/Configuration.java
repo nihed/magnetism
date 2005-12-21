@@ -18,7 +18,7 @@ public interface Configuration {
 	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
 	static final public String POSTINFO_RELATIVE_PATH = "/postinfo";
 	static final public int SHOT_SMALL_SIZE = 48;
-	static final public int SHOT_LARGE_SIZE = 128;
+	static final public int SHOT_LARGE_SIZE = 192;
 	
 	@ApplicationException
 	public class PropertyNotFoundException extends Exception {

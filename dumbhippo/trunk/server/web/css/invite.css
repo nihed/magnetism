@@ -1,11 +1,16 @@
 @CHARSET "UTF-8";
 
 @import "sitewide.css";
+@import "home.css";
+
 
 .dh-invite-mail-body, .dh-invite-mail-header {
-	padding:				1em;
-	border:					1px solid #404040;
-	width:					28em;
+	padding:					1em;
+	border:						1px solid #404040;
+}
+.dh-invite-mail-body a {
+	color:						blue;
+	background-color:			inherit;
 }
 .dh-invite-mail-header {
 	border-bottom:				0;
@@ -16,9 +21,13 @@
 }
 
 .dhText {
-	width:					25em;
+	width:						22em;
 }
 
 .dhTextArea {
-	width:					25em;
+	width:						22em;
+}	
+
+input.dh-send-invite {
+
 }

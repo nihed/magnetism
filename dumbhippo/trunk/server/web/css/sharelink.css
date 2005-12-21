@@ -1,7 +1,6 @@
 @CHARSET "UTF-8";
 
-/* This file contains styles specific to the "share a link" page 
- */
+/* ------------ STYLES SPECIFIC TO /SHARELINK ------------ */
 
 @import "sitewide.css";
 
@@ -10,6 +9,8 @@ body {
 	width:							100%;
 	max-width:						100%;
 	padding:						0;
+	color:							#000000;
+	background-color:				#ffffff;
 }
 div.header {
 	width:							100%;
@@ -133,4 +134,73 @@ div.dhFlickrPhotoStatus {
 
 div.dhFlickrPhotoUploadMeta {
 	text-align: center;
+}
+
+/* ------------ IMPORT FROM SITEWIDE -------------- */
+
+
+.dh-help-bubble {
+	width:				200px;
+	height:				75px;
+	position:			absolute;
+}
+.dh-help-bubble-triangle {
+	position:		relative;
+	display:		block;
+	top:			1px;
+	z-index:		2; /* on top */
+}
+.dh-help-bubble-message {
+	position:			relative;
+	padding:			7px;
+	font-size:			small;
+	background-color:	#a773fb;
+	color:				white;
+	border:				1px solid black;
+}
+.dh-help-bubble a {
+	font-size:			small;
+	color:				yellow;
+	text-decoration:	none;
+	margin:				7px;
+}
+.dh-help-bubble a:link {
+	color:				yellow;
+}
+.dh-help-bubble a:hover {
+	text-decoration:	underline;
+}
+/* Autosuggest stuff */
+.dh-suggestion-list {
+	z-index:			2; /* on top */
+	font-family: 		Bitstream Vera Sans, sans;
+	font-size:			10pt;
+	background: 		lightsteelblue;
+	padding: 			2px;
+	max-width:			20em;
+}
+.dh-suggestion-list ul
+{
+	padding: 			0;
+	margin: 			0;
+	list-style-type: 		none;
+}
+.dh-suggestion-list a
+{
+	text-decoration: 		none;
+	color: 				navy;
+}
+.dh-suggestion-list .dh-selected
+{
+	background: 			#bcd1ed;
+ 	color: 				white;
+}
+.dh-suggestion-list .dh-selected a
+{
+	color: 				white;
+}
+
+#dhAutoSuggest {
+	display: 			none;
+	cursor: 			pointer;	
 }

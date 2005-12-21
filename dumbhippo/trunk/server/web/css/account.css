@@ -9,39 +9,27 @@
 	text-align:	center;
 }
 
-.dh-account-movie {
-	width: 		240;
-	height: 	200;
-	border: 	1px solid black;
-	text-align: 	center;
-	margin:		auto;
-	margin-bottom:	2em;
+.dh-account-movie-area {
+	width: 					420;
+	height: 				300;
+	border: 				1px solid black;
+	text-align: 			center;
+	margin:					auto;
+	margin-bottom:			1em;
+}
+
+#dhPasswordEntry, #dhPasswordAgainEntry {
+	width:			10em;
 }
 
 .dh-edit-table {
-	margin:			.5em;
-}
-
-.dh-step {
-	font-weight:	bold;
-	padding-right:  1.5em;
-}
-
-.dh-step:before {
-	content:		'Step ';
-}
-
-.dh-step:after {
-	content:		'.';
+	width:				400px;
 }
 
 .dh-edit-table tr {
-	padding:		1.5em;
 }
 
 .dh-edit-table-label {
-	padding-left:	.5em;
-	padding-right:	1em;
 }
 
 .dh-edit-table-control {
@@ -49,26 +37,12 @@
 }
 
 .dh-explanation {
-	text-align: 	right;
-	font-size:		smaller;
+	font-size:		small;
 	font-style: 	italic;
-	padding-bottom:	.5em;
-	padding-left:	2.5em;
-}
-
-.dh-right-box {
-	max-width:			15em;
-	margin:		1em;
-}
-
-.dh-right-box-section {
-	font-weight:		bold;
-	font-size:			smaller;
 }
 
 .dhBackgroundBox {
-	/* needed so dh-right-box is relative to this */
-	position:			relative;
+
 }
 
 /* Lame hack to keep dojo Edit link from screwing with the layout on mouseover;
