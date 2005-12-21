@@ -227,7 +227,21 @@ public class MessageSenderBean implements MessageSender {
 		
 		private String makeJid(User recipient) {
 			StringBuilder recipientJid = new StringBuilder();
-			recipientJid.append(recipient.getId().toString());
+
+			// Reverse the transformation in MessageGlueBean:jiveUserNameToGuid
+			String id = recipient.getId();
+			for (int i = 0; i < id.length(); i++) {
+				char c = id.charAt(i);
+				if (Character.isUpperCase(c)) {
+					recipientJid.append(Character.toLowerCase(c));
+				} else if (Character.isLowerCase(c)) {
+					recipientJid.append(c);
+					recipientJid.append('_');
+				} else {
+					recipientJid.append(c);
+				}
+			}
+							
 			recipientJid.append("@dumbhippo.com");
 			
 			return recipientJid.toString();
