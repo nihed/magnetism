@@ -96,16 +96,24 @@ public class ViewGroupPage {
 		}
 		
 		if (viewedGroup != null) {
-			// kind of a hack, but when people just accepted
-			// the invitation we want to put them right in the group.
-			if (fromInvite) {
-				groupSystem.addMember(signin.getUser(), viewedGroup, signin.getUser());
-			}
 			
 			try {
 				groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
 			} catch (NotFoundException e) {
 				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+			}
+			
+			// If you view a group you were invited to, you get added; you can leave again and then 
+			// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
+			if (groupMember.getStatus() == MembershipStatus.INVITED) {
+				groupSystem.addMember(signin.getUser(), viewedGroup, signin.getUser());
+				
+				// reload the groupMember to have the new state
+				try {
+					groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+				} catch (NotFoundException e) {
+					groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+				}
 			}
 
 			adder = groupMember.getAdder();

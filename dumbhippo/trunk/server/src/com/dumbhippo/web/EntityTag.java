@@ -7,6 +7,9 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+import org.apache.commons.logging.Log;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
@@ -16,6 +19,8 @@ import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
 public class EntityTag extends SimpleTagSupport {
+	static private final Log logger = GlobalSetup.getLog(EntityTag.class);
+	
 	private Object entity;
 	private boolean showInviteLinks;
 	private boolean photo;
@@ -60,6 +65,10 @@ public class EntityTag extends SimpleTagSupport {
 			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
 			className = "dh-group";
 		} else {
+			if (o == null)
+				logger.error("null object in EntityTag!");
+			else
+				logger.error("Weird object in EntityTag type " + o.getClass().getName() + ": " + o.toString());
 			body = "???";
 		}
 		
