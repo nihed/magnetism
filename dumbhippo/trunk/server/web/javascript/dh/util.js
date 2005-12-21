@@ -271,6 +271,6 @@ dh.util.openShareGroupWindow = function(groupId) {
 }
 
 dh.util.openFrameSet = function(window, event, obj, postID) {
-	top.window.location.href = "frameset?postId=" + postID;
+	top.window.location.href = "visit?post=" + postID;
 	return false;
 }

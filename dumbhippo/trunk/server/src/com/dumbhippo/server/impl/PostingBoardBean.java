@@ -114,7 +114,7 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug(String.format("do we remove frameset with path %s host %s query %s",
 				original.getPath(), original.getHost(), original.getQuery()));
 		
-		if (!original.getPath().equals("/frameset"))
+		if (!original.getPath().equals("/visit"))
 			return original;
 		 
 		URL baseurl = configuration.getBaseUrl();
@@ -124,10 +124,10 @@ public class PostingBoardBean implements PostingBoard {
 		if (q == null)
 			return original;
 
-		int i = q.indexOf("postId=");
+		int i = q.indexOf("post=");
 		if (i < 0)
 			return original;
-		i += "postId=".length();
+		i += "post=".length();
 		String postId;
 		try {
 			String decoded = URLDecoder.decode(q.substring(i), "UTF-8");
