@@ -4,7 +4,8 @@
 <%-- This tag is used by sharelink.jsp and sharephotoset.jsp.  It
      is the HTML container for a recipient list; requires the
      JavaScript dh.sharelink to be loaded too --%>
-<%-- TODO reindent --%>     
+<%-- TODO reindent --%>   
+		<div id="dhRecipientListAreaContainer">  
 			<div id="dhRecipientListArea" class="dhBackgroundBox">		
 				<div id="dhRecipientList"> </div>
 				
@@ -52,3 +53,4 @@
 					 Add <span id="dhAddMemberDescription"></span> to <span id="dhAddMemberGroup"></span>
 				</a>
 			</div><!-- end of div containing create group link and recipient list -->
+		</div><!-- dhRecipientListAreaContainer -->

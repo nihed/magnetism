@@ -61,13 +61,15 @@
 			<div id="dhRecipientsError" class="dhValidityError"></div>
 	
 			<div class="dhVerticalPadding"></div>
-			
-			<div id="dhRecipientListArea" class="dhBackgroundBox">		
-				<div id="dhRecipientList"> </div>
-				
-				<span id="dhInvitationsRemainingMessage" style="display: none;"></span>
+
+			<div id="dhRecipientListAreaContainer">
+				<div id="dhRecipientListArea" class="dhBackgroundBox">	
+					<div id="dhRecipientList"> </div>
+					
+					<span id="dhInvitationsRemainingMessage" style="display: none;"></span>
+				</div>
 			</div>
-	
+
 			<div class="dhVerticalPadding"></div>
 	
 			<div class="dhLabel"><u>D</u>escription:</div>

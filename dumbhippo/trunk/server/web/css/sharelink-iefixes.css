@@ -11,6 +11,10 @@
 	padding:					0.5em;
 	float:						left;
 }
+#dhRecipientListAreaContainer {
+	position:						relative;
+	height:							7em;
+}
 #dhRecipientListArea {
 	height:						7em;
 }
