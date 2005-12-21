@@ -16,7 +16,7 @@
 <div id="dhContainer">
 
 	<div id="dhMainArea">
-		<img src="/images/dh-logo.jpg"/>
+		<dht:logo/>
 
 		<dht:toolbar/>
 

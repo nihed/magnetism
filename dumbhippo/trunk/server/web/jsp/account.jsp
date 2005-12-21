@@ -66,9 +66,9 @@
 <div id="dhContainer">
 
 	<div id="dhMainArea">
-		<img src="/images/dh-logo.jpg"/>
+		<dht:logo/>
 
-		<div id="dhToolbar">Do It: <a class="dh-toolbar-item" href="/home">Home</a> - <a class="dh-toolbar-item" href="/account">Your Account</a></div>
+		<dht:toolbar/>
 
 		<h2 class="dh-title">Comics!</h2>
 
