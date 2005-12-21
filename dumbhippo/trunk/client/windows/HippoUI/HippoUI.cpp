@@ -504,7 +504,7 @@ HippoUI::displaySharedLink(BSTR postId)
 {
     HippoBSTR targetURL;
 
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"frameset?postId="), &targetURL)))
+    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"visit?post="), &targetURL)))
         return;
     targetURL.Append(postId);
 
