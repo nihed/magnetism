@@ -94,3 +94,26 @@ div.dh-share-to a {
 	background-color:		inherit;
 	font-size:				small;
 }
+
+div.dh-share-search {
+	position:				relative;
+	text-align:				right;
+	right:					30px;
+}
+
+form.dh-share-search {
+	display:				inline;
+}
+
+input.dh-share-search {
+	width:					5em;
+	border:					1px solid black;
+	text-align:				center;
+	padding:				0;
+	margin:					0;
+}
+
+a.dh-share-search {
+	color:					blue;
+	background-color:		inherit;
+}

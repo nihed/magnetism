@@ -37,12 +37,11 @@
 			</c:otherwise>
 		</c:choose>
 
-		<h2 class="dh-title">Links Shared With You</h2>
+		<h2 class="dh-title">Stuff Shared With You</h2>
 
 		<div id="dhSharesArea">
 			<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
 		</div>
-		<div style="position:absolute;bottom:60px;right:30px;"><input style="width:5em;text-align:center;border:1px solid black;padding:0;"type="text" value="Search"> More Shares</div>
 	</div>
 
 	<div id="dhPersonalArea">
