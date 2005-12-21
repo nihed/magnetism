@@ -32,7 +32,7 @@ fi
 $dbcommand <<EOF
 DELETE FROM jiveProperty ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.plain.port', @@jivePlainPort@@ ) ;
-INSERT INTO jiveProperty VALUES ( 'xmpp.socket.secure.port', @@jiveSecurePort@@ ) ;
+INSERT INTO jiveProperty VALUES ( 'xmpp.socket.ssl.port', @@jiveSecurePort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.server.socket.port', @@jiveServerPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.port', @@jiveComponentPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domain', 'dumbhippo.com' ) ;
