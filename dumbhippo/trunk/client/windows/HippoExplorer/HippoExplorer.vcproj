@@ -33,6 +33,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				RegisterOutput="TRUE"
+				AdditionalDependencies="wininet.lib"
 				OutputFile="$(OutDir)/HippoExplorer.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="HippoExplorer.def"

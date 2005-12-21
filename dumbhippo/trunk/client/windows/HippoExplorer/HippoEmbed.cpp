@@ -12,6 +12,21 @@
 #include <strsafe.h>
 #include <stdarg.h>
 #include <ExDispid.h>
+#include <wininet.h> // For InternetCrackUrl
+
+// NOTE: This ActiveX control is disabled two separate ways
+//
+// 1. It isn't self-registered (DllRegisterServer), or registered by the 
+//    installer(Components.wxs)
+// 2. SetInterfaceSafetyOptions() always refused to set it as safe for scripting
+//
+// Both need to be reversed when we start using this.
+
+// The leading .; this prevents .foodumbhippo.com; we might want to consider
+// changing things so that the control can only be used from *exactly* the web
+// server specified in the preferences. (You'd have to check for either the
+// normal or debug server.
+static const WCHAR ALLOWED_HOST_SUFFIX[] = L".dumbhippo.com";
 
 HippoEmbed::HippoEmbed(void)
 {
@@ -25,10 +40,10 @@ HippoEmbed::HippoEmbed(void)
     // the constructor. We'd need to rework ClassFactory to handle this
     connectionPointContainer_.addConnectionPoint(IID_IHippoEmbedEvents);
 
-    hippoLoadTypeInfo(L"HippoExplorer.dll",
-                      &IID_IHippoEmbed, &ifaceTypeInfo_,
-                      &CLSID_HippoEmbed, &classTypeInfo_,
-                      NULL);
+    hippoLoadRegTypeInfo(LIBID_HippoExplorer, 0, 1,
+                         &IID_IHippoEmbed, &ifaceTypeInfo_,
+                         &CLSID_HippoEmbed, &classTypeInfo_,
+                         NULL);
 }
 
 HippoEmbed::~HippoEmbed(void)
@@ -148,10 +163,26 @@ HippoEmbed::SetInterfaceSafetyOptions (const IID &ifaceID,
                                        DWORD      enabledOptions)
 {
     if (IsEqualIID(ifaceID, IID_IDispatch)) {
+        // We're not using this currently, so just refuse always
+        return E_FAIL;
+
+#if 0
         if ((optionSetMask & ~INTERFACESAFE_FOR_UNTRUSTED_CALLER) != 0)
             return E_FAIL;
+
+        // INTERFACESAFE_FOR_UNSTRUSTED_CALLER covers use of a control
+        // both for invoking methods on it and receiving events for it
+
+        HippoBSTR url;
+        if (browser_)
+            browser_->get_LocationURL(&url);
+
+        if (!url || !checkURL(url))
+            return E_FAIL;
+
         safetyOptions_ = ((safetyOptions_ & ~optionSetMask) |
                           (enabledOptions & optionSetMask));
+#endif
 
         return S_OK;
     } else {
@@ -262,51 +293,6 @@ HippoEmbed::Invoke (DISPID        member,
 
 //////////////////////// IHippoEmbed Methods ////////////////////////
 
-STDMETHODIMP 
-HippoEmbed::DisplayMessage (BSTR message)
-{
-    MessageBox(NULL, message, NULL, MB_OK);
-
-    return S_OK;
-}
-
-static void
-formatHTML(MSHTML::IHTMLElement *element,
-           WCHAR *format, 
-           ...)
-{
-    WCHAR buf[1024];
-    va_list vap;
-    va_start (vap, format);
-    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
-    va_end (vap);
-
-    element->put_innerHTML(buf);
-}
-
-STDMETHODIMP 
-HippoEmbed::DebugDump (IDispatch *dispatch)
-{
-    if (!dispatch)
-        return E_FAIL;
-    HippoPtr<MSHTML::IHTMLElement> element;
-    HRESULT hr = dispatch->QueryInterface<MSHTML::IHTMLElement>(&element);
-    if (!SUCCEEDED(hr))
-        return hr;
- 
-    HippoBSTR browserURL, toplevelURL;
-    if (browser_)
-        browser_->get_LocationURL(&browserURL);
-    if (toplevelBrowser_)
-        toplevelBrowser_->get_LocationURL(&toplevelURL);
-
-    formatHTML(element, L"Toplevel URL: %ls<br>Browser URL: %ls\n",
-        toplevelURL ? toplevelURL : L"<null>", 
-        browserURL ? browserURL : L"<null>");
-
-    return S_OK;
-}
-
 STDMETHODIMP
 HippoEmbed::CloseWindow()
 {
@@ -378,4 +364,39 @@ HippoEmbed::onDocumentComplete(IDispatch *dispatch,
                 hippoDebug(L"Invoke failed %x", hr);
         }
     }
+}
+
+bool
+HippoEmbed::checkURL(BSTR url)
+{
+    URL_COMPONENTS components;
+    ZeroMemory(&components, sizeof(components));
+    components.dwStructSize = sizeof(components);
+
+    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
+    // to return pointers into the passed in URL along with lengths. The 
+    // specific non-zero value is irrelevant
+    components.dwHostNameLength = 1;
+    components.dwUserNameLength = 1;
+    components.dwPasswordLength = 1;
+    components.dwUrlPathLength = 1;
+    components.dwExtraInfoLength = 1;
+
+    if (!InternetCrackUrl(url, 0, 0, &components))
+        return false;
+
+    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+        return false;
+
+    HippoBSTR foo(components.dwHostNameLength, components.lpszHostName);
+    hippoDebug(L"%ls", foo);
+
+    size_t allowedHostLength = wcslen(ALLOWED_HOST_SUFFIX);
+    if (components.dwHostNameLength < allowedHostLength)
+        return false;
+
+    if (wcsncmp(components.lpszHostName + components.dwHostNameLength - allowedHostLength,
+                ALLOWED_HOST_SUFFIX,
+                allowedHostLength) != 0)
+        return false;
 }

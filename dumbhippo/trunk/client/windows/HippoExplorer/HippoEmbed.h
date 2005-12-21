@@ -51,6 +51,7 @@ public:
 private:
     void clearSite();
     void onDocumentComplete(IDispatch *dispatch, BSTR url);
+    bool checkURL(BSTR url);
 
     HippoConnectionPointContainer connectionPointContainer_;
 

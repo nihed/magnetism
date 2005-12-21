@@ -18,10 +18,6 @@ library HippoExplorer {
     ]
     interface IHippoEmbed : IDispatch
     {
-        [helpstring("Display message")]
-        HRESULT DisplayMessage([in] BSTR message);
-        [helpstring("Insert debugging information into the element")]
-        HRESULT DebugDump([in] IDispatch *element);
         [helpstring("Close the browser window; usually used for server side dialogs")]
         HRESULT CloseWindow(void);
     }
