@@ -129,7 +129,7 @@ public class PersonView {
 	}
 	
 	/**
-	 * Gets the id that should be used with viewperson.jsp, which is 
+	 * Gets the id that should be used with person.jsp, which is 
 	 * the User if any else null. Contacts without accounts don't have a public page.
 	 * 
 	 * @return the id or null

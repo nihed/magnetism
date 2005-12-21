@@ -15,7 +15,7 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
-    <c:url value="viewperson?who=${welcome.signin.userId}" var="publicurl"/>
+    <c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>
     <dht:header>
 		Welcome!
 	</dht:header>

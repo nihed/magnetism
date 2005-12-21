@@ -33,7 +33,7 @@ public class EntityTag extends SimpleTagSupport {
 				String id = user.getId();
 				if (skipId != null && skipId.equals(id))
 					return null;
-				link = "/viewperson?who=" + id;
+				link = "/person?who=" + id;
 				photoUrl = AbstractPhotoServlet.getPersonSmallPhotoUrl(id, user.getVersion());
 			}
 			body = view.getName();

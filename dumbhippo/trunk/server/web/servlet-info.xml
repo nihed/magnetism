@@ -185,7 +185,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>viewperson,viewgroup,main,search</param-value>
+          <param-value>person,viewgroup,main,search</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>

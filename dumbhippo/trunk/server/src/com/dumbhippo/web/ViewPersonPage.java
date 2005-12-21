@@ -93,9 +93,9 @@ public class ViewPersonPage {
 			try {
 				setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
 			} catch (ParseException e) {
-				logger.debug("bad personId as viewperson parameter " + personId);
+				logger.debug("bad personId as person parameter " + personId);
 			} catch (NotFoundException e) {
-				logger.debug("bad personId as viewperson parameter " + personId);
+				logger.debug("bad personId as person parameter " + personId);
 			}
 		}
 	}

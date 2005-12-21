@@ -455,7 +455,7 @@ public class MessageSenderBean implements MessageSender {
 			String viewPersonPageId = posterViewedBySelf.getViewPersonPageId();
 			String posterPublicPageUrl = null;
 			if (viewPersonPageId != null)
-				posterPublicPageUrl = baseurl + "/viewperson?who=" + viewPersonPageId;
+				posterPublicPageUrl = baseurl + "/person?who=" + viewPersonPageId;
 						
 			// HTML: "link shared by"
 			String recipientLink;
