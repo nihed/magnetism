@@ -119,8 +119,11 @@ public class RewriteServlet extends HttpServlet {
 		
 		if ((requiresSignin.contains(afterSlash) || (stealthMode && requiresSigninStealth.contains(afterSlash))) && 
 			!hasSignin(request) && 
-			request.getMethod().toUpperCase().equals("GET")) {
+			request.getMethod().toUpperCase().equals("GET")) { 
 			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
+			if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
+				url = url + "&wouldBePublic=true";
+			}
 			response.sendRedirect(url);
 			return;
 		}

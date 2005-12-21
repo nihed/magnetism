@@ -37,6 +37,18 @@
 				</tr>
 			</table>
 		</form>
+		<c:if test="${param.wouldBePublic}">
+			<p><b>Don't have an account?</b></p>
+			<p>
+				The page you're trying to get to will be public eventually, 
+				but right now it's "members only." If you want in, leave us 
+				your email address and we'll let you know when you can sign up.
+			</p>
+			<form method="post" action="/wantsin">
+				<input type="text" value="let@me.in.please" name="address" class="dhText"/>
+				<input type="submit" value="Want In?"/>
+			</form>
+		</c:if>
 	</div>
 </body>
 </html>
