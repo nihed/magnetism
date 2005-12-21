@@ -7,6 +7,12 @@
     </target>
 
     <target name="dar" depends="compile">
-	<exec dir="${basedir}" executable="${basedir}/super/super"><arg value="deploy"/><arg value="all"/></exec>
+	<exec dir="${basedir}" executable="${basedir}/super/super">
+		 <!-- this parameter doesn't matter; super barfs though if
+		      $HOME isn't set, which is true for the autobuilder. -->
+		<arg value="-Dhome=/enoent"/>
+		<arg value="deploy"/>
+		<arg value="all"/>
+	</exec>
     </target>
 </project>
