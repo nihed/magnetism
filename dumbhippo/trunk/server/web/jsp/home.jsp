@@ -48,7 +48,7 @@
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
 		<dht:headshot person="${home.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
+		<dht:uploadPhoto location="/headshots" linkText="change hoto"/>
 		<div id="dhName"><dht:userNameEdit value="${home.person.name}"/></div>
 		</div>
 
@@ -69,7 +69,7 @@
 		</div>
 		<div class="dh-right-box dh-right-box-last">
 			<h5 class="dh-title">People You Know</h5>
-			<p class="dh-invites">
+			<p class="dh-right-box-text">
 			<c:if test="${home.invitations > 0}">
 			You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
 			</c:if>

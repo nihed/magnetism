@@ -5,6 +5,13 @@
 @import "sitewide.css";
 @import "bubbles.css";
 
+.dh-right-box-text {
+	font-size:				x-small;
+	color:					#cecece;
+	text-align:				justify;
+	padding:				3px;
+	margin:					0;
+}
 
 /* ------------ GROUP LISTING ------------ */
 .dh-groups {
@@ -49,13 +56,6 @@ a.dh-group:visited {
 	text-align:				center;
 	clear:					both;
 	height:					180px;
-}
-.dh-invites {
-	font-size:				x-small;
-	color:					#cecece;
-	text-align:				justify;
-	padding:				3px;
-	margin:					0;
 }
 .dh-invites-left {
 	color:					#fff500;
