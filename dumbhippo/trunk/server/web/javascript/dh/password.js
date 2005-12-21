@@ -58,6 +58,10 @@ dhPasswordInit = function() {
 	dh.password.passwordEntry = document.getElementById('dhPasswordEntry');
 	dh.password.againEntry = document.getElementById('dhPasswordAgainEntry');
 	dh.password.setButton = document.getElementById('dhSetPasswordButton');
+	
+	// this happens when your account is disabled
+	if (!dh.password.passwordEntry)
+		return;
 
 	dojo.event.connect(dh.password.passwordEntry, "onchange", dj_global, "dhPasswordFormUpdate");
 	dojo.event.connect(dh.password.againEntry, "onchange", dj_global, "dhPasswordFormUpdate");
