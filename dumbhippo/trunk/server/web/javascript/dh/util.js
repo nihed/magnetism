@@ -52,31 +52,15 @@ dh.util.isShowing = function(node) {
 }
 
 dh.util.closeWindow = function() {
-	// Use our ActiveX control to close this dialog; the reason
-	// for checking the readyState is to see if the object was 
-	// actually loaded.
-	var embed = document.getElementById("dhEmbedObject");
-	if (embed && embed.readyState && embed.readyState >= 3) {
-		try {
-			embed.CloseWindow(); // this never returns though, I don't think
-			return true;
-		} catch(e) {
-			// Hmm, that didn't work. That probably means we are in
-			// one of our embedded IE instances. In this case we can simply
-			//  window.close()
-			window.close();
-			return true;
-		}
-	}
-
-	// In a javascript popup window from the javascript.open function
-	//   window.opener will be defined as the parent window object
-	if (window.opener) {
-		window.close();
-		return true;
-	} else {
-		return false;
-	}
+	// We have a CloseWindow object in our ActiveX control that
+	// we can use to close arbitrary windows, but as it happens,
+	// the only windows we want to close can be closed with
+	// window.close. Don't check window.opener here since we
+	// can close the windows opened by the client even when
+	// window.opener isn't set.
+	
+	window.close();
+	return true;
 }
 
 // could probably choose a better color ;-)

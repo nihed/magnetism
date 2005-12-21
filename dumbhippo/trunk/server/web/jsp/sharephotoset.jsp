@@ -8,7 +8,6 @@
 	<title></title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
 	<dht:scriptIncludes/>
-	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<script type="text/javascript">
 		dojo.require("dh.sharephotoset");	
 	</script>
