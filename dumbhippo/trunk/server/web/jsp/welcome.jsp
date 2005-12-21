@@ -86,9 +86,7 @@
 			<td>
 				<div class="shared-links">	
 					<strong>Cool Shared Links</strong>
-					<c:forEach items="${welcome.receivedPosts.list}" var="post">
-						<dht:postBubble post="${post}"/>
-					</c:forEach>
+					<dht:postList posts="${welcome.receivedPosts.list}" maxPosts="${welcome.maxReceivedPostsShown}" recipientId="${welcome.person.user.id}" recipientName="${welcome.person.name}"/>
 				</div>
 			</td>
 		</c:if>

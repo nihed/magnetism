@@ -23,7 +23,8 @@ import com.dumbhippo.server.PostingBoard;
  */
 public class WelcomePage {
 	static private final Log logger = GlobalSetup.getLog(WelcomePage.class);
-
+	static private final int MAX_RECEIVED_POSTS_SHOWN = 6;
+	
 	@Signin
 	private SigninBean signin;
 	
@@ -66,7 +67,7 @@ public class WelcomePage {
 	public ListBean<PostView> getReceivedPosts() {
 		logger.debug("Getting received posts for " + signin.getUser().getId());
 		if (receivedPosts == null)
-			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, 0));
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
 		return receivedPosts;
 	}
 	
@@ -87,4 +88,8 @@ public class WelcomePage {
 	public String getFeedbackEmail() {
 		return configuration.getProperty(HippoProperty.FEEDBACK_EMAIL);
 	}
+	
+	public int getMaxReceivedPostsShown() {
+		return MAX_RECEIVED_POSTS_SHOWN;
+	}	
 }
