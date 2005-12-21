@@ -48,6 +48,7 @@ fi
 
 "$JAVA" -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=@@jiveJdwpPort@@,suspend=n \
      -server \
+     -Djava.naming.provider.url=jnp://localhost:@@jnpPort@@ \
      -DmessengerHome=$targetdir \
      -Dmessenger.lib.dir=$targetdir/lib \
      -classpath $targetdir/lib/startup.jar \
