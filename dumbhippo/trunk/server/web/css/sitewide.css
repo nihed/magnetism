@@ -78,7 +78,13 @@ img {
 	left:							531px;
 }
 a.dh-upload-photo {
-	font-size:						small;
+	color:							black;
+	background-color:				inherit;
+	display:						block;
+	text-align:						right;
+	text-decoration:				none;
+	font-size:						x-small;
+	font-family:					Bitstream Vera Sans Mono, mono;
 }
 
 input.dh-upload-photo {
