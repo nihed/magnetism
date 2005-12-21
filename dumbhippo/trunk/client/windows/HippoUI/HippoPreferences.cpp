@@ -26,7 +26,7 @@ HippoPreferences::getMessageServer(BSTR *server)
     if (messageServer_)
         return messageServer_.CopyTo(server);
     else
-        return HippoBSTR(L"dumbhippo.com").CopyTo(server);
+        return HippoBSTR(L"messages.dumbhippo.com").CopyTo(server);
 }
 
 void
@@ -62,8 +62,8 @@ HippoPreferences::parseMessageServer(char        **nameUTF8,
             *nameUTF8 = g_utf16_to_utf8(raw, - 1, NULL, NULL, NULL);
     }
 
-    if (!nameUTF8)
-        *nameUTF8 = g_strdup("dumbhippo.com");
+    if (!*nameUTF8)
+        *nameUTF8 = g_strdup("messages.dumbhippo.com");
 }
 
 void 
