@@ -36,7 +36,7 @@ fi
 ######################################################################
 
 JAVA_OPTS="-Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
-$jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null &
+$jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null 2>&1 &
 pid=$!
 started=false
 for i in `seq 1 30` ; do
