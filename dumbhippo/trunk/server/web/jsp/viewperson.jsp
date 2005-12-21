@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="viewperson" class="com.dumbhippo.web.ViewPersonPage" scope="request"/>
-<jsp:setProperty name="viewperson" property="viewedPersonId" param="personId"/>
+<jsp:setProperty name="viewperson" property="viewedPersonId" param="who"/>
 
 <c:if test="${!viewperson.valid}">
 	<dht:errorPage>There's nobody here!</dht:errorPage>

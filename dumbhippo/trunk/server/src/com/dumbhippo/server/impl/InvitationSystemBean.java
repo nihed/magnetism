@@ -273,7 +273,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		messageHtml.append("<div style=\"padding: 1em;\">\n");
 		messageHtml.append("This was sent to you by <a href=\"");
-		messageHtml.appendEscaped(baseurl + "/viewperson?personId=" + inviter.getId());
+		messageHtml.appendEscaped(baseurl + "/viewperson?who=" + inviter.getId());
 		messageHtml.append("\">");
 		messageHtml.appendEscaped(inviterName);
 		messageHtml.append("</a> using ");
