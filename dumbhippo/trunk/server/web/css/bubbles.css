@@ -41,6 +41,8 @@ div.dh-share a.dh-person {
 	background-color:		inherit;
 	font-size:				small;
 	float:					none;
+	margin-left:			auto;
+	margin-right:			auto;
 }
 a.dh-headshot:link {
 	color:					#e5e920;
