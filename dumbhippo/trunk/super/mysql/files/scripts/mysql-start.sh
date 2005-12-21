@@ -12,7 +12,7 @@ if [ ! -d $targetdir/data/mysql ] ; then
     need_set_password=true
 fi
 
-/usr/bin/mysqld_safe --defaults-file=$targetdir/conf/my.cnf > /dev/null &
+/usr/bin/mysqld_safe --defaults-file=$targetdir/conf/my.cnf > /dev/null 2>&1 &
 pid=$!
 
 started=false
