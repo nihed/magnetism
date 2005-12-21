@@ -44,7 +44,7 @@ body {
 	background-color:				#626262;
 }
 a {
-	color:							#fff500;
+	color:							blue;
 	background-color:				inherit;
 }
 form {
@@ -119,7 +119,9 @@ a.dh-toolbar-item:visited {
 	text-align:				center;
 	height:					60px;
 }
-
+#dhInformationBar a {
+	color:					#fff500;
+}
 h2.dh-title {
 	color:					#3399ff;
 	margin:					0;
