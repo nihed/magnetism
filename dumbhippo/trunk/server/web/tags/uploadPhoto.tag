@@ -17,8 +17,9 @@
 <form id="dhPhotoUploadForm${N}" enctype="multipart/form-data" action="${posturl}" method="post">
 	<c:if test="${!empty linkText}">
 		<a id="dhChangePhotoLink${N}" class="dh-upload-photo" href="javascript:void(0);" onClick="dh.util.hideId('dhChangePhotoLink${N}');dh.util.showId('dhPhotoUploadFileEntry${N}');">${linkText}</a>
+		<c:set var="invisibleClass" value="dhInvisible" scope="request"/>
 	</c:if>
-	<input class="dh-upload-photo dhInvisible" onChange="document.forms['dhPhotoUploadForm${N}'].submit();" id="dhPhotoUploadFileEntry${N}" type="file" name="photo"/>
+	<input class="dh-upload-photo ${invisibleClass}" onChange="document.forms['dhPhotoUploadForm${N}'].submit();" id="dhPhotoUploadFileEntry${N}" type="file" name="photo"/>
 	<!-- we just always submit this, servlet ignores it if we aren't 
 		changing a group photo -->
 	<input type="hidden" name="groupId" value="${groupId}"/>

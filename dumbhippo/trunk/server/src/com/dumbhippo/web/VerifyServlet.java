@@ -87,7 +87,7 @@ public class VerifyServlet extends AbstractServlet {
 		if (urlParam != null) {
 			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
 			
-			// if the redirect url is to ourself (normally a viewgroup page) then 
+			// if the redirect url is to ourself (normally a group page) then 
 			// we want to tell the page we're sending to that it's from here
 			if (urlParam.startsWith(config.getPropertyFatalIfUnset(HippoProperty.BASEURL))) {
 				try {

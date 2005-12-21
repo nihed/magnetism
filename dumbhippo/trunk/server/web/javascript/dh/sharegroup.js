@@ -63,11 +63,11 @@ dh.sharegroup.submitButtonClicked = function() {
 							dojo.debug("sharegroup got back data " + dhAllPropsAsString(data));
 							
 							if (window.opener) {
-								// reload the viewgroup page so it shows we've invited people
+								// reload the group page so it shows we've invited people
 								window.opener.location.reload();
 							}
 							
-							dh.util.goToNextPage("viewgroup?groupId=" + dhShareGroupId, 
+							dh.util.goToNextPage("group?who=" + dhShareGroupId, 
 							                     "The group has been shared!");
 						},
 						function(type, error, http) {

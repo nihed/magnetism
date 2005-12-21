@@ -9,7 +9,7 @@
 <jsp:setProperty name="search" property="count" param="count"/>
 <jsp:setProperty name="search" property="posterId" param="posterId"/>
 <jsp:setProperty name="search" property="recipientId" param="recipientId"/>
-<jsp:setProperty name="search" property="groupId" param="groupId"/>
+<jsp:setProperty name="search" property="groupId" param="group"/>
 
 <head>
 	<title>Search</title>
@@ -48,7 +48,7 @@
 			<input type="hidden" name="count" value="${search.count}"/>
 			<input type="hidden" name="posterId" value="${search.posterId}"/>
 			<input type="hidden" name="recipientId" value="${search.recipientId}"/>
-			<input type="hidden" name="groupId" value="${search.groupId}"/>
+			<input type="hidden" name="group" value="${search.groupId}"/>
 		</form>
 	</div>
 

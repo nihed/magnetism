@@ -69,7 +69,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		
 		int newVersion = groupSystem.incrementGroupVersion(group.getId());
 		
-		doFinalRedirect(request, response, LARGEST_PHOTO_DIMENSION + "/" + groupId,
-				newVersion, "Go to group " + groupName, "/viewgroup?groupId=" + groupId);
+		doFinalRedirect(request, response, groupId,
+				newVersion, "Go to group " + groupName, "/group?who=" + groupId);
 	}
 }

@@ -26,7 +26,6 @@ public class EntityListTag extends SimpleTagSupport {
 			throw new RuntimeException(e);
 		}
 		
-		boolean first = true;
 		for (Object o : entities) {
 			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos);
 			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
@@ -39,8 +38,6 @@ public class EntityListTag extends SimpleTagSupport {
 			}
 				
 			writer.print(html);
-			
-			first = false;
 		}
 	}
 	

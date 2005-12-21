@@ -44,7 +44,7 @@ public class EntityTag extends SimpleTagSupport {
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			PersonView inviter = groupView.getInviter();
-			link = "/viewgroup?groupId=" + group.getId();
+			link = "/group?who=" + group.getId();
 			if (inviter != null)
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
@@ -55,7 +55,7 @@ public class EntityTag extends SimpleTagSupport {
 			Group group = (Group)o;
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
-			link = "/viewgroup?groupId=" + group.getId();
+			link = "/group?who=" + group.getId();
 			body = group.getName();
 			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
 			className = "dh-group";

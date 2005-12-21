@@ -185,11 +185,11 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>person,viewgroup,main,search</param-value>
+          <param-value>person,group,main,search</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,welcomedisabled,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,newphoto,groupphoto,framer,frameset</param-value>
+          <param-value>home,welcome,welcomedisabled,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,newphoto,framer,frameset</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

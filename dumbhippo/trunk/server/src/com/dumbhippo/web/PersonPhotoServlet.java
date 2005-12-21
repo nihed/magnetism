@@ -40,7 +40,7 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		
 		int newVersion = identitySpider.incrementUserVersion(person.getId());
 				
-		doFinalRedirect(request, response, LARGEST_PHOTO_DIMENSION + "/" + personId, 
+		doFinalRedirect(request, response, personId, 
 				newVersion, "Go to your page", "/home");
 	}
 }

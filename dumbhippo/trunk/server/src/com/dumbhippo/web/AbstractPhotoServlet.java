@@ -86,14 +86,14 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 			translateY = (size - origHeight * scaleY) * 0.5;
 		}
 
-		logger.debug("Scaling photo scaleX = " + scaleX + " scaleY = " + scaleY + " new width = "
+		logger.debug("Scaling photo to " + size + " scaleX = " + scaleX + " scaleY = " + scaleY + " new width = "
 				+ image.getWidth() * scaleX + " new height = " + image.getHeight() * scaleY
 				+ " translation = +" + translateX + "+" + translateY);
 
 		/* Our transformation */
 		AffineTransform tx = new AffineTransform();
-		tx.scale(scaleX, scaleY);
 		tx.translate(translateX, translateY);
+		tx.scale(scaleX, scaleY);
 		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
 		
 		/* All-transparent dest image */

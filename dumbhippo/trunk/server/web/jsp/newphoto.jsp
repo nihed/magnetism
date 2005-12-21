@@ -15,9 +15,10 @@
 	<dht:toolbar/>
 
 	<div id="dhMain">
-		<p>Your new photo looks like this:</p>
-		<dh:png klass="dh-headshot" src="/files${photoLocation}/${photoFilename}?v=${photoVersion}" style="width: 48; height: 48;"/>
-
+		<p>Your new photo looks like this (in two sizes):</p>
+		<dh:png klass="dh-headshot" src="/files${photoLocation}/192/${photoFilename}?v=${photoVersion}" style="width: 192; height: 192; border: 1px solid white;"/>
+		&nbsp;
+		<dh:png klass="dh-headshot" src="/files${photoLocation}/48/${photoFilename}?v=${photoVersion}" style="width: 48; height: 48; border: 1px solid white;"/>
 		<br/>
 		<p><c:out value="${homePageLink}" escapeXml="false"/></p>
 

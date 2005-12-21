@@ -132,7 +132,7 @@ public class SearchPage {
 		// these are untrusted from the params we got in the request
 		
 		if (groupId != null && groupId.length() > 0) {
-			sb.append("&groupId=");
+			sb.append("&group=");
 			sb.append(StringUtils.urlEncode(groupId));
 		}
 	

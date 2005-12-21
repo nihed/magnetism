@@ -223,7 +223,7 @@ public class PostingBoardBean implements PostingBoard {
 		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
 		URL url;
 		try {
-			url = new URL(baseurl + "/viewgroup?groupId=" + group.getId());
+			url = new URL(baseurl + "/group?who=" + group.getId());
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("We created an invalid url for a group", e);
 		}
