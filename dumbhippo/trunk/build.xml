@@ -1,5 +1,4 @@
 <project name="build-dumbhippo" default="dar" basedir=".">
-    <!-- build all subdirectories -->
     <target name="compile">
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
