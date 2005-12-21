@@ -43,6 +43,10 @@ body {
 	color:							#000000;
 	background-color:				#626262;
 }
+a {
+	color:							#fff500;
+	background-color:				inherit;
+}
 form {
 	margin:							0;
 }
@@ -52,6 +56,9 @@ div {
 }
 img {
 	border:							0;
+}
+#dhContainer {
+	z-index:						1;
 }
 #dhMainArea {
 	min-height:						1080px;
@@ -104,6 +111,7 @@ a.dh-toolbar-item:visited {
 	font-size:				x-small;
 	padding:				5px;
 	text-align:				center;
+	height:					60px;
 }
 
 h2.dh-title {
@@ -192,7 +200,11 @@ a.dh-name-edit {
 	top:							30px;
 	background-color:				#626262;
 	color:							#919191;
-	width:							150px;
+	width:							175px;
+	z-index:						0;
+	border:							0;
+	margin:							0;
+	padding:						0;
 }
 
 /* ------------ LEGACY IMPORTING ------------ */

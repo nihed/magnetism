@@ -64,8 +64,9 @@ a.dh-group:visited {
 a.dh-person {
 	font-size:				small;
 	width:					58px;
+	height:					60px;
 	display:				block;
-	margin-bottom:			3px;
+	margin:					0px;
 	padding:				0px;
 	text-align:				center;
 	color:					#fff500;
@@ -74,7 +75,7 @@ a.dh-person {
 	float:					left;
 }
 div.dh-people a.dh-person {
-	float:					left;
+	margin-bottom:			3px;
 }
 a.dh-person:link {
 	color:					#fff500;

@@ -13,31 +13,15 @@ body {
 .dh-non-ie-png {
 	display: 				none;
 }
-.dh-share-shadow {
-	width:					480px;
-	position:				relative;
-	left:					-10px;
-	top:					10px;
-}
-.dh-share {	/* this is to counter the shadow code */
-	left:					10px;
-	top:					-0px;
-}
-.dh-share-shadow {
-   	height:  				150px;
-	background-image:		none;
-/*	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src="/images/ie-shadow.png", sizingMethod="scale"); */
-}
-
 
 #dhContainer {
 	height:					100%;
 	overflow:				auto;
 	position:				relative;
-	z-index:				1;
 }
 #dhMainArea {
 	height:					1080px;
+	width:					446px;
 }
 #dhToolbar {
 	font-size:				xx-small;
@@ -64,5 +48,5 @@ a.dh-toolbar-item:link {
 }
 #dhOTP {
 	position:				absolute;
-	z-index:				-1;
+	z-index:				0;
 }

@@ -43,7 +43,7 @@
 		<c:choose>
 			<c:when test="${viewgroup.invitedNotAccepted}">
 				<!-- FIXME: Need to be auto-added to group and only show this message on first load -->
-				<div id="dhInformationBar"><p><dh:entity value="${viewgroup.inviter}" photo="true"/> invited you to this group, you can <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave</a> it any time.</p></div>
+				<div id="dhInformationBar"><dh:entity value="${viewgroup.inviter}" photo="true"/><p> invited you to this group, you can <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave</a> it any time.</p></div>
 			</c:when>
 			<c:otherwise>
 				<!-- FIXME: Leaving this option in case we want other messages -->
