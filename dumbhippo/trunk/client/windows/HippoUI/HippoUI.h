@@ -96,6 +96,7 @@ public:
 
     void registerWindowMsgHook(HWND window, HippoMessageHook *hook);
     void unregisterWindowMsgHook(HWND window);
+    HWND getWindow() { return window_; }
 
 private:
     bool registerActive();

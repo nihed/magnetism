@@ -52,13 +52,17 @@ HippoBubble::setUI(HippoUI *ui)
 bool
 HippoBubble::createWindow(void)
 {
+    // We need to set the parent here, even though it is invisible, to keep the
+    // window from showing on the taskbar. If there is no parent, then it shows
+    // up even when WS_EX_APPWINDOW isn't set.
     window_ = CreateWindowEx(WS_EX_TOPMOST, CLASS_NAME, L"Hippo Notification", WS_POPUP,
                              CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             NULL, NULL, instance_, NULL);
+                             ui_->getWindow(), NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
         return false;
     }
+
     EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
     moveResizeWindow();
