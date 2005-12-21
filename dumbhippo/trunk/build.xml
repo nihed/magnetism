@@ -1,4 +1,4 @@
-<project name="build-dumbhippo" default="dar">
+<project name="build-dumbhippo" default="dar" basedir=".">
     <target name="compile">
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
@@ -7,6 +7,6 @@
     </target>
 
     <target name="dar" depends="compile">
-	<exec dir="." executable="./super/super"><arg value="deploy"/><arg value="all"/></exec>
+	<exec dir="${basedir}" executable="${basedir}/super/super"><arg value="deploy"/><arg value="all"/></exec>
     </target>
 </project>
