@@ -20,11 +20,11 @@
 					<input style="width:7em;border:1px solid black;" type="text" name="searchText" value="Search"/>
 					<input type="hidden" name="start" value="0"/>
 					<input type="hidden" name="count" value="${maxPosts}"/>
-					<input type="hidden" name="posterId" value="${posterId}"/>
-					<input type="hidden" name="recipientId" value="${recipientId}"/>
-					<input type="hidden" name="groupId" value="${groupId}"/>
+					<input type="hidden" name="poster" value="${posterId}"/>
+					<input type="hidden" name="recipient" value="${recipientId}"/>
+					<input type="hidden" name="group" value="${groupId}"/>
 				</form>
-				the <a href="/search?start=${maxPosts}&count=${maxPosts}&posterId=${posterId}&recipientId=${recipientId}&groupId=${groupId}">other shares</a>
+				the <a href="/search?start=${maxPosts}&count=${maxPosts}&poster=${posterId}&recipient=${recipientId}&group=${groupId}">other shares</a>
 				<c:choose>
 					<c:when test="${!empty posterName}">
 						<c:out value="${posterName}"/> shared.

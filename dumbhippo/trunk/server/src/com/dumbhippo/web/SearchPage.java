@@ -137,12 +137,12 @@ public class SearchPage {
 		}
 	
 		if (posterId != null && posterId.length() > 0) {
-			sb.append("&posterId=");
+			sb.append("&poster=");
 			sb.append(StringUtils.urlEncode(posterId));
 		}
 
 		if (recipientId != null && recipientId.length() > 0) {
-			sb.append("&recipientId=");
+			sb.append("&recipient=");
 			sb.append(StringUtils.urlEncode(recipientId));
 		}
 		

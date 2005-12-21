@@ -7,13 +7,13 @@
 <jsp:setProperty name="search" property="searchText" param="searchText"/>
 <jsp:setProperty name="search" property="start" param="start"/>
 <jsp:setProperty name="search" property="count" param="count"/>
-<jsp:setProperty name="search" property="posterId" param="posterId"/>
-<jsp:setProperty name="search" property="recipientId" param="recipientId"/>
+<jsp:setProperty name="search" property="posterId" param="poster"/>
+<jsp:setProperty name="search" property="recipientId" param="recipient"/>
 <jsp:setProperty name="search" property="groupId" param="group"/>
 
 <head>
 	<title>Search</title>
-	<dht:stylesheets href="search.css" />
+	<dht:stylesheets href="search.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes/>
 </head>
 <body>
@@ -46,8 +46,8 @@
 			</p>
 			<input type="hidden" name="start" value="${search.start}"/>
 			<input type="hidden" name="count" value="${search.count}"/>
-			<input type="hidden" name="posterId" value="${search.posterId}"/>
-			<input type="hidden" name="recipientId" value="${search.recipientId}"/>
+			<input type="hidden" name="poster" value="${search.posterId}"/>
+			<input type="hidden" name="recipient" value="${search.recipientId}"/>
 			<input type="hidden" name="group" value="${search.groupId}"/>
 		</form>
 	</div>
