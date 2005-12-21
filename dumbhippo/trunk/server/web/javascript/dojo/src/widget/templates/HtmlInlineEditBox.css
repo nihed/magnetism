@@ -3,12 +3,12 @@
 	font-size : 		xx-small;
 	padding : 			0 5px;
 	display:			inline;
-	color:				#ffb979; !important;
+	color:				#ffb979 !important;
 	background-color:	inherit;
 	text-decoration:	none;
 }
 a.editLabel:link {
-	color:				#ffb979; !important;
+	color:				#ffb979 !important;
 	background-color : 	inherit;
 }
 
