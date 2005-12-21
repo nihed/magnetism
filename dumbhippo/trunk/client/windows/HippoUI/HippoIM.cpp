@@ -270,13 +270,28 @@ void
 HippoIM::authenticate()
 {
     if (username_ && password_) {
-        char *usernameUTF = g_utf16_to_utf8(username_, -1, NULL, NULL, NULL);
+        GString *usernameString = g_string_new(NULL);
+        for (WCHAR *p = username_; *p; p++) {
+            WCHAR c = *p;
+            // A usename in our system, is alphanumeric, with case sensitivity
+            // convert to lowercase only, by using _ to mark lowercase in the
+            // original.
+            if (c >= 'A' && c <= 'Z') {
+                g_string_append_c(usernameString, c + ('a' - 'A'));
+            } else if (c >= 'a' && c <= 'z') {
+                g_string_append_c(usernameString, (char)c);
+                g_string_append_c(usernameString, '_');
+            } else if (c >= '0' && c <= '9') {
+                g_string_append_c(usernameString, (char)c);
+            }
+        }
+
         char *passwordUTF = g_utf16_to_utf8(password_, -1, NULL, NULL, NULL);
 
         GError *error = NULL;
 
         if (!lm_connection_authenticate(lmConnection_, 
-                                        usernameUTF, passwordUTF, "DumbHippo",
+                                        usernameString->str, passwordUTF, "DumbHippo",
                                         onConnectionAuthenticate, (gpointer)this, NULL, &error)) 
         {
             authFailure(error ? error->message : NULL);
@@ -285,6 +300,8 @@ HippoIM::authenticate()
         } else {
             stateChange(AUTHENTICATING);
         }
+        g_string_free(usernameString, TRUE);
+        g_free(passwordUTF);
     } else {
         authFailure("Not signed in");
     }
