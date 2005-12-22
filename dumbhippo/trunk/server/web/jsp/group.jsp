@@ -42,11 +42,10 @@
 
 		<c:choose>
 			<c:when test="${viewgroup.justAdded}">
-				<!-- FIXME: Need to be auto-added to group and only show this message on first load -->
 				<div id="dhInformationBar"><dh:entity value="${viewgroup.inviter}" photo="true"/><p> invited you to this group, you can <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave</a> it any time.</p></div>
 			</c:when>
 			<c:otherwise>
-				<!-- FIXME: Leaving this option in case we want other messages -->
+
 			</c:otherwise>
 		</c:choose>
 
@@ -78,14 +77,13 @@
 		<div id="dhSharesArea">
 			<dht:postList posts="${viewgroup.posts}" maxPosts="${viewgroup.maxPostsShown}" groupId="${viewgroup.viewedGroupId}" groupName="${viewgroup.name}"/>
 		</div>
-		<div style="position:absolute;bottom:60px;right:30px;"><input style="width:5em;text-align:center;border:1px solid black;padding:0;"type="text" value="Search"> More Shares</div>
 	</div>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
 		<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
 		<c:if test="${viewgroup.canModify}">
-			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="Change Group Photo"/>
+			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="change group photo"/>
 		</c:if>
 		<div id="dhName"><c:out value="${viewgroup.name}"/></div>
 		</div>

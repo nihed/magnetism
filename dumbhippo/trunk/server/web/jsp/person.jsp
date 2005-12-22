@@ -57,7 +57,6 @@
 			<div id="dhSharesArea">
 				<dht:postList posts="${viewperson.posts.list}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
 			</div>
-			<div style="position:absolute;bottom:60px;right:30px;"><input style="width:5em;text-align:center;border:1px solid black;padding:0;"type="text" value="Search"> More Shares</div>
 			</c:otherwise>
 		</c:choose>
 	</div>
