@@ -59,7 +59,7 @@
 	       <td class="action" nowrap><a class="action highlight-action" href="${forwardUrl}" target="_blank">Forward To Others</a></td>
 	   </tr>
        <tr>
-	       <td class="action" nowrap><a class="action action-box highlight-action" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">&#187</a></td>
+	       <td class="action" nowrap><a class="action highlight-action" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5"><dh:png klass="dh-chat-icon" src="/images/${buildStamp}/chat.png" style="width: 16; height: 16;"/></a></td>
 	       <td class="action" nowrap><a class="action highlight-action" target="_blank" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">${framer.post.chatRoomMembers}</a></td>
 	   </tr>
 	   <tr>
