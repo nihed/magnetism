@@ -599,6 +599,11 @@ HippoIM::onMessage (LmMessageHandler *handler,
                     continue;
                 linkshare.senderId.setUTF8(node->value);
 
+                node = lm_message_node_get_child (child, "senderPhotoUrl");
+                if (!(node && node->value))
+                    continue;
+                linkshare.senderPhotoUrl.setUTF8(node->value);
+
                 node = lm_message_node_get_child (child, "description");
                 if (!(node))
                     continue;

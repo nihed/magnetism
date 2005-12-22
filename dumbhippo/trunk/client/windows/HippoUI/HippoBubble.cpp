@@ -196,6 +196,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 
     variant_t senderName(share.senderName);
     variant_t senderId(share.senderId);
+    variant_t senderPhotoUrl(share.senderPhotoUrl);
     variant_t postId(share.postId);
     variant_t linkTitle(share.title);
     variant_t linkURL(share.url);
@@ -216,8 +217,8 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
-    invokeJavascript(L"dhAddLinkShare", &result, 10, &senderName,
-                     &senderId, &postId, &linkTitle, &linkURL, &linkDescription,
+    invokeJavascript(L"dhAddLinkShare", &result, 11, &senderName,
+                     &senderId, &senderPhotoUrl, &postId, &linkTitle, &linkURL, &linkDescription,
                      &personRecipientsArg, &groupRecipientsArg, &viewersArg, &infoArg);
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);

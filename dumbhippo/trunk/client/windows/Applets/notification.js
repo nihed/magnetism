@@ -275,9 +275,8 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     this._display_linkShare = function (share) {
         dh.util.debug("displaying " + share.postId + " " + share.linkTitle)
 
-        var personUrl = this.serverUrl + "viewperson?personId=" + share["senderId"]
-        this._setPhotoUrl(this.serverUrl + "files/headshots/" + share["senderId"],
-                          personUrl)
+        var personUrl = this.serverUrl + "person?who=" + share["senderId"]
+        this._setPhotoUrl(this.serverUrl + share.senderPhotoUrl, personUrl)
                       
         this._setPhotoLink(this.getPersonName(share.senderId), personUrl)
         
@@ -339,13 +338,14 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 }
 
 // Global namespace since it's painful to do anything else from C++
-dhAddLinkShare = function (senderName, senderId, postId, linkTitle, 
+dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTitle, 
                            linkURL, linkDescription, personRecipients, groupRecipients, viewers, postInfo) {
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
     dh.util.debug("postinfo: " + postInfo)    
     dh.display.setVisible(true)
     dh.display.addPersonName(senderId, senderName)                            
     dh.display.addLinkShare({senderId: senderId,
+                             senderPhotoUrl: senderPhotoUrl,
                              postId: postId,
                             linkTitle: linkTitle,
                             linkURL: linkURL,

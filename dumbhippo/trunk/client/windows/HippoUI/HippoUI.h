@@ -29,6 +29,7 @@ struct HippoLinkShare
 {
     HippoBSTR postId;
     HippoBSTR senderId;
+    HippoBSTR senderPhotoUrl;
     HippoBSTR senderName;
     HippoBSTR url;
     HippoBSTR title;
