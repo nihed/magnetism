@@ -6,7 +6,10 @@
 .dh-share-link {
    	font-size: 				large;
 }
-.dh-share-from-name {
+div.dh-share-from {
+   	font-size: 				x-small;
+}
+div.dh-share-from a.dh-person {
    	font-size: 				x-small;
 }
 div.dh-share-to a {
