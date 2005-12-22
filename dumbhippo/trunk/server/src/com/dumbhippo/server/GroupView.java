@@ -10,6 +10,7 @@ import java.util.Set;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.VersionedEntity;
 
 /**
  * @author otaylor
@@ -19,7 +20,7 @@ import com.dumbhippo.persistence.MembershipStatus;
  * constructor makes queries into the database; the read-only properties of 
  * this object access pre-computed data.
  */ 
- public class GroupView {
+ public class GroupView extends EntityView {
 	 Group group;
 	 GroupMember groupMember;
 	 PersonView inviter;
@@ -67,4 +68,14 @@ import com.dumbhippo.persistence.MembershipStatus;
 		 
 		 return list;
 	 }
+
+	@Override
+	protected VersionedEntity getVersionedEntity() {
+		return group;
+	}
+
+	@Override
+	protected String getFilePath() {
+		return Configuration.GROUPSHOTS_RELATIVE_PATH;
+	}
 }

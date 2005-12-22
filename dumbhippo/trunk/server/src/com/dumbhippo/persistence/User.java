@@ -18,7 +18,7 @@ import com.dumbhippo.persistence.Person;
  */
 @Entity
 @Table(name="HippoUser") // "User" is reserved in PostgreSQL
-public class User extends Person {
+public class User extends Person implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
 	
 	private Account account;

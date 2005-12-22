@@ -25,37 +25,6 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 	
 	private static final Log logger = GlobalSetup.getLog(AbstractPhotoServlet.class);
 
-	private static String getPhotoUrl(String id, int version, boolean isGroup, int size) {
-		StringBuilder sb = new StringBuilder("/files");
-		if (isGroup)
-			sb.append(Configuration.GROUPSHOTS_RELATIVE_PATH);
-		else
-			sb.append(Configuration.HEADSHOTS_RELATIVE_PATH);
-		sb.append("/");
-		sb.append(size);
-		sb.append("/");
-		sb.append(id);
-		sb.append("?v=");
-		sb.append(version);
-		return sb.toString();
-	}
-	
-	public static String getPersonSmallPhotoUrl(String id, int version) {
-		return getPhotoUrl(id, version, false, Configuration.SHOT_SMALL_SIZE);
-	}
-
-	public static String getPersonLargePhotoUrl(String id, int version) {
-		return getPhotoUrl(id, version, false, Configuration.SHOT_LARGE_SIZE);
-	}
-
-	public static String getGroupSmallPhotoUrl(String id, int version) {
-		return getPhotoUrl(id, version, true, Configuration.SHOT_SMALL_SIZE);
-	}
-
-	public static String getGroupLargePhotoUrl(String id, int version) {
-		return getPhotoUrl(id, version, true, Configuration.SHOT_LARGE_SIZE);
-	}
-	
 	@Override
 	protected String getDefaultFilename() {
 		return "default";

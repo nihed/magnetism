@@ -92,6 +92,7 @@ public class MessageSenderBean implements MessageSender {
 		
 		private String senderName;
 		private Guid senderGuid;
+		private String senderPhotoUrl;
 		
 		private Set<String> recipientNames;
 		
@@ -143,7 +144,8 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
 			builder.appendTextNode("senderName", senderName, "isCache", "true");
-			builder.appendTextNode("senderGuid", senderGuid.toString());			
+			builder.appendTextNode("senderGuid", senderGuid.toString());
+			builder.appendTextNode("senderPhotoUrl", senderPhotoUrl);
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
 			builder.appendTextNode("postInfo", postInfo);
@@ -181,6 +183,10 @@ public class MessageSenderBean implements MessageSender {
 
 		public void setPostInfo(String postInfo) {
 			this.postInfo = postInfo;
+		}
+
+		public void setSenderPhotoUrl(String senderPhotoUrl) {
+			this.senderPhotoUrl = senderPhotoUrl;
 		}
 	}
 	
@@ -316,6 +322,7 @@ public class MessageSenderBean implements MessageSender {
 			extension.setPostId(post.getGuid());
 			extension.setSenderName(senderName);
 			extension.setSenderGuid(post.getPoster().getGuid());
+			extension.setSenderPhotoUrl(recipientView.getSmallPhotoUrl());
 			extension.setRecipientNames(recipientNames);
 			extension.setGroupRecipients(groupRecipientNames);
 			extension.setUrl(url);

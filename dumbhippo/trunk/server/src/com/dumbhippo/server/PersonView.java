@@ -10,12 +10,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.mq.il.uil2.msgs.GetIDMsg;
+
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.VersionedEntity;
 
 /**
  * @author otaylor
@@ -28,7 +31,7 @@ import com.dumbhippo.persistence.User;
  * This class is a person as viewed by another person; it differs from
  * PersonView primarily in not being a session bean.
  */
-public class PersonView {
+public class PersonView extends EntityView {
 	
 	public static final int MAX_SHORT_NAME_LENGTH = 15;
 	
@@ -287,5 +290,15 @@ public class PersonView {
 		//return ChatRoomStatusCache.isOnline(this.getViewPersonPageId());
 		// TODO: implement this without using a global static class variable
 		return false;
+	}
+
+	@Override
+	protected VersionedEntity getVersionedEntity() {
+		return user;
+	}
+	
+	@Override
+	protected String getFilePath() {
+		return Configuration.HEADSHOTS_RELATIVE_PATH;
 	}
 }

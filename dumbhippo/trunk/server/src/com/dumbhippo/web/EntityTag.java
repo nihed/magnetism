@@ -39,7 +39,7 @@ public class EntityTag extends SimpleTagSupport {
 				if (skipId != null && skipId.equals(id))
 					return null;
 				link = "/person?who=" + id;
-				photoUrl = AbstractPhotoServlet.getPersonSmallPhotoUrl(id, user.getVersion());
+				photoUrl = view.getSmallPhotoUrl();
 			}
 			body = view.getName();
 			className = "dh-person";
@@ -54,15 +54,16 @@ public class EntityTag extends SimpleTagSupport {
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
 				body = group.getName();
-			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
+			photoUrl = groupView.getSmallPhotoUrl();
 			className = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
+			GroupView view = new GroupView(group, null, null);
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			link = "/group?who=" + group.getId();
 			body = group.getName();
-			photoUrl = AbstractPhotoServlet.getGroupSmallPhotoUrl(group.getId(), group.getVersion());
+			photoUrl = view.getSmallPhotoUrl();
 			className = "dh-group";
 		} else {
 			if (o == null)

@@ -15,7 +15,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
-public class Group extends GuidPersistable {
+public class Group extends GuidPersistable implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
 	
 	private GroupAccess access;
