@@ -129,8 +129,12 @@ public class BrowserBean implements Serializable {
 		return os == OS.Windows;
 	}
 
+	public String getSupportedBrowsers() {
+		return "Internet Explorer 6 and Firefox 1.5";
+	}
+	
 	public boolean isSupported() {
-		return isIeAtLeast55() || isGeckoAtLeast10();
+		return isIeAtLeast60() || isGeckoAtLeast15();
 	}
 	
 	public boolean getIeAlphaImage() {

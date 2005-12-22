@@ -64,6 +64,8 @@ public class RewriteServlet extends HttpServlet {
 		if (path.equals("/")) {
 			if (hasSignin(request))
 				response.sendRedirect(response.encodeRedirectURL("home"));
+			else if (stealthMode)
+				response.sendRedirect(response.encodeRedirectURL("comingsoon"));
 			else
 				response.sendRedirect(response.encodeRedirectURL("main"));
 			return;

@@ -3,6 +3,8 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
+<dh:bean id="who" class="com.dumbhippo.web.WhoAreYouPage" scope="request"/>
+
 <head>
 	<title>Sign In</title>
 	<dht:stylesheets href="signin.css" />
@@ -30,7 +32,7 @@
 						<div>
 							I have a password:
 							<input type="password" class="dhText" name="password"/>
-							<input type="submit" value="Sign in" name="checkpassword"/>
+							<input type="submit" value="Sign in with password" name="checkpassword"/>
 						</div>
 					</td>
 				</tr>
@@ -47,6 +49,14 @@
 				<input type="text" value="let@me.in.please" name="address" class="dhText"/>
 				<input type="submit" value="Want In?"/>
 			</form>
+		</c:if>
+		<c:if test="${!who.browser.supported}">
+			<p><b>Your Web Browser</b></p>
+			Right now we've only tested the site with 
+			<c:out value="${who.browser.supportedBrowsers}"/>. Your browser
+			might work, but we haven't tried it ourselves.
+			Feel free to give it a try and let us know if you find a problem.
+			We'll test more browsers as soon as we can.
 		</c:if>
 	</div>
 </div>
