@@ -9,11 +9,12 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
-	<dht:header>
-		Invite Sent
-	</dht:header>
-	<dht:toolbar/>
-	<div id="dhMain">
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 
 		<h3>
 			Congratulations, the invitation to 
@@ -37,5 +38,6 @@
 		<p><a href="/home">Home</a></p>
 		<p><a href="/main">Main</a></p>
 	</div>
+</div>
 </body>
 </html>

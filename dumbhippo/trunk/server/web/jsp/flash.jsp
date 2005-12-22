@@ -14,11 +14,14 @@
 	</script>
 </head>
 <body>
-	<dht:header>
-	</dht:header>
+<div id="dhContainer">
 
-	<div id="dhMain">
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 		<c:out value="${flashMessage}"/>
 	</div>
+</div>
 </body>
 </html>

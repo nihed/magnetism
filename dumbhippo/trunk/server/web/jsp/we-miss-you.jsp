@@ -16,12 +16,13 @@
 	<dht:scriptIncludes />
 </head>
 <body>
-    <dht:header>
-		Ciao!
-	</dht:header>
-	
-	<div id="dhMain">
-	
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
+
 		<p>
 		We've disabled your account and will not send 
 		further invitation emails or shared items to <c:out value="${welcomedisabled.person.email}"/>.
@@ -39,5 +40,6 @@
 		Otherwise, <a href="javascript:dh.actions.signOut();">click here to sign out</a>.
 		</p>
 	</div>
+</div>
 </body>
 </html>

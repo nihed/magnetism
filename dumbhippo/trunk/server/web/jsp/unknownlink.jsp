@@ -8,11 +8,12 @@
 	<dht:stylesheets />
 </head>
 <body>
-	<dht:header>
-		Unknown Link
-	</dht:header>
+<div id="dhContainer">
 
-	<div id="dhMain">
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 		
 		<h2>Unknown link</h2>
 		
@@ -21,6 +22,6 @@
 		<p><a href="/home">Home</a></p>
 		
 	</div>
-	
+</div>	
 </body>
 </html>

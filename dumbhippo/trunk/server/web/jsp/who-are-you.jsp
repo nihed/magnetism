@@ -8,12 +8,11 @@
 	<dht:stylesheets href="signin.css" />
 </head>
 <body>
-	<dht:header>
-		Sign In
-	</dht:header>
-	<!--  no toolbar, it's weird on this page -->
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<dht:logo/>
 	
-	<div id="dhMain">
 		<form class="dh-signin-form" action="/signinpost" method="post">
 			<table>
 				<tr class="dh-signin-address">
@@ -50,5 +49,6 @@
 			</form>
 		</c:if>
 	</div>
+</div>
 </body>
 </html>

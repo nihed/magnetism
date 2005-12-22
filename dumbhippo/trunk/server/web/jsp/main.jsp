@@ -11,10 +11,12 @@
 	<dht:scriptIncludes/>
 </head>
 <body>
-	<dht:header>
-		Main
-	</dht:header>
-	<dht:toolbar/>
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 
 	<h3>This is the main page.</h3>
 
@@ -29,5 +31,7 @@
 	  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
 		</c:otherwise>
 	</c:choose>
+	</div>
+</div>
 </body>
 </html>

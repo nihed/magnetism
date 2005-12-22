@@ -10,11 +10,13 @@
 	<dht:stylesheets />
 </head>
 <body>
-    <dht:header>
-		Mail Settings
-	</dht:header>
+<div id="dhContainer">
 
-	<div id="dhMain">
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
+
 		<c:choose>
 			<c:when test="${mail.signin.valid}">
 				<p>You're currently signed in as '${mail.person.name}'.
@@ -56,5 +58,6 @@
 	<br/>
 	<p><a href="/privacy">Our privacy policy</a></p>
 	</div>
+</div>
 </body>
 </html>

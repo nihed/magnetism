@@ -8,11 +8,13 @@
 	<dht:stylesheets />
 </head>
 <body>
-	<dht:header>
-		Error
-	</dht:header>
 
-	<div id="dhMain">
+<div id="dhContainer">
+
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 		
 		<h2>Oops!</h2>
 		
@@ -35,6 +37,7 @@
 		</c:choose>
 		
 	</div>
+</div>
 	
 </body>
 </html>

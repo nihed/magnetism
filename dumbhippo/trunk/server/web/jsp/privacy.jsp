@@ -8,11 +8,12 @@
 	<dht:stylesheets />
 </head>
 <body>
-	<dht:header>
-		Privacy
-	</dht:header>
+<div id="dhContainer">
 
-	<div id="dhMain">
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
 		
 		<h2>Who can see your stuff?</h2>
 		
@@ -22,5 +23,6 @@
 		This site counts as a Public Forum under that policy.
 		</p>
 	</div>
+</div>
 </body>
 </html>

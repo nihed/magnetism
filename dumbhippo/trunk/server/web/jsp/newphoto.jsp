@@ -9,12 +9,13 @@
 	<dht:scriptIncludes/>	
 </head>
 <body>
-	<dht:header>
-		New Photo
-	</dht:header>
-	<dht:toolbar/>
+<div id="dhContainer">
 
-	<div id="dhMain">
+	<div id="dhMainArea">
+		<dht:logo/>
+
+		<dht:toolbar/>
+
 		<p>Your new photo looks like this (in two sizes):</p>
 		<dh:png klass="dh-headshot" src="/files${photoLocation}/192/${photoFilename}?v=${photoVersion}" style="width: 192; height: 192; border: 1px solid white;"/>
 		&nbsp;
@@ -28,5 +29,6 @@
 			the servlet ignores it -->
 		<dht:uploadPhoto location="${photoLocation}" groupId="${photoFilename}"/>
 	</div>
+</div>
 </body>
 </html>
