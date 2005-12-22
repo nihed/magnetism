@@ -22,7 +22,7 @@
         <dht:stylesheets />
 </head>
 
-<frameset rows="*,135">
+<frameset rows="*,165">
     <frame name="top" src="${framer.post.url}">
     <frame name="bottom" src="framer?postId=${framer.postId}" scrolling="no" noresize bordercolor="#cccccc" marginwidth="0" marginheight="0">
 </frameset>

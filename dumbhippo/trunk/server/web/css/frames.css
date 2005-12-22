@@ -43,30 +43,36 @@ a.join-chat {
 }
 .action  {
 	font-size:		xx-small;
-	color:			gray;
+	color:			white;
 	text-decoration:	none;
 	padding:		0.3px;
 }
 a.action:link  {
-	color:			gray;
+	color:			white;
 }
 
 .action-box {
-	border:			1px solid grey;
-	color:			grey;
+	border:			1px solid white;
+	color:			white;
 	font-size:		xx-small;
 	display:		block;
 	width:			1em;
 	text-align:		center;
 }
 .highlight-action {
-	border-color:		blue;	
-	color:			blue;
+	border-color:		white;	
+	color:			white;
 	font-weight:		bold;
 }
 a.highlight-action:link {
-	color:			blue;
+	color:			white;
 }
 td.cool-link-meta {
 
+}
+.chat-preview  {
+	font-size:		xx-small;
+	color:			white;
+	text-decoration:	none;
+	padding:		0.3px;
 }

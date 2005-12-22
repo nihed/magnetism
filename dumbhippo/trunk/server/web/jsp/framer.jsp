@@ -26,32 +26,23 @@
 	</script>
 </head>
 <body>
-   <div id="dhMain">
-	<table class="dhFramer">
-	<tr>
-	<td rowSpan="3">
-		<dht:headshot person="${framer.post.poster}"/>
-	</td>
-	<td class="cool-link-desc">
-	     <div class="cool-link"><c:out value="${title}" />&nbsp;<dh:presence value="${framer.post}"/></div>
-	     <div class="cool-link-desc"><c:out value="${description}" /></div>
-	     <div class="cool-link-chat">
-	     <c:choose>
-	       <c:when test="${fn:length(chatmessages) > 0}">
-	         What's going on in the chat:
-	         <c:forEach items="${chatmessages}" var="chatmessage" varStatus="status">
-	           <div class="cool-link-chat-mesg">
-	             <% /*  truncating this is a pain because the message text from AIM includes HTML markup */ %>
-	             ${chatmessage.fromScreenName}: ${chatmessage.messageText}
-	           </div>
-	         </c:forEach>
-	       </c:when>
-	       <c:otherwise>
-	         <div class="cool-link-chat-none">No chat messages.</div>
-	       </c:otherwise>
-	     </c:choose>
-	     <a class="join-chat" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">Join</a>
-    	 </div>
+
+  <div>
+	<table>
+	<td>
+	<div class="dh-share-shadow">
+      <div class="dh-share">
+	    <div class="dh-share-from">
+	  	  <dh:entity value="${framer.post.poster}" photo="true"/>
+	    </div>
+	    <div class="dh-share-text">
+	  	  <c:out value="${framer.post.titleAsHtml}" escapeXml="false"/>
+		  <dh:favicon link="${framer.post.url}"/>
+		  <div class="dh-share-description"><c:out value="${framer.post.textAsHtml}" escapeXml="false"/></div>
+	    </div>
+	    <div class="dh-share-to">Shared with <dh:entityList value="${framer.post.recipients}" skipRecipientId="${hideRecipientId}"/> by <dh:entity value="${framer.post.poster}" photo="false"/>&nbsp;<dh:presence value="${framer.post.poster}"/></div>    
+      </div> <!-- share -->
+    </div> <!-- share-shadow -->
 	</td>
 	<td class="action-area">
 	   <table class="action-area" cellspacing="2px">
@@ -66,17 +57,33 @@
 	   <tr>
 	       <td class="action" nowrap><a class="action action-box highlight-action" href="${forwardUrl}" target="_blank">&#187</a></td>
 	       <td class="action" nowrap><a class="action highlight-action" href="${forwardUrl}" target="_blank">Forward To Others</a></td>
-	    </tr>
-	    </table>
+	   </tr>
+       <tr>
+	       <td class="action" nowrap><a class="action action-box highlight-action" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">&#187</a></td>
+	       <td class="action" nowrap><a class="action highlight-action" target="_blank" onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">${framer.post.chatRoomMembers}</a></td>
+	   </tr>
+	   <tr>
+	       <td class="chat-preview" nowrap colspan=2>
+             <c:choose>
+	           <c:when test="${fn:length(chatmessages) > 0}">
+	           What's going on in the chat:
+	           <c:forEach items="${chatmessages}" var="chatmessage" varStatus="status">
+	             <div class="chat-preview">
+	                 <% /*  truncating this is a pain because the message text from AIM includes HTML markup */ %>
+	                 ${chatmessage.fromScreenName}: ${chatmessage.messageText}
+	             </div>
+	           </c:forEach>
+	         </c:when>
+	         <c:otherwise>
+	             <div class="chat-preview">
+	               <!-- No chat messages, so far. -->
+	             </div>
+	         </c:otherwise>
+	         </c:choose>      
+	       </td>
+	   </tr>
+	   </table>
 	</td>
-	</tr>
-	<tr>
-	   <td> 
-	   </td>
-	   <td class="cool-link-meta">
-	     <div class="cool-link-date"><a onClick='dh.actions.requestJoinRoom("${framer.post.post.id}")' href="aim:GoChat?RoomName=${framer.post.chatRoomName}&Exchange=5">${framer.post.chatRoomMembers}</a></div>
-	     <div class="cool-link-to">This was sent to you by <dh:entity value="${framer.post.poster}" photo="false"/>&nbsp;<dh:presence value="${post.poster}"/></div>
-	   </td>
 	</tr>
 	</table>
   </div>
