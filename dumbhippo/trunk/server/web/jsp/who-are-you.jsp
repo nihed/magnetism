@@ -28,7 +28,7 @@
 							OR
 						</div>
 						<div>
-							I have a <a href="/account">password</a>:
+							I have a password:
 							<input type="password" class="dhText" name="password"/>
 							<input type="submit" value="Sign in" name="checkpassword"/>
 						</div>
