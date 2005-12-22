@@ -16,8 +16,11 @@ dh.model.GuidPersistable = function(id, displayName) {
 }
 dojo.inherits(dh.model.GuidPersistable, Object);
 
-dh.model.Person = function(id, displayName, email, aim, emails, aims, hasAccount) {
+dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, hasAccount) {
 	this.id = id;
+	if (userId == "")
+		userId = null;
+	this.userId = userId;	
 	this.displayName = displayName;
 	this.email = email; // can be null
 	this.aim = aim; // can be null
@@ -45,6 +48,8 @@ dh.model.personFromXmlNode = function(element) {
 		dojo.raise("not a person element");
 
 	var id = element.getAttribute("id");
+	var contactId = element.getAttribute("contactId")
+	var userId = element.getAttribute("userId")
 	var displayName = element.getAttribute("display");
 	var email = element.getAttribute("email");
 	var aim = element.getAttribute("aim");
@@ -63,7 +68,7 @@ dh.model.personFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <person> node");
 	
-	return new dh.model.Person(id, displayName, email, aim, emails, aims, 
+	return new dh.model.Person(id, userId, displayName, email, aim, emails, aims, 
 		hasAccount == "true" ? true : false);
 }
 

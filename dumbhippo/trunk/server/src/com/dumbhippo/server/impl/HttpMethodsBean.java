@@ -135,6 +135,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				
 				xml.appendTextNode("person", null,
 						"id", p.getContact() != null ? p.getContact().getId() : p.getUser().getId(),
+						"contactId", p.getContact() != null ? p.getContact().getId() : "",
+						"userId", p.getUser() != null ? p.getUser().getId() : "",								
 						"display", display,
 						"hasAccount", hasAccount,
 						"email", primaryEmail != null ? primaryEmail.getEmail() : null,

@@ -230,10 +230,15 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		tr1.appendChild(td);
 		
 		var imgSrc;
-		if (obj.isPerson())
-			imgSrc = dhHeadshotsRoot + obj.id;
-		else
+		if (obj.isPerson()) {
+			if (obj.userId) {
+				imgSrc = dhHeadshotsRoot + obj.userId;
+			} else {
+				imgSrc = dhHeadshotsRoot + "default";
+			}
+		} else {
 			imgSrc = dhGroupshotsRoot + obj.id;
+		}
 		
 		var img = dh.util.createPngElement(imgSrc, 48, 48);
 		td.appendChild(img);
