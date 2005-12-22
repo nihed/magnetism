@@ -10,6 +10,7 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 public class EntityListTag extends SimpleTagSupport {
 	private List<Object> entities;
 	private String skipRecipientId;
+	private String cssClass;
 	private boolean showInviteLinks;
 	private boolean photos;
 	
@@ -27,7 +28,7 @@ public class EntityListTag extends SimpleTagSupport {
 		}
 		
 		for (Object o : entities) {
-			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos);
+			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos, cssClass);
 			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
 		
 			if (html == null)
@@ -55,5 +56,9 @@ public class EntityListTag extends SimpleTagSupport {
 	
 	public void setPhotos(boolean photos) {
 		this.photos = photos;
+	}
+	
+	public void entityCssClass(String klass) {
+		this.cssClass = klass;
 	}
 }

@@ -24,12 +24,14 @@ public class EntityTag extends SimpleTagSupport {
 	private Object entity;
 	private boolean showInviteLinks;
 	private boolean photo;
+	private String cssClass;
 	
-	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo) {
+	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo,
+			String cssClass) {
 		String link = null;
 		String body;
 		String photoUrl = null;
-		String className = "dh-headshot";
+		String defaultCssClass = "dh-headshot";
 
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
@@ -42,7 +44,7 @@ public class EntityTag extends SimpleTagSupport {
 				photoUrl = view.getSmallPhotoUrl();
 			}
 			body = view.getName();
-			className = "dh-person";
+			defaultCssClass = "dh-person";
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
 			Group group = groupView.getGroup();
@@ -55,7 +57,7 @@ public class EntityTag extends SimpleTagSupport {
 			else
 				body = group.getName();
 			photoUrl = groupView.getSmallPhotoUrl();
-			className = "dh-group";
+			defaultCssClass = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
 			GroupView view = new GroupView(group, null, null);
@@ -64,7 +66,7 @@ public class EntityTag extends SimpleTagSupport {
 			link = "/group?who=" + group.getId();
 			body = group.getName();
 			photoUrl = view.getSmallPhotoUrl();
-			className = "dh-group";
+			defaultCssClass = "dh-group";
 		} else {
 			if (o == null)
 				logger.error("null object in EntityTag!");
@@ -73,11 +75,14 @@ public class EntityTag extends SimpleTagSupport {
 			body = "???";
 		}
 		
+		if (cssClass == null)
+			cssClass = defaultCssClass;
+		
 		XmlBuilder xml = new XmlBuilder();
 		
 		if (photo && photoUrl != null) {
 			if (link != null)
-				xml.openElement("a", "href", link, "target", "_top", "class", className);
+				xml.openElement("a", "href", link, "target", "_top", "class", cssClass);
 
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
 			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
@@ -110,7 +115,7 @@ public class EntityTag extends SimpleTagSupport {
 		} catch (ELException e) {
 			throw new RuntimeException(e);
 		}
-		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo));
+		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, cssClass));
 	}
 	
 	public void setValue(Object value) {
@@ -123,5 +128,9 @@ public class EntityTag extends SimpleTagSupport {
 	
 	public void setPhoto(boolean photo) {
 		this.photo = photo;
+	}
+
+	public void setCssClass(String cssClass) {
+		this.cssClass = cssClass;
 	}
 }
