@@ -290,8 +290,17 @@ HippoIM::authenticate()
 
         GError *error = NULL;
 
+        // Create an XMPP resource identifier based on this machine's hardware
+        // profile GUID.
+        HW_PROFILE_INFO hwProfile;
+        if (!GetCurrentHwProfile(&hwProfile)) {
+            hippoDebugLogW(L"Failed to get hardware profile!");
+            return;
+        }
+        gchar *guidUTF = g_utf16_to_utf8 (hwProfile.szHwProfileGuid, -1, NULL, NULL, NULL);
+
         if (!lm_connection_authenticate(lmConnection_, 
-                                        usernameString->str, passwordUTF, "DumbHippo",
+                                        usernameString->str, passwordUTF, guidUTF,
                                         onConnectionAuthenticate, (gpointer)this, NULL, &error)) 
         {
             authFailure(error ? error->message : NULL);
@@ -301,6 +310,7 @@ HippoIM::authenticate()
             stateChange(AUTHENTICATING);
         }
         g_string_free(usernameString, TRUE);
+        g_free(guidUTF);
         g_free(passwordUTF);
     } else {
         authFailure("Not signed in");
