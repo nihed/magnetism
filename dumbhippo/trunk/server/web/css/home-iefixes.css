@@ -10,6 +10,9 @@ a.dh-group {
 a.dh-group:link {
 	font-size:				x-small;
 }
+span.dh-headshot {
+	cursor:					hand;
+}
 a.dh-person {
 	font-size:				x-small;
 }

@@ -22,16 +22,19 @@
 a.dh-group {
 	width:					58px;
 	display:				block;
-	margin-bottom:			3px;
 	padding:				0px;
 	font-size:				small;
 	text-align:				center;
 	color:					#fff500;
 	background-color:		inherit;
 	border:					0;
+	float:					left;
+}
+a.dh-group img.dh-headshot {
+	cursor:					pointer;
 }
 div.dh-groups a.dh-group {
-	float:					left;
+	margin-bottom:			3px;
 }
 a.dh-group:link {
 	color:					#fff500;
@@ -73,6 +76,9 @@ a.dh-person {
 	background-color:		inherit;
 	border:					0;
 	float:					left;
+}
+a.dh-person img.dh-headshot {
+	cursor:					pointer;
 }
 div.dh-people a.dh-person {
 	margin-bottom:			3px;
