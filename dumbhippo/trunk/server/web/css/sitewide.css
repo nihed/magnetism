@@ -184,8 +184,8 @@ a.dh-name-edit {
 	margin:					0;
 	margin-top:				3px;
 	border:					2px solid white;
-	border-top-size:		3px;
-	border-bottom-size:		3px;
+	border-top-width:		3px;
+	border-bottom-width:	3px;
 	background-color:		#626262;
 }
 .dh-right-box-area a {
