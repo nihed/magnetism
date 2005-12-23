@@ -81,7 +81,7 @@ public class EntityTag extends SimpleTagSupport {
 		
 		XmlBuilder xml = new XmlBuilder();
 		
-		if (body.length() > bodyLengthLimit) {
+		if (bodyLengthLimit != 0 && (body.length() > bodyLengthLimit)) {
 			if (bodyLengthLimit > 3) {
 				body = body.substring(0, bodyLengthLimit - 3);
 				body += "...";

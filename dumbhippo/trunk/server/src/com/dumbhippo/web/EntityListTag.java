@@ -1,7 +1,9 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
@@ -14,6 +16,7 @@ public class EntityListTag extends SimpleTagSupport {
 	private boolean showInviteLinks;
 	private boolean photos;
 	private int bodyLengthLimit;
+	private String separator;
 
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
@@ -28,7 +31,10 @@ public class EntityListTag extends SimpleTagSupport {
 			throw new RuntimeException(e);
 		}
 		
-		for (Object o : entities) {
+		Iterator it = entities.iterator();
+		
+		while (it.hasNext()) {
+			Object o = it.next();
 			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
 											   photos, cssClass, bodyLengthLimit);
 			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
@@ -41,6 +47,9 @@ public class EntityListTag extends SimpleTagSupport {
 			}
 				
 			writer.print(html);
+			if (separator != null && it.hasNext()) {
+				writer.print(separator);
+			}
 		}
 	}
 	
@@ -66,5 +75,10 @@ public class EntityListTag extends SimpleTagSupport {
 
 	public void setBodyLengthLimit(int bodyLengthLimit) {
 		this.bodyLengthLimit = bodyLengthLimit;
-	}	
+	}
+
+	public void setSeparator(String separator) {
+		this.separator = separator;
+	}
+	
 }

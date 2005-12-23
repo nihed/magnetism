@@ -11,14 +11,14 @@
 <div class="dh-share-shadow">
 <div class="dh-share">
 	<div class="dh-share-from">
-		<dh:entity value="${post.poster}" photo="true"/>
+		<dh:entity value="${post.poster}" photo="true" bodyLengthLimit="4"/>
 	</div>
 	<div class="dh-share-text">
 		<a href="${post.url}" onClick="return dh.util.openFrameSet(window,event,this,'${post.post.id}');" title="${post.url}" class="dh-share-link"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
 		<dh:favicon link="${post.url}"/>
 		<div class="dh-share-description"><c:out value="${post.textAsHtml}" escapeXml="false"/></div>
 	</div>
-	<div class="dh-share-to"><dh:entityList value="${post.recipients}" skipRecipientId="${hideRecipientId}"/></div>
+	<div class="dh-share-to"><dh:entityList value="${post.recipients}" skipRecipientId="${hideRecipientId}" separator=", "/></div>
 </div>
 </div>
 
