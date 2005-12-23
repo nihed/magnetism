@@ -13,7 +13,8 @@ public class EntityListTag extends SimpleTagSupport {
 	private String cssClass;
 	private boolean showInviteLinks;
 	private boolean photos;
-	
+	private int bodyLengthLimit;
+
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		
@@ -28,7 +29,8 @@ public class EntityListTag extends SimpleTagSupport {
 		}
 		
 		for (Object o : entities) {
-			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, photos, cssClass);
+			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
+											   photos, cssClass, bodyLengthLimit);
 			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
 		
 			if (html == null)
@@ -61,4 +63,8 @@ public class EntityListTag extends SimpleTagSupport {
 	public void entityCssClass(String klass) {
 		this.cssClass = klass;
 	}
+
+	public void setBodyLengthLimit(int bodyLengthLimit) {
+		this.bodyLengthLimit = bodyLengthLimit;
+	}	
 }

@@ -51,7 +51,12 @@
            <name>cssClass</name>
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
-        </attribute>        
+        </attribute>
+        <attribute>
+           <name>bodyLengthLimit</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>            
     </tag>
     <tag>
         <name>presence</name>
@@ -93,7 +98,12 @@
            <name>cssClass</name>
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
-        </attribute>           
+        </attribute>
+        <attribute>
+           <name>bodyLengthLimit</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>                  
     </tag>
     <tag>
         <name>favicon</name>

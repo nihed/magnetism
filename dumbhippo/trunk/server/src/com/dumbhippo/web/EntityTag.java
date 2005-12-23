@@ -25,9 +25,10 @@ public class EntityTag extends SimpleTagSupport {
 	private boolean showInviteLinks;
 	private boolean photo;
 	private String cssClass;
+	private int bodyLengthLimit;
 	
 	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo,
-			String cssClass) {
+			String cssClass, int bodyLengthLimit) {
 		String link = null;
 		String body;
 		String photoUrl = null;
@@ -80,6 +81,15 @@ public class EntityTag extends SimpleTagSupport {
 		
 		XmlBuilder xml = new XmlBuilder();
 		
+		if (body.length() > bodyLengthLimit) {
+			if (bodyLengthLimit > 3) {
+				body = body.substring(0, bodyLengthLimit - 3);
+				body += "...";
+			} else {
+				body = body.substring(0, bodyLengthLimit);
+			}
+		}
+		
 		if (photo && photoUrl != null) {
 			if (link != null)
 				xml.openElement("a", "href", link, "target", "_top", "class", cssClass);
@@ -115,7 +125,7 @@ public class EntityTag extends SimpleTagSupport {
 		} catch (ELException e) {
 			throw new RuntimeException(e);
 		}
-		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, cssClass));
+		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, cssClass, bodyLengthLimit));
 	}
 	
 	public void setValue(Object value) {
@@ -132,5 +142,9 @@ public class EntityTag extends SimpleTagSupport {
 
 	public void setCssClass(String cssClass) {
 		this.cssClass = cssClass;
+	}
+
+	public void setBodyLengthLimit(int bodyLengthLimit) {
+		this.bodyLengthLimit = bodyLengthLimit;
 	}
 }
