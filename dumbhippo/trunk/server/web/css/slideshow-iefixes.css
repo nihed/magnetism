@@ -1,12 +1,3 @@
-.dh-account-movie-area {
-	text-align:			center;
-}
-a.dh-slideshow-control {
-	cursor:				hand;
-}
-a.dh-slideshow-control:link {
-	cursor:				hand;
-}
-div.dh-slideshow-player {
+div.dh-slideshow-screen {
 	border: 		1px solid black;
 }

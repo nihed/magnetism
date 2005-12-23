@@ -22,10 +22,10 @@
 
 		<c:choose>
 			<c:when test="${invite.invitations < 1}">
-				<div id="dhInformationBar">You're Out Of Invites Right Now</div>
+				<div id="dhInformationBar"><strong>You're Out Of Invites Right Now</strong></div>
 			</c:when>
 			<c:otherwise>
-				<div id="dhInformationBar">You can invite up to ${invite.invitations} people to DumbHippo</div>
+				<div id="dhInformationBar"><strong>You can invite up to ${invite.invitations} people to DumbHippo</strong></div>
 			</c:otherwise>
 		</c:choose>
 
@@ -70,7 +70,7 @@
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
 		<dht:headshot person="${invite.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="Change My Photo"/>
+		<dht:uploadPhoto location="/headshots" linkText="change photo"/>
 		<div id="dhName"><dht:userNameEdit value="${invite.person.name}"/></div>
 		</div>
 

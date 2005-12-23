@@ -31,6 +31,17 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 		node.appendChild(t);
 	}
 	
+	var setImg = function(node, img) {
+		while (node.firstChild) { node.removeChild(node.firstChild); }
+		node.appendChild(img);		
+	}
+
+	var createImg = function(src) {
+		var img = document.createElement("img");
+			img.src = src;
+		return img;
+	}
+
 	this.setSlides = function(slides) {
 		
 		// drop any old slides
@@ -89,24 +100,24 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	}
 
 	this.updateControls = function() {
-		if (this.playing) {	
-			setText(this.playPauseControl, "||");
-			this.playPauseControl.setAttribute("active", "false");
-
-		} else {
-			setText(this.playPauseControl, ">|");
-			this.playPauseControl.setAttribute("active", "true");
-		}
+		if (this.playing)
+			setImg(this.playPauseControl, this.pauseImg);
+		else
+			setImg(this.playPauseControl, this.playImg);
 
 		if (this.current < 1)
-			this.back.setAttribute("active", "false");
+			this.back.disabled = true;
 		else
-			this.back.setAttribute("active", "true");
+			this.back.disabled = false;
 
-		if (this.current == this.slides.length - 1) 
-			this.forward.setAttribute("active", "false");
-		else
-			this.forward.setAttribute("active", "true");
+		if (this.current >= this.slides.length - 1) {
+			this.forward.disabled = true;
+			this.playPauseControl.disabled = true;
+		}
+		else {
+			this.forward.disabled = false;
+			this.playPauseControl.disabled = false;
+		}
 	}
 	
 	this.setPlaying = function(play) {
@@ -179,17 +190,22 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 	this.player.style.display = 'none';
 	
 	this.screen = createElemWithClass("div", this.player, "dh-slideshow-screen");
+	// Fix for IE, since it's busted
+	this.screen.style.border = "1px solid black";
 
 	this.controlArea = createElemWithClass("div", this.player, "dh-slideshow-control-area");
 	
-	this.back = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-back");
-	this.back.appendChild(document.createTextNode("<<"));
+	this.back = createElemWithClass("button", this.controlArea, "dh-slideshow-control dh-slideshow-control-back");
+	setImg(this.back, createImg("/images/stock_media-prev.gif"));
 	this.back.onclick = function(ev) {
 		me.setCurrent(me.current - 1);
 		me.setPlaying(false);
 	}
 
-	this.playPauseControl = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-pause");
+	this.pauseImg = createImg("/images/stock_media-pause.gif");
+	this.playImg = createImg("/images/stock_media-play.gif");
+
+	this.playPauseControl = createElemWithClass("button", this.controlArea, "dh-slideshow-control dh-slideshow-control-pause");
 
 	this.playPauseControl.onclick = function(ev) {
 		if (me.playing)
@@ -202,8 +218,8 @@ dh.slideshow.Slideshow = function(node, width, height, slides) {
 
 	this.where = createElemWithClass("span", this.controlArea, "dh-slideshow-where");
 
-	this.forward = createElemWithClass("a", this.controlArea, "dh-slideshow-control dh-slideshow-control-forward");
-	this.forward.appendChild(document.createTextNode(">>"));
+	this.forward = createElemWithClass("button", this.controlArea, "dh-slideshow-control dh-slideshow-control-forward");
+	setImg(this.forward, createImg("/images/stock_media-next.gif"));
 	this.forward.onclick = function(ev) {
 		me.setCurrent(me.current + 1);
 		me.setPlaying(false);

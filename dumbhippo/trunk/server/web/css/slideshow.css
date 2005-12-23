@@ -1,71 +1,32 @@
 @CHARSET "UTF-8";
 
+.dh-account-movie-area {
+	width:					450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
+	margin:					auto;
+	text-align:				center;
+}
 #dhAccountSlideshow, .dh-slideshow-player {
 	/* you want to float or absolute-position it so it shrinks to fit contents */
-	padding:	6px;
-	width:		450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
-	margin:		auto;
+	width:					450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
 }
 
 .dh-slideshow-screen {
-	position:		relative;
-	border: 		1px solid black;
-}
-
-div.dh-slideshow-spacer {
-	text-align:			center;
-	width:				100%;
+	position:				relative;
+	border: 				1px solid black;
 }
 
 .dh-slideshow-control-area {
-	text-align:			center;
-	float:				left;
-	height:				2em;
-	vertical-align:			middle;
-}
-
-a.dh-slideshow-control {
-	margin:				3px;
-	padding:			3px;
-	text-decoration: 		none;
-	color:				white;
-	font-weight:			bold;
-	background-color:		steelblue;
-	cursor:				pointer;
-	border:				2px outset lightsteelblue;
-	display:			block;
-	float:				left;
-	width:				2em;
-}
-a.dh-slideshow-control:link {
-	text-decoration: 		none;
-	color:				white;
-	font-weight:			bold;
-	cursor:				pointer;
-}
-a.dh-slideshow-control[active=false] {
-	background-color:		gray;
-	border:				2px outset gray;
-}
-a.dh-slideshow-control[active=true] {
-	background-color:		steelblue;
-	border:				2px outset lightsteelblue;
-}
-
-a.dh-slideshow-control-pause[active=false] {
-	background-color:		lightsteelblue;
-	color:				black;
+	text-align:				center;
 }
 
 .dh-slideshow-where {
-	display:			block;
-	float:				left;
-	margin:				3px;
-	padding:			4px;
+	margin-left:			auto;
+	margin-right:			auto;
+	padding:				4px;
 }
 
 .dh-slideshow-slide {
-	position:	absolute;
+	position:				relative;
 }
 	
 img.dh-slideshow-slide {

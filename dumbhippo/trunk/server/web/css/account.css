@@ -4,18 +4,10 @@
  */
 
 @import "sitewide.css";
+@import "slideshow.css";
 
 .dh-account-movie-area {
 	text-align:	center;
-}
-
-.dh-account-movie-area {
-	width: 					420;
-	height: 				300;
-	border: 				1px solid black;
-	text-align: 			center;
-	margin:					auto;
-	margin-bottom:			1em;
 }
 
 #dhPasswordEntry, #dhPasswordAgainEntry {
@@ -50,4 +42,5 @@
  */
 a.editLabel {
 	position:		absolute;
+	color:			#556a87 !important;
 }
