@@ -105,22 +105,27 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public void onUserAvailable(String username) {
 		logger.debug("Jabber user " + username + " now available");
-		
-		// account could be missing due to debug users or our own send-notifications
-		// user, i.e. any user on the jabber server that we don't know about
-		Account account;
 		try {
-			account = accountFromUsername(username);
-		} catch (JabberUserNotFoundException e) {
-			logger.debug("username signed on that we don't know: " + username);
-			return;
-		}
-		if (!account.getWasSentShareLinkTutorial()) {
-			logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
-
-			postingBoard.doShareLinkTutorialPost(account.getOwner());
-
-			account.setWasSentShareLinkTutorial(true);
+			// account could be missing due to debug users or our own send-notifications
+			// user, i.e. any user on the jabber server that we don't know about
+			Account account;
+			try {
+				account = accountFromUsername(username);
+			} catch (JabberUserNotFoundException e) {
+				logger.debug("username signed on that we don't know: " + username);
+				return;
+			}
+			if (!account.getWasSentShareLinkTutorial()) {
+				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
+	
+				postingBoard.doShareLinkTutorialPost(account.getOwner());
+	
+				account.setWasSentShareLinkTutorial(true);
+			}
+		} catch (RuntimeException e) {
+			logger.error("Failed to do share link tutorial", e);
+			logger.trace(e);
+			throw e;
 		}
 	}
 
