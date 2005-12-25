@@ -7,6 +7,7 @@ import javax.ejb.Stateless;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
@@ -125,6 +126,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		} catch (RuntimeException e) {
 			logger.error("Failed to do share link tutorial", e);
 			logger.trace(e);
+			logger.trace(ExceptionUtils.getRootCause(e));
 			throw e;
 		}
 	}

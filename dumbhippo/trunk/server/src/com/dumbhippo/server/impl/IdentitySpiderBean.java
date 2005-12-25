@@ -264,7 +264,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private transient User theMan;
 	
 	private static final String theManNickname = "The Man";
-	private static final String theManGuid = "8716baa63bef600797fbc59e06010000a35ad1637e6a7f87";
+	private static final String theManGuid = "09mfAhfd7wzVRq";
 	private static final String theManEmail = "theman@dumbhippo.com";
 
 	// This needs to be synchronized since the stateless session bean might be shared
