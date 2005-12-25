@@ -10,8 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.jboss.mq.il.uil2.msgs.GetIDMsg;
-
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;

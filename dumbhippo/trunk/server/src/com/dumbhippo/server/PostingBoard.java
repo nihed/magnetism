@@ -39,7 +39,7 @@ public interface PostingBoard {
 	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
 		throws NotFoundException;
 	
-	public void doShareLinkTutorialPost(Person recipient);
+	public void doShareLinkTutorialPost(User recipient);
 	
 	/**
 	 * You don't want to use this directly because it doesn't send any notifications.

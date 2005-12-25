@@ -34,7 +34,6 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
@@ -239,17 +238,29 @@ public class PostingBoardBean implements PostingBoard {
 		return doLinkPost(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo);			
 	}
 	
-	public void doShareLinkTutorialPost(Person recipient) {
-
+	public void doShareLinkTutorialPost(User recipient) {
+		logger.debug("Sending share link tutorial post");
 		User poster = identitySpider.getTheMan();
-		LinkResource link = identitySpider.getLink(configuration.getProperty(HippoProperty.BASEURL) + "/account");
-		Set<Group> emptyGroups = Collections.emptySet();
-		Set<Resource> recipientSet = Collections.singleton(identitySpider.getBestResource(recipient));
-
-		Post post = createPostViaProxy(poster, PostVisibility.RECIPIENTS_ONLY, "What is this DumbHippo thing?",
-				"Set up your account and learn to use DumbHippo by visiting this link", Collections.singleton((Resource) link), recipientSet, emptyGroups, recipientSet, null);
-
-		sendPostNotifications(post, recipientSet);
+		URL url;
+		String urlText = configuration.getProperty(HippoProperty.BASEURL) + "/account";
+		try {
+			url = new URL(urlText);
+		} catch (MalformedURLException e) {
+			logger.error("Malformed tutorial url: " + urlText, e);
+			throw new RuntimeException(e);
+		}
+		String title = "What is this DumbHippo thing?";
+		String text = "Set up your account and learn to use DumbHippo by visiting this link"; 
+		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
+		Post post;
+		try {
+			post = doLinkPost(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null);
+		} catch (NotFoundException e) {
+			logger.error("Failed to post: " + e, e);
+			logger.trace(e);
+			throw new RuntimeException(e);
+		}
+		logger.debug("Tutorial post done: " + post);
 	}
 	
 	private Post createPostViaProxy(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients, PostInfo postInfo) {
