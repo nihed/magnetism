@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1759 $
- * $Date: 2005-08-09 18:32:51 -0400 (Tue, 09 Aug 2005) $
+ * $RCSfile: DefaultVCardProvider.java,v $
+ * $Revision: 3062 $
+ * $Date: 2005-11-11 13:26:30 -0300 (Fri, 11 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.vcard;
+package org.jivesoftware.wildfire.vcard;
 
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -76,7 +76,7 @@ public class DefaultVCardProvider implements VCardProvider {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error("Error loading vCard of username: " + username, e);
             }
             finally {
                 // Return the sax reader to the pool
@@ -108,7 +108,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error creating vCard for username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -133,7 +133,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error updating vCard of username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
@@ -153,7 +153,7 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error("Error deleting vCard of username: " + username, e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }

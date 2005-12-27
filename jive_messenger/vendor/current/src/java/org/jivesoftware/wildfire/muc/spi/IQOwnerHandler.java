@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1623 $
- * $Date: 2005-07-12 17:40:57 -0400 (Tue, 12 Jul 2005) $
+ * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,18 +9,18 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
-import org.jivesoftware.messenger.forms.DataForm;
-import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.muc.ConflictException;
-import org.jivesoftware.messenger.muc.ForbiddenException;
-import org.jivesoftware.messenger.muc.MUCRole;
+import org.jivesoftware.wildfire.forms.DataForm;
+import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.wildfire.muc.ConflictException;
+import org.jivesoftware.wildfire.muc.ForbiddenException;
+import org.jivesoftware.wildfire.muc.MUCRole;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import java.util.*;
 
 import org.dom4j.DocumentHelper;

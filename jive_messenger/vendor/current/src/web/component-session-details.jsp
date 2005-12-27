@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 1577 $
-  -	$Date: 2005-07-01 17:34:52 -0400 (Fri, 01 Jul 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -10,24 +10,17 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.messenger.*,
-                 java.text.DateFormat,
+                 org.jivesoftware.wildfire.*,
                  java.text.NumberFormat,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User,
-                 org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.messenger.server.IncomingServerSession,
-                 org.jivesoftware.messenger.server.OutgoingServerSession,
-                 org.jivesoftware.messenger.component.ComponentSession"
+                 org.jivesoftware.wildfire.component.ComponentSession"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
@@ -46,16 +39,12 @@
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("component.session.details.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "component-session-details.jsp?jid=" + jid));
-    pageinfo.setPageID("component-session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="component.session.details.title"/></title>
+        <meta name="pageID" content="component-session-summary"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="component.session.details.info">
@@ -105,16 +94,16 @@
         <td>
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/msn.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
              <% }
                 else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/aim.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
              <% }
                 else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/yahoo.gif" width="22" height="16" border="0">&nbsp;
+                <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
              <% }
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/icq.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
              <% }
             }
             %>
@@ -167,4 +156,5 @@
 </center>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

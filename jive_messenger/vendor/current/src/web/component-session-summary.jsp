@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 1616 $
-  -	$Date: 2005-07-10 01:58:32 -0400 (Sun, 10 Jul 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -11,14 +11,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.Date,
-                 org.jivesoftware.admin.*,
-                 java.text.DateFormat,
-                 org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.server.IncomingServerSession,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.component.ComponentSession"
+                 org.jivesoftware.wildfire.component.ComponentSession"
     errorPage="error.jsp"
 %>
 
@@ -73,16 +69,12 @@
     int maxIndex = (start+range <= sessionCount ? start+range : sessionCount);
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("component.session.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "component-session-summary.jsp"));
-    pageinfo.setPageID("component-session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="component.session.summary.title"/></title>
+        <meta name="pageID" content="component-session-summary"/>
+    </head>
+    <body>
 
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
@@ -110,12 +102,11 @@
     <%  } %>
 
 </select>
-</p>
 
 <%  if (numPages > 1) { %>
 
     <p>
-    <fmt:message key="global.page" />:
+    <fmt:message key="global.pages" />:
     [
     <%  for (int i=0; i<numPages; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
@@ -130,8 +121,6 @@
     </p>
 
 <%  } %>
-
-</p>
 
 <p>
 <fmt:message key="component.session.summary.info">
@@ -187,16 +176,16 @@
         <td align="center" width="10%" nowrap>
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/msn.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
              <% }
                 else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/aim.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
              <% }
                 else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/yahoo.gif" width="22" height="16" border="0">&nbsp;
+                <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
              <% }
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/icq.gif" width="16" height="16" border="0">&nbsp;
+                <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
              <% }
             }
             %>
@@ -226,7 +215,7 @@
             <a href="component-session-summary.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>&close=true"
              title="<fmt:message key="session.row.cliked_kill_session" />"
              onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
     </tr>
     <%  } %>
@@ -259,4 +248,5 @@
 <fmt:message key="component.session.summary.last_update" />: <%= JiveGlobals.formatDateTime(new Date()) %>
 </p>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

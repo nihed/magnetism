@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 17:40:57 -0400 (Tue, 12 Jul 2005) $
+ * $Revision: 2979 $
+ * $Date: 2005-10-18 19:46:58 -0300 (Tue, 18 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,20 +9,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import java.util.List;
 import java.util.Date;
 import java.util.Collection;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.muc.spi.IQAdminHandler;
-import org.jivesoftware.messenger.muc.spi.IQOwnerHandler;
+import org.jivesoftware.wildfire.muc.spi.IQAdminHandler;
+import org.jivesoftware.wildfire.muc.spi.IQOwnerHandler;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.database.JiveID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Message;
@@ -466,13 +466,15 @@ public interface MUCRoom {
     public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException;
 
     /**
-     * Sends a private message to a selected occupant. 
+     * Sends a private packet to a selected occupant. The packet can be a Message for private
+     * conversation between room occupants or IQ packets when an occupant wants to send IQ packets
+     * to other room occupants.
      * 
-     * @param message The message to send.
+     * @param packet The packet to send.
      * @param senderRole the role of the user that is trying to send a public message.
-     * @throws NotFoundException If the user is sending a message to a room JID that does not exist.
+     * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
      */
-    public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException;
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException;
 
     /**
      * Kicks a user from the room. If the user was in the room, the returned updated presence will

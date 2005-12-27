@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1651 $
- * $Date: 2005-07-19 23:20:39 -0400 (Tue, 19 Jul 2005) $
+ * $Date: 2005-07-20 00:20:39 -0300 (Wed, 20 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.vcard;
+package org.jivesoftware.wildfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.AlreadyExistsException;

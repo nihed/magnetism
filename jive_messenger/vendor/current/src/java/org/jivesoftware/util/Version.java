@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 42 $
- * $Date: 2004-10-21 03:28:12 -0400 (Thu, 21 Oct 2004) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -11,7 +11,7 @@
 package org.jivesoftware.util;
 
 /**
- * Holds version information for Jive Messenger.
+ * Holds version information for Wildfire.
  *
  * @author Iain Shigeoka
  */
@@ -81,7 +81,7 @@ public class Version {
     }
 
     /**
-     * Returns the version number of this instance of Jive Messenger as a
+     * Returns the version number of this instance of Wildfire as a
      * String (ie major.minor.revision).
      *
      * @return The version as a string

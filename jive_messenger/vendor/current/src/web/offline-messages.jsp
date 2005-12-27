@@ -1,45 +1,34 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2691 $
-  -	$Date: 2005-08-18 16:58:19 -0400 (Thu, 18 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
-                 org.jivesoftware.messenger.*,
-                 java.util.Date,
-                 java.text.DateFormat,
+                 org.jivesoftware.wildfire.*,
                  java.util.HashMap,
                  java.util.Map,
-                 org.jivesoftware.admin.*,
-                 java.text.DecimalFormat,
-                 java.text.NumberFormat"
+                 java.text.DecimalFormat"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" scope="page" />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" scope="page" />
+<% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("offline.messages.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "offline-messages.jsp"));
-    pageinfo.setPageID("server-offline-messages");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_offline_messages.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="offline.messages.title"/></title>
+        <meta name="pageID" content="server-offline-messages"/>
+        <meta name="helpPage" content="manage_offline_messages.html"/>
+    </head>
+    <body>
 
 <c:set var="success" />
 
@@ -62,10 +51,10 @@
     DecimalFormat format = new DecimalFormat("#0.00");
 
     // Get the offline message manager
-    OfflineMessageStrategy manager = admin.getXMPPServer().getOfflineMessageStrategy();
+    OfflineMessageStrategy manager = webManager.getXMPPServer().getOfflineMessageStrategy();
 
     // Update the session kick policy if requested
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (update) {
         // Validate params
         if (strategy != BOUNCE && strategy != DROP && strategy != STORE) {
@@ -227,7 +216,7 @@
                  <%= ((strategy==STORE) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b><fmt:message key="offline.messages.store_option" /></b></label> - <fmt:message key="offline.messages.storage_messenger" />
+                <label for="rb03"><b><fmt:message key="offline.messages.store_option" /></b></label> - <fmt:message key="offline.messages.storage_wildfire" />
             </td>
         </tr>
         <tr valign="top">
@@ -290,4 +279,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

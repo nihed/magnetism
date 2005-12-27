@@ -1,15 +1,15 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 1217 $
-  -	$Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
 --%>
 
 <%@ page import="java.io.*,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.messenger.user.UserNotFoundException,
-                 org.jivesoftware.messenger.group.GroupNotFoundException"
+                 org.jivesoftware.wildfire.auth.UnauthorizedException,
+                 org.jivesoftware.wildfire.user.UserNotFoundException,
+                 org.jivesoftware.wildfire.group.GroupNotFoundException"
     isErrorPage="true"
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

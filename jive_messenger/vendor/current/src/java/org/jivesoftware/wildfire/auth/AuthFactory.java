@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 2814 $
+ * $Date: 2005-09-13 16:41:10 -0300 (Tue, 13 Sep 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserManager;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -42,7 +44,7 @@ public class AuthFactory {
     static {
         // Load an auth provider.
         String className = JiveGlobals.getXMLProperty("provider.auth.className",
-                "org.jivesoftware.messenger.auth.DefaultAuthProvider");
+                "org.jivesoftware.wildfire.auth.DefaultAuthProvider");
         try {
             Class c = ClassUtils.forName(className);
             authProvider = (AuthProvider)c.newInstance();
@@ -79,6 +81,21 @@ public class AuthFactory {
      */
     public static boolean isDigestSupported() {
         return authProvider.isDigestSupported();
+    }
+
+    /**
+     * Returns the user's password. This method will throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @return the user's password.
+     * @throws UserNotFoundException if the given user could not be found.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public static String getPassword(String username) throws UserNotFoundException,
+            UnsupportedOperationException {
+        return UserManager.getUserProvider().getPassword(username);
     }
 
     /**

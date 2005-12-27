@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1125 $
- * $Date: 2005-03-14 13:59:37 -0500 (Mon, 14 Mar 2005) $
+ * $RCSfile: IQRosterHandler.java,v $
+ * $Revision: 3163 $
+ * $Date: 2005-12-05 17:54:23 -0300 (Mon, 05 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,17 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.roster.Roster;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -169,6 +169,12 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         IQ.Type type = packet.getType();
 
         try {
+            if (session.getUsername() == null && IQ.Type.get == type) {
+                // If anonymous user asks for his roster then return an empty roster
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement("query", "jabber:iq:roster");
+                return reply;
+            }
             User sessionUser = userManager.getUser(session.getUsername());
             Roster cachedRoster = sessionUser.getRoster();
             if (IQ.Type.get == type) {
@@ -219,7 +225,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(org.jivesoftware.messenger.roster.Roster roster, JID sender,
+    private void removeItem(org.jivesoftware.wildfire.roster.Roster roster, JID sender,
             org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         JID recipient = item.getJID();
         // Remove recipient from the sender's roster
@@ -275,8 +281,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:roster");
         return features.iterator();
     }

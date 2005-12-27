@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 956 $
- * $Date: 2005-02-08 16:39:58 -0500 (Tue, 08 Feb 2005) $
+ * $Revision: 3036 $
+ * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import java.util.List;
 import java.util.Collection;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
 import org.xmpp.component.Component;
@@ -201,9 +201,9 @@ public interface MultiUserChatServer extends Component {
      * @param roomName Name of the room to get.
      * @param userjid The user's normal jid, not the chat nickname jid.
      * @return The chatroom for the given name.
-     * @throws UnauthorizedException If the caller doesn't have permission to create a new room.
+     * @throws NotAllowedException If the caller doesn't have permission to create a new room.
      */
-    MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException;
+    MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException;
 
     /**
      * Obtains a chatroom by name. If the chatroom does not exists then null will be returned.
@@ -276,7 +276,7 @@ public interface MultiUserChatServer extends Component {
      * the logged messages in memory until the logging process saves them to the database. It's 
      * possible to configure the logging process to run every X milliseconds and also the number 
      * of messages to log on each execution. 
-     * @see org.jivesoftware.messenger.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.messenger.XMPPServer)
+     * @see org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.wildfire.XMPPServer)
      * 
      * @param room the room that received the message.
      * @param message the message to log as part of the conversation in the room.

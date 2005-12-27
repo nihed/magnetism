@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 624 $
- * $Date: 2004-12-05 00:38:08 -0500 (Sun, 05 Dec 2004) $
+ * $Date: 2004-12-05 02:38:08 -0300 (Sun, 05 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.spi;
+package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.transport.TransportHandler;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.xmpp.packet.Packet;
 
 /**

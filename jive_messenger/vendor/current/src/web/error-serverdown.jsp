@@ -1,7 +1,7 @@
  <%--
   -	$RCSfile$
-  -	$Revision: 985 $
-  -	$Date: 2005-02-18 13:35:44 -0500 (Fri, 18 Feb 2005) $
+  -	$Revision: 2925 $
+  -	$Date: 2005-10-07 12:26:47 -0400 (Fri, 07 Oct 2005) $
 --%>
 <%@ page import="org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.util.LocaleUtils"%>
@@ -65,7 +65,9 @@
         </td>
         <td width="99%" id="jive-content">
 
-        <jsp:include page="title.jsp" flush="true" />
+        <div id="jive-title">
+            <%= title %>
+        </div>
 
         <p>
         <%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.is_down" />

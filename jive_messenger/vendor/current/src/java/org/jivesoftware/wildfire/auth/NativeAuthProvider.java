@@ -9,15 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.NativeUserProvider;
+import org.jivesoftware.wildfire.user.*;
 import com.cenqua.shaj.Shaj;
 
 import java.net.URL;
@@ -39,10 +36,10 @@ import java.lang.reflect.Field;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.messenger.auth.NativeAuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.wildfire.auth.NativeAuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.messenger.user.NativeUserProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.wildfire.user.NativeUserProvider&lt;/className&gt;
  *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>
@@ -71,7 +68,7 @@ public class NativeAuthProvider implements AuthProvider {
         this.domain = JiveGlobals.getXMLProperty("nativeAuth.domain");
 
         // Configure the library path so that we can load the shaj native library
-        // from the Jive Messenger lib directory.
+        // from the Wildfire lib directory.
         // Find the root path of this class.
         try {
             String binaryPath = (new URL(Shaj.class.getProtectionDomain()
@@ -91,7 +88,7 @@ public class NativeAuthProvider implements AuthProvider {
             Log.error(e);
         }
 
-        // Configure Shaj to log output to the Jive Messenger logger.
+        // Configure Shaj to log output to the Wildfire logger.
         com.cenqua.shaj.log.Log.Factory.setInstance(new com.cenqua.shaj.log.Log() {
             public boolean isDebug() {
                 return Log.isDebugEnabled();
@@ -135,6 +132,12 @@ public class NativeAuthProvider implements AuthProvider {
                 // Create user; use a random password for better safety in the future.
                 // Note that we have to go to the user provider directly -- because the
                 // provider is read-only, UserManager will usually deny access to createUser.
+                UserProvider provider = UserManager.getUserProvider();
+                if (!(provider instanceof NativeUserProvider)) {
+                    Log.error("Error: not using NativeUserProvider so authentication with " +
+                            "NativeAuthProvider will likely fail. Using: " +
+                            provider.getClass().getName());
+                }
                 UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
                         null, null);
             }

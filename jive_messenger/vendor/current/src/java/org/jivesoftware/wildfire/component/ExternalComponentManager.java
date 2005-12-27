@@ -1,10 +1,10 @@
-package org.jivesoftware.messenger.component;
+package org.jivesoftware.wildfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.SessionManager;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.component.ExternalComponentConfiguration.Permission;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.component.ExternalComponentConfiguration.Permission;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 

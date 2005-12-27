@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 128 $
- * $Date: 2004-10-25 19:42:00 -0400 (Mon, 25 Oct 2004) $
+ * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
 import com.sun.net.ssl.X509KeyManager;
 import java.net.Socket;

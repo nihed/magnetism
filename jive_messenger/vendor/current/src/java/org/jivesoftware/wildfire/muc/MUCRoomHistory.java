@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1747 $
- * $Date: 2005-08-04 17:36:36 -0400 (Thu, 04 Aug 2005) $
+ * $RCSfile: MUCRoomHistory.java,v $
+ * $Revision: 3157 $
+ * $Date: 2005-12-04 22:54:55 -0300 (Sun, 04 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -53,9 +53,14 @@ public final class MUCRoomHistory {
                 packet.getSubject() == null) {
             return;
         }
-        Message packetToAdd = (Message) packet.createCopy();
+        // Do not store messages is strategy is none and message is not changing the room subject
+        if (!historyStrategy.isHistoryEnabled()) {
+            if (packet.getSubject() == null || packet.getSubject().trim().length() == 0) {
+                return;
+            }
+        }
 
-        // TODO Analyze concurrency (on the LinkList) when adding many messages simultaneously
+        Message packetToAdd = (Message) packet.createCopy();
 
         // Check if the room has changed its configuration
         if (isNonAnonymousRoom != room.canAnyoneDiscoverJID()) {

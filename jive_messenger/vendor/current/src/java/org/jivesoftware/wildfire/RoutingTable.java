@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 970 $
- * $Date: 2005-02-10 15:31:24 -0500 (Thu, 10 Feb 2005) $
+ * $RCSfile: RoutingTable.java,v $
+ * $Revision: 3138 $
+ * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import org.xmpp.packet.JID;
 
@@ -91,9 +91,8 @@ public interface RoutingTable {
      *
      * @param node The address we want a route to
      * @return The handler corresponding to the route, or null indicating no route exists
-     * @throws NoSuchRouteException If the requested route does not exist
      */
-    RoutableChannelHandler getRoute(JID node) throws NoSuchRouteException;
+    RoutableChannelHandler getRoute(JID node);
 
     /**
      * <p>Obtain all child routes for the given node.</p>
@@ -134,9 +133,8 @@ public interface RoutingTable {
      *
      * @param node The address we want a route to
      * @return The Session corresponding to the route, or null indicating no route exists
-     * @throws NoSuchRouteException If the requested route does not exist
      */
-    ChannelHandler getBestRoute(JID node) throws NoSuchRouteException;
+    ChannelHandler getBestRoute(JID node);
 
     /**
      * <p>Remove a route from the routing table.</p>

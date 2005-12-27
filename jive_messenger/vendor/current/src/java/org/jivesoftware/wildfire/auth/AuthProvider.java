@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 691 $
- * $Date: 2004-12-13 13:06:54 -0500 (Mon, 13 Dec 2004) $
+ * $Date: 2004-12-13 15:06:54 -0300 (Mon, 13 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.wildfire.auth;
 
 /**
  * Provider interface for authentication. Users that wish to integrate with
  * their own authentication system must implement this class and then register
- * the implementation with Jive Messenger in the <tt>jive-messenger.xml</tt>
+ * the implementation with Wildfire in the <tt>wildfire.xml</tt>
  * file. An entry in that file would look like the following:
  *
  * <pre>

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 943 $
- * $Date: 2005-02-03 23:53:20 -0500 (Thu, 03 Feb 2005) $
+ * $Date: 2005-02-04 01:53:20 -0300 (Fri, 04 Feb 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.IQ;
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.container.BasicModule;
 
 /**
  * <p>An uber router that can handle any packet type.</p>

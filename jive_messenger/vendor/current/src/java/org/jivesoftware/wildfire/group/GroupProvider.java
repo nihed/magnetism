@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2699 $
- * $Date: 2005-08-19 14:29:15 -0400 (Fri, 19 Aug 2005) $
+ * $Revision: 3117 $
+ * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,16 +9,16 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.group;
+package org.jivesoftware.wildfire.group;
 
-import org.jivesoftware.messenger.user.User;
+import org.xmpp.packet.JID;
 
 import java.util.Collection;
 
 /**
  * Provider interface for groups. Users that wish to integrate with
  * their own group system must implement this class and then register
- * the implementation with Jive Messenger in the <tt>jive-messenger.xml</tt>
+ * the implementation with Wildfire in the <tt>wildfire.xml</tt>
  * file. An entry in that file would look like the following:
  *
  * <pre>
@@ -113,46 +113,46 @@ public interface GroupProvider {
     Collection<Group> getGroups(int startIndex, int numResults);
 
     /**
-     * Returns the Collection of Groups that a user belongs to.
+     * Returns the Collection of Groups that an entity belongs to.
      *
-     * @param user the user.
+     * @param user the JID of the entity.
      * @return the Collection of groups that the user belongs to.
      */
-    Collection<Group> getGroups(User user);
+    Collection<Group> getGroups(JID user);
 
     /**
-     * Adds a user to a group (optional operation).
+     * Adds an entity to a group (optional operation).
      *
      * @param groupName the group to add the member to
-     * @param username the username to add
+     * @param user the JID of the entity to add
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void addMember(String groupName, String username, boolean administrator)
+    void addMember(String groupName, JID user, boolean administrator)
             throws UnsupportedOperationException;
 
     /**
-     * Updates the privileges of a user in a group.
+     * Updates the privileges of an entity in a group.
      *
      * @param groupName the group where the change happened
-     * @param username the username to of the user with new privileges
+     * @param user the JID of the entity with new privileges
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void updateMember(String groupName, String username, boolean administrator)
+    void updateMember(String groupName, JID user, boolean administrator)
             throws UnsupportedOperationException;
 
     /**
-     * Deletes a user from a group (optional operation).
+     * Deletes an entity from a group (optional operation).
      *
      * @param groupName the group name.
-     * @param username the username.
+     * @param user the JID of the entity to delete.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void deleteMember(String groupName, String username) throws UnsupportedOperationException;
+    void deleteMember(String groupName, JID user) throws UnsupportedOperationException;
 
     /**
      * Returns true if this GroupProvider is read-only. When read-only,

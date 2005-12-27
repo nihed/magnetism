@@ -1,17 +1,15 @@
-<%@ page import="org.jivesoftware.messenger.Session,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils,
+ <%--
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+--%>
+
+<%@ page import="java.net.URLEncoder,
                  org.jivesoftware.util.JiveGlobals,
                  java.util.Date,
                  java.util.Calendar,
                  javax.swing.*,
                  java.net.URL"%>
- <%--
-  -	$RCSfile$
-  -	$Revision: 1599 $
-  -	$Date: 2005-07-04 17:18:40 -0400 (Mon, 04 Jul 2005) $
---%>
+<%@ page import="org.jivesoftware.wildfire.server.IncomingServerSession"%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 4 variables:
@@ -40,12 +38,12 @@
             </tr>
         </table>
     </td>
-    <% if (inSession != null && outSession == null) { %>
+    <% if (!inSessions.isEmpty() && outSession == null) { %>
         <td width="1%">
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">
         </td>
         <td width="10%"><fmt:message key="server.session.connection.incoming" /></td>
-    <% } else if (inSession == null && outSession != null) { %>
+    <% } else if (inSessions.isEmpty() && outSession != null) { %>
         <td width="1%">
             <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.outgoing" />">
         </td>
@@ -59,17 +57,35 @@
 
     <% Date creationDate = null;
         Date lastActiveDate = null;
-        if (inSession != null && outSession == null) {
-            creationDate = inSession.getCreationDate();
-            lastActiveDate = inSession.getLastActiveDate();
+        if (!inSessions.isEmpty() && outSession == null) {
+            for (IncomingServerSession inSession : inSessions) {
+                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+                    // Use the creation date of the oldest incoming session
+                    creationDate = inSession.getCreationDate();
+                }
+                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+                    // Use the last active date of the newest incoming session
+                    lastActiveDate = inSession.getLastActiveDate();
+                }
+            }
         }
-        else if (inSession == null && outSession != null) {
+        else if (inSessions.isEmpty() && outSession != null) {
             creationDate = outSession.getCreationDate();
             lastActiveDate = outSession.getLastActiveDate();
         }
         else {
-            creationDate = inSession.getCreationDate().before(outSession.getCreationDate()) ? inSession.getCreationDate() : outSession.getCreationDate();
-            lastActiveDate = inSession.getLastActiveDate().after(outSession.getLastActiveDate()) ? inSession.getLastActiveDate() : outSession.getLastActiveDate();
+            for (IncomingServerSession inSession : inSessions) {
+                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+                    // Use the creation date of the oldest incoming session
+                    creationDate = inSession.getCreationDate();
+                }
+                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+                    // Use the last active date of the newest incoming session
+                    lastActiveDate = inSession.getLastActiveDate();
+                }
+            }
+            creationDate = creationDate.before(outSession.getCreationDate()) ? creationDate : outSession.getCreationDate();
+            lastActiveDate = lastActiveDate.after(outSession.getLastActiveDate()) ? lastActiveDate : outSession.getLastActiveDate();
         }
         Calendar creationCal = Calendar.getInstance();
         creationCal.setTime(creationDate);

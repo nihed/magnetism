@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1761 $
- * $Date: 2005-08-09 18:34:09 -0400 (Tue, 09 Aug 2005) $
+ * $Date: 2005-08-09 19:34:09 -0300 (Tue, 09 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,17 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.disco.*;
-import org.jivesoftware.messenger.forms.DataForm;
-import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.disco.*;
+import org.jivesoftware.wildfire.forms.DataForm;
+import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;

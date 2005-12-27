@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 655 $
- * $Date: 2004-12-09 19:54:27 -0500 (Thu, 09 Dec 2004) $
+ * $Date: 2004-12-09 21:54:27 -0300 (Thu, 09 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 /**
  * A unique identifier for a stream.

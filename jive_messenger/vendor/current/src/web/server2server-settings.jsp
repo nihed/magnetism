@@ -1,7 +1,6 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1607 $
-  -	$Date: 2005-07-07 14:27:11 -0400 (Thu, 07 Jul 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -14,18 +13,15 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.Iterator,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.*,
-                 java.text.DateFormat,
-                 org.jivesoftware.admin.AdminPageBean,
-                 org.jivesoftware.messenger.server.RemoteServerManager,
-                 org.jivesoftware.messenger.server.RemoteServerConfiguration,
-                 org.jivesoftware.messenger.component.ExternalComponentManager"
+                 org.jivesoftware.wildfire.server.RemoteServerManager,
+                 org.jivesoftware.wildfire.server.RemoteServerConfiguration"
     errorPage="error.jsp"
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;
@@ -48,10 +44,10 @@
     boolean deleteSuccess = false;
 
     // Get muc server
-    SessionManager sessionManager = admin.getSessionManager();
+    SessionManager sessionManager = webManager.getSessionManager();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (update) {
         // Validate params
         if (s2sEnabled) {
@@ -178,17 +174,12 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server2server.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server2server-settings.jsp"));
-    pageinfo.setPageID("server2server-settings");
-%>
-
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server2server.settings.title"/></title>
+        <meta name="pageID" content="server2server-settings"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="server2server.settings.info">
@@ -298,7 +289,7 @@
         <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="closeEnabled" value="false" id="rb03"
-                 <%= ((admin.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
+                 <%= ((webManager.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
             </td>
             <td width="99%">
                 <label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
@@ -307,13 +298,13 @@
         <tr valign="middle">
             <td width="1%" nowrap>
                 <input type="radio" name="closeEnabled" value="true" id="rb04"
-                 <%= ((admin.getSessionManager().getServerSessionIdleTime() > -1) ? "checked" : "") %>>
+                 <%= ((webManager.getSessionManager().getServerSessionIdleTime() > -1) ? "checked" : "") %>>
             </td>
             <td width="99%">
                     <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
                      <input type="text" name="idletime" size="5" maxlength="5"
                          onclick="this.form.closeEnabled[1].checked=true;"
-                         value="<%= admin.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : admin.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
+                         value="<%= webManager.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : webManager.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
                      <fmt:message key="global.minutes" />.
             </td>
         </tr>
@@ -490,4 +481,5 @@
     </div>
 </fieldset>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

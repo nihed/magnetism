@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 17:40:57 -0400 (Tue, 12 Jul 2005) $
+ * $Revision: 3158 $
+ * $Date: 2005-12-04 22:55:49 -0300 (Sun, 04 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,12 +18,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.messenger.muc.*;
+import org.jivesoftware.wildfire.muc.*;
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
 import org.dom4j.Element;
 
@@ -575,7 +575,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (occupant == joinRole) {
                 continue;
             }
-            Presence occupantPresence = occupant.getPresence().createCopy();
+            Presence occupantPresence = occupant.getPresence();
             // Skip to the next occupant if we cannot send presence of this occupant
             if (hasToCheckRoleToBroadcastPresence()) {
                 Element frag = occupantPresence.getChildElement("x",
@@ -588,6 +588,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Don't include the occupant's JID if the room is semi-anon and the new occupant
             // is not a moderator
             if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
+                occupantPresence = occupantPresence.createCopy();
                 Element frag = occupantPresence.getChildElement("x",
                         "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);
@@ -750,12 +751,12 @@ public class MUCRoomImpl implements MUCRoom {
         send(message);
     }
 
-    public void sendPrivateMessage(Message message, MUCRole senderRole) throws NotFoundException {
-        String resource = message.getTo().getResource();
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {
+        String resource = packet.getTo().getResource();
         MUCRole occupant = occupants.get(resource.toLowerCase());
         if (occupant != null) {
-            message.setFrom(senderRole.getRoleAddress());
-            occupant.send(message);
+            packet.setFrom(senderRole.getRoleAddress());
+            occupant.send(packet);
         }
         else {
             throw new NotFoundException();

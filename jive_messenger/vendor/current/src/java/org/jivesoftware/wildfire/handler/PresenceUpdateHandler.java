@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1698 $
- * $Date: 2005-07-26 01:15:53 -0400 (Tue, 26 Jul 2005) $
+ * $RCSfile: PresenceUpdateHandler.java,v $
+ * $Revision: 3125 $
+ * $Date: 2005-11-30 15:14:14 -0300 (Wed, 30 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,15 +9,15 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.roster.Roster;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -307,7 +307,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     // If the directed presence was sent to an entity that is not in the user's
                     // roster, keep a registry of this so that when the user goes offline we will
                     // be able to send the unavailable presence to the entity
-                    if (!roster.isRosterItem(update.getTo())) {
+                    RosterItem rosterItem = null;
+                    try {
+                        rosterItem = roster.getRosterItem(update.getTo());
+                    }
+                    catch (UserNotFoundException e) {}
+                    if (rosterItem == null || RosterItem.SUB_NONE == rosterItem.getSubStatus() ||
+                            RosterItem.SUB_TO == rosterItem.getSubStatus()) {
                         keepTrack = true;
                     }
                 }
@@ -406,6 +412,22 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
+    public boolean hasDirectPresence(Session session, JID recipientJID) {
+        Map<ChannelHandler, Set<String>> map =
+                directedPresences.get(session.getAddress().toString());
+        if (map != null) {
+            String recipient = recipientJID.toBareJID();
+            for (Set<String> fullJIDs : map.values()) {
+                for (String fullJID : fullJIDs) {
+                    if (fullJID.contains(recipient)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
@@ -415,4 +437,5 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
     }
+
 }

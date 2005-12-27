@@ -1,4 +1,4 @@
-package org.jivesoftware.messenger.server;
+package org.jivesoftware.wildfire.server;
 
 /**
  * Holds the configuration when connecting to/from a remote server. The configuration specifies

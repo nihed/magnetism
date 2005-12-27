@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 3157 $
+ * $Date: 2005-12-04 22:54:55 -0300 (Sun, 04 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -18,6 +18,7 @@ import org.xmpp.packet.Message;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * <p>Multi-User Chat rooms may cache history of the conversations in the room in order to
@@ -39,7 +40,7 @@ public class HistoryStrategy {
     /**
      * List containing the history of messages.
      */
-    private LinkedList history = new LinkedList();
+    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<Message>();
     /**
      * Default max number.
      */
@@ -159,7 +160,7 @@ public class HistoryStrategy {
             }
         }
         else if (strategyType == Type.all) {
-            history.addLast(packet);
+            history.add(packet);
         }
         else if (strategyType == Type.number) {
             if (history.size() >= strategyMaxNumber) {
@@ -169,15 +170,23 @@ public class HistoryStrategy {
                 // last room subject
                 // message because we want to preserve the room subject if
                 // possible.
-                ListIterator historyIter = history.listIterator();
+                Iterator historyIter = history.iterator();
                 while (historyIter.hasNext() && history.size() > strategyMaxNumber) {
                     if (historyIter.next() != roomSubject) {
                         historyIter.remove();
                     }
                 }
             }
-            history.addLast(packet);
+            history.add(packet);
         }
+    }
+
+    boolean isHistoryEnabled() {
+        Type strategyType = type;
+        if (type == Type.defaulType && parent != null) {
+            strategyType = parent.getType();
+        }
+        return strategyType != HistoryStrategy.Type.none;
     }
 
     /**
@@ -185,8 +194,8 @@ public class HistoryStrategy {
      * 
      * @return An iterator of Message objects to be sent to the new room member.
      */
-    public Iterator getMessageHistory(){
-        LinkedList list = new LinkedList(history);
+    public Iterator<Message> getMessageHistory(){
+        LinkedList<Message> list = new LinkedList<Message>(history);
         return list.iterator();
     }
 
@@ -197,8 +206,8 @@ public class HistoryStrategy {
      * 
      * @return A list iterator of Message objects positioned at the end of the list.
      */
-    public ListIterator getReverseMessageHistory(){
-        LinkedList list = new LinkedList(history);
+    public ListIterator<Message> getReverseMessageHistory(){
+        LinkedList<Message> list = new LinkedList<Message>(history);
         return list.listIterator(list.size());
     }
 

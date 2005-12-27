@@ -1,15 +1,15 @@
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.PresenceManager;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.PresenceManager;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -38,7 +38,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         IQ reply = IQ.createResultIQ(packet);
         Element lastActivity = reply.setChildElement("query", "jabber:iq:last");
         String sender = packet.getFrom().getNode();
-        String username = packet.getTo().getNode();
+        String username = packet.getTo() == null ? null : packet.getTo().getNode();
 
         // Check if any of the usernames is null
         if (sender == null || username == null) {

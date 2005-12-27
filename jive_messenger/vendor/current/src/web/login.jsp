@@ -1,20 +1,19 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 1327 $
-  -	$Date: 2005-05-06 15:05:04 -0400 (Fri, 06 May 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.auth.AuthToken,
-                 org.jivesoftware.messenger.auth.AuthFactory,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.Log,
-                 org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.util.JiveGlobals"
+                 org.jivesoftware.wildfire.auth.AuthToken,
+                 org.jivesoftware.wildfire.auth.AuthFactory,
+                 org.jivesoftware.wildfire.auth.UnauthorizedException,
+                 org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.*"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -24,17 +23,12 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%! // List of allowed usernames:
-    static Map authorizedUsernames = null;
-    static String authorizedUsernameProp = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
+    static Map authorizedUsernames = new HashMap();
     static {
-        if (authorizedUsernameProp != null) {
-            StringTokenizer tokenizer = new StringTokenizer(authorizedUsernameProp, ",");
-            while (tokenizer.hasMoreTokens()) {
-                if (authorizedUsernames == null) {
-                    authorizedUsernames = new HashMap();
-                }
-                String tok = tokenizer.nextToken().trim();
-                authorizedUsernames.put(tok, tok);
+        for (JID jid : XMPPServer.getInstance().getAdmins()) {
+            // Only allow local users to log into the admin console
+            if (XMPPServer.getInstance().isLocal(jid)) {
+                authorizedUsernames.put(jid.getNode(), jid.getNode());
             }
         }
     }
@@ -50,11 +44,15 @@
 
 <%-- Check if in setup mode --%>
 <c:if test="${admin.setupMode}">
-  <c:redirect url="setup-index.jsp" />
+  <c:redirect url="setup/index.jsp" />
 </c:if>
 
 <%	// get parameters
     String username = ParamUtils.getParameter(request,"username");
+    // Escape HTML tags in username to prevent cross-site scripting attacks. This
+    // is necessary because we display the username in the page below.
+    username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
+
     String password = ParamUtils.getParameter(request,"password");
     String url = ParamUtils.getParameter(request,"url");
 
@@ -242,7 +240,7 @@
                 </td>
             </tr>
             <tr class="jive-login-label">
-                <td colspan="3"><img src="images/blank.gif" width="1" height="4" border="0"></td>
+                <td colspan="3"><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
             </tr>
             <tr class="jive-footer">
                 <td colspan="3" nowrap>

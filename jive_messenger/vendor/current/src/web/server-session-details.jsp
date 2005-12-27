@@ -1,7 +1,6 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1538 $
-  -	$Date: 2005-06-24 01:00:27 -0400 (Fri, 24 Jun 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -11,22 +10,18 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
-                 java.text.DateFormat,
+                 org.jivesoftware.wildfire.*,
                  java.text.NumberFormat,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.user.User,
-                 org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.messenger.server.IncomingServerSession,
-                 org.jivesoftware.messenger.server.OutgoingServerSession"
+                 org.jivesoftware.wildfire.server.IncomingServerSession,
+                 org.jivesoftware.wildfire.server.OutgoingServerSession"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     String hostname = ParamUtils.getParameter(request, "hostname");
@@ -39,23 +34,19 @@
 
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
-    IncomingServerSession inSession = sessionManager.getIncomingServerSession(hostname);
+    List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(hostname);
     OutgoingServerSession outSession = sessionManager.getOutgoingServerSession(hostname);
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.session.details.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-session-details.jsp?hostname=" + hostname));
-    pageinfo.setPageID("server-session-summary");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.session.details.title"/></title>
+        <meta name="pageID" content="server-session-summary"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="server.session.details.info">
@@ -79,10 +70,10 @@
             <fmt:message key="server.session.label.connection" />
         </td>
         <td>
-        <% if (inSession != null && outSession == null) { %>
+        <% if (!inSessions.isEmpty() && outSession == null) { %>
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">
             <fmt:message key="server.session.connection.incoming" />
-        <% } else if (inSession == null && outSession != null) { %>
+        <% } else if (inSessions.isEmpty() && outSession != null) { %>
             <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.outgoing" />">
             <fmt:message key="server.session.connection.outgoing" />
         <% } else { %>
@@ -96,10 +87,10 @@
             <fmt:message key="server.session.details.hostname" />
         </td>
         <td>
-        <% if (inSession != null) { %>
-            <%= inSession.getConnection().getInetAddress().getHostAddress() %>
+        <% if (!inSessions.isEmpty()) { %>
+            <%= inSessions.get(0).getConnection().getInetAddress().getHostAddress() %>
             /
-            <%= inSession.getConnection().getInetAddress().getHostName() %>
+            <%= inSessions.get(0).getConnection().getInetAddress().getHostName() %>
         <% } else if (outSession != null) { %>
             <%= outSession.getConnection().getInetAddress().getHostAddress() %>
             /
@@ -112,8 +103,8 @@
 </div>
 <br>
 
-<%  // Show details of the incoming session
-    if (inSession != null) {
+<%  // Show details of the incoming sessions
+    for (IncomingServerSession inSession : inSessions) {
 %>
     <b><fmt:message key="server.session.details.incoming_session" /></b>
     <div class="jive-table">
@@ -125,9 +116,24 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
+        <%
+            Date creationDate = inSession.getCreationDate();
+            Date lastActiveDate = inSession.getLastActiveDate();
+
+            Calendar creationCal = Calendar.getInstance();
+            creationCal.setTime(creationDate);
+
+            Calendar lastActiveCal = Calendar.getInstance();
+            lastActiveCal.setTime(lastActiveDate);
+
+            Calendar nowCal = Calendar.getInstance();
+
+            boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+            boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+        %>
         <td><%= inSession.getStreamID()%></td>
-        <td align="center"><%= (System.currentTimeMillis() - inSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getCreationDate()) : JiveGlobals.formatDateTime(inSession.getCreationDate()) %></td>
-        <td align="center"><%= (System.currentTimeMillis() - inSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(inSession.getLastActiveDate()) : JiveGlobals.formatDateTime(inSession.getLastActiveDate()) %></td>
+        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
     </tr>
     </table>
@@ -149,9 +155,24 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
+        <%
+            Date creationDate = outSession.getCreationDate();
+            Date lastActiveDate = outSession.getLastActiveDate();
+
+            Calendar creationCal = Calendar.getInstance();
+            creationCal.setTime(creationDate);
+
+            Calendar lastActiveCal = Calendar.getInstance();
+            lastActiveCal.setTime(lastActiveDate);
+
+            Calendar nowCal = Calendar.getInstance();
+
+            boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+            boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+        %>
         <td><%= outSession.getStreamID()%></td>
-        <td align="center"><%= (System.currentTimeMillis() - outSession.getCreationDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getCreationDate()) : JiveGlobals.formatDateTime(outSession.getCreationDate()) %></td>
-        <td align="center"><%= (System.currentTimeMillis() - outSession.getLastActiveDate().getTime() < 24*60*60*1000) ? JiveGlobals.formatTime(outSession.getLastActiveDate()) : JiveGlobals.formatDateTime(outSession.getLastActiveDate()) %></td>
+        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
     </table>
@@ -168,4 +189,5 @@
 </center>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -11,7 +11,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.group.Group,
+                 org.jivesoftware.wildfire.group.Group,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
@@ -46,20 +46,14 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("group.delete.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-delete.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
-    pageinfo.setSubPageID("group-delete");
-    pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="delete_a_group.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="group.delete.title"/></title>
+        <meta name="subPageID" content="group-delete"/>
+        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+        <meta name="helpPage" content="delete_a_group.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="group.delete.hint_info" />
@@ -73,4 +67,5 @@
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

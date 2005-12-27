@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1747 $
- * $Date: 2005-08-04 17:36:36 -0400 (Thu, 04 Aug 2005) $
+ * $Date: 2005-08-04 18:36:36 -0300 (Thu, 04 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.util.FastDateFormat;
 import org.xmpp.packet.IQ;
 

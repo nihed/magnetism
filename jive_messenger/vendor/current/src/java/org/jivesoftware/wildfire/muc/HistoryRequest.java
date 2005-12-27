@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1746 $
- * $Date: 2005-08-04 17:36:08 -0400 (Thu, 04 Aug 2005) $
+ * $RCSfile: HistoryRequest.java,v $
+ * $Revision: 2899 $
+ * $Date: 2005-09-28 15:30:42 -0300 (Wed, 28 Sep 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
-import org.jivesoftware.messenger.muc.spi.MUCRoleImpl;
+import org.jivesoftware.wildfire.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
 import org.dom4j.Element;
@@ -156,6 +156,10 @@ public class HistoryRequest {
                 message = (Message)iterator.previous();
                 // Update number of characters to send
                 String text = message.getBody() == null ? message.getSubject() : message.getBody();
+                if (text == null) {
+                    // Skip this message since it has no body and no subject  
+                    continue;
+                }
                 accumulatedChars += text.length();
                 if (getMaxChars() > -1 && accumulatedChars > getMaxChars()) {
                     // Stop collecting history since we have exceded a limit

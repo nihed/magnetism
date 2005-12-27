@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1425 $
- * $Date: 2005-05-28 20:11:02 -0400 (Sat, 28 May 2005) $
+ * $Revision: 3186 $
+ * $Date: 2005-12-10 22:07:52 -0500 (Sat, 10 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -46,7 +46,7 @@ public class XMLProperties {
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map propertyCache = new HashMap();
+    private Map<String, String> propertyCache = new HashMap<String, String>();
 
     /**
      * Creates a new XMLPropertiesTest object.
@@ -117,7 +117,7 @@ public class XMLProperties {
      * @return the value of the specified property.
      */
     public synchronized String getProperty(String name) {
-        String value = (String)propertyCache.get(name);
+        String value = propertyCache.get(name);
         if (value != null) {
             return value;
         }
@@ -182,7 +182,7 @@ public class XMLProperties {
         }
         // We found matching property, return names of children.
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
-        ArrayList props = new ArrayList();
+        List<String> props = new ArrayList<String>();
         String value;
         while (iter.hasNext()) {
             // Empty strings are skipped.
@@ -192,7 +192,7 @@ public class XMLProperties {
             }
         }
         String[] childrenNames = new String[props.size()];
-        return (String[])props.toArray(childrenNames);
+        return props.toArray(childrenNames);
     }
 
     /**
@@ -318,9 +318,9 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        Map params = new HashMap();
+        Map<String, Object> params = new HashMap<String, Object>();
         params.put("value", values);
-        PropertyEventDispatcher.dispatchEvent((String)name,
+        PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
     }
 
@@ -387,9 +387,9 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        Map params = new HashMap();
+        Map<String, String> params = new HashMap<String,String>();
         params.put("value", value);
-        PropertyEventDispatcher.dispatchEvent((String)name,
+        PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
     }
 
@@ -418,7 +418,7 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        PropertyEventDispatcher.dispatchEvent((String)name,
+        PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_deleted, Collections.emptyMap());
     }
 
@@ -452,8 +452,9 @@ public class XMLProperties {
         Writer writer = null;
         try {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-            writer = new FileWriter(tempFile);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+            prettyPrinter.setEncoding("UTF-8");
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
         }
@@ -506,20 +507,18 @@ public class XMLProperties {
      * @return an array representation of the given Jive property.
      */
     private String[] parsePropertyName(String name) {
-        List propName = new ArrayList(5);
+        List<String> propName = new ArrayList<String>(5);
         // Use a StringTokenizer to tokenize the property name.
         StringTokenizer tokenizer = new StringTokenizer(name, ".");
         while (tokenizer.hasMoreTokens()) {
             propName.add(tokenizer.nextToken());
         }
-        return (String[])propName.toArray(new String[propName.size()]);
+        return propName.toArray(new String[propName.size()]);
     }
 
-    public void setProperties(Map propertyMap) {
-        Iterator iter = propertyMap.keySet().iterator();
-        while (iter.hasNext()) {
-            String propertyName = (String) iter.next();
-            String propertyValue = (String) propertyMap.get(propertyName);
+    public void setProperties(Map<String, String> propertyMap) {
+        for (String propertyName : propertyMap.keySet()) {
+            String propertyValue = propertyMap.get(propertyName);
             setProperty(propertyName, propertyValue);
         }
     }

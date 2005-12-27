@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 247 $
- * $Date: 2004-11-09 14:50:00 -0500 (Tue, 09 Nov 2004) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
  *
@@ -11,10 +11,6 @@
 package org.jivesoftware.util;
 
 import junit.framework.TestCase;
-import org.dom4j.Document;
-
-import java.io.FileReader;
-import java.io.FileWriter;
 
 /**
  * <p>Test the writing of dom4j documents using the XPP serializer.</p>
@@ -38,7 +34,7 @@ public class XPPWriterTest extends TestCase {
         // NOTE: disabling this test case until we get resources working again.
         /*
         try {
-            Document doc = XPPReader.parseDocument(new FileReader("../conf/jive-messenger.xml"),this.getClass());
+            Document doc = XPPReader.parseDocument(new FileReader("../conf/wildfire.xml"),this.getClass());
             XPPWriter.write(doc, new FileWriter("../conf/xmpp_writer_test_copy.xml"));
         } catch (Exception e) {
             e.printStackTrace();

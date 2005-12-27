@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 580 $
- * $Date: 2004-12-01 16:46:33 -0500 (Wed, 01 Dec 2004) $
+ * $Date: 2004-12-01 18:46:33 -0300 (Wed, 01 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import java.util.Comparator;
 import java.util.Date;

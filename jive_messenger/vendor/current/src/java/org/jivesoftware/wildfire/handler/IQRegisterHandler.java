@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1634 $
- * $Date: 2005-07-15 21:37:54 -0400 (Fri, 15 Jul 2005) $
+ * $Date: 2005-07-15 22:37:54 -0300 (Fri, 15 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,24 +9,24 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.forms.DataForm;
-import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.group.GroupManager;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.forms.DataForm;
+import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;

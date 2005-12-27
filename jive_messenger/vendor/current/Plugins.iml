@@ -7,6 +7,7 @@
     <exclude-exploded />
     <content url="file://$MODULE_DIR$/src/plugins">
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/broadcast/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugins/contentFilter/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/presence/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/registration/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugins/search/src/java" isTestSource="false" />
@@ -14,7 +15,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Messenger" />
+    <orderEntry type="module" module-name="Wildfire" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -46,6 +47,16 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/isorelax.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="Admin" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/commons-fileupload-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

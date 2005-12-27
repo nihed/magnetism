@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1137 $
- * $Date: 2005-03-15 04:14:13 -0500 (Tue, 15 Mar 2005) $
+ * $Revision: 2925 $
+ * $Date: 2005-10-07 12:26:47 -0400 (Fri, 07 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -118,12 +118,8 @@ public class TabsTag extends BodyTagSupport {
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
         String beanName = getBean();
         // Get the page data bean from the request:
-        AdminPageBean pageInfo = (AdminPageBean)request.getAttribute(beanName);
         // If the page info bean is not in the request then no tab will be selected - so, it'll fail gracefully
-        String pageID = null;
-        if (pageInfo != null) {
-            pageID = pageInfo.getPageID();
-        }
+        String pageID = (String)request.getAttribute("pageID");
         // Get tabs from the model:
         List tabs = AdminConsole.getModel().selectNodes("//tab");
         if (tabs.size() > 0) {

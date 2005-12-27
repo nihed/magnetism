@@ -1,7 +1,7 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 710 $
-  -	$Date: 2004-12-14 22:57:36 -0500 (Tue, 14 Dec 2004) $
+  -	$RCSfile: muc-room-create.jsp,v $
+  -	$Revision: 1.2 $
+  -	$Date: 2004/12/15 03:57:36 $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -

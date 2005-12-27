@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1530 $
- * $Date: 2005-06-17 17:38:27 -0400 (Fri, 17 Jun 2005) $
+ * $Date: 2005-06-17 18:38:27 -0300 (Fri, 17 Jun 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.server;
+package org.jivesoftware.wildfire.server;
 
 import org.dom4j.Element;
-import org.dom4j.io.XPPPacketReader;
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
 
 import java.io.IOException;
@@ -35,13 +35,13 @@ public class OutgoingServerSocketReader {
 
     private OutgoingServerSession session;
     private boolean open = true;
-    private XPPPacketReader reader = null;
+    private XMPPPacketReader reader = null;
     /**
-     * Queue that holds the elements read by the XPPPacketReader.
+     * Queue that holds the elements read by the XMPPPacketReader.
      */
     private BlockingQueue<Element> elements = new LinkedBlockingQueue<Element>();
 
-    public OutgoingServerSocketReader(XPPPacketReader reader) {
+    public OutgoingServerSocketReader(XMPPPacketReader reader) {
         this.reader = reader;
         init();
     }

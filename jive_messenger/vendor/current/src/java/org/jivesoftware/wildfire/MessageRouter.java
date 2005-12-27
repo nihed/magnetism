@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1558 $
- * $Date: 2005-06-26 13:48:13 -0400 (Sun, 26 Jun 2005) $
+ * $RCSfile: MessageRouter.java,v $
+ * $Revision: 3007 $
+ * $Date: 2005-10-31 13:29:25 -0300 (Mon, 31 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -133,13 +133,9 @@ public class MessageRouter extends BasicModule {
         }
         else {
             // Forward the message to the users allowed to log into the admin console
-            jids = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
-            jids = (jids == null || jids.trim().length() == 0) ? "admin" : jids;
-            StringTokenizer tokenizer = new StringTokenizer(jids, ",");
-            while (tokenizer.hasMoreTokens()) {
-                String username = tokenizer.nextToken();
+            for (JID jid : XMPPServer.getInstance().getAdmins()) {
                 Message forward = packet.createCopy();
-                forward.setTo(username + "@" + serverName);
+                forward.setTo(jid);
                 route(forward);
             }
         }

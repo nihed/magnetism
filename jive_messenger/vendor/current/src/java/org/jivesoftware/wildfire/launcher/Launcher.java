@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1720 $
- * $Date: 2005-07-27 23:58:07 -0400 (Wed, 27 Jul 2005) $
+ * $Revision: 3054 $
+ * $Date: 2005-11-10 21:08:33 -0300 (Thu, 10 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.launcher;
+package org.jivesoftware.wildfire.launcher;
 
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
@@ -54,7 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Graphical launcher for Jive Messenger.
+ * Graphical launcher for Wildfire.
  *
  * @author Matt Tucker
  */
@@ -62,7 +62,7 @@ public class Launcher {
 
     private String appName;
     private File binDir;
-    private Process messengerd;
+    private Process wildfired;
     private String configFile;
     private JPanel toolbar = new JPanel();
 
@@ -81,7 +81,15 @@ public class Launcher {
      */
     public Launcher() {
         // Initialize the SystemTray now (to avoid a bug!)
-        final SystemTray tray = SystemTray.getDefaultSystemTray();
+        SystemTray tray = null;
+        try {
+            tray = SystemTray.getDefaultSystemTray();
+        }
+        catch (Throwable e) {
+            // Log to System error instead of standard error log.
+            System.err.println("Error loading system tray library, system tray support disabled.");
+        }
+        
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -94,7 +102,7 @@ public class Launcher {
             appName = System.getProperty("app.name");
         }
         else {
-            appName = "Jive Messenger";
+            appName = "Wildfire";
         }
 
         binDir = new File("").getAbsoluteFile();
@@ -104,7 +112,7 @@ public class Launcher {
         }
 
         configFile = new File(new File(binDir.getParent(), "conf"),
-                "jive-messenger.xml").getAbsolutePath();
+                "wildfire.xml").getAbsolutePath();
 
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
@@ -128,11 +136,12 @@ public class Launcher {
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
             splashLabel = new JLabel("", splash, JLabel.CENTER);
 
-            onIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_on-16x16.gif"));
-            offIcon = new ImageIcon(getClass().getClassLoader().getResource("messenger_off-16x16.gif"));
+            onIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_on-16x16.gif"));
+            offIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_off-16x16.gif"));
             frame.setIconImage(offIcon.getImage());
         }
         catch (Exception e) {
+            e.printStackTrace();
         }
 
         mainPanel.setLayout(new BorderLayout());
@@ -152,10 +161,14 @@ public class Launcher {
         quitButton.setActionCommand("Quit");
 
         toolbar.setLayout(new GridBagLayout());
-        toolbar.add(startButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(stopButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
-        toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(startButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(stopButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(browserButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        toolbar.add(quitButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
 
         mainPanel.add(cardPanel, BorderLayout.CENTER);
         mainPanel.add(toolbar, BorderLayout.SOUTH);
@@ -213,7 +226,8 @@ public class Launcher {
                             try {
                                 sleep(8000);
                             }
-                            catch (Exception e) {
+                            catch (InterruptedException ie) {
+                                // Ignore.
                             }
                             // Enable the Launch Admin button/menu item only if the
                             // server has started.
@@ -282,7 +296,9 @@ public class Launcher {
         trayIcon.setIconAutoSize(true);
         trayIcon.addActionListener(actionListener);
 
-        tray.addTrayIcon(trayIcon);
+        if (tray != null) {
+            tray.addTrayIcon(trayIcon);
+        }
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -355,15 +371,15 @@ public class Launcher {
     }
 
     private synchronized void startApplication() {
-        if (messengerd == null) {
+        if (wildfired == null) {
             try {
-                File windowsExe = new File(binDir, "messengerd.exe");
-                File unixExe = new File(binDir, "messengerd");
+                File windowsExe = new File(binDir, "wildfired.exe");
+                File unixExe = new File(binDir, "wildfired");
                 if (windowsExe.exists()) {
-                    messengerd = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
+                    wildfired = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
                 else if (unixExe.exists()) {
-                    messengerd = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
+                    wildfired = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
                 }
                 else {
                     throw new FileNotFoundException();
@@ -373,7 +389,7 @@ public class Launcher {
                 // Try one more time using the jar and hope java is on the path
                 try {
                     File libDir = new File(binDir.getParentFile(), "lib").getAbsoluteFile();
-                    messengerd = Runtime.getRuntime().exec(new String[]{
+                    wildfired = Runtime.getRuntime().exec(new String[]{
                         "java", "-jar", new File(libDir, "startup.jar").toString()
                     });
                 }
@@ -388,10 +404,10 @@ public class Launcher {
             final SimpleAttributeSet styles = new SimpleAttributeSet();
             SwingWorker inputWorker = new SwingWorker() {
                 public Object construct() {
-                    if (messengerd != null) {
+                    if (wildfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = messengerd.getInputStream();
+                            InputStream in = wildfired.getInputStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -400,6 +416,7 @@ public class Launcher {
                                             "" + (char)c, styles);
                                 }
                                 catch (BadLocationException e) {
+                                    // Ignore.
                                 }
                             }
                             in.close();
@@ -416,10 +433,10 @@ public class Launcher {
 
             SwingWorker errorWorker = new SwingWorker() {
                 public Object construct() {
-                    if (messengerd != null) {
+                    if (wildfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = messengerd.getErrorStream();
+                            InputStream in = wildfired.getErrorStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -427,6 +444,7 @@ public class Launcher {
                                     pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
                                 }
                                 catch (BadLocationException e) {
+                                    // Ignore.
                                 }
                             }
                             in.close();
@@ -446,7 +464,7 @@ public class Launcher {
                     cardLayout.show(cardPanel, "running");
                 }
                 catch (Exception ex) {
-
+                    // Ignore.
                 }
                 freshStart = false;
             }
@@ -460,10 +478,10 @@ public class Launcher {
     }
 
     private synchronized void stopApplication() {
-        if (messengerd != null) {
+        if (wildfired != null) {
             try {
-                messengerd.destroy();
-                messengerd.waitFor();
+                wildfired.destroy();
+                wildfired.waitFor();
                 cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {
@@ -471,14 +489,20 @@ public class Launcher {
             }
         }
 
-        messengerd = null;
+        wildfired = null;
     }
 
     private synchronized void launchBrowser() {
         try {
             XMLProperties props = new XMLProperties(configFile);
             String port = props.getProperty("adminConsole.port");
-            BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+            String securePort = props.getProperty("adminConsole.securePort");
+            if ("-1".equals(port)) {
+                BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
+            }
+            else {
+                BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+            }
         }
         catch (Exception e) {
             JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());

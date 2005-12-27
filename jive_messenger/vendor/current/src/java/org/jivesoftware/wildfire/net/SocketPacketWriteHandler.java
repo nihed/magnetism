@@ -1,7 +1,7 @@
 /**
  * $RCSfile: SocketPacketWriteHandler.java,v $
- * $Revision: 2715 $
- * $Date: 2005-08-23 21:16:45 -0400 (Tue, 23 Aug 2005) $
+ * $Revision: 3137 $
+ * $Date: 2005-12-01 02:11:05 -0300 (Thu, 01 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -46,12 +46,13 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             JID recipient = packet.getTo();
             // Check if the target domain belongs to a remote server or a component
             if (server.matchesComponent(recipient) || server.isRemote(recipient)) {
-                try {
-                    // Locate the route to the remote server or component and ask it
-                    // to process the packet
-                    routingTable.getRoute(recipient).process(packet);
+                // Locate the route to the remote server or component and ask it
+                // to process the packet
+                ChannelHandler route = routingTable.getRoute(recipient);
+                if (route != null) {
+                    route.process(packet);
                 }
-                catch (NoSuchRouteException e) {
+                else {
                     // No root was found so either drop or store the packet
                     handleUnprocessedPacket(packet);
                 }

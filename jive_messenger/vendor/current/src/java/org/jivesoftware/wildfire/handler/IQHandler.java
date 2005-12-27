@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1556 $
- * $Date: 2005-06-25 18:32:42 -0400 (Sat, 25 Jun 2005) $
+ * $Date: 2005-06-25 19:32:42 -0300 (Sat, 25 Jun 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -50,7 +50,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
                 deliverer.deliver(iq);
             }
         }
-        catch (org.jivesoftware.messenger.auth.UnauthorizedException e) {
+        catch (org.jivesoftware.wildfire.auth.UnauthorizedException e) {
             if (iq != null) {
                 try {
                     IQ response = IQ.createResultIQ(iq);

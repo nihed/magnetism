@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -10,12 +10,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.*,
-                 org.jivesoftware.messenger.user.UserManager,
-                 java.text.DateFormat,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.PresenceManager,
+                 org.jivesoftware.wildfire.PresenceManager,
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
                  org.jivesoftware.util.JiveGlobals"
@@ -32,18 +29,13 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-summary.jsp"));
-    pageinfo.setPageID("user-summary");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="about_users_and_groups.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="user.summary.title"/></title>
+        <meta name="pageID" content="user-summary"/>
+        <meta name="helpPage" content="about_users_and_groups.html"/>
+    </head>
+    <body>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
@@ -288,4 +280,5 @@
 
 <%  } %>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

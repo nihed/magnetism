@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1094 $
- * $Date: 2005-03-07 02:32:32 -0500 (Mon, 07 Mar 2005) $
+ * $Date: 2005-03-07 04:32:32 -0300 (Mon, 07 Mar 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.launcher;
+package org.jivesoftware.wildfire.launcher;
 
 import javax.swing.SwingUtilities;
 

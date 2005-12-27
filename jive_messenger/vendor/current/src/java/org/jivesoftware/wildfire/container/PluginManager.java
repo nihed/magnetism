@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1755 $
- * $Date: 2005-08-09 00:36:15 -0400 (Tue, 09 Aug 2005) $
+ * $Revision: 3001 $
+ * $Date: 2005-10-31 05:39:25 -0300 (Mon, 31 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,15 +9,14 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.container;
+package org.jivesoftware.wildfire.container;
 
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
 
@@ -44,7 +43,7 @@ import java.util.zip.ZipFile;
  *
  * @author Matt Tucker
  * @see Plugin
- * @see org.jivesoftware.messenger.XMPPServer#getPluginManager()
+ * @see org.jivesoftware.wildfire.XMPPServer#getPluginManager()
  */
 public class PluginManager {
 
@@ -52,7 +51,6 @@ public class PluginManager {
     private Map<String, Plugin> plugins;
     private Map<Plugin, PluginClassLoader> classloaders;
     private Map<Plugin, File> pluginDirs;
-    private boolean setupMode = !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
     private Map<Plugin, List<String>> parentPluginMap;
@@ -148,7 +146,7 @@ public class PluginManager {
      */
     private void loadPlugin(File pluginDir) {
         // Only load the admin plugin during setup mode.
-        if (setupMode && !(pluginDir.getName().equals("admin"))) {
+        if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getName().equals("admin"))) {
             return;
         }
         Log.debug("Loading plugin " + pluginDir.getName());
@@ -159,7 +157,7 @@ public class PluginManager {
                 SAXReader saxReader = new SAXReader();
                 Document pluginXML = saxReader.read(pluginConfig);
 
-                // See if the plugin specifies a version of Jive Messenger
+                // See if the plugin specifies a version of Wildfire
                 // required to run.
                 Element minServerVersion = (Element)pluginXML.selectSingleNode("/plugin/minServerVersion");
                 if (minServerVersion != null) {
@@ -187,6 +185,7 @@ public class PluginManager {
                     if (plugins.containsKey(parentPlugin)) {
                         pluginLoader = classloaders.get(getPlugin(parentPlugin));
                         pluginLoader.addDirectory(pluginDir);
+
                     }
                     else {
                         // See if the parent plugin exists but just hasn't been loaded yet.
@@ -212,7 +211,7 @@ public class PluginManager {
                                     parentPlugin + " not present.";
                                     Log.warn(msg);
                                     System.out.println(msg);
-                                    return;    
+                                    return;
                                 }
                             }
                         }
@@ -270,6 +269,15 @@ public class PluginManager {
 
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
+                if(parentPluginNode != null){
+                    String parentPlugin = parentPluginNode.getTextTrim();
+                    // See if the parent is already loaded.
+                    if (plugins.containsKey(parentPlugin)) {
+                        pluginLoader = classloaders.get(getPlugin(parentPlugin));
+                        classloaders.put(plugin, pluginLoader);
+                    }
+                }
+
                 plugin.initializePlugin(this, pluginDir);
                 plugins.put(pluginDir.getName(), plugin);
                 pluginDirs.put(plugin, pluginDir);
@@ -312,25 +320,30 @@ public class PluginManager {
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
+                    String pluginName = pluginDir.getName();
+                    if(parentPluginNode != null){
+                        pluginName = parentPluginNode.getTextTrim();
+                    }
+
+
                     // If global images are specified, override their URL.
                     Element imageEl = (Element)adminElement.selectSingleNode(
                             "/plugin/adminconsole/global/logo-image");
                     if (imageEl != null) {
-                        imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
+                        imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
                     }
-                    imageEl = (Element)adminElement.selectSingleNode(
-                            "/plugin/adminconsole/global/login-image");
+                    imageEl = (Element)adminElement.selectSingleNode("/plugin/adminconsole/global/login-image");
                     if (imageEl != null) {
-                        imageEl.setText("plugins/" + pluginDir.getName() + "/" + imageEl.getText());
+                        imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
                     }
                     // Modify all the URL's in the XML so that they are passed through
                     // the plugin servlet correctly.
                     List urls = adminElement.selectNodes("//@url");
                     for (int i = 0; i < urls.size(); i++) {
                         Attribute attr = (Attribute)urls.get(i);
-                        attr.setValue("plugins/" + pluginDir.getName() + "/" + attr.getValue());
+                        attr.setValue("plugins/" + pluginName + "/" + attr.getValue());
                     }
-                    AdminConsole.addModel(pluginDir.getName(), adminElement);
+                    AdminConsole.addModel(pluginName, adminElement);
                 }
             }
             else {
@@ -482,6 +495,15 @@ public class PluginManager {
     }
 
     /**
+     * Returns the classloader of a plugin.
+     * @param plugin the plugin.
+     * @return the classloader of the plugin.
+     */
+    public PluginClassLoader getPluginClassloader(Plugin plugin){
+        return classloaders.get(plugin);
+    }
+
+    /**
      * Returns the value of an element selected via an xpath expression from
      * a Plugin's plugin.xml file.
      *
@@ -543,7 +565,7 @@ public class PluginManager {
                 if (jars == null) {
                     return;
                 }
-                
+
                 for (int i = 0; i < jars.length; i++) {
                     File jarFile = jars[i];
                     String pluginName = jarFile.getName().substring(0,

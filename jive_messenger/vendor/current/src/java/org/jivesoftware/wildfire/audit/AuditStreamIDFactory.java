@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 38 $
- * $Date: 2004-10-21 02:30:10 -0400 (Thu, 21 Oct 2004) $
+ * $Date: 2004-10-21 03:30:10 -0300 (Thu, 21 Oct 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.audit;
+package org.jivesoftware.wildfire.audit;
 
-import org.jivesoftware.messenger.StreamID;
-import org.jivesoftware.messenger.StreamIDFactory;
-import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
+import org.jivesoftware.wildfire.StreamID;
+import org.jivesoftware.wildfire.StreamIDFactory;
+import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 
 /**
  * Factory for producing audit stream IDs. We use a factory so that

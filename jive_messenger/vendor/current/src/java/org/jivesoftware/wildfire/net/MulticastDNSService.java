@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1379 $
- * $Date: 2005-05-23 14:38:09 -0400 (Mon, 23 May 2005) $
+ * $Date: 2005-05-23 15:38:09 -0300 (Mon, 23 May 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.XMPPServerInfo;
-import org.jivesoftware.messenger.ServerPort;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServerInfo;
+import org.jivesoftware.wildfire.ServerPort;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.admin.AdminConsole;
 
@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Publishes Jive Messenger as a service using the Multicast DNS (marketed by Apple
+ * Publishes Wildfire as a service using the Multicast DNS (marketed by Apple
  * as Rendezvous) protocol. This lets other nodes on the local network to discover
- * the name and port of Jive Messenger.<p>
+ * the name and port of Wildfire.<p>
  *
  * The multicast DNS entry is published with a type of "_xmpp-client._tcp.local.".
  *

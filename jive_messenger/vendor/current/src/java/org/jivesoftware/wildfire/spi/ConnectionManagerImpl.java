@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1593 $
- * $Date: 2005-07-04 12:18:25 -0400 (Mon, 04 Jul 2005) $
+ * $RCSfile: ConnectionManagerImpl.java,v $
+ * $Revision: 3159 $
+ * $Date: 2005-12-04 22:56:40 -0300 (Sun, 04 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.spi;
+package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.net.*;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.net.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
@@ -92,7 +92,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 serverSocketThread.setDaemon(true);
                 serverSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(serverSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.server", params));
             }
@@ -125,7 +125,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 componentSocketThread.setDaemon(true);
                 componentSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(componentSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
             }
@@ -158,7 +158,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 socketThread.setDaemon(true);
                 socketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(socketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
             }
@@ -195,7 +195,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 sslSocketThread.setDaemon(true);
                 sslSocketThread.start();
 
-                List params = new ArrayList();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(sslSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }
@@ -227,15 +227,15 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             String threadName = null;
             if (serverPort.isClientPort()) {
                 reader = new ClientSocketReader(router, serverName, sock, conn);
-                threadName = "Client SR";
+                threadName = "Client SR - " + reader.hashCode();
             }
             else if (serverPort.isComponentPort()) {
                 reader = new ComponentSocketReader(router, serverName, sock, conn);
-                threadName = "Component SR";
+                threadName = "Component SR - " + reader.hashCode();
             }
             else {
                 reader = new ServerSocketReader(router, serverName, sock, conn);
-                threadName = "Server SR";
+                threadName = "Server SR - " + reader.hashCode();
             }
             Thread thread = new Thread(reader, threadName);
             thread.setDaemon(true);

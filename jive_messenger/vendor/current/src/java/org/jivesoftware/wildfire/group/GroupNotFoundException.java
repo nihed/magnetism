@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 570 $
- * $Date: 2004-12-01 14:00:10 -0500 (Wed, 01 Dec 2004) $
+ * $Date: 2004-12-01 16:00:10 -0300 (Wed, 01 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.group;
+package org.jivesoftware.wildfire.group;
 
 /**
  * Thrown when unable to find or load a group.

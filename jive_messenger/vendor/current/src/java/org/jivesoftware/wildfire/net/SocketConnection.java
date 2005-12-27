@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1428 $
- * $Date: 2005-05-28 20:13:02 -0400 (Sat, 28 May 2005) $
+ * $Revision: 3187 $
+ * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.interceptor.InterceptorManager;
-import org.jivesoftware.messenger.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
@@ -25,9 +26,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipOutputStream;
 
 /**
  * An object to track the state of a XMPP client-server session.
@@ -43,9 +47,24 @@ public class SocketConnection implements Connection {
      */
     public static final String CHARSET = "UTF-8";
 
-    private Map listeners = new HashMap();
+    private static Map<SocketConnection, String> instances =
+            new ConcurrentHashMap<SocketConnection, String>();
+
+    /**
+     * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
+     * up to the connection's owner to configure the timeout value. Sending stanzas to the client
+     * is not considered as activity. We are only considering the connection active when the
+     * client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * The reason for this is that sending data will fail if the connection is closed. And if
+     * the thread is blocked while sending data (because the socket is closed) then the clean up
+     * thread will close the socket anyway.
+     */
+    private long idleTimeout = -1;
+
+    private Map<ConnectionCloseListener, Object> listeners = new HashMap<ConnectionCloseListener, Object>();
 
     private Socket socket;
+    private SocketReader socketReader;
 
     private Writer writer;
 
@@ -53,11 +72,29 @@ public class SocketConnection implements Connection {
 
     private Session session;
     private boolean secure;
+	private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
     private boolean flashClient = false;
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
+    private TLSStreamHandler tlsStreamHandler;
+
+    private long writeStarted = -1;
+
+    /**
+     * TLS policy currently in use for this connection.
+     */
+    private TLSPolicy tlsPolicy = TLSPolicy.optional;
+
+	/**
+	 * Compression policy currently in use for this connection.
+	 */
+	private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
+
+    public static Collection<SocketConnection> getInstances() {
+        return instances.keySet();
+    }
 
     /**
      * Create a new session using the supplied socket.
@@ -68,8 +105,7 @@ public class SocketConnection implements Connection {
      * @throws NullPointerException if the socket is null.
      */
     public SocketConnection(PacketDeliverer deliverer, Socket socket, boolean isSecure)
-            throws IOException
-    {
+            throws IOException {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
         }
@@ -78,7 +114,55 @@ public class SocketConnection implements Connection {
         this.socket = socket;
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
         this.deliverer = deliverer;
-        xmlSerializer = new XMLSocketWriter(writer, socket);
+        xmlSerializer = new XMLSocketWriter(writer, this);
+
+        instances.put(this, "");
+    }
+
+    /**
+     * Returns the stream handler responsible for securing the plain connection and providing
+     * the corresponding input and output streams.
+     *
+     * @return the stream handler responsible for securing the plain connection and providing
+     *         the corresponding input and output streams.
+     */
+    public TLSStreamHandler getTLSStreamHandler() {
+        return tlsStreamHandler;
+    }
+
+    /**
+     * Secures the plain connection by negotiating TLS with the client.
+     *
+     * @param clientMode boolean indicating if this entity is a client or a server.
+     * @throws IOException if an error occured while securing the connection.
+     */
+    public void startTLS(boolean clientMode) throws IOException {
+        if (!secure) {
+            secure = true;
+            tlsStreamHandler = new TLSStreamHandler(socket, clientMode);
+            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
+            xmlSerializer = new XMLSocketWriter(writer, this);
+        }
+    }
+
+    /**
+     * Start using compression for this connection. Compression will only be available after TLS
+     * has been negotiated. This means that a connection can never be using compression before
+     * TLS. However, it is possible to use compression without TLS.
+     *
+     * @throws IOException if an error occured while starting compression.
+     */
+    public void startCompression() throws IOException {
+        compressed = true;
+
+        if (tlsStreamHandler == null) {
+            writer = new BufferedWriter(
+                    new OutputStreamWriter(new ZipOutputStream(socket.getOutputStream()), CHARSET));
+        }
+        else {
+            writer = new BufferedWriter(new OutputStreamWriter(
+                    new ZipOutputStream(tlsStreamHandler.getOutputStream()), CHARSET));
+        }
     }
 
     public boolean validate() {
@@ -88,7 +172,7 @@ public class SocketConnection implements Connection {
         try {
             synchronized (writer) {
                 // Register that we started sending data on the connection
-                SocketSendingTracker.getInstance().socketStartedSending(socket);
+                writeStarted();
                 writer.write(" ");
                 writer.flush();
             }
@@ -99,7 +183,7 @@ public class SocketConnection implements Connection {
         }
         finally {
             // Register that we finished sending data on the connection
-            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+            writeFinished();
         }
         return !isClosed();
     }
@@ -140,6 +224,34 @@ public class SocketConnection implements Connection {
 
     public boolean isSecure() {
         return secure;
+    }
+
+    public boolean isCompressed() {
+        return compressed;
+    }
+
+    public TLSPolicy getTlsPolicy() {
+        return tlsPolicy;
+    }
+
+    public void setTlsPolicy(TLSPolicy tlsPolicy) {
+        this.tlsPolicy = tlsPolicy;
+    }
+
+    public CompressionPolicy getCompressionPolicy() {
+        return compressionPolicy;
+    }
+
+    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
+        this.compressionPolicy = compressionPolicy;
+    }
+
+    public long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(long timeout) {
+        this.idleTimeout = timeout;
     }
 
     public int getMajorXMPPVersion() {
@@ -203,7 +315,7 @@ public class SocketConnection implements Connection {
                     synchronized (writer) {
                         try {
                             // Register that we started sending data on the connection
-                            SocketSendingTracker.getInstance().socketStartedSending(socket);
+                            writeStarted();
                             writer.write("</stream:stream>");
                             if (flashClient) {
                                 writer.write('\0');
@@ -213,7 +325,7 @@ public class SocketConnection implements Connection {
                         catch (IOException e) {}
                         finally {
                             // Register that we finished sending data on the connection
-                            SocketSendingTracker.getInstance().socketFinishedSending(socket);
+                            writeFinished();
                         }
                     }
                 }
@@ -221,18 +333,87 @@ public class SocketConnection implements Connection {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.close")
                             + "\n" + this.toString(), e);
                 }
-                try {
-                    socket.close();
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
+                closeConnection();
                 wasClosed = true;
             }
         }
         if (wasClosed) {
             notifyCloseListeners();
+        }
+    }
+
+    void writeStarted() {
+        writeStarted = System.currentTimeMillis();
+    }
+
+    void writeFinished() {
+        writeStarted = -1;
+    }
+
+    void checkHealth() {
+        // Check that the sending operation is still active
+        if (writeStarted > -1 && System.currentTimeMillis() - writeStarted >
+                JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
+            // Close the socket
+            if (Log.isDebugEnabled()) {
+                Log.debug("Closing connection: " + this + " that started sending data at: " +
+                        new Date(writeStarted));
+            }
+            forceClose();
+        }
+        else {
+            // Check if the connection has been idle. A connection is considered idle if the client
+            // has not been receiving data for a period. Sending data to the client is not
+            // considered as activity.
+            if (idleTimeout > -1 && socketReader != null &&
+                    System.currentTimeMillis() - socketReader.getLastActive() > idleTimeout) {
+                // Close the socket
+                if (Log.isDebugEnabled()) {
+                    Log.debug("Closing connection that has been idle: " + this);
+                }
+                forceClose();
+            }
+        }
+    }
+
+    void release() {
+        writeStarted = -1;
+        instances.remove(this);
+    }
+
+    /**
+     * Forces the connection to be closed immediately no matter if closing the socket takes
+     * a long time. This method should only be called from {@link SocketSendingTracker} when
+     * sending data over the socket has taken a long time and we need to close the socket, discard
+     * the connection and its session.
+     */
+    private void forceClose() {
+        if (session != null) {
+            // Set that the session is closed. This will prevent threads from trying to
+            // deliver packets to this session thus preventing future locks.
+            session.setStatus(Session.STATUS_CLOSED);
+        }
+        closeConnection();
+        // Notify the close listeners so that the SessionManager can send unavailable
+        // presences if required.
+        notifyCloseListeners();
+    }
+
+    private void closeConnection() {
+        try {
+            if (tlsStreamHandler == null) {
+                socket.close();
+            }
+            else {
+                // Close the channels since we are using TLS (i.e. NIO). If the channels implement
+                // the InterruptibleChannel interface then any other thread that was blocked in
+                // an I/O operation will be interrupted and an exception thrown
+                tlsStreamHandler.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                    + "\n" + this.toString(), e);
         }
     }
 
@@ -282,7 +463,7 @@ public class SocketConnection implements Connection {
             synchronized (writer) {
                 try {
                     // Register that we started sending data on the connection
-                    SocketSendingTracker.getInstance().socketStartedSending(socket);
+                    writeStarted();
                     writer.write(text);
                     if (flashClient) {
                         writer.write('\0');
@@ -295,7 +476,7 @@ public class SocketConnection implements Connection {
                 }
                 finally {
                     // Register that we finished sending data on the connection
-                    SocketSendingTracker.getInstance().socketFinishedSending(socket);
+                    writeFinished();
                 }
             }
             if (errorDelivering) {
@@ -310,15 +491,22 @@ public class SocketConnection implements Connection {
      */
     private void notifyCloseListeners() {
         synchronized (listeners) {
-            Iterator itr = listeners.keySet().iterator();
-            while (itr.hasNext()) {
-                ConnectionCloseListener listener = (ConnectionCloseListener)itr.next();
-                listener.onConnectionClose(listeners.get(listener));
+            for (ConnectionCloseListener listener : listeners.keySet()) {
+                try {
+                    listener.onConnectionClose(listeners.get(listener));
+                }
+                catch (Exception e) {
+                    Log.error("Error notifying listener: " + listener, e);
+                }
             }
         }
     }
 
     public String toString() {
         return super.toString() + " socket: " + socket + " session: " + session;
+    }
+
+    public void setSocketReader(SocketReader socketReader) {
+        this.socketReader = socketReader;
     }
 }

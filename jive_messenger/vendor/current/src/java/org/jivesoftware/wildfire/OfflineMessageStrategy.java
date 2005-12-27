@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1286 $
- * $Date: 2005-04-21 19:59:37 -0400 (Thu, 21 Apr 2005) $
+ * $RCSfile: OfflineMessageStrategy.java,v $
+ * $Revision: 3114 $
+ * $Date: 2005-11-23 18:12:54 -0300 (Wed, 23 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -60,8 +60,15 @@ public class OfflineMessageStrategy extends BasicModule {
     public void storeOffline(Message message) {
         if (message != null) {
             // Do nothing if the message was sent to the server itself or to an anonymous user
-            if (message.getTo() == null || serverAddress.equals(message.getTo()) ||
-                    message.getTo().getNode() == null) {
+            JID recipientJID = message.getTo();
+            if (recipientJID == null || serverAddress.equals(recipientJID) ||
+                    recipientJID.getNode() == null) {
+                return;
+            }
+            // Do not store messages of type groupchat, error or headline as specified in JEP-160
+            if (Message.Type.groupchat == message.getType() ||
+                    Message.Type.error == message.getType() ||
+                    Message.Type.headline == message.getType()) {
                 return;
             }
 

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2708 $
- * $Date: 2005-08-23 12:19:47 -0400 (Tue, 23 Aug 2005) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class JiveGlobals {
 
-    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "jive-messenger.xml";
+    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "wildfire.xml";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -62,7 +62,7 @@ public class JiveGlobals {
         if (locale == null) {
             if (xmlProperties != null) {
                 String [] localeArray;
-                String localeProperty = (String) xmlProperties.getProperty("locale");
+                String localeProperty = xmlProperties.getProperty("locale");
                 if (localeProperty != null) {
                     localeArray = localeProperty.split("_");
                 }
@@ -106,13 +106,9 @@ public class JiveGlobals {
         setXMLProperty("locale", locale.toString());
 
         // Reset the date formatter objects
-        timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT, locale);
-        dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
-        dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
-                DateFormat.MEDIUM, locale);
-        timeFormat.setTimeZone(timeZone);
-        dateFormat.setTimeZone(timeZone);
-        dateTimeFormat.setTimeZone(timeZone);
+        timeFormat = null;
+        dateFormat = null;
+        dateTimeFormat = null;
     }
 
     /**
@@ -145,9 +141,15 @@ public class JiveGlobals {
      */
     public static void setTimeZone(TimeZone newTimeZone) {
         timeZone = newTimeZone;
-        timeFormat.setTimeZone(timeZone);
-        dateFormat.setTimeZone(timeZone);
-        dateTimeFormat.setTimeZone(timeZone);
+        if (timeFormat != null) {
+            timeFormat.setTimeZone(timeZone);
+        }
+        if (dateFormat != null) {
+            dateFormat.setTimeZone(timeZone);
+        }
+        if (dateTimeFormat != null) {
+            dateTimeFormat.setTimeZone(timeZone);
+        }
         setProperty("locale.timeZone", timeZone.getID());
     }
 
@@ -343,7 +345,9 @@ public class JiveGlobals {
             try {
                 return Integer.parseInt(value);
             }
-            catch (NumberFormatException nfe) { }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
         }
         return defaultValue;
     }
@@ -392,7 +396,7 @@ public class JiveGlobals {
      *
      * @param propertyMap a map of properties, keyed on property name.
      */
-    public static void setXMLProperties(Map propertyMap) {
+    public static void setXMLProperties(Map<String, String> propertyMap) {
         if (xmlProperties == null) {
             loadSetupProperties();
         }
@@ -436,9 +440,8 @@ public class JiveGlobals {
 
         String[] propNames = xmlProperties.getChildrenProperties(parent);
         List<String> values = new ArrayList<String>();
-        for (int i = 0; i < propNames.length; i++) {
-            String propName = propNames[i];
-            String value = getProperty(parent + "." + propName);
+        for (String propName : propNames) {
+            String value = getXMLProperty(parent + "." + propName);
             if (value != null) {
                 values.add(value);
             }
@@ -515,7 +518,9 @@ public class JiveGlobals {
             try {
                 return Integer.parseInt(value);
             }
-            catch (NumberFormatException nfe) { }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
         }
         return defaultValue;
     }
@@ -528,7 +533,7 @@ public class JiveGlobals {
      *      Otherwise <tt>false</tt> is returned.
      */
     public static boolean getBooleanProperty(String name) {
-        return Boolean.valueOf(getProperty(name)).booleanValue();
+        return Boolean.valueOf(getProperty(name));
     }
 
     /**
@@ -546,7 +551,7 @@ public class JiveGlobals {
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = getProperty(name);
         if (value != null) {
-            return Boolean.valueOf(getProperty(name)).booleanValue();
+            return Boolean.valueOf(getProperty(name));
         }
         else {
             return defaultValue;
@@ -592,9 +597,8 @@ public class JiveGlobals {
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
         List<String> values = new ArrayList<String>();
-        for (Iterator i=propertyNames.iterator(); i.hasNext(); ) {
-            String propName = (String)i.next();
-            String value = getProperty(propName);
+        for (String propertyName : propertyNames) {
+            String value = getProperty(propertyName);
             if (value != null) {
                 values.add(value);
             }
@@ -663,14 +667,14 @@ public class JiveGlobals {
             if (isSetupMode()) {
                 return;
             }
-            properties = JiveProperties.getInstance();;
+            properties = JiveProperties.getInstance();
         }
         properties.remove(name);
     }
 
    /**
     * Allows the name of the local config file name to be changed. The
-    * default is "jive-messenger.xml".
+    * default is "wildfire.xml".
     *
     * @param configName the name of the config file.
     */
@@ -693,7 +697,7 @@ public class JiveGlobals {
      * @return true if in setup mode.
      */
     private static boolean isSetupMode() {
-        return !(Boolean.valueOf(JiveGlobals.getXMLProperty("setup")).booleanValue());
+        return !Boolean.valueOf(JiveGlobals.getXMLProperty("setup"));
     }
 
     /**
@@ -709,7 +713,6 @@ public class JiveGlobals {
                 msg.append("Critical Error! The home directory has not been configured, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
                 System.err.println(msg.toString());
-                return;
             }
             // Create a manager with the full path to the xml config file.
             else {
@@ -719,7 +722,6 @@ public class JiveGlobals {
                 catch (IOException ioe) {
                     Log.error(ioe);
                     failedLoading = true;
-                    return;
                 }
             }
         }

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 942 $
- * $Date: 2005-02-02 19:55:43 -0500 (Wed, 02 Feb 2005) $
+ * $Date: 2005-02-02 21:55:43 -0300 (Wed, 02 Feb 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.forms.spi;
+package org.jivesoftware.wildfire.forms.spi;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +18,7 @@ import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.forms.FormField;
+import org.jivesoftware.wildfire.forms.FormField;
 
 /**
  * A concrete FormField capable of sending itself to a writer and recover its state from an XMPP

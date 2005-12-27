@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1321 $
- * $Date: 2005-05-05 14:31:03 -0400 (Thu, 05 May 2005) $
+ * $Date: 2005-05-05 15:31:03 -0300 (Thu, 05 May 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.wildfire.user;
 
-import org.jivesoftware.messenger.roster.Roster;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;

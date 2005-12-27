@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 824 $
- * $Date: 2005-01-07 22:16:59 -0500 (Fri, 07 Jan 2005) $
+ * $Date: 2005-01-08 00:16:59 -0300 (Sat, 08 Jan 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.dom4j.Element;

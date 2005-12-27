@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 997 $
- * $Date: 2005-02-20 17:29:36 -0500 (Sun, 20 Feb 2005) $
+ * $RCSfile: RosterItem.java,v $
+ * $Revision: 3080 $
+ * $Date: 2005-11-15 01:28:23 -0300 (Tue, 15 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,15 +9,15 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.roster;
+package org.jivesoftware.wildfire.roster;
 
 import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.messenger.group.GroupManager;
-import org.jivesoftware.messenger.group.GroupNotFoundException;
-import org.jivesoftware.messenger.group.Group;
-import org.jivesoftware.messenger.SharedGroupException;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.group.GroupNotFoundException;
+import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.SharedGroupException;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -322,16 +322,32 @@ public class RosterItem implements Cacheable {
             }
 
             // Remove shared groups from the param
+            Collection<Group> existingGroups = GroupManager.getInstance().getGroups();
             for (Iterator<String> it=groups.iterator(); it.hasNext();) {
+                String groupName = it.next();
                 try {
-                    String group = it.next();
+                    // Optimistic approach for performance reasons. Assume first that the shared
+                    // group name is the same as the display name for the shared roster
+
                     // Check if exists a shared group with this name
-                    GroupManager.getInstance().getGroup(group);
-                    // Remove the shared group from the list (since it exists)
-                    it.remove();
+                    Group group = GroupManager.getInstance().getGroup(groupName);
+                    // Get the display name of the group
+                    String displayName = group.getProperties().get("sharedRoster.displayName");
+                    if (displayName.equals(groupName)) {
+                        // Remove the shared group from the list (since it exists)
+                        it.remove();
+                    }
                 }
                 catch (GroupNotFoundException e) {
-                    // Do nothing since the group is a personal group
+                    // Check now if there is a group whose display name matches the requested group
+                    for (Group group : existingGroups) {
+                        // Get the display name of the group
+                        String displayName = group.getProperties().get("sharedRoster.displayName");
+                        if (displayName.equals(groupName)) {
+                            // Remove the shared group from the list (since it exists)
+                            it.remove();
+                        }
+                    }
                 }
             }
             this.groups = groups;

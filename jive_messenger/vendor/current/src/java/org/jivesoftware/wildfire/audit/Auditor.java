@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 719 $
- * $Date: 2004-12-20 11:16:01 -0500 (Mon, 20 Dec 2004) $
+ * $Date: 2004-12-20 13:16:01 -0300 (Mon, 20 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.audit;
+package org.jivesoftware.wildfire.audit;
 
 import org.xmpp.packet.Packet;
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.wildfire.Session;
 
 /**
  * <p>Use auditors to audit events and messages on the server.</p>

@@ -1,4 +1,4 @@
-package org.jivesoftware.messenger.component;
+package org.jivesoftware.wildfire.component;
 
 /**
  * Holds the configuration for external components that want to connect to this server. The

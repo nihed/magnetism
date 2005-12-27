@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 569 $
- * $Date: 2004-12-01 13:31:18 -0500 (Wed, 01 Dec 2004) $
+ * $Date: 2004-12-01 15:31:18 -0300 (Wed, 01 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import java.util.Date;
 
-import org.jivesoftware.messenger.muc.MUCRoom;
+import org.jivesoftware.wildfire.muc.MUCRoom;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
 

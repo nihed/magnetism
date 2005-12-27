@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1125 $
- * $Date: 2005-03-14 13:59:37 -0500 (Mon, 14 Mar 2005) $
+ * $Date: 2005-03-14 15:59:37 -0300 (Mon, 14 Mar 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,18 +9,18 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.dom4j.Element;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.muc.ConflictException;
-import org.jivesoftware.messenger.muc.ForbiddenException;
-import org.jivesoftware.messenger.muc.MUCRole;
-import org.jivesoftware.messenger.muc.NotAllowedException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.muc.ConflictException;
+import org.jivesoftware.wildfire.muc.ForbiddenException;
+import org.jivesoftware.wildfire.muc.MUCRole;
+import org.jivesoftware.wildfire.muc.NotAllowedException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;

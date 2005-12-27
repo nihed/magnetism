@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 2703 $
-  -	$Date: 2005-08-19 20:13:25 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -13,20 +13,19 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  java.util.*,
-                 org.jivesoftware.messenger.muc.MUCRoom,
-                 org.jivesoftware.messenger.forms.spi.*,
-                 org.jivesoftware.messenger.forms.*,
+                 org.jivesoftware.wildfire.muc.MUCRoom,
+                 org.jivesoftware.wildfire.forms.spi.*,
+                 org.jivesoftware.wildfire.forms.*,
                  org.dom4j.Element,
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
-                 org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.wildfire.muc.NotAllowedException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -79,7 +78,7 @@
     }
 
     // Handle an save
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         // do validation
 
@@ -128,7 +127,7 @@
                             errors.put("room_already_exists", "room_already_exists");
                         }
                     }
-                    catch (UnauthorizedException e) {
+                    catch (NotAllowedException e) {
                         // This user is not allowed to create rooms
                         errors.put("not_enough_permissions", "not_enough_permissions");
                     }
@@ -307,25 +306,18 @@
     roomName = roomName == null ? "" : roomName;
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("muc.room.edit.form.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    if (create) {
-        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?create=true"));
-        pageinfo.setPageID("muc-room-create");
-    }
-    else {
-        pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-room-edit-form.jsp?roomName="+URLEncoder.encode(roomName, "UTF-8")));
-        pageinfo.setSubPageID("muc-room-edit-form");
-    }
-    pageinfo.setExtraParams("roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create);
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="view_group_chat_room_summary.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="muc.room.edit.form.title"/></title>
+        <% if (create) { %>
+        <meta name="pageID" content="muc-room-create"/>
+        <% } else { %>
+        <meta name="subPageID" content="muc-room-edit-form"/>
+        <% } %>
+        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
+        <meta name="helpPage" content="view_group_chat_room_summary.html"/>
+    </head>
+    <body>
 
 <%  if (!errors.isEmpty()) { %>
 
@@ -381,7 +373,7 @@
         </td></tr>
     </tbody>
     </table>
-    </div><br
+    </div><br>
 
 <%  } %>
 
@@ -423,7 +415,8 @@
 <input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">
 
     <table width="100%" border="0"> <tr>
-         <td width="70%"><table width="100%"  border="0">
+         <td width="70%">
+            <table width="100%" border="0">
                 <tbody>
                 <% if (create) { %>
                 <tr>
@@ -488,7 +481,9 @@
                     </td>
                  </tr>
          </tbody>
-         </table></td>
+         </table>
+
+         </td>
         <td width="30%" valign="top" >
         <fieldset>
         <legend><fmt:message key="muc.room.edit.form.room_options" /></legend>
@@ -530,6 +525,7 @@
                 <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" <% if ("true".equals(enableLog)) out.write("checked");%>>
                     <LABEL FOR="enablelogging"><fmt:message key="muc.room.edit.form.log" /></td>
             </tr>
+        </tbody>
         </table>
         </fieldset>
         </tr>
@@ -541,4 +537,5 @@
     </table>
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

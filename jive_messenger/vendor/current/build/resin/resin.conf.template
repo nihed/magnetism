@@ -1,17 +1,17 @@
 <!--
  - $RCSfile$
- - $Revision: 1009 $
- - $Date: 2005-02-23 12:03:22 -0500 (Wed, 23 Feb 2005) $
+ - $Revision: 3195 $
+ - $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
 -->
 
-<!-- Resin 3.1.10+ configuration file for Jive Messenger site. Precondition: run 'ant jar'. -->
+<!-- Resin 3.1.10+ configuration file for Wildfire site. Precondition: run 'ant jar'. -->
 
 <resin xmlns="http://caucho.com/ns/resin" xmlns:resin="http://caucho.com/ns/resin/core">
 
-   <!-- Path to the messenger cvs project -->
+   <!-- Path to the wildfire cvs project -->
    <system-property root="XXX EDIT THIS PATH XXX"/>
    <system-property target="${root}\target"/>
-   <system-property messengerHome="${target}"/>
+   <system-property wildfireHome="${target}"/>
 
    <log name="" level="info" path="stdout:" timestamp="%H:%M:%S "/>
    <log name="com.caucho.java" level="config" path="stdout:" timestamp="%H:%M:%S "/>
@@ -41,8 +41,8 @@
        <!-- configures the default host, matching any host name -->
        <host id="">
 
-           <!-- MESSENGER webapp -->
-           <web-app id="/messenger"
+           <!-- WILDFIRE webapp -->
+           <web-app id="/wildfire"
                    document-directory="${root}/src/web"
                    startup-mode="lazy"
                    temp-dir="${root}/src/web/WEB-INF/tmp"

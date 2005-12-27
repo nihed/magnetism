@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 2698 $
- * $Date: 2005-08-19 14:28:16 -0400 (Fri, 19 Aug 2005) $
+ * $Date: 2005-08-19 15:28:16 -0300 (Fri, 19 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.ldap;
+package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 

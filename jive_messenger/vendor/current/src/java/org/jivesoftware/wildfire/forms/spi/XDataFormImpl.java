@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 904 $
- * $Date: 2005-01-25 13:41:48 -0500 (Tue, 25 Jan 2005) $
+ * $Date: 2005-01-25 15:41:48 -0300 (Tue, 25 Jan 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.forms.spi;
+package org.jivesoftware.wildfire.forms.spi;
 
-import org.jivesoftware.messenger.forms.FormField;
+import org.jivesoftware.wildfire.forms.FormField;
 
 import java.util.*;
 import org.dom4j.DocumentHelper;

@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -11,9 +10,8 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  java.util.Date,
-                 org.jivesoftware.admin.*,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
@@ -29,26 +27,26 @@
     static final int[] REFRESHES = {0, 10, 30, 60, 90};
     static final String[] REFRESHES_LABELS = {NONE,"10","30","60","90"};
 %>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("session-summary", DEFAULT_RANGE));
-    int refresh = ParamUtils.getIntParameter(request,"refresh",admin.getRefreshValue("session-summary", 0));
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("session-summary", DEFAULT_RANGE));
+    int refresh = ParamUtils.getIntParameter(request,"refresh",webManager.getRefreshValue("session-summary", 0));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String jid = ParamUtils.getParameter(request,"jid");
 
     if (request.getParameter("range") != null) {
-        admin.setRowsPerPage("session-summary", range);
+        webManager.setRowsPerPage("session-summary", range);
     }
 
     if (request.getParameter("refresh") != null) {
-        admin.setRefreshValue("session-summary", refresh);
+        webManager.setRefreshValue("session-summary", refresh);
     }
 
     // Get the user manager
-    SessionManager sessionManager = admin.getSessionManager();
+    SessionManager sessionManager = webManager.getSessionManager();
 
     // Get the session count
     int sessionCount = sessionManager.getSessionCount();
@@ -65,7 +63,7 @@
         catch (Exception ignored) {
             // Session might have disappeared on its own
         }
-        // redirect back to this page
+        // Redirect back to this page
         response.sendRedirect("session-summary.jsp?close=success");
         return;
     }
@@ -75,24 +73,13 @@
     int curPage = (start/range) + 1;
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("session.summary.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "session-summary.jsp"));
-    pageinfo.setPageID("session-summary");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="view_current_sessions.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
-
-<%  if (refresh > 0) { %>
-
-    <meta http-equiv="refresh" content="<%= refresh %>">
-
-<%  } %>
+<html>
+    <head>
+        <title><fmt:message key="session.summary.title"/></title>
+        <meta name="pageID" content="session-summary"/>
+        <meta name="helpPage" content="view_active_client_sessions.html"/>
+    </head>
+    <body>
 
 <%  if ("success".equals(request.getParameter("close"))) { %>
 
@@ -100,6 +87,10 @@
     <fmt:message key="session.summary.close" />
     </p>
 
+<%  } %>
+
+<%  if (refresh > 0) { %>
+    <meta http-equiv="refresh" content="<%= refresh %>">
 <%  } %>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -203,7 +194,6 @@
             count++;
     %>
         <%@ include file="session-row.jspf" %>
-
     <%  } %>
 
 </tbody>
@@ -234,4 +224,5 @@
 <fmt:message key="session.summary.last_update" />: <%= JiveGlobals.formatDateTime(new Date()) %>
 </p>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

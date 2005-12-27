@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1632 $
- * $Date: 2005-07-15 01:49:00 -0400 (Fri, 15 Jul 2005) $
+ * $Date: 2005-07-15 02:49:00 -0300 (Fri, 15 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,15 +9,15 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.audit.spi;
+package org.jivesoftware.wildfire.audit.spi;
 
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.audit.AuditManager;
-import org.jivesoftware.messenger.audit.Auditor;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.interceptor.InterceptorManager;
-import org.jivesoftware.messenger.interceptor.PacketInterceptor;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.audit.AuditManager;
+import org.jivesoftware.wildfire.audit.Auditor;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.JID;

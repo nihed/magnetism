@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1760 $
- * $Date: 2005-08-09 18:33:17 -0400 (Tue, 09 Aug 2005) $
+ * $Revision: 2911 $
+ * $Date: 2005-10-03 12:35:52 -0300 (Mon, 03 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.*;
 import org.xmpp.packet.Message;
 
@@ -179,6 +179,8 @@ public class OfflineMessageStore extends BasicModule {
                 pstmt = con.prepareStatement(DELETE_OFFLINE);
                 pstmt.setString(1, username);
                 pstmt.executeUpdate();
+                
+                removeUsernameFromSizeCache(username);
             }
         }
         catch (Exception e) {
@@ -257,6 +259,8 @@ public class OfflineMessageStore extends BasicModule {
             pstmt = con.prepareStatement(DELETE_OFFLINE);
             pstmt.setString(1, username);
             pstmt.executeUpdate();
+            
+            removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -266,6 +270,13 @@ public class OfflineMessageStore extends BasicModule {
             catch (Exception e) { Log.error(e); }
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
+        }
+    }
+
+    private void removeUsernameFromSizeCache(String username) {
+        // Update the cached size if it exists.
+        if (sizeCache.containsKey(username)) {
+            sizeCache.remove(username);
         }
     }
 
@@ -285,6 +296,11 @@ public class OfflineMessageStore extends BasicModule {
             pstmt.setString(1, username);
             pstmt.setString(2, StringUtils.dateToMillis(creationDate));
             pstmt.executeUpdate();
+            
+            //force a refresh for next call to getSize(username)
+            //its easier than loading the msg to be deleted just
+            //to update the cache.
+            removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

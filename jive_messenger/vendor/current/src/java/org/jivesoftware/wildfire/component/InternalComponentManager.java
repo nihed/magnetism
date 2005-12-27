@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1539 $
- * $Date: 2005-06-24 01:02:50 -0400 (Fri, 24 Jun 2005) $
+ * $Revision: 3126 $
+ * $Date: 2005-11-30 15:20:53 -0300 (Wed, 30 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,24 +9,23 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.component;
+package org.jivesoftware.wildfire.component;
 
 import org.dom4j.Element;
+import org.jivesoftware.wildfire.PacketException;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutableChannelHandler;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
+import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.messenger.component.ComponentSession;
-import org.jivesoftware.messenger.RoutableChannelHandler;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.PacketException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,7 +105,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void removeComponent(String subdomain) {
-        components.remove(subdomain);
+        Component component = components.remove(subdomain);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
@@ -118,6 +117,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         // Remove the disco item from the server for the component that is being removed
         if (XMPPServer.getInstance().getIQDiscoItemsHandler() != null) {
             XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
+        }
+
+        // Ask the component to shutdown
+        if (component != null) {
+            component.shutdown();
         }
     }
 
@@ -214,11 +218,14 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             return components.get(jid);
         }
         else {
+            if (!jid.contains(serverDomain)) {
+                // Ignore JIDs that doesn't belong to this server
+                return null;
+            }
             String serverName = new JID(jid).getDomain();
             int index = serverName.indexOf(".");
             if (index != -1) {
-                String serviceName = serverName.substring(0, index);
-                jid = serviceName;
+                jid = serverName.substring(0, index);
             }
         }
         return components.get(jid);

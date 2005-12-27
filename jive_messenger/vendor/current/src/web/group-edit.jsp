@@ -1,7 +1,6 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2005 Jive Software. All rights reserved.
   -
@@ -9,28 +8,27 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.text.DateFormat,
-                 java.util.*,
-                 org.jivesoftware.admin.*,
-                 org.xmpp.packet.JID,
-                 org.jivesoftware.messenger.group.GroupManager,
-                 org.jivesoftware.messenger.group.Group,
+<%@ page import="java.util.*,
+                 org.jivesoftware.wildfire.group.GroupManager,
+                 org.jivesoftware.wildfire.group.Group,
                  java.net.URLEncoder,
                  java.net.URLDecoder,
-                 org.jivesoftware.messenger.user.UserManager,
-                 org.jivesoftware.messenger.user.UserNotFoundException,
-                 org.jivesoftware.stringprep.Stringprep,
                  java.io.UnsupportedEncodingException,
                  org.jivesoftware.util.*"
 %>
+<%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<%  webManager.init(pageContext); %>
 <jsp:useBean id="errors" class="java.util.HashMap"/>
 
-<%  webManager.init(pageContext); %>
+
 
 <%  // Get parameters
     boolean add = request.getParameter("add") != null;
@@ -105,9 +103,9 @@
 
 
     if (update) {
-        Set adminIDSet = new HashSet();
+        Set<JID> adminIDSet = new HashSet<JID>();
         for (int i = 0; i < adminIDs.length; i++) {
-            String newAdmin = adminIDs[i];
+            JID newAdmin = new JID(adminIDs[i]);
             adminIDSet.add(newAdmin);
             boolean isAlreadyAdmin = group.getAdmins().contains(newAdmin);
             if (!isAlreadyAdmin) {
@@ -115,17 +113,17 @@
                 group.getAdmins().add(newAdmin);
             }
         }
-        Iterator groupIter = Collections.unmodifiableCollection(group.getAdmins()).iterator();
-        Set removeList = new HashSet();
+        Iterator<JID> groupIter = Collections.unmodifiableCollection(group.getAdmins()).iterator();
+        Set<JID> removeList = new HashSet<JID>();
         while (groupIter.hasNext()) {
-            String m = (String) groupIter.next();
+            JID m = (JID) groupIter.next();
             if (!adminIDSet.contains(m)) {
                 removeList.add(m);
             }
         }
-        Iterator i = removeList.iterator();
+        Iterator<JID> i = removeList.iterator();
         while (i.hasNext()) {
-            String m = (String) i.next();
+            JID m = (JID) i.next();
             group.getMembers().add(m);
         }
         // Get admin list and compare it the admin posted list.
@@ -141,18 +139,34 @@
             username = username.toLowerCase();
 
             // Add to group as member by default.
-            if (!group.getMembers().contains(username) && !group.getAdmins().contains(username)) {
-                // Ensure that the user is valid
-                try {
-                    group.getMembers().add(username);
+            try {
+                boolean added = false;
+                if (username.indexOf('@') == -1) {
+                    // No @ was found so assume this is a JID of a local user
+                    username = Stringprep.nodeprep(username);
+                    UserManager.getInstance().getUser(username);
+                    added = group.getMembers().add(webManager.getXMPPServer().createJID(username, null));
+                }
+                else {
+                    // Admin entered a JID. Add the JID directly to the list of group members
+                    added = group.getMembers().add(new JID(username));
+                }
+
+                if (added) {
                     count++;
                 }
-                catch (IllegalArgumentException unfe) {
-                  errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.inexistent_user", JiveGlobals.getLocale(), Arrays.asList(username)));
+                else {
+                    errorBuf.append("<br>").append(
+                            LocaleUtils.getLocalizedString("group.edit.already_user",
+                            JiveGlobals.getLocale(), Arrays.asList(username)));
                 }
+
             }
-            else {
-                errorBuf.append("<br>" + LocaleUtils.getLocalizedString("group.edit.already_user", JiveGlobals.getLocale(), Arrays.asList(username)));
+            catch (Exception e) {
+                Log.debug("Problem adding new user to existing group", e);
+                errorBuf.append("<br>").append(
+                        LocaleUtils.getLocalizedString("group.edit.inexistent_user",
+                        JiveGlobals.getLocale(), Arrays.asList(username)));
             }
         }
         if (count > 0) {
@@ -171,7 +185,7 @@
     }
     else if (delete) {
         for (int i = 0; i < deleteMembers.length; i++) {
-            String member = deleteMembers[i];
+            JID member = new JID(deleteMembers[i]);
             group.getMembers().remove(member);
             group.getAdmins().remove(member);
         }
@@ -201,20 +215,15 @@
         groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
     }
 %>
-    <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-<% // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("group.edit.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "group-edit.jsp?group="+URLEncoder.encode(groupName, "UTF-8")));
-    pageinfo.setSubPageID("group-edit");
-    pageinfo.setExtraParams("group="+URLEncoder.encode(groupName, "UTF-8"));
-%>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_properties.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
+<html>
+    <head>
+        <title><fmt:message key="group.edit.title"/></title>
+        <meta name="subPageID" content="group-edit"/>
+        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+        <meta name="helpPage" content="edit_group_properties.html"/>
+    </head>
+    <body>
 
     <p>
         <fmt:message key="group.edit.form_info" />
@@ -226,7 +235,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if (groupInfoChanged) { %>
         <fmt:message key="group.edit.update" />
@@ -252,7 +261,7 @@
  <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if(add) { %>
         <fmt:message key="group.edit.not_update" />
@@ -282,7 +291,7 @@
                 </td>
                 <td>
                     <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
-                    <img src="images/edit-16x16.gif" border="0">
+                    <img src="images/edit-16x16.gif" border="0" alt="">
                    </a>
                 </td>
                 <% } else { %>
@@ -462,8 +471,8 @@
             <!-- Add admins first -->
 <%
             int memberCount = group.getMembers().size() + group.getAdmins().size();
-            Iterator members = group.getMembers().iterator();
-            Iterator admins = group.getAdmins().iterator();
+            Iterator<JID> members = group.getMembers().iterator();
+            Iterator<JID> admins = group.getAdmins().iterator();
 %>
 <%
             if (memberCount == 0) {
@@ -481,16 +490,17 @@
 %>
 <%
             boolean showUpdateButtons = memberCount > 0;
+            boolean showRemoteJIDsWarning = false;
             while (admins.hasNext()) {
-                String username = (String)admins.next();
+                JID user = (JID)admins.next();
 %>
                 <tr>
-                    <td><%= username %></td>
+                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <td align="center">
-                        <input type="checkbox" name="admin" value="<%= username %>" checked>
+                        <input type="checkbox" name="admin" value="<%= user %>" checked>
                     </td>
                     <td align="center">
-                        <input type="checkbox" name="delete" value="<%= username %>">
+                        <input type="checkbox" name="delete" value="<%= user %>">
                     </td>
                 </tr>
 <%
@@ -498,15 +508,15 @@
 %>
 <%
             while (members.hasNext()) {
-                String username = (String)members.next();
+                JID user = (JID)members.next();
 %>
                 <tr>
-                    <td><%= username %></td>
+                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <td align="center">
-                        <input type="checkbox" name="admin" value="<%= username %>">
+                        <input type="checkbox" name="admin" value="<%= user %>">
                     </td>
                     <td align="center">
-                        <input type="checkbox" name="delete" value="<%= username %>">
+                        <input type="checkbox" name="delete" value="<%= user %>">
                     </td>
                 </tr>
 <%
@@ -528,6 +538,16 @@
                 </tr>
 <%
             }
+
+            if (showRemoteJIDsWarning) {
+%>
+            <tr>
+                <td colspan="3">
+                    <font color="red">* <fmt:message key="group.edit.note" /></font>
+                </td>
+            </tr>
+<%
+            }
 %>
         </table>
         </div>
@@ -537,9 +557,8 @@
         document.f.users.focus();
     </script>
 
-    <jsp:include page="footer.jsp" flush="true"/>
-
-
+    </body>
+</html>
 
 <%!
     private static String toList(String[] array, String enc) {

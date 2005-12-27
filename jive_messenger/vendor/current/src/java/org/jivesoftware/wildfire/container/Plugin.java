@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,17 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.container;
+package org.jivesoftware.wildfire.container;
 
 import java.io.File;
 
 /**
- * Plugin interface. Plugins enhance the functionality of Jive Messenger. They can:<ul>
+ * Plugin interface. Plugins enhance the functionality of Wildfire. They can:<ul>
  *
  *      <li>Act as {@link org.xmpp.component.Component Components} to implement
  *      additional features in the XMPP protocol.
  *      <li>Dynamically modify the admin console.
- *      <li>Use the Jive Messenger API to add new functionality to server.
+ *      <li>Use the Wildfire API to add new functionality to server.
  * </ul>
  *
  * Plugins live in the <tt>plugins</tt> directory of <tt>home</tt>. Plugins
@@ -67,7 +67,7 @@ public interface Plugin {
      *
      * Implementations of this method must release all resources held
      * by the plugin such as file handles, database or network connections,
-     * and references to core Jive Messenger classes. In other words, a
+     * and references to core Wildfire classes. In other words, a
      * garbage collection executed after this method is called must be able
      * to clean up all plugin classes.
      */

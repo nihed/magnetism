@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1619 $
- * $Date: 2005-07-10 18:07:59 -0400 (Sun, 10 Jul 2005) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -11,28 +11,22 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.group.GroupManager;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
-import org.jivesoftware.messenger.roster.RosterManager;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.AuthToken;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.muc.MultiUserChatServer;
+import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
- * A utility bean for Messenger admin console pages.
+ * A utility bean for Wildfire admin console pages.
  */
 public class WebManager extends WebBean {
-
-    private Map breadcrumbMap = new LinkedHashMap();
-    private String title = "";
-    private String sidebar = "";
 
     private int start = 0;
     private int range = 15;
@@ -48,7 +42,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * Returns <tt>true</tt> if the Messenger container is in setup mode, <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if the Wildfire container is in setup mode, <tt>false</tt> otherwise.
      */
     public boolean isSetupMode() {
         return getXMPPServer().isSetupMode();
@@ -107,7 +101,9 @@ public class WebManager extends WebBean {
         try {
             pageUser = getUserManager().getUser(getAuthToken().getUsername());
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+            // Ignore.
+        }
         return pageUser;
     }
 
@@ -116,7 +112,7 @@ public class WebManager extends WebBean {
      */
     public boolean isEmbedded() {
         try {
-            ClassUtils.forName("org.jivesoftware.messenger.starter.ServerStarter");
+            ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
             return true;
         }
         catch (Exception ignored) {
@@ -162,39 +158,7 @@ public class WebManager extends WebBean {
     }
 
     public boolean isServerRunning() {
-        if (getPresenceManager() == null ||
-                getXMPPServer() == null) {
-            return false;
-        }
-        return true;
-    }
-
-    public void addBreadCrumb(String name, String url) {
-        breadcrumbMap.put(name, url);
-    }
-
-    public Map getBreadCrumbs() {
-        return breadcrumbMap;
-    }
-
-    public void setSidebar(String sidebar) {
-        this.sidebar = sidebar;
-    }
-
-    public String getSidebar() {
-        return sidebar;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public int getBreadcrumbSize() {
-        return getBreadCrumbs().size();
+        return !(getPresenceManager() == null || getXMPPServer() == null);
     }
 
     public void setStart(int start) {
@@ -223,6 +187,7 @@ public class WebManager extends WebBean {
             Thread.sleep(3000L);
         }
         catch (Exception ignored) {
+            // Ignore.
         }
     }
 
@@ -253,13 +218,17 @@ public class WebManager extends WebBean {
                     in.close();
                 }
             }
-            catch (IOException e) { }
+            catch (IOException e) {
+                // Ignore.
+            }
             try {
                 if (out != null) {
                     out.close();
                 }
             }
-            catch (IOException e) { }
+            catch (IOException e) {
+                // Ignore.
+            }
         }
     }
 
@@ -378,7 +347,7 @@ public class WebManager extends WebBean {
                     }
                 }
             }
-            else if (values == null) {
+            else {
                 // Store the new page-value as a new user property
                 user.getProperties().put(property, toStore);
             }

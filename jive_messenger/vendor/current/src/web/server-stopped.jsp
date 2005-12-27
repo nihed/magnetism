@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 985 $
-  -	$Date: 2005-02-18 13:35:44 -0500 (Fri, 18 Feb 2005) $
+  -	$Revision: 2927 $
+  -	$Date: 2005-10-07 13:27:06 -0400 (Fri, 07 Oct 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.admin.AdminConsole,
@@ -30,6 +30,7 @@
 <head>
  <title><%= AdminConsole.getAppName() %> <fmt:message key="server.stopped.admin_console" /><%= (pageinfo.getTitle() != null ? (": "+pageinfo.getTitle()) : "") %></title>
  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+ <meta name="decorator" content="false"/>
  <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
 

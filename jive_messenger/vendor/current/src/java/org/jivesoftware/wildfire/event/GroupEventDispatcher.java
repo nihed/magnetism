@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1705 $
- * $Date: 2005-07-26 13:10:33 -0400 (Tue, 26 Jul 2005) $
+ * $Date: 2005-07-26 14:10:33 -0300 (Tue, 26 Jul 2005) $
  *
  * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.event;
+package org.jivesoftware.wildfire.event;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.group.Group;
+import org.jivesoftware.wildfire.group.Group;
 
 import java.util.List;
 import java.util.Map;

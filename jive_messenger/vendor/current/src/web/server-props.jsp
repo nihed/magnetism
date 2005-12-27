@@ -1,25 +1,22 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1638 $
-  -	$Date: 2005-07-18 13:16:48 -0400 (Mon, 18 Jul 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.XMPPServerInfo,
-                 org.jivesoftware.messenger.ServerPort,
                  org.jivesoftware.admin.AdminPageBean,
                  java.util.*,
-                 org.jivesoftware.messenger.XMPPServer,
+                 org.jivesoftware.wildfire.XMPPServer,
                  java.net.InetAddress,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.messenger.net.SSLSocketAcceptThread,
-                 org.jivesoftware.messenger.net.SocketAcceptThread,
-                 org.jivesoftware.messenger.ConnectionManager"
+                 org.jivesoftware.wildfire.net.SSLSocketAcceptThread,
+                 org.jivesoftware.wildfire.net.SocketAcceptThread,
+                 org.jivesoftware.wildfire.ConnectionManager"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -28,8 +25,8 @@
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%-- Define Administration Bean --%>
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%
     // Get parameters
@@ -62,9 +59,9 @@
         save = true;
     }
 
-    XMPPServer server = admin.getXMPPServer();
+    XMPPServer server = webManager.getXMPPServer();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (serverName == null) {
             errors.put("serverName","");
@@ -143,16 +140,12 @@
     }
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("server.props.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("index.properties"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "server-props.jsp"));
-    pageinfo.setPageID("server-settings");
-%>
-<jsp:include page="top.jsp" flush="true" />
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="server.props.title"/></title>
+        <meta name="pageID" content="server-settings"/>
+    </head>
+    <body>
 
 <style type="text/css">
 .c1 {
@@ -366,4 +359,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

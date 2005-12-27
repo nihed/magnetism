@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1653 $
- * $Date: 2005-07-19 23:21:40 -0400 (Tue, 19 Jul 2005) $
+ * $Date: 2005-07-20 00:21:40 -0300 (Wed, 20 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,19 +9,19 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.PacketException;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.vcard.VCardManager;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.PacketException;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.vcard.VCardManager;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1661 $
- * $Date: 2005-07-20 23:06:49 -0400 (Wed, 20 Jul 2005) $
+ * $Date: 2005-07-21 00:06:49 -0300 (Thu, 21 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 

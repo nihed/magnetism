@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1393 $
- * $Date: 2005-05-25 15:21:51 -0400 (Wed, 25 May 2005) $
+ * $Revision: 3182 $
+ * $Date: 2005-12-08 17:54:20 -0500 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -45,16 +45,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SequenceManager {
 
+    private static final String CREATE_ID =
+            "INSERT INTO jiveID (id, idType) VALUES (1, ?)";
+
     private static final String LOAD_ID =
             "SELECT id FROM jiveID WHERE idType=?";
 
     private static final String UPDATE_ID =
             "UPDATE jiveID SET id=? WHERE idType=? AND id=?";
 
-    private static final String VERIFY_TYPE = "SELECT 1 FROM jiveID WHERE idType = ?";
-
     // Statically startup a sequence manager for each of the sequence counters.
-    private static Map<Integer,SequenceManager> managers = new ConcurrentHashMap<Integer,SequenceManager>();
+    private static Map<Integer, SequenceManager> managers = new ConcurrentHashMap<Integer, SequenceManager>();
 
     static {
         new SequenceManager(JiveConstants.ROSTER, 5);
@@ -75,40 +76,38 @@ public class SequenceManager {
         else {
             // Verify type is valid from the db, if so create an instance for the type
             // And return the next unique id
-            if(isValidType(type)) {
-                SequenceManager manager = new SequenceManager(type, 1);
-                return manager.nextUniqueID();
-            }
-
-            throw new IllegalArgumentException("Invalid type");
+            SequenceManager manager = new SequenceManager(type, 1);
+            return manager.nextUniqueID();
         }
     }
 
     /**
-     * Method for objects that have defined the annotation {@link JiveID} in their class.
-     *
+     * Returns the next id for an object that has defined the annotation {@link JiveID}.
+     * The JiveID annotation value is the synonymous for the type integer.
+     * <p/>
      * The annotation JiveID should contain the id type for the object (the same number you would
      * use to call nextID(int type))
-     *
+     * <p/>
      * Example class definition:
-     *
+     * <p/>
      * <code>
      * \@JiveID(10)
      * public class MyClass {
-     *
+     * <p/>
      * }
      * </code>
      *
      * @param o object that has annotation JiveID
      * @return the next int
+     * @throws IllegalArgumentException If the object passed in does not defined {@link JiveID}
      */
     public static long nextID(Object o) {
         JiveID id = o.getClass().getAnnotation(JiveID.class);
 
-        if(id == null) {
-            Log.error("Annotation JiveID must be defined in the class "+o.getClass());
+        if (id == null) {
+            Log.error("Annotation JiveID must be defined in the class " + o.getClass());
             throw new IllegalArgumentException(
-                    "Annotation JiveID must be defined in the class "+o.getClass());
+                    "Annotation JiveID must be defined in the class " + o.getClass());
         }
 
         return nextID(id.value());
@@ -118,20 +117,15 @@ public class SequenceManager {
      * Used to set the blocksize of a given SequenceManager. If no SequenceManager has been registered
      * for the type we will verify the type is valid and then create a new sequence manager for it.
      *
-     * @param type the type of unique id
-     * @param blockSize how many blocks of ids we should 
+     * @param type      the type of unique id
+     * @param blockSize how many blocks of ids we should
      */
     public static void setBlockSize(int type, int blockSize) {
         if (managers.containsKey(type)) {
             managers.get(type).blockSize = blockSize;
         }
         else {
-            // Verify type is valid from the db, if so create an instance for the type
-            if(isValidType(type)) {
-                new SequenceManager(type, blockSize);
-            } else {
-                throw new IllegalArgumentException("Invalid type");
-            }
+            new SequenceManager(type, blockSize);
         }
     }
 
@@ -195,13 +189,19 @@ public class SequenceManager {
             pstmt = con.prepareStatement(LOAD_ID);
             pstmt.setInt(1, type);
             ResultSet rs = pstmt.executeQuery();
+
+            long currentID = 1;
             if (!rs.next()) {
-                throw new SQLException("Loading the current ID failed. The " +
-                        "jiveID table may not be correctly populated.");
+                rs.close();
+                pstmt.close();
+
+                createNewID(con, type);
             }
-            long currentID = rs.getLong(1);
-            rs.close();
-            pstmt.close();
+            else {
+                currentID = rs.getLong(1);
+                rs.close();
+                pstmt.close();
+            }
 
             // Increment the id to define our block.
             long newID = currentID + blockSize;
@@ -226,8 +226,14 @@ public class SequenceManager {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
 
@@ -244,40 +250,20 @@ public class SequenceManager {
         }
     }
 
+    private void createNewID(Connection con, int type) throws SQLException {
+        Log.warn("Autocreating jiveID row for type '" + type + "'");
 
-    /**
-     * Checks to seed if the jiveID type listed is valid
-     *
-     * @param type jiveID type to check
-     * @return true if it is valid
-     */
-    private static boolean isValidType(int type) {
-
-        boolean isValid = false;
-
-        Connection con = null;
+        // create new ID row
         PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(VERIFY_TYPE);
-            pstmt.setInt(1, type);
 
-            ResultSet rs = pstmt.executeQuery();
-            if(rs.next()) {
-                isValid = true;
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle);
+        try {
+            pstmt = con.prepareStatement(CREATE_ID);
+            pstmt.setInt(1, type);
+            pstmt.execute();
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, null);
         }
-
-        return isValid;
     }
 
 }

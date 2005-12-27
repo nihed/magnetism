@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1378 $
- * $Date: 2005-05-23 14:25:24 -0400 (Mon, 23 May 2005) $
+ * $Date: 2005-05-23 15:25:24 -0300 (Mon, 23 May 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import java.util.Iterator;
 import java.util.ArrayList;

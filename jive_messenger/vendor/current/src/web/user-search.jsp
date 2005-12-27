@@ -1,13 +1,11 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.HashMap,
-                 org.jivesoftware.admin.*,
                  java.util.Map,
                  java.net.URLEncoder"
 %>
@@ -46,19 +44,14 @@
         }
     }
 %>
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean"/>
-<%    // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.search.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-search.jsp"));
-    pageinfo.setPageID("user-search");
-%>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="search_for_a_user.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true"/>
+<html>
+    <head>
+        <title><fmt:message key="user.search.title"/></title>
+        <meta name="pageID" content="user-search"/>
+        <meta name="helpPage" content="search_for_a_user.html"/>
+    </head>
+    <body>
 
 <%    if (errors.size() > 0) { %>
 <p class="jive-error-text"><fmt:message key="user.search.not_found" /></p>
@@ -82,4 +75,6 @@
 <script language="JavaScript" type="text/javascript">
 document.f.username.focus();
 </script>
-<jsp:include page="bottom.jsp" flush="true"/>
+
+    </body>
+</html>

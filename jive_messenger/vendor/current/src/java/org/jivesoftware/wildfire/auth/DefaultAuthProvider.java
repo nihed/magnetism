@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1116 $
- * $Date: 2005-03-10 18:18:08 -0500 (Thu, 10 Mar 2005) $
+ * $Date: 2005-03-10 20:18:08 -0300 (Thu, 10 Mar 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;

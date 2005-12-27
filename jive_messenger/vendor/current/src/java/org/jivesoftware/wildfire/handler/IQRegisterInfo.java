@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 128 $
- * $Date: 2004-10-25 19:42:00 -0400 (Mon, 25 Oct 2004) $
+ * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 
 /**
  * Handle the various user registration settings that are
@@ -121,7 +121,7 @@ public interface IQRegisterInfo {
      * Sets the location for storing field information.
      *
      * @param location The location type
-     * @throws org.jivesoftware.messenger.auth.UnauthorizedException
+     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
      *          If you don't have permission to adjust this setting
      */
     public void setFieldStoreLocation(int location) throws UnauthorizedException;
@@ -138,7 +138,7 @@ public interface IQRegisterInfo {
      * Tells the server whether to support open registration or not.
      *
      * @param isSupported True if open registration is supported
-     * @throws org.jivesoftware.messenger.auth.UnauthorizedException
+     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
     public void setOpenRegistrationSupported(boolean isSupported) throws UnauthorizedException;
@@ -156,7 +156,7 @@ public interface IQRegisterInfo {
      *
      * @param fieldType  The field to require.
      * @param isRequired True if the field should be required
-     * @throws org.jivesoftware.messenger.auth.UnauthorizedException
+     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
     public void setFieldRequired(int fieldType, boolean isRequired) throws UnauthorizedException;

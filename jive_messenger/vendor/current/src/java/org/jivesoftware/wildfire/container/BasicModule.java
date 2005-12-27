@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 626 $
- * $Date: 2004-12-05 10:15:18 -0500 (Sun, 05 Dec 2004) $
+ * $Date: 2004-12-05 12:15:18 -0300 (Sun, 05 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.container;
+package org.jivesoftware.wildfire.container;
 
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServer;
 
 /**
  * A default Module implementation that basically avoids subclasses having to implement the whole

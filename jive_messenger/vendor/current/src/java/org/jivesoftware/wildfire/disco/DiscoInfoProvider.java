@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1695 $
- * $Date: 2005-07-26 01:09:55 -0400 (Tue, 26 Jul 2005) $
+ * $Date: 2005-07-26 02:09:55 -0300 (Tue, 26 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.disco;
+package org.jivesoftware.wildfire.disco;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;

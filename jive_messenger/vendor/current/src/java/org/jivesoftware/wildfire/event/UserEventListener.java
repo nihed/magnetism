@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1526 $
- * $Date: 2005-06-16 01:50:35 -0400 (Thu, 16 Jun 2005) $
+ * $Date: 2005-06-16 02:50:35 -0300 (Thu, 16 Jun 2005) $
  *
  * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.event;
+package org.jivesoftware.wildfire.event;
 
-import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.wildfire.user.User;
 
 import java.util.Map;
 

@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1747 $
- * $Date: 2005-08-04 17:36:36 -0400 (Thu, 04 Aug 2005) $
+ * $RCSfile: MultiUserChatServerImpl.java,v $
+ * $Revision: 3036 $
+ * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,23 +9,23 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.disco.DiscoInfoProvider;
-import org.jivesoftware.messenger.disco.DiscoItemsProvider;
-import org.jivesoftware.messenger.disco.DiscoServerItem;
-import org.jivesoftware.messenger.disco.ServerItemsProvider;
-import org.jivesoftware.messenger.forms.DataForm;
-import org.jivesoftware.messenger.forms.FormField;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.forms.spi.XFormFieldImpl;
-import org.jivesoftware.messenger.muc.*;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.disco.DiscoInfoProvider;
+import org.jivesoftware.wildfire.disco.DiscoItemsProvider;
+import org.jivesoftware.wildfire.disco.DiscoServerItem;
+import org.jivesoftware.wildfire.disco.ServerItemsProvider;
+import org.jivesoftware.wildfire.forms.DataForm;
+import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.wildfire.muc.*;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -214,6 +214,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     private boolean process(IQ iq) {
         Element childElement = iq.getChildElement();
         String namespace = null;
+        // Ignore IQs of type ERROR
+        if (IQ.Type.error == iq.getType()) {
+            return false;
+        }
+        if (iq.getTo().getResource() != null) {
+            // Ignore IQ packets sent to room occupants
+            return false;
+        }
         if (childElement != null) {
             namespace = childElement.getNamespaceURI();
         }
@@ -377,7 +385,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCRoom getChatRoom(String roomName, JID userjid) throws UnauthorizedException {
+    public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
         MUCRoom room = null;
         synchronized (roomName.intern()) {
             room = rooms.get(roomName.toLowerCase());
@@ -399,7 +407,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         if (!allowedToCreate.contains(userjid.toBareJID())) {
                             // The user is not in the list of allowed JIDs to create a room so raise
                             // an exception
-                            throw new UnauthorizedException();
+                            throw new NotAllowedException();
                         }
                     }
                     room.addFirstOwner(userjid.toBareJID());

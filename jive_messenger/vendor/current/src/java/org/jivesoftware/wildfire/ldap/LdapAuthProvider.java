@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.ldap;
+package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.messenger.auth.AuthProvider;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.auth.AuthProvider;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;

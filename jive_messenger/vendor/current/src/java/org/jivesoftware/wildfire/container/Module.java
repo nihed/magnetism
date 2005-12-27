@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 624 $
- * $Date: 2004-12-05 00:38:08 -0500 (Sun, 05 Dec 2004) $
+ * $Date: 2004-12-05 02:38:08 -0300 (Sun, 05 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.container;
+package org.jivesoftware.wildfire.container;
 
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServer;
 
 /**
  * Logical, server-managed entities must implement this interface. A module

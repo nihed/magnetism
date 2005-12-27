@@ -1,20 +1,20 @@
 /**
- * $RCSfile$
- * $Revision: 1637 $
- * $Date: 2005-07-16 00:09:36 -0400 (Sat, 16 Jul 2005) $
+ * $RCSfile: ComponentSession.java,v $
+ * $Revision: 3174 $
+ * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.messenger.component;
+package org.jivesoftware.wildfire.component;
 
 import org.dom4j.Element;
-import org.dom4j.io.XPPPacketReader;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.AuthFactory;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.AuthFactory;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -49,7 +49,7 @@ public class ComponentSession extends Session {
      * @param connection the connection with the component.
      * @return a newly created session between the server and a component.
      */
-    public static Session createSession(String serverName, XPPPacketReader reader,
+    public static Session createSession(String serverName, XMPPPacketReader reader,
             Connection connection) throws UnauthorizedException, IOException,
             XmlPullParserException
     {
@@ -199,6 +199,11 @@ public class ComponentSession extends Session {
         super(serverName, conn, id);
     }
 
+    public String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
+    }
+
     public void process(Packet packet) throws PacketException {
         // Since ComponentSessions are not being stored in the RoutingTable this messages is very
         // unlikely to be sent
@@ -221,9 +226,9 @@ public class ComponentSession extends Session {
      */
     public class ExternalComponent implements Component {
 
-        private String name;
-        private String type;
-        private String category;
+        private String name = "";
+        private String type = "";
+        private String category = "";
         private String subdomain;
 
         public void processPacket(Packet packet) {

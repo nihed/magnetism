@@ -1,9 +1,8 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -11,12 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.messenger.*,
+                 org.jivesoftware.wildfire.*,
                  org.jivesoftware.admin.*,
-                 java.util.Date,
-                 java.text.DateFormat,
                  java.util.HashMap,
-                 org.jivesoftware.messenger.user.*,
+                 org.jivesoftware.wildfire.user.*,
                  java.util.Map,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder"
@@ -116,19 +113,14 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.message.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "user-message.jsp"));
-    pageinfo.setPageID("user-message");
-%>
 
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="send_an_administrative_message_to_users.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="user.message.title"/></title>
+        <meta name="pageID" content="user-message"/>
+        <meta name="helpPage" content="send_an_administrative_message_to_users.html"/>
+    </head>
+    <body>
 
 <%  if (success) { %>
 
@@ -264,4 +256,5 @@ function updateSelect(el) {
 document.f.message.focus();
 </script>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 2654 $
- * $Date: 2005-08-14 13:40:32 -0400 (Sun, 14 Aug 2005) $
+ * $Date: 2005-08-14 14:40:32 -0300 (Sun, 14 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.auth;
+package org.jivesoftware.wildfire.auth;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 
 import javax.mail.Store;
 import javax.mail.Session;
@@ -29,10 +29,10 @@ import java.util.Properties;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.messenger.auth.POP3AuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.wildfire.auth.POP3AuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.messenger.user.POP3UserProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.wildfire.user.POP3UserProvider&lt;/className&gt;
  *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>

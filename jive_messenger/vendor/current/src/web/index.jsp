@@ -1,22 +1,15 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2691 $
-  -	$Date: 2005-08-18 16:58:19 -0400 (Thu, 18 Aug 2005) $
+  -	$Revision: 2989 $
+  -	$Date: 2005-10-23 17:34:49 -0400 (Sun, 23 Oct 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.messenger.user.*,
-                 java.util.*,
                  java.text.*,
-                 org.jivesoftware.admin.AdminPageBean,
                  org.jivesoftware.admin.AdminConsole"
 %>
 
@@ -54,22 +47,19 @@
     }
 %>
 
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("index.title");
-    pageinfo.setTitle(title);
-    pageinfo.setPageID("server-settings");
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="about_the_server.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="index.title"/></title>
+        <meta name="pageID" content="server-settings"/>
+        <meta name="helpPage" content="about_the_server.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="index.title.info" />
 </p>
 
-<script lang="JavaScript" type="text/javascript">
+<script language="JavaScript" type="text/javascript">
     var checked = false;
     function checkClick() {
         if (checked) { return false; }
@@ -102,26 +92,37 @@
                     if ("en".equals(JiveGlobals.getLocale().getLanguage())) {
                         long now = System.currentTimeMillis();
                         long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
-                        long uptime = (now - lastStarted) / 1000L;
+                        long uptime = now - lastStarted;
 
-                        if (uptime < 60) {
+                        if (uptime < JiveConstants.MINUTE) {
                             uptimeDisplay = "Less than 1 minute";
                         }
-                        else if (uptime < 60*60) {
-                            long mins = uptime / (60);
-                            uptimeDisplay = "Approx " + mins + ((mins==1) ? " minute" : " minutes");
+                        else if (uptime < JiveConstants.HOUR) {
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = mins + ((mins==1) ? " minute" : " minutes");
                         }
-                        else if (uptime < 60*60*24) {
-                            long days = uptime / (60*60);
-                            uptimeDisplay = "Approx " + days + ((days==1) ? " hour" : " hours");
+                        else if (uptime < JiveConstants.DAY) {
+                            long hours = uptime / JiveConstants.HOUR;
+                            uptime -= hours * JiveConstants.HOUR;
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = hours + ((hours==1) ? " hour" : " hours" + ", " +
+                                    mins + ((mins==1) ? " minute" : " minutes"));
+                        }
+                        else {
+                            long days = uptime / JiveConstants.DAY;
+                            uptime -= days * JiveConstants.DAY;
+                            long hours = uptime / JiveConstants.HOUR;
+                            uptime -= hours * JiveConstants.HOUR;
+                            long mins = uptime / JiveConstants.MINUTE;
+                            uptimeDisplay = days + ((days==1) ? " day" : " days") + ", " +
+                                    hours + ((hours==1) ? " hour" : " hours") + ", " +
+                                    mins + ((mins==1) ? " minute" : " minutes");
                         }
                     }
                 %>
 
                 <%  if (uptimeDisplay != null) { %>
-
                     <%= uptimeDisplay %> -- started
-
                 <%  } %>
 
                 <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
@@ -313,4 +314,5 @@
 <input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

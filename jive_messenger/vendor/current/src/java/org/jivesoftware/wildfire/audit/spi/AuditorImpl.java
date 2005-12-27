@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1627 $
- * $Date: 2005-07-14 14:13:40 -0400 (Thu, 14 Jul 2005) $
+ * $Revision: 3186 $
+ * $Date: 2005-12-11 00:07:52 -0300 (Sun, 11 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.audit.spi;
+package org.jivesoftware.wildfire.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.audit.AuditManager;
-import org.jivesoftware.messenger.audit.Auditor;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.audit.AuditManager;
+import org.jivesoftware.wildfire.audit.Auditor;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -170,7 +170,7 @@ public class AuditorImpl implements Auditor {
             }
         }
 
-        writer = new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8");
+        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8"));
         writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
         xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
     }

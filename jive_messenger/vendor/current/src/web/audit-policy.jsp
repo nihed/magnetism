@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 2691 $
-  -	$Date: 2005-08-18 16:58:19 -0400 (Thu, 18 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -9,40 +9,31 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.messenger.audit.AuditManager,
-                   org.jivesoftware.admin.*,
+<%@ page import="org.jivesoftware.wildfire.audit.AuditManager,
                    org.jivesoftware.util.*,
                    java.util.*,
                  java.io.File,
-                 org.xmpp.component.ComponentManagerFactory,
                  org.xmpp.packet.JID,
-                 java.util.LinkedList,
-                 org.jivesoftware.messenger.user.UserNotFoundException"
+                 org.jivesoftware.wildfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
-<% admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("audit.policy.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "audit-policy.jsp"));
-    pageinfo.setPageID("server-audit-policy");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="set_server_traffic_auditing_policy.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
-<script language="JavaScript" type="text/javascript">
-function openWin(el) {
-    var win = window.open('user-browser.jsp?formName=f&elName=ignore','newWin','width=500,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
-}
-</script>
+<html>
+    <head>
+        <title><fmt:message key="audit.policy.title"/></title>
+        <meta name="pageID" content="server-audit-policy"/>
+        <meta name="helpPage" content="set_server_traffic_auditing_policy.html"/>
+    </head>
+    <body>
+
+
 
 <%   // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -61,9 +52,9 @@ function openWin(el) {
 
 
     // Get an audit manager:
-    AuditManager auditManager = admin.getXMPPServer().getAuditManager();
+    AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
 
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (update) {
         auditManager.setEnabled(auditEnabled);
         auditManager.setAuditMessage(auditMessages);
@@ -117,7 +108,7 @@ function openWin(el) {
                     String tok = tokenizer.nextToken();
                     String username = tok;
                     if (tok.contains("@")) {
-                        if (tok.contains("@" + admin.getServerInfo().getName())) {
+                        if (tok.contains("@" + webManager.getServerInfo().getName())) {
                            username = new JID(tok).getNode();
                         }
                         else {
@@ -126,7 +117,7 @@ function openWin(el) {
                         }
                     }
                     try {
-                        admin.getUserManager().getUser(username);
+                        webManager.getUserManager().getUser(username);
                         newIgnoreList.add(username);
                     }
                     catch (UserNotFoundException e){
@@ -140,7 +131,7 @@ function openWin(el) {
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="audit.policy.settings.saved_successfully" />
         </td></tr>
@@ -221,7 +212,7 @@ function openWin(el) {
                         <fmt:message key="audit.policy.log_directory" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="30" maxlength="150" name="logDir"
+                        <input type="text" size="50" maxlength="150" name="logDir"
                          value="<%= ((logDir != null) ? logDir : "") %>">
 
                     <%  if (errors.get("logDir") != null) { %>
@@ -339,23 +330,14 @@ function openWin(el) {
                         <fmt:message key="audit.policy.ignore" />
                     </td>
                     <td width="99%">
-                        <table>
-                            <td>
-                            <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
-                            <%  if (errors.get("ignore") != null) { %>
+                        <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
+                        <%  if (errors.get("ignore") != null) { %>
 
-                                <span class="jive-error-text">
-                                <fmt:message key="audit.policy.validignore" />
-                                </span>
+                            <span class="jive-error-text">
+                            <fmt:message key="audit.policy.validignore" />
+                            </span>
 
-                            <%  } %>
-                            </td>
-                             <td nowrap valign="top">
-                                <a href="#" onclick="openWin(document.f.ignore);return false;"
-                                 title="<fmt:message key="user.browser.browse_users_desc" />"
-                                 ><img src="images/user.gif" border="0"/> <fmt:message key="user.browser.browse_users" /></a>
-                            </td>
-                        </table>
+                        <%  } %>
                     </td>
                 </tr>
                 </table>
@@ -382,4 +364,5 @@ function openWin(el) {
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

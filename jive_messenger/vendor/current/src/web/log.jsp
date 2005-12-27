@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 1746 $
-  -	$Date: 2005-08-04 17:36:08 -0400 (Thu, 04 Aug 2005) $
+  -	$Revision: 2938 $
+  -	$Date: 2005-10-08 04:53:48 -0400 (Sat, 08 Oct 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -11,10 +11,8 @@
 
 <%@ page import="java.io.*,
                  java.text.SimpleDateFormat,
-                 org.jivesoftware.messenger.user.User,
                  java.util.Date,
                  java.text.ParseException,
-                 org.jivesoftware.messenger.auth.UnauthorizedException,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.StringUtils"
@@ -138,6 +136,7 @@
 <html>
 <head>
     <title><%= log %></title>
+    <meta name="decorator" content="none"/>
     <style type="text/css">
     .log TABLE {
         border : 1px #ccc solid;

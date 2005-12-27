@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1528 $
- * $Date: 2005-06-17 01:43:20 -0400 (Fri, 17 Jun 2005) $
+ * $RCSfile: ServerSocketReader.java,v $
+ * $Revision: 3174 $
+ * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.interceptor.PacketRejectedException;
-import org.jivesoftware.messenger.server.IncomingServerSession;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
@@ -209,5 +209,13 @@ public class ServerSocketReader extends SocketReader {
             return true;
         }
         return false;
+    }
+
+    String getNamespace() {
+        return "jabber:server";
+    }
+
+    boolean validateHost() {
+        return true;
     }
 }

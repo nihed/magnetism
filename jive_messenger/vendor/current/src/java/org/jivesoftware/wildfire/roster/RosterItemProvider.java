@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1751 $
- * $Date: 2005-08-07 19:08:47 -0400 (Sun, 07 Aug 2005) $
+ * $Date: 2005-08-07 20:08:47 -0300 (Sun, 07 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.roster;
+package org.jivesoftware.wildfire.roster;
 
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.JiveConstants;
@@ -75,12 +75,12 @@ public class RosterItemProvider {
      *
      * <b>Important!</b> The item passed as a parameter to this method is strictly a convenience
      * for passing all of the data needed for a new roster item. The roster item returned from the
-     * method will be cached by Messenger. In some cases, the roster item passed in will be passed
+     * method will be cached by Wildfire. In some cases, the roster item passed in will be passed
      * back out. However, if an implementation may return RosterItems as a separate class
      * (for example, a RosterItem that directly accesses the backend storage, or one that is an
      * object in an object database).<p>
      *
-     * If you don't want roster items edited through messenger, throw
+     * If you don't want roster items edited through wildfire, throw
      * UnsupportedOperationException.
      *
      * @param username the username of the user/chatbot that owns the roster item
@@ -125,7 +125,7 @@ public class RosterItemProvider {
      * Update the roster item in storage with the information contained in the given item
      * (optional operation).<p>
      *
-     * If you don't want roster items edited through messenger, throw UnsupportedOperationException.
+     * If you don't want roster items edited through wildfire, throw UnsupportedOperationException.
      *
      * @param username the username of the user/chatbot that owns the roster item
      * @param item   The roster item to update
@@ -170,7 +170,7 @@ public class RosterItemProvider {
     /**
      * Delete the roster item with the given itemJID for the user (optional operation).<p>
      *
-     * If you don't want roster items deleted through messenger, throw
+     * If you don't want roster items deleted through wildfire, throw
      * UnsupportedOperationException.
      *
      * @param username the long ID of the user/chatbot that owns the roster item

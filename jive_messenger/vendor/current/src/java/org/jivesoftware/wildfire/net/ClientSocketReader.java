@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1368 $
- * $Date: 2005-05-23 13:45:49 -0400 (Mon, 23 May 2005) $
+ * $Revision: 3174 $
+ * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.ClientSession;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.ClientSession;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
@@ -26,7 +27,13 @@ import java.net.Socket;
 /**
  * A SocketReader specialized for client connections. This reader will be used when the open
  * stream contains a jabber:client namespace. Received packet will have their FROM attribute
- * overriden to avoid spoofing.
+ * overriden to avoid spoofing.<p>
+ *
+ * By default the hostname specified in the stream header sent by clients will not be validated.
+ * When validated the TO attribute of the stream header has to match the server name or a valid
+ * subdomain. If the value of the 'to' attribute is not valid then a host-unknown error
+ * will be returned. To enable the validation set the system property
+ * <b>xmpp.client.validate.host</b> to true.
  *
  * @author Gaston Dombiak
  */
@@ -76,4 +83,11 @@ public class ClientSocketReader extends SocketReader {
         return false;
     }
 
+    String getNamespace() {
+        return "jabber:client";
+    }
+
+    boolean validateHost() {
+        return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
+    }
 }

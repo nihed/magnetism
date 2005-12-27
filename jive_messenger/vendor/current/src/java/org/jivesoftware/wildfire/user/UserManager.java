@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.wildfire.user;
 
-import org.jivesoftware.messenger.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.*;
@@ -39,7 +39,7 @@ public class UserManager {
         userCache = CacheManager.getCache("userCache");
         // Load a user provider.
         String className = JiveGlobals.getXMLProperty("provider.user.className",
-                "org.jivesoftware.messenger.user.DefaultUserProvider");
+                "org.jivesoftware.wildfire.user.DefaultUserProvider");
         try {
             Class c = ClassUtils.forName(className);
             provider = (UserProvider)c.newInstance();

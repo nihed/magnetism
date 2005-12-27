@@ -1,7 +1,7 @@
 /*
  * $RCSfile$
  * $Revision: 1089 $
- * $Date: 2005-03-07 00:36:27 -0500 (Mon, 07 Mar 2005) $
+ * $Date: 2005-03-07 02:36:27 -0300 (Mon, 07 Mar 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.starter;
+package org.jivesoftware.wildfire.starter;
 
 import org.jivesoftware.util.Log;
 
@@ -19,7 +19,7 @@ import java.io.File;
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
  *
- * This class should be for standalone mode only. Jive Messenger servers launched
+ * This class should be for standalone mode only. Wildfire servers launched
  * through a J2EE container (servlet/EJB) will use those environment's
  * classloading facilities to ensure proper startup.<p>
  *
@@ -29,8 +29,8 @@ import java.io.File;
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property <tt>messenger.lib.directory</tt> is specified
- * ServerStarter will attempt to use this value as the value for messenger's lib
+ * Note: if the enviroment property <tt>wildfire.lib.directory</tt> is specified
+ * ServerStarter will attempt to use this value as the value for wildfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *
  * @author Iain Shigeoka
@@ -57,7 +57,7 @@ public class ServerStarter {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
 
-            String libDirString = System.getProperty("messenger.lib.dir");
+            String libDirString = System.getProperty("wildfire.lib.dir");
 
             File libDir;
             if (libDirString != null) {
@@ -78,7 +78,7 @@ public class ServerStarter {
            
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(
-                    "org.jivesoftware.messenger.XMPPServer");
+                    "org.jivesoftware.wildfire.XMPPServer");
             containerClass.newInstance();
         }
         catch (Exception e) {

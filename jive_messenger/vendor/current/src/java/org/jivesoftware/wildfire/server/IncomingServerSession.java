@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1519 $
- * $Date: 2005-06-15 18:29:18 -0400 (Wed, 15 Jun 2005) $
+ * $RCSfile: IncomingServerSession.java,v $
+ * $Revision: 3174 $
+ * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,20 +9,22 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.server;
+package org.jivesoftware.wildfire.server;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.net.SocketConnection;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.xmpp.packet.Packet;
-import org.dom4j.io.XPPPacketReader;
 import org.dom4j.Element;
-import org.xmlpull.v1.XmlPullParserException;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.Packet;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -48,7 +50,19 @@ import java.util.Collections;
  */
 public class IncomingServerSession extends Session {
 
+    /**
+     * List of domains, subdomains and virtual hostnames of the remote server that were
+     * validated with this server. The remote server is allowed to send packets to this
+     * server from any of the validated domains.
+     */
     private Collection<String> validatedDomains = new ArrayList<String>();
+
+    /**
+     * Domains or subdomain of this server that was used by the remote server
+     * when validating the new connection. This information is useful to prevent
+     * many connections from the same remote server to the same local domain.
+     */
+    private String localDomain = null;
 
     /**
      * Creates a new session that will receive packets. The new session will be authenticated
@@ -60,7 +74,7 @@ public class IncomingServerSession extends Session {
      * an incoming connection that will only exist until the requested domain has been validated.
      * In this case, this method will return <tt>null</tt> since the connection is closed after
      * the domain was validated. See
-     * {@link ServerDialback#createIncomingSession(org.dom4j.io.XPPPacketReader)} for more
+     * {@link ServerDialback#createIncomingSession(org.dom4j.io.XMPPPacketReader)} for more
      * information.
      *
      * @param serverName hostname of this server.
@@ -72,16 +86,74 @@ public class IncomingServerSession extends Session {
      * @throws XmlPullParserException if an error occurs while parsing the XML.
      * @throws IOException if an input/output error occurs while using the connection.
      */
-    public static Session createSession(String serverName, XPPPacketReader reader,
+    public static Session createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection) throws XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();
         if (xpp.getNamespace("db") != null) {
+            // Server is trying to establish connection and authenticate using server dialback
             ServerDialback method = new ServerDialback(connection, serverName);
             return method.createIncomingSession(reader);
         }
-        // Close the connection since we only support server dialback for s2s communication
+        String version = xpp.getAttributeValue("", "version");
+        int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+        if (serverVersion[0] >= 1) {
+            // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection
+            try {
+                return createIncomingSession(connection, serverName);
+            }
+            catch (Exception e) {
+                Log.error("Error establishing connection from remote server", e);
+            }
+
+        }
+        // Close the connection since remote server is not XMPP 1.0 compliant and is not
+        // using server dialback to establish and authenticate the connection
         connection.close();
         return null;
+    }
+
+    /**
+     * Returns a new incoming server session pending to be authenticated. The remote server
+     * will be notified that TLS and SASL are available. The remote server will be able to
+     * send packets to this server only after SASL authentication has been finished.
+     *
+     * @param connection the new established connection with the remote server.
+     * @param serverName hostname of this server.
+     * @return a new incoming server session pending to be authenticated.
+     * @throws UnauthorizedException if this server is being shutdown.
+     */
+    private static Session createIncomingSession(SocketConnection connection, String serverName)
+            throws UnauthorizedException {
+        // Get the stream ID for the new session
+        StreamID streamID = SessionManager.getInstance().nextStreamID();
+        // Create a server Session for the remote server
+        IncomingServerSession session = SessionManager.getInstance()
+                .createIncomingServerSession(connection, streamID);
+
+        // Send the stream header
+        StringBuilder openingStream = new StringBuilder();
+        openingStream.append("<stream:stream");
+        openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+        openingStream.append(" xmlns=\"jabber:server\"");
+        openingStream.append(" from=\"").append(serverName).append("\"");
+        openingStream.append(" id=\"").append(streamID).append("\"");
+        openingStream.append(" version=\"1.0\">");
+        connection.deliverRawText(openingStream.toString());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<stream:features>");
+        sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+        // TODO Consider that STARTTLS may be optional (add TLS options to the AC - disabled, optional, required)
+        // sb.append("<required/>");
+        sb.append("</starttls>");
+        // Include available SASL Mechanisms
+        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        sb.append("</stream:features>");
+        connection.deliverRawText(sb.toString());
+
+        // Set the domain or subdomain of the local server targeted by the remote server
+        session.setLocalDomain(serverName);
+        return session;
     }
 
     public IncomingServerSession(String serverName, Connection connection, StreamID streamID) {
@@ -106,6 +178,7 @@ public class IncomingServerSession extends Session {
     public boolean validateSubsequentDomain(Element dbResult) {
         ServerDialback method = new ServerDialback(getConnection(), getServerName());
         if (method.validateRemoteDomain(dbResult, getStreamID())) {
+            // Add the validated domain as a valid domain
             addValidatedDomain(dbResult.attributeValue("from"));
             return true;
         }
@@ -169,7 +242,32 @@ public class IncomingServerSession extends Session {
     public void removeValidatedDomain(String domain) {
         validatedDomains.remove(domain);
         // Unregister the validated domain for this server session in SessionManager
-        SessionManager.getInstance().unregisterIncomingServerSession(domain);
+        SessionManager.getInstance().unregisterIncomingServerSessions(domain);
+    }
+
+    /**
+     * Returns the domain or subdomain of the local server used by the remote server
+     * when validating the session. This information is only used to prevent many
+     * connections from the same remote server to the same domain or subdomain of
+     * the local server.
+     *
+     * @return the domain or subdomain of the local server used by the remote server
+     *         when validating the session.
+     */
+    public String getLocalDomain() {
+        return localDomain;
+    }
+
+    /**
+     * Sets the domain or subdomain of the local server used by the remote server when asking
+     * to validate the session. This information is only used to prevent many connections from
+     * the same remote server to the same domain or subdomain of the local server.
+     *
+     * @param domain the domain or subdomain of the local server used when validating the
+     *        session.
+     */
+    public void setLocalDomain(String domain) {
+        localDomain = domain;
     }
 
     /**
@@ -181,5 +279,10 @@ public class IncomingServerSession extends Session {
      */
     public void verifyReceivedKey(Element doc) {
         ServerDialback.verifyReceivedKey(doc, getConnection());
+    }
+
+    public String getAvailableStreamFeatures() {
+        // Nothing special to add
+        return null;
     }
 }

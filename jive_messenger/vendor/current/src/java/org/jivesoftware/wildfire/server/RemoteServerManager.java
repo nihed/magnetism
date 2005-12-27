@@ -1,10 +1,10 @@
-package org.jivesoftware.messenger.server;
+package org.jivesoftware.wildfire.server;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.Session;
-import org.jivesoftware.messenger.SessionManager;
-import org.jivesoftware.messenger.net.SocketAcceptThread;
-import org.jivesoftware.messenger.server.RemoteServerConfiguration.Permission;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.net.SocketAcceptThread;
+import org.jivesoftware.wildfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
@@ -59,11 +59,10 @@ public class RemoteServerManager {
         config.setPermission(Permission.blocked);
         addConfiguration(config);
         // Check if the remote server was connected and proceed to close the connection
-        Session session = SessionManager.getInstance().getIncomingServerSession(domain);
-        if (session != null) {
+        for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             session.getConnection().close();
         }
-        session = SessionManager.getInstance().getOutgoingServerSession(domain);
+        Session session = SessionManager.getInstance().getOutgoingServerSession(domain);
         if (session != null) {
             session.getConnection().close();
         }
@@ -135,6 +134,18 @@ public class RemoteServerManager {
     }
 
     /**
+     * Returns the number of milliseconds to wait to connect to a remote server or read
+     * data from a remote server. Default timeout value is 20 seconds. Configure the
+     * <tt>xmpp.server.read.timeout</tt> global property to override the default value.
+     *
+     * @return the number of milliseconds to wait to connect to a remote server or read
+     *         data from a remote server.
+     */
+    public static int getSocketTimeout() {
+        return JiveGlobals.getIntProperty("xmpp.server.read.timeout", 20000);
+    }
+
+    /**
      * Removes any existing defined permission and configuration for the specified
      * remote server.
      *
@@ -188,10 +199,10 @@ public class RemoteServerManager {
     }
 
     /**
-     * Returns the configuration for a remote server.
+     * Returns the configuration for a remote server or <tt>null</tt> if none was found.
      *
      * @param domain the domain of the remote server.
-     * @return the configuration for a remote server.
+     * @return the configuration for a remote server or <tt>null</tt> if none was found.
      */
     public static RemoteServerConfiguration getConfiguration(String domain) {
         RemoteServerConfiguration configuration = null;
@@ -311,8 +322,10 @@ public class RemoteServerManager {
         // Check if the connected servers can remain connected to the server
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {
-                Session session = SessionManager.getInstance().getIncomingServerSession(hostname);
-                session.getConnection().close();
+                for (Session session : SessionManager.getInstance()
+                        .getIncomingServerSessions(hostname)) {
+                    session.getConnection().close();
+                }
             }
         }
         for (String hostname : SessionManager.getInstance().getOutgoingServers()) {

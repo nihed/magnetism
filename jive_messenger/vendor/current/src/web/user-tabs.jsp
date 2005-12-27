@@ -1,13 +1,13 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%--
   -	$RCSfile$
-  -	$Revision: 985 $
-  -	$Date: 2005-02-18 13:35:44 -0500 (Fri, 18 Feb 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.messenger.PresenceManager,
-                 org.jivesoftware.messenger.user.*"
+                 org.jivesoftware.wildfire.PresenceManager,
+                 org.jivesoftware.wildfire.user.*"
     
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

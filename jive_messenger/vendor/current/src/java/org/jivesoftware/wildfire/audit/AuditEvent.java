@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 37 $
- * $Date: 2004-10-21 02:08:43 -0400 (Thu, 21 Oct 2004) $
+ * $Date: 2004-10-21 03:08:43 -0300 (Thu, 21 Oct 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.audit;
+package org.jivesoftware.wildfire.audit;
 
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.wildfire.Session;
 import java.util.Date;
 
 /**
@@ -24,7 +24,7 @@ public class AuditEvent {
 
     /**
      * All user generated codes must be equal to or greater than this constant
-     * to avoid clashing with Jive Messenger event codes.
+     * to avoid clashing with Wildfire event codes.
      */
     public static final int USER_CODES = 100;
 

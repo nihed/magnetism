@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2871 $
- * $Date: 2005-09-22 22:43:29 -0400 (Thu, 22 Sep 2005) $
+ * $Revision: 2993 $
+ * $Date: 2005-10-24 18:11:33 -0300 (Mon, 24 Oct 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.container;
+package org.jivesoftware.wildfire.container;
 
 import org.jivesoftware.util.Log;
 
@@ -21,6 +21,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -79,6 +80,10 @@ class PluginClassLoader {
         catch (MalformedURLException mue) {
             Log.error(mue);
         }
+    }
+
+    public Collection<URL> getURLS(){
+        return list;
     }
 
     /**

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -69,7 +69,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 }
 
                 String serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() +
-                        File.separator + "messenger";
+                        File.separator + "wildfire";
                 String username = "sa";
                 String password = "";
                 int minConnections = 3;
@@ -135,7 +135,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         Connection con = null;
         try {
             in = new BufferedReader(new InputStreamReader(
-                    getClass().getResourceAsStream("/database/messenger_hsqldb.sql")));
+                    getClass().getResourceAsStream("/database/wildfire_hsqldb.sql")));
             con = connectionPool.getConnection();
             boolean done = false;
             while (!done) {

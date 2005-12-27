@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 617 $
- * $Date: 2004-12-03 03:59:50 -0500 (Fri, 03 Dec 2004) $
+ * $Date: 2004-12-03 05:59:50 -0300 (Fri, 03 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;

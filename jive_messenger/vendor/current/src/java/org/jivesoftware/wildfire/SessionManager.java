@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1697 $
- * $Date: 2005-07-26 01:11:33 -0400 (Tue, 26 Jul 2005) $
+ * $Revision: 3170 $
+ * $Date: 2005-12-07 14:00:58 -0300 (Wed, 07 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,19 +9,21 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.messenger.audit.AuditStreamIDFactory;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
-import org.jivesoftware.messenger.server.IncomingServerSession;
-import org.jivesoftware.messenger.server.OutgoingServerSession;
-import org.jivesoftware.messenger.spi.BasicStreamIDFactory;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.component.ComponentSession;
-import org.jivesoftware.messenger.component.InternalComponentManager;
+import org.jivesoftware.wildfire.audit.AuditStreamIDFactory;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.wildfire.server.IncomingServerSession;
+import org.jivesoftware.wildfire.server.OutgoingServerSession;
+import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
+import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.component.ComponentSession;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
+import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -88,9 +90,11 @@ public class SessionManager extends BasicModule {
      * The sessions contained in this Map are server sessions originated by a remote server. These
      * sessions can only receive packets from the remote server but are not capable of sending
      * packets to the remote server. Sessions will be added to this collecion only after they were
-     * authenticated. The key of the Map is the hostname of the remote server.
+     * authenticated. The key of the Map is the hostname of the remote server. The value is a
+     * list of IncomingServerSession that will keep each session created by a remote server to
+     * this server.
      */
-    private Map<String, IncomingServerSession> incomingServerSessions = new ConcurrentHashMap<String, IncomingServerSession>();
+    private Map<String, List<IncomingServerSession>> incomingServerSessions = new ConcurrentHashMap<String, List<IncomingServerSession>>();
 
     /**
      * The sessions contained in this Map are server sessions originated from this server to remote
@@ -159,7 +163,7 @@ public class SessionManager extends BasicModule {
      */
     private class SessionMap {
         private Map<String,ClientSession> resources = new ConcurrentHashMap<String,ClientSession>();
-        private LinkedList priorityList = new LinkedList();
+        private LinkedList<String> priorityList = new LinkedList<String>();
 
         /**
          * Add a session to the manager.
@@ -183,7 +187,7 @@ public class SessionManager extends BasicModule {
         private void sortSession(String resource, int priority) {
             synchronized (priorityList) {
                 if (priorityList.size() > 0) {
-                    Iterator iter = priorityList.iterator();
+                    Iterator<String> iter = priorityList.iterator();
                     for (int i = 0; iter.hasNext(); i++) {
                         ClientSession sess = resources.get(iter.next());
                         if (sess != null && sess.getPresence().getPriority() <= priority) {
@@ -305,12 +309,8 @@ public class SessionManager extends BasicModule {
          *
          * @return An iterator of all sessions
          */
-        public Iterator getSessions() {
-            LinkedList<Session> list = new LinkedList<Session>();
-            for (Session session : resources.values()) {
-                list.add(session);
-            }
-            return list.iterator();
+        public Collection<ClientSession> getSessions() {
+            return resources.values();
         }
 
         /**
@@ -436,24 +436,59 @@ public class SessionManager extends BasicModule {
     /**
      * Registers that a server session originated by a remote server is hosting a given hostname.
      * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys.
+     * the same IncomingServerSession may be associated with many keys. If the remote server
+     * creates many sessions to this server (eg. one for each subdomain) then associate all
+     * the sessions with the originating server that created all the sessions.
      *
      * @param hostname the hostname that is being served by the remote server.
      * @param session the incoming server session to the remote server.
      */
     public void registerIncomingServerSession(String hostname, IncomingServerSession session) {
-        incomingServerSessions.put(hostname, session);
+        synchronized (incomingServerSessions) {
+            List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+            if (sessions == null || sessions.isEmpty()) {
+                // First session from the remote server to this server so create a
+                // new association
+                List<IncomingServerSession> value = new CopyOnWriteArrayList<IncomingServerSession>();
+                value.add(session);
+                incomingServerSessions.put(hostname, value);
+            }
+            else {
+                // Add new session to the existing list of sessions originated by
+                // the remote server
+                sessions.add(session);
+            }
+        }
     }
 
     /**
-     * Unregisters that a server session originated by a remote server is hosting a given hostname.
+     * Unregisters the server sessions originated by a remote server with the specified hostname.
      * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys.
+     * the same IncomingServerSession may be associated with many keys. The remote server may have
+     * many sessions established with this server (eg. to the server itself and to subdomains
+     * hosted by this server).
      *
      * @param hostname the hostname that is being served by the remote server.
      */
-    public void unregisterIncomingServerSession(String hostname) {
-        incomingServerSessions.remove(hostname);
+    public void unregisterIncomingServerSessions(String hostname) {
+        synchronized (incomingServerSessions) {
+            incomingServerSessions.remove(hostname);
+        }
+    }
+
+    /**
+     * Unregisters the specified remote server session originiated by the specified remote server.
+     *
+     * @param hostname the hostname that is being served by the remote server.
+     * @param session the session to unregiser.
+     */
+    private void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
+        synchronized (incomingServerSessions) {
+            List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+            if (sessions != null) {
+                sessions.remove(session);
+            }
+        }
     }
 
     /**
@@ -501,6 +536,11 @@ public class SessionManager extends BasicModule {
             // Remove the pre-Authenticated session but remember to use the temporary JID as the key
             preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
                     session.getStreamID().toString()).toString());
+            
+            // Fire session created event.
+            SessionEventDispatcher.dispatchEvent(session,
+                    SessionEventDispatcher.EventType.session_created);
+            
             success = true;
         }
         return success;
@@ -601,14 +641,10 @@ public class SessionManager extends BasicModule {
                 // the user from the routing table
                 if (sessionMap == null) {
                     JID userJID = new JID(session.getUsername(), serverName, "");
-                    try {
-                        routingTable.getRoute(userJID);
+                    if (routingTable.getRoute(userJID) != null) {
                         // Remove the route for the session's BARE address
                         routingTable.removeRoute(new JID(session.getAddress().getNode(),
                                 session.getAddress().getDomain(), ""));
-                    }
-                    catch (NoSuchRouteException e) {
-                        // Do nothing since the routingTable does not have routes to this user
                     }
                 }
                 // If all the user sessions are gone then remove the route to the default session
@@ -763,7 +799,7 @@ public class SessionManager extends BasicModule {
         if (from == null) {
             return null;
         }
-        return getSession(from.getNode(), from.getDomain(), from.getResource());
+        return getSession(from.toString(), from.getNode(), from.getDomain(), from.getResource());
     }
 
     /**
@@ -783,9 +819,8 @@ public class SessionManager extends BasicModule {
             return null;
         }
 
-        ClientSession session = null;
         // Build a JID represention based on the given JID data
-        StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder(40);
         if (username != null) {
             buf.append(username).append("@");
         }
@@ -793,8 +828,30 @@ public class SessionManager extends BasicModule {
         if (resource != null) {
             buf.append("/").append(resource);
         }
+        return getSession(buf.toString(), username, domain, resource);
+    }
+
+    /**
+     * Returns the session responsible for this JID data. The returned Session may have never sent
+     * an available presence (thus not have a route) or could be a Session that hasn't
+     * authenticated yet (i.e. preAuthenticatedSessions).
+     *
+     * @param jid the full representation of the JID.
+     * @param username the username of the JID.
+     * @param domain the username of the JID.
+     * @param resource the username of the JID.
+     * @return the <code>Session</code> associated with the JID data.
+     */
+    private ClientSession getSession(String jid, String username, String domain, String resource) {
+        // Return null if the JID's data belongs to a foreign server. If the server is
+        // shutting down then serverName will be null so answer null too in this case.
+        if (serverName == null || !serverName.equals(domain)) {
+            return null;
+        }
+
+        ClientSession session = null;
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(buf.toString());
+        session = preAuthenticatedSessions.get(jid);
         if(session != null){
             return session;
         }
@@ -816,7 +873,6 @@ public class SessionManager extends BasicModule {
         }
         return session;
     }
-
 
     public Collection<ClientSession> getSessions() {
         List<ClientSession> allSessions = new ArrayList<ClientSession>();
@@ -841,6 +897,7 @@ public class SessionManager extends BasicModule {
                             results);
                 }
                 catch (UserNotFoundException e) {
+                    // Ignore.
                 }
             }
 
@@ -910,15 +967,21 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns a session that was originated by a remote server. IncomingServerSession can only
-     * receive packets from the remote server but are not capable of sending packets to the remote
-     * server.
+     * Returns the list of sessions that were originated by a remote server. The list will be
+     * ordered chronologically.  IncomingServerSession can only receive packets from the remote
+     * server but are not capable of sending packets to the remote server.
      *
      * @param hostname the name of the remote server.
-     * @return a session that was originated by a remote server.
+     * @return the sessions that were originated by a remote server.
      */
-    public IncomingServerSession getIncomingServerSession(String hostname) {
-        return incomingServerSessions.get(hostname);
+    public List<IncomingServerSession> getIncomingServerSessions(String hostname) {
+        List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
+        if (sessions == null) {
+            return Collections.emptyList();
+        }
+        else {
+            return Collections.unmodifiableList(sessions);
+        }
     }
 
     /**
@@ -983,30 +1046,28 @@ public class SessionManager extends BasicModule {
         return between;
     }
 
-    private void copyAnonSessions(List sessions) {
+    private void copyAnonSessions(List<ClientSession> sessions) {
         // Add anonymous sessions
-        for (Session session : anonymousSessions.values()) {
+        for (ClientSession session : anonymousSessions.values()) {
             sessions.add(session);
         }
     }
 
-    private void copyUserSessions(List sessions) {
+    private void copyUserSessions(List<ClientSession> sessions) {
         // Get a copy of the sessions from all users
         for (String username : getSessionUsers()) {
-            Collection<ClientSession> usrSessions = getSessions(username);
-            for (Session session : usrSessions) {
+            for (ClientSession session : getSessions(username)) {
                 sessions.add(session);
             }
         }
     }
 
-    private void copyUserSessions(String username, List sessionList) {
+    private void copyUserSessions(String username, List<ClientSession> sessionList) {
         // Get a copy of the sessions from all users
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
-            Iterator sessionItr = sessionMap.getSessions();
-            while (sessionItr.hasNext()) {
-                sessionList.add(sessionItr.next());
+            for (ClientSession session : sessionMap.getSessions()) {
+                sessionList.add(session);
             }
         }
     }
@@ -1109,9 +1170,8 @@ public class SessionManager extends BasicModule {
      * @param packet The packet to be broadcast
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
-        Iterator values = sessions.values().iterator();
-        while (values.hasNext()) {
-            ((SessionMap)values.next()).broadcast(packet);
+        for (SessionMap sessionMap : sessions.values()) {
+            ((SessionMap) sessionMap).broadcast(packet);
         }
 
         for (Session session : anonymousSessions.values()) {
@@ -1150,6 +1210,10 @@ public class SessionManager extends BasicModule {
         if (anonymousSessions.containsValue(session)) {
             anonymousSessions.remove(session.getAddress().getResource());
             sessionCount--;
+            
+            // Fire session event.
+            SessionEventDispatcher.dispatchEvent(session,
+                    SessionEventDispatcher.EventType.anonymous_session_destroyed);
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
@@ -1163,6 +1227,10 @@ public class SessionManager extends BasicModule {
                         if (sessionMap.isEmpty()) {
                             sessions.remove(username);
                         }
+                        
+                        // Fire session event.
+                        SessionEventDispatcher.dispatchEvent(session,
+                                SessionEventDispatcher.EventType.session_destroyed);
                     }
                 }
             }
@@ -1186,6 +1254,10 @@ public class SessionManager extends BasicModule {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
         preAuthenticatedSessions.remove(session.getAddress().toString());
+        
+        // Fire session event.
+        SessionEventDispatcher.dispatchEvent(session,
+                SessionEventDispatcher.EventType.anonymous_session_created);
     }
 
     public int getConflictKickLimit() {
@@ -1217,7 +1289,7 @@ public class SessionManager extends BasicModule {
             try {
                 ClientSession session = (ClientSession)handback;
                 try {
-                    if (session.getPresence().isAvailable()) {
+                    if (session.getPresence().isAvailable() || !session.wasAvailable()) {
                         // Send an unavailable presence to the user's subscribers
                         // Note: This gives us a chance to send an unavailable presence to the
                         // entities that the user sent directed presences
@@ -1274,7 +1346,7 @@ public class SessionManager extends BasicModule {
             IncomingServerSession session = (IncomingServerSession)handback;
             // Remove all the hostnames that were registered for this server session
             for (String hostname : session.getValidatedDomains()) {
-                unregisterIncomingServerSession(hostname);
+                unregisterIncomingServerSession(hostname, session);
             }
         }
     }
@@ -1372,6 +1444,7 @@ public class SessionManager extends BasicModule {
             }
         }
         catch (UnauthorizedException e) {
+            // Ignore.
         }
     }
 
@@ -1387,6 +1460,8 @@ public class SessionManager extends BasicModule {
 
     public void stop() {
         Log.debug("Stopping server");
+        // Stop threads that are sending packets to remote servers
+        OutgoingSessionPromise.getInstance().shutdown();
         timer.cancel();
         serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
@@ -1398,10 +1473,12 @@ public class SessionManager extends BasicModule {
                     session.getConnection().close();
                 }
                 catch (Throwable t) {
+                    // Ignore.
                 }
             }
         }
         catch (Exception e) {
+            // Ignore.
         }
     }
 
@@ -1446,7 +1523,7 @@ public class SessionManager extends BasicModule {
     }
 
     public int getServerSessionIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 30 * 60 * 1000);
+        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
     /**
@@ -1474,14 +1551,16 @@ public class SessionManager extends BasicModule {
                 }
             }
             // Check incoming server sessions
-            for (IncomingServerSession session : incomingServerSessions.values()) {
-                try {
-                    if (session.getLastActiveDate().getTime() < deadline) {
-                        session.getConnection().close();
+            for (List<IncomingServerSession> sessions : incomingServerSessions.values()) {
+                for (IncomingServerSession session : sessions) {
+                    try {
+                        if (session.getLastActiveDate().getTime() < deadline) {
+                            session.getConnection().close();
+                        }
                     }
-                }
-                catch (Throwable e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    catch (Throwable e) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    }
                 }
             }
         }

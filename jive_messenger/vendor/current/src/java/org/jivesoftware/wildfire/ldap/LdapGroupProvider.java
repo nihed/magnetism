@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2697 $
- * $Date: 2005-08-19 14:25:12 -0400 (Fri, 19 Aug 2005) $
+ * $Revision: 3191 $
+ * $Date: 2005-12-12 13:41:22 -0300 (Mon, 12 Dec 2005) $
  *
  * Copyright (C) 2005 Jive Software. All rights reserved.
  *
@@ -9,24 +9,23 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.ldap;
+package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.user.*;
-import org.jivesoftware.messenger.group.*;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.group.GroupProvider;
+import org.jivesoftware.wildfire.group.GroupNotFoundException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-
-import java.util.ArrayList;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Vector;
-import java.text.MessageFormat;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
 import javax.naming.ldap.LdapName;
+import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is
@@ -79,18 +78,19 @@ public class LdapGroupProvider implements GroupProvider {
         throw new UnsupportedOperationException();
     }
 
-    public Group getGroup(String group) {
+    public Group getGroup(String group) throws GroupNotFoundException {
         String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
         String searchFilter = "(&" + filter + "(" +
                 manager.getGroupNameField() + "=" + group + "))";
         Collection<Group> groups = populateGroups(searchForGroups(searchFilter, standardAttributes));
         if (groups.size() > 1) {
-            return null; //if multiple groups found return null
+            //if multiple groups found throw exception
+            throw new GroupNotFoundException("Too many groups with name " + group + " were found.");
         }
         for (Group g : groups) {
             return g; //returns the first group found
         }
-        return null;
+        throw new GroupNotFoundException("Group with name " + group + " not found.");
     }
 
     /**
@@ -171,8 +171,9 @@ public class LdapGroupProvider implements GroupProvider {
         return populateGroups(v.elements());
     }
 
-    public Collection<Group> getGroups(User user) {
-        String username = JID.unescapeNode(user.getUsername());
+    public Collection<Group> getGroups(JID user) {
+        XMPPServer server = XMPPServer.getInstance();
+        String username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
         if (!manager.isPosixMode()) {
             try {
                 username = manager.findUserDN(username) + "," +
@@ -192,11 +193,11 @@ public class LdapGroupProvider implements GroupProvider {
      * LDAP groups are read-only.
      *
      * @param groupName name of a group.
-     * @param username name of a user.
+     * @param user the JID of the user to add
      * @param administrator true if is an administrator.
      * @throws UnsupportedOperationException when called.
      */
-    public void addMember(String groupName, String username, boolean administrator)
+    public void addMember(String groupName, JID user, boolean administrator)
             throws UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
@@ -207,11 +208,11 @@ public class LdapGroupProvider implements GroupProvider {
      * LDAP groups are read-only.
      *
      * @param groupName the naame of a group.
-     * @param username the name of a user.
+     * @param user the JID of the user with new privileges
      * @param administrator true if is an administrator.
      * @throws UnsupportedOperationException when called.
      */
-    public void updateMember(String groupName, String username, boolean administrator)
+    public void updateMember(String groupName, JID user, boolean administrator)
             throws UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
@@ -222,10 +223,10 @@ public class LdapGroupProvider implements GroupProvider {
      * LDAP groups are read-only.
      *
      * @param groupName the name of a group.
-     * @param username the ame of a user.
+     * @param user the JID of the user to delete.
      * @throws UnsupportedOperationException when called.
      */
-    public void deleteMember(String groupName, String username)
+    public void deleteMember(String groupName, JID user)
             throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
@@ -306,6 +307,8 @@ public class LdapGroupProvider implements GroupProvider {
         ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
         String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
+        XMPPServer server = XMPPServer.getInstance();
+        String serverName = server.getServerInfo().getName();
 
         while (answer.hasMoreElements()) {
             String name = "";
@@ -319,7 +322,7 @@ public class LdapGroupProvider implements GroupProvider {
                 catch (Exception e) {
                     description = "";
                 }
-                TreeSet<String> members = new TreeSet<String>();
+                TreeSet<JID> members = new TreeSet<JID>();
                 Attribute member = a.get(manager.getGroupMemberField());
                 NamingEnumeration ne = member.getAll();
                 while (ne.hasMore()) {
@@ -352,13 +355,22 @@ public class LdapGroupProvider implements GroupProvider {
                     // Therefore, we have to try to load each user we found to see if
                     // it passes the filter.
                     try {
-                        // In order to lookup a username from the manager, the username
-                        // must be a properly escaped JID node.
-                        String escapedUsername = JID.escapeNode(username);
-                        userManager.getUser(escapedUsername);
-                        // No exception, so the user must exist. Add the user as a group
-                        // member using the escaped username.
-                        members.add(escapedUsername);
+                        JID userJID = null;
+                        // Create JID of local user if JID does not match a component's JID
+                        if (!username.contains(serverName)) {
+                            // In order to lookup a username from the manager, the username
+                            // must be a properly escaped JID node.
+                            String escapedUsername = JID.escapeNode(username);
+                            userManager.getUser(escapedUsername);
+                            // No exception, so the user must exist. Add the user as a group
+                            // member using the escaped username.
+                            userJID = server.createJID(escapedUsername, null);
+                        }
+                        else {
+                            // This is a JID of a component or node of a server's component
+                            userJID = new JID(username);
+                        }
+                        members.add(userJID);
                     }
                     catch (UserNotFoundException e) {
                         if (manager.isDebugEnabled()) {
@@ -369,7 +381,7 @@ public class LdapGroupProvider implements GroupProvider {
                 if (manager.isDebugEnabled()) {
                     Log.debug("Adding group \"" + name + "\" with " + members.size() + " members.");
                 }
-                Group g = new Group(this, name, description, members, new ArrayList<String>());
+                Group g = new Group(this, name, description, members, new ArrayList<JID>());
                 groups.put(name, g);
             }
             catch (Exception e) {

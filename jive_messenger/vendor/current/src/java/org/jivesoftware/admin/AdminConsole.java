@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1175 $
- * $Date: 2005-03-24 20:36:32 -0500 (Thu, 24 Mar 2005) $
+ * $Revision: 3195 $
+ * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -13,7 +13,7 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.messenger.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -24,7 +24,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
- * A model for admin tab and sidebar info. This class loads in xml definitions of the
+ * A model for admin tab and sidebar info. This class loads in XML definitions of the
  * data and produces an in-memory model.<p>
  *
  * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed
@@ -40,10 +40,6 @@ public class AdminConsole {
     private static Element generatedModel;
 
     static {
-        init();
-    }
-
-    private static void init() {
         overrideModels = new LinkedHashMap<String,Element>();
         load();
     }
@@ -144,7 +140,7 @@ public class AdminConsole {
             return globalVersion.getText();
         }
         else {
-            // Default to the Jive Messenger version if none has been provided via XML.
+            // Default to the Wildfire version if none has been provided via XML.
             XMPPServer xmppServer = XMPPServer.getInstance();
             return xmppServer.getServerInfo().getVersion().getVersionString();
         }
@@ -174,7 +170,7 @@ public class AdminConsole {
         // Load the core model as the admin-sidebar.xml file from the classpath.
         InputStream in = ClassUtils.getResourceAsStream("/admin-sidebar.xml");
         if (in == null) {
-            Log.error("Failed to load admin-sidebar.xml file from Jive Messenger classes - admin "
+            Log.error("Failed to load admin-sidebar.xml file from Wildfire classes - admin "
                     + "console will not work correctly.");
             return;
         }

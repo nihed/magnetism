@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 919 $
- * $Date: 2005-01-29 17:26:02 -0500 (Sat, 29 Jan 2005) $
+ * $Date: 2005-01-29 19:26:02 -0300 (Sat, 29 Jan 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc;
+package org.jivesoftware.wildfire.muc;
 
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;

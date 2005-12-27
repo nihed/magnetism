@@ -1,7 +1,7 @@
 /**
  * $RCSfile: PresenceRouter.java,v $
- * $Revision: 2705 $
- * $Date: 2005-08-22 18:00:05 -0400 (Mon, 22 Aug 2005) $
+ * $Revision: 3138 $
+ * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,15 +9,15 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.jivesoftware.messenger.handler.PresenceUpdateHandler;
-import org.jivesoftware.messenger.handler.PresenceSubscribeHandler;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
+import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.wildfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 
@@ -88,10 +88,12 @@ public class PresenceRouter extends BasicModule {
                 }
                 else {
                     // The user sent a directed presence to an entity
-                    ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    handler.process(packet);
-                    // Notify the PresenceUpdateHandler of the directed presence
-                    updateHandler.directedPresenceSent(packet, handler, recipientJID.toString());
+                    ChannelHandler route = routingTable.getRoute(recipientJID);
+                    if (route != null) {
+                        route.process(packet);
+                        // Notify the PresenceUpdateHandler of the directed presence
+                        updateHandler.directedPresenceSent(packet, route, recipientJID.toString());
+                    }
                 }
 
             }
@@ -107,13 +109,14 @@ public class PresenceRouter extends BasicModule {
                 presenceManager.handleProbe(packet);
             }
             else {
-                // It's an unknown or ERROR type, just deliver it because there's nothing else to do with it
-                routingTable.getRoute(recipientJID).process(packet);
+                // It's an unknown or ERROR type, just deliver it because there's nothing
+                // else to do with it
+                ChannelHandler route = routingTable.getRoute(recipientJID);
+                if (route != null) {
+                    route.process(packet);
+                }
             }
 
-        }
-        catch (NoSuchRouteException e) {
-            // Do nothing, presence to unreachable routes are dropped
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);

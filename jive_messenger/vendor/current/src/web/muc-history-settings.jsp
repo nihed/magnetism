@@ -1,7 +1,6 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2704 $
-  -	$Date: 2005-08-22 13:21:39 -0400 (Mon, 22 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -11,10 +10,8 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,                  
-                 org.jivesoftware.messenger.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.messenger.muc.HistoryStrategy,
-                 org.jivesoftware.messenger.muc.MultiUserChatServer"
+                 org.jivesoftware.wildfire.muc.HistoryStrategy,
+                 org.jivesoftware.wildfire.muc.MultiUserChatServer"
     errorPage="error.jsp"
 %>
 
@@ -29,8 +26,8 @@
     static final int NUMBER = 3;
 %>
 
-<jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"/>
-<%  admin.init(request, response, session, application, out ); %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<%  webManager.init(request, response, session, application, out ); %>
 
 <%   // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -38,7 +35,7 @@
     int numMessages = ParamUtils.getIntParameter(request,"numMessages",0);
 
 	// Get muc history
-    MultiUserChatServer mucServer = admin.getMultiUserChatServer();
+    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
     HistoryStrategy historyStrat = mucServer.getHistoryStrategy();
 
     Map errors = new HashMap();
@@ -86,18 +83,13 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("groupchat.history.settings.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "muc-history-settings.jsp"));
-    pageinfo.setPageID("muc-history");
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="edit_group_chat_history_settings.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="groupchat.history.settings.title"/></title>
+        <meta name="pageID" content="muc-history"/>
+        <meta name="helpPage" content="edit_group_chat_history_settings.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="groupchat.history.settings.introduction" />
@@ -172,4 +164,5 @@
 
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

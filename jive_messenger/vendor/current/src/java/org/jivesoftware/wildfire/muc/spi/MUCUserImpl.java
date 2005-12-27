@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 17:40:57 -0400 (Tue, 12 Jul 2005) $
+ * $Revision: 3084 $
+ * $Date: 2005-11-15 23:51:41 -0300 (Tue, 15 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,19 +9,19 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
 
-import org.jivesoftware.messenger.muc.*;
+import org.jivesoftware.wildfire.muc.*;
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserAlreadyExistsException;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
 
 /**
@@ -216,7 +216,7 @@ public class MUCUserImpl implements MUCUser {
                             else if (resource != null
                                     && (Message.Type.chat == type || Message.Type.normal == type)) {
                                 // An occupant is trying to send a private message
-                                role.getChatRoom().sendPrivateMessage(packet, role);
+                                role.getChatRoom().sendPrivatePacket(packet, role);
                             }
                             else if (resource == null && Message.Type.normal == type) {
                                 // An occupant could be sending an invitation or declining an
@@ -228,30 +228,34 @@ public class MUCUserImpl implements MUCUser {
                                 // persistence will be added. Replace locking with transactions!
                                 MUCRoomImpl room = (MUCRoomImpl) role.getChatRoom();
                                 if (userInfo != null && userInfo.element("invite") != null) {
-                                    // An occupant is sending an invitation
-                                    Element info = userInfo.element("invite");
+                                    // An occupant is sending invitations
 
-                                    // Add the user as a member of the room if the room is
-                                    // members only
-                                    if (room.isMembersOnly()) {
-                                        room.lock.writeLock().lock();
-                                        try {
-                                            room.addMember(info.attributeValue("to"), null, role);
-                                        }
-                                        finally {
-                                            room.lock.writeLock().unlock();
-                                        }
-                                    }
-                                    // Try to keep the list of extensions sent together with the 
-                                    // message invitation. These extensions will be sent to the 
-                                    // invitee.
+                                    // Try to keep the list of extensions sent together with the
+                                    // message invitation. These extensions will be sent to the
+                                    // invitees.
                                     List<Element> extensions = new ArrayList<Element>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
+                                    // Send invitations to invitees
+                                    for (Iterator it=userInfo.elementIterator("invite");it.hasNext();) {
+                                        Element info = (Element) it.next();
 
-                                    // Send the invitation to the user
-                                    room.sendInvitation(new JID(info.attributeValue("to")),
-                                            info.elementTextTrim("reason"), role, extensions);
+                                        // Add the user as a member of the room if the room is
+                                        // members only
+                                        if (room.isMembersOnly()) {
+                                            room.lock.writeLock().lock();
+                                            try {
+                                                room.addMember(info.attributeValue("to"), null, role);
+                                            }
+                                            finally {
+                                                room.lock.writeLock().unlock();
+                                            }
+                                        }
+
+                                        // Send the invitation to the invitee
+                                        room.sendInvitation(new JID(info.attributeValue("to")),
+                                                info.elementTextTrim("reason"), role, extensions);
+                                    }
                                 }
                                 else if (userInfo != null
                                         && userInfo.element("decline") != null) {
@@ -284,7 +288,7 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public void process(IQ packet) {
-        // Ignore IQs of type ERROR sent to a room 
+        // Ignore IQs of type ERROR or RESULT sent to a room
         if (IQ.Type.error == packet.getType()) {
             return;
         }
@@ -302,6 +306,19 @@ public class MUCUserImpl implements MUCUser {
             if (role == null) {
                 // TODO: send error message to user (can't send packets to group you haven't
                 // joined)
+            }
+            else if (IQ.Type.result == packet.getType()) {
+                // Only process IQ result packet if it's a private packet sent to another
+                // room occupant
+                if (packet.getTo().getResource() != null) {
+                    try {
+                        // User is sending an IQ result packet to another room occupant
+                        role.getChatRoom().sendPrivatePacket(packet, role);
+                    }
+                    catch (NotFoundException e) {
+                        // Do nothing. No error will be sent to the sender of the IQ result packet
+                    }
+                }
             }
             else {
                 // Check and reject conflicting packets with conflicting roles
@@ -321,11 +338,20 @@ public class MUCUserImpl implements MUCUser {
                             role.getChatRoom().getIQAdminHandler().handleIQ(packet, role);
                         }
                         else {
-                            sendErrorPacket(packet, PacketError.Condition.bad_request);
+                            if (packet.getTo().getResource() != null) {
+                                // User is sending an IQ packet to another room occupant
+                                role.getChatRoom().sendPrivatePacket(packet, role);
+                            }
+                            else {
+                                sendErrorPacket(packet, PacketError.Condition.bad_request);
+                            }
                         }
                     }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);
+                    }
+                    catch (NotFoundException e) {
+                        sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
                     }
                     catch (ConflictException e) {
                         sendErrorPacket(packet, PacketError.Condition.conflict);
@@ -410,6 +436,9 @@ public class MUCUserImpl implements MUCUser {
                         }
                         catch (NotAcceptableException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                        }
+                        catch (NotAllowedException e) {
+                            sendErrorPacket(packet, PacketError.Condition.not_allowed);
                         }
                     }
                     else {

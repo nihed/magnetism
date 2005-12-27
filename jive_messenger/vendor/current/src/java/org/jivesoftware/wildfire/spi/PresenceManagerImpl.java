@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1722 $
- * $Date: 2005-07-28 18:19:16 -0400 (Thu, 28 Jul 2005) $
+ * $RCSfile: PresenceManagerImpl.java,v $
+ * $Revision: 3128 $
+ * $Date: 2005-11-30 15:31:54 -0300 (Wed, 30 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,20 +9,21 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.spi;
+package org.jivesoftware.wildfire.spi;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.DocumentException;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.component.InternalComponentManager;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.roster.Roster;
-import org.jivesoftware.messenger.roster.RosterItem;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -49,6 +50,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private SessionManager sessionManager;
     private XMPPServer server;
     private PacketDeliverer deliverer;
+    private PresenceUpdateHandler presenceUpdateHandler;
 
     private InternalComponentManager componentManager;
 
@@ -333,6 +335,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
         if (userJID.getNode() != null && !"".equals(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
+                // Do not send an unavailable presence if the user sent a direct available presence
+                if (presenceUpdateHandler.hasDirectPresence(session, recipientJID)) {
+                    continue;
+                }
                 Presence presencePacket = new Presence();
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
@@ -356,6 +362,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         this.server = server;
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
+        presenceUpdateHandler = server.getPresenceUpdateHandler();
     }
 
     public Component getPresenceComponent(JID probee) {

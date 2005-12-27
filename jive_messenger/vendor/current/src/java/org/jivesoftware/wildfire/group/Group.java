@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1741 $
- * $Date: 2005-08-03 11:29:18 -0400 (Wed, 03 Aug 2005) $
+ * $Revision: 3127 $
+ * $Date: 2005-11-30 15:26:07 -0300 (Wed, 30 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,22 +9,22 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.group;
+package org.jivesoftware.wildfire.group;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.event.GroupEventDispatcher;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Groups organize users into a single entity for easier management.
@@ -49,8 +49,8 @@ public class Group implements Cacheable {
     private String name;
     private String description;
     private Map<String, String> properties;
-    private Collection<String> members;
-    private Collection<String> administrators;
+    private Set<JID> members;
+    private Set<JID> administrators;
 
     /**
      * Constructs a new group. Note: this constructor is intended for implementors of the
@@ -64,14 +64,14 @@ public class Group implements Cacheable {
      * @param administrators a Collection of the group administrators.
      */
     public Group(GroupProvider provider, String name, String description,
-            Collection<String> members, Collection<String> administrators)
+            Collection<JID> members, Collection<JID> administrators)
     {
         this.provider = provider;
         this.groupManager = GroupManager.getInstance();
         this.name = name;
         this.description = description;
-        this.members = members;
-        this.administrators = administrators;
+        this.members = new HashSet<JID>(members);
+        this.administrators = new HashSet<JID>(administrators);
     }
 
     /**
@@ -144,6 +144,10 @@ public class Group implements Cacheable {
         }
     }
 
+    public String toString() {
+        return name;
+    }
+
     /**
      * Returns all extended properties of the group. Groups
      * have an arbitrary number of extended properties.
@@ -166,7 +170,7 @@ public class Group implements Cacheable {
      *
      * @return a Collection of the group administrators.
      */
-    public Collection<String> getAdmins() {
+    public Collection<JID> getAdmins() {
         // Return a wrapper that will intercept add and remove commands.
         return new MemberCollection(administrators, true);
     }
@@ -176,9 +180,19 @@ public class Group implements Cacheable {
      *
      * @return a Collection of the group members.
      */
-    public Collection<String> getMembers() {
+    public Collection<JID> getMembers() {
         // Return a wrapper that will intercept add and remove commands.
         return new MemberCollection(members, false);
+    }
+
+    /**
+     * Returns true if the provided username belongs to a user that is part of the group.
+     *
+     * @param user the JID address of the user to check.
+     * @return true if the specified user is a group user.
+     */
+    public boolean isUser(JID user) {
+        return user != null && (members.contains(user) || administrators.contains(user));
     }
 
     /**
@@ -188,7 +202,11 @@ public class Group implements Cacheable {
      * @return true if the provided username belongs to a user of the group.
      */
     public boolean isUser(String username) {
-        return members.contains(username) || administrators.contains(username);
+        if  (username != null) {
+        	return isUser(XMPPServer.getInstance().createJID(username, null));
+        } else {
+            return false;
+        }
     }
 
     public int getCachedSize() {
@@ -207,18 +225,18 @@ public class Group implements Cacheable {
      */
     private class MemberCollection extends AbstractCollection {
 
-        private Collection<String> users;
+        private Collection<JID> users;
         private boolean adminCollection;
 
-        public MemberCollection(Collection<String> users, boolean adminCollection) {
+        public MemberCollection(Collection<JID> users, boolean adminCollection) {
             this.users = users;
             this.adminCollection = adminCollection;
         }
 
-        public Iterator iterator() {
+        public Iterator<JID> iterator() {
             return new Iterator() {
 
-                Iterator iter = users.iterator();
+                Iterator<JID> iter = users.iterator();
                 Object current = null;
 
                 public boolean hasNext() {
@@ -234,7 +252,7 @@ public class Group implements Cacheable {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    String user = (String)current;
+                    JID user = (JID)current;
                     // Remove the user from the collection in memory.
                     iter.remove();
                     // Remove the group user from the backend store.
@@ -242,13 +260,13 @@ public class Group implements Cacheable {
                     // Fire event.
                     if (adminCollection) {
                         Map<String, String> params = new HashMap<String, String>();
-                        params.put("admin", user);
+                        params.put("admin", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.admin_removed, params);
                     }
                     else {
                         Map<String, String> params = new HashMap<String, String>();
-                        params.put("member", user);
+                        params.put("member", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.member_removed, params);
                     }
@@ -261,36 +279,29 @@ public class Group implements Cacheable {
         }
 
         public boolean add(Object member) {
-            String username = (String) member;
-            try {
-                username = Stringprep.nodeprep(username);
-                UserManager.getInstance().getUser(username);
-            }
-            catch (Exception e) {
-                throw new IllegalArgumentException("Invalid user.", e);
-            }
+            JID user = (JID) member;
             // Find out if the user was already a group user
             boolean alreadyGroupUser = false;
             if (adminCollection) {
-                alreadyGroupUser = members.contains(username);
+                alreadyGroupUser = members.contains(user);
             }
             else {
-                alreadyGroupUser = administrators.contains(username);
+                alreadyGroupUser = administrators.contains(user);
             }
-            if (users.add(username)) {
+            if (users.add(user)) {
                 if (alreadyGroupUser) {
                     // Update the group user privileges in the backend store.
-                    provider.updateMember(name, username, adminCollection);
+                    provider.updateMember(name, user, adminCollection);
                 }
                 else {
                     // Add the group user to the backend store.
-                    provider.addMember(name, username, adminCollection);
+                    provider.addMember(name, user, adminCollection);
                 }
 
                 // Fire event.
                 if (adminCollection) {
                     Map<String, String> params = new HashMap<String, String>();
-                    params.put("admin", username);
+                    params.put("admin", user.toString());
                     if (alreadyGroupUser) {
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.member_removed, params);
@@ -300,7 +311,7 @@ public class Group implements Cacheable {
                 }
                 else {
                     Map<String, String> params = new HashMap<String, String>();
-                    params.put("member", username);
+                    params.put("member", user.toString());
                     if (alreadyGroupUser) {
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.admin_removed, params);
@@ -312,13 +323,13 @@ public class Group implements Cacheable {
                 // user from the other collection
                 if (alreadyGroupUser) {
                     if (adminCollection) {
-                        if (members.contains(username)) {
-                            members.remove(username);
+                        if (members.contains(user)) {
+                            members.remove(user);
                         }
                     }
                     else {
-                        if (administrators.contains(username)) {
-                            administrators.remove(username);
+                        if (administrators.contains(user)) {
+                            administrators.remove(user);
                         }
                     }
                 }

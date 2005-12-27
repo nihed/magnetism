@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2748 $
- * $Date: 2005-08-31 14:12:49 -0400 (Wed, 31 Aug 2005) $
+ * $Revision: 3117 $
+ * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,14 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.group;
+package org.jivesoftware.wildfire.group;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.messenger.user.User;
+import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.messenger.event.GroupEventDispatcher;
+import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.xmpp.packet.JID;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +50,7 @@ public class GroupManager {
         groupCache = CacheManager.getCache("group");
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
-                "org.jivesoftware.messenger.group.DefaultGroupProvider");
+                "org.jivesoftware.wildfire.group.DefaultGroupProvider");
         try {
             Class c = ClassUtils.forName(className);
             provider = (GroupProvider)c.newInstance();
@@ -136,12 +138,13 @@ public class GroupManager {
      * @param user the deleted user from the system.
      */
     public void deleteUser(User user) {
-        for (Group group : getGroups(user)) {
-            if (group.getAdmins().contains(user.getUsername())) {
-                group.getAdmins().remove(user.getUsername());
+        JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
+        for (Group group : getGroups(userJID)) {
+            if (group.getAdmins().contains(userJID)) {
+                group.getAdmins().remove(userJID);
             }
             else {
-                group.getMembers().remove(user.getUsername());
+                group.getMembers().remove(userJID);
             }
         }
     }
@@ -186,12 +189,12 @@ public class GroupManager {
     }
 
     /**
-     * Returns an iterator for all groups that a user is a member of.
+     * Returns an iterator for all groups that the entity with the specified JID is a member of.
      *
-     * @param user the user to get a list of groups for.
-     * @return all groups that a user belongs to.
+     * @param user the JID of the entity to get a list of groups for.
+     * @return all groups that an entity belongs to.
      */
-    public Collection<Group> getGroups(User user) {
+    public Collection<Group> getGroups(JID user) {
         // TODO: add caching
         return provider.getGroups(user);
     }

@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1701 $
- * $Date: 2005-07-26 01:23:45 -0400 (Tue, 26 Jul 2005) $
+ * $RCSfile: IQDiscoInfoHandler.java,v $
+ * $Revision: 2859 $
+ * $Date: 2005-09-22 02:30:39 -0300 (Thu, 22 Sep 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,18 +9,19 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.disco;
+package org.jivesoftware.wildfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.XMPPServer;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.forms.spi.XDataFormImpl;
-import org.jivesoftware.messenger.handler.IQHandler;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -50,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQDiscoInfoHandler extends IQHandler {
 
-    private HashMap entities = new HashMap();
+    private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
     private List<String> serverFeatures = new ArrayList<String>();
     private Map<String, DiscoInfoProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoInfoProvider>();
@@ -77,8 +78,6 @@ public class IQDiscoInfoHandler extends IQHandler {
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        // TODO Let configure an authorization policy (ACL?). Currently anyone can discover info.
-        
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
@@ -175,7 +174,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      *         null if none was found.
      */
     private DiscoInfoProvider getProvider(String name) {
-        return (DiscoInfoProvider)entities.get(name);
+        return entities.get(name);
     }
 
     /**
@@ -244,9 +243,10 @@ public class IQDiscoInfoHandler extends IQHandler {
                     synchronized (identities) {
                         if (identities.isEmpty()) {
                             Element identity = DocumentHelper.createElement("identity");
-                            identity.addAttribute("category", "services");
-                            identity.addAttribute("name", "Messenger Server");
-                            identity.addAttribute("type", "jabber");
+                            identity.addAttribute("category", "server");
+                            identity.addAttribute("name", JiveGlobals.getProperty(
+                                    "xmpp.server.name", "Wildfire Server"));
+                            identity.addAttribute("type", "im");
 
                             identities.add(identity);
                         }

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1613 $
- * $Date: 2005-07-08 16:22:32 -0400 (Fri, 08 Jul 2005) $
+ * $Revision: 2771 $
+ * $Date: 2005-09-05 01:49:45 -0300 (Mon, 05 Sep 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.user;
+package org.jivesoftware.wildfire.user;
 
 import java.util.Date;
 import java.util.Collection;
@@ -227,4 +227,14 @@ public interface UserProvider {
      * @return true if the user provider is read-only.
      */
     public boolean isReadOnly();
+
+    /**
+     * Returns true if this UserProvider is able to retrieve user passwords from
+     * the backend user store. If this operation is not supported then {@link #getPassword(String)}
+     * will throw an {@link UnsupportedOperationException} if invoked.
+     *
+     * @return true if this UserProvider is able to retrieve user passwords from the
+     *         backend user store.
+     */
+    public boolean supportsPasswordRetrieval();
 }

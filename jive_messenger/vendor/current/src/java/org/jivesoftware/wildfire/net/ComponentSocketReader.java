@@ -1,7 +1,7 @@
 /**
- * $RCSfile$
- * $Revision: 1537 $
- * $Date: 2005-06-24 00:58:50 -0400 (Fri, 24 Jun 2005) $
+ * $RCSfile: ComponentSocketReader.java,v $
+ * $Revision: 3174 $
+ * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.net;
+package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.messenger.component.ComponentSession;
-import org.jivesoftware.messenger.PacketRouter;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.component.ComponentSession;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -51,6 +51,14 @@ public class ComponentSocketReader extends SocketReader {
             session = ComponentSession.createSession(serverName, reader, connection);
             return true;
         }
+        return false;
+    }
+
+    String getNamespace() {
+        return "jabber:component:accept";
+    }
+
+    boolean validateHost() {
         return false;
     }
 }

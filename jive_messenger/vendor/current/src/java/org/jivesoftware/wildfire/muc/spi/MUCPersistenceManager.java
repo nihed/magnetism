@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 1623 $
- * $Date: 2005-07-12 17:40:57 -0400 (Tue, 12 Jul 2005) $
+ * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.muc.spi;
+package org.jivesoftware.wildfire.muc.spi;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,10 +18,10 @@ import java.sql.ResultSet;
 import java.util.*;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.messenger.muc.MUCRole;
-import org.jivesoftware.messenger.muc.MUCRoom;
-import org.jivesoftware.messenger.muc.MultiUserChatServer;
-import org.jivesoftware.messenger.PacketRouter;
+import org.jivesoftware.wildfire.muc.MUCRole;
+import org.jivesoftware.wildfire.muc.MUCRoom;
+import org.jivesoftware.wildfire.muc.MultiUserChatServer;
+import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 

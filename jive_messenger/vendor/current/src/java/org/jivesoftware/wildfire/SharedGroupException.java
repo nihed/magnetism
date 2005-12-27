@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 771 $
- * $Date: 2005-01-02 13:11:44 -0500 (Sun, 02 Jan 2005) $
+ * $Date: 2005-01-02 15:11:44 -0300 (Sun, 02 Jan 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
 /**
  * Thrown when a a user is trying to add or remove a contact from his/her roster that belongs to a

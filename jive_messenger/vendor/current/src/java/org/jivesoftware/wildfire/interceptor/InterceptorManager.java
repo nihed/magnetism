@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1295 $
- * $Date: 2005-04-24 04:03:47 -0400 (Sun, 24 Apr 2005) $
+ * $Revision: 3142 $
+ * $Date: 2005-12-01 13:39:33 -0300 (Thu, 01 Dec 2005) $
  *
  * Copyright (C) 2005 Jive Software. All rights reserved.
  *
@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.interceptor;
+package org.jivesoftware.wildfire.interceptor;
 
-import org.jivesoftware.messenger.Session;
+import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
@@ -214,21 +214,25 @@ public class InterceptorManager {
             throws PacketRejectedException
     {
         // Invoke the global interceptors for this packet
-        for (PacketInterceptor interceptor : globalInterceptors) {
-            try {
-                interceptor.interceptPacket(packet, session, read, processed);
-            }
-            catch (PacketRejectedException e) {
-                if (processed) {
-                    Log.error("Post interceptor cannot reject packet.", e);
+        // Checking if collection is empty to prevent creating an iterator of
+        // a CopyOnWriteArrayList that is an expensive operation
+        if (!globalInterceptors.isEmpty()) {
+            for (PacketInterceptor interceptor : globalInterceptors) {
+                try {
+                    interceptor.interceptPacket(packet, session, read, processed);
                 }
-                else {
-                    // Throw this exception since we don't really want to catch it
-                    throw e;
+                catch (PacketRejectedException e) {
+                    if (processed) {
+                        Log.error("Post interceptor cannot reject packet.", e);
+                    }
+                    else {
+                        // Throw this exception since we don't really want to catch it
+                        throw e;
+                    }
                 }
-            }
-            catch (Exception e) {
-                Log.error("Error in interceptor", e);
+                catch (Exception e) {
+                    Log.error("Error in interceptor", e);
+                }
             }
         }
         // Invoke the interceptors that are related to the address of the session

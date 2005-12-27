@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 2874 $
- * $Date: 2005-09-23 14:24:34 -0400 (Fri, 23 Sep 2005) $
+ * $Revision: 3227 $
+ * $Date: 2005-12-14 14:31:38 -0500 (Wed, 14 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -46,10 +46,10 @@ public class DbConnectionManager {
     /**
      * Database schema minor version.
      */
-    private static final int CURRENT_MINOR_VERSION = 2;
+    private static final int CURRENT_MINOR_VERSION = 4;
 
     private static ConnectionProvider connectionProvider;
-    private static Object providerLock = new Object();
+    private static final Object providerLock = new Object();
 
     // True if connection profiling is turned on. Always false by default.
     private static boolean profilingEnabled = false;
@@ -357,6 +357,21 @@ public class DbConnectionManager {
     }
 
     /**
+     * Destroys the currennt connection provider. Future calls to
+     * {@link #getConnectionProvider()} will return <tt>null</tt> until a new
+     * ConnectionProvider is set, or one is automatically loaded by a call to
+     * {@link #getConnection()}.
+     */
+    public static void destroyConnectionProvider() {
+        synchronized (providerLock) {
+            if (connectionProvider != null) {
+                connectionProvider.destroy();
+                connectionProvider = null;
+            }
+        }
+    }
+
+    /**
      * Retrives a large text column from a result set, automatically performing
      * streaming if the JDBC driver requires it. This is necessary because
      * different JDBC drivers have different capabilities and methods for
@@ -390,9 +405,12 @@ public class DbConnectionManager {
             }
             finally {
                 try {
-                    bodyReader.close();
+                    if (bodyReader != null) {
+                        bodyReader.close();
+                    }
                 }
                 catch (Exception e) {
+                    // Ignore.
                 }
             }
             return value;
@@ -416,7 +434,7 @@ public class DbConnectionManager {
             String value) throws SQLException
     {
         if (isStreamTextRequired()) {
-            Reader bodyReader = null;
+            Reader bodyReader;
             try {
                 bodyReader = new StringReader(value);
                 pstmt.setCharacterStream(parameterIndex, bodyReader, value.length());
@@ -538,13 +556,14 @@ public class DbConnectionManager {
             fetchSizeSupported = false;
             maxRowsSupported = false;
         }
-        // SQLServer, JDBC driver i-net UNA properties
-        else if (dbName.indexOf("sql server") != -1 &&
-                (driverName.indexOf("una") != -1 || driverName.indexOf("sqlserver") != -1))
-        {
+        // SQLServer
+        else if (dbName.indexOf("sql server") != -1) {
             databaseType = DatabaseType.sqlserver;
-            fetchSizeSupported = true;
-            maxRowsSupported = false;
+            // JDBC driver i-net UNA properties
+            if (driverName.indexOf("una") != -1) {
+                fetchSizeSupported = true;
+                maxRowsSupported = false;
+            }
         }
         // MySQL properties
         else if (dbName.indexOf("mysql") != -1) {
@@ -655,7 +674,7 @@ public class DbConnectionManager {
 
         interbase,
 
-        unknown;
+        unknown
     }
 
     /**
@@ -714,14 +733,23 @@ public class DbConnectionManager {
         // Run all upgrade scripts until we're up to the latest schema.
         for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
             BufferedReader in = null;
-            Statement stmt = null;
+            Statement stmt;
             try {
-                // Resource will be like "/database/upgrade/2.0_to_2.1/messenger_hsqldb.sql"
+                // Resource will be like "/database/upgrade/2.0_to_2.1/wildfire_hsqldb.sql"
                 String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
-                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/messenger_" +
+                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/wildfire_" +
                         databaseType + ".sql";
-                in = new BufferedReader(new InputStreamReader(
-                        new DbConnectionManager().getClass().getResourceAsStream(resourceName)));
+                InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
+                if (resource == null) {
+                    Log.info("Warning: Make sure that database was not modified for release: " +
+                            CURRENT_MAJOR_VERSION + "." + (i + 1) + ". Upgrade script not found: " +
+                            resourceName);
+                    System.out.println("Warning: Make sure that database was not modified for " +
+                            "release: " + CURRENT_MAJOR_VERSION + "." + (i + 1) +
+                            ". Upgrade script not found: " + resourceName);
+                    continue;
+                }
+                in = new BufferedReader(new InputStreamReader(resource));
                 boolean done = false;
                 while (!done) {
                     StringBuilder command = new StringBuilder();
@@ -752,7 +780,9 @@ public class DbConnectionManager {
                 catch (Exception e) { Log.error(e); }
                 if (in != null) {
                     try { in.close(); }
-                    catch (Exception e) { }
+                    catch (Exception e) {
+                        // Ignore.
+                    }
                 }
             }
         }
@@ -778,12 +808,8 @@ public class DbConnectionManager {
         //   "#" is MySQL
         //   "REM" is Oracle
         //   "/*" is SQLServer
-        if (line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
-                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"))
-        {
-            return false;
-        }
-        return true;
+        return !(line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
+                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"));
     }
 
     private DbConnectionManager() {

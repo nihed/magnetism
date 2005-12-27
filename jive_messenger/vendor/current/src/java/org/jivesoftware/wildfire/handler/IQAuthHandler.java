@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 2747 $
- * $Date: 2005-08-31 14:12:28 -0400 (Wed, 31 Aug 2005) $
+ * $Date: 2005-08-31 15:12:28 -0300 (Wed, 31 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,17 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.AuthFactory;
-import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.AuthFactory;
+import org.jivesoftware.wildfire.auth.AuthToken;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;

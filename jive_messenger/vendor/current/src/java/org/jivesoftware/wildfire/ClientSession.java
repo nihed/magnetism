@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1718 $
- * $Date: 2005-07-27 14:44:36 -0400 (Wed, 27 Jul 2005) $
+ * $Revision: 3187 $
+ * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,30 +9,31 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.messenger.auth.AuthToken;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.user.User;
-import org.jivesoftware.messenger.user.UserManager;
-import org.jivesoftware.messenger.user.UserNotFoundException;
-import org.jivesoftware.messenger.net.SocketConnection;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.wildfire.auth.AuthToken;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
-import org.dom4j.io.XPPPacketReader;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParser;
 
-import java.io.Writer;
 import java.io.IOException;
-import java.util.Map;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
@@ -44,13 +45,6 @@ public class ClientSession extends Session {
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
-    private static final String TLS_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-tls";
-
-    /**
-     * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
-     */
-    private static final int MAJOR_VERSION = 0;
-    private static final int MINOR_VERSION = 0;
 
     /**
      * Keep the list of IP address that are allowed to connect to the server. If the list is
@@ -61,6 +55,19 @@ public class ClientSession extends Session {
      */
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
 
+    private static Connection.TLSPolicy tlsPolicy;
+	private static Connection.CompressionPolicy compressionPolicy;
+
+    /**
+     * Milliseconds a connection has to be idle to be closed. Default is 30 minutes. Sending
+     * stanzas to the client is not considered as activity. We are only considering the connection
+     * active when the client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * The reason for this is that sending data will fail if the connection is closed. And if
+     * the thread is blocked while sending data (because the socket is closed) then the clean up
+     * thread will close the socket anyway.
+     */
+    private static long idleTimeout;
+
     /**
      * The authentication token for this session.
      */
@@ -70,6 +77,11 @@ public class ClientSession extends Session {
      * Flag indicating if this session has been initialized yet (upon first available transition).
      */
     private boolean initialized;
+
+    /**
+     * Flag that indicates if the session was available ever.
+     */
+    private boolean wasAvailable = false;
 
     /**
      * Flag indicating if the user requested to not receive offline messages when sending
@@ -92,6 +104,18 @@ public class ClientSession extends Session {
             String address = tokens.nextToken().trim();
             allowedIPs.put(address, "");
         }
+        // Set the TLS policy stored as a system property
+        String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy",
+                Connection.TLSPolicy.optional.toString());
+        tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
+
+        // Set the Compression policy stored as a system property
+        policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
+                Connection.CompressionPolicy.disabled.toString());
+        compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+
+        // Set the default read idle timeout. If none was set then assume 30 minutes
+        idleTimeout = JiveGlobals.getIntProperty("xmpp.client.idle", 30 * 60 * 1000);
     }
 
     /**
@@ -104,7 +128,7 @@ public class ClientSession extends Session {
      * @param connection the connection with the client.
      * @return a newly created session between the server and a client.
      */
-    public static Session createSession(String serverName, XPPPacketReader reader,
+    public static Session createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection) throws XmlPullParserException, UnauthorizedException,
             IOException
     {
@@ -145,9 +169,7 @@ public class ClientSession extends Session {
                             connection.getInetAddress().getHostAddress());
                     // Include the not-authorized error in the response
                     StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(error.toXML());
-                    connection.deliverRawText(sb.toString());
+                    connection.deliverRawText(error.toXML());
                     // Close the underlying connection
                     connection.close();
                     return null;
@@ -168,9 +190,9 @@ public class ClientSession extends Session {
             }
             if ("version".equals(xpp.getAttributeName(i))) {
                 try {
-                    String [] versionString = xpp.getAttributeValue(i).split("\\.");
-                    majorVersion = Integer.parseInt(versionString[0]);
-                    minorVersion = Integer.parseInt(versionString[1]);
+                    int[] version = decodeVersion(xpp.getAttributeValue(i));
+                    majorVersion = version[0];
+                    minorVersion = version[1];
                 }
                 catch (Exception e) {
                     Log.error(e);
@@ -197,12 +219,22 @@ public class ClientSession extends Session {
         connection.setLanaguage(language);
         connection.setXMPPVersion(majorVersion, minorVersion);
 
+        // Indicate the TLS policy to use for this connection
+        connection.setTlsPolicy(tlsPolicy);
+
+        // Indicate the compression policy to use for this connection
+        connection.setCompressionPolicy(compressionPolicy);
+
+        // Set the max number of milliseconds the connection may not receive data from the
+        // client before closing the connection
+        connection.setIdleTimeout(idleTimeout);
+
         // Create a ClientSession for this user.
         Session session = SessionManager.getInstance().createClientSession(connection);
 
         Writer writer = connection.getWriter();
         // Build the start packet response
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
@@ -239,11 +271,23 @@ public class ClientSession extends Session {
         }
         // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
 
-        sb = new StringBuilder();
+        sb = new StringBuilder(490);
         sb.append("<stream:features>");
-        sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-        // sb.append("<required/>");
-        sb.append("</starttls></stream:features>");
+        if (tlsPolicy != Connection.TLSPolicy.disabled) {
+            sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            if (tlsPolicy == Connection.TLSPolicy.required) {
+                sb.append("<required/>");
+            }
+            sb.append("</starttls>");
+        }
+        // Include available SASL Mechanisms
+        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        // Include Stream features
+        String specificFeatures = session.getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            sb.append(specificFeatures);
+        }
+        sb.append("</stream:features>");
 
         writer.write(sb.toString());
 
@@ -251,24 +295,6 @@ public class ClientSession extends Session {
             writer.write('\0');
         }
         writer.flush();
-
-        boolean done = false;
-        while (!done) {
-            if (xpp.next() == XmlPullParser.START_TAG) {
-                done = true;
-                if (xpp.getName().equals("starttls") &&
-                        xpp.getNamespace(xpp.getPrefix()).equals(TLS_NAMESPACE))
-                {
-                    writer.write("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
-                    if (isFlashClient) {
-                        writer.write('\0');
-                    }
-                    writer.flush();
-
-                    // TODO: setup SSLEngine and negotiate TLS.
-                }
-            }
-        }
 
         return session;
     }
@@ -309,6 +335,77 @@ public class ClientSession extends Session {
     }
 
     /**
+     * Returns whether TLS is mandatory, optional or is disabled for clients. When TLS is
+     * mandatory clients are required to secure their connections or otherwise their connections
+     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
+     * their connections using TLS. Their connections will be closed if they try to secure the
+     * connection. in this last case.
+     *
+     * @return whether TLS is mandatory, optional or is disabled.
+     */
+    public static SocketConnection.TLSPolicy getTLSPolicy() {
+        return tlsPolicy;
+    }
+
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled for clients. When TLS is
+     * mandatory clients are required to secure their connections or otherwise their connections
+     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
+     * their connections using TLS. Their connections will be closed if they try to secure the
+     * connection. in this last case.
+     *
+     * @param policy whether TLS is mandatory, optional or is disabled.
+     */
+    public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
+        tlsPolicy = policy;
+        JiveGlobals.setProperty("xmpp.client.tls.policy", tlsPolicy.toString());
+    }
+
+    /**
+     * Returns whether compression is optional or is disabled for clients.
+     *
+     * @return whether compression is optional or is disabled.
+     */
+    public static SocketConnection.CompressionPolicy getCompressionPolicy() {
+        return compressionPolicy;
+    }
+
+    /**
+     * Sets whether compression is optional or is disabled for clients.
+     *
+     * @param policy whether compression is optional or is disabled.
+     */
+    public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
+        compressionPolicy = policy;
+        JiveGlobals.setProperty("xmpp.client.compression.policy", compressionPolicy.toString());
+    }
+
+    /**
+     * Returns the number of milliseconds a connection has to be idle to be closed. Default is
+     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
+     * considering the connection active when the client sends some data or hearbeats
+     * (i.e. whitespaces) to the server.
+     *
+     * @return the number of milliseconds a connection has to be idle to be closed.
+     */
+    public static long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    /**
+     * Sets the number of milliseconds a connection has to be idle to be closed. Default is
+     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
+     * considering the connection active when the client sends some data or hearbeats
+     * (i.e. whitespaces) to the server.
+     *
+     * @param timeout the number of milliseconds a connection has to be idle to be closed.
+     */
+    public static void setIdleTimeout(long timeout) {
+        idleTimeout = timeout;
+        JiveGlobals.setProperty("xmpp.client.idle", Long.toString(idleTimeout));
+    }
+
+    /**
      * Creates a session with an underlying connection and permission protection.
      *
      * @param connection The connection we are proxying
@@ -335,6 +432,17 @@ public class ClientSession extends Session {
         return getAddress().getNode();
     }
 
+    /**
+     * Sets the new Authorization Token for this session. The session is not yet considered fully
+     * authenticated (i.e. active) since a resource has not been binded at this point. This
+     * message will be sent after SASL authentication was successful but yet resource binding
+     * is required.
+     *
+     * @param auth the authentication token obtained from SASL authentication.
+     */
+    public void setAuthToken(AuthToken auth) {
+        authToken = auth;
+    }
 
     /**
      * Initialize the session with a valid authentication token and
@@ -399,6 +507,15 @@ public class ClientSession extends Session {
      */
     public void setInitialized(boolean isInit) {
         initialized = isInit;
+    }
+
+    /**
+     * Returns true if the session was available ever.
+     *
+     * @return true if the session was available ever.
+     */
+    public boolean wasAvailable() {
+        return wasAvailable;
     }
 
     /**
@@ -477,6 +594,7 @@ public class ClientSession extends Session {
         else if (!oldPresence.isAvailable() && this.presence.isAvailable()) {
             // The client is available
             sessionManager.sessionAvailable(this);
+            wasAvailable = true;
         }
         else if (oldPresence.getPriority() != this.presence.getPriority()) {
             // The client has changed the priority of his presence
@@ -498,6 +616,41 @@ public class ClientSession extends Session {
      */
     public int getConflictCount() {
         return conflictCount;
+    }
+
+    public String getAvailableStreamFeatures() {
+        // Offer authenticate and registration only if TLS was not required or if required
+        // then the connection is already secured
+        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder(200);
+
+        // Include Stream Compression Mechanism
+        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+                !conn.isCompressed()) {
+            sb.append(
+                    "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        }
+
+        if (getAuthToken() == null) {
+            // Advertise that the server supports Non-SASL Authentication
+            if (XMPPServer.getInstance().getIQAuthHandler().isAllowAnonymous()) {
+                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            }
+            // Advertise that the server supports In-Band Registration
+            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
+            }
+        }
+        else {
+            // If the session has been authenticated then offer resource binding
+            // and session establishment
+            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
+            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        }
+        return sb.toString();
     }
 
     /**

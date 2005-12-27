@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1684 $
- * $Date: 2005-07-22 17:33:01 -0400 (Fri, 22 Jul 2005) $
+ * $Revision: 3189 $
+ * $Date: 2005-12-11 22:38:08 -0500 (Sun, 11 Dec 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -165,7 +165,7 @@ public class ConnectionPool implements Runnable {
                 }
                 catch (InterruptedException ex) {
                     --waitingForCon;
-                    waitLock.notify();
+                    waitLock.notifyAll();
 
                     throw new SQLException("Interrupted while waiting for connection to " +
                             "become available.");
@@ -177,7 +177,7 @@ public class ConnectionPool implements Runnable {
     public void freeConnection() {
         synchronized (waitLock) {
             if (waitingForCon > 0) {
-                waitLock.notify();
+                waitLock.notifyAll();
             }
         }
     }

@@ -5,20 +5,10 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.util.zip.ZipFile,
-                 java.util.jar.JarFile,
-                 java.util.jar.JarEntry,
-                 java.io.*,
-                 org.dom4j.io.SAXReader,
-                 org.dom4j.Document,
-                 org.dom4j.Element,
-                 org.dom4j.Node,
-                 java.text.DateFormat,
-                 org.jivesoftware.admin.AdminPageBean,
-				 org.jivesoftware.messenger.XMPPServer,
-				 org.jivesoftware.messenger.container.PluginManager,
+<%@ page import="java.io.*,
+				 org.jivesoftware.wildfire.container.PluginManager,
 				 org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.container.Plugin,
+                 org.jivesoftware.wildfire.container.Plugin,
                  java.util.*,
                  java.net.URLEncoder"
 %>
@@ -27,11 +17,10 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<% webManager.init(request, response, session, application, out ); %>
 
 <%
 	String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
-	String refreshPlugin = ParamUtils.getParameter(request, "refreshplugin");
+	String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
     boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
@@ -61,12 +50,12 @@
         return;
 	}
 	
-	if (refreshPlugin != null) {		
+	if (reloadPlugin != null) {
 		for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
-			if (refreshPlugin.equals(pluginDir.getName())) {
-				pluginManager.unloadPlugin(refreshPlugin);
-				response.sendRedirect("plugin-admin.jsp?refrehsuccess=true");
+			if (reloadPlugin.equals(pluginDir.getName())) {
+				pluginManager.unloadPlugin(reloadPlugin);
+				response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
                 return;
 			}
 		}		
@@ -131,59 +120,14 @@
        return;
     }
 %>
-<% if (showIcon) {
-       String pluginName = ParamUtils.getParameter(request, "plugin");
-       Plugin plugin = pluginManager.getPlugin(pluginName);
-       if (plugin != null) {
-           File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
-           if (icon.exists()) {
-               // Clear any empty line added by the JSP declaration. This is required to show
-               // the image in resin!!!!!
-               response.reset();
-               response.setContentType("image/gif");
-               InputStream in = null;
-               OutputStream ost = null;
-               try {
-                   in = new FileInputStream(icon);
-                   ost = response.getOutputStream();
 
-                   byte[] buf = new byte[1024];
-                   int len;
-                   while ((len = in.read(buf)) >= 0) {
-                      ost.write(buf,0,len);
-                   }
-                   ost.flush();
-               }
-               catch (IOException ioe) {
-
-               }
-               finally {
-                   if (in != null) {
-                       try { in.close(); } catch (Exception e) { }
-                   }
-                   if (ost != null) {
-                       try { ost.close(); } catch (Exception e) { }
-                   }
-               }
-           }
-       }
-       return;
-    }
-%>
-
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%
-    String title = LocaleUtils.getLocalizedString("plugin.admin.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title, "plugin-admin.jsp"));
-    pageinfo.setPageID("plugin-settings");    
-%>
-
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="manage_system_plugins.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="plugin.admin.title"/></title>
+        <meta name="pageID" content="plugin-settings"/>
+        <meta name="helpPage" content="manage_system_plugins.html"/>
+    </head>
+    <body>
 
 <% if ("true".equals(request.getParameter("deletesuccess"))) { %>
 
@@ -191,7 +135,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_success" /></td>
         </tr>
     </tbody>
@@ -205,7 +149,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" />></td>
         	<td class="jive-icon-label"><fmt:message key="plugin.admin.deleted_failure" /></td>
         </tr>
     </tbody>
@@ -215,13 +159,13 @@
 
 <% } %>
 
-<% if ("true".equals(request.getParameter("refrehsuccess"))) { %>
+<% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-        <td class="jive-icon-label"><fmt:message key="plugin.admin.refresh_success" /></td></tr>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label"><fmt:message key="plugin.admin.reload_success" /></td></tr>
     </tbody>
     </table>
     </div>
@@ -260,8 +204,7 @@
     }
 
     int count = 0;
-    for (int i=0; i<plugins.size(); i++) {
-        Plugin plugin = plugins.get(i);
+    for (Plugin plugin : plugins) {
         String dirName = pluginManager.getPluginDirectory(plugin).getName();
         // Skip the admin plugin.
         if (!"admin".equals(dirName)) {
@@ -271,13 +214,16 @@
             String pluginAuthor = pluginManager.getAuthor(plugin);
             String pluginVersion = pluginManager.getVersion(plugin);
             File pluginDir = pluginManager.getPluginDirectory(plugin);
-            File logo = new File(pluginDir, "logo_small.gif");
+            File icon = new File(pluginDir, "logo_small.png");
+            if (!icon.exists()) {
+                icon = new File(pluginDir, "logo_small.gif");
+            }
 %>
 
 	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
 	        <td width="1%">
-                <% if (logo.exists()) { %>
-                <img src="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true" width="16" height="16" alt="Plugin">
+                <% if (icon.exists()) { %>
+                <img src="plugin-icon.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
                 <% } else { %>
 	            <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
                 <% } %>
@@ -292,11 +238,11 @@
                 </td>
             <td nowrap>
                 <% if (readmeExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true"
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
                 ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
                 <% } else { %> &nbsp; <% } %>
                 <% if (changelogExists) { %>
-                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true"
+                <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
                 ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
                 <% } else { %> &nbsp; <% } %>
             </td>
@@ -310,14 +256,14 @@
 	             <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
 	        </td>
 	        <td width="1%" align="center">
-	            <a href="plugin-admin.jsp?refreshplugin=<%= dirName %>"
-	             title="<fmt:message key="plugin.admin.click_refresh" />"
-	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0"></a>
+	            <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
+	             title="<fmt:message key="plugin.admin.click_reload" />"
+	             ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
 	        </td>
 	        <td width="1%" align="center" style="border-right:1px #ccc solid;">
 	            <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
 	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>
 	        </td>
 	    </tr>
 <%		    
@@ -328,4 +274,5 @@
 </table>
 </div>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

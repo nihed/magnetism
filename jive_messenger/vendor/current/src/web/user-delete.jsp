@@ -1,25 +1,24 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 19:48:22 -0400 (Fri, 19 Aug 2005) $
+  -	$Revision: 3195 $
+  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.messenger.user.*,
-                 org.jivesoftware.admin.*,
+                 org.jivesoftware.wildfire.user.*,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
-                 org.jivesoftware.messenger.group.GroupManager"
+                 org.jivesoftware.wildfire.group.GroupManager"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -60,20 +59,14 @@
     }
 %>
 
-<jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
-<%  // Title of this page and breadcrumbs
-    String title = LocaleUtils.getLocalizedString("user.delete.title");
-    pageinfo.setTitle(title);
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(LocaleUtils.getLocalizedString("global.main"), "index.jsp"));
-    pageinfo.getBreadcrumbs().add(new AdminPageBean.Breadcrumb(title,
-            "user-delete.jsp?username="+URLEncoder.encode(username, "UTF-8")));
-    pageinfo.setSubPageID("user-delete");
-    pageinfo.setExtraParams("username="+URLEncoder.encode(username, "UTF-8"));
-%>
-<jsp:include page="top.jsp" flush="true">
-    <jsp:param name="helpPage" value="remove_a_user_from_the_system.html" />
-</jsp:include>
-<jsp:include page="title.jsp" flush="true" />
+<html>
+    <head>
+        <title><fmt:message key="user.delete.title"/></title>
+        <meta name="subPageID" content="user-delete"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="helpPage" content="remove_a_user_from_the_system.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="user.delete.info" />
@@ -93,4 +86,5 @@
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
-<jsp:include page="bottom.jsp" flush="true" />
+    </body>
+</html>

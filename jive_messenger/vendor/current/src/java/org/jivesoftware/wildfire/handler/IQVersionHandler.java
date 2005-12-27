@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
  * $Revision: 684 $
- * $Date: 2004-12-11 21:30:40 -0500 (Sat, 11 Dec 2004) $
+ * $Date: 2004-12-11 23:30:40 -0300 (Sat, 11 Dec 2004) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.handler;
+package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.messenger.disco.ServerFeaturesProvider;
-import org.jivesoftware.messenger.IQHandlerInfo;
-import org.jivesoftware.messenger.PacketException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.admin.AdminConsole;
 
 import java.util.ArrayList;

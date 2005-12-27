@@ -1,7 +1,7 @@
 /**
  * $RCSfile: PacketDelivererImpl.java,v $
  * $Revision: 2715 $
- * $Date: 2005-08-23 21:16:45 -0400 (Tue, 23 Aug 2005) $
+ * $Date: 2005-08-23 22:16:45 -0300 (Tue, 23 Aug 2005) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.messenger.spi;
+package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.messenger.*;
-import org.jivesoftware.messenger.auth.UnauthorizedException;
-import org.jivesoftware.messenger.container.BasicModule;
-import org.jivesoftware.messenger.net.SocketPacketWriteHandler;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.net.SocketPacketWriteHandler;
 import org.xmpp.packet.Packet;
 
 /**
