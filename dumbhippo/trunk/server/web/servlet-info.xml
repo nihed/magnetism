@@ -34,11 +34,6 @@
       <servlet-class>com.dumbhippo.web.GroupPhotoServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
 	</servlet>
-	<servlet>
-      <servlet-name>XmlRpcServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.XmlRpcServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>   
 
     <servlet>
       <servlet-name>RedirectServlet</servlet-name>
@@ -84,11 +79,6 @@
 		<exception-type>java.lang.Throwable</exception-type>
 		<location>/abnormalerror</location>
 	</error-page>
-
-   <servlet-mapping>
-      <servlet-name>XmlRpcServlet</servlet-name>
-      <url-pattern>/xmlrpc/*</url-pattern>
-   </servlet-mapping>
     
    <servlet-mapping>
       <servlet-name>HttpMethodsServlet</servlet-name>

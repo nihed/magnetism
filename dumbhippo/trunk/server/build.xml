@@ -54,28 +54,11 @@
 		<mkdir dir="${build}" />
 		<mkdir dir="${buildjar.dir}" />
 		<mkdir dir="${reports.tests}" />
-		<mkdir dir="${build.tests}" />
-		
-		<!-- See what needs rebuilding -->
-		<uptodate property="uptodate.xmlrpc" targetfile="xmlrpc/target/xmlrpc-2.0.jar">
-		    <srcfiles dir= "xmlrpc/src/java" includes="**/*.java"/>
-		    <srcfiles dir= "xmlrpc" includes="*.xml" />
-		    <srcfiles dir= "xmlrpc" includes="*.properties" />
-		</uptodate>
+		<mkdir dir="${build.tests}" />		
+		<mkdir dir="${build.lib}" />		
 	</target>
 	
-	<target name="buildxmlrpc" depends="init" unless="uptodate.xmlrpc">
-		<echo message="have to rebuild xmlrpc" />
-		<ant dir="xmlrpc" inheritAll="false" />
-	</target>
-		
-	<target name="subprojects" depends="buildxmlrpc">
-		<copy todir="${build.lib}">
-			<fileset dir="xmlrpc/target" includes="*.jar"/>
-		</copy>
-	</target>
-	
-	<target name="compile" depends="init,subprojects">
+	<target name="compile" depends="init">
 		<!-- Compile the java code -->
 		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5">
 			<classpath refid="project.class.path" />
@@ -197,7 +180,7 @@
 				<include name="**/web/**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath} xmlrpc-2.0.jar" />
+				<attribute name="Class-Path" value="${bundled-classpath}" />
 			</manifest>
 			<lib dir="${lib}" includes="${bundled-deps.web}"/>
 		</war>
@@ -235,7 +218,6 @@
 		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
 			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
 			<fileset dir="${lib}" includes="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar"/>
-			<fileset dir="${build.lib}" includes="xmlrpc-2.0.jar" />
 		</ear>
 	</target>
 
