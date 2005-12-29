@@ -16,7 +16,7 @@ public class Signin extends PageTestCase {
 	
 	@Override
 	public void testPage() {
-		t.beginAt("/signin");
+		t.beginAt("/who-are-you");
 		validatePage();
 	}
 	

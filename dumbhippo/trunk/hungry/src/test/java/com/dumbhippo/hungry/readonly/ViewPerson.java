@@ -26,7 +26,7 @@ public class ViewPerson extends PageTestCase {
 	
 	@Override
 	public void testPage() {
-		t.beginAt("/viewperson?personId=" + userId);
+		t.beginAt("/person?who=" + userId);
 		validatePage();
 	}
 

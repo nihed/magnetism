@@ -66,7 +66,14 @@ public class CheatSheet {
 		// FIXME would improve the tests if we randomized the order so
 		// when getting a fixed number we got different users each time
 		try {
-			String query = "SELECT id FROM HippoUser";
+			// we only want users with an auth key, so we can log in 
+			// as those users.
+			String query =
+			"SELECT HippoUser.id, Client.authKey "
+				+ "FROM HippoUser "
+				+ "INNER JOIN Account ON HippoUser.id = Account.owner_id "
+				+ "LEFT JOIN Client ON Account.id = Client.account_id "
+				+ "WHERE Client.authKey IS NOT NULL";
 			if (max > 0)
 				query = query + " LIMIT " + max;
 			PreparedStatement statement =
@@ -74,7 +81,8 @@ public class CheatSheet {
 			ResultSet rs = statement.executeQuery();
 			Set<String> ret = new HashSet<String>();
 			while (rs.next()) {
-				ret.add(rs.getString("id"));
+				String id = rs.getString("id");
+				ret.add(id);
 			}
 			return ret;
 		} catch (SQLException e) {
