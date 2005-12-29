@@ -23,7 +23,7 @@ public class ShareLink extends SignedInPageTestCase {
 	}
 
 	public void validatePage() {
-		t.assertElementPresent("dhShareLinkForm");
+		t.assertElementPresent("dhShareForm");
 	}
 
 }

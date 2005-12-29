@@ -3,19 +3,19 @@ package com.dumbhippo.hungry.readonly;
 import net.sourceforge.jwebunit.WebTester;
 
 import com.dumbhippo.hungry.util.CheatSheet;
-import com.dumbhippo.hungry.util.SignedInPageTestCase;
+import com.dumbhippo.hungry.util.PageTestCase;
 
-public class ViewPerson extends SignedInPageTestCase {
+public class ViewPersonAnonymous extends PageTestCase {
 
 	private String viewedId;
 	
-	public ViewPerson() {
+	public ViewPersonAnonymous() {
 		CheatSheet cs = CheatSheet.getReadOnly();
 		viewedId = cs.getOneSampleUserId();
 	}
 	
-	ViewPerson(WebTester t, String viewedId) {
-		super(t, null);
+	ViewPersonAnonymous(WebTester t, String viewedId) {
+		super(t);
 		this.viewedId = viewedId;
 	}
 	
@@ -26,7 +26,10 @@ public class ViewPerson extends SignedInPageTestCase {
 	}
 
 	public void validatePage() {
-		t.assertLinkPresentWithText("Home");
-		t.assertLinkPresentWithText("Your Account");
+		// should turn out to be a signin page, since 
+		// we're in "stealth mode"
+		Signin signin = new Signin(t);
+		signin.setUp();
+		signin.validatePage();
 	}
 }

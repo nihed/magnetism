@@ -121,7 +121,29 @@ public class CheatSheet {
 			return ret;
 		} catch (SQLException e) {
 			fatalSqlException(e);
-			return null;
+			return null; // not reached
+		}
+	}
+	
+	public int getNumberOfInvitations(String userId) {
+		try {
+			PreparedStatement statement =
+				getConnection().prepareStatement("SELECT HippoUser.id, Account.invitations "
+						+ "FROM HippoUser "
+						+ "INNER JOIN Account ON HippoUser.id = Account.owner_id "
+						+ "WHERE HippoUser.id = ?");
+			statement.setString(1, userId);
+			ResultSet rs = statement.executeQuery();
+			int ret = -1;
+			while (rs.next()) {
+				ret = rs.getInt("invitations");
+			}
+			if (ret < 0)
+				throw new RuntimeException("no invitation count retrieved for user " + userId);
+			return ret;
+		} catch (SQLException e) {
+			fatalSqlException(e);
+			return 0; // not reached
 		}
 	}
 	
@@ -143,7 +165,7 @@ public class CheatSheet {
 			return ret;
 		} catch (SQLException e) {
 			fatalSqlException(e);
-			return null;
+			return null; // not reached
 		}
 	}
 	
@@ -162,6 +184,7 @@ public class CheatSheet {
 			}
 		} catch (SQLException e) {
 			fatalSqlException(e);
+			// not reached
 		}
 	}
 	
@@ -178,7 +201,7 @@ public class CheatSheet {
 			return dbConnection;
 		} catch (SQLException e) {
 			fatalSqlException(e);
-			return null;
+			return null; // not reached
 		}
 	}
 }

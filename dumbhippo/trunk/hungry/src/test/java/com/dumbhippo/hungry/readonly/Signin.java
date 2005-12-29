@@ -21,8 +21,8 @@ public class Signin extends PageTestCase {
 	}
 	
 	public void validatePage() {
-		t.assertElementPresent("dhSendLinkButton");
-		t.assertElementPresent("dhSendLinkAddress");
+		t.assertFormElementPresent("sendlink");
+		t.assertFormElementPresent("checkpassword");
 	}
 	
 }
