@@ -11,7 +11,7 @@
 </c:if>
 
 <head>
-	<title><c:out value="${home.person.name}"/></title>
+	<title>Your Home</title>
 	<dht:stylesheets href="home.css" iehref="home-iefixes.css" />
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
@@ -25,7 +25,7 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
-		<dht:toolbar/>
+		<dht:toolbar publicPageId="${home.signin.userId}" home="false"/>
 
 		<c:choose>
 			<c:when test="${home.signin.disabled}">

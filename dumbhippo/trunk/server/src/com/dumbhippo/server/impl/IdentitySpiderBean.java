@@ -678,14 +678,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	static final String IS_CONTACT_QUERY =
-		"SELECT COUNT(cc.contact) FROM Account contactAccount, ContactClaim cc " +
+	static final String IS_CONTACT_QUERY = 
+		"SELECT COUNT(cc.contact) FROM Account contactAccount, AccountClaim ac, ContactClaim cc " +
 		"WHERE contactAccount.owner = :contactUser " +
-		  "AND cc.account = :account AND cc.resource = contactAccount";
-		
+		"AND ac.owner = :contactUser " +
+		"AND cc.account = :viewpointAccount " + 
+		"AND cc.resource = ac.resource";
+	
 	public boolean isContact(Viewpoint viewpoint, User user, Person contactPerson) {
 		if (!user.equals(viewpoint.getViewer()))
-				return false;
+			return false;
 		
 		if (contactPerson instanceof Contact) {
 			// Must be a contact of user, so trivial
@@ -698,7 +700,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			// returns an Integer. We use (Number) to be robust
 			Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
 				.setParameter("contactUser", contactUser)
-				.setParameter("account", user.getAccount())
+				.setParameter("viewpointAccount", user.getAccount())
 				.getSingleResult();
 			
 			return count.longValue() > 0;

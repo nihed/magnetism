@@ -68,7 +68,7 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
-		<dht:toolbar/>
+		<dht:toolbar account="false" publicPageId="${account.signin.userId}"/>
 
 		<h2 class="dh-title">Comics!</h2>
 

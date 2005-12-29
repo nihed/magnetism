@@ -6,7 +6,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -26,7 +25,7 @@ public class ViewPersonPage {
 
 	static private final int MAX_POSTS_SHOWN = 10;
 	
-	private Person viewedPerson;
+	private User viewedPerson;
 	private String viewedPersonId;
 	private boolean disabled;
 	
@@ -69,7 +68,7 @@ public class ViewPersonPage {
 		return disabled;
 	}
 	
-	protected void setViewedPerson(Person person) {
+	protected void setViewedPerson(User person) {
 		this.viewedPerson = person;
 		this.viewedPersonId = person.getId();
 		
@@ -91,7 +90,7 @@ public class ViewPersonPage {
 			return;
 		} else {
 			try {
-				setViewedPerson(identitySpider.lookupGuidString(Person.class, personId));
+				setViewedPerson(identitySpider.lookupGuidString(User.class, personId));
 			} catch (ParseException e) {
 				logger.debug("bad personId as person parameter " + personId);
 			} catch (NotFoundException e) {
