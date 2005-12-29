@@ -87,20 +87,14 @@
 			</div>
 		</div>
 		<div class="dh-right-box dh-right-box-last">
-			<h5 class="dh-title">People You Know</h5>
-			<p class="dh-invites">
-			<c:if test="${home.invitations > 0}">
-			You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
-			</c:if>
-			</p>
+			<h5 class="dh-title">People They Know</h5>
 			<div class="dh-people">
 			<c:choose>
 				<c:when test="${home.contacts.size > 0}">
 					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
 				</c:when>
 				<c:otherwise>
-					<!-- FIXME: need class definition for this -->
-					<div class="dh-friends-none">You Need Peeps!!</div>
+					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
 				</c:otherwise>
 			</c:choose>
 			</div>
