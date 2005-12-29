@@ -31,6 +31,7 @@ public class ViewPerson extends PageTestCase {
 	}
 
 	public void validatePage() {
-		t.assertLinkPresentWithText("Share");
+		t.assertLinkPresentWithText("Home");
+		t.assertLinkPresentWithText("Your Account");
 	}
 }

@@ -2,10 +2,10 @@ package com.dumbhippo.hungry.util;
 
 import java.util.Arrays;
 
-import com.meterware.httpunit.HttpUnitOptions;
-
 import junit.framework.TestCase;
 import net.sourceforge.jwebunit.WebTester;
+
+import com.meterware.httpunit.HttpUnitOptions;
 
 /**
  * A base class for tests of a web page. Convenience functions can 
@@ -26,10 +26,15 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 		this.t = t;
 		if (this.t == null)
 			this.t = new WebTester();
+		setUserAgent(UserAgent.IE6);
 	}
 	
 	protected PageTestCase() {
 		this(null);
+	}
+	
+	public void setUserAgent(UserAgent agent) {
+		t.getTestContext().setUserAgent(agent.getText());
 	}
 	
 	/**
