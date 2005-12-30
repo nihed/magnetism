@@ -39,6 +39,4 @@ public interface LoginVerifier {
 	 */
 	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException;
 	
-	// internal hack to use transaction attribute
-	public LoginToken findOrCreateLoginToken(Resource resource);
 }

@@ -21,41 +21,31 @@ public class TransactionRunnerBean implements TransactionRunner {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
-	public <T> T runTaskInNewTransaction(Callable<T> callable) {
+	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
 		return proxy.internalRunTaskInNewTransaction(callable);
 	}
 	
-	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) {
+	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception {
 		int retries = 1;
 		
 		while (true) {
 			try {
-				return callable.call();
+				return runTaskInNewTransaction(callable);
 			} catch (Exception e) {
 				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					logger.debug("Constraint violation race condition detected, retrying: " + e.getClass().getName(), e);
 					retries--;
 				} else {
-					logger.error("Fatal error running task: " + e.getClass().getName(), e);			
-					if (e instanceof RuntimeException)
-						throw (RuntimeException) e;
-					else
-						throw new RuntimeException(e);
+					logger.error("Fatal error running task: " + e.getClass().getName(), e);
+					throw e;
 				}
 			}
 		}
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) {
-		try {
-			return callable.call();
-		} catch (Exception e) {
-			if (e instanceof RuntimeException)
-				throw (RuntimeException) e;
-			else
-				throw new RuntimeException(e);
-		}
+	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception {
+		return callable.call();
 	}
 }

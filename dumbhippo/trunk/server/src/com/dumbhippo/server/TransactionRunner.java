@@ -6,9 +6,9 @@ import javax.ejb.Local;
 
 @Local
 public interface TransactionRunner {
-	public <T> T runTaskInNewTransaction(Callable<T> callable);
-	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable);
+	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception;
+	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception;
 	
 	// internal, way to get TransactionAttribute, do not use
-	public <T> T internalRunTaskInNewTransaction(Callable<T> callable);
+	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception;
 }

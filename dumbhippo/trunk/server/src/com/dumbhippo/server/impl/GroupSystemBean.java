@@ -6,11 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -18,6 +17,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Contact;
@@ -36,6 +36,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -49,6 +50,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private TransactionRunner runner;
 	
 	public Group createGroup(User creator, String name, GroupAccess access) {
 		if (creator == null)
@@ -441,24 +445,33 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;	
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)	
-	public int incrementGroupVersion(String groupId) {
-//		While it isn't a big deal in practice, the implementation below is slightly
-//		racy. The following would be better, but triggers a hibernate bug.
-//
-//		em.createQuery("UPDATE Group g set g.version = g.version + 1 WHERE g.id = :id")
-//		.setParameter("id", groupId)
-//		.executeUpdate();
-//		
-//		return em.find(Group.class, groupId).getVersion();
-//
-		Group group = em.find(Group.class, groupId);
-		int newVersion = group.getVersion() + 1;
+	public int incrementGroupVersion(final String groupId) {
+		try {
+			return runner.runTaskInNewTransaction(new Callable<Integer>() {
 
-		group.setVersion(newVersion);
-		
-		return newVersion;
-		
+				public Integer call() {
+//				While it isn't a big deal in practice, the implementation below is slightly
+//				racy. The following would be better, but triggers a hibernate bug.
+
+//				em.createQuery("UPDATE Group g set g.version = g.version + 1 WHERE g.id = :id")
+//				.setParameter("id", groupId)
+//				.executeUpdate();
+				
+//				return em.find(Group.class, groupId).getVersion();
+
+					Group group = em.find(Group.class, groupId);
+					int newVersion = group.getVersion() + 1;
+					
+					group.setVersion(newVersion);
+					
+					return newVersion;
+				}
+				
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return 0; // not reached
+		}
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks

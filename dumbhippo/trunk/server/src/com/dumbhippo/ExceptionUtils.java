@@ -28,4 +28,11 @@ public class ExceptionUtils {
 			throw new RuntimeException("bug in getRootCause");
 		return root;
 	}
+	
+	public static void throwAsRuntimeException(Exception e) {
+		if (e instanceof RuntimeException)
+			throw (RuntimeException) e;
+		else
+			throw new RuntimeException(e);
+	}
 }

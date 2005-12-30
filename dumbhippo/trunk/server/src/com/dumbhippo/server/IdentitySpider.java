@@ -40,15 +40,6 @@ public interface IdentitySpider {
 	public EmailResource getEmail(String email);
 	
 	/**
-	 * This is an internal detail used in implementing getEmail(); getEmail
-	 * adds retry. 
-	 * 
-	 * @param email the address
-	 * @return a resource for the email
-	 */
-	public EmailResource findOrCreateEmail(String email);
-	
-	/**
 	 * Gets a Resource object for the given AIM address, creating
 	 * it if necessary. Note that the result is a detached entity.
 	 * 
@@ -65,23 +56,13 @@ public interface IdentitySpider {
 	public AimResource getAim(String screenName) throws ValidationException;
 	
 	/**
-	 * This is an internal detail used in implementing getAim(); getAim
-	 * adds retry. 
-	 * 
-	 * @param screenName the address
-	 * @return a resource for the address
-	 */
-	public AimResource findOrCreateAim(String screenName) throws ValidationException;
-	
-	/**
 	 * Returns the AimResource for a given screen name, or null if there is none.
 	 * Does not create a new AimResource if it's not there already.
 	 * 
 	 * @param screenName
 	 * @return AimResource object, or null if it doesn't exist in the database
-	 * @throws ValidationException
 	 */
-	public AimResource lookupAim(String screenName) throws ValidationException;
+	public AimResource lookupAim(String screenName);
 		
 	/**
 	 * Gets a Resource object for the given URL, creating
@@ -91,15 +72,6 @@ public interface IdentitySpider {
 	 * @return a resource for the url
 	 */
 	public LinkResource getLink(String url);
-	
-	/**
-	 * This is an internal detail used in implementing getLink(); getLink
-	 * adds retry. 
-	 * 
-	 * @param url the rl
-	 * @return a resource for the url
-	 */
-	public LinkResource findOrCreateLink(String url);
 	
 	/**
 	 * Finds the unique person which owns an email address
@@ -212,14 +184,6 @@ public interface IdentitySpider {
 	 * @return The Man
 	 */
 	public User getTheMan();
-	
-	/**
-	 * This is an internal detail used in implementing getTheMan(); getTheMan
-	 * adds caching and retry. 
-	 * 
-	 * @return The Man
-	 */
-	public User findOrCreateTheMan();
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person.

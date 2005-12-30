@@ -11,6 +11,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.NoMail;
@@ -52,22 +53,22 @@ public class NoMailSystemBean implements NoMailSystem {
 		}
 	}
 	
-	public void processAction(EmailResource email, Action action) {
-		final EmailResource email_ = email;
-		NoMail noMail =
-			runner.runTaskRetryingOnConstraintViolation(new Callable<NoMail>() {
+	public void processAction(final EmailResource email, Action action) {
+		NoMail noMail;
+		try {
+			noMail = runner.runTaskRetryingOnConstraintViolation(new Callable<NoMail>() {
 
-				public NoMail call() throws Exception {
+				public NoMail call() {
 					Query q;
 					
 					q = em.createQuery("from NoMail t where t.email = :email");
-					q.setParameter("email", email_);
+					q.setParameter("email", email);
 					
 					NoMail result;
 					try {
 						result = (NoMail) q.getSingleResult();
 					} catch (EntityNotFoundException e) {
-						result = new NoMail(email_);
+						result = new NoMail(email);
 						em.persist(result);
 					}
 					
@@ -75,6 +76,10 @@ public class NoMailSystemBean implements NoMailSystem {
 				}
 				
 			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return; // not reached
+		}
 		
 		if (action == Action.TOGGLE_MAIL)
 			noMail.setMailEnabled(!noMail.getMailEnabled());
@@ -90,16 +95,16 @@ public class NoMailSystemBean implements NoMailSystem {
 		return getNoMailUrl(email, action);
 	}
 	
-	public String getNoMailUrl(EmailResource email, Action action) {
-		final EmailResource email_ = email;
-		ToggleNoMailToken token =
-			runner.runTaskRetryingOnConstraintViolation(new Callable<ToggleNoMailToken>() {
+	public String getNoMailUrl(final EmailResource email, Action action) {
+		ToggleNoMailToken token;
+		try {
+			token = runner.runTaskRetryingOnConstraintViolation(new Callable<ToggleNoMailToken>() {
 
-				public ToggleNoMailToken call() throws Exception {
+				public ToggleNoMailToken call() {
 					Query q;
 					
 					q = em.createQuery("from ToggleNoMailToken t where t.email = :email");
-					q.setParameter("email", email_);
+					q.setParameter("email", email);
 					
 					ToggleNoMailToken token;
 					try {
@@ -109,7 +114,7 @@ public class NoMailSystemBean implements NoMailSystem {
 							throw new EntityNotFoundException("found expired nomail token, making a new one");
 						}
 					} catch (EntityNotFoundException e) {
-						token = new ToggleNoMailToken(email_);
+						token = new ToggleNoMailToken(email);
 						em.persist(token);
 					}
 					
@@ -117,6 +122,10 @@ public class NoMailSystemBean implements NoMailSystem {
 				}
 				
 			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
+		}
 		return getNoMailUrl(token, action);
 	}
 

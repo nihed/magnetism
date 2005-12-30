@@ -36,7 +36,6 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.ChatRoomSystem;
 import com.dumbhippo.server.GroupSystem;
@@ -391,8 +390,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			producer.send(jmsMessage);
 		} catch (ParseException pe) {
 			throw new RuntimeException("bad Guid in doRequestJoinRoom for " + postId, pe);
-		} catch (ValidationException ve) {
-			throw new RuntimeException("validatino error in doRequestJoinRoom for " + postId, ve);	
 		}
 	}
 

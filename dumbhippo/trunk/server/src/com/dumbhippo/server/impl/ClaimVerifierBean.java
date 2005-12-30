@@ -11,6 +11,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
@@ -37,39 +38,41 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	@EJB
 	private TransactionRunner runner;
 	
-	public String getAuthKey(User user, Resource resource) {
+	public String getAuthKey(final User user, final Resource resource) {
 		
 		if (user == null && resource == null)
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
 		
-		final User user_ = user;
-		final Resource resource_ = resource;
-		
-		return runner.runTaskRetryingOnConstraintViolation(new Callable<String>() {
-			
-			public String call() throws Exception {
-				Query q;
+		try {
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<String>() {
 				
-				q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
-				q.setParameter("user", user_);
-				q.setParameter("resource", resource_);
-				
-				ResourceClaimToken token;
-				try {
-					token = (ResourceClaimToken) q.getSingleResult();
-					if (token.isExpired()) {
-						em.remove(token);
-						throw new EntityNotFoundException("found expired token, making a new one");
+				public String call() {
+					Query q;
+					
+					q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
+					q.setParameter("user", user);
+					q.setParameter("resource", resource);
+					
+					ResourceClaimToken token;
+					try {
+						token = (ResourceClaimToken) q.getSingleResult();
+						if (token.isExpired()) {
+							em.remove(token);
+							throw new EntityNotFoundException("found expired token, making a new one");
+						}
+					} catch (EntityNotFoundException e) {
+						token = new ResourceClaimToken(user, resource);
+						em.persist(token);
 					}
-				} catch (EntityNotFoundException e) {
-					token = new ResourceClaimToken(user_, resource_);
-					em.persist(token);
+					
+					return token.getAuthKey();
 				}
 				
-				return token.getAuthKey();
-			}
-			
-		});
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
+		}
 	}
 
 	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException {

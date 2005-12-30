@@ -4,12 +4,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
-import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -17,6 +15,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
@@ -40,8 +39,8 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.server.util.EJBUtil;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -54,8 +53,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
-	@javax.annotation.Resource
-	private EJBContext ejbContext;
+	@EJB
+	private TransactionRunner runner;
 	
 	@EJB
 	private AccountSystem accountSystem;
@@ -133,83 +132,71 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ret;
 	}
 		
-	public EmailResource getEmail(String email) {
-		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
-		int retries = 1;
-		
-		while (true) {
-			try {
-				return proxy.findOrCreateEmail(email);
-			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating email resource, retrying");
-					retries--;
-				} else {
-					logger.error("Couldn't create email resource", e);						
-					throw new RuntimeException("Unexpected error creating email resource", e);
-				}
-			}
-		}
-	}
-
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public EmailResource findOrCreateEmail(String email) {
-		Query q;
-		
-		q = em.createQuery("from EmailResource e where e.email = :email");
-		q.setParameter("email", email);
-		
-		EmailResource res;
+	public EmailResource getEmail(final String email) {
+		EmailResource ret;
 		try {
-			res = (EmailResource) q.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			res = new EmailResource(email);
-			em.persist(res);
+			ret = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
+				
+				public EmailResource call() throws Exception {
+					Query q;
+					
+					q = em.createQuery("from EmailResource e where e.email = :email");
+					q.setParameter("email", email);
+					
+					EmailResource res;
+					try {
+						res = (EmailResource) q.getSingleResult();
+					} catch (EntityNotFoundException e) {
+						res = new EmailResource(email);
+						em.persist(res);
+					}
+					
+					return res;	
+				}			
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
 		}
 		
-		return res;	
+		return ret;
 	}
 	
-	public AimResource getAim(String screenName) throws ValidationException {
-		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
-		int retries = 1;
-		
-		while (true) {
-			try {
-				return proxy.findOrCreateAim(screenName);
-			} catch (ValidationException e) {
-				throw e;
-			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating aim resource, retrying");
-					retries--;
-				} else {
-					logger.error("Couldn't create AIM resource", e);					
-					throw new RuntimeException("Unexpected error creating aim resource", e);
-				}
-			}
-		}
-	}
-
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public AimResource findOrCreateAim(String screenName) throws ValidationException {
-		Query q;
-		
-		q = em.createQuery("from AimResource a where a.screenName = :name");
-		q.setParameter("name", screenName);
-		
-		AimResource res;
+	public AimResource getAim(final String screenName) throws ValidationException {
 		try {
-			res = (AimResource) q.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			res = new AimResource(screenName);
-			em.persist(res);
+			AimResource ret = runner.runTaskRetryingOnConstraintViolation(new Callable<AimResource>() {
+				public AimResource call() {
+					Query q;
+					
+					q = em.createQuery("from AimResource a where a.screenName = :name");
+					q.setParameter("name", screenName);
+					
+					AimResource res;
+					try {
+						res = (AimResource) q.getSingleResult();
+					} catch (EntityNotFoundException e) {
+						try {
+							res = new AimResource(screenName);
+						} catch (ValidationException v) {
+							throw new RuntimeException(v);
+						}
+						em.persist(res);
+					}
+					
+					return res;			
+				}
+			});
+			
+			return ret;
+		} catch (ValidationException e) {
+			throw e;
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
 		}
-		
-		return res;	
 	}
 
-	public AimResource lookupAim(String screenName) throws ValidationException {
+	public AimResource lookupAim(String screenName) {
 		Query q;
 		
 		q = em.createQuery("from AimResource a where a.screenName = :name");
@@ -224,41 +211,33 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return res;
 	}
 	
-	public LinkResource getLink(String link) {
-		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
-		int retries = 1;
-		
-		while (true) {
-			try {
-				return proxy.findOrCreateLink(link);
-			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating link resource, retrying");
-					retries--;
-				} else {
-					logger.error("Couldn't create link resource", e);
-					throw new RuntimeException("Unexpected error creating link resource", e);
-				}
-			}
-		}
-	}
-
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public LinkResource findOrCreateLink(String url) {
-		Query q;
-	
-		q = em.createQuery("from LinkResource l where l.url = :url");
-		q.setParameter("url", url);
-		
-		LinkResource res;
+	public LinkResource getLink(final String link) {
 		try {
-			res = (LinkResource) q.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			res = new LinkResource(url);
-			em.persist(res);
+			LinkResource ret = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
+	
+				public LinkResource call() throws Exception {
+					Query q;
+					
+					q = em.createQuery("from LinkResource l where l.url = :url");
+					q.setParameter("url", link);
+					
+					LinkResource res;
+					try {
+						res = (LinkResource) q.getSingleResult();
+					} catch (EntityNotFoundException e) {
+						res = new LinkResource(link);
+						em.persist(res);
+					}
+					
+					return res;					
+				}
+				
+			});
+			return ret;
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
 		}
-		
-		return res;	
 	}
 	
 	private transient User theMan;
@@ -270,45 +249,37 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	// This needs to be synchronized since the stateless session bean might be shared
 	// between threads.
 	public synchronized User getTheMan() {
-		IdentitySpider proxy = (IdentitySpider) ejbContext.lookup(IdentitySpider.class.getCanonicalName());
-		int retries = 1;
-		
-		while (theMan == null) {
+		if (theMan == null) {
 			try {
-				theMan = proxy.findOrCreateTheMan();
+				theMan = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
+					public User call() {	
+						User result;
+						Guid guid;
+						try {
+							guid = new Guid(theManGuid);
+						} catch (ParseException e1) {
+							throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
+						}
+						try {
+							result = lookupGuid(User.class, guid);
+						} catch (NotFoundException e) {
+							logger.debug("Creating theman@dumbhippo.com");
+							EmailResource resource = getEmail(theManEmail);
+							result = new User(guid);
+							result.setNickname(theManNickname);
+							em.persist(result);
+							addVerifiedOwnershipClaim(result, resource);
+						}
+						
+						return result;
+					}
+				});
 			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating theMan, retrying");
-					retries--;
-				} else {
-					throw new RuntimeException("Unexpected error looking up theMan", e);
-				}
+				ExceptionUtils.throwAsRuntimeException(e);
+				return null; // not reached
 			}
 		}
 		return theMan;
-	}
-	
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public User findOrCreateTheMan() {
-		User result;
-		Guid guid;
-		try {
-			guid = new Guid(theManGuid);
-		} catch (ParseException e1) {
-			throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
-		}
-		try {
-			result = lookupGuid(User.class, guid);
-		} catch (NotFoundException e) {
-			logger.debug("Creating theman@dumbhippo.com");
-			EmailResource resource = getEmail(theManEmail);
-			result = new User(guid);
-			result.setNickname(theManNickname);
-			em.persist(result);
-			addVerifiedOwnershipClaim(result, resource);
-		}
-		
-		return result;
 	}
 	
 	private static final String GET_RESOURCES_FOR_USER_QUERY = 
@@ -743,21 +714,29 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		account.setDisabled(disabled);
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)	
-	public int incrementUserVersion(String userId) {
-//		While it isn't a big deal in practice, the implementation below is slightly
-//		racy. The following would be better, but triggers a hibernate bug.
-//
-//		em.createQuery("UPDATE User u set u.version = u.version + 1 WHERE u.id = :id")
-//		.setParameter("id", userId)
-//		.executeUpdate();
-//		
-//		return em.find(User.class, userId).getVersion();
-		User user = em.find(User.class, userId);
-		int newVersion = user.getVersion() + 1;
-
-		user.setVersion(newVersion);
-		
-		return newVersion;
-	}	
+	public int incrementUserVersion(final String userId) {
+		try {
+			return runner.runTaskInNewTransaction(new Callable<Integer>() {
+				public Integer call() {
+	//				While it isn't a big deal in practice, the implementation below is slightly
+	//				racy. The following would be better, but triggers a hibernate bug.
+	//				
+	//				em.createQuery("UPDATE User u set u.version = u.version + 1 WHERE u.id = :id")
+	//				.setParameter("id", userId)
+	//				.executeUpdate();
+	//				
+	//				return em.find(User.class, userId).getVersion();
+					User user = em.find(User.class, userId);
+					int newVersion = user.getVersion() + 1;
+					
+					user.setVersion(newVersion);
+					
+					return newVersion;			
+				}
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return 0; // not reached
+		}
+	}
 }

@@ -12,7 +12,6 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 
@@ -41,24 +40,6 @@ public interface PostingBoard {
 	
 	public void doShareLinkTutorialPost(User recipient);
 	
-	/**
-	 * You don't want to use this directly because it doesn't send any notifications.
-	 * It's only public so we can use the transaction annotation on it.
-	 * 
-	 * @param poster
-	 * @param visibility
-	 * @param title
-	 * @param text
-	 * @param resources
-	 * @param personRecipients
-	 * @param groupRecipients
-	 * @param expandedRecipients
-	 * @return
-	 */
-	public Post createPost(User poster, PostVisibility visibility, String title, String text,
-			Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients,
-			Set<Resource> expandedRecipients, PostInfo postInfo);
-
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid);
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid);
@@ -71,14 +52,4 @@ public interface PostingBoard {
 	 * @param clicker person who clicked on the post
 	 */
 	public void postViewedBy(String postId, User clicker);
-	
-	/**
-	 * Internal implementation detail, public so we can put a transaction annotation
-	 * on it.
-	 * 
-	 * @param user a User
-	 * @param post a Post
-	 * @return true if a new PersonPostData object was created for the pair
-	 */
-	public boolean updatePersonPostDataInternal(User user, Post post);
 }

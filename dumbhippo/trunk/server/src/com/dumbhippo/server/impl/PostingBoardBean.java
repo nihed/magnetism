@@ -9,12 +9,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -22,6 +21,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -59,6 +59,7 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -72,8 +73,8 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private IdentitySpider identitySpider;	
+
 	@EJB
-	
 	private AccountSystem accountSystem;
 
 	@EJB
@@ -90,6 +91,9 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private TransactionRunner runner;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -203,7 +207,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPostViaProxy(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
+		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
 		sendPostNotifications(post, expandedRecipients);
 		return post;
@@ -263,23 +267,23 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Tutorial post done: " + post);
 	}
 	
-	private Post createPostViaProxy(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients, PostInfo postInfo) {
-		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
-		
-		return proxy.createPost(poster, visibility, title, text, resources, personRecipients, groupRecipients, expandedRecipients, postInfo);
-	}
-	
-	// internal function that is public only because of TransactionAttribute; use createPostViaProxy
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Post createPost(User poster, PostVisibility visibility, String title, String text, Set<Resource> resources, 
-			               Set<Resource> personRecipients, Set<Group> groupRecipients, Set<Resource> expandedRecipients, PostInfo postInfo) {
-		
-		logger.debug("saving new Post");
-		Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
-		post.setPostInfo(postInfo);
-		em.persist(post);
-	
-		return post;
+	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
+			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
+		try {
+			return runner.runTaskInNewTransaction(new Callable<Post>() {
+				public Post call() {
+					logger.debug("saving new Post");
+					Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
+					post.setPostInfo(postInfo);
+					em.persist(post);
+				
+					return post;
+				}
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
+		}
 	}
 
 	private PersonPostData getPersonPostData(Viewpoint viewpoint, Post post) {
@@ -697,41 +701,30 @@ public class PostingBoardBean implements PostingBoard {
 	 * @param post a Post
 	 * @return true if the user had not previously viewed the post
 	 */
-	private boolean updatePersonPostData(User user, Post post) {
-		PostingBoard proxy = (PostingBoard) ejbContext.lookup(PostingBoard.class.getCanonicalName());
-		int retries = 1;
-		
-		while (true) {
-			try {
-				return proxy.updatePersonPostDataInternal(user, post);
-			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Race condition creating PersonPostData, retrying");
-					retries--;
-				} else {
-					logger.error("Couldn't create PersonPostData resource", e);					
-					throw new RuntimeException("Unexpected error creating PersonPostData", e);
-				}
-			}
-		}		
-		
-	}
-	
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public boolean updatePersonPostDataInternal(User user, Post post) {
-		PersonPostData ppd;
-		
+	private boolean updatePersonPostData(final User user, final Post post) {
 		try {
-			ppd = (PersonPostData)em.createQuery("SELECT ppd FROM PersonPostData ppd " +
-				                                 "WHERE ppd.post = :post AND ppd.person = :user")
-	            .setParameter("post", post)
-	            .setParameter("user", user)
-	            .getSingleResult();
-			return false;
-		} catch (EntityNotFoundException e) {
-			ppd = new PersonPostData(user, post); 
-			em.persist(ppd);
-			return true;
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<Boolean>() {
+
+				public Boolean call() {
+					PersonPostData ppd;
+					
+					try {
+						ppd = (PersonPostData)em.createQuery("SELECT ppd FROM PersonPostData ppd " +
+							                                 "WHERE ppd.post = :post AND ppd.person = :user")
+				            .setParameter("post", post)
+				            .setParameter("user", user)
+				            .getSingleResult();
+						return false;
+					} catch (EntityNotFoundException e) {
+						ppd = new PersonPostData(user, post); 
+						em.persist(ppd);
+						return true;
+					}
+				}
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return false; // not reached
 		}
 	}
 

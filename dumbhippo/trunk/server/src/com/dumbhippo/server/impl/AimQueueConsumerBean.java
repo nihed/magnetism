@@ -150,33 +150,22 @@ public class AimQueueConsumerBean implements MessageListener {
 			
 			logger.debug("processing user presence event part for '" + screenName + "' of " + (isOnline.booleanValue() ? "online" : "offline"));
 			
-			AimResource aimResource;
-			try {
+			AimResource aimResource = identitySpider.lookupAim(screenName);
+			if (aimResource == null) {
+				logger.debug("no AimResource found for screen name '" + screenName + "'");
+			} else {
+				logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
 				
-				// map screenname -> user
-				aimResource = identitySpider.lookupAim(screenName);
-				if (aimResource == null) {
-					logger.debug("no AimResource found for screen name '" + screenName + "'");
-				} else {
-					logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
-					
-					User user = identitySpider.getUser(aimResource);
-					
-					if (user == null) {
-						logger.debug("didn't find a matching user for " + aimResource.getId());
-						return;
-					}
+				User user = identitySpider.getUser(aimResource);
 				
-					logger.debug("matching user for screen name '" + screenName + "' is " + user.getNickname() + "/" + user.getGuid().toString());
+				if (user == null) {
+					logger.debug("didn't find a matching user for " + aimResource.getId());
+					return;
 				}
-			} catch (ValidationException e) {
-				logger.trace(e);
-				logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + screenName + "'");
-				// seems a little excessive to throw a RuntimeException because of this
-				//throw new RuntimeException("broken, invalid screen name from AIM bot", e);
+				
+				logger.debug("matching user for screen name '" + screenName + "' is " + user.getNickname() + "/" + user.getGuid().toString());
 			}
-		}	
-		
+		}
 	}
 	
 	private void processChatRoomMessageEvent(BotEventChatRoomMessage event) {
