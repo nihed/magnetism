@@ -23,6 +23,11 @@ public class Config {
 		return v;
 	}
 	
+	public int getIntValue(ConfigValue value) {
+		String s = getValue(value);
+		return Integer.parseInt(s);
+	}
+	
 	private Config() {
 		
 		// FIXME this (and the same thing in server ConfigurationBean) 
