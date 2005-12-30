@@ -555,8 +555,9 @@ public class MessageSenderBean implements MessageSender {
 	}
 	
 	public void sendPostNotification(Resource recipient, Post post) {
-		if (recipient instanceof Account) {
-			Account account = (Account)recipient;
+		User user = identitySpider.getUser(recipient);
+		if (user != null) {
+			Account account = user.getAccount();
 			xmppSender.sendPostNotification(account.getOwner(), post, null);
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post);
