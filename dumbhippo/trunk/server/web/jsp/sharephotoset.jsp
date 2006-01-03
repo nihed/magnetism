@@ -58,7 +58,7 @@
 			</td>
 			<td>
 				<input type="button" value="Add" accesskey="a" class="dhButton" 
-						onclick="dh.share.doAddRecipientFromCombo();"/>
+						onclick="dh.share.autoSuggest.activate();"/>
 			</td>
 			</tr>
 			</tbody>
