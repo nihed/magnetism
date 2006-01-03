@@ -29,6 +29,7 @@ public class HippoPlugin implements Plugin {
 		iqRouter.addHandler(new ClientMethodIQHandler());		
 		iqRouter.addHandler(new ClientInfoIQHandler());		
 	
+		Log.debug("Adding PresenceMonitor");
 		SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 		sessionManager.registerListener(new PresenceMonitor());
 				

@@ -62,6 +62,8 @@ public class PresenceMonitor implements SessionManagerListener {
 			return;
 		}
 		
+		Log.debug("User '" + user + "' session count incrementing by " + increment);
+		
 		synchronized (sessionCounts) {			
 			Integer tmp = sessionCounts.get(user);
 			if (tmp == null)
@@ -93,10 +95,12 @@ public class PresenceMonitor implements SessionManagerListener {
 	
 	
 	public void onClientSessionAvailable(ClientSession session) {
+		Log.debug("Client session now available: " + session.getStreamID());
 		onSessionCountChange(session, 1);
 	}
 
 	public void onClientSessionUnavailable(ClientSession session) {
+		Log.debug("Client session now unavailable: " + session.getStreamID());
 		onSessionCountChange(session, -1);
 	}
 }
