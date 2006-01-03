@@ -10,14 +10,16 @@
 		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/super"/></exec>
 		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/server"/></exec>
 		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/jive_messenger"/></exec>		
-		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/imbot"/></exec>		
+		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/imbot"/></exec>
+		<exec dir=".." executable="svn"><arg value="co"/><arg value="${svnroot}/dumbhippo/trunk/hungry"/></exec>
 	</target>
 	
 	<target name="update">
 		<exec dir="../super" executable="svn"><arg value="update"/></exec>
 		<exec dir="../server" executable="svn"><arg value="update"/></exec>
 		<exec dir="../jive_messenger" executable="svn"><arg value="update"/></exec>		
-		<exec dir="../imbot" executable="svn"><arg value="update"/></exec>		
+		<exec dir="../imbot" executable="svn"><arg value="update"/></exec>
+		<exec dir="../hungry" executable="svn"><arg value="update"/></exec>
 	</target>
 	
     <target name="build">
@@ -25,5 +27,6 @@
     	<!-- jive has a weird ant file -->
         <ant dir="../jive_messenger/" antfile="build/build.xml" target="plugins"/>    	
         <ant dir="../imbot" target="all"/>
+        <ant dir="../hungry" target="build"/>
     </target>
 </project>
