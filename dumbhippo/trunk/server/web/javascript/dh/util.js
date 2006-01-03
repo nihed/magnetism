@@ -11,6 +11,9 @@ dh.util.getParamsFromLocation = function() {
    		if (eqpos > 0) {
    		    var key = params[i].substring(0, eqpos);
    		    var val = params[i].substring(eqpos+1);
+   		    // Java encodes spaces as +'s, we need to change that
+   		    // into something that decodeURIComponent can understand
+   		    val = val.replace(/\+/, "%20");
    			map[key] = decodeURIComponent(val);
    			dojo.debug("mapping query key " + key + " to " + map[key]);
    		}
