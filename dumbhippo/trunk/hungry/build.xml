@@ -52,7 +52,7 @@
 		<path refid="project.classpath" />
 	</path>
 
-	<target name="test" depends="init">
+	<target name="build" depends="init">
 		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
 			<classpath refid="tests.classpath" />
 		</javac>
@@ -65,7 +65,7 @@
 		</copy>
 	</target>
 	
-	<target name="test-readonly" depends="test">
+	<target name="test-readonly" depends="build">
 		<echo message="Running READ-ONLY tests on site" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes" showoutput="true">
@@ -83,7 +83,7 @@
 		</junit>
 	</target>
 
-	<target name="test-destructive" depends="test">
+	<target name="test-destructive" depends="build">
 		<echo message="Running DESTRUCTIVE tests on site" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes" showoutput="true">
@@ -101,7 +101,7 @@
 		</junit>
 	</target>
 
-	<target name="test-example" depends="test">
+	<target name="test-example" depends="build">
 		<echo message="Running example tests on random web sites" />
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
