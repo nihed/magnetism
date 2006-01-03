@@ -26,12 +26,19 @@ public:
                   bool        *result);
     bool loadLong(const WCHAR *valueName,
                   long        *result);
+    bool loadBinary(const WCHAR *valueName,
+                    BYTE       **data,
+                    DWORD       *dataLength);
     bool saveString(const WCHAR *valueName, 
                     const WCHAR *str);
     bool saveBool(const WCHAR *valueName, 
                   bool         value);
     bool saveLong(const WCHAR *valueName, 
                   long         value);
+    bool saveBinary(const WCHAR *valueName,
+                    const BYTE  *data,
+                    const DWORD  dataLength);
+
 private:
     HKEY key_;
 };

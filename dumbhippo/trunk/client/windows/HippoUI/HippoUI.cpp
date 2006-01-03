@@ -17,6 +17,7 @@
 #include <wininet.h>  // for cookie retrieval
 #include "Resource.h"
 #include "HippoHTTP.h"
+#include "HippoToolbarEdit.h"
 #include "HippoRemoteWindow.h"
 
 #include <glib.h>
@@ -1289,6 +1290,13 @@ quitExisting(bool debug)
         oldUI->Quit();
 }
 
+static void
+editToolbar()
+{
+    HippoToolbarEdit edit;
+    edit.ensureToolbarButton();
+}
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -1360,6 +1368,8 @@ WinMain(HINSTANCE hInstance,
     ULONG_PTR gdiplusToken;
    
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    editToolbar();
 
     ui = new HippoUI(debug != FALSE,
                      replaceExisting != FALSE, initialDebugShare != FALSE);

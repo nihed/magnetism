@@ -107,7 +107,42 @@ HippoRegKey::loadLong(const WCHAR *valueName,
     }
  }
  
- bool 
+bool 
+HippoRegKey::loadBinary(const WCHAR *valueName,
+                        BYTE       **data,
+                        DWORD       *dataLength)
+{
+    if (!key_)
+        return false;
+
+    long result;
+    DWORD bufSize = 0;
+    DWORD type;
+    BYTE *buf;
+
+    result = RegQueryValueEx(key_, valueName, NULL, 
+                             &type, NULL, &bufSize);
+    if ((result != ERROR_SUCCESS && result != ERROR_MORE_DATA) || type != REG_BINARY)
+        return false;
+
+    buf = (BYTE *)CoTaskMemAlloc(bufSize);
+    if (!buf)
+        return false;
+
+    result = RegQueryValueEx(key_, valueName, NULL, 
+        &type, buf, &bufSize);
+    if (result != ERROR_SUCCESS || type != REG_BINARY) {
+        CoTaskMemFree(buf);
+        return false;
+    }
+
+    *data = buf;
+    *dataLength = bufSize;
+
+    return true;
+}
+
+bool 
 HippoRegKey::saveString(const WCHAR *valueName, 
                         const WCHAR *str)
 {
@@ -152,4 +187,20 @@ HippoRegKey::saveLong(const WCHAR *valueName,
     return RegSetValueEx(key_, valueName, NULL, REG_DWORD,
                          (const BYTE *)&tmp, sizeof(DWORD)) == ERROR_SUCCESS;
 
+}
+
+bool 
+HippoRegKey::saveBinary(const WCHAR *valueName,
+                        const BYTE  *data,
+                        const DWORD  dataLength)
+{
+    if (!key_)
+        return false;
+
+    if (data && dataLength > 0) {
+        return RegSetValueEx(key_, valueName, NULL, REG_BINARY,
+                             data, dataLength) == ERROR_SUCCESS;
+    } else {
+        return RegDeleteValue(key_, valueName) == ERROR_SUCCESS;
+    }
 }
