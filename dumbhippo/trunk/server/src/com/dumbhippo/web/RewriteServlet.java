@@ -59,15 +59,21 @@ public class RewriteServlet extends HttpServlet {
 		
 		// logger.debug("Handling request for " + path);
 		
-		// The root URL is special-cased
+		// The root URL is special-cased, we redirect it depending
+		// on whether the user is signed in and depending on our
+		// configuration. Note that we don't use encodeRedirectURL()
+		// here because that will add ;jsessionid=1230811241...
+		// when page is accessed without an existing session, which is 
+		// silly, since we don't support cookie-less operation anywhere
+		// else.
 		
 		if (path.equals("/")) {
 			if (hasSignin(request))
-				response.sendRedirect(response.encodeRedirectURL("home"));
+				response.sendRedirect("home");
 			else if (stealthMode)
-				response.sendRedirect(response.encodeRedirectURL("comingsoon"));
+				response.sendRedirect("comingsoon");
 			else
-				response.sendRedirect(response.encodeRedirectURL("main"));
+				response.sendRedirect("main");
 			return;
 		}
 		
