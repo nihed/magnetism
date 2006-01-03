@@ -1,6 +1,9 @@
 package com.dumbhippo.hungry.destructive;
 
+import org.jivesoftware.smack.packet.Packet;
+
 import com.dumbhippo.hungry.readonly.Welcome;
+import com.dumbhippo.hungry.util.JabberClient;
 import com.dumbhippo.hungry.util.PageTestCase;
 
 public class VerifyInvitation extends PageTestCase {
@@ -32,6 +35,14 @@ public class VerifyInvitation extends PageTestCase {
 		Welcome w = new Welcome(t);
 		w.validatePage();
 		
-		assertSignedIn();
+		String userId = assertSignedIn();
+		
+		// now try our jabber connection
+		JabberClient c = new JabberClient(userId);
+		c.login();
+		assertTrue(c.isConnected());
+		Packet p = c.take();
+		System.out.println("Signing on post-invite, got packet: " + p.toXML());
+		c.close();
 	}
 }

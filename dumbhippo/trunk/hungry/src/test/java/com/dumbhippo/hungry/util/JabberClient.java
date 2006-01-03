@@ -6,12 +6,17 @@ package com.dumbhippo.hungry.util;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.jivesoftware.smack.ConnectionListener;
+import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.jivesoftware.smack.packet.Authentication;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Packet;
+import org.jivesoftware.smack.packet.Presence;
 
 /**
  * Utility class for connecting to the message daemon as 
@@ -27,11 +32,24 @@ public class JabberClient {
 	private String authKey;
 	private String host;
 	private int port;
-	private BlockingQueue<Packet> incoming;
+	private BlockingQueue<PacketWrapper> incoming;
 	private JabberThread thread;
 	
+	// this is purely to allow null packets in the queue
+	private static class PacketWrapper {
+		private Packet packet;
+		
+		PacketWrapper(Packet packet) {
+			this.packet = packet;
+		}
+		
+		public Packet getPacket() {
+			return packet;
+		} 
+	}
+	
 	public JabberClient(String userId, String authKey) {
-		XMPPConnection.DEBUG_ENABLED = true;
+		XMPPConnection.DEBUG_ENABLED = false;
 		this.userId = userId;
 		this.authKey = authKey;
 	
@@ -41,7 +59,11 @@ public class JabberClient {
 		host = config.getValue(ConfigValue.JIVE_HOST);
 		port = config.getIntValue(ConfigValue.JIVE_PORT);
 		
-		incoming = new LinkedBlockingQueue<Packet>();
+		incoming = new LinkedBlockingQueue<PacketWrapper>();
+	}
+	
+	public JabberClient(String userId) {
+		this(userId, CheatSheet.getReadOnly().getUserAuthKey(userId));
 	}
 	
 	public Packet take() {
@@ -50,7 +72,7 @@ public class JabberClient {
 				return null;
 
 			try {
-				return incoming.take();
+				return incoming.take().getPacket();
 			} catch (InterruptedException e) {
 			}
 		}
@@ -59,7 +81,7 @@ public class JabberClient {
 	private void put(Packet packet) {
 		while (true) {
 			try {
-				incoming.put(packet);
+				incoming.put(new PacketWrapper(packet));
 				return;
 			} catch (InterruptedException e) {
 			}
@@ -67,20 +89,48 @@ public class JabberClient {
 	}
 	
 	public void login() {
+		
+		// because we do auth by hand, XMPPConnection is a little bit 
+		// broken/confused (isAuthenticated won't work for example)
+		
 		thread = new JabberThread();
 		
 		thread.open();
 		
-		Thread t = new Thread(thread);
-		t.setName("jabber " + jiveUser);
-		t.start();
-
-		thread.sendGetAuthentication();
-		Packet p = take();
-		thread.sendDigestAuthentication();
-		p = take();
-	}
+		IQ reply;
+		try {
+			reply = thread.sendGetAuthentication();
+		} catch (XMPPException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		//System.out.println("Got auth options: " + reply.toXML());
 		
+		try {
+			reply = thread.sendDigestAuthentication();
+		} catch (XMPPException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		
+		//System.out.println("Logged in, auth reply packet: " + reply.toXML());
+		
+		thread.sendAvailable();
+		
+		System.out.println(userId + " signed in to jive");
+	}
+	
+	public boolean isConnected() {
+		return thread != null && thread.isConnected();
+	}
+	
+	public void close() {
+		if (thread != null) {
+			thread.close();
+			thread = null;
+		}
+	}
+	
 	@SuppressWarnings("unused")
 	private String jiveUserNameToGuid(String username) {
 		StringBuilder transformedName = new StringBuilder();
@@ -113,31 +163,11 @@ public class JabberClient {
 		return sb.toString();
 	}
 	
-	private class JabberThread implements Runnable, PacketListener {
+	private class JabberThread implements PacketListener, ConnectionListener {
 		
-		private XMPPConnection connection;
-		private boolean authorized = false;
+		private XMPPConnection connection; 
 		
 		public JabberThread() {
-		}
-		
-		public void run() {
-			while (isConnected()) {
-				try {
-					synchronized (this) {
-						// Smack is supposed to wake us up, 
-						// but timeout for paranoia (Smack has its 
-						// own thread...)
-						wait(2000);
-					}
-				} catch (InterruptedException e) {
-					// ignore
-				}
-			}
-			
-			connection = null;
-			
-			System.out.println("Disconnected Jabber thread");
 		}
 
 		public void open() {
@@ -147,6 +177,7 @@ public class JabberClient {
 				connection = new XMPPConnection(host, port);
 				
 				connection.addPacketListener(this, null);
+				connection.addConnectionListener(this);
 			} catch (XMPPException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Could not login as guid " + userId + " jid " + jiveUser, e);
@@ -154,21 +185,35 @@ public class JabberClient {
 		}
 		
 		public void close() {
-			if (isConnected())
+			if (isConnected()) {
 				connection.close();
+			}
 		}
 		
-		public void sendGetAuthentication() {
+		private IQ doIq(Packet request) throws XMPPException {
+			PacketCollector collector = connection.createPacketCollector(new PacketIDFilter(request.getPacketID()));
+			connection.sendPacket(request);
+			IQ response = (IQ) collector.nextResult(SmackConfiguration.getPacketReplyTimeout());
+			if (response == null) {
+				throw new XMPPException("No response from server to request: " + request.toXML());
+			} else if (response.getType() == IQ.Type.ERROR) {
+				throw new XMPPException(response.getError());
+			}
+			collector.cancel();
+			return response;
+		}
+		
+		public IQ sendGetAuthentication() throws XMPPException {
 			// Ask what is supported, though we don't care, 
 			// the server seems to like it
 	        Authentication askAuth = new Authentication();
 	        askAuth.setType(IQ.Type.GET);
 	        askAuth.setUsername(jiveUser);
 			
-			connection.sendPacket(askAuth);
+	        return doIq(askAuth);
 		}
 	
-		public void sendDigestAuthentication() {
+		public IQ sendDigestAuthentication() throws XMPPException {
 			// Hardcode use of digest auth; we only work with our own server
 			
 			Authentication auth = new Authentication();
@@ -179,37 +224,49 @@ public class JabberClient {
 			
 			auth.setResource("hungry");
 			
-			connection.sendPacket(auth);			
+			return doIq(auth);
 		}
 
+		public void sendAvailable() {
+			connection.sendPacket(new Presence(Presence.Type.AVAILABLE));
+		}
+		
 		public boolean isConnected() {
 			return connection != null && connection.isConnected();
 		}
 
 		public void processPacket(Packet packet) {
-			System.out.println("Got a packet " + packet.toXML());
-			
+			//System.out.println("Got a packet " + packet.toXML());
+	
 			if (packet instanceof IQ) {
-				IQ iq = (IQ) packet;
-				if (iq.getType() == IQ.Type.ERROR)
-					System.err.println(iq.getError());
-				
-				if (iq instanceof Authentication &&
-						iq.getType() == IQ.Type.RESULT) {
-					System.out.println("We're probably authorized now");
-					authorized = true;
-				}
+				return;
 			}
 			
 			put(packet);
-			
-			synchronized (this) {
-				notifyAll();
-			}
+		}
+
+		public void connectionClosed() {
+			//System.out.println("Jabber connection closed");
+			connection = null;
+			put(null); // wake everyone up
+		}
+
+		public void connectionClosedOnError(Exception e) {
+			System.out.println("Jabber connection closed on error: " + e.getMessage());
+			connection = null;
+			put(null); // for wakeup
 		}
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("does nothing");
+		// note that this is "destructive" in that it can have side effects
+		// on the database
+		JabberClient c = new JabberClient(CheatSheet.getReadOnly().getOneSampleUserId());
+		c.login();
+		while (c.isConnected()) {
+			Packet p = c.take();
+			System.out.println("...");
+		}
+		System.out.println("Disconnected");
 	}
 }

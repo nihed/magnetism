@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.jivesoftware.smack.packet.Packet;
+
 import net.sourceforge.jwebunit.WebTester;
 
 import com.dumbhippo.hungry.readonly.ShareLink;
 import com.dumbhippo.hungry.util.CheatSheet;
+import com.dumbhippo.hungry.util.JabberClient;
 import com.dumbhippo.hungry.util.OrderAfter;
 import com.dumbhippo.hungry.util.SignedInPageTestCase;
 import com.dumbhippo.hungry.util.WebServices;
@@ -25,10 +28,17 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 	
 	private void shareLink(WebServices ws, String url, String title, String description, 
 			boolean secret, String... recipientIds) {
+		
+		ArrayList<JabberClient> recipientClients = new ArrayList<JabberClient>(recipientIds.length);
+		
 		StringBuilder sb = new StringBuilder();
 		for (String r : recipientIds) {
 			sb.append(r);
 			sb.append(",");
+			
+			JabberClient c = new JabberClient(r);
+			c.login();
+			recipientClients.add(c);
 		}
 		if (sb.length() > 0)
 			sb.delete(sb.length() - 1, sb.length());
@@ -42,7 +52,17 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 				"title", title, 
 				"description", description,
 				"recipients", commaRecipients,
-				"secret", Boolean.toString(secret));	
+				"secret", Boolean.toString(secret));
+		
+		for (JabberClient c : recipientClients) {
+			if (!c.isConnected())
+				throw new RuntimeException("One of the recipients got kicked off jabber or something");
+			
+			System.out.println("Waiting for recipient to be notified of post...");
+			Packet p = c.take();
+			System.out.println("After post share, got packet: " + p.toXML());
+			c.close();
+		}
 	}
 	
 	@Override

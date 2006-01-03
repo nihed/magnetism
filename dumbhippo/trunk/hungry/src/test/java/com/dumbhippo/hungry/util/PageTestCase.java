@@ -72,7 +72,7 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 	 */
 	public abstract void testPage();
 	
-	protected void assertSignedIn() {
+	protected String assertSignedIn() {
 		// Bug in jwebunit; t.getTestContext.getWebClient() has the right cookies,
 		// but t.whateverCookieMethod() does not have them
 		//t.assertCookiePresent("auth");
@@ -83,6 +83,11 @@ public abstract class PageTestCase extends TestCase implements PageChecker {
 			System.out.println(Arrays.toString(t.getTestContext().getWebClient().getCookieNames()));
 		}
 		assertNotNull(auth);
+		
+		int i = auth.indexOf("name=");
+		i += "name=".length();
+		int j = auth.indexOf("&", i);
+		return auth.substring(i, j);
 	}
 }
 
