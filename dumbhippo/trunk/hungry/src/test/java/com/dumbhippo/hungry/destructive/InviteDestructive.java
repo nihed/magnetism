@@ -6,7 +6,10 @@ import java.util.Random;
 import net.sourceforge.jwebunit.WebTester;
 
 import com.dumbhippo.hungry.readonly.Invite;
+import com.dumbhippo.hungry.util.CheatSheet;
+import com.dumbhippo.hungry.util.OrderAfter;
 
+@OrderAfter(MakeBootstrapUser.class)
 public class InviteDestructive extends Invite {
 
 	public InviteDestructive(WebTester t, String userId) {
@@ -19,6 +22,10 @@ public class InviteDestructive extends Invite {
 	
 	@Override
 	public void testPage() {
+		// be sure we have some invitations
+		CheatSheet cs = CheatSheet.getReadWrite();
+		cs.setNumberOfInvitations(getUserId(), 10);
+
 		// load and validate
 		super.testPage();
 		
@@ -31,8 +38,9 @@ public class InviteDestructive extends Invite {
 		String name = sb.toString() + " Doe";
 		String email = sb.toString() + "@example.com";
 		
-		t.setFormElement("fullName", name);
+		t.setFormElement("subject", "Yo " + name + ", join up");
 		t.setFormElement("email", email);
+		t.setFormElement("message", "This is my message to you");
 		
 		t.submit();
 	}

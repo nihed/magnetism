@@ -95,7 +95,7 @@ public class CheatSheet {
 		Set<String> ret = getSampleUserIds(1);
 		if (ret.size() == 0) {
 			System.err.println("At this point in the tests, we need at least one user in the database (readonly tests don't work with an empty db)");
-			System.exit(1);
+			throw new RuntimeException("no users in the db");
 		}
 		return ret.iterator().next();
 	}
@@ -144,6 +144,21 @@ public class CheatSheet {
 		} catch (SQLException e) {
 			fatalSqlException(e);
 			return 0; // not reached
+		}
+	}
+	
+	public void setNumberOfInvitations(String userId, int invites) {
+		try {
+			PreparedStatement statement =
+				getConnection().prepareStatement("UPDATE Account SET invitations=? "
+						+ "WHERE Account.owner_id=?");
+			statement.setInt(1, invites);
+			statement.setString(2, userId);
+			int rowsChanged = statement.executeUpdate();
+			//System.out.println("Changed invitation count for " + rowsChanged + " rows");
+		} catch (SQLException e) {
+			fatalSqlException(e);
+			return; // not reached
 		}
 	}
 	
