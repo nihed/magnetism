@@ -1293,6 +1293,17 @@ quitExisting(bool debug)
 static void
 editToolbar()
 {
+    // ensureToolbarButton() should be called when IE isn't running, since it edits
+    // registry entries behind IE's back. This is normally the case the first time
+    // that the client is run after an install. If it isn't the case (say, another user 
+    // installed DumbHippo on the system), then we'll hope for the best. Testing
+    // indicates that things should work OK for new IE windows opened later, though
+    // existing IE windows will, of course, not be affected.
+    //
+    // After the first time, it doesn't matter if IE is running or not, since we
+    // remember that we've already added (or didn't have to add) the button
+    // and don't try again.
+
     HippoToolbarEdit edit;
     edit.ensureToolbarButton();
 }
