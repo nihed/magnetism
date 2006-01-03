@@ -240,8 +240,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	private transient User theMan;
-	
 	private static final String theManNickname = "The Man";
 	private static final String theManGuid = "09mfAhfd7wzVRq";
 	private static final String theManEmail = "theman@dumbhippo.com";
@@ -249,37 +247,34 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	// This needs to be synchronized since the stateless session bean might be shared
 	// between threads.
 	public synchronized User getTheMan() {
-		if (theMan == null) {
-			try {
-				theMan = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
-					public User call() {	
-						User result;
-						Guid guid;
-						try {
-							guid = new Guid(theManGuid);
-						} catch (ParseException e1) {
-							throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
-						}
-						try {
-							result = lookupGuid(User.class, guid);
-						} catch (NotFoundException e) {
-							logger.debug("Creating theman@dumbhippo.com");
-							EmailResource resource = getEmail(theManEmail);
-							result = new User(guid);
-							result.setNickname(theManNickname);
-							em.persist(result);
-							addVerifiedOwnershipClaim(result, resource);
-						}
-						
-						return result;
+		try {
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
+				public User call() {	
+					User result;
+					Guid guid;
+					try {
+						guid = new Guid(theManGuid);
+					} catch (ParseException e1) {
+						throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
 					}
-				});
-			} catch (Exception e) {
-				ExceptionUtils.throwAsRuntimeException(e);
-				return null; // not reached
-			}
+					try {
+						result = lookupGuid(User.class, guid);
+					} catch (NotFoundException e) {
+						logger.debug("Creating theman@dumbhippo.com");
+						EmailResource resource = getEmail(theManEmail);
+						result = new User(guid);
+						result.setNickname(theManNickname);
+						em.persist(result);
+						addVerifiedOwnershipClaim(result, resource);
+					}
+					
+					return result;
+				}
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
 		}
-		return theMan;
 	}
 	
 	private static final String GET_RESOURCES_FOR_USER_QUERY = 
