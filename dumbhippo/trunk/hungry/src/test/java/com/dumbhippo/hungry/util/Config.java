@@ -19,7 +19,7 @@ public class Config {
 	public String getValue(ConfigValue value) {
 		String v = props.getProperty(value.getProperty());
 		if (v == null)
-			throw new IllegalStateException("Improperly configured, key " + value.getProperty() + " not set");
+			throw new IllegalStateException("Improperly configured, key " + value.getProperty() + " not set (copy dhdeploy/files/conf/hungry.properties to src/test/java/com/dumbhippo/hungry/util/hungry.properties)");
 		return v;
 	}
 	
