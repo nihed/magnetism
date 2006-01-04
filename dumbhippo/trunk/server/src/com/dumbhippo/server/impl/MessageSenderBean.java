@@ -108,6 +108,8 @@ public class MessageSenderBean implements MessageSender {
 		private Set<String> groupRecipients;
 		
 		private List<String> viewers;
+		
+		private String timeout;
 
 		public LinkExtension() {
 		}
@@ -149,6 +151,8 @@ public class MessageSenderBean implements MessageSender {
 			builder.appendTextNode("title", title);
 			builder.appendTextNode("description", description);
 			builder.appendTextNode("postInfo", postInfo);
+			if (timeout != null)
+				builder.appendTextNode("timeout", timeout);			
 			builder.openElement("recipients");
 			for (String recipient : recipientNames) {
 				builder.appendTextNode("recipient", recipient);
@@ -187,6 +191,10 @@ public class MessageSenderBean implements MessageSender {
 
 		public void setSenderPhotoUrl(String senderPhotoUrl) {
 			this.senderPhotoUrl = senderPhotoUrl;
+		}
+
+		public void setTimeout(String timeout) {
+			this.timeout = timeout;
 		}
 	}
 	
@@ -283,7 +291,7 @@ public class MessageSenderBean implements MessageSender {
 			return connection;
 		}
 
-		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers) {
+		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, boolean isTutorialPost) {
 			XMPPConnection connection = getConnection();
 
 			if (connection == null || !connection.isConnected()) {
@@ -329,6 +337,8 @@ public class MessageSenderBean implements MessageSender {
 			extension.setTitle(title);
 			extension.setDescription(post.getText());
 			extension.setPostInfo(post.getInfo());
+			if (isTutorialPost)
+				extension.setTimeout("none");
 			
 			if (viewers != null) {
 				List<String> viewerNames = new ArrayList<String>();
@@ -554,11 +564,11 @@ public class MessageSenderBean implements MessageSender {
 		this.xmppSender = new XMPPSender();
 	}
 	
-	public void sendPostNotification(Resource recipient, Post post) {
+	public void sendPostNotification(Resource recipient, Post post, boolean isTutorialPost) {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
 			Account account = user.getAccount();
-			xmppSender.sendPostNotification(account.getOwner(), post, null);
+			xmppSender.sendPostNotification(account.getOwner(), post, null, isTutorialPost);
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post);
 		} else {
@@ -573,7 +583,7 @@ public class MessageSenderBean implements MessageSender {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
 				if (!recipient.equals(clicker))
-					xmppSender.sendPostNotification(recipient, post, viewers);
+					xmppSender.sendPostNotification(recipient, post, viewers, false);
 				if (recipient.equals(post.getPoster()))
 					seenPoster = true;
 			}
@@ -581,6 +591,6 @@ public class MessageSenderBean implements MessageSender {
 		
 		// Send to the poster, but not if they were in expandedRecipients
 		if (!seenPoster)
-			xmppSender.sendPostNotification(post.getPoster(), post, viewers);
+			xmppSender.sendPostNotification(post.getPoster(), post, viewers, false);
 	}
 }

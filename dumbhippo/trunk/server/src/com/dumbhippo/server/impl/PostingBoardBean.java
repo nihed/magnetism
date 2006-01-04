@@ -98,11 +98,11 @@ public class PostingBoardBean implements PostingBoard {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
-	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients) {
+	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients, boolean isTutorialPost) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
 		for (Resource r : expandedRecipients) {
-			messageSender.sendPostNotification(r, post);
+			messageSender.sendPostNotification(r, post, isTutorialPost);
 		}
 	}
 	
@@ -165,8 +165,7 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
-		
+	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo, boolean isTutorialPost) throws NotFoundException {
 		url = removeFrameset(url);
 		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
@@ -209,8 +208,12 @@ public class PostingBoardBean implements PostingBoard {
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
-		sendPostNotifications(post, expandedRecipients);
-		return post;
+		sendPostNotifications(post, expandedRecipients, isTutorialPost);
+		return post;		
+	}
+	
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
+		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, false);
 	}
 	
 	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
@@ -258,7 +261,7 @@ public class PostingBoardBean implements PostingBoard {
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
-			post = doLinkPost(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null);
+			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null, true);
 		} catch (NotFoundException e) {
 			logger.error("Failed to post: " + e, e);
 			logger.trace(e);
