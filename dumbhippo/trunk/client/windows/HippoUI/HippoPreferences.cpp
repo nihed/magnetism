@@ -9,8 +9,11 @@
 #include <limits.h>
 #include <glib.h>
 
-static const WCHAR *DUMBHIPPO_SUBKEY = L"Software\\DumbHippo\\Client";
-static const WCHAR *DUMBHIPPO_SUBKEY_DEBUG = L"Software\\DumbHippo\\DebugClient";
+static const WCHAR DUMBHIPPO_SUBKEY[] = L"Software\\DumbHippo\\Client";
+static const WCHAR DUMBHIPPO_SUBKEY_DEBUG[] = L"Software\\DumbHippo\\DebugClient";
+
+static const WCHAR DEFAULT_MESSAGE_SERVER[] = L"messages.dumbhippo.com";
+static const WCHAR DEFAULT_WEB_SERVER[] = L"dumbhippo.com";
 
 HippoPreferences::HippoPreferences(bool debug)
 {
@@ -26,23 +29,26 @@ HippoPreferences::getMessageServer(BSTR *server)
     if (messageServer_)
         return messageServer_.CopyTo(server);
     else
-        return HippoBSTR(L"messages.dumbhippo.com").CopyTo(server);
+        return HippoBSTR(DEFAULT_MESSAGE_SERVER).CopyTo(server);
 }
 
 void
-HippoPreferences::parseMessageServer(char        **nameUTF8,
-                                     unsigned int *port)
+HippoPreferences::parseServer(BSTR          server,
+                              const WCHAR  *defaultHost,
+                              unsigned int  defaultPort,
+                              BSTR         *host,
+                              unsigned int *port)
 {
-    *nameUTF8 = NULL;
-    *port = 5222;
+    *host = NULL;
+    *port = defaultPort;
 
-    if (messageServer_) {
-        const WCHAR *raw = messageServer_.m_str;
-        const WCHAR *p = raw + messageServer_.Length();
+    if (server) {
+        const WCHAR *p = server + SysStringLen(server);
 
-        while (p > raw) {
+        while (p > server) {
             if (*(p - 1) == ':') {
-                *nameUTF8 = g_utf16_to_utf8(raw, p - raw - 1, NULL, NULL, NULL);
+                HippoBSTR tmpStr((UINT)(p - server - 1), server);
+                tmpStr.CopyTo(host);
 
                 if (*p) {
                     WCHAR *end;
@@ -58,12 +64,23 @@ HippoPreferences::parseMessageServer(char        **nameUTF8,
             p--;
         }
 
-        if (p == raw)
-            *nameUTF8 = g_utf16_to_utf8(raw, - 1, NULL, NULL, NULL);
+        if (p == server) {
+            HippoBSTR tmpStr(server);
+            tmpStr.CopyTo(host);
+        }
     }
 
-    if (!*nameUTF8)
-        *nameUTF8 = g_strdup("messages.dumbhippo.com");
+    if (!*host) {
+        HippoBSTR tmpStr(defaultHost);
+        tmpStr.CopyTo(host);
+    }
+}
+
+void
+HippoPreferences::parseMessageServer(BSTR         *host,
+                                     unsigned int *port)
+{
+    parseServer(messageServer_, DEFAULT_MESSAGE_SERVER, 5222, host, port);
 }
 
 void 
@@ -80,7 +97,7 @@ HippoPreferences::getWebServer(BSTR *server)
     if (webServer_)
         return webServer_.CopyTo(server);
     else
-        return HippoBSTR(L"dumbhippo.com").CopyTo(server);
+        return HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
 }
 
 void 
@@ -91,6 +108,12 @@ HippoPreferences::setWebServer(BSTR server)
     save();
 }
 
+void
+HippoPreferences::parseWebServer(BSTR         *host,
+                                 unsigned int *port)
+{
+    parseServer(webServer_, DEFAULT_WEB_SERVER, 80, host, port);
+}
 
 bool 
 HippoPreferences::getSignIn()

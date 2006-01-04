@@ -12,11 +12,13 @@ public:
 
     HRESULT getMessageServer(BSTR *server);
     void setMessageServer(BSTR server);
-    void parseMessageServer(char        **nameUTF8,
+    void parseMessageServer(BSTR         *host,
                             unsigned int *port);
 
     HRESULT getWebServer(BSTR *server);
     void setWebServer(BSTR server);
+    void parseWebServer(BSTR         *host,
+                        unsigned int *port);
 
     bool getSignIn();
     void setSignIn(bool signIn);
@@ -24,6 +26,11 @@ public:
 private:
     void load();
     void save();
+    void parseServer(BSTR          server,
+                     const WCHAR  *defaultHost,
+                     unsigned int  defaultPort,
+                     BSTR         *host,
+                     unsigned int *port);
 
     // Whether to use a separate debug registry section
     bool debug_;

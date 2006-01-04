@@ -75,7 +75,7 @@ public:
 
     void showMenu(UINT buttonFlag);
     HippoExternalBrowser *launchBrowser(BSTR url);
-    void displaySharedLink(BSTR postId);
+    void displaySharedLink(BSTR postId, BSTR url);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
@@ -118,6 +118,10 @@ private:
 
     // Check if an URL points to our site (and not to /visit)
     bool isSiteURL(BSTR url);
+
+    // Check if an URL points to /account, or another page that we
+    // want to avoid framing
+    bool isNoFrameURL(BSTR url);
 
     static int checkIdle(gpointer data);
 

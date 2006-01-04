@@ -514,10 +514,12 @@ HippoUI::isSiteURL(BSTR url)
     if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
         return false;
 
-    HippoBSTR webServer;
-    preferences_.getWebServer(&webServer);
-    if (components.dwHostNameLength != webServer.Length() ||
-        wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) != 0)
+    HippoBSTR host;
+    unsigned int port;
+    preferences_.parseWebServer(&host, &port);
+    if (components.dwHostNameLength != host.Length() ||
+        wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
+        port != components.nPort)
         return false;
 
     // If we're just framing a page, don't count it as a browser pointing to out site. 
@@ -528,6 +530,52 @@ HippoUI::isSiteURL(BSTR url)
         return false;
 
     return true;
+}
+
+bool
+HippoUI::isNoFrameURL(BSTR url)
+{
+    URL_COMPONENTS components;
+    ZeroMemory(&components, sizeof(components));
+    components.dwStructSize = sizeof(components);
+
+    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
+    // to return pointers into the passed in URL along with lengths. The 
+    // specific non-zero value is irrelevant
+    components.dwHostNameLength = 1;
+    components.dwUserNameLength = 1;
+    components.dwPasswordLength = 1;
+    components.dwUrlPathLength = 1;
+    components.dwExtraInfoLength = 1;
+
+    if (!InternetCrackUrl(url, 0, 0, &components))
+        return false;
+
+    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+        return false;
+
+    HippoBSTR host;
+    unsigned int port;
+    preferences_.parseWebServer(&host, &port);
+    if (components.dwHostNameLength != host.Length() ||
+        wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
+        port != components.nPort)
+        return false;
+
+    // Currently the only page we don't frame is /account
+    static const WCHAR *noFramePages[] = {
+        L"/account",
+    };
+
+    for (int i = 0; i < sizeof(noFramePages) / sizeof(noFramePages[0]); i++) {
+        const WCHAR *page = noFramePages[i];
+
+        if (components.dwUrlPathLength == wcslen(page) &&
+            wcsncmp(components.lpszUrlPath, page, components.dwUrlPathLength) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 HippoExternalBrowser *
@@ -575,17 +623,22 @@ HippoUI::launchBrowser(BSTR url)
 
 // Show a window when the user clicks on a shared link
 void 
-HippoUI::displaySharedLink(BSTR postId)
+HippoUI::displaySharedLink(BSTR postId, BSTR url)
 {
     HippoBSTR targetURL;
 
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"visit?post="), &targetURL)))
-        return;
-    targetURL.Append(postId);
+    // The initial share from the man of /account is very confusing if framed
+    if (isNoFrameURL(url)) {
+        targetURL = url;
+    } else {
+        if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"visit?post="), &targetURL)))
+            return;
+        targetURL.Append(postId);
+    }
 
     HippoExternalBrowser *browser = launchBrowser(targetURL);
-    // browser is only NULL if we reuse an existing browser, which we
-    // shouldn't do for visit? URLs, but check just in case.
+    // browser is only NULL if we reuse an existing browser, which we won't
+    // do for URLs where we want the browser bar.
     if (browser)
         browser->injectBrowserBar();
 

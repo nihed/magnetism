@@ -213,21 +213,23 @@ out:
 void
 HippoIM::connect()
 {
-    char *messageServer;
+    HippoBSTR messageServer;
+    char *messageServerU;
     unsigned int port;
 
     ui_->getPreferences()->parseMessageServer(&messageServer, &port);
+    messageServerU = g_utf16_to_utf8(messageServer.m_str, -1, NULL, NULL, NULL);
     
     if (lmConnection_) {
         hippoDebug(L"connect() called when there is an existing connection");
         return;
     }
 
-    lmConnection_ = lm_connection_new(messageServer);
+    lmConnection_ = lm_connection_new(messageServerU);
     lm_connection_set_port(lmConnection_, port);
     lm_connection_set_keep_alive_rate(lmConnection_, KEEP_ALIVE_RATE);
 
-    ui_->debugLogU("Connecting to %s:%d", messageServer, port);
+    ui_->debugLogU("Connecting to %s:%d", messageServerU, port);
 
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 
@@ -253,6 +255,8 @@ HippoIM::connect()
         if (error)
             g_error_free(error);
     }
+
+    g_free(messageServerU);
 }
 
 void

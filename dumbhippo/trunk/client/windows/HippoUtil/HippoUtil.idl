@@ -46,7 +46,7 @@ library HippoUtil {
         [id(121), helpstring("Close notification window")]
         HRESULT Close();
         [id(122), helpstring("Display a shared link")]
-        HRESULT DisplaySharedLink([in] BSTR postId);
+        HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
         [id(123), helpstring("Debug log")]
         HRESULT DebugLog([in] BSTR msg);
         [id(125), helpstring("Set the number of pixels to reserve for viewer information")]

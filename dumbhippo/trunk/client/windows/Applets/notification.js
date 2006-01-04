@@ -245,12 +245,12 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         photoLinkDiv.appendChild(a)
     }
     
-    this._createSharedLinkLink = function(linkTitle, postId, hookfn) {
+    this._createSharedLinkLink = function(linkTitle, postId, url, hookfn) {
         var a = document.createElement("a")
         a.setAttribute("href", "javascript:true")
         a.onclick = dh.util.dom.stdEventHandler(function(e) {
             e.stopPropagation();
-            window.external.application.DisplaySharedLink(postId)
+            window.external.application.DisplaySharedLink(postId, url)
             if (hookfn)
                 hookfn()
             return false;
@@ -299,7 +299,7 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         }
 
         var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
-        titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId, hook))
+        titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId, share.linkURL, hook))
 
         var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
         bodyDiv.appendChild(document.createTextNode(share.linkDescription))
