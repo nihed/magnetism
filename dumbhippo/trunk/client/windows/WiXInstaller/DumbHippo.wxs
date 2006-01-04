@@ -42,7 +42,12 @@
 	</Feature>
 	
 	<CustomAction Id="DhQuitApp" FileKey="hippoUIExe" ExeCommand="--quit"/>	
-        <CustomAction Id="DhLaunchApp" FileKey="hippoUIExe" Execute="commit" ExeCommand="--install-launch"/>
+	<!-- Specifying Return="ignore" prevents the installation from being rolled back if 
+	     launching DumbHippo fails; while the launch failure almost certainly indicates
+	     a broken install, it will be easier to debug what is going on if the user can
+	     try running the client. The downside is that they may not realize that something
+	     went wrong at all. -->
+        <CustomAction Id="DhLaunchApp" FileKey="hippoUIExe" Execute="commit" Return="ignore" ExeCommand="--install-launch"/>
 	
 	<InstallExecuteSequence>
 	    <Custom Action="DhQuitApp" After="InstallValidate">REMOVE="ALL"</Custom>
