@@ -80,7 +80,8 @@ public class EntityTag extends SimpleTagSupport {
 			cssClass = defaultCssClass;
 		
 		XmlBuilder xml = new XmlBuilder();
-		
+
+		String bodyOriginal = body;
 		if (bodyLengthLimit != 0 && (body.length() > bodyLengthLimit)) {
 			if (bodyLengthLimit > 3) {
 				body = body.substring(0, bodyLengthLimit - 3);
@@ -92,7 +93,7 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (photo && photoUrl != null) {
 			if (link != null)
-				xml.openElement("a", "href", link, "target", "_top", "class", cssClass);
+				xml.openElement("a", "href", link, "target", "_top", "class", cssClass, "title", bodyOriginal);
 
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
 			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
