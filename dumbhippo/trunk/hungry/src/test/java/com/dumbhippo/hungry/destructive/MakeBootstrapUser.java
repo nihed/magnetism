@@ -4,7 +4,9 @@ import org.jivesoftware.smack.packet.Packet;
 
 import com.dumbhippo.hungry.readonly.Signin;
 import com.dumbhippo.hungry.util.JabberClient;
+import com.dumbhippo.hungry.util.OrderAfter;
 
+@OrderAfter(VerifyInvitation.class)
 public class MakeBootstrapUser extends Signin {
 
 	@Override
