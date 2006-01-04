@@ -25,12 +25,12 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
-	    <dht:toolbar>
+	    <dht:toolbar account="false">
 	    	<c:if test="${!viewperson.disabled}">
 		    	<c:choose>
 		    		<c:when test="${viewperson.contact}">
 		    			&#151;
-		    			<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contact list</a>
+		    			<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contacts</a>
 			    	</c:when>
 		    		<c:otherwise>
 			    		&#151;

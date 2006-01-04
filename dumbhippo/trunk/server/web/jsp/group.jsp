@@ -26,16 +26,16 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
-		<dht:toolbar>
+		<dht:toolbar account="false">
 			<c:if test="${viewgroup.canShare}">
-				 &#151; <a class="dh-toolbar-item" title="Share <c:out value="${viewgroup.name}"/> with friends" href="javascript:dh.util.openShareGroupWindow('${viewgroup.viewedGroupId}');">Share</a>
+				 &#151; <a class="dh-toolbar-item" title="Share <c:out value="${viewgroup.name}"/> with friends" href="javascript:dh.util.openShareGroupWindow('${viewgroup.viewedGroupId}');">Share Group</a>
 			</c:if>
 			<c:choose>
 				<c:when test="${viewgroup.canLeave}">
-					 &#151; <a class="dh-toolbar-item" href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave</a>
+					 &#151; <a class="dh-toolbar-item" href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>Leave Group</a>
 				</c:when>
 				<c:when test="${viewgroup.canJoin}">
-					 &#151; <a class="dh-toolbar-item" href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join <c:out value="${viewgroup.name}"/></a>
+					 &#151; <a class="dh-toolbar-item" href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join This Group</a>
 				</c:when>
 			</c:choose>
 		</dht:toolbar>
