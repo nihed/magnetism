@@ -1,5 +1,7 @@
 package com.dumbhippo.hungry.destructive;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -31,14 +33,23 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 		
 		ArrayList<JabberClient> recipientClients = new ArrayList<JabberClient>(recipientIds.length);
 		
+		boolean invalidUrl = false;
+		try {
+			new URL(url);
+		} catch (MalformedURLException e) {
+			invalidUrl = true;
+		}
+		
 		StringBuilder sb = new StringBuilder();
 		for (String r : recipientIds) {
 			sb.append(r);
 			sb.append(",");
 			
-			JabberClient c = new JabberClient(r);
-			c.login();
-			recipientClients.add(c);
+			if (!invalidUrl) {
+				JabberClient c = new JabberClient(r);
+				c.login();
+				recipientClients.add(c);
+			}
 		}
 		if (sb.length() > 0)
 			sb.delete(sb.length() - 1, sb.length());
@@ -58,9 +69,14 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 			if (!c.isConnected())
 				throw new RuntimeException("One of the recipients got kicked off jabber or something");
 			
-			System.out.println("Waiting for recipient to be notified of post...");
+			//System.out.println("Waiting for recipient to be notified of post...");
 			Packet p = c.take();
-			System.out.println("After post share, got packet: " + p.toXML());
+			//System.out.println("After post share, got packet: " + p.toXML());
+			if (!JabberClient.packetContains(p, url)) {
+				System.out.println("Packet was: " + p.toXML());
+				System.out.println("URL was: " + url);
+				throw new RuntimeException("xmpp packet received after link share didn't contain the link");
+			}
 			c.close();
 		}
 	}

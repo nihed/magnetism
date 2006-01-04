@@ -3,6 +3,7 @@
  */
 package com.dumbhippo.hungry.util;
 
+import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -256,6 +257,30 @@ public class JabberClient {
 			connection = null;
 			put(null); // for wakeup
 		}
+	}
+	
+	private static String xmlEscape(String text) {
+		StringBuilder sb = new StringBuilder(text.length());
+		for (char c : text.toCharArray()){
+			if (c == '&')
+				sb.append("&amp;");
+			else if (c == '<')
+				sb.append("&lt;");
+			else if (c == '>')
+				sb.append("&gt;");
+			else if (c == '\'')
+				sb.append("&#39;"); // &apos; is valid XML but not valid HTML
+			else if (c == '"')
+				sb.append("&quot;");
+			else
+				sb.append(c);
+		}
+		return sb.toString();
+	}
+
+	public static boolean packetContains(Packet p, String text) {
+		String xml = p.toXML();
+		return xml.contains(xmlEscape(text));
 	}
 	
 	public static void main(String[] args) {

@@ -42,7 +42,10 @@ public class VerifyInvitation extends PageTestCase {
 		c.login();
 		assertTrue(c.isConnected());
 		Packet p = c.take();
-		System.out.println("Signing on post-invite, got packet: " + p.toXML());
+		//System.out.println("Signing on post-invite, got packet: " + p.toXML());
+		if (!JabberClient.packetContains(p, "/account")) {
+			throw new RuntimeException("xmpp packet received after first sign-on didn't contain /account");
+		}
 		c.close();
 	}
 }
