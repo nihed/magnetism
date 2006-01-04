@@ -1,13 +1,10 @@
 package com.dumbhippo.web;
 
-import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorConvertOp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,9 +64,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		Image scaled;
 		
 		if (scale > 0.75 && scale != 1.0) {
-			/* Our transformation */
-			AffineTransform tx = new AffineTransform();
-			tx.scale(scale, scale);
+			AffineTransform tx = AffineTransform.getScaleInstance(scale, scale);
 			AffineTransformOp transformOp = new AffineTransformOp(tx, AffineTransformOp.TYPE_BICUBIC);
 			
 			scaled = transformOp.filter(image, null);
