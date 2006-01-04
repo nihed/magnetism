@@ -23,7 +23,7 @@ Do It:
 <c:if test="${account}">
 	<a class="dh-toolbar-item" href="/account">Your Account</a>
 </c:if>
-<c:if test="${account && !empty publicPageId}">
+<c:if test="${account && !empty publicPageId || home && !empty publicPageId}">
 &#151;
 </c:if>
 <c:if test="${!empty publicPageId}">
