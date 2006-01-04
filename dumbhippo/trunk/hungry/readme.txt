@@ -38,3 +38,5 @@ our test stuff works. The thing to note is that one test
 can create another test by passing in a WebTester, and 
 then use methods from the other test.
 
+There's a cron job on devel.dumbhippo.com that runs this thing
+periodically.
