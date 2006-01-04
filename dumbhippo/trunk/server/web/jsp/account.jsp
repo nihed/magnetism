@@ -36,19 +36,19 @@
 			slideNode.appendChild(p);
 			
 			var slides = [
-				{ 	"time" : 4500, 
+				{ 	"time" : 9500, 
 					"src" : "/images/tpfd-slides/001.jpg" },
-				{ 	"time" : 7000,
+				{ 	"time" : 12000,
 					"src" : "/images/tpfd-slides/002.jpg" },
-				{ 	"time" : 6000,
+				{ 	"time" : 11000,
 					"src" : "/images/tpfd-slides/003.jpg" },
-				{ 	"time" : 6000,
+				{ 	"time" : 11000,
 					"src" : "/images/tpfd-slides/004.jpg" },
-				{ 	"time" : 7000,
+				{ 	"time" : 12000,
 					"src" : "/images/tpfd-slides/005.jpg" },
-				{ 	"time" : 6000,
+				{ 	"time" : 11000,
 					"src" : "/images/tpfd-slides/006.jpg" },
-				{ 	"time" : 1500,
+				{ 	"time" : 6500,
 					"src" : "/images/tpfd-slides/007.jpg" },
 				{ 	"time" : 0,
 					"node" : slideNode }
