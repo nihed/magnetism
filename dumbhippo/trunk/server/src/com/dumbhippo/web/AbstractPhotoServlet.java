@@ -82,7 +82,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		BufferedImage dest = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB_PRE);
 
 		Graphics2D graphics = dest.createGraphics();
-		graphics.drawImage(scaled, (int)Math.round(translateX), (int)Math.round(translateY), null);
+		graphics.drawImage(scaled, translateX, translateY, null);
 		
 		return dest;	
 	}
