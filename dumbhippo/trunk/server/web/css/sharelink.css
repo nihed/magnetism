@@ -175,8 +175,9 @@ div.dhFlickrPhotoUploadMeta {
 	z-index:			2; /* on top */
 	font-family: 		Bitstream Vera Sans, sans;
 	font-size:			10pt;
-	background: 		lightsteelblue;
+	background: 		Window;
 	padding: 			2px;
+	border:             1px solid WindowText;
 	max-width:			20em;
 }
 .dh-suggestion-list ul
@@ -188,16 +189,16 @@ div.dhFlickrPhotoUploadMeta {
 .dh-suggestion-list a
 {
 	text-decoration: 		none;
-	color: 				navy;
+	color: 				WindowText;
 }
 .dh-suggestion-list .dh-selected
 {
-	background: 			#bcd1ed;
- 	color: 				white;
+	background: 			Highlight;
+ 	color: 				HighlightText;
 }
 .dh-suggestion-list .dh-selected a
 {
-	color: 				white;
+	color: 				HighlightText;
 }
 
 #dhAutoSuggest {
