@@ -214,12 +214,15 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     viewersArg.vt = VT_ARRAY | VT_VARIANT;
     viewersArg.parray = viewers;
     variant_t infoArg(share.info);
+    variant_t timeout(share.timeout);
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
-    invokeJavascript(L"dhAddLinkShare", &result, 11, &senderName,
+    // Note if you change the arguments to this function, you must change
+    // notification.js (and don't forget to update the argument count here too)
+    invokeJavascript(L"dhAddLinkShare", &result, 12, &senderName,
                      &senderId, &senderPhotoUrl, &postId, &linkTitle, &linkURL, &linkDescription,
-                     &personRecipientsArg, &groupRecipientsArg, &viewersArg, &infoArg);
+                     &personRecipientsArg, &groupRecipientsArg, &viewersArg, &infoArg, &timeout);
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);
 

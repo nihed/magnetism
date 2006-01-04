@@ -90,9 +90,9 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     this._resetPageTimeout = function() {
         if (!this._idle) {
             this._clearPageTimeout();
-            this._pageTimeoutId = window.setTimeout(
-                function() {
-                    dh.display.goNextOrClose()
+            var display = this;                
+            this._pageTimeoutId = window.setTimeout(function() {
+                display.displayTimeout()
                 }, 7 * 1000); // 7 seconds
         }
     }
@@ -149,6 +149,19 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     
     this.goNext = function () {
         this.setPosition(this.position + 1)
+    }
+    
+    this.displayTimeout = function () {
+        // Handle infinite timeout
+        dh.util.debug("displayTimeout, position=" + this.position)        
+        if (this.position >= 0) {
+            var timeout = this.notifications[this.position].data.timeout
+            dh.util.debug("current page timeout is " + timeout)        
+            if (timeout == "none") {
+                return;
+            }
+        }            
+        this.goNextOrClose();    
     }
     
     this.goNextOrClose = function () {
@@ -338,8 +351,10 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 }
 
 // Global namespace since it's painful to do anything else from C++
+// Note if you change the parameters to this function, you must change
+// HippoBubble.cpp
 dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTitle, 
-                           linkURL, linkDescription, personRecipients, groupRecipients, viewers, postInfo) {
+                           linkURL, linkDescription, personRecipients, groupRecipients, viewers, postInfo, timeout) {
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
     dh.util.debug("postinfo: " + postInfo)    
     dh.display.setVisible(true)
@@ -353,7 +368,8 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
                             personRecipients: personRecipients,
                             groupRecipients: groupRecipients,
                             viewers: viewers,
-                            info: dh.parseXML(postInfo)})
+                            info: dh.parseXML(postInfo),
+                            timeout: timeout})
 }
 
 dhSetIdle = function(idle) {

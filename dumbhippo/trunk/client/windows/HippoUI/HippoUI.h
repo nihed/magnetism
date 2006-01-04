@@ -38,6 +38,7 @@ struct HippoLinkShare
     HippoArray<HippoBSTR> groupRecipients;
     HippoArray<HippoBSTR> viewers;
     HippoBSTR info;
+    HippoBSTR timeout;
 };
 
 class HippoUI 

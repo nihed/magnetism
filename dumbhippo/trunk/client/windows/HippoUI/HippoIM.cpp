@@ -583,7 +583,6 @@ HippoIM::onMessage (LmMessageHandler *handler,
                 }
                 linkshare.postId.setUTF8(postId);
 
-                /* WARNING !  Must be in same order as XML stream */
                 node = lm_message_node_get_child (child, "title");
                 if (!(node && node->value))
                     continue;
@@ -619,6 +618,12 @@ HippoIM::onMessage (LmMessageHandler *handler,
                     linkshare.info.setUTF8(node->value);
                 else
                     linkshare.info = L"";
+
+                node = lm_message_node_get_child (child, "timeout");
+                if (node && node->value)
+                    linkshare.timeout.setUTF8(node->value);
+                else
+                    linkshare.timeout = L"default";
 
                 node = lm_message_node_get_child (child, "recipients");
                 if (!node)
