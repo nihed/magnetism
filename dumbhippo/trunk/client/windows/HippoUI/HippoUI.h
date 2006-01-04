@@ -189,6 +189,7 @@ private:
     bool rememberPassword_;
     bool passwordRemembered_;
 
-    bool idle_;
+    bool idle_; // is the user idle
+    bool screenSaverRunning_; // is the screen saver running
     unsigned checkIdleTimeoutId_;
 };

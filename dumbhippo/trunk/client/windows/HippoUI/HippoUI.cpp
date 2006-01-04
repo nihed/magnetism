@@ -70,6 +70,7 @@ HippoUI::HippoUI(bool debug, bool replaceExisting, bool initialDebugShare)
     bigIcon_ = NULL;
 
     idle_ = FALSE;
+    screenSaverRunning_ = FALSE;
     checkIdleTimeoutId_ = 0;
 
     currentShare_ = NULL;
@@ -874,6 +875,18 @@ HippoUI::checkIdle(gpointer data)
         }
     }
 
+    /* Getting notification on screen saver starts/stops without polling also would 
+     * require a global hook. (For SC_SCREENSAVE) We actually don't need notification 
+     * when the screensaver starts, but we do need it when it is deactivated so we
+     * know to pop up our bubble at that point if we have one queued.
+     */
+    BOOL screenSaverRunning;
+    SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, (void *)&screenSaverRunning, 0);
+    if (ui->screenSaverRunning_ != screenSaverRunning != FALSE) {
+        ui->screenSaverRunning_ = screenSaverRunning != FALSE;
+        ui->bubble_.setScreenSaverRunning(ui->screenSaverRunning_);
+    }
+
     return TRUE;
 }
 
@@ -1440,7 +1453,7 @@ WinMain(HINSTANCE hInstance,
 
     if (doQuitExisting) {
         CoInitialize(NULL);
-        quitExisting(debug);
+        quitExisting(debug != FALSE);
         CoUninitialize();
         return 0;
     }

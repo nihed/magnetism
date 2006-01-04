@@ -28,8 +28,10 @@ HippoBubble::HippoBubble(void)
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
     idle_ = FALSE;
+    screenSaverRunning_ = FALSE;
     haveMouse_ = FALSE;
     effectiveIdle_ = FALSE;
+    shown_ = FALSE;
     viewerSpace_ = 0;
     ie_ = NULL;
 
@@ -270,6 +272,18 @@ HippoBubble::doSetIdle()
     }
 }
 
+void 
+HippoBubble::setScreenSaverRunning(bool screenSaverRunning)
+{
+    screenSaverRunning_ = screenSaverRunning;
+    if (shown_) {
+        if (!screenSaverRunning_)
+            doShow();
+        else
+            doClose();
+    }
+}
+
 bool
 HippoBubble::registerClass()
 {
@@ -297,7 +311,7 @@ HippoBubble::registerClass()
 }
 
 void
-HippoBubble::show(void) 
+HippoBubble::doShow(void) 
 {   
     ui_->debugLogW(L"doing bubble show");
     //if (!AnimateWindow(window_, 400, AW_BLEND))
@@ -311,6 +325,20 @@ HippoBubble::show(void)
 
     SetTimer(window_, CHECK_MOUSE, 250 /* 0.25 second */, NULL);
     checkMouse();
+}
+
+void
+HippoBubble::show(void) 
+{   
+    // If we show the bubble when the screensaver is running, it will pop up
+    // over the screensaver, so we simply remember that the bubble is logically
+    // shown and actually show it when the screensaver deactivates. Our assumption
+    // here is that the screensaver only activates when the user is idle, so we
+    // don't have to worry about explicitely stopping paging in the bubble; 
+    // paging doesn't happen when the user is idle anyways.
+    shown_ = TRUE;
+    if (!screenSaverRunning_)
+        doShow();
 }
 
 /* We want to detect when the mouse pointer is over the bubble; this
@@ -417,8 +445,8 @@ HippoBubble::GetServerBaseUrl(BSTR *ret)
     return S_OK;
 }
 
-STDMETHODIMP
-HippoBubble::Close()
+void
+HippoBubble::doClose()
 {
     KillTimer(window_, CHECK_MOUSE);
     if (haveMouse_) {
@@ -426,8 +454,23 @@ HippoBubble::Close()
         updateIdle();
     }
 
-    AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
+    // Don't animate if the screenSaver is starting
+    if (screenSaverRunning_)
+        ShowWindow(window_, SW_HIDE);
+    else
+        AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
+}
+
+STDMETHODIMP
+HippoBubble::Close()
+{
     ui_->debugLogU("closing link notification");
+
+    shown_ = FALSE;
+
+    if (!screenSaverRunning_)
+        doClose();
+
     return S_OK;
 }
 

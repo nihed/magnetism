@@ -24,6 +24,7 @@ public:
     void setLinkNotification(HippoLinkShare &share);
     void show(void);
     void setIdle(bool idle);
+    void setScreenSaverRunning(bool screenSaverRunning);
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -71,9 +72,11 @@ private:
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;
 
+    bool shown_;
     bool idle_;
     bool haveMouse_;
     bool effectiveIdle_;
+    bool screenSaverRunning_;
     DWORD viewerSpace_;
 
     bool embedIE(void);
@@ -86,6 +89,8 @@ private:
     void checkMouse();
     void updateIdle();
     void doSetIdle();
+    void doShow();
+    void doClose();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
 
