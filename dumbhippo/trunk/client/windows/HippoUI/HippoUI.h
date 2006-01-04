@@ -116,6 +116,9 @@ private:
     // instance exits
     void addInternalBrowser(HippoExternalBrowser *browser, bool closeOnQuit);
 
+    // Check if an URL points to our site (and not to /visit)
+    bool isSiteURL(BSTR url);
+
     static int checkIdle(gpointer data);
 
     bool processMessage(UINT   message,

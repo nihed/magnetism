@@ -491,9 +491,82 @@ HippoUI::showMenu(UINT buttonFlag)
     PostMessage(window_, WM_NULL, 0, 0);
 }
 
+bool
+HippoUI::isSiteURL(BSTR url)
+{
+    URL_COMPONENTS components;
+    ZeroMemory(&components, sizeof(components));
+    components.dwStructSize = sizeof(components);
+
+    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
+    // to return pointers into the passed in URL along with lengths. The 
+    // specific non-zero value is irrelevant
+    components.dwHostNameLength = 1;
+    components.dwUserNameLength = 1;
+    components.dwPasswordLength = 1;
+    components.dwUrlPathLength = 1;
+    components.dwExtraInfoLength = 1;
+
+    if (!InternetCrackUrl(url, 0, 0, &components))
+        return false;
+
+    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+        return false;
+
+    HippoBSTR webServer;
+    preferences_.getWebServer(&webServer);
+    if (components.dwHostNameLength != webServer.Length() ||
+        wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) != 0)
+        return false;
+
+    // If we're just framing a page, don't count it as a browser pointing to out site. 
+    // (For bonus points we'd figure out what was being visited, and check if *that*
+    // was on our site, but it's better to just handle that on the server and unframe.)
+    if (components.dwUrlPathLength == wcslen(L"/visit") &&
+        wcsncmp(components.lpszUrlPath, L"/visit", components.dwUrlPathLength) == 0)
+        return false;
+
+    return true;
+}
+
 HippoExternalBrowser *
 HippoUI::launchBrowser(BSTR url)
 {
+    // If the URL points directly to our site, try to find another IE window
+    // visiting a part of our site and reuse that web browser; this avoids
+    // getting a big pile of windows as the user keeps on using the notification
+    // icon.
+    if (isSiteURL(url)) {
+        for (ULONG i = 0; i < browsers_.length(); i++) {
+            if (isSiteURL(browsers_[i].url)) {
+                IWebBrowser2 *browser = browsers_[i].browser;
+    
+                VARIANT missing;
+                missing.vt = VT_EMPTY;
+                if (FAILED(browser->Navigate(url, &missing, &missing, &missing, &missing)))
+                    continue;
+
+                long windowLong;
+                if (SUCCEEDED(browser->get_HWND(&windowLong))) {
+                    HWND window = (HWND)windowLong;
+
+                    // If the window is minimized, we want to restore it, but we
+                    // have to be careful not to restore a maximized window, which
+                    // ShowWindow(window, SW_RESTORE) will also do.
+                    WINDOWPLACEMENT windowPlacement;
+                    windowPlacement.length = sizeof(WINDOWPLACEMENT);
+                    if (GetWindowPlacement(window, &windowPlacement) && 
+                        windowPlacement.showCmd != SW_SHOWMAXIMIZED)
+                        ShowWindow(window, SW_RESTORE);
+
+                    SetForegroundWindow(window);
+                }
+
+                return NULL;
+            }
+        }
+    }
+
     HippoExternalBrowser *browser = new HippoExternalBrowser(url, FALSE, NULL);
     internalBrowsers_.append(HippoPtr<HippoExternalBrowser>(browser));
     return browser;
@@ -510,7 +583,10 @@ HippoUI::displaySharedLink(BSTR postId)
     targetURL.Append(postId);
 
     HippoExternalBrowser *browser = launchBrowser(targetURL);
-    browser->injectBrowserBar();
+    // browser is only NULL if we reuse an existing browser, which we
+    // shouldn't do for visit? URLs, but check just in case.
+    if (browser)
+        browser->injectBrowserBar();
 
     WCHAR *postIdW = postId;
     char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);
@@ -1296,7 +1372,7 @@ editToolbar()
     // ensureToolbarButton() should be called when IE isn't running, since it edits
     // registry entries behind IE's back. This is normally the case the first time
     // that the client is run after an install. If it isn't the case (say, another user 
-    // installed DumbHippo on the system), then we'll hope for the best. Testing
+    // installed DumbHippo on the system), then we'll hope for the best. Testi
     // indicates that things should work OK for new IE windows opened later, though
     // existing IE windows will, of course, not be affected.
     //
