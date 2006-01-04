@@ -1,8 +1,13 @@
 package com.dumbhippo.web;
 
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +28,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 	private static final int[] PHOTO_DIMENSIONS = { Configuration.SHOT_LARGE_SIZE, Configuration.SHOT_SMALL_SIZE };
 	protected static final int LARGEST_PHOTO_DIMENSION = Configuration.SHOT_LARGE_SIZE;
 	
+	@SuppressWarnings("unused")
 	private static final Log logger = GlobalSetup.getLog(AbstractPhotoServlet.class);
 
 	@Override
@@ -31,54 +37,54 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 	}	
 	
 	private BufferedImage scaleTo(BufferedImage image, int size) {
-		/* FIXME it would be nicer to avoid round-tripping a jpeg through a
-		 * BufferedImage
-		 */
-
 		/* To avoid questions of aspect ratio on the client side, we always 
 		 * generate a square image, adding transparent padding if required.
+		 * If it happens that image was originally a JPEG exactly size x size,
+		 * then it would be better to use that without converting to a PNG.
+		 * We don't expect that to happen very often.
 		 */
+		int origWidth = image.getWidth();
+		int origHeight = image.getHeight();
+
+		double scale;
+		if (origHeight > origWidth)
+			scale = (double)size / origHeight;
+		else
+			scale = (double)size / origWidth;
 		
-		double scaleX, scaleY;
-		double translateX, translateY;
-		double origWidth = image.getWidth();
-		double origHeight = image.getHeight();
-		if (origHeight > origWidth) {
-			scaleY = size / origHeight;
-			scaleX = scaleY;
-			translateY = 0;
-			translateX = (size - origWidth * scaleX) * 0.5;
+		int newWidth = (int)Math.round(scale * origWidth);
+		int newHeight = (int)Math.round(scale * origHeight);
+		int translateX = (size - newWidth) / 2;
+		int translateY = (size - newHeight) / 2;
+		
+		/* When upscaling, or scaling down by a small amount, we use Java2D and 
+		 * bi-cubic filtering. When scaling down by a larger factor, even using  
+		 * bi-cubic filtering gives pretty bad results, since we are sampling only 
+		 * a small number of source pixels. So, instead, we use the old java.awt image 
+		 * scaling facility which has SCALE_AREA_AVERAGING, which averages all pixels. 
+		 * Performance is not significant for us.
+		 */
+		Image scaled;
+		
+		if (scale > 0.75 && scale != 1.0) {
+			/* Our transformation */
+			AffineTransform tx = new AffineTransform();
+			tx.scale(scale, scale);
+			AffineTransformOp transformOp = new AffineTransformOp(tx, AffineTransformOp.TYPE_BICUBIC);
+			
+			scaled = transformOp.filter(image, null);
 		} else {
-			scaleX = size / origWidth;
-			scaleY = scaleX;
-			translateX = 0;
-			translateY = (size - origHeight * scaleY) * 0.5;
+			scaled = image.getScaledInstance(newWidth, newHeight, Image.SCALE_AREA_AVERAGING);
 		}
+		
+		/* If the source is both square and doesn't have alpha, we could use
+		 * TYPE_INT_RGB instead. */
+		BufferedImage dest = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB_PRE);
 
-		logger.debug("Scaling photo to " + size + " scaleX = " + scaleX + " scaleY = " + scaleY + " new width = "
-				+ image.getWidth() * scaleX + " new height = " + image.getHeight() * scaleY
-				+ " translation = +" + translateX + "+" + translateY);
-
-		/* Our transformation */
-		AffineTransform tx = new AffineTransform();
-		tx.translate(translateX, translateY);
-		tx.scale(scaleX, scaleY);
-		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+		Graphics2D graphics = dest.createGraphics();
+		graphics.drawImage(scaled, (int)Math.round(translateX), (int)Math.round(translateY), null);
 		
-		/* All-transparent dest image */
-		BufferedImage dest = new BufferedImage(image.getColorModel(),
-				image.getRaster().createCompatibleWritableRaster(size, size),
-				false, null);
-		
-		//logger.debug("src cm = " + image.getColorModel() + " dest cm = " + dest.getColorModel());
-		
-		// filled with transparent seems to be the default anyway
-		//Graphics2D graphics = dest.createGraphics();
-		//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
-		//graphics.fill(new Rectangle(0, 0, size, size));
-		
-		/* Draw the transformed image */
-		return op.filter(image, dest);	
+		return dest;	
 	}
 	
 	protected Collection<BufferedImage> readScaledPhotos(FileItem photo) throws IOException, HumanVisibleException {
