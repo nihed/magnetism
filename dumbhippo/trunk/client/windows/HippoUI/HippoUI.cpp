@@ -365,6 +365,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.viewers.append(viewer2);
         linkshare.viewers.append(viewer3);
         linkshare.viewers.append(viewer4);
+        linkshare.timeout = 0;
         onLinkMessage(linkshare);
 
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");

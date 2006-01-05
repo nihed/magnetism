@@ -632,9 +632,9 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
                 node = lm_message_node_get_child (child, "timeout");
                 if (node && node->value)
-                    linkshare.timeout.setUTF8(node->value);
+                    linkshare.timeout = atoi(node->value);
                 else
-                    linkshare.timeout = L"default";
+                    linkshare.timeout = 0; // Default
 
                 node = lm_message_node_get_child (child, "recipients");
                 if (!node)

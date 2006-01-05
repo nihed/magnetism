@@ -93,10 +93,20 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this._resetPageTimeout = function() {
         if (!this._idle) {
             this._clearPageTimeout();
-            var display = this;                
-            this._pageTimeoutId = window.setTimeout(function() {
-                display.displayTimeout()
-                }, 7 * 1000); // 7 seconds
+            // Handle infinite timeout   
+            if (this.position >= 0) {
+                var timeout = this.notifications[this.position].data.timeout
+                dh.util.debug("current page timeout is " + timeout)        
+                if (timeout < 0) {
+                    return;
+                } else if (timeout == 0) {
+                    timeout = 7 // default timeout
+                }
+                var display = this;                
+                this._pageTimeoutId = window.setTimeout(function() {
+                    display.goNextOrClose();
+                    }, timeout * 1000); // 7 seconds
+            }
         }
     }
 
@@ -153,20 +163,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this.goNext = function () {
         this.setPosition(this.position + 1)
     }
-    
-    this.displayTimeout = function () {
-        // Handle infinite timeout
-        dh.util.debug("displayTimeout, position=" + this.position)        
-        if (this.position >= 0) {
-            var timeout = this.notifications[this.position].data.timeout
-            dh.util.debug("current page timeout is " + timeout)        
-            if (timeout == "none") {
-                return;
-            }
-        }            
-        this.goNextOrClose();    
-    }
-    
+
     this.goNextOrClose = function () {
         if (this.position >= (this.notifications.length-1)) {
             this.close();
