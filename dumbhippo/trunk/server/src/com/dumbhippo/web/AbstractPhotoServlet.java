@@ -17,7 +17,6 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 
@@ -94,12 +93,9 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		return images;
 	}
 
-	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response, String filename, int version, String title, String url) throws ServletException, IOException, HumanVisibleException {
-		request.setAttribute("photoFilename", filename);		
-		request.setAttribute("photoVersion", version);
-		XmlBuilder link = new XmlBuilder();
-		link.appendTextNode("a", title, "href", url);
-		request.setAttribute("homePageLink", link.toString());
-		request.getRequestDispatcher("/newphoto").forward(request, response);			
+	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, HumanVisibleException {
+		if (reloadTo == null)
+			reloadTo = "/home";
+		response.sendRedirect(reloadTo);
 	}
 }

@@ -5,6 +5,7 @@
 <%@ attribute name="location" required="true" type="java.lang.String"%>
 <%@ attribute name="groupId" required="false" type="java.lang.String"%>
 <%@ attribute name="linkText" required="false" type="java.lang.String"%>
+<%@ attribute name="reloadTo" required="true" type="java.lang.String" %>
 
 <%-- We need to uniquify ids across the generated output --%>
 <c:if test="${empty dhUploadPhotoCount}">
@@ -23,4 +24,7 @@
 	<!-- we just always submit this, servlet ignores it if we aren't 
 		changing a group photo -->
 	<input type="hidden" name="groupId" value="${groupId}"/>
+	<input type="hidden" name="reloadTo" value="${reloadTo}"/>
 </form>
+
+

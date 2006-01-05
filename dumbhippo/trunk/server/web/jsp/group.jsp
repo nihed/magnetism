@@ -83,7 +83,7 @@
 		<div id="dhPhotoNameArea">
 		<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
 		<c:if test="${viewgroup.canModify}">
-			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="change group photo"/>
+			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="change group photo" reloadTo="/group?who=${viewgroup.viewedGroupId}"/>
 		</c:if>
 		<div id="dhName"><c:out value="${viewgroup.name}"/></div>
 		</div>

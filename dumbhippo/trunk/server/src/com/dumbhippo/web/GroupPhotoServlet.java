@@ -39,7 +39,6 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 			Map<String, String> formParameters, FileItem photo) throws HttpException, IOException, ServletException,
 			HumanVisibleException {
 
-		String groupName = "";
 		String groupId = formParameters.get("groupId");
 		if (groupId == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "group ID not provided");
@@ -63,13 +62,12 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		if (member == null || !member.canModify()) {
 			throw new HumanVisibleException("You can't change the photo for a group unless you're in the group");
 		}
-		groupName = group.getName();
+
 		Collection<BufferedImage> scaled = readScaledPhotos(photo);
 		writePhotos(scaled, groupId, true);
 		
-		int newVersion = groupSystem.incrementGroupVersion(group.getId());
+		groupSystem.incrementGroupVersion(group.getId());
 		
-		doFinalRedirect(request, response, groupId,
-				newVersion, "Go to group " + groupName, "/group?who=" + groupId);
+		doFinalRedirect(request, response);
 	}
 }

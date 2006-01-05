@@ -70,7 +70,6 @@
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
 		<dht:headshot person="${invite.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="change photo"/>
 		<div id="dhName"><dht:userNameEdit value="${invite.person.name}"/></div>
 		</div>
 

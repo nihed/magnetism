@@ -38,9 +38,8 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		String personId = person.getId();
 		writePhotos(scaled, personId, true);
 		
-		int newVersion = identitySpider.incrementUserVersion(person.getId());
+		identitySpider.incrementUserVersion(person.getId());
 				
-		doFinalRedirect(request, response, personId, 
-				newVersion, "Go to your page", "/home");
+		doFinalRedirect(request, response);
 	}
 }

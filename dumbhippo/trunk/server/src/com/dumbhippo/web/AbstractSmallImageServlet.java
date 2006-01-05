@@ -42,6 +42,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	protected Configuration config;
 	protected IdentitySpider identitySpider;
 	protected File saveDir;
+	protected String reloadTo;
 	
 	protected abstract String getRelativePath();
 	
@@ -133,6 +134,8 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		Person user = doLogin(request);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in to change a photo");
+		
+		reloadTo = formParameters.get("reloadTo");
 		
 		request.setAttribute("photoLocation", location);
 		logger.debug("File " + photo.getName() + " size " + photo.getSize() + " content-type "
