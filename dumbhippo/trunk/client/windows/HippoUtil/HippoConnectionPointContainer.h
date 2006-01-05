@@ -14,6 +14,10 @@
 #define DLLEXPORT __declspec(dllimport)
 #endif
 
+// This is just a private member, but export the instantiation to avoid
+// annoying warnings.
+template class DLLEXPORT HippoArray<HippoConnectionPoint *>;
+
 class DLLEXPORT HippoConnectionPointContainer :
     public IConnectionPointContainer,
     private IEnumConnectionPoints
