@@ -342,7 +342,7 @@ public class MessageSenderBean implements MessageSender {
 			extension.setDescription(post.getText());
 			extension.setPostInfo(post.getInfo());
 			if (isTutorialPost)
-				extension.setTimeout("none");
+				extension.setTimeout("-1");
 			
 			if (viewers != null) {
 				Set<PersonView> viewerNames = new HashSet<PersonView>();
