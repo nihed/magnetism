@@ -94,7 +94,7 @@ public class MessageSenderBean implements MessageSender {
 		private Guid senderGuid;
 		private String senderPhotoUrl;
 		
-		private Set<String> recipientNames;
+		private Set<PersonView> recipients;
 		
 		private String url;
 		private String postInfo;
@@ -107,7 +107,7 @@ public class MessageSenderBean implements MessageSender {
 
 		private Set<String> groupRecipients;
 		
-		private List<String> viewers;
+		private Set<PersonView> viewers;
 		
 		private String timeout;
 
@@ -123,8 +123,8 @@ public class MessageSenderBean implements MessageSender {
 		public void setPostId(Guid postId) {
 			this.guid = postId;
 		}
-		public void setRecipientNames(Set<String> recipientNames) {
-			this.recipientNames = recipientNames;
+		public void setRecipients(Set<PersonView> recipients) {
+			this.recipients = recipients;
 		}
 		public void setGroupRecipients(Set<String> groupRecipients) {
 			this.groupRecipients = groupRecipients;
@@ -138,8 +138,20 @@ public class MessageSenderBean implements MessageSender {
 		public void setDescription(String description) {
 			this.description = description;
 		}
-		public void setViewers(List<String> viewers) {
+		public void setViewers(Set<PersonView> viewers) {
 			this.viewers = viewers;
+		}
+		
+		private static void appendPersonViews(XmlBuilder builder, String outerNode, String nodeName, Set<PersonView> views) {
+			builder.openElement(outerNode);
+			for (PersonView recipient : views) {
+				Account acct = recipient.getAccount();
+				if (acct != null)
+					builder.appendTextNode(nodeName, recipient.getName(), "id", acct.getId());
+				else
+					builder.appendTextNode(nodeName, recipient.getName());
+			}
+			builder.closeElement();
 		}
 
 		public String toXML() {
@@ -153,22 +165,14 @@ public class MessageSenderBean implements MessageSender {
 			builder.appendTextNode("postInfo", postInfo);
 			if (timeout != null)
 				builder.appendTextNode("timeout", timeout);			
-			builder.openElement("recipients");
-			for (String recipient : recipientNames) {
-				builder.appendTextNode("recipient", recipient);
-			}
-			builder.closeElement();
+			appendPersonViews(builder, "recipients", "recipient", recipients);
 			builder.openElement("groupRecipients");
 			for (String recipient : groupRecipients) {
 				builder.appendTextNode("recipient", recipient);
 			}
 			builder.closeElement();
 			if (viewers != null) {
-				builder.openElement("viewers");
-				for (String recipient : viewers) {
-					builder.appendTextNode("viewer", recipient);
-				}
-				builder.closeElement();					
+				appendPersonViews(builder, "viewers", "viewer", viewers);			
 			}
 			builder.closeElement();
 			return builder.toString();
@@ -315,10 +319,10 @@ public class MessageSenderBean implements MessageSender {
 
 			PersonView recipientView = identitySpider.getPersonView(viewpoint, post.getPoster());
 			String senderName = recipientView.getName();
-			Set<String> recipientNames = new HashSet<String>();
+			Set<PersonView> recipientViews = new HashSet<PersonView>();
 			for (Resource r : post.getPersonRecipients()) {
 				PersonView viewedP = identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE);
-				recipientNames.add(viewedP.getName());
+				recipientViews.add(viewedP);
 			}
 			
 			Set<String> groupRecipientNames = new HashSet<String>();
@@ -331,7 +335,7 @@ public class MessageSenderBean implements MessageSender {
 			extension.setSenderName(senderName);
 			extension.setSenderGuid(post.getPoster().getGuid());
 			extension.setSenderPhotoUrl(recipientView.getSmallPhotoUrl());
-			extension.setRecipientNames(recipientNames);
+			extension.setRecipients(recipientViews);
 			extension.setGroupRecipients(groupRecipientNames);
 			extension.setUrl(url);
 			extension.setTitle(title);
@@ -341,10 +345,10 @@ public class MessageSenderBean implements MessageSender {
 				extension.setTimeout("none");
 			
 			if (viewers != null) {
-				List<String> viewerNames = new ArrayList<String>();
+				Set<PersonView> viewerNames = new HashSet<PersonView>();
 				for (User u : viewers) {
 					PersonView viewedP = identitySpider.getPersonView(viewpoint, u);
-					viewerNames.add(viewedP.getName());
+					viewerNames.add(viewedP);
 				}
 				extension.setViewers(viewerNames);
 			}

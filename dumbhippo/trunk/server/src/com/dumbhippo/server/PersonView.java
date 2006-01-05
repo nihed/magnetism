@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.dumbhippo.TypeFilteredCollection;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -140,6 +141,17 @@ public class PersonView extends EntityView {
 			return user.getId();
 		else
 			return null;
+	}
+	
+	/**
+	 * Gets the account associated with this person, or null if none.
+	 * 
+	 * @return the account or null
+	 */	
+	public Account getAccount() {
+		if (user != null)
+			return user.getAccount();
+		return null;
 	}
 	
 	public boolean isInvited() {
