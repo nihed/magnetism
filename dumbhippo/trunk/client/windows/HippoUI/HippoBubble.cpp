@@ -133,10 +133,13 @@ HippoBubble::embedIE(void)
     ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
     HippoBSTR appletURLStr;
     ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
+    HippoBSTR selfIdStr;
+    ui_->getLoginId(&selfIdStr);
     variant_t serverUrl(serverURLStr.m_str);
     variant_t appletUrl(appletURLStr.m_str);
+    variant_t selfId(selfIdStr.m_str);
     variant_t result;
-    ie_->invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
+    ie_->invokeJavascript(L"dhInit", &result, 3, &serverUrl, &appletUrl, &selfId);
 
     // Set the initial value of the idle state
     doSetIdle();
@@ -185,6 +188,37 @@ hippoStrArrayToSafeArray(HippoArray<HippoBSTR> &args)
     return ret;
 }
 
+static SAFEARRAY *
+hippoLinkRecipientArrayToSafeArray(HippoArray<HippoLinkRecipient> &args)
+{
+    SAFEARRAYBOUND dim[1];
+    dim[0].lLbound= 0;
+    dim[0].cElements = args.length();
+    SAFEARRAY *ret = SafeArrayCreate(VT_VARIANT, 1, dim);
+    for (unsigned int i = 0; i < args.length(); i++) {
+        VARIANT *data;
+
+        SAFEARRAYBOUND subdim[1];
+        subdim[0].lLbound = 0;
+        subdim[0].cElements = 2;
+        SAFEARRAY *val = SafeArrayCreate(VT_VARIANT, 1, subdim);
+        variant_t vId(args[i].id);
+        variant_t vName(args[i].name);
+        SafeArrayAccessData(val, (void**)&data);
+        VariantCopy(&(data[0]), &vId);
+        VariantCopy(&(data[1]), &vName);
+        SafeArrayUnaccessData(val);
+
+        VARIANT vArray;
+        vArray.vt = VT_ARRAY | VT_VARIANT;
+        vArray.parray = val;
+        SafeArrayAccessData(ret, (void**)&data);
+        VariantCopy(&(data[i]), &vArray);
+        SafeArrayUnaccessData(ret);
+    }
+    return ret;
+}
+
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
@@ -203,7 +237,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     variant_t linkTitle(share.title);
     variant_t linkURL(share.url);
     variant_t linkDescription(share.description);
-    SAFEARRAY *personRecipients = hippoStrArrayToSafeArray(share.personRecipients);
+    SAFEARRAY *personRecipients = hippoLinkRecipientArrayToSafeArray(share.personRecipients);
     VARIANT personRecipientsArg;
     personRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
     personRecipientsArg.parray = personRecipients;
@@ -211,7 +245,7 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     VARIANT groupRecipientsArg;
     groupRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
     groupRecipientsArg.parray = groupRecipients;
-    SAFEARRAY *viewers = hippoStrArrayToSafeArray(share.viewers);
+    SAFEARRAY *viewers = hippoLinkRecipientArrayToSafeArray(share.viewers);
     VARIANT viewersArg;
     viewersArg.vt = VT_ARRAY | VT_VARIANT;
     viewersArg.parray = viewers;

@@ -343,15 +343,28 @@ HippoUI::create(HINSTANCE instance)
                                       "we can see wrapping and all sorts of fun things like that which will "
                                       "cause differences from what we would have if we had a short title without "
                                       "the kind of excessive length that you see here.");
-        linkshare.personRecipients.append(HippoBSTR(L"Some Person"));
+        HippoLinkRecipient personRecipient;
+        personRecipient.name = L"person@example.com";
+        linkshare.personRecipients.append(personRecipient);
         linkshare.groupRecipients.append(HippoBSTR(L"Some Group"));
         onLinkMessage(linkshare);
 
         linkshare.postId.setUTF8("24");
-        linkshare.viewers.append(HippoBSTR(L"A Viewer"));
-        linkshare.viewers.append(HippoBSTR(L"Owen Taylor"));
-        linkshare.viewers.append(HippoBSTR(L"Colin Walters"));
-        linkshare.viewers.append(HippoBSTR(L"Bryan Clark"));
+        HippoLinkRecipient viewer1;
+        HippoLinkRecipient viewer2;
+        HippoLinkRecipient viewer3;
+        HippoLinkRecipient viewer4;
+        viewer1.name = L"person@example.com";
+        viewer2.id = L"15a1fbae7f2807";
+        viewer2.name = L"Owen Taylor";
+        viewer3.id = L"25a1fbae7f2807";
+        viewer3.name = L"Colin Walters";
+        viewer4.id = L"35a1fbae7f2807";
+        viewer4.name = L"Bryan Clark";
+        linkshare.viewers.append(viewer1);
+        linkshare.viewers.append(viewer2);
+        linkshare.viewers.append(viewer3);
+        linkshare.viewers.append(viewer4);
         onLinkMessage(linkshare);
 
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
@@ -1113,6 +1126,14 @@ HippoUI::getRemoteURL(BSTR  appletName,
         return hr;
 
     return url.CopyTo(result);
+}
+
+// Return the GUID of the current user
+HRESULT
+HippoUI::getLoginId(BSTR *ret)
+{
+    // GUID is same as username
+    return im_.getUsername(ret);
 }
 
 bool

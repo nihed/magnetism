@@ -47,6 +47,8 @@ public:
     // Get the current state
     State getState();
 
+    HRESULT getUsername(BSTR *ret);
+
 private:
     HRESULT getAuthURL(BSTR *result);
 

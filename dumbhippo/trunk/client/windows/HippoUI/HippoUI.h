@@ -25,6 +25,12 @@ struct HippoBrowserInfo
     DWORD cookie;
 };
 
+struct HippoLinkRecipient
+{
+    HippoBSTR id;
+    HippoBSTR name;
+};
+
 struct HippoLinkShare
 {
     HippoBSTR postId;
@@ -34,9 +40,9 @@ struct HippoLinkShare
     HippoBSTR url;
     HippoBSTR title;
     HippoBSTR description;
-    HippoArray<HippoBSTR> personRecipients;
+    HippoArray<HippoLinkRecipient> personRecipients;
     HippoArray<HippoBSTR> groupRecipients;
-    HippoArray<HippoBSTR> viewers;
+    HippoArray<HippoLinkRecipient> viewers;
     HippoBSTR info;
     HippoBSTR timeout;
 };
@@ -93,6 +99,7 @@ public:
 
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
+    HRESULT getLoginId(BSTR *result);
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 

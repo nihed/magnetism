@@ -75,6 +75,13 @@ HippoIM::getState()
     return state_;
 }
 
+HRESULT
+HippoIM::getUsername(BSTR *ret)
+{
+    *ret = username_;
+    return S_OK;
+}
+
 void 
 HippoIM::stateChange(State state)
 {
@@ -638,9 +645,12 @@ HippoIM::onMessage (LmMessageHandler *handler,
                         continue;
                     if (!subchild->value)
                         continue;
-                    HippoBSTR str;
-                    str.setUTF8(subchild->value);
-                    linkshare.personRecipients.append(str);
+                    HippoLinkRecipient recipient;
+                    recipient.name.setUTF8(subchild->value);
+                    const char *id = lm_message_node_get_attribute(subchild, "id");
+                    if (id)
+                        recipient.id.setUTF8(id);
+                    linkshare.personRecipients.append(recipient);
                 }
                 node = lm_message_node_get_child (child, "groupRecipients");
                 if (!node)
@@ -661,9 +671,12 @@ HippoIM::onMessage (LmMessageHandler *handler,
                             continue;
                         if (!subchild->value)
                             continue;
-                        HippoBSTR str;
-                        str.setUTF8(subchild->value);
-                        linkshare.viewers.append(str);
+                        HippoLinkRecipient recipient;
+                        recipient.name.setUTF8(subchild->value);
+                        const char *id = lm_message_node_get_attribute(subchild, "id");
+                        if (id)
+                            recipient.id.setUTF8(id);
+                        linkshare.viewers.append(recipient);
                     }
                 }
 

@@ -159,8 +159,23 @@ span.dh-notification-recipient
     font-weight: bold
 }
 
+span.dh-notification-self-recipient
+{
+    font-weight: bold
+    font-style: italic;
+}
+
 span.dh-notification-group-recipient
 {
     font-weight: bold;
     font-size: 120%;
+}
+
+span.dh-notification-viewer
+{
+}
+
+span.dh-notification-self-viewer
+{
+    font-weight: bold;
 }

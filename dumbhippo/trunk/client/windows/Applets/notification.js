@@ -7,19 +7,22 @@ dh.display = null;
 dh.notification.extensions = {}
 
 // Global function called immediately after document.write
-var dhInit = function(serverUrl, appletUrl) {
+var dhInit = function(serverUrl, appletUrl, selfId) {
     var closeButton = document.getElementById("dh-close-button")
     closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
             e.stopPropagation();
             window.external.application.Close();
             return false;
     })
-    dh.display = new dh.notification.Display(serverUrl, appletUrl); 
+    dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
-dh.notification.Display = function (serverUrl, appletUrl) {
+dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
     this._idle = false
+    
+    // Current user guid
+    this.selfId = selfId
     
     // Whether the bubble is showing
     this._visible = false
@@ -284,7 +287,32 @@ dh.notification.Display = function (serverUrl, appletUrl) {
         var bodyDiv = document.getElementById("dh-notification-body")
         bodyDiv.style.height = desiredHeight + "px"
     }
-    
+     
+    this.renderRecipient = function (recipient, normalCssClass, selfCssClass) {
+        var id = recipient[0]
+        var name = recipient[1]
+        dh.util.debug("rendering recipient with name=" + name)
+        var cssClass = normalCssClass;
+        if (id == this.selfId) {
+            name = "you"
+            cssClass = selfCssClass
+        }
+        var node = document.createElement("span")
+        node.setAttribute("className", cssClass)
+        node.appendChild(document.createTextNode(name))       
+        return node
+    }
+     
+    this.renderRecipients = function (node, arr, normalCssClass, selfCssClass) {
+        for (var i = 0; i < arr.length; i++) {
+            var recipientNode = this.renderRecipient(arr[i], normalCssClass, selfCssClass)
+            node.appendChild(recipientNode)
+            if (i < arr.length - 1) {
+                node.appendChild(document.createTextNode(", "))
+            }
+        }  
+    }
+  
     this._display_linkShare = function (share) {
         dh.util.debug("displaying " + share.postId + " " + share.linkTitle)
 
@@ -315,15 +343,15 @@ dh.notification.Display = function (serverUrl, appletUrl) {
 
         var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
         metaDiv.appendChild(document.createTextNode("This was sent to "))
-        var personRecipients = dh.core.adaptExternalArray(share["personRecipients"])
-        var groupRecipients = dh.core.adaptExternalArray(share["groupRecipients"])  
+        var personRecipients = share.personRecipients
+        var groupRecipients = share.groupRecipients
         // FIXME this is all hostile to i18n
-        dh.util.dom.joinSpannedText(metaDiv, personRecipients, "dh-notification-recipient", ", ")
+        this.renderRecipients(metaDiv, personRecipients, "dh-notification-recipient", "dh-notification-self-recipient")
         if (personRecipients.length > 0 && groupRecipients.length > 0) {
             metaDiv.appendChild(document.createTextNode(" and "))
         }
         if (groupRecipients.length > 1) {
-            metaDiv.appendChild(document.createTextNode("the groups "))
+            metaDiv.appendChild(document.createTextNode("the groups "))            
             dh.util.dom.joinSpannedText(metaDiv, groupRecipients, "dh-notification-group-recipient", ", ")
         } else if (groupRecipients.length == 1) {
             metaDiv.appendChild(document.createTextNode("the "))
@@ -331,12 +359,12 @@ dh.notification.Display = function (serverUrl, appletUrl) {
             metaDiv.appendChild(document.createTextNode(" group"))
         }
         
-        var viewers = dh.core.adaptExternalArray(share["viewers"])
+        var viewers = share.viewers
         if (viewers.length > 0) {
             var viewersDiv = dh.util.dom.getClearedElementById("dh-notification-viewers")
             dh.util.dom.appendSpanText(viewersDiv, "Viewed by: ", "dh-notification-viewers-label")
-            dh.util.dom.joinSpannedText(viewersDiv, viewers, "dh-notification-viewer", ", ")
-            
+            this.renderRecipients(viewersDiv, viewers, "dh-notification-viewer", "dh-notification-self-viewer")            
+
             // Need to pass in the viewer ID as well as name to here to display
             var viewersPhotoDiv = document.getElementById("dh-notification-viewers-photo")
             viewersPhotoDiv.style.display = "None"
@@ -350,6 +378,16 @@ dh.notification.Display = function (serverUrl, appletUrl) {
     }    
 }
 
+dhAdaptLinkRecipients = function (recipients) {
+    dh.util.debug("adapting array")
+    var ret = dh.core.adaptExternalArray(recipients)
+    for (var i = 0; i < ret.length; i++) {
+        dh.util.debug("adapting " + ret[i])
+        ret[i] = dh.core.adaptExternalArray(ret[i])
+    }
+    return ret;
+}
+
 // Global namespace since it's painful to do anything else from C++
 // Note if you change the parameters to this function, you must change
 // HippoBubble.cpp
@@ -358,7 +396,10 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
     dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
     dh.util.debug("postinfo: " + postInfo)    
     dh.display.setVisible(true)
-    dh.display.addPersonName(senderId, senderName)                            
+    dh.display.addPersonName(senderId, senderName)
+    personRecipients = dhAdaptLinkRecipients(personRecipients)
+    groupRecipients = dh.core.adaptExternalArray(groupRecipients)
+    viewers = dhAdaptLinkRecipients(viewers)
     dh.display.addLinkShare({senderId: senderId,
                              senderPhotoUrl: senderPhotoUrl,
                              postId: postId,
