@@ -338,6 +338,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
         linkshare.senderName.setUTF8("Owen Taylor");
         linkshare.senderId.setUTF8("15a1fbae7f2807");
+        linkshare.senderPhotoUrl.setUTF8("/files/headshots/48/15a1fbae7f2807");
         linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
                                       "we can see wrapping and all sorts of fun things like that which will "
                                       "cause differences from what we would have if we had a short title without "
