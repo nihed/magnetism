@@ -337,7 +337,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.postId.setUTF8("42");
         linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
         linkshare.senderName.setUTF8("Owen Taylor");
-        linkshare.senderId.setUTF8("1327573584f715a1fbae7f2807010000c9bdb4786d081e58");
+        linkshare.senderId.setUTF8("15a1fbae7f2807");
         linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
                                       "we can see wrapping and all sorts of fun things like that which will "
                                       "cause differences from what we would have if we had a short title without "
@@ -597,7 +597,7 @@ HippoUI::launchBrowser(BSTR url)
 
                 long windowLong;
                 if (SUCCEEDED(browser->get_HWND(&windowLong))) {
-                    HWND window = (HWND)windowLong;
+                    HWND window = (HWND)(size_t)windowLong; // Suppress a warning
 
                     // If the window is minimized, we want to restore it, but we
                     // have to be careful not to restore a maximized window, which
@@ -935,7 +935,7 @@ HippoUI::checkIdle(gpointer data)
      */
     BOOL screenSaverRunning;
     SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, (void *)&screenSaverRunning, 0);
-    if (ui->screenSaverRunning_ != screenSaverRunning != FALSE) {
+    if (!ui->screenSaverRunning_ != !screenSaverRunning) {
         ui->screenSaverRunning_ = screenSaverRunning != FALSE;
         ui->bubble_.setScreenSaverRunning(ui->screenSaverRunning_);
     }
