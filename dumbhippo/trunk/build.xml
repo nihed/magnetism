@@ -2,7 +2,7 @@
     <target name="compile">
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
-        <ant dir="jive_messenger/" antfile="build/build.xml" target="plugins"/>    	
+        <ant dir="wildfire/" antfile="build/build.xml" target="plugins"/>    	
         <ant dir="imbot" target="all"/>
     </target>
 
