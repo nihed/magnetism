@@ -12,6 +12,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.roster.RosterItemProvider;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
@@ -164,7 +165,8 @@ public class ImportExportPlugin implements Plugin {
         List<String> duplicateUsers = new ArrayList<String>();
         
         UserManager userManager = UserManager.getInstance();
-        RosterItemProvider rosterItemProvider = RosterItemProvider.getInstance();
+	RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
+        RosterItemProvider rosterItemProvider = rosterManager.getRosterItemProvider();
     	
         Map<String, List>  rosterMap = new HashMap<String, List>();
         

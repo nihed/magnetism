@@ -15,6 +15,9 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import org.jivesoftware.util.Cache;
 import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.user.User;
@@ -43,6 +46,7 @@ import java.util.*;
 public class RosterManager extends BasicModule implements GroupEventListener {
 
     private Cache rosterCache = null;
+    private RosterItemProvider rosterItemProvider = null;
     private XMPPServer server;
     private RoutingTable routingTable;
 
@@ -50,6 +54,18 @@ public class RosterManager extends BasicModule implements GroupEventListener {
         super("Roster Manager");
         // Add the new instance as a listener of group events
         GroupEventDispatcher.addListener(this);
+        
+        // Load provider
+        String className = JiveGlobals.getXMLProperty("provider.rosteritem.className",
+        "org.jivesoftware.wildfire.roster.DefaultRosterItemProvider");
+        try {
+        	Class c = ClassUtils.forName(className);
+        	rosterItemProvider = (RosterItemProvider)c.newInstance();
+        }
+        catch (Exception e) {
+        	Log.error("Error loading roster item provider: " + className, e);
+        	rosterItemProvider = new DefaultRosterItemProvider();
+        }
     }
 
     /**
@@ -111,8 +127,7 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             CacheManager.getCache("username2roster").remove(username);
 
             // Get the rosters that have a reference to the deleted user
-            RosterItemProvider rosteItemProvider = RosterItemProvider.getInstance();
-            Iterator<String> usernames = rosteItemProvider.getUsernames(user.toBareJID());
+            Iterator<String> usernames = rosterItemProvider.getUsernames(user.toBareJID());
             while (usernames.hasNext()) {
                 username = usernames.next();
                 // Get the roster that has a reference to the deleted user
@@ -757,5 +772,14 @@ public class RosterManager extends BasicModule implements GroupEventListener {
             }
         }
         return false;
+    }
+
+    /**
+     * Gets the RosterItemProvider.
+     * 
+     * @return the RosterItemProvider
+     */
+    public RosterItemProvider getRosterItemProvider() {
+	return rosterItemProvider;
     }
 }

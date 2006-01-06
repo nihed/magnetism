@@ -57,7 +57,7 @@ public class ClientSession extends Session {
 
     private static Connection.TLSPolicy tlsPolicy;
 	private static Connection.CompressionPolicy compressionPolicy;
-
+	
     /**
      * Milliseconds a connection has to be idle to be closed. Default is 30 minutes. Sending
      * stanzas to the client is not considered as activity. We are only considering the connection
@@ -280,8 +280,10 @@ public class ClientSession extends Session {
             }
             sb.append("</starttls>");
         }
+        // Smack doesn't include DIGEST-MD5 support with SASL, so disable
+        // SASL support for now
         // Include available SASL Mechanisms
-        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        // sb.append(SASLAuthentication.getSASLMechanisms(session));
         // Include Stream features
         String specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
