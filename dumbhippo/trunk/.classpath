@@ -10,10 +10,10 @@
 			<accessrule kind="accessible" pattern="**/awt/Graphics2D"/>
 			<accessrule kind="accessible" pattern="**/awt/AlphaComposite"/>
 			<accessrule kind="accessible" pattern="**/awt/Rectangle"/>
+			<accessrule kind="accessible" pattern="**/awt/Image"/>
 			<accessrule kind="discouraged" pattern="**/awt/**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry kind="output" path="eclipse-bin"/>
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-logging-api-1.0.4.jar"/>
@@ -46,4 +46,5 @@
 	<classpathentry kind="lib" path="hungry/lib/xmlParserAPIs.jar"/>
 	<classpathentry kind="lib" path="hungry/lib/jwebunit-1.2.jar"/>
 	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.jar"/>
+	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
