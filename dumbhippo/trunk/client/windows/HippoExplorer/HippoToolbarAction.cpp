@@ -250,14 +250,20 @@ HippoToolbarAction::createWindow()
     return true;
 }
 
-// Check first for a non-debug instance of HippoUI, then for the debug instance
-// We favor the non-debug instance to let people use DumbHippo while hacking it.
+// Check first for a non-debug instance of HippoUI, then a "dogfood" (testing)
+// instance, then the debug instance. We favor the non-debug instance to let 
+// people use DumbHippo while hacking it.
 HRESULT
 HippoToolbarAction::getUI(IHippoUI **ui)
 {
     HippoPtr<IUnknown> unknown;
 
     if (SUCCEEDED(GetActiveObject(CLSID_HippoUI, NULL, &unknown)) &&
+        SUCCEEDED(unknown->QueryInterface<IHippoUI>(ui)))
+            return S_OK;
+
+    unknown = NULL;
+    if (SUCCEEDED(GetActiveObject(CLSID_HippoUI_Dogfood, NULL, &unknown)) &&
         SUCCEEDED(unknown->QueryInterface<IHippoUI>(ui)))
             return S_OK;
 

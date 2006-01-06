@@ -60,6 +60,10 @@ private:
     DWORD registerCookie_;
     bool registered_;
 
+    HippoPtr<IHippoUI> dogfoodUi_;
+    DWORD dogfoodRegisterCookie_;
+    bool dogfoodRegistered_;
+
     HippoPtr<IHippoUI> debugUi_;
     DWORD debugRegisterCookie_;
     bool debugRegistered_;

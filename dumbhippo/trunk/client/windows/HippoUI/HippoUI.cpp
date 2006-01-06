@@ -38,11 +38,11 @@ static const int USER_IDLE_TIME = 30 * 1000;
 // How often to check if the user is idle (in ms)
 static const int CHECK_IDLE_TIME = 5 * 1000;
 
-HippoUI::HippoUI(bool debug, bool replaceExisting, bool initialDebugShare) 
-    : preferences_(debug)
+HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
+    : preferences_(instanceType)
 {
     refCount_ = 1;
-    debug_ = debug;
+    instanceType_ = instanceType;
     replaceExisting_ = replaceExisting;
     initialShowDebugShare_ = initialDebugShare;
 
@@ -253,9 +253,9 @@ HippoUI::updateIcons(void)
     TCHAR *icon;
 
     if (connected_) {
-        icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG : IDI_DUMBHIPPO);
+        icon = MAKEINTRESOURCE(preferences_.getInstanceIcon());
     } else {
-        icon = MAKEINTRESOURCE(debug_ ? IDI_DUMBHIPPO_DEBUG_DISCONNECTED : IDI_DUMBHIPPO_DISCONNECTED);
+        icon = MAKEINTRESOURCE(preferences_.getInstanceDisonnectedIcon());
     }
     if (smallIcon_ != NULL)
         DestroyIcon(smallIcon_);
@@ -755,7 +755,7 @@ RETRY_REGISTER:
 
     QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
     HRESULT hr = RegisterActiveObject(pHippoUI, 
-                                      debug_ ? CLSID_HippoUI_Debug : CLSID_HippoUI,
+                                      *preferences_.getInstanceClassId(),
                                       ACTIVEOBJECT_STRONG, &registerHandle_);
     pHippoUI->Release();
 
@@ -775,7 +775,7 @@ RETRY_REGISTER:
 
         HippoPtr<IUnknown> unknown;
         HippoPtr<IHippoUI> oldUI;
-        if (SUCCEEDED (GetActiveObject(debug_ ? CLSID_HippoUI_Debug : CLSID_HippoUI, NULL, &unknown)))
+        if (SUCCEEDED (GetActiveObject(*preferences_.getInstanceClassId(), NULL, &unknown)))
             unknown->QueryInterface<IHippoUI>(&oldUI);
 
         if (replaceExisting_) {
@@ -819,11 +819,11 @@ HippoUI::revokeActive()
 void 
 HippoUI::registerStartup()
 {
-    if (!debug_) {
+    if (instanceType_ == HIPPO_INSTANCE_NORMAL) {
         WCHAR commandLine[MAX_PATH];
         GetModuleFileName(instance_, commandLine, sizeof(commandLine) / sizeof(commandLine[0]));
         HippoRegistrar registrar(NULL);
-        registrar.registerStartupProgram(L"DumbHippo", commandLine);
+
     }
 }
 
@@ -831,7 +831,7 @@ HippoUI::registerStartup()
 void
 HippoUI::unregisterStartup()
 {
-    if (!debug_) {
+    if (instanceType_ == HIPPO_INSTANCE_NORMAL) {
         HippoRegistrar registrar(NULL);
         registrar.unregisterStartupProgram(L"DumbHippo");
     }
@@ -1444,11 +1444,11 @@ installLaunch(HINSTANCE instance)
 }
 
 static void
-quitExisting(bool debug)
+quitExisting(HippoInstanceType instanceType)
 {
     HippoPtr<IUnknown> unknown;
     HippoPtr<IHippoUI> oldUI;
-    if (SUCCEEDED (GetActiveObject(debug ? CLSID_HippoUI_Debug : CLSID_HippoUI, NULL, &unknown)))
+    if (SUCCEEDED (GetActiveObject(*HippoPreferences::getInstanceClassId(instanceType), NULL, &unknown)))
        unknown->QueryInterface<IHippoUI>(&oldUI);
 
     if (oldUI)
@@ -1487,11 +1487,14 @@ WinMain(HINSTANCE hInstance,
     char **argv;
 
     static gboolean debug = FALSE;
+    static gboolean dogfood = FALSE;
     static gboolean configFlag = FALSE;
     static gboolean doInstallLaunch = FALSE;
     static gboolean replaceExisting = FALSE;
     static gboolean doQuitExisting = FALSE;
     static gboolean initialDebugShare = FALSE;
+
+    HippoInstanceType instanceType;
 
     char *command_line = GetCommandLineA();
     GError *error = NULL;
@@ -1503,6 +1506,7 @@ WinMain(HINSTANCE hInstance,
 
     static const GOptionEntry entries[] = {
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
+        { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doInstallLaunch, "Run appropriately at the end of the install" },
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replaceExisting, "Replace existing instance, if any" },
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doQuitExisting, "Tell any existing instances to quit" },
@@ -1521,6 +1525,13 @@ WinMain(HINSTANCE hInstance,
         return 1;
     }
 
+    if (debug)
+        instanceType = HIPPO_INSTANCE_DEBUG;
+    else if (dogfood)
+        instanceType = HIPPO_INSTANCE_DOGFOOD;
+    else
+        instanceType = HIPPO_INSTANCE_NORMAL;
+
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (doInstallLaunch) {
         installLaunch(hInstance);
@@ -1529,7 +1540,7 @@ WinMain(HINSTANCE hInstance,
 
     if (doQuitExisting) {
         CoInitialize(NULL);
-        quitExisting(debug != FALSE);
+        quitExisting(instanceType);
         CoUninitialize();
         return 0;
     }
@@ -1547,7 +1558,7 @@ WinMain(HINSTANCE hInstance,
 
     editToolbar();
 
-    ui = new HippoUI(debug != FALSE,
+    ui = new HippoUI(instanceType,
                      replaceExisting != FALSE, initialDebugShare != FALSE);
     if (!ui->create(hInstance))
         return 0;

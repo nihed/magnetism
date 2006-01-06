@@ -32,6 +32,8 @@
 #define IDR_HTML1                       142
 #define IDR_DEBUG                       144
 #define IDI_DUMBHIPPO_DEBUG             204
+#define IDI_DUMBHIPPO_DOGFOOD           205
+#define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
 #define IDC_REMEMBERPASS                1003

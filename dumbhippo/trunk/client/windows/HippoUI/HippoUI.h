@@ -51,7 +51,7 @@ class HippoUI
 : public IHippoUI 
 {
 public:
-    HippoUI(bool debug, bool replaceExisting, bool initialDebugShare);
+    HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare);
     ~HippoUI();
 
     //IUnknown methods
@@ -160,7 +160,7 @@ private:
 private:
     // If true, this is a debug instance, acts as a separate global
     // singleton and has a separate registry namespace
-    bool debug_;
+    HippoInstanceType instanceType_;
     // If true, then on startup if another instance is already running,
     // tell it to exit rather than erroring out.
     bool replaceExisting_;

@@ -23,6 +23,7 @@ HippoTracker::HippoTracker(void)
                          NULL);
 
     registered_ = false;
+    dogfoodRegistered_ = false;
     debugRegistered_ = false;
 
     uiStartedMessage_ = RegisterWindowMessage(TEXT("HippoUIStarted"));
@@ -226,6 +227,17 @@ HippoTracker::registerBrowser()
     }
 
 
+    if (!dogfoodRegistered_ && dogfoodUi_ && site_) {
+        dogfoodRegistered_ = true;
+        HRESULT hr = dogfoodUi_->RegisterBrowser(site_, &dogfoodRegisterCookie_); // may reenter
+        if (FAILED (hr))
+            dogfoodRegistered_ = false;
+        else {
+            lastUrl_ = NULL;
+            lastName_ = NULL;
+        }
+    }
+
     if (!debugRegistered_ && debugUi_ && site_) {
         debugRegistered_ = true;
         HRESULT hr = debugUi_->RegisterBrowser(site_, &debugRegisterCookie_); // may reenter
@@ -244,6 +256,11 @@ HippoTracker::unregisterBrowser()
     if (registered_) {
         registered_ = false;
         ui_->UnregisterBrowser(registerCookie_); // May recurse
+    }
+
+    if (dogfoodRegistered_) {
+        dogfoodRegistered_ = false;
+        dogfoodUi_->UnregisterBrowser(dogfoodRegisterCookie_); // May recurse
     }
 
     if (debugRegistered_) {
@@ -273,6 +290,8 @@ HippoTracker::updateBrowser()
 
         if (registered_)
             ui_->UpdateBrowser(registerCookie_, url, name);
+        if (dogfoodRegistered_)
+            dogfoodUi_->UpdateBrowser(dogfoodRegisterCookie_, url, name);
         if (debugRegistered_)
             debugUi_->UpdateBrowser(debugRegisterCookie_, url, name);
     }
@@ -303,6 +322,8 @@ HippoTracker::clearUI()
  
     if (ui_)
         ui_ = NULL;
+    if (dogfoodUi_)
+        dogfoodUi_ = NULL;
     if (debugUi_)
         debugUi_ = NULL;
 
@@ -360,6 +381,10 @@ HippoTracker::onUIStarted(void)
     HippoPtr<IUnknown> unknown;
     if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
         unknown->QueryInterface<IHippoUI>(&ui_);
+
+    unknown = NULL;
+    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Dogfood, NULL, &unknown)))
+        unknown->QueryInterface<IHippoUI>(&dogfoodUi_);
 
     unknown = NULL;
     if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)))

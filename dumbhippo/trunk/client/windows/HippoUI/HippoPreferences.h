@@ -5,10 +5,16 @@
 
 #include <HippoUtil.h>
 
+enum HippoInstanceType {
+    HIPPO_INSTANCE_NORMAL,
+    HIPPO_INSTANCE_DOGFOOD,
+    HIPPO_INSTANCE_DEBUG
+};
+
 class HippoPreferences
 {
 public:
-    HippoPreferences(bool debug);
+    HippoPreferences(HippoInstanceType instanceType);
 
     HRESULT getMessageServer(BSTR *server);
     void setMessageServer(BSTR server);
@@ -23,6 +29,13 @@ public:
     bool getSignIn();
     void setSignIn(bool signIn);
 
+    const WCHAR *getInstanceSubkey();
+    const CLSID *getInstanceClassId();
+    const WORD getInstanceIcon();
+    const WORD getInstanceDisonnectedIcon();
+
+    static const CLSID *getInstanceClassId(HippoInstanceType instanceType);
+
 private:
     void load();
     void save();
@@ -33,7 +46,7 @@ private:
                      unsigned int *port);
 
     // Whether to use a separate debug registry section
-    bool debug_;
+    HippoInstanceType instanceType_;
 
     HippoBSTR messageServer_;
     HippoBSTR webServer_;
