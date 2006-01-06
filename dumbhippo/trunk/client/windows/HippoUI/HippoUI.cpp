@@ -885,6 +885,8 @@ HippoUI::showPreferences()
         if (!preferencesDialog_)
             return;
 
+        SendDlgItemMessage(preferencesDialog_, IDC_LOGOICON, STM_SETICON, (WPARAM)bigIcon_, 0);
+
         HippoBSTR messageServer;
         if (SUCCEEDED (preferences_.getMessageServer(&messageServer)))
             SetDlgItemText(preferencesDialog_, IDC_MESSAGE_SERVER, messageServer);
