@@ -2,7 +2,7 @@
 
 targetdir=@@targetdir@@
 
-echo "Starting Jive Messenger..."
+echo "Starting Jive Wildfire..."
 
 ######################################################################
 
@@ -13,7 +13,7 @@ dbcommand="/usr/bin/mysql $mysqlOptions jive"
 
 if [ -d $mysqlTargetdir/data/jive ] ; then : ; else
     /usr/bin/mysqladmin $mysqlOptions create jive
-    $dbcommand < $targetdir/resources/database/messenger_mysql.sql
+    $dbcommand < $targetdir/resources/database/wildfire_mysql.sql
 fi
 @@elif pgsqlEnabled
 pgsqlOptions="@@pgsqlOptions@@"
@@ -21,7 +21,7 @@ dbcommand="/usr/bin/psql $pgsqlOptions jive"
 
 if [ echo "" | $dbcommand > /dev/null 2>&1 ] ; then : ; else
     /usr/bin/createdb $pgsqlOptions -O dumbhippo jive
-    $dbcommand < $targetdir/resources/database/messenger_mysql.sql
+    $dbcommand < $targetdir/resources/database/wildfire_mysql.sql
 fi
 @@else
 @@  error "No database"
@@ -36,6 +36,7 @@ INSERT INTO jiveProperty VALUES ( 'xmpp.socket.ssl.port', @@jiveSecurePort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.server.socket.port', @@jiveServerPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.port', @@jiveComponentPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domain', 'dumbhippo.com' ) ;
+INSERT INTO jiveProperty VALUES ( 'xmpp.client.tls.policy', 'disabled') ;
 EOF
 
 cd $targetdir/bin
@@ -49,8 +50,8 @@ fi
 "$JAVA" -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=@@jiveJdwpPort@@,suspend=n \
      -server \
      -Djava.naming.provider.url=jnp://localhost:@@jnpPort@@ \
-     -DmessengerHome=$targetdir \
-     -Dmessenger.lib.dir=$targetdir/lib \
+     -DwildfireHome=$targetdir \
+     -Dwildfire.lib.dir=$targetdir/lib \
      -classpath $targetdir/lib/startup.jar \
      -jar $targetdir/lib/startup.jar >/dev/null 2>&1 &
 

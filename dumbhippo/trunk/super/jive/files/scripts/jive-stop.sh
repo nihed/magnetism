@@ -4,7 +4,7 @@ targetdir=@@targetdir@@
 
 pidfile=$targetdir/run/jive.pid
 
-echo "Stopping Jive Messenger..."
+echo "Stopping Jive Wildfire..."
 
 if [ \! -f $pidfile ] ; then 
     echo "... not running"
