@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="AF05340F-3dAB-4620-A723-2AEBD8A6ACF3" 
+    <Product Id="4A42CD9E-8F89-4279-876F-F31AC43FA8C2" 
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="DumbHippo" 
             Language="1033" 
-            Version="1.1.9"
+            Version="1.1.10"
     	    Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="DumbHippo client software" 
