@@ -39,6 +39,7 @@ public class ViewPersonPage {
 	
 	private ListBean<PostView> posts;
 	private ListBean<Group> groups;
+	private ListBean<PersonView> contacts;
 	
 	public ViewPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
@@ -135,5 +136,13 @@ public class ViewPersonPage {
 	
 	public int getMaxPostsShown() {
 		return MAX_POSTS_SHOWN;
+	}
+	
+	public ListBean<PersonView> getContacts() {
+		if (contacts == null) {
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), viewedPerson, false,
+					PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
+		}
+		return contacts;
 	}
 }

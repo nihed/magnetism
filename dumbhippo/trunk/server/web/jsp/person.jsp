@@ -90,8 +90,8 @@
 			<h5 class="dh-title">People They Know</h5>
 			<div class="dh-people">
 			<c:choose>
-				<c:when test="${home.contacts.size > 0}">
-					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
+				<c:when test="${viewperson.contacts.size > 0}">
+					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
 				</c:when>
 				<c:otherwise>
 					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>

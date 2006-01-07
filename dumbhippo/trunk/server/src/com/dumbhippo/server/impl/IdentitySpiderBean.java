@@ -615,7 +615,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras) {
 		if (!user.equals(viewpoint.getViewer()))
-				return Collections.emptySet();
+			return Collections.emptySet();
 		
 		// there are various ways to get yourself in your own contact list;
 		// we make includeSelf work in both cases (where you are or are not in there)
