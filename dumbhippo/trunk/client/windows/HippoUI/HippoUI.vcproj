@@ -270,6 +270,9 @@
 				RelativePath=".\DumbHippoDogfood_Disconnected.ico">
 			</File>
 			<File
+				RelativePath=".\DumbHippoMissed.ico">
+			</File>
+			<File
 				RelativePath=".\HippoUI.exe.manifest">
 			</File>
 			<File

@@ -31,6 +31,7 @@
 #define IDI_DUMBHIPPO_DEBUG_DISCONNECTED 140
 #define IDR_HTML1                       142
 #define IDR_DEBUG                       144
+#define IDI_DUMBHIPPO_MISSED            145
 #define IDI_DUMBHIPPO_DEBUG             204
 #define IDI_DUMBHIPPO_DOGFOOD           205
 #define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
@@ -47,6 +48,8 @@
 #define IDM_RECENT                      32773
 #define IDM_PREFERENCES                 32779
 #define IDM_DEBUGLOG                    32781
+#define ID__MISSEDLINKS                 32784
+#define IDM_MISSED                      32789
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -54,8 +57,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        145
-#define _APS_NEXT_COMMAND_VALUE         32784
+#define _APS_NEXT_RESOURCE_VALUE        146
+#define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124
 #endif

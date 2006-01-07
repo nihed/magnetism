@@ -32,7 +32,8 @@ public:
     const WCHAR *getInstanceSubkey();
     const CLSID *getInstanceClassId();
     const WORD getInstanceIcon();
-    const WORD getInstanceDisonnectedIcon();
+    const WORD getInstanceDisconnectedIcon();
+    const WORD getInstanceMissedIcon();
 
     static const CLSID *getInstanceClassId(HippoInstanceType instanceType);
 

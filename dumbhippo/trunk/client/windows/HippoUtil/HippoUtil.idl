@@ -53,6 +53,8 @@ library HippoUtil {
         HRESULT SetViewerSpace([in] DWORD viewerSpace);
         [id(126), helpstring("Return the base Url for the DumbHippo server")]
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        [id(127), helpstring("Signal whether or not we have missed notifications")]
+        HRESULT SetHaveMissedBubbles([in] BOOL haveMissed);
         // up to 130
     }
     [

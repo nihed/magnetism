@@ -8,12 +8,6 @@ dh.notification.extensions = {}
 
 // Global function called immediately after document.write
 var dhInit = function(serverUrl, appletUrl, selfId) {
-    var closeButton = document.getElementById("dh-close-button")
-    closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
-            e.stopPropagation();
-            window.external.application.Close();
-            return false;
-    })
     dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
@@ -38,6 +32,9 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this.appletUrl = appletUrl
     
     this._pageTimeoutId = null
+    
+    // postid -> notification
+    this.savedNotifications = {}
 
     this.addPersonName = function (personId, name) {
         this._nameCache[personId] = name
@@ -57,8 +54,19 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     
     this._initNotifications() // And do it initially
     
+    // Initialize close button
+    var display = this;
+    this.closeButton = document.getElementById("dh-close-button")
+    this.closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
+            e.stopPropagation();
+            display._markCurrentAsSeen();
+            display.close();
+            return false;
+    })    
+    
     this._pushNotification = function (nType, data) {
         this.notifications.push({notificationType: nType,
+                                 state: "pending",
                                  data: data})
         dh.util.debug("position " + this.position + " notifications: " + this.notifications)                                 
         if (this.position < 0) {
@@ -68,11 +76,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this.addLinkShare = function (share) {
-        // If we already have a notification for the same post, replace it
+        // If we already have a notification for the same post, update the viewers
         for (var i = 0; i < this.notifications.length; i++) {
             if (this.notifications[i].notificationType == 'linkShare' &&
                 this.notifications[i].data.postId == share.postId) {
-                this.notifications[i].data = share;
+                this.notifications[i].data.viewers = share.viewers;
                 if (i == this.position)
                     this._display_linkShare(share)
                 return;
@@ -81,6 +89,15 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         
         // Otherwise, add a new notification page
         this._pushNotification('linkShare', share)
+    }
+    
+    this.displayMissed = function () {
+        for (postid in this.savedNotifications) {
+            var notification = this.savedNotifications[postid]
+            if (notification.state == "missed") {
+                this._pushNotification(notification.notificationType, notification.data)
+            }
+        }    
     }
     
     this._clearPageTimeout = function() {
@@ -104,7 +121,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
                 }
                 var display = this;                
                 this._pageTimeoutId = window.setTimeout(function() {
-                    display.goNextOrClose();
+                    display.displayTimeout();
                     }, timeout * 1000); // 7 seconds
             }
         }
@@ -163,7 +180,12 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this.goNext = function () {
         this.setPosition(this.position + 1)
     }
-
+    
+    this.displayTimeout = function () {
+        this._markCurrentAsMissed()
+        this.goNextOrClose()
+    }
+    
     this.goNextOrClose = function () {
         if (this.position >= (this.notifications.length-1)) {
             this.close();
@@ -172,10 +194,31 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
     }
     
+    this.notifyMissedChanged = function () {
+        var haveMissed = false;
+        for (postid in this.savedNotifications) {
+            var notification = this.savedNotifications[postid]
+            if (notification.state == "missed") {
+                haveMissed = true;
+            }
+        }
+        window.external.application.SetHaveMissedBubbles(haveMissed)
+    }
+    
     this.close = function () {
         this.setVisible(false)
         this._clearPageTimeout()
         window.external.application.Close()
+        var curDate = new Date()
+        for (var i = 0; i < this.notifications.length; i++) {
+            var notification = this.notifications[i]
+            notification.saveDate = curDate
+            if (notification.state == "pending") // shouldn't happen
+                notification.state = "missed"
+            // be sure we've saved it, this is a noop for already saved
+            this.savedNotifications[notification.data.postId] = notification
+        }
+        this.notifyMissedChanged()        
         this._initNotifications()
     }
     
@@ -191,6 +234,18 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this.setVisible = function(visible) {
         this._visible = visible
     }
+    
+    this._markCurrentAsMissed = function () {
+        var notification = this.notifications[this.position]
+        if (notification.state == "pending")
+            notification.state = "missed"               
+    }
+    
+    this._markCurrentAsSeen = function () {
+        var notification = this.notifications[this.position]
+        if (notification.state == "pending")
+            notification.state = "seen"            
+    }
 
     this._updateNavigation = function () {
         var navText = dh.util.dom.getClearedElementById("dh-notification-navigation-text")
@@ -201,7 +256,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         img.firstChild.setAttribute("className", "dh-notification-navigation")
         navButtons.appendChild(img)
         var display = this
-        img.onclick = dh.util.dom.stdEventHandler(function (e) {
+        img.onclick = dh.util.dom.stdEventHandler(function (e) {      
             display.goPrevious();
             return false;
         })
@@ -209,6 +264,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         img.firstChild.setAttribute("className", "dh-notification-navigation")      
         navButtons.appendChild(img)
         img.onclick = dh.util.dom.stdEventHandler(function (e) {
+            display._markCurrentAsSeen()        
             display.goNext();
             return false;
         })
@@ -286,8 +342,8 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
      
     this.renderRecipient = function (recipient, normalCssClass, selfCssClass) {
-        var id = recipient[0]
-        var name = recipient[1]
+        var id = recipient.id
+        var name = recipient.name
         dh.util.debug("rendering recipient with name=" + name)
         var cssClass = normalCssClass;
         if (id == this.selfId) {
@@ -320,6 +376,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         
         var display = this;
         var hook = function () {
+            display._markCurrentAsSeen()
             display.goNextOrClose();
         }
 
@@ -380,7 +437,8 @@ dhAdaptLinkRecipients = function (recipients) {
     var ret = dh.core.adaptExternalArray(recipients)
     for (var i = 0; i < ret.length; i++) {
         dh.util.debug("adapting " + ret[i])
-        ret[i] = dh.core.adaptExternalArray(ret[i])
+        var recipient = dh.core.adaptExternalArray(ret[i])
+        ret[i] = {id: recipient[0], name: recipient[1] }
     }
     return ret;
 }
@@ -408,6 +466,11 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
                             viewers: viewers,
                             info: dh.parseXML(postInfo),
                             timeout: timeout})
+}
+
+dhDisplayMissed = function () {
+    dh.util.debug("in dhDisplayMissed")
+    dh.display.displayMissed()
 }
 
 dhSetIdle = function(idle) {

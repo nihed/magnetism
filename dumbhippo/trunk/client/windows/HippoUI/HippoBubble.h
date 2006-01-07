@@ -25,6 +25,7 @@ public:
     void show(void);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);
+    void showMissedBubbles();
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -45,6 +46,7 @@ public:
     STDMETHODIMP OpenExternalURL(BSTR url);
     STDMETHODIMP Close();
     STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
+    STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
 
 private:
     HINSTANCE instance_;

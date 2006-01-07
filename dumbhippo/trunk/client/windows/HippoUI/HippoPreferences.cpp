@@ -194,7 +194,7 @@ HippoPreferences::getInstanceIcon()
 }
 
 const WORD 
-HippoPreferences::getInstanceDisonnectedIcon()
+HippoPreferences::getInstanceDisconnectedIcon()
 {
     switch (instanceType_) {
         case HIPPO_INSTANCE_NORMAL:
@@ -204,6 +204,18 @@ HippoPreferences::getInstanceDisonnectedIcon()
             return IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED;
         case HIPPO_INSTANCE_DEBUG:
             return IDI_DUMBHIPPO_DEBUG_DISCONNECTED;
+    }
+}
+
+const WORD
+HippoPreferences::getInstanceMissedIcon()
+{
+    switch (instanceType_)  {
+        case HIPPO_INSTANCE_DOGFOOD:
+        case HIPPO_INSTANCE_DEBUG:
+        case HIPPO_INSTANCE_NORMAL:
+        default:
+            return IDI_DUMBHIPPO_MISSED;
     }
 }
 

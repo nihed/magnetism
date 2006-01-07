@@ -361,6 +361,13 @@ HippoBubble::doShow(void)
     checkMouse();
 }
 
+void 
+HippoBubble::showMissedBubbles()
+{
+    invokeJavascript(L"dhDisplayMissed", NULL, 0);
+    show();
+}
+
 void
 HippoBubble::show(void) 
 {   
@@ -517,6 +524,13 @@ HippoBubble::SetViewerSpace(DWORD viewerSpace)
             moveResizeWindow();
     }
 
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoBubble::SetHaveMissedBubbles(BOOL haveMissed)
+{
+    ui_->setHaveMissedBubbles(!!haveMissed);
     return S_OK;
 }
 

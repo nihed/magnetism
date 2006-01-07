@@ -70,6 +70,7 @@ public:
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
     STDMETHODIMP Quit();
+    STDMETHODIMP ShowMissed();
     STDMETHODIMP ShowRecent();
     STDMETHODIMP BeginFlickrShare(BSTR filePath);
     STDMETHODIMP ShareLink(BSTR url, BSTR title);
@@ -96,6 +97,8 @@ public:
                        const char *downloadUrl);
     void onUpgradeReady();
     void onLinkMessage(HippoLinkShare &link);
+
+    void setHaveMissedBubbles(bool haveMissed);
 
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
@@ -201,6 +204,7 @@ private:
     bool passwordRemembered_;
 
     bool idle_; // is the user idle
+    bool haveMissedBubbles_; // has the user not seen bubbles
     bool screenSaverRunning_; // is the screen saver running
     unsigned checkIdleTimeoutId_;
 };

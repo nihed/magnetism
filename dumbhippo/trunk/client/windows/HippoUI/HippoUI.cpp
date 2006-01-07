@@ -70,6 +70,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     bigIcon_ = NULL;
 
     idle_ = FALSE;
+    haveMissedBubbles_ = FALSE;
     screenSaverRunning_ = FALSE;
     checkIdleTimeoutId_ = 0;
 
@@ -234,6 +235,13 @@ HippoUI::Quit()
 }
 
 STDMETHODIMP
+HippoUI::ShowMissed()
+{
+    bubble_.showMissedBubbles();
+    return S_OK;
+}
+
+STDMETHODIMP
 HippoUI::ShowRecent()
 {
     HippoBSTR recentURL;
@@ -246,16 +254,53 @@ HippoUI::ShowRecent()
 
 ////////////////////////////////////////////////////////////////////////////
 
+//HICON
+//HippoUI::loadWithOverlay(int width, int height, TCHAR *icon)
+//{
+//    HICON icon;
+//    HDC memcontext = CreateCompatibleDC(NULL);
+//    ICONINFO iconInfo;
+//    HBITMAP bitmap = CreateCompatibleBitmap(memcontext, width, height);
+//    icon = (HICON)LoadImage(instance_, icon,
+//                            IMAGE_ICON, width, height, LR_DEFAULTCOLOR);
+//    GetIconInfo(icon, &iconInfo);
+//    DrawIcon(memcontext, 0, 0, icon);
+//
+//    DestroyIcon(icon);
+//    if (haveMissedBubbles_) {
+//        // Draw a white rectangle
+//        TRIVERTEX bounds[2]
+//        GRADIENT_RECT rect;
+//        bounds[0].x = width * .75;
+//        bounds[0].y = height * .75;
+//        bounds[0].Red = 0x0000;
+//        bounds[0].Green = 0x0000;
+//        bounds[0].Blue = 0x0000;
+//        bounds[0].Alpha = 0x0000;
+//        bounds[1].x = width;
+//        bounds[1].y = height; 
+//        bounds[1].Red = 0xFF00;
+//        bounds[1].Green = 0xFF00;
+//        bounds[1].Blue = 0xFF00;
+//        bounds[1].Alpha = 0x0000;
+//        rect.UpperLeft = 0;
+//        rect.LowerRight = 1;
+//        GradientFill(memcontext, bounds, 2, &rect, 1, GRADIENT_FILL_RECT_H);
+//    }
+//
+//}
 
 void
 HippoUI::updateIcons(void)
 {
     TCHAR *icon;
 
-    if (connected_) {
+    if (haveMissedBubbles_) {
+        icon = MAKEINTRESOURCE(preferences_.getInstanceMissedIcon());
+    } else if (connected_) {
         icon = MAKEINTRESOURCE(preferences_.getInstanceIcon());
     } else {
-        icon = MAKEINTRESOURCE(preferences_.getInstanceDisonnectedIcon());
+        icon = MAKEINTRESOURCE(preferences_.getInstanceDisconnectedIcon());
     }
     if (smallIcon_ != NULL)
         DestroyIcon(smallIcon_);
@@ -263,7 +308,7 @@ HippoUI::updateIcons(void)
         DestroyIcon(bigIcon_);
 
     smallIcon_ = (HICON)LoadImage(instance_, icon,
-                                  IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+                                IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
     bigIcon_ = (HICON)LoadImage(instance_, icon,
                                 IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
 }
@@ -745,6 +790,16 @@ HippoUI::onLinkMessage(HippoLinkShare &linkshare)
     bubble_.setLinkNotification(linkshare);
 }
 
+void 
+HippoUI::setHaveMissedBubbles(bool haveMissed)
+{
+    if (haveMissedBubbles_ != haveMissed) {
+        haveMissedBubbles_ = haveMissed;
+    }
+    updateIcons();
+    notificationIcon_.updateIcon(smallIcon_);
+}
+
 // Tries to register as the singleton HippoUI, returns true on success
 bool 
 HippoUI::registerActive()
@@ -1055,6 +1110,8 @@ HippoUI::updateMenu()
             
         InsertMenuItem(popupMenu, pos++, TRUE, &info);
     }
+
+    EnableMenuItem(popupMenu, IDM_MISSED, haveMissedBubbles_ ? MF_ENABLED : MF_GRAYED);
 }
 
 // Find the pathname for a local HTML file, based on the location of the .exe
@@ -1176,6 +1233,9 @@ HippoUI::processMessage(UINT   message,
             return true;
         case IDM_RECENT:
             ShowRecent();
+            return true;
+        case IDM_MISSED:
+            ShowMissed();
             return true;
         case IDM_PREFERENCES:
             showPreferences();
