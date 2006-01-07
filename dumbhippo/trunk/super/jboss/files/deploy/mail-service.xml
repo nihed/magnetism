@@ -29,6 +29,9 @@
           <!-- Change to the SMTP gateway server -->
           <property name="mail.smtp.host" value="@@mailHost@@"/>
 
+          <!-- Change to the SMTP gateway port -->
+          <property name="mail.smtp.port" value="@@mailPort@@"/>
+
           <!-- Change to the address mail will be from  -->
           <property name="mail.from" value="nobody@dumbhippo.com"/>
 
