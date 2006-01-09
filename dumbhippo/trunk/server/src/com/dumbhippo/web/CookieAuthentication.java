@@ -40,6 +40,7 @@ public class CookieAuthentication {
 		if (cookies != null) {
 			for (Cookie c : cookies) {
 				if (c.getName().equals(LoginCookie.COOKIE_NAME)) {
+					logger.debug("Found login cookie");
 					loginCookie = new LoginCookie(c);
 					break;
 				}
@@ -60,6 +61,7 @@ public class CookieAuthentication {
 	public static User authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
 
 		if (loginCookie == null) {
+			logger.debug("loginCookie == null");
 			throw new NotLoggedInException("No login cookie set");
 		}
 
@@ -93,6 +95,7 @@ public class CookieAuthentication {
 		if (!accountSystem.checkClientCookie(user, authKey)) {
 			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
+		logger.debug("Authenticated cookie successfully");
 		return user;
 	}
 }
