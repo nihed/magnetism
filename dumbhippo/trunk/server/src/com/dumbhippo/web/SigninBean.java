@@ -50,7 +50,7 @@ public class SigninBean implements Serializable {
 				request.getSession().setAttribute(USER_ID_KEY, userGuid);
 				logger.debug("storing authenticated user ID " + user + " in session");
 			} catch (BadTastingException e) {
-				logger.debug("Cookie was malformed");
+				logger.debug("Cookie was malformed", e);
 				userGuid = null;
 				user = null;
 			} catch (NotLoggedInException e) {
