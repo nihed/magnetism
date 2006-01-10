@@ -169,7 +169,7 @@ public interface IdentitySpider {
 	 * @param user who to look in the contacts of
 	 * @param contact person to look for in the contacts
 	 */
-	public boolean isContact(Viewpoint viewpoint, User user, Person contact);
+	public boolean isContact(Viewpoint viewpoint, User user, User contact);
 	
 	/**
 	 * The Man is an internal person who we use for various nefarious purposes.

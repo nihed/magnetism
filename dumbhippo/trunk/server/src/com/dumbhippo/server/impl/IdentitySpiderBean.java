@@ -614,7 +614,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras) {
-		if (!user.equals(viewpoint.getViewer()))
+		if (!canSeeContacts(viewpoint, user))
 			return Collections.emptySet();
 		
 		// there are various ways to get yourself in your own contact list;
@@ -648,29 +648,33 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		"SELECT COUNT(cc.contact) FROM Account contactAccount, AccountClaim ac, ContactClaim cc " +
 		"WHERE contactAccount.owner = :contactUser " +
 		"AND ac.owner = :contactUser " +
-		"AND cc.account = :viewpointAccount " + 
+		"AND cc.account = :contactOfAccount " + 
 		"AND cc.resource = ac.resource";
 	
-	public boolean isContact(Viewpoint viewpoint, User user, Person contactPerson) {
-		if (!user.equals(viewpoint.getViewer()))
-			return false;
+	private boolean isContactNoViewpoint(User user, User contactUser) {
+		// According to the spec, a count query should return a Long, Hibernate
+		// returns an Integer. We use (Number) to be robust
+		Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
+			.setParameter("contactUser", contactUser)
+			.setParameter("contactOfAccount", user.getAccount())
+			.getSingleResult();
 		
-		if (contactPerson instanceof Contact) {
-			// Must be a contact of user, so trivial
-			assert ((Contact)contactPerson).getAccount() == user.getAccount();
+		return count.longValue() > 0;		
+	}
+	
+	private boolean canSeeContacts(Viewpoint viewpoint, User user) {
+		// You can see someone's contacts if you are them, or you are a contact of them
+		if (user.equals(viewpoint.getViewer()) || isContactNoViewpoint(user, viewpoint.getViewer()))
 			return true;
-		} else {
-			User contactUser = (User)contactPerson;
-			
-			// According to the spec, a count query should return a Long, Hibernate
-			// returns an Integer. We use (Number) to be robust
-			Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
-				.setParameter("contactUser", contactUser)
-				.setParameter("viewpointAccount", user.getAccount())
-				.getSingleResult();
-			
-			return count.longValue() > 0;
-		}
+		else
+			return false;
+	}
+	
+	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
+			if (!canSeeContacts(viewpoint, user))
+				return false;
+			else
+				return isContactNoViewpoint(user, contactUser);
 	}
 	
 	static final String GET_CONTACT_RESOURCES_QUERY = 
