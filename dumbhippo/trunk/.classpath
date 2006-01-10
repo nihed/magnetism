@@ -81,5 +81,6 @@
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/standard.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/whack.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/xpp3.jar"/>
+	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
