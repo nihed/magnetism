@@ -1,5 +1,7 @@
 package com.dumbhippo.web;
 
+import java.net.URL;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
@@ -9,6 +11,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -37,12 +40,23 @@ public class CookieAuthentication {
 	public static User authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
+		
+		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+		URL url = config.getBaseUrl();
+		String host = url.getHost();
+		
 		if (cookies != null) {
 			for (Cookie c : cookies) {
 				if (c.getName().equals(LoginCookie.COOKIE_NAME)) {
-					logger.debug("Found login cookie");
-					loginCookie = new LoginCookie(c);
-					break;
+					// An old cookie might not have the host specified in it;
+					// treat that as matching any server host
+					LoginCookie possibleCookie = new LoginCookie(c);
+					String cookieHost = possibleCookie.getHost();
+					if (cookieHost == null || cookieHost.equals(host)) {
+						logger.debug("Found login cookie");
+						loginCookie = possibleCookie;
+						break;
+					}
 				}
 			}
 		}

@@ -13,6 +13,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.SigninSystem;
 
@@ -24,10 +25,12 @@ public class SigninServlet extends AbstractServlet {
 	private static final long serialVersionUID = 1L;
 
 	private SigninSystem signinSystem;
+	private Configuration config;
 	
 	@Override
 	public void init() {
 		signinSystem = WebEJBUtil.defaultLookup(SigninSystem.class);
+		config = WebEJBUtil.defaultLookup(Configuration.class);		
 	}
 	
 	@Override
@@ -66,7 +69,8 @@ public class SigninServlet extends AbstractServlet {
 		
 		if (checkpassword || password != null) {
 			Pair<Client,User> result = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
-			LoginCookie loginCookie = new LoginCookie(result.getSecond().getId(), result.getFirst().getAuthKey());
+			String host = config.getBaseUrl().getHost();
+			LoginCookie loginCookie = new LoginCookie(host, result.getSecond().getId(), result.getFirst().getAuthKey());
 			response.addCookie(loginCookie.getCookie());
 			HttpSession sess = request.getSession(false);
 			if (sess != null)

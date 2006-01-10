@@ -15,10 +15,13 @@ import com.dumbhippo.identity20.Guid.ParseException;
 public class LoginCookie {
 	
 	static final String COOKIE_NAME = "auth";
+	static private final String COOKIE_HOST_HEADER = "host=";
 	static private final String COOKIE_NAME_HEADER = "name=";
 	static private final String COOKIE_PASSWORD_HEADER = "password=";
 	
 	private transient Cookie cachedCookie = null;
+	
+	private String host;
 	
 	private String personId;
 
@@ -55,6 +58,16 @@ public class LoginCookie {
 	private Cookie computeCookie() {
 		StringBuilder val;
 		val = new StringBuilder();
+		
+		if (host == null) {
+			throw new RuntimeException("Trying to write a cookie without setting the host");
+		}
+
+		val.append(COOKIE_HOST_HEADER);
+		val.append(host);
+		
+		val.append('&');
+
 		try {
 			Guid.validate(personId);
 		} catch (ParseException e) {
@@ -109,36 +122,58 @@ public class LoginCookie {
 		computePersonIdLogin(cookie);
 	}
 
-	public LoginCookie(String personId, String authKey) {
+	public LoginCookie(String host, String personId, String authKey) {
+		this.host = host;
 		this.personId = personId;
 		this.authKey = authKey;
 	}
 	
 	private void computePersonIdLogin(Cookie cookie) throws BadTastingException {
-		String val = cookie.getValue();
 		if (!cookie.getName().equals(COOKIE_NAME)) {
 			throw new BadTastingException("invalid cookie name \"" + cookie.getName() 
 					+ "\", expected \"" + COOKIE_NAME + "\"");
 		}
-		int ampIdx = val.indexOf('&');
-		if (ampIdx < 0)
-			throw new BadTastingException("invalid cookie value, missing '&'");
-		String personIdStr = val.substring(0, ampIdx);
-		if (!personIdStr.startsWith(COOKIE_NAME_HEADER))
-			throw new BadTastingException("invalid cookie value, missing " + COOKIE_NAME_HEADER);
-		personId = personIdStr.substring(COOKIE_NAME_HEADER.length());
-		try {
-			Guid.validate(personId);
-		} catch (ParseException e) {
-			throw new BadTastingException("Bad personId");
+		
+		String val = cookie.getValue();
+		
+		host = null;
+		personId = null;
+		authKey = null;
+
+		int pos = 0;
+		while (pos < val.length()) {
+			int nextIndex = val.indexOf('&', pos);
+			if (nextIndex < 0)
+				nextIndex = val.length();
+			
+			if (val.startsWith(COOKIE_HOST_HEADER, pos)) {
+				host = val.substring(pos + COOKIE_HOST_HEADER.length(), nextIndex);
+			} else if (val.startsWith(COOKIE_NAME_HEADER, pos)) {
+				personId = val.substring(pos + COOKIE_NAME_HEADER.length(), nextIndex);
+				try {
+					Guid.validate(personId);
+				} catch (ParseException e) {
+					throw new BadTastingException("Bad personId");
+				}
+			} else if (val.startsWith(COOKIE_PASSWORD_HEADER, pos)) {
+				authKey = val.substring(pos + COOKIE_PASSWORD_HEADER.length(), nextIndex);
+				validateHex(authKey);
+			}
+			
+			pos = nextIndex + 1;
 		}
-		String authKeyStr = val.substring(ampIdx + 1);
-		if (!authKeyStr.startsWith(COOKIE_PASSWORD_HEADER))
+			
+		if (personId == null)
+			throw new BadTastingException("invalid cookie value, missing " + COOKIE_NAME_HEADER);
+
+		if (authKey == null)
 			throw new BadTastingException("invalid cookie value, missing " + COOKIE_PASSWORD_HEADER);		
-		authKey = authKeyStr.substring(COOKIE_PASSWORD_HEADER.length());
-		validateHex(authKey);
 	}
 
+	public String getHost() {
+		return host;
+	}
+	
 	public String getAuthKey() {
 		return authKey;
 	}

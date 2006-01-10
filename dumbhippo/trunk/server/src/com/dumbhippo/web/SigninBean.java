@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
@@ -98,7 +99,10 @@ public class SigninBean implements Serializable {
 	}
 
 	public static void setCookie(HttpServletResponse response, String personId, String authKey) {
-		LoginCookie loginCookie = new LoginCookie(personId, authKey);
+		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+		String host = config.getBaseUrl().getHost();
+				
+		LoginCookie loginCookie = new LoginCookie(host, personId, authKey);
 		response.addCookie(loginCookie.getCookie());
 		logger.debug("Set cookie for personId = " + personId + " authKey = " + authKey);
 	}
