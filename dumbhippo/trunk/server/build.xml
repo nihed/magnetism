@@ -134,6 +134,7 @@
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/identity20/**/*.class" />
 				<include name="**/botcom/**/*.class" />
+				<include name="**/xmppcom/**/*.class" />
 				<include name="**/jms/**/*.class" />
 			</fileset>
 		</jar>
@@ -229,6 +230,7 @@
 				<include name="**/dumbhippo/*.properties" />
 				<include name="**/jms/**/*.class" />
 				<include name="**/botcom/**/*.class" />
+				<include name="**/xmppcom/**/*.class" />
 				<include name="**/identity20/**/*.class" />
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
