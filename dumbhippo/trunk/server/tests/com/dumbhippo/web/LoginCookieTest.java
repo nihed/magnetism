@@ -15,11 +15,13 @@ public class LoginCookieTest extends TestCase {
 		Account acct = new Account(h);
 		Client c = new Client(acct);
 		acct.authorizeNewClient(c);
+		String host = "test.dumbhippo.com";
 		String personId = h.getId();
 		String authKey = c.getAuthKey();
-		LoginCookie loginCookie = new LoginCookie(personId, authKey);
+		LoginCookie loginCookie = new LoginCookie(host, personId, authKey);
 		assertEquals(personId, loginCookie.getPersonId());
 		assertEquals(authKey, loginCookie.getAuthKey());
+		assertEquals(host, loginCookie.getHost());
 		
 		Cookie cookie = loginCookie.getCookie();
 		assertNotNull(cookie);
@@ -27,6 +29,7 @@ public class LoginCookieTest extends TestCase {
 		LoginCookie loginCookie2 = new LoginCookie(cookie);
 		assertEquals(personId, loginCookie2.getPersonId());
 		assertEquals(authKey, loginCookie2.getAuthKey());
+		assertEquals(host, loginCookie.getHost());
 	}
 	
 }
