@@ -57,9 +57,17 @@ public:
     operator T *(){
         return raw_;
     }
+    operator const T *() const{
+        return raw_;
+    }
+
     T* operator->() {
         return raw_;
     }
+	const T* operator->() const {
+        return raw_;
+    }
+
     T **operator&() {
         assert(raw_ == NULL);
         return &raw_;
@@ -150,7 +158,7 @@ public:
         }
     }
 
-    unsigned int Length() {
+    unsigned int Length() const {
         return ::SysStringLen(m_str);
     }
 

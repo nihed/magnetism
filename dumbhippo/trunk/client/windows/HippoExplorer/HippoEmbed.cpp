@@ -399,4 +399,6 @@ HippoEmbed::checkURL(BSTR url)
                 ALLOWED_HOST_SUFFIX,
                 allowedHostLength) != 0)
         return false;
+
+	return true;
 }

@@ -16,6 +16,7 @@
 #include "HippoIM.h"
 #include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
+#include "HippoMusic.h"
 
 struct HippoBrowserInfo
 {
@@ -190,6 +191,7 @@ private:
     HippoIM im_;
     HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
+	HippoMusic music_;
 
     HippoRemoteWindow *currentShare_;
 
