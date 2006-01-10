@@ -155,6 +155,21 @@ HippoIM::forgetAuth()
     password_ = NULL;
 }
 
+static bool
+startsWith(WCHAR *str, WCHAR *prefix)
+{
+    size_t prefixlen = wcslen(prefix);
+    return wcsncmp(str, prefix, prefixlen) == 0;
+}
+
+static void
+copySubstring(WCHAR *str, WCHAR *end, BSTR *to) 
+{
+    unsigned int length = (unsigned int)(end - str);
+    HippoBSTR tmp(length, str);
+    tmp.CopyTo(to);
+}
+
 bool
 HippoIM::loadAuth()
 {
@@ -167,6 +182,13 @@ HippoIM::loadAuth()
 
     username_ = NULL;
     password_ = NULL;
+
+    // We look for an auth key for the particular server being used; otherwise,
+    // we might get a cookie for dumbhippo.com when we are trying to log
+    // into dogfood.dumbhippo.com.
+    HippoBSTR matchHost;
+    unsigned int matchPort; // unused
+    ui_->getPreferences()->parseWebServer(&matchHost, &matchPort);
 
     if (FAILED(getAuthURL(&url)))
         goto out;
@@ -186,27 +208,46 @@ retry:
         }
     }
 
-    if (wcsncmp(cookieBuffer, L"auth=", 5) != 0)
-        goto out;
+    WCHAR *p = cookieBuffer;
+    WCHAR *nextCookie = NULL;
+    for (WCHAR *p = cookieBuffer; p < cookieBuffer + cookieSize; p = nextCookie + 1) {
+        HippoBSTR host;
+        HippoBSTR username;
+        HippoBSTR password;
 
-    for (WCHAR *p = cookieBuffer + 5; *p;) {
-        WCHAR *next = wcschr(p, '&');
-        if (!next)
-            next = p + wcslen(p);
-        if (wcsncmp(p, L"name=", 5) == 0)
-        {
-            HippoBSTR tmp = HippoBSTR(next - (p + 5), p + 5);
-            username_ = tmp;
-        }
-        else if (wcsncmp(p, L"password=", 9) == 0)
-        {
-            HippoBSTR tmp = HippoBSTR(next - (p + 9), p + 9);
-            password_ = tmp;
-        }
+        nextCookie = wcschr(p, ';');
+        if (!nextCookie)
+            nextCookie = cookieBuffer + cookieSize;
 
-        p = next;
-        if (*p) // Skip &
+        while (*p == ' ' || *p == '\t') // Skip whitespace after ;
             p++;
+
+        if (!startsWith(p, L"auth="))
+            continue;
+
+        p += 5; // Skip 'auth='
+
+        WCHAR *nextKey = NULL;
+        for (; p < nextCookie; p = nextKey + 1) {
+            nextKey = wcschr(p, '&');
+            if (!nextKey)
+                nextKey = nextCookie;
+
+            if (startsWith(p, L"host="))
+                copySubstring(p + 5, nextKey, &host);
+            else if (startsWith(p, L"name="))
+                copySubstring(p + 5, nextKey, &username);
+            else if (startsWith(p, L"password="))
+                copySubstring(p + 9, nextKey, &password);
+        }
+
+        // Old (pre-Jan 2005) cookies may not have a host
+        if (host == NULL || wcscmp(host, matchHost) == 0) {
+            username_ = username;
+            password_ = password;
+            if (host != NULL)
+                break;
+        }
     }
 
 out:
