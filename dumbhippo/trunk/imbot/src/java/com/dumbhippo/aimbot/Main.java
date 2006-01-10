@@ -154,8 +154,8 @@ public class Main {
 		BotPool pool = new BotPool();
 		
 		// outgoing queue is outgoing from jboss, incoming goes to jboss
-		Thread queueWatcher = watchQueue("OutgoingAimQueue", pool);
-		Thread eventWatcher = watchEvents("IncomingAimQueue", pool);
+		Thread queueWatcher = watchQueue(BotTask.QUEUE, pool);
+		Thread eventWatcher = watchEvents(BotEvent.QUEUE, pool);
 		
 		pool.start();
 		

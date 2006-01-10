@@ -10,6 +10,7 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 
 @MessageDriven(activateConfig =
@@ -17,22 +18,20 @@ import com.dumbhippo.xmppcom.XmppEventMusicChanged;
   @ActivationConfigProperty(propertyName="destinationType",
     propertyValue="javax.jms.Queue"),
   @ActivationConfigProperty(propertyName="destination",
-    propertyValue="queue/" + XmppQueueConsumerBean.INCOMING_QUEUE)
+    propertyValue="queue/" + XmppEvent.QUEUE)
 })
 public class XmppQueueConsumerBean implements MessageListener {
 
 	static private final Log logger = GlobalSetup.getLog(XmppQueueConsumerBean.class);
-	static public final String INCOMING_QUEUE = "IncomingXMPPQueue";
-	static public final String OUTGOING_QUEUE = "OutgoingXMPPQueue";
 	
 	public void onMessage(Message message) {
 		try {
-			logger.debug("Got message from " + INCOMING_QUEUE + ": " + message);
+			logger.debug("Got message from " + XmppEvent.QUEUE + ": " + message);
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in " + INCOMING_QUEUE + ": " + obj);
+				logger.debug("Got object in " + XmppEvent.QUEUE + ": " + obj);
 				
 				if (obj instanceof XmppEventMusicChanged) {
 					XmppEventMusicChanged event = (XmppEventMusicChanged) obj;

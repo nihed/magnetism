@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskJoinRoom;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -385,7 +386,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			//  all join requests for a particular room get directed to the same bot.  
 			//  Otherwise the bots will take over and humans with perish from the earth.
 			BotTaskJoinRoom joinTask = new BotTaskJoinRoom(null, chatRoomName);
-			JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
+			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
 			ObjectMessage jmsMessage = producer.createObjectMessage(joinTask);
 			producer.send(jmsMessage);
 		} catch (ParseException pe) {

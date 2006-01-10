@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
@@ -86,7 +87,7 @@ public class SigninSystemBean implements SigninSystem {
 			bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
 			
 			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
-			JmsProducer producer = new JmsProducer(AimQueueConsumerBean.OUTGOING_QUEUE, true);
+			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
 			ObjectMessage jmsMessage = producer.createObjectMessage(message);
 			producer.send(jmsMessage);
 		}
