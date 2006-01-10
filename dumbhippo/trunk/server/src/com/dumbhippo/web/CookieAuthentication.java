@@ -55,7 +55,8 @@ public class CookieAuthentication {
 					if (cookieHost == null || cookieHost.equals(host)) {
 						logger.debug("Found login cookie");
 						loginCookie = possibleCookie;
-						break;
+						if (cookieHost != null)
+							break;
 					}
 				}
 			}
