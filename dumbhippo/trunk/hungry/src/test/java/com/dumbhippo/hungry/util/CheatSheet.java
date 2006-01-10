@@ -154,7 +154,7 @@ public class CheatSheet {
 						+ "WHERE Account.owner_id=?");
 			statement.setInt(1, invites);
 			statement.setString(2, userId);
-			int rowsChanged = statement.executeUpdate();
+			/*int rowsChanged = */statement.executeUpdate();
 			//System.out.println("Changed invitation count for " + rowsChanged + " rows");
 		} catch (SQLException e) {
 			fatalSqlException(e);

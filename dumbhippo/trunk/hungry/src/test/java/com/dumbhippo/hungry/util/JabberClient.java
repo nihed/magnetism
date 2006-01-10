@@ -3,7 +3,6 @@
  */
 package com.dumbhippo.hungry.util;
 
-import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -98,7 +97,7 @@ public class JabberClient {
 		
 		thread.open();
 		
-		IQ reply;
+		@SuppressWarnings("unused") IQ reply;
 		try {
 			reply = thread.sendGetAuthentication();
 		} catch (XMPPException e) {
@@ -289,7 +288,7 @@ public class JabberClient {
 		JabberClient c = new JabberClient(CheatSheet.getReadOnly().getOneSampleUserId());
 		c.login();
 		while (c.isConnected()) {
-			Packet p = c.take();
+			/* Packet p = */ c.take();
 			System.out.println("...");
 		}
 		System.out.println("Disconnected");
