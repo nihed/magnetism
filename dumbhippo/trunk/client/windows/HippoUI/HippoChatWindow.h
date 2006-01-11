@@ -1,4 +1,4 @@
-/* HippoChatRoom.h: Window displaying a chatroom for a post
+/* HippoChatWindow.h: Window displaying a ChatWindow for a post
  *
  * Copyright Red Hat, Inc. 2005
  **/
@@ -11,13 +11,13 @@
 class HippoUI;
 struct HippoLinkShare;
 
-class HippoChatRoom :
-    public IHippoChatRoom,
+class HippoChatWindow :
+    public IHippoChatWindow,
     public IDispatch
 {
 public:
-    HippoChatRoom();
-    ~HippoChatRoom();
+    HippoChatWindow();
+    ~HippoChatWindow();
 
     void setUI(HippoUI *ui);
     bool create(void);
@@ -35,7 +35,7 @@ public:
     STDMETHODIMP Invoke (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
                          VARIANT *, EXCEPINFO *, unsigned int *);
 
-    // IHippoChatRoom
+    // IHippoChatWindow
     STDMETHODIMP SendMessage(BSTR message);
     STDMETHODIMP GetServerBaseUrl(BSTR *ret);
     STDMETHODIMP OpenExternalURL(BSTR url);
@@ -44,18 +44,18 @@ private:
     HINSTANCE instance_;
     HWND window_;
 
-    class HippoChatRoomIECallback : public HippoIECallback
+    class HippoChatWindowIECallback : public HippoIECallback
     {
     public:
-        HippoChatRoomIECallback(HippoChatRoom *chatRoom) {
-            chatRoom_ = chatRoom;
+        HippoChatWindowIECallback(HippoChatWindow *chatWindow) {
+            chatWindow_ = chatWindow;
         }
-        HippoChatRoom *chatRoom_;
+        HippoChatWindow *chatWindow_;
         void onDocumentComplete();
         void onError(WCHAR *text);
         void onClose() {}
     };
-    HippoChatRoomIECallback *ieCallback_;
+    HippoChatWindowIECallback *ieCallback_;
 
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
@@ -82,6 +82,6 @@ private:
     DWORD refCount_;
 
     // private so they aren't used
-    HippoChatRoom(const HippoChatRoom &other);
-    HippoChatRoom& operator=(const HippoChatRoom &other);
+    HippoChatWindow(const HippoChatWindow &other);
+    HippoChatWindow& operator=(const HippoChatWindow &other);
 };

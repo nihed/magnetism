@@ -122,7 +122,7 @@
 				RelativePath=".\HippoBubble.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoChatRoom.cpp">
+				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoExternal.cpp">
@@ -205,7 +205,7 @@
 				RelativePath=".\HippoBubble.h">
 			</File>
 			<File
-				RelativePath=".\HippoChatRoom.h">
+				RelativePath=".\HippoChatWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoExternal.h">
@@ -306,6 +306,9 @@
 		<File
 			RelativePath=".\html1.htm"
 			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath="..\HippoShellExt\ReadMe.txt">
 		</File>
 	</Files>
 	<Globals>

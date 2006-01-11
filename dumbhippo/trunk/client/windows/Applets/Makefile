@@ -6,9 +6,9 @@ all: *.xml *.css *.png *.js
     copy close.png $(OUTDIR)\applets
     copy dh.css $(OUTDIR)\applets	    
     copy dh.js $(OUTDIR)\applets
-    copy chatroom.css $(OUTDIR)\applets    
-    copy chatroom.js $(OUTDIR)\applets    
-    copy chatroom.xml $(OUTDIR)\applets    
+    copy chatwindow.css $(OUTDIR)\applets    
+    copy chatwindow.js $(OUTDIR)\applets    
+    copy chatwindow.xml $(OUTDIR)\applets    
     copy clientstyle.xml $(OUTDIR)\applets
     copy flickr.js $(OUTDIR)\applets	
     copy flickrstatus.xml $(OUTDIR)\applets

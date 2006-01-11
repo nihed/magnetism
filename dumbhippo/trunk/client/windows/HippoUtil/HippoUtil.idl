@@ -73,12 +73,12 @@ library HippoUtil {
         HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
     [
-        uuid(D0B3370F-14F0-49ea-8A81-9C6D3D187BD1), // IID_IHippoBubble
+        uuid(D0B3370F-14F0-49ea-8A81-9C6D3D187BD1), // IID_IHippoChatWindow
         helpstring("DumbHippo Chat Room Window"),
         dual,
         oleautomation
     ]
-    interface IHippoChatRoom : IUnknown
+    interface IHippoChatWindow : IUnknown
     {
         [id(160), helpstring("Open an external URL")]
         HRESULT OpenExternalURL([in] BSTR url);
