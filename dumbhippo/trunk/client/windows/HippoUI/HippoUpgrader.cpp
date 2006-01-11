@@ -150,7 +150,7 @@ HippoUpgrader::performUpgrade()
     }
 
     HINSTANCE result = ShellExecute(NULL, L"open", progressFilename_, NULL, L"C:\\", SW_SHOW);
-    if (reinterpret_cast<int>(result) < 32)
+    if (reinterpret_cast<ptrdiff_t>(result) < 32)
         ui_->debugLogW(L"Error starting windows installer: %d", result);
 }
 

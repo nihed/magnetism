@@ -171,7 +171,6 @@ DllRegisterServer(void)
 {
     HippoRegistrar registrar(TEXT("HippoExplorer.dll"));
     HRESULT hr;
-    CATID catids[1];
 
     hr  = registrar.registerTypeLib();
     if (FAILED(hr))
