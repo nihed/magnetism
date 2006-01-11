@@ -119,6 +119,32 @@ dh.util.dom.selectNodes = function (doc, path) {
     return doc.selectNodes(path)
 }
 
+dh.util.fillAlphaPng = function(image) {
+    var span = image.parentNode
+    var src = image.src
+    span.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
+    span.style.background = "transparent";
+}
+
+dh.util.createPngElement = function(url, width, height) {
+    // 5.5 <= IE < 7 specific
+    var span = document.createElement("span")
+      
+    span.style.background = "#bbbbbb"
+    span.style.width = width
+    span.style.height = height
+    
+    var image = document.createElement("img")
+    image.style.visibility = "hidden"
+    span.appendChild(image)
+    
+    image.onload = function() { dh.util.fillAlphaPng(image) }
+    image.src = url
+
+    return span
+}
+
+
 dh.getXmlHttp = function () {
     var xmlhttp = false
     try {

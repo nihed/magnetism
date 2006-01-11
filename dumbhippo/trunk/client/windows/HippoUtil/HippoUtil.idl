@@ -73,6 +73,22 @@ library HippoUtil {
         HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
     [
+        uuid(D0B3370F-14F0-49ea-8A81-9C6D3D187BD1), // IID_IHippoBubble
+        helpstring("DumbHippo Chat Room Window"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoChatRoom : IUnknown
+    {
+        [id(160), helpstring("Open an external URL")]
+        HRESULT OpenExternalURL([in] BSTR url);
+        [id(162), helpstring("Send a new message to the room")]
+        HRESULT SendMessage([in] BSTR message);
+        [id(163), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        // up to 130
+    }
+    [
         uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr
         helpstring("DumbHippo Flickr Uploader"),
         dual,

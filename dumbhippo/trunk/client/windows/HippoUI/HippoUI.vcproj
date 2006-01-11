@@ -122,6 +122,9 @@
 				RelativePath=".\HippoBubble.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoChatRoom.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoExternal.cpp">
 			</File>
 			<File
@@ -200,6 +203,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoBubble.h">
+			</File>
+			<File
+				RelativePath=".\HippoChatRoom.h">
 			</File>
 			<File
 				RelativePath=".\HippoExternal.h">

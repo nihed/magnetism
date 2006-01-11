@@ -2,9 +2,10 @@
 <!-- note this file must actually be XML to make XSLT work -->
 <html xmlns:dh="http://dumbhippo.com/schema/clientjs">
     <head>
-        <dh:stylesheet/>
+        <dh:coreStyle/>
+        <dh:notificationStyle/>
         <title>dumbhippo notification</title>
-        <dh:corescript/>
+        <dh:coreScript/>
         <dh:notificationScript/>           
     </head>
     <body onload="dhInit();">

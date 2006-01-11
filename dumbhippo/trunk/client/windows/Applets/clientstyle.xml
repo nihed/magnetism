@@ -4,8 +4,11 @@
         version="1.0">
     <xsl:param name="appleturl"/>
     <xsl:output method="html" encoding="UTF-8"/>
-    <xsl:template match="dh:corescript"> 
+    <xsl:template match="dh:coreScript"> 
         <script language="javascript" src="{$appleturl}dh.js"></script>
+    </xsl:template>
+    <xsl:template match="dh:chatScript">
+        <script language="javascript" src="{$appleturl}chatroom.js"></script>
     </xsl:template>
     <xsl:template match="dh:notificationScript">
         <script language="javascript" src="{$appleturl}notification.js"></script>
@@ -14,8 +17,13 @@
     <xsl:template match="dh:flickrScript">
         <script language="javascript" src="{$appleturl}flickrstatus.js"></script>
     </xsl:template>    
-    <xsl:template match="dh:stylesheet">
+    <xsl:template match="dh:coreStyle">
         <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:chatStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}chatroom.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:notificationStyle">
         <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>    
     </xsl:template>
     <xsl:template match="dh:closeButton">

@@ -42,6 +42,18 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\chatroom.css"
+			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath=".\chatroom.js"
+			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath=".\chatroom.xml"
+			DeploymentContent="TRUE">
+		</File>
+		<File
 			RelativePath=".\clientstyle.xml"
 			DeploymentContent="TRUE">
 		</File>
