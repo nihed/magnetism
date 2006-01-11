@@ -58,8 +58,8 @@ IDR_DEBUG MENU
 BEGIN
     POPUP "Dummy"
     BEGIN
-        MENUITEM "&Debug Log...",               IDM_DEBUGLOG
         MENUITEM "&Preferences...",             IDM_PREFERENCES
+        MENUITEM "&Debug Log...",               IDM_DEBUGLOG
     END
 END
 

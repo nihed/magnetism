@@ -113,6 +113,39 @@ listConnections(IConnectionPoint *point)
 	}
 }
 
+static BOOL CALLBACK
+findITunesWindow(HWND hwnd, LPARAM lParam)
+{
+	bool *foundp = reinterpret_cast<bool*>(lParam);
+
+	WCHAR buf[128];
+	if (GetClassName(hwnd, &buf[0], 128) != 0) {
+		//hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
+		if (StrCmpW(L"iTunes", &buf[0]) == 0) {
+			*foundp = true;
+			// can stop looking now
+			return FALSE;
+		}
+	} else {
+		hippoDebugLogW(L"Failed to get class of window");
+	}
+
+	return TRUE;
+}
+
+static bool
+iTunesIsRunning()
+{
+	bool found = false;
+	// return value of this doesn't matter, but 
+	// it is 0 on error or if we ever return false from 
+	// our function. To check error you have to use GetLastError
+	// or something. See docs if you ever care.
+	EnumWindows(findITunesWindow, reinterpret_cast<LPARAM>(&found));
+
+	return found;
+}
+
 void
 HippoITunesMonitorImpl::attemptConnect()
 {
@@ -142,9 +175,26 @@ HippoITunesMonitorImpl::attemptConnect()
 	}
 
 	HippoPtr<IiTunes> iTunesPtr;
+#if 0
+	// Does not work... iTunes doesn't register itself I guess
+    HippoPtr<IUnknown> unknown;
+	hRes = GetActiveObject(CLSID_iTunesApp, 0, &unknown);
+	if (SUCCEEDED(hRes)) {
+		hippoDebugLogW(L"iTunes already running");
+		unknown->QueryInterface<IiTunes>(&iTunesPtr);
+	}
+#endif
+	if (!iTunesIsRunning()) {
+		hippoDebugLogW(L"iTunes doesn't have a window open, not monitoring it");
+		return;
+	} else {
+		hippoDebugLogW(L"Found an iTunes window, trying to connect");
+	}
 
+	// force-launches itunes if not running
 	hRes = ::CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID *)&iTunesPtr);
-	if (FAILED(hRes)) {
+
+	if (FAILED(hRes) || iTunesPtr == 0) {
 		hippoDebugLogW(L"Failed to get the iTunes app");
 		return;
 	}
