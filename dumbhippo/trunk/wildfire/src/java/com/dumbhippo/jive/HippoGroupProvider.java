@@ -2,13 +2,11 @@ package com.dumbhippo.jive;
 
 import java.util.Collection;
 
-import org.xmpp.packet.JID;
-
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.group.GroupProvider;
-import org.jivesoftware.wildfire.user.User;
+import org.xmpp.packet.JID;
 
 public class HippoGroupProvider implements GroupProvider {
 
