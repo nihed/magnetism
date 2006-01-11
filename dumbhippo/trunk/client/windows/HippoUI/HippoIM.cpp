@@ -78,8 +78,7 @@ HippoIM::getState()
 HRESULT
 HippoIM::getUsername(BSTR *ret)
 {
-    *ret = username_;
-    return S_OK;
+    return username_.CopyTo(ret);
 }
 
 void 
