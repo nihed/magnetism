@@ -16,6 +16,9 @@
 		<dht:logo/>
 	
 		<form class="dh-signin-form" action="/signinpost" method="post">
+			<c:if test='${!empty param["next"]}'>
+				<input type="hidden" value='${param["next"]}' name="next"/>
+			</c:if>
 			<table>
 				<tr class="dh-signin-address">
 					<td>Email or AIM:</td>
