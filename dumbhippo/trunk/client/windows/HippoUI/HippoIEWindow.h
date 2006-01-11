@@ -37,7 +37,7 @@ public:
     void moveResize(int x, int y, int width, int height);
     void show();
     void hide();
-
+    void setForegroundWindow();
 
     bool hookMessage(MSG *msg);
 

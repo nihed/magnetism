@@ -95,6 +95,12 @@ HippoIEWindow::show()
 }
 
 void
+HippoIEWindow::setForegroundWindow() 
+{
+    SetForegroundWindow(window_);
+}
+
+void
 HippoIEWindow::hide()
 {
     AnimateWindow(window_, 400, AW_BLEND | AW_HIDE);

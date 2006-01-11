@@ -27,6 +27,7 @@ HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *applic
     docSrc_ = src;
     callback_ = cb;
     haveTransform_ = false;
+    threeDBorder_ = true;
 
     HippoExternal *external = new HippoExternal();
     if (external)
@@ -133,6 +134,12 @@ HippoIE::setXsltTransform(WCHAR *stylesrc, ...)
     va_end(vap);
 }
 
+void 
+HippoIE::setThreeDBorder(bool threeDBorder)
+{
+    threeDBorder_ = threeDBorder;
+}
+    
 void
 HippoIE::signalError(WCHAR *text, ...)
 {
@@ -168,7 +175,6 @@ HippoIE::create()
     variant_t vEmpty;
     vEmpty.vt = VT_EMPTY;
     browser->Navigate2(&vTargetUrl, &vEmpty, &vEmpty, &vEmpty, &vEmpty);
-    browser->put_Resizable(VARIANT_FALSE);
 
     HippoQIPtr<IConnectionPointContainer> container(ie_);
     if (container)
@@ -183,7 +189,6 @@ HippoIE::create()
 
     if (!haveTransform_)
         return;
-
     variant_t xmlResult;
     MSXML2::IXMLDOMDocumentPtr xmlsrc(MSXML2::CLSID_DOMDocument);
     MSXML2::IXMLDOMDocumentPtr clientXSLT(CLSID_FreeThreadedDOMDocument);
@@ -245,6 +250,7 @@ HippoIE::create()
     hresult = SafeArrayUnaccessData(sfArray);
     // Append the transformed XML to the document
     hresult = doc->write(sfArray);
+    hresult = doc->close();
 
     iceCream->Release();
 }
@@ -256,7 +262,7 @@ HippoIE::resize(RECT *rect)
     inPlace->SetObjectRects(rect, rect);
 }
 
-// IDocHostUIExternal
+// IDocHostUIHandler
 STDMETHODIMP 
 HippoIE::EnableModeless(BOOL enable)
 {
@@ -290,7 +296,15 @@ HippoIE::GetExternal(IDispatch **dispatch)
 STDMETHODIMP 
 HippoIE::GetHostInfo(DOCHOSTUIINFO *info)
 {
-    return E_NOTIMPL;
+    if (info->cbSize < sizeof(DOCHOSTUIINFO))
+        return E_FAIL;
+
+    info->dwFlags = threeDBorder_ ? 0 : DOCHOSTUIFLAG_NO3DBORDER;
+    info->dwDoubleClick = DOCHOSTUIDBLCLK_DEFAULT;
+    info->pchHostCss = NULL;
+    info->pchHostNS = NULL;
+
+    return S_OK;
 }
 
 STDMETHODIMP 

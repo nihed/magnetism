@@ -30,6 +30,13 @@ HippoRemoteWindow::navigate(WCHAR *url)
 }
 
 void
+HippoRemoteWindow::setForegroundWindow()
+{
+    if (ieWindow_)
+        ieWindow_->setForegroundWindow();
+}
+
+void
 HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare)
 {
     showShare(urlToShare, titleOfShare, L"url");

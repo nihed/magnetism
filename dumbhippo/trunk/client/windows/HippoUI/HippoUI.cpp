@@ -75,6 +75,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     checkIdleTimeoutId_ = 0;
 
     currentShare_ = NULL;
+    signinWindow_ = NULL;
 }
 
 HippoUI::~HippoUI()
@@ -426,6 +427,16 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
+    if (currentShare_) {
+        delete currentShare_;
+        currentShare_ = NULL;
+    }
+    
+    if (signinWindow_) {
+        delete signinWindow_;
+        signinWindow_ = NULL;
+    }
+
     if (checkIdleTimeoutId_)
         g_source_remove(checkIdleTimeoutId_);
 
@@ -514,13 +525,12 @@ HippoUI::BeginFlickrShare(BSTR filePath)
 void
 HippoUI::showSignInWindow()
 {
-    HippoBSTR signInURL;
-    
-    if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"who-are-you?next=close"), &signInURL)))
-        return;
-
-    HippoPtr<IWebBrowser2> webBrowser;
-    showAppletWindow(signInURL, webBrowser);
+    if (!signinWindow_) {
+        signinWindow_ = new HippoRemoteWindow(this, L"Sign in to DumbHippo", NULL);
+        signinWindow_->showSignin();
+    } else {
+        signinWindow_->setForegroundWindow();
+    }
 }
 
 void

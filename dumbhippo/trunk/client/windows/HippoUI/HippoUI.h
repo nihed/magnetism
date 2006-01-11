@@ -191,9 +191,10 @@ private:
     HippoIM im_;
     HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
-	HippoMusic music_;
+    HippoMusic music_;
 
     HippoRemoteWindow *currentShare_;
+    HippoRemoteWindow *signinWindow_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject

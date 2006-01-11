@@ -20,6 +20,7 @@ public:
     void showSignin();
     ~HippoRemoteWindow(void);
 
+    void setForegroundWindow();
     HippoIE *getIE();
 
 private:

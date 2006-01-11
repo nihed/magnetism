@@ -55,6 +55,10 @@ public:
     // Optional, apply an XSLT stylesheet to source
     void setXsltTransform(WCHAR *styleSrc, ...);
 
+    // Set whether the IE window should have a 3D border (must be called before create)
+    // defaults to true
+    void setThreeDBorder(bool threeDBorder);
+
     // Actually instantiate
     void create();
 
@@ -194,6 +198,8 @@ private:
     HippoBSTR styleSrc_;
     HippoArray<HippoBSTR> styleParamNames_;
     HippoArray<HippoBSTR> styleParamValues_;
+
+    bool threeDBorder_;
 
     DWORD refCount_;
 
