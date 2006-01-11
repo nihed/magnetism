@@ -9,6 +9,7 @@
 #include <loudmouth/loudmouth.h>
 
 class HippoUI;
+class HippoChatRoom;
 
 class HippoIM 
 {
@@ -48,6 +49,9 @@ public:
     State getState();
 
     HRESULT getUsername(BSTR *ret);
+
+    HippoChatRoom *joinChatRoom(BSTR postId);
+    void leaveChatRoom(BSTR postId);
 
 private:
     HRESULT getAuthURL(BSTR *result);
@@ -116,4 +120,6 @@ private:
 
     // Timeout waiting for the server to appear; state is RETRYING
     guint retryTimeoutID_;    // GSource ID for timeout
+
+    HippoArray<HippoChatRoom *> chatRooms_;
 };

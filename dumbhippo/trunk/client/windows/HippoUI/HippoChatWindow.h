@@ -7,21 +7,27 @@
 #include <HippoUtil.h>
 #include <HippoConnectionPointContainer.h>
 #include "HippoIE.h"
+#include "HippoChatRoom.h"
 
 class HippoUI;
-struct HippoLinkShare;
 
 class HippoChatWindow :
     public IHippoChatWindow,
-    public IDispatch
+    public IDispatch,
+    public HippoChatRoomListener
 {
 public:
     HippoChatWindow();
     ~HippoChatWindow();
 
     void setUI(HippoUI *ui);
-    bool create(void);
-    void show(void);
+    bool create();
+    void show();
+    void setForegroundWindow();
+
+    // The chat room that the window should track; argument can be NULL
+    void setChatRoom(HippoChatRoom *chatRoom);
+    HippoChatRoom *getChatRoom();
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -39,6 +45,11 @@ public:
     STDMETHODIMP SendMessage(BSTR message);
     STDMETHODIMP GetServerBaseUrl(BSTR *ret);
     STDMETHODIMP OpenExternalURL(BSTR url);
+
+    // HippoChatRoomListener
+    void onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user);
+    void onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user);
+    void onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message);
 
 private:
     HINSTANCE instance_;
@@ -61,13 +72,13 @@ private:
     HippoPtr<IWebBrowser2> browser_;
 
     HippoUI* ui_;
+    HippoChatRoom *chatRoom_;
 
     bool embedIE(void);
     bool appendTransform(BSTR src, BSTR style, ...);
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
     bool createWindow(void);
     bool registerClass();
-    void close();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
 

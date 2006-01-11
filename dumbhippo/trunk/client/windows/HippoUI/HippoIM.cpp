@@ -4,6 +4,7 @@
  **/
 
 #include "stdafx.h"
+#include "HippoChatRoom.h"
 #include "HippoIM.h"
 #include "HippoUI.h"
 
@@ -27,6 +28,9 @@ HippoIM::HippoIM()
 
 HippoIM::~HippoIM()
 {
+    for (unsigned long i = 0; i < chatRooms_.length(); i++)
+        delete chatRooms_[i];
+
     stopSignInTimeout();
     stopRetryTimeout();
 }
@@ -79,6 +83,31 @@ HRESULT
 HippoIM::getUsername(BSTR *ret)
 {
     return username_.CopyTo(ret);
+}
+
+
+HippoChatRoom *
+HippoIM::joinChatRoom(BSTR postId)
+{
+    HippoChatRoom *chatRoom = new HippoChatRoom(this, postId);
+    chatRooms_.append(chatRoom);
+
+    return chatRoom;
+}
+
+void 
+HippoIM::leaveChatRoom(BSTR postId)
+{
+    for (unsigned long i = 0; i < chatRooms_.length(); i++) {
+        HippoChatRoom *chatRoom = chatRooms_[i];
+        if (wcscmp(chatRoom->getPostId(), postId) == 0) {
+            chatRooms_.remove(i);
+            delete chatRoom;
+            return;
+        }
+    }
+
+    assert(false);
 }
 
 void 

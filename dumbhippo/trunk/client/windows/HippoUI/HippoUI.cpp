@@ -421,12 +421,19 @@ HippoUI::create(HINSTANCE instance)
         onLinkMessage(linkshare);
     }
 
+    // showChatWindow(HippoBSTR(L"cGslncsjA8QJY0"));
+
     return true;
 }
 
 void
 HippoUI::destroy()
 {
+    for (unsigned long i = chatWindows_.length(); i > 0; i--) {
+        delete chatWindows_[i - 1];
+        chatWindows_.remove(i - 1);
+    }
+
     if (currentShare_) {
         delete currentShare_;
         currentShare_ = NULL;
@@ -766,6 +773,45 @@ HippoUI::onAuthFailure()
 {
     updateForgetPassword();
     showSignInWindow();
+}
+
+void 
+HippoUI::showChatWindow(BSTR postId)
+{
+    for (unsigned i = 0; i < chatWindows_.length(); i++) {
+        if (wcscmp(chatWindows_[i]->getChatRoom()->getPostId(), postId) == 0) {
+            chatWindows_[i]->setForegroundWindow();
+            return;
+        }
+    }
+
+    HippoChatRoom *chatRoom = im_.joinChatRoom(postId);
+    HippoChatWindow *window = new HippoChatWindow();
+    window->setUI(this);
+    window->setChatRoom(chatRoom);
+
+    chatWindows_.append(window);
+
+    window->create();
+    window->show();
+}
+
+void 
+HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
+{
+    for (unsigned i = 0; i < chatWindows_.length(); i++) {
+        if (chatWindows_[i] == chatWindow) {
+            HippoChatRoom *chatRoom = chatWindow->getChatRoom();
+
+            chatWindows_.remove(i);
+            delete chatWindow; // should be safe, called from WM_CLOSE only
+
+            im_.leaveChatRoom(chatRoom->getPostId());
+            return;
+        }
+    }
+
+    assert(false);
 }
 
 void

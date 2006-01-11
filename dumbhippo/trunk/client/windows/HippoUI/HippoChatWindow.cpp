@@ -27,6 +27,7 @@ HippoChatWindow::HippoChatWindow(void)
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
     ie_ = NULL;
+    chatRoom_ = NULL;
 
     ieCallback_ = new HippoChatWindowIECallback(this);
 
@@ -35,6 +36,10 @@ HippoChatWindow::HippoChatWindow(void)
 
 HippoChatWindow::~HippoChatWindow(void)
 {
+    setChatRoom(NULL);
+
+    DestroyWindow(window_);
+
     delete ieCallback_;
 }
 
@@ -179,10 +184,29 @@ HippoChatWindow::show(void)
         ui_->logLastError(L"Failed to invoke BringWindowToTop");
 }
 
-void
-HippoChatWindow::close()
+void 
+HippoChatWindow::setForegroundWindow()
 {
-    ShowWindow(window_, SW_HIDE);
+    if (window_)
+        SetForegroundWindow(window_);
+}
+
+void 
+HippoChatWindow::setChatRoom(HippoChatRoom *chatRoom)
+{
+    if (chatRoom_)
+        chatRoom_->removeListener(this);
+     
+    chatRoom_ = chatRoom;
+
+    if (chatRoom_)
+        chatRoom_->addListener(this);
+}
+
+HippoChatRoom *
+HippoChatWindow::getChatRoom()
+{
+    return chatRoom_;
 }
 
 bool
@@ -193,7 +217,7 @@ HippoChatWindow::processMessage(UINT   message,
     switch (message) 
     {
     case WM_CLOSE:
-        close();
+        ui_->onChatWindowClosed(this);
         return true;
     case WM_SIZE:
         {
@@ -333,4 +357,40 @@ HippoChatWindow::Invoke (DISPID        member,
     HRESULT hr = DispInvoke(chatWindow, ifaceTypeInfo_, member, flags, 
                             dispParams, result, excepInfo, argErr);
     return hr;
+}
+
+////////////////////////////// HippoChatRoomListener implementatin //////////////////////////////////
+
+void 
+HippoChatWindow::onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user)
+{
+    variant_t userId(user.getUserId());
+    variant_t version(user.getVersion);
+    variant_t name(user.getName());
+    variant_t result;
+
+    ie_->invokeJavascript(L"dhAddUser", &result, 3, &userId, &version, &name);
+}
+
+void 
+HippoChatWindow::onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user)
+{
+    variant_t userId(user.getUserId());
+    variant_t result;
+
+    ie_->invokeJavascript(L"dhRemoveUser", &result, 1, &userId);
+}
+
+void 
+HippoChatWindow::onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message)
+{
+    const HippoChatUser &user = message.getUser();
+
+    variant_t userId(user.getUserId());
+    variant_t version(user.getVersion);
+    variant_t name(user.getName());
+    variant_t text(message.getText());
+    variant_t result;
+
+    ie_->invokeJavascript(L"dhAddMessage", &result, 4, &userId, &version, &name, &text);
 }

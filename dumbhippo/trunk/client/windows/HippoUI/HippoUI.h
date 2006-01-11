@@ -8,6 +8,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoBubble.h"
+#include "HippoChatWindow.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
 #include "HippoPreferences.h"
@@ -101,6 +102,8 @@ public:
 
     void setHaveMissedBubbles(bool haveMissed);
 
+    void onChatWindowClosed(HippoChatWindow *chatWindow);
+
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
     HRESULT getLoginId(BSTR *result);
@@ -121,6 +124,8 @@ private:
     void showSignInWindow();
     void showPreferences();
     void updateForgetPassword();
+
+    void showChatWindow(BSTR postId);
 
     // Register an "internal" browser instance that we don't want
     // to allow sharing of, and that we quit when the HippoUI
@@ -201,6 +206,8 @@ private:
 
     HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
+    HippoArray<HippoChatWindow *> chatWindows_;
+
     DWORD nextBrowserCookie_;
 
     bool rememberPassword_;
