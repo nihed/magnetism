@@ -118,8 +118,8 @@ findITunesWindow(HWND hwnd, LPARAM lParam)
 {
 	bool *foundp = reinterpret_cast<bool*>(lParam);
 
-	WCHAR buf[128];
-	if (GetClassName(hwnd, &buf[0], 128) != 0) {
+	WCHAR buf[32];
+	if (GetClassName(hwnd, &buf[0], 32) != 0) {
 		//hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
 		if (StrCmpW(L"iTunes", &buf[0]) == 0) {
 			*foundp = true;
