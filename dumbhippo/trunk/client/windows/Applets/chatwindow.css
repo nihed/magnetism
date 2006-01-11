@@ -1,0 +1,126 @@
+body 
+{
+    background-color: #7189bf;
+}
+
+#dhChatPeopleDiv 
+{
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 10em;
+    overflow: hidden;
+    background-color: White;
+}
+
+#dhChatAdsDiv 
+{
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 10em;
+    overflow: hidden;
+    background-color: White;
+}
+
+#dhChatAdsInnerDiv 
+{
+    margin: 5px;
+    font-size: small;
+}
+
+#dhChatMessagesDiv 
+{
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    overflow: auto;
+    background-color: White;
+}
+
+#dhChatMessageInput 
+{
+    position: absolute;
+    left: 0px;
+    bottom: 10px;
+    left: 10px;
+    right: 5px;
+    background-color: White;
+    overflow: auto;
+}
+
+#dhChatSendButton 
+{
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    height: 3em;
+}
+
+.dh-chat-person
+{
+    margin: 5px;
+}
+
+.dh-chat-person-image
+{
+    float: left;
+}
+
+.dh-chat-person-name
+{
+    height: 48px;
+    font-size: 48px;
+}
+
+.dh-chat-person-name-inner
+{
+    vertical-align: middle;
+    font-size: medium;
+}
+
+.dh-chat-message-my
+{
+    margin: 5px;
+}
+
+.dh-chat-message-other
+{
+    margin: 5px;
+}
+
+.dh-chat-message-my .dh-chat-message-image 
+{
+    float: left;
+}
+
+.dh-chat-message-other .dh-chat-message-image 
+{
+    float: right;
+}
+
+.dh-chat-message-text 
+{
+    height: 36px;
+}
+
+.dh-chat-message-my .dh-chat-message-text {
+    text-align: left;
+}
+
+.dh-chat-message-other .dh-chat-message-text {
+    text-align: right;
+}
+
+.dh-chat-message-text-inner {
+    background-color: #fafac5;
+}

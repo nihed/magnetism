@@ -1,11 +1,11 @@
 // Chat room window implementation
 
-dh.chatroom = {}
+dh.chatwindow = {}
 dh.display = null
 
 // Global function called immediately after document.write
 var dhInit = function(serverUrl, appletUrl, selfId) {
-    dh.display = new dh.chatroom.Display(serverUrl, appletUrl, selfId) 
+    dh.display = new dh.chatwindow.Display(serverUrl, appletUrl, selfId) 
     
     dh.display.resizeElements()
     window.onresize = function() { dh.display.resizeElements() }
@@ -13,7 +13,7 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
     dh.display.addTestMessages()
 }
 
-dh.chatroom.Display = function(serverUrl, appletUrl, selfId) {
+dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
     // Current user guid
     this._selfId = selfId
 
@@ -146,6 +146,6 @@ function dhChatRemovePerson(userId) {
     dh.display.removePerson(userId)
 }
 
-function dhChatAddMessage(userId, version, text) {
-    dh.display.addMessage(usreId, version, text)
+function dhChatAddMessage(userId, version, name, text) {
+    dh.display.addMessage(userId, version, name, text)
 }
