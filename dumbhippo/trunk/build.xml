@@ -15,4 +15,16 @@
 		<arg value="all"/>
 	</exec>
     </target>
+
+    <target name="reload" depends="compile">
+        <exec executable="super/super">
+             <arg line="reload all"/>
+        </exec>
+    </target>
+
+    <target name="restart" depends="compile">
+        <exec executable="super/super">
+            <arg line="restart all"/>
+        </exec>
+    </target>
 </project>
