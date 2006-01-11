@@ -53,7 +53,7 @@ fi
      -DwildfireHome=$targetdir \
      -Dwildfire.lib.dir=$targetdir/lib \
      -classpath $targetdir/lib/startup.jar \
-     -jar $targetdir/lib/startup.jar >/dev/null 2>&1 &
+     -jar $targetdir/lib/startup.jar >$targetdir/logs/stdout.log 2>&1 &
 
 pid=$!
 

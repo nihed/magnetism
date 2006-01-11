@@ -16,7 +16,7 @@ import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
@@ -31,7 +31,7 @@ import com.dumbhippo.GlobalSetup;
  */
 public abstract class JmsQueue {
 
-	protected static final Log logger = GlobalSetup.getLog(JmsQueue.class);
+	protected static final Logger logger = GlobalSetup.getLogger(JmsQueue.class);
 	private static final int RETRY_INTERVAL_MILLISECONDS = 10000;
 	
 	private String queue;

@@ -8,6 +8,8 @@ import java.net.URL;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -49,6 +51,10 @@ public final class GlobalSetup {
 	public static Log getLog(Class klass) {
 		initialize();
 		return LogFactory.getLog(klass);
+	}
+	
+	public static Logger getLogger(Class klass) {
+		return LoggerFactory.getLogger(klass);
 	}
 }
 

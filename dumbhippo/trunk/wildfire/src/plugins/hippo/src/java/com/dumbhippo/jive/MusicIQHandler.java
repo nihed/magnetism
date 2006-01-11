@@ -22,10 +22,12 @@ public class MusicIQHandler extends IQHandler {
 	
 	public MusicIQHandler() {
 		super("DumbHippo Music IQ Handler");
-
+		
 		info = new IQHandlerInfo("music", "http://dumbhippo.com/protocol/music");
 		
+		Log.debug("Opening JmsProducer for " + XmppEvent.QUEUE);
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
+		Log.debug("Done constructing Music IQ handler");
 	}
 
 	private void makeError(IQ reply, String message) {
