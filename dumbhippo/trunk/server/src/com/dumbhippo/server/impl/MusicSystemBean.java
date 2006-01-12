@@ -10,7 +10,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.slf4j.Logger;
+import org.apache.commons.logging.Log;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -24,10 +24,10 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
-public class MusicSystemBean extends Object implements MusicSystem {
+public class MusicSystemBean implements MusicSystem {
 
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(MusicSystemBean.class);
+	static private final Log logger = GlobalSetup.getLog(MusicSystemBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
