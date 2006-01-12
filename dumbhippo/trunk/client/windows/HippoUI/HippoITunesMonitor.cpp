@@ -2,6 +2,7 @@
 #include "HippoUtil.h"
 #include "HippoITunesMonitor.h"
 #include "HippoLogWindow.h"
+#include <glib.h>
 
 #undef GetFreeSpace
 // iTunesLib
@@ -62,11 +63,16 @@ public:
 	HippoPtr<ITypeInfo> ifaceTypeInfo_;
 	HippoPtr<IConnectionPoint> connectionPoint_;
 	DWORD connectionCookie_;
+#define CHECK_RUNNING_TIMEOUT (1000*30)
+    unsigned int timeout_id_;
+    bool firstTimeout_;
 
 	void attemptConnect();
 	void disconnect();
 	void setTrack(IITTrack *track);
 	bool readTrackInfo(IITTrack *track, HippoTrackInfo *info);
+
+    static gboolean checkRunningTimeout(void *data);
 
 	/// COM goo
 
@@ -82,36 +88,6 @@ public:
     STDMETHODIMP Invoke (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
                          VARIANT *, EXCEPINFO *, unsigned int *);
 };
-
-HippoITunesMonitorImpl::HippoITunesMonitorImpl(HippoITunesMonitor *wrapper)
-	: wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1)
-{
-	attemptConnect();
-}
-
-HippoITunesMonitorImpl::~HippoITunesMonitorImpl()
-{
-	disconnect();
-}
-
-static void
-listConnections(IConnectionPoint *point) 
-{
-	HippoPtr<IEnumConnections> connections;
-	HRESULT hRes = point->EnumConnections(&connections);
-	if (FAILED(hRes)) {
-		hippoDebugLogU("Failed to list connections");
-		return;
-	}
-
-	hippoDebugLogU("connections:");
-	CONNECTDATA data;
-	while ((hRes = connections->Next(1, &data, 0)) == S_OK) {
-		hippoDebugLogU("  cookie %d", (int) data.dwCookie);
-		hippoDebugLogU("  unknown %p", data.pUnk);
-		data.pUnk->Release();
-	}
-}
 
 static BOOL CALLBACK
 findITunesWindow(HWND hwnd, LPARAM lParam)
@@ -144,6 +120,66 @@ iTunesIsRunning()
 	EnumWindows(findITunesWindow, reinterpret_cast<LPARAM>(&found));
 
 	return found;
+}
+
+gboolean
+HippoITunesMonitorImpl::checkRunningTimeout(void *data)
+{
+    HippoITunesMonitorImpl *impl = static_cast<HippoITunesMonitorImpl*>(data);
+    gboolean ret;
+
+    ret = 1; // stay connected
+    
+    if (impl->firstTimeout_) {
+       impl->timeout_id_ = g_timeout_add(CHECK_RUNNING_TIMEOUT, checkRunningTimeout, 
+                                         impl);
+       ret = 0; // disconnect this one, we added a new one
+       impl->firstTimeout_ = false; // in future don't disconnect again
+    }
+
+    if (impl->state_ == NO_ITUNES) {
+        if (iTunesIsRunning())
+            impl->attemptConnect();
+    } else if (impl->state_ == CONNECTED) {
+        if (!iTunesIsRunning())
+            impl->disconnect();
+    }
+
+    return ret;
+}
+
+HippoITunesMonitorImpl::HippoITunesMonitorImpl(HippoITunesMonitor *wrapper)
+	: wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1), firstTimeout_(true)
+{
+    // one-shot idle immediately, which converts itself to a periodic timeout
+    timeout_id_ = g_timeout_add(0, checkRunningTimeout, 
+                                this);
+}
+
+HippoITunesMonitorImpl::~HippoITunesMonitorImpl()
+{
+    g_source_remove(timeout_id_);
+    timeout_id_ = 0;
+	disconnect();
+}
+
+static void
+listConnections(IConnectionPoint *point) 
+{
+	HippoPtr<IEnumConnections> connections;
+	HRESULT hRes = point->EnumConnections(&connections);
+	if (FAILED(hRes)) {
+		hippoDebugLogU("Failed to list connections");
+		return;
+	}
+
+	hippoDebugLogU("connections:");
+	CONNECTDATA data;
+	while ((hRes = connections->Next(1, &data, 0)) == S_OK) {
+		hippoDebugLogU("  cookie %d", (int) data.dwCookie);
+		hippoDebugLogU("  unknown %p", data.pUnk);
+		data.pUnk->Release();
+	}
 }
 
 void
