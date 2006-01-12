@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -39,6 +40,7 @@ public class MusicSystemBean implements MusicSystem {
 	private IdentitySpider identitySpider;
 	
 	public Track getTrack(Map<String, String> properties) {
+		
 		final Track key = new Track(properties);
 		try {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<Track>() {
@@ -80,8 +82,10 @@ public class MusicSystemBean implements MusicSystem {
 					try {
 						res = (CurrentTrack) q.getSingleResult();
 						res.setTrack(track);
+						res.setLastUpdated(new Date());
 					} catch (EntityNotFoundException e) {
 						res = new CurrentTrack(user, track);
+						res.setLastUpdated(new Date());
 						em.persist(res);
 					}
 					
@@ -95,6 +99,11 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	 
 	public void setCurrentTrack(User user, Map<String,String> properties) {
+		// empty properties means "not listening to any track" - we always
+		// keep the latest track with content, we don't set CurrentTrack to null
+		if (properties.size() == 0)
+			return;
+		
 		Track track = getTrack(properties);
 		setCurrentTrack(user, track);
 	}

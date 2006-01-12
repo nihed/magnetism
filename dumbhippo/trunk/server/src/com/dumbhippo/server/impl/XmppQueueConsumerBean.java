@@ -66,7 +66,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 		try {
 			guid = Guid.parseJabberId(event.getJabberId());
 		} catch (ParseException e) {
-			logger.warn("Invalid jabber ID in music changed event");
+			logger.warn("Invalid jabber ID in music changed event: " + event.getJabberId());
 			throw new RuntimeException(e);
 		}
 		User user;

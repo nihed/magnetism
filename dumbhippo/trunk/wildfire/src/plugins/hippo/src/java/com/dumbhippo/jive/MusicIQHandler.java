@@ -63,12 +63,12 @@ public class MusicIQHandler extends IQHandler {
 
 	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
 		
-		XmppEventMusicChanged event = new XmppEventMusicChanged(from.toBareJID());
-		
-        for (Object argObj : iq.elements()) {
+		XmppEventMusicChanged event = new XmppEventMusicChanged(from.getNode());
+
+		for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;
         	
-        	Log.debug("parsing expected arg node " + node); 	
+        	Log.debug("parsing expected arg node " + node);
         	
         	if (node.getNodeType() == Node.ELEMENT_NODE) {
         		Element element = (Element) node;
