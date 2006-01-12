@@ -114,6 +114,8 @@ public:
     void unregisterWindowMsgHook(HWND window);
     HWND getWindow() { return window_; }
 
+    void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
+
 private:
     bool registerActive();
     bool registerClass();

@@ -150,6 +150,49 @@ HippoIM::notifyPostClickedU(const char *postGuid)
     lm_message_unref(message);
 }
 
+static void
+addPropValue(LmMessageNode *node, const char *key, const HippoBSTR &value)
+{
+    char *valueU = g_utf16_to_utf8(value.m_str, value.Length(), NULL, NULL, NULL);
+    if (valueU == 0) {
+        hippoDebugLogU("Failed to convert property %s to UTF8", key);
+        return;
+    }
+    LmMessageNode *propNode = lm_message_node_add_child(node, "prop", NULL);
+    lm_message_node_set_attribute(propNode, "key", key);
+    lm_message_node_set_value(propNode, valueU);
+    g_free(valueU);
+}
+
+void
+HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    LmMessageNode *node = lm_message_get_node(message);
+
+    LmMessageNode *music = lm_message_node_add_child (node, "music", NULL);
+    lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
+    lm_message_node_set_attribute(music, "type", "musicChanged");
+
+    if (haveTrack) {
+        if (track.hasName())
+            addPropValue(music, "name", track.getName());
+        if (track.hasArtist())
+            addPropValue(music, "artist", track.getArtist());
+    }
+
+    GError *error = NULL;
+    lm_connection_send(lmConnection_, message, &error);
+    if (error) {
+        hippoDebugLogU("Failed to send music changed notification: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    hippoDebugLogW(L"Sent music changed xmpp message");
+}
+
 HRESULT
 HippoIM::getAuthURL(BSTR *result)
 {

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoMusicMonitor.h"
 #include <loudmouth/loudmouth.h>
 
 class HippoUI;
@@ -31,6 +32,8 @@ public:
     void setUI(HippoUI *ui);
 
     void notifyPostClickedU(const char *postGuid);
+
+    void notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track);
 
     // Try to sign in. Returns TRUE if we need to show a web page where
     // the user can sign in

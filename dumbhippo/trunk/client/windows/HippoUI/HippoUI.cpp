@@ -53,6 +53,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     notificationIcon_.setUI(this);
     bubble_.setUI(this);
     upgrader_.setUI(this);
+    music_.setUI(this);
 
     preferencesDialog_ = NULL;
 
@@ -1437,6 +1438,12 @@ void
 HippoUI::unregisterWindowMsgHook(HWND window)
 {
     // fixme
+}
+
+void
+HippoUI::onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack)
+{
+    im_.notifyMusicTrackChanged(haveTrack, newTrack);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32
