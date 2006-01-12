@@ -78,6 +78,10 @@ private:
     void connectFailure(char *message);
     void authFailure(char *message);
 
+    void sendMessage(LmMessage *message);
+    void sendMessage(LmMessage *message, LmMessageHandler *handler);
+    void flushPending();
+
     static gboolean onSignInTimeout(gpointer data);
     static gboolean onRetryTimeout(gpointer data);
 
@@ -125,4 +129,6 @@ private:
     guint retryTimeoutID_;    // GSource ID for timeout
 
     HippoArray<HippoChatRoom *> chatRooms_;
+
+    GQueue *pending_messages_;
 };

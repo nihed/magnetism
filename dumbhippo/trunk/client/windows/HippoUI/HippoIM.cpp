@@ -16,6 +16,37 @@ static int KEEP_ALIVE_RATE = 60;        /* 1 minute; 0 disables */
 
 static const int RETRY_TIMEOUT = 60000; /* 1 minute */
 
+class OutgoingMessage
+{
+public:
+    OutgoingMessage(LmMessage *message, LmMessageHandler *handler) 
+        : message_(message), handler_(handler) {
+        if (message_ != 0)
+            lm_message_ref(message_);
+        if (handler_ != 0)
+            lm_message_handler_ref(handler_);
+    }
+
+    ~OutgoingMessage() {
+        if (message_ != 0)
+            lm_message_unref(message_);
+        if (handler_ != 0)
+            lm_message_handler_unref(handler_);
+    }
+
+    LmMessage* getMessage() {
+        return message_;
+    }
+
+    LmMessageHandler* getMessageHandler() {
+        return handler_;
+    }
+
+private:
+    LmMessage *message_;
+    LmMessageHandler *handler_;
+};
+
 HippoIM::HippoIM()
 {
     signInTimeoutID_ = 0;
@@ -24,6 +55,15 @@ HippoIM::HippoIM()
     state_ = SIGNED_OUT;
     lmConnection_ = NULL;
     ui_ = NULL;
+    // queue of OutgoingMessage
+    pending_messages_ = g_queue_new();
+}
+
+static void
+delete_outgoing_message(void *p, void *user_data)
+{
+    OutgoingMessage *m = static_cast<OutgoingMessage*>(p);
+    delete m;
 }
 
 HippoIM::~HippoIM()
@@ -33,6 +73,9 @@ HippoIM::~HippoIM()
 
     stopSignInTimeout();
     stopRetryTimeout();
+
+    g_queue_foreach(pending_messages_, delete_outgoing_message, 0);
+    g_queue_free(pending_messages_);
 }
 
 void
@@ -115,7 +158,10 @@ HippoIM::stateChange(State state)
 {
     state_ = state;
     ui_->debugLogW(L"IM connection state changed to %d", (int) state);
-    ui_->onConnectionChange(state == AUTHENTICATED);
+
+    flushPending(); // this could result in re-entrancy I think...
+
+    ui_->onConnectionChange(state_ == AUTHENTICATED);
 }
 
 bool
@@ -141,12 +187,8 @@ HippoIM::notifyPostClickedU(const char *postGuid)
     LmMessageNode *guidArg = lm_message_node_add_child (method, "arg", NULL);
     lm_message_node_set_value (guidArg, postGuid);
 
-    GError *error = NULL;
-    lm_connection_send(lmConnection_, message, &error);
-    if (error) {
-        hippoDebug(L"Failed to send post clicked notification: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message);
+
     lm_message_unref(message);
 }
 
@@ -183,12 +225,8 @@ HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
             addPropValue(music, "artist", track.getArtist());
     }
 
-    GError *error = NULL;
-    lm_connection_send(lmConnection_, message, &error);
-    if (error) {
-        hippoDebugLogU("Failed to send music changed notification: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message);
+
     lm_message_unref(message);
     hippoDebugLogW(L"Sent music changed xmpp message");
 }
@@ -441,6 +479,40 @@ HippoIM::authenticate()
 }
 
 void
+HippoIM::sendMessage(LmMessage *message)
+{
+    sendMessage(message, 0);
+}
+
+void
+HippoIM::sendMessage(LmMessage *message, LmMessageHandler *handler)
+{
+    g_queue_push_tail(pending_messages_, new OutgoingMessage(message, handler));
+
+    flushPending();
+}
+
+void
+HippoIM::flushPending()
+{
+    while (state_ == AUTHENTICATED && pending_messages_->length > 0) {
+        OutgoingMessage *om = static_cast<OutgoingMessage*>(g_queue_pop_head(pending_messages_));
+        LmMessage *message = om->getMessage();
+        LmMessageHandler *handler = om->getMessageHandler();
+        GError *error = 0;
+        if (handler != 0)
+            lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+        else
+            lm_connection_send(lmConnection_, message, &error);
+        if (error) {
+            ui_->debugLogU("Failed sending message: %s", error->message);
+            g_error_free(error);
+        }
+        delete om;
+    }
+}
+
+void
 HippoIM::getClientInfo()
 {
     LmMessage *message;
@@ -453,14 +525,11 @@ HippoIM::getClientInfo()
     lm_message_node_set_attribute(child, "platform", "windows");
     LmMessageHandler *handler = lm_message_handler_new(onClientInfoReply, this, NULL);
 
-    GError *error = NULL;
-    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
-    if (error) {
-        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message, handler);
+
     lm_message_unref(message);
     lm_message_handler_unref(handler);
+
     ui_->debugLogU("Sent request for clientInfo");
 }
 
