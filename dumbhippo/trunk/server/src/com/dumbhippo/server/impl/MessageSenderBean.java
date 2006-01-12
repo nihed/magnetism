@@ -241,29 +241,7 @@ public class MessageSenderBean implements MessageSender {
 	private class XMPPSender {
 
 		private XMPPConnection connection;
-		
-		private String makeJid(User recipient) {
-			StringBuilder recipientJid = new StringBuilder();
-
-			// Reverse the transformation in MessageGlueBean:jiveUserNameToGuid
-			String id = recipient.getId();
-			for (int i = 0; i < id.length(); i++) {
-				char c = id.charAt(i);
-				if (Character.isUpperCase(c)) {
-					recipientJid.append(Character.toLowerCase(c));
-				} else if (Character.isLowerCase(c)) {
-					recipientJid.append(c);
-					recipientJid.append('_');
-				} else {
-					recipientJid.append(c);
-				}
-			}
-							
-			recipientJid.append("@dumbhippo.com");
-			
-			return recipientJid.toString();
-		}
-		
+				
 		private synchronized XMPPConnection getConnection() {
 			if (connection != null && !connection.isConnected()) {
 				logger.debug("got disconnected from XMPP server");
@@ -302,7 +280,9 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 			
-			Message message = new Message(makeJid(recipient), Message.Type.HEADLINE);
+			// FIXME should dumbhippo.com domain be hardcoded here?
+			Message message = new Message(recipient.getGuid().toJabberId("dumbhippo.com"),
+					Message.Type.HEADLINE);
 
 			String title = post.getTitle();
 			
@@ -369,7 +349,8 @@ public class MessageSenderBean implements MessageSender {
 					logger.debug("No user for " + recipientResource.getId());
 				}
 				
-				Message message = new Message(makeJid(recipient), Message.Type.HEADLINE);
+				Message message = new Message(recipient.getGuid().toJabberId("dumbhippo.com"),
+						Message.Type.HEADLINE);
 
 				Viewpoint viewpoint = new Viewpoint(recipient);
 				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);

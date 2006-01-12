@@ -614,7 +614,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras) {
-		if (!canSeeContacts(viewpoint, user))
+		if (!isViewerFriendOf(viewpoint, user))
 			return Collections.emptySet();
 		
 		// there are various ways to get yourself in your own contact list;
@@ -662,19 +662,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return count.longValue() > 0;		
 	}
 	
-	private boolean canSeeContacts(Viewpoint viewpoint, User user) {
-		// You can see someone's contacts if you are them, or you are a contact of them
+	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
+			if (!isViewerFriendOf(viewpoint, user))
+				return false;
+			else
+				return isContactNoViewpoint(user, contactUser);
+	}
+	
+	public boolean isViewerFriendOf(Viewpoint viewpoint, User user) {
+		// You can see someone's "friends only" stuff if you are them, or you are a contact of them
 		if (user.equals(viewpoint.getViewer()) || isContactNoViewpoint(user, viewpoint.getViewer()))
 			return true;
 		else
 			return false;
 	}
 	
-	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
-			if (!canSeeContacts(viewpoint, user))
-				return false;
-			else
-				return isContactNoViewpoint(user, contactUser);
+	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
+		// FIXME haven't implemented this feature yet
+		return false;
 	}
 	
 	static final String GET_CONTACT_RESOURCES_QUERY = 

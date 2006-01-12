@@ -11,35 +11,69 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class Digest {
-	private static MessageDigest messageDigest;
 	
-	static private synchronized String cachedComputeDigest(String token, String secret) {
+	static public final int SHA1_HEX_LENGTH = 40;
+	
+	static public MessageDigest newDigest() {
 		try {
-			messageDigest = MessageDigest.getInstance("SHA");
+			return MessageDigest.getInstance("SHA");
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
 			throw new IllegalStateException("SHA algorithm provider missing", e);
 		}
-		
-	    messageDigest.update(token.getBytes());
-		byte[] expectedDigest = messageDigest.digest(secret.getBytes());
-		 
-        return StringUtils.hexEncode(expectedDigest);
+	}
+	
+	static public void update(MessageDigest md, String s) {
+		if (s == null)
+			md.update((byte) 0);
+		else
+			md.update(StringUtils.getBytes(s));
+	}
+	
+	static public void update(MessageDigest md, int value) {
+		while (value != 0) {
+			md.update((byte) (value & 0xff));
+			// >>> 0-fills vs. >> sign-bit-fills
+			value = value >>> 8;
+		}
+	}
+
+	static public void update(MessageDigest md, long value) {
+		while (value != 0) {
+			md.update((byte) (value & 0xff));
+			// >>> 0-fills vs. >> sign-bit-fills
+			value = value >>> 8;
+		}
+	}
+	
+	static public String digest(MessageDigest md) {
+		return StringUtils.hexEncode(md.digest());
 	}
 	
 	/**
 	 * Computes a lowercase hex-encoded SHA-1 digest of the 
 	 * given token prepended to the given secret.
 	 * 
-	 * Right now uses a global MessageDigest, but the idea is that 
-	 * we could tune this method to use various caching strategies for
-	 * the MessageDigest if appropriate.
-	 * 
 	 * @param token token to prepend
 	 * @param secret the secret
 	 * @return SHA-1 digest as hex string
 	 */
 	public String computeDigest(String token, String secret) {
-		return cachedComputeDigest(token, secret);
+		MessageDigest md = newDigest();
+		update(md, token);
+		update(md, secret);
+		return digest(md);
+	}
+	
+	/**
+	 * Computes a lowercase hex-encoded SHA-1 digest of the 
+	 * given data.
+	 * 
+	 * @param data what to digest
+	 * @return SHA-1 digest as hex string
+	 */
+	public String computeDigest(String data) {
+		MessageDigest md = newDigest();
+		update(md, data);
+		return digest(md);
 	}
 }

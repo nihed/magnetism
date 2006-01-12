@@ -172,6 +172,25 @@ public interface IdentitySpider {
 	public boolean isContact(Viewpoint viewpoint, User user, User contact);
 	
 	/**
+	 * Check whether viewpoint user as seen by this user is considered
+	 * a friend (contact or same user)
+	 * @param viewpoint the currently logged-in user
+	 * @param user the user we want to see if we're a friend of
+	 * @return true if friendly
+	 */
+	public boolean isViewerFriendOf(Viewpoint viewpoint, User user);
+	
+
+	/**
+	 * Check whether viewpoint user as seen by this user is considered
+	 * weird (marked as not desirable)
+	 * @param viewpoint the currently logged-in user
+	 * @param user the user we want to see if we're weird to
+	 * @return true if weird
+	 */
+	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user);
+	
+	/**
 	 * The Man is an internal person who we use for various nefarious purposes.
 	 *
 	 * (More helpfully: The Man is the system user; his opinions 

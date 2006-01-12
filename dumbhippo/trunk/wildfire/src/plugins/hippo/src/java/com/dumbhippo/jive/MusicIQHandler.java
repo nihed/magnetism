@@ -9,6 +9,7 @@ import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.jms.JmsProducer;
@@ -42,6 +43,7 @@ public class MusicIQHandler extends IQHandler {
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
 		
 		Log.debug("handling IQ packet " + packet);
+		JID from = packet.getFrom();
 		IQ reply = IQ.createResultIQ(packet);
 		Element iq = packet.getChildElement();
 
@@ -56,12 +58,12 @@ public class MusicIQHandler extends IQHandler {
 			return reply;
 		}
 		
-		return processMusicChanged(iq, reply);
+		return processMusicChanged(from, iq, reply);
 	}
 
-	private IQ processMusicChanged(Element iq, IQ reply) {
+	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
 		
-		XmppEventMusicChanged event = new XmppEventMusicChanged();
+		XmppEventMusicChanged event = new XmppEventMusicChanged(from.toBareJID());
 		
         for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;

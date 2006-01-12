@@ -6,7 +6,6 @@ package com.dumbhippo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -201,11 +200,7 @@ public class XmlBuilder {
 	}
 	
 	public byte[] getBytes() {
-		try {
-			return toString().getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("no utf8", e);
-		}
+		return StringUtils.getBytes(toString());
 	}
 	
 	public static String escape(String text) {

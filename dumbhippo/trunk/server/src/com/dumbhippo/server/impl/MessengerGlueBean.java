@@ -9,6 +9,8 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -31,23 +33,15 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	@EJB
 	private PostingBoard postingBoard;
-	
-	private String jiveUserNameToGuid(String username) {
-		StringBuilder transformedName = new StringBuilder();
-		for (int i = 0; i < username.length(); i++) {
-			if (i+1 < username.length() && username.charAt(i+1) == '_') {
-				transformedName.append(Character.toLowerCase(username.charAt(i)));
-				i++;
-			} else {
-				transformedName.append(Character.toUpperCase(username.charAt(i)));
-			}
-		}
-		return transformedName.toString();
-	}
 		
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
-		String guidUsername = jiveUserNameToGuid(username);
-		Account account = accountSystem.lookupAccountByPersonId(guidUsername);
+		Guid guid;
+		try {
+			guid = Guid.parseJabberId(username);
+		} catch (ParseException e) {
+			throw new JabberUserNotFoundException("corrupt username");
+		}
+		Account account = accountSystem.lookupAccountByPersonId(guid.toString());
 		if (account == null)
 			throw new JabberUserNotFoundException("username does not exist");
 		

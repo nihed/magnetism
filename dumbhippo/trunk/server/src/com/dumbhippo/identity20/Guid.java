@@ -7,6 +7,8 @@ import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.dumbhippo.persistence.User;
+
 /**
  * Guid is a globally-unique identifier, designed to not
  * require coordination (i.e. you can make up the GUID without asking the server
@@ -198,5 +200,44 @@ final public class Guid {
 			guids.add(new Guid(str));
 		}
 		return guids;
-	}		
+	}
+	
+	static public Guid parseJabberId(String username) throws ParseException {
+		StringBuilder transformedName = new StringBuilder();
+		for (int i = 0; i < username.length(); i++) {
+			if (i+1 < username.length() && username.charAt(i+1) == '_') {
+				transformedName.append(Character.toLowerCase(username.charAt(i)));
+				i++;
+			} else {
+				transformedName.append(Character.toUpperCase(username.charAt(i)));
+			}
+		}
+		return new Guid(transformedName.toString());
+	}
+	
+	public String toJabberId(String domain) {
+		StringBuilder sb = new StringBuilder();
+
+		// Reverse the transformation in MessageGlueBean:jiveUserNameToGuid
+		String id = toString();
+		for (int i = 0; i < id.length(); i++) {
+			char c = id.charAt(i);
+			if (Character.isUpperCase(c)) {
+				sb.append(Character.toLowerCase(c));
+			} else if (Character.isLowerCase(c)) {
+				sb.append(c);
+				sb.append('_');
+			} else {
+				sb.append(c);
+			}
+		}
+			
+		if (domain != null) {
+			sb.append('@');
+			sb.append(domain);
+		}
+		
+		return sb.toString();
+	}
+
 }

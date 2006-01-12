@@ -7,9 +7,15 @@ public class XmppEventMusicChanged extends XmppEvent {
 	private static final long serialVersionUID = 1L;
 	
 	private Map<String,String> properties;
-
-	public XmppEventMusicChanged() {
+	private String jabberId;
+	
+	public XmppEventMusicChanged(String jabberId) {
+		this.jabberId = jabberId;
 		properties = new HashMap<String,String>();
+	}
+	
+	public String getJabberId() {
+		return jabberId;
 	}
 	
 	public Map<String,String> getProperties() {

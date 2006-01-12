@@ -4,11 +4,14 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.CurrentTrack;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -35,16 +38,20 @@ public class ViewPersonPage {
 	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	private PostingBoard postBoard;
+	private MusicSystem musicSystem;
 	private PersonView person;
 	
 	private ListBean<PostView> posts;
 	private ListBean<Group> groups;
 	private ListBean<PersonView> contacts;
 	
+	private CurrentTrack currentTrack;
+	
 	public ViewPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 	}
 	
 	public ListBean<PostView> getPosts() {
@@ -144,5 +151,22 @@ public class ViewPersonPage {
 					PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
 		}
 		return contacts;
+	}
+	
+	private void ensureCurrentTrack() {
+		if (currentTrack == null) {
+			try {
+				currentTrack = musicSystem.getCurrentTrack(signin.getViewpoint(), viewedPerson);
+			} catch (NotFoundException e) {
+				// to avoid lots of null checks and avoid looking it 
+				// up again, create a dummy object
+				currentTrack = new CurrentTrack(viewedPerson, null);
+			}
+		}		
+	}
+	
+	public Track getCurrentTrack() {
+		ensureCurrentTrack();
+		return currentTrack.getTrack();
 	}
 }

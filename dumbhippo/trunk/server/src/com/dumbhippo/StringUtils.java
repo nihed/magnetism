@@ -51,4 +51,20 @@ public class StringUtils {
 			return new String[0];
 		return text.split("\\s");
 	}
+
+	/**
+	 * The normal String.getBytes() is broken since it uses
+	 * some kind of platform-specific encoding, and getBytes(String)
+	 * is broken since it throws a checked exception, thus this wrapper.
+	 * 
+	 * @param s a string
+	 * @return bytes of string in UTF-8 encoding
+	 */
+	public static byte[] getBytes(String s) {
+		try {
+			return s.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("No UTF-8 support in JRE, totally busted");
+		}
+	}
 }

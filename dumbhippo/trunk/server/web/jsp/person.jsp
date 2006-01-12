@@ -72,6 +72,22 @@
 		</div>
 
 		<div class="dh-right-box-area">
+		
+		<c:if test="${!empty viewperson.currentTrack}">
+			<div class="dh-right-box">
+				<h5 class="dh-title">Latest Song</h5>
+				<div class="dh-song">
+					<c:if test="${!empty viewperson.currentTrack.name}">
+						<c:out value="${viewperson.currentTrack.name"/>
+					</c:if>
+					<br/>
+					<c:if test="${!empty viewperson.currentTrack.artist}">
+						<c:out value="${viewperson.currentTrack.artist"/>
+					</c:if>
+				</div>
+			</div>
+		</c:if>
+		
 		<div class="dh-right-box">
 			<h5 class="dh-title">Groups They're In</h5>
 			<div class="dh-groups">
