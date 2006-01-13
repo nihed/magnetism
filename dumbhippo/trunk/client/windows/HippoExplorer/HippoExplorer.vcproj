@@ -144,6 +144,9 @@
 				RelativePath=".\HippoTracker.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoUILauncher.cpp">
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -190,6 +193,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoTracker.h">
+			</File>
+			<File
+				RelativePath=".\HippoUILauncher.h">
 			</File>
 			<File
 				RelativePath=".\Resource.h">

@@ -20,6 +20,8 @@ library HippoExplorer {
     {
         [helpstring("Close the browser window; usually used for server side dialogs")]
         HRESULT CloseWindow(void);
+        [helpstring("Show a chat window for the given post")]
+        HRESULT ShowChatWindow(BSTR userId, BSTR postId);
     }
     [
         uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents

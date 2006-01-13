@@ -1,4 +1,4 @@
-/* HippoEmbed.cpp: Browser helper object to track user visited URL
+/* HippoEmbed.cpp: ActiveX control to extend the capabilities of our web pages
  *
  * Copyright Red Hat, Inc. 2005
  */
@@ -7,18 +7,48 @@
 #include "HippoEmbed.h"
 #include "HippoExplorer_h.h"
 #include "HippoDispID.h"
+#include "HippoUILauncher.h"
 #include "Guid.h"
 #include "Globals.h"
 #include <strsafe.h>
 #include <stdarg.h>
 #include <ExDispid.h>
-#include <wininet.h> // For InternetCrackUrl
+#include <wininet.h> // For InternetCrackUr
 
-// NOTE: This ActiveX control is disabled two separate ways
-//
-// 1. It isn't self-registered (DllRegisterServer), or registered by the 
-//    installer(Components.wxs)
-// 2. SetInterfaceSafetyOptions() always refused to set it as safe for scripting
+class ShowChatLaunchListener : public HippoUILaunchListener {
+public:
+    ShowChatLaunchListener(BSTR postId);
+    
+    void onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui);
+    void onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason);
+
+private:
+    HippoBSTR postId_;
+};
+
+ShowChatLaunchListener::ShowChatLaunchListener(BSTR postId)
+{
+    postId_ = postId;
+}
+
+void 
+ShowChatLaunchListener::onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui)
+{
+    ui->ShowChatWindow(postId_);
+    delete launcher;
+    delete this;
+}
+ 
+void 
+ShowChatLaunchListener::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason)
+{
+    hippoDebug(L"%s", reason);
+    delete launcher;
+    delete this;
+}
+
+// This needs to be registered in the registry to be used; see 
+// DllRegisterServer() (for self-registry during development) and Components.wxs
 //
 // Both need to be reversed when we start using this.
 
@@ -163,10 +193,6 @@ HippoEmbed::SetInterfaceSafetyOptions (const IID &ifaceID,
                                        DWORD      enabledOptions)
 {
     if (IsEqualIID(ifaceID, IID_IDispatch)) {
-        // We're not using this currently, so just refuse always
-        return E_FAIL;
-
-#if 0
         if ((optionSetMask & ~INTERFACESAFE_FOR_UNTRUSTED_CALLER) != 0)
             return E_FAIL;
 
@@ -182,7 +208,6 @@ HippoEmbed::SetInterfaceSafetyOptions (const IID &ifaceID,
 
         safetyOptions_ = ((safetyOptions_ & ~optionSetMask) |
                           (enabledOptions & optionSetMask));
-#endif
 
         return S_OK;
     } else {
@@ -302,6 +327,27 @@ HippoEmbed::CloseWindow()
         return E_FAIL;
 }
 
+STDMETHODIMP
+HippoEmbed::ShowChatWindow(BSTR userId, BSTR postId)
+{
+    HippoUILauncher *launcher = new HippoUILauncher();
+    HippoPtr<IHippoUI> ui;
+    if (SUCCEEDED(launcher->getUI(&ui, userId))) {
+        ui->ShowChatWindow(postId);
+        delete launcher;
+    } else {
+        ShowChatLaunchListener *listener = new ShowChatLaunchListener(postId);
+        launcher->setListener(listener);
+
+        if (FAILED(launcher->launchUI())) {
+            delete launcher;
+            delete listener;
+        }
+    }
+
+    return S_OK;
+}
+
 /////////////////////////////////////////////////////////////////////
 
  void
@@ -389,7 +435,6 @@ HippoEmbed::checkURL(BSTR url)
         return false;
 
     HippoBSTR foo(components.dwHostNameLength, components.lpszHostName);
-    hippoDebug(L"%ls", foo);
 
     size_t allowedHostLength = wcslen(ALLOWED_HOST_SUFFIX);
     if (components.dwHostNameLength < allowedHostLength)
@@ -400,5 +445,5 @@ HippoEmbed::checkURL(BSTR url)
                 allowedHostLength) != 0)
         return false;
 
-	return true;
+    return true;
 }

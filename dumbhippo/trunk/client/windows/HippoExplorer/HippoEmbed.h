@@ -1,4 +1,4 @@
-/* HippoEmbed.h: Browser helper object to track user visited URLs
+/* HippoEmbed.h: ActiveX control to extend the capabilities of our web pages
  *
  * Copyright Red Hat, Inc. 2005
  */
@@ -44,9 +44,8 @@ public:
                         VARIANT *, EXCEPINFO *, unsigned int *);
 
    // IHippoEmbed methods
-   STDMETHODIMP DisplayMessage (BSTR message);
-   STDMETHODIMP DebugDump (IDispatch *element);
    STDMETHODIMP CloseWindow (void);
+   STDMETHODIMP ShowChatWindow (BSTR userId, BSTR postId);
 
 private:
     void clearSite();

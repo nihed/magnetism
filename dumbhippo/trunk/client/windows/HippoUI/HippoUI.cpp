@@ -528,6 +528,38 @@ HippoUI::BeginFlickrShare(BSTR filePath)
     return S_OK;
 }
 
+HRESULT
+HippoUI::ShowChatWindow(BSTR postId)
+{
+    // If a chat window already exists for the post, just raise it
+    for (unsigned i = 0; i < chatWindows_.length(); i++) {
+        if (wcscmp(chatWindows_[i]->getChatRoom()->getPostId(), postId) == 0) {
+            chatWindows_[i]->setForegroundWindow();
+            return S_OK;
+        }
+    }
+
+    HippoChatRoom *chatRoom = im_.joinChatRoom(postId);
+    HippoChatWindow *window = new HippoChatWindow();
+    window->setUI(this);
+    window->setChatRoom(chatRoom);
+
+    chatWindows_.append(window);
+
+    window->create();
+    window->show();
+    window->setForegroundWindow();
+
+    return S_OK;
+}
+
+HRESULT
+HippoUI::GetLoginId(BSTR *ret)
+{
+    // GUID is same as username
+    return im_.getUsername(ret);
+}
+
 void
 HippoUI::showSignInWindow()
 {
@@ -772,27 +804,6 @@ HippoUI::onAuthFailure()
 {
     updateForgetPassword();
     showSignInWindow();
-}
-
-void 
-HippoUI::showChatWindow(BSTR postId)
-{
-    for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (wcscmp(chatWindows_[i]->getChatRoom()->getPostId(), postId) == 0) {
-            chatWindows_[i]->setForegroundWindow();
-            return;
-        }
-    }
-
-    HippoChatRoom *chatRoom = im_.joinChatRoom(postId);
-    HippoChatWindow *window = new HippoChatWindow();
-    window->setUI(this);
-    window->setChatRoom(chatRoom);
-
-    chatWindows_.append(window);
-
-    window->create();
-    window->show();
 }
 
 void 
@@ -1241,14 +1252,6 @@ HippoUI::getRemoteURL(BSTR  appletName,
         return hr;
 
     return url.CopyTo(result);
-}
-
-// Return the GUID of the current user
-HRESULT
-HippoUI::getLoginId(BSTR *ret)
-{
-    // GUID is same as username
-    return im_.getUsername(ret);
 }
 
 bool

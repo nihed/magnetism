@@ -272,7 +272,7 @@ HRESULT
 HippoChatWindow::GetSelfId(BSTR *ret)
 {
     HippoBSTR temp;
-    ui_->getLoginId(&temp);
+    ui_->GetLoginId(&temp);
 
     return temp.CopyTo(ret);
 }

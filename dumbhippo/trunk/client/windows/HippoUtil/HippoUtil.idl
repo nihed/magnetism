@@ -31,6 +31,10 @@ library HippoUtil {
         HRESULT BeginFlickrShare([in] BSTR path);
         [id(106), helpstring("Share a specific URL")]
         HRESULT ShareLink([in] BSTR url, [in] BSTR title);
+        [id(107), helpstring("Open a chat window about a post")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(108), helpstring("Get the user ID of the logged-in user")]
+        HRESULT GetLoginId([out, retval] BSTR *loginId);
         // up to 120
     }
     [

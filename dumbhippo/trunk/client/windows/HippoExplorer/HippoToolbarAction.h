@@ -6,10 +6,12 @@
 
 #include <shlobj.h>
 #include <HippoUtil.h>
+#include "HippoUILauncher.h"
 
 class HippoToolbarAction :
     public IObjectWithSite,
-    public IOleCommandTarget
+    public IOleCommandTarget,
+    public HippoUILaunchListener
 {
 public:
     HippoToolbarAction(void);
@@ -35,6 +37,10 @@ public:
                       VARIANTARG *commandInput,
                       VARIANTARG *commandOutput);
 
+   // HippoUILauncherListener methods
+   void onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui);
+   void onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason);
+
 protected:
     DWORD refCount_;
 
@@ -54,12 +60,11 @@ private:
                                        WPARAM wParam,
                                        LPARAM lParam);
 
+    HippoUILauncher launcher_;
+
     HippoPtr<IServiceProvider> site_;
     HippoPtr<IWebBrowser2> browser_;
 
-    HWND window_;
-
-    unsigned uiWaitCount_;
     HippoBSTR shareUrl_;
     HippoBSTR shareTitle_;
 };

@@ -76,6 +76,8 @@ public:
     STDMETHODIMP ShowRecent();
     STDMETHODIMP BeginFlickrShare(BSTR filePath);
     STDMETHODIMP ShareLink(BSTR url, BSTR title);
+    STDMETHODIMP ShowChatWindow(BSTR postId);
+    STDMETHODIMP GetLoginId(BSTR *result);
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -106,7 +108,6 @@ public:
 
     HRESULT getRemoteURL(BSTR appletName, BSTR *result);
     HRESULT getAppletURL(BSTR appletName, BSTR *result);
-    HRESULT getLoginId(BSTR *result);
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 
@@ -126,8 +127,6 @@ private:
     void showSignInWindow();
     void showPreferences();
     void updateForgetPassword();
-
-    void showChatWindow(BSTR postId);
 
     // Register an "internal" browser instance that we don't want
     // to allow sharing of, and that we quit when the HippoUI

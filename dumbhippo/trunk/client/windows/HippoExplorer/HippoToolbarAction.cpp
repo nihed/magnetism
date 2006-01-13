@@ -11,28 +11,15 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 
-// If we have to start the client, we need to wait in a timeout
-static const UINT_PTR UI_WAIT = 1;        // timeout identifier (unique only for window)
-static const UINT UI_WAIT_INTERVAL = 250; // timeout interval: 0.25s
-static const int UI_WAIT_MAX_TRIES = 100; // How many times to check
-
-// Window class for the window we use to receive the above timeout
-static const TCHAR *CLASS_NAME = TEXT("HippoToolbarActionClass");
-
 HippoToolbarAction::HippoToolbarAction(void)
 {
     refCount_ = 1;
     dllRefCount++;
-
-    window_ = NULL;
-    uiWaitCount_ = 0;
+    launcher_.setListener(this);
 }
 
 HippoToolbarAction::~HippoToolbarAction(void)
 {
-    if (window_)
-        DestroyWindow(window_);
-
     // In case setSite(NULL) wasn't called
     clearSite();
         
@@ -160,31 +147,19 @@ HippoToolbarAction::Exec (const GUID *commandGroup,
 
     HippoPtr<IHippoUI> ui;
 
-    if (SUCCEEDED(getUI(&ui))) {
+    if (SUCCEEDED(launcher_.getUI(&ui))) {
         ui->ShareLink(url, title);
     } else {
-        // If the HippoUI client isn't running, we start it. We check periodically
-        // in a timeout until it actually starts
-        if (!window_) {
-            if (!createWindow()) {
-                hippoDebug(L"Can't create window to receive timer messages");
-                return E_FAIL;
-            }
-        }
-
-        if (!spawnUI()) {
-            hippoDebug(L"Couldn't start DumbHippo client");
-            return E_FAIL;
-        }
-
-        uiWaitCount_ = UI_WAIT_MAX_TRIES;
-
         // Stash away the URL and Title to use when the UI shows up
         shareUrl_ = url;
         shareTitle_ = title;
 
-        SetTimer(window_, UI_WAIT, UI_WAIT_INTERVAL, NULL);
-        updateCommandEnabled();
+        if (SUCCEEDED(launcher_.launchUI())) {
+            updateCommandEnabled();
+        } else {
+            shareUrl_ = NULL;
+            shareTitle_ = NULL;
+        }
     }
 
     return S_OK;
@@ -193,6 +168,31 @@ HippoToolbarAction::Exec (const GUID *commandGroup,
     HippoPtr<IUnknown> unknown;
 
     return S_OK;
+}
+
+/////////////////// HippoUILaunchListener implementation ///////////////////
+
+void 
+HippoToolbarAction::onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui)
+{
+    HippoBSTR url = shareUrl_;
+    HippoBSTR title = shareTitle_;
+
+    shareUrl_ = NULL;
+    shareTitle_ = NULL;
+    updateCommandEnabled();
+
+    ui->ShareLink(url, title);
+}
+
+void 
+HippoToolbarAction::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason)
+{
+    shareUrl_ = NULL;
+    shareTitle_ = NULL;
+    updateCommandEnabled();
+
+    hippoDebug(L"%s", reason);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -206,130 +206,6 @@ HippoToolbarAction::clearSite()
     }
 }
 
-bool 
-HippoToolbarAction::registerWindowClass()
-{
-    WNDCLASS windowClass;
-
-    if (GetClassInfo(dllInstance, CLASS_NAME, &windowClass))
-        return true;  // Already registered
-
-    windowClass.style = 0;
-    windowClass.lpfnWndProc = windowProc;
-    windowClass.cbClsExtra = 0;
-    windowClass.cbWndExtra = 0;
-    windowClass.hInstance = dllInstance;
-    windowClass.hIcon = NULL;
-    windowClass.hCursor = NULL;
-    windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    windowClass.lpszMenuName = NULL;
-    windowClass.lpszClassName = CLASS_NAME;    
-
-    return RegisterClass(&windowClass) != 0;
-}
-
-bool
-HippoToolbarAction::createWindow()
-{
-    if (!registerWindowClass())
-        return false;
-
-    window_ = CreateWindow(CLASS_NAME, 
-                           NULL, // No title
-                           0,    // Window style doesn't matter
-                           0, 0, 10, 10,
-                           NULL, // No parent
-                           NULL, // No menu
-                           dllInstance,
-                           NULL); // lpParam
-    if (!window_)
-        return false;
-
-    hippoSetWindowData<HippoToolbarAction>(window_, this);
-
-    return true;
-}
-
-// Check first for a non-debug instance of HippoUI, then a "dogfood" (testing)
-// instance, then the debug instance. We favor the non-debug instance to let 
-// people use DumbHippo while hacking it.
-HRESULT
-HippoToolbarAction::getUI(IHippoUI **ui)
-{
-    HippoPtr<IUnknown> unknown;
-
-    if (SUCCEEDED(GetActiveObject(CLSID_HippoUI, NULL, &unknown)) &&
-        SUCCEEDED(unknown->QueryInterface<IHippoUI>(ui)))
-            return S_OK;
-
-    unknown = NULL;
-    if (SUCCEEDED(GetActiveObject(CLSID_HippoUI_Dogfood, NULL, &unknown)) &&
-        SUCCEEDED(unknown->QueryInterface<IHippoUI>(ui)))
-            return S_OK;
-
-    unknown = NULL;
-    if (SUCCEEDED(GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)) &&
-        SUCCEEDED(unknown->QueryInterface<IHippoUI>(ui)))
-            return S_OK;
-
-    return E_FAIL;
-}
-
-// Start up the HippoUI process. We assume it's in the same directory 
-// as the HippoExplorer DLL
-bool
-HippoToolbarAction::spawnUI()
-{
-    HINSTANCE module = GetModuleHandle(L"HippoExplorer.dll");
-    if (!module)
-        module = GetModuleHandle(L"HIPPOE~1.DLL");
-    if (!module)
-        return false;
-
-    WCHAR fileBuf[MAX_PATH];
-    if (!GetModuleFileName(module, fileBuf, sizeof(fileBuf) / sizeof(fileBuf[0])))
-        false;
-
-    for (size_t i = wcslen(fileBuf); i > 0; i--)
-        if (fileBuf[i - 1] == '\\')
-            break;
-
-    if (i == 0)  // No \ in path?
-        return false;
-
-    if (FAILED(StringCchCopy(fileBuf + i, MAX_PATH - i, L"HippoUI.exe")))
-        return false;
-
-    return _wspawnl(_P_NOWAIT, fileBuf, L"HippoUI", NULL) != -1;
-}
-
-// The periodic time called while waiting for the UI to start
-void 
-HippoToolbarAction::uiWaitTimer()
-{
-    HippoPtr<IHippoUI> ui;
-
-    if (!SUCCEEDED(getUI(&ui))) {
-        uiWaitCount_--;
-        if (uiWaitCount_ == 0) {
-            stopUIWait();
-            hippoDebug(L"Could not start DumbHippo client.");
-        }
-
-        return;
-    }
-
-    // Stop the timer before invoking the remote shareLink to avoid
-    // reentrancy problems
-    HippoBSTR url = shareUrl_;
-    HippoBSTR title = shareTitle_;
-    stopUIWait();
-
-    ui->ShareLink(url, title);
-
-    return;
-}
-
 // Tell the container in which we are embedded to recheck command
 // sensitivity; the actual new value of sensitivity is conveyed by
 // IOleCommandTarget::QueryStatus()
@@ -340,33 +216,4 @@ HippoToolbarAction::updateCommandEnabled()
     if (frameTarget) {
         frameTarget->Exec(NULL, OLECMDID_UPDATECOMMANDS, 0, NULL, NULL);
     }
-}
-
-void
-HippoToolbarAction::stopUIWait() 
-{
-    KillTimer(window_, UI_WAIT);
-    shareUrl_ = NULL;
-    shareTitle_ = NULL;
-
-    updateCommandEnabled();
-}
-
-LRESULT CALLBACK 
-HippoToolbarAction::windowProc(HWND   window,
-                               UINT   message,
-                               WPARAM wParam,
-                               LPARAM lParam)
-{
-    HippoToolbarAction *toolbarAction = hippoGetWindowData<HippoToolbarAction>(window);
-    if (toolbarAction) {
-        if (message == WM_TIMER && wParam == UI_WAIT) {
-            toolbarAction->uiWaitTimer();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    return DefWindowProc(window, message, wParam, lParam);
 }

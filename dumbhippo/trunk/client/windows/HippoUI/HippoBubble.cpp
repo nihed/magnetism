@@ -134,7 +134,7 @@ HippoBubble::embedIE(void)
     HippoBSTR appletURLStr;
     ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
     HippoBSTR selfIdStr;
-    ui_->getLoginId(&selfIdStr);
+    ui_->GetLoginId(&selfIdStr);
     variant_t serverUrl(serverURLStr.m_str);
     variant_t appletUrl(appletURLStr.m_str);
     variant_t selfId(selfIdStr.m_str);
