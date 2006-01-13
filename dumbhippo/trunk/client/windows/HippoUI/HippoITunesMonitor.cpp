@@ -276,7 +276,6 @@ HippoITunesMonitorImpl::attemptConnect()
 void
 HippoITunesMonitorImpl::disconnect() {
 	hippoDebugLogU("%s", __FUNCTION__);
-	hippoDebugLogU("%s", __FUNCTION__);
 
 	ifaceTypeInfo_ = 0;
 
@@ -300,6 +299,98 @@ HippoITunesMonitorImpl::disconnect() {
 	state_ = NO_ITUNES;
 }
 
+
+#define GET_PROPERTY_START(obj, varType, iProp, hProp)          \
+    do {                                                        \
+	if (obj != 0) {                                             \
+        hRes = obj->get_ ## iProp(&val ## hProp);               \
+		if (FAILED(hRes)) {                                     \
+			HippoBSTR e;                                        \
+			hippoHresultToString(hRes, e);                      \
+            hippoDebugLogW(L"error getting prop: %s", e.m_str); \
+			disconnect();                                       \
+			return false;                                       \
+        }                                                       \
+    }                                                           \
+    } while(0)
+
+#define GET_PROPERTY_END_STRING(obj, iProp, hProp)              \
+    do {                                                        \
+	if (obj != 0) {                                             \
+        info->set ## hProp (val ## hProp);                      \
+        hippoDebugLogU("  got prop %s", #hProp);                \
+        hippoDebugLogW(L" %s", val ## hProp .m_str);            \
+    }                                                           \
+    } while(0)
+
+#define GET_PROPERTY_END_LONG(obj, iProp, hProp)                \
+    do {                                                        \
+	if (obj != 0) {                                             \
+        info->set ## hProp (val ## hProp);                      \
+        hippoDebugLogU("  got prop %s", #hProp);                \
+        hippoDebugLogW(L" %ld", val ## hProp );                 \
+    }                                                           \
+    } while(0)
+
+#define GET_PROPERTY_END_KIND(obj, iProp, hProp)                \
+    do {                                                        \
+	if (obj != 0) {                                             \
+        HippoBSTR k;                                            \
+        switch (val ## hProp) {                                 \
+        case ITTrackKindCD:                                     \
+            k = HIPPO_TRACK_TYPE_CD;                            \
+            break;                                              \
+        case ITTrackKindFile:                                   \
+            if (isPodcast)                                      \
+                k = HIPPO_TRACK_TYPE_PODCAST;                   \
+            else                                                \
+                k = HIPPO_TRACK_TYPE_FILE;                      \
+            break;                                              \
+        case ITTrackKindURL:                                    \
+            if (isPodcast)                                      \
+                k = HIPPO_TRACK_TYPE_PODCAST;                   \
+            else                                                \
+                k = HIPPO_TRACK_TYPE_NETWORK_STREAM;            \
+            break;                                              \
+        default:                                                \
+            k = HIPPO_TRACK_TYPE_UNKNOWN;                       \
+            break;                                              \
+        }                                                       \
+        info->set ## hProp (k);                                 \
+        hippoDebugLogU("  got prop %s", #hProp);                \
+        hippoDebugLogW(L" %ld", (long) val ## hProp );          \
+    }                                                           \
+    } while(0)
+
+#define GET_PROPERTY_STRING(obj, iProp, hProp)                  \
+    do {                                                        \
+    HippoBSTR val ## hProp;                                     \
+    GET_PROPERTY_START(obj, HippoBSTR, iProp, hProp);           \
+    GET_PROPERTY_END_STRING(obj, iProp, hProp);                 \
+    } while(0)
+
+#define GET_PROPERTY_LONG(obj, iProp, hProp)                    \
+    do {                                                        \
+    long val ## hProp;                                          \
+    GET_PROPERTY_START(obj, long, iProp, hProp);                \
+    GET_PROPERTY_END_LONG(obj, iProp, hProp);                   \
+    } while(0)
+
+#define GET_PROPERTY_KIND(obj, iProp, hProp)                    \
+    do {                                                        \
+    ITTrackKind val ## hProp;                                   \
+    GET_PROPERTY_START(obj, ITTrackKind, iProp, hProp);         \
+    GET_PROPERTY_END_KIND(obj, iProp, hProp);                   \
+    } while(0)
+
+#define GET_PROPERTY_STRING_IF_NOT_SET(obj, iProp, hProp)           \
+    do {                                                            \
+    if (!info->has ## hProp ()) {                                   \
+        GET_PROPERTY_STRING(obj, iProp, hProp);                     \
+    }                                                               \
+    } while(0)
+
+
 bool
 HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
 {
@@ -312,47 +403,42 @@ HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
 	HippoQIPtr<IITURLTrack> urlTrack_(track);
 
 	HRESULT hRes;
-	HippoBSTR name;
-		
-	if (fileTrack_ != 0) {
-		hRes = fileTrack_->get_Name(&name);
-		if (FAILED(hRes)) {
-			HippoBSTR e;
-			hippoHresultToString(hRes, e);
-			hippoDebugLogW(L"%s", e.m_str);
-			disconnect();
-			return false;
-		}
-	} else if (urlTrack_ != 0) {
-		hRes = urlTrack_->get_Name(&name);
-		if (FAILED(hRes)) {
-			HippoBSTR e;
-			hippoHresultToString(hRes, e);
-			hippoDebugLogW(L"%s", e.m_str);
-			disconnect();
-			return false;
-		}
-	}
+       
+    // we need to know if it's a podcast to interpret the ITTrackKind value
+    VARIANT_BOOL isPodcast = false;
+    if (urlTrack_ != 0) {
+        hRes = urlTrack_->get_Podcast(&isPodcast);
+		if (FAILED(hRes)) {                                     
+			HippoBSTR e;                                        
+			hippoHresultToString(hRes, e);                      
+            hippoDebugLogW(L"error getting prop: %s", e.m_str); 
+			disconnect();                                       
+			return false;                                       
+        }                                                       
+    }
+    if (fileTrack_ != 0) {
+        hRes = fileTrack_->get_Podcast(&isPodcast);
+		if (FAILED(hRes)) {                                     
+			HippoBSTR e;                                        
+			hippoHresultToString(hRes, e);                      
+            hippoDebugLogW(L"error getting prop: %s", e.m_str); 
+			disconnect();                                       
+			return false;                                       
+        }                                                       
+    }
 
-	HippoBSTR artist;
-
-	hRes = track->get_Artist(&artist);
-	if (FAILED(hRes)) {
-		HippoBSTR e;
-		hippoHresultToString(hRes, e);
-		hippoDebugLogW(L"%s", e.m_str);
-		disconnect();
-		return false;
-	}
-
-	// if no COM failures, we can fill stuff in and return
-	info->setName(name != 0 ? name : L"");
-	info->setArtist(artist != 0 ? artist : L"");
-
-	if (name != 0)
-		hippoDebugLogW(L"  name=%s", name.m_str);
-	if (artist != 0)
-		hippoDebugLogW(L"  artist=%s", artist.m_str);
+    GET_PROPERTY_KIND(track, Kind, Type);
+    // can't find an obvious way to get this from iTunes
+    //GET_PROPERTY_STRING(track, Format, Format);
+    GET_PROPERTY_STRING(fileTrack_, Name, Name);
+    GET_PROPERTY_STRING_IF_NOT_SET(urlTrack_, Name, Name);
+    GET_PROPERTY_STRING(track, Artist, Artist);
+    GET_PROPERTY_STRING(urlTrack_, URL, Url);
+    GET_PROPERTY_LONG(track, Duration, Duration);
+    GET_PROPERTY_LONG(track, Size, FileSize);
+    GET_PROPERTY_LONG(track, TrackNumber, TrackNumber);
+    // can't find an obvious way to get this from iTunes
+    //GET_PROPERTY_STRING(track, DiscIdentifier, DiscIdentifier);
 
 	return true;
 }

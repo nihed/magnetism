@@ -218,11 +218,20 @@ HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
     lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
     lm_message_node_set_attribute(music, "type", "musicChanged");
 
+#define ADD_PROP(lower, upper) \
+    if (track.has ## upper ()) addPropValue(music, #lower, track.get ## upper ())
+
     if (haveTrack) {
-        if (track.hasName())
-            addPropValue(music, "name", track.getName());
-        if (track.hasArtist())
-            addPropValue(music, "artist", track.getArtist());
+        ADD_PROP(type, Type);
+        ADD_PROP(format, Format);
+        ADD_PROP(name, Name);
+        ADD_PROP(artist, Artist);
+        ADD_PROP(album, Album);
+        ADD_PROP(url, Url);
+        ADD_PROP(duration, Duration);
+        ADD_PROP(fileSize, FileSize);
+        ADD_PROP(trackNumber, TrackNumber);
+        ADD_PROP(discIdentifier, DiscIdentifier);
     }
 
     sendMessage(message);

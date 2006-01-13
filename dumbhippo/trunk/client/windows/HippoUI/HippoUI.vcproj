@@ -21,6 +21,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
