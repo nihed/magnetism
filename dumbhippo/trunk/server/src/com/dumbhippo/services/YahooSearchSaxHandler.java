@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.xml.sax.SAXException;
@@ -17,6 +16,7 @@ import com.dumbhippo.persistence.YahooSongResult;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
+	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(YahooSearchSaxHandler.class);
 	
 	// The enum names should match the xml element names (including case)
