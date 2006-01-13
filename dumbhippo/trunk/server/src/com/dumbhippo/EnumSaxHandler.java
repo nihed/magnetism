@@ -15,12 +15,14 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	private Class<E> enumClass;
 	private E ignoredValue;
 	
+	private List<Attributes> attributesStack;
 	private List<E> stack;
 	private StringBuilder content;
 
 	protected EnumSaxHandler(Class<E> enumClass, E ignoredValue) {
 		this.enumClass = enumClass;
 		this.ignoredValue = ignoredValue;
+		attributesStack = new ArrayList<Attributes>();
 		stack = new ArrayList<E>();
 		content = new StringBuilder();
 	}
@@ -36,8 +38,9 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		 return value;
 	}
 	
-	private void push(String name) {
+	private void push(String name, Attributes attributes) {
 		 E value = parseElementName(name);
+		 attributesStack.add(attributes);
 		 stack.add(value);
 	}
 	
@@ -49,13 +52,21 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		 if (c != value)
 			 throw new SAXException("unmatched close to element " + name + " we were expecting " + c.name());
 		 stack.remove(stack.size() - 1);
+		 attributesStack.remove(stack.size() - 1);
 		 content.setLength(0);
+	}
+	
+	static private <T> T stackTop(List<T> stack) {
+		if (stack.size() > 0)
+			return stack.get(stack.size() - 1);
+		else
+			return null;		
 	}
 	
 	@Override
 	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		 //logger.debug("start element " + qName);
-		 push(qName);
+		 push(qName, attributes);
 		 
 		 openElement(current());
 	}
@@ -77,15 +88,16 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		E c = current();
 		if (c != ignoredValue)
 			content.append(ch, start, length);
-	}
+	}	
 	
 	protected final E current() {
-		if (stack.size() > 0)
-			return stack.get(stack.size() - 1);
-		else
-			return null;
+		return stackTop(stack);
 	}
 
+	protected final Attributes currentAttributes() {
+		return stackTop(attributesStack);
+	}
+	
 	protected final E parent() {
 		if (stack.size() > 1)
 			return stack.get(stack.size() - 2);

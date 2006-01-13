@@ -1,29 +1,21 @@
 package com.dumbhippo.services;
 
-import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 
-public class AmazonWebServices {
+public class AmazonWebServices extends AbstractWebServices<AmazonSaxHandler> {
 
 	static private final Log logger = GlobalSetup.getLog(AmazonWebServices.class);
 	
-	private SAXParserFactory saxFactory;
 	private String amazonAccessKeyId;
-	private int timeoutMilliseconds;
 	
 	public AmazonWebServices(String amazonAccessKeyId, int timeoutMilliseconds) {
+		super(timeoutMilliseconds);
 		this.amazonAccessKeyId = amazonAccessKeyId;
-		this.timeoutMilliseconds = timeoutMilliseconds;
 	}
 	
 	String parseItemIdFromUrl(URL url) {
@@ -66,12 +58,12 @@ public class AmazonWebServices {
 				+ "&ResponseGroup=Images,OfferSummary&AWSAccessKeyId=");
 		sb.append(amazonAccessKeyId);
 		sb.append("&ItemId=");
-		sb.append(itemId);
+		sb.append(StringUtils.urlEncode(itemId));		
 
 		String wsUrl = sb.toString();
 		logger.debug("Loading amazon web services url " + wsUrl);
 		
-		AmazonSaxHandler handler = parseUrl(wsUrl);
+		AmazonSaxHandler handler = parseUrl(new AmazonSaxHandler(), wsUrl);
 		
 		return handler;
 	}
@@ -90,42 +82,5 @@ public class AmazonWebServices {
 			logger.debug("failed to load amazon data, we parsed item ID '" + itemId + "' from url " + url);
 		}
 		return itemData;
-	}
-
-	private SAXParser newSAXParser() {
-		if (saxFactory == null)
-			saxFactory = SAXParserFactory.newInstance();
-		try {
-			return saxFactory.newSAXParser();
-		} catch (ParserConfigurationException e) {
-			logger.trace(e);
-			throw new RuntimeException(e);
-		} catch (SAXException e) {
-			logger.trace(e);
-			throw new RuntimeException(e);
-		}
-	}
-
-	private AmazonSaxHandler parseUrl(String url) {
-		AmazonSaxHandler handler = new AmazonSaxHandler();
-		SAXParser parser = newSAXParser();
-		try {
-			URL u = new URL(url);
-			URLConnection connection = u.openConnection();
-
-			connection.setConnectTimeout(timeoutMilliseconds);
-			connection.setReadTimeout(timeoutMilliseconds);
-			connection.setAllowUserInteraction(false);
-			
-			parser.parse(connection.getInputStream(), handler);
-		} catch (SAXException e) {
-			logger.warn("parse error on amazon reply", e);
-			return null;
-		} catch (IOException e) {
-			logger.warn("IO error talking to amazon", e);
-			return null;
-		}
-		
-		return handler;
 	}
 }
