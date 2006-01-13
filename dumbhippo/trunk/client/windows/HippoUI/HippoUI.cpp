@@ -1666,7 +1666,9 @@ WinMain(HINSTANCE hInstance,
 
     if (doQuitExisting) {
         CoInitialize(NULL);
-        quitExisting(instanceType);
+        quitExisting(HIPPO_INSTANCE_NORMAL);
+        quitExisting(HIPPO_INSTANCE_DEBUG);
+        quitExisting(HIPPO_INSTANCE_DOGFOOD);
         CoUninitialize();
         return 0;
     }
