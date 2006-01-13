@@ -4,19 +4,12 @@ dh.chatwindow = {}
 dh.display = null
 
 // Global function called immediately after document.write
-var dhInit = function(serverUrl, appletUrl, selfId) {
-    dh.display = new dh.chatwindow.Display(serverUrl, appletUrl, selfId) 
-    
-    dh.display.resizeElements()
-    window.onresize = function() { dh.display.resizeElements() }
-    
-    dh.display.addTestMessages()
+var dhInit = function(serverUrl, appletUrl) {
+    dh.display = new dh.chatwindow.Display(serverUrl, appletUrl) 
+    dh.display.init()
 }
 
-dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
-    // Current user guid
-    this._selfId = selfId
-
+dh.chatwindow.Display = function(serverUrl, appletUrl) {
     // Base URL of the web server
     this._serverUrl = serverUrl
     
@@ -33,9 +26,6 @@ dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
     
     // Add a user to the list of current users
     this.addPerson = function(userId, version, name) {
-        if (userId == this._selfId)
-            return // Don't show the user themselves
-        
         var peopleDiv = document.getElementById("dhChatPeopleDiv")
 
         var personDiv = document.createElement("div")
@@ -59,7 +49,7 @@ dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
     }
     
     // Remove the user from the list of current users
-    this.removePerson = function() {
+    this.removePerson = function(userId) {
         var div = this._personDivs[userId]
         if (div) {
             div.parentNode.removeChild(div)
@@ -68,11 +58,11 @@ dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
     }
 
     // Add a message to the message area
-    this.addMessage = function(userId, version, message) {
+    this.addMessage = function(userId, version, name, message) {
         var messagesDiv = document.getElementById("dhChatMessagesDiv")
 
         var messageDiv = document.createElement("div")
-        if (userId == this._selfId)
+        if (userId == window.external.application.GetSelfId())
             messageDiv.className = "dh-chat-message-my"
         else
             messageDiv.className = "dh-chat-message-other"
@@ -91,6 +81,18 @@ dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
         textDiv.appendChild(textSpan)
 
         messagesDiv.appendChild(messageDiv)
+    }
+    
+    // Clear all messages and users (called on reconnect)
+    this.clear = function() {
+        var peopleDiv = document.getElementById("dhChatPeopleDiv")
+        dh.util.dom.clearNode(peopleDiv)
+        
+        this._personDivs = {}
+
+        var messagesDiv = document.getElementById("dhChatMessagesDiv")
+        dh.util.dom.clearNode(messagesDiv)
+
     }
 
     // Adjust element sizes for the current window size; we need to do this
@@ -129,13 +131,36 @@ dh.chatwindow.Display = function(serverUrl, appletUrl, selfId) {
         sendButton.style.height = messageInput.offsetHeight + "px"
     }
     
-    this.addTestMessages = function() {
-        this.addPerson("hKcbRMYl4vNDqw", 2, "Colin")
-        for (var i = 0; i < 10; i++) {
-            this.addMessage("hKcbRMYl4vNDqw", 2, "Foo, Bar, Baz, Boof, Boof, Boof")
-            this.addMessage(this._selfId, 28, "Bah, Nah, Nah, Nah")
+    this.sendClicked = function() {
+        var messageInput = document.getElementById("dhChatMessageInput")
+        var text = messageInput.value
+        text = text.replace(/^\s+/, "")
+        text = text.replace(/\s+?$/, "")
+        if (text == "") {
+            alert("Please enter a non-empty message")
+            return;
         }
+        window.external.application.SendMessage(text)
+        messageInput.value = ""
     }
+    
+    this.onMessageKeyPress = function(e) {
+        if (e.keyCode == 13) {
+            this.sendClicked()
+            return false
+        }
+            
+        return true
+    }
+    
+    this.init = function() {
+        var messageInput = document.getElementById("dhChatMessageInput")
+        messageInput.onkeypress = dh.util.dom.stdEventHandler(function(e) { return dh.display.onMessageKeyPress(e) })
+    
+        dh.display.resizeElements()
+        window.onresize = function() { dh.display.resizeElements() }
+    }
+    
 }
 
 function dhChatAddPerson(userId, version, name) {
@@ -147,5 +172,10 @@ function dhChatRemovePerson(userId) {
 }
 
 function dhChatAddMessage(userId, version, name, text) {
+    dh.util.debug("Adding message: " + userId + "/" + version + "/" + name + ": " + text);
     dh.display.addMessage(userId, version, name, text)
+}
+
+function dhChatClear() {
+    dh.display.clear()
 }

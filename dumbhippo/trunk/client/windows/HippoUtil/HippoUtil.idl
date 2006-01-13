@@ -86,7 +86,9 @@ library HippoUtil {
         HRESULT SendMessage([in] BSTR message);
         [id(163), helpstring("Return the base Url for the DumbHippo server")]
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
-        // up to 130
+        [id(164), helpstring("Get the userId of the logged in user")]
+        HRESULT GetSelfId([out, retval] BSTR *selfId);
+        // up to 170
     }
     [
         uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr

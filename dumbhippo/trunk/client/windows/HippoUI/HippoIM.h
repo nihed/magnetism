@@ -54,7 +54,8 @@ public:
     HRESULT getUsername(BSTR *ret);
 
     HippoChatRoom *joinChatRoom(BSTR postId);
-    void leaveChatRoom(BSTR postId);
+    void leaveChatRoom(HippoChatRoom *chatRoom);
+    void sendChatRoomMessage(HippoChatRoom *chatRoom, BSTR text);
 
 private:
     HRESULT getAuthURL(BSTR *result);
@@ -74,6 +75,20 @@ private:
     void stopRetryTimeout();
 
     void clearConnection();
+
+    void sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType);
+    void sendChatRoomEnter(HippoChatRoom *chatRoom);
+    void sendChatRoomLeave(HippoChatRoom *chatRoom);
+
+    bool checkRoomMessage(LmMessage      *message,
+                          HippoChatRoom **chatRoom,
+                          BSTR           *userId);
+    bool getChatUserInfo(LmMessageNode *parent,
+                         int           *version,
+                         BSTR          *name);
+    LmHandlerResult handleRoomMessage(LmMessage     *message,
+                                      HippoChatRoom *chatRoom,
+                                      BSTR           userId);
 
     void connectFailure(char *message);
     void authFailure(char *message);
@@ -106,6 +121,21 @@ private:
                                      LmConnection     *connection,
                                      LmMessage        *message,
                                      gpointer          userData);
+
+    static LmHandlerResult onPresence(LmMessageHandler *handler,
+                                      LmConnection     *connection,
+                                      LmMessage        *message,
+                                      gpointer          userData);
+
+    static char *idToJabber(WCHAR *id);
+    static bool idFromJabber(const char *jabber, 
+                             BSTR       *guid);
+    static bool parseRoomJid(const char *jid, 
+                             BSTR       *postId, 
+                             BSTR       *userId);
+    static LmMessageNode *findChildNode(LmMessageNode *node, 
+                                        const char    *elementNamespace, 
+                                        const char    *elementName);
 
 private:
     State state_;

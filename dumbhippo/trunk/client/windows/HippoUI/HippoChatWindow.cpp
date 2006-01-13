@@ -101,13 +101,10 @@ HippoChatWindow::embedIE(void)
     ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
     HippoBSTR appletURLStr;
     ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
-    HippoBSTR selfIdStr;
-    ui_->getLoginId(&selfIdStr);
     variant_t serverUrl(serverURLStr.m_str);
     variant_t appletUrl(appletURLStr.m_str);
-    variant_t selfId(selfIdStr.m_str);
     variant_t result;
-    ie_->invokeJavascript(L"dhInit", &result, 3, &serverUrl, &appletUrl, &selfId);
+    ie_->invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
 
     return true;
 }
@@ -251,6 +248,7 @@ HippoChatWindow::windowProc(HWND   window,
 STDMETHODIMP 
 HippoChatWindow::SendMessage(BSTR message)
 {
+    chatRoom_->sendMessage(message);
     return S_OK;
 }
 
@@ -266,8 +264,17 @@ HippoChatWindow::GetServerBaseUrl(BSTR *ret)
 {
     HippoBSTR temp;
     ui_->getRemoteURL(L"", &temp);
-    *ret = ::SysAllocString(temp.m_str);
-    return S_OK;
+
+    return temp.CopyTo(ret);
+}
+
+HRESULT
+HippoChatWindow::GetSelfId(BSTR *ret)
+{
+    HippoBSTR temp;
+    ui_->getLoginId(&temp);
+
+    return temp.CopyTo(ret);
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -369,7 +376,7 @@ HippoChatWindow::onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user)
     variant_t name(user.getName());
     variant_t result;
 
-    ie_->invokeJavascript(L"dhAddUser", &result, 3, &userId, &version, &name);
+    ie_->invokeJavascript(L"dhChatAddPerson", &result, 3, &userId, &version, &name);
 }
 
 void 
@@ -378,7 +385,7 @@ HippoChatWindow::onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user)
     variant_t userId(user.getUserId());
     variant_t result;
 
-    ie_->invokeJavascript(L"dhRemoveUser", &result, 1, &userId);
+    ie_->invokeJavascript(L"dhChatRemovePerson", &result, 1, &userId);
 }
 
 void 
@@ -387,10 +394,18 @@ HippoChatWindow::onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &mess
     const HippoChatUser &user = message.getUser();
 
     variant_t userId(user.getUserId());
-    variant_t version(user.getVersion);
+    variant_t version(user.getVersion());
     variant_t name(user.getName());
     variant_t text(message.getText());
     variant_t result;
 
-    ie_->invokeJavascript(L"dhAddMessage", &result, 4, &userId, &version, &name, &text);
+    ie_->invokeJavascript(L"dhChatAddMessage", &result, 4, &userId, &version, &name, &text);
+}
+
+void 
+HippoChatWindow::onClear(HippoChatRoom *chatRoom)
+{
+    variant_t result;
+
+    ie_->invokeJavascript(L"dhChatClear", &result, 0);
 }

@@ -422,8 +422,6 @@ HippoUI::create(HINSTANCE instance)
         onLinkMessage(linkshare);
     }
 
-    // showChatWindow(HippoBSTR(L"cGslncsjA8QJY0"));
-
     return true;
 }
 
@@ -807,7 +805,7 @@ HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
             chatWindows_.remove(i);
             delete chatWindow; // should be safe, called from WM_CLOSE only
 
-            im_.leaveChatRoom(chatRoom->getPostId());
+            im_.leaveChatRoom(chatRoom);
             return;
         }
     }

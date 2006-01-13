@@ -18,6 +18,6 @@
         </div>
         <div id="dhChatMessagesDiv"></div>
         <textarea id="dhChatMessageInput" cols="40" rows="3"></textarea>
-        <input id="dhChatSendButton" type="button" value="Send"></input>
+        <input id="dhChatSendButton" type="button" value="Send" onclick="dh.display.sendClicked()"></input>
     </body>
 </html>

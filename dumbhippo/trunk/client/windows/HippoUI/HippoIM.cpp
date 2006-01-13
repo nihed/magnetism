@@ -135,22 +135,47 @@ HippoIM::joinChatRoom(BSTR postId)
     HippoChatRoom *chatRoom = new HippoChatRoom(this, postId);
     chatRooms_.append(chatRoom);
 
+    if (state_ == AUTHENTICATED)
+        sendChatRoomEnter(chatRoom);
+
     return chatRoom;
 }
 
 void 
-HippoIM::leaveChatRoom(BSTR postId)
+HippoIM::leaveChatRoom(HippoChatRoom *chatRoom)
 {
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
-        HippoChatRoom *chatRoom = chatRooms_[i];
-        if (wcscmp(chatRoom->getPostId(), postId) == 0) {
+        if (chatRooms_[i] == chatRoom) {
+            if (state_ == AUTHENTICATED)
+                sendChatRoomLeave(chatRoom);
+
             chatRooms_.remove(i);
             delete chatRoom;
+
             return;
         }
     }
 
     assert(false);
+}
+
+void
+HippoIM::sendChatRoomMessage(HippoChatRoom *chatRoom,
+                             BSTR           text)
+{
+    char *postId = idToJabber(chatRoom->getPostId());
+    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    LmMessage *message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
+
+    char *textU = g_utf16_to_utf8(text, -1, NULL, NULL, NULL);
+    LmMessageNode *body = lm_message_node_add_child(message->node, "body", textU);
+    g_free (textU);
+
+    sendMessage(message);
+    lm_message_unref(message);
+
+    g_free(postId);
+    g_free(to);
 }
 
 void 
@@ -403,6 +428,12 @@ HippoIM::connect()
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
+    handler = lm_message_handler_new(onPresence, (gpointer)this, NULL);
+    lm_connection_register_message_handler(lmConnection_, handler, 
+                                           LM_MESSAGE_TYPE_PRESENCE, 
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
     lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
 
     stateChange(CONNECTING);
@@ -429,33 +460,23 @@ void
 HippoIM::disconnect()
 {
     if (lmConnection_) {
+        // This normally calls our disconnect handler which clears 
+        // and unrefs lmConnection_
         lm_connection_close(lmConnection_, NULL);
-        lm_connection_unref(lmConnection_);
-        lmConnection_ = NULL;
+        
+        // To be safe
+        if (lmConnection_) {
+            lm_connection_unref(lmConnection_);
+            lmConnection_ = NULL;
+        }
     }
 }
-
 
 void
 HippoIM::authenticate()
 {
     if (username_ && password_) {
-        GString *usernameString = g_string_new(NULL);
-        for (WCHAR *p = username_; *p; p++) {
-            WCHAR c = *p;
-            // A usename in our system, is alphanumeric, with case sensitivity
-            // convert to lowercase only, by using _ to mark lowercase in the
-            // original.
-            if (c >= 'A' && c <= 'Z') {
-                g_string_append_c(usernameString, c + ('a' - 'A'));
-            } else if (c >= 'a' && c <= 'z') {
-                g_string_append_c(usernameString, (char)c);
-                g_string_append_c(usernameString, '_');
-            } else if (c >= '0' && c <= '9') {
-                g_string_append_c(usernameString, (char)c);
-            }
-        }
-
+        char *usernameUTF = idToJabber(username_);
         char *passwordUTF = g_utf16_to_utf8(password_, -1, NULL, NULL, NULL);
 
         GError *error = NULL;
@@ -470,7 +491,7 @@ HippoIM::authenticate()
         gchar *guidUTF = g_utf16_to_utf8 (hwProfile.szHwProfileGuid, -1, NULL, NULL, NULL);
 
         if (!lm_connection_authenticate(lmConnection_, 
-                                        usernameString->str, passwordUTF, guidUTF,
+                                        usernameUTF, passwordUTF, guidUTF,
                                         onConnectionAuthenticate, (gpointer)this, NULL, &error)) 
         {
             authFailure(error ? error->message : NULL);
@@ -479,7 +500,7 @@ HippoIM::authenticate()
         } else {
             stateChange(AUTHENTICATING);
         }
-        g_string_free(usernameString, TRUE);
+        g_free(usernameUTF);
         g_free(guidUTF);
         g_free(passwordUTF);
     } else {
@@ -586,6 +607,126 @@ HippoIM::clearConnection()
     lmConnection_ = NULL;
 }
 
+void 
+HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType)
+{
+    char *postId = idToJabber(chatRoom->getPostId());
+    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    LmMessage *message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_PRESENCE, subType);
+
+    GError *error = NULL;
+    lm_connection_send(lmConnection_, message, &error);
+    if (error) {
+        hippoDebugLogU("Error sending chat room presence %s: %s", 
+                       subType == LM_MESSAGE_SUB_TYPE_AVAILABLE ? "available" : "unavailable",
+                       error->message);
+        g_error_free(error);
+    }
+
+    lm_message_unref(message);
+
+    g_free(postId);
+    g_free(to);
+}
+
+void 
+HippoIM::sendChatRoomEnter(HippoChatRoom *chatRoom)
+{
+    sendChatRoomPresence(chatRoom, LM_MESSAGE_SUB_TYPE_AVAILABLE);
+}
+
+void 
+HippoIM::sendChatRoomLeave(HippoChatRoom *chatRoom)
+{
+    sendChatRoomPresence(chatRoom, LM_MESSAGE_SUB_TYPE_UNAVAILABLE);
+}
+
+bool
+HippoIM::checkRoomMessage (LmMessage      *message,
+                           HippoChatRoom **chatRoom,
+                           BSTR           *userId)
+{
+    const char *from = lm_message_node_get_attribute(message->node, "from");
+
+    HippoBSTR tmpPostId;
+    HippoBSTR tmpUserId;
+
+    if (!from || !parseRoomJid(from, &tmpPostId, &tmpUserId))
+        return false;
+
+    *chatRoom = NULL;
+    for (unsigned long i = 0; i < chatRooms_.length(); i++) {
+        if (wcscmp(chatRooms_[i]->getPostId(), tmpPostId) == 0) {
+            if (FAILED(tmpUserId.CopyTo(userId)))
+                return false;
+
+            *chatRoom = chatRooms_[i];
+            return true;
+        }
+    }
+
+    hippoDebugLogW(L"Ignoring message from unknown room: %ls", tmpPostId.m_str);
+    return false;
+}
+
+bool
+HippoIM::getChatUserInfo(LmMessageNode *parent,
+                         int           *version,
+                         BSTR          *name)
+{
+    LmMessageNode *infoNode = findChildNode(parent, "http://dumbhippo.com/protocol/rooms", "userInfo");
+    if (!infoNode) {
+        hippoDebugLogW(L"Can't find userInfo node");
+        return false;
+    }
+
+    const char *versionU = lm_message_node_get_attribute(infoNode, "version");
+    const char *nameU = lm_message_node_get_attribute(infoNode, "name");
+
+    if (!versionU || !nameU) {
+        hippoDebugLogW(L"uesrInfo node without name and version");
+        return false;
+    }
+
+    *version = atoi(versionU);
+    HippoBSTR tmpName;
+    tmpName.setUTF8(nameU);
+
+    if (!tmpName || FAILED(tmpName.CopyTo(name)))
+        return false;
+
+    return true;
+}
+
+
+LmHandlerResult 
+HippoIM::handleRoomMessage(LmMessage     *message,
+                           HippoChatRoom *chatRoom,
+                           BSTR           userId)
+{
+    HippoBSTR text;
+
+    const char *textU = NULL;
+    LmMessageNode *bodyNode = lm_message_node_find_child(message->node, "body");
+    if (bodyNode)
+        textU = lm_message_node_get_value(bodyNode);
+
+    if (!textU) {
+        hippoDebugLogW(L"Chat room message without body");
+        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+    }
+    text.setUTF8(textU);
+
+    int version;
+    HippoBSTR name;
+    if (!getChatUserInfo(message->node, &version, &name))
+        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+    chatRoom->addMessage(userId, version, name, text);
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
 void
 HippoIM::connectFailure(char *message)
 {
@@ -690,6 +831,15 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
         }
         lm_message_unref(message);
         im->stateChange(AUTHENTICATED);
+
+        // Enter any chatrooms that we are (logically) connected to
+        for (unsigned long i = 0; i < im->chatRooms_.length(); i++) {
+            // We left the previous contents there while we were disconnected,
+            // clear it since we'll now get the current contents sent
+            im->chatRooms_[i]->clear();
+            im->sendChatRoomEnter(im->chatRooms_[i]);
+        }
+
         im->getClientInfo();
         im->ui_->onAuthSuccess();
     } else {
@@ -758,80 +908,105 @@ HippoIM::onMessage (LmMessageHandler *handler,
 {
     HippoIM *im = (HippoIM *)userData;
 
+    HippoChatRoom *chatRoom;
+    HippoBSTR userId;
+    if (im->checkRoomMessage(message, &chatRoom, &userId))
+        return im->handleRoomMessage(message, chatRoom, userId);
+
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-        for (LmMessageNode *child = message->node->children; child; child = child->next) {
-            const char *ns = lm_message_node_get_attribute(child, "xmlns");
-            // We really should allow xmlns="foo:http://...", but lazy for now
-            if (!(ns && strcmp(ns, "http://dumbhippo.com/protocol/linkshare") == 0 && child->name))
-                continue;
-       
-            if (strcmp (child->name, "link") == 0)
-            {
-                HippoLinkShare linkshare;
-                LmMessageNode *node;
+        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/linkshare", "link");
+        if (!child) {
+            HippoLinkShare linkshare;
+            LmMessageNode *node;
 
-                const char *url = lm_message_node_get_attribute(child, "href");
-                if (!url) {
-                    im->ui_->debugLogU("Malformed link message, no URL");
+            const char *url = lm_message_node_get_attribute(child, "href");
+            if (!url) {
+                im->ui_->debugLogU("Malformed link message, no URL");
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            }
+            linkshare.url.setUTF8(url);
+
+            const char *postId = lm_message_node_get_attribute(child, "id");
+            if (!postId) {
+                im->ui_->debugLogU("Malformed link message, no post ID");
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            }
+            linkshare.postId.setUTF8(postId);
+
+            node = lm_message_node_get_child (child, "title");
+            if (!(node && node->value))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            linkshare.title.setUTF8(node->value);
+
+            node = lm_message_node_get_child (child, "senderName");
+            if (!(node && node->value))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            linkshare.senderName.setUTF8(node->value);
+
+            node = lm_message_node_get_child (child, "senderGuid");
+            if (!(node && node->value))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            linkshare.senderId.setUTF8(node->value);
+
+            node = lm_message_node_get_child (child, "senderPhotoUrl");
+            if (!(node && node->value))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            linkshare.senderPhotoUrl.setUTF8(node->value);
+
+            node = lm_message_node_get_child (child, "description");
+            if (!(node))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            if (node->value)
+                linkshare.description.setUTF8(node->value);
+            else
+                linkshare.description = L"";
+
+            node = lm_message_node_get_child (child, "postInfo");
+            if (!(node))
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            if (node->value)
+                linkshare.info.setUTF8(node->value);
+            else
+                linkshare.info = L"";
+
+            node = lm_message_node_get_child (child, "timeout");
+            if (node && node->value)
+                linkshare.timeout = atoi(node->value);
+            else
+                linkshare.timeout = 0; // Default
+
+            node = lm_message_node_get_child (child, "recipients");
+            if (!node)
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            LmMessageNode *subchild;
+            for (subchild = node->children; subchild; subchild = subchild->next) {
+                if (strcmp (subchild->name, "recipient") != 0)
                     continue;
-                }
-                linkshare.url.setUTF8(url);
-
-                const char *postId = lm_message_node_get_attribute(child, "id");
-                if (!postId) {
-                    im->ui_->debugLogU("Malformed link message, no post ID");
+                if (!subchild->value)
                     continue;
-                }
-                linkshare.postId.setUTF8(postId);
-
-                node = lm_message_node_get_child (child, "title");
-                if (!(node && node->value))
+                HippoLinkRecipient recipient;
+                recipient.name.setUTF8(subchild->value);
+                const char *id = lm_message_node_get_attribute(subchild, "id");
+                if (id)
+                    recipient.id.setUTF8(id);
+                linkshare.personRecipients.append(recipient);
+            }
+            node = lm_message_node_get_child (child, "groupRecipients");
+            if (!node)
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+            for (subchild = node->children; subchild; subchild = subchild->next) {
+                if (strcmp (subchild->name, "recipient") != 0)
                     continue;
-                linkshare.title.setUTF8(node->value);
-
-                node = lm_message_node_get_child (child, "senderName");
-                if (!(node && node->value))
+                if (!subchild->value)
                     continue;
-                linkshare.senderName.setUTF8(node->value);
-
-                node = lm_message_node_get_child (child, "senderGuid");
-                if (!(node && node->value))
-                    continue;
-                linkshare.senderId.setUTF8(node->value);
-
-                node = lm_message_node_get_child (child, "senderPhotoUrl");
-                if (!(node && node->value))
-                    continue;
-                linkshare.senderPhotoUrl.setUTF8(node->value);
-
-                node = lm_message_node_get_child (child, "description");
-                if (!(node))
-                    continue;
-                if (node->value)
-                    linkshare.description.setUTF8(node->value);
-                else
-                    linkshare.description = L"";
-
-                node = lm_message_node_get_child (child, "postInfo");
-                if (!(node))
-                    continue;
-                if (node->value)
-                    linkshare.info.setUTF8(node->value);
-                else
-                    linkshare.info = L"";
-
-                node = lm_message_node_get_child (child, "timeout");
-                if (node && node->value)
-                    linkshare.timeout = atoi(node->value);
-                else
-                    linkshare.timeout = 0; // Default
-
-                node = lm_message_node_get_child (child, "recipients");
-                if (!node)
-                    continue;
-                LmMessageNode *subchild;
+                HippoBSTR str;
+                str.setUTF8(subchild->value);
+                linkshare.groupRecipients.append(str);
+            }
+            node = lm_message_node_get_child (child, "viewers");
+            if (node) {
                 for (subchild = node->children; subchild; subchild = subchild->next) {
-                    if (strcmp (subchild->name, "recipient") != 0)
+                    if (strcmp (subchild->name, "viewer") != 0)
                         continue;
                     if (!subchild->value)
                         continue;
@@ -840,42 +1015,176 @@ HippoIM::onMessage (LmMessageHandler *handler,
                     const char *id = lm_message_node_get_attribute(subchild, "id");
                     if (id)
                         recipient.id.setUTF8(id);
-                    linkshare.personRecipients.append(recipient);
+                    linkshare.viewers.append(recipient);
                 }
-                node = lm_message_node_get_child (child, "groupRecipients");
-                if (!node)
-                    continue;
-                for (subchild = node->children; subchild; subchild = subchild->next) {
-                    if (strcmp (subchild->name, "recipient") != 0)
-                        continue;
-                    if (!subchild->value)
-                        continue;
-                    HippoBSTR str;
-                    str.setUTF8(subchild->value);
-                    linkshare.groupRecipients.append(str);
-                }
-                node = lm_message_node_get_child (child, "viewers");
-                if (node) {
-                    for (subchild = node->children; subchild; subchild = subchild->next) {
-                        if (strcmp (subchild->name, "viewer") != 0)
-                            continue;
-                        if (!subchild->value)
-                            continue;
-                        HippoLinkRecipient recipient;
-                        recipient.name.setUTF8(subchild->value);
-                        const char *id = lm_message_node_get_attribute(subchild, "id");
-                        if (id)
-                            recipient.id.setUTF8(id);
-                        linkshare.viewers.append(recipient);
-                    }
-                }
-
-                im->ui_->onLinkMessage(linkshare);
-            } else {
-                im->ui_->debugLogU("Unknown message \"%s\", delegating to next handler", child->name ? child->name : "(null)");
             }
-        }
+
+            im->ui_->onLinkMessage(linkshare);
+        } 
     }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+LmHandlerResult 
+HippoIM::onPresence (LmMessageHandler *handler,
+                     LmConnection     *connection,
+                     LmMessage        *message,
+                     gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    const char *from = lm_message_node_get_attribute(message->node, "from");
+
+    HippoChatRoom *chatRoom;
+    HippoBSTR userId;
+
+    if (!im->checkRoomMessage(message, &chatRoom, &userId))
+        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+    LmMessageSubType subType = lm_message_get_sub_type(message);
+
+    if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
+        LmMessageNode *xNode = findChildNode(message->node, "http://jabber.org/protocol/muc#user", "x");
+        if (!xNode) {
+            hippoDebugLogW(L"Presence without x child");
+            return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+        }
+        
+        int version;
+        HippoBSTR name;
+        if (!im->getChatUserInfo(xNode, &version, &name))
+            return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+        chatRoom->addUser(userId, version, name);
+
+    } else if (subType == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
+        chatRoom->removeUser(userId);
+    }
+    
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+char *
+HippoIM::idToJabber(WCHAR *guid)
+{
+    GString *str = g_string_new(NULL);
+    for (WCHAR *p = guid; *p; p++) {
+        WCHAR c = *p;
+        // A usename in our system, is alphanumeric, with case sensitivity
+        // convert to lowercase only, by using _ to mark lowercase in the
+        // original.
+        if (c >= 'A' && c <= 'Z') {
+            g_string_append_c(str, c + ('a' - 'A'));
+        } else if (c >= 'a' && c <= 'z') {
+            g_string_append_c(str, (char)c);
+            g_string_append_c(str, '_');
+        } else if (c >= '0' && c <= '9') {
+            g_string_append_c(str, (char)c);
+        }
+    }
+
+    return g_string_free(str, FALSE);
+}
+
+bool
+HippoIM::idFromJabber(const char *jabber, 
+                      BSTR       *guid)
+{
+    unsigned int count = 0;
+    for (const char *p = jabber; *p; p++) {
+        if (*(p + 1) && *(p + 1) == '_') {
+            count++;
+            p++;
+        }
+        count++;
+    }
+
+    WCHAR *tmp = g_new(WCHAR, count + 1);
+    WCHAR *out = tmp;
+    for (const char *p = jabber; *p; p++) {
+        WCHAR c = *p;
+        if (*(p + 1) && *(p + 1) == '_') {
+            if (*p >= 'A' && c <= 'Z') {
+                c = c + ('a' - 'A');
+            }
+            p++;
+        } else {
+            if (*p >= 'a' && c <= 'z') {
+                c = c - ('a' - 'A');
+            }
+        }
+        *(out++) = c;
+    }
+    *out = '\0';
+
+    *guid = SysAllocString(tmp);
+    g_free(tmp);
+
+    return *guid != NULL;
+}
+
+bool
+HippoIM::parseRoomJid(const char *jid,
+                      BSTR       *postId,
+                      BSTR       *userId)
+{
+    *postId = NULL;
+    *userId = NULL;
+
+    char *at = strchr(jid, '@');
+    if (!at)
+        return false;
+
+    char *slash = strchr(at + 1, '/');
+    if (!slash)
+        slash = (at + 1) + strlen(at + 1);
+    if (strncmp(at + 1, "rooms.dumbhippo.com", slash - (at + 1)) != 0)
+        return false;
+
+    BSTR tmpPostId = NULL;
+    BSTR tmpUserId = NULL;
+
+    char *room = g_strndup(jid, at - jid);
+    bool result = idFromJabber(room, &tmpPostId);
+    g_free(room);
+
+    if (!result)
+        goto error;
+
+    if (slash) {
+        if (!idFromJabber(slash + 1, &tmpUserId))
+            goto error;
+    }
+
+    *postId = tmpPostId;
+    *userId = tmpUserId;
+    
+    return true;
+
+error:
+    if (tmpPostId)
+        SysFreeString(tmpPostId);
+    if (tmpUserId)
+        SysFreeString(tmpPostId);
+
+    return false;
+}
+
+LmMessageNode *
+HippoIM::findChildNode(LmMessageNode *node, 
+                       const char    *elementNamespace, 
+                       const char    *elementName)
+{
+    for (LmMessageNode *child = node->children; child; child = child->next) {
+        const char *ns = lm_message_node_get_attribute(child, "xmlns");
+        if (!(ns && strcmp(ns, elementNamespace) == 0 && child->name))
+            continue;
+        if (strcmp(child->name, elementName) != 0)
+            continue;
+
+        return child;
+    }
+
+    return NULL;
 }

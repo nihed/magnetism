@@ -6,6 +6,7 @@
 
 #include "stdafx.h"
 #include "HippoChatRoom.h"
+#include "HippoIM.h"
 
 HippoChatUser::HippoChatUser()
 {
@@ -32,7 +33,7 @@ HippoChatMessage::HippoChatMessage()
 HippoChatMessage::HippoChatMessage(const HippoChatUser &user, BSTR text)
     : user_(user)
 {
-    text = text;
+    text_ = text;
 }
 
 HippoChatRoom::HippoChatRoom(HippoIM *im, BSTR postId)
@@ -46,8 +47,9 @@ HippoChatRoom::~HippoChatRoom()
 }
 
 void 
-HippoChatRoom::sendMessage(BSTR message)
+HippoChatRoom::sendMessage(BSTR text)
 {
+    im_->sendChatRoomMessage(this, text);
 }
 
 BSTR
@@ -77,9 +79,9 @@ HippoChatRoom::addListener(HippoChatRoomListener *listener)
 void 
 HippoChatRoom::removeListener(HippoChatRoomListener *listener)
 {
-    for (unsigned long i = listeners_.length() - 1; i >= 0; --i) {
-        if (listeners_[i] == listener) {
-	    listeners_.remove(i);
+    for (unsigned long i = listeners_.length(); i > 0; --i) {
+        if (listeners_[i - 1] == listener) {
+	    listeners_.remove(i - 1);
 	    return;
 	}
     }
@@ -126,4 +128,17 @@ HippoChatRoom::addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text
 
     for (unsigned long i = 0; i < listeners_.length(); i++)
         listeners_[i]->onMessage(this, message);
+}
+
+void
+HippoChatRoom::clear() 
+{
+    for (unsigned long i = users_.length(); i > 0; --i)
+        users_.remove(i);
+
+    for (unsigned long i = messages_.length(); i > 0; --i)
+        messages_.remove(i);
+
+    for (unsigned long i = 0; i < listeners_.length(); i++)
+        listeners_[i]->onClear(this);
 }

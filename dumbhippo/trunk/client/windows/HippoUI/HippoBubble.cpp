@@ -482,8 +482,8 @@ HippoBubble::GetServerBaseUrl(BSTR *ret)
 {
     HippoBSTR temp;
     ui_->getRemoteURL(L"", &temp);
-    *ret = ::SysAllocString(temp.m_str);
-    return S_OK;
+
+    return temp.CopyTo(ret);
 }
 
 void

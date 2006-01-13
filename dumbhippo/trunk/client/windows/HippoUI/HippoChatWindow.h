@@ -44,12 +44,14 @@ public:
     // IHippoChatWindow
     STDMETHODIMP SendMessage(BSTR message);
     STDMETHODIMP GetServerBaseUrl(BSTR *ret);
+    STDMETHODIMP GetSelfId(BSTR *ret);
     STDMETHODIMP OpenExternalURL(BSTR url);
 
     // HippoChatRoomListener
     void onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user);
     void onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user);
     void onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message);
+    void onClear(HippoChatRoom *chatRoom);
 
 private:
     HINSTANCE instance_;

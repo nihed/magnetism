@@ -47,7 +47,7 @@ public:
     HippoChatRoom(HippoIM *im, BSTR postId);
     ~HippoChatRoom();
 
-    void sendMessage(BSTR message);
+    void sendMessage(BSTR text);
 
     BSTR getPostId();
 
@@ -57,10 +57,11 @@ public:
     void addListener(HippoChatRoomListener *listener);
     void removeListener(HippoChatRoomListener *listener);
 
-    /* Called by HippoIM */
+    // Called by HippoIM
     void addUser(BSTR userId, int userVersion, BSTR userName);
     void removeUser(BSTR userId);
     void addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text);
+    void clear(); // Called on reconnect, since users and messages will be resent
 
 private:
     HippoIM *im_;
@@ -79,6 +80,7 @@ public:
     virtual void onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user) = 0;
     virtual void onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user) = 0;
     virtual void onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message) = 0;
+    virtual void onClear(HippoChatRoom *chatRoom) = 0;
     
     virtual ~HippoChatRoomListener() {}
 };

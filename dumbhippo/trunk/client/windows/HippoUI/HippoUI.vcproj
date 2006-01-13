@@ -310,13 +310,6 @@
 				RelativePath=".\HippoUI.rc">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\html1.htm"
-			DeploymentContent="TRUE">
-		</File>
-		<File
-			RelativePath="..\HippoShellExt\ReadMe.txt">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>
