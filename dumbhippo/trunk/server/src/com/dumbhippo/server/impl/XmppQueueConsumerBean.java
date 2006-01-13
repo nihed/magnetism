@@ -13,11 +13,15 @@ import org.apache.commons.logging.Log;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
+import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 
 @MessageDriven(activateConfig =
@@ -35,6 +39,9 @@ public class XmppQueueConsumerBean implements MessageListener {
 	MusicSystem musicSystem;
 	
 	@EJB
+	private PostingBoard postingBoard;
+
+	@EJB
 	IdentitySpider identitySpider;
 	
 	public void onMessage(Message message) {
@@ -49,6 +56,9 @@ public class XmppQueueConsumerBean implements MessageListener {
 				if (obj instanceof XmppEventMusicChanged) {
 					XmppEventMusicChanged event = (XmppEventMusicChanged) obj;
 					processMusicChangedEvent(event);
+				} else if (obj instanceof XmppEventChatMessage) {
+					XmppEventChatMessage event = (XmppEventChatMessage) obj;
+					processChatMessageEvent(event);					
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}
@@ -78,4 +88,40 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 		musicSystem.setCurrentTrack(user, event.getProperties());
 	}
+	
+	private User getUserFromUsername(String username) {
+		User user = null;
+		try {
+			user = identitySpider.lookupGuid(User.class, Guid.parseJabberId(username));
+		} catch (NotFoundException e) {
+		} catch (Guid.ParseException e) {
+		}
+		
+		return user;
+	}
+	
+	private Post getPostFromRoomName(User user, String roomName) {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
+		Post post = null;
+		try {
+			post = postingBoard.loadRawPost(viewpoint, Guid.parseJabberId(roomName));
+		} catch (Guid.ParseException e) {
+		}
+		
+		return post;
+	}
+	
+	
+	public void processChatMessageEvent(XmppEventChatMessage event) {
+		User fromUser = getUserFromUsername(event.getFromUsername());
+		if (fromUser == null)
+			throw new RuntimeException("non-existant username: " + event.getFromUsername());
+				
+		Post post = getPostFromRoomName(fromUser, event.getRoomName());
+		if (post == null)
+			return;
+		
+		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp());
+	}	
 }

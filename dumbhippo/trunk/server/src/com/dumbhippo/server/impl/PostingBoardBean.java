@@ -6,6 +6,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +39,7 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -741,6 +743,20 @@ public class PostingBoardBean implements PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
 		return getGroupPosts(viewpoint, recipient, null, start, max);
+	}
+	
+	public List<PostMessage> getPostMessages(Post post) {
+		@SuppressWarnings("unchecked")
+		List<PostMessage> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
+		.setParameter("post", post)
+		.getResultList();
+		
+		return messages;
+	}
+	
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
+		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
+		em.persist(postMessage);
 	}
 }
 

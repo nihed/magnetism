@@ -1,9 +1,13 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 
@@ -12,13 +16,19 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Viewpoint;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -101,7 +111,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	public void onUserAvailable(String username) {
 		logger.debug("Jabber user " + username + " now available");
 		try {
-			// account could be missing due to debug users or our own send-notifications
+			// account could be missing due to debug users or our own
+			// send-notifications
 			// user, i.e. any user on the jabber server that we don't know about
 			Account account;
 			try {
@@ -127,5 +138,66 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	public void onUserUnavailable(String username) {
 		logger.debug("Jabber user " + username + " now unavailable");
+	}
+	
+	private User getUserFromUsername(String username) {
+		User user = null;
+		try {
+			user = identitySpider.lookupGuid(User.class, Guid.parseJabberId(username));
+		} catch (NotFoundException e) {
+		} catch (Guid.ParseException e) {
+		}
+		
+		return user;
+	}
+	
+	private Post getPostFromRoomName(User user, String roomName) {
+		Viewpoint viewpoint = new Viewpoint(user);
+		
+		Post post = null;
+		try {
+			post = postingBoard.loadRawPost(viewpoint, Guid.parseJabberId(roomName));
+		} catch (Guid.ParseException e) {
+		}
+		
+		return post;
+	}
+	
+	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername) {
+		User initialUser = getUserFromUsername(initialUsername);
+		if (initialUser == null)
+			throw new RuntimeException("non-existant username: " + initialUsername);
+				
+		Post post = getPostFromRoomName(initialUser, roomName);
+		if (post == null)
+			return null;
+		 
+		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
+		
+		User poster = post.getPoster();
+		allowedUsers.add(new ChatRoomUser(poster.getGuid().toJabberId(null), poster.getVersion(), poster.getNickname()));
+		
+		// FIXME: This isn't really right; it doesn't handle public posts and
+		// posts
+		// where people join a group that it was sent to after the post was
+		// sent. Public posts will need to be handled with a separate flag
+		// in ChatRoomInfo.
+		for (Resource recipient : post.getExpandedRecipients()) {
+			User user = identitySpider.getUser(recipient);
+			if (user != null && !user.equals(poster))
+				allowedUsers.add(new ChatRoomUser(user.getId(), user.getVersion(), user.getNickname()));
+		}
+		
+		List<PostMessage> messages = postingBoard.getPostMessages(post);
+
+		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
+		for (PostMessage postMessage : messages) {
+			String username = postMessage.getFromUser().getGuid().toJabberId(null);
+			ChatRoomMessage message;
+			message = new ChatRoomMessage(username, postMessage.getMessageText(), postMessage.getTimestamp()); 
+			history.add(message);
+		}
+		
+		return new ChatRoomInfo(roomName, post.getTitle(), allowedUsers, history);
 	}
 }

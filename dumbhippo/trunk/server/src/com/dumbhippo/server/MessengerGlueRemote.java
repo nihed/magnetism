@@ -1,6 +1,9 @@
 package com.dumbhippo.server;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 import javax.ejb.Remote;
 
@@ -40,6 +43,91 @@ public interface MessengerGlueRemote {
 
 		public String getUsername() {
 			return username;
+		}
+	}
+	
+	public class ChatRoomUser implements Serializable {
+		private static final long serialVersionUID = 0L;
+		
+		private String username;
+		private int version;
+		private String name;
+		
+		public ChatRoomUser(String username, int version, String name) {
+			this.username = username;
+			this.version = version;
+			this.name = name;
+		}
+		
+		public String getUsername() {
+			return username;
+		}
+		
+		public int getVersion() {
+			return version;
+		}
+		
+		public String getName() {
+			return name;
+		}
+	}
+
+	public class ChatRoomMessage implements Serializable {
+		private static final long serialVersionUID = 0L;
+		
+		private String fromUsername;
+		private Date timestamp;
+		private String text;
+		
+		public ChatRoomMessage(String fromUsername, String text, Date timestamp) {
+			this.fromUsername = fromUsername;
+			this.timestamp = timestamp;
+			this.text = text;
+		}
+		
+		public String getFromUsername() {
+			return fromUsername;
+		}
+		
+		public String getText() {
+			return text;
+		}
+
+		public Date getTimestamp() {
+			return timestamp;
+		}
+	}
+
+	public class ChatRoomInfo implements Serializable {
+		private static final long serialVersionUID = 0L;
+		
+		private String roomName;
+		private String postTitle;
+		private List<ChatRoomUser> allowedUsers;
+		private List<ChatRoomMessage> history;
+		
+		public ChatRoomInfo(String roomName, String postTitle, List<ChatRoomUser> allowedUsers, List<ChatRoomMessage> history) {
+			this.roomName = roomName;
+			this.postTitle = postTitle;
+			this.allowedUsers = allowedUsers; // Don't copy for efficiency, assume the caller won't
+			                                  // subsequently modify
+			this.history = history;
+		}
+		
+		public String getPostId() {
+			return roomName;
+		}
+		
+		public String getPostTitle() {
+			return postTitle;
+		}
+		
+		public List<ChatRoomUser> getAllowedUsers() {
+			return Collections.unmodifiableList(allowedUsers);
+		}
+
+		public List<ChatRoomMessage> getHistory() {
+			return Collections.unmodifiableList(history);
 		}
 	}
 	
@@ -110,4 +198,19 @@ public interface MessengerGlueRemote {
 	 * @param username the username that became unavailable
 	 */
 	public void onUserUnavailable(String username);
+	
+	/**
+	 * Get the information needed to manage a chatroom for a post.
+	 * 
+	 * @param roomName The GUID for the post that the chat is about,
+	 *   encoded in jabber node form. 
+	 * @param initialUsername The initial user requesting that the 
+	 *   chatroom be created. If the user doesn't have access to
+	 *   the post, null will be returned as if the post doesn't
+	 *   exist.
+	 *  @return a blob of information about the chatroom. Will
+	 *   be null if no such post exists or the user isn't allowed
+	 *   to see it.
+	 */
+	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername);
 }

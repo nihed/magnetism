@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
@@ -52,4 +54,22 @@ public interface PostingBoard {
 	 * @param clicker person who clicked on the post
 	 */
 	public void postViewedBy(String postId, User clicker);
+	
+	/**
+	 * Get all messages that where posted in the chatroom about this post,
+	 * 
+	 * @param post the post the look up the messages for
+	 * @return the list of mesages, sorted by date (newest last)
+	 */
+	public List<PostMessage> getPostMessages(Post post);
+	
+	/**
+	 * Add a new message that was sent to the chatroom about this post
+	 * 
+	 * @param post the post the message is about.
+	 * @param fromUser the user who sent the message
+	 * @param text the text of the message
+	 * @param timestamp the time when the message was posted
+	 */
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp);
 }
