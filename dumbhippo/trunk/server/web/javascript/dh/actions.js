@@ -2,15 +2,11 @@ dojo.provide("dh.actions");
 
 dojo.require("dh.server");
 
-dh.actions.requestJoinRoom = function(chatRoomName) {
-   	dh.server.doPOST("requestjoinroom",
-				     { "chatRoomName" : chatRoomName },
-		  	    	 function(type, data, http) {
-		  	    	 	 window.setTimeout('document.location.reload()', 5000);
-		  	    	 },
-		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't request to join room");
-		  	    	 });
+dh.actions.requestJoinRoom = function(userId, postId) {
+    // Check readyState is to see if the object was actually loaded.
+    var embed = document.getElementById("dhEmbedObject");
+    if (embed && embed.readyState && embed.readyState >= 3)
+		embed.showChatWindow(userId, postId);
 }
 
 dh.actions.addContact = function(contactId) {
