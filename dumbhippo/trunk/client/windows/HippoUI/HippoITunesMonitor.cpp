@@ -433,6 +433,7 @@ HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
     GET_PROPERTY_STRING(fileTrack_, Name, Name);
     GET_PROPERTY_STRING_IF_NOT_SET(urlTrack_, Name, Name);
     GET_PROPERTY_STRING(track, Artist, Artist);
+    GET_PROPERTY_STRING(track, Album, Album);
     GET_PROPERTY_STRING(urlTrack_, URL, Url);
     GET_PROPERTY_LONG(track, Duration, Duration);
     GET_PROPERTY_LONG(track, Size, FileSize);
