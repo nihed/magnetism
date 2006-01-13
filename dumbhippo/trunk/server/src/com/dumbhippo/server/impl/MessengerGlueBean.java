@@ -6,8 +6,6 @@ import java.util.List;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 

@@ -7,8 +7,6 @@ import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.dumbhippo.persistence.User;
-
 /**
  * Guid is a globally-unique identifier, designed to not
  * require coordination (i.e. you can make up the GUID without asking the server
