@@ -6,6 +6,8 @@ package com.dumbhippo.persistence;
  * We need an UNKNOWN value instead of using null since it's mapped to
  * an int in the db and thus can't be nullable with EJB3 persistence.
  * 
+ * The client also has these strings, and they have to be in sync.
+ * 
  * @author hp
  */
 public enum MediaFileFormat {
