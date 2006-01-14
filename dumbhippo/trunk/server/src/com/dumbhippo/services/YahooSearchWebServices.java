@@ -16,7 +16,7 @@ public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHa
 	
 	private String appId;
 	
-	public YahooSearchWebServices(String amazonAccessKeyId, int timeoutMilliseconds) {
+	public YahooSearchWebServices(int timeoutMilliseconds) {
 		super(timeoutMilliseconds);
 		this.appId = "dumbhippo";
 	}
@@ -31,11 +31,13 @@ public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHa
 	 * @param trackNumber
 	 * @returns list of results (possibly empty)
 	 */
-	List<YahooSongResult> lookupSong(String artist, String album, String name,
+	public List<YahooSongResult> lookupSong(String artist, String album, String name,
 			int duration, int trackNumber) {
 		
-		if (artist == null || album == null || name == null)
-			return null; // Yahoo search won't work without these
+		if (artist == null || album == null || name == null) {
+			logger.debug("one of artist/album/name missing, can't do yahoo search on this track");
+			return Collections.emptyList();
+		}
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=3&appid=");
@@ -55,13 +57,16 @@ public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHa
 		// than include some wrong ones
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
-		if (handler == null)
+		if (handler == null) {
+			logger.debug("Song search failed, returning nothing");
 			return Collections.emptyList();
-		else
+		} else {
+			logger.debug("Returning search results");
 			return handler.getBestSongs();
+		}
 	}
 	
-	List<YahooSongDownloadResult> lookupDownloads(String songId) {
+	public List<YahooSongDownloadResult> lookupDownloads(String songId) {
 			
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songDownloadLocation?appid=");
@@ -73,9 +78,10 @@ public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHa
 		logger.debug("Loading yahoo song download search " + wsUrl);
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
-		if (handler == null)
+		if (handler == null) {
+			logger.debug("Download search failed, returning nothing");
 			return Collections.emptyList();
-		else {
+		} else {
 			List<YahooSongDownloadResult> list = handler.getBestDownloads();
 			for (YahooSongDownloadResult result : list) {
 				result.setSongId(songId);

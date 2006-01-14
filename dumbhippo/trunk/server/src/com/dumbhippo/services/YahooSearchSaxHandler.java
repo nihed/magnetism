@@ -1,11 +1,13 @@
 package com.dumbhippo.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
+import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -125,31 +127,49 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			return null;
 	}
 	
+	
 	@Override
-	protected void closeElement(Element c) throws SAXException {
-
+	protected void openElement(Element c) throws SAXException {
+		//logger.debug("opening element " + c);
 		if (c == Element.Result) {
 			String id = currentAttributes().getValue("id");
 			Result result = new Result(id);
 			results.add(result);
+		}
+	}
+	
+	@Override
+	protected void closeElement(Element c) throws SAXException {
+		/*
+		logger.debug("closing element " + c);
+		
+		Attributes a = currentAttributes();
+		for (int i = 0; i < a.getLength(); ++i) {
+			logger.debug("qName = " + a.getQName(i) + " localname = " + a.getLocalName(i) + " value = " + a.getValue(i));
+		}
+		*/
+		
+		if (c == Element.Result) {
+			results.remove(results.size() - 1);
 		} else if (parent() == Element.Result) {
 			currentResult().setValue(c, getCurrentContent());
 			
 			if (c == Element.Artist)
 				currentResult().setArtistId(currentAttributes().getValue("id"));
 			else if (c == Element.Album)
-				currentResult().setAlbumId(currentAttributes().getValue("id"));
-			
+				currentResult().setAlbumId(currentAttributes().getValue("id"));	
 		} else if (parent() == Element.Thumbnail) {
 			if (c == Element.Url || c == Element.Width || c == Element.Height)
 				currentResult().setValue(c, getCurrentContent());
 		} else if (c == Element.Message && parent() == Element.Error) {
+			logger.debug("Error reply from Yahoo: " + getCurrentContent());
 			throw new SAXException("Yahoo! search failed: " + getCurrentContent());	
 		}
 	}
 	
 	@Override 
 	public void endDocument() throws SAXException {
+		logger.debug("End of yahoo document");
 	}
 	
 	private YahooSongResult songFromResult(Result r) {
@@ -171,8 +191,10 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		// good ones. you sometimes need two different song IDs 
 		// to get all the download urls we care about (iTunes 
 		// in particular)
-		if (results.isEmpty())
-			return null;
+		if (results.isEmpty()) {
+			logger.debug("No song results were parsed");
+			return Collections.emptyList();
+		}
 
 		List<YahooSongResult> list = new ArrayList<YahooSongResult>();
 		Result r = results.get(0);
@@ -196,11 +218,15 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		// need a known source and an url to be useful
 		String sourceStr = r.getValue(Element.Source);
 		SongDownloadSource source = SongDownloadSource.parseYahooSourceName(sourceStr);
-		if (source == null)
+		if (source == null) {
+			logger.debug("Ignoring download result from unknown source " + sourceStr);
 			return null;
+		}
 		String url = r.getValue(Element.Url);
-		if (url == null)
+		if (url == null) {
+			logger.debug("Ignoring download result with no url");
 			return null;
+		}
 		
 		YahooSongDownloadResult song = new YahooSongDownloadResult();
 		song.setLastUpdated(new Date());
@@ -213,8 +239,10 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	public List<YahooSongDownloadResult> getBestDownloads() {
-		if (results.isEmpty())
-			return null;
+		if (results.isEmpty()) {
+			logger.debug("No download results were parsed");
+			return Collections.emptyList();
+		}
 
 		List<YahooSongDownloadResult> list = new ArrayList<YahooSongDownloadResult>();
 		for (Result r : results) {
@@ -222,6 +250,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			if (d != null)
 				list.add(d);
 		}
+		logger.debug("Got " + list.size() + " download results: " + list);
 		return list;		
 	}
 }

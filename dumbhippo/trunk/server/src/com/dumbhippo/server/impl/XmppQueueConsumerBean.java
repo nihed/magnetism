@@ -10,6 +10,7 @@ import javax.jms.ObjectMessage;
 
 import org.apache.commons.logging.Log;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -67,6 +68,8 @@ public class XmppQueueConsumerBean implements MessageListener {
 			}
 		} catch (JMSException e) {
 			logger.warn("JMS exception", e);
+		} catch (Exception e) {
+			logger.warn("Exception processing Xmpp JMS message: " + ExceptionUtils.getRootCause(e).getMessage(), e);
 		}
 	}
 

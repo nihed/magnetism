@@ -297,7 +297,7 @@ public class Track extends DBUnique {
 	
 	@Override
 	public String toString() {
-		return "{Track id=" + getId() + " name=" + name + "}";
+		return "{Track id=" + getId() + " name=" + name + " album=" + album + " artist=" + artist + "}";
 	}
 	
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */
