@@ -10,24 +10,33 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+/**
+ * Every time you listen to a song, we add it to this history 
+ * and update the lastUpdated. Your current song is the row
+ * with the latest lastUpdated.
+ * 
+ * @author hp
+ */
 @Entity
-@Table(name="CurrentTrack", 
+@Table(name="TrackHistory", 
 		   uniqueConstraints = 
-		      {@UniqueConstraint(columnNames={"user_id"})}
+		      {@UniqueConstraint(columnNames={"user_id","track_id"})}
 	      )
-public class CurrentTrack extends DBUnique {
+public class TrackHistory extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
 
 	private User user;
 	private Track track;
 	private long lastUpdated;
+	private int timesPlayed;
 	
-	protected CurrentTrack() {
-		
+	protected TrackHistory() {
+		this.timesPlayed = 0;
 	}
 	
-	public CurrentTrack(User user, Track track) {
+	public TrackHistory(User user, Track track) {
+		this();
 		this.user = user;
 		this.track = track;
 	}
@@ -57,5 +66,14 @@ public class CurrentTrack extends DBUnique {
 	}
 	protected void setUser(User user) {
 		this.user = user;
+	}
+
+	@Column(nullable=false)
+	public int getTimesPlayed() {
+		return timesPlayed;
+	}
+
+	public void setTimesPlayed(int timesPlayed) {
+		this.timesPlayed = timesPlayed;
 	}
 }

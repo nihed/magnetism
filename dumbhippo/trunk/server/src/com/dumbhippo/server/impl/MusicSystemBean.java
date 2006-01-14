@@ -25,13 +25,14 @@ import org.apache.commons.logging.Log;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CurrentTrack;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
@@ -40,7 +41,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooSearchWebServices;
 
 @Stateless
-public class MusicSystemBean implements MusicSystem {
+public class MusicSystemBean implements MusicSystem, MusicSystemInternal {
 
 	@SuppressWarnings("unused")
 	static private final Log logger = GlobalSetup.getLog(MusicSystemBean.class);
@@ -108,24 +109,27 @@ public class MusicSystemBean implements MusicSystem {
 		}
 	}
 
-	public void setCurrentTrack(final User user, final Track track) {
+	private void addTrackHistory(final User user, final Track track, final Date now) {
 		try {
-			runner.runTaskRetryingOnConstraintViolation(new Callable<CurrentTrack>() {
+			runner.runTaskRetryingOnConstraintViolation(new Callable<TrackHistory>() {
 				
-				public CurrentTrack call() throws Exception {
+				public TrackHistory call() throws Exception {
 					Query q;
 					
-					q = em.createQuery("from CurrentTrack ct where ct.user = :user");
+					q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
+							"AND h.track = :track");
 					q.setParameter("user", user);
+					q.setParameter("track", track);
 					
-					CurrentTrack res;
+					TrackHistory res;
 					try {
-						res = (CurrentTrack) q.getSingleResult();
-						res.setTrack(track);
-						res.setLastUpdated(new Date());
+						res = (TrackHistory) q.getSingleResult();
+						res.setLastUpdated(now);
+						res.setTimesPlayed(res.getTimesPlayed() + 1);
 					} catch (EntityNotFoundException e) {
-						res = new CurrentTrack(user, track);
-						res.setLastUpdated(new Date());
+						res = new TrackHistory(user, track);
+						res.setLastUpdated(now);
+						res.setTimesPlayed(1);
 						em.persist(res);
 					}
 					
@@ -136,6 +140,10 @@ public class MusicSystemBean implements MusicSystem {
 			ExceptionUtils.throwAsRuntimeException(e);
 			// not reached
 		}
+	}
+	
+	public void setCurrentTrack(final User user, final Track track) {
+		addTrackHistory(user, track, new Date());
 	}
 	 
 	public void setCurrentTrack(User user, Map<String,String> properties) {
@@ -148,28 +156,53 @@ public class MusicSystemBean implements MusicSystem {
 		setCurrentTrack(user, track);
 	}
 	
-	public CurrentTrack getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
+	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
+		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 1);
+		assert !list.isEmpty(); // supposed to throw NotFoundException if empty
+		return list.get(0);
+	}
+
+	enum History {
+		LATEST,
+		FREQUENT
+	}
+	
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
 		if (!identitySpider.isViewerFriendOf(viewpoint, user))
-			throw new NotFoundException("Not allowed to see this user's current track");
+			throw new NotFoundException("Not allowed to see this user's track history");
 
 		Query q;
 		
-		q = em.createQuery("from CurrentTrack ct where ct.user = :user");
+		String order = null;
+		switch (type) {
+		case LATEST:
+			order = "ORDER BY h.lastUpdated DESC ";
+			break;
+		case FREQUENT:
+			order = "ORDER BY h.timesPlayed DESC ";
+			break;
+		}
+		
+		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
+				order + 
+				"LIMIT " + maxResults);
 		q.setParameter("user", user);
 		
-		CurrentTrack res;
-		try {
-			res = (CurrentTrack) q.getSingleResult();
+		List<TrackHistory> results = new ArrayList<TrackHistory>();
+ 		try {
+			List<?> rawResults = q.getResultList();
+			for (Object o : rawResults) {
+				TrackHistory h = (TrackHistory) o;
+				if (h.getTrack() != null) // force-loads the track if it wasn't
+					results.add(h);
+			}
 		} catch (EntityNotFoundException e) {
-			res = null;
 		}
 
-		// note that getTrack() has the side effect of ensuring 
-		// we load the track...
-		if (res == null || res.getTrack() == null)
-			throw new NotFoundException("User has no current track");
+		if (results.isEmpty())
+			throw new NotFoundException("User has no track history");
 		else
-			return res;
+			return results;
 	}
 	
 	static private class YahooSongTask implements Callable<List<YahooSongResult>> {
@@ -184,7 +217,7 @@ public class MusicSystemBean implements MusicSystem {
 			logger.debug("Running YahooSongTask thread");
 			
 			// we do this instead of an inner class to work right with threads
-			MusicSystem musicSystem = EJBUtil.defaultLookup(MusicSystem.class);
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
 			return musicSystem.getYahooSongResultsSync(track);
 		}
@@ -201,7 +234,7 @@ public class MusicSystemBean implements MusicSystem {
 		public List<YahooSongDownloadResult> call() {
 			logger.debug("Running YahooSongDownloadTask thread");
 			// we do this instead of an inner class to work right with threads
-			MusicSystem musicSystem = EJBUtil.defaultLookup(MusicSystem.class);
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
 			return musicSystem.getYahooSongDownloadResultsSync(songId);
 		}
@@ -218,7 +251,7 @@ public class MusicSystemBean implements MusicSystem {
 		public TrackView call() {
 			logger.debug("Running GetTrackViewTask thread");
 			// we do this instead of an inner class to work right with threads
-			MusicSystem musicSystem = EJBUtil.defaultLookup(MusicSystem.class);
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
 			return musicSystem.getTrackView(track);
 		}
@@ -419,6 +452,10 @@ public class MusicSystemBean implements MusicSystem {
 	public TrackView getTrackView(Track track) {
 		TrackView view = new TrackView(track);
 		
+		// FIXME this should never throw due to Yahoo failure;
+		// we should just return a view without the download 
+		// sources.
+		
 		// get our song IDs; no point doing it async...
 		List<YahooSongResult> songs = getYahooSongResultsSync(track);
 		
@@ -454,7 +491,7 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
-		CurrentTrack current = getCurrentTrack(viewpoint, user);
+		TrackHistory current = getCurrentTrack(viewpoint, user);
 		return getTrackView(current.getTrack());
 	}
 	
@@ -466,7 +503,41 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
-		CurrentTrack current = getCurrentTrack(viewpoint, user);
+		TrackHistory current = getCurrentTrack(viewpoint, user);
 		return getTrackViewAsync(current.getTrack());
+	}
+	
+	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
+		// spawn a bunch of yahoo updater threads; this will need some better
+		// optimization
+		for (Track t : tracks) {
+			hintNeedsYahooResults(t);
+		}
+		
+		List<TrackView> views = new ArrayList<TrackView>(tracks.size());
+		for (Track t : tracks) {
+			TrackView v = getTrackView(t);
+			views.add(v);
+		}
+		
+		return views;
+	}
+	
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
+		
+		List<Track> tracks = new ArrayList<Track>(history.size());
+		for (TrackHistory h : history)
+			tracks.add(h.getTrack());
+		return getViewsFromTracks(tracks);
+	}
+	
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
+		
+		List<Track> tracks = new ArrayList<Track>(history.size());
+		for (TrackHistory h : history)
+			tracks.add(h.getTrack());
+		return getViewsFromTracks(tracks);
 	}
 }

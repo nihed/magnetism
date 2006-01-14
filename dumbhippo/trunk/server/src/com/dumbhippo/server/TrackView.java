@@ -7,16 +7,20 @@ import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 
 public class TrackView {
-	
+	 
 	private String artist;
 	private String album;
-	private String song;
+	private String name;
 	private Map<SongDownloadSource,String> downloads;
+	
+	public TrackView() {
+		// a "dummy" track view with no data in it
+	}
 	
 	public TrackView(Track track) {
 		this.artist = track.getArtist();
 		this.album = track.getAlbum();
-		this.song = track.getName();
+		this.name = track.getName();
 	}
 
 	public String getDownloadUrl(SongDownloadSource source) {
@@ -48,11 +52,11 @@ public class TrackView {
 		this.artist = artist;
 	}
 
-	public String getSong() {
-		return song;
+	public String getName() {
+		return name;
 	}
 
-	public void setSong(String song) {
-		this.song = song;
+	public void setName(String name) {
+		this.name = name;
 	}
 }

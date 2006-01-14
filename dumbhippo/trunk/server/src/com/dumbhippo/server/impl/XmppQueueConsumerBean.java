@@ -17,7 +17,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -37,7 +37,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 	static private final Log logger = GlobalSetup.getLog(XmppQueueConsumerBean.class);
 
 	@EJB
-	MusicSystem musicSystem;
+	private MusicSystemInternal musicSystem;
 	
 	@EJB
 	private PostingBoard postingBoard;
