@@ -131,5 +131,8 @@ public class YahooSongResult extends DBUnique {
 		this.trackNumber = trackNumber;
 	}
 
-
+	@Override
+	public String toString() {
+		return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
+	}
 }

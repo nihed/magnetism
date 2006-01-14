@@ -89,4 +89,16 @@ public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHa
 			return list;
 		}
 	}
+	
+	static public final void main(String[] args) {
+		YahooSearchWebServices ws = new YahooSearchWebServices(6000);
+		List<YahooSongResult> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven", -1, -1);
+		for (YahooSongResult r : list) {
+			System.out.println("Got result: " + r);
+			List<YahooSongDownloadResult> listD = ws.lookupDownloads(r.getSongId());
+			for (YahooSongDownloadResult d : listD) {
+				System.out.println("  download: " + d);
+			}
+		}
+	}
 }

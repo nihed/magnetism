@@ -103,4 +103,9 @@ public class YahooSongDownloadResult extends DBUnique {
 	public void setSource(SongDownloadSource source) {
 		this.source = source;
 	}
+	
+	@Override
+	public String toString() {
+		return "{songId=" + songId + " source=" + source + " url=" + url + "}";
+	}
 }

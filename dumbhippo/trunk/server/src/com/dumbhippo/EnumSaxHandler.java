@@ -52,7 +52,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		 if (c != value)
 			 throw new SAXException("unmatched close to element " + name + " we were expecting " + c.name());
 		 stack.remove(stack.size() - 1);
-		 attributesStack.remove(stack.size() - 1);
+		 attributesStack.remove(attributesStack.size() - 1);
 		 content.setLength(0);
 	}
 	

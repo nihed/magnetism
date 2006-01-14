@@ -440,10 +440,13 @@ public class MusicSystemBean implements MusicSystem {
 				throw new RuntimeException(e);
 			}
 			for (YahooSongDownloadResult d : ds) {
-				// if two search results are for the same source, we just have a last-one-wins
-				// kind of semantic
-				view.setDownloadUrl(d.getSource(), d.getUrl());
-				logger.debug("adding download url for " + d.getSource().getYahooSourceName());
+				// if two search results are for the same source, first is assumed better
+				if (view.getDownloadUrl(d.getSource()) == null) {
+					view.setDownloadUrl(d.getSource(), d.getUrl());
+					logger.debug("adding download url for " + d.getSource().getYahooSourceName());
+				} else {
+					logger.debug("ignoring second download url for " + d.getSource().getYahooSourceName());
+				}
 			}
 		}
 		

@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -65,12 +65,13 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 
 	private class Result {
 		private String id;
-		private EnumMap<Element,String> values;
+		private Map<Element,String> values;
 		private String artistId;
 		private String albumId;
 		
 		public Result(String id) {
 			this.id = id;
+			values = new EnumMap<Element,String>(Element.class);
 		}
 		
 		public String getValue(Element e) {
@@ -121,6 +122,8 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 
 	private Result currentResult() {
+		// note that unlike the other current() things, 
+		// "results" is not a stack, just a list 
 		if (results.size() > 0)
 			return results.get(results.size() - 1);
 		else
@@ -149,9 +152,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		}
 		*/
 		
-		if (c == Element.Result) {
-			results.remove(results.size() - 1);
-		} else if (parent() == Element.Result) {
+		if (parent() == Element.Result) {
 			currentResult().setValue(c, getCurrentContent());
 			
 			if (c == Element.Artist)
@@ -167,10 +168,12 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		}
 	}
 	
+	/*
 	@Override 
 	public void endDocument() throws SAXException {
 		logger.debug("End of yahoo document");
 	}
+	*/
 	
 	private YahooSongResult songFromResult(Result r) {
 		YahooSongResult song = new YahooSongResult();

@@ -42,16 +42,13 @@ public class AbstractWebServices<SaxHandlerT extends DefaultHandler> {
 	protected SaxHandlerT parseUrl(SaxHandlerT handler, String url) {
 		SAXParser parser = newSAXParser();
 		try {
-			logger.debug("Parsing url");
 			URL u = new URL(url);
-			logger.debug("Connecting to web service " + url);
 			URLConnection connection = u.openConnection();
 
 			connection.setConnectTimeout(timeoutMilliseconds);
 			connection.setReadTimeout(timeoutMilliseconds);
 			connection.setAllowUserInteraction(false);
 			
-			logger.debug("Parsing web service results");
 			parser.parse(connection.getInputStream(), handler);
 			logger.debug("Successfully parsed web service URL contents");
 		} catch (SAXException e) {
