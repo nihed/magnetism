@@ -508,18 +508,23 @@ public class MusicSystemBean implements MusicSystem, MusicSystemInternal {
 	}
 	
 	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
-		// spawn a bunch of yahoo updater threads; this will need some better
-		// optimization
-		/*// this is always a lose right now since we don't in any way map 
-		  // the pending stuff back to what we ask for right away below
+		// spawn a bunch of yahoo updater threads in parallel
+		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
 		for (Track t : tracks) {
-			hintNeedsYahooResults(t);
+			futureViews.add(getTrackViewAsync(t));
 		}
-		*/
-		
+	
+		// now harvest all the results
 		List<TrackView> views = new ArrayList<TrackView>(tracks.size());
-		for (Track t : tracks) {
-			TrackView v = getTrackView(t);
+		for (Future<TrackView> fv : futureViews) {
+			TrackView v;
+			try {
+				v = fv.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Future<TrackView> was interrupted", e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException("Future<TrackView> had execution exception", e);
+			}
 			views.add(v);
 		}
 		
