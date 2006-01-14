@@ -510,9 +510,12 @@ public class MusicSystemBean implements MusicSystem, MusicSystemInternal {
 	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
 		// spawn a bunch of yahoo updater threads; this will need some better
 		// optimization
+		/*// this is always a lose right now since we don't in any way map 
+		  // the pending stuff back to what we ask for right away below
 		for (Track t : tracks) {
 			hintNeedsYahooResults(t);
 		}
+		*/
 		
 		List<TrackView> views = new ArrayList<TrackView>(tracks.size());
 		for (Track t : tracks) {
