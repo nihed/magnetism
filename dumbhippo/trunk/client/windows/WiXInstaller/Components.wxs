@@ -61,6 +61,9 @@
         		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
 	        	        <File Id="activeLeftPng"   Name="activeLe.png" LongName="activeLeft.png"   src="applets\activeLeft.png"   DiskId="1" Vital="yes"/>
 	        	        <File Id="activeRightPng"  Name="activeRi.png" LongName="activeRight.png"  src="applets\activeRight.png"  DiskId="1" Vital="yes"/>
+	        	        <File Id="chatwindowCss"   Name="chatwind.css" LongName="chatwindow.css"   src="applets\chatwindow.css"   DiskId="1" Vital="yes"/>
+	        	        <File Id="chatwindowJs"    Name="chatwind.js"  LongName="chatwindow.js"    src="applets\chatwindow.js"    DiskId="1" Vital="yes"/>
+	        	        <File Id="chatwindowXml"   Name="chatwind.xml" LongName="chatwindow.xml"   src="applets\chatwindow.xml"   DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"  Name="clientst.xml" LongName="clientstyle.xml"  src="applets\clientstyle.xml"  DiskId="1" Vital="yes"/>
 	        	        <File Id="closePng"        Name="close.png"                                src="applets\close.png"        DiskId="1" Vital="yes"/>
 	        	        <File Id="dhCss"           Name="dh.css"                                   src="applets\dh.css"           DiskId="1" Vital="yes"/>
