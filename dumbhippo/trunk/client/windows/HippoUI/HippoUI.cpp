@@ -1487,7 +1487,7 @@ win32SourceDispatch(GSource     *source,
 
     // Don't use GetMessage() here, since the event we saw in check() could
     // have been stolen out from under us in the meantime, causing a hang
-    if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+    if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         return TRUE;
 
     if (msg.message == WM_QUIT) {
