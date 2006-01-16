@@ -21,6 +21,8 @@
         <ant dir="wildfire/" antfile="build/build.xml" target="clean"/>    	
         <ant dir="imbot" target="clean"/>
     </target>
+ 
+    <target name="cleandar" depends="clean,dar"/>
 
     <target name="reload" depends="compile">
         <exec executable="super/super">
