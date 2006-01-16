@@ -87,19 +87,19 @@ HippoUILauncher::createWindow()
 HRESULT
 HippoUILauncher::getUI(IHippoUI **ui, BSTR user)
 {
-    HippoPtr<IHippoUI> exact;
-    HippoPtr<IHippoUI> approximate;
+    IHippoUI *exact = NULL;
+    IHippoUI *approximate = NULL;
 
     checkOneInstance(CLSID_HippoUI, user, &exact, &approximate);
     checkOneInstance(CLSID_HippoUI_Dogfood, user, &exact, &approximate);
     checkOneInstance(CLSID_HippoUI_Debug, user, &exact, &approximate);
 
     if (exact) {
-        exact->AddRef();
+        if (approximate)
+            approximate->Release();
         *ui = exact;
         return S_OK;
     } else if (approximate) {
-        approximate->AddRef();
         *ui = approximate;
         return S_OK;
     } else {
