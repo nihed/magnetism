@@ -57,7 +57,7 @@ public:
 private:
     void fromLong(HippoBSTR &s, long val) {
         WCHAR buf[32];
-        wsprintf(buf, L"%ld", val);
+        StringCchPrintfW(buf, sizeof(buf), L"%ld", val);
         buf[31]='\0';
         s = buf;
     }

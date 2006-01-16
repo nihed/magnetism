@@ -276,7 +276,7 @@ HippoFlickr::computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBS
     g_free(utf);
     for (unsigned int i = 0; i < 16; i++) {
         WCHAR *digestPtr = digestStr;
-        wsprintf(digestPtr+(2*i), L"%02X", digest[i]);
+        StringCchPrintfW(digestPtr+(2*i), sizeof(digestStr) - 2*i, L"%02X", digest[i]);
     }
     digestStr[sizeof(digestStr)/sizeof(digestStr[0]) - 1] = 0;
 
