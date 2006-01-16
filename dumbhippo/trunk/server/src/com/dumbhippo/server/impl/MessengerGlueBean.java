@@ -183,7 +183,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		for (Resource recipient : post.getExpandedRecipients()) {
 			User user = identitySpider.getUser(recipient);
 			if (user != null && !user.equals(poster))
-				allowedUsers.add(new ChatRoomUser(user.getId(), user.getVersion(), user.getNickname()));
+				allowedUsers.add(new ChatRoomUser(user.getGuid().toJabberId(null), user.getVersion(), user.getNickname()));
 		}
 		
 		List<PostMessage> messages = postingBoard.getPostMessages(post);
