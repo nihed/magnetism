@@ -36,6 +36,20 @@ public class TrackView {
 		downloads.put(source, url);
 	}
 	
+	// These getDownloadUrl wrappers are convenient from JSTL expression language
+	
+	public String getYahooUrl() {
+		return getDownloadUrl(SongDownloadSource.YAHOO);
+	}
+
+	public String getItunesUrl() {
+		return getDownloadUrl(SongDownloadSource.ITUNES);
+	}
+
+	public String getRhapsodyUrl() {
+		return getDownloadUrl(SongDownloadSource.RHAPSODY);
+	}
+	
 	public String getAlbum() {
 		return album;
 	}

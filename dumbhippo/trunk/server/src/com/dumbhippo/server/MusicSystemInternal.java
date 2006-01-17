@@ -21,7 +21,7 @@ import com.dumbhippo.persistence.YahooSongResult;
  */
 @BanFromWebTier
 @Local
-public interface MusicSystemInternal {
+public interface MusicSystemInternal extends MusicSystem {
 
 	public Track getTrack(Map<String,String> properties);
 	

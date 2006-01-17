@@ -99,25 +99,27 @@ public class BeanTag extends SimpleTagSupport {
 			throw new RuntimeException("Can't instantiate " + clazz.getName(), e);
 		}
 		
-		for (Field f : clazz.getDeclaredFields()) {
-			if (f.isAnnotationPresent(Signin.class) &&
-				f.getType().isAssignableFrom(SigninBean.class)) {
-				setField(o, f, getSigninBean());
-			} else if (f.isAnnotationPresent(Browser.class) &&
-				f.getType().isAssignableFrom(BrowserBean.class)) {
-				setField(o, f, getBrowserBean());
-			} else if (f.isAnnotationPresent(FromJspContext.class)) {
-				FromJspContext a = f.getAnnotation(FromJspContext.class);
-				String key = a.value();
-				Scope s = a.scope();
-				if (s == null)
-					s = scope; // default to scope of the page
-				
-				Object toInject = findInScope(s, key);
-				if (toInject != null)
-					setField(o, f, toInject);
-				else
-					logger.debug("no value " + key + " found in scope " + s + " not injecting into " + o.getClass().getName());
+		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {
+			for (Field f : c.getDeclaredFields()) {
+				if (f.isAnnotationPresent(Signin.class) &&
+					f.getType().isAssignableFrom(SigninBean.class)) {
+					setField(o, f, getSigninBean());
+				} else if (f.isAnnotationPresent(Browser.class) &&
+					f.getType().isAssignableFrom(BrowserBean.class)) {
+					setField(o, f, getBrowserBean());
+				} else if (f.isAnnotationPresent(FromJspContext.class)) {
+					FromJspContext a = f.getAnnotation(FromJspContext.class);
+					String key = a.value();
+					Scope s = a.scope();
+					if (s == null)
+						s = scope; // default to scope of the page
+					
+					Object toInject = findInScope(s, key);
+					if (toInject != null)
+						setField(o, f, toInject);
+					else
+						logger.debug("no value " + key + " found in scope " + s + " not injecting into " + o.getClass().getName());
+				}
 			}
 		}
 		

@@ -76,15 +76,8 @@
 		<c:if test="${!empty viewperson.currentTrack}">
 			<div class="dh-right-box">
 				<h5 class="dh-title">Latest Song</h5>
-				<div class="dh-song">
-					<c:if test="${!empty viewperson.currentTrack.name}">
-						<c:out value="${viewperson.currentTrack.name}"/>
-					</c:if>
-					<br/>
-					<c:if test="${!empty viewperson.currentTrack.artist}">
-						<c:out value="${viewperson.currentTrack.artist}"/>
-					</c:if>
-				</div>
+				<dht:track track="${viewperson.currentTrack}"/>
+				<a href="/music?who=${personId}">More songs</a>
 			</div>
 		</c:if>
 		
