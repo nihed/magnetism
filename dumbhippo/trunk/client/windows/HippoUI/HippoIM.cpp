@@ -915,7 +915,7 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/linkshare", "link");
-        if (!child) {
+        if (child) {
             HippoLinkShare linkshare;
             LmMessageNode *node;
 
