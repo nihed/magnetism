@@ -7,7 +7,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
@@ -22,7 +22,7 @@ import com.dumbhippo.server.XMPPMethods;
 public class XMPPMethodsBean implements XMPPMethods, Serializable {
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(XMPPMethodsBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(XMPPMethodsBean.class);
 	
 	private static final long serialVersionUID = 0L;
 	

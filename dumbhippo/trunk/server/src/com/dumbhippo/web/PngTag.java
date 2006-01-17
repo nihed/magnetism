@@ -14,14 +14,14 @@ import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.DynamicAttributes;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 
 public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 
-	static private final Log logger = GlobalSetup.getLog(PngTag.class);
+	static private final Logger logger = GlobalSetup.getLogger(PngTag.class);
 	
 	private String src;
 	private String klass;

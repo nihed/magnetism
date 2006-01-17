@@ -20,7 +20,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -68,7 +68,7 @@ import com.dumbhippo.server.util.EJBUtil;
 @Stateless
 public class PostingBoardBean implements PostingBoard {
 
-	private static final Log logger = GlobalSetup.getLog(PostingBoardBean.class);	
+	private static final Logger logger = GlobalSetup.getLogger(PostingBoardBean.class);	
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -265,8 +265,7 @@ public class PostingBoardBean implements PostingBoard {
 		try {
 			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null, true);
 		} catch (NotFoundException e) {
-			logger.error("Failed to post: " + e, e);
-			logger.trace(e);
+			logger.error("Failed to post: " + e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 		logger.debug("Tutorial post done: " + post);

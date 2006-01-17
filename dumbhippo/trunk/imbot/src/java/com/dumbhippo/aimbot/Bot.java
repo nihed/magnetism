@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.aim.Buddy;
@@ -36,7 +36,7 @@ import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.RandomToken;
 
 class Bot implements Runnable {
-	private static final Log logger = GlobalSetup.getLog(Bot.class);
+	private static final Logger logger = GlobalSetup.getLogger(Bot.class);
 
 	private static Timer timer;
 	

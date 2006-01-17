@@ -9,7 +9,7 @@ import java.util.Properties;
 import javax.ejb.PostConstruct;
 import javax.ejb.Stateless;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -22,7 +22,7 @@ import com.dumbhippo.server.HippoProperty;
 @Stateless
 public class ConfigurationBean implements Configuration {
 	
-	static private final Log logger = GlobalSetup.getLog(ConfigurationBean.class);		
+	static private final Logger logger = GlobalSetup.getLogger(ConfigurationBean.class);		
 	
 	private Properties props;
 

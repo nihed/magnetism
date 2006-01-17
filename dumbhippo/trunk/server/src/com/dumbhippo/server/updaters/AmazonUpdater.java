@@ -2,7 +2,7 @@ package com.dumbhippo.server.updaters;
 
 import java.net.URL;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.AmazonPostInfo;
@@ -14,7 +14,7 @@ import com.dumbhippo.services.AmazonItemData;
 import com.dumbhippo.services.AmazonWebServices;
 
 public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
-	static private final Log logger = GlobalSetup.getLog(AmazonUpdater.class);
+	static private final Logger logger = GlobalSetup.getLogger(AmazonUpdater.class);
 	
 	static private final String[] domains = { "amazon.com" };
 

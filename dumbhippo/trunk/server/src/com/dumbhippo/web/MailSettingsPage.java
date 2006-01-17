@@ -1,6 +1,6 @@
 package com.dumbhippo.web;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ToggleNoMailToken;
@@ -10,7 +10,7 @@ import com.dumbhippo.server.PersonView;
 
 public class MailSettingsPage {
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(MailSettingsPage.class);
+	private static final Logger logger = GlobalSetup.getLogger(MailSettingsPage.class);
 	
 	@FromJspContext(value="dumbhippo.toggleNoMailToken", scope=Scope.SESSION)
 	private ToggleNoMailToken token;

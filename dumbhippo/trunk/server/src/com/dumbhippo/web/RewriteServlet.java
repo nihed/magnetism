@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -19,7 +19,7 @@ import com.dumbhippo.server.HippoProperty;
 
 public class RewriteServlet extends HttpServlet {
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(RewriteServlet.class);	
+	private static final Logger logger = GlobalSetup.getLogger(RewriteServlet.class);	
 	
 	static final long serialVersionUID = 1;
 	

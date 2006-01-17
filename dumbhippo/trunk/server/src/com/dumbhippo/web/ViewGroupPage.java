@@ -2,7 +2,7 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
@@ -22,7 +22,7 @@ import com.dumbhippo.server.PostingBoard;
 
 public class ViewGroupPage {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(ViewGroupPage.class);	
+	static private final Logger logger = GlobalSetup.getLogger(ViewGroupPage.class);	
 	
 	static private final int MAX_POSTS_SHOWN = 10;
 	

@@ -9,7 +9,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -21,7 +21,7 @@ import com.dumbhippo.server.WantsInSystem;
 public class WantsInSystemBean implements WantsInSystem {
 
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(WantsInSystem.class);
+	static private final Logger logger = GlobalSetup.getLogger(WantsInSystem.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;

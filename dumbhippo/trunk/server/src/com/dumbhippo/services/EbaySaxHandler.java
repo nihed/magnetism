@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.TimeZone;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -15,7 +15,7 @@ import com.dumbhippo.GlobalSetup;
 
 public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> implements EbayItemData {
 
-	static private final Log logger = GlobalSetup.getLog(EbaySaxHandler.class);
+	static private final Logger logger = GlobalSetup.getLogger(EbaySaxHandler.class);
 	
 	// The enum names should match the xml element names (including case).
 	// indentation roughly matches xml nesting ;-)

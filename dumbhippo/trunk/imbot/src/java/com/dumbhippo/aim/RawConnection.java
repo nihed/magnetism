@@ -50,12 +50,12 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
 public class RawConnection {
-	private static Log logger = GlobalSetup.getLog(RawConnection.class);
+	private static Logger logger = GlobalSetup.getLogger(RawConnection.class);
     
     // for TOC3 (using toc2_login)
     // private static final String REVISION = "\"TIC:\\Revision: 1.61 \" 160 US

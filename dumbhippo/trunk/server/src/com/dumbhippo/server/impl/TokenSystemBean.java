@@ -5,7 +5,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Token;
@@ -16,7 +16,7 @@ import com.dumbhippo.server.TokenUnknownException;
 @Stateless
 public class TokenSystemBean implements TokenSystem {
 
-	private static final Log logger = GlobalSetup.getLog(TokenSystemBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(TokenSystemBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -35,7 +35,7 @@ public class TokenSystemBean implements TokenSystem {
 			// probably a jboss bug
 			// hp: not sure this is a jboss bug - it happens if you throw an exception
 			// from the entity beans somehow, which can be our fault
-			logger.trace("Token key " + authKey + " exception loading " + e, e);
+			logger.debug("Token key " + authKey + " exception loading " + e.getMessage(), e);
 			throw new TokenUnknownException(authKey, e);
 		}
 		

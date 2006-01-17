@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
@@ -52,7 +52,7 @@ import com.dumbhippo.GlobalSetup;
  * @created September 4, 2001
  */
 public class Client {
-	private static Log logger = GlobalSetup.getLog(Client.class);
+	private static Logger logger = GlobalSetup.getLogger(Client.class);
 	
     private RawConnection connection;
     
@@ -270,7 +270,7 @@ public class Client {
                 try {
                 	l.handleMessage(aimbud, htmlMessage);
                 } catch (Exception e) {
-                    logger.error(e);
+                    logger.error("Failure handling message", e);
                 }
             }
         }
@@ -281,7 +281,7 @@ public class Client {
             try {
             	l.handleChatRoomRosterChange(chatRoomName, chatRoomRoster);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling roster change", e);
             }
         }
 	}
@@ -310,7 +310,7 @@ public class Client {
                 try {
                 	l.handleChatMessage(aimbud, chatRoomName, chatRoomId, htmlMessage);
                 } catch (Exception e) {
-                    logger.error(e);
+                    logger.error("Failure handling message", e);
                 }
             }
         }
@@ -322,7 +322,7 @@ public class Client {
             try {
             	l.handleWarning(aimbud, amount);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling warning", e);
             }
         }
     }
@@ -332,7 +332,7 @@ public class Client {
             try {
             	l.handleConnected();
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling connected", e);
             }
         }
     }
@@ -342,7 +342,7 @@ public class Client {
             try {
             	l.handleDisconnected();
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling disconnected", e);
             }
         }
     }
@@ -352,7 +352,7 @@ public class Client {
             try {
                 l.handleError(error, message);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling error", e);
             }
         }
     }
@@ -370,7 +370,7 @@ public class Client {
                 try {
                     l.handleBuddySignOn(aimbud, message);
                 } catch (Exception e) {
-                    logger.error(e);
+                    logger.error("Failure handling buddy sign on", e);
                 }
             }
         }
@@ -389,7 +389,7 @@ public class Client {
             try {
             	l.handleBuddySignOff(aimbud, message);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling buddy sign off", e);
             }
         }
     }
@@ -404,7 +404,7 @@ public class Client {
             try {
             	l.handleBuddyAvailable(aimbud, message);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling buddy available", e);
             }
         }
     }
@@ -420,7 +420,7 @@ public class Client {
             try {
             	l.handleBuddyUnavailable(aimbud, message);
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Failure handling buddy unavailable", e);
             }
         }
     }
@@ -519,7 +519,7 @@ public class Client {
 					filtered = true;
 					break;
 				} catch (Exception e2) {
-					logger.error(e2);
+					logger.error("Failure handling message", e2);
 				}
 			}
 			
@@ -542,7 +542,7 @@ public class Client {
 					filtered = true;
 					break;
 				} catch (Exception e2) {
-					logger.error(e2);
+					logger.error("Failure handling chat message", e2);
 				}
 			}
 			
@@ -563,7 +563,7 @@ public class Client {
 				try {
 					l.handleSetEvilAmount(whoEviledUs, amount);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling set evil", e);
 				}
 			}
 			
@@ -586,7 +586,7 @@ public class Client {
 				try {
 					l.handleBuddySignOn(buddy, htmlInfo);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling buddy sign on", e);
 				}
 			}
 			generateBuddySignOn(buddy, htmlInfo);
@@ -597,7 +597,7 @@ public class Client {
 				try {
 					l.handleBuddySignOff(buddy, htmlInfo);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling buddy sign off", e);
 				}
 			}
 			generateBuddySignOff(buddy, htmlInfo);			
@@ -608,7 +608,7 @@ public class Client {
 				try {
 					l.handleBuddyUnavailable(buddy, htmlMessage);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling buddy unavailable", e);
 				}
 			}
 			generateBuddyUnavailable(buddy, htmlMessage);			
@@ -620,7 +620,7 @@ public class Client {
 				try {
 					l.handleBuddyAvailable(buddy, htmlMessage);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("failure handling buddy available", e);
 				}
 			}
 			generateBuddyAvailable(buddy, htmlMessage);			
@@ -631,7 +631,7 @@ public class Client {
 				try {
 					l.handleConnected();
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling connected", e);
 				}
 			}
 			generateConnected();			
@@ -642,7 +642,7 @@ public class Client {
 				try {
 					l.handleDisconnected();
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling disconnected", e);
 				}
 			}
 			generateDisconnected();
@@ -653,7 +653,7 @@ public class Client {
 				try {
 					l.handleError(error, message);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling error", e);
 				}
 			}
 			generateError(error, message);
@@ -664,7 +664,7 @@ public class Client {
 				try {
 					l.handleUpdateBuddy(name, group);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling update buddy", e);
 				}
 			}
 
@@ -686,7 +686,7 @@ public class Client {
 				try {
 					l.handleAddPermitted(buddy);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling add permitted", e);
 				}
 			}
 			permitted.add(buddy);
@@ -697,7 +697,7 @@ public class Client {
 				try {
 					l.handleAddDenied(buddy);
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error("Failure handling add denied", e);
 				}
 			}
 			denied.add(buddy);

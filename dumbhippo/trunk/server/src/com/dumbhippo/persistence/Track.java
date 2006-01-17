@@ -11,7 +11,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
@@ -58,7 +58,7 @@ import com.dumbhippo.GlobalSetup;
 	      )
 public class Track extends DBUnique {
 	private static final long serialVersionUID = 1L;
-	static private final Log logger = GlobalSetup.getLog(Track.class);
+	static private final Logger logger = GlobalSetup.getLogger(Track.class);
 	
 	private String digest;
 	private TrackType type;

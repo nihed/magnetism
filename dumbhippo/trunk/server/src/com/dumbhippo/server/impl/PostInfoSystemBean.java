@@ -18,7 +18,7 @@ import javax.annotation.EJB;
 import javax.ejb.PostConstruct;
 import javax.ejb.Stateless;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
@@ -33,7 +33,7 @@ import com.dumbhippo.server.updaters.PostUpdater;
 @Stateless
 public class PostInfoSystemBean implements PostInfoSystem {
 
-	static private final Log logger = GlobalSetup.getLog(PostInfoSystemBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(PostInfoSystemBean.class);
 	static private final int MAX_UPDATE_RATE = 1000 * 60 * 30; // never update more often than every 30 minutes
 	
 	private ExecutorService threadPool;	
@@ -93,10 +93,10 @@ public class PostInfoSystemBean implements PostInfoSystem {
 				getDomains = c.getMethod("getDomains");
 				newInstance = c.getMethod("newInstance", Configuration.class);
 			} catch (SecurityException e) {
-				logger.trace(e);
+				logger.error("Security exception loading post updater", e);
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
-				logger.trace(e);
+				logger.error("Missing expected methods loading post updater", e);
 				throw new RuntimeException(e);
 			}
 			if (!String[].class.isAssignableFrom(getDomains.getReturnType()))
@@ -110,13 +110,13 @@ public class PostInfoSystemBean implements PostInfoSystem {
 				Object result = getDomains.invoke(null);
 				domains = (String[]) result;
 			} catch (IllegalArgumentException e) {
-				logger.trace(e);
+				logger.error("error", e);
 				throw new RuntimeException(e);
 			} catch (IllegalAccessException e) {
-				logger.trace(e);
+				logger.error("error", e);
 				throw new RuntimeException(e);
 			} catch (InvocationTargetException e) {
-				logger.trace(e);
+				logger.error("error", e);
 				throw new RuntimeException(e);
 			}
 			
@@ -153,13 +153,13 @@ public class PostInfoSystemBean implements PostInfoSystem {
 			Object result = factoryMethod.invoke(null, configuration);
 			return (PostUpdater) result;
 		} catch (IllegalArgumentException e) {
-			logger.trace(e);
+			logger.error("Failed to invoke PostUpdater factory method", e);
 			throw new RuntimeException(e);
 		} catch (IllegalAccessException e) {
-			logger.trace(e);
+			logger.error("Failed to invoke PostUpdater factory method", e);
 			throw new RuntimeException(e);
 		} catch (InvocationTargetException e) {
-			logger.trace(e);
+			logger.error("Failure in PostUpdater factory method", e);
 			throw new RuntimeException(e.getCause());
 		}
 	}

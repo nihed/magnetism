@@ -17,7 +17,7 @@ import javax.jms.ObjectMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
@@ -55,7 +55,7 @@ import com.dumbhippo.server.Viewpoint;
 public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(HttpMethodsBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(HttpMethodsBean.class);
 	
 	private static final long serialVersionUID = 0L;
 	

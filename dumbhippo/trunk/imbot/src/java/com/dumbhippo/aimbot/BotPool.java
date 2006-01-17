@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.aim.ScreenName;
@@ -16,7 +16,7 @@ import com.dumbhippo.botcom.BotTaskJoinRoom;
 
 public class BotPool implements BotListener {
 	
-	private static Log logger = GlobalSetup.getLog(BotPool.class);
+	private static Logger logger = GlobalSetup.getLogger(BotPool.class);
 	private List<BotQueue> bots;
 	private LinkedBlockingQueue<BotEvent> eventQueue;
 	

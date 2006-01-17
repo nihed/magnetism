@@ -8,7 +8,7 @@ import java.util.List;
 
 import javax.ejb.EJBContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
@@ -36,7 +36,7 @@ import com.dumbhippo.server.formatters.ShareGroupFormatter;
  * properties and methods are safe to access at any point.
  */
 public class PostView {
-	private static final Log logger = GlobalSetup.getLog(PostView.class);
+	private static final Logger logger = GlobalSetup.getLogger(PostView.class);
 	
 	private Context context;
 	private Post post;

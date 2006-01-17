@@ -5,7 +5,7 @@ import java.io.Serializable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
@@ -27,7 +27,7 @@ import com.dumbhippo.web.LoginCookie.BadTastingException;
 public class SigninBean implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private static final Log logger = GlobalSetup.getLog(SigninBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(SigninBean.class);
 	
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
 	private static final String SIGNIN_BEAN_KEY = "dumbhippo.signin";

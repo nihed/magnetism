@@ -7,7 +7,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.TransactionRunner;
@@ -16,7 +16,7 @@ import com.dumbhippo.server.util.EJBUtil;
 @Stateless
 public class TransactionRunnerBean implements TransactionRunner {
 
-	static private final Log logger = GlobalSetup.getLog(TransactionRunnerBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(TransactionRunnerBean.class);
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;

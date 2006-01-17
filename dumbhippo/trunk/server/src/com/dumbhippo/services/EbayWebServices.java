@@ -11,14 +11,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 
 public class EbayWebServices {
-	static private final Log logger = GlobalSetup.getLog(EbayWebServices.class);
+	static private final Logger logger = GlobalSetup.getLogger(EbayWebServices.class);
 	
 	private SAXParserFactory saxFactory;
 	
@@ -47,10 +47,10 @@ public class EbayWebServices {
 		try {
 			return saxFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
-			logger.trace(e);
+			logger.error("creating ebay sax parser", e);
 			throw new RuntimeException(e);
 		} catch (SAXException e) {
-			logger.trace(e);
+			logger.error("creating ebay sax parser", e);
 			throw new RuntimeException(e);
 		}
 	}
@@ -140,10 +140,10 @@ public class EbayWebServices {
 		try {
 			parser.parse(is, handler);
 		} catch (SAXException e) {
-			logger.trace(e);
+			logger.error("Failed to parse ebay return stuff", e);
 			return null;
 		} catch (IOException e) {
-			logger.trace(e);
+			logger.warn("io error talking to ebay", e);
 			return null;
 		}
 		

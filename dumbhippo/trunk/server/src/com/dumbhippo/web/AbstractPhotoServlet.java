@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -25,7 +25,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 	protected static final int LARGEST_PHOTO_DIMENSION = Configuration.SHOT_LARGE_SIZE;
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(AbstractPhotoServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(AbstractPhotoServlet.class);
 
 	@Override
 	protected String getDefaultFilename() {

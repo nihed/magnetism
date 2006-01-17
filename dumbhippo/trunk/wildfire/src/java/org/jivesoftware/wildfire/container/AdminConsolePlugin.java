@@ -133,6 +133,8 @@ public class AdminConsolePlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
         try {
+        	// we have this disabled so we don't have to deal with commons-logging and its evils
+        	if (false && true) {
             // Configure logging to a file, creating log dir if needed
             System.setProperty("org.apache.commons.logging.LogFactory", "org.mortbay.log.Factory");
             File logDir = new File(JiveGlobals.getHomeDirectory(), "logs");
@@ -142,7 +144,7 @@ public class AdminConsolePlugin implements Plugin {
             File logFile = new File(logDir, "admin-console.log");
             OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
             logSink.start();
-            LogImpl log = (LogImpl) Factory.getFactory().getInstance("");
+            LogImpl log = null;//(LogImpl) Factory.getFactory().getInstance("");
             // Ignore INFO logs unless debugging turned on.
             if (!Log.isDebugEnabled()) {
                 log.setVerbose(-1);
@@ -151,7 +153,7 @@ public class AdminConsolePlugin implements Plugin {
                 log.setVerbose(1);
             }
             log.add(logSink);
-
+        	} // end if(false)
             jetty = new Server();
 
             loadListeners();

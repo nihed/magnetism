@@ -6,7 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
@@ -15,7 +15,7 @@ import com.dumbhippo.server.InvitationSystem;
 
 public class SendInviteServlet extends AbstractServlet {
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(SendInviteServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(SendInviteServlet.class);
 	
 	static final long serialVersionUID = 1;
 

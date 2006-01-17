@@ -17,8 +17,6 @@
 	</fileset>
 	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
 		<include name="target/classes/dumbhippo-client.jar"/>
-		<include name="lib/commons-logging-1.0.4.jar"/>
-		<include name="lib/commons-logging-api-1.0.4.jar"/>
 		<include name="lib/slf4j-*.jar"/>
 	</fileset>
     <path id="project.classpath">

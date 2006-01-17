@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -26,7 +26,7 @@ import com.dumbhippo.server.HumanVisibleException;
 
 public class HttpMethodsServlet extends AbstractServlet {
 
-	private static final Log logger = GlobalSetup.getLog(HttpMethodsServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(HttpMethodsServlet.class);
 	
 	private static final long serialVersionUID = 0L;
 	
@@ -207,10 +207,10 @@ public class HttpMethodsServlet extends AbstractServlet {
 					logger.debug("Invoking method " + m.getName() + " with args " + Arrays.toString(methodArgs));
 					m.invoke(object, methodArgs);
 				} catch (IllegalArgumentException e) {
-					logger.error(e);
+					logger.error("invoking method on http methods bean", e);
 					throw new RuntimeException(e);
 				} catch (IllegalAccessException e) {
-					logger.error(e);
+					logger.error("invoking method on http methods bean", e);
 					throw new RuntimeException(e);
 				} catch (InvocationTargetException e) {
 					Throwable cause = e.getCause();

@@ -3,14 +3,14 @@ package com.dumbhippo.web;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 
 public class PersonMusicPage extends AbstractPersonPage {
-	static private final Log logger = GlobalSetup.getLog(PersonMusicPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(PersonMusicPage.class);
 	
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;

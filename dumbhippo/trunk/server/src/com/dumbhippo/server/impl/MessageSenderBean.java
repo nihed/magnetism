@@ -9,7 +9,7 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -55,7 +55,7 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
  */
 @Stateless
 public class MessageSenderBean implements MessageSender {
-	static private final Log logger = GlobalSetup.getLog(MessageSenderBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(MessageSenderBean.class);
 
 	// Injected beans, some are logically used by delegates but we can't 
 	// inject into the delegate objects.
@@ -260,11 +260,11 @@ public class MessageSenderBean implements MessageSender {
 					logger.debug("logged in OK");
 				} catch (XMPPException e) {
 					e.printStackTrace(System.out);
-					logger.error(e);
+					logger.error("Failed to log in to xmpp", e);
 					connection = null;
 				} catch (PropertyNotFoundException e) {
 					e.printStackTrace(System.out);
-					logger.error(e);
+					logger.error("configuration is f'd up", e);
 					connection = null;
 				}
 			}

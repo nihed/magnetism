@@ -2,7 +2,7 @@ package com.dumbhippo.server.formatters;
 
 import javax.ejb.EJBContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.FullName;
 import com.dumbhippo.GlobalSetup;
@@ -21,7 +21,7 @@ import com.dumbhippo.server.util.EJBUtil;
 
 public class ShareGroupFormatter extends DefaultFormatter {
 
-	static private final Log logger = GlobalSetup.getLog(ShareGroupFormatter.class);
+	static private final Logger logger = GlobalSetup.getLogger(ShareGroupFormatter.class);
 	
 	private String inviterName;
 	

@@ -3,14 +3,14 @@ package com.dumbhippo;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(EnumSaxHandler.class);
+	static private final Logger logger = GlobalSetup.getLogger(EnumSaxHandler.class);
 	
 	private Class<E> enumClass;
 	private E ignoredValue;

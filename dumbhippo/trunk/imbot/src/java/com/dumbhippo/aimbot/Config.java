@@ -7,7 +7,7 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -17,7 +17,7 @@ import com.dumbhippo.aim.ScreenName;
 
 class Config {
 
-	private static Log logger = GlobalSetup.getLog(Config.class);
+	private static Logger logger = GlobalSetup.getLogger(Config.class);
 	
 	private static final String CONFIG_FILE = "conf/imbot.xml";
 	

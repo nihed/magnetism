@@ -1,6 +1,6 @@
 package com.dumbhippo.web;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -15,7 +15,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 
 public class AbstractPersonPage {
-	static private final Log logger = GlobalSetup.getLog(AbstractPersonPage.class);	
+	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
 	private User viewedPerson;
 	private String viewedPersonId;

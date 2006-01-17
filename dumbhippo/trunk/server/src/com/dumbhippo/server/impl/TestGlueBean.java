@@ -10,7 +10,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
@@ -28,7 +28,7 @@ import com.dumbhippo.server.TestGlueRemote;
 @Stateless
 public class TestGlueBean implements TestGlue, TestGlueRemote {
 
-	static private final Log logger = GlobalSetup.getLog(TestGlueBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(TestGlueBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;

@@ -9,7 +9,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -30,7 +30,7 @@ import com.dumbhippo.server.TransactionRunner;
 public class LoginVerifierBean implements LoginVerifier {
 	
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(LoginVerifier.class);
+	static private final Logger logger = GlobalSetup.getLogger(LoginVerifier.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;

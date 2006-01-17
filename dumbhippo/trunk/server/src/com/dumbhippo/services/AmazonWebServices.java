@@ -2,14 +2,14 @@ package com.dumbhippo.services;
 
 import java.net.URL;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 
 public class AmazonWebServices extends AbstractWebServices<AmazonSaxHandler> {
 
-	static private final Log logger = GlobalSetup.getLog(AmazonWebServices.class);
+	static private final Logger logger = GlobalSetup.getLogger(AmazonWebServices.class);
 	
 	private String amazonAccessKeyId;
 	

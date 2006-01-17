@@ -5,7 +5,7 @@ import javax.ejb.Stateless;
 import javax.jms.ObjectMessage;
 import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
@@ -33,7 +33,7 @@ import com.dumbhippo.server.SigninSystem;
 @Stateless
 public class SigninSystemBean implements SigninSystem {
 
-	static private final Log logger = GlobalSetup.getLog(SigninSystemBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(SigninSystemBean.class);
 	
 	@EJB
 	private IdentitySpider identitySpider;

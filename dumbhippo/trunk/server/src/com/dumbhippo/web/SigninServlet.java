@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
@@ -20,7 +20,7 @@ import com.dumbhippo.server.SigninSystem;
 public class SigninServlet extends AbstractServlet {
 
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(SigninServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(SigninServlet.class);
 
 	private static final long serialVersionUID = 1L;
 

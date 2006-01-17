@@ -2,7 +2,7 @@ package com.dumbhippo.web;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -22,7 +22,7 @@ import com.dumbhippo.server.PostingBoard;
  * shared with him.
  */
 public class WelcomePage {
-	static private final Log logger = GlobalSetup.getLog(WelcomePage.class);
+	static private final Logger logger = GlobalSetup.getLogger(WelcomePage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 6;
 	
 	@Signin

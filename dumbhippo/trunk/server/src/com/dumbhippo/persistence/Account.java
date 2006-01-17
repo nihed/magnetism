@@ -12,7 +12,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
@@ -40,7 +40,7 @@ import com.dumbhippo.GlobalSetup;
 @Entity
 public class Account extends Resource {
 
-	private static final Log logger = GlobalSetup.getLog(Account.class);	
+	private static final Logger logger = GlobalSetup.getLogger(Account.class);	
 	
 	private static final long serialVersionUID = 0L;
 		

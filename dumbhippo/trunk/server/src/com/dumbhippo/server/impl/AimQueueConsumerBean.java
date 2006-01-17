@@ -12,7 +12,7 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
@@ -46,7 +46,7 @@ import com.dumbhippo.server.TokenUnknownException;
      propertyValue="queue/" + BotEvent.QUEUE)
 })
 public class AimQueueConsumerBean implements MessageListener {
-	static private final Log logger = GlobalSetup.getLog(AimQueueConsumerBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(AimQueueConsumerBean.class);
 	
 	@EJB
 	private TokenSystem tokenSystem;
@@ -95,8 +95,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		try {
 			resource = identitySpider.getAim(event.getAimName());
 		} catch (ValidationException e) {
-			logger.trace(e);
-			logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'");
+			logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'", e);
 			throw new RuntimeException("broken, invalid screen name from AIM bot", e);
 		}
 		

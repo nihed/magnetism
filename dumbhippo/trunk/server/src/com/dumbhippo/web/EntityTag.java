@@ -7,7 +7,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
@@ -19,7 +19,7 @@ import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
 public class EntityTag extends SimpleTagSupport {
-	static private final Log logger = GlobalSetup.getLog(EntityTag.class);
+	static private final Logger logger = GlobalSetup.getLogger(EntityTag.class);
 	
 	private Object entity;
 	private boolean showInviteLinks;

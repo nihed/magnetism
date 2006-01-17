@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.EbayPostInfo;
@@ -14,7 +14,7 @@ import com.dumbhippo.services.EbayItemData;
 import com.dumbhippo.services.EbayScreenScraper;
 
 public class EbayUpdater extends AbstractUpdater<EbayPostInfo> {
-	static private final Log logger = GlobalSetup.getLog(EbayUpdater.class);
+	static private final Logger logger = GlobalSetup.getLogger(EbayUpdater.class);
 	
 	static private final String[] domains = { "ebay.com" };
 

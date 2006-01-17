@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
@@ -24,7 +24,7 @@ import com.dumbhippo.server.HumanVisibleException;
 
 public abstract class AbstractServlet extends HttpServlet {
 
-	private static final Log logger = GlobalSetup.getLog(AbstractServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(AbstractServlet.class);
 	
 	enum HttpResponseCode {
 		
@@ -206,10 +206,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		try {
 			wrappedDoPost(request, response);
 		} catch (HttpException e) {
-			logger.debug(e);
+			logger.debug("http exception processing POST", e);
 			e.send(response);
 		} catch (HumanVisibleException e) {
-			logger.debug(e);
+			logger.debug("human visible exception", e);
 			forwardToErrorPage(request, response, e);
 		}
 	}
@@ -221,10 +221,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		try {
 			wrappedDoGet(request, response);
 		} catch (HttpException e) {
-			logger.debug(e);
+			logger.debug("http exception processing GET", e);
 			e.send(response);
 		} catch (HumanVisibleException e) {
-			logger.debug(e);
+			logger.debug("human visible exception", e);
 			forwardToErrorPage(request, response, e);
 		}
 	}

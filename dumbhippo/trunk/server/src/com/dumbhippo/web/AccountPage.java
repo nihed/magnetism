@@ -1,6 +1,6 @@
 package com.dumbhippo.web;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.ClaimVerifier;
@@ -17,7 +17,7 @@ import com.dumbhippo.server.PersonViewExtra;
  */
 public class AccountPage {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(AccountPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(AccountPage.class);
 
 	@Signin
 	private SigninBean signin;

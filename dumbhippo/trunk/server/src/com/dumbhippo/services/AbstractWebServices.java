@@ -8,7 +8,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -16,7 +16,7 @@ import com.dumbhippo.GlobalSetup;
 
 public class AbstractWebServices<SaxHandlerT extends DefaultHandler> {
 	
-	static private final Log logger = GlobalSetup.getLog(AbstractWebServices.class);
+	static private final Logger logger = GlobalSetup.getLogger(AbstractWebServices.class);
 	
 	private SAXParserFactory saxFactory;
 	private int timeoutMilliseconds;
@@ -31,10 +31,10 @@ public class AbstractWebServices<SaxHandlerT extends DefaultHandler> {
 		try {
 			return saxFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
-			logger.trace(e);
+			logger.error("creating sax parser: ", e);
 			throw new RuntimeException(e);
 		} catch (SAXException e) {
-			logger.trace(e);
+			logger.error("creating sax parser: ", e);
 			throw new RuntimeException(e);
 		}
 	}

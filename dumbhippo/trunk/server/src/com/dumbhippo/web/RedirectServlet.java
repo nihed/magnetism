@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
@@ -18,7 +18,7 @@ import com.dumbhippo.server.PostingBoard;
 public class RedirectServlet extends AbstractServlet {
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(RedirectServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(RedirectServlet.class);
 	
 	private static final long serialVersionUID = 1L;
 

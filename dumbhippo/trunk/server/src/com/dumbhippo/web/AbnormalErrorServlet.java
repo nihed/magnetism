@@ -6,7 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -24,7 +24,7 @@ import com.dumbhippo.server.HumanVisibleException;
 public class AbnormalErrorServlet extends AbstractServlet {
 
 	private static final long serialVersionUID = 1L;
-	private static final Log logger = GlobalSetup.getLog(AbnormalErrorServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(AbnormalErrorServlet.class);
 
     private static final String[] errorVars = {
     	"javax.servlet.error.request_uri",
@@ -50,7 +50,7 @@ public class AbnormalErrorServlet extends AbstractServlet {
     		}
     		Throwable t = (Throwable) request.getAttribute("javax.servlet.error.exception");
     		if (t != null) {
-    			logger.trace("Backtrace:", t);
+    			logger.error("Backtrace:", t);
     			Throwable root = ExceptionUtils.getRootCause(t);
     			if (root != t) {
     				logger.error("Root cause is " + root.getClass().getName() + " message: " + root.getMessage());
@@ -59,8 +59,7 @@ public class AbnormalErrorServlet extends AbstractServlet {
     	} catch (Throwable t) {
     		// not sure what happens if the error servlet throws an error, but it can't be good, so 
     		// we unconditionally eat it here
-    		logger.error("Error servlet broke! " + t);
-    		logger.trace("Backtrace:", t);
+    		logger.error("Error servlet broke! ", t);
     	}
     	// now redirect to error page
     	throw new HumanVisibleException("There was an unexpected problem with the site. Please try again; " 

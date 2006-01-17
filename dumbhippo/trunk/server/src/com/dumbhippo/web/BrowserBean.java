@@ -6,14 +6,14 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
 public class BrowserBean implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(BrowserBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(BrowserBean.class);
 
 	private enum OS { Mac, Windows, Linux, Unknown };
 	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };

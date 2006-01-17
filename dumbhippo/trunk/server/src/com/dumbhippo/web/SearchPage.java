@@ -3,7 +3,7 @@ package com.dumbhippo.web;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
@@ -16,7 +16,7 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
 public class SearchPage {
-	static private final Log logger = GlobalSetup.getLog(SearchPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(SearchPage.class);
 	
 	static private final int DEFAULT_COUNT = 15;
 	static private final int MAX_COUNT = 50;
@@ -54,9 +54,9 @@ public class SearchPage {
 				try {
 					recipient = identitySpider.lookupGuidString(Person.class, recipientId);
 				} catch (ParseException e) {
-					logger.trace("bad recipientId", e);
+					logger.debug("bad recipientId", e);
 				} catch (NotFoundException e) {
-					logger.trace("bad recipientId", e);
+					logger.debug("bad recipientId", e);
 				}
 			}
 		}
@@ -69,9 +69,9 @@ public class SearchPage {
 				try {
 					poster = identitySpider.lookupGuidString(Person.class, posterId);
 				} catch (ParseException e) {
-					logger.trace("bad posterId", e);
+					logger.debug("bad posterId", e);
 				} catch (NotFoundException e) {
-					logger.trace("bad posterId", e);
+					logger.debug("bad posterId", e);
 				}
 			}
 		}
@@ -84,9 +84,9 @@ public class SearchPage {
 				try {
 					group = identitySpider.lookupGuidString(Group.class, groupId);
 				} catch (ParseException e) {
-					logger.trace("bad groupId", e);
+					logger.debug("bad groupId", e);
 				} catch (NotFoundException e) {
-					logger.trace("bad groupId", e);
+					logger.debug("bad groupId", e);
 				}
 			}
 		}

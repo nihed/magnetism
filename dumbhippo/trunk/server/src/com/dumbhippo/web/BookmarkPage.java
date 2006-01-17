@@ -1,6 +1,6 @@
 package com.dumbhippo.web;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -8,7 +8,7 @@ import com.dumbhippo.server.HippoProperty;
 
 public class BookmarkPage {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(BookmarkPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(BookmarkPage.class);
 
 	@Browser
 	private BrowserBean browser;

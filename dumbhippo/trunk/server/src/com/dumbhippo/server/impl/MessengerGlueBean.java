@@ -7,9 +7,8 @@ import java.util.List;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -31,7 +30,7 @@ import com.dumbhippo.server.Viewpoint;
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
 	
-	static private final Log logger = GlobalSetup.getLog(MessengerGlueBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(MessengerGlueBean.class);
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -128,8 +127,6 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			}
 		} catch (RuntimeException e) {
 			logger.error("Failed to do share link tutorial", e);
-			logger.trace(e);
-			logger.trace(ExceptionUtils.getRootCause(e));
 			throw e;
 		}
 	}

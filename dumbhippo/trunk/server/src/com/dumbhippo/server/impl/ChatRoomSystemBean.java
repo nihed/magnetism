@@ -11,7 +11,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -29,7 +29,7 @@ import com.dumbhippo.server.TransactionRunner;
 public class ChatRoomSystemBean implements ChatRoomSystem {
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(ChatRoomSystemBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(ChatRoomSystemBean.class);
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	

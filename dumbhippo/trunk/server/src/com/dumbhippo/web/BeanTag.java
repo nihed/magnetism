@@ -9,12 +9,12 @@ import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.JspFragment;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
 public class BeanTag extends SimpleTagSupport {
-	private static final Log logger = GlobalSetup.getLog(BeanTag.class);
+	private static final Logger logger = GlobalSetup.getLogger(BeanTag.class);
 	
 	String id;
 	Scope scope;

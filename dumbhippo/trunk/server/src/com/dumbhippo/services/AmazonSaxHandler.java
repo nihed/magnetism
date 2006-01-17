@@ -5,7 +5,7 @@ package com.dumbhippo.services;
 
 import java.util.EnumMap;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -13,7 +13,7 @@ import com.dumbhippo.GlobalSetup;
 
 class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implements AmazonItemData {
 	
-	static private final Log logger = GlobalSetup.getLog(AmazonSaxHandler.class);
+	static private final Logger logger = GlobalSetup.getLogger(AmazonSaxHandler.class);
 	
 	// The enum names should match the xml element names (including case)
 	enum Element {

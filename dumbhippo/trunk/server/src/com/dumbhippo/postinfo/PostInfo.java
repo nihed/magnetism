@@ -8,7 +8,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
@@ -17,7 +17,7 @@ import com.dumbhippo.XmlBuilder;
 public class PostInfo {
 	
 	@SuppressWarnings("unused")
-	private static final Log logger = GlobalSetup.getLog(PostInfo.class);
+	private static final Logger logger = GlobalSetup.getLogger(PostInfo.class);
 	
 	static private SAXParserFactory saxFactory;
 	

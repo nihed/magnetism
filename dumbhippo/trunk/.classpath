@@ -15,8 +15,6 @@
 		</accessrules>
 	</classpathentry>
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-logging-api-1.0.4.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-collections-2.1.1.jar"/>
 	<classpathentry kind="lib" path="server/lib/dom4j-1.6.jar"/>
 	<classpathentry sourcepath="/smack/source" kind="lib" path="server/lib/smack-svn-local-build-2005-09-30.jar"/>

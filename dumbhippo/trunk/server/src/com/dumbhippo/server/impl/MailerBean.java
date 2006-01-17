@@ -14,7 +14,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
@@ -36,7 +36,7 @@ import com.dumbhippo.server.Viewpoint;
 @Stateless
 public class MailerBean implements Mailer {
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(MailerBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(MailerBean.class);
 	
 	@EJB
 	private IdentitySpider identitySpider;

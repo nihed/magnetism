@@ -3,7 +3,7 @@ package com.dumbhippo.services;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
@@ -12,7 +12,7 @@ import com.dumbhippo.persistence.YahooSongResult;
 
 public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHandler> {
 
-	static private final Log logger = GlobalSetup.getLog(YahooSearchWebServices.class);
+	static private final Logger logger = GlobalSetup.getLogger(YahooSearchWebServices.class);
 	
 	private String appId;
 	

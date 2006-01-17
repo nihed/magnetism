@@ -3,7 +3,7 @@ package com.dumbhippo.server.updaters;
 import java.net.URL;
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Post;
@@ -12,7 +12,7 @@ import com.dumbhippo.postinfo.PostInfoType;
 
 abstract public class AbstractUpdater<T extends PostInfo> implements PostUpdater {
 
-	static private final Log logger = GlobalSetup.getLog(AbstractUpdater.class);
+	static private final Logger logger = GlobalSetup.getLogger(AbstractUpdater.class);
 	
 	private Class<T> postInfoClass;
 	private T postInfo;

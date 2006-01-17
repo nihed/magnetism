@@ -21,7 +21,7 @@ public class InterfaceFilterProxyFactory {
 
 	static class Handler implements InvocationHandler {
 
-		//static private final Log logger = GlobalSetup.getLog(Handler.class);
+		//static private final Logger logger = GlobalSetup.getLogger(Handler.class);
 		
 		private Object delegate;
 

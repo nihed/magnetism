@@ -4,7 +4,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.botcom.BotEvent;
@@ -17,7 +17,7 @@ import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
 
 public class Main {
-	private static Log logger = GlobalSetup.getLog(Main.class);
+	private static Logger logger = GlobalSetup.getLogger(Main.class);
 	
 	static class PoolToQueueDispatcher implements Runnable {
 		private String queue;
@@ -52,7 +52,7 @@ public class Main {
 				try {
 					event = pool.take();
 					
-					logger.debug(event);
+					logger.debug("{}", event);
 					
 					if ((event instanceof BotEventToken) ||
 					    (event instanceof BotEventChatRoomRoster) ||

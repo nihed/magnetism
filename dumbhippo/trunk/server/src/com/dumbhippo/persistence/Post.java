@@ -17,7 +17,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
@@ -26,7 +26,7 @@ import com.dumbhippo.postinfo.PostInfo;
 @Entity
 public class Post extends GuidPersistable {
 	
-	static private final Log logger = GlobalSetup.getLog(Post.class);
+	static private final Logger logger = GlobalSetup.getLogger(Post.class);
 	static public final int MAX_INFO_LENGTH = 2048;
 	
 	private static final long serialVersionUID = 0L;
@@ -271,8 +271,7 @@ public class Post extends GuidPersistable {
 				cachedPostInfo.makeImmutable();
 				return cachedPostInfo;
 			} catch (SAXException e) {
-				logger.trace(e);
-				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string: " + e.getMessage());
+				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string: " + e.getMessage(), e);
 				
 				// We enter a "do no harm" mode when this happens; it's probably some bug
 				// in our XML parser and we don't want to lose any data from the PostInfo

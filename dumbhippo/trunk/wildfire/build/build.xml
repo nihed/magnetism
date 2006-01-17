@@ -140,7 +140,7 @@
     </path>
 
 	<path id="hippoclient.dependencies">
-		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar commons-logging*.jar" />
+		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar" />
 	</path>
 	
     <path id="compile.dependencies">

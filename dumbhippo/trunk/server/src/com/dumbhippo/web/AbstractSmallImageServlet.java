@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.DiskFileUpload;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Person;
@@ -32,7 +32,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Log logger = GlobalSetup.getLog(AbstractSmallImageServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(AbstractSmallImageServlet.class);
 
 	private static final int MAX_FILE_SIZE = 1024 * 1024 * 5; // 5M is huge, but photos can be big...
 	// scaling something huge is probably bad, but allowing a typical desktop background is 

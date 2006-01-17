@@ -10,13 +10,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
 
 public class EbayScreenScraper {
-	static private final Log logger = GlobalSetup.getLog(EbayScreenScraper.class);
+	static private final Logger logger = GlobalSetup.getLogger(EbayScreenScraper.class);
 	
 	private static class ScrapedItemData implements EbayItemData {
 
@@ -220,7 +220,7 @@ public class EbayScreenScraper {
 			html = StreamUtils.readStreamUTF8(connection.getInputStream());
 		
 		} catch (IOException e) {
-			logger.warn(e);
+			logger.warn("http error getting ebay item", e);
 			return null;
 		}
 		

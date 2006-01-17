@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
@@ -35,7 +35,7 @@ import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
 
 public class VerifyServlet extends AbstractServlet {
-	private static final Log logger = GlobalSetup.getLog(VerifyServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(VerifyServlet.class);
 	
 	static final long serialVersionUID = 1;
 
@@ -171,7 +171,7 @@ public class VerifyServlet extends AbstractServlet {
 		try {
 			token = tokenSystem.getTokenByKey(authKey);
 		} catch (TokenExpiredException e) {
-			logger.trace(e);
+			logger.debug("token expired", e);
 			if (e.getTokenClass() == InvitationToken.class)
 				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
@@ -184,7 +184,7 @@ public class VerifyServlet extends AbstractServlet {
 			else
 				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		} catch (TokenUnknownException e) {
-			logger.trace(e);
+			logger.debug("token unknown", e);
 			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		}
 		

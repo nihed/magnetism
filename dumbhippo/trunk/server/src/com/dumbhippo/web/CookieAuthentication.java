@@ -5,7 +5,7 @@ import java.net.URL;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -18,7 +18,7 @@ import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {
 	
-	private static final Log logger = GlobalSetup.getLog(CookieAuthentication.class);
+	private static final Logger logger = GlobalSetup.getLogger(CookieAuthentication.class);
 	
 	@SuppressWarnings("serial")
 	public static class NotLoggedInException extends Exception {
