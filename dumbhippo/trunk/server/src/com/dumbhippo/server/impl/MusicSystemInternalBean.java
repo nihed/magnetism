@@ -21,7 +21,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -43,7 +43,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	@SuppressWarnings("unused")
-	static private final Log logger = GlobalSetup.getLog(MusicSystemInternalBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(MusicSystemInternalBean.class);
 	
 	// 2 days
 	static private final int EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 2;
@@ -548,7 +548,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return views;
 	}
 	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {		
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		logger.debug("getLatestTrackViews() for user " + user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -558,6 +559,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		logger.debug("getFrequentTrackViews() for user " + user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());

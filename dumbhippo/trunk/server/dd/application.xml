@@ -12,6 +12,9 @@
     	<java>smackx-svn-local-build-2005-09-30.jar</java>
     </module>
     <module>
+    	<java>slf4j-log4j12.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>

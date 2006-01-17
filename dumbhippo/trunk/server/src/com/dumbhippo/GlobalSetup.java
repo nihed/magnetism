@@ -15,9 +15,6 @@ import org.slf4j.LoggerFactory;
  * 
  * Try to avoid putting stuff in here...
  * 
- * There's no point making this thread safe because trying it from multiple
- * threads doesn't make any sense (you can only call it once!)
- * 
  * @author hp
  * 
  */
@@ -57,4 +54,3 @@ public final class GlobalSetup {
 		return LoggerFactory.getLogger(klass);
 	}
 }
-

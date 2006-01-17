@@ -8,7 +8,7 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -34,7 +34,7 @@ import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 })
 public class XmppQueueConsumerBean implements MessageListener {
 
-	static private final Log logger = GlobalSetup.getLog(XmppQueueConsumerBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(XmppQueueConsumerBean.class);
 
 	@EJB
 	private MusicSystemInternal musicSystem;
