@@ -185,7 +185,7 @@ listConnections(IConnectionPoint *point)
 void
 HippoITunesMonitorImpl::attemptConnect()
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+	hippoDebugLogU("ITUNES CONNECT %s", __FUNCTION__);
 
 	if (state_ == CONNECTED)
 		return;
@@ -275,7 +275,7 @@ HippoITunesMonitorImpl::attemptConnect()
 
 void
 HippoITunesMonitorImpl::disconnect() {
-	hippoDebugLogU("%s", __FUNCTION__);
+	hippoDebugLogU("ITUNES DISCONNECT %s", __FUNCTION__);
 
 	ifaceTypeInfo_ = 0;
 
@@ -447,16 +447,23 @@ HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
 void
 HippoITunesMonitorImpl::setTrack(IITTrack *track)
 {
-	hippoDebugLogW(L"setTrack");
+	hippoDebugLogW(L"itunes setTrack");
+
+    bool oldHaveTrack = haveTrack_;
+    HippoTrackInfo oldTrack = track_;
 
 	haveTrack_ = readTrackInfo(track, &track_);
+    if (!haveTrack_)
+        track_.clear();
 
-	hippoDebugLogW(L"read track result: %d", haveTrack_);
+	hippoDebugLogW(L"itunes track result: %d", haveTrack_);
 
-	if (wrapper_)
-		wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
+    if (oldHaveTrack != haveTrack_ || oldTrack != track_) {
+	    if (wrapper_)
+		    wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
+    }
 
-	hippoDebugLogW(L"fired track change event");
+	hippoDebugLogW(L"itunes fired track change event");
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -465,7 +472,7 @@ STDMETHODIMP
 HippoITunesMonitorImpl::QueryInterface(const IID &ifaceID,
                             void   **result)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+	//hippoDebugLogU("%s", __FUNCTION__);
 	if (IsEqualIID(ifaceID, IID_IUnknown)) {
         *result = static_cast<IUnknown *>(this);
 	} else if (IsEqualIID(ifaceID, IID_IDispatch)) {
@@ -547,7 +554,7 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 								EXCEPINFO    *excepInfo,  
 								unsigned int *argErr)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+	//hippoDebugLogU("%s", __FUNCTION__);
 
 	if (!ifaceTypeInfo_)
         return E_OUTOFMEMORY;

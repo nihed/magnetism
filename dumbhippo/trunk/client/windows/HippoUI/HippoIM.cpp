@@ -385,7 +385,7 @@ retry:
         }
 
         // Old (pre-Jan 2005) cookies may not have a host
-        if (host == NULL || wcscmp(host, matchHost) == 0) {
+        if (host.m_str == 0 || wcscmp(host.m_str, matchHost.m_str) == 0) {
             username_ = username;
             password_ = password;
             if (host != NULL)

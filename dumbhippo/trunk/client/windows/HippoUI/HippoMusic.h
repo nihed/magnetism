@@ -21,4 +21,5 @@ public:
 private:
     HippoUI *ui_;
 	HippoMusicMonitor *iTunes_;
+    HippoMusicMonitor *yahoo_;
 };

@@ -183,6 +183,9 @@
 				RelativePath=".\HippoUpgrader.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoYahooMonitor.cpp">
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -267,6 +270,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUpgrader.h">
+			</File>
+			<File
+				RelativePath=".\HippoYahooMonitor.h">
 			</File>
 			<File
 				RelativePath=".\Resource.h">

@@ -177,9 +177,15 @@ public:
             return;
     }
 
+#if 1
+    // FIXME this is almost certainly a Bad Idea. Just type .m_str, just like std::string::c_str()
+    // unfortunately it's already used all over the place so fixing it is sort of a PITA
+    // an example of what this breaks is "HippoBSTR s; if (s == 0) {}" since the implicit 
+    // conversion makes it ambiguous whether to use the conversion or operator== (or something)
     operator BSTR () {
         return m_str;
     }
+#endif
 
     BSTR *operator&() {
         assert(m_str == NULL);
@@ -204,6 +210,16 @@ public:
 		}
 
          return *this;
+    }
+
+    bool operator==(const HippoBSTR& other) const {
+        if (&other == this)
+            return true;
+        if ((m_str != 0) != (other.m_str != 0))
+            return false;
+        if (m_str == 0)
+            return true;
+        return wcscmp(m_str, other.m_str) == 0;
     }
 
     BSTR m_str;

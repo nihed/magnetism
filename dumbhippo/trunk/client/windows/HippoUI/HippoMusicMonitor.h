@@ -54,6 +54,41 @@ public:
     HIPPO_TRACK_INFO_PROP_LONG(TrackNumber);
     HIPPO_TRACK_INFO_PROP(DiscIdentifier);
 
+public:
+    void clear() {
+        Type_ = 0;
+        Format_ = 0;
+        Name_ = 0;
+        Artist_ = 0;
+        Album_ = 0;
+        Url_ = 0;
+        Duration_ = 0;
+        FileSize_ = 0;
+        TrackNumber_ = 0;
+        DiscIdentifier_ = 0;
+    }
+
+    bool operator==(const HippoTrackInfo &other) const {
+        if (&other == this)
+            return true;
+        return Type_ == other.Type_ &&
+            Format_ == other.Format_ &&
+            Name_ == other.Name_ &&
+            Artist_ == other.Artist_ &&
+            Album_ == other.Album_ &&
+            Url_ == other.Url_ &&
+            Duration_ == other.Duration_ &&
+            FileSize_ == other.FileSize_ &&
+            TrackNumber_ == other.TrackNumber_ && 
+            DiscIdentifier_ == other.DiscIdentifier_;
+    }
+
+    bool operator!=(const HippoTrackInfo &other) const {
+        return !(*this == other);
+    }
+
+    // default operator= and copy should be OK in theory...
+
 private:
     void fromLong(HippoBSTR &s, long val) {
         WCHAR buf[32];
@@ -77,6 +112,7 @@ public:
 	virtual ~HippoMusicMonitor() {}
 
 	static HippoMusicMonitor* createITunesMonitor();
+    static HippoMusicMonitor* createYahooMonitor();
 
 protected:
 	void fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);

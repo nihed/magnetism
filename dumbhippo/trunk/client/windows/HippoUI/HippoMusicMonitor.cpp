@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "HippoMusicMonitor.h"
 #include "HippoITunesMonitor.h"
+#include "HippoYahooMonitor.h"
 
 void
 HippoMusicMonitor::addListener(HippoMusicListener *listener)
@@ -35,4 +36,10 @@ HippoMusicMonitor*
 HippoMusicMonitor::createITunesMonitor()
 {
 	return new HippoITunesMonitor();
+}
+
+HippoMusicMonitor*
+HippoMusicMonitor::createYahooMonitor()
+{
+	return new HippoYahooMonitor();
 }
