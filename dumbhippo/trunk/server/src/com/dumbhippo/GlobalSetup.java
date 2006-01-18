@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class GlobalSetup {
 	private volatile static boolean initialized = false;
+	private volatile static boolean usesLog4j = true;
 
 	private GlobalSetup() {
 		// can't instantiate this thing
@@ -38,7 +39,8 @@ public final class GlobalSetup {
 		if (initialized)
 			return;
 
-		initializeLogging();
+		if (usesLog4j)
+			initializeLogging();
 		
 		initialized = true;
 	}
@@ -46,5 +48,11 @@ public final class GlobalSetup {
 	public static Logger getLogger(Class klass) {
 		initialize();
 		return LoggerFactory.getLogger(klass);
+	}
+	
+	public static void disableLog4j() {
+		if (initialized)
+			throw new RuntimeException("Must disable log4j prior to using the logger");
+		usesLog4j = false;
 	}
 }

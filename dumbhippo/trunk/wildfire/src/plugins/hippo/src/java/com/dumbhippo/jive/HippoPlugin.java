@@ -13,6 +13,7 @@ import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.ExceptionUtils;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -26,6 +27,7 @@ public class HippoPlugin implements Plugin {
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
 			Log.debug("Initializing Hippo plugin");
+			GlobalSetup.disableLog4j();
 			
 			// this is a little broken since we have no connection tracking and thus
 			// no clue when the server restarts and we need to call this again

@@ -2,7 +2,7 @@
 
 @import "person.css";
 
-#dhSharesArea .dh-track {
+#dhMainArea .dh-track {
 	position: relative;
 	margin-bottom: 7px;
 	/* this doesn't seem like the right way to do it... */

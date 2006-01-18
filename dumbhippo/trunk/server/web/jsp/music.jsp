@@ -37,13 +37,22 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
+				<h2 class="dh-title"><c:out value="${personName}"/>'s Recent Songs</h2>
+	
+				<div>
+					<c:forEach items="${viewperson.latestTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+				</div>
+			
 				<h2 class="dh-title"><c:out value="${personName}"/>'s Most Played Songs</h2>
 	
-				<div id="dhSharesArea">
+				<div>
 					<c:forEach items="${viewperson.frequentTracks.list}" var="track">
 						<dht:track track="${track}"/>
 					</c:forEach>
 				</div>
+								
 			</c:otherwise>
 		</c:choose>
 	</div>
