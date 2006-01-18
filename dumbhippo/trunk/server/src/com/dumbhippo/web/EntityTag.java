@@ -26,8 +26,10 @@ public class EntityTag extends SimpleTagSupport {
 	private boolean photo;
 	private String cssClass;
 	private int bodyLengthLimit;
+	private boolean music;
 	
-	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId, boolean showInviteLinks, boolean photo,
+	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId,
+			boolean showInviteLinks, boolean photo, boolean music,
 			String cssClass, int bodyLengthLimit) {
 		String link = null;
 		String body;
@@ -41,7 +43,10 @@ public class EntityTag extends SimpleTagSupport {
 				String id = user.getId();
 				if (skipId != null && skipId.equals(id))
 					return null;
-				link = "/person?who=" + id;
+				if (music)
+					link = "/music?who=" + id;
+				else
+					link = "/person?who=" + id;
 				photoUrl = view.getSmallPhotoUrl();
 			}
 			body = view.getName();
@@ -126,7 +131,7 @@ public class EntityTag extends SimpleTagSupport {
 		} catch (ELException e) {
 			throw new RuntimeException(e);
 		}
-		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, cssClass, bodyLengthLimit));
+		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, music, cssClass, bodyLengthLimit));
 	}
 	
 	public void setValue(Object value) {
@@ -147,5 +152,9 @@ public class EntityTag extends SimpleTagSupport {
 
 	public void setBodyLengthLimit(int bodyLengthLimit) {
 		this.bodyLengthLimit = bodyLengthLimit;
+	}
+
+	public void setMusic(boolean music) {
+		this.music = music;
 	}
 }

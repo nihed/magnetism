@@ -48,6 +48,11 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>
+           <name>music</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
            <name>cssClass</name>
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
@@ -91,6 +96,11 @@
         </attribute>
         <attribute>
            <name>photos</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>music</name>
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>

@@ -66,6 +66,8 @@ public class SigninServlet extends AbstractServlet {
 		// setting. But if the person just hits enter, the browser picks one randomly (well I think it 
 		// picks sendlink, but no guarantees). That then breaks us. For now we always go into 
 		// check password mode if you put a password in the box, even if you click send link. FIXME
+		if (checkpassword && password == null)
+			password = ""; // if you click send password but don't put one in
 		
 		if (checkpassword || password != null) {
 			Pair<Client,User> result = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));

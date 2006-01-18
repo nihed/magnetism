@@ -100,7 +100,7 @@
 			<div class="dh-people">
 			<c:choose>
 				<c:when test="${viewperson.contacts.size > 0}">
-					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
+					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true"/>
 				</c:when>
 				<c:otherwise>
 					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>

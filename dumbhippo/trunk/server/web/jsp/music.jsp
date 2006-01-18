@@ -72,7 +72,14 @@
 			<div class="dh-right-box">
 				<h5 class="dh-title">Friends' Music</h5>
 				<div class="dh-people">
-					FIXME
+					<c:choose>
+						<c:when test="${viewperson.contacts.size > 0}">
+							<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" music="true"/>
+						</c:when>
+						<c:otherwise>
+							<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
+						</c:otherwise>
+					</c:choose>
 				</div>
 			</div>
 		</div>

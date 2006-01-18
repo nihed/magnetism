@@ -16,6 +16,7 @@ public class EntityListTag extends SimpleTagSupport {
 	private boolean photos;
 	private int bodyLengthLimit;
 	private String separator;
+	private boolean music;
 
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
@@ -35,7 +36,7 @@ public class EntityListTag extends SimpleTagSupport {
 		while (it.hasNext()) {
 			Object o = it.next();
 			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
-											   photos, cssClass, bodyLengthLimit);
+											   photos, music, cssClass, bodyLengthLimit);
 			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
 		
 			if (html == null)
@@ -80,4 +81,7 @@ public class EntityListTag extends SimpleTagSupport {
 		this.separator = separator;
 	}
 	
+	public void setMusic(boolean music) {
+		this.music = music;
+	}
 }
