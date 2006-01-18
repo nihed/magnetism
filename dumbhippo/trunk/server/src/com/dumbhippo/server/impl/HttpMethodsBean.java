@@ -401,4 +401,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		signinSystem.setPassword(user, password);
 	}
+
+	public void doSetMySpaceName(User user, String name) throws IOException {
+		identitySpider.setMySpaceName(user, name);
+	}
 }

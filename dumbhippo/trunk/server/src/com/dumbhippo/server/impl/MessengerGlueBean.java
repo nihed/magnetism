@@ -13,14 +13,16 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.MySpaceBlogComment;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MySpaceBlogTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -40,6 +42,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	@EJB
 	private PostingBoard postingBoard;
+	
+	@EJB
+	private MySpaceBlogTracker mySpaceTracker;
 		
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
@@ -55,6 +60,22 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		assert account.getOwner().getId().equals(username);
 		
 		return account;
+	}
+	
+	private Account accountFromUsernameOrLose(String username) {
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			logger.debug("username signed on that we don't know: " + username);			
+			throw new RuntimeException(e);
+		}		
+		return account;
+	}
+	
+	private User userFromUsername(String username) {
+		Account acct = accountFromUsernameOrLose(username);
+		return acct.getOwner();
 	}
 	
 	public boolean authenticateJabberUser(String username, String token, String digest) {
@@ -133,6 +154,21 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 
 	public void onUserUnavailable(String username) {
 		logger.debug("Jabber user " + username + " now unavailable");
+	}
+
+	public String getMySpaceName(String username) {
+		Account account = accountFromUsernameOrLose(username);		
+		User user = account.getOwner();
+		PersonView pv = identitySpider.getPersonView(null, user, PersonViewExtra.MYSPACE_NAME);
+		return pv.getMySpaceName().getMySpaceName();
+	}
+	
+	public void addMySpaceBlogComment(String username, long commentId, long posterId) {
+		mySpaceTracker.addMySpaceBlogComment(userFromUsername(username), commentId, posterId);
+	}	
+	
+	public List<MySpaceBlogComment> getMySpaceBlogComments(String username) {
+		return mySpaceTracker.getRecentComments(userFromUsername(username));
 	}
 	
 	private User getUserFromUsername(String username) {

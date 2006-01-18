@@ -11,7 +11,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
-public class ClientInfoIQHandler extends IQHandler {
+public class ClientInfoIQHandler extends AbstractIQHandler {
 	private IQHandlerInfo info;
 	
 	public ClientInfoIQHandler() {
@@ -20,14 +20,6 @@ public class ClientInfoIQHandler extends IQHandler {
 		info = new IQHandlerInfo("method", "http://dumbhippo.com/protocol/clientinfo");
 	}
 
-	private void makeError(IQ reply, String message) {
-		Log.error(message);
-		reply.setError(new PacketError(PacketError.Condition.bad_request, 
-                					   PacketError.Type.modify, 
-                					   message));
-		return;
-	}
-	
 	@Override
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
 		Log.debug("handling IQ packet " + packet);

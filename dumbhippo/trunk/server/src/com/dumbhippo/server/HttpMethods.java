@@ -103,4 +103,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "chatRoomName" })
 	public void doRequestJoinRoom(String postId) throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "name" })
+	public void doSetMySpaceName(User user, String name) throws IOException;
 }

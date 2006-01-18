@@ -170,6 +170,16 @@ public interface MessengerGlueRemote {
 		throws JabberUserNotFoundException;
 	
 	/**
+	 * Return the MySpace name associated with a user, or null if none 
+	 * 
+	 * @param userId
+	 * @return MySpace name or null
+	 */
+	public String getMySpaceName(String username);
+	
+	public void addMySpaceBlogComment(String username, long commentId, long posterId);
+	
+	/**
 	 * Called when Jabber server starts up, so we can detect when 
 	 * we have a new server and need to reset.
 	 *  

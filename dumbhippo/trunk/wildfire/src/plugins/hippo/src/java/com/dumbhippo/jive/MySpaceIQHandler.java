@@ -1,0 +1,96 @@
+package com.dumbhippo.jive;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.xmpp.packet.IQ;
+
+import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.util.EJBUtil;
+
+public class MySpaceIQHandler extends AbstractIQHandler {
+
+	private IQHandlerInfo info;
+	
+	public MySpaceIQHandler() {
+		super("DumbHippo MySpace IQ Handler");
+		Log.debug("creating MySpace IQ handler");
+		info = new IQHandlerInfo("myspace", "http://dumbhippo.com/protocol/myspace");
+	}
+
+	@Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+		
+		Log.debug("handling IQ packet " + packet);
+		IQ reply = IQ.createResultIQ(packet);
+		Element iq = packet.getChildElement();
+		
+		String username = packet.getFrom().getNode();
+
+		String type = iq.attributeValue("type");
+		if (type == null) {
+			makeError(reply, "No type attribute on the root iq element for myspace message");
+			return reply;
+		}
+		
+		if (type.equals("getName")) {
+			handleGetName(iq, username, reply);
+		} else if (type.equals("addBlogComment")) {
+			handleAddBlogComment(iq, username, reply);
+		} else {
+			makeError(reply, "Unknown myspace IQ type, known types are: getName");
+
+		}
+		return reply;		
+	}
+
+	private void handleGetName(Element iq, String username, IQ reply) {
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		
+		String name = glue.getMySpaceName(username);
+		
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("mySpaceInfo", "http://dumbhippo.com/protocol/myspace"); 
+		childElement.addAttribute("mySpaceName", name);
+		reply.setChildElement(childElement);;
+	}
+	
+	private void handleAddBlogComment(Element iq, String username, IQ reply) {
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		Long commentId = null;
+		Long posterId = null;
+		for (Object argObj : iq.elements()) {
+        	Node node = (Node) argObj;
+        	
+        	Log.debug("parsing arg node " + node);
+        	
+        	if (node.getNodeType() == Node.ELEMENT_NODE) {
+        		Element element = (Element) node;
+        		
+        		if (element.getName().equals("commentId")) {
+        			commentId = Long.parseLong(element.getText());
+        		} else if (element.getName().equals("posterId")) {
+        			posterId = Long.parseLong(element.getText());
+        		} else {
+        			makeError(reply, "Unknown node type: " + element.getName());
+        			return;
+        		}
+        	}
+        }		
+		if (commentId == null || posterId == null) {
+			makeError(reply, "Missing parameter for AddBlogComment");
+			return;		
+		}
+		Log.debug("adding blog comment with id " + commentId);
+		glue.addMySpaceBlogComment(username, commentId, posterId);
+	}
+
+	@Override
+	public IQHandlerInfo getInfo() {
+		return info;
+	}
+}

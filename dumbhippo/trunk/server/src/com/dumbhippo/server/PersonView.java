@@ -15,6 +15,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.MySpaceResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.VersionedEntity;
@@ -124,6 +125,11 @@ public class PersonView extends EntityView {
 				this.getResources().add(resource);
 		}
 	}
+	
+	public void addMySpace(MySpaceResource mySpace) {
+		addExtras(EnumSet.of(PersonViewExtra.MYSPACE_NAME));
+		this.getResources().add(mySpace);
+	}	
 	
 	public void addInvitedStatus(boolean invited) {
 		addExtras(EnumSet.of(PersonViewExtra.INVITED_STATUS));
@@ -249,6 +255,10 @@ public class PersonView extends EntityView {
 	
 	public AimResource getAim() {
 		return getOne(PersonViewExtra.PRIMARY_AIM, AimResource.class);
+	}
+	
+	public MySpaceResource getMySpaceName() {
+		return getOne(PersonViewExtra.MYSPACE_NAME, MySpaceResource.class);
 	}
 	
 	public Collection<EmailResource> getAllEmails() {

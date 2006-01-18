@@ -16,6 +16,7 @@
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.password");
+		dojo.require("dh.myspace");		
 		dojo.require("dh.slideshow");
         dojo.require("dh.util");
 	</script>
@@ -177,6 +178,12 @@
 					</c:forEach>
 					<p><a href="${account.addAimLink}">AIM us your screen name</a></p>
 					<p class="dh-explanation">You can use it to login, we'll keep it private (just between us).</p>
+			</div>
+			<div class="dh-right-box">
+				<h5 class="dh-title">MySpace Name</h5>
+				<div id="dhMySpaceChangeDescription" style="display:none">Change your MySpace name:</div>
+				<div id="dhMySpaceDescription" style="display:none">Tell us your MySpace name, and you'll get bubble notifications when your buddies add comments on your MySpace page!</div>
+				<p><input id="dhMySpaceName" class="dhText" value="${account.person.mySpaceName.mySpaceName}"/><input type="button" value="Set Name" id="dhMySpaceSubmit"/></p>
 			</div>
 		</c:if>
 			<div class="dh-right-box">

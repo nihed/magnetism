@@ -16,7 +16,7 @@ import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 
-public class MusicIQHandler extends IQHandler {
+public class MusicIQHandler extends AbstractIQHandler {
 
 	private IQHandlerInfo info;
 	private JmsProducer queue;
@@ -24,19 +24,12 @@ public class MusicIQHandler extends IQHandler {
 	public MusicIQHandler() {
 		super("DumbHippo Music IQ Handler");
 		
+		Log.debug("creaing Music handler");
 		info = new IQHandlerInfo("music", "http://dumbhippo.com/protocol/music");
 		
 		Log.debug("Opening JmsProducer for " + XmppEvent.QUEUE);
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
 		Log.debug("Done constructing Music IQ handler");
-	}
-
-	private void makeError(IQ reply, String message) {
-		Log.error(message);
-		reply.setError(new PacketError(PacketError.Condition.bad_request, 
-                					   PacketError.Type.modify, 
-                					   message));
-		return;
 	}
 	
 	@Override

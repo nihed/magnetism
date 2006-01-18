@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.MySpaceResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -63,7 +64,23 @@ public interface IdentitySpider {
 	 * @return AimResource object, or null if it doesn't exist in the database
 	 */
 	public AimResource lookupAim(String screenName);
-		
+	
+	/**
+	 * Create a new MySpaceResource object representing the MySpace name.
+	 * 
+	 * @param mySpaceName a MySpace name - this is the permanent one
+	 * @return MySpaceResource object
+	 */
+	public MySpaceResource getMySpace(String mySpaceName);
+	
+	/**
+	 * Returns the MySpaceResource for a MySpace name, or null if none
+	 * 
+	 * @param mySpaceName a MySpace name
+	 * @return MySpaceResource object or null
+	 */		
+	public MySpaceResource lookupMySpace(String mySpaceName);	
+	
 	/**
 	 * Gets a Resource object for the given URL, creating
 	 * it if necessary. Note that the result is a detached entity.
@@ -283,6 +300,15 @@ public interface IdentitySpider {
 	public boolean getAccountDisabled(User user);
 	
 	public void setAccountDisabled(User user, boolean disabled);
+	
+	/**
+	 * Associate a MySpace identity with an account holder.
+	 * Currently creates a "verified" claim. 
+	 * 
+	 * @param user account user
+	 * @param name permanent MySpace name
+	 */
+	public void setMySpaceName(User user, String name);
 	
 	/**
 	 * Increase the version number of the user; increasing the user version means
