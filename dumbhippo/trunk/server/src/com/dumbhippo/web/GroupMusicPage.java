@@ -3,28 +3,25 @@ package com.dumbhippo.web;
 import java.util.Collections;
 import java.util.List;
 
-import org.slf4j.Logger;
-
-import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 
-public class PersonMusicPage extends AbstractPersonPage {
-	static private final Logger logger = GlobalSetup.getLogger(PersonMusicPage.class);
-	
-	static private final int LIST_SIZE = 5;
-	
+public class GroupMusicPage extends AbstractGroupPage {
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
-	
-	public PersonMusicPage() {
-		
-	}
+	private MusicSystem musicSystem;
 
+	static private final int LIST_SIZE = 5;
+	
+	public GroupMusicPage() {
+		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+	}
+	
 	public ListBean<TrackView> getFrequentTracks() {
 		if (frequentTracks == null) {
 			try {
-				frequentTracks = new ListBean<TrackView>(getMusicSystem().getFrequentTrackViews(getSignin().getViewpoint(), getViewedUser(), LIST_SIZE));
+				frequentTracks = new ListBean<TrackView>(musicSystem.getFrequentTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 			} catch (NotFoundException e) {
 				logger.debug("Failed to load frequent tracks");
 				List<TrackView> list = Collections.emptyList();
@@ -38,7 +35,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	public ListBean<TrackView> getLatestTracks() {
 		if (latestTracks == null) {
 			try {
-				latestTracks = new ListBean<TrackView>(getMusicSystem().getLatestTrackViews(getSignin().getViewpoint(), getViewedUser(), LIST_SIZE));
+				latestTracks = new ListBean<TrackView>(musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 			} catch (NotFoundException e) {
 				logger.debug("Failed to load latest tracks");
 				List<TrackView> list = Collections.emptyList();
@@ -47,5 +44,5 @@ public class PersonMusicPage extends AbstractPersonPage {
 		}
 
 		return latestTracks;
-	}
+	}	
 }

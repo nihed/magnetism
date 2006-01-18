@@ -14,7 +14,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 
-public class AbstractPersonPage {
+public abstract class AbstractPersonPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
 	private User viewedPerson;

@@ -70,6 +70,19 @@
 		<div class="dh-right-box-area">
 		
 			<div class="dh-right-box">
+				<h5 class="dh-title">Groups' Music</h5>
+				<div class="dh-groups">
+				<c:choose>
+					<c:when test="${viewperson.groups.size > 0}">
+						<dh:entityList value="${viewperson.groups.list}" photos="true" music="true"/>
+					</c:when>
+					<c:otherwise>
+					</c:otherwise>
+				</c:choose>
+				</div>
+			</div>
+		
+			<div class="dh-right-box">
 				<h5 class="dh-title">Friends' Music</h5>
 				<div class="dh-people">
 					<c:choose>

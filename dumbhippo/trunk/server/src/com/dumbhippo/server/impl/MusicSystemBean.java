@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
@@ -35,5 +36,13 @@ public class MusicSystemBean implements MusicSystem {
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		return internal.getFrequentTrackViews(viewpoint, user, maxResults);
+	}
+
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+		return internal.getLatestTrackViews(viewpoint, group, maxResults);
+	}
+
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+		return internal.getFrequentTrackViews(viewpoint, group, maxResults);
 	}
 }

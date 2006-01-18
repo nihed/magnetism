@@ -25,11 +25,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
@@ -61,6 +63,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private GroupSystem groupSystem;
 	
 	private ExecutorService threadPool;
 	
@@ -167,7 +172,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
-		logger.debug("getTrackHistory() type " + type + " for " + user);
+		logger.debug("getTrackHistory() type " + type + " for " + user + " max results " + maxResults);
 		
 		if (!identitySpider.isViewerFriendOf(viewpoint, user)) {
 			logger.debug("Not allowed to see track history");
@@ -179,17 +184,17 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		String order = null;
 		switch (type) {
 		case LATEST:
-			order = "ORDER BY h.lastUpdated DESC ";
+			order = " ORDER BY h.lastUpdated DESC ";
 			break;
 		case FREQUENT:
-			order = "ORDER BY h.timesPlayed DESC ";
+			order = " ORDER BY h.timesPlayed DESC ";
 			break;
 		}
 		
-		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
-				order + 
-				"LIMIT " + maxResults);
+		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " + 
+				order);
 		q.setParameter("user", user);
+		q.setMaxResults(maxResults);
 		
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
  		try {
@@ -208,6 +213,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (results.isEmpty()) {
 			logger.debug("No track history results");
 			throw new NotFoundException("User has no track history");
+		} else {
+			return results;
+		}
+	}
+
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) throws NotFoundException {
+		logger.debug("getTrackHistory() type " + type + " for " + group + " max results " + maxResults);
+
+		// FIXME
+		
+		List<TrackHistory> results = new ArrayList<TrackHistory>();
+
+		if (results.isEmpty()) {
+			logger.debug("No track history results");
+			throw new NotFoundException("Group has no track history");
 		} else {
 			return results;
 		}
@@ -561,6 +581,26 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		logger.debug("getFrequentTrackViews() for user " + user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
+		
+		List<Track> tracks = new ArrayList<Track>(history.size());
+		for (TrackHistory h : history)
+			tracks.add(h.getTrack());
+		return getViewsFromTracks(tracks);
+	}
+
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+		logger.debug("getLatestTrackViews() for group {}", group);
+		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
+		
+		List<Track> tracks = new ArrayList<Track>(history.size());
+		for (TrackHistory h : history)
+			tracks.add(h.getTrack());
+		return getViewsFromTracks(tracks);
+	}
+
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+		logger.debug("getFrequentTrackViews() for group {}", group);
+		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
 		for (TrackHistory h : history)

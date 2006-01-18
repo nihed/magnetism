@@ -57,7 +57,10 @@ public class EntityTag extends SimpleTagSupport {
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			PersonView inviter = groupView.getInviter();
-			link = "/group?who=" + group.getId();
+			if (music)
+				link = "/musicgroup?who=" + group.getId();
+			else
+				link = "/group?who=" + group.getId();
 			if (inviter != null)
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
@@ -69,7 +72,10 @@ public class EntityTag extends SimpleTagSupport {
 			GroupView view = new GroupView(group, null, null);
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
-			link = "/group?who=" + group.getId();
+			if (music)
+				link = "/musicgroup?who=" + group.getId();
+			else
+				link = "/group?who=" + group.getId();
 			body = group.getName();
 			photoUrl = view.getSmallPhotoUrl();
 			defaultCssClass = "dh-group";
