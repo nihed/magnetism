@@ -157,9 +157,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public String getMySpaceName(String username) {
-		Account account = accountFromUsernameOrLose(username);		
-		User user = account.getOwner();
-		PersonView pv = identitySpider.getPersonView(null, user, PersonViewExtra.MYSPACE_NAME);
+		PersonView pv = identitySpider.getSystemView(userFromUsername(username), PersonViewExtra.MYSPACE_NAME);
 		return pv.getMySpaceName().getMySpaceName();
 	}
 	
@@ -167,8 +165,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		mySpaceTracker.addMySpaceBlogComment(userFromUsername(username), commentId, posterId);
 	}	
 	
-	public List<MySpaceBlogComment> getMySpaceBlogComments(String username) {
-		return mySpaceTracker.getRecentComments(userFromUsername(username));
+	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username) {
+		List<MySpaceBlogCommentInfo> ret = new ArrayList<MySpaceBlogCommentInfo>();
+		for (MySpaceBlogComment cmt : mySpaceTracker.getRecentComments(userFromUsername(username))) {
+			ret.add(new MySpaceBlogCommentInfo(cmt.getCommentId(), cmt.getPosterId()));
+		}
+		return ret;
 	}
 	
 	private User getUserFromUsername(String username) {

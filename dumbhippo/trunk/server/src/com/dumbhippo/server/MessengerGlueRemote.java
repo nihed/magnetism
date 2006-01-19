@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.ejb.Remote;
 
+import com.dumbhippo.persistence.MySpaceBlogComment;
+
 @Remote
 public interface MessengerGlueRemote {
 
@@ -131,6 +133,24 @@ public interface MessengerGlueRemote {
 		}
 	}
 	
+	public class MySpaceBlogCommentInfo implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private long commentId;
+		private long posterId;
+		
+		public MySpaceBlogCommentInfo(long commentId, long posterId) {
+			this.commentId = commentId;
+			this.posterId = posterId;
+		}
+		public long getCommentId() {
+			return commentId;
+		}
+		public long getPosterId() {
+			return posterId;
+		}
+	}
+	
 	/** 
 	 * Do Jabber digest authentication
 	 * @param username Jabber username (domain is not included, just username)
@@ -178,6 +198,8 @@ public interface MessengerGlueRemote {
 	public String getMySpaceName(String username);
 	
 	public void addMySpaceBlogComment(String username, long commentId, long posterId);
+	
+	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username);	
 	
 	/**
 	 * Called when Jabber server starts up, so we can detect when 

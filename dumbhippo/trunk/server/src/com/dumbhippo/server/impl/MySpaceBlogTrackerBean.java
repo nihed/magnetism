@@ -45,7 +45,7 @@ public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 	}	
 	
 	public void addMySpaceBlogComment(User user, long commentId, long posterId) {
-		PersonView pv = identitySpider.getPersonView(null, user, PersonViewExtra.MYSPACE_NAME);
+		PersonView pv = identitySpider.getSystemView(user, PersonViewExtra.MYSPACE_NAME);
 		MySpaceResource myIdentity = pv.getMySpaceName();
 		MySpaceBlogComment cm = lookupComment(myIdentity, commentId);
 		if (cm != null)
@@ -58,7 +58,7 @@ public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 		"SELECT cm FROM MySpaceBlogComment cm WHERE cm.blog = :blog ORDER BY cm.discoveredDate DESC";
 	
 	public List<MySpaceBlogComment> getRecentComments(User user) {
-		PersonView pv = identitySpider.getPersonView(null, user, PersonViewExtra.MYSPACE_NAME);
+		PersonView pv = identitySpider.getSystemView(user, PersonViewExtra.MYSPACE_NAME);
 		MySpaceResource myIdentity = pv.getMySpaceName();				
 		List<MySpaceBlogComment> comments = new ArrayList<MySpaceBlogComment>();
 		List results = em.createQuery(LOOKUP_COMMENTS_QUERY).setParameter("blog", myIdentity).getResultList();		
