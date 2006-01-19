@@ -12,6 +12,7 @@ class HippoHTTPAsyncHandler
 public:
     virtual void handleError(HRESULT result) = 0;
     virtual void handleGotSize(long responseSize) { };
+    virtual void handleContentType(WCHAR *mimetype, WCHAR *charset) { };
     virtual void handleBytesRead(void *responseData, long responseBytes) { };
     virtual void handleComplete(void *responseData, long responseBytes) = 0;
 };

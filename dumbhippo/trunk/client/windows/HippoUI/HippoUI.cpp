@@ -61,6 +61,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     registered_ = false;
 
     flickr_ = NULL;
+    mySpace_ = NULL;
 
     nextBrowserCookie_ = 0;
 
@@ -838,6 +839,35 @@ HippoUI::setClientInfo(const char *minVersion,
     upgrader_.setUpgradeInfo(minVersion, currentVersion, downloadUrl);
 }
 
+struct HippoIdleMySpaceInfo
+{
+    HippoUI *ui_;
+    HippoBSTR name_;
+};
+
+gboolean
+HippoUI::idleCreateMySpace(gpointer data)
+{
+    struct HippoIdleMySpaceInfo *info = (struct HippoIdleMySpaceInfo *) data;
+
+    info->ui_->mySpace_ = new HippoMySpace(info->name_, info->ui_);    
+    delete info;
+
+    return FALSE;
+}
+
+void 
+HippoUI::setMySpaceName(const char *name)
+{
+    if (mySpace_)
+        delete mySpace_;
+
+    struct HippoIdleMySpaceInfo *info = new struct HippoIdleMySpaceInfo;
+    info->ui_ = this;
+    info->name_.setUTF8(name);
+    g_idle_add (idleCreateMySpace, info);
+}
+
 void 
 HippoUI::onUpgradeReady()
 {
@@ -1445,6 +1475,19 @@ void
 HippoUI::onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack)
 {
     im_.notifyMusicTrackChanged(haveTrack, newTrack);
+}
+
+void 
+HippoUI::onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment)
+{
+    im_.addMySpaceComment(comment);
+    bubble_.addMySpaceCommentNotification(myId, blogId, comment);
+}
+
+void 
+HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment> &comments)
+{
+    mySpace_->setSeenComments(comments);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32

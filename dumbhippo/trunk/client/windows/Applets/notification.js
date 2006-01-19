@@ -64,10 +64,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             return false;
     })    
     
-    this._pushNotification = function (nType, data) {
+    this._pushNotification = function (nType, data, timeout) {
         this.notifications.push({notificationType: nType,
                                  state: "pending",
-                                 data: data})
+                                 data: data,
+                                 timeout: timeout})
         dh.util.debug("position " + this.position + " notifications: " + this.notifications)                                 
         if (this.position < 0) {
             this.setPosition(0)
@@ -75,7 +76,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._updateNavigation()
     }
     
-    this.addLinkShare = function (share) {
+    this.addLinkShare = function (share, timeout) {
         // If we already have a notification for the same post, update the viewers
         for (var i = 0; i < this.notifications.length; i++) {
             if (this.notifications[i].notificationType == 'linkShare' &&
@@ -88,7 +89,20 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
         
         // Otherwise, add a new notification page
-        this._pushNotification('linkShare', share)
+        this._pushNotification('linkShare', share, timeout)
+    }
+    
+    this.addMySpaceComment = function (comment) {
+        // If we already have a notification for the same comment, ignore this
+        for (var i = 0; i < this.notifications.length; i++) {
+            if (this.notifications[i].notificationType == 'mySpaceComment' &&
+                this.notifications[i].data.commentId == comment.commentId) {
+                return;
+            }
+        }
+        
+        // Otherwise, add a new notification page
+        this._pushNotification('mySpaceComment', comment, 7)    
     }
     
     this.displayMissed = function () {
@@ -112,7 +126,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             this._clearPageTimeout();
             // Handle infinite timeout   
             if (this.position >= 0) {
-                var timeout = this.notifications[this.position].data.timeout
+                var timeout = this.notifications[this.position].timeout
                 dh.util.debug("current page timeout is " + timeout)        
                 if (timeout < 0) {
                     return;
@@ -162,10 +176,16 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         var notification = this.notifications[pos]  
         this.position = pos
         dh.util.debug("notification type " + notification.notificationType)
-        if (notification.notificationType == 'linkShare')
-            this._display_linkShare(notification.data)
-        else
-            dh.util.debug("unknown notfication type " + notification.notificationType)
+        switch (notification.notificationType) {
+            case 'linkShare':
+                this._display_linkShare(notification.data)
+                break
+            case 'mySpaceComment':
+                this._display_mySpaceComment(notification.data)
+                break
+            default:
+                dh.util.debug("unknown notfication type " + notification.notificationType)
+        }
         //var handler = this["_display_" + notification.notificationType]
         //dh.util.debug("notification handler: " + handler)     
         //handler(this, notification.data)
@@ -365,6 +385,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             }
         }  
     }
+    
+    this.markAsSeenGoNext = function () {
+        this._markCurrentAsSeen()
+        this.goNextOrClose();    
+    }
   
     this._display_linkShare = function (share) {
         dh.util.debug("displaying " + share.postId + " " + share.linkTitle)
@@ -375,13 +400,8 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._setPhotoLink(this.getPersonName(share.senderId), personUrl)
         
         var display = this;
-        var hook = function () {
-            display._markCurrentAsSeen()
-            display.goNextOrClose();
-        }
-
         var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
-        titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId, share.linkURL, hook))
+        titleDiv.appendChild(this._createSharedLinkLink(share.linkTitle, share.postId, share.linkURL, function () { display.markAsSeenGoNext() }))
 
         var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
         bodyDiv.appendChild(document.createTextNode(share.linkDescription))
@@ -429,7 +449,26 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
         
         this._fixupLayout()
-    }    
+    }
+    
+    this._display_mySpaceComment = function (comment) {
+        dh.util.debug("displaying blog " + comment.blogId + " comment " + comment.commentId)
+
+
+        var display = this;
+        var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
+        var a = this._getExternalAnchor("http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=" + comment.myId + "&blogID=" + comment.blogId)
+        a.appendChild(document.createTextNode("New MySpace comment from " + comment.posterId))
+        titleDiv.appendChild(a)
+  
+        var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
+        bodyDiv.appendChild(document.createTextNode(comment.content))
+  
+        var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
+        this._setShowViewers(false)
+        
+        this._fixupLayout()    
+    }
 }
 
 dhAdaptLinkRecipients = function (recipients) {
@@ -464,8 +503,16 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
                             personRecipients: personRecipients,
                             groupRecipients: groupRecipients,
                             viewers: viewers,
-                            info: dh.parseXML(postInfo),
-                            timeout: timeout})
+                            info: dh.parseXML(postInfo)}, timeout)
+}
+
+dhAddMySpaceComment = function (myId, blogId, commentId, posterId, content) {
+    dh.util.debug("in dhAddMySpaceComment, blogId: " + blogId + " commentId: " + commentId + " posterId: " + posterId + " content: " + content)
+    dh.display.addMySpaceComment({myId: myId,
+                                  blogId: blogId,
+                                  commentId: commentId, 
+                                  posterId: posterId, 
+                                  content:  content})
 }
 
 dhDisplayMissed = function () {

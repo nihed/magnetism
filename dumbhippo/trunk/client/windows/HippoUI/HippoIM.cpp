@@ -7,6 +7,7 @@
 #include "HippoChatRoom.h"
 #include "HippoIM.h"
 #include "HippoUI.h"
+#include "HippoMySpace.h"
 
 static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
 static const int SIGN_IN_INITIAL_COUNT = 60;     /* 5 minutes */
@@ -263,6 +264,30 @@ HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
 
     lm_message_unref(message);
     hippoDebugLogW(L"Sent music changed xmpp message");
+}
+
+void 
+HippoIM::addMySpaceComment(const HippoMySpaceBlogComment &comment)
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    LmMessageNode *node = lm_message_get_node(message);
+
+    LmMessageNode *subnode = lm_message_node_add_child (node, "addBlogComment", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(subnode, "type", "addBlogComment");
+    LmMessageNode *prop = lm_message_node_add_child(subnode, "commentId", NULL);
+    char *commentIdStr = g_strdup_printf("%d", comment.commentId);
+    lm_message_node_set_value(prop, commentIdStr);
+    prop = lm_message_node_add_child(subnode, "posterId", NULL);
+    g_free(commentIdStr);
+    char *posterIdStr = g_strdup_printf("%d", comment.posterId);
+    lm_message_node_set_value(prop, posterIdStr);
+
+    sendMessage(message);
+    lm_message_unref(message);
+    hippoDebugLogW(L"Sent MySpace comment xmpp message");
 }
 
 HRESULT
@@ -561,6 +586,54 @@ HippoIM::getClientInfo()
     lm_message_handler_unref(handler);
 
     ui_->debugLogU("Sent request for clientInfo");
+}
+
+void
+HippoIM::getMySpaceName()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getName");
+    LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceNameReply, this, NULL);
+
+    GError *error = NULL;
+    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+    if (error) {
+        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for MySpace name");
+}
+
+void
+HippoIM::getMySpaceSeenBlogComments()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getBlogComments");
+    LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceBlogCommentsReply, this, NULL);
+
+    GError *error = NULL;
+    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+    if (error) {
+        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for MySpace blog comments");
 }
 
 void 
@@ -862,6 +935,27 @@ HippoIM::onDisconnect(LmConnection       *connection,
     }
 }
 
+bool
+HippoIM::messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *expectedNamespace, const char *documentElementName)
+{
+    LmMessageNode *child = message->node->children;
+
+    const char *ns;
+    if (child)
+        ns = lm_message_node_get_attribute(child, "xmlns");
+
+    if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
+        lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
+        !child || child->next ||
+        !ns || strcmp(ns, expectedNamespace) != 0 ||
+        strcmp(child->name, documentElementName) != 0)
+    {
+        im->ui_->debugLogU("Got a bad reply to IQ");
+        return false;
+    }
+    return true;
+}
+
 LmHandlerResult
 HippoIM::onClientInfoReply(LmMessageHandler *handler,
                            LmConnection     *connection,
@@ -871,17 +965,8 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
     HippoIM *im = (HippoIM *)userData;
 
     LmMessageNode *child = message->node->children;
-    const char *ns;
-    if (child)
-        ns = lm_message_node_get_attribute(child, "xmlns");
 
-    if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
-        lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
-        !child || child->next ||
-        !ns || strcmp(ns, "http://dumbhippo.com/protocol/clientinfo") != 0 ||
-        strcmp(child->name, "clientInfo") != 0)
-    {
-        im->ui_->debugLogU("Got a bad reply to clientInfo IQ");
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/clientinfo", "clientInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -896,6 +981,78 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
 
     im->ui_->debugLogU("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
     im->ui_->setClientInfo(minimum, current, download);
+
+    // Next get the MySpace info
+    im->getMySpaceName();
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+
+LmHandlerResult
+HippoIM::onGetMySpaceNameReply(LmMessageHandler *handler,
+                               LmConnection     *connection,
+                               LmMessage        *message,
+                               gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    const char *name = lm_message_node_get_attribute(child, "mySpaceName");
+
+    if (!name) {
+        im->ui_->debugLogU("getMySpaceName reply missing attributes");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    im->ui_->debugLogU("getMySpaceName response: name=%s", name);
+    im->ui_->setMySpaceName(name);
+    im->getMySpaceSeenBlogComments(); // Now retrieve known blog comments
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+LmHandlerResult
+HippoIM::onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
+                                       LmConnection     *connection,
+                                       LmMessage        *message,
+                                       gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    HippoArray<HippoMySpaceBlogComment> comments;
+
+    for (LmMessageNode *subchild = child->children; subchild; subchild = subchild->next) {
+        LmMessageNode *commentNode;
+        HippoMySpaceBlogComment comment;
+    
+        if (strcmp (subchild->name, "comment") != 0)
+            continue;
+
+        commentNode = lm_message_node_get_child (subchild, "commentId");
+        if (!(commentNode && commentNode->value)) {
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        comment.commentId = strtol(commentNode->value, NULL, 10);
+        commentNode = lm_message_node_get_child (subchild, "posterId");
+        if (!(commentNode && commentNode->value)) {
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment.commentId);
+        comments.append(comment);
+    }
+
+    im->ui_->setSeenMySpaceComments(comments);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }

@@ -265,6 +265,28 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     show();
 }
 
+void 
+HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment)
+{
+    if (window_ == NULL) {
+        ui_->debugLogW(L"Creating new window");
+        if (!create()) {
+            ui_->debugLogW(L"Failed to create window");
+            return;
+        }
+    }
+    variant_t vMyId(myId);
+    variant_t vBlogId(blogId);
+    variant_t vCommentId(comment.commentId);
+    variant_t vFriendId(comment.posterId);
+    variant_t vContent(_bstr_t(comment.content.m_str));
+    ui_->debugLogW(L"Invoking dhAddMySpaceComment");
+    // Note if you change the arguments to this function, you must change
+    // notification.js (and don't forget to update the argument count here too)
+    invokeJavascript(L"dhAddMySpaceComment", NULL, 5, &vMyId, &vBlogId, &vCommentId, &vFriendId, &vContent);
+    show();
+}
+
 bool
 HippoBubble::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
 {

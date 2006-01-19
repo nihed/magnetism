@@ -135,9 +135,14 @@ public:
         UINT oldlen = SysStringLen(m_str);
         size_t appendlen = wcslen(str);
         
-        if (oldlen + appendlen >= oldlen && // check for overflow
-            ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen)) {
-            memcpy(m_str + oldlen, str, sizeof(OLECHAR) * (appendlen + 1));
+        if (oldlen + appendlen >= oldlen) {// check for overflow
+            HRESULT res;
+            res = ::SysReAllocStringLen(&m_str, m_str, oldlen + appendlen);
+            if (SUCCEEDED(res)) {
+                memcpy(m_str + oldlen, str, sizeof(OLECHAR) * (appendlen + 1));
+            } else {
+                return res;
+            }
             return S_OK;
         } else {
             return E_OUTOFMEMORY;
@@ -166,15 +171,21 @@ public:
         setUTF8(utf8, -1);
     }
 
-    void setUTF8(const char *utf8, unsigned int len) {
+    HRESULT setUTF8(const char *utf8, unsigned int len) {
         int addlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
         if (addlen == 0)
-            return;
+            return GetLastError();
+        if (len == -1)
+            addlen -= 1; // Subtract trailing null from returned length
         int reqlen = Length() + addlen;
-        ::SysReAllocStringLen(&m_str, m_str, reqlen);
+        HRESULT res;
+        res = ::SysReAllocStringLen(&m_str, m_str, reqlen);
+        if (FAILED(res))
+            return res;
         int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, len, m_str, reqlen);
         if (ret == 0)
-            return;
+            return GetLastError();
+        return S_OK;
     }
 
 #if 1

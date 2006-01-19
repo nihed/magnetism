@@ -11,6 +11,7 @@
 
 class HippoUI;
 class HippoChatRoom;
+class HippoMySpaceBlogComment;
 
 class HippoIM 
 {
@@ -34,6 +35,8 @@ public:
     void notifyPostClickedU(const char *postGuid);
 
     void notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track);
+
+    void addMySpaceComment(const HippoMySpaceBlogComment &comment);
 
     // Try to sign in. Returns TRUE if we need to show a web page where
     // the user can sign in
@@ -67,6 +70,8 @@ private:
     void disconnect();
     void authenticate();
     void getClientInfo();
+    void getMySpaceName();
+    void getMySpaceSeenBlogComments();
 
     void startSignInTimeout();
     void stopSignInTimeout();
@@ -112,10 +117,20 @@ private:
                              LmDisconnectReason  reason,
                              gpointer            userData);
 
+    static bool messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *expectedNamespace, const char *documentElementName);
+
     static LmHandlerResult onClientInfoReply(LmMessageHandler *handler,
                                              LmConnection     *connection,
                                              LmMessage        *message,
                                              gpointer          userData);
+    static LmHandlerResult onGetMySpaceNameReply(LmMessageHandler *handler,
+                                                 LmConnection     *connection,
+                                                 LmMessage        *message,
+                                                 gpointer          userData);
+    static LmHandlerResult onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
+                                                         LmConnection     *connection,
+                                                         LmMessage        *message,
+                                                         gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,

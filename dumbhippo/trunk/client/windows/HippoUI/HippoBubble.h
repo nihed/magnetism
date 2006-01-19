@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include <HippoConnectionPointContainer.h>
 #include "HippoIE.h"
+#include "HippoMySpace.h"
 
 class HippoUI;
 struct HippoLinkShare;
@@ -22,6 +23,7 @@ public:
     void setUI(HippoUI *ui);
 
     void setLinkNotification(HippoLinkShare &share);
+    void addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment);
     void show(void);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);

@@ -18,6 +18,7 @@
 #include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
+#include "HippoMySpace.h"
 
 struct HippoBrowserInfo
 {
@@ -99,6 +100,7 @@ public:
     void setClientInfo(const char *minVersion,
                        const char *currentVersion,
                        const char *downloadUrl);
+    void setMySpaceName(const char *name);
     void onUpgradeReady();
     void onLinkMessage(HippoLinkShare &link);
 
@@ -116,6 +118,8 @@ public:
     HWND getWindow() { return window_; }
 
     void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
+    void onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment);
+    void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment>&comments);
 
 private:
     bool registerActive();
@@ -152,6 +156,7 @@ private:
     void unregisterStartup();
 
     static int doQuit(gpointer data);
+    static gboolean idleCreateMySpace(gpointer data);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,
@@ -198,6 +203,7 @@ private:
     HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
     HippoMusic music_;
+    HippoMySpace *mySpace_;
 
     HippoRemoteWindow *currentShare_;
     HippoRemoteWindow *signinWindow_;

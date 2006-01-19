@@ -165,6 +165,9 @@
 				RelativePath=".\HippoMusicMonitor.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoMySpace.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoPreferences.cpp">
 			</File>
 			<File
@@ -252,6 +255,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoMusicMonitor.h">
+			</File>
+			<File
+				RelativePath=".\HippoMySpace.h">
 			</File>
 			<File
 				RelativePath=".\HippoPreferences.h">

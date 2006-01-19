@@ -30,6 +30,8 @@ public:
     long inputLen_;
 
     long responseSize_;
+    HippoBSTR responseContentType_;
+    HippoBSTR responseContentCharset_;
 
     // -----------------------------------------------------------------------------
     // These following items are shared between the read thread and response idle
@@ -37,6 +39,7 @@ public:
 
     ResponseState responseState_;
     bool seenResponseSize_;
+    bool seenResponseContentType_;
     long responseBytesRead_;
     long responseBytesSeen_;
     unsigned responseIdle_;
@@ -45,6 +48,7 @@ public:
     // -----------------------------------------------------------------------------
 
     void *responseBuffer_;
+    long responseBufferSize_;
 
     HippoHTTPAsyncHandler *handler_;
 
@@ -82,8 +86,10 @@ HippoHTTPContext::doResponseIdle()
         return;
     }
     
-    if (!oldSeenResponseSize)
+    if (!oldSeenResponseSize) {
         handler_->handleGotSize(responseSize_);
+        handler_->handleContentType(responseContentType_, responseContentCharset_);
+    }
 
     if (oldResponseBytesSeen != newResponseBytesSeen) {
         handler_->handleBytesRead((char *)responseBuffer_ + oldResponseBytesSeen, 
@@ -142,12 +148,12 @@ HippoHTTPContext::readData()
         return;
     }
 
-    while ((responseSize_ - responseBytesRead_) != 0) {
+    while (responseSize_ == -1 || (responseSize_ - responseBytesRead_) != 0) {
         DWORD bytesRead;
 
         // Things seem to work badly if we call neglect to call InternetQueryDataAvailable() 
         // before trying to read
-        DWORD bytesAvailable;
+        DWORD bytesAvailable = 0;
         if (!InternetQueryDataAvailable(requestOpenHandle_, &bytesAvailable, 0, 0)) {
             // ERROR_IO_PENDING means no data currently available; return and we'll get
             // called again later
@@ -159,14 +165,31 @@ HippoHTTPContext::readData()
 
         EnterCriticalSection(&criticalSection_);
 
-        DWORD toRead = responseSize_ - responseBytesRead_;
+        DWORD toRead;
+        if (responseSize_ > 0) {
+            toRead = responseSize_ - responseBytesRead_;
+        } else {
+            toRead = 4096;
+        }
         void *readLocation;
+        HRESULT allocResult;
 
-        readLocation = ((char*)responseBuffer_) + responseBytesRead_;
         if (toRead > bytesAvailable)
             toRead = bytesAvailable;
 
+        if (((long)toRead + responseBytesRead_) > responseBufferSize_) {
+            responseBuffer_ = realloc(responseBuffer_, responseBufferSize_ *= 2);
+            allocResult = GetLastError();
+        }
+
+        readLocation = ((char*)responseBuffer_) + responseBytesRead_;
+
         LeaveCriticalSection(&criticalSection_);
+
+        if (responseBuffer_ == NULL) {
+            enqueueError(allocResult);
+            return;
+        }
 
         if (!InternetReadFile(requestOpenHandle_,
                               readLocation, toRead, &bytesRead)) 
@@ -180,6 +203,7 @@ HippoHTTPContext::readData()
             return;
         } else {
             EnterCriticalSection(&criticalSection_);
+            char *current = (char*)responseBuffer_;
             responseBytesRead_ += bytesRead;
             ensureResponseIdle();
             LeaveCriticalSection(&criticalSection_);
@@ -192,8 +216,8 @@ HippoHTTPContext::readData()
     closeHandles();
 
     EnterCriticalSection(&criticalSection_);
-    if (responseSize_ - responseBytesRead_ != 0) { 
-        // Invalid Content-Length
+    if (responseSize_ < 0 || responseSize_ - responseBytesRead_ != 0) { 
+        // Missing or invalid Content-Length
         responseSize_ = responseBytesRead_;
     }
     responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
@@ -208,7 +232,7 @@ static void
 handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOID statusInfo, 
                       DWORD statusLength)
 {
-    if (ctx->responseSize_ < 0) {
+    if (ctx->responseBuffer_ == NULL) {
         DWORD statusCode;
         DWORD statusCodeSize = sizeof(statusCode);
 
@@ -222,21 +246,43 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
         WCHAR responseSize[80];
         static const long MAX_SIZE = 16 * 1024 * 1024;
         DWORD responseDatumSize = sizeof(responseSize);
+        WCHAR responseContentType[120];
+        DWORD responseContentTypeSize = sizeof(responseContentType);
 
         if (!HttpQueryInfo(ctx->requestOpenHandle_, HTTP_QUERY_CONTENT_LENGTH,
             &responseSize, &responseDatumSize, 
             NULL)) 
         {
-            ctx->enqueueError(E_FAIL);
-            return;
+            ctx->responseSize_ = -1;
+            ctx->responseBufferSize_ = 4096;
+        } else {
+            ctx->responseSize_ = wcstoul(responseSize, NULL, 10);
+            if (ctx->responseSize_ < 0)
+                ctx->responseSize_ = 0;
+            else if (ctx->responseSize_ > MAX_SIZE)
+                ctx->responseSize_ = MAX_SIZE;
+            ctx->responseBufferSize_ = ctx->responseSize_;
         }
-        ctx->responseSize_ = wcstoul(responseSize, NULL, 10);
-        if (ctx->responseSize_ < 0)
-            ctx->responseSize_ = 0;
-        else if (ctx->responseSize_ > MAX_SIZE)
-            ctx->responseSize_ = MAX_SIZE;
+
+        ctx->responseContentType_ = NULL;
+        ctx->responseContentCharset_ = NULL;
+        if (HttpQueryInfo(ctx->requestOpenHandle_, HTTP_QUERY_CONTENT_TYPE,
+            &responseContentType, &responseContentTypeSize, 
+            NULL))
+        {
+            WCHAR *defaultCharset = L"UTF-8";
+            WCHAR *charsetDelim = L"; charset=";
+            WCHAR *contentPtr = wcsstr(responseContentType, charsetDelim);
+            if (contentPtr) {
+                ctx->responseContentType_ = HippoBSTR(contentPtr - responseContentType, responseContentType);
+                ctx->responseContentCharset_ = contentPtr + wcslen(charsetDelim) + 1;
+            } else {
+                ctx->responseContentType_ = responseContentType;
+                ctx->responseContentCharset_ = defaultCharset;
+            }
+        }
         ctx->responseBytesRead_ = 0;
-        ctx->responseBuffer_ = malloc (ctx->responseSize_);
+        ctx->responseBuffer_ = malloc (ctx->responseBufferSize_);
         ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_READING;
         EnterCriticalSection(&(ctx->criticalSection_));
         ctx->ensureResponseIdle(); // To report that we have the size
@@ -540,6 +586,7 @@ HippoHTTP::doAsync(WCHAR                 *host,
     context->responseState_ = HippoHTTPContext::RESPONSE_STATE_STARTING;
     context->responseSize_ = -1;
     context->seenResponseSize_ = false;
+    context->responseBuffer_ = NULL;
     context->inputData_ = requestInput;
     context->inputLen_ = len;
     InitializeCriticalSection(&(context->criticalSection_));
