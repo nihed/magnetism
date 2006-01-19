@@ -52,11 +52,11 @@ ShowChatLaunchListener::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *
 //
 // Both need to be reversed when we start using this.
 
-// The leading .; this prevents .foodumbhippo.com; we might want to consider
+// "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 
 // changing things so that the control can only be used from *exactly* the web
 // server specified in the preferences. (You'd have to check for either the
 // normal or debug server.
-static const WCHAR ALLOWED_HOST_SUFFIX[] = L".dumbhippo.com";
+static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
 
 HippoEmbed::HippoEmbed(void)
 {
@@ -440,9 +440,13 @@ HippoEmbed::checkURL(BSTR url)
     if (components.dwHostNameLength < allowedHostLength)
         return false;
 
+    // check for "SUFFIX" or "<foo>.SUFFIX"
     if (wcsncmp(components.lpszHostName + components.dwHostNameLength - allowedHostLength,
                 ALLOWED_HOST_SUFFIX,
                 allowedHostLength) != 0)
+        return false;
+    if (components.dwHostNameLength > allowedHostLength && 
+        *(components.lpszHostName + components.dwHostNameLength - allowedHostLength - 1) != '.')
         return false;
 
     return true;
