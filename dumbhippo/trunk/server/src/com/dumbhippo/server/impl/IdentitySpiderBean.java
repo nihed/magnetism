@@ -235,7 +235,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		T res = null;
 		try {		
-			res = (T) q.getSingleResult();
+			res = klass.cast(q.getSingleResult());
 		} catch (EntityNotFoundException e) {
 			;
 		}

@@ -2,7 +2,6 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;

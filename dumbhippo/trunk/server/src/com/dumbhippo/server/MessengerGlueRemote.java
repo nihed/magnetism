@@ -7,8 +7,6 @@ import java.util.List;
 
 import javax.ejb.Remote;
 
-import com.dumbhippo.persistence.MySpaceBlogComment;
-
 @Remote
 public interface MessengerGlueRemote {
 
