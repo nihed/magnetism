@@ -13,6 +13,7 @@ HippoConnectionPoint::HippoConnectionPoint(const IID                 &ifaceID,
     ifaceID_ = ifaceID;
     refCount_ = 1;
     curConnection_ = 0;
+    nextCookie_ = 1;
 }
 
 HippoConnectionPoint::~HippoConnectionPoint()
@@ -85,15 +86,18 @@ HippoConnectionPoint::Advise(IUnknown *sink,
         return E_POINTER;
 
     newData.pUnk = sink;
-    newData.dwCookie = ++nextCookie_;
+    newData.dwCookie = nextCookie_++;
 
     HRESULT hr = connections_.append(newData);
-    if (FAILED(hr))
+    if (FAILED(hr)) {
+        *cookie = 0;
         return hr;
+    } else {
+        *cookie = newData.dwCookie;
+        sink->AddRef();
 
-    sink->AddRef();
-
-    return S_OK;
+        return S_OK;
+    }
 }
 
 STDMETHODIMP 
