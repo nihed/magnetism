@@ -26,17 +26,15 @@
 		<dht:logo/>
 
 	    <dht:toolbar account="false">
-	    	<c:if test="${!viewperson.disabled}">
+	    	<c:if test="${!viewperson.disabled && !viewperson.self}">
 		    	<c:choose>
-		    		<c:when test="${viewperson.contact && !viewperson.self}">
+		    		<c:when test="${viewperson.contact}">
 		    			&#151;
 		    			<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contacts</a>
 			    	</c:when>
-		    		<c:when test="${!viewperson.self}">
+					<c:otherwise>
 			    		&#151;
 						<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.addContact("${personId}")'>I know <c:out value="${personName}"/></a>
-					</c:when>
-					<c:otherwise>
 					</c:otherwise>
 				</c:choose>
 			</c:if>
