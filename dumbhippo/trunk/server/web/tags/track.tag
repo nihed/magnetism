@@ -9,7 +9,12 @@
 		<div class="dh-track-artist"><c:out value="${track.artist}"/></div>
 	</c:if>
 	<c:if test="${!empty track.itunesUrl}">
-		<div class="dh-track-itunes-link dh-track-link"><a href="${track.itunesUrl}">iTunes</a></div>
+		<div class="dh-track-itunes-link dh-track-link">
+			<a href="${track.itunesUrl}">
+				<img height="15" width="61" alt="${track.name} on iTunes"
+				src="http://ax.phobos.apple.com.edgesuite.net/images/badgeitunes61x15dark.gif"/>
+			</a>
+		</div>
 	</c:if>
 	<c:if test="${!empty track.yahooUrl}">
 		<div class="dh-track-yahoo-link dh-track-link"><a href="${track.yahooUrl}">Yahoo!</a></div>
