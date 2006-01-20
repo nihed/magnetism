@@ -10,7 +10,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 
-public class YahooSearchWebServices extends AbstractWebServices<YahooSearchSaxHandler> {
+public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHandler> {
 
 	static private final Logger logger = GlobalSetup.getLogger(YahooSearchWebServices.class);
 	

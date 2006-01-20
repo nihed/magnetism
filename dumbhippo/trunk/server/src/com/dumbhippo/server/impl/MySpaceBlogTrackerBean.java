@@ -16,15 +16,11 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MySpaceBlogTracker;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.server.TransactionRunner;
 
 @Stateless
 public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private IdentitySpider identitySpider;

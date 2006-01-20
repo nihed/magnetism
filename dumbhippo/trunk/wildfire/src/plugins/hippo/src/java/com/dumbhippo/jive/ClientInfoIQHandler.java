@@ -3,13 +3,11 @@ package com.dumbhippo.jive;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
 
 public class ClientInfoIQHandler extends AbstractIQHandler {
 	private IQHandlerInfo info;

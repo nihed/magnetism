@@ -7,10 +7,8 @@ import org.dom4j.Node;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.handler.IQHandler;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.xmppcom.XmppEvent;

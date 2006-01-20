@@ -11,7 +11,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.services.AmazonItemData;
-import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.services.AmazonItemLookup;
 
 public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 	static private final Logger logger = GlobalSetup.getLogger(AmazonUpdater.class);
@@ -57,8 +57,8 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 	protected void update(AmazonPostInfo postInfo, URL url) {
 		if (amazonAccessKeyId == null)
 			return;
-		AmazonWebServices webServices = new AmazonWebServices(amazonAccessKeyId, getUpdateTimeoutMilliseconds());
-		AmazonItemData itemData = webServices.getItemForUrl(url);
+		AmazonItemLookup itemLookup = new AmazonItemLookup(getUpdateTimeoutMilliseconds());
+		AmazonItemData itemData = itemLookup.getItemForUrl(amazonAccessKeyId, url);
 		
 		// if the update fails, just stick with whatever old information we had
 		if (itemData != null) {

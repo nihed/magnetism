@@ -14,14 +14,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.dumbhippo.GlobalSetup;
 
-public class AbstractWebServices<SaxHandlerT extends DefaultHandler> {
+class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 	
-	static private final Logger logger = GlobalSetup.getLogger(AbstractWebServices.class);
+	static private final Logger logger = GlobalSetup.getLogger(AbstractXmlRequest.class);
 	
 	private SAXParserFactory saxFactory;
 	private int timeoutMilliseconds;
 	
-	protected AbstractWebServices(int timeoutMilliseconds) {
+	protected AbstractXmlRequest(int timeoutMilliseconds) {
 		this.timeoutMilliseconds = timeoutMilliseconds;
 	}
 	

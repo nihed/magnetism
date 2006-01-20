@@ -7,18 +7,15 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 
-public class AmazonWebServices extends AbstractWebServices<AmazonSaxHandler> {
-
-	static private final Logger logger = GlobalSetup.getLogger(AmazonWebServices.class);
+public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHandler> {
 	
-	private String amazonAccessKeyId;
+	static private final Logger logger = GlobalSetup.getLogger(AmazonItemLookup.class);
 	
-	public AmazonWebServices(String amazonAccessKeyId, int timeoutMilliseconds) {
+	public AmazonItemLookup(int timeoutMilliseconds) {
 		super(timeoutMilliseconds);
-		this.amazonAccessKeyId = amazonAccessKeyId;
 	}
 	
-	String parseItemIdFromUrl(URL url) {
+	private String parseItemIdFromUrl(URL url) {
 		// some possible formats are:
 		// http://www.amazon.com/gp/product/B000A0GP4K/...
 		// http://www.amazon.com/gp/product/product-description/B000A0GP4K/...
@@ -52,7 +49,7 @@ public class AmazonWebServices extends AbstractWebServices<AmazonSaxHandler> {
 		return null;
 	}
 	
-	AmazonItemData getItem(String itemId) {
+	public AmazonItemData getItem(String amazonAccessKeyId, String itemId) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&Operation=ItemLookup"
 				+ "&ResponseGroup=Images,OfferSummary&AWSAccessKeyId=");
@@ -63,19 +60,19 @@ public class AmazonWebServices extends AbstractWebServices<AmazonSaxHandler> {
 		String wsUrl = sb.toString();
 		logger.debug("Loading amazon web services url " + wsUrl);
 		
-		AmazonSaxHandler handler = parseUrl(new AmazonSaxHandler(), wsUrl);
+		AmazonItemLookupSaxHandler handler = parseUrl(new AmazonItemLookupSaxHandler(), wsUrl);
 		
 		return handler;
 	}
 	
-	public AmazonItemData getItemForUrl(URL url) {
+	public AmazonItemData getItemForUrl(String amazonAccessKeyId, URL url) {
 		String itemId = parseItemIdFromUrl(url);
 		if (itemId == null) {
 			logger.debug("could not extract item ID from amazon url " + url);
 			return null;
 		}
 		
-		AmazonItemData itemData = getItem(itemId); 
+		AmazonItemData itemData = getItem(amazonAccessKeyId, itemId); 
 		if (itemData != null)
 			logger.debug("successfully loaded amazon data");
 		else {

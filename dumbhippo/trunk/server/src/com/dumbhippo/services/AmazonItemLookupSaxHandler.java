@@ -11,9 +11,9 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 
-class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implements AmazonItemData {
+class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandler.Element> implements AmazonItemData {
 	
-	static private final Logger logger = GlobalSetup.getLogger(AmazonSaxHandler.class);
+	static private final Logger logger = GlobalSetup.getLogger(AmazonItemLookupSaxHandler.class);
 	
 	// The enum names should match the xml element names (including case)
 	enum Element {
@@ -27,13 +27,13 @@ class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> implemen
 		IGNORED // an element we don't care about
 	};	
 
-	String ASIN;
-	String smallImageUrl;
-	int smallImageWidth;
-	int smallImageHeight;
+	private String ASIN;
+	private String smallImageUrl;
+	private int smallImageWidth;
+	private int smallImageHeight;
 	private EnumMap<Element,String> prices;
 	
-	AmazonSaxHandler() {
+	AmazonItemLookupSaxHandler() {
 		super(Element.class, Element.IGNORED);
 		prices = new EnumMap<Element,String>(Element.class);
 	}
