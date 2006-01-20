@@ -6,9 +6,35 @@
 	position: relative;
 	margin-bottom: 7px;
 	/* this doesn't seem like the right way to do it... */
-	left: 45px;
+	left: 				45px;
+	height:				75px;
 }
-
+.dh-track {
+	
+}
+.dh-track-image {
+	position:			absolute;
+	left:				0;
+	width:				75px;
+	height:				75px;
+}
+.dh-track-info {
+	position:			absolute;
+	left:				75px;
+	padding:			3px;
+}
+.dh-track-image img {
+	border:				0;
+}
 .dh-track-name {
 	font-weight:		bold;
+}
+.dh-track-links {
+	position:			relative;
+	height:				20px;
+	width:				100%;
+}
+.dh-track-link {
+	float:				left;
+	margin:				3px;
 }
