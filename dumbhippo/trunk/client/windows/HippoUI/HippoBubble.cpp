@@ -280,11 +280,12 @@ HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceB
     variant_t vBlogId(blogId);
     variant_t vCommentId(comment.commentId);
     variant_t vFriendId(comment.posterId);
+    variant_t vFriendName(comment.posterName.m_str);
     variant_t vContent(_bstr_t(comment.content.m_str));
     ui_->debugLogW(L"Invoking dhAddMySpaceComment");
     // Note if you change the arguments to this function, you must change
     // notification.js (and don't forget to update the argument count here too)
-    invokeJavascript(L"dhAddMySpaceComment", NULL, 5, &vMyId, &vBlogId, &vCommentId, &vFriendId, &vContent);
+    invokeJavascript(L"dhAddMySpaceComment", NULL, 6, &vMyId, &vBlogId, &vCommentId, &vFriendId, &vFriendName, &vContent);
     show();
 }
 

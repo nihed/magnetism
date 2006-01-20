@@ -119,7 +119,7 @@ public:
 
     void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
     void onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment);
-    void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment>&comments);
+    void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments);
 
 private:
     bool registerActive();

@@ -464,7 +464,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         var display = this;
         var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
         var a = this._getExternalAnchor("http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=" + comment.myId + "&blogID=" + comment.blogId)
-        a.appendChild(document.createTextNode("New MySpace comment from " + comment.posterId))
+        a.appendChild(document.createTextNode("New MySpace comment from " + comment.posterName))
         titleDiv.appendChild(a)
   
         var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
@@ -513,13 +513,14 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
                             info: dh.parseXML(postInfo)}, timeout)
 }
 
-dhAddMySpaceComment = function (myId, blogId, commentId, posterId, content) {
+dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, content) {
     dh.util.debug("in dhAddMySpaceComment, blogId: " + blogId + " commentId: " + commentId + " posterId: " + posterId + " content: " + content)
     try {
     dh.display.addMySpaceComment({myId: myId,
                                   blogId: blogId,
                                   commentId: commentId, 
                                   posterId: posterId, 
+                                  posterName: posterName,
                                   content:  content})
     } catch (e) {
         dh.util.debug("addMySpaceComment failed: " + e.message)

@@ -1030,11 +1030,11 @@ HippoIM::onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
     if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    HippoArray<HippoMySpaceBlogComment> comments;
+    HippoArray<HippoMySpaceBlogComment*> comments;
 
     for (LmMessageNode *subchild = child->children; subchild; subchild = subchild->next) {
         LmMessageNode *commentNode;
-        HippoMySpaceBlogComment comment;
+        HippoMySpaceBlogComment *comment = new HippoMySpaceBlogComment();
     
         if (strcmp (subchild->name, "comment") != 0)
             continue;
@@ -1043,17 +1043,18 @@ HippoIM::onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
         if (!(commentNode && commentNode->value)) {
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
-        comment.commentId = strtol(commentNode->value, NULL, 10);
+        comment->commentId = strtol(commentNode->value, NULL, 10);
         commentNode = lm_message_node_get_child (subchild, "posterId");
         if (!(commentNode && commentNode->value)) {
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
-        comment.posterId = strtol(commentNode->value, NULL, 10);
-        im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment.commentId);
+        comment->posterId = strtol(commentNode->value, NULL, 10);
+        im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment->commentId);
         comments.append(comment);
     }
 
-    im->ui_->setSeenMySpaceComments(comments);
+    // Takes ownership of comments
+    im->ui_->setSeenMySpaceComments(&comments);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }

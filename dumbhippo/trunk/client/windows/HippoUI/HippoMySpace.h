@@ -12,37 +12,13 @@ class HippoMySpaceBlogComment
 public:
     long commentId;
     long posterId;
+    HippoBSTR posterName;
     HippoBSTR content;
+    HippoBSTR posterImgUrl;
 
     HippoMySpaceBlogComment() {
         commentId = -1;
         posterId = -1;
-    }
-
-    HippoMySpaceBlogComment(const HippoMySpaceBlogComment &other) {
-        commentId = other.commentId;
-        posterId = other.posterId;
-        if (other.content.m_str != NULL)
-            content = other.content;
-    }
-
-    HippoMySpaceBlogComment & operator=(const HippoMySpaceBlogComment &other) {
-		if (this != &other) {
-            commentId = other.commentId;
-            posterId = other.posterId;
-            if (other.content.m_str != NULL)
-                content = other.content.m_str;
-            else
-                content = NULL;
-		}
-
-         return *this;
-    }
-
-    bool operator==(const HippoMySpaceBlogComment& other) const {
-        if (&other == this)
-            return true;
-        return other.commentId == commentId;
     }
 };
 
@@ -61,7 +37,7 @@ public:
     
     State state_;
 
-    void setSeenComments(HippoArray<HippoMySpaceBlogComment> &comments);
+    void setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments);
 
 private:
     class HippoMySpaceFriendIdHandler : public HippoHTTPAsyncHandler

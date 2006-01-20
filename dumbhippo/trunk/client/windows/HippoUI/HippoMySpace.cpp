@@ -99,10 +99,10 @@ HippoMySpace::GetFriendId()
 }
 
 void 
-HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment> &comments)
+HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 {
-    for (UINT i = 0; i < comments.length(); i++) {
-        comments_.append(new HippoMySpaceBlogComment(comments[i]));
+    for (UINT i = 0; i < comments->length(); i++) {
+        comments_.append((*comments)[i]);
     }
     GetFriendId(); // Now poll the web page
 }
@@ -182,19 +182,37 @@ void
 HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, long responseBytes)
 {
     myspace_->ui_->debugLogU("got myspace blog feed");
-    const char *commentSectionElt = "<td class=\"blogComments\">";
+    const char *profileSectionElt = "<td class=\"blogCommentsProfile\">";
     const char *response = (const char*)responseData;
-    const char *commentSectionStart;
+    const char *profileSectionStart;
 
     g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this);
 
-    if (!(commentSectionStart = strstr(response, commentSectionElt))) {
-        myspace_->ui_->debugLogU("failed to find blog comments");
+    if (!(profileSectionStart = strstr(response, profileSectionElt))) {
+        myspace_->ui_->debugLogU("failed to find blog comment profile");
         return;
     }
+    const char *commentSectionElt = "<td class=\"blogComments\">";
+    const char *commentSectionStart;
+    if (!(commentSectionStart = strstr(response, commentSectionElt))) {
+        myspace_->ui_->debugLogU("failed to find blog comment content");
+        return;
+    }
+
     const char *commentStartStr = "<p class=\"blogCommentsContent\">";
     const char *comment = commentSectionStart;
     while ((comment = strstr(comment, commentStartStr)) != NULL) {
+        const char *imglinkStr = "<img src=\"";
+        const char *imglink = strstr(profileSectionStart, imglinkStr);
+        if (!imglink)
+            break;
+        const char *imglinkStart = imglink + strlen(imglinkStr);
+        if (imglink >= comment)
+            break;
+        const char *imglinkEnd = strchr(imglink, '"');
+        if (!imglinkEnd)
+            break;
+
         const char *commentStart = comment + strlen(commentStartStr);
         const char *commentEnd = strstr(comment, "</p>");
         if (!commentEnd)
@@ -212,6 +230,13 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
             break;
         if (friendIdEnd - friendIdStart > myspace_->mySpaceIdSize_)
             break;
+        const char *friendNameStr = "\"><b>";
+        if (strncmp(friendIdEnd, friendNameStr, strlen(friendNameStr)) != 0)
+            break;
+        const char *friendNameStart = friendIdEnd + strlen(friendNameStr);
+        const char *friendNameEnd = strstr(friendNameStart, "</b>");
+        if (!friendNameEnd)
+            break;
         const char *commentIdStr = "&journalDetailID=";
         const char *commentIdLink = strstr(friendIdEnd, commentIdStr);
         if (!commentIdLink)
@@ -225,11 +250,16 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
         HippoMySpaceBlogComment commentData;
         commentData.commentId = strtol(commentIdStart, NULL, 10);
         commentData.posterId = strtol(friendIdStart, NULL, 10);
+        commentData.posterName.setUTF8(friendNameStart, (UINT) (friendNameEnd - friendNameStart));
+        commentData.posterImgUrl.setUTF8(imglinkStart, imglinkEnd - imglinkStart);
         HippoBSTR rawHtml;
         rawHtml.setUTF8(commentStart, (UINT) (commentEnd - commentStart));
         myspace_->SanitizeCommentHTML(rawHtml, commentData.content);
         myspace_->addBlogComment(commentData);
-        comment = commentStart; 
+        comment = strstr(commentStart, commentStartStr); // Skip over next commentStart
+        if (!comment)
+            break;
+        comment += strlen(commentStartStr);
     }
 }
 

@@ -839,33 +839,14 @@ HippoUI::setClientInfo(const char *minVersion,
     upgrader_.setUpgradeInfo(minVersion, currentVersion, downloadUrl);
 }
 
-struct HippoIdleMySpaceInfo
-{
-    HippoUI *ui_;
-    HippoBSTR name_;
-};
-
-gboolean
-HippoUI::idleCreateMySpace(gpointer data)
-{
-    struct HippoIdleMySpaceInfo *info = (struct HippoIdleMySpaceInfo *) data;
-
-    info->ui_->mySpace_ = new HippoMySpace(info->name_, info->ui_);    
-    delete info;
-
-    return FALSE;
-}
-
 void 
 HippoUI::setMySpaceName(const char *name)
 {
     if (mySpace_)
         delete mySpace_;
-
-    struct HippoIdleMySpaceInfo *info = new struct HippoIdleMySpaceInfo;
-    info->ui_ = this;
-    info->name_.setUTF8(name);
-    g_idle_add (idleCreateMySpace, info);
+    HippoBSTR wName;
+    wName.setUTF8(name);
+    mySpace_ = new HippoMySpace(wName, this);  
 }
 
 void 
@@ -1485,7 +1466,7 @@ HippoUI::onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &co
 }
 
 void 
-HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment> &comments)
+HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 {
     mySpace_->setSeenComments(comments);
 }
