@@ -13,7 +13,7 @@
 
 <head>
 	<title><c:out value="${viewgroup.name}'s Music"/></title>
-	<dht:stylesheets href="group.css" iehref="group-iefixes.css" />
+	<dht:stylesheets href="musicgroup.css" iehref="group-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">
         dojo.require("dh.util");

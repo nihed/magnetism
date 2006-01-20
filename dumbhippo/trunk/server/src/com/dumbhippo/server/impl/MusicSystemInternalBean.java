@@ -2,9 +2,11 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,6 +28,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
@@ -221,10 +224,64 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) throws NotFoundException {
 		logger.debug("getTrackHistory() type " + type + " for " + group + " max results " + maxResults);
 
-		// FIXME
+		// This is not very efficient now is it...
 		
+		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
-
+		for (User m : members) {
+			try {
+				List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, maxResults);
+				results.addAll(memberHistory);
+			} catch (NotFoundException e) {
+				// ignore
+			}
+		}
+		
+		Comparator<TrackHistory> comparator;
+		switch (type) {
+		case FREQUENT:
+			comparator = new Comparator<TrackHistory>() {
+			
+			// we want the list in descending order of frequency, so this is "backward"
+			public int compare(TrackHistory a, TrackHistory b) {
+				int aPlayed = a.getTimesPlayed();
+				int bPlayed = b.getTimesPlayed();
+				if (aPlayed > bPlayed)
+					return -1;
+				else if (aPlayed < bPlayed)
+					return 1;
+				else
+					return 0;
+			}	
+		};
+		break;
+		case LATEST:
+			comparator = new Comparator<TrackHistory>() {
+			
+			public int compare(TrackHistory a, TrackHistory b) {
+				long aUpdated = a.getLastUpdated().getTime();
+				long bUpdated = b.getLastUpdated().getTime();
+				if (aUpdated > bUpdated)
+					return -1;
+				else if (aUpdated < bUpdated)
+					return 1;
+				else
+					return 0;
+			}	
+		};
+		
+		break;
+		default:
+			comparator = null;
+		break;
+		}
+		
+		Collections.sort(results, comparator);
+		
+		if (results.size() > maxResults) {
+			results.subList(maxResults, results.size()).clear();
+		}
+		
 		if (results.isEmpty()) {
 			logger.debug("No track history results");
 			throw new NotFoundException("Group has no track history");

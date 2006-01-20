@@ -1,10 +1,8 @@
 package com.dumbhippo.server.impl;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -19,9 +17,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Contact;
-import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -224,63 +220,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
                   "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
 	static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
-		return getMembers(viewpoint, group, null, extras);
-	}
-	
-	// The selection of Group is only needed for the CAN_SEE checks
-	static final String GET_CONTACT_MEMBERS_QUERY = 
-		"SELECT cc FROM Group g, GroupMember gm, ContactClaim cc " +
-		"WHERE gm.group = :group AND g = :group AND cc.resource = gm.member AND cc.account = :account";
-	
 	private String getStatusClause(MembershipStatus status) {
 		if (status != null) {
 			return " AND gm.status = " + status.ordinal();
 		} else {
 			return " AND gm.status >= " + MembershipStatus.INVITED.ordinal();
 		}
-	}
-	
-	private List<ContactClaim> getContactMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
-		String statusClause = getStatusClause(status);
-		User viewer = viewpoint.getViewer();
-		
-		if (viewer == null)
-			return Collections.emptyList();
-
-		@SuppressWarnings("unchecked")
-		List<ContactClaim> result = em.createQuery(GET_CONTACT_MEMBERS_QUERY + " AND " + CAN_SEE + statusClause)
-			.setParameter("viewer", viewer)
-			.setParameter("account", viewer.getAccount())			
-			.setParameter("group", group)
-			.getResultList();
-			
-		return result;
-	}
-	
-	// The selection of Group is only needed for the CAN_SEE checks
-	static final String GET_ACCOUNT_MEMBERS_QUERY = 
-		"SELECT ac FROM Group g, GroupMember gm, AccountClaim ac " +
-		"WHERE gm.group = :group AND g = :group AND ac.resource = gm.member";
-		
-	private List<AccountClaim> getAccountMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
-		String statusClause = getStatusClause(status);
-		User viewer = viewpoint.getViewer();
-
-		Query q;
-		if (viewer == null) {
-			q = em.createQuery(GET_ACCOUNT_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
-		} else {
-			q = em.createQuery(GET_ACCOUNT_MEMBERS_QUERY + " AND " + CAN_SEE + statusClause)
-		    	.setParameter("viewer", viewer);
-		}
-
-		@SuppressWarnings("unchecked")
-		List<AccountClaim> result = q
-			.setParameter("group", group)
-			.getResultList();
-		
-		return result;
 	}
 
 	// The selection of Group is only needed for the CAN_SEE checks
@@ -308,38 +253,42 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;
 	}
 
+	
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
+		return getMembers(viewpoint, group, null, extras);
+	}
+	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras) {
-		Map<Resource,PersonView> members = new HashMap<Resource,PersonView>();
 		
-		// If EJB-QL was more advanced, we could do this as a single query, but
-		// failing that, we need to query for members that we can map to a contact,
-		// members that we can map to a user/account, and raw members separately.
-		//
-		// We favor user members over contact members for now since they work
-		// a bit better in the user interface. Really, we should be taking the merge
-		// of the two but we'll leave that for another pass.
-
-		// Get this first to allow us to optimize out the case of an empty result
-		// this is common when status is non-NULL.
+		// The subversion history has some code to try doing this with fewer queries; 
+		// but for now keeping it simple
+		
 		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, status);
 		if (resourceMembers.size() == 0)
 			return Collections.emptySet();
 		
-		for (AccountClaim ac : getAccountMembers(viewpoint, group, status)) {
-			members.put(ac.getResource(), identitySpider.getPersonView(viewpoint, ac.getOwner(), extras));
-		}
-		for (ContactClaim cc : getContactMembers(viewpoint, group, status)) {
-			if (!members.containsKey(cc.getResource()))
-				members.put(cc.getResource(), identitySpider.getPersonView(viewpoint, cc.getContact(), extras));
-		}
+		Set<PersonView> result = new HashSet<PersonView>();
 		for (Resource r : resourceMembers) {
-			PersonView pv = new PersonView(null, null);
-			// this covers any "extras" that may have been requested
-			pv.addAllResources(Collections.singleton(r));
+			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
 		}
 		
-		Set<PersonView> result = new HashSet<PersonView>();
-		result.addAll(members.values());
+		return result;
+	}
+	
+	public Set<User> getUserMembers(Viewpoint viewpoint, Group group) {
+		return getUserMembers(viewpoint, group, null);
+	}
+	
+	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
+		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, status);
+		if (resourceMembers.size() == 0)
+			return Collections.emptySet();
+		
+		Set<User> result = new HashSet<User>();
+		for (Resource r : resourceMembers) {
+			User user = identitySpider.getUser(r);
+			result.add(user);
+		}
 		
 		return result;
 	}

@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+
+@import "group.css";
+
+#dhMainArea .dh-track {
+	position: relative;
+	margin-bottom: 7px;
+	/* this doesn't seem like the right way to do it... */
+	left: 45px;
+}
+
+.dh-track-name {
+	font-weight:		bold;
+}

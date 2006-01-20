@@ -25,6 +25,10 @@ public interface GroupSystem {
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras);
+
+	public Set<User> getUserMembers(Viewpoint viewpoint, Group group);
+	
+	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException;
 	
