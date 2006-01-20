@@ -139,6 +139,7 @@ HippoBubble::embedIE(void)
     variant_t appletUrl(appletURLStr.m_str);
     variant_t selfId(selfIdStr.m_str);
     variant_t result;
+    ui_->debugLogU("dhInit being invoked");
     ie_->invokeJavascript(L"dhInit", &result, 3, &serverUrl, &appletUrl, &selfId);
 
     // Set the initial value of the idle state

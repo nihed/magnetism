@@ -1,10 +1,14 @@
 #include "stdafx.h"
 
 #import <msxml3.dll>  named_guids
+#include <mshtml.h>
 
 #include "HippoMySpace.h"
 #include "HippoHttp.h"
 #include "HippoUI.h"
+extern "C" {
+#include <html-parse.h>
+}
 
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
 
@@ -25,6 +29,64 @@ HippoMySpace::~HippoMySpace(void)
 {
 }
 
+static void
+handleHtmlTag(struct taginfo *tag, void *data)
+{
+    HippoBSTR *str = (HippoBSTR *) data;
+}
+
+void
+HippoMySpace::SanitizeCommentHTML(BSTR html, HippoBSTR &ret)
+{
+    // Punt on the below for now
+    ret = html;
+    return;
+
+    HippoPtr<IHTMLDocument2> doc;
+    CoCreateInstance(CLSID_HTMLDocument,
+                     NULL,
+                     CLSCTX_INPROC_SERVER,
+                     IID_IHTMLDocument2,
+                     (void **) &doc);
+    if (!doc) {
+        ui_->debugLogU("failed to create IID_IHTMLDocument2");
+        return;
+    }
+
+    HippoQIPtr<IPersistStreamInit> persist(doc);
+    persist->InitNew();
+    persist->Release();
+
+    HippoQIPtr<IMarkupServices> markup(doc);
+    if (!markup) {
+        ui_->debugLogU("failed to cast to IMarkupServices");
+        return;
+    }
+    
+    HippoPtr<IMarkupContainer> container;
+    IMarkupPointer *markupStart = NULL, *markupEnd = NULL;
+    markup->CreateMarkupPointer(&markupStart);
+    markup->CreateMarkupPointer(&markupEnd);
+    markup->ParseString(html, 0, &container, markupStart, markupEnd);
+    if (!container) {
+        ui_->logLastError(L"failed parse MySpace comment html to IMarkupContainer");
+        return;
+    }
+    HippoPtr<IHTMLElementCollection> allElts;
+    doc->get_all(&allElts);
+    long len = 0;
+    allElts->get_length(&len);
+    for (long i = 0; i < len; i++) {
+        variant_t vMissing(VT_NULL);
+        variant_t vIndex(i);
+        HippoPtr<IDispatch> eltDisp;
+        allElts->item(vMissing, vIndex, &eltDisp);
+        HippoQIPtr<IHTMLElement> elt(eltDisp);
+        BSTR innerHtml;
+        elt->get_innerHTML(&innerHtml);
+    }
+}
+
 void
 HippoMySpace::GetFriendId()
 {
@@ -40,7 +102,7 @@ void
 HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment> &comments)
 {
     for (UINT i = 0; i < comments.length(); i++) {
-        comments_.append(comments[i]);
+        comments_.append(new HippoMySpaceBlogComment(comments[i]));
     }
     GetFriendId(); // Now poll the web page
 }
@@ -163,7 +225,9 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
         HippoMySpaceBlogComment commentData;
         commentData.commentId = strtol(commentIdStart, NULL, 10);
         commentData.posterId = strtol(friendIdStart, NULL, 10);
-        commentData.content.setUTF8(comment, commentEnd - commentStart);
+        HippoBSTR rawHtml;
+        rawHtml.setUTF8(commentStart, (UINT) (commentEnd - commentStart));
+        myspace_->SanitizeCommentHTML(rawHtml, commentData.content);
         myspace_->addBlogComment(commentData);
         comment = commentStart; 
     }
@@ -173,12 +237,12 @@ void
 HippoMySpace::addBlogComment(HippoMySpaceBlogComment &comment)
 {
     for (UINT i = 0; i < comments_.length(); i++) {
-        if (comments_[i].commentId == comment.commentId) {
+        if (comments_[i]->commentId == comment.commentId) {
             ui_->debugLogU("already seen myspace comment %d", comment.commentId);
             return;
         }
     }
     ui_->debugLogU("appending myspace comment %d", comment.commentId);
-    comments_.append(comment);
+    comments_.append(new HippoMySpaceBlogComment(comment));
     ui_->onNewMySpaceComment(friendId_, blogId_, comment);
 }

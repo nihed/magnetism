@@ -8,7 +8,9 @@ dh.notification.extensions = {}
 
 // Global function called immediately after document.write
 var dhInit = function(serverUrl, appletUrl, selfId) {
-    dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
+    dh.util.debug("invoking dhInit")
+    if (dh.display == null)
+        dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
@@ -59,6 +61,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this.closeButton = document.getElementById("dh-close-button")
     this.closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
             e.stopPropagation();
+            dh.util.debug("doing close, position=" + display.position)            
             display._markCurrentAsSeen();
             display.close();
             return false;
@@ -102,10 +105,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
         
         // Otherwise, add a new notification page
-        this._pushNotification('mySpaceComment', comment, 7)    
+        this._pushNotification('mySpaceComment', comment, 0)    
     }
     
     this.displayMissed = function () {
+    
         for (postid in this.savedNotifications) {
             var notification = this.savedNotifications[postid]
             if (notification.state == "missed") {
@@ -202,11 +206,13 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this.displayTimeout = function () {
+        dh.util.debug("got display timeout")
         this._markCurrentAsMissed()
         this.goNextOrClose()
     }
     
     this.goNextOrClose = function () {
+        dh.util.debug("doing goNextOrClose")
         if (this.position >= (this.notifications.length-1)) {
             this.close();
         } else {
@@ -226,9 +232,10 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this.close = function () {
+        dh.util.debug("bubble close invoked")
         this.setVisible(false)
         this._clearPageTimeout()
-        window.external.application.Close()
+        window.external.application.Close()     
         var curDate = new Date()
         for (var i = 0; i < this.notifications.length; i++) {
             var notification = this.notifications[i]
@@ -238,12 +245,12 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             // be sure we've saved it, this is a noop for already saved
             this.savedNotifications[notification.data.postId] = notification
         }
-        this.notifyMissedChanged()        
+        this.notifyMissedChanged()      
         this._initNotifications()
     }
     
     this.setIdle = function(idle) {
-        dh.util.debug("Idle status is now " + idle)
+        dh.util.debug("Idle status is now " + idle + " at position " + this.position)
         this._idle = idle
         if (this._idle)
             this._clearPageTimeout()
@@ -508,11 +515,16 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, content) {
     dh.util.debug("in dhAddMySpaceComment, blogId: " + blogId + " commentId: " + commentId + " posterId: " + posterId + " content: " + content)
+    try {
     dh.display.addMySpaceComment({myId: myId,
                                   blogId: blogId,
                                   commentId: commentId, 
                                   posterId: posterId, 
                                   content:  content})
+    } catch (e) {
+        dh.util.debug("addMySpaceComment failed: " + e.message)
+    }
+    dh.util.debug("current position: " + dh.display.position)
 }
 
 dhDisplayMissed = function () {

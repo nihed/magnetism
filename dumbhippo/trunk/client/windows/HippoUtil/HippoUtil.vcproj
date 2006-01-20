@@ -140,6 +140,15 @@
 				RelativePath=".\HippoUtil.idl">
 			</File>
 			<File
+				RelativePath=".\html-parse.c">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\md5.c">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -181,6 +190,9 @@
 				RelativePath=".\HippoUtil.h">
 			</File>
 			<File
+				RelativePath=".\html-parse.h">
+			</File>
+			<File
 				RelativePath=".\md5.h">
 			</File>
 			<File
@@ -188,6 +200,9 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h">
+			</File>
+			<File
+				RelativePath=".\wget.h">
 			</File>
 		</Filter>
 		<File

@@ -1048,6 +1048,7 @@ HippoIM::onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
         if (!(commentNode && commentNode->value)) {
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
+        comment.posterId = strtol(commentNode->value, NULL, 10);
         im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment.commentId);
         comments.append(comment);
     }
