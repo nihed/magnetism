@@ -9,8 +9,7 @@ dh.notification.extensions = {}
 // Global function called immediately after document.write
 var dhInit = function(serverUrl, appletUrl, selfId) {
     dh.util.debug("invoking dhInit")
-    if (dh.display == null)
-        dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
+    dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
@@ -469,7 +468,8 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         titleDiv.appendChild(a)
   
         var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
-        bodyDiv.appendChild(document.createTextNode(comment.content))
+        bodyDiv.innerHTML = comment.content
+        // bodyDiv.appendChild(document.createTextNode(comment.content))
   
         var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
         this._setShowViewers(false)

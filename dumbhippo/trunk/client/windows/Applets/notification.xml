@@ -8,7 +8,7 @@
         <dh:coreScript/>
         <dh:notificationScript/>           
     </head>
-    <body onload="dhInit();">
+    <body>
         <div id="dh-notification-leftside">
             <div id="dh-notification-photo"></div>
             <div id="dh-notification-photolink"></div>
