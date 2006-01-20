@@ -6,9 +6,6 @@
 #include "HippoMySpace.h"
 #include "HippoHttp.h"
 #include "HippoUI.h"
-extern "C" {
-#include <html-parse.h>
-}
 
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
 
@@ -38,53 +35,26 @@ handleHtmlTag(struct taginfo *tag, void *data)
 void
 HippoMySpace::SanitizeCommentHTML(BSTR html, HippoBSTR &ret)
 {
-    // Punt on the below for now
-    ret = html;
+    // To hopefully be replaced by a somewhat more real parser later.
+    UINT len = ::SysStringLen(html);
+    for (UINT i = 0; i < len; i++) {
+        if (html[i] == '<') {
+            while (i < len && html[i] != '>') {
+                i++;
+            }
+            if (i < len)
+                i++;
+        } else if (html[i] == '&') {
+            while (i < len && html[i] != ';' && !iswspace(html[i])) {
+                i++;
+            }
+            if (i < len)
+                i++;
+        } else if (iswalnum(html[i]) || iswspace(html[i])) {
+            ret.Append(html[i]);
+        }
+    }
     return;
-
-    HippoPtr<IHTMLDocument2> doc;
-    CoCreateInstance(CLSID_HTMLDocument,
-                     NULL,
-                     CLSCTX_INPROC_SERVER,
-                     IID_IHTMLDocument2,
-                     (void **) &doc);
-    if (!doc) {
-        ui_->debugLogU("failed to create IID_IHTMLDocument2");
-        return;
-    }
-
-    HippoQIPtr<IPersistStreamInit> persist(doc);
-    persist->InitNew();
-    persist->Release();
-
-    HippoQIPtr<IMarkupServices> markup(doc);
-    if (!markup) {
-        ui_->debugLogU("failed to cast to IMarkupServices");
-        return;
-    }
-    
-    HippoPtr<IMarkupContainer> container;
-    IMarkupPointer *markupStart = NULL, *markupEnd = NULL;
-    markup->CreateMarkupPointer(&markupStart);
-    markup->CreateMarkupPointer(&markupEnd);
-    markup->ParseString(html, 0, &container, markupStart, markupEnd);
-    if (!container) {
-        ui_->logLastError(L"failed parse MySpace comment html to IMarkupContainer");
-        return;
-    }
-    HippoPtr<IHTMLElementCollection> allElts;
-    doc->get_all(&allElts);
-    long len = 0;
-    allElts->get_length(&len);
-    for (long i = 0; i < len; i++) {
-        variant_t vMissing(VT_NULL);
-        variant_t vIndex(i);
-        HippoPtr<IDispatch> eltDisp;
-        allElts->item(vMissing, vIndex, &eltDisp);
-        HippoQIPtr<IHTMLElement> elt(eltDisp);
-        BSTR innerHtml;
-        elt->get_innerHTML(&innerHtml);
-    }
 }
 
 void
@@ -101,6 +71,7 @@ HippoMySpace::GetFriendId()
 void 
 HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 {
+    ui_->debugLogU("got %d MySpace comments seen", comments->length());
     for (UINT i = 0; i < comments->length(); i++) {
         comments_.append((*comments)[i]);
     }
@@ -186,33 +157,33 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
     const char *response = (const char*)responseData;
     const char *profileSectionStart;
 
-    g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this);
+    g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
 
     if (!(profileSectionStart = strstr(response, profileSectionElt))) {
         myspace_->ui_->debugLogU("failed to find blog comment profile");
         return;
     }
-    const char *commentSectionElt = "<td class=\"blogComments\">";
-    const char *commentSectionStart;
-    if (!(commentSectionStart = strstr(response, commentSectionElt))) {
-        myspace_->ui_->debugLogU("failed to find blog comment content");
-        return;
-    }
 
-    const char *commentStartStr = "<p class=\"blogCommentsContent\">";
-    const char *comment = commentSectionStart;
-    while ((comment = strstr(comment, commentStartStr)) != NULL) {
+    const char *profile = profileSectionStart;
+    while ((profile = strstr(profile, profileSectionElt)) != NULL) {
         const char *imglinkStr = "<img src=\"";
-        const char *imglink = strstr(profileSectionStart, imglinkStr);
+        const char *imglink = strstr(profile, imglinkStr);
         if (!imglink)
             break;
         const char *imglinkStart = imglink + strlen(imglinkStr);
-        if (imglink >= comment)
-            break;
-        const char *imglinkEnd = strchr(imglink, '"');
+        const char *imglinkEnd = strchr(imglinkStart, '"');
         if (!imglinkEnd)
             break;
 
+        const char *commentSectionElt = "<td class=\"blogComments\">";
+        const char *commentSectionStart;
+        if (!(commentSectionStart = strstr(profile, commentSectionElt)))
+            break;
+
+        const char *commentStartStr = "<p class=\"blogCommentsContent\">";
+        const char *comment = strstr(commentSectionStart, commentStartStr);
+        if (!comment)
+            break;
         const char *commentStart = comment + strlen(commentStartStr);
         const char *commentEnd = strstr(comment, "</p>");
         if (!commentEnd)
@@ -256,10 +227,7 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
         rawHtml.setUTF8(commentStart, (UINT) (commentEnd - commentStart));
         myspace_->SanitizeCommentHTML(rawHtml, commentData.content);
         myspace_->addBlogComment(commentData);
-        comment = strstr(commentStart, commentStartStr); // Skip over next commentStart
-        if (!comment)
-            break;
-        comment += strlen(commentStartStr);
+        profile += strlen(profileSectionElt);
     }
 }
 

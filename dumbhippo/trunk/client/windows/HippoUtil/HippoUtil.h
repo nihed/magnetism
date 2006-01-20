@@ -153,6 +153,13 @@ public:
 		return Append(str.m_str);
 	}
 
+    HRESULT Append(OLECHAR c) {
+        OLECHAR str[2];
+        str[0] = c;
+        str[1] = 0;
+        return Append(str);
+    }
+
     HRESULT CopyTo(BSTR *str) {
         if (m_str) {
             *str = ::SysAllocString(m_str);

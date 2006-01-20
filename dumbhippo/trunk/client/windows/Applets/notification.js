@@ -460,16 +460,20 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this._display_mySpaceComment = function (comment) {
         dh.util.debug("displaying blog " + comment.blogId + " comment " + comment.commentId)
 
-
         var display = this;
         var titleDiv = dh.util.dom.getClearedElementById("dh-notification-title")
         var a = this._getExternalAnchor("http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=" + comment.myId + "&blogID=" + comment.blogId)
         a.appendChild(document.createTextNode("New MySpace comment from " + comment.posterName))
         titleDiv.appendChild(a)
+        
+        var personUrl = "http://myspace.com/" + comment.posterId
+        dh.util.debug("using myspace photo url: " + comment.posterImgUrl)
+        this._setPhotoUrl(comment.posterImgUrl, personUrl)
+        this._setPhotoLink(comment.posterName, personUrl)        
   
         var bodyDiv = dh.util.dom.getClearedElementById("dh-notification-body")
-        bodyDiv.innerHTML = comment.content
-        // bodyDiv.appendChild(document.createTextNode(comment.content))
+        // bodyDiv.innerHTML = comment.content
+        bodyDiv.appendChild(document.createTextNode(comment.content))
   
         var metaDiv = dh.util.dom.getClearedElementById("dh-notification-meta")
         this._setShowViewers(false)
@@ -513,7 +517,7 @@ dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTit
                             info: dh.parseXML(postInfo)}, timeout)
 }
 
-dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, content) {
+dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
     dh.util.debug("in dhAddMySpaceComment, blogId: " + blogId + " commentId: " + commentId + " posterId: " + posterId + " content: " + content)
     try {
     dh.display.addMySpaceComment({myId: myId,
@@ -521,6 +525,7 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, c
                                   commentId: commentId, 
                                   posterId: posterId, 
                                   posterName: posterName,
+                                  posterImgUrl: posterImgUrl,
                                   content:  content})
     } catch (e) {
         dh.util.debug("addMySpaceComment failed: " + e.message)
