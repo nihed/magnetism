@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
@@ -29,8 +30,10 @@ public interface MusicSystemInternal extends MusicSystem {
 
 	public void setCurrentTrack(User user, Map<String,String> properties);
 	
-	public void hintNeedsYahooResults(Track track);
+	public void hintNeedsRefresh(Track track);
 
+	public AmazonAlbumResult getAmazonAlbumSync(Track track);
+	
 	public List<YahooSongResult> getYahooSongResultsSync(Track track);
 	
 	public Future<List<YahooSongResult>> getYahooSongResultsAsync(Track track);

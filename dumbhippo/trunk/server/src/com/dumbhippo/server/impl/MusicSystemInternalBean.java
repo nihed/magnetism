@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Track;
@@ -34,14 +35,19 @@ import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.AmazonAlbumData;
+import com.dumbhippo.services.AmazonItemSearch;
 import com.dumbhippo.services.YahooSearchWebServices;
 
 @Stateless
@@ -51,7 +57,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	static private final Logger logger = GlobalSetup.getLogger(MusicSystemInternalBean.class);
 	
 	// 2 days
-	static private final int EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 2;
+	static private final int YAHOO_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 2;
+	// 14 days since we aren't getting price information
+	static private final int AMAZON_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 14;
 	// hour timeout to retry on failure
 	static private final int FAILED_QUERY_TIMEOUT = 1000 * 60 * 60;
 	
@@ -69,6 +77,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private Configuration config;
 	
 	private ExecutorService threadPool;
 	
@@ -104,7 +115,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						em.persist(res);
 						
 						// this is a fresh new track, so asynchronously fill in the Yahoo! search results
-						hintNeedsYahooResults(res);
+						hintNeedsRefresh(res);
 					}
 					
 					return res;	
@@ -325,6 +336,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
+	static private class AmazonAlbumSearchTask implements Callable<AmazonAlbumResult> {
+
+		private Track track;
+		
+		public AmazonAlbumSearchTask(Track track) {
+			this.track = track;
+		}
+		
+		public AmazonAlbumResult call() {
+			logger.debug("Running AmazonAlbumSearchTask thread");
+			// we do this instead of an inner class to work right with threads
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+			
+			return musicSystem.getAmazonAlbumSync(track);
+		}
+	}
+	
 	static private class GetTrackViewTask implements Callable<TrackView> {
 
 		private Track track;
@@ -342,7 +370,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	public void hintNeedsYahooResults(Track track) {
+	public void hintNeedsRefresh(Track track) {
 		// called for side effect to kick off querying the results
 		getTrackViewAsync(track);
 	}
@@ -358,7 +386,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// times so we don't re-query too often.
 		if (newResults.isEmpty()) {
 			// ensure we won't update for FAILED_QUERY_TIMEOUT
-			long updateTime = System.currentTimeMillis() - EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
+			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
 			for (YahooSongResult old : oldResults) {
 				old.setLastUpdated(new Date(updateTime));
 			}
@@ -421,7 +449,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (!needNewQuery) {
 			long now = System.currentTimeMillis();
 			for (YahooSongResult r : results) {
-				if ((r.getLastUpdated().getTime() + EXPIRATION_TIMEOUT) < now) {
+				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
 					needNewQuery = true;
 					logger.debug("Outdated Yahoo result, will need to renew the search");
 					break;
@@ -449,7 +477,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// times so we don't re-query too often.
 		if (newResults.isEmpty()) {
 			// ensure we won't update for FAILED_QUERY_TIMEOUT
-			long updateTime = System.currentTimeMillis() - EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
+			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
 			for (YahooSongDownloadResult old : oldResults) {
 				old.setLastUpdated(new Date(updateTime));
 			}
@@ -484,7 +512,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public List<YahooSongDownloadResult> getYahooSongDownloadResultsSync(String songId) {
 		Query q;
 		
-		q = em.createQuery("from YahooSongDownloadResult download where download.songId = :songId");
+		q = em.createQuery("FROM YahooSongDownloadResult download WHERE download.songId = :songId");
 		q.setParameter("songId", songId);
 		
 		List<YahooSongDownloadResult> results;
@@ -502,7 +530,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (!needNewQuery) {
 			long now = System.currentTimeMillis();
 			for (YahooSongDownloadResult r : results) {
-				if ((r.getLastUpdated().getTime() + EXPIRATION_TIMEOUT) < now) {
+				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
 					needNewQuery = true;
 					logger.debug("Outdated Yahoo download result, will need to renew the search");
 					break;
@@ -513,6 +541,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		if (needNewQuery) {
+			// passing in the old results here is a race, since the db could have 
+			// changed underneath us - but the worst case is that we just fail to
+			// get results once in a while
 			return updateSongDownloadResultsSync(results, songId);
 		} else {
 			logger.debug("Returning Yahoo song download results from database cache");
@@ -533,13 +564,99 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		threadPool.execute(futureDownload);
 		return futureDownload;		
 	}
+
+	public Future<AmazonAlbumResult> getAmazonAlbumAsync(Track track) {
+		FutureTask<AmazonAlbumResult> futureAlbum =
+			new FutureTask<AmazonAlbumResult>(new AmazonAlbumSearchTask(track));
+		threadPool.execute(futureAlbum);
+		return futureAlbum;		
+	}
+	
+	private AmazonAlbumResult albumResultQuery(String artist, String album) {
+		Query q;
+		
+		q = em.createQuery("FROM AmazonAlbumResult album WHERE album.artist = :artist AND album.album = :album");
+		q.setParameter("artist", artist);
+		q.setParameter("album", album);
+		
+		try {
+			return (AmazonAlbumResult) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		} 
+	}
+	
+	public AmazonAlbumResult getAmazonAlbumSync(Track track) {
+		
+		final String artist = track.getArtist();
+		final String album = track.getAlbum();
+		if (artist == null || album == null) {
+			logger.debug("track missing artist or album, not looking up on amazon");
+			return null;
+		}
+		
+		AmazonAlbumResult result = albumResultQuery(artist, album);
+
+		if (result != null) {
+			long now = System.currentTimeMillis();
+			Date lastUpdated = result.getLastUpdated();
+			if (lastUpdated == null || ((lastUpdated.getTime() + AMAZON_EXPIRATION_TIMEOUT) < now)) {
+				result = null;
+			}
+		}
+
+		if (result != null)
+			return result;
+		
+		AmazonItemSearch search = new AmazonItemSearch(REQUEST_TIMEOUT);
+		String amazonKey;
+		final AmazonAlbumData data;
+		try {
+			amazonKey = config.getPropertyNoDefault(HippoProperty.AMAZON_ACCESS_KEY_ID);
+		} catch (PropertyNotFoundException e) {
+			amazonKey = null;
+		}
+		if (amazonKey != null)
+			data = search.searchAlbum(amazonKey, artist, album);
+		else
+			data = null;
+		
+		try {
+			result = runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumResult>() {
+				
+				public AmazonAlbumResult call() {
+					AmazonAlbumResult r = albumResultQuery(artist, album);
+					if (r == null) {
+						if (data != null)
+							r = new AmazonAlbumResult(artist, album, data);
+						else
+							r = new AmazonAlbumResult();
+						r.setLastUpdated(new Date());
+						em.persist(r);
+					} else {
+						if (data != null)
+							r.updateData(data); // if we got no data, just keep whatever the old data was
+						r.setLastUpdated(new Date());
+					}
+					return r;
+				}
+				
+			});
+		} catch (Exception e) {
+			result = null;
+		}
+		
+		return result;
+	}
 	
 	public TrackView getTrackView(Track track) {
 		TrackView view = new TrackView(track);
+
+		// this method should never throw due to Yahoo or Amazon failure;
+		// we should just return a view without the extra information.
 		
-		// this should never throw due to Yahoo failure;
-		// we should just return a view without the download 
-		// sources.
+		Future<AmazonAlbumResult> futureAlbum = getAmazonAlbumAsync(track);
+		
 		try {
 			// get our song IDs; no point doing it async...
 			List<YahooSongResult> songs = getYahooSongResultsSync(track);
@@ -573,6 +690,26 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		} catch (Exception e) {
 			logger.debug("Failed to get Yahoo! search information for TrackView " + view, e);
+		}
+		
+		try {
+			AmazonAlbumResult album;
+			try {
+				album = futureAlbum.get();
+			} catch (InterruptedException e) {
+				logger.debug("amazon album get thread interrupted", e);
+				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				logger.debug("amazon album get thread execution exception", e.getCause());
+				throw new RuntimeException(e);
+			}
+			if (album != null) {
+				view.setSmallImageUrl(album.getSmallImageUrl());
+				view.setSmallImageWidth(album.getSmallImageWidth());
+				view.setSmallImageHeight(album.getSmallImageHeight());
+			}
+		} catch (Exception e) {
+			logger.debug("Failed to get Amazon album information for TrackView " + view, e);
 		}
 		
 		return view;

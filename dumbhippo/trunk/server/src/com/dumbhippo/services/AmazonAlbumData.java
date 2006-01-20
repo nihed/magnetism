@@ -1,5 +1,6 @@
 package com.dumbhippo.services;
 
+
 public interface AmazonAlbumData {
 
 	public String getASIN();

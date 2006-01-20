@@ -3,7 +3,14 @@
 
 <div class="dh-track">
 	<div class="dh-track-image">
-		<img src="/images/no_image_available75x75light.gif" />
+		<c:choose>
+			<c:when test="${!empty track.smallImageUrl}">
+				<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
+			</c:when>
+			<c:otherwise>
+				<img src="/images/no_image_available75x75light.gif" width="75" height="75"/>
+			</c:otherwise>
+		</c:choose>
 	</div>
 	<div class="dh-track-info">
 		<c:if test="${!empty track.name}">

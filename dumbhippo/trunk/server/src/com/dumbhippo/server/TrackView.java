@@ -12,12 +12,18 @@ public class TrackView {
 	private String album;
 	private String name;
 	private Map<SongDownloadSource,String> downloads;
+	private String smallImageUrl;
+	private int smallImageWidth;
+	private int smallImageHeight;
 	
 	public TrackView() {
 		// a "dummy" track view with no data in it
+		this.smallImageWidth = -1;
+		this.smallImageHeight = -1;
 	}
 	
 	public TrackView(Track track) {
+		this();
 		this.artist = track.getArtist();
 		this.album = track.getAlbum();
 		this.name = track.getName();
@@ -72,5 +78,29 @@ public class TrackView {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public int getSmallImageHeight() {
+		return smallImageHeight;
+	}
+
+	public void setSmallImageHeight(int smallImageHeight) {
+		this.smallImageHeight = smallImageHeight;
+	}
+
+	public String getSmallImageUrl() {
+		return smallImageUrl;
+	}
+
+	public void setSmallImageUrl(String smallImageUrl) {
+		this.smallImageUrl = smallImageUrl;
+	}
+
+	public int getSmallImageWidth() {
+		return smallImageWidth;
+	}
+
+	public void setSmallImageWidth(int smallImageWidth) {
+		this.smallImageWidth = smallImageWidth;
 	}
 }
