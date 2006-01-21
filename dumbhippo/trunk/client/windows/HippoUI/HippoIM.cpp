@@ -129,30 +129,48 @@ HippoIM::getUsername(BSTR *ret)
     return username_.CopyTo(ret);
 }
 
-
-HippoChatRoom *
-HippoIM::joinChatRoom(BSTR postId)
+HRESULT
+HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
 {
-    HippoChatRoom *chatRoom = new HippoChatRoom(this, postId);
-    chatRooms_.append(chatRoom);
+    for (unsigned long i = 0; i < chatRooms_.length(); i++) {
+        if (wcscmp(chatRooms_[i]->getPostId(), postId) == 0) {
+            *chatRoom = chatRooms_[i];
+            chatRooms_[i]->AddRef();
 
-    if (state_ == AUTHENTICATED)
-        sendChatRoomEnter(chatRoom);
+            return S_OK;
+        }
+    }
 
-    return chatRoom;
+    HippoChatRoom *newRoom = new HippoChatRoom(this, postId);
+    if (newRoom) {
+        chatRooms_.append(newRoom);
+        *chatRoom = newRoom;
+        return S_OK;
+    } else {
+        return E_OUTOFMEMORY;
+    }
 }
 
 void 
-HippoIM::leaveChatRoom(HippoChatRoom *chatRoom)
+HippoIM::onChatRoomStateChange(HippoChatRoom *chatRoom, HippoChatRoom::State oldState)
+{
+    if (state_ != AUTHENTICATED)
+        return;
+
+    if (oldState == HippoChatRoom::NONMEMBER) {
+        chatRoom->clear();
+        sendChatRoomEnter(chatRoom);
+    } else if (chatRoom->getState() == HippoChatRoom::NONMEMBER) {
+        sendChatRoomLeave(chatRoom);
+    }
+}
+
+void
+HippoIM::removeChatRoom(HippoChatRoom *chatRoom)
 {
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
         if (chatRooms_[i] == chatRoom) {
-            if (state_ == AUTHENTICATED)
-                sendChatRoomLeave(chatRoom);
-
             chatRooms_.remove(i);
-            delete chatRoom;
-
             return;
         }
     }
@@ -757,7 +775,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     const char *nameU = lm_message_node_get_attribute(infoNode, "name");
 
     if (!versionU || !nameU) {
-        hippoDebugLogW(L"uesrInfo node without name and version");
+        hippoDebugLogW(L"userInfo node without name and version");
         return false;
     }
 
@@ -771,6 +789,40 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     return true;
 }
 
+bool
+HippoIM::getChatMessageInfo(LmMessageNode *parent,
+                            int           *version,
+                            BSTR          *name,
+                            INT64         *timestamp,
+                            int           *serial)
+{
+    LmMessageNode *infoNode = findChildNode(parent, "http://dumbhippo.com/protocol/rooms", "messageInfo");
+    if (!infoNode) {
+        hippoDebugLogW(L"Can't find messageInfo node");
+        return false;
+    }
+
+    const char *versionU = lm_message_node_get_attribute(infoNode, "version");
+    const char *nameU = lm_message_node_get_attribute(infoNode, "name");
+    const char *timestampU = lm_message_node_get_attribute(infoNode, "timestamp");
+    const char *serialU = lm_message_node_get_attribute(infoNode, "serial");
+
+    if (!versionU || !nameU) {
+        hippoDebugLogW(L"messageInfo node without name, version, timestamp, and serial");
+        return false;
+    }
+
+    *version = atoi(versionU);
+    *timestamp = _atoi64(timestampU);
+    *serial = atoi(serialU);
+    HippoBSTR tmpName;
+    tmpName.setUTF8(nameU);
+
+    if (!tmpName || FAILED(tmpName.CopyTo(name)))
+        return false;
+
+    return true;
+}
 
 LmHandlerResult 
 HippoIM::handleRoomMessage(LmMessage     *message,
@@ -791,11 +843,13 @@ HippoIM::handleRoomMessage(LmMessage     *message,
     text.setUTF8(textU);
 
     int version;
+    INT64 timestamp;
+    int serial;
     HippoBSTR name;
-    if (!getChatUserInfo(message->node, &version, &name))
+    if (!getChatMessageInfo(message->node, &version, &name, &timestamp, &serial))
         return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
-    chatRoom->addMessage(userId, version, name, text);
+    chatRoom->addMessage(userId, version, name, text, timestamp, serial);
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }

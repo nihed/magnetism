@@ -534,16 +534,15 @@ HippoUI::ShowChatWindow(BSTR postId)
 {
     // If a chat window already exists for the post, just raise it
     for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (wcscmp(chatWindows_[i]->getChatRoom()->getPostId(), postId) == 0) {
+        if (wcscmp(chatWindows_[i]->getPostId(), postId) == 0) {
             chatWindows_[i]->setForegroundWindow();
             return S_OK;
         }
     }
 
-    HippoChatRoom *chatRoom = im_.joinChatRoom(postId);
     HippoChatWindow *window = new HippoChatWindow();
     window->setUI(this);
-    window->setChatRoom(chatRoom);
+    window->setPostId(postId);
 
     chatWindows_.append(window);
 
@@ -552,6 +551,12 @@ HippoUI::ShowChatWindow(BSTR postId)
     window->setForegroundWindow();
 
     return S_OK;
+}
+
+HRESULT
+HippoUI::GetChatRoom(BSTR postId, IHippoChatRoom **result)
+{
+    return im_.getChatRoom(postId, result);
 }
 
 HRESULT
@@ -812,12 +817,9 @@ HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
 {
     for (unsigned i = 0; i < chatWindows_.length(); i++) {
         if (chatWindows_[i] == chatWindow) {
-            HippoChatRoom *chatRoom = chatWindow->getChatRoom();
-
             chatWindows_.remove(i);
             delete chatWindow; // should be safe, called from WM_CLOSE only
 
-            im_.leaveChatRoom(chatRoom);
             return;
         }
     }

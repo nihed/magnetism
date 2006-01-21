@@ -42,15 +42,6 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\chatwindow.css">
-		</File>
-		<File
-			RelativePath=".\chatwindow.js">
-		</File>
-		<File
-			RelativePath=".\chatwindow.xml">
-		</File>
-		<File
 			RelativePath=".\clientstyle.xml"
 			DeploymentContent="TRUE">
 		</File>

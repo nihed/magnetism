@@ -181,6 +181,9 @@
 				RelativePath=".\HippoUtil.h">
 			</File>
 			<File
+				RelativePath=".\HippoUtilDispId.h">
+			</File>
+			<File
 				RelativePath=".\md5.h">
 			</File>
 			<File

@@ -83,7 +83,8 @@ DllGetClassObject(const CLSID &classID,
 {
     HRESULT hr;
 
-    if (!IsEqualCLSID(classID, CLSID_HippoEmbed) &&
+    if (!IsEqualCLSID(classID, CLSID_HippoChatControl) &&
+        !IsEqualCLSID(classID, CLSID_HippoEmbed) &&
         !IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
         !IsEqualCLSID(classID, CLSID_HippoToolbarAction) &&
         !IsEqualCLSID(classID, CLSID_HippoTracker)) {
@@ -199,6 +200,11 @@ DllRegisterServer(void)
     if (FAILED(hr))
         return hr;
     
+    hr = registrar.registerInprocServer(CLSID_HippoChatControl,
+                                        TEXT("Hippo Chat Control"));
+    if (FAILED(hr))
+        return hr;
+
     hr = registrar.registerInprocServer(CLSID_HippoEmbed,
                                         TEXT("Hippo Embed"));
     if (FAILED(hr))

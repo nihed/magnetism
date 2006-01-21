@@ -11,10 +11,7 @@
 
 class HippoUI;
 
-class HippoChatWindow :
-    public IHippoChatWindow,
-    public IDispatch,
-    public HippoChatRoomListener
+class HippoChatWindow
 {
 public:
     HippoChatWindow();
@@ -25,33 +22,8 @@ public:
     void show();
     void setForegroundWindow();
 
-    // The chat room that the window should track; argument can be NULL
-    void setChatRoom(HippoChatRoom *chatRoom);
-    HippoChatRoom *getChatRoom();
-
-    // IUnknown methods
-    STDMETHODIMP QueryInterface(REFIID, LPVOID*);
-    STDMETHODIMP_(DWORD) AddRef();
-    STDMETHODIMP_(DWORD) Release();
-
-    // IDispatch methods
-    STDMETHODIMP GetIDsOfNames (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
-    STDMETHODIMP GetTypeInfo (unsigned int, LCID, ITypeInfo **);           
-    STDMETHODIMP GetTypeInfoCount (unsigned int *);
-    STDMETHODIMP Invoke (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
-                         VARIANT *, EXCEPINFO *, unsigned int *);
-
-    // IHippoChatWindow
-    STDMETHODIMP SendMessage(BSTR message);
-    STDMETHODIMP GetServerBaseUrl(BSTR *ret);
-    STDMETHODIMP GetSelfId(BSTR *ret);
-    STDMETHODIMP OpenExternalURL(BSTR url);
-
-    // HippoChatRoomListener
-    void onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user);
-    void onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user);
-    void onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message);
-    void onClear(HippoChatRoom *chatRoom);
+    void setPostId(BSTR postId);
+    BSTR getPostId();
 
 private:
     HINSTANCE instance_;
@@ -74,15 +46,11 @@ private:
     HippoPtr<IWebBrowser2> browser_;
 
     HippoUI* ui_;
-    HippoChatRoom *chatRoom_;
+    HippoBSTR postId_;
 
     bool embedIE(void);
-    bool appendTransform(BSTR src, BSTR style, ...);
-    bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
     bool createWindow(void);
     bool registerClass();
-
-    HippoPtr<ITypeInfo> ifaceTypeInfo_;
 
     bool processMessage(UINT   message,
                         WPARAM wParam,
@@ -92,7 +60,6 @@ private:
                                        UINT   message,
                                        WPARAM wParam,
                                        LPARAM lParam);
-    DWORD refCount_;
 
     // private so they aren't used
     HippoChatWindow(const HippoChatWindow &other);

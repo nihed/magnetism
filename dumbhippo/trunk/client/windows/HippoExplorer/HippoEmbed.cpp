@@ -6,7 +6,7 @@
 
 #include "HippoEmbed.h"
 #include "HippoExplorer_h.h"
-#include "HippoDispID.h"
+#include "HippoExplorerDispID.h"
 #include "HippoUILauncher.h"
 #include "Guid.h"
 #include "Globals.h"
@@ -14,6 +14,15 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 #include <wininet.h> // For InternetCrackUr
+
+// This needs to be registered in the registry to be used; see 
+// DllRegisterServer() (for self-registry during development) and Components.wxs
+
+// "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 
+// changing things so that the control can only be used from *exactly* the web
+// server specified in the preferences. (You'd have to check for either the
+// normal or debug server.
+static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
 
 class ShowChatLaunchListener : public HippoUILaunchListener {
 public:
@@ -46,17 +55,6 @@ ShowChatLaunchListener::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *
     delete launcher;
     delete this;
 }
-
-// This needs to be registered in the registry to be used; see 
-// DllRegisterServer() (for self-registry during development) and Components.wxs
-//
-// Both need to be reversed when we start using this.
-
-// "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 
-// changing things so that the control can only be used from *exactly* the web
-// server specified in the preferences. (You'd have to check for either the
-// normal or debug server.
-static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
 
 HippoEmbed::HippoEmbed(void)
 {
@@ -445,6 +443,7 @@ HippoEmbed::checkURL(BSTR url)
                 ALLOWED_HOST_SUFFIX,
                 allowedHostLength) != 0)
         return false;
+
     if (components.dwHostNameLength > allowedHostLength && 
         *(components.lpszHostName + components.dwHostNameLength - allowedHostLength - 1) != '.')
         return false;

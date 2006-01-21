@@ -56,9 +56,12 @@ public:
 
     HRESULT getUsername(BSTR *ret);
 
-    HippoChatRoom *joinChatRoom(BSTR postId);
-    void leaveChatRoom(HippoChatRoom *chatRoom);
+    HRESULT getChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
+
+    // Called by HippoChatRoom
+    void onChatRoomStateChange(HippoChatRoom *chatRoom, HippoChatRoom::State oldState);
     void sendChatRoomMessage(HippoChatRoom *chatRoom, BSTR text);
+    void removeChatRoom(HippoChatRoom *chatRoom);
 
 private:
     HRESULT getAuthURL(BSTR *result);
@@ -91,6 +94,11 @@ private:
     bool getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name);
+    bool getChatMessageInfo(LmMessageNode *parent,
+                            int           *version,
+                            BSTR          *name,
+                            INT64         *timestamp,
+                            int           *serial);
     LmHandlerResult handleRoomMessage(LmMessage     *message,
                                       HippoChatRoom *chatRoom,
                                       BSTR           userId);

@@ -79,6 +79,7 @@ public:
     STDMETHODIMP ShareLink(BSTR url, BSTR title);
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
+    STDMETHODIMP GetChatRoom(BSTR postId, IHippoChatRoom **result);
 
     bool create(HINSTANCE instance);
     void destroy();

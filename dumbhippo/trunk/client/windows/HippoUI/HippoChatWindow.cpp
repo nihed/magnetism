@@ -23,21 +23,15 @@ static const int BASE_HEIGHT = 600;
 
 HippoChatWindow::HippoChatWindow(void)
 {
-    refCount_ = 1;
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
     ie_ = NULL;
-    chatRoom_ = NULL;
 
     ieCallback_ = new HippoChatWindowIECallback(this);
-
-    hippoLoadTypeInfo(L"HippoUtil.dll", &IID_IHippoChatWindow, &ifaceTypeInfo_, NULL);
 }
 
 HippoChatWindow::~HippoChatWindow(void)
 {
-    setChatRoom(NULL);
-
     DestroyWindow(window_);
 
     delete ieCallback_;
@@ -84,27 +78,13 @@ HippoChatWindow::embedIE(void)
     RECT rect;
     GetClientRect(window_,&rect);
     HippoBSTR srcURL;
-    ui_->getAppletURL(L"chatwindow.xml", &srcURL);
-    ie_ = new HippoIE(window_, srcURL, ieCallback_, this);
+    ui_->getRemoteURL(L"chatwindow?postId=", &srcURL);
+    srcURL.Append(postId_);
+    ie_ = new HippoIE(window_, srcURL, ieCallback_, NULL);
     ie_->setThreeDBorder(false);
 
-    HippoBSTR appletURL;
-    ui_->getAppletURL(L"", &appletURL);
-    HippoBSTR styleURL;
-    ui_->getAppletURL(L"clientstyle.xml", &styleURL);
-    ie_->setXsltTransform(styleURL, L"appleturl", appletURL.m_str, NULL);
     ie_->create();
     browser_ = ie_->getBrowser();
-
-    // Kind of a hack
-    HippoBSTR serverURLStr;
-    ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
-    HippoBSTR appletURLStr;
-    ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
-    variant_t serverUrl(serverURLStr.m_str);
-    variant_t appletUrl(appletURLStr.m_str);
-    variant_t result;
-    ie_->invokeJavascript(L"dhInit", &result, 2, &serverUrl, &appletUrl);
 
     return true;
 }
@@ -128,19 +108,6 @@ HippoChatWindow::create(void)
         return false;
     }
     return true;
-}
-
-bool
-HippoChatWindow::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
-{
-    va_list args;
-    va_start (args, nargs);
-    HRESULT result = ie_->invokeJavascript(funcName, invokeResult, nargs, args);
-    bool ret = SUCCEEDED(result);
-    if (!ret)
-        ui_->logError(L"failed to invoke javascript", result);
-    va_end (args);
-    return ret;
 }
 
 bool
@@ -189,21 +156,15 @@ HippoChatWindow::setForegroundWindow()
 }
 
 void 
-HippoChatWindow::setChatRoom(HippoChatRoom *chatRoom)
+HippoChatWindow::setPostId(BSTR postId)
 {
-    if (chatRoom_)
-        chatRoom_->removeListener(this);
-     
-    chatRoom_ = chatRoom;
-
-    if (chatRoom_)
-        chatRoom_->addListener(this);
+    postId_ = postId;
 }
 
-HippoChatRoom *
-HippoChatWindow::getChatRoom()
+BSTR
+HippoChatWindow::getPostId()
 {
-    return chatRoom_;
+    return postId_.m_str;
 }
 
 bool
@@ -241,171 +202,4 @@ HippoChatWindow::windowProc(HWND   window,
     }
 
     return DefWindowProc(window, message, wParam, lParam);
-}
-
-// IHippoChatWindow
-
-STDMETHODIMP 
-HippoChatWindow::SendMessage(BSTR message)
-{
-    chatRoom_->sendMessage(message);
-    return S_OK;
-}
-
-STDMETHODIMP
-HippoChatWindow::OpenExternalURL(BSTR url)
-{
-    ui_->launchBrowser(url);
-    return S_OK;
-}
-
-HRESULT
-HippoChatWindow::GetServerBaseUrl(BSTR *ret)
-{
-    HippoBSTR temp;
-    ui_->getRemoteURL(L"", &temp);
-
-    return temp.CopyTo(ret);
-}
-
-HRESULT
-HippoChatWindow::GetSelfId(BSTR *ret)
-{
-    HippoBSTR temp;
-    ui_->GetLoginId(&temp);
-
-    return temp.CopyTo(ret);
-}
-
-/////////////////////// IUnknown implementation ///////////////////////
-
-STDMETHODIMP 
-HippoChatWindow::QueryInterface(const IID &ifaceID, 
-                            void   **result)
-{
-    if (IsEqualIID(ifaceID, IID_IUnknown))
-        *result = static_cast<IUnknown *>(static_cast<IHippoChatWindow*>(this));
-    else if (IsEqualIID(ifaceID, IID_IDispatch)) 
-        *result = static_cast<IDispatch *>(this);
-    else if (IsEqualIID(ifaceID, IID_IHippoChatWindow)) 
-        *result = static_cast<IHippoChatWindow *>(this);
-    else {
-        *result = NULL;
-        return E_NOINTERFACE;
-    }
-
-    this->AddRef();
-    return S_OK;    
-}                                             
-
-HIPPO_DEFINE_REFCOUNTING(HippoChatWindow)
-
-//////////////////////// IDispatch implementation ///////////////////
-
-// We just delegate IDispatch to the standard Typelib-based version.
-
-STDMETHODIMP
-HippoChatWindow::GetTypeInfoCount(UINT *pctinfo)
-{
-    if (pctinfo == NULL)
-        return E_INVALIDARG;
-
-    *pctinfo = 1;
-
-    return S_OK;
-}
-
-STDMETHODIMP 
-HippoChatWindow::GetTypeInfo(UINT        iTInfo,
-                         LCID        lcid,
-                         ITypeInfo **ppTInfo)
-{
-    if (ppTInfo == NULL)
-        return E_INVALIDARG;
-    if (!ifaceTypeInfo_)
-        return E_OUTOFMEMORY;
-    if (iTInfo != 0)
-        return DISP_E_BADINDEX;
-
-    ifaceTypeInfo_->AddRef();
-    *ppTInfo = ifaceTypeInfo_;
-
-    return S_OK;
-}
-        
-STDMETHODIMP 
-HippoChatWindow::GetIDsOfNames (REFIID    riid,
-                            LPOLESTR *rgszNames,
-                            UINT      cNames,
-                            LCID      lcid,
-                            DISPID   *rgDispId)
-{
-    HRESULT ret;
-    if (!ifaceTypeInfo_) 
-        return E_OUTOFMEMORY;
-    
-    ret = DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
-    return ret;
-}
-        
-STDMETHODIMP
-HippoChatWindow::Invoke (DISPID        member,
-                     const IID    &iid,
-                     LCID          lcid,              
-                     WORD          flags,
-                     DISPPARAMS   *dispParams,
-                     VARIANT      *result,
-                     EXCEPINFO    *excepInfo,  
-                     unsigned int *argErr)
-{
-    if (!ifaceTypeInfo_) 
-        return E_OUTOFMEMORY;
-    HippoQIPtr<IHippoChatWindow> chatWindow(static_cast<IHippoChatWindow *>(this));
-    HRESULT hr = DispInvoke(chatWindow, ifaceTypeInfo_, member, flags, 
-                            dispParams, result, excepInfo, argErr);
-    return hr;
-}
-
-////////////////////////////// HippoChatRoomListener implementatin //////////////////////////////////
-
-void 
-HippoChatWindow::onUserJoin(HippoChatRoom *chatRoom, const HippoChatUser &user)
-{
-    variant_t userId(user.getUserId());
-    variant_t version(user.getVersion);
-    variant_t name(user.getName());
-    variant_t result;
-
-    ie_->invokeJavascript(L"dhChatAddPerson", &result, 3, &userId, &version, &name);
-}
-
-void 
-HippoChatWindow::onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user)
-{
-    variant_t userId(user.getUserId());
-    variant_t result;
-
-    ie_->invokeJavascript(L"dhChatRemovePerson", &result, 1, &userId);
-}
-
-void 
-HippoChatWindow::onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message)
-{
-    const HippoChatUser &user = message.getUser();
-
-    variant_t userId(user.getUserId());
-    variant_t version(user.getVersion());
-    variant_t name(user.getName());
-    variant_t text(message.getText());
-    variant_t result;
-
-    ie_->invokeJavascript(L"dhChatAddMessage", &result, 4, &userId, &version, &name, &text);
-}
-
-void 
-HippoChatWindow::onClear(HippoChatRoom *chatRoom)
-{
-    variant_t result;
-
-    ie_->invokeJavascript(L"dhChatClear", &result, 0);
 }

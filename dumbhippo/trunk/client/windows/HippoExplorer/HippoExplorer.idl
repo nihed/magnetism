@@ -1,7 +1,10 @@
+cpp_quote("#pragma once")
+
 import "oaidl.idl";
 import "ocidl.idl";
+import "HippoUtil.idl";
 
-#include "HippoDispID.h"
+#include "HippoExplorerDispID.h"
 
 [
     uuid(39794B35-15C8-43b8-A1D7-AEB345E8355C), // LIBID_HippoExplorer
@@ -41,5 +44,14 @@ library HippoExplorer {
     {
         [default] interface IHippoEmbed;
         [default, source] interface IHippoEmbedEvents;
+    }
+    [
+        uuid(2D40665F-8139-4cb5-BA39-A6E25A147F5D) // CLSID_HippoChatControl
+    ]
+    coclass HippoChatControl
+    {
+        [default] interface IHippoChatRoom;
+        [default, source] interface IHippoChatRoomEvents;
+        interface IHippoChatRoomEvents;
     }
 }

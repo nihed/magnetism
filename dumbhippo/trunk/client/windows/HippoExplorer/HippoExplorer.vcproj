@@ -42,7 +42,8 @@
 				SubSystem="2"
 				TargetMachine="1"/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCMIDLTool"
+				AdditionalIncludeDirectories="../HippoUtil"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -123,6 +124,9 @@
 				RelativePath=".\ClassFactory.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoChatControl.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoEmbed.cpp">
 			</File>
 			<File
@@ -180,13 +184,16 @@
 				RelativePath=".\Guid.h">
 			</File>
 			<File
-				RelativePath=".\HippoDispID.h">
+				RelativePath=".\HippoChatControl.h">
 			</File>
 			<File
 				RelativePath=".\HippoEmbed.h">
 			</File>
 			<File
 				RelativePath=".\HippoExplorerBar.h">
+			</File>
+			<File
+				RelativePath=".\HippoExplorerDispID.h">
 			</File>
 			<File
 				RelativePath=".\HippoToolbarAction.h">

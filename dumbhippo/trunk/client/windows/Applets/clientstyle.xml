@@ -7,9 +7,6 @@
     <xsl:template match="dh:coreScript"> 
         <script language="javascript" src="{$appleturl}dh.js"></script>
     </xsl:template>
-    <xsl:template match="dh:chatScript">
-        <script language="javascript" src="{$appleturl}chatwindow.js"></script>
-    </xsl:template>
     <xsl:template match="dh:notificationScript">
         <script language="javascript" src="{$appleturl}notification.js"></script>
         <script language="javascript" src="{$appleturl}flickr.js"></script>        
@@ -19,9 +16,6 @@
     </xsl:template>    
     <xsl:template match="dh:coreStyle">
         <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    
-    </xsl:template>
-    <xsl:template match="dh:chatStyle">
-        <link rel="stylesheet" type="text/css" href="{$appleturl}chatwindow.css"/>    
     </xsl:template>
     <xsl:template match="dh:notificationStyle">
         <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>    
