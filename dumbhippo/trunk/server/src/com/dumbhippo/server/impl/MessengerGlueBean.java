@@ -227,7 +227,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		for (PostMessage postMessage : messages) {
 			String username = postMessage.getFromUser().getGuid().toJabberId(null);
 			ChatRoomMessage message;
-			message = new ChatRoomMessage(username, postMessage.getMessageText(), postMessage.getTimestamp()); 
+			message = new ChatRoomMessage(username, postMessage.getMessageText(), postMessage.getTimestamp(), postMessage.getMessageSerial()); 
 			history.add(message);
 		}
 		

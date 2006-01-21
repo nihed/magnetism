@@ -10,7 +10,6 @@
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
-<c:set var="chatmessages" value="${framer.post.lastFewChatRoomMessages}" scope="page"/>
 
 <c:url var="forwardUrl" value="/sharelink">
 	<c:param name="url" value="${url}"/>
@@ -22,9 +21,36 @@
 	<dht:stylesheets href="frames.css" iehref="frames-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">
-    	dojo.require("dojo.html");
+    	dojo.require("dh.framer")
+    	dh.framer.setSelfId("${framer.signin.userId}")
 	</script>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
+	<object classid="clsid:2D40665F-8139-4cb5-BA39-A6E25A147F5D" id="dhChatControl">
+		<param name="UserID" value="${framer.signin.userId}"/>
+		<param name="PostID" value="${framer.post.post.id}"/>
+	</object>
+	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name)">
+		dh.framer.onUserJoin(userId, version, name)
+	</script>
+	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
+		dh.framer.onUserLeave(userId)
+	</script>
+	<script for="dhChatControl" language="javascript" event="OnMessage(userId, version, name, text, timestamp, serial)">
+		dh.framer.onMessage(userId, version, name, text, timestamp, serial)
+	</script>
+	<script for="dhChatControl" language="javascript" event="OnReconnect()">
+		dh.framer.onReconnect()
+	</script>
+	<script type="text/javascript">
+		var chatControl = document.getElementById("dhChatControl")
+		if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+			chatControl.Join(false)
+			chatControl.Rescan()
+		}
+	</script>
+	<script defer type="text/javascript">
+		dh.framer.init()
+	</script>
 </head>
 <body>
 
@@ -66,23 +92,8 @@
 		   </tr>
 	   </c:if>
 	   <tr>
-	       <td class="chat-preview" nowrap colspan=2>
-             <c:choose>
-	           <c:when test="${fn:length(chatmessages) > 0}">
-	           What's going on in the chat:
-	           <c:forEach items="${chatmessages}" var="chatmessage" varStatus="status">
-	             <div class="chat-preview">
-	                 <% /*  truncating this is a pain because the message text from AIM includes HTML markup */ %>
-	                 ${chatmessage.fromScreenName}: ${chatmessage.messageText}
-	             </div>
-	           </c:forEach>
-	         </c:when>
-	         <c:otherwise>
-	             <div class="chat-preview">
-	               <!-- No chat messages, so far. -->
-	             </div>
-	         </c:otherwise>
-	         </c:choose>      
+	       <td id="dhChatPreview" nowrap colspan=2>
+			    <div>Currently chatting: <span id="dhChatUserList"></span></div>
 	       </td>
 	   </tr>
 	   </table>

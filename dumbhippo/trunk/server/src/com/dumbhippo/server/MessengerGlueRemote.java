@@ -76,19 +76,25 @@ public interface MessengerGlueRemote {
 		private static final long serialVersionUID = 0L;
 		
 		private String fromUsername;
+		private int serial;
 		private Date timestamp;
 		private String text;
 		
-		public ChatRoomMessage(String fromUsername, String text, Date timestamp) {
+		public ChatRoomMessage(String fromUsername, String text, Date timestamp, int serial) {
 			this.fromUsername = fromUsername;
 			this.timestamp = timestamp;
 			this.text = text;
+			this.serial = serial;
 		}
 		
 		public String getFromUsername() {
 			return fromUsername;
 		}
-		
+
+		public int getSerial() {
+			return serial;
+		}
+
 		public String getText() {
 			return text;
 		}

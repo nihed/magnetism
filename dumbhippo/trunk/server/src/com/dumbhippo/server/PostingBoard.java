@@ -70,6 +70,7 @@ public interface PostingBoard {
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
 	 * @param timestamp the time when the message was posted
+	 * @param serial counter (starts at zero) of messages for the post
 	 */
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial);
 }

@@ -21,19 +21,21 @@ public class PostMessage extends DBUnique {
 	
 	private Post post;
 	private User fromUser;
+	private int messageSerial;
 	private String messageText;
 	private long timestamp;
 	
 	public PostMessage() {
-		this(null,null,null,null);
+		this(null, null, null, null, -1);
 	}
 
-	public PostMessage(Post post, User fromUser, String messageText, Date timestamp) {
+	public PostMessage(Post post, User fromUser, String messageText, Date timestamp, int messageSerial) {
 		super();
 		this.post = post;
 		this.fromUser = fromUser;
 		this.messageText = messageText;
 		this.setTimestamp(timestamp);
+		this.messageSerial = messageSerial;
 	}
 	
 	@ManyToOne
@@ -54,6 +56,15 @@ public class PostMessage extends DBUnique {
 
 	public void setFromUser(User fromUser) {
 		this.fromUser = fromUser;
+	}
+
+	@Column(nullable=false)
+	public int getMessageSerial() {
+		return messageSerial;
+	}
+
+	public void setMessageSerial(int messageSerial) {
+		this.messageSerial = messageSerial;
 	}
 
 	@Column(nullable=false)

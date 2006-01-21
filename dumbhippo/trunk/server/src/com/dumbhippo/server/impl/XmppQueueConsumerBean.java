@@ -125,6 +125,6 @@ public class XmppQueueConsumerBean implements MessageListener {
 		if (post == null)
 			return;
 		
-		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp());
+		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
 	}	
 }

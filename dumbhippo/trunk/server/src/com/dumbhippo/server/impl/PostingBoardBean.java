@@ -753,8 +753,11 @@ public class PostingBoardBean implements PostingBoard {
 		return messages;
 	}
 	
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
-		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
+		if (serial < 0) 
+			throw new IllegalArgumentException("Negative serial");
+		
+		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
 		em.persist(postMessage);
 	}
 }

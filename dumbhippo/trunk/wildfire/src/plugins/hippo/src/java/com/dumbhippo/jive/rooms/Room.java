@@ -65,15 +65,21 @@ public class Room {
 		private UserInfo user;
 		private String text;
 		private Date timestamp;
+		private int serial;
 		
-		public MessageInfo(UserInfo user, String text, Date timestamp) {
+		public MessageInfo(UserInfo user, String text, Date timestamp, int serial) {
 			this.user = user;
 			this.text = text;
 			this.timestamp = timestamp;
+			this.serial = serial;
 		}
 		
 		public UserInfo getUser() {
 			return user;
+		}
+		
+		public int getSerial() {
+			return serial;
 		}
 		
 		public String getText() {
@@ -89,6 +95,7 @@ public class Room {
 	private Map<JID, UserInfo> presentResources;
 	private Map<String, UserInfo> presentUsers;
 	private List<MessageInfo> messages;
+	private int nextSerial;
 	
 	private String roomName;
 	
@@ -104,6 +111,7 @@ public class Room {
 		
 		this.roomName = info.getPostId();
 		for (ChatRoomUser user : info.getAllowedUsers()) {
+			Log.debug("Allowed user: " + user.getUsername());
 			allowedUsers.put(user.getUsername(), 
 						     new UserInfo(user.getUsername(), user.getVersion(), user.getName()));
 		}
@@ -114,8 +122,11 @@ public class Room {
 				Log.debug("Ignoring message from unknown user " + message.getFromUsername());
 				continue;
 			}
-			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp());
+			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp(), message.getSerial());
 			messages.add(messageInfo);
+			
+			if (message.getSerial() >= nextSerial)
+				nextSerial = message.getSerial() + 1;
 		}
 	}
 	
@@ -170,7 +181,7 @@ public class Room {
 		String username = jid.getNode();
 
 		Log.debug("Got available presence from : " + jid);
-
+		
 		// The resource passed in this presence message, is the requested
 		// nickname in the groupchat protocol, but we ignore it and just
 		// make them use their userid as their nickname; we'll cover
@@ -241,9 +252,11 @@ public class Room {
 		outgoing.setBody(messageInfo.getText());
 		
 		Element messageElement = outgoing.getElement();
-		Element info = messageElement.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
+		Element info = messageElement.addElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
+		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
+		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 		
 		return outgoing;
 	}
@@ -272,8 +285,9 @@ public class Room {
 			throw new RuntimeException("User " + username + " isn't in allowedUsers");
 		
 		Date timestamp = new Date(); // Current time
+		int serial = nextSerial++;
 		
-		MessageInfo messageInfo = new MessageInfo(userInfo, packet.getBody(), timestamp);
+		MessageInfo messageInfo = new MessageInfo(userInfo, packet.getBody(), timestamp, serial);
 		messages.add(messageInfo);
 		
 		Message outgoing = makeMessage(messageInfo);
@@ -281,7 +295,7 @@ public class Room {
 			sendMessage(outgoing, member);
 		
 		// Send over to the server via JMS
-		XmppEventChatMessage event = new XmppEventChatMessage(roomName, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp());
+		XmppEventChatMessage event = new XmppEventChatMessage(roomName, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
         ObjectMessage message = queue.createObjectMessage(event);
         queue.send(message);
 	}
