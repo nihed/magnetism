@@ -32,6 +32,7 @@
 		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Hippo Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Hippo Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Hippo Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Hippo Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
                         <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Internet Explorer\Extensions\{7197AC86-5F8A-43BE-806C-C03BB363C85E}">
                             <Registry Name="Default Visible" Value="Yes" Type="string" />
                             <Registry Name="ButtonText" Value="Share Link" Type="string" />
