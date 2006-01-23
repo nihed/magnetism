@@ -28,7 +28,6 @@ import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
-import com.dumbhippo.persistence.MySpaceResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -195,35 +194,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
 		}
-	}
-	
-
-	public MySpaceResource getMySpace(final String mySpaceName) {
-		try {
-			MySpaceResource ret = runner.runTaskRetryingOnConstraintViolation(new Callable<MySpaceResource>() {
-				public MySpaceResource call() {
-					Query q;
-					
-					q = em.createQuery("from MySpaceResource a where a.mySpaceName = :name");
-					q.setParameter("name", mySpaceName);
-					
-					MySpaceResource res;
-					try {
-						res = (MySpaceResource) q.getSingleResult();
-					} catch (EntityNotFoundException e) {
-						res = new MySpaceResource(mySpaceName);
-						em.persist(res);
-					}
-					
-					return res;			
-				}
-			});
-			
-			return ret;
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}		
 	}	
 
 	private <T extends Resource> T lookupResourceByName(Class<T> klass, String identifier, String name) {
@@ -245,10 +215,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public AimResource lookupAim(String screenName) {
 		return lookupResourceByName(AimResource.class, "screenName", screenName);
 	}
-	
-	public MySpaceResource lookupMySpace(String mySpaceName) {
-		return lookupResourceByName(MySpaceResource.class, "mySpaceName", mySpaceName);
-	}	
 	
 	public LinkResource getLink(final String link) {
 		try {
@@ -341,8 +307,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				if (r instanceof EmailResource)
 					resources.add((Resource) r);
 				else if (r instanceof AimResource)
-					resources.add((Resource) r);
-				else if (r instanceof MySpaceResource)
 					resources.add((Resource) r);
 				// we filter out any non-"primary" resources for now
 			}
@@ -450,14 +414,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					}
 					pv.addInvitedStatus(invited);
 				}
-			} else if (e == PersonViewExtra.MYSPACE_NAME) {
-				MySpaceResource mySpace = null;
-				for (MySpaceResource r : new TypeFilteredCollection<Resource,MySpaceResource>(resources, MySpaceResource.class)) {
-					assert mySpace == null;
-					mySpace = r;
-					break;
-				}
-				pv.addMySpace(mySpace);
 			} else if (e == PersonViewExtra.ALL_RESOURCES) {
 				pv.addAllResources(resources);
 			} else if (e == PersonViewExtra.ALL_EMAILS) {
@@ -794,8 +750,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public void setMySpaceName(User user, String name) {
-		user = em.find(User.class, user.getId());
-		Resource mySpaceName = getMySpace(name);
-		addVerifiedOwnershipClaim(user, mySpaceName);
+		// Refresh
+		try {
+			user = lookupGuid(User.class, user.getGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Account acct = user.getAccount();
+		acct.setMySpaceName(name);
 	}
 }

@@ -58,6 +58,8 @@ public class Account extends Resource {
 	
 	private String password;
 	
+	private String mySpaceName;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -324,6 +326,23 @@ public class Account extends Resource {
 		this.disabled = disabled;
 	}
 	
+	@Column
+	public String getMySpaceName() {
+		return mySpaceName;
+	}
+
+	public void setMySpaceName(String name) {
+		if (name != null) {
+			// Last ditch exceptions
+			if (name.length() > 40)
+				throw new IllegalArgumentException("MySpace name too long: " + name);
+			if (!name.matches("^[\\p{Alnum}]+$"))
+				throw new IllegalArgumentException("Invalid MySpace name");
+		}
+		
+		this.mySpaceName = name;
+	}
+	
 	@Override
 	@Transient
 	public String getHumanReadableString() {
@@ -335,4 +354,5 @@ public class Account extends Resource {
 	public String getDerivedNickname() {
 		return getHumanReadableString();
 	}
+
 }

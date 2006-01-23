@@ -157,8 +157,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public String getMySpaceName(String username) {
-		PersonView pv = identitySpider.getSystemView(userFromUsername(username), PersonViewExtra.MYSPACE_NAME);
-		return pv.getMySpaceName().getMySpaceName();
+		User user = userFromUsername(username);
+		return user.getAccount().getMySpaceName();
 	}
 	
 	public void addMySpaceBlogComment(String username, long commentId, long posterId) {

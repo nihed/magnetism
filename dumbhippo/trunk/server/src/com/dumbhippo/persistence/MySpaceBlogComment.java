@@ -11,15 +11,15 @@ import javax.persistence.ManyToOne;
 public class MySpaceBlogComment extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
-	MySpaceResource blog;
+	User owner;
 	long commentId;
 	long posterId;
 	long discoveredDate;
 	
 	protected MySpaceBlogComment() {}
 	
-	public MySpaceBlogComment(MySpaceResource blog, long commentId, long posterId) {
-		this.blog = blog;
+	public MySpaceBlogComment(User owner, long commentId, long posterId) {
+		this.owner = owner;
 		this.commentId = commentId;
 		this.posterId = posterId;
 		this.discoveredDate = new Date().getTime();
@@ -27,11 +27,11 @@ public class MySpaceBlogComment extends DBUnique {
 	
 	@ManyToOne
 	@JoinColumn(nullable=false)	
-	public MySpaceResource getBlog() {
-		return blog;
+	public User getOwner() {
+		return owner;
 	}
-	public void setBlog(MySpaceResource blog) {
-		this.blog = blog;
+	public void setOwner(User owner) {
+		this.owner = owner;
 	}
 	
 	@Column(nullable=false)	

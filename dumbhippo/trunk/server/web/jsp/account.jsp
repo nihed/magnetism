@@ -183,7 +183,7 @@
 				<h5 class="dh-title">MySpace Name</h5>
 				<div id="dhMySpaceChangeDescription" style="display:none">Change your MySpace name:</div>
 				<div id="dhMySpaceDescription" style="display:none">Tell us your MySpace name, and you'll get bubble notifications when your buddies add comments on your MySpace page!</div>
-				<p><input id="dhMySpaceName" class="dhText" value="${account.person.mySpaceName.mySpaceName}"/><input type="button" value="Set Name" id="dhMySpaceSubmit"/></p>
+				<p><input id="dhMySpaceName" class="dhText" value="${account.person.account.mySpaceName}"/><input type="button" value="Set Name" id="dhMySpaceSubmit"/></p>
 			</div>
 		</c:if>
 			<div class="dh-right-box">
