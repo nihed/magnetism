@@ -39,6 +39,16 @@ dh.chatwindow.onReconnect = function() {
 	this._userList.clear()
 }
 
+// Check if we are scrolled to the bottom (with 8 pixels of fuzz)
+dh.chatwindow._isAtBottom = function(element) {
+	return element.scrollTop >= element.scrollHeight - element.clientHeight - 8
+}
+
+// Scroll to the bottom
+dh.chatwindow._scrollToBottom = function(element) {
+	element.scrollTop = element.scrollHeight - element.clientHeight
+}
+
 dh.chatwindow._addMessage = function(message, before) {
 	message.div = document.createElement("div")
     if (message.userId == this._selfId)
@@ -60,7 +70,11 @@ dh.chatwindow._addMessage = function(message, before) {
     textDiv.appendChild(textSpan)
 
     var messagesDiv = document.getElementById("dhChatMessagesDiv")
+
+	var wasAtBottom = this._isAtBottom(messagesDiv)
     messagesDiv.insertBefore(message.div, before ? before.div : null)
+	if (!before && wasAtBottom)
+		this._scrollToBottom(messagesDiv)
 }
 
 dh.chatwindow._removeMessage = function(message) {
