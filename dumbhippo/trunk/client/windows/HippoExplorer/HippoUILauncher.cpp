@@ -136,7 +136,7 @@ HippoUILauncher::checkOneInstance(const CLSID &classId, BSTR user, IHippoUI **ex
 
     // Otherwise check the user ID for the found match
     HippoBSTR loginId;
-    if (FAILED(ui->GetLoginId(&loginId)) && !loginId)
+    if (FAILED(ui->GetLoginId(&loginId)) || !loginId)
         return;
 
     if (wcscmp(loginId, user) == 0) {
