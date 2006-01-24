@@ -29,6 +29,7 @@
 		    
 		    <Component Id="hippoExplorer" Guid="D933FFD1-6ACC-4CF9-87A4-5EAECF43CD01">
 		        <File Id="hippoExplorerDll" Name="HippoExp.dll" LongName="HippoExplorer.dll" src="HippoExplorer.dll"  DiskId="1" Vital="yes"/>
+		        <TypeLib Id="39794B35-15C8-43b8-A1D7-AEB345E8355C" Language="0"/>
 		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Hippo Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Hippo Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Hippo Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
