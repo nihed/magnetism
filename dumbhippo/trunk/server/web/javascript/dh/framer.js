@@ -9,21 +9,29 @@ dh.framer._messageList = new dh.chat.MessageList(
 	function(message, before) { dh.framer._addMessage(message, before) },
 	function(message) { dh.framer._removeMessage(message) },
 	3)
-dh.framer._userList = new dh.chat.UserList(
-	function(user, before) { dh.framer._addUser(user, before) },
-	function(user) { dh.framer._removeUser(user) })
+dh.framer._participantList = new dh.chat.UserList(
+	function(user, before) { dh.framer._addUser(user, before, true) },
+	function(user) { dh.framer._removeUser(user, true) })
+dh.framer._visitorList = new dh.chat.UserList(
+	function(user, before) { dh.framer._addUser(user, before, false) },
+	function(user) { dh.framer._removeUser(user, false) })
 
-dh.framer._personDivs = {}
-    
 // Add a user to the list of current users
-dh.framer.onUserJoin = function(userId, version, name) {
+dh.framer.onUserJoin = function(userId, version, name, participant) {
 	var user = new dh.chat.User(userId, version, name)
-	this._userList.userJoin(user)
+	if (participant) {
+		this._visitorList.userLeave(userId)
+		this._participantList.userJoin(user)
+	} else {
+		this._participantList.userLeave(userId)
+		this._visitorList.userJoin(user)
+	}
 }
 
 // Remove the user from the list of current users
 dh.framer.onUserLeave = function(userId) {
-	this._userList.userLeave(userId)
+	this._visitorList.userLeave(userId)
+	this._participantList.userLeave(userId)
 }
 
 // Add a message to the message area
@@ -34,8 +42,8 @@ dh.framer.onMessage = function(userId, version, name, text, timestamp, serial) {
 
 // Clear all messages and users (called on reconnect)
 dh.framer.onReconnect = function() {
-    this._personDivs = {}
-
+	this._participantList.clear()
+	this._visitorList.clear()
 	this._messageList.clear()
 }
 
@@ -54,8 +62,15 @@ dh.framer._removeMessage = function(message) {
 	previewArea.removeChild(message.div)
 }
 
-dh.framer._addUser = function(user, before) {
-    var userList = document.getElementById("dhChatUserList")
+dh.framer._getUserListSpan = function(participant) {
+	if (participant)
+	    return document.getElementById("dhChatParticipantList")
+    else
+	    return document.getElementById("dhChatVisitorList")
+}
+
+dh.framer._addUser = function(user, before, participant) {
+	var userList = this._getUserListSpan(participant)
     
     user.span = document.createElement("span")
     user.span.appendChild(document.createTextNode(user.name))
@@ -67,8 +82,9 @@ dh.framer._addUser = function(user, before) {
 		userList.insertBefore(document.createTextNode(", "), user.span)
 }
 
-dh.framer._removeUser = function(user) {
-    var userList = document.getElementById("dhChatUserList")
+dh.framer._removeUser = function(user, participant) {
+	var userList = this._getUserListSpan(participant)
+    
     if (user.span.nextSibling)
 	    userList.removeChild(user.span.nextSibling)
     userList.removeChild(user.span)

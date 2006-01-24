@@ -18,7 +18,10 @@ dh.chatwindow._createHeadShot = function(userId, version) {
 }
 
 // Add a user to the list of current users
-dh.chatwindow.onUserJoin = function(userId, version, name) {
+dh.chatwindow.onUserJoin = function(userId, version, name, participant) {
+	if (!participant)
+		return;
+		
 	var user = new dh.chat.User(userId, version, name)
 	this._userList.userJoin(user)
 }

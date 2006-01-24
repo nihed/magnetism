@@ -28,8 +28,8 @@
 		<param name="UserID" value="${framer.signin.userId}"/>
 		<param name="PostID" value="${framer.post.post.id}"/>
 	</object>
-	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name)">
-		dh.chatwindow.onUserJoin(userId, version, name)
+	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
+		dh.chatwindow.onUserJoin(userId, version, name, participant)
 	</script>
 	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
 		dh.chatwindow.onUserLeave(userId)

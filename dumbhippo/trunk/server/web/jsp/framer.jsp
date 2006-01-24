@@ -29,8 +29,8 @@
 		<param name="UserID" value="${framer.signin.userId}"/>
 		<param name="PostID" value="${framer.post.post.id}"/>
 	</object>
-	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name)">
-		dh.framer.onUserJoin(userId, version, name)
+	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
+		dh.framer.onUserJoin(userId, version, name, participant)
 	</script>
 	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
 		dh.framer.onUserLeave(userId)
@@ -93,7 +93,8 @@
 	   </c:if>
 	   <tr>
 	       <td id="dhChatPreview" nowrap colspan=2>
-			    <div>Currently chatting: <span id="dhChatUserList"></span></div>
+			    <div>Just looking at the page: <span id="dhChatVisitorList"></span></div>
+			    <div>Currently chatting: <span id="dhChatParticipantList"></span></div>
 	       </td>
 	   </tr>
 	   </table>
