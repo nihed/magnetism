@@ -24,4 +24,6 @@ public interface MessageSender {
 	 * @param clicker The new viewer; no notification is sent to them
 	 */
 	public void sendPostClickedNotification(Post post, List<User> viewers, User clicker);
+	
+	public void sendMySpaceNameChangedNotification(User user);
 }

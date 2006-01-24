@@ -55,6 +55,33 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
  */
 @Stateless
 public class MessageSenderBean implements MessageSender {
+	private class MySpaceNameChangedExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "mySpaceNameChanged";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
+		
+		private String mySpaceName;
+
+		public MySpaceNameChangedExtension(String newMySpaceName) {
+			mySpaceName = newMySpaceName;
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("mySpaceNameChanged", "xmlns", NAMESPACE, "name", mySpaceName);
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
+
 	static private final Logger logger = GlobalSetup.getLogger(MessageSenderBean.class);
 
 	// Injected beans, some are logically used by delegates but we can't 
@@ -377,6 +404,16 @@ public class MessageSenderBean implements MessageSender {
 				connection.sendPacket(message);
 			}
 		}
+
+		public void sendMySpaceNameChangedNotification(User user) {
+			XMPPConnection connection = getConnection();
+			Message message = new Message(user.getGuid().toJabberId("dumbhippo.com"),
+					Message.Type.HEADLINE);
+			String newMySpaceName = user.getAccount().getMySpaceName();
+			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
+			logger.info("Sending mySpaceNameChanged message to " + message.getTo());			
+			connection.sendPacket(message);
+		}
 	}
 
 	private class EmailSender {
@@ -576,5 +613,9 @@ public class MessageSenderBean implements MessageSender {
 		// Send to the poster, but not if they were in expandedRecipients
 		if (!seenPoster)
 			xmppSender.sendPostNotification(post.getPoster(), post, viewers, false);
+	}
+
+	public void sendMySpaceNameChangedNotification(User user) {
+		xmppSender.sendMySpaceNameChangedNotification(user);
 	}
 }
