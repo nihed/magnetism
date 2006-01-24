@@ -59,13 +59,12 @@ dh.framer._addUser = function(user, before) {
     
     user.span = document.createElement("span")
     user.span.appendChild(document.createTextNode(user.name))
-
-	if (before) {
-		userList.insertBefore(user.span, before)
-		userList.insertBefore(document.createTextNode(", "), before)
-	} else {
-		userList.appendChild(user.span)
-	}
+    
+	userList.insertBefore(user.span, before)
+	if (user.span.nextSibling)
+		userList.insertBefore(document.createTextNode(", "), user.span.nextSibling)
+	else if (user.span.previousSibling)
+		userList.insertBefore(document.createTextNode(", "), user.span)
 }
 
 dh.framer._removeUser = function(user) {
