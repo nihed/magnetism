@@ -104,7 +104,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				public Track call() throws Exception {
 					Query q;
 					
-					q = em.createQuery("from Track t where t.digest = :digest");
+					q = em.createQuery("FROM Track t WHERE t.digest = :digest");
 					q.setParameter("digest", key.getDigest());
 					
 					Track res;
@@ -201,7 +201,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			order = " ORDER BY h.lastUpdated DESC ";
 			break;
 		case FREQUENT:
-			order = " ORDER BY h.timesPlayed DESC ";
+			// we need the secondary order of lastUpdated, or you get 
+			// random choices from among tracks with same timesPlayed
+			order = " ORDER BY h.timesPlayed DESC, h.lastUpdated DESC ";
 			break;
 		}
 		
