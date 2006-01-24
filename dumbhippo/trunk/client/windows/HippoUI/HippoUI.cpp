@@ -848,7 +848,13 @@ HippoUI::setMySpaceName(const char *name)
         delete mySpace_;
     HippoBSTR wName;
     wName.setUTF8(name);
-    mySpace_ = new HippoMySpace(wName, this);  
+    mySpace_ = new HippoMySpace(wName, this);
+}
+
+void
+HippoUI::getSeenMySpaceComments()
+{
+    im_.getMySpaceSeenBlogComments();
 }
 
 void 
@@ -1461,10 +1467,11 @@ HippoUI::onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack)
 }
 
 void 
-HippoUI::onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment)
+HippoUI::onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment, bool doDisplay)
 {
     im_.addMySpaceComment(comment);
-    bubble_.addMySpaceCommentNotification(myId, blogId, comment);
+    if (doDisplay)
+        bubble_.addMySpaceCommentNotification(myId, blogId, comment);
 }
 
 void 

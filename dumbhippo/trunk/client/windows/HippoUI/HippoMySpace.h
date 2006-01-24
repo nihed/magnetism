@@ -29,10 +29,11 @@ public:
     ~HippoMySpace(void);
 
     typedef enum {
-        INITIAL,
+        IDLE,
+        RETRIEVING_SAVED_COMMENTS,
         FINDING_FRIENDID,
-        RETRIEVING_BLOG,
-        SCANNING_COMMENTS
+        INITIAL_COMMENT_SCAN,
+        COMMENT_CHANGE_POLL
     } State;
     
     State state_;

@@ -12,7 +12,6 @@
 HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 {
     ui_ = ui;
-    state_ = HippoMySpace::State::INITIAL;
     name_ = name;
     lastUpdateTime_ = 0;
     friendId_ = 0;
@@ -20,6 +19,9 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
     mySpaceIdSize_ = 14;
 
     blogUrlPrefix_ = "http://blog.myspace.com/index.cfm?fuseaction=blog.view";
+
+    state_ = HippoMySpace::State::RETRIEVING_SAVED_COMMENTS;
+    ui_->getSeenMySpaceComments(); // Start retriving seen comments
 }
 
 HippoMySpace::~HippoMySpace(void)
@@ -120,7 +122,10 @@ HippoMySpace::HippoMySpaceFriendIdHandler::handleComplete(void *responseData, lo
 void
 HippoMySpace::RefreshComments()
 {
-    state_ = HippoMySpace::State::RETRIEVING_BLOG;
+    if (state_ == HippoMySpace::State::FINDING_FRIENDID)
+        state_ = HippoMySpace::State::INITIAL_COMMENT_SCAN;
+    else
+        state_ = HippoMySpace::State::COMMENT_CHANGE_POLL;
     HippoMySpace::HippoMySpaceCommentHandler *handler = new HippoMySpace::HippoMySpaceCommentHandler(this);
     HippoHTTP *http = new HippoHTTP();
     HippoBSTR url;
@@ -140,7 +145,7 @@ HippoMySpace::idleRefreshComments(void *data)
 {
     HippoMySpace *mySpace = (HippoMySpace*)data;
     mySpace->RefreshComments();
-    return TRUE;
+    return FALSE;
 }
 
 void
@@ -159,6 +164,7 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
 
     g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
 
+    myspace_->state_ = HippoMySpace::State::IDLE;
     if (!(profileSectionStart = strstr(response, profileSectionElt))) {
         myspace_->ui_->debugLogU("failed to find blog comment profile");
         return;
@@ -242,5 +248,9 @@ HippoMySpace::addBlogComment(HippoMySpaceBlogComment &comment)
     }
     ui_->debugLogU("appending myspace comment %d", comment.commentId);
     comments_.append(new HippoMySpaceBlogComment(comment));
-    ui_->onNewMySpaceComment(friendId_, blogId_, comment);
+    // We only display them if this is the polling state, otherwise just record
+    // them as seen - we don't want to display all the comments the first time
+    // they log in
+    bool doDisplay = (state_ == HippoMySpace::State::COMMENT_CHANGE_POLL);
+    ui_->onNewMySpaceComment(friendId_, blogId_, comment, doDisplay);
 }

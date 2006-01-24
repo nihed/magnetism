@@ -869,6 +869,27 @@ HippoIM::handleRoomMessage(LmMessage     *message,
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+bool 
+HippoIM::checkMySpaceNameChangedMessage(LmMessage      *message,
+                                        char          **nameRet)
+{
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return false;
+    LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/myspace", "mySpaceNameChanged");
+    const char *name = lm_message_node_get_attribute(child, "name");
+    if (!name)
+       return false;
+    *nameRet = g_strdup(name);
+    return true;
+}
+
+void
+HippoIM::handleMySpaceNameChangedMessage(char           *name)
+{
+    ui_->setMySpaceName(name);
+    g_free(name);
+}
+
 void
 HippoIM::connectFailure(char *message)
 {
@@ -1073,7 +1094,7 @@ HippoIM::onGetMySpaceNameReply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    const char *name = lm_message_node_get_attribute(child, "mySpaceName");
+    char *name = g_strdup(lm_message_node_get_attribute(child, "mySpaceName"));
 
     if (!name) {
         im->ui_->debugLogU("getMySpaceName reply missing attributes");
@@ -1081,8 +1102,7 @@ HippoIM::onGetMySpaceNameReply(LmMessageHandler *handler,
     }
 
     im->ui_->debugLogU("getMySpaceName response: name=%s", name);
-    im->ui_->setMySpaceName(name);
-    im->getMySpaceSeenBlogComments(); // Now retrieve known blog comments
+    im->handleMySpaceNameChangedMessage(name);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1141,6 +1161,12 @@ HippoIM::onMessage (LmMessageHandler *handler,
     HippoBSTR userId;
     if (im->checkRoomMessage(message, &chatRoom, &userId))
         return im->handleRoomMessage(message, chatRoom, userId);
+
+    char *mySpaceName = NULL;
+    if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
+        im->handleMySpaceNameChangedMessage(mySpaceName);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
 
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/linkshare", "link");

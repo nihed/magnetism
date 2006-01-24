@@ -38,6 +38,8 @@ public:
 
     void addMySpaceComment(const HippoMySpaceBlogComment &comment);
 
+    void getMySpaceSeenBlogComments();
+
     // Try to sign in. Returns TRUE if we need to show a web page where
     // the user can sign in
     bool signIn();
@@ -74,7 +76,6 @@ private:
     void authenticate();
     void getClientInfo();
     void getMySpaceName();
-    void getMySpaceSeenBlogComments();
 
     void startSignInTimeout();
     void stopSignInTimeout();
@@ -103,6 +104,10 @@ private:
     LmHandlerResult handleRoomMessage(LmMessage     *message,
                                       HippoChatRoom *chatRoom,
                                       BSTR           userId);
+
+    bool checkMySpaceNameChangedMessage(LmMessage      *message,
+                                        char           **name);
+    void handleMySpaceNameChangedMessage(char           *name);
 
     void connectFailure(char *message);
     void authFailure(char *message);
