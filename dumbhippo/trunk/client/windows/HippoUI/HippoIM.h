@@ -84,8 +84,8 @@ private:
 
     void clearConnection();
 
-    void sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType);
-    void sendChatRoomEnter(HippoChatRoom *chatRoom);
+    void sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType, bool participant = true);
+    void sendChatRoomEnter(HippoChatRoom *chatRoom, bool participant);
     void sendChatRoomLeave(HippoChatRoom *chatRoom);
 
     bool checkRoomMessage(LmMessage      *message,
@@ -93,7 +93,8 @@ private:
                           BSTR           *userId);
     bool getChatUserInfo(LmMessageNode *parent,
                          int           *version,
-                         BSTR          *name);
+                         BSTR          *name,
+                         bool          *participant);
     bool getChatMessageInfo(LmMessageNode *parent,
                             int           *version,
                             BSTR          *name,

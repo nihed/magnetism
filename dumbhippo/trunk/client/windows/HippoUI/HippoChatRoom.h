@@ -13,16 +13,18 @@ class HippoChatUser
 public:
     HippoChatUser();
     HippoChatUser(const HippoChatUser &other);
-    HippoChatUser(BSTR userId, int version, BSTR name);
+    HippoChatUser(BSTR userId, int version, BSTR name, bool participant);
 
     BSTR getUserId() const { return userId_.m_str; }
     const int getVersion() const { return version_; }
     BSTR getName() const { return name_.m_str; };
+    bool isParticipant() const { return participant_; };
 
 private:
     HippoBSTR userId_;
     int version_;
     HippoBSTR name_;
+    bool participant_;
 };
 
 class HippoChatMessage
@@ -51,7 +53,7 @@ class HippoChatRoom : public IHippoChatRoom
 public:
     enum State {
         NONMEMBER,
-        GUEST,
+        VISITOR,
         PARTICIPANT
     };
 
@@ -87,7 +89,7 @@ public:
     STDMETHODIMP Rescan();
 
     // Called by HippoIM
-    void addUser(BSTR userId, int userVersion, BSTR userName);
+    void addUser(BSTR userId, int userVersion, BSTR userName, bool participant);
     void removeUser(BSTR userId);
     void addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial);
     void clear(); // Called on reconnect, since users and messages will be resent

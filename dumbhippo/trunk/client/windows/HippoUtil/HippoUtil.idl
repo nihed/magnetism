@@ -110,7 +110,7 @@ library HippoUtil {
     interface IHippoChatRoomEvents : IDispatch
     {
         [helpstring("User joined the chat room")]
-        [id(HIPPO_DISPID_ONUSERJOIN)] HRESULT OnUserJoin([in] BSTR userId, [in] int version, [in] BSTR name);
+        [id(HIPPO_DISPID_ONUSERJOIN)] HRESULT OnUserJoin([in] BSTR userId, [in] int version, [in] BSTR name, [in] BOOL partipant);
         [helpstring("User left the chat room")]
         [id(HIPPO_DISPID_ONUSERLEAVE)] HRESULT OnUserLeave([in] BSTR userId);
         [helpstring("New message in the chat room")]

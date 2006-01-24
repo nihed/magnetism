@@ -159,9 +159,12 @@ HippoIM::onChatRoomStateChange(HippoChatRoom *chatRoom, HippoChatRoom::State old
 
     if (oldState == HippoChatRoom::NONMEMBER) {
         chatRoom->clear();
-        sendChatRoomEnter(chatRoom);
+        sendChatRoomEnter(chatRoom, chatRoom->getState() == HippoChatRoom::PARTICIPANT);
     } else if (chatRoom->getState() == HippoChatRoom::NONMEMBER) {
         sendChatRoomLeave(chatRoom);
+    } else {
+        // Change from Visitor => Participant or vice-versa
+        sendChatRoomEnter(chatRoom, chatRoom->getState() == HippoChatRoom::PARTICIPANT);
     }
 }
 
@@ -699,11 +702,20 @@ HippoIM::clearConnection()
 }
 
 void 
-HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType)
+HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType, bool participant)
 {
     char *postId = idToJabber(chatRoom->getPostId());
     char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
     LmMessage *message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_PRESENCE, subType);
+
+    if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
+        LmMessageNode *xNode = lm_message_node_add_child(message->node, "x", NULL);
+        lm_message_node_set_attribute(xNode, "xmlns", "http://jabber.org/protocol/muc");
+
+        LmMessageNode *userInfoNode = lm_message_node_add_child(xNode, "userInfo", NULL);
+        lm_message_node_set_attribute(userInfoNode, "xmlns", "http://dumbhippo.com/protocol/rooms");
+        lm_message_node_set_attribute(userInfoNode, "role", participant ? "participant" : "visitor");
+    }
 
     GError *error = NULL;
     lm_connection_send(lmConnection_, message, &error);
@@ -721,9 +733,9 @@ HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType)
 }
 
 void 
-HippoIM::sendChatRoomEnter(HippoChatRoom *chatRoom)
+HippoIM::sendChatRoomEnter(HippoChatRoom *chatRoom, bool participant)
 {
-    sendChatRoomPresence(chatRoom, LM_MESSAGE_SUB_TYPE_AVAILABLE);
+    sendChatRoomPresence(chatRoom, LM_MESSAGE_SUB_TYPE_AVAILABLE, participant);
 }
 
 void 
@@ -763,7 +775,8 @@ HippoIM::checkRoomMessage (LmMessage      *message,
 bool
 HippoIM::getChatUserInfo(LmMessageNode *parent,
                          int           *version,
-                         BSTR          *name)
+                         BSTR          *name,
+                         bool          *participant)
 {
     LmMessageNode *infoNode = findChildNode(parent, "http://dumbhippo.com/protocol/rooms", "userInfo");
     if (!infoNode) {
@@ -773,6 +786,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
 
     const char *versionU = lm_message_node_get_attribute(infoNode, "version");
     const char *nameU = lm_message_node_get_attribute(infoNode, "name");
+    const char *roleU = lm_message_node_get_attribute(infoNode, "role");
 
     if (!versionU || !nameU) {
         hippoDebugLogW(L"userInfo node without name and version");
@@ -780,9 +794,10 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     }
 
     *version = atoi(versionU);
+    *participant = !roleU || strcmp(roleU, "participant") == 0;
+
     HippoBSTR tmpName;
     tmpName.setUTF8(nameU);
-
     if (!tmpName || FAILED(tmpName.CopyTo(name)))
         return false;
 
@@ -964,7 +979,8 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
             // We left the previous contents there while we were disconnected,
             // clear it since we'll now get the current contents sent
             im->chatRooms_[i]->clear();
-            im->sendChatRoomEnter(im->chatRooms_[i]);
+            if (im->chatRooms_[i]->getState() != HippoChatRoom::NONMEMBER) 
+                im->sendChatRoomEnter(im->chatRooms_[i], im->chatRooms_[i]->getState() == HippoChatRoom::PARTICIPANT);
         }
 
         im->getClientInfo();
@@ -1266,10 +1282,11 @@ HippoIM::onPresence (LmMessageHandler *handler,
         
         int version;
         HippoBSTR name;
-        if (!im->getChatUserInfo(xNode, &version, &name))
+        bool participant;
+        if (!im->getChatUserInfo(xNode, &version, &name, &participant))
             return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
-        chatRoom->addUser(userId, version, name);
+        chatRoom->addUser(userId, version, name, participant);
 
     } else if (subType == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
         chatRoom->removeUser(userId);

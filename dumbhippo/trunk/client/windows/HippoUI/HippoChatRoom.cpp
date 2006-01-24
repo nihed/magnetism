@@ -14,11 +14,12 @@ HippoChatUser::HippoChatUser()
 {
 }
 
-HippoChatUser::HippoChatUser(BSTR userId, int version, BSTR name) 
+HippoChatUser::HippoChatUser(BSTR userId, int version, BSTR name, bool participant) 
 {
     userId_ = userId;
     version_ = version;
     name_ = name;
+    participant_ = participant;
 }
 
 HippoChatUser::HippoChatUser(const HippoChatUser &other)
@@ -123,13 +124,13 @@ HippoChatRoom::removeListener(HippoChatRoomListener *listener)
 }
 
 void 
-HippoChatRoom::addUser(BSTR userId, int userVersion, BSTR userName)
+HippoChatRoom::addUser(BSTR userId, int userVersion, BSTR userName, bool participant)
 {
     // Treat adding an existing user as adding then removing; this allows
     // for version/name changes.
     removeUser(userId);
 
-    HippoChatUser user(userId, userVersion, userName);
+    HippoChatUser user(userId, userVersion, userName, participant);
     users_.append(user);
 
     notifyUserJoin(user);
@@ -155,17 +156,19 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
         HippoQIPtr<IDispatch> dispatch(data.pUnk);
         if (dispatch) {
             DISPPARAMS dispParams;
-            VARIANTARG args[5];
+            VARIANTARG args[4];
 
-            args[0].vt = VT_BSTR;
-            args[0].bstrVal = user.getName();
-            args[1].vt = VT_INT;
-            args[1].intVal = user.getVersion();
-            args[2].vt = VT_BSTR;
-            args[2].bstrVal = user.getUserId();
+            args[0].vt = VT_BOOL;
+            args[0].boolVal = user.isParticipant() ? TRUE : FALSE;
+            args[1].vt = VT_BSTR;
+            args[1].bstrVal = user.getName();
+            args[2].vt = VT_INT;
+            args[2].intVal = user.getVersion();
+            args[3].vt = VT_BSTR;
+            args[3].bstrVal = user.getUserId();
 
             dispParams.rgvarg = args;
-            dispParams.cArgs = 3;
+            dispParams.cArgs = 4;
             dispParams.cNamedArgs = 0;
             dispParams.rgdispidNamedArgs = NULL;
 
@@ -233,7 +236,7 @@ HippoChatRoom::notifyUserLeave(const HippoChatUser &user)
 void 
 HippoChatRoom::addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial)
 {
-    HippoChatUser user(userId, userVersion, userName);
+    HippoChatUser user(userId, userVersion, userName, true);
     HippoChatMessage message(user, text, timestamp, serial);
 
     messages_.append(message);
@@ -444,7 +447,7 @@ HippoChatRoom::Join(BOOL participant)
         participantCount_++;
 
     if (memberCount_ == 1) {
-        setState(participant ? PARTICIPANT : GUEST);
+        setState(participant ? PARTICIPANT : VISITOR);
     } else if (participant && participantCount_ == 1) {
         // Was a guest, become a participant
         setState(PARTICIPANT);
@@ -470,7 +473,7 @@ HippoChatRoom::Leave(BOOL participant)
         setState(NONMEMBER);
     } else if (participant && participantCount_ == 0) {
         // Was a participant, become a guest
-        setState(GUEST);
+        setState(VISITOR);
     }
 
     return S_OK;
