@@ -210,7 +210,7 @@ public class Room {
 		
 		// Send the user the list of current messages
 		for (UserInfo memberInfo : presentUsers.values()) {
-			if (!userInfo.getUsername().equals(username)) // Skip this user, to avoid sending two notifications
+			if (!memberInfo.getUsername().equals(username)) // Skip this user, to avoid sending two notifications
 				sendPresenceAvailable(jid, memberInfo);
 		}
 		
