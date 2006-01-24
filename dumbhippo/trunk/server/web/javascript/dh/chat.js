@@ -117,7 +117,7 @@ dh.chat.UserList = function(insertCallback, removeCallback) {
 			if (this._users[i].userId == userId) {
 				var old = this._users[i]
 				this._users.splice(i, 1)
-				this.removeCallback(old)
+				this._removeCallback(old)
 			}
 		}
 	}
