@@ -16,12 +16,12 @@ class HippoPreferences
 public:
     HippoPreferences(HippoInstanceType instanceType);
 
-    HRESULT getMessageServer(BSTR *server);
+    void getMessageServer(BSTR *server) throw (std::bad_alloc);
     void setMessageServer(BSTR server);
     void parseMessageServer(BSTR         *host,
                             unsigned int *port);
 
-    HRESULT getWebServer(BSTR *server);
+    void getWebServer(BSTR *server) throw (std::bad_alloc);
     void setWebServer(BSTR server);
     void parseWebServer(BSTR         *host,
                         unsigned int *port);

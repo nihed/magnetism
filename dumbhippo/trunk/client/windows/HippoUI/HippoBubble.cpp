@@ -502,13 +502,14 @@ HippoBubble::OpenExternalURL(BSTR url)
     return S_OK;
 }
 
-HRESULT
+STDMETHODIMP
 HippoBubble::GetServerBaseUrl(BSTR *ret)
 {
     HippoBSTR temp;
     ui_->getRemoteURL(L"", &temp);
 
-    return temp.CopyTo(ret);
+    temp.CopyTo(ret);
+    return S_OK;
 }
 
 void

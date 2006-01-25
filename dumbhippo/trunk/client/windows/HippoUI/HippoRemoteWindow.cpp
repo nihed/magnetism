@@ -61,10 +61,7 @@ HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare, WCHAR *shar
     HippoUIUtil::encodeQueryString(queryString, queryParamNames, queryParamValues);
 
     HippoBSTR shareURL;
-    if (!SUCCEEDED (ui_->getRemoteURL(HippoBSTR(L"sharelink"), &shareURL))) {
-        ui_->debugLogW(L"out of memory");
-        return;
-    }
+    ui_->getRemoteURL(HippoBSTR(L"sharelink"), &shareURL);
             
     shareURL.Append(queryString);
 

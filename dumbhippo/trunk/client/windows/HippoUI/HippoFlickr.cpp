@@ -12,7 +12,7 @@
 extern "C" {
 #include <md5.h>
 }
-#include <gdiplus.h>
+#include "cleangdiplus.h"
 
 #import <msxml3.dll>  named_guids
 #include <mshtml.h>
@@ -271,7 +271,7 @@ HippoFlickr::computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBS
     utf = (unsigned char *) g_utf16_to_utf8(sig, -1, NULL, NULL, NULL);
     MD5Context md5Ctx;
     MD5Init(&md5Ctx);
-    MD5Update(&md5Ctx, utf, strlen((char*)utf));
+    MD5Update(&md5Ctx, utf, static_cast<unsigned int>(strlen((char*)utf)));
     MD5Final(digest, &md5Ctx);
     g_free(utf);
     for (unsigned int i = 0; i < 16; i++) {

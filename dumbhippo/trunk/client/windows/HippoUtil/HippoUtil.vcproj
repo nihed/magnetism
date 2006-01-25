@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILDING_HIPPO_UTIL"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILDING_HIPPO_UTIL;NOMINMAX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -163,6 +163,9 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath=".\cleangdiplus.h">
+			</File>
+			<File
 				RelativePath=".\HippoArray.h">
 			</File>
 			<File
@@ -176,6 +179,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoRegKey.h">
+			</File>
+			<File
+				RelativePath=".\HippoStdAfx.h">
 			</File>
 			<File
 				RelativePath=".\HippoUtil.h">

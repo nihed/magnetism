@@ -642,3 +642,10 @@ HippoYahooMonitor::getCurrentTrack() const
 	assert(hasCurrentTrack());
 	return impl_->track_;
 }
+
+const std::vector<HippoTrackInfo>
+HippoYahooMonitor::getPrimingData() const
+{
+    std::vector<HippoTrackInfo> empty;
+    return empty;
+}

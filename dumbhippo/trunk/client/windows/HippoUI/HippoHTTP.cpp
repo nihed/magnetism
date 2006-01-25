@@ -379,15 +379,13 @@ HippoHTTP::parseURL(WCHAR         *url,
         return false;
 
     HippoBSTR host(components.dwHostNameLength, components.lpszHostName);
-    if (FAILED(host.CopyTo(hostReturn)))
-        return false;
+    host.CopyTo(hostReturn);
 
     *portReturn = components.nPort;
 
     // We don't care about the division between the path and the query string
     HippoBSTR target(components.lpszUrlPath);
-    if (FAILED(target.CopyTo(targetReturn)))
-        return false;
+    target.CopyTo(targetReturn);
 
     return true;
 }

@@ -123,10 +123,10 @@ HippoIM::getState()
     return state_;
 }
 
-HRESULT
+void
 HippoIM::getUsername(BSTR *ret)
 {
-    return username_.CopyTo(ret);
+    username_.CopyTo(ret);
 }
 
 HRESULT
@@ -311,24 +311,16 @@ HippoIM::addMySpaceComment(const HippoMySpaceBlogComment &comment)
     hippoDebugLogW(L"Sent MySpace comment xmpp message");
 }
 
-HRESULT
+void
 HippoIM::getAuthURL(BSTR *result)
 {
     HippoBSTR url(L"http://");
     HippoBSTR webServer;
-    HRESULT hr;
 
-    hr = ui_->getPreferences()->getWebServer(&webServer);
-    if (FAILED(hr))
-        return hr;
-    hr = url.Append(webServer);
-    if (FAILED(hr))
-        return hr;
-    hr = url.Append(L"/jsf/");
-    if (FAILED(hr))
-        return hr;
-
-    return url.CopyTo(result);
+    ui_->getPreferences()->getWebServer(&webServer);
+    url.Append(webServer);
+    url.Append(L"/jsf/");
+    url.CopyTo(result);
 }
 
 void
@@ -336,8 +328,7 @@ HippoIM::forgetAuth()
 {
     HippoBSTR url;
 
-    if (FAILED(getAuthURL(&url)))
-        return;
+    getAuthURL(&url);
 
     InternetSetCookie(url, NULL,  L"auth=; Path=/");
     username_ = NULL;
@@ -379,8 +370,11 @@ HippoIM::loadAuth()
     unsigned int matchPort; // unused
     ui_->getPreferences()->parseWebServer(&matchHost, &matchPort);
 
-    if (FAILED(getAuthURL(&url)))
+    try {
+        getAuthURL(&url);
+    } catch (...) {
         goto out;
+    }
 
 retry:
     if (!InternetGetCookieEx(url, 
@@ -784,8 +778,7 @@ HippoIM::checkRoomMessage (LmMessage      *message,
     *chatRoom = NULL;
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
         if (wcscmp(chatRooms_[i]->getPostId(), tmpPostId) == 0) {
-            if (FAILED(tmpUserId.CopyTo(userId)))
-                return false;
+            tmpUserId.CopyTo(userId);
 
             *chatRoom = chatRooms_[i];
             return true;
@@ -822,8 +815,9 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
 
     HippoBSTR tmpName;
     tmpName.setUTF8(nameU);
-    if (!tmpName || FAILED(tmpName.CopyTo(name)))
+    if (!tmpName)
         return false;
+    tmpName.CopyTo(name);
 
     return true;
 }
@@ -857,8 +851,9 @@ HippoIM::getChatMessageInfo(LmMessageNode *parent,
     HippoBSTR tmpName;
     tmpName.setUTF8(nameU);
 
-    if (!tmpName || FAILED(tmpName.CopyTo(name)))
+    if (!tmpName)
         return false;
+    tmpName.CopyTo(name);
 
     return true;
 }
@@ -1463,7 +1458,7 @@ HippoIM::parseRoomJid(const char *jid,
     BSTR tmpPostId = NULL;
     BSTR tmpUserId = NULL;
 
-    char *room = g_strndup(jid, at - jid);
+    char *room = g_strndup(jid, static_cast<gsize>(at - jid));
     bool result = idFromJabber(room, &tmpPostId);
     g_free(room);
 

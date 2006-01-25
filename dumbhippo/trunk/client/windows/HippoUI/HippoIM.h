@@ -52,12 +52,12 @@ public:
     bool hasAuth();
 
     // Forget any remembered authentication information
-    void forgetAuth();
+    void forgetAuth() throw (std::bad_alloc);
 
     // Get the current state
     State getState();
 
-    HRESULT getUsername(BSTR *ret);
+    void getUsername(BSTR *ret) throw (std::bad_alloc);
 
     HRESULT getChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
 
@@ -67,7 +67,7 @@ public:
     void removeChatRoom(HippoChatRoom *chatRoom);
 
 private:
-    HRESULT getAuthURL(BSTR *result);
+    void getAuthURL(BSTR *result) throw (std::bad_alloc);
 
     void stateChange(State state);
 
@@ -92,16 +92,16 @@ private:
 
     bool checkRoomMessage(LmMessage      *message,
                           HippoChatRoom **chatRoom,
-                          BSTR           *userId);
+                          BSTR           *userId) throw (std::bad_alloc);
     bool getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name,
-                         bool          *participant);
+                         bool          *participant) throw (std::bad_alloc);
     bool getChatMessageInfo(LmMessageNode *parent,
                             int           *version,
                             BSTR          *name,
                             INT64         *timestamp,
-                            int           *serial);
+                            int           *serial) throw (std::bad_alloc);
     LmHandlerResult handleRoomMessage(LmMessage     *message,
                                       HippoChatRoom *chatRoom,
                                       BSTR           userId);

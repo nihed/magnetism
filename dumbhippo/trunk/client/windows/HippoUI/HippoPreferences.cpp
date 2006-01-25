@@ -26,13 +26,13 @@ HippoPreferences::HippoPreferences(HippoInstanceType instanceType)
     load();
 }
 
-HRESULT
+void
 HippoPreferences::getMessageServer(BSTR *server)
 {
     if (messageServer_)
-        return messageServer_.CopyTo(server);
+        messageServer_.CopyTo(server);
     else
-        return HippoBSTR(DEFAULT_MESSAGE_SERVER).CopyTo(server);
+        HippoBSTR(DEFAULT_MESSAGE_SERVER).CopyTo(server);
 }
 
 void
@@ -94,13 +94,13 @@ HippoPreferences::setMessageServer(BSTR server)
     save();
 }
 
-HRESULT
+void
 HippoPreferences::getWebServer(BSTR *server)
 {
     if (webServer_)
-        return webServer_.CopyTo(server);
+        webServer_.CopyTo(server);
     else
-        return HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
+        HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
 }
 
 void 

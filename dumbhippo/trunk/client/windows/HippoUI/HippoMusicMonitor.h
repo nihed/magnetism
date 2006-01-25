@@ -7,6 +7,8 @@
 #include "HippoArray.h"
 #include "HippoUtil.h"
 
+#include <vector>
+
 #define HIPPO_TRACK_INFO_PROP(prop)                                                     \
 public:                                                                                 \
     bool has ## prop() const { return prop ## _.Length() > 0; }                         \
@@ -106,6 +108,8 @@ public:
 	
 	virtual bool hasCurrentTrack() const = 0;
 	virtual const HippoTrackInfo& getCurrentTrack() const = 0;
+    virtual const std::vector<HippoTrackInfo> getPrimingData() const = 0;
+
 	void addListener(HippoMusicListener *listener);
 	void removeListener(HippoMusicListener *listener);
 

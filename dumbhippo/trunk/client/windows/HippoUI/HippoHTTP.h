@@ -6,6 +6,7 @@
 
 #include "stdafx.h"
 #include <wininet.h>
+#include <new>
 
 class HippoHTTPAsyncHandler
 {
@@ -31,7 +32,7 @@ public:
 private:
     HINTERNET inetHandle_;
 
-    bool parseURL(WCHAR *url, BSTR *host, INTERNET_PORT *port, BSTR *target);
+    bool parseURL(WCHAR *url, BSTR *host, INTERNET_PORT *port, BSTR *target) throw (std::bad_alloc);
     bool writeAllToStream(IStream *stream, void *data, ULONG bytesTotal, HippoHTTPAsyncHandler *handler);
     bool writeToStreamAsUTF8(IStream *stream,
                              WCHAR   *str,

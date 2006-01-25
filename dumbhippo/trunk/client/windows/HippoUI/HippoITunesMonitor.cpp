@@ -660,3 +660,10 @@ HippoITunesMonitor::getCurrentTrack() const
 	assert(hasCurrentTrack());
 	return impl_->track_;
 }
+
+const std::vector<HippoTrackInfo>
+HippoITunesMonitor::getPrimingData() const
+{
+    std::vector<HippoTrackInfo> empty;
+    return empty;
+}

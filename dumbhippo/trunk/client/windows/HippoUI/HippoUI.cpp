@@ -12,9 +12,10 @@
 #include <HippoRegistrar.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
-#include <gdiplus.h>
+#include "cleangdiplus.h"
 #include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
+#include <limits>
 #include "Resource.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
@@ -113,7 +114,8 @@ HIPPO_DEFINE_REFCOUNTING(HippoUI)
 
 // We just delegate IDispatch to the standard Typelib-based version.
 
-    STDMETHODIMP
+
+STDMETHODIMP
 HippoUI::GetTypeInfoCount(UINT *pctinfo)
 {
     if (pctinfo == NULL)
@@ -248,9 +250,7 @@ STDMETHODIMP
 HippoUI::ShowRecent()
 {
     HippoBSTR recentURL;
-    HRESULT hr = getRemoteURL(HippoBSTR(L"home"), &recentURL);
-    if (!SUCCEEDED(hr))
-        return hr;
+    getRemoteURL(HippoBSTR(L"home"), &recentURL);
     launchBrowser(recentURL);
     return S_OK;
 }
@@ -559,11 +559,12 @@ HippoUI::GetChatRoom(BSTR postId, IHippoChatRoom **result)
     return im_.getChatRoom(postId, result);
 }
 
-HRESULT
+STDMETHODIMP
 HippoUI::GetLoginId(BSTR *ret)
 {
     // GUID is same as username
-    return im_.getUsername(ret);
+    im_.getUsername(ret);
+    return S_OK;
 }
 
 void
@@ -745,8 +746,7 @@ HippoUI::displaySharedLink(BSTR postId, BSTR url)
     if (isNoFrameURL(url)) {
         targetURL = url;
     } else {
-        if (!SUCCEEDED (getRemoteURL(HippoBSTR(L"visit?post="), &targetURL)))
-            return;
+        getRemoteURL(HippoBSTR(L"visit?post="), &targetURL);
         targetURL.Append(postId);
     }
 
@@ -1034,12 +1034,12 @@ HippoUI::showPreferences()
         SendDlgItemMessage(preferencesDialog_, IDC_LOGOICON, STM_SETICON, (WPARAM)bigIcon_, 0);
 
         HippoBSTR messageServer;
-        if (SUCCEEDED (preferences_.getMessageServer(&messageServer)))
-            SetDlgItemText(preferencesDialog_, IDC_MESSAGE_SERVER, messageServer);
+        preferences_.getMessageServer(&messageServer);
+        SetDlgItemText(preferencesDialog_, IDC_MESSAGE_SERVER, messageServer);
 
         HippoBSTR webServer;
-        if (SUCCEEDED (preferences_.getWebServer(&webServer)))
-            SetDlgItemText(preferencesDialog_, IDC_WEB_SERVER, webServer);
+        preferences_.getWebServer(&webServer);
+        SetDlgItemText(preferencesDialog_, IDC_WEB_SERVER, webServer);
     }
     
     updateForgetPassword();
@@ -1208,7 +1208,7 @@ HippoUI::updateMenu()
 // Find the pathname for a local HTML file, based on the location of the .exe
 // We could alternatively use res: URIs and embed the HTML files in the
 // executable, but this is probably more flexible
-HRESULT
+void
 HippoUI::getAppletURL(BSTR  filename, 
                       BSTR *url)
 {
@@ -1220,63 +1220,48 @@ HippoUI::getAppletURL(BSTR  filename,
     WCHAR baseBuf[MAX_PATH];
 
     if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
-        return E_FAIL;
+        throw HResultException::create(GetLastError());
 
     for (size_t i = wcslen(baseBuf); i > 0; i--)
         if (baseBuf[i - 1] == '\\')
             break;
 
     if (i == 0)  // No \ in path?
-        return E_FAIL;
+        throw HResultException::create(E_FAIL);
 
     HippoBSTR path((UINT)i, baseBuf);
-    hr = path.Append(L"applets\\");
-    if (!SUCCEEDED (hr))
-        return hr;
+    path.Append(L"applets\\");
 
-    hr = path.Append(filename);
-    if (!SUCCEEDED (hr))
-        return hr;
+    path.Append(filename);
 
     WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
     DWORD urlLength = INTERNET_MAX_URL_LENGTH;
     hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
     if (!SUCCEEDED (hr))
-        return hr;
+        throw HResultException::create(hr);
 
     *url = SysAllocString(urlBuf);
-    return *url ? S_OK : E_OUTOFMEMORY;
+    if (*url == 0)
+        throw std::bad_alloc();
 }
 
 // Get the URL of a file on the web server
-HRESULT
+void
 HippoUI::getRemoteURL(BSTR  appletName, 
                       BSTR *result)
 {
-    HRESULT hr;
     HippoBSTR webServer;
     HippoBSTR url(L"http://");
 
-    if (!url)
-        return E_OUTOFMEMORY;
+    preferences_.getWebServer(&webServer);
 
-    hr = preferences_.getWebServer(&webServer);
-    if (FAILED (hr))
-        return hr;
+    url.Append(webServer);
 
-    hr = url.Append(webServer);
-    if (FAILED (hr))
-        return hr;
+    url.Append(L"/");
 
-    hr = url.Append(L"/");
-    if (FAILED (hr))
-        return hr;
+    url.Append(appletName);
 
-    hr = url.Append(appletName);
-    if (FAILED (hr))
-        return hr;
-
-    return url.CopyTo(result);
+    url.CopyTo(result);
 }
 
 bool
@@ -1555,8 +1540,12 @@ win32SourceDispatch(GSource     *source,
         }
     }
 
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+    try {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    } catch (...) {
+        hippoDebugLogW(L"*** Unhandled exception trapped in dispatch");
+    }
 
     return TRUE;
 }
@@ -1647,6 +1636,25 @@ editToolbar()
 
     HippoToolbarEdit edit;
     edit.ensureToolbarButton();
+}
+
+static void
+test_alloc_failure_behavior()
+{
+#if 0
+    // using just max() without / 2 will trigger some funky case 
+    // in the visual studio debug malloc
+    size_t maxSize = std::numeric_limits<size_t>::max() / 2;
+    try {
+        void *t = new char[maxSize];
+        hippoDebugLogW(L"allocated t is %p", t);
+        delete t; // in case it succeeded, but may be 0...
+    } catch (std::bad_alloc e) {
+        hippoDebugLogU("exception is %s", e.what());
+    } catch (...) {
+        hippoDebugLogW(L"caught generic exception on alloc failure");
+    }
+#endif
 }
 
 int APIENTRY 
@@ -1745,6 +1753,8 @@ WinMain(HINSTANCE hInstance,
 
     source = win32SourceNew(loop);
     g_source_attach(source, NULL);
+
+    test_alloc_failure_behavior();
 
     g_main_loop_run(loop);
 

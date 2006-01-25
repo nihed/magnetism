@@ -132,7 +132,12 @@ HippoUpgrader::setUpgradeInfo(const char *minVersion,
 
     minVersion_ = g_strdup(minVersion);
     currentVersion_ = g_strdup(currentVersion);
-    downloadUrl_.setUTF8(downloadUrl);
+    try {
+        downloadUrl_.setUTF8(downloadUrl);
+    } catch (std::exception e) {
+        hippoDebugLogU("Failed to convert download url from UTF-8: %s", e.what());
+        return;
+    }
 
     if (compareVersions(VERSION, currentVersion_) < 0) {
         startDownload();
@@ -250,10 +255,12 @@ HippoUpgrader::openDownloadFile(BSTR  basename,
     if (!file)
         return false;
 
-    HippoBSTR tmp = path;
-    HRESULT hr = tmp.CopyTo(filename);
-    if (!SUCCEEDED(hr))
+    try {
+        HippoBSTR tmp = path;
+        tmp.CopyTo(filename);
+    } catch (std::bad_alloc e) {
         return false;
+    }
 
     downloadFile_ = file;
 

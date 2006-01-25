@@ -4,17 +4,7 @@
 //
 
 #pragma once
-
-
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-#define UNICODE
-// Windows Header Files:
-#include <windows.h>
-// C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
+#include "HippoStdAfx.h"
 
 /* We want to use __uuidof() for type-safe QueryInterface, but a bunch
  * of __declspec(uuid) declarations are only found in the PlatformSDK
