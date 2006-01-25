@@ -118,7 +118,7 @@ HippoBubble::embedIE(void)
     GetClientRect(window_,&rect);
     HippoBSTR srcURL;
     ui_->getAppletURL(L"notification.xml", &srcURL);
-    ie_ = new HippoIE(window_, srcURL, ieCallback_, this);
+    ie_ = new HippoIE(ui_, window_, srcURL, ieCallback_, this);
 
     HippoBSTR appletURL;
     ui_->getAppletURL(L"", &appletURL);

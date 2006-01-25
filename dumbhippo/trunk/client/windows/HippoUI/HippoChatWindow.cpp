@@ -80,7 +80,7 @@ HippoChatWindow::embedIE(void)
     HippoBSTR srcURL;
     ui_->getRemoteURL(L"chatwindow?postId=", &srcURL);
     srcURL.Append(postId_);
-    ie_ = new HippoIE(window_, srcURL, ieCallback_, NULL);
+    ie_ = new HippoIE(ui_, window_, srcURL, ieCallback_, NULL);
     ie_->setThreeDBorder(false);
 
     ie_->create();

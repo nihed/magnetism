@@ -41,7 +41,7 @@ HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *e
                            NULL, NULL, instance_, NULL);
     hippoSetWindowData<HippoIEWindow>(window_, this);
     ieCb_ = new HippoIEWindowIECallback(this);
-    ie_ = new HippoIE(window_, src, ieCb_, external);
+    ie_ = new HippoIE(ui_, window_, src, ieCb_, external);
     created_ = FALSE;
     ui_->registerWindowMsgHook(window_, this);
 }

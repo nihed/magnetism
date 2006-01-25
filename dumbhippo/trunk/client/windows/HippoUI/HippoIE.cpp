@@ -16,13 +16,15 @@
 #include <HippoUtil.h>
 #include "HippoExternal.h"
 #include "HippoLogWindow.h"
+#include "HippoUI.h"
 
 using namespace MSXML2;
 
 #define NOTIMPLEMENTED assert(0); return E_NOTIMPL
 
-HippoIE::HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
+HippoIE::HippoIE(HippoUI *ui, HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
 {
+    ui_ = ui;
     window_ = window;
     docSrc_ = src;
     callback_ = cb;
@@ -260,6 +262,73 @@ HippoIE::resize(RECT *rect)
 {
     HippoQIPtr<IOleInPlaceObject> inPlace = ie_;
     inPlace->SetObjectRects(rect, rect);
+}
+
+bool 
+HippoIE::handleNavigation(IDispatch *targetDispatch,
+                          BSTR       url,
+                          bool       isPost)
+{
+    // Three cases here:
+    //
+    // 1. If it's normal navigation (of the toplevel window, not a post),
+    //    to a normal looking URL (http, https, ftp protocol), then open
+    //    the link in a new IE window, and cancel navigation.
+    //
+    // 2. If it's navigation not of the toplevel window (of an internal
+    //    frame) and the link points to our site (via http or https)
+    //    then allow the navigation.
+    //
+    // 3. Otherwise, cancel navigation
+    
+    HippoQIPtr<IWebBrowser2> targetWebBrowser = targetDispatch;
+    bool toplevelNavigation = (IWebBrowser2 *)targetWebBrowser == (IWebBrowser2 *)browser_;
+
+    bool ourSite = false;
+    bool normalURL = false;
+    
+    URL_COMPONENTS components;
+    ZeroMemory(&components, sizeof(components));
+    components.dwStructSize = sizeof(components);
+
+    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
+    // to return pointers into the passed in URL along with lengths. The 
+    // specific non-zero value is irrelevant
+    components.dwHostNameLength = 1;
+    components.dwUserNameLength = 1;
+    components.dwPasswordLength = 1;
+    components.dwUrlPathLength = 1;
+    components.dwExtraInfoLength = 1;
+
+    if (InternetCrackUrl(url, 0, 0, &components)) {
+        // Note that this blocks things like itms: and aim:, we may need to loosen
+        // that eventually for desired functionality, but be safe for now.
+        if (components.nScheme == INTERNET_SCHEME_HTTP ||
+            components.nScheme == INTERNET_SCHEME_HTTPS ||
+            components.nScheme == INTERNET_SCHEME_FTP)
+            normalURL = true;
+
+        HippoBSTR webServer;
+        unsigned int port;
+        ui_->getPreferences()->parseWebServer(&webServer, &port);
+
+        if ((components.nScheme == INTERNET_SCHEME_HTTP ||
+            components.nScheme == INTERNET_SCHEME_HTTPS) &&
+            components.dwHostNameLength == webServer.Length() &&
+            wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) == 0)
+            ourSite = true;
+    }
+
+    if (toplevelNavigation && !isPost && normalURL) {
+        ui_->launchBrowser(url);
+        return true;
+    } else if (!toplevelNavigation && ourSite) {
+        hippoDebugLogW(L"Allowing internal frame navigation to %ls", url);
+        return false;
+    } else {
+        hippoDebugLogW(L"Denying navigation to %ls", url);
+        return true;
+    }
 }
 
 // IDocHostUIHandler
@@ -783,37 +852,66 @@ HippoIE::Invoke (DISPID        member,
                       VARIANT      *result,
                       EXCEPINFO    *excepInfo,  
                       unsigned int *argErr)
- {
-     switch (member) {
+{
+    switch (member) {
+        case DISPID_BEFORENAVIGATE2:
+            if (dispParams->cArgs != 7)
+                return DISP_E_BADPARAMCOUNT;
+            if (!(dispParams->rgvarg[6].vt == VT_DISPATCH &&
+                  dispParams->rgvarg[5].vt == (VT_BYREF | VT_VARIANT) &&
+                  dispParams->rgvarg[5].pvarVal->vt == VT_BSTR &&
+                  dispParams->rgvarg[3].vt == (VT_BYREF | VT_VARIANT) &&
+                  dispParams->rgvarg[3].pvarVal->vt == VT_BSTR &&
+                  dispParams->rgvarg[2].vt == (VT_BYREF | VT_VARIANT) &&
+                  dispParams->rgvarg[2].pvarVal->vt == (VT_BYREF | VT_VARIANT) && 
+                  (dispParams->rgvarg[2].pvarVal->pvarVal->vt == (VT_ARRAY | VT_UI1) ||
+                   dispParams->rgvarg[2].pvarVal->pvarVal->vt == VT_EMPTY) &&
+                  dispParams->rgvarg[1].vt == (VT_BYREF | VT_VARIANT) &&
+                  dispParams->rgvarg[1].pvarVal->vt == VT_BSTR &&
+                  dispParams->rgvarg[0].vt == (VT_BYREF | VT_BOOL))) 
+            {
+                // If we get here, most likely the above code is just buggy, so do the 
+                // safe thing and cancel navigation since we can't understand the request
+                if (dispParams->rgvarg[0].vt == (VT_BYREF | VT_BOOL)) {
+                    *dispParams->rgvarg[0].pboolVal = true;
+                    return S_OK;
+                } else
+                    return DISP_E_BADVARTYPE;
+            }
+
+            // Check to see if navigation should be allowed; if the function returns TRUE
+            // either handleNavigation() has handled the navigation itself by opening
+            // an IE window for the URL or navigation should be blocked entirely.
+            *dispParams->rgvarg[0].pboolVal = handleNavigation(dispParams->rgvarg[6].pdispVal,
+                                                               dispParams->rgvarg[5].pvarVal->bstrVal,
+                                                               dispParams->rgvarg[2].pvarVal->pvarVal->vt != VT_EMPTY);
+
+            return S_OK;
         case DISPID_DOCUMENTCOMPLETE:
-            if (dispParams->cArgs == 2 &&
-                dispParams->rgvarg[1].vt == VT_DISPATCH &&
-                dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
-            {
-                callback_->onDocumentComplete();
-                return S_OK;
-            } else {
-                return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
-            }
+            if (dispParams->cArgs != 2)
+                return DISP_E_BADPARAMCOUNT;
+            if (!(dispParams->rgvarg[1].vt == VT_DISPATCH &&
+                  dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT)))
+                return DISP_E_BADVARTYPE;
+            callback_->onDocumentComplete();
+            return S_OK;
         case DISPID_WINDOWCLOSING:
-            if (dispParams->cArgs == 2 &&
-                dispParams->rgvarg[1].vt == VT_BOOL &&
-                dispParams->rgvarg[0].vt == (VT_BYREF | VT_BOOL))
-            {
-                // window.close() was called from a script; storing TRUE
-                // in the out parameter means "cancel", and then we handle
-                // it ourselves by hiding the window. If we stored FALSE,
-                // IE would ask the user whether they wanted to close the
-                // window, then (AFAIK) do nothing, since the web browser
-                // control doesn't have any ability to "quit".
-                *dispParams->rgvarg[0].pboolVal = VARIANT_TRUE;
+            if (dispParams->cArgs != 2)
+                return DISP_E_BADPARAMCOUNT;
+            if (!(dispParams->rgvarg[1].vt == VT_BOOL &&
+                  dispParams->rgvarg[0].vt == (VT_BYREF | VT_BOOL)))
+                return DISP_E_BADVARTYPE;
 
-                callback_->onClose();                
+            // window.close() was called from a script; storing TRUE
+            // in the out parameter means "cancel", and then we handle
+            // it ourselves by hiding the window. If we stored FALSE,
+            // IE would ask the user whether they wanted to close the
+            // window, then (AFAIK) do nothing, since the web browser
+            // control doesn't have any ability to "quit".
+            *dispParams->rgvarg[0].pboolVal = VARIANT_TRUE;
 
-                return S_OK;
-            } else {
-                return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
-            }
+            callback_->onClose();                
+            return S_OK;
         default:
             return DISP_E_MEMBERNOTFOUND; // Or S_OK
      }

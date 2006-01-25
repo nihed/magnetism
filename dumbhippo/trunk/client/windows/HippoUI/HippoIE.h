@@ -11,6 +11,8 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 
+class HippoUI;
+
 class HippoIECallback
 {
 public:
@@ -26,7 +28,9 @@ public:
  and instantiating random COM components.  AT NO POINT SHOULD IT READ UNTRUSTED
  CONTENT.  This means for example that not only can you not point it at
  http://randomsite.com, you can't do http://randomsite.com in a frame either.
- External images should be fine though.
+ External images should be fine though. (Frames on external sites are blocked and
+ links to external sites redirected to IE by the handling of BeforeNavigate2,
+ so shouldn't generally be an issue.)
 
  Currently using this on remote trusted sites is a lot like downloading a .exe
  from that site and executing it on the fly.  This means it's vulnerable to 
@@ -50,7 +54,7 @@ class HippoIE :
 public:
 
     // Only sets up object
-    HippoIE(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application);
+    HippoIE(HippoUI *ui, HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application);
 
     // Optional, apply an XSLT stylesheet to source
     void setXsltTransform(WCHAR *styleSrc, ...);
@@ -181,6 +185,12 @@ public:
 #endif
 
 private:
+    bool handleNavigation(IDispatch *targetDispatch,
+                          BSTR       url,
+                          bool       isPost);
+    void signalError(WCHAR *text, ...);
+
+    HippoUI *ui_;
     HippoIECallback *callback_;
     HWND window_;
     HippoPtr<IOleObject> ie_;
@@ -203,5 +213,4 @@ private:
 
     DWORD refCount_;
 
-    void signalError(WCHAR *text, ...);
 };
