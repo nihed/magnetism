@@ -42,8 +42,6 @@ HippoIEWindow::HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *e
     hippoSetWindowData<HippoIEWindow>(window_, this);
     ieCb_ = new HippoIEWindowIECallback(this);
     ie_ = new HippoIE(window_, src, ieCb_, external);
-    SetForegroundWindow(window_);
-    SetFocus(window_);
     created_ = FALSE;
     ui_->registerWindowMsgHook(window_, this);
 }
@@ -98,6 +96,7 @@ void
 HippoIEWindow::setForegroundWindow() 
 {
     SetForegroundWindow(window_);
+    SetFocus(window_);
 }
 
 void
