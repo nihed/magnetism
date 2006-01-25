@@ -42,8 +42,10 @@
 	</script>
 	<script type="text/javascript">
 		var chatControl = document.getElementById("dhChatControl")
-		chatControl.Join(true)
-		chatControl.Rescan()
+        if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+			chatControl.Join(true)
+			window.setTimeout(function() { chatControl.Rescan() }, 0)
+		}
 	</script>
 	<script defer type="text/javascript">
 		dh.chatwindow.init()

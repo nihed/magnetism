@@ -43,9 +43,9 @@
 	</script>
 	<script type="text/javascript">
 		var chatControl = document.getElementById("dhChatControl")
-		if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+        if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
 			chatControl.Join(false)
-			chatControl.Rescan()
+			window.setTimeout(function() { chatControl.Rescan() }, 0)
 		}
 	</script>
 	<script defer type="text/javascript">

@@ -103,7 +103,7 @@ dh.chatwindow._addUser = function(user, before) {
     nameDiv.appendChild(nameSpan)
 
     var peopleDiv = document.getElementById("dhChatPeopleDiv")
-    peopleDiv.appendChild(user.div)
+    peopleDiv.insertBefore(user.div, before ? before.div : null)
 }
 
 dh.chatwindow._removeUser = function(user) {
