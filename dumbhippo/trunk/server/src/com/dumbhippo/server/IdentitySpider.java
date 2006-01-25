@@ -293,6 +293,8 @@ public interface IdentitySpider {
 	 */
 	public void setMySpaceName(User user, String name);
 	
+	public Set<User> getMySpaceContacts(User user);
+	
 	/**
 	 * Increase the version number of the user; increasing the user version means
 	 * any cached resources for the user (currently, just the headshot) are

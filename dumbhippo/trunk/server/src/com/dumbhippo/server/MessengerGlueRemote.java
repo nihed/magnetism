@@ -154,7 +154,7 @@ public interface MessengerGlueRemote {
 			return posterId;
 		}
 	}
-	
+
 	/** 
 	 * Do Jabber digest authentication
 	 * @param username Jabber username (domain is not included, just username)
@@ -204,6 +204,15 @@ public interface MessengerGlueRemote {
 	public void addMySpaceBlogComment(String username, long commentId, long posterId);
 	
 	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username);	
+	
+	/**
+	 * Return a list of MySpace names associated with the passed user's DumbHippo
+	 * contacts.
+	 * 
+	 * @param username user for which MySpace contacts are retrieved
+	 * @return MySpace contacts
+	 */
+	public List<String> getContactMySpaceNames(String username);
 	
 	/**
 	 * Called when Jabber server starts up, so we can detect when 

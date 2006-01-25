@@ -764,4 +764,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		acct.setMySpaceName(name);
 		messageSender.sendMySpaceNameChangedNotification(user);
 	}
+
+	/* 
+	 * Return the set of users contained in the user's contacts which 
+	 * have set their MySpace name.
+	 */
+	public Set<User> getMySpaceContacts(User user) {
+		Set<PersonView> contacts = getContacts(new Viewpoint(user), user, false);
+		Set<User> ret = new HashSet<User>();
+		for (PersonView person : contacts) {
+			Account acct = person.getAccount();
+			if (acct != null && acct.getMySpaceName() != null)
+				ret.add(person.getUser());
+		}
+		return ret;
+	}
 }

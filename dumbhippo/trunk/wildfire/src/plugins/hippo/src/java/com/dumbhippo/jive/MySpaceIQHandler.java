@@ -45,8 +45,10 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 			handleAddBlogComment(iq, username, reply);
 		} else if (type.equals("getBlogComments")) {
 			handleGetBlogComments(iq, username, reply);
+		} else if (type.equals("getContacts")) {
+			handleGetContacts(iq, username, reply);			
 		} else {
-			makeError(reply, "Unknown myspace IQ type, known types are: getName");
+			makeError(reply, "Unknown myspace IQ type");
 
 		}
 		Log.debug("returning IQ reply " + reply);		
@@ -69,6 +71,18 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 			commentElt.add(val);		
 		}
 	}
+	
+	private void handleGetContacts(Element iq, String username, IQ reply) {
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("mySpaceInfo", "http://dumbhippo.com/protocol/myspace"); 
+		reply.setChildElement(childElement);		
+		for (String contact : glue.getContactMySpaceNames(username)) {
+			Element contactElt = new DefaultElement("contact");
+			childElement.add(contactElt);
+			contactElt.addAttribute("name", contact);
+		}
+	}	
 
 	private void handleGetName(Element iq, String username, IQ reply) {
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);

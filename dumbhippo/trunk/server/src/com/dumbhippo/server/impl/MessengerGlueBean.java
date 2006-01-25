@@ -173,6 +173,15 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return ret;
 	}
 	
+	public List<String> getContactMySpaceNames(String username) {
+		User requestingUser = userFromUsername(username);
+		List<String> ret = new ArrayList<String>();
+		for (User user : identitySpider.getMySpaceContacts(requestingUser)) {
+			ret.add(user.getAccount().getMySpaceName());
+		}
+		return ret;
+	}	
+	
 	private User getUserFromUsername(String username) {
 		User user = null;
 		try {
