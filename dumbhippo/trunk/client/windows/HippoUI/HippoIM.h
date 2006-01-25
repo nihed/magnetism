@@ -38,6 +38,7 @@ public:
 
     void addMySpaceComment(const HippoMySpaceBlogComment &comment);
 
+    void getMySpaceContacts();
     void getMySpaceSeenBlogComments();
 
     // Try to sign in. Returns TRUE if we need to show a web page where
@@ -145,6 +146,10 @@ private:
                                                          LmConnection     *connection,
                                                          LmMessage        *message,
                                                          gpointer          userData);
+    static LmHandlerResult onGetMySpaceContactsReply(LmMessageHandler *handler,
+                                                     LmConnection     *connection,
+                                                     LmMessage        *message,
+                                                     gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,

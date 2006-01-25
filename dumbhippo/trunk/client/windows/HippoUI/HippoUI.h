@@ -103,6 +103,7 @@ public:
                        const char *downloadUrl);
     void setMySpaceName(const char *name);
     void getSeenMySpaceComments();
+    void getMySpaceContacts();
     void onUpgradeReady();
     void onLinkMessage(HippoLinkShare &link);
 
@@ -120,8 +121,10 @@ public:
     HWND getWindow() { return window_; }
 
     void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
+
     void onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment, bool doDisplay);
     void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments);
+    void setMySpaceContacts(HippoArray<HippoBSTR> &contacts);
 
 private:
     bool registerActive();

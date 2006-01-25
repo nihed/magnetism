@@ -857,6 +857,12 @@ HippoUI::getSeenMySpaceComments()
     im_.getMySpaceSeenBlogComments();
 }
 
+void
+HippoUI::getMySpaceContacts()
+{
+    im_.getMySpaceContacts();
+}
+
 void 
 HippoUI::onUpgradeReady()
 {
@@ -1478,6 +1484,12 @@ void
 HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 {
     mySpace_->setSeenComments(comments);
+}
+
+void 
+HippoUI::setMySpaceContacts(HippoArray<HippoBSTR> &contacts)
+{
+    mySpace_->setContacts(contacts);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32

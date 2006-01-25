@@ -657,6 +657,30 @@ HippoIM::getMySpaceSeenBlogComments()
     ui_->debugLogU("Sent request for MySpace blog comments");
 }
 
+void
+HippoIM::getMySpaceContacts()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getContacts");
+    LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceContactsReply, this, NULL);
+
+    GError *error = NULL;
+    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+    if (error) {
+        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for MySpace contacts");
+}
+
 void 
 HippoIM::startSignInTimeout()
 {
@@ -1145,6 +1169,44 @@ HippoIM::onGetMySpaceBlogCommentsReply(LmMessageHandler *handler,
 
     // Takes ownership of comments
     im->ui_->setSeenMySpaceComments(&comments);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+
+LmHandlerResult
+HippoIM::onGetMySpaceContactsReply(LmMessageHandler *handler,
+                                   LmConnection     *connection,
+                                   LmMessage        *message,
+                                   gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+
+    im->ui_->debugLogU("got reply for getMySpaceContacts");
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    HippoArray<HippoBSTR> contacts;
+
+    for (LmMessageNode *subchild = child->children; subchild; subchild = subchild->next) {
+        LmMessageNode *commentNode;
+    
+        if (strcmp (subchild->name, "contact") != 0)
+            continue;
+        const char *name = lm_message_node_get_attribute(subchild, "name");
+        if (!name)
+            continue;
+
+        HippoBSTR contactName;
+        contactName.setUTF8(name);
+        contacts.append(contactName);
+        im->ui_->debugLogU("getMySpaceContacts: contact=%s", name);
+    }
+
+    im->ui_->setMySpaceContacts(contacts);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }

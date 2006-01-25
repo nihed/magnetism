@@ -8,6 +8,7 @@
 #include "HippoUI.h"
 
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
+#define HIPPO_MYSPACE_QUICKPOLL_INTERVAL_SECS (40)
 
 HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 {
@@ -76,6 +77,17 @@ HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments)
     ui_->debugLogU("got %d MySpace comments seen", comments->length());
     for (UINT i = 0; i < comments->length(); i++) {
         comments_.append((*comments)[i]);
+    }
+    state_ = HippoMySpace::State::RETRIEVING_CONTACTS;
+    ui_->getMySpaceContacts();
+}
+
+void
+HippoMySpace::setContacts(HippoArray<HippoBSTR> &contacts)
+{
+    assert(state_ == HippoMySpace::State::RETRIEVING_CONTACTS);
+    for (UINT i = 0; i < contacts.length(); i++) {
+        contacts_.append(contacts[i]);
     }
     GetFriendId(); // Now poll the web page
 }
@@ -162,11 +174,10 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
     const char *response = (const char*)responseData;
     const char *profileSectionStart;
 
-    g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
-
     myspace_->state_ = HippoMySpace::State::IDLE;
+    g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
     if (!(profileSectionStart = strstr(response, profileSectionElt))) {
-        myspace_->ui_->debugLogU("failed to find blog comment profile");
+        myspace_->ui_->debugLogU("failed to find blog comment profile (possibly no comments)");
         return;
     }
 

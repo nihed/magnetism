@@ -31,6 +31,7 @@ public:
     typedef enum {
         IDLE,
         RETRIEVING_SAVED_COMMENTS,
+        RETRIEVING_CONTACTS,
         FINDING_FRIENDID,
         INITIAL_COMMENT_SCAN,
         COMMENT_CHANGE_POLL
@@ -39,6 +40,7 @@ public:
     State state_;
 
     void setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments);
+    void setContacts(HippoArray<HippoBSTR> &contacts);
 
 private:
     class HippoMySpaceFriendIdHandler : public HippoHTTPAsyncHandler
@@ -76,6 +78,8 @@ private:
     HippoUI *ui_;
 
     HippoArray<HippoMySpaceBlogComment *> comments_;
+
+    HippoArray<HippoBSTR> contacts_;
 
     const char * blogUrlPrefix_;
 
