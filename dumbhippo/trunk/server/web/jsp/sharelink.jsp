@@ -56,7 +56,7 @@
 				<input autocomplete="off" accesskey="w"
 						type="text" id="dhRecipientComboBox" class="dhText"/>
 				<!-- dh:png id="dhRecipientComboBoxButton" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/> -->
-				<img id="dhRecipientComboBoxButton" src="/images/${buildStamp}/arrow.gif" />
+				<img id="dhRecipientComboBoxButton" src="/images/${buildStamp}/arrow.gif" height="16" width="16"/>
 				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div>
 			</td>
 			<td>
