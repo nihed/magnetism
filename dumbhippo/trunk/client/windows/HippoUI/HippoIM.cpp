@@ -1184,20 +1184,25 @@ HippoIM::onGetMySpaceContactsReply(LmMessageHandler *handler,
     if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    HippoArray<HippoBSTR> contacts;
+    HippoArray<HippoMySpaceContact *> contacts;
 
     for (LmMessageNode *subchild = child->children; subchild; subchild = subchild->next) {
-        LmMessageNode *commentNode;
     
         if (strcmp (subchild->name, "contact") != 0)
             continue;
         const char *name = lm_message_node_get_attribute(subchild, "name");
         if (!name)
             continue;
+        const char *friendID = lm_message_node_get_attribute(subchild, "friendID");
+        if (!friendID)
+            continue;
 
         HippoBSTR contactName;
         contactName.setUTF8(name);
-        contacts.append(contactName);
+        HippoBSTR contactFriendId;
+        contactFriendId.setUTF8(friendID);
+        HippoMySpaceContact * contact = new HippoMySpaceContact(contactName, contactFriendId);
+        contacts.append(contact);
         im->ui_->debugLogU("getMySpaceContacts: contact=%s", name);
     }
 

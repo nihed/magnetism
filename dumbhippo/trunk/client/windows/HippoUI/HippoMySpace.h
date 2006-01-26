@@ -6,6 +6,7 @@
 #include "HippoHTTP.h"
 
 class HippoUI;
+struct HippoBrowserInfo;
 
 class HippoMySpaceBlogComment
 {
@@ -21,6 +22,22 @@ public:
         posterId = -1;
     }
 };
+
+class HippoMySpaceContact
+{
+public:
+    const HippoBSTR &getName() { return name_; }
+    const HippoBSTR &getFriendId() { return friendId_; }
+
+    HippoMySpaceContact(WCHAR *name, WCHAR *friendId) {
+        name_ = name;
+        friendId_ = friendId;
+    }
+private:
+    HippoBSTR name_;
+    HippoBSTR friendId_;
+};
+
 
 class HippoMySpace
 {
@@ -40,7 +57,9 @@ public:
     State state_;
 
     void setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments);
-    void setContacts(HippoArray<HippoBSTR> &contacts);
+    void setContacts(HippoArray<HippoMySpaceContact *> &contacts);
+
+    void browserChanged(HippoBrowserInfo &browser);
 
 private:
     class HippoMySpaceFriendIdHandler : public HippoHTTPAsyncHandler
@@ -79,9 +98,11 @@ private:
 
     HippoArray<HippoMySpaceBlogComment *> comments_;
 
-    HippoArray<HippoBSTR> contacts_;
+    HippoArray<HippoMySpaceContact *> contacts_;
 
-    const char * blogUrlPrefix_;
+    const char *blogUrlPrefix_;
+
+    HippoBSTR blogPostPrefix_;
 
     int mySpaceIdSize_;
 

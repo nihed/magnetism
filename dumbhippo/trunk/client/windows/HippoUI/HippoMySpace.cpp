@@ -8,7 +8,6 @@
 #include "HippoUI.h"
 
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
-#define HIPPO_MYSPACE_QUICKPOLL_INTERVAL_SECS (40)
 
 HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 {
@@ -20,6 +19,7 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
     mySpaceIdSize_ = 14;
 
     blogUrlPrefix_ = "http://blog.myspace.com/index.cfm?fuseaction=blog.view";
+    blogPostPrefix_ = L"http://blog.myspace.com/index.cfm?fuseaction=blog.comment";
 
     state_ = HippoMySpace::State::RETRIEVING_SAVED_COMMENTS;
     ui_->getSeenMySpaceComments(); // Start retriving seen comments
@@ -83,7 +83,7 @@ HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 }
 
 void
-HippoMySpace::setContacts(HippoArray<HippoBSTR> &contacts)
+HippoMySpace::setContacts(HippoArray<HippoMySpaceContact *> &contacts)
 {
     assert(state_ == HippoMySpace::State::RETRIEVING_CONTACTS);
     for (UINT i = 0; i < contacts.length(); i++) {
@@ -264,4 +264,26 @@ HippoMySpace::addBlogComment(HippoMySpaceBlogComment &comment)
     // they log in
     bool doDisplay = (state_ == HippoMySpace::State::COMMENT_CHANGE_POLL);
     ui_->onNewMySpaceComment(friendId_, blogId_, comment, doDisplay);
+}
+
+void
+HippoMySpace::browserChanged(HippoBrowserInfo &browser)
+{
+    if (wcsncmp(browser.url, blogPostPrefix_, blogPostPrefix_.Length()) != 0)
+        return;
+    const WCHAR *friendIdParam = L"&friendID=";
+    const WCHAR *friendId = wcsstr(browser.url, friendIdParam);
+    if (!friendId) {
+        ui_->debugLogU("failed to find friendId parameter");
+        return;
+    }
+    const WCHAR *friendIdStart = friendId + wcslen(friendIdParam);
+    const WCHAR *friendIdEnd = wcschr(friendIdStart, '&');
+    if (!friendIdEnd) {
+        ui_->debugLogU("failed to find end of friendId parameter");
+        return;
+    }
+    long friendIdNum = wcstol(friendIdStart, NULL, 10);
+    ui_->debugLogU("posting on myspace blog, friendId=%d", friendIdNum);
+
 }

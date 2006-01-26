@@ -211,6 +211,7 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
         if (browsers_[i].cookie == cookie) {
             browsers_[i].url = url;
             browsers_[i].title = title;
+            mySpace_->browserChanged(browsers_[i]);
             return S_OK;
         }
     }
@@ -1472,7 +1473,7 @@ HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments)
 }
 
 void 
-HippoUI::setMySpaceContacts(HippoArray<HippoBSTR> &contacts)
+HippoUI::setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts)
 {
     mySpace_->setContacts(contacts);
 }
