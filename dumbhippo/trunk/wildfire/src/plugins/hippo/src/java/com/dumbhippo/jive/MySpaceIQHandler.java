@@ -12,6 +12,7 @@ import org.xmpp.packet.IQ;
 
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.MySpaceBlogCommentInfo;
+import com.dumbhippo.server.MessengerGlueRemote.MySpaceContactInfo;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class MySpaceIQHandler extends AbstractIQHandler {
@@ -77,10 +78,11 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("mySpaceInfo", "http://dumbhippo.com/protocol/myspace"); 
 		reply.setChildElement(childElement);		
-		for (String contact : glue.getContactMySpaceNames(username)) {
+		for (MySpaceContactInfo contact : glue.getContactMySpaceNames(username)) {
 			Element contactElt = new DefaultElement("contact");
 			childElement.add(contactElt);
-			contactElt.addAttribute("name", contact);
+			contactElt.addAttribute("name", contact.getUsername());
+			contactElt.addAttribute("friendID", contact.getFriendId());
 		}
 	}	
 

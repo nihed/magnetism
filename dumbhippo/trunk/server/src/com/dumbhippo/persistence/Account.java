@@ -59,6 +59,7 @@ public class Account extends Resource {
 	private String password;
 	
 	private String mySpaceName;
+	private String mySpaceFriendId;
 	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
@@ -341,8 +342,17 @@ public class Account extends Resource {
 		}
 		
 		this.mySpaceName = name;
-	}
+	}	
 	
+	@Column
+	public String getMySpaceFriendId() {
+		return mySpaceFriendId;
+	}
+
+	public void setMySpaceFriendId(String mySpaceFriendId) {
+		this.mySpaceFriendId = mySpaceFriendId;
+	}
+
 	@Override
 	@Transient
 	public String getHumanReadableString() {

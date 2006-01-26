@@ -37,6 +37,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.MySpaceBlogTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -65,6 +66,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private MessageSender messageSender;
+	
+	@EJB
+	private MySpaceBlogTracker mySpaceTracker;
 	
 	private static class GuidNotFoundException extends NotFoundException {
 		private static final long serialVersionUID = 0L;
@@ -762,6 +766,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		Account acct = user.getAccount();
 		acct.setMySpaceName(name);
+		mySpaceTracker.updateFriendId(user);
 		messageSender.sendMySpaceNameChangedNotification(user);
 	}
 
@@ -774,7 +779,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<User> ret = new HashSet<User>();
 		for (PersonView person : contacts) {
 			Account acct = person.getAccount();
-			if (acct != null && acct.getMySpaceName() != null)
+			if (acct != null && acct.getMySpaceName() != null && acct.getMySpaceFriendId() != null)
 				ret.add(person.getUser());
 		}
 		return ret;

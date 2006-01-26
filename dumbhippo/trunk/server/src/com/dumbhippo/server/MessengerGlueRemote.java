@@ -154,6 +154,23 @@ public interface MessengerGlueRemote {
 			return posterId;
 		}
 	}
+	
+	
+	public class MySpaceContactInfo implements Serializable {
+		private static final long serialVersionUID = 1L;		
+		private String username;
+		private String friendId;
+		public MySpaceContactInfo(String username, String friendId) {
+			this.username = username;
+			this.friendId = friendId;
+		}
+		public String getFriendId() {
+			return friendId;
+		}
+		public String getUsername() {
+			return username;
+		}
+	}	
 
 	/** 
 	 * Do Jabber digest authentication
@@ -212,7 +229,7 @@ public interface MessengerGlueRemote {
 	 * @param username user for which MySpace contacts are retrieved
 	 * @return MySpace contacts
 	 */
-	public List<String> getContactMySpaceNames(String username);
+	public List<MySpaceContactInfo> getContactMySpaceNames(String username);
 	
 	/**
 	 * Called when Jabber server starts up, so we can detect when 
