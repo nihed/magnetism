@@ -21,7 +21,7 @@
 		<c:set var="invisibleClass" value="dhInvisible" scope="request"/>
 	</c:if>
 	<input class="dh-upload-photo ${invisibleClass}" onChange="dh.util.hideId('dhPhotoUploadFileEntry${N}');dh.util.showId('dhPhotoUploadProgress${N}');document.forms['dhPhotoUploadForm${N}'].submit();" id="dhPhotoUploadFileEntry${N}" type="file" name="photo"/>
-	<img src="/images/photoprogress.gif" id="dhPhotoUploadProgress${N}" class="dhInvisible"/>
+	<img src="/images/photoprogress.gif" id="dhPhotoUploadProgress${N}" class="dhInvisible" width="192" height="30"/>
 	<%-- we just always submit this, servlet ignores it if we aren't 
 		  changing a group photo --%>
 	<input type="hidden" name="groupId" value="${groupId}"/>

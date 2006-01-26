@@ -7,5 +7,5 @@
 <br/>
 <!-- required by yahoo terms of use -->
 <a href="http://developer.yahoo.net/about"> 
-<img src="http://us.dev1.yimg.com/us.yimg.com/i/us/nt/bdg/websrv_120_1.gif" border="0"> 
+<img src="http://us.dev1.yimg.com/us.yimg.com/i/us/nt/bdg/websrv_120_1.gif" border="0" width="127" height="17"> 
 </a>
