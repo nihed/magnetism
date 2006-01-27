@@ -107,4 +107,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
 	public void doSetMySpaceName(User user, String name) throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "enabled" })
+	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException;
 }

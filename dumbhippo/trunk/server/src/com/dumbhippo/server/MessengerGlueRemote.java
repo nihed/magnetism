@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Remote;
 
@@ -277,4 +278,13 @@ public interface MessengerGlueRemote {
 	 *   to see it.
 	 */
 	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername);
+	
+	/**
+	 * Return a blob of user prefs.
+	 * 
+	 * @param username the username 
+	 * @return the blob o' prefs
+	 * @throws JabberUserNotFoundException 
+	 */
+	public Map<String,String> getPrefs(String username) throws JabberUserNotFoundException;
 }

@@ -35,21 +35,37 @@
 			</c:otherwise>
 		</c:choose>
 
-		<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Recent Songs</h2>
-
-		<div>
-			<c:forEach items="${viewgroup.latestTracks.list}" var="track">
-				<dht:track track="${track}"/>
-			</c:forEach>
-		</div>
-	
-		<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Most Played Songs</h2>
-
-		<div>
-			<c:forEach items="${viewgroup.frequentTracks.list}" var="track">
-				<dht:track track="${track}"/>
-			</c:forEach>
-		</div>
+		<c:choose>
+			<c:when test="${viewgroup.signin.disabled}">
+				<% /* note this message appears even when viewing other people's pages */ %>
+				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
+				to share stuff with friends.
+			</c:when>
+			<c:when test="${!viewgroup.signin.musicSharingEnabled}">
+				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
+				You haven't turned on music sharing. Turn it on to see what your friends in
+				<c:out value="${viewgroup.name}"/> are listening 
+				to lately, and share your music with them. 
+					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
+			</c:when>
+			<c:otherwise>
+				<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Recent Songs</h2>
+		
+				<div>
+					<c:forEach items="${viewgroup.latestTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+				</div>
+			
+				<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Most Played Songs</h2>
+		
+				<div>
+					<c:forEach items="${viewgroup.frequentTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+				</div>
+			</c:otherwise>
+		</c:choose>
 	</div>
 
 	<div id="dhPersonalArea">

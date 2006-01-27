@@ -716,20 +716,43 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return getFirstContactResource ((Contact)person);
 	}
 
-	public boolean getAccountDisabled(User user) {
+	private Account getMaybeDetachedAccount(User user) {
 		Account account = user.getAccount();
 		if (account == null) // must have been detached
 			account = accountSystem.lookupAccountByUser(user);
-		return account.isDisabled();
+		return account;
+	}
+	
+	private Account getAttachedAccount(User user) {
+		Account account = user.getAccount();
+		if (account == null || !em.contains(account))
+			account = accountSystem.lookupAccountByUser(user);
+		return account;
+	}
+	
+	public boolean getAccountDisabled(User user) {
+		return getMaybeDetachedAccount(user).isDisabled();
 	}
 	
 	public void setAccountDisabled(User user, boolean disabled) {
-		Account account = user.getAccount();
-		if (account == null || !em.contains(account))
-			account = accountSystem.lookupAccountByUser(user); // get attached account
+		Account account = getAttachedAccount(user);
 		logger.debug("New disabled = " + disabled + " for account " + account);
 		account.setDisabled(disabled);
 	}
+	
+	public boolean getMusicSharingEnabled(User user) {
+		// we only share your music if your account is enabled, AND music sharing is enabled.
+		// but we return only the music sharing flag here since the two settings are distinct
+		// in the UI. The pref we send to the client is a composite of the two.
+		Account account = getMaybeDetachedAccount(user); 
+		return account.isMusicSharingEnabled();
+	}
+	
+	public void setMusicSharingEnabled(User user, boolean enabled) {
+		Account account = getAttachedAccount(user);
+		account.setMusicSharingEnabled(enabled);
+	}
+
 	
 	public int incrementUserVersion(final String userId) {
 		try {

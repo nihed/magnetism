@@ -405,4 +405,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetMySpaceName(User user, String name) throws IOException {
 		identitySpider.setMySpaceName(user, name);
 	}
+
+	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException {
+		identitySpider.setMusicSharingEnabled(user, enabled);
+	}
 }

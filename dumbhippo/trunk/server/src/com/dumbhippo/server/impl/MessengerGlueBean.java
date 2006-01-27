@@ -2,7 +2,9 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -251,5 +253,16 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 		
 		return new ChatRoomInfo(roomName, post.getTitle(), allowedUsers, history);
+	}
+
+	public Map<String,String> getPrefs(String username) throws JabberUserNotFoundException {
+		Account account = accountFromUsername(username);
+		Map<String,String> prefs = new HashMap<String,String>();
+		
+		// right now we have only one pref
+		
+		prefs.put("musicSharingEnabled", Boolean.toString(!account.isDisabled() && account.isMusicSharingEnabled()));
+		
+		return prefs;
 	}
 }

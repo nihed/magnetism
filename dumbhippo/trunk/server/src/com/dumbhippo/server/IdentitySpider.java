@@ -283,6 +283,10 @@ public interface IdentitySpider {
 	public boolean getAccountDisabled(User user);
 	
 	public void setAccountDisabled(User user, boolean disabled);
+
+	public boolean getMusicSharingEnabled(User user);
+	
+	public void setMusicSharingEnabled(User user, boolean enabled);
 	
 	/**
 	 * Associate a MySpace identity with an account holder.

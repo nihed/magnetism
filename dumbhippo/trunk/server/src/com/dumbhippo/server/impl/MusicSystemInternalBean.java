@@ -193,6 +193,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			throw new NotFoundException("Not allowed to see this user's track history");
 		}
 
+		if (!identitySpider.getMusicSharingEnabled(user)) {
+			throw new NotFoundException("User has music sharing disabled, no tracks");
+		}
+		
 		Query q;
 		
 		String order = null;

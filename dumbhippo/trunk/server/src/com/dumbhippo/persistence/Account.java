@@ -61,6 +61,8 @@ public class Account extends Resource {
 	private String mySpaceName;
 	private String mySpaceFriendId;
 	
+	private boolean musicSharingEnabled;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -353,6 +355,16 @@ public class Account extends Resource {
 		this.mySpaceFriendId = mySpaceFriendId;
 	}
 
+
+	@Column(nullable=false)
+	public boolean isMusicSharingEnabled() {
+		return musicSharingEnabled;
+	}
+
+	public void setMusicSharingEnabled(boolean musicSharingEnabled) {
+		this.musicSharingEnabled = musicSharingEnabled;
+	}
+	
 	@Override
 	@Transient
 	public String getHumanReadableString() {
@@ -364,5 +376,4 @@ public class Account extends Resource {
 	public String getDerivedNickname() {
 		return getHumanReadableString();
 	}
-
 }

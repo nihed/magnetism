@@ -35,6 +35,7 @@ public class SigninBean implements Serializable {
 	private Guid userGuid;
 	private User user; // lazily initialized
 	private Boolean disabled; // lazily initialized
+	private Boolean musicSharingEnabled; // lazily initialized
 	
 	private SigninBean(HttpServletRequest request) {
 
@@ -153,5 +154,13 @@ public class SigninBean implements Serializable {
 			logger.debug("AccountPage loaded disabled = " + disabled);
 		}
 		return disabled;
+	}
+	
+	public boolean isMusicSharingEnabled() {
+		if (musicSharingEnabled == null) {
+			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+			musicSharingEnabled = Boolean.valueOf(identitySpider.getMusicSharingEnabled(getUser()));
+		}
+		return musicSharingEnabled;
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 
@@ -16,6 +17,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
+	private boolean musicSharingEnabled;
 	
 	public PersonMusicPage() {
 		
@@ -47,5 +49,15 @@ public class PersonMusicPage extends AbstractPersonPage {
 		}
 
 		return latestTracks;
+	}
+	
+	public boolean isMusicSharingEnabled() {
+		return musicSharingEnabled;
+	}
+	
+	@Override
+	public void setViewedPerson(User person) {
+		super.setViewedPerson(person);
+		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(person);
 	}
 }

@@ -70,8 +70,7 @@ public abstract class AbstractPersonPage {
 		this.viewedPerson = person;
 		this.viewedPersonId = person.getId();
 		
-		if (person instanceof User &&
-				identitySpider.getAccountDisabled((User) person)) {
+		if (identitySpider.getAccountDisabled(person)) {
 				this.disabled = true;
 		}
 		

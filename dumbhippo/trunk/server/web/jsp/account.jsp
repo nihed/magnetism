@@ -143,13 +143,13 @@
 				<div>				
 					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
 
-					<p>Enabling your account will give you a public page and let you share links and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
+					<p>Enabling your account will give you a public page and let you share links, music, and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
 				</div>
 				<div>
 					<a href="javascript:dh.actions.signOut();">Sign Out</a>
 				</div>
 			</c:otherwise>
-		</c:choose>		
+		</c:choose>
 
 		</div>
 	</div>

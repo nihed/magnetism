@@ -30,11 +30,23 @@
 		</c:if>
 
 		<c:choose>
-			<c:when test="${viewperson.disabled}">
-				This page is disabled.
-				<c:if test="${viewperson.self}">
-					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable it again</a>
-				</c:if>
+			<c:when test="${viewperson.disabled && !viewperson.self}">
+				This account is disabled. Ask your friend to switch it back on!
+			</c:when>
+			<c:when test="${viewperson.signin.disabled}">
+				<% /* note this message appears even when viewing other people's pages */ %>
+				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
+				to share stuff with friends.
+			</c:when>
+			<c:when test="${!viewperson.signin.musicSharingEnabled}">
+				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
+				You haven't turned on music sharing. Turn it on to see what your friends are listening 
+				to lately, and share your music with them. 
+					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
+			</c:when>
+			<c:when test="${!viewperson.musicSharingEnabled}">
+				<c:out value="${personName}"/> hasn't turned on music sharing. Ask them to
+				switch it on and you can see each other's impeccable musical tastes.
 			</c:when>
 			<c:otherwise>
 				<h2 class="dh-title"><c:out value="${personName}"/>'s Recent Songs</h2>
@@ -44,7 +56,7 @@
 						<dht:track track="${track}"/>
 					</c:forEach>
 				</div>
-			
+				
 				<h2 class="dh-title"><c:out value="${personName}"/>'s Most Played Songs</h2>
 	
 				<div>
@@ -52,7 +64,9 @@
 						<dht:track track="${track}"/>
 					</c:forEach>
 				</div>
-								
+				<div>
+					<a href="javascript:dh.actions.setMusicSharingEnabled(false);">Turn off music sharing</a>
+				</div>
 			</c:otherwise>
 		</c:choose>
 	</div>

@@ -40,6 +40,7 @@ public class HippoPlugin implements Plugin {
 			Log.debug("Instantiating MySpace handler");		
 			iqRouter.addHandler(new MySpaceIQHandler());					
 			iqRouter.addHandler(new MusicIQHandler());
+			iqRouter.addHandler(new PrefsIQHandler());
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(new PresenceMonitor());
