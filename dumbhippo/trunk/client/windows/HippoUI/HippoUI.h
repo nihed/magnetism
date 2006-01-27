@@ -125,6 +125,8 @@ public:
     void onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment, bool doDisplay);
     void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments);
     void setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts);
+    void onCreatingMySpaceContactPost(HippoMySpaceContact *contact);
+    void onReceivingMySpaceContactPost();
 
 private:
     bool registerActive();

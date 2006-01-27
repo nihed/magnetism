@@ -311,6 +311,26 @@ HippoIM::addMySpaceComment(const HippoMySpaceBlogComment &comment)
     hippoDebugLogW(L"Sent MySpace comment xmpp message");
 }
 
+void 
+HippoIM::notifyMySpaceContactPost(HippoMySpaceContact *contact)
+{
+   LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    LmMessageNode *node = lm_message_get_node(message);
+
+    LmMessageNode *subnode = lm_message_node_add_child (node, "notifyContactComment", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(subnode, "type", "notifyContactComment");
+    char *nameU = g_utf16_to_utf8(contact->getName().m_str, -1, NULL, NULL, NULL);
+    lm_message_node_set_attribute(subnode, "name", nameU);
+    g_free(nameU);
+
+    sendMessage(message);
+    lm_message_unref(message);
+    hippoDebugLogW(L"Sent MySpace contact post xmpp message");
+}
+
 void
 HippoIM::getAuthURL(BSTR *result)
 {
@@ -902,11 +922,26 @@ HippoIM::checkMySpaceNameChangedMessage(LmMessage      *message,
     return true;
 }
 
+bool 
+HippoIM::checkMySpaceContactCommentMessage(LmMessage      *message)
+{
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return false;
+    LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/myspace", "mySpaceContactComment");
+    return child != NULL;
+}
+
 void
 HippoIM::handleMySpaceNameChangedMessage(char           *name)
 {
     ui_->setMySpaceName(name);
     g_free(name);
+}
+
+void
+HippoIM::handleMySpaceContactCommentMessage()
+{
+    ui_->onReceivingMySpaceContactPost();
 }
 
 void
@@ -1227,6 +1262,11 @@ HippoIM::onMessage (LmMessageHandler *handler,
     char *mySpaceName = NULL;
     if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
         im->handleMySpaceNameChangedMessage(mySpaceName);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (im->checkMySpaceContactCommentMessage(message)) {
+        im->handleMySpaceContactCommentMessage();
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 

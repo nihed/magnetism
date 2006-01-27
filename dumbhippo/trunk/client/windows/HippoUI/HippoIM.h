@@ -12,6 +12,7 @@
 class HippoUI;
 class HippoChatRoom;
 class HippoMySpaceBlogComment;
+class HippoMySpaceContact;
 
 class HippoIM 
 {
@@ -37,6 +38,7 @@ public:
     void notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track);
 
     void addMySpaceComment(const HippoMySpaceBlogComment &comment);
+    void notifyMySpaceContactPost(HippoMySpaceContact *contact);
 
     void getMySpaceContacts();
     void getMySpaceSeenBlogComments();
@@ -109,6 +111,8 @@ private:
     bool checkMySpaceNameChangedMessage(LmMessage      *message,
                                         char           **name);
     void handleMySpaceNameChangedMessage(char           *name);
+    bool checkMySpaceContactCommentMessage(LmMessage      *message);
+    void handleMySpaceContactCommentMessage();
 
     void connectFailure(char *message);
     void authFailure(char *message);

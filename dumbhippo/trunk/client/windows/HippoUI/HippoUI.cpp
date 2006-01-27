@@ -1478,6 +1478,19 @@ HippoUI::setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts)
     mySpace_->setContacts(contacts);
 }
 
+void 
+HippoUI::onCreatingMySpaceContactPost(HippoMySpaceContact *contact)
+{
+    im_.notifyMySpaceContactPost(contact);
+}
+
+void
+HippoUI::onReceivingMySpaceContactPost() 
+{
+    mySpace_->onReceivingMySpaceContactPost();
+}
+
+
 /* Define a custom main loop source for integrating the Glib main loop with Win32
  * message handling; this isn't very generalized, since we hardcode the handling
  * of a FALSE return from GetMessage() to call g_main_loop_quit() on a particular

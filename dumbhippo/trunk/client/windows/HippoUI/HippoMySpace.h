@@ -38,6 +38,19 @@ private:
     HippoBSTR friendId_;
 };
 
+class HippoMySpaceContactPost
+{
+public:
+    HippoMySpaceContactPost(HippoMySpaceContact *contact, IWebBrowser2 *browser) {
+        contact_ = contact;
+        browser_ = browser;
+    }
+    HippoMySpaceContact *getContact() { return contact_; }
+    IWebBrowser2 *getBrowser() { return browser_; }
+private:
+    HippoMySpaceContact *contact_;
+    HippoPtr<IWebBrowser2> browser_;
+};
 
 class HippoMySpace
 {
@@ -60,6 +73,7 @@ public:
     void setContacts(HippoArray<HippoMySpaceContact *> &contacts);
 
     void browserChanged(HippoBrowserInfo &browser);
+    void onReceivingMySpaceContactPost();
 
 private:
     class HippoMySpaceFriendIdHandler : public HippoHTTPAsyncHandler
@@ -86,19 +100,23 @@ private:
         HippoMySpace *myspace_;
     };
 
-    void SanitizeCommentHTML(BSTR html, HippoBSTR &ret);
+    void sanitizeCommentHTML(BSTR html, HippoBSTR &ret);
 
-    void GetSeenComments();
-    void GetFriendId();
-    void RefreshComments();
+    void getSeenComments();
+    void getFriendId();
+    void refreshComments();
     static UINT idleRefreshComments(void *data);
     void addBlogComment(HippoMySpaceBlogComment &comment);
+
+    bool handlePostStart(HippoBrowserInfo &browser);
 
     HippoUI *ui_;
 
     HippoArray<HippoMySpaceBlogComment *> comments_;
 
     HippoArray<HippoMySpaceContact *> contacts_;
+
+    HippoArray<HippoMySpaceContactPost *> activeContactPosts_;
 
     const char *blogUrlPrefix_;
 
@@ -109,6 +127,8 @@ private:
     HippoBSTR name_;
     long friendId_;
     long blogId_;
+
+    int idlePollMySpaceId_;
 
     long lastUpdateTime_;
 };

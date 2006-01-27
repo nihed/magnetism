@@ -18,6 +18,8 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 
     mySpaceIdSize_ = 14;
 
+    idlePollMySpaceId_ = 0;
+
     blogUrlPrefix_ = "http://blog.myspace.com/index.cfm?fuseaction=blog.view";
     blogPostPrefix_ = L"http://blog.myspace.com/index.cfm?fuseaction=blog.comment";
 
@@ -27,6 +29,8 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 
 HippoMySpace::~HippoMySpace(void)
 {
+    if (idlePollMySpaceId_ > 0)
+        g_source_remove(idlePollMySpaceId_);
 }
 
 static void
@@ -36,7 +40,7 @@ handleHtmlTag(struct taginfo *tag, void *data)
 }
 
 void
-HippoMySpace::SanitizeCommentHTML(BSTR html, HippoBSTR &ret)
+HippoMySpace::sanitizeCommentHTML(BSTR html, HippoBSTR &ret)
 {
     // To hopefully be replaced by a somewhat more real parser later.
     UINT len = ::SysStringLen(html);
@@ -61,7 +65,7 @@ HippoMySpace::SanitizeCommentHTML(BSTR html, HippoBSTR &ret)
 }
 
 void
-HippoMySpace::GetFriendId()
+HippoMySpace::getFriendId()
 {
     state_ = HippoMySpace::State::FINDING_FRIENDID;
     HippoMySpace::HippoMySpaceFriendIdHandler *handler = new HippoMySpace::HippoMySpaceFriendIdHandler(this);
@@ -89,7 +93,7 @@ HippoMySpace::setContacts(HippoArray<HippoMySpaceContact *> &contacts)
     for (UINT i = 0; i < contacts.length(); i++) {
         contacts_.append(contacts[i]);
     }
-    GetFriendId(); // Now poll the web page
+    getFriendId(); // Now poll the web page
 }
 
 void
@@ -122,7 +126,7 @@ HippoMySpace::HippoMySpaceFriendIdHandler::handleComplete(void *responseData, lo
                 myspace_->friendId_ = strtol(friendIdStart, NULL, 10);
                 myspace_->blogId_ = strtol(blogIdStr, NULL, 10);
                 myspace_->ui_->debugLogU("got myspace friend id: %d, blogid: %d", myspace_->friendId_, myspace_->blogId_);
-                myspace_->RefreshComments();
+                myspace_->refreshComments();
             }
             return;
         }
@@ -132,7 +136,7 @@ HippoMySpace::HippoMySpaceFriendIdHandler::handleComplete(void *responseData, lo
 }
 
 void
-HippoMySpace::RefreshComments()
+HippoMySpace::refreshComments()
 {
     if (state_ == HippoMySpace::State::FINDING_FRIENDID)
         state_ = HippoMySpace::State::INITIAL_COMMENT_SCAN;
@@ -156,7 +160,7 @@ UINT
 HippoMySpace::idleRefreshComments(void *data)
 {
     HippoMySpace *mySpace = (HippoMySpace*)data;
-    mySpace->RefreshComments();
+    mySpace->refreshComments();
     return FALSE;
 }
 
@@ -174,9 +178,9 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
     const char *response = (const char*)responseData;
     const char *profileSectionStart;
 
-    myspace_->state_ = HippoMySpace::State::IDLE;
-    g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
+    myspace_->idlePollMySpaceId_ = g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
     if (!(profileSectionStart = strstr(response, profileSectionElt))) {
+        myspace_->state_ = HippoMySpace::State::IDLE;
         myspace_->ui_->debugLogU("failed to find blog comment profile (possibly no comments)");
         return;
     }
@@ -242,10 +246,11 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
         commentData.posterImgUrl.setUTF8(imglinkStart, imglinkEnd - imglinkStart);
         HippoBSTR rawHtml;
         rawHtml.setUTF8(commentStart, (UINT) (commentEnd - commentStart));
-        myspace_->SanitizeCommentHTML(rawHtml, commentData.content);
+        myspace_->sanitizeCommentHTML(rawHtml, commentData.content);
         myspace_->addBlogComment(commentData);
         profile += strlen(profileSectionElt);
     }
+    myspace_->state_ = HippoMySpace::State::IDLE;
 }
 
 void
@@ -266,24 +271,61 @@ HippoMySpace::addBlogComment(HippoMySpaceBlogComment &comment)
     ui_->onNewMySpaceComment(friendId_, blogId_, comment, doDisplay);
 }
 
-void
-HippoMySpace::browserChanged(HippoBrowserInfo &browser)
+bool
+HippoMySpace::handlePostStart(HippoBrowserInfo &browser)
 {
-    if (wcsncmp(browser.url, blogPostPrefix_, blogPostPrefix_.Length()) != 0)
-        return;
     const WCHAR *friendIdParam = L"&friendID=";
     const WCHAR *friendId = wcsstr(browser.url, friendIdParam);
     if (!friendId) {
         ui_->debugLogU("failed to find friendId parameter");
-        return;
+        return false;
     }
     const WCHAR *friendIdStart = friendId + wcslen(friendIdParam);
     const WCHAR *friendIdEnd = wcschr(friendIdStart, '&');
     if (!friendIdEnd) {
         ui_->debugLogU("failed to find end of friendId parameter");
-        return;
+        return false;
     }
-    long friendIdNum = wcstol(friendIdStart, NULL, 10);
-    ui_->debugLogU("posting on myspace blog, friendId=%d", friendIdNum);
+    HippoBSTR friendIdStr(friendIdEnd - friendIdStart, friendIdStart);
+    for (UINT i = 0; i < activeContactPosts_.length(); i++) {
+        if (wcscmp(activeContactPosts_[i]->getContact()->getFriendId().m_str, friendIdStr) == 0)
+            return true;
+    }
+    ui_->debugLogU("posting on myspace blog for contact, friendId=%S", friendIdStr.m_str);
+    for (UINT i = 0; i < contacts_.length(); i++) {
+        if (wcscmp(contacts_[i]->getFriendId().m_str, friendIdStr) != 0)
+            continue;
+        HippoMySpaceContactPost *post = new HippoMySpaceContactPost(contacts_[i], browser.browser);
+        activeContactPosts_.append(post);
+        return true;
+    }
+    return false;
+}
 
+void
+HippoMySpace::browserChanged(HippoBrowserInfo &browser)
+{
+    // Check if this is a post
+    if (wcsncmp(browser.url, blogPostPrefix_, blogPostPrefix_.Length()) == 0) {
+        if (handlePostStart(browser))
+            return;
+    }
+    for (UINT i = 0; i < activeContactPosts_.length(); i++) {
+        if (activeContactPosts_[i]->getBrowser() == browser.browser) {
+            ui_->onCreatingMySpaceContactPost(activeContactPosts_[i]->getContact());
+            delete activeContactPosts_[i];
+            activeContactPosts_.remove(i);
+            return;
+        }
+    }
+
+}
+
+void
+HippoMySpace::onReceivingMySpaceContactPost()
+{
+    ui_->debugLogU("got contact post, re-polling");
+    if (idlePollMySpaceId_ > 0)
+        g_source_remove(idlePollMySpaceId_);
+    refreshComments();
 }
