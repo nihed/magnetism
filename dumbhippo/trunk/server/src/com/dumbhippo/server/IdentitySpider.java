@@ -82,7 +82,7 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */
 	public User lookupUserByEmail(String email);
-		
+
 	//public Person lookupPersonByAim(String aim);
 	//public Person lookupPersonByAim(Person viewpoint, String aim);
 
@@ -293,7 +293,22 @@ public interface IdentitySpider {
 	 */
 	public void setMySpaceName(User user, String name);
 	
+	/**
+	 * Return the set of all User contacts (Contacts which represent Users)
+	 * that have set a MySpace name.
+	 * 
+	 * @param user viewpoint from which we gather contacts
+	 * @return set of Users with MySpace names
+	 */
 	public Set<User> getMySpaceContacts(User user);
+	
+	/**
+	 * Similar to getMySpaceContacts, but filtered by a particular name.
+	 * 
+	 * @param mySpaceName name to look for
+	 * @return a set of Users claiming mySpaceName
+	 */
+	public Set<User> getUserContactsWithMySpaceName(Viewpoint viewpoint, String mySpaceName); 	
 	
 	/**
 	 * Increase the version number of the user; increasing the user version means

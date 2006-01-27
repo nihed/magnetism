@@ -55,33 +55,6 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
  */
 @Stateless
 public class MessageSenderBean implements MessageSender {
-	private class MySpaceNameChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "mySpaceNameChanged";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
-		
-		private String mySpaceName;
-
-		public MySpaceNameChangedExtension(String newMySpaceName) {
-			mySpaceName = newMySpaceName;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("mySpaceNameChanged", "xmlns", NAMESPACE, "name", mySpaceName);
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-
 	static private final Logger logger = GlobalSetup.getLogger(MessageSenderBean.class);
 
 	// Injected beans, some are logically used by delegates but we can't 
@@ -265,6 +238,56 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}	
 	
+	private class MySpaceNameChangedExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "mySpaceNameChanged";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
+		
+		private String mySpaceName;
+
+		public MySpaceNameChangedExtension(String newMySpaceName) {
+			mySpaceName = newMySpaceName;
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("mySpaceNameChanged", "xmlns", NAMESPACE, "name", mySpaceName);
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
+	
+	private class MySpaceContactCommentExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "mySpaceContactComment";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
+		
+		public MySpaceContactCommentExtension() {
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("mySpaceContactComment", "xmlns", NAMESPACE);
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
 	private class XMPPSender {
 
 		private XMPPConnection connection;
@@ -298,6 +321,15 @@ public class MessageSenderBean implements MessageSender {
 
 			return connection;
 		}
+		
+		private Message createMessageFor(User user, Message.Type type) {
+			// FIXME should dumbhippo.com domain be hardcoded here?			
+			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
+		}
+		
+		private Message createMessageFor(User user) {
+			return createMessageFor(user, Message.Type.HEADLINE);
+		}
 
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, boolean isTutorialPost) {
 			XMPPConnection connection = getConnection();
@@ -307,9 +339,7 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 			
-			// FIXME should dumbhippo.com domain be hardcoded here?
-			Message message = new Message(recipient.getGuid().toJabberId("dumbhippo.com"),
-					Message.Type.HEADLINE);
+			Message message = createMessageFor(recipient); 
 
 			String title = post.getTitle();
 			
@@ -376,8 +406,7 @@ public class MessageSenderBean implements MessageSender {
 					logger.debug("No user for " + recipientResource.getId());
 				}
 				
-				Message message = new Message(recipient.getGuid().toJabberId("dumbhippo.com"),
-						Message.Type.HEADLINE);
+				Message message = createMessageFor(recipient);
 
 				Viewpoint viewpoint = new Viewpoint(recipient);
 				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
@@ -407,11 +436,18 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendMySpaceNameChangedNotification(User user) {
 			XMPPConnection connection = getConnection();
-			Message message = new Message(user.getGuid().toJabberId("dumbhippo.com"),
-					Message.Type.HEADLINE);
+			Message message = createMessageFor(user);
 			String newMySpaceName = user.getAccount().getMySpaceName();
 			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
 			logger.info("Sending mySpaceNameChanged message to " + message.getTo());			
+			connection.sendPacket(message);
+		}
+
+		public void sendMySpaceContactCommentNotification(User user) {
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(user);
+			message.addExtension(new MySpaceContactCommentExtension());
+			logger.info("Sending mySpaceContactComment message to " + message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -617,5 +653,9 @@ public class MessageSenderBean implements MessageSender {
 
 	public void sendMySpaceNameChangedNotification(User user) {
 		xmppSender.sendMySpaceNameChangedNotification(user);
+	}
+
+	public void sendMySpaceContactCommentNotification(User user) {
+		xmppSender.sendMySpaceContactCommentNotification(user);
 	}
 }

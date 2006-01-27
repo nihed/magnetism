@@ -770,10 +770,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		messageSender.sendMySpaceNameChangedNotification(user);
 	}
 
-	/* 
-	 * Return the set of users contained in the user's contacts which 
-	 * have set their MySpace name.
-	 */
 	public Set<User> getMySpaceContacts(User user) {
 		Set<PersonView> contacts = getContacts(new Viewpoint(user), user, false);
 		Set<User> ret = new HashSet<User>();
@@ -784,4 +780,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return ret;
 	}
+	
+	public Set<User> getUserContactsWithMySpaceName(Viewpoint viewpoint, String mySpaceName) {	
+		Set<User> users = getMySpaceContacts(viewpoint.getViewer());
+		Set<User> ret = new HashSet<User>();
+		for (User u : users) {
+			if (u.getAccount().getMySpaceName().equals(mySpaceName)) {
+				ret.add(u);
+			}
+		}
+		return ret;
+	}	
 }

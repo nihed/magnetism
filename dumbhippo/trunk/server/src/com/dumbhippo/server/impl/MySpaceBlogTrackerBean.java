@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -21,8 +22,10 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceBlogTracker;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
 
@@ -35,6 +38,9 @@ public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private MessageSender messageSender;
 
 	private ExecutorService threadPool;
 	
@@ -109,6 +115,13 @@ public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 				}
 			} 
 		});
+	}
+
+	public void notifyNewContactComment(User user, String mySpaceContactName) {
+		Set<User> mySpaceNameOwners = identitySpider.getUserContactsWithMySpaceName(new Viewpoint(user), mySpaceContactName);
+		for (User u : mySpaceNameOwners) {
+			messageSender.sendMySpaceContactCommentNotification(u);
+		}
 	}
 
 }

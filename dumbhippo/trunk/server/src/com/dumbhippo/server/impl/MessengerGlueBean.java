@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -173,15 +174,23 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return ret;
 	}
 	
-	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
-		User requestingUser = userFromUsername(username);
+	private List<MySpaceContactInfo> userSetToContactList(Set<User> users) {
 		List<MySpaceContactInfo> ret = new ArrayList<MySpaceContactInfo>();
-		for (User user : identitySpider.getMySpaceContacts(requestingUser)) {
+		for (User user : users) {
 			Account acct = user.getAccount();
 			ret.add(new MySpaceContactInfo(acct.getMySpaceName(), acct.getMySpaceFriendId()));
 		}
-		return ret;
-	}	
+		return ret;		
+	}
+	
+	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
+		User requestingUser = userFromUsername(username);
+		return userSetToContactList(identitySpider.getMySpaceContacts(requestingUser));
+	}
+	
+	public void notifyNewMySpaceContactComment(String username, String mySpaceContactName) {
+		mySpaceTracker.notifyNewContactComment(userFromUsername(username), mySpaceContactName);
+	}
 	
 	private User getUserFromUsername(String username) {
 		User user = null;

@@ -47,13 +47,22 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 		} else if (type.equals("getBlogComments")) {
 			handleGetBlogComments(iq, username, reply);
 		} else if (type.equals("getContacts")) {
-			handleGetContacts(iq, username, reply);			
+			handleGetContacts(iq, username, reply);
+		} else if (type.equals("notifyContactComment")) {
+			handleNotifyContactComment(iq, username, reply);					
 		} else {
 			makeError(reply, "Unknown myspace IQ type");
 
 		}
 		Log.debug("returning IQ reply " + reply);		
 		return reply;		
+	}
+
+	private void handleNotifyContactComment(Element iq, String username, IQ reply) {
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		String mySpaceName = iq.attributeValue("name");
+		Log.debug("notifing of contact comment with id " + mySpaceName);
+		glue.notifyNewMySpaceContactComment(username, mySpaceName);
 	}
 
 	private void handleGetBlogComments(Element iq, String username, IQ reply) {

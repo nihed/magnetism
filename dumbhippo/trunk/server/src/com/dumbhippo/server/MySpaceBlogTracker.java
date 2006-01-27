@@ -18,4 +18,6 @@ public interface MySpaceBlogTracker {
 	public void addMySpaceBlogComment(User user, long commentId, long posterId);
 	
 	public List<MySpaceBlogComment> getRecentComments(User user);
+
+	public void notifyNewContactComment(User user, String mySpaceContactName);
 }

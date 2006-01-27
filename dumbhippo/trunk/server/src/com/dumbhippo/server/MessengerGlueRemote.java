@@ -222,6 +222,8 @@ public interface MessengerGlueRemote {
 	
 	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username);	
 	
+	public void notifyNewMySpaceContactComment(String username, String contactName);
+	
 	/**
 	 * Return a list of MySpace names associated with the passed user's DumbHippo
 	 * contacts.

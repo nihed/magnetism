@@ -26,4 +26,6 @@ public interface MessageSender {
 	public void sendPostClickedNotification(Post post, List<User> viewers, User clicker);
 	
 	public void sendMySpaceNameChangedNotification(User user);
+	
+	public void sendMySpaceContactCommentNotification(User user);
 }
