@@ -1,6 +1,7 @@
 @CHARSET "UTF-8";
 
 @import "group.css";
+@import "music.css";
 
 #dhMainArea .dh-track {
 	position: relative;
