@@ -6,7 +6,7 @@
 	position: relative;
 	margin-bottom: 7px;
 	/* this doesn't seem like the right way to do it... */
-	left: 				45px;
+	left: 				30px;
 	height:				75px;
 }
 .dh-track {
@@ -31,10 +31,21 @@
 }
 .dh-track-links {
 	position:			relative;
-	height:				20px;
+	height:				30px;
 	width:				100%;
+	width:				250px;
+	padding:			2px;
+	font-size:			7pt;
+	color:				#777777;
+	background-color:	#efefef;
+	-moz-border-radius:	5px;
 }
-.dh-track-link {
+div.dh-track-link {
 	float:				left;
 	margin:				3px;
+	font-size:			10pt;
+}
+
+a.dh-track-rhapsody-link:link {
+	text-decoration:	none;
 }
