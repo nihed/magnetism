@@ -42,9 +42,9 @@ public interface PostingBoard {
 	
 	public void doShareLinkTutorialPost(User recipient);
 	
-	public Post loadRawPost(Viewpoint viewpoint, Guid guid);
+	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
-	public PostView loadPost(Viewpoint viewpoint, Guid guid);
+	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 
 	/**
 	 * Notifies system that the post was viewed by the given person.

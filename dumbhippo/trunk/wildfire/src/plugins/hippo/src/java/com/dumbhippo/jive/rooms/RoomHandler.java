@@ -80,6 +80,10 @@ public class RoomHandler implements Component {
 		}
 		
 		room = Room.loadFromServer(roomName, userId);
+		if (room == null) {
+			Log.debug("  room doesn't seem to exist");
+			return null;
+		}
 		rooms.put(roomName, room);
 		
 		return room;

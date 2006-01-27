@@ -65,20 +65,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return account;
 	}
 	
-	private Account accountFromUsernameOrLose(String username) {
-		Account account;
+	private User userFromTrustedUsername(String username) {
 		try {
-			account = accountFromUsername(username);
-		} catch (JabberUserNotFoundException e) {
-			logger.debug("username signed on that we don't know: " + username);			
-			throw new RuntimeException(e);
-		}		
-		return account;
-	}
-	
-	private User userFromUsername(String username) {
-		Account acct = accountFromUsernameOrLose(username);
-		return acct.getOwner();
+			return identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
+		} catch (NotFoundException e) {
+			throw new RuntimeException("trusted username doesn't appear to exist: " + username);
+		}
 	}
 	
 	public boolean authenticateJabberUser(String username, String token, String digest) {
@@ -160,17 +152,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public String getMySpaceName(String username) {
-		User user = userFromUsername(username);
+		User user = userFromTrustedUsername(username);
 		return user.getAccount().getMySpaceName();
 	}
 	
 	public void addMySpaceBlogComment(String username, long commentId, long posterId) {
-		mySpaceTracker.addMySpaceBlogComment(userFromUsername(username), commentId, posterId);
+		mySpaceTracker.addMySpaceBlogComment(userFromTrustedUsername(username), commentId, posterId);
 	}	
 	
 	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username) {
 		List<MySpaceBlogCommentInfo> ret = new ArrayList<MySpaceBlogCommentInfo>();
-		for (MySpaceBlogComment cmt : mySpaceTracker.getRecentComments(userFromUsername(username))) {
+		for (MySpaceBlogComment cmt : mySpaceTracker.getRecentComments(userFromTrustedUsername(username))) {
 			ret.add(new MySpaceBlogCommentInfo(cmt.getCommentId(), cmt.getPosterId()));
 		}
 		return ret;
@@ -186,45 +178,39 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 	
 	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
-		User requestingUser = userFromUsername(username);
+		User requestingUser = userFromTrustedUsername(username);
 		return userSetToContactList(identitySpider.getMySpaceContacts(requestingUser));
 	}
 	
 	public void notifyNewMySpaceContactComment(String username, String mySpaceContactName) {
-		mySpaceTracker.notifyNewContactComment(userFromUsername(username), mySpaceContactName);
+		mySpaceTracker.notifyNewContactComment(userFromTrustedUsername(username), mySpaceContactName);
 	}
 	
 	private User getUserFromUsername(String username) {
-		User user = null;
 		try {
-			user = identitySpider.lookupGuid(User.class, Guid.parseJabberId(username));
+			return identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
 		} catch (NotFoundException e) {
-		} catch (Guid.ParseException e) {
+			throw new RuntimeException("User does not exist: " + username, e);
 		}
-		
-		return user;
 	}
 	
-	private Post getPostFromRoomName(User user, String roomName) {
+	private Post getPostFromRoomName(User user, String roomName) throws NotFoundException {
 		Viewpoint viewpoint = new Viewpoint(user);
 		
-		Post post = null;
-		try {
-			post = postingBoard.loadRawPost(viewpoint, Guid.parseJabberId(roomName));
-		} catch (Guid.ParseException e) {
-		}
-		
-		return post;
+		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
 	}
 	
 	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername) {
-		User initialUser = getUserFromUsername(initialUsername);
-		if (initialUser == null)
-			throw new RuntimeException("non-existant username: " + initialUsername);
-				
-		Post post = getPostFromRoomName(initialUser, roomName);
-		if (post == null)
+		User initialUser = getUserFromUsername(initialUsername);				
+		Post post;
+		try {
+			post = getPostFromRoomName(initialUser, roomName);
+		} catch (NotFoundException e) {
+			// FIXME in principle this should happen if the initialUser can't see the post, 
+			// but right now there's no access controls in loadRawPost so it only happens
+			// if something is broken
 			return null;
+		}
 		 
 		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
 		
@@ -255,9 +241,16 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return new ChatRoomInfo(roomName, post.getTitle(), allowedUsers, history);
 	}
 
-	public Map<String,String> getPrefs(String username) throws JabberUserNotFoundException {
-		Account account = accountFromUsername(username);
+	public Map<String,String> getPrefs(String username) {
 		Map<String,String> prefs = new HashMap<String,String>();
+		
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			logger.debug("Returning empty prefs for user we've never heard of");
+			return prefs;
+		}
 		
 		// right now we have only one pref
 		

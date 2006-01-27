@@ -154,6 +154,7 @@ public class Room {
 		ChatRoomInfo info = glue.getChatRoomInfo(roomName, username);
 		if (info == null) {
 			Log.debug("  no such room");
+			return null;
 		}
 
 		Log.debug("  got response from server, title is " + info.getPostTitle());

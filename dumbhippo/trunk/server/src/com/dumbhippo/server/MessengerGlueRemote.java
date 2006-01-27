@@ -280,11 +280,11 @@ public interface MessengerGlueRemote {
 	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername);
 	
 	/**
-	 * Return a blob of user prefs.
+	 * Return a blob of user prefs. If user doesn't exist it just returns
+	 * empty prefs.
 	 * 
 	 * @param username the username 
-	 * @return the blob o' prefs
-	 * @throws JabberUserNotFoundException 
+	 * @return the blob o' prefs 
 	 */
-	public Map<String,String> getPrefs(String username) throws JabberUserNotFoundException;
+	public Map<String,String> getPrefs(String username);
 }

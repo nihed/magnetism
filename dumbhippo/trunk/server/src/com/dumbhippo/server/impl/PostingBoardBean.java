@@ -654,12 +654,16 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, null, start, max);
 	}
 	
-	public Post loadRawPost(Viewpoint viewpoint, Guid guid) {
-		return em.find(Post.class, guid.toString());
+	// FIXME we aren't checking whether viewpoint can see the post...
+	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		Post post = em.find(Post.class, guid.toString());
+		if (post == null)
+			throw new NotFoundException("Post not found in database: " + guid.toString());
+		return post;
 	}
 	
-	public PostView loadPost(Viewpoint viewpoint, Guid guid) {
-		Post p =  em.find(Post.class, guid.toString());
+	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		Post p =  loadRawPost(viewpoint, guid);
 		// FIXME access control check here, when used from post framer?
 		return getPostView(viewpoint, p);
 	}
@@ -673,13 +677,12 @@ public class PostingBoardBean implements PostingBoard {
 		try {
 			postGuid = new Guid(postId);
 		} catch (ParseException e) {
-			logger.warn("postViewedBy, bad post ID: " + postId);
-			return;
+			throw new RuntimeException("postViewedBy, bad Guid for some reason " + postId, e);
 		}
-		post = loadRawPost(new Viewpoint(clicker), postGuid);
-		if (post == null) {
-			logger.warn("postViewedBy, nonexistent post ID: " + postGuid);
-			return;
+		try {
+			post = loadRawPost(new Viewpoint(clicker), postGuid);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
 		
 		if (!updatePersonPostData(clicker, post))

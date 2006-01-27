@@ -93,38 +93,26 @@ public class XmppQueueConsumerBean implements MessageListener {
 	}
 	
 	private User getUserFromUsername(String username) {
-		User user = null;
 		try {
-			user = identitySpider.lookupGuid(User.class, Guid.parseJabberId(username));
+			return identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
 		} catch (NotFoundException e) {
-		} catch (Guid.ParseException e) {
+			throw new RuntimeException("trusted username " + username + " did not exist for some reason");
 		}
-		
-		return user;
 	}
 	
 	private Post getPostFromRoomName(User user, String roomName) {
 		Viewpoint viewpoint = new Viewpoint(user);
-		
-		Post post = null;
 		try {
-			post = postingBoard.loadRawPost(viewpoint, Guid.parseJabberId(roomName));
-		} catch (Guid.ParseException e) {
+			return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
+		} catch (NotFoundException e) {
+			throw new RuntimeException("trusted room name did not exist" + roomName, e);
 		}
-		
-		return post;
 	}
 	
 	
 	public void processChatMessageEvent(XmppEventChatMessage event) {
 		User fromUser = getUserFromUsername(event.getFromUsername());
-		if (fromUser == null)
-			throw new RuntimeException("non-existant username: " + event.getFromUsername());
-				
-		Post post = getPostFromRoomName(fromUser, event.getRoomName());
-		if (post == null)
-			return;
-		
+		Post post = getPostFromRoomName(fromUser, event.getRoomName());		
 		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
-	}	
+	}
 }

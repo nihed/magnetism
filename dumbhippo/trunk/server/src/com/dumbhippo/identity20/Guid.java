@@ -213,6 +213,14 @@ final public class Guid {
 		return new Guid(transformedName.toString());
 	}
 	
+	static public Guid parseTrustedJabberId(String username) {
+		try {
+			return parseJabberId(username);
+		} catch (ParseException e) {
+			throw new RuntimeException("Jabber ID was known trusted and failed to parse: " + username, e);
+		}
+	}
+	
 	public String toJabberId(String domain) {
 		StringBuilder sb = new StringBuilder();
 

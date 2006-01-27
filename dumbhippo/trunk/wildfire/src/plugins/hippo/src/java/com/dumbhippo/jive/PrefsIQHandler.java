@@ -11,7 +11,6 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -42,13 +41,7 @@ public class PrefsIQHandler extends AbstractIQHandler {
 		//Element iq = packet.getChildElement();
 		
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
-		Map<String,String> prefs;
-		try {
-			prefs = glue.getPrefs(from.getNode());
-		} catch (JabberUserNotFoundException e) {
-			makeError(reply, "No such user");
-			return reply;
-		}
+		Map<String,String> prefs = glue.getPrefs(from.getNode());
 		
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("prefs", "http://dumbhippo.com/protocol/prefs");
