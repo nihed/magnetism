@@ -15,6 +15,9 @@
 	<title>Search</title>
 	<dht:stylesheets href="search.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes/>
+	<script type="text/javascript">
+		dojo.require("dh.util");
+	</script>
 </head>
 <body>
 <div id="dhContainer">
