@@ -64,7 +64,8 @@ public:
         RETRIEVING_CONTACTS,
         FINDING_FRIENDID,
         INITIAL_COMMENT_SCAN,
-        COMMENT_CHANGE_POLL
+        COMMENT_CHANGE_POLL,
+        REFRESHING_CONTACTS
     } State;
     
     State state_;
@@ -102,11 +103,15 @@ private:
 
     void sanitizeCommentHTML(BSTR html, HippoBSTR &ret);
 
+    void setState(HippoMySpace::State newState);
     void getSeenComments();
     void getFriendId();
     void refreshComments();
     static UINT idleRefreshComments(void *data);
     void addBlogComment(HippoMySpaceBlogComment &comment);
+
+    static UINT idleRefreshContacts(void *data);
+    void refreshContacts();
 
     bool handlePostStart(HippoBrowserInfo &browser);
 
@@ -129,6 +134,7 @@ private:
     long blogId_;
 
     int idlePollMySpaceId_;
+    int idleRefreshContactsId_;
 
     long lastUpdateTime_;
 };

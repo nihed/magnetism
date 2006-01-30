@@ -7,7 +7,9 @@
 #include "HippoHttp.h"
 #include "HippoUI.h"
 
+#define HIPPO_MYSPACE_REQUEUE_INTERVAL_SECS (30)
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
+#define HIPPO_MYSPACE_REFRESH_CONTACT_INTERVAL_SECS (30*60)
 
 HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 {
@@ -19,11 +21,12 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
     mySpaceIdSize_ = 14;
 
     idlePollMySpaceId_ = 0;
+    idleRefreshContactsId_ = 0;
 
     blogUrlPrefix_ = "http://blog.myspace.com/index.cfm?fuseaction=blog.view";
     blogPostPrefix_ = L"http://blog.myspace.com/index.cfm?fuseaction=blog.comment";
 
-    state_ = HippoMySpace::State::RETRIEVING_SAVED_COMMENTS;
+    setState(HippoMySpace::State::RETRIEVING_SAVED_COMMENTS);
     ui_->getSeenMySpaceComments(); // Start retriving seen comments
 }
 
@@ -67,7 +70,7 @@ HippoMySpace::sanitizeCommentHTML(BSTR html, HippoBSTR &ret)
 void
 HippoMySpace::getFriendId()
 {
-    state_ = HippoMySpace::State::FINDING_FRIENDID;
+    setState(HippoMySpace::State::FINDING_FRIENDID);
     HippoMySpace::HippoMySpaceFriendIdHandler *handler = new HippoMySpace::HippoMySpaceFriendIdHandler(this);
     HippoHTTP *http = new HippoHTTP();
     HippoBSTR url(L"http://www.myspace.com/");
@@ -82,18 +85,47 @@ HippoMySpace::setSeenComments(HippoArray<HippoMySpaceBlogComment*> *comments)
     for (UINT i = 0; i < comments->length(); i++) {
         comments_.append((*comments)[i]);
     }
-    state_ = HippoMySpace::State::RETRIEVING_CONTACTS;
+    refreshContacts();
+}
+
+void
+HippoMySpace::refreshContacts()
+{
+    if (state_ == HippoMySpace::State::RETRIEVING_SAVED_COMMENTS)
+        setState(HippoMySpace::State::RETRIEVING_CONTACTS);
+    else if (state_ == HippoMySpace::State::IDLE)
+        setState(HippoMySpace::State::REFRESHING_CONTACTS);
+    else
+        ui_->debugLogU("unknown HippoMySpace state %d for refreshContacts()", state_);
     ui_->getMySpaceContacts();
 }
 
 void
 HippoMySpace::setContacts(HippoArray<HippoMySpaceContact *> &contacts)
 {
-    assert(state_ == HippoMySpace::State::RETRIEVING_CONTACTS);
     for (UINT i = 0; i < contacts.length(); i++) {
         contacts_.append(contacts[i]);
     }
-    getFriendId(); // Now poll the web page
+    if (state_ == HippoMySpace::State::RETRIEVING_CONTACTS)
+        getFriendId(); // Now poll the web page
+    else {
+        assert(state_ == HippoMySpace::State::REFRESHING_CONTACTS);
+        setState(HippoMySpace::State::IDLE);
+        idleRefreshContactsId_ = g_timeout_add(HIPPO_MYSPACE_REFRESH_CONTACT_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshContacts, this);
+    }
+}
+
+UINT
+HippoMySpace::idleRefreshContacts(void *data)
+{
+    HippoMySpace *mySpace = (HippoMySpace*)data;
+    if (mySpace->state_ != HippoMySpace::State::IDLE) { // If we're busy, requeue this
+        mySpace->ui_->debugLogU("HippoMySpace currently busy, requeueing comment refresh");
+        mySpace->idleRefreshContactsId_ = g_timeout_add(HIPPO_MYSPACE_REQUEUE_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshContacts, mySpace);
+        return FALSE;
+    }
+    mySpace->refreshContacts();
+    return FALSE;
 }
 
 void
@@ -139,9 +171,9 @@ void
 HippoMySpace::refreshComments()
 {
     if (state_ == HippoMySpace::State::FINDING_FRIENDID)
-        state_ = HippoMySpace::State::INITIAL_COMMENT_SCAN;
+        setState(HippoMySpace::State::INITIAL_COMMENT_SCAN);
     else
-        state_ = HippoMySpace::State::COMMENT_CHANGE_POLL;
+        setState(HippoMySpace::State::COMMENT_CHANGE_POLL);
     HippoMySpace::HippoMySpaceCommentHandler *handler = new HippoMySpace::HippoMySpaceCommentHandler(this);
     HippoHTTP *http = new HippoHTTP();
     HippoBSTR url;
@@ -160,6 +192,11 @@ UINT
 HippoMySpace::idleRefreshComments(void *data)
 {
     HippoMySpace *mySpace = (HippoMySpace*)data;
+    if (mySpace->state_ != HippoMySpace::State::IDLE) { // If we're busy, requeue this
+        mySpace->ui_->debugLogU("HippoMySpace not idle, requeuing comment refresh");
+        mySpace->idlePollMySpaceId_ = g_timeout_add(HIPPO_MYSPACE_REQUEUE_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, mySpace);
+        return FALSE;
+    }
     mySpace->refreshComments();
     return FALSE;
 }
@@ -170,6 +207,13 @@ HippoMySpace::HippoMySpaceCommentHandler::handleError(HRESULT res)
     myspace_->ui_->logError(L"error while retriving MySpace blog feed", res);
 }
 
+void
+HippoMySpace::setState(HippoMySpace::State newState)
+{
+    ui_->debugLogU("HippoMySpace changing to state: %d", newState);
+    state_ = newState;
+}
+
 void 
 HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, long responseBytes)
 {
@@ -178,9 +222,9 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
     const char *response = (const char*)responseData;
     const char *profileSectionStart;
 
-    myspace_->idlePollMySpaceId_ = g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, this->myspace_);
+    myspace_->idlePollMySpaceId_ = g_timeout_add(HIPPO_MYSPACE_POLL_START_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshComments, myspace_);
     if (!(profileSectionStart = strstr(response, profileSectionElt))) {
-        myspace_->state_ = HippoMySpace::State::IDLE;
+        myspace_->setState(HippoMySpace::State::IDLE);
         myspace_->ui_->debugLogU("failed to find blog comment profile (possibly no comments)");
         return;
     }
@@ -250,7 +294,12 @@ HippoMySpace::HippoMySpaceCommentHandler::handleComplete(void *responseData, lon
         myspace_->addBlogComment(commentData);
         profile += strlen(profileSectionElt);
     }
-    myspace_->state_ = HippoMySpace::State::IDLE;
+    if (myspace_->state_ == HippoMySpace::State::INITIAL_COMMENT_SCAN) {
+        // Queue the initial contact refresh now
+        myspace_->ui_->debugLogU("queueing idle contact refresh");
+        myspace_->idleRefreshContactsId_ = g_timeout_add(HIPPO_MYSPACE_REFRESH_CONTACT_INTERVAL_SECS * 1000, (GSourceFunc) idleRefreshContacts, myspace_);
+    }
+    myspace_->setState(HippoMySpace::State::IDLE);
 }
 
 void
