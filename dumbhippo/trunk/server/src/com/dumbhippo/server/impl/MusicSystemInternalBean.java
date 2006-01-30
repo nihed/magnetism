@@ -41,6 +41,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
@@ -806,5 +807,76 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (TrackHistory h : history)
 			tracks.add(h.getTrack());
 		return getViewsFromTracks(tracks);
+	}
+
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+		logger.debug("song search artist " + artist + " album " + album + " name " + name);
+		
+		int count = 0;
+		if (artist != null)
+			++count;
+		if (name != null)
+			++count;
+		if (album != null)
+			++count;
+		
+		if (count == 0)
+			throw new NotFoundException("Search has no parameters");
+		
+		StringBuilder sb = new StringBuilder("FROM Track t WHERE ");
+		if (artist != null) {
+			sb.append(" t.artist = :artist ");
+			--count;
+			if (count > 0)
+				sb.append(" AND ");
+		}
+		if (album != null) {
+			sb.append(" t.album = :album ");
+			--count;
+			if (count > 0)
+				sb.append(" AND ");
+		}
+		if (name != null) {
+			sb.append(" t.name = :name ");
+			--count;
+		}		
+		if (count != 0)
+			throw new RuntimeException("broken code in song search");
+		
+		// just to make this deterministic, though we have no real reason
+		// to prefer one Track over another, this means we always use the 
+		// same (earliest-created) row
+		sb.append(" ORDER BY t.id");
+		
+		Query q = em.createQuery(sb.toString());
+		if (artist != null)
+			q.setParameter("artist", artist);
+		if (album != null)
+			q.setParameter("album", album);
+		if (name != null)
+			q.setParameter("name", name);
+		
+		// pick one of the matching Track arbitrarily
+		q.setMaxResults(1);
+		
+		try {
+			Track t = (Track) q.getSingleResult();
+			return getTrackView(t);
+		} catch (EntityNotFoundException e) {
+			throw new NotFoundException("No matching tracks", e);
+		}
+	}
+
+	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
+		
+		 
+		
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

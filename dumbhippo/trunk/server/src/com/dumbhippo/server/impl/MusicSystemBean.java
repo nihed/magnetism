@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.Viewpoint;
 
@@ -44,5 +45,17 @@ public class MusicSystemBean implements MusicSystem {
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
 		return internal.getFrequentTrackViews(viewpoint, group, maxResults);
+	}
+
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+		return internal.songSearch(viewpoint, artist, album, name);
+	}
+
+	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
+		return internal.getRelatedPeople(viewpoint, artist, album, name);
+	}
+
+	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
+		return internal.getRecommendations(viewpoint, artist, album, name);
 	}
 }

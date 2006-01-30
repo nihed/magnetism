@@ -19,4 +19,10 @@ public interface MusicSystem {
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException;
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException;
+	
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
+	
+	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name);
+	
+	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name);
 }
