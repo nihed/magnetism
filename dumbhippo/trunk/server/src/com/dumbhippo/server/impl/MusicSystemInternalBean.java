@@ -872,11 +872,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		 
 		
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<PersonMusicView>();
 	}
 
 	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<TrackView>();
 	}
 }

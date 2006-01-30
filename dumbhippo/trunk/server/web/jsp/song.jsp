@@ -41,7 +41,7 @@
 				<h2 class="dh-title"></h2>
 	
 				<div>
-					<dht:track track="${musicsearch.song}"/>
+					<dht:track track="${musicsearch.trackView}" linkifySong="false"/>
 				</div>
 				<c:if test="${musicsearch.relatedPeople.size > 0}">
 					<h2 class="dh-title">Some Friends Who Listened to This Song</h2>
@@ -76,42 +76,9 @@
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
-		<c:if test="${!musicsearch.disabled}">
-			<div class="person">
-				<dht:headshot person="${musicsearch.person}" size="192"/>
-				<div id="dhName"><c:out value="${personName}"/></div>
-			</div>
-		</c:if>
 		</div>
 
 		<div class="dh-right-box-area">
-		
-			<div class="dh-right-box">
-				<h5 class="dh-title">Groups' Music</h5>
-				<div class="dh-groups">
-				<c:choose>
-					<c:when test="${musicsearch.groups.size > 0}">
-						<dh:entityList value="${musicsearch.groups.list}" photos="true" music="true"/>
-					</c:when>
-					<c:otherwise>
-					</c:otherwise>
-				</c:choose>
-				</div>
-			</div>
-		
-			<div class="dh-right-box">
-				<h5 class="dh-title">Friends' Music</h5>
-				<div class="dh-people">
-					<c:choose>
-						<c:when test="${musicsearch.contacts.size > 0}">
-							<dh:entityList value="${musicsearch.contacts.list}" showInviteLinks="false" photos="true" music="true"/>
-						</c:when>
-						<c:otherwise>
-							<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
-						</c:otherwise>
-					</c:choose>
-				</div>
-			</div>
 		</div>
 	</div>
 

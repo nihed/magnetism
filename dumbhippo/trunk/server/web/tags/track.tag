@@ -1,5 +1,10 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
+<%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
+
+<c:if test="${empty linkifySong}">
+	<c:set var="linkifySong" value="true"/>
+</c:if>
 
 <div class="dh-track">
 	<div class="dh-track-image">
@@ -14,7 +19,20 @@
 	</div>
 	<div class="dh-track-info">
 		<c:if test="${!empty track.name}">
-			<div class="dh-track-name"><c:out value="${track.name}"/></div>
+			<div class="dh-track-name">
+				<c:if test="${linkifySong}">
+					<c:url value="/song" var="songlink">
+						<c:param name="track" value="${track.name}"/>
+						<c:param name="artist" value="${track.artist}"/>
+						<c:param name="album" value="${track.album}"/>
+					</c:url>
+					<a href="${songlink}">
+				</c:if>
+					<c:out value="${track.name}"/>
+				<c:if test="${linkifySong}">
+					</a>
+				</c:if>
+			</div>
 		</c:if>
 		<c:if test="${!empty track.artist}">
 			<div class="dh-track-artist"><c:out value="${track.artist}"/></div>
