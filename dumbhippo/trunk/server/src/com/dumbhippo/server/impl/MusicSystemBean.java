@@ -7,6 +7,7 @@ import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
@@ -51,6 +52,10 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.songSearch(viewpoint, artist, album, name);
 	}
 
+	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException {
+		return internal.albumSearch(viewpoint, artist, album);
+	}
+	
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
 		return internal.getRelatedPeople(viewpoint, artist, album, name);
 	}

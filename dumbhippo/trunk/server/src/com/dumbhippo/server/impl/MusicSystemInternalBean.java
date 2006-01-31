@@ -36,6 +36,7 @@ import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -377,6 +378,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return musicSystem.getTrackView(track);
 		}
 	}
+
+	static private class GetAlbumViewTask implements Callable<AlbumView> {
+
+		private Track track;
+		
+		public GetAlbumViewTask(Track track) {
+			this.track = track;
+		}
+		
+		public AlbumView call() {
+			logger.debug("Running GetAlbumViewTask thread");
+			// we do this instead of an inner class to work right with threads
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+			
+			return musicSystem.getAlbumView(track);
+		}
+	}
 	
 	public void hintNeedsRefresh(Track track) {
 		// called for side effect to kick off querying the results
@@ -657,6 +675,28 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return result;
 	}
 	
+	private void fillAlbumInfo(Future<AmazonAlbumResult> futureAlbum, AlbumView albumView) {
+		try {
+			AmazonAlbumResult album;
+			try {
+				album = futureAlbum.get();
+			} catch (InterruptedException e) {
+				logger.debug("amazon album get thread interrupted", e);
+				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				logger.debug("amazon album get thread execution exception", e.getCause());
+				throw new RuntimeException(e);
+			}
+			if (album != null) {
+				albumView.setSmallImageUrl(album.getSmallImageUrl());
+				albumView.setSmallImageWidth(album.getSmallImageWidth());
+				albumView.setSmallImageHeight(album.getSmallImageHeight());
+			}
+		} catch (Exception e) {
+			logger.debug("Failed to get Amazon album information", e);
+		}		
+	}
+	
 	public TrackView getTrackView(Track track) {
 		TrackView view = new TrackView(track);
 
@@ -700,26 +740,22 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Failed to get Yahoo! search information for TrackView " + view, e);
 		}
 		
-		try {
-			AmazonAlbumResult album;
-			try {
-				album = futureAlbum.get();
-			} catch (InterruptedException e) {
-				logger.debug("amazon album get thread interrupted", e);
-				throw new RuntimeException(e);
-			} catch (ExecutionException e) {
-				logger.debug("amazon album get thread execution exception", e.getCause());
-				throw new RuntimeException(e);
-			}
-			if (album != null) {
-				view.setSmallImageUrl(album.getSmallImageUrl());
-				view.setSmallImageWidth(album.getSmallImageWidth());
-				view.setSmallImageHeight(album.getSmallImageHeight());
-			}
-		} catch (Exception e) {
-			logger.debug("Failed to get Amazon album information for TrackView " + view, e);
-		}
+		fillAlbumInfo(futureAlbum, view.getAlbumView());
 		
+		return view;
+	}
+	
+	// right now this is really dumb, since getAlbumViewAsync creates 
+	// a thread just to call this thing which also creates a thread;
+	// but we expect to add more stuff inside here to get the album 
+	// play links, track list, etc.
+	public AlbumView getAlbumView(Track track) {
+		// this method should never throw due to Yahoo or Amazon failure;
+		// we should just return a view without the extra information.
+		
+		Future<AmazonAlbumResult> futureAlbum = getAmazonAlbumAsync(track);
+		AlbumView view = new AlbumView();
+		fillAlbumInfo(futureAlbum, view);
 		return view;
 	}
 	
@@ -732,12 +768,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		FutureTask<TrackView> futureView =
 			new FutureTask<TrackView>(new GetTrackViewTask(track));
 		threadPool.execute(futureView);
-		return futureView;				
+		return futureView;
 	}
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
 		return getTrackViewAsync(current.getTrack());
+	}
+	
+	public Future<AlbumView> getAlbumViewAsync(Track track) {
+		FutureTask<AlbumView> futureView = 
+			new FutureTask<AlbumView>(new GetAlbumViewTask(track));
+		threadPool.execute(futureView);
+		return futureView;
 	}
 	
 	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
@@ -861,15 +904,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return q;
 	}
 	
-	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		logger.debug("song search artist " + artist + " album " + album + " name " + name);
-		
-		// max results of 1 picks one of the matching Track arbitrarily
+	private Track getMatchingTrack(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+		//		 max results of 1 picks one of the matching Track arbitrarily
 		Query q = buildSongQuery(viewpoint, artist, album, name, 1);
 		
 		try {
 			Track t = (Track) q.getSingleResult();
-			return getTrackView(t);
+			return t;
 		} catch (EntityNotFoundException e) {
 			throw new NotFoundException("No matching tracks", e);
 		}
@@ -886,6 +927,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		return ret;
 	}
+	
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+		logger.debug("song search artist " + artist + " album " + album + " name " + name);
+		
+		return getTrackView(getMatchingTrack(viewpoint, artist, album, name));
+	}
+	
+	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException {
+		Track track = getMatchingTrack(viewpoint, artist, album, null);
+		
+		return getAlbumView(track);
+	}
+		
+	private static final int MAX_RELATED_FRIENDS_RESULTS = 5;
+	private static final int MAX_RELATED_ANON_RESULTS = 5;
 	
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
 
@@ -939,40 +995,47 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		int contactViews = 0;
 		int anonViews = 0;
 		
+		// FIXME this is more parallelizable than it is here, i.e. we could
+		// first collect all the Track then convert each one to TrackView all in 
+		// parallel
+		
 		List<?> history = q.getResultList();
 		for (Object o : history) {
 			TrackHistory h = (TrackHistory) o;
 			
-			logger.debug("Got track history " + h);
-			
 			User user = h.getUser();
+			
+			if (user.equals(viewpoint.getViewer()))
+				continue; // don't recommend stuff from our own history
+			
 			PersonMusicView pmv = views.get(user);
 			if (pmv == null) {
 				if (contacts.contains(user)) {
-					if (contactViews < 5) {
+					if (contactViews < MAX_RELATED_FRIENDS_RESULTS) {
 						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
 	
 						try {
 							List<TrackView> latest = getLatestTrackViews(viewpoint, user, 3);
 							pmv.setTracks(latest);
 						} catch (NotFoundException e) {
-							// just leave the tracks list empty
+							// just leave the tracks list empty,
+							// but still display the friend
 						}
 						++contactViews;
 					}
 				} else {
-					if (anonViews < 5) {
-						pmv = new PersonMusicView(); // don't load a PersonView
-
+					if (anonViews < MAX_RELATED_ANON_RESULTS) {
 						try {
 							// get latest tracks from system view
 							List<TrackView> latest = getLatestTrackViews(null, user, 3);
-							pmv.setTracks(latest);
+							if (latest.size() > 0) {
+								pmv = new PersonMusicView(); // don't load a PersonView
+								pmv.setTracks(latest);
+								++anonViews;
+							}
 						} catch (NotFoundException e) {
-							// just leave the tracks list empty
+							// don't include this one
 						}
-						
-						++anonViews;
 					}
 				}
 				
@@ -980,8 +1043,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					views.put(user, pmv);
 			}
 			
-			// return at most 5 contacts and 5 anonymous
-			if (contactViews >= 5 && anonViews >= 5)
+			if (contactViews >= MAX_RELATED_FRIENDS_RESULTS &&
+					anonViews >= MAX_RELATED_ANON_RESULTS)
 				break;
 		}
 		

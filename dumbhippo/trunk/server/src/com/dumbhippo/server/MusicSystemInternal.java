@@ -48,4 +48,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 
+	public AlbumView getAlbumView(Track track);
+	
+	public Future<AlbumView> getAlbumViewAsync(Track track);
 }

@@ -22,5 +22,7 @@ public interface MusicSystem {
 	
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
 	
+	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException;
+	
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name);
 }

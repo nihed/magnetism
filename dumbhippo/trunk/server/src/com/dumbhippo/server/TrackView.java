@@ -6,29 +6,34 @@ import java.util.Map;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 
+/**
+ * FIXME the AlbumView is kind of retrofitted in here, it should 
+ * really be TrackView.getAlbumView() and drop most of the "wrapper"
+ * accessors
+ * 
+ * @author hp
+ *
+ */
 public class TrackView {
 	 
-	private String artist;
-	private String album;
+	private AlbumView album;
+	
 	private String name;
 	private Map<SongDownloadSource,String> downloads;
-	private String smallImageUrl;
-	private int smallImageWidth;
-	private int smallImageHeight;
 	
 	public TrackView() {
-		// a "dummy" track view with no data in it
-		this.smallImageWidth = -1;
-		this.smallImageHeight = -1;
+		album = new AlbumView();
 	}
 	
 	public TrackView(Track track) {
-		this();
-		this.artist = track.getArtist();
-		this.album = track.getAlbum();
+		this.album = new AlbumView(track);
 		this.name = track.getName();
 	}
 
+	public AlbumView getAlbumView() {
+		return album;
+	}
+	
 	public String getDownloadUrl(SongDownloadSource source) {
 		if (downloads == null)
 			return null;
@@ -57,19 +62,19 @@ public class TrackView {
 	}
 	
 	public String getAlbum() {
-		return album;
+		return album.getTitle();
 	}
 
 	public void setAlbum(String album) {
-		this.album = album;
+		this.album.setTitle(album);
 	}
 
 	public String getArtist() {
-		return artist;
+		return album.getArtist();
 	}
 
 	public void setArtist(String artist) {
-		this.artist = artist;
+		album.setArtist(artist);
 	}
 
 	public String getName() {
@@ -81,26 +86,26 @@ public class TrackView {
 	}
 
 	public int getSmallImageHeight() {
-		return smallImageHeight;
+		return album.getSmallImageHeight();
 	}
 
 	public void setSmallImageHeight(int smallImageHeight) {
-		this.smallImageHeight = smallImageHeight;
+		album.setSmallImageHeight(smallImageHeight);
 	}
 
 	public String getSmallImageUrl() {
-		return smallImageUrl;
+		return album.getSmallImageUrl();
 	}
 
 	public void setSmallImageUrl(String smallImageUrl) {
-		this.smallImageUrl = smallImageUrl;
+		album.setSmallImageUrl(smallImageUrl);
 	}
 
 	public int getSmallImageWidth() {
-		return smallImageWidth;
+		return album.getSmallImageWidth();
 	}
 
 	public void setSmallImageWidth(int smallImageWidth) {
-		this.smallImageWidth = smallImageWidth;
+		album.setSmallImageWidth(smallImageWidth);
 	}
 }
