@@ -91,26 +91,31 @@ body
 
 .dh-chat-person-name
 {
-    height: 48px;
-    font-size: 48px;
+    height: 		48px;
+    font-size: 		48px;
+	vertical-align:	middle;
 }
 
 .dh-chat-person-name-inner
 {
     vertical-align: middle;
-    font-size: medium;
+    font-size: 		medium;
 }
-
+.dh-chat-message {
+	margin:			5px;
+}
 .dh-chat-message-my
 {
-    margin: 5px;
+
 }
 
 .dh-chat-message-other
 {
-    margin: 5px;
-}
 
+}
+.dh-chat-message-image {
+
+}
 .dh-chat-message-my .dh-chat-message-image 
 {
     float: left;
@@ -135,5 +140,9 @@ body
 }
 
 .dh-chat-message-text-inner {
-    background-color: #fafac5;
+	font-family:			Verdana, sans;
+	color:					#222222;
+    background-color: 		#fafac5;
+	padding:				3px;
+	
 }

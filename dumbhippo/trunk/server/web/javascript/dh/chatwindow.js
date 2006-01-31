@@ -55,9 +55,9 @@ dh.chatwindow._scrollToBottom = function(element) {
 dh.chatwindow._addMessage = function(message, before) {
 	message.div = document.createElement("div")
     if (message.userId == this._selfId)
-        message.div.className = "dh-chat-message-my"
+        message.div.className = "dh-chat-message dh-chat-message-my"
     else
-        message.div.className = "dh-chat-message-other"
+        message.div.className = "dh-chat-message dh-chat-message-other"
     
     var image = this._createHeadShot(message.userId, message.version)
     image.className = "dh-chat-message-image"
@@ -185,4 +185,6 @@ dh.chatwindow.init = function() {
 
     dh.chatwindow.resizeElements()
     window.onresize = function() { dh.chatwindow.resizeElements() }
+
+	messageInput.focus()
 }
