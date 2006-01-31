@@ -11,7 +11,7 @@ public class AlbumView {
 	private int smallImageWidth;
 	private int smallImageHeight;
 
-	public AlbumView() {
+	AlbumView() {
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
 	}

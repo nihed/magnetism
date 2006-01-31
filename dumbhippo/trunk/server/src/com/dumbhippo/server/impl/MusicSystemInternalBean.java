@@ -755,7 +755,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// we should just return a view without the extra information.
 		
 		Future<AmazonAlbumResult> futureAlbum = getAmazonAlbumAsync(track);
-		AlbumView view = new AlbumView();
+		AlbumView view = new AlbumView(track);
 		fillAlbumInfo(futureAlbum, view);
 		return view;
 	}
@@ -903,6 +903,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				tracks.add(t);
 				albums.add(t.getAlbum());
 			}
+			if (albums.size() >= maxResults)
+				break;
 		}
 		return getAlbumViewsFromTracks(tracks);		
 	}
