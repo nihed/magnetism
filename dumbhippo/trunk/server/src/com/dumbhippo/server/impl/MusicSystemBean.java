@@ -54,8 +54,4 @@ public class MusicSystemBean implements MusicSystem {
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
 		return internal.getRelatedPeople(viewpoint, artist, album, name);
 	}
-
-	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
-		return internal.getRecommendations(viewpoint, artist, album, name);
-	}
 }

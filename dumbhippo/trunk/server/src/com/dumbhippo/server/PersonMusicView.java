@@ -7,12 +7,18 @@ import java.util.List;
 public class PersonMusicView {
 	private PersonView person;
 	private List<TrackView> tracks;
+
 	
-	public PersonMusicView(PersonView person) {
-		this.person = person;
+	public PersonMusicView() {
 		this.tracks = new ArrayList<TrackView>();
 	}
 	
+	public PersonMusicView(PersonView person) {
+		this();
+		this.person = person;
+	}
+
+	// person is null if this is an "anonymous" PersonMusicView
 	public PersonView getPerson() {
 		return person;
 	}

@@ -1,5 +1,8 @@
 package com.dumbhippo.web;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -47,19 +50,30 @@ public class MusicSearchPage {
 		this.artist = artist;
 	}
 
-	public ListBean<TrackView> getRecommendations() {
-		if (recommendations == null) {
-			recommendations = new ListBean<TrackView>(musicSystem.getRecommendations(signin.getViewpoint(),
-					artist, album, song));
+	private void initRelated() {
+		if (relatedPeople == null) {
+			List<PersonMusicView> related = musicSystem.getRelatedPeople(signin.getViewpoint(),
+					artist, album, song);
+			List<TrackView> anonymous = new ArrayList<TrackView>();
+			List<PersonMusicView> friends = new ArrayList<PersonMusicView>();
+			for (PersonMusicView r : related) {
+				if (r.getPerson() != null)
+					friends.add(r);
+				else
+					anonymous.addAll(r.getTracks());
+			}
+			relatedPeople = new ListBean<PersonMusicView>(friends);
+			recommendations = new ListBean<TrackView>(anonymous);
 		}
+	}
+	
+	public ListBean<TrackView> getRecommendations() {
+		initRelated();
 		return recommendations;
 	}
 
 	public ListBean<PersonMusicView> getRelatedPeople() {
-		if (relatedPeople == null) {
-			relatedPeople = new ListBean<PersonMusicView>(musicSystem.getRelatedPeople(signin.getViewpoint(),
-					artist, album, song));
-		}
+		initRelated();
 		return relatedPeople;
 	}
 

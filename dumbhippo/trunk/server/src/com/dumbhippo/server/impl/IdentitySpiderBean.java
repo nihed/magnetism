@@ -696,7 +696,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public boolean isViewerFriendOf(Viewpoint viewpoint, User user) {
 		// You can see someone's "friends only" stuff if you are them, or you are a contact of them
-		if (user.equals(viewpoint.getViewer()) || isContactNoViewpoint(user, viewpoint.getViewer()))
+		// viewpoint == null means omniscient
+		if (viewpoint == null || user.equals(viewpoint.getViewer()) || isContactNoViewpoint(user, viewpoint.getViewer()))
 			return true;
 		else
 			return false;

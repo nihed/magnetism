@@ -889,6 +889,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
 
+		if (viewpoint == null)
+			throw new IllegalArgumentException("System view not supported here");
+		
 		logger.debug("Related people search");
 		
 		List<PersonMusicView> ret = new ArrayList<PersonMusicView>();
@@ -911,22 +914,30 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (sb.charAt(sb.length()-1) == ',') {
 			sb.setLength(sb.length() - 1);
 		}
-		sb.append(") AND h.user.id IN (");
+		sb.append(")");
 		
 		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
-		for (User u : contacts) {
-			sb.append("'");
-			sb.append(u.getId());
-			sb.append("',");
+		// disabled for now since we want to return anonymous recommendations too
+		if (true && false) {
+			sb.append(" AND h.user.id IN (");
+			
+			for (User u : contacts) {
+				sb.append("'");
+				sb.append(u.getId());
+				sb.append("',");
+			}
+			if (sb.charAt(sb.length()-1) == ',') {
+				sb.setLength(sb.length() - 1);
+			}
+			sb.append(")");
 		}
-		if (sb.charAt(sb.length()-1) == ',') {
-			sb.setLength(sb.length() - 1);
-		}
-		sb.append(")");
 		
 		Query q = em.createQuery(sb.toString());
 		
 		Map<User,PersonMusicView> views = new HashMap<User,PersonMusicView>();
+		
+		int contactViews = 0;
+		int anonViews = 0;
 		
 		List<?> history = q.getResultList();
 		for (Object o : history) {
@@ -937,31 +948,45 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			User user = h.getUser();
 			PersonMusicView pmv = views.get(user);
 			if (pmv == null) {
-				pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, h.getUser()));
-				views.put(user, pmv);
+				if (contacts.contains(user)) {
+					if (contactViews < 5) {
+						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
+	
+						try {
+							List<TrackView> latest = getLatestTrackViews(viewpoint, user, 3);
+							pmv.setTracks(latest);
+						} catch (NotFoundException e) {
+							// just leave the tracks list empty
+						}
+						++contactViews;
+					}
+				} else {
+					if (anonViews < 5) {
+						pmv = new PersonMusicView(); // don't load a PersonView
+
+						try {
+							// get latest tracks from system view
+							List<TrackView> latest = getLatestTrackViews(null, user, 3);
+							pmv.setTracks(latest);
+						} catch (NotFoundException e) {
+							// just leave the tracks list empty
+						}
+						
+						++anonViews;
+					}
+				}
+				
+				if (pmv != null)
+					views.put(user, pmv);
 			}
 			
-			// return at most 5 users
-			if (views.size() > 5)
+			// return at most 5 contacts and 5 anonymous
+			if (contactViews >= 5 && anonViews >= 5)
 				break;
-		}
-		
-		for (PersonMusicView pmv : views.values()) {	
-			try {
-				List<TrackView> latest = getLatestTrackViews(viewpoint, pmv.getPerson().getUser(), 3);
-				pmv.setTracks(latest);
-			} catch (NotFoundException e) {
-				// nothing to do
-			}
 		}
 		
 		ret.addAll(views.values());
 		
 		return ret;
-	}
-
-	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
-		// TODO Auto-generated method stub
-		return new ArrayList<TrackView>();
 	}
 }
