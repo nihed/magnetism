@@ -81,10 +81,10 @@ public class MusicSearchPage {
 			
 			List<PersonMusicView> related;
 			if (mode == Mode.ALBUM) {
-				related = musicSystem.getRelatedPeopleWithTracks(signin.getViewpoint(),
+				related = musicSystem.getRelatedPeopleWithAlbums(signin.getViewpoint(),
 						artist, album, song);
 			} else {
-				related = musicSystem.getRelatedPeopleWithAlbums(signin.getViewpoint(),
+				related = musicSystem.getRelatedPeopleWithTracks(signin.getViewpoint(),
 						artist, album, song);
 			}
 		
