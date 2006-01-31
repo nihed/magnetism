@@ -821,6 +821,15 @@ HippoUI::onAuthFailure()
     showSignInWindow();
 }
 
+
+bool 
+HippoUI::isChatWindowActive(BSTR postId)
+{
+    IHippoChatRoom *chatRoom = NULL;
+    HRESULT ret = im_.findChatRoom(postId, &chatRoom);
+    return SUCCEEDED(ret) && chatRoom != NULL;
+}
+
 void 
 HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
 {

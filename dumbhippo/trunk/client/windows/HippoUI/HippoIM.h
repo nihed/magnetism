@@ -61,6 +61,7 @@ public:
 
     void getUsername(BSTR *ret) throw (std::bad_alloc);
 
+    HRESULT findChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
     HRESULT getChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
 
     // Called by HippoChatRoom

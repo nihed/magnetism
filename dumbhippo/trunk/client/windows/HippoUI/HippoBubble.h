@@ -29,6 +29,8 @@ public:
     void setScreenSaverRunning(bool screenSaverRunning);
     void showMissedBubbles();
 
+    void setShareHasChatActive(const WCHAR *postId, bool isActive);
+
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
     STDMETHODIMP_(DWORD) AddRef();
@@ -75,6 +77,8 @@ private:
     HippoBSTR currentLink_;
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;
+
+    HippoArray<HippoBSTR> activeChatShares_;
 
     bool shown_;
     bool idle_;

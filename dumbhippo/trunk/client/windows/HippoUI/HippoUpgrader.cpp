@@ -126,7 +126,7 @@ HippoUpgrader::setUpgradeInfo(const char *minVersion,
         // in the STATE_DOWNLOADED version, since the HippoUI is
         // displaying a dialog to the user. We'll pick up the version
         // the next time the user reconnects.
-
+        ui_->debugLogU("HippoUpgrader in state %d, ignoring upgrade until reconnect"); 
         return;
     }
 
@@ -139,9 +139,11 @@ HippoUpgrader::setUpgradeInfo(const char *minVersion,
         return;
     }
 
+    ui_->debugLogU("HippoUpgrader comparing running version %s to next version %s", VERSION, currentVersion_); 
     if (compareVersions(VERSION, currentVersion_) < 0) {
         startDownload();
     } else {
+        ui_->debugLogU("HippoUpgrader switching to STATE_GOOD"); 
         state_ = STATE_GOOD;
     }
 }
@@ -321,6 +323,8 @@ HippoUpgrader::startDownload()
     HippoBSTR downloadBase;
     HippoBSTR filename;
     getBase(downloadUrl_, &downloadBase, '/');
+
+    ui_->debugLogW(L"HippoUpgrader starting download"); 
 
     loadProgress();
     if (progressFilename_) {

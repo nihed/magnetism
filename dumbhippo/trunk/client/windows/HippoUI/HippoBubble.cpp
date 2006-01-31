@@ -263,7 +263,10 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);
 
-    show();
+    if (!ui_->isChatWindowActive(share.postId))
+        show();
+    else
+        ui_->debugLogW(L"chat is active for postId %s, not showing", share.postId);
 }
 
 void 

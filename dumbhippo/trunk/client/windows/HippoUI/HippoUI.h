@@ -109,6 +109,7 @@ public:
 
     void setHaveMissedBubbles(bool haveMissed);
 
+    bool isChatWindowActive(BSTR postId);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);

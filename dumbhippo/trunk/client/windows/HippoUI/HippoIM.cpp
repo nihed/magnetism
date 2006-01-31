@@ -130,7 +130,7 @@ HippoIM::getUsername(BSTR *ret)
 }
 
 HRESULT
-HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
+HippoIM::findChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
 {
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
         if (wcscmp(chatRooms_[i]->getPostId(), postId) == 0) {
@@ -140,7 +140,15 @@ HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
             return S_OK;
         }
     }
+    return E_FAIL;
+}
 
+HRESULT
+HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
+{
+    HRESULT ret = findChatRoom(postId, chatRoom);
+    if (SUCCEEDED(ret))
+        return ret;
     HippoChatRoom *newRoom = new HippoChatRoom(this, postId);
     if (newRoom) {
         chatRooms_.append(newRoom);
