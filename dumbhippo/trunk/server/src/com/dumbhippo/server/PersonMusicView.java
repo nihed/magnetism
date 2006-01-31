@@ -8,10 +8,13 @@ public class PersonMusicView {
 	private PersonView person;
 	private List<TrackView> tracks;
 	private List<AlbumView> albums;
+	private List<ArtistView> artists;
+
 	
 	public PersonMusicView() {
 		this.tracks = new ArrayList<TrackView>();
 		this.albums = new ArrayList<AlbumView>();
+		this.artists = new ArrayList<ArtistView>();
 	}
 	
 	public PersonMusicView(PersonView person) {
@@ -56,5 +59,21 @@ public class PersonMusicView {
 	// needed since getAlbums().size() can't be obtained easily in JSP expression language
 	public int getAlbumCount() {
 		return this.albums.size();
+	}
+
+	public List<ArtistView> getArtists() {
+		return Collections.unmodifiableList(artists);
+	}
+	public void setArtists(List<ArtistView> artists) {
+		this.artists.clear();
+		this.artists.addAll(artists);
+	}
+	public void addArtist(ArtistView artist) {
+		this.artists.add(artist);
+	}
+	
+	// needed since getArtists().size() can't be obtained easily in JSP expression language
+	public int getArtistCount() {
+		return this.artists.size();
 	}
 }

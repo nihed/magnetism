@@ -51,4 +51,8 @@ public interface MusicSystemInternal extends MusicSystem {
 	public AlbumView getAlbumView(Track track);
 	
 	public Future<AlbumView> getAlbumViewAsync(Track track);
+	
+	public ArtistView getArtistView(Track track);
+	
+	public Future<ArtistView> getArtistViewAsync(Track track);
 }

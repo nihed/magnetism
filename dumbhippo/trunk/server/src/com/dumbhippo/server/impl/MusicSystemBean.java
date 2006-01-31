@@ -8,6 +8,7 @@ import javax.ejb.Stateless;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AlbumView;
+import com.dumbhippo.server.ArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
@@ -67,5 +68,17 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
+	}
+
+	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException {
+		return internal.artistSearch(viewpoint, artist);
+	}
+
+	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {
+		return internal.getRelatedPeopleWithArtists(viewpoint, artist, album, name);
+	}
+
+	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		return internal.getLatestArtistViews(viewpoint, user, maxResults);
 	}
 }

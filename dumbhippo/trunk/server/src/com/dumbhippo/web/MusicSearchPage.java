@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.AlbumView;
+import com.dumbhippo.server.ArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonMusicView;
@@ -36,8 +37,10 @@ public class MusicSearchPage {
 	private boolean triedSearch;
 	private TrackView trackView;
 	private AlbumView albumView;
+	private ArtistView artistView;
 	private ListBean<TrackView> recommendations;
 	private ListBean<AlbumView> albumRecommendations;
+	private ListBean<ArtistView> artistRecommendations;
 	
 	private ListBean<PersonMusicView> relatedPeople;
 
@@ -80,16 +83,26 @@ public class MusicSearchPage {
 		if (relatedPeople == null) {
 			
 			List<PersonMusicView> related;
-			if (mode == Mode.ALBUM) {
+			switch (mode) {
+			case ALBUM:
 				related = musicSystem.getRelatedPeopleWithAlbums(signin.getViewpoint(),
 						artist, album, song);
-			} else {
+				break;
+			case TRACK:
 				related = musicSystem.getRelatedPeopleWithTracks(signin.getViewpoint(),
 						artist, album, song);
+				break;
+			case ARTIST:
+				related = musicSystem.getRelatedPeopleWithArtists(signin.getViewpoint(),
+						artist, album, song);
+				break;
+			default:
+				throw new RuntimeException("invalid mode in MusicSearchPage");
 			}
 		
 			List<TrackView> anonymousTracks = new ArrayList<TrackView>();
 			List<AlbumView> anonymousAlbums = new ArrayList<AlbumView>();
+			List<ArtistView> anonymousArtists = new ArrayList<ArtistView>();
 			List<PersonMusicView> friends = new ArrayList<PersonMusicView>();
 			for (PersonMusicView r : related) {
 				if (r.getPerson() != null)
@@ -97,11 +110,13 @@ public class MusicSearchPage {
 				else {
 					anonymousTracks.addAll(r.getTracks());
 					anonymousAlbums.addAll(r.getAlbums());
+					anonymousArtists.addAll(r.getArtists());
 				}
 			}
 			relatedPeople = new ListBean<PersonMusicView>(friends);
 			recommendations = new ListBean<TrackView>(anonymousTracks);
 			albumRecommendations = new ListBean<AlbumView>(anonymousAlbums);
+			artistRecommendations = new ListBean<ArtistView>(anonymousArtists);
 		}
 	}
 	
@@ -113,6 +128,11 @@ public class MusicSearchPage {
 	public ListBean<AlbumView> getAlbumRecommendations() {
 		initRelated();
 		return albumRecommendations;
+	}
+	
+	public ListBean<ArtistView> getArtistRecommendations() {
+		initRelated();
+		return artistRecommendations;
 	}
 	
 	public ListBean<PersonMusicView> getRelatedPeople() {
@@ -148,9 +168,25 @@ public class MusicSearchPage {
 				} catch (NotFoundException e) {
 					logger.debug("Album not found");
 				}
-			} else if (trackView != null) {
+			}
+			
+			if (trackView != null && albumView == null) {
 				// but if we got a track view, be sure we use the same album from it
 				albumView = trackView.getAlbumView();
+			}
+			
+			if (albumView == null && artist != null) {
+				// try an artist-only search if album/track failed
+				try {
+					artistView = musicSystem.artistSearch(signin.getViewpoint(), artist);
+				} catch (NotFoundException e) {
+					logger.debug("Artist not found");
+				}
+			}
+			
+			if (albumView != null && artistView == null) {
+				// if we got an album view, use the artist from it
+				artistView = albumView.getArtistView();
 			}
 		}
 	}
@@ -163,6 +199,11 @@ public class MusicSearchPage {
 	public AlbumView getAlbumView() {
 		doSearch();
 		return albumView;		
+	}
+	
+	public ArtistView getArtistView() {
+		doSearch();
+		return artistView;
 	}
 	
 	public SigninBean getSignin() {

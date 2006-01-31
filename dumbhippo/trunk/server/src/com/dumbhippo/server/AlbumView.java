@@ -5,21 +5,23 @@ import com.dumbhippo.persistence.Track;
 public class AlbumView {
 
 	private String title;
-	private String artist;
+	private ArtistView artistView;
 
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
 
 	AlbumView() {
+		this.artistView = new ArtistView();
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
 	}
 
 	public AlbumView(Track track) {
-		this();
+		this.smallImageWidth = -1;
+		this.smallImageHeight = -1;
+		this.artistView = new ArtistView(track);
 		this.title = track.getAlbum();
-		this.artist = track.getArtist();
 	}
 	
 	public int getSmallImageHeight() {
@@ -55,10 +57,14 @@ public class AlbumView {
 	}
 
 	public String getArtist() {
-		return artist;
+		return artistView.getName();
 	}
 
 	public void setArtist(String artist) {
-		this.artist = artist;
+		artistView.setName(artist);
+	}
+	
+	public ArtistView getArtistView() {
+		return artistView;
 	}
 }
