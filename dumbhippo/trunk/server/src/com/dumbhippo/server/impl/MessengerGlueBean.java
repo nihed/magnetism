@@ -179,7 +179,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
 		User requestingUser = userFromTrustedUsername(username);
-		return userSetToContactList(identitySpider.getMySpaceContacts(requestingUser));
+		return userSetToContactList(identitySpider.getMySpaceContacts(new Viewpoint(requestingUser)));
 	}
 	
 	public void notifyNewMySpaceContactComment(String username, String mySpaceContactName) {

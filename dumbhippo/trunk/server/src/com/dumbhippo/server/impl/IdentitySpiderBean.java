@@ -480,7 +480,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Contact contact;
 		
 		contact = findContactByResource(viewpoint.getViewer(), r);
-
+		
 		if (r instanceof Account) {
 			user = ((Account)r).getOwner();
 		} else {
@@ -620,22 +620,34 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.remove(contact);		
 	}
 
-	public Set<Contact> getRawContacts(User user) {
+	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
+		if (!isViewerFriendOf(viewpoint, user))
+			return Collections.emptySet();
+
 		// We call lookupAccountByPerson to deal with possibly detached users
 		Account account = accountSystem.lookupAccountByUser(user);
 		return account.getContacts();
 	}
 	
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
+		Set<Contact> contacts = getRawContacts(viewpoint, user);
+		Set<User> ret = new HashSet<User>();
+		for (Contact c : contacts) {
+			User u = getUserForContact(c);
+			if (u != null)
+				ret.add(u);
+		}
+		return ret;
+	}
+	
 	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras) {
-		if (!isViewerFriendOf(viewpoint, user))
-			return Collections.emptySet();
 		
 		// there are various ways to get yourself in your own contact list;
 		// we make includeSelf work in both cases (where you are or are not in there)
 		
 		boolean sawSelf = false;
 		Set<PersonView> result = new HashSet<PersonView>();
-		for (Person p : getRawContacts(user)) {
+		for (Person p : getRawContacts(viewpoint, user)) {
 			PersonView pv = getPersonView(viewpoint, p, extras);
 			
 			if (pv.getUser() != null && pv.getUser().equals(user)) {
@@ -793,19 +805,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		messageSender.sendMySpaceNameChangedNotification(user);
 	}
 
-	public Set<User> getMySpaceContacts(User user) {
-		Set<PersonView> contacts = getContacts(new Viewpoint(user), user, false);
-		Set<User> ret = new HashSet<User>();
-		for (PersonView person : contacts) {
-			Account acct = person.getAccount();
+	public Set<User> getMySpaceContacts(Viewpoint viewpoint) {
+		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint.getViewer());
+		
+		// filter out ourselves and anyone with no myspace
+		for (User user : contacts) {
+			
+			if (user.equals(viewpoint.getViewer()))
+				continue;
+			
+			Account acct = user.getAccount();
 			if (acct != null && acct.getMySpaceName() != null && acct.getMySpaceFriendId() != null)
-				ret.add(person.getUser());
+				continue;
+			
+			
+			contacts.remove(user);
 		}
-		return ret;
+		return contacts;
 	}
 	
 	public Set<User> getUserContactsWithMySpaceName(Viewpoint viewpoint, String mySpaceName) {	
-		Set<User> users = getMySpaceContacts(viewpoint.getViewer());
+		Set<User> users = getMySpaceContacts(viewpoint);
 		Set<User> ret = new HashSet<User>();
 		for (User u : users) {
 			if (u.getAccount().getMySpaceName().equals(mySpaceName)) {
@@ -813,5 +833,5 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 		return ret;
-	}	
+	}
 }

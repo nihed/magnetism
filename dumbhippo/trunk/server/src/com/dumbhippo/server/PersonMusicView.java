@@ -8,22 +8,26 @@ public class PersonMusicView {
 	private PersonView person;
 	private List<TrackView> tracks;
 	
-	PersonMusicView(PersonView person, List<TrackView> tracks) {
+	public PersonMusicView(PersonView person) {
 		this.person = person;
-		this.tracks = new ArrayList<TrackView>(tracks);
+		this.tracks = new ArrayList<TrackView>();
 	}
 	
 	public PersonView getPerson() {
 		return person;
 	}
-	void setPerson(PersonView person) {
+	public void setPerson(PersonView person) {
 		this.person = person;
 	}
 	public List<TrackView> getTracks() {
 		return Collections.unmodifiableList(tracks);
 	}
-	void setTracks(List<TrackView> tracks) {
-		this.tracks = new ArrayList<TrackView>(tracks);
+	public void setTracks(List<TrackView> tracks) {
+		this.tracks.clear();
+		this.tracks.addAll(tracks);
+	}
+	public void addTrack(TrackView track) {
+		this.tracks.add(track);
 	}
 	
 	// needed since getTracks().size() can't be obtained easily in JSP expression language

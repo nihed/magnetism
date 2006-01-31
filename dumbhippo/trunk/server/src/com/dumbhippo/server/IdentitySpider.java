@@ -147,7 +147,15 @@ public interface IdentitySpider {
 	 * @param user who to get contacts of
 	 * @return their contacts
 	 */
-	public Set<Contact> getRawContacts(User user);
+	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user);
+	
+	/** 
+	 * Get the contacts of a given person who have an account
+	 * @param user who to get contacts of
+	 * @return their friends
+	 * 
+	 */
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user);
 	
 	/** 
 	 * Get the contacts of the given person as a list of PersonView
@@ -301,10 +309,10 @@ public interface IdentitySpider {
 	 * Return the set of all User contacts (Contacts which represent Users)
 	 * that have set a MySpace name.
 	 * 
-	 * @param user viewpoint from which we gather contacts
+	 * @param viewpoint viewpoint from which we gather contacts
 	 * @return set of Users with MySpace names
 	 */
-	public Set<User> getMySpaceContacts(User user);
+	public Set<User> getMySpaceContacts(Viewpoint viewpoint);
 	
 	/**
 	 * Similar to getMySpaceContacts, but filtered by a particular name.

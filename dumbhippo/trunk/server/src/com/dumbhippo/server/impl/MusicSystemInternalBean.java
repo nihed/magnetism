@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -809,9 +810,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getViewsFromTracks(tracks);
 	}
 
-	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		logger.debug("song search artist " + artist + " album " + album + " name " + name);
-		
+	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
 		int count = 0;
 		if (artist != null)
 			++count;
@@ -856,8 +855,17 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (name != null)
 			q.setParameter("name", name);
 		
-		// pick one of the matching Track arbitrarily
-		q.setMaxResults(1);
+		if (maxResults >= 0)
+			q.setMaxResults(maxResults);
+
+		return q;
+	}
+	
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+		logger.debug("song search artist " + artist + " album " + album + " name " + name);
+		
+		// max results of 1 picks one of the matching Track arbitrarily
+		Query q = buildSongQuery(viewpoint, artist, album, name, 1);
 		
 		try {
 			Track t = (Track) q.getSingleResult();
@@ -867,12 +875,89 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
+	private List<Track> getMatchingTracks(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+
+		Query q = buildSongQuery(viewpoint, artist, album, name, -1);
+		
+		List<?> tracks = q.getResultList();
+		List<Track> ret = new ArrayList<Track>(tracks.size());
+		for (Object o : tracks) {
+			ret.add((Track) o);
+		}
+		return ret;
+	}
+	
 	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
+
+		logger.debug("Related people search");
 		
-		 
+		List<PersonMusicView> ret = new ArrayList<PersonMusicView>();
 		
-		// TODO Auto-generated method stub
-		return new ArrayList<PersonMusicView>();
+		List<Track> tracks;
+		try {
+			tracks = getMatchingTracks(viewpoint, artist, album, name);
+		} catch (NotFoundException e) {
+			return ret;
+		}
+		
+		// FIXME Query.setParameter(List<Track>) doesn't seem to work, a hibernate bug?
+		// also, we could merge this with the query to get the matching tracks and be
+		// more efficient, but too lazy right now
+		StringBuilder sb = new StringBuilder("FROM TrackHistory h WHERE h.track.id IN (");
+		for (Track t : tracks) {
+			sb.append(t.getId());
+			sb.append(",");
+		}
+		if (sb.charAt(sb.length()-1) == ',') {
+			sb.setLength(sb.length() - 1);
+		}
+		sb.append(") AND h.user.id IN (");
+		
+		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
+		for (User u : contacts) {
+			sb.append("'");
+			sb.append(u.getId());
+			sb.append("',");
+		}
+		if (sb.charAt(sb.length()-1) == ',') {
+			sb.setLength(sb.length() - 1);
+		}
+		sb.append(")");
+		
+		Query q = em.createQuery(sb.toString());
+		
+		Map<User,PersonMusicView> views = new HashMap<User,PersonMusicView>();
+		
+		List<?> history = q.getResultList();
+		for (Object o : history) {
+			TrackHistory h = (TrackHistory) o;
+			
+			logger.debug("Got track history " + h);
+			
+			User user = h.getUser();
+			PersonMusicView pmv = views.get(user);
+			if (pmv == null) {
+				pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, h.getUser()));
+				views.put(user, pmv);
+			}
+			
+			// return at most 5 users
+			if (views.size() > 5)
+				break;
+		}
+		
+		for (PersonMusicView pmv : views.values()) {	
+			try {
+				List<TrackView> latest = getLatestTrackViews(viewpoint, pmv.getPerson().getUser(), 3);
+				pmv.setTracks(latest);
+			} catch (NotFoundException e) {
+				// nothing to do
+			}
+		}
+		
+		ret.addAll(views.values());
+		
+		return ret;
 	}
 
 	public List<TrackView> getRecommendations(Viewpoint viewpoint, String artist, String album, String name) {
