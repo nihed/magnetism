@@ -19,7 +19,13 @@ public class EJBUtil {
 	private static final char LIKE_ESCAPE_CHAR = '^';
 	
 	/**
-	 * Very simple wrapper around InitialContext.lookup.
+	 * Very simple wrapper around InitialContext.lookup. If I undestand
+	 * correctly, the fact that this works is relying on JBoss specifics. There 
+	 * is no standard way of looking up bean at runtime without having 
+	 * specified a dependency on the bean via an @EJB annotation (On a field or 
+	 * on a class.) We are relying here on the fact that JBoss (in the absence
+	 * of its extension @LocalBinding annotation) uses the fully qualified
+	 * name of the bean's interface as it's JNDI name.   
 	 */
 	public static <T> T defaultLookup(Class<T> clazz) {
 		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
