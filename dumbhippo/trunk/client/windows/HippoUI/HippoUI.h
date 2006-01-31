@@ -196,6 +196,7 @@ private:
     HWND window_;
     HICON bigIcon_;
     HICON smallIcon_;
+    HippoBSTR tooltip_;
     HMENU menu_;
     HMENU debugMenu_;
     HWND preferencesDialog_;

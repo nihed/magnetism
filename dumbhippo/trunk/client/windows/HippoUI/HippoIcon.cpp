@@ -48,12 +48,8 @@ HippoIcon::create(HWND window)
     notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
     notifyIconData.hWnd = window_;
     notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE;
     notifyIconData.uCallbackMessage = message_;
-    StringCchCopyW(notifyIconData.szTip, 
-                   sizeof(notifyIconData.szTip) / sizeof(notifyIconData.szTip[0]),
-                   L"DumbHippo");
-    notifyIconData.szTip;
     notifyIconData.hIcon = icon_;
 
     Shell_NotifyIcon(NIM_ADD, &notifyIconData);
@@ -89,6 +85,20 @@ HippoIcon::updateIcon(HICON icon)
     notifyIconData.uFlags = NIF_ICON;
     notifyIconData.hIcon = icon_;
 
+    Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+}
+
+void
+HippoIcon::updateTip(const WCHAR *tip)
+{
+    NOTIFYICONDATA notifyIconData = { 0 };
+    notifyIconData.uID = 0;
+    notifyIconData.hWnd = window_;
+    notifyIconData.uFlags = NIF_TIP;
+    StringCchCopyW(notifyIconData.szTip, 
+                   sizeof(notifyIconData.szTip) / sizeof(notifyIconData.szTip[0]),
+                   tip);
+    notifyIconData.szTip;
     Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
 }
 

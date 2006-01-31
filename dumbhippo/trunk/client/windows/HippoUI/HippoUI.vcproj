@@ -295,6 +295,15 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
+				RelativePath=".\16logo.bmp">
+			</File>
+			<File
+				RelativePath=".\16Logo1.bmp">
+			</File>
+			<File
+				RelativePath=".\32logo.bmp">
+			</File>
+			<File
 				RelativePath=".\DumbHippo.ico">
 			</File>
 			<File
@@ -320,6 +329,27 @@
 			</File>
 			<File
 				RelativePath=".\HippoUI.rc">
+			</File>
+			<File
+				RelativePath=".\icon1.ico">
+			</File>
+			<File
+				RelativePath=".\icon2.ico">
+			</File>
+			<File
+				RelativePath=".\Logo1.ico">
+			</File>
+			<File
+				RelativePath=".\Logo2.ico">
+			</File>
+			<File
+				RelativePath=".\Logo3.ico">
+			</File>
+			<File
+				RelativePath=".\Logo4.ico">
+			</File>
+			<File
+				RelativePath=".\Logo5.ico">
 			</File>
 		</Filter>
 	</Files>

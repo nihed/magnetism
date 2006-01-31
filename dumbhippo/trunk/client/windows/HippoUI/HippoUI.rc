@@ -37,6 +37,11 @@ IDI_DUMBHIPPO_DEBUG_DISCONNECTED ICON                    "DumbHippoDebug_Disconn
 IDI_DUMBHIPPO_DOGFOOD   ICON                    "DumbHippoDogfood.ico"
 IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED ICON                    "DumbHippoDogfood_Disconnected.ico"
 IDI_DUMBHIPPO_MISSED    ICON                    "DumbHippoMissed.ico"
+IDI_DUMBHIPPO_1         ICON                    "Logo1.ico"
+IDI_DUMBHIPPO_2         ICON                    "Logo2.ico"
+IDI_DUMBHIPPO_3         ICON                    "Logo3.ico"
+IDI_DUMBHIPPO_4         ICON                    "Logo4.ico"
+IDI_DUMBHIPPO_5         ICON                    "Logo5.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

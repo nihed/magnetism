@@ -32,6 +32,13 @@
 #define IDR_HTML1                       142
 #define IDR_DEBUG                       144
 #define IDI_DUMBHIPPO_MISSED            145
+#define IDB_BITMAP1                     148
+#define IDI_DUMBHIPPO_1                 152
+#define IDI_DUMBHIPPO_2                 153
+#define IDI_DUMBHIPPO_3                 154
+#define IDI_DUMBHIPPO_4                 155
+#define IDI_ICON1                       157
+#define IDI_DUMBHIPPO_5                 157
 #define IDI_DUMBHIPPO_DEBUG             204
 #define IDI_DUMBHIPPO_DOGFOOD           205
 #define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
@@ -57,7 +64,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        146
+#define _APS_NEXT_RESOURCE_VALUE        158
 #define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124

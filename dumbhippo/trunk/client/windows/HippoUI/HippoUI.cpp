@@ -71,6 +71,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
     smallIcon_ = NULL;
     bigIcon_ = NULL;
+    tooltip_ = L"Initializing General Purpose Architecture";  // thanks jboss
 
     idle_ = FALSE;
     haveMissedBubbles_ = FALSE;
@@ -315,6 +316,11 @@ HippoUI::updateIcons(void)
                                 IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
     bigIcon_ = (HICON)LoadImage(instance_, icon,
                                 IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+
+    const WCHAR *currentDesc = preferences_.getInstanceDescription();
+    tooltip_ = currentDesc;
+    if (!connected_)
+        tooltip_.Append(L" (disconnected)");
 }
 
 void
@@ -326,6 +332,7 @@ HippoUI::onConnectionChange(bool connected)
     updateIcons();
 
     notificationIcon_.updateIcon(smallIcon_);
+    notificationIcon_.updateTip(tooltip_.m_str);
 }
 
 static void
@@ -361,6 +368,7 @@ HippoUI::create(HINSTANCE instance)
         revokeActive();
         return false;
     }
+    notificationIcon_.updateTip(tooltip_.m_str);
 
     logWindow_.setBigIcon(bigIcon_);
     logWindow_.setSmallIcon(smallIcon_);

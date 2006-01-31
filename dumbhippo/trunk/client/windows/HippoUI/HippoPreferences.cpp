@@ -182,41 +182,19 @@ HippoPreferences::getInstanceClassId()
 const WORD
 HippoPreferences::getInstanceIcon()
 {
-    switch (instanceType_) {
-        case HIPPO_INSTANCE_NORMAL:
-        default:
-            return IDI_DUMBHIPPO;
-        case HIPPO_INSTANCE_DOGFOOD:
-            return IDI_DUMBHIPPO_DOGFOOD;
-        case HIPPO_INSTANCE_DEBUG:
-            return IDI_DUMBHIPPO_DEBUG;
-    }
+    return IDI_DUMBHIPPO_1;
 }
 
 const WORD 
 HippoPreferences::getInstanceDisconnectedIcon()
 {
-    switch (instanceType_) {
-        case HIPPO_INSTANCE_NORMAL:
-        default:
-            return IDI_DUMBHIPPO_DISCONNECTED;
-        case HIPPO_INSTANCE_DOGFOOD:
-            return IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED;
-        case HIPPO_INSTANCE_DEBUG:
-            return IDI_DUMBHIPPO_DEBUG_DISCONNECTED;
-    }
+    return IDI_DUMBHIPPO_1;
 }
 
 const WORD
 HippoPreferences::getInstanceMissedIcon()
 {
-    switch (instanceType_)  {
-        case HIPPO_INSTANCE_DOGFOOD:
-        case HIPPO_INSTANCE_DEBUG:
-        case HIPPO_INSTANCE_NORMAL:
-        default:
-            return IDI_DUMBHIPPO_MISSED;
-    }
+    return IDI_DUMBHIPPO_1;
 }
 
 const CLSID *
@@ -230,5 +208,19 @@ HippoPreferences::getInstanceClassId(HippoInstanceType instanceType)
             return &CLSID_HippoUI_Dogfood;
         case HIPPO_INSTANCE_DEBUG:
             return &CLSID_HippoUI_Debug;
+    }
+}
+
+const WCHAR *
+HippoPreferences::getInstanceDescription() 
+{
+    switch (instanceType_) {
+        case HIPPO_INSTANCE_NORMAL:
+        default:
+            return L"DumbHippo - Share links and more!";
+        case HIPPO_INSTANCE_DOGFOOD:
+            return L"DumbHippo - I prefer dog food!";
+        case HIPPO_INSTANCE_DEBUG:
+            return L"DumbHippo - Eat pesky bugs!";
     }
 }
