@@ -990,3 +990,4 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return ret;
 	}
 }
+
