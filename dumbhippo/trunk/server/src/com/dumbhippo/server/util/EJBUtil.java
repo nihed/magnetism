@@ -25,7 +25,7 @@ public class EJBUtil {
 	 * specified a dependency on the bean via an @EJB annotation (On a field or 
 	 * on a class.) We are relying here on the fact that JBoss (in the absence
 	 * of its extension @LocalBinding annotation) uses the fully qualified
-	 * name of the bean's interface as it's JNDI name.   
+	 * name of the bean's interface as the bean's JNDI name.   
 	 */
 	public static <T> T defaultLookup(Class<T> clazz) {
 		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
