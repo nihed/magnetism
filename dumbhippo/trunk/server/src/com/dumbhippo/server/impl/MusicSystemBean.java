@@ -56,7 +56,16 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.albumSearch(viewpoint, artist, album);
 	}
 	
-	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
-		return internal.getRelatedPeople(viewpoint, artist, album, name);
+	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name) {
+		return internal.getRelatedPeopleWithTracks(viewpoint, artist, album, name);
+	}
+
+	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name) {
+		return internal.getRelatedPeopleWithAlbums(viewpoint, artist, album, name);
+	}
+
+	
+	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
 	}
 }

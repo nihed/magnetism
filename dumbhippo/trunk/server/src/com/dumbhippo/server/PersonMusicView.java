@@ -7,10 +7,11 @@ import java.util.List;
 public class PersonMusicView {
 	private PersonView person;
 	private List<TrackView> tracks;
-
+	private List<AlbumView> albums;
 	
 	public PersonMusicView() {
 		this.tracks = new ArrayList<TrackView>();
+		this.albums = new ArrayList<AlbumView>();
 	}
 	
 	public PersonMusicView(PersonView person) {
@@ -39,5 +40,21 @@ public class PersonMusicView {
 	// needed since getTracks().size() can't be obtained easily in JSP expression language
 	public int getTrackCount() {
 		return this.tracks.size();
+	}
+	
+	public List<AlbumView> getAlbums() {
+		return Collections.unmodifiableList(albums);
+	}
+	public void setAlbums(List<AlbumView> albums) {
+		this.albums.clear();
+		this.albums.addAll(albums);
+	}
+	public void addAlbum(AlbumView album) {
+		this.albums.add(album);
+	}
+	
+	// needed since getAlbums().size() can't be obtained easily in JSP expression language
+	public int getAlbumCount() {
+		return this.albums.size();
 	}
 }

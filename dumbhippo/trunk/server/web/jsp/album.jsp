@@ -4,12 +4,14 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="musicsearch" class="com.dumbhippo.web.MusicSearchPage" scope="request"/>
+<jsp:setProperty name="musicsearch" property="albumMode" value="true"/>
+
 <jsp:setProperty name="musicsearch" property="song" param="track"/>
 <jsp:setProperty name="musicsearch" property="album" param="album"/>
 <jsp:setProperty name="musicsearch" property="artist" param="artist"/>
 
 <head>
-	<title><c:out value="${musicsearch.song} - ${musicsearch.artist}"/></title>
+	<title><c:out value="${musicsearch.album} - ${musicsearch.artist}"/></title>
 	<dht:stylesheets href="music.css" iehref="person-iefixes.css" />
 	<dht:scriptIncludes/>
 </head>
@@ -21,10 +23,10 @@
 		<dht:logo/>
 
 		<c:choose>
-			<c:when test="${empty musicsearch.trackView}">
+			<c:when test="${empty musicsearch.albumView}">
 				We got nothing! We couldn't find anything about
-				the track "<c:out value="${musicsearch.song}"/>" on the album
-				"<c:out value="${musicsearch.album}"/>" from the artist "<c:out value="${musicsearch.artist}"/>."
+				the album "<c:out value="${musicsearch.album}"/>" from
+				the artist "<c:out value="${musicsearch.artist}"/>."
 			</c:when>
 			<c:when test="${musicsearch.signin.disabled}">
 				<% /* note this message appears even when viewing other people's pages */ %>
@@ -41,34 +43,34 @@
 				<h2 class="dh-title"></h2>
 	
 				<div>
-					<dht:track track="${musicsearch.trackView}" linkifySong="false"/>
+					<dht:album album="${musicsearch.albumView}"/>
 				</div>
 				<c:if test="${musicsearch.relatedPeople.size > 0}">
-					<h2 class="dh-title">Some Friends Who Listened to This Song</h2>
+					<h2 class="dh-title">Some Friends Who Listened to This Album</h2>
 		
 					<div>
 						<c:forEach items="${musicsearch.relatedPeople.list}" var="personmusic">
 							<div>
 								<dht:headshot person="${personmusic.person}"/>
 								<c:out value="${personmusic.person.name}"/>
-								<c:forEach items="${personmusic.tracks}" var="track">
-									<dht:track track="${track}"/>
+								<c:forEach items="${personmusic.albums}" var="album">
+									<dht:album album="${album}"/>
 								</c:forEach>
 							</div>
 						</c:forEach>
 					</div>
 				</c:if>
-				<c:if test="${musicsearch.recommendations.size > 0}">
+				<c:if test="${musicsearch.albumRecommendations.size > 0}">
 					<h2 class="dh-title">Related Music</h2>
 		
 					<div>
-						Other people who listened to <c:out value="${musicsearch.song}"/> also listened to:
+						Other people who listened to <c:out value="${musicsearch.album}"/> also listened to:
 					</div>
 		
 					<div>
-						<c:forEach items="${musicsearch.recommendations.list}" var="track">
-							<dht:track track="${track}"/>
-						</c:forEach>				
+						<c:forEach items="${musicsearch.albumRecommendations.list}" var="album">
+							<dht:album album="${album}"/>
+						</c:forEach>
 					</div>
 				</c:if>
 			</c:otherwise>

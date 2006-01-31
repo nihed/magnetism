@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -812,6 +813,36 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		return views;
 	}
+
+	private List<AlbumView> getAlbumViewsFromTracks(List<Track> tracks) {
+		
+		logger.debug("Getting AlbumViews from tracks list with " + tracks.size() + " items");
+		
+		// spawn threads in parallel
+		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
+		for (Track t : tracks) {
+			futureViews.add(getAlbumViewAsync(t));
+		}
+	
+		// now harvest all the results
+		List<AlbumView> views = new ArrayList<AlbumView>(tracks.size());
+		for (Future<AlbumView> fv : futureViews) {
+			AlbumView v;
+			try {
+				v = fv.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Future<AlbumView> was interrupted", e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException("Future<AlbumView> had execution exception", e);
+			}
+			
+			assert v != null;
+			
+			views.add(v);
+		}
+		
+		return views;
+	}
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		logger.debug("getLatestTrackViews() for user " + user);
@@ -853,6 +884,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getViewsFromTracks(tracks);
 	}
 
+	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+		logger.debug("getLatestAlbumViews() for user " + user);
+		
+		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
+		// unique albums. For now, just heuristically ask for more results so we have a better shot
+		// at getting several albums, but probably some real solution would be nice.
+		// The case to think about is someone playing an entire album, so their last dozen 
+		// tracks or so are all from the same album.
+		
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults*12);
+		
+		Set<String> albums = new HashSet<String>();
+		List<Track> tracks = new ArrayList<Track>(history.size());
+		for (TrackHistory h : history) {
+			Track t = h.getTrack();
+			if (!albums.contains(t.getAlbum())) {
+				tracks.add(t);
+				albums.add(t.getAlbum());
+			}
+		}
+		return getAlbumViewsFromTracks(tracks);		
+	}
+	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
 		int count = 0;
 		if (artist != null)
@@ -943,7 +997,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private static final int MAX_RELATED_FRIENDS_RESULTS = 5;
 	private static final int MAX_RELATED_ANON_RESULTS = 5;
 	
-	public List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name) {
+	private enum RelatedType {
+		ALBUMS,
+		TRACKS
+	}
+	
+	private List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name, RelatedType type) {
 
 		if (viewpoint == null)
 			throw new IllegalArgumentException("System view not supported here");
@@ -1015,8 +1074,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
 	
 						try {
-							List<TrackView> latest = getLatestTrackViews(viewpoint, user, 3);
-							pmv.setTracks(latest);
+							if (type == RelatedType.TRACKS) {
+								List<TrackView> latest = getLatestTrackViews(viewpoint, user, 3);
+								pmv.setTracks(latest);
+							} else {
+								List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, 3);
+								pmv.setAlbums(latest);
+							}
 						} catch (NotFoundException e) {
 							// just leave the tracks list empty,
 							// but still display the friend
@@ -1026,12 +1090,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				} else {
 					if (anonViews < MAX_RELATED_ANON_RESULTS) {
 						try {
-							// get latest tracks from system view
-							List<TrackView> latest = getLatestTrackViews(null, user, 3);
-							if (latest.size() > 0) {
-								pmv = new PersonMusicView(); // don't load a PersonView
-								pmv.setTracks(latest);
-								++anonViews;
+							if (type == RelatedType.TRACKS) {
+								// get latest tracks from system view
+								List<TrackView> latest = getLatestTrackViews(null, user, 3);
+								if (latest.size() > 0) {
+									pmv = new PersonMusicView(); // don't load a PersonView
+									pmv.setTracks(latest);
+									++anonViews;
+								}
+							} else {
+								List<AlbumView> latest = getLatestAlbumViews(null, user, 3);
+								if (latest.size() > 0) {
+									pmv = new PersonMusicView(); // don't load a PersonView
+									pmv.setAlbums(latest);
+									++anonViews;
+								}
 							}
 						} catch (NotFoundException e) {
 							// don't include this one
@@ -1051,6 +1124,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		ret.addAll(views.values());
 		
 		return ret;
+	}
+
+	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name) {
+		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.TRACKS);
+	}
+
+	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name) {
+		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.ALBUMS);
 	}
 }
 

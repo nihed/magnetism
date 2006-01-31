@@ -6,16 +6,24 @@
 	<c:set var="linkifySong" value="true"/>
 </c:if>
 
+<c:url value="/album" var="albumlink">
+	<c:param name="track" value="${track.name}"/>
+	<c:param name="artist" value="${track.artist}"/>
+	<c:param name="album" value="${track.album}"/>
+</c:url>
+
 <div class="dh-track">
 	<div class="dh-track-image">
-		<c:choose>
-			<c:when test="${!empty track.smallImageUrl}">
-				<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
-			</c:when>
-			<c:otherwise>
-				<img src="/images/no_image_available75x75light.gif" width="75" height="75"/>
-			</c:otherwise>
-		</c:choose>
+		<a href="${albumlink}">
+			<c:choose>
+				<c:when test="${!empty track.smallImageUrl}">
+					<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
+				</c:when>
+				<c:otherwise>
+					<img src="/images/no_image_available75x75light.gif" width="75" height="75"/>
+				</c:otherwise>
+			</c:choose>
+		</a>
 	</div>
 	<div class="dh-track-info">
 		<c:if test="${!empty track.name}">
