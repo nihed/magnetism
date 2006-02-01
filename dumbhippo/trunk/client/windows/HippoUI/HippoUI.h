@@ -130,16 +130,6 @@ public:
     void onReceivingMySpaceContactPost();
 
 private:
-    class HippoActiveBrowserShare {
-    public:
-        HippoActiveBrowserShare(BSTR postId, HippoExternalBrowser *browser) {
-            postId_ = postId;
-            browser_ = browser;
-        }
-    private:
-        HippoBSTR postId_;
-        HippoPtr<HippoExternalBrowser> browser_;
-    };
     bool registerActive();
     bool registerClass();
     bool createWindow();

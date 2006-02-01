@@ -1278,7 +1278,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
+    // Messages used to be HEADLINE, we accept both for compatibility
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
+        || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET // Shouldn't need this, default should be normal
+        || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/linkshare", "link");
         if (child) {
             HippoLinkShare linkshare;
