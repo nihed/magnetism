@@ -488,7 +488,5 @@ dh.share.init = function() {
 	dh.share.autoSuggest.setGetEligibleFunc(dh.share.getEligibleRecipients);
 	
 	// rich text areas can't exist when display:none, so we have to create it after showing
-	dh.share.descriptionRichText = dojo.widget.fromScript("richtext", 
-															 {}, // props,
-															 document.getElementById("dhShareDescription"));
+	dh.share.descriptionRichText = document.getElementById("dhShareDescription");
 }

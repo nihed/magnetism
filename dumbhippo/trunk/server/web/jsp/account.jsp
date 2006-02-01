@@ -167,9 +167,11 @@
 				<h5 class="dh-title">Email Addresses</h5>
 					<c:forEach items="${account.person.allEmails}" var="email">
 						<p><c:out value="${email.humanReadableString}"/></p>
-					</c:forEach>	
+					</c:forEach>
+					<!-- disabled for now
 					<p><input id="dhExtraEmailAddress" class="dhText"/><input type="button" value="Add Email Address"/></p>
 					<p class="dh-explanation">Click on the link you get in the mail.</p>
+					-->
 			</div>
 			<div class="dh-right-box">
 				<h5 class="dh-title">Screen Names</h5>

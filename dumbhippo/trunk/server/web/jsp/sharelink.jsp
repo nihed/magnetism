@@ -54,7 +54,7 @@
 			<tr>
 			<td>
 				<input autocomplete="off" accesskey="w"
-						type="text" id="dhRecipientComboBox" class="dhText"/>
+						type="text" id="dhRecipientComboBox" class="dhText" tabindex="1"/>
 				<!-- dh:png id="dhRecipientComboBoxButton" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/> -->
 				<img id="dhRecipientComboBoxButton" src="/images/${buildStamp}/arrow.gif" height="16" width="16"/>
 				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div>
@@ -76,13 +76,12 @@
 			<div class="dhVerticalPadding"></div>
 	
 			<div class="dhLabel"><u>D</u>escription:</div>
-			<div class="dhTextArea" id="dhShareDescription">
-			</div>
+			<textarea rows="6" class="dhTextArea" id="dhShareDescription" tabindex="2"></textarea>
 	
 			<div class="dhVerticalPadding"></div>
 	
 			<input type="button" value="Share" accesskey="s"
-					class="dhButton share" onclick="dh.sharelink.submitButtonClicked();"/>
+					class="dhButton share" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/>
 	
 			<div class="dhVerticalPadding"></div>
 			

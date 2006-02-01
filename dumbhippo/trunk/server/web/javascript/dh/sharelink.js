@@ -257,7 +257,7 @@ dh.sharelink.submitButtonClicked = function() {
 
 	var url = dh.sharelink.urlToShareEditBox.value;
 
-	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText);
+	var descriptionHtml = dh.share.descriptionRichText.value;
 	
 	var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 	
