@@ -23,15 +23,15 @@ import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.MySpaceBlogTracker;
+import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
 
 @Stateless
-public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
-	static private final Logger logger = GlobalSetup.getLogger(MySpaceBlogTrackerBean.class);
+public class MySpaceTrackerBean implements MySpaceTracker {
+	static private final Logger logger = GlobalSetup.getLogger(MySpaceTrackerBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -104,7 +104,7 @@ public class MySpaceBlogTrackerBean implements MySpaceBlogTracker {
 		assert(acct != null);		
 		threadPool.execute(new Runnable() {
 			public void run() {
-				MySpaceBlogTracker tracker = EJBUtil.defaultLookup(MySpaceBlogTracker.class);
+				MySpaceTracker tracker = EJBUtil.defaultLookup(MySpaceTracker.class);
 				String name = acct.getMySpaceName();
 				assert(name != null);
 				try {

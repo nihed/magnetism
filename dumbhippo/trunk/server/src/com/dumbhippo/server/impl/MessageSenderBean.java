@@ -328,7 +328,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		private Message createMessageFor(User user) {
-			return createMessageFor(user, Message.Type.HEADLINE);
+			return createMessageFor(user, Message.Type.NORMAL);
 		}
 
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, boolean isTutorialPost) {
@@ -436,7 +436,7 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendMySpaceNameChangedNotification(User user) {
 			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(user);
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			String newMySpaceName = user.getAccount().getMySpaceName();
 			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
 			logger.info("Sending mySpaceNameChanged message to " + message.getTo());			
@@ -445,7 +445,7 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendMySpaceContactCommentNotification(User user) {
 			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(user);
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
 			logger.info("Sending mySpaceContactComment message to " + message.getTo());			
 			connection.sendPacket(message);

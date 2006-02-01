@@ -25,7 +25,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
-import com.dumbhippo.server.MySpaceBlogTracker;
+import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -47,7 +47,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	private PostingBoard postingBoard;
 	
 	@EJB
-	private MySpaceBlogTracker mySpaceTracker;
+	private MySpaceTracker mySpaceTracker;
 		
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;

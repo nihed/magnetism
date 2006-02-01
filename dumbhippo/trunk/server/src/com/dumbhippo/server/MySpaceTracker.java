@@ -9,7 +9,7 @@ import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
 
 @Local
-public interface MySpaceBlogTracker {
+public interface MySpaceTracker {
 	
 	public void updateFriendId(User user);
 	

@@ -37,7 +37,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.MySpaceBlogTracker;
+import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -68,7 +68,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private MessageSender messageSender;
 	
 	@EJB
-	private MySpaceBlogTracker mySpaceTracker;
+	private MySpaceTracker mySpaceTracker;
 	
 	private static class GuidNotFoundException extends NotFoundException {
 		private static final long serialVersionUID = 0L;
