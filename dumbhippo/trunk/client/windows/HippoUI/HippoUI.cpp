@@ -617,22 +617,58 @@ HippoUI::showMenu(UINT buttonFlag)
 }
 
 bool
-HippoUI::isSiteURL(BSTR url)
+HippoUI::crackUrl(BSTR url, URL_COMPONENTS *components)
 {
-    URL_COMPONENTS components;
-    ZeroMemory(&components, sizeof(components));
-    components.dwStructSize = sizeof(components);
+    ZeroMemory(components, sizeof(*components));
+    components->dwStructSize = sizeof(*components);
 
     // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
     // to return pointers into the passed in URL along with lengths. The 
     // specific non-zero value is irrelevant
-    components.dwHostNameLength = 1;
-    components.dwUserNameLength = 1;
-    components.dwPasswordLength = 1;
-    components.dwUrlPathLength = 1;
-    components.dwExtraInfoLength = 1;
+    components->dwHostNameLength = 1;
+    components->dwUserNameLength = 1;
+    components->dwPasswordLength = 1;
+    components->dwUrlPathLength = 1;
+    components->dwExtraInfoLength = 1;
 
-    if (!InternetCrackUrl(url, 0, 0, &components))
+    if (!InternetCrackUrl(url, 0, 0, components))
+        return false;
+}
+
+bool
+HippoUI::isFramedPost(BSTR url, BSTR postId)
+{
+    URL_COMPONENTS components;
+    if (!crackUrl(url, &components))
+        return false;
+
+    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+        return false;
+
+    HippoBSTR host;
+    unsigned int port;
+    preferences_.parseWebServer(&host, &port);
+    if (components.dwHostNameLength != host.Length() ||
+        wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
+        port != components.nPort)
+        return false;
+
+    HippoBSTR expectedExtra(L"?post=");
+    expectedExtra.Append(postId);
+    if (components.dwUrlPathLength == wcslen(L"/visit") &&
+        wcsncmp(components.lpszUrlPath, L"/visit", components.dwUrlPathLength) == 0 &&
+        wcsncmp(components.lpszExtraInfo, expectedExtra.m_str, expectedExtra.Length()) == 0) 
+    {
+        return true;
+    }
+    return false;
+}
+
+bool
+HippoUI::isSiteURL(BSTR url)
+{
+    URL_COMPONENTS components;
+    if (!crackUrl(url, &components))
         return false;
 
     if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
@@ -660,19 +696,8 @@ bool
 HippoUI::isNoFrameURL(BSTR url)
 {
     URL_COMPONENTS components;
-    ZeroMemory(&components, sizeof(components));
-    components.dwStructSize = sizeof(components);
 
-    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
-    // to return pointers into the passed in URL along with lengths. The 
-    // specific non-zero value is irrelevant
-    components.dwHostNameLength = 1;
-    components.dwUserNameLength = 1;
-    components.dwPasswordLength = 1;
-    components.dwUrlPathLength = 1;
-    components.dwExtraInfoLength = 1;
-
-    if (!InternetCrackUrl(url, 0, 0, &components))
+    if (!crackUrl(url, &components))
         return false;
 
     if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
@@ -764,12 +789,6 @@ HippoUI::displaySharedLink(BSTR postId, BSTR url)
     // do for URLs where we want the browser bar.
     if (browser)
         browser->injectBrowserBar();
-
-    WCHAR *postIdW = postId;
-    char *postIdU = g_utf16_to_utf8(postIdW, -1, NULL, NULL, NULL);
-    debugLogW(L"notifying post clicked: %s", postId);
-    im_.notifyPostClickedU(postIdU);
-    g_free (postIdU);
 }
 
 void
@@ -823,11 +842,18 @@ HippoUI::onAuthFailure()
 
 
 bool 
-HippoUI::isChatWindowActive(BSTR postId)
+HippoUI::isShareActive(BSTR postId)
 {
     IHippoChatRoom *chatRoom = NULL;
     HRESULT ret = im_.findChatRoom(postId, &chatRoom);
-    return SUCCEEDED(ret) && chatRoom != NULL;
+    if (SUCCEEDED(ret) && chatRoom != NULL)
+        return TRUE;
+    for (UINT i = 0; i < browsers_.length(); i++) {
+        if (isFramedPost(browsers_[i].url, postId)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 void 

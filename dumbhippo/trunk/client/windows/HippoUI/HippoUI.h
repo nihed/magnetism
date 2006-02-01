@@ -109,7 +109,7 @@ public:
 
     void setHaveMissedBubbles(bool haveMissed);
 
-    bool isChatWindowActive(BSTR postId);
+    bool isShareActive(BSTR postId);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
@@ -130,6 +130,16 @@ public:
     void onReceivingMySpaceContactPost();
 
 private:
+    class HippoActiveBrowserShare {
+    public:
+        HippoActiveBrowserShare(BSTR postId, HippoExternalBrowser *browser) {
+            postId_ = postId;
+            browser_ = browser;
+        }
+    private:
+        HippoBSTR postId_;
+        HippoPtr<HippoExternalBrowser> browser_;
+    };
     bool registerActive();
     bool registerClass();
     bool createWindow();
@@ -145,8 +155,10 @@ private:
     // instance exits
     void addInternalBrowser(HippoExternalBrowser *browser, bool closeOnQuit);
 
+    bool crackUrl(BSTR url, URL_COMPONENTS *components);
     // Check if an URL points to our site (and not to /visit)
     bool isSiteURL(BSTR url);
+    bool isFramedPost(BSTR url, BSTR postId);
 
     // Check if an URL points to /account, or another page that we
     // want to avoid framing
