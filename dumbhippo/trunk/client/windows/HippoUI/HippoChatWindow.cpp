@@ -32,6 +32,7 @@ HippoChatWindow::HippoChatWindow(void)
 
 HippoChatWindow::~HippoChatWindow(void)
 {
+    ui_->unregisterWindowMsgHook(window_);
     DestroyWindow(window_);
 
     delete ieCallback_;
@@ -57,6 +58,7 @@ HippoChatWindow::createWindow(void)
     EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
     hippoSetWindowData<HippoChatWindow>(window_, this);
+    ui_->registerWindowMsgHook(window_, this);
 
     return true;
 }
@@ -165,6 +167,19 @@ BSTR
 HippoChatWindow::getPostId()
 {
     return postId_.m_str;
+}
+
+bool
+HippoChatWindow::hookMessage(MSG *msg)
+{
+    if ((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST))
+    {
+        HippoPtr<IWebBrowser> browser(ie_->getBrowser());
+        HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());
+        HRESULT res = active->TranslateAccelerator(msg);
+        return res == S_OK;
+    }
+    return FALSE;
 }
 
 bool

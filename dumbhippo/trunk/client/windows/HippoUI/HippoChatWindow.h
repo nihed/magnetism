@@ -11,7 +11,7 @@
 
 class HippoUI;
 
-class HippoChatWindow
+class HippoChatWindow : public HippoMessageHook
 {
 public:
     HippoChatWindow();
@@ -24,6 +24,8 @@ public:
 
     void setPostId(BSTR postId);
     BSTR getPostId();
+
+    bool hookMessage(MSG *msg);
 
 private:
     HINSTANCE instance_;
