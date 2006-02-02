@@ -28,6 +28,8 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max);
 
+	public boolean canViewPost(Viewpoint viewpoint, Post post);
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
 
 	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, String search, int start, int max);

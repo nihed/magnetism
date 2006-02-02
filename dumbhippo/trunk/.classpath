@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="server/src"/>
+	<classpathentry kind="src" path="taste/src/main"/>
 	<classpathentry kind="src" path="imbot/src/java"/>
 	<classpathentry kind="src" path="hungry/src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
@@ -80,5 +81,7 @@
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="lib" path="server/lib/slf4j-log4j12.jar"/>
+	<classpathentry kind="lib" path="taste/taste.jar"/>
+	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

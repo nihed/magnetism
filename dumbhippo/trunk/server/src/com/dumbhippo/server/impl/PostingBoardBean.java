@@ -61,6 +61,7 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
@@ -96,6 +97,9 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private RecommenderSystem recommenderSystem;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -211,6 +215,10 @@ public class PostingBoardBean implements PostingBoard {
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
 		sendPostNotifications(post, expandedRecipients, isTutorialPost);
+		
+		// tell the recommender engine, so ratings can be updated
+		recommenderSystem.addRatingForPostCreatedBy(post, poster);
+		
 		return post;		
 	}
 	
@@ -545,6 +553,41 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
+	static final String GET_SPECIFIC_POST_QUERY = 
+		"SELECT post from Post post WHERE post.id = :post";
+
+	/**
+	 * Check if a particular viewer can see a particular post.
+	 * 
+	 * @param viewpoint
+	 * @param post
+	 * @return true if post is visible, false otherwise
+	 */
+	public boolean canViewPost(Viewpoint viewpoint, Post post) {
+		User viewer = viewpoint.getViewer();
+		
+		Query q;
+		StringBuilder queryText = new StringBuilder(GET_SPECIFIC_POST_QUERY + " AND ");
+		queryText.append(CAN_VIEW);
+		logger.debug("Full canViewPost query is: '" + queryText.toString() + "'");
+		
+		q = em.createQuery(queryText.toString());
+		q.setParameter("post", post);
+		q.setParameter("viewer", viewer);
+		
+		try {
+			Post resultPost = (Post)em.createQuery(queryText.toString())
+	            .setParameter("post", post)
+	            .setParameter("viewer", viewer)
+	            .getSingleResult();
+			logger.debug("canViewPost query got one result: " + resultPost + "; returning true/access granted");
+			return true;
+		} catch (EntityNotFoundException e) {
+			logger.debug("canViewPost query got no result; returning false/access denied");
+			return false;
+		}
+	}
+	
 	static final String GET_POSTS_FOR_QUERY =
 		"SELECT post FROM Post post WHERE post.poster = :poster";
 	
@@ -684,6 +727,9 @@ public class PostingBoardBean implements PostingBoard {
 		} catch (NotFoundException e) {
 			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
+		
+		// Notify the recommender system that a user clicked through, so that ratings can be updated
+		recommenderSystem.addRatingForPostViewedBy(post, clicker);
 		
 		if (!updatePersonPostData(clicker, post))
 			return;

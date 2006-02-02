@@ -28,6 +28,7 @@ import com.planetj.taste.recommender.Recommender;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -110,32 +111,40 @@ public final class GenericUserBasedRecommender extends AbstractRecommender {
 		// TODO: refactor this section somehow since it's so much like similar
 		// sections in NearestNUserNeighborhood and GenericItemBasedRecommender
 		final LinkedList<RecommendedItem> topItems = new LinkedList<RecommendedItem>();
-		boolean full = false;
+	
+		// binary sort them by preference
 		for (final Item item : allItems) {
-			if (item.isRecommendable() && filter.isAccepted(item)) {
+			if (item.isRecommendable()) {
 				final double preference = doEstimatePreference(theNeighborhood, item);
-				if (!full || preference > topItems.getFirst().getValue()) {
-					final GenericRecommendedItem newItem = new GenericRecommendedItem(item, preference);
-					int addAt = Collections.binarySearch(topItems, newItem);
-					// See Collection.binarySearch() javadoc for an explanation of this:
-					if (addAt < 0) {
-						addAt = -addAt - 1;
-					}
-					topItems.add(addAt, newItem);
-					if (full) {
-						topItems.removeLast();
-					} else if (topItems.size() > howMany) {
-						full = true;
-						topItems.removeLast();
-					}
+				final GenericRecommendedItem newItem = new GenericRecommendedItem(item, preference);
+				int addAt = Collections.binarySearch(topItems, newItem);
+				// See Collection.binarySearch() javadoc for an explanation of this:
+				if (addAt < 0) {
+					addAt = -addAt - 1;
+				}
+				topItems.add(addAt, newItem);			
+			}
+		}
+		
+		// now walk the sorted list from the front until we have howMany items
+		//  that pass the isAccepted() test
+		
+		// note that we do this in a separate pass to minimize the number of calls
+		//  to isAccepted, since it may (does) require a database query per call
+		ArrayList<RecommendedItem> topHowManyItems = new ArrayList<RecommendedItem>(howMany);
+		for (RecommendedItem recItem: topItems) {
+			if (filter.isAccepted(recItem.getItem())) {
+				topHowManyItems.add(recItem);
+				if (topHowManyItems.size() >= howMany) {
+					break;
 				}
 			}
 		}
 
 		if (log.isLoggable(Level.FINE)) {
-			log.fine("Recommendations are: " + topItems);
+			log.fine("Recommendations are: " + topHowManyItems);
 		}
-		return topItems;
+		return topHowManyItems;
 	}
 
 	/**
