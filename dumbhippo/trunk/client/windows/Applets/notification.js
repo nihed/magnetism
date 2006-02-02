@@ -78,20 +78,60 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._updateNavigation()
     }
     
-    this.addLinkShare = function (share, timeout) {
-        // If we already have a notification for the same post, update the viewers
+    this._shouldDisplayShare = function (share) {
+        // We only display bubbles if the viewers are at a certain
+        // threshold: http://devel.dumbhippo.com/wiki/Bubble_Behavior#States
+        if (share.viewers.length > 127) {
+            dh.util.debug("> 127 viewers, not displaying")
+            return false
+        }
+        if (share.viewers.length >= 3 &&
+            share.viewers.length <= 5) {
+            dh.util.debug("between 3 and 5 viewers inclusive, displaying share")                     
+            return true
+        }
+        // Compute log_2 of viewers
+        var logViewerLen = Math.LOG2E * Math.log(share.viewers.length)
+        if (share.viewers.length > 5 && Math.ceil(logViewerLen) == Math.floor(logViewerLen)) {
+            dh.util.debug("viewers is a power of 2, displaying share")
+            return true
+        }
+        dh.util.debug("not displaying share")                
+        return false    
+    }
+    
+    this._findLinkShare = function (postId) {
         for (var i = 0; i < this.notifications.length; i++) {
-            if (this.notifications[i].notificationType == 'linkShare' &&
-                this.notifications[i].data.postId == share.postId) {
-                this.notifications[i].data.viewers = share.viewers;
-                if (i == this.position)
-                    this._display_linkShare(share)
-                return;
+            var notification = this.notifications[i] 
+            if (notification.notificationType == 'linkShare' &&
+                notification.data.postId == postId) {
+                return {notification: notification, position: i}
             }
         }
-        
-        // Otherwise, add a new notification page
-        this._pushNotification('linkShare', share, timeout)
+        if (this.savedNotifications[postId]) {
+            return {notification: this.savedNotifications[postId], position: -1}
+        }
+        return null
+    }
+    
+    // Returns true iff we should show the window if it's hidden
+    this.addLinkShare = function (share, timeout) {
+        var prevShareData = this._findLinkShare(share.postId)
+        var shouldDisplayShare = this._shouldDisplayShare(share)
+        if (prevShareData) {
+            // Update the viewer data
+            prevShareData.notification.data.viewers = share.viewers        
+        }
+        if (!prevShareData || (prevShareData.position < 0 && shouldDisplayShare)) {   
+            // We don't have it at all, or it was saved and needs to be redisplayed
+            this._pushNotification('linkShare', share, timeout)
+            return true
+        } else if (prevShareData && prevShareData.position == this.position) {
+            // We're currently displaying this share, rerender
+            this._display_linkShare(share)
+            return false
+        }
+        return false
     }
     
     this.addMySpaceComment = function (comment) {
@@ -397,6 +437,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this.goNextOrClose();    
     }
   
+    // Returns true iff we should display this share
     this._display_linkShare = function (share) {
         dh.util.debug("displaying " + share.postId + " " + share.linkTitle)
 
@@ -498,14 +539,13 @@ dhAdaptLinkRecipients = function (recipients) {
 // HippoBubble.cpp
 dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTitle, 
                            linkURL, linkDescription, personRecipients, groupRecipients, viewers, postInfo, timeout) {
-    dh.util.debug("in dhAddLinkShare, senderName: " + senderName)
-    dh.util.debug("postinfo: " + postInfo)    
+    dh.util.debug("in dhAddLinkShare, senderName: " + senderName)  
     dh.display.setVisible(true)
     dh.display.addPersonName(senderId, senderName)
     personRecipients = dhAdaptLinkRecipients(personRecipients)
     groupRecipients = dh.core.adaptExternalArray(groupRecipients)
     viewers = dhAdaptLinkRecipients(viewers)
-    dh.display.addLinkShare({senderId: senderId,
+    return dh.display.addLinkShare({senderId: senderId,
                              senderPhotoUrl: senderPhotoUrl,
                              postId: postId,
                             linkTitle: linkTitle,

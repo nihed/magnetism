@@ -263,10 +263,21 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
     SafeArrayDestroy(personRecipients);
     SafeArrayDestroy(groupRecipients);
 
-    if (!ui_->isShareActive(share.postId))
-        show();
-    else
+    if (result.vt != VT_BOOL) {
+        ui_->debugLogU("dhAddLinkShare returned invalid type");
+        return;
+    }
+    // Only show the bubble both if dhAddLinkShare says we should,
+    // and the share isn't active elsewhere (e.g. in a browser frame)
+    if (!result.boolVal) {
+        ui_->debugLogU("dhAddLinkShare returned false");
+        return;
+    }
+    if (ui_->isShareActive(share.postId)) {
         ui_->debugLogW(L"chat is active for postId %s, not showing", share.postId);
+        return;
+    }
+    show();
 }
 
 void 
