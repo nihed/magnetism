@@ -8,6 +8,7 @@
 #include "HippoUI.h"
 
 #define HIPPO_MYSPACE_REQUEUE_INTERVAL_SECS (30)
+#define HIPPO_MYSPACE_RETRY_FRIENDID_SECS (20 * 60)
 #define HIPPO_MYSPACE_POLL_START_INTERVAL_SECS (7*60)
 #define HIPPO_MYSPACE_REFRESH_CONTACT_INTERVAL_SECS (30*60)
 
@@ -20,6 +21,7 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 
     mySpaceIdSize_ = 14;
 
+    idleGetFriendIdId_ = 0;
     idlePollMySpaceId_ = 0;
     idleRefreshContactsId_ = 0;
 
@@ -32,8 +34,12 @@ HippoMySpace::HippoMySpace(BSTR name, HippoUI *ui)
 
 HippoMySpace::~HippoMySpace(void)
 {
+    if (idleGetFriendIdId_ > 0)
+        g_source_remove(idleGetFriendIdId_);
     if (idlePollMySpaceId_ > 0)
         g_source_remove(idlePollMySpaceId_);
+    if (idleRefreshContactsId_ > 0)
+        g_source_remove(idleRefreshContactsId_);
 }
 
 static void
@@ -65,6 +71,14 @@ HippoMySpace::sanitizeCommentHTML(BSTR html, HippoBSTR &ret)
         }
     }
     return;
+}
+
+UINT
+HippoMySpace::idleGetFriendId(void * data)
+{
+    HippoMySpace *mySpace = (HippoMySpace *) data;
+    mySpace->getFriendId();
+    return FALSE;
 }
 
 void
@@ -131,7 +145,8 @@ HippoMySpace::idleRefreshContacts(void *data)
 void
 HippoMySpace::HippoMySpaceFriendIdHandler::handleError(HRESULT res) 
 {
-    myspace_->ui_->logError(L"got error while retriving MySpace friend id", res);
+    myspace_->ui_->logError(L"got error while retriving MySpace friend id, queuing retry", res);
+    myspace_->idleGetFriendIdId_ = g_timeout_add(HIPPO_MYSPACE_RETRY_FRIENDID_SECS * 1000, (GSourceFunc) HippoMySpace::idleGetFriendId, myspace_);
     delete this;
 }
 

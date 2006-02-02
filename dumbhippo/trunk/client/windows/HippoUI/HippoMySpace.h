@@ -104,11 +104,13 @@ private:
     void sanitizeCommentHTML(BSTR html, HippoBSTR &ret);
 
     void setState(HippoMySpace::State newState);
-    void getSeenComments();
+    void getSeenComments(); 
+    static UINT idleGetFriendId(void * data);
     void getFriendId();
     void refreshComments();
     static UINT idleRefreshComments(void *data);
     void addBlogComment(HippoMySpaceBlogComment &comment);
+
 
     static UINT idleRefreshContacts(void *data);
     void refreshContacts();
@@ -133,6 +135,7 @@ private:
     long friendId_;
     long blogId_;
 
+    int idleGetFriendIdId_;
     int idlePollMySpaceId_;
     int idleRefreshContactsId_;
 
