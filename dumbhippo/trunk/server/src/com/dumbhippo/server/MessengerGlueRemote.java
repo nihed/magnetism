@@ -235,34 +235,61 @@ public interface MessengerGlueRemote {
 	public List<MySpaceContactInfo> getContactMySpaceNames(String username);
 	
 	/**
-	 * Called when Jabber server starts up, so we can detect when 
-	 * we have a new server and need to reset.
-	 *  
-	 * @param timestamp when the server is starting, from System.currentTimeMillis()
+	 * Thrown when the server identifier passed to one of the functions
+	 * for maintaining Jabber state is unknown. This could happen for
+	 * one of two reasons; either the application server has been 
+	 * restarted in between, or because the Jabber server did not
+	 * ping frequently enough and the application server assumed
+	 * that it had died. In either case, when you get this exception
+	 * you must get a new server identifier and replay the current
+	 * state.
 	 */
-	public void serverStartup(long timestamp);
+	public class NoSuchServerException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public NoSuchServerException(String message) {
+			super(message);
+		}
+	}
 	
 	/**
-	 * Called each time a user opens their first session. Note that this 
-	 * can only be used to take some action on user availability, unless we 
-	 * add database fields to track state.
+	 * Called when Jabber server starts up. After calling this method you must
+	 * calling serverPing periodically or it will be assumed that the server
+	 * has died and cached state for the server will be discarded. 
+	 * (Once a minute is the recommended ping period.)
+	 *  
+	 * @param timestamp when the server is starting, from System.currentTimeMillis()
+	 * @return a string that will be used to identify this server
+	 *        instance in subsequent communication. Each time the server is
+	 *        restarted, a new server identifier should be generated.
+	 *        If an attempt to use this ID throws NoSuchServerException, then
+	 *        the server must call serverStartup() again, then re-register
+	 *        all present users by calling onUserAvailable().
+	 */
+	public String serverStartup(long timestamp);
+
+	/**
+	 * Keep resources associated with a Jabber server from timing out.
 	 * 
+	 * @param serverIdentifier identifying string for the server returned from serverStartup()
+	 */
+	public void serverPing(String serverIdentifier) throws NoSuchServerException;
+	
+	/**
+	 * Called each time a user opens their first session.
+	 * 
+	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param username the username that has a new session available
 	 */
-	public void onUserAvailable(String username);
+	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException;
 
 	/**
 	 * Called each time a user has zero sessions available.
-	 * Not very reliably called since Jive could go down 
-	 * and restart. To try to track user presence you'd 
-	 * need to address this by e.g. having Jive reset
-	 * our list of available users when it starts up.
-	 * Also, to track user presence we'd need a database 
-	 * representation of it.
 	 * 
+	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param username the username that became unavailable
 	 */
-	public void onUserUnavailable(String username);
+	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException;
 	
 	/**
 	 * Get the information needed to manage a chatroom for a post.

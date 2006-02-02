@@ -1,0 +1,6 @@
+<jboss-app>
+    <loader-repository>dumbhippo.com:loader=dumbhippo.ear</loader-repository>
+    <module>
+        <service>dumbhippo.sar</service>
+     </module>
+</jboss-app>

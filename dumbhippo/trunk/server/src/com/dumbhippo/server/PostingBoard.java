@@ -11,6 +11,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
@@ -47,6 +48,8 @@ public interface PostingBoard {
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
+	
+	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
 
 	/**
 	 * Notifies system that the post was viewed by the given person.

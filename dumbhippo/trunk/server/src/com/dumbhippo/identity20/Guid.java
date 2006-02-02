@@ -2,6 +2,7 @@ package com.dumbhippo.identity20;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.HashSet;
@@ -17,7 +18,9 @@ import java.util.Set;
  * @author hp, otaylor
  * 
  */
-final public class Guid {
+final public class Guid implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	public static class ParseException extends Exception {
 		private static final long serialVersionUID = 0L;
 		public ParseException(String message, Throwable cause) {

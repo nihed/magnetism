@@ -19,21 +19,41 @@ public class EJBUtil {
 	private static final char LIKE_ESCAPE_CHAR = '^';
 	
 	/**
-	 * Very simple wrapper around InitialContext.lookup. If I undestand
-	 * correctly, the fact that this works is relying on JBoss specifics. There 
-	 * is no standard way of looking up bean at runtime without having 
-	 * specified a dependency on the bean via an @EJB annotation (On a field or 
+	 * Very simple wrapper around InitialContext.lookup that looks up an
+	 * a desired session bean in JNDI by the interface name of its primary 
+	 * interface. 
+	 * 
+	 * If I understand correctly, the fact that this works is relying on JBoss 
+	 * specifics. Thereis no standard way of looking up bean at runtime without 
+	 * having specified a dependency on the bean via an @EJB annotation (On a field or 
 	 * on a class.) We are relying here on the fact that JBoss (in the absence
 	 * of its extension @LocalBinding annotation) uses the fully qualified
-	 * name of the bean's interface as the bean's JNDI name.   
+	 * name of the bean's interface as the bean's JNDI name.
+	 *    
+	 * @param clazz the class of the (local or remote) EJB interface to look up.
+	 * @return the found EJB
 	 */
 	public static <T> T defaultLookup(Class<T> clazz) {
-		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
 		try {
-			namingContext = new InitialContext();
+			return defaultLookupChecked(clazz);
 		} catch (NamingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	/**
+	 * Like defaultLookup() but throws a checked NamingException. You should
+	 * use this function only if you have useful recovery to do if lookup fails.
+	 * 
+	 * @param clazz the class of the (local or remote) EJB interface to look up.
+	 * @return the found EJB
+	 * @throws NamingException if an error occurs finding the object; this might
+	 *   be because of a network error, or becaus the server providing the object
+	 *   doesn't exist.
+	 */
+	public static <T> T defaultLookupChecked(Class<T> clazz) throws NamingException {
+		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
+		namingContext = new InitialContext();
 		if (clazz == null)
 			throw new IllegalArgumentException("Class passed to nameLookup() is null");
 		
@@ -41,11 +61,7 @@ public class EJBUtil {
 		if (!clazz.isInterface())
 			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
 
-		try {
-			return clazz.cast(namingContext.lookup(name));
-		} catch (NamingException e) {
-			throw new RuntimeException(e);
-		}
+		return clazz.cast(namingContext.lookup(name));
 	}
 	
 	public static <T> T contextLookup(EJBContext ejbContext, Class<T> clazz) {

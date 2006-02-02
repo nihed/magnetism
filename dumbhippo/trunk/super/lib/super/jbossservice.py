@@ -6,6 +6,7 @@ trimre = re.compile('[0-9]+-[0-9]+-[0-9]+\s+')
 reloadre = re.compile('Deployed package:.*dumbhippo.ear')
 ignorere = re.compile('\[STDOUT\]')
 infore = re.compile('INFO')
+warnre = re.compile('WARN')
 errorre = re.compile('ERROR')
 hippore = re.compile('DEBUG \[com.dumbhippo')
 hippoclassre = re.compile('com.dumbhippo.([a-zA-Z.]+)')
@@ -25,6 +26,8 @@ class JBossService(Service):
 
         if infore.search(line):
             print "\033[34m" + line + "\033[m" # blue
+        elif warnre.search(line):
+            print "\033[31m" + line + "\033[m" # red
         elif errorre.search(line):
             print "\033[31m" + line + "\033[m" # red
         elif hippore.search(line):

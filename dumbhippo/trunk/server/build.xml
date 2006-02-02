@@ -35,6 +35,7 @@
 		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
+		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
 			<include name="hibernate3.jar"/>
@@ -193,6 +194,7 @@
 	<target name="ejb3jar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
 			<fileset dir="${build}">
+				<include name="**/live/*.class" />
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
@@ -219,9 +221,26 @@
 		</jar>
 	</target>
 
-	<target name="ear" depends="war,ejb3jar,par,basejar">
+	<target name="sar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.sar">
+			<metainf dir="dd">
+				<include name="jboss-service.xml" />
+			</metainf>
+			<fileset dir="${build}">
+				<include name="**/mbean/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="ear" depends="war,ejb3jar,par,sar,basejar">
 		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
-			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.war, *.jar" />
+			<metainf dir="dd">
+				<include name="jboss-app.xml" />
+                        </metainf>
+			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.sar, *.war, *.jar" />
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
 			<fileset dir="${build.lib}" includes="taste.jar"/>
 		</ear>

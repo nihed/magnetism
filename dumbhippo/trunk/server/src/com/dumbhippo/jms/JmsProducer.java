@@ -44,6 +44,7 @@ public class JmsProducer extends JmsQueue {
 			try {
 				return getSession().createObjectMessage(payload);
 			} catch (JMSException e) {
+				logger.debug("Error creating object message", e);
 				close();
 			}
 		}
@@ -56,6 +57,7 @@ public class JmsProducer extends JmsQueue {
 				logger.debug("Sent message OK " + message);
 				break;
 			} catch (JMSException e) {
+				logger.debug("Error sending message", e);
 				close();
 			}
 		}

@@ -14,8 +14,6 @@ import org.xmpp.component.ComponentException;
 import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.MessengerGlueRemote;
-import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * Our plugin for Jive Messenger
@@ -23,16 +21,12 @@ import com.dumbhippo.server.util.EJBUtil;
 public class HippoPlugin implements Plugin {
 	
 	private RoomHandler roomHandler;
+	private PresenceMonitor presenceMonitor;
 	
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
 			Log.debug("Initializing Hippo plugin");
 			GlobalSetup.disableLog4j();
-			
-			// this is a little broken since we have no connection tracking and thus
-			// no clue when the server restarts and we need to call this again
-			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
-			glue.serverStartup(System.currentTimeMillis());
 			
 			IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
 			iqRouter.addHandler(new ClientMethodIQHandler());		
@@ -42,8 +36,9 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new MusicIQHandler());
 			iqRouter.addHandler(new PrefsIQHandler());
 			Log.debug("Adding PresenceMonitor");
+			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-			sessionManager.registerListener(new PresenceMonitor());
+			sessionManager.registerListener(presenceMonitor);
 					
 			roomHandler = new RoomHandler();
 			try {
@@ -63,6 +58,9 @@ public class HippoPlugin implements Plugin {
 		
 		Log.debug("Removing rooms route");
 		InternalComponentManager.getInstance().removeComponent("rooms");
+		
+		Log.debug("Shutting down presence monitor");
+		presenceMonitor.shutdown();
 
 		Log.debug("... done unloading Hippo plugin");
 	}

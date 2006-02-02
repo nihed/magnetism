@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
@@ -117,12 +119,27 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return user;
 	}
 
-	public void serverStartup(long timestamp) {
+	public String serverStartup(long timestamp) {
 		logger.debug("Jabber server startup at " + new Date(timestamp));
+		
+		return LiveState.getInstance().createXmppServer().getServerIdentifier();
 	}
 	
-	public void onUserAvailable(String username) {
+	public void serverPing(String serverIdentifier) throws NoSuchServerException {
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+		
+		server.ping();
+	}
+	
+	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException {
 		logger.debug("Jabber user " + username + " now available");
+
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+
 		try {
 			// account could be missing due to debug users or our own
 			// send-notifications
@@ -134,6 +151,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				logger.debug("username signed on that we don't know: " + username);
 				return;
 			}
+			
+			server.userAvailable(account.getOwner().getGuid());
+			
 			if (!account.getWasSentShareLinkTutorial()) {
 				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 	
@@ -147,8 +167,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 	}
 
-	public void onUserUnavailable(String username) {
+	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException {
 		logger.debug("Jabber user " + username + " now unavailable");
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+		
+		try {
+			server.userUnavailable(Guid.parseJabberId(username));
+		} catch (ParseException e) {
+			logger.debug("Corrupt username passed to onUserUnavailable");
+		}
 	}
 
 	public String getMySpaceName(String username) {

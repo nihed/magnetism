@@ -26,6 +26,8 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ChatRoom;
 import com.dumbhippo.persistence.ChatRoomMessage;
@@ -711,6 +713,23 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
+     public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
+    	 if (viewpoint != null)
+    		 throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
+    	 
+    	 Query q = em.createQuery("SELECT ppd FROM PersonPostData ppd " +
+    			 				  "WHERE ppd.post = :postId ORDER BY clickedDate DESC")
+		             .setParameter("postId", guid.toString());
+    	 
+    	 if (max > 0)
+    	     q.setMaxResults(max);
+    	 
+    	 @SuppressWarnings("unchecked")
+    	 List<PersonPostData> viewers = q.getResultList();
+    	 
+    	 return viewers;
+    }
+	
 	public void postViewedBy(String postId, User clicker) {
 		logger.debug("Post " + postId + " clicked by " + clicker);
 		
@@ -744,6 +763,8 @@ public class PostingBoardBean implements PostingBoard {
 		
 		
 		messageSender.sendPostClickedNotification(post, viewers, clicker);
+		
+        LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, clicker.getGuid(), new Date()));
 	}
 	
 	/**

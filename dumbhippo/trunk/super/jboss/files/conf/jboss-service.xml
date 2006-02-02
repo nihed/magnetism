@@ -420,4 +420,13 @@
 		</depends>
 	</mbean>
 
+        <!-- Queue for asynchronous updates to cached state -->
+	<mbean code="org.jboss.mq.server.jmx.Queue"
+		name="jboss.mq.destination:service=Queue,name=LiveUpdateQueue">
+		<!--  we need to start DestinationManager first before creating a queue -->
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
+
 </server>

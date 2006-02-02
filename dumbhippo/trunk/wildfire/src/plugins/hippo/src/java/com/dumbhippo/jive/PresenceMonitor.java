@@ -1,9 +1,16 @@
 package com.dumbhippo.jive;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import javax.ejb.EJBException;
+import javax.naming.NamingException;
 
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManagerListener;
@@ -11,15 +18,118 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlueRemote.NoSuchServerException;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class PresenceMonitor implements SessionManagerListener {
 
 	private Map<String, Integer> sessionCounts;
-	private ExecutorService notificationQueue;
+	private BlockingQueue<Notification> notificationQueue;
+	private NotifierThread notifierThread;
 	
-	private class Notification implements Runnable {
+	// Time between pings. Must be less than 
+	// LiveState.CLEANER_INTERVAL * LiveState.MAX_XMPP_SERVER_CACHE_AGE
+	// or we'll be timed out.
+	private static final long PING_INTERVAL = 60 * 1000; // 1 minute
+	
+	// How long to wait before retrying if we need to reconnect to 
+	// the application server
+	private static final long RETRY_SLEEP = 10 * 1000; // 10 seconds
 
+	private class NotifierThread extends Thread {
+		public void run() {
+			// This thread is responsible for keeping the application server 
+			// notified of the current set of present users. Three things are 
+			// necessary for this; first, we need to register with the
+			// application server and provide the current set of users; then
+			// we feed the application server with incremental changes. 
+			// Finally we have to periodically ping the application server
+			// so it knows we haven't died.
+			//
+			// If we lose the connection to the server for any reason - 
+			// it has been started, there is a network problem, or the
+			// server times us out despite our efforts to ping it, then we
+			// have to start over from scratch with registration.
+			
+			String serverIdentifier = null;
+			long lastPingTime = -1;
+		
+			try {
+				while (true) {
+					try {
+						MessengerGlueRemote glue = getGlue();
+	
+						if (serverIdentifier == null) {
+							Log.debug("Registering with application server");
+							
+							// Not yet registered; register and send all users
+							// We need to atomically clear any existing items in the
+							// queue and send the current set of users. However,
+							// we don't want to block the connection while sending
+							// out the initial notifications, so we use a temporary
+							// array.
+							List<String> users = new ArrayList<String>();
+							
+							synchronized(sessionCounts) {
+								notificationQueue.clear();
+								
+								for (Entry<String, Integer> entry : sessionCounts.entrySet()) {
+									if (entry.getValue() > 0)
+										users.add(entry.getKey());
+								}
+							}
+							
+							long now = lastPingTime = System.currentTimeMillis();
+							serverIdentifier = glue.serverStartup(now);
+							
+							for (String user : users) {
+								glue.onUserAvailable(serverIdentifier, user);
+							}
+	
+							Log.debug("Registered as " + serverIdentifier);
+						} else {
+							long now = System.currentTimeMillis();
+	
+							// Ping if necessary
+							if (now >= lastPingTime + PING_INTERVAL) {
+								glue.serverPing(serverIdentifier);
+								lastPingTime = now;
+							}
+							
+							// Wait until it's time to ping or until we get another notification
+							long sleepTime = (lastPingTime + PING_INTERVAL) - now;
+							Notification notification = notificationQueue.poll(sleepTime, TimeUnit.MILLISECONDS);
+							if (notification != null) {
+								if (notification.available) {
+									Log.debug("Sending user available notification");
+									glue.onUserAvailable(serverIdentifier, notification.user);
+								} else {
+									Log.debug("Sending user unavailable notification");
+									glue.onUserUnavailable(serverIdentifier, notification.user);
+								}
+							}
+						}
+					} catch (NamingException e) {
+						Log.debug("Couldn't get handle to MessengerGlue object, restarting presence tracking");
+						serverIdentifier = null;
+						Thread.sleep(RETRY_SLEEP);
+					} catch (EJBException e) {
+						Log.debug("Got exception communicating with the application server, restarting presence tracking");
+						serverIdentifier = null;
+						Thread.sleep(RETRY_SLEEP);
+					} catch (NoSuchServerException e) {
+						Log.debug("Application server doesn't recognize us, restarting presence tracking");
+						serverIdentifier = null;
+						Thread.sleep(RETRY_SLEEP);
+					}
+				}
+			} catch (InterruptedException e) {
+				// all done
+			}
+		}
+	}
+
+	private static class Notification {
 		private String user;
 		private boolean available;
 
@@ -27,29 +137,26 @@ public class PresenceMonitor implements SessionManagerListener {
 			this.user = user;
 			this.available = available;
 		}
-		
-		public void run() {
-			Log.debug("Running notification that user " + user + " available = " + available);
-			if (available) {
-				getGlue().onUserAvailable(user);
-			} else {
-				getGlue().onUserUnavailable(user);
-			}
-		}
 	}
 	
-	private MessengerGlueRemote getGlue() {
+	private MessengerGlueRemote getGlue() throws NamingException {
 		// don't cache this for now, so jive will be robust against jboss redeploy,
 		// and so we're thread safe automatically (note that our notification queue
 		// calls this from another thread)
-		return EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		return EJBUtil.defaultLookupChecked(MessengerGlueRemote.class);
 	}
 	
 	public PresenceMonitor() {
 		sessionCounts = new HashMap<String, Integer>();
-		notificationQueue = Executors.newSingleThreadExecutor();
+		notificationQueue = new LinkedBlockingQueue<Notification>();
+		notifierThread = new NotifierThread();
+		notifierThread.start();
 	}
 
+	public void shutdown() {
+		notifierThread.interrupt();
+	}
+	
 	private void onSessionCountChange(ClientSession session, int increment) {
 		int oldCount, newCount;
 		String user;
@@ -86,9 +193,9 @@ public class PresenceMonitor implements SessionManagerListener {
 			// We queue this stuff so we aren't invoking some database operation in jboss
 			// with the lock held and blocking all new clients in the meantime
 			if (oldCount > 0 && newCount == 0) {
-				notificationQueue.execute(new Notification(user, false));
+				notificationQueue.add(new Notification(user, false));
 			} else if (oldCount == 0 && newCount > 0) {
-				notificationQueue.execute(new Notification(user, true));
+				notificationQueue.add(new Notification(user, true));
 			}
 		}
 	}
