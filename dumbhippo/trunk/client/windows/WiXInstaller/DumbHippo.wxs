@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="79F2B7C1-EBDD-459B-A94A-14CB11F7183B" 
-            UpgradeCode="BBAA5130-AC98-4708-B40E-C0E3BBCA4E48"
+    <Product Id="BBAA5130-AC98-4708-B40E-C0E3BBCA4E48" 
+            UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="DumbHippo" 
             Language="1033" 
             Version="1.1.22"
