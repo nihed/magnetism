@@ -1788,8 +1788,9 @@ WinMain(HINSTANCE hInstance,
         return 0;
     }
 
-    // Initialize COM
-    CoInitialize(NULL);
+    // Initialize OLE and COM; We need to use this rather than CoInitialize
+    // in order to get cut-and-paste and drag-and-drop to work
+    OleInitialize(NULL);
 
     if (!initializeWinSock())
         return 0;
@@ -1822,7 +1823,7 @@ WinMain(HINSTANCE hInstance,
     ui->Release();
 
     WSACleanup();
-    CoUninitialize();
+    OleUninitialize();
 
     return result;
 }
