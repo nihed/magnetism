@@ -50,7 +50,7 @@ public class ConfigurationBean implements Configuration {
 			// our properties.
 			if (loaded != null && loaded.trim().length() == 0) {
 				logger.debug("Clearing empty property value for " + prop.getKey());
-				props.setProperty(prop.getKey(), null);
+				props.remove(prop.getKey());
 			}
 			
 			if (prop.getDefault() != null && props.getProperty(prop.getKey()) == null) {
