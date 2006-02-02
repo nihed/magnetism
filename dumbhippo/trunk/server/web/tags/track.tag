@@ -21,14 +21,7 @@
 <div class="dh-track">
 	<div class="dh-track-image">
 		<a href="${albumlink}">
-			<c:choose>
-				<c:when test="${!empty track.smallImageUrl}">
-					<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
-				</c:when>
-				<c:otherwise>
-					<img src="/images/no_image_available75x75light.gif" width="75" height="75"/>
-				</c:otherwise>
-			</c:choose>
+			<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
 		</a>
 	</div>
 	<div class="dh-track-info">

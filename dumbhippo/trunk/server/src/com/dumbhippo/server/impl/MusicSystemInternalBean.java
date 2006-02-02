@@ -679,6 +679,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private void fillAlbumInfo(Future<AmazonAlbumResult> futureAlbum, AlbumView albumView) {
 		try {
+			// set defaults for the image
+			albumView.setSmallImageUrl(config.getProperty(HippoProperty.BASEURL) + "/images/no_image_available75x75light.gif");
+			albumView.setSmallImageWidth(75);
+			albumView.setSmallImageHeight(75);
+			
+			// now get the real stuff
 			AmazonAlbumResult album;
 			try {
 				album = futureAlbum.get();
@@ -690,9 +696,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				throw new RuntimeException(e);
 			}
 			if (album != null) {
-				albumView.setSmallImageUrl(album.getSmallImageUrl());
-				albumView.setSmallImageWidth(album.getSmallImageWidth());
-				albumView.setSmallImageHeight(album.getSmallImageHeight());
+				if (album.getSmallImageUrl() != null) {
+					albumView.setSmallImageUrl(album.getSmallImageUrl());
+					albumView.setSmallImageWidth(album.getSmallImageWidth());
+					albumView.setSmallImageHeight(album.getSmallImageHeight());
+				}
 			}
 		} catch (Exception e) {
 			logger.debug("Failed to get Amazon album information", e);

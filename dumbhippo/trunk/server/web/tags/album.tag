@@ -14,14 +14,7 @@
 <div class="dh-album">
 	<div class="dh-album-image">
 		<a href="${albumlink}">
-			<c:choose>
-				<c:when test="${!empty album.smallImageUrl}">
-					<img src="${album.smallImageUrl}" width="${album.smallImageWidth}" height="${album.smallImageHeight}"/>
-				</c:when>
-				<c:otherwise>
-					<img src="/images/no_image_available75x75light.gif" width="75" height="75"/>
-				</c:otherwise>
-			</c:choose>
+			<img src="${album.smallImageUrl}" width="${album.smallImageWidth}" height="${album.smallImageHeight}"/>
 		</a>
 	</div>
 	<div class="dh-album-info">
