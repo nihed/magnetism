@@ -44,11 +44,13 @@ import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -77,6 +79,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private ChatRoomSystem chatRoomSystem;
 	
+	@EJB
+	private MusicSystem musicSystem;
+	
 	private void startReturnObjectsXml(HttpResponseData contentType, XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
@@ -89,7 +94,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private void endReturnObjectsXml(OutputStream out, XmlBuilder xml) throws IOException {
 		xml.append("</objects>");
 		
-		out.write(xml.toString().getBytes());
+		out.write(xml.getBytes());
 	}
 	
 	private void returnPersonsXml(XmlBuilder xml, Viewpoint viewpoint, Set<PersonView> persons) {
@@ -408,5 +413,37 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException {
 		identitySpider.setMusicSharingEnabled(user, enabled);
+	}
+
+	public void getCurrentTrack(OutputStream out, HttpResponseData contentType, String who) throws IOException {
+		if (contentType != HttpResponseData.XML)
+			throw new IllegalArgumentException("only support XML replies");
+		
+		User whoUser;
+		try {
+			whoUser = identitySpider.lookupGuidString(User.class, who);
+		} catch (ParseException e) {
+			throw new RuntimeException("bad guid", e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such person", e);
+		}
+		TrackView tv;
+		try {
+			// FIXME this is from the system viewpoint for now, but 
+			// should really be from an "anonymous" viewpoint
+			tv = musicSystem.getCurrentTrackView(null, whoUser);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no current track for this person", e);
+		}
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("song");
+		xml.appendTextNode("image", tv.getSmallImageUrl());
+		xml.appendTextNode("songTitle", tv.getName());
+		xml.appendTextNode("artist", tv.getArtist());
+		xml.appendTextNode("album", tv.getAlbum());
+		xml.closeElement();
+		out.write(xml.getBytes());
+		out.flush();
 	}
 }

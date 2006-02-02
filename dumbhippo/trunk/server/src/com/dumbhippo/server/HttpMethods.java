@@ -111,4 +111,9 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "enabled" })
 	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "who" })
+	public void getCurrentTrack(OutputStream out, HttpResponseData contentType, String who)
+			throws IOException;
 }

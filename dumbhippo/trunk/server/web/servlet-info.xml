@@ -188,6 +188,11 @@
       <servlet-name>RewriteServlet</servlet-name>
       <url-pattern>/</url-pattern>
    </servlet-mapping>
+  
+   <mime-mapping>
+   		<extension>swf</extension>
+   		<mime-type>application/x-shockwave-flash</mime-type>
+   </mime-mapping>
 
    <welcome-file-list>
       <welcome-file>index.html</welcome-file>

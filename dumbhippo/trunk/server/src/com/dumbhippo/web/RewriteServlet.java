@@ -97,7 +97,8 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		} else if (path.startsWith("/javascript/") || 
 			path.startsWith("/css/") ||
-			path.startsWith("/images/")) {
+			path.startsWith("/images/") ||
+			path.startsWith("/flash/")) {
 			
 			newPath = checkBuildStamp(path);
 			if (newPath != null) {
