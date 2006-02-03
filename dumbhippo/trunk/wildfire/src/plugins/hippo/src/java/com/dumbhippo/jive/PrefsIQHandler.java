@@ -11,6 +11,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -26,10 +27,9 @@ public class PrefsIQHandler extends AbstractIQHandler {
 	}
 	
 	private void addProp(Element parent, String key, String value) {
-		Element prop = parent.getDocument().addElement("prop");
+		Element prop = parent.addElement("prop");
 		prop.addAttribute("key", key);
 		prop.setText(value);
-		parent.add(prop);
 	}
 	
 	@Override
@@ -40,8 +40,14 @@ public class PrefsIQHandler extends AbstractIQHandler {
 		IQ reply = IQ.createResultIQ(packet);
 		//Element iq = packet.getChildElement();
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
-		Map<String,String> prefs = glue.getPrefs(from.getNode());
+		Map<String,String> prefs;
+		try {
+			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			prefs = glue.getPrefs(from.getNode());
+		} catch (Exception e) {
+			makeError(reply, "Failed to get prefs from app server: " + ExceptionUtils.getRootCause(e).getMessage());
+			return reply;
+		}
 		
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("prefs", "http://dumbhippo.com/protocol/prefs");
@@ -50,6 +56,7 @@ public class PrefsIQHandler extends AbstractIQHandler {
 		}
 		reply.setChildElement(childElement);
 		
+		Log.debug("Sending back prefs " + prefs);
 		return reply;
 	}
 
