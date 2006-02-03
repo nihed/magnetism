@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.ejb.Remote;
 
+import com.dumbhippo.live.Hotness;
+
 @Remote
 public interface MessengerGlueRemote {
 
@@ -314,4 +316,6 @@ public interface MessengerGlueRemote {
 	 * @return the blob o' prefs 
 	 */
 	public Map<String,String> getPrefs(String username);
+	
+	public Hotness getUserHotness(String username);
 }

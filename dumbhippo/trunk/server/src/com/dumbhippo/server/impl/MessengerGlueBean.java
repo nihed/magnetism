@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
@@ -286,5 +287,11 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		prefs.put("musicSharingEnabled", Boolean.toString(!account.isDisabled() && account.isMusicSharingEnabled()));
 		
 		return prefs;
+	}
+
+	public Hotness getUserHotness(String username) {
+		User user = userFromTrustedUsername(username);
+		LiveState state = LiveState.getInstance();
+		return state.getLiveUser(user.getGuid()).getHotness();
 	}
 }

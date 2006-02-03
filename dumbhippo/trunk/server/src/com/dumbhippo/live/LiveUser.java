@@ -26,7 +26,10 @@ public class LiveUser implements Ageable {
 	private int availableCount;
 	private int cacheAge;
 	
+	private Hotness hotness;
+
 	LiveUser(Guid userId) {
+		this.hotness = Hotness.UNKNOWN;
 		this.userId = userId;
 	}
 		
@@ -44,6 +47,14 @@ public class LiveUser implements Ageable {
 
 	public void setCacheAge(int cacheAge) {
 		this.cacheAge = cacheAge;
+	}
+	
+	public Hotness getHotness() {
+		return hotness;
+	}
+
+	public void setHotness(Hotness hotness) {
+		this.hotness = hotness;
 	}
 	
 	public void discard() {

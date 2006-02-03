@@ -251,6 +251,7 @@
 			<fileset dir="${build}">
 				<include name="*.properties" />
 				<include name="**/dumbhippo/*.class" />
+				<include name="**/live/**/*.class" />				
 				<include name="**/dumbhippo/*.properties" />
 				<include name="**/jms/**/*.class" />
 				<include name="**/botcom/**/*.class" />
