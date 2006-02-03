@@ -125,6 +125,8 @@ private:
     void sendMessage(LmMessage *message, LmMessageHandler *handler);
     void flushPending();
 
+    void updatePrefs();
+
     static gboolean onSignInTimeout(gpointer data);
     static gboolean onRetryTimeout(gpointer data);
 
@@ -173,6 +175,11 @@ private:
                                       LmMessage        *message,
                                       gpointer          userData);
 
+    static LmHandlerResult onPrefsReply(LmMessageHandler *handler,
+                                        LmConnection     *connection,
+                                        LmMessage        *message,
+                                        gpointer          userData);
+
     static char *idToJabber(WCHAR *id);
     static bool idFromJabber(const char *jabber, 
                              BSTR       *guid);
@@ -207,4 +214,6 @@ private:
     HippoArray<HippoChatRoom *> chatRooms_;
 
     GQueue *pending_messages_;
+
+    bool musicSharingEnabled_;
 };

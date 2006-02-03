@@ -58,6 +58,7 @@ HippoIM::HippoIM()
     ui_ = NULL;
     // queue of OutgoingMessage
     pending_messages_ = g_queue_new();
+    musicSharingEnabled_ = false;
 }
 
 static void
@@ -264,6 +265,17 @@ addPropValue(LmMessageNode *node, const char *key, const HippoBSTR &value)
 void
 HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
 {
+    // FIXME hack, we should have change notification on prefs, but for now there's only
+    // one pref and we just refetch it if you are doing track changes, since that's when it 
+    // could be relevant. lame.
+
+    updatePrefs(); // note this is async, so doesn't change musicSharingEnabled_ for the below check
+
+    if (!musicSharingEnabled_) {
+        hippoDebugLogW(L"Music sharing disabled, not sending track changed notification");
+        return;
+    }
+
     LmMessage *message;
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
@@ -1063,6 +1075,7 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
         }
 
         im->getClientInfo();
+        im->updatePrefs();
         im->ui_->onAuthSuccess();
     } else {
         im->authFailure(NULL);
@@ -1099,7 +1112,11 @@ HippoIM::messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *e
         !ns || strcmp(ns, expectedNamespace) != 0 ||
         strcmp(child->name, documentElementName) != 0)
     {
-        im->ui_->debugLogU("Got a bad reply to IQ");
+        im->ui_->debugLogU("Got a bad reply to IQ, expected ns '%s' elem '%s' got '%s' '%s'",
+            expectedNamespace, documentElementName, ns, child->name);
+        char *s = lm_message_node_to_string(lm_message_get_node(message));
+        im->ui_->debugLogU("Node is '%s'", s);
+        g_free(s);
         return false;
     }
     return true;
@@ -1603,4 +1620,63 @@ HippoIM::findChildNode(LmMessageNode *node,
     }
 
     return NULL;
+}
+
+void
+HippoIM::updatePrefs()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "prefs", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/prefs");
+    LmMessageHandler *handler = lm_message_handler_new(onPrefsReply, this, NULL);
+
+    sendMessage(message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for prefs");
+}
+
+LmHandlerResult
+HippoIM::onPrefsReply(LmMessageHandler *handler,
+                      LmConnection     *connection,
+                      LmMessage        *message,
+                      gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    im->ui_->debugLogU("got reply for prefs");
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/prefs", "prefs")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    LmMessageNode *prefsNode = message->node->children;
+
+    if (prefsNode == 0 || strcmp(prefsNode->name, "prefs") != 0)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+
+    for (LmMessageNode *child = prefsNode->children; child != 0; child = child->next) {
+        const char *key = lm_message_node_get_attribute(child, "key");
+        const char *value = lm_message_node_get_value(child);
+
+        if (key == 0) {
+            im->ui_->debugLogU("ignoring node '%s' with no 'key' attribute in prefs reply",
+                child->name);
+            continue;
+        }
+        
+        if (strcmp(key, "musicSharingEnabled") == 0) {
+            im->musicSharingEnabled_ = value != 0 && strcmp(value, "true") == 0;
+            im->ui_->debugLogW(L"musicSharingEnabled set to %d", (int) im->musicSharingEnabled_);
+        } else {
+            im->ui_->debugLogU("Unknown pref '%s'", key);
+        }
+    }
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
