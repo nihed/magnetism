@@ -71,9 +71,7 @@
 
 			<div class="dhVerticalPadding"></div>
 	
-			<div class="dhLabel"><u>D</u>escription:</div>
-			<div class="dhTextArea" id="dhShareDescription">
-			</div>
+			<dht:shareDescription/>
 	
 			<div class="dhVerticalPadding"></div>
 	
