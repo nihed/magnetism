@@ -644,12 +644,8 @@ HippoIM::getMySpaceName()
     lm_message_node_set_attribute(child, "type", "getName");
     LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceNameReply, this, NULL);
 
-    GError *error = NULL;
-    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
-    if (error) {
-        ui_->debugLogU("Failed sending getMySpaceName IQ: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message, handler);
+
     lm_message_unref(message);
     lm_message_handler_unref(handler);
     ui_->debugLogU("Sent request for MySpace name");
@@ -668,12 +664,8 @@ HippoIM::getHotness()
     lm_message_node_set_attribute(child, "type", "getValue");
     LmMessageHandler *handler = lm_message_handler_new(onGetHotnessReply, this, NULL);
 
-    GError *error = NULL;
-    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
-    if (error) {
-        ui_->debugLogU("Failed sending getHotness IQ: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message, handler);
+
     lm_message_unref(message);
     lm_message_handler_unref(handler);
     ui_->debugLogU("Sent request for hotness");
@@ -692,12 +684,8 @@ HippoIM::getMySpaceSeenBlogComments()
     lm_message_node_set_attribute(child, "type", "getBlogComments");
     LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceBlogCommentsReply, this, NULL);
 
-    GError *error = NULL;
-    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
-    if (error) {
-        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message, handler);
+
     lm_message_unref(message);
     lm_message_handler_unref(handler);
     ui_->debugLogU("Sent request for MySpace blog comments");
@@ -716,12 +704,8 @@ HippoIM::getMySpaceContacts()
     lm_message_node_set_attribute(child, "type", "getContacts");
     LmMessageHandler *handler = lm_message_handler_new(onGetMySpaceContactsReply, this, NULL);
 
-    GError *error = NULL;
-    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
-    if (error) {
-        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
-        g_error_free(error);
-    }
+    sendMessage(message, handler);
+
     lm_message_unref(message);
     lm_message_handler_unref(handler);
     ui_->debugLogU("Sent request for MySpace contacts");
@@ -787,14 +771,7 @@ HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType,
         lm_message_node_set_attribute(userInfoNode, "role", participant ? "participant" : "visitor");
     }
 
-    GError *error = NULL;
-    lm_connection_send(lmConnection_, message, &error);
-    if (error) {
-        hippoDebugLogU("Error sending chat room presence %s: %s", 
-                       subType == LM_MESSAGE_SUB_TYPE_AVAILABLE ? "available" : "unavailable",
-                       error->message);
-        g_error_free(error);
-    }
+    sendMessage(message);
 
     lm_message_unref(message);
 
@@ -1072,13 +1049,8 @@ HippoIM::onConnectionAuthenticate (LmConnection *connection,
                                                LM_MESSAGE_TYPE_PRESENCE, 
                                                LM_MESSAGE_SUB_TYPE_AVAILABLE);
 
-        GError *error = NULL;
-        lm_connection_send(connection, message, &error);
-        if (error) {
-            hippoDebug(L"Failed to send presence: %s", error->message);
-            g_error_free(error);
-        }
-        lm_message_unref(message);
+        im->sendMessage(message);
+
         im->stateChange(AUTHENTICATED);
 
         // Enter any chatrooms that we are (logically) connected to
