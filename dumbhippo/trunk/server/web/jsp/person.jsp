@@ -17,6 +17,9 @@
 	<title><c:out value="${personName}"/></title>
 	<dht:stylesheets href="person.css" iehref="person-iefixes.css" />
 	<dht:scriptIncludes/>
+	<script type="text/javascript">
+	        dojo.require("dh.util");
+	</script>
 </head>
 <body>
 
