@@ -139,6 +139,10 @@ registerToolbarAction(HippoRegistrar *registrar)
     CHECK_BOOL(key.saveString(L"MenuText", L"Share Link..."));
     CHECK_BOOL(key.saveString(L"MenuStatusBar", L"Share the current web page via DumbHippo"));
 
+    // Note that HotIcon / Icon here are windows concepts corresponding to grayscale and prelighted/color
+    // icons, they have nothing to do with our system's idea of "hotness" (and in fact right now 
+    // we're just lazy and use the same icon for both)
+
     hr = StringCchPrintf(iconPath, MAX_PATH, L"%s,%d", registrar->getModulePath(), IDI_DUMBHIPPO_HOT);
     if (FAILED(hr))
         goto out;
