@@ -179,24 +179,6 @@ HippoPreferences::getInstanceClassId()
     return getInstanceClassId(instanceType_);
 }
 
-const WORD
-HippoPreferences::getInstanceIcon()
-{
-    return IDI_DUMBHIPPO_1;
-}
-
-const WORD 
-HippoPreferences::getInstanceDisconnectedIcon()
-{
-    return IDI_DUMBHIPPO_1;
-}
-
-const WORD
-HippoPreferences::getInstanceMissedIcon()
-{
-    return IDI_DUMBHIPPO_1;
-}
-
 const CLSID *
 HippoPreferences::getInstanceClassId(HippoInstanceType instanceType)
 {

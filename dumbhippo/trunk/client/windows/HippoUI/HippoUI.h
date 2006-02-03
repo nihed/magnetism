@@ -129,12 +129,24 @@ public:
     void onCreatingMySpaceContactPost(HippoMySpaceContact *contact);
     void onReceivingMySpaceContactPost();
 
+    typedef enum {
+        UNKNOWN,
+        COLD,
+        COOL,
+        WARM,
+        GETTING_HOT,
+        HOT
+    } Hotness;
+
+    void setHotness(BSTR hotness);
+
 private:
     bool registerActive();
     bool registerClass();
     bool createWindow();
     void updateMenu();
-    void updateIcons();
+    void setIcons();
+    void updateIcon();
 
     void showSignInWindow();
     void showPreferences();
@@ -155,6 +167,8 @@ private:
     bool isNoFrameURL(BSTR url);
 
     static int checkIdle(gpointer data);
+
+    static int idleHotnessBlink(gpointer data);
 
     bool processMessage(UINT   message,
                         WPARAM wParam,
@@ -231,8 +245,12 @@ private:
     bool rememberPassword_;
     bool passwordRemembered_;
 
+    int idleHotnessBlinkId_;
+    int hotnessBlinkCount_;
+
     bool idle_; // is the user idle
     bool haveMissedBubbles_; // has the user not seen bubbles
+    HippoUI::Hotness hotness_;
     bool screenSaverRunning_; // is the screen saver running
     unsigned checkIdleTimeoutId_;
 };

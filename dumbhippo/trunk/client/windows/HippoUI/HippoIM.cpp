@@ -647,12 +647,36 @@ HippoIM::getMySpaceName()
     GError *error = NULL;
     lm_connection_send_with_reply(lmConnection_, message, handler, &error);
     if (error) {
-        ui_->debugLogU("Failed sending clientInfo IQ: %s", error->message);
+        ui_->debugLogU("Failed sending getMySpaceName IQ: %s", error->message);
         g_error_free(error);
     }
     lm_message_unref(message);
     lm_message_handler_unref(handler);
     ui_->debugLogU("Sent request for MySpace name");
+}
+
+void
+HippoIM::getHotness()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "hotness", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/hotness");
+    lm_message_node_set_attribute(child, "type", "getValue");
+    LmMessageHandler *handler = lm_message_handler_new(onGetHotnessReply, this, NULL);
+
+    GError *error = NULL;
+    lm_connection_send_with_reply(lmConnection_, message, handler, &error);
+    if (error) {
+        ui_->debugLogU("Failed sending getHotness IQ: %s", error->message);
+        g_error_free(error);
+    }
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for hotness");
 }
 
 void
@@ -1137,6 +1161,7 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
 
     // Next get the MySpace info
     im->getMySpaceName();
+    im->getHotness();
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1253,6 +1278,52 @@ HippoIM::onGetMySpaceContactsReply(LmMessageHandler *handler,
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
+
+LmHandlerResult
+HippoIM::onGetHotnessReply(LmMessageHandler *handler,
+                           LmConnection     *connection,
+                           LmMessage        *message,
+                           gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+
+    im->ui_->debugLogU("got reply for getHotness");
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/hotness", "hotness")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    HippoBSTR hotness;
+    const char *hotnessStr = lm_message_node_get_attribute(child, "value");
+    if (!hotnessStr)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    hotness.setUTF8(hotnessStr);
+
+    im->ui_->setHotness(hotness);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+bool
+HippoIM::handleHotnessMessage(LmMessage *message)
+{
+   if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
+        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/hotness", "hotness");
+        if (!child)
+            return false;
+        HippoBSTR hotness;
+        const char *hotnessStr = lm_message_node_get_attribute(child, "value");
+        if (!hotnessStr)
+            return false;
+        hotness.setUTF8(hotnessStr);
+ 
+        ui_->setHotness(hotness);
+        return true;
+   }
+   return false;
+}
    
 LmHandlerResult 
 HippoIM::onMessage (LmMessageHandler *handler,
@@ -1270,6 +1341,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
     char *mySpaceName = NULL;
     if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
         im->handleMySpaceNameChangedMessage(mySpaceName);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (im->handleHotnessMessage(message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 

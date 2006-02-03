@@ -80,6 +80,7 @@ private:
     void authenticate();
     void getClientInfo();
     void getMySpaceName();
+    void getHotness();
 
     void startSignInTimeout();
     void stopSignInTimeout();
@@ -114,6 +115,8 @@ private:
     void handleMySpaceNameChangedMessage(char           *name);
     bool checkMySpaceContactCommentMessage(LmMessage      *message);
     void handleMySpaceContactCommentMessage();
+
+    bool handleHotnessMessage(LmMessage *message);
 
     void connectFailure(char *message);
     void authFailure(char *message);
@@ -155,6 +158,10 @@ private:
                                                      LmConnection     *connection,
                                                      LmMessage        *message,
                                                      gpointer          userData);
+    static LmHandlerResult onGetHotnessReply(LmMessageHandler *handler,
+                                             LmConnection     *connection,
+                                             LmMessage        *message,
+                                             gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,

@@ -39,6 +39,9 @@ static const int USER_IDLE_TIME = 30 * 1000;
 // How often to check if the user is idle (in ms)
 static const int CHECK_IDLE_TIME = 5 * 1000;
 
+// Time between icon blinks (in ms)
+static const int HOTNESS_BLINK_TIME = 150;
+
 HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
     : preferences_(instanceType)
 {
@@ -55,6 +58,10 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     bubble_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
+
+    hotness_ = HippoUI::Hotness::UNKNOWN;
+    hotnessBlinkCount_ = 0;
+    idleHotnessBlinkId_ = 0;
 
     preferencesDialog_ = NULL;
 
@@ -296,16 +303,37 @@ HippoUI::ShowRecent()
 //}
 
 void
-HippoUI::updateIcons(void)
+HippoUI::setIcons(void)
 {
     TCHAR *icon;
 
-    if (haveMissedBubbles_) {
-        icon = MAKEINTRESOURCE(preferences_.getInstanceMissedIcon());
-    } else if (connected_) {
-        icon = MAKEINTRESOURCE(preferences_.getInstanceIcon());
+    if (hotnessBlinkCount_ % 2 == 1) {
+        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1); // need blank/outlined icon?
     } else {
-        icon = MAKEINTRESOURCE(preferences_.getInstanceDisconnectedIcon());
+        switch (hotness_) {
+        case HippoUI::Hotness::UNKNOWN:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1); // need different icon for this?
+            break;
+        case HippoUI::Hotness::COLD:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
+            break;
+        case HippoUI::Hotness::COOL:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_2);
+            break;
+        case HippoUI::Hotness::WARM:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_3);
+            break;
+        case HippoUI::Hotness::GETTING_HOT:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_4);
+            break;
+        case HippoUI::Hotness::HOT:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_5);
+            break;
+        default:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
+            debugLogU("unknown hotness state!");
+            break;
+        }
     }
     if (smallIcon_ != NULL)
         DestroyIcon(smallIcon_);
@@ -329,10 +357,56 @@ HippoUI::onConnectionChange(bool connected)
     if (connected_ == connected)
         return;
     connected_ = connected;
-    updateIcons();
+    updateIcon();
+}
 
+void
+HippoUI::updateIcon()
+{
+    setIcons();
     notificationIcon_.updateIcon(smallIcon_);
     notificationIcon_.updateTip(tooltip_.m_str);
+}
+
+void 
+HippoUI::setHotness(BSTR str)
+{
+    HippoUI::Hotness hotness;
+    if (!wcscmp(str, L"COLD"))
+        hotness = HippoUI::Hotness::COLD;
+    else if (!wcscmp(str, L"COOL"))
+        hotness = HippoUI::Hotness::COOL;
+    else if (!wcscmp(str, L"WARM"))
+        hotness = HippoUI::Hotness::WARM;
+    else if (!wcscmp(str, L"GETTING_HOT"))
+        hotness = HippoUI::Hotness::GETTING_HOT;
+    else if (!wcscmp(str, L"HOT"))
+        hotness = HippoUI::Hotness::HOT;
+    else
+        hotness = HippoUI::Hotness::UNKNOWN;
+
+    debugLogU("hotness changing from %d to %d", hotness_, hotness);
+    hotness_ = hotness;
+    hotnessBlinkCount_ = 0;
+    if (idleHotnessBlinkId_ > 0)
+        g_source_remove(idleHotnessBlinkId_);
+    updateIcon();
+}
+
+int
+HippoUI::idleHotnessBlink(gpointer data)
+{
+    HippoUI *ui = (HippoUI*) data;
+
+    if (ui->hotnessBlinkCount_ > 3) {
+        ui->idleHotnessBlinkId_ = 0;
+        return FALSE;
+    }
+    ui->updateIcon();
+    ui->hotnessBlinkCount_++;
+    ui->idleHotnessBlinkId_ = g_timeout_add(HOTNESS_BLINK_TIME, HippoUI::idleHotnessBlink, ui);
+    
+    return FALSE;
 }
 
 static void
@@ -347,7 +421,7 @@ HippoUI::create(HINSTANCE instance)
 {
     instance_ = instance;
    
-    updateIcons();
+    setIcons();
     menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
     debugMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_DEBUG));
 
@@ -633,6 +707,7 @@ HippoUI::crackUrl(BSTR url, URL_COMPONENTS *components)
 
     if (!InternetCrackUrl(url, 0, 0, components))
         return false;
+    return true;
 }
 
 bool
@@ -931,8 +1006,7 @@ HippoUI::setHaveMissedBubbles(bool haveMissed)
     if (haveMissedBubbles_ != haveMissed) {
         haveMissedBubbles_ = haveMissed;
     }
-    updateIcons();
-    notificationIcon_.updateIcon(smallIcon_);
+    updateIcon();
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
