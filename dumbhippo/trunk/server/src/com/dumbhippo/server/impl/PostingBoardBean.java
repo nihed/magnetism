@@ -185,6 +185,8 @@ public class PostingBoardBean implements PostingBoard {
 		Set<Group> groupRecipients = new HashSet<Group>();
 		Set<Resource> expandedRecipients = new HashSet<Resource>();
 		
+		boolean addedPoster = false;
+		
 		// sort into persons and groups
 		for (GuidPersistable r : recipients) {
 			if (r instanceof Person) {
@@ -196,6 +198,11 @@ public class PostingBoardBean implements PostingBoard {
 					// or already has an account (it's also very cheap if bestResource is an Account)
 					invitationSystem.createInvitation(poster, bestResource);
 				}
+				
+				if (p.equals(poster)) {
+					addedPoster = true;
+				}
+				
 			} else if (r instanceof Group) {
 				groupRecipients.add((Group) r);
 			} else {
@@ -203,6 +210,9 @@ public class PostingBoardBean implements PostingBoard {
 				throw new NotFoundException("recipient not found " + r.getId());
 			}
 		}
+
+		if (!addedPoster)
+			personRecipients.add(identitySpider.getBestResource(poster));
 		
 		// build expanded recipients
 		expandedRecipients.addAll(personRecipients);
