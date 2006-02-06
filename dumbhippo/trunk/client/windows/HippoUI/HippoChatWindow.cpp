@@ -195,7 +195,6 @@ HippoChatWindow::processMessage(UINT   message,
     case WM_SIZE:
         {
             RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
-            hippoDebugLogW(L"Now CLIENT is %d %d", rect.right, rect.bottom);
             ie_->resize(&rect);
             return true;
         }
