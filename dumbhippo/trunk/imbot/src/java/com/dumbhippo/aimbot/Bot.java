@@ -26,12 +26,9 @@ import com.dumbhippo.aim.RawListenerAdapter;
 import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
 import com.dumbhippo.botcom.BotEvent;
-import com.dumbhippo.botcom.BotEventChatRoomMessage;
-import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTaskFailedException;
-import com.dumbhippo.botcom.BotTaskJoinRoom;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.RandomToken;
 
@@ -167,31 +164,9 @@ class Bot implements Runnable {
 		 */
 		public void handleChatMessage(Buddy buddy, String chatRoomName, String chatRoomId, String messageHtml) {
 			logger.info(name + " message from " + buddy.getName() + " in room " + chatRoomId + "/" + chatRoomName + ": " + messageHtml);
-			
-			Client client = aim;
-			if (client == null)
-				return;		
-
-			// pass the message back to the main server for logging/display, including bot comments
-			// TODO: cleanse the HTML at some point to avoid CSS attacks
-			sendEvent(new BotEventChatRoomMessage(name.getNormalized(), chatRoomName, buddy.getName().getNormalized(), messageHtml, new java.util.Date()));		
-			
-			// in a chat room, things that we say get echoed back to us
-			// so check if the sender is our screen name, and if so ignore the message
-			if (buddy.getName().getNormalized() == name.getNormalized()) {
-				logger.debug("Ignoring echoed chat room message from this bot!");
-				return;
-			}
-			
-			// only say something in response if this bot's screenname was in the message
-			if (messageHtml.toLowerCase().indexOf(name.toString()) >= 0) {
-				saySomethingRandom(buddy, chatRoomId);
-			}
 		}
 		
 		public void handleChatRoomRosterChange(String chatRoomName, List<String> chatRoomRoster) {			
-			// send the event to the main server over JMS connection
-			sendEvent(new BotEventChatRoomRoster(name.getNormalized(), chatRoomName, chatRoomRoster));
 		}
 		
 		public void handleWarning(Buddy buddy, int amount) {
@@ -489,28 +464,6 @@ class Bot implements Runnable {
 			// most likely this means we failed (there's really no way to know reliably)
 			throw new BotTaskFailedException("offline right when we sent the message");
 		}
-	}
-	
-	public void doJoinRoom(BotTaskJoinRoom request) throws BotTaskFailedException {
-		logger.debug("Bot " + name + " got join room task for " + request.getChatRoomName());
-		
-		// we save a reference in case it gets set to null by the main thread
-		Client client = aim;
-		
-		if (client == null) {
-			throw new BotTaskFailedException("bot is not running");
-		}
-		
-		String chatRoomName = request.getChatRoomName();
-			
-		// join the specified room
-		client.joinRoom(chatRoomName);
-		
-		if (!client.getOnline()) {
-			// most likely this means we failed (there's really no way to know reliably)
-			throw new BotTaskFailedException("offline right when we tried to join room");
-		}
-		
 	}
 	
 	public void addListener(BotListener listener) {

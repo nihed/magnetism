@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.EJB;
@@ -17,20 +15,16 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
-import com.dumbhippo.botcom.BotEventChatRoomMessage;
-import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.persistence.ChatRoom;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
-import com.dumbhippo.server.ChatRoomSystem;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
@@ -56,9 +50,6 @@ public class AimQueueConsumerBean implements MessageListener {
 	
 	@EJB
 	private IdentitySpider identitySpider;
-	
-	@EJB
-	private ChatRoomSystem chatRoomSystem;
 	
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
@@ -108,29 +99,6 @@ public class AimQueueConsumerBean implements MessageListener {
 		}
 	}
 	
-	private void processChatRoomRosterEvent(BotEventChatRoomRoster event) {
-		String chatRoomName = event.getChatRoomName();
-		List<String> chatRoomRoster = event.getChatRoomRoster();
-		String botName = event.getBotName();
-		
-		logger.debug("processing chat room roster event for '" + chatRoomName + "' with " + chatRoomRoster);
-			
-		ChatRoom chatRoom = chatRoomSystem.lookupChatRoom(chatRoomName);
-		
-		if (chatRoom == null) {
-			logger.error("Couldn't find ChatRoom entity for " + chatRoomName);
-			return;
-		}
-		
-		if (!botName.equals(chatRoom.getBotName())) {
-			logger.warn("Message received from " + botName + " doesn't match expected bot name " + chatRoom.getBotName());
-		}
-		
-		// add and persist the chatRoomMessage
-		chatRoomSystem.updateChatRoomRoster(chatRoom, chatRoomRoster);
-		
-	}
-	
 	/*
 	 * Handle an event from the bot specifying the online/offline status of
 	 * one or more screen names.
@@ -166,31 +134,6 @@ public class AimQueueConsumerBean implements MessageListener {
 		}
 	}
 	
-	private void processChatRoomMessageEvent(BotEventChatRoomMessage event) {
-		String chatRoomName = event.getChatRoomName();
-		String fromScreenName = event.getFromScreenName();
-		String messageText = event.getMessageText();
-		Date timestamp = event.getTimestamp();
-		String botName = event.getBotName();
-		
-		logger.debug("processing chat room message event from " + fromScreenName + " in room "  + chatRoomName + ": " + messageText);
-		
-		ChatRoom chatRoom = chatRoomSystem.lookupChatRoom(chatRoomName);
-	
-		if (chatRoom == null) {
-			logger.error("Couldn't find ChatRoom entity for " + chatRoomName);
-			return;
-		}
-		
-		if (!botName.equals(chatRoom.getBotName())) {
-			logger.warn("Message received from " + botName + " doesn't match expected bot name " + chatRoom.getBotName());
-		}
-	
-		// add and persist the chatRoomMessage
-		chatRoomSystem.addChatRoomMessage(chatRoom, fromScreenName, messageText, timestamp);
-	}
-	
-	
 	public void onMessage(Message message) {
 		try {
 			logger.debug("Got message from " + BotEvent.QUEUE + ": " + message);
@@ -203,12 +146,6 @@ public class AimQueueConsumerBean implements MessageListener {
 				if (obj instanceof BotEventToken) {
 					BotEventToken event = (BotEventToken) obj;
 					processTokenEvent(event);
-				} else if (obj instanceof BotEventChatRoomRoster) {
-					BotEventChatRoomRoster event = (BotEventChatRoomRoster) obj;
-					processChatRoomRosterEvent(event);
-				} else if (obj instanceof BotEventChatRoomMessage) {
-					BotEventChatRoomMessage event = (BotEventChatRoomMessage) obj;
-					processChatRoomMessageEvent(event);
 				} else if (obj instanceof BotEventUserPresence) {
 					BotEventUserPresence event = (BotEventUserPresence) obj;
 					processUserPresence(event);

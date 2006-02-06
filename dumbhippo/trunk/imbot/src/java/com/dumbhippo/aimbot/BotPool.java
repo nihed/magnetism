@@ -12,7 +12,6 @@ import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskFailedException;
 import com.dumbhippo.botcom.BotTaskMessage;
-import com.dumbhippo.botcom.BotTaskJoinRoom;
 
 public class BotPool implements BotListener {
 	
@@ -57,8 +56,6 @@ public class BotPool implements BotListener {
 					try {
 						if (task instanceof BotTaskMessage) {
 							bot.doMessage((BotTaskMessage) task);
-						} else if (task instanceof BotTaskJoinRoom) {
-							bot.doJoinRoom((BotTaskJoinRoom) task);
 						} else {
 							throw new RuntimeException("unknown bot task " + task.getClass().getCanonicalName());
 						}

@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.botcom.BotEvent;
-import com.dumbhippo.botcom.BotEventChatRoomMessage;
-import com.dumbhippo.botcom.BotEventChatRoomRoster;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTask;
@@ -55,8 +53,6 @@ public class Main {
 					logger.debug("{}", event);
 					
 					if ((event instanceof BotEventToken) ||
-					    (event instanceof BotEventChatRoomRoster) ||
-						(event instanceof BotEventChatRoomMessage) ||
 						(event instanceof BotEventUserPresence)) {
 						
 						logger.debug("Sending event type " + event.getClass().getName());

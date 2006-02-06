@@ -12,9 +12,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.persistence.ChatRoom;
-import com.dumbhippo.persistence.ChatRoomMessage;
-import com.dumbhippo.persistence.ChatRoomScreenName;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -36,6 +33,7 @@ import com.dumbhippo.server.formatters.ShareGroupFormatter;
  * properties and methods are safe to access at any point.
  */
 public class PostView {
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(PostView.class);
 	
 	private Context context;
@@ -43,8 +41,6 @@ public class PostView {
 	private String url;
 	private boolean viewerHasViewed;
 	private PersonView posterView;
-	private ChatRoom chatRoom;
-	private List<ChatRoomMessage> lastFewMessages;
 	private List<Object> recipients;
 	private String search;
 	private PostFormatter formatter;
@@ -78,13 +74,11 @@ public class PostView {
 	 * @param recipientList the list of (visible) recipients of the post
 	 * @param viewpoint who is looking at the post
 	 */
-	public PostView(EJBContext ejbContext, Post p, PersonView poster, PersonPostData ppd, ChatRoom chatRoom, List<ChatRoomMessage> lastFewMessages, List<Object>recipientList, Viewpoint viewpoint) {
+	public PostView(EJBContext ejbContext, Post p, PersonView poster, PersonPostData ppd, List<Object>recipientList, Viewpoint viewpoint) {
 		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
 		viewerHasViewed = ppd != null;
 		recipients = recipientList;
-		this.chatRoom = chatRoom;
-		this.lastFewMessages = lastFewMessages;
 		this.viewpoint = viewpoint;
 		
 		initFormatter(ejbContext);
@@ -184,50 +178,19 @@ public class PostView {
 		return getFormatter().getTextAsHtml();		
 	}
 	
-	public String getChatRoomName() {
-		if (chatRoom != null) {
-			return chatRoom.getName();
-		} else {
-			return ChatRoom.createChatRoomNameStringFor(this.post);
-		}
-	}
-	
 	public boolean isChatRoomActive() {
-		if (chatRoom == null) {
-			logger.debug("chatroom is null on isChatRoomActive()");
-			return false;
-		} else {
-			logger.debug("chatroom size on isChatRoomActive() is " + chatRoom.getRoster().size());
-			return (chatRoom.getRoster().size() > 0);
-		}
+		return true;
 	}
 	
 	public String getChatRoomMembers() {
-		if (chatRoom == null) {
-			logger.debug("chatroom is null");
-			return "Start a new chat!";
-		} else {
-			List<ChatRoomScreenName> members = chatRoom.getRoster();
-			if ((members == null) || (members.size() == 0)) {
-				logger.debug("chatroom is empty");
-				if (members == null) {
-					logger.debug("members is null");
-				} else {
-					logger.debug("members size is zero");
-				}
-				return "Start a new chat!";
-			} else {	
-				String memberlist = "Join chat with ";
-				for (ChatRoomScreenName mem: members) {
-					memberlist = memberlist + mem.getScreenName() + " ";
-				}
-				return memberlist;
-			}
-		}
-	}
+		return "Start chatting";
 
-	public List<ChatRoomMessage> getLastFewChatRoomMessages() {
-		return lastFewMessages;
+//      return "Start a new chat!";
+//		String memberlist = "Join chat with ";
+//		for (ChatRoomScreenName mem: members) {
+//			memberlist = memberlist + mem.getScreenName() + " ";
+//		}
+//				return memberlist;
 	}
 
 	public Collection<String> getSearchTerms() {

@@ -36,8 +36,7 @@ public class PresenceTag extends SimpleTagSupport {
 		} else if (o instanceof PostView) {
 			PostView postView = (PostView)o;
 			if (postView.isChatRoomActive()) {
-				String chatRoomName = postView.getChatRoomName();
-				returnString = "<a onClick='dh.actions.requestJoinRoom(\"" + postView.getPost().getId() + "\")' href=\"aim:GoChat?RoomName=" + chatRoomName + "&Exchange=5\" alt=\"" + postView.getChatRoomMembers() + "\"><img src=\"/images/online.gif\" height=16 width=16 border=0 valign=center></a>";
+				returnString = "<a href='javascript:dh.actions.requestJoinRoom(\"" + postView.getPost().getId() + "\")' alt=\"" + postView.getChatRoomMembers() + "\"><img src=\"/images/online.gif\" height=16 width=16 border=0 valign=center></a>";
 			}
 		}
 		
