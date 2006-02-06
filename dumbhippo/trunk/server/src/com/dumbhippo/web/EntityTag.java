@@ -108,6 +108,7 @@ public class EntityTag extends SimpleTagSupport {
 
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
 			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
+			xml.append("<br/>");
 			xml.appendEscaped(body);
 		}
 		else {
