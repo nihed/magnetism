@@ -30,7 +30,8 @@ public:
  http://randomsite.com, you can't do http://randomsite.com in a frame either.
  External images should be fine though. (Frames on external sites are blocked and
  links to external sites redirected to IE by the handling of BeforeNavigate2,
- so shouldn't generally be an issue.)
+ so shouldn't generally be an issue. Note however that javascript: URLs are
+ *not* blocked, and must be trapped by HTML sanitization.)
 
  Currently using this on remote trusted sites is a lot like downloading a .exe
  from that site and executing it on the fly.  This means it's vulnerable to 

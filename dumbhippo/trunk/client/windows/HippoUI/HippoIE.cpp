@@ -269,7 +269,7 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
                           BSTR       url,
                           bool       isPost)
 {
-    // Three cases here:
+    // Cases here:
     //
     // 1. If it's normal navigation (of the toplevel window, not a post),
     //    to a normal looking URL (http, https, ftp protocol), then open
@@ -283,7 +283,10 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     //    frame) and the link points to our site (via http or https)
     //    then allow the navigation.
     //
-    // 3. Otherwise, cancel navigation
+    // 3. If it's a javascript: URL, then it is code in the page and
+    //    not really a link at all, so allow navigation.
+    //
+    // 4. Otherwise, cancel navigation
     
     HippoQIPtr<IWebBrowser2> targetWebBrowser = targetDispatch;
     bool toplevelNavigation = (IWebBrowser2 *)targetWebBrowser == (IWebBrowser2 *)browser_;
@@ -306,6 +309,12 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     components.dwExtraInfoLength = 1;
 
     if (InternetCrackUrl(url, 0, 0, &components)) {
+        // javascript: special case; just code in the page
+        if (components.nScheme == INTERNET_SCHEME_JAVASCRIPT) {
+            hippoDebugLogW(L"Allowing navigation to javascript URL");
+            return false;
+        }
+
         // Note that this blocks things like itms: and aim:, we may need to loosen
         // that eventually for desired functionality, but be safe for now.
         if (components.nScheme == INTERNET_SCHEME_HTTP ||
