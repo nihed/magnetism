@@ -275,6 +275,10 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     //    to a normal looking URL (http, https, ftp protocol), then open
     //    the link in a new IE window, and cancel navigation.
     //
+    //    We are also allowing javascript: for now; in principle our HTML
+    //    is all from our server and these should be safe. javascript: links
+    //    don't open in a new window.
+    //
     // 2. If it's navigation not of the toplevel window (of an internal
     //    frame) and the link points to our site (via http or https)
     //    then allow the navigation.
@@ -286,6 +290,7 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
 
     bool ourSite = false;
     bool normalURL = false;
+    bool javascript = false;
     
     URL_COMPONENTS components;
     ZeroMemory(&components, sizeof(components));
@@ -307,6 +312,8 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
             components.nScheme == INTERNET_SCHEME_HTTPS ||
             components.nScheme == INTERNET_SCHEME_FTP)
             normalURL = true;
+        else if (components.nScheme == INTERNET_SCHEME_JAVASCRIPT)
+            javascript = true;
 
         HippoBSTR webServer;
         unsigned int port;
@@ -322,6 +329,9 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     if (toplevelNavigation && !isPost && normalURL) {
         ui_->launchBrowser(url);
         return true;
+    } else if (javascript) {
+        hippoDebugLogW(L"Allowing javascript href %ls", url);
+        return false;
     } else if (!toplevelNavigation && ourSite) {
         hippoDebugLogW(L"Allowing internal frame navigation to %ls", url);
         return false;
