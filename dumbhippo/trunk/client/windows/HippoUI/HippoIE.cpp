@@ -275,10 +275,6 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     //    to a normal looking URL (http, https, ftp protocol), then open
     //    the link in a new IE window, and cancel navigation.
     //
-    //    We are also allowing javascript: for now; in principle our HTML
-    //    is all from our server and these should be safe. javascript: links
-    //    don't open in a new window.
-    //
     // 2. If it's navigation not of the toplevel window (of an internal
     //    frame) and the link points to our site (via http or https)
     //    then allow the navigation.
@@ -309,12 +305,6 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     components.dwExtraInfoLength = 1;
 
     if (InternetCrackUrl(url, 0, 0, &components)) {
-        // javascript: special case; just code in the page
-        if (components.nScheme == INTERNET_SCHEME_JAVASCRIPT) {
-            hippoDebugLogW(L"Allowing navigation to javascript URL");
-            return false;
-        }
-
         // Note that this blocks things like itms: and aim:, we may need to loosen
         // that eventually for desired functionality, but be safe for now.
         if (components.nScheme == INTERNET_SCHEME_HTTP ||
@@ -324,25 +314,28 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
         else if (components.nScheme == INTERNET_SCHEME_JAVASCRIPT)
             javascript = true;
 
-        HippoBSTR webServer;
-        unsigned int port;
-        ui_->getPreferences()->parseWebServer(&webServer, &port);
 
-        if ((components.nScheme == INTERNET_SCHEME_HTTP ||
-            components.nScheme == INTERNET_SCHEME_HTTPS) &&
-            components.dwHostNameLength == webServer.Length() &&
-            wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) == 0)
-            ourSite = true;
+        if (components.nScheme == INTERNET_SCHEME_HTTP ||
+            components.nScheme == INTERNET_SCHEME_HTTPS) 
+        {
+            HippoBSTR webServer;
+            unsigned int port;
+            ui_->getPreferences()->parseWebServer(&webServer, &port);
+
+            if (components.dwHostNameLength == webServer.Length() &&
+                wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) == 0)
+                ourSite = true;
+        }
     }
 
     if (toplevelNavigation && !isPost && normalURL) {
         ui_->launchBrowser(url);
         return true;
-    } else if (javascript) {
-        hippoDebugLogW(L"Allowing javascript href %ls", url);
-        return false;
     } else if (!toplevelNavigation && ourSite) {
         hippoDebugLogW(L"Allowing internal frame navigation to %ls", url);
+        return false;
+    } else if (javascript) {
+        hippoDebugLogW(L"Allowing navigation to javascript URL");
         return false;
     } else {
         hippoDebugLogW(L"Denying navigation to %ls", url);
