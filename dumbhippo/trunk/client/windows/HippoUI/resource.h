@@ -38,10 +38,11 @@
 #define IDI_DUMBHIPPO_3                 154
 #define IDI_DUMBHIPPO_4                 155
 #define IDI_DUMBHIPPO_5                 157
+#define IDI_ICON1                       159
+#define IDI_DUMBHIPPO_0                 159
 #define IDI_DUMBHIPPO_DEBUG             204
 #define IDI_DUMBHIPPO_DOGFOOD           205
 #define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
-#define IDI_DUMBHIPPO_6                 207
 #define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
@@ -65,7 +66,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        158
+#define _APS_NEXT_RESOURCE_VALUE        160
 #define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124

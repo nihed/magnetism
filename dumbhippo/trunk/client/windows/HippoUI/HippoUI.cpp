@@ -307,13 +307,12 @@ HippoUI::setIcons(void)
 {
     TCHAR *icon;
 
-    if (hotnessBlinkCount_ % 2 == 1) {
+    if (!connected_) {
+        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0);
+    } else if (hotnessBlinkCount_ % 2 == 1) {
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
         switch (hotness_) {
-        case HippoUI::Hotness::UNKNOWN:
-            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1); // need different icon for this?
-            break;
         case HippoUI::Hotness::COLD:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
             break;
@@ -330,8 +329,8 @@ HippoUI::setIcons(void)
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_5);
             break;
         default:
-            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
-            debugLogU("unknown hotness state!");
+        case HippoUI::Hotness::UNKNOWN:
+            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0); // need different icon for this?
             break;
         }
     }
@@ -372,6 +371,8 @@ void
 HippoUI::setHotness(BSTR str)
 {
     HippoUI::Hotness hotness;
+
+
     if (!wcscmp(str, L"COLD"))
         hotness = HippoUI::Hotness::COLD;
     else if (!wcscmp(str, L"COOL"))
@@ -390,10 +391,15 @@ HippoUI::setHotness(BSTR str)
     if (idleHotnessBlinkId_ > 0)
         g_source_remove(idleHotnessBlinkId_);
     hotnessBlinkCount_ = 0;
-    idleHotnessBlinkId_ = g_idle_add(HippoUI::idleHotnessBlink, this);
-
     debugLogU("hotness changing from %d to %d", hotness_, hotness);
+    HippoUI::Hotness oldHotness = hotness_;
     hotness_ = hotness;
+    if (oldHotness != HippoUI::Hotness::UNKNOWN) {
+        idleHotnessBlinkId_ = g_idle_add(HippoUI::idleHotnessBlink, this);
+    } else {
+        // If we're transitioning from UNKNOWN, don't do blink
+        updateIcon();
+    }
 }
 
 int

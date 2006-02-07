@@ -343,6 +343,9 @@
 				RelativePath=".\icon2.ico">
 			</File>
 			<File
+				RelativePath=".\Logo0.ico">
+			</File>
+			<File
 				RelativePath=".\Logo1.ico">
 			</File>
 			<File
