@@ -58,10 +58,13 @@ public class ShareGroupFormatter extends DefaultFormatter {
 		
 		if (member != null) {
 			User adder = member.getAdder();
-			String nick = adder.getNickname();
-			if (nick != null) {
-				FullName parsed = FullName.parseHumanString(nick);
-				inviterName = parsed.getFirstName();
+			// adder is null if you created the group, I believe
+			if (adder != null) {
+				String nick = adder.getNickname();
+				if (nick != null) {
+					FullName parsed = FullName.parseHumanString(nick);
+					inviterName = parsed.getFirstName();
+				}
 			}
 		}
 	}
