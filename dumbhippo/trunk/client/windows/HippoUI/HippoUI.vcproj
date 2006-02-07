@@ -351,6 +351,9 @@
 			<File
 				RelativePath=".\Logo5.ico">
 			</File>
+			<File
+				RelativePath=".\Logo6.ico">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

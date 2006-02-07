@@ -308,7 +308,7 @@ HippoUI::setIcons(void)
     TCHAR *icon;
 
     if (hotnessBlinkCount_ % 2 == 1) {
-        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1); // need blank/outlined icon?
+        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
         switch (hotness_) {
         case HippoUI::Hotness::UNKNOWN:
@@ -385,12 +385,15 @@ HippoUI::setHotness(BSTR str)
     else
         hotness = HippoUI::Hotness::UNKNOWN;
 
-    debugLogU("hotness changing from %d to %d", hotness_, hotness);
-    hotness_ = hotness;
-    hotnessBlinkCount_ = 0;
+    if (hotness == hotness_)
+        return;
     if (idleHotnessBlinkId_ > 0)
         g_source_remove(idleHotnessBlinkId_);
-    updateIcon();
+    hotnessBlinkCount_ = 0;
+    idleHotnessBlinkId_ = g_idle_add(HippoUI::idleHotnessBlink, this);
+
+    debugLogU("hotness changing from %d to %d", hotness_, hotness);
+    hotness_ = hotness;
 }
 
 int
@@ -398,7 +401,7 @@ HippoUI::idleHotnessBlink(gpointer data)
 {
     HippoUI *ui = (HippoUI*) data;
 
-    if (ui->hotnessBlinkCount_ > 3) {
+    if (ui->hotnessBlinkCount_ > 4) {
         ui->idleHotnessBlinkId_ = 0;
         return FALSE;
     }

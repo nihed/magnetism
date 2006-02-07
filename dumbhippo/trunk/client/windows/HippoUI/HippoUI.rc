@@ -42,6 +42,7 @@ IDI_DUMBHIPPO_2         ICON                    "Logo2.ico"
 IDI_DUMBHIPPO_3         ICON                    "Logo3.ico"
 IDI_DUMBHIPPO_4         ICON                    "Logo4.ico"
 IDI_DUMBHIPPO_5         ICON                    "Logo5.ico"
+IDI_DUMBHIPPO_BLANK     ICON                    "Logo6.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

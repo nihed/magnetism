@@ -1148,7 +1148,7 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
     im->ui_->debugLogU("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
     im->ui_->setClientInfo(minimum, current, download);
 
-    // Next get the MySpace info
+    // Next get the MySpace info and current hotness
     im->getMySpaceName();
     im->getHotness();
 

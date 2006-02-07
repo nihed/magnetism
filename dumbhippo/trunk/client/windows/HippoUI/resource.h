@@ -37,11 +37,12 @@
 #define IDI_DUMBHIPPO_2                 153
 #define IDI_DUMBHIPPO_3                 154
 #define IDI_DUMBHIPPO_4                 155
-#define IDI_ICON1                       157
 #define IDI_DUMBHIPPO_5                 157
 #define IDI_DUMBHIPPO_DEBUG             204
 #define IDI_DUMBHIPPO_DOGFOOD           205
 #define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
+#define IDI_DUMBHIPPO_6                 207
+#define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
 #define IDC_REMEMBERPASS                1003
