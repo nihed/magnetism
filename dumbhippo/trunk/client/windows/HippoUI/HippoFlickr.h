@@ -215,7 +215,7 @@ private:
     public:
         HippoFlickrStatusWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
         virtual void onDocumentComplete();
-        virtual bool onClose(HWND window);
+        virtual bool onClose();
     private:
         HippoFlickr *flickr_;
     };
@@ -225,7 +225,7 @@ private:
     public:
         HippoFlickrFirstTimeWindowCallback(HippoFlickr *flickr) { flickr_ = flickr; }
         virtual void onDocumentComplete();
-        virtual bool onClose(HWND window);
+        virtual bool onClose();
     private:
         HippoFlickr *flickr_;
     };

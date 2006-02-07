@@ -163,7 +163,7 @@ HippoFlickr::HippoFlickrFirstTimeWindowCallback::onDocumentComplete()
 }
 
 bool
-HippoFlickr::HippoFlickrFirstTimeWindowCallback::onClose(HWND window)
+HippoFlickr::HippoFlickrFirstTimeWindowCallback::onClose()
 {
     flickr_->setState(HippoFlickr::State::CANCELLED);
     return TRUE;
@@ -185,7 +185,7 @@ HippoFlickr::HippoFlickrStatusWindowCallback::onDocumentComplete()
 }
 
 bool
-HippoFlickr::HippoFlickrStatusWindowCallback::onClose(HWND window)
+HippoFlickr::HippoFlickrStatusWindowCallback::onClose()
 {
     flickr_->setState(HippoFlickr::State::CANCELLED);
     return TRUE;
@@ -202,8 +202,12 @@ HippoFlickr::showIEWindow(WCHAR *title, WCHAR *relUrl, HippoIEWindowCallback *cb
     HippoBSTR url;
     ui_->getRemoteURL(HippoBSTR(relUrl), &url);
     ieWindowCallback_ = cb;
-    shareWindow_ = new HippoIEWindow(ui_, title, url, this, ieWindowCallback_);
-	shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 650, 600);
+    shareWindow_ = new HippoIEWindow(url, ieWindowCallback_);
+    shareWindow_->setUI(ui_);
+    shareWindow_->setApplication(this);
+    shareWindow_->setTitle(title);
+    shareWindow_->create();
+    shareWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 650, 600);
     shareWindow_->show();
     ie_ = shareWindow_->getIE();
 }

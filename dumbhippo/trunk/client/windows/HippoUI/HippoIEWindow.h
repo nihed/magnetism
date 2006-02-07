@@ -5,69 +5,29 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include "HippoIE.h"
-
-class HippoUI;
+#include "HippoAbstractWindow.h"
 
 class HippoIEWindowCallback
 {
 public:
     virtual void onDocumentComplete() = 0;
     // Return TRUE to allow close, FALSE to disallow
-    virtual bool onClose(HWND window) {
+    virtual bool onClose() {
         return TRUE;
     }
 };
 
-class HippoIEWindow : public HippoMessageHook
+class HippoIEWindow : public HippoAbstractWindow
 {
 public:
-    HippoIEWindow(HippoUI *ui, WCHAR *title, WCHAR *src, IDispatch *external, HippoIEWindowCallback *cb);
+    HippoIEWindow(WCHAR *src, HippoIEWindowCallback *cb);
     ~HippoIEWindow(void);
 
-    HippoIE *getIE();
-
-    /***
-     * Move and resize the window to the given size and position
-     * @param x X position. CW_DEAULT means center horizontally
-     * @param y Y position. CW_DEAULT means center vertically
-     * @param width the new width, including window decorations
-     * @param height the new height, including window decorations
-     **/
-    void moveResize(int x, int y, int width, int height);
-    void show();
-    void hide();
-    void setForegroundWindow();
-
-    bool hookMessage(MSG *msg);
+protected:
+    virtual void onDocumentComplete();
+    virtual void onClose(bool fromScript);
 
 private:
-    class HippoIEWindowIECallback : public HippoIECallback
-    {
-    public:
-        HippoIEWindow *win_;
-        HippoIEWindowIECallback(HippoIEWindow *win) {
-            win_ = win;
-        }
-        void onDocumentComplete();
-        void onClose();
-        void onError(WCHAR *errText);
-    };
-
-    HippoIEWindowIECallback *ieCb_;
-    HINSTANCE instance_;
-    HWND window_;
     HippoIEWindowCallback *cb_;
-    HippoUI *ui_;
-    HippoIE *ie_;
     bool created_;
-
-    bool processMessage(UINT   message,
-                            WPARAM wParam,
-                            LPARAM lParam);
-    static LRESULT CALLBACK windowProc(HWND   window,
-                        UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
-    bool registerClass();
 };

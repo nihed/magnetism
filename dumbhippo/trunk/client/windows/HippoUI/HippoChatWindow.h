@@ -4,66 +4,25 @@
  **/
 #pragma once
 
-#include <HippoUtil.h>
-#include <HippoConnectionPointContainer.h>
-#include "HippoIE.h"
-#include "HippoChatRoom.h"
+#include "HippoAbstractWindow.h"
 
-class HippoUI;
-
-class HippoChatWindow : public HippoMessageHook
+class HippoChatWindow : public HippoAbstractWindow
 {
 public:
     HippoChatWindow();
     ~HippoChatWindow();
 
-    void setUI(HippoUI *ui);
-    bool create();
-    void show();
-    void setForegroundWindow();
-
     void setPostId(BSTR postId);
     BSTR getPostId();
 
-    bool hookMessage(MSG *msg);
+protected:
+    HippoBSTR getURL();
+    HippoBSTR getClassName();
+    HippoBSTR getTitle();
+
+    void onClose(bool fromScript);
+    void onDocumentComplete();
 
 private:
-    HINSTANCE instance_;
-    HWND window_;
-
-    class HippoChatWindowIECallback : public HippoIECallback
-    {
-    public:
-        HippoChatWindowIECallback(HippoChatWindow *chatWindow) {
-            chatWindow_ = chatWindow;
-        }
-        HippoChatWindow *chatWindow_;
-        void onDocumentComplete();
-        void onError(WCHAR *text);
-        void onClose() {}
-    };
-    HippoChatWindowIECallback *ieCallback_;
-
-    HippoIE *ie_;
-    HippoPtr<IWebBrowser2> browser_;
-
-    HippoUI* ui_;
     HippoBSTR postId_;
-
-    bool embedIE(void);
-    bool createWindow(void);
-    bool registerClass();
-
-    bool processMessage(UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
-
-    static LRESULT CALLBACK windowProc(HWND   window,
-                                       UINT   message,
-                                       WPARAM wParam,
-                                       LPARAM lParam);
-
-    // private so they aren't used
-    HippoChatWindow(const HippoChatWindow &other);
-    HippoChatWindow& operator=(const HippoChatWindow &other);
 };

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoChatRoom.h"
 #include "HippoMusicMonitor.h"
 #include <loudmouth/loudmouth.h>
 
