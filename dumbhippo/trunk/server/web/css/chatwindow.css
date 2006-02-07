@@ -52,7 +52,6 @@ body
 {
     border: 0px;
     margin: 0px;
-    padding: 0px;
     position: absolute;
     top: 10px;
     left: 10px;
@@ -101,48 +100,49 @@ body
     vertical-align: middle;
     font-size: 		medium;
 }
+
 .dh-chat-message {
 	margin:			5px;
 }
-.dh-chat-message-my
-{
 
-}
-
-.dh-chat-message-other
-{
-
-}
-.dh-chat-message-image {
-
-}
 .dh-chat-message-my .dh-chat-message-image 
 {
     float: left;
+    clear: right;
+    padding: 0px;
+    margin: 0px;
 }
 
 .dh-chat-message-other .dh-chat-message-image 
 {
     float: right;
+    clear: left;
+    padding: 0px;
+    margin: 0px;
 }
 
-.dh-chat-message-text 
+.dh-chat-message-user-repeat .dh-chat-message-image 
 {
-    height: 48px;
+    display: none;
 }
 
 .dh-chat-message-my .dh-chat-message-text {
     text-align: left;
+    clear: right;
 }
 
 .dh-chat-message-other .dh-chat-message-text {
     text-align: right;
+    clear: left;
 }
+
+.dh-chat-message-text {
+    margin-left: 53px;
+    margin-right: 53px;
+    background-color: 		#fafac5;
+ }
 
 .dh-chat-message-text-inner {
 	font-family:			Verdana, sans;
 	color:					#222222;
-    background-color: 		#fafac5;
-	padding:				3px;
-	
 }

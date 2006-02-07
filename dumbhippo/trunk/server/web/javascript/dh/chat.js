@@ -8,8 +8,6 @@ dh.chat.Message = function(userId, version, name, text, timestamp, serial) {
 	this.timestamp = timestamp
 	this.serial = serial
 	
-	this.div = null
-
 	this._shortLocaleTime = function(date) {
 		return date.toLocaleTimeString().replace(/(\d:\d\d):\d\d/, "$1")
 	}
@@ -59,12 +57,35 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 			insertPos--
 		}
 		
+		if (insertPos > 0 && this._messages[insertPos - 1].userId == message.userId)
+			message.userFirst = false
+		else
+			message.userFirst = true
+		
 		// Insert the new message in the correct place
 		this._messages.splice(insertPos, 0, message)
 		var before = null
 		if (insertPos < this._messages.length - 1)
 			before = this._messages[insertPos + 1]
 		this._insertCallback(message, before)		
+		
+		if (before) {
+			// If the 'userFirst' user for the next message, we need
+			// to remove and reinsert it so that the GUI can be updated
+			var oldNextIsFirst = before.userFirst
+			before.userFirst = before.userId != message.userId
+			
+			if (before.userFirst != oldNextIsFirst) {
+				var nextBefore
+				if (insertPos < this._messages.length - 2)
+					nextBefore = this._messages[insertPos + 2]
+
+				this._messages.splice(insertPos + 1, 1)
+				this._removeCallback(before)
+				this._messages.splice(insertPos + 1, 0, before)
+				this._insertCallback(before, nextBefore)
+			}
+		}
 	}
 	
 	this.clear = function() {
