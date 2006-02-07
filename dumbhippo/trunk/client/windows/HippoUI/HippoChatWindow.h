@@ -16,12 +16,7 @@ public:
     BSTR getPostId();
 
 protected:
-    HippoBSTR getURL();
-    HippoBSTR getClassName();
-    HippoBSTR getTitle();
-
     void onClose(bool fromScript);
-    void onDocumentComplete();
 
 private:
     HippoBSTR postId_;

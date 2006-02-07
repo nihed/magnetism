@@ -5,7 +5,7 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include <HippoConnectionPointContainer.h>
+#include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
@@ -14,17 +14,15 @@ struct HippoLinkShare;
 
 class HippoBubble :
     public IHippoBubble,
-    public IDispatch
+    public IDispatch,
+    public HippoAbstractWindow
 {
 public:
     HippoBubble();
     ~HippoBubble();
 
-    void setUI(HippoUI *ui);
-
     void setLinkNotification(HippoLinkShare &share);
     void addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment);
-    void show(void);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);
     void showMissedBubbles();
@@ -52,28 +50,14 @@ public:
     STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
     STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
 
+protected:
+    virtual HippoBSTR getURL();
+    virtual void initializeWindow();
+    virtual void initializeIE();
+    virtual void initializeBrowser();
+    virtual void onClose(bool fromScript);
+
 private:
-    HINSTANCE instance_;
-    HWND window_;
-
-    class HippoBubbleIECallback : public HippoIECallback
-    {
-    public:
-        HippoBubbleIECallback(HippoBubble *bubble) {
-            bubble_ = bubble;
-        }
-        HippoBubble *bubble_;
-        void onDocumentComplete();
-        void onError(WCHAR *text);
-        void onClose() {}
-    };
-    HippoBubbleIECallback *ieCallback_;
-
-    HippoIE *ie_;
-    HippoPtr<IWebBrowser2> browser_;
-
-    HippoUI* ui_;
-
     HippoBSTR currentLink_;
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;
@@ -87,13 +71,10 @@ private:
     bool screenSaverRunning_;
     DWORD viewerSpace_;
 
-    bool embedIE(void);
+    void setShown();
     bool appendTransform(BSTR src, BSTR style, ...);
     bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
-    bool create(void);
-    bool createWindow(void);
     void moveResizeWindow(void);
-    bool registerClass();
     void checkMouse();
     void updateIdle();
     void doSetIdle();
@@ -106,13 +87,5 @@ private:
                         WPARAM wParam,
                         LPARAM lParam);
 
-    static LRESULT CALLBACK windowProc(HWND   window,
-                                       UINT   message,
-                                       WPARAM wParam,
-                                       LPARAM lParam);
     DWORD refCount_;
-
-	// private so they aren't used
-	HippoBubble(const HippoBubble &other);
-	HippoBubble& operator=(const HippoBubble &other);
 };

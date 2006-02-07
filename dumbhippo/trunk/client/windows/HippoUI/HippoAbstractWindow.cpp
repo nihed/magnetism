@@ -15,6 +15,7 @@ HippoAbstractWindow::HippoAbstractWindow()
 {
     animate_ = false;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
+    extendedStyle_ = 0;
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
@@ -56,6 +57,12 @@ HippoAbstractWindow::setWindowStyle(DWORD windowStyle)
 }
 
 void 
+HippoAbstractWindow::setExtendedStyle(DWORD extendedStyle)
+{
+    extendedStyle_ = extendedStyle;
+}
+
+void 
 HippoAbstractWindow::setURL(const HippoBSTR &url)
 {
     url_ = url;   
@@ -73,12 +80,43 @@ HippoAbstractWindow::setTitle(const HippoBSTR &title)
     title_ = title;
 }
 
+HippoBSTR
+HippoAbstractWindow::getURL()
+{
+    return url_;
+}
+
+void 
+HippoAbstractWindow::initializeWindow()
+{
+}
+
+void 
+HippoAbstractWindow::initializeIE()
+{
+}
+
+void 
+HippoAbstractWindow::initializeBrowser()
+{
+}
+
+void 
+HippoAbstractWindow::onClose(bool fromScript)
+{
+}
+
+void
+HippoAbstractWindow::onDocumentComplete()
+{
+}
+
 bool
 HippoAbstractWindow::createWindow(void)
 {
-    window_ = CreateWindow(className_, title_, windowStyle_,
-                           CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                           NULL, NULL, instance_, NULL);
+    window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
+                             CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
+                             ui_->getWindow(), NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
         return false;
@@ -88,6 +126,8 @@ HippoAbstractWindow::createWindow(void)
 
     hippoSetWindowData<HippoAbstractWindow>(window_, this);
     ui_->registerWindowMsgHook(window_, this);
+
+    initializeWindow();
 
     return true;
 }
@@ -113,13 +153,14 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::onError(WCHAR *text)
 bool
 HippoAbstractWindow::embedIE(void)
 {
-    RECT rect;
-    GetClientRect(window_,&rect);
-    ie_ = new HippoIE(ui_, window_, url_, ieCallback_, application_);
+    ie_ = new HippoIE(ui_, window_, getURL(), ieCallback_, application_);
     ie_->setThreeDBorder(false);
+    initializeIE();
 
     ie_->create();
     browser_ = ie_->getBrowser();
+
+    initializeBrowser();
 
     return true;
 }
@@ -259,11 +300,11 @@ HippoAbstractWindow::processMessage(UINT   message,
         onClose(false);
         return true;
     case WM_SIZE:
-        {
+        if (ie_) {
             RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
             ie_->resize(&rect);
-            return true;
         }
+        return true;
     default:
         return false;
     }

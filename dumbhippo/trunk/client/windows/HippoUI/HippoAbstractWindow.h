@@ -95,6 +95,12 @@ protected:
     void setWindowStyle(DWORD windowStyle);
 
     /**
+     * Set the extended window style flags that will be passed to CreateWindowEx()
+     * @param extendedStyle the extended window style flags. (See CreateWindowEx() docs)
+     */
+    void setExtendedStyle(DWORD extendedStyle);
+
+    /**
      * Set the class name that will be used when registering the class for
      * this type of window. Mandatory to call before create().
      * @param className the class name string
@@ -108,10 +114,37 @@ protected:
      */
     void setURL(const HippoBSTR &url);
 
+    /********************************************************/
+
+    /**
+     * Get the URL that will be passed to the HippoIE object. The default
+     * implementation just returns the result of setURL(), but this 
+     * is virtual so that it can be determined dynamically, depending
+     * on, for example, the HippoUI object passed to setUI().
+     **/
+    virtual HippoBSTR getURL();
+
+    /**
+     * Do any necessary post-creation initialization of our window
+     **/
+    virtual void initializeWindow();
+
+    /**
+     * Do any initializion of the HippoIE needed before calling ie_->create(),
+     * for example, call ie_->setXsltTransform()
+     **/
+    virtual void initializeIE();
+
+    /**
+     * Do any necessary initialization of the browser control 
+     * post-creation.
+     **/
+    virtual void initializeBrowser();
+
     /**
      * Callback when the document finishes loading 
      **/
-    virtual void onDocumentComplete() = 0;
+    virtual void onDocumentComplete();
 
     /**
      * Callback when the window is closed either by the user
@@ -120,22 +153,23 @@ protected:
      * you do here.
      * @param fromScript true if a script invoked as window.close()
      **/
-    virtual void onClose(bool fromScript) = 0;
+    virtual void onClose(bool fromScript);
 
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
     HippoUI* ui_;
+    HWND window_;
 
 private:
     bool animate_;
     DWORD windowStyle_;
+    DWORD extendedStyle_;
     HippoBSTR className_;
     HippoBSTR url_;
     HippoBSTR title_;
 
     HINSTANCE instance_;
     HippoPtr<IDispatch> application_;
-    HWND window_;
 
     class HippoAbstractWindowIECallback : public HippoIECallback
     {

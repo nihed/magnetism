@@ -4,74 +4,36 @@
  */
 #include "stdafx.h"
 
-#include <mshtml.h>
-#include "exdisp.h"
-#include <strsafe.h>
 #include <stdarg.h>
-#include <ExDispid.h>
-#include "HippoUI.h"
-#include "HippoIE.h"
 #include <HippoUtil.h>
 #include "HippoBubble.h"
-#include "Guid.h"
+#include "HippoUI.h"
 
-static const TCHAR *CLASS_NAME = TEXT("HippoBubbleClass");
 static const int BASE_WIDTH = 400;
 static const int BASE_HEIGHT = 150;
 static const UINT_PTR CHECK_MOUSE = 1;
 
-#define NOTIMPLEMENTED assert(0); return E_NOTIMPL
-
 HippoBubble::HippoBubble(void)
 {
     refCount_ = 1;
-    instance_ = GetModuleHandle(NULL);
-    window_ = NULL;
     idle_ = FALSE;
     screenSaverRunning_ = FALSE;
     haveMouse_ = FALSE;
     effectiveIdle_ = FALSE;
     shown_ = FALSE;
     viewerSpace_ = 0;
-    ie_ = NULL;
 
-    ieCallback_ = new HippoBubbleIECallback(this);
+    setWindowStyle(WS_POPUP);
+    setExtendedStyle(WS_EX_TOPMOST);
+    setClassName(L"HippoBubbleClass");
+    setTitle(L"Hippo Notification");
+    setApplication(this);
 
     hippoLoadTypeInfo(L"HippoUtil.dll", &IID_IHippoBubble, &ifaceTypeInfo_, NULL);
 }
 
 HippoBubble::~HippoBubble(void)
 {
-    delete ieCallback_;
-}
-
-void 
-HippoBubble::setUI(HippoUI *ui)
-{
-    ui_ = ui;
-}
-
-bool
-HippoBubble::createWindow(void)
-{
-    // We need to set the parent here, even though it is invisible, to keep the
-    // window from showing on the taskbar. If there is no parent, then it shows
-    // up even when WS_EX_APPWINDOW isn't set.
-    window_ = CreateWindowEx(WS_EX_TOPMOST, CLASS_NAME, L"Hippo Notification", WS_POPUP,
-                             CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             ui_->getWindow(), NULL, instance_, NULL);
-    if (!window_) {
-        hippoDebugLastErr(L"Couldn't create window!");
-        return false;
-    }
-
-    EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
-
-    moveResizeWindow();
-
-    hippoSetWindowData<HippoBubble>(window_, this);
-
-    return true;
 }
 
 void
@@ -83,51 +45,41 @@ HippoBubble::moveResizeWindow()
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-    MoveWindow(window_, 
-               (desktopRect.right - width), (desktopRect.bottom - height), 
-               width, height, 
-               TRUE);
-
-    if (ie_) {
-        RECT rect;
-
-        rect.top = 0;
-        rect.left = 0;
-        rect.bottom = height;
-        rect.right = width;
-
-        ie_->resize(&rect);
-    }
+    moveResize(desktopRect.right - width, (desktopRect.bottom - height),
+               width, height);
 }
 
-void HippoBubble::HippoBubbleIECallback::onDocumentComplete()
+HippoBSTR
+HippoBubble::getURL()
 {
-    bubble_->ui_->debugLogW(L"HippoBubble document complete");
+    HippoBSTR srcURL;
+
+    ui_->getAppletURL(L"notification.xml", &srcURL);
+
+    return srcURL;
 }
 
 void
-HippoBubble::HippoBubbleIECallback::onError(WCHAR *text) 
+HippoBubble::initializeWindow()
 {
-    bubble_->ui_->debugLogW(L"HippoIE error: %s", text);
+    moveResizeWindow();
 }
 
-bool
-HippoBubble::embedIE(void)
+void 
+HippoBubble::initializeIE()
 {
-    RECT rect;
-    GetClientRect(window_,&rect);
-    HippoBSTR srcURL;
-    ui_->getAppletURL(L"notification.xml", &srcURL);
-    ie_ = new HippoIE(ui_, window_, srcURL, ieCallback_, this);
+    ie_->setThreeDBorder(true);
 
     HippoBSTR appletURL;
     ui_->getAppletURL(L"", &appletURL);
     HippoBSTR styleURL;
     ui_->getAppletURL(L"clientstyle.xml", &styleURL);
     ie_->setXsltTransform(styleURL, L"appleturl", appletURL.m_str, NULL);
-    ie_->create();
-    browser_ = ie_->getBrowser();
+}
 
+void 
+HippoBubble::initializeBrowser()
+{
     // Kind of a hack
     HippoBSTR serverURLStr;
     ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
@@ -144,29 +96,12 @@ HippoBubble::embedIE(void)
 
     // Set the initial value of the idle state
     doSetIdle();
-
-    return true;
 }
-
-bool
-HippoBubble::create(void)
+    
+void 
+HippoBubble::onClose(bool fromScript)
 {
-    if (window_ != NULL) {
-        return true;
-    }
-    if (!registerClass()) {
-        ui_->debugLogW(L"Failed to register window class");
-        return false;
-    }
-    if (!createWindow()) {
-        ui_->debugLogW(L"Failed to create window");
-        return false;
-    }
-    if (!embedIE()) {
-        ui_->debugLogW(L"Failed to embed IE");
-        return false;
-    }
-    return true;
+    Close();
 }
 
 static SAFEARRAY *
@@ -223,13 +158,8 @@ hippoLinkRecipientArrayToSafeArray(HippoArray<HippoLinkRecipient> &args)
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
-    if (window_ == NULL) {
-        ui_->debugLogW(L"Creating new window");
-        if (!create()) {
-            ui_->debugLogW(L"Failed to create window");
-            return;
-        }
-    }
+    if (!create())
+        return;
 
     variant_t senderName(share.senderName);
     variant_t senderId(share.senderId);
@@ -277,19 +207,15 @@ HippoBubble::setLinkNotification(HippoLinkShare &share)
         ui_->debugLogW(L"chat is active for postId %s, not showing", share.postId);
         return;
     }
-    show();
+    setShown();
 }
 
 void 
 HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment)
 {
-    if (window_ == NULL) {
-        ui_->debugLogW(L"Creating new window");
-        if (!create()) {
-            ui_->debugLogW(L"Failed to create window");
-            return;
-        }
-    }
+    if (!create())
+        return;
+
     variant_t vMyId(myId);
     variant_t vBlogId(blogId);
     variant_t vCommentId(comment.commentId);
@@ -301,7 +227,7 @@ HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceB
     // Note if you change the arguments to this function, you must change
     // notification.js (and don't forget to update the argument count here too)
     invokeJavascript(L"dhAddMySpaceComment", NULL, 7, &vMyId, &vBlogId, &vCommentId, &vPosterId, &vPosterName, &vPosterImgUrl, &vContent);
-    show();
+    setShown();
 }
 
 bool
@@ -357,44 +283,10 @@ HippoBubble::setScreenSaverRunning(bool screenSaverRunning)
     }
 }
 
-bool
-HippoBubble::registerClass()
-{
-    WNDCLASSEX wcex;
-
-    ZeroMemory(&wcex, sizeof(WNDCLASSEX));
-    wcex.cbSize = sizeof(WNDCLASSEX); 
-
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = windowProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance  = instance_;
-    wcex.hCursor    = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = CLASS_NAME;
-
-    if (RegisterClassEx(&wcex) == 0) {
-        if (GetClassInfoEx(instance_, CLASS_NAME, &wcex) != 0)
-            return true;
-        return false;
-    }
-    return true;
-}
-
 void
 HippoBubble::doShow(void) 
 {   
-    ui_->debugLogW(L"doing bubble show");
-    //if (!AnimateWindow(window_, 400, AW_BLEND))
-    //  ui_->logLastError(L"Failed to invoke AnimateWindow");
-    if (!ShowWindow(window_, SW_SHOW))
-        ui_->logLastError(L"Failed to invoke ShowWindow");
-    if (!RedrawWindow(window_, NULL, NULL, RDW_UPDATENOW))
-        ui_->logLastError(L"Failed to invoke RedrawWindow");
-    if (!BringWindowToTop(window_))
-        ui_->logLastError(L"Failed to invoke BringWindowToTop");
+    show();
 
     SetTimer(window_, CHECK_MOUSE, 250 /* 0.25 second */, NULL);
     checkMouse();
@@ -404,11 +296,11 @@ void
 HippoBubble::showMissedBubbles()
 {
     invokeJavascript(L"dhDisplayMissed", NULL, 0);
-    show();
+    setShown();
 }
 
 void
-HippoBubble::show(void) 
+HippoBubble::setShown(void) 
 {   
     // If we show the bubble when the screensaver is running, it will pop up
     // over the screensaver, so we simply remember that the bubble is logically
@@ -478,21 +370,6 @@ HippoBubble::processMessage(UINT   message,
     }
 }
 
-LRESULT CALLBACK 
-HippoBubble::windowProc(HWND   window,
-                        UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam)
-{
-    HippoBubble *bubbleWindow = hippoGetWindowData<HippoBubble>(window);
-    if (bubbleWindow) {
-        if (bubbleWindow->processMessage(message, wParam, lParam))
-            return 0;
-    }
-
-    return DefWindowProc(window, message, wParam, lParam);
-}
-
 // IHippoBubble
 
 STDMETHODIMP
@@ -536,10 +413,11 @@ HippoBubble::doClose()
     }
 
     // Don't animate if the screenSaver is starting
+    if (!screenSaverRunning_)
+        setAnimate(true);
+    hide();
     if (screenSaverRunning_)
-        ShowWindow(window_, SW_HIDE);
-    else
-        AnimateWindow(window_, 200, AW_BLEND | AW_HIDE);
+        setAnimate(false);
 }
 
 STDMETHODIMP
@@ -602,7 +480,7 @@ HIPPO_DEFINE_REFCOUNTING(HippoBubble)
 
 // We just delegate IDispatch to the standard Typelib-based version.
 
-    STDMETHODIMP
+STDMETHODIMP
 HippoBubble::GetTypeInfoCount(UINT *pctinfo)
 {
     if (pctinfo == NULL)

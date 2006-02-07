@@ -43,8 +43,3 @@ HippoChatWindow::onClose(bool fromScript)
 {
     ui_->onChatWindowClosed(this);
 }
-
-void
-HippoChatWindow::onDocumentComplete()
-{
-}
