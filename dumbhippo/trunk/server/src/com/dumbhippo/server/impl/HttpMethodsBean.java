@@ -273,7 +273,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(
 				GuidPersistable.class, recipientGuids);
 
-		URL urlObject = new URL(url);
+		URL urlObject = postingBoard.parsePostURL(url);
 
 		postingBoard.doLinkPost(user, visibility, title, description,
 				urlObject, recipients, false, info);

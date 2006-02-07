@@ -21,6 +21,8 @@ import com.dumbhippo.postinfo.PostInfo;
 @Local
 public interface PostingBoard {
 
+	public URL parsePostURL(String url);
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
 	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max);

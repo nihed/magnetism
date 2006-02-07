@@ -782,5 +782,17 @@ public class PostingBoardBean implements PostingBoard {
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
 		em.persist(postMessage);
 	}
+
+	public URL parsePostURL(String urlStr) {
+		URL url;		
+		try {
+			url = new URL(urlStr);
+			if (!url.getProtocol().equals("http") || url.getProtocol().equals("https"))
+				throw new IllegalArgumentException("invalid protocol in url" + urlStr);
+		} catch (MalformedURLException e) {
+			throw new IllegalArgumentException(e);
+		}
+		return url;
+	}
 }
 
