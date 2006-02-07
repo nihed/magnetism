@@ -2,6 +2,8 @@ package com.dumbhippo.live;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid;
+
 /**
  * Create and update LivePost objects using information from the
  * data store.
@@ -14,4 +16,8 @@ public interface LiveUserUpdater {
 	 * @param user the LiveUser object to initialize
 	 */
 	void initialize(LiveUser user);
+	
+	void periodicUpdate(LiveUser user);
+	
+	void handlePostViewed(Guid userGuid, LivePost post);
 }

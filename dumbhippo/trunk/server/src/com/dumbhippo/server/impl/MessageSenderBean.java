@@ -9,17 +9,18 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
-import org.slf4j.Logger;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
+import com.dumbhippo.live.Hotness;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -288,6 +289,34 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
+	
+	private class HotnessChangedExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "hotness";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/hotness";
+		
+		private Hotness hotness;
+		
+		public HotnessChangedExtension(Hotness hotness) {
+			this.hotness = hotness;
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement("hotness", "xmlns", NAMESPACE, "value", hotness.name());
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
+	
 	private class XMPPSender {
 
 		private XMPPConnection connection;
@@ -448,6 +477,14 @@ public class MessageSenderBean implements MessageSender {
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
 			logger.info("Sending mySpaceContactComment message to " + message.getTo());			
+			connection.sendPacket(message);
+		}
+
+		public void sendHotnessChanged(User user, Hotness hotness) {
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
+			message.addExtension(new HotnessChangedExtension(hotness));
+			logger.info("Sending hotnessChanged message to " + message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -657,5 +694,9 @@ public class MessageSenderBean implements MessageSender {
 
 	public void sendMySpaceContactCommentNotification(User user) {
 		xmppSender.sendMySpaceContactCommentNotification(user);
+	}
+
+	public void sendHotnessChanged(User user, Hotness hotness) {
+		xmppSender.sendHotnessChanged(user, hotness);
 	}
 }

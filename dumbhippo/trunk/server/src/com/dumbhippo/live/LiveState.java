@@ -25,6 +25,8 @@ public class LiveState {
 	// How often to run time based cleanups
 	private static final long CLEANER_INTERVAL = 60 * 1000; // 1 minute
 	
+	private static final long LIVE_USER_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+	
 	// Maximum number of cleaner intervals for each user
 	private static final int MAX_USER_CACHE_AGE = 30;
 	
@@ -80,11 +82,32 @@ public class LiveState {
 
 			userMap.poke(userId, liveUser);
 		}
-
-		cachedUsers.add(liveUser);
-		liveUser.setCacheAge(0);
+		
+		updateLiveUser(liveUser);
 		
 		return liveUser;
+	}
+	
+	/**
+	 * Insert an updated LiveUser object into the cache.  Since LiveUser
+	 * objects are immutable, for updating them it is necessary to clone
+	 * the existing instance, then insert the updated copy into the cache,
+	 * overwriting the previous.
+	 * 
+	 * @param user new LiveUser object to insert
+	 * @return the inserted LiveUser object
+	 */
+	public synchronized LiveUser updateLiveUser(LiveUser user) {
+		cachedUsers.add(user);
+		user.setCacheAge(0);		
+		return user;
+	}
+	
+	/**
+	 * Returns a snapshot of the current set of live users.
+	 */
+	public synchronized Set<LiveUser> getLiveUserSnapshot() {
+		return userMap.values();
 	}
 	
 	/**
@@ -211,6 +234,8 @@ public class LiveState {
 
 	private Cleaner cleaner;
 	
+	private LiveUserPeriodicUpdater liveUserUpdater;
+	
 	private JmsProducer updateQueue;
 	
 	private LiveState() {
@@ -227,6 +252,9 @@ public class LiveState {
 		
 		cleaner = new Cleaner();
 		cleaner.start();
+		
+		liveUserUpdater = new LiveUserPeriodicUpdater();
+		liveUserUpdater.start();
 	}
 	
 	// Internal function to update the availability count for the user;
@@ -316,6 +344,14 @@ public class LiveState {
 				return null;			
 		}
 		
+		public Set<T> values() {
+			Set<T> ret = new HashSet<T>();
+			for (GuidReference<T> ref : map.values()) {
+				ret.add(ref.get());
+			}
+			return ret;
+		}
+		
 		// Remove any pending weak references
 		public void clean() {
 			while (true) {
@@ -348,4 +384,33 @@ public class LiveState {
 			}
 		}
 	}
+	
+	// Peroidcally decays the hotness of every active user
+	private class LiveUserPeriodicUpdater extends Thread {
+		public void run() {
+			long nextTime = System.currentTimeMillis() + LIVE_USER_UPDATE_INTERVAL;
+			
+			while (true) {
+				try {
+					Thread.sleep(nextTime - System.currentTimeMillis());
+
+					LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);					
+					Set<LiveUser> users;
+					// Grab a copy of the current user map to avoid locking the whole
+					// object for a long time
+					users = getLiveUserSnapshot();
+					
+					for (LiveUser user : users) {
+						userUpdater.periodicUpdate(user);
+					}
+					
+					long currentTime = System.currentTimeMillis();
+					nextTime = Math.max(currentTime, nextTime + LIVE_USER_UPDATE_INTERVAL);
+					
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+		}
+	}	
 }

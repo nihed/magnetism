@@ -29,6 +29,7 @@
 		dumbhippo.server.ebay.devid=@@ebayDevId@@
 		dumbhippo.server.ebay.appid=@@ebayAppId@@
 		dumbhippo.server.ebay.certid=@@ebayCertId@@
+		dumbhippo.server.adminconsole.enable=@@adminConsole@@
     </attribute>
   </mbean>
   

@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.dumbhippo.TypeFilteredCollection;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
@@ -214,6 +216,13 @@ public class PersonView extends EntityView {
 	
 	public User getUser() {
 		return user;
+	}
+	
+	public LiveUser getLiveUser() {
+		if (user == null)
+			return null;
+		LiveState state = LiveState.getInstance();
+		return state.peekLiveUser(user.getGuid());
 	}
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {

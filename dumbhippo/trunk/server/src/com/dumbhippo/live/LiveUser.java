@@ -11,7 +11,7 @@ import com.dumbhippo.identity20.Guid;
  * 
  * @author otaylor
  */
-public class LiveUser implements Ageable {
+public class LiveUser implements Ageable, Cloneable {
 	/**
 	 * Get the User ID for which the LivePost object was created. 
 	 * 
@@ -58,6 +58,15 @@ public class LiveUser implements Ageable {
 	}
 	
 	public void discard() {
+	}
+	
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
 
