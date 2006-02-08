@@ -262,7 +262,7 @@ public:
         return Append(str);
     }
 
-    void CopyTo(BSTR *str) throw (std::bad_alloc) {
+    void CopyTo(BSTR *str) const throw (std::bad_alloc) {
         if (m_str) {
             *str = ::SysAllocString(m_str);
             if (*str == 0)

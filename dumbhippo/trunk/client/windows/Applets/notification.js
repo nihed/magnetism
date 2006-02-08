@@ -524,14 +524,12 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
 }
 
 dhAdaptLinkRecipients = function (recipients) {
-    dh.util.debug("adapting array")
-    var ret = dh.core.adaptExternalArray(recipients)
-    for (var i = 0; i < ret.length; i++) {
-        dh.util.debug("adapting " + ret[i])
-        var recipient = dh.core.adaptExternalArray(ret[i])
-        ret[i] = {id: recipient[0], name: recipient[1] }
+    var result = []
+    var tmp = dh.core.adaptExternalArray(recipients)
+    for (var i = 0; i < tmp.length; i += 2) {
+        result.push({ id: tmp[i], name: tmp[i + 1] })
     }
-    return ret;
+    return result;
 }
 
 // Global namespace since it's painful to do anything else from C++

@@ -81,18 +81,19 @@ void
 HippoBubble::initializeBrowser()
 {
     // Kind of a hack
-    HippoBSTR serverURLStr;
-    ui_->getRemoteURL(HippoBSTR(L""), &serverURLStr);
-    HippoBSTR appletURLStr;
-    ui_->getAppletURL(HippoBSTR(L""), &appletURLStr);
-    HippoBSTR selfIdStr;
-    ui_->GetLoginId(&selfIdStr);
-    variant_t serverUrl(serverURLStr.m_str);
-    variant_t appletUrl(appletURLStr.m_str);
-    variant_t selfId(selfIdStr.m_str);
-    variant_t result;
-    ui_->debugLogU("dhInit being invoked");
-    ie_->invokeJavascript(L"dhInit", &result, 3, &serverUrl, &appletUrl, &selfId);
+    HippoBSTR serverURL;
+    ui_->getRemoteURL(HippoBSTR(L""), &serverURL);
+    HippoBSTR appletURL;
+    ui_->getAppletURL(HippoBSTR(L""), &appletURL);
+    HippoBSTR selfID;
+    ui_->GetLoginId(&selfID);
+
+    ui_->debugLogU("Invoking dhInit");
+    ie_->createInvocation(L"dhInit")
+        .add(serverURL)
+        .add(appletURL)
+        .add(selfID)
+        .run();
 
     // Set the initial value of the idle state
     doSetIdle();
@@ -104,94 +105,46 @@ HippoBubble::onClose(bool fromScript)
     Close();
 }
 
-static SAFEARRAY *
-hippoStrArrayToSafeArray(HippoArray<HippoBSTR> &args)
-{
-    // I swear the SAFEARRAY API was *designed* to be painful
-    SAFEARRAYBOUND dim[1];
-    dim[0].lLbound= 0;
-    dim[0].cElements = args.length();
-    SAFEARRAY *ret = SafeArrayCreate(VT_VARIANT, 1, dim);
-    for (unsigned int i = 0; i < args.length(); i++) {
-        VARIANT *data;
-        VARIANT argv;
-        SafeArrayAccessData(ret, (void**)&data);
-        argv.vt = VT_BSTR;
-        argv.bstrVal = args[i];
-        VariantCopy(&(data[i]), &argv);
-        SafeArrayUnaccessData(ret);
-    }
-    return ret;
-}
-
-static SAFEARRAY *
-hippoLinkRecipientArrayToSafeArray(HippoArray<HippoLinkRecipient> &args)
-{
-    SAFEARRAYBOUND dim[1];
-    dim[0].lLbound= 0;
-    dim[0].cElements = args.length();
-    SAFEARRAY *ret = SafeArrayCreate(VT_VARIANT, 1, dim);
-    for (unsigned int i = 0; i < args.length(); i++) {
-        VARIANT *data;
-
-        SAFEARRAYBOUND subdim[1];
-        subdim[0].lLbound = 0;
-        subdim[0].cElements = 2;
-        SAFEARRAY *val = SafeArrayCreate(VT_VARIANT, 1, subdim);
-        variant_t vId(args[i].id);
-        variant_t vName(args[i].name);
-        SafeArrayAccessData(val, (void**)&data);
-        VariantCopy(&(data[0]), &vId);
-        VariantCopy(&(data[1]), &vName);
-        SafeArrayUnaccessData(val);
-
-        VARIANT vArray;
-        vArray.vt = VT_ARRAY | VT_VARIANT;
-        vArray.parray = val;
-        SafeArrayAccessData(ret, (void**)&data);
-        VariantCopy(&(data[i]), &vArray);
-        SafeArrayUnaccessData(ret);
-    }
-    return ret;
-}
-
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
     if (!create())
         return;
 
-    variant_t senderName(share.senderName);
-    variant_t senderId(share.senderId);
-    variant_t senderPhotoUrl(share.senderPhotoUrl);
-    variant_t postId(share.postId);
-    variant_t linkTitle(share.title);
-    variant_t linkURL(share.url);
-    variant_t linkDescription(share.description);
-    SAFEARRAY *personRecipients = hippoLinkRecipientArrayToSafeArray(share.personRecipients);
-    VARIANT personRecipientsArg;
-    personRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
-    personRecipientsArg.parray = personRecipients;
-    SAFEARRAY *groupRecipients = hippoStrArrayToSafeArray(share.groupRecipients);
-    VARIANT groupRecipientsArg;
-    groupRecipientsArg.vt = VT_ARRAY | VT_VARIANT;
-    groupRecipientsArg.parray = groupRecipients;
-    SAFEARRAY *viewers = hippoLinkRecipientArrayToSafeArray(share.viewers);
-    VARIANT viewersArg;
-    viewersArg.vt = VT_ARRAY | VT_VARIANT;
-    viewersArg.parray = viewers;
-    variant_t infoArg(share.info);
-    variant_t timeout(share.timeout);
+    std::vector<HippoBSTR> personRecipients;
+    for (unsigned long i = 0; i < share.personRecipients.length(); i++) {
+        personRecipients.push_back(share.personRecipients[i].id);
+        personRecipients.push_back(share.personRecipients[i].name);
+    }
+
+    std::vector<HippoBSTR> groupRecipients;
+    for (unsigned long i = 0; i < share.groupRecipients.length(); i++) {
+        groupRecipients.push_back(share.groupRecipients[i]);
+    }
+
+    std::vector<HippoBSTR> viewers;
+    for (unsigned long i = 0; i < share.viewers.length(); i++) {
+        viewers.push_back(share.viewers[i].id);
+        viewers.push_back(share.viewers[i].name);
+    }
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
-    // Note if you change the arguments to this function, you must change
-    // notification.js (and don't forget to update the argument count here too)
-    invokeJavascript(L"dhAddLinkShare", &result, 12, &senderName,
-                     &senderId, &senderPhotoUrl, &postId, &linkTitle, &linkURL, &linkDescription,
-                     &personRecipientsArg, &groupRecipientsArg, &viewersArg, &infoArg, &timeout);
-    SafeArrayDestroy(personRecipients);
-    SafeArrayDestroy(groupRecipients);
+    // Note if you change the arguments to this function, you must change notification.js
+    ie_->createInvocation(L"dhAddLinkShare")
+        .add(share.senderName)
+        .add(share.senderId)
+        .add(share.senderPhotoUrl)
+        .add(share.postId)
+        .add(share.title)
+        .add(share.url)
+        .add(share.description)
+        .addStringVector(personRecipients)
+        .addStringVector(groupRecipients)
+        .addStringVector(viewers)
+        .add(share.info)
+        .addLong(share.timeout)
+        .getResult(&result);
 
     if (result.vt != VT_BOOL) {
         ui_->debugLogU("dhAddLinkShare returned invalid type");
@@ -216,31 +169,21 @@ HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceB
     if (!create())
         return;
 
-    variant_t vMyId(myId);
-    variant_t vBlogId(blogId);
-    variant_t vCommentId(comment.commentId);
-    variant_t vPosterId(comment.posterId);
-    variant_t vPosterName(comment.posterName.m_str);
-    variant_t vPosterImgUrl(comment.posterImgUrl.m_str);
-    variant_t vContent(_bstr_t(comment.content.m_str));
     ui_->debugLogW(L"Invoking dhAddMySpaceComment");
-    // Note if you change the arguments to this function, you must change
-    // notification.js (and don't forget to update the argument count here too)
-    invokeJavascript(L"dhAddMySpaceComment", NULL, 7, &vMyId, &vBlogId, &vCommentId, &vPosterId, &vPosterName, &vPosterImgUrl, &vContent);
-    setShown();
-}
 
-bool
-HippoBubble::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
-{
-    va_list args;
-    va_start (args, nargs);
-    HRESULT result = ie_->invokeJavascript(funcName, invokeResult, nargs, args);
-    bool ret = SUCCEEDED(result);
-    if (!ret)
-        ui_->logError(L"failed to invoke javascript", result);
-    va_end (args);
-    return ret;
+    // Note if you change the arguments to this function, you must change
+    // notification.js
+    ie_->createInvocation(L"dhAddMySpaceComment")
+        .addLong(myId)
+        .addLong(blogId)
+        .addLong(comment.commentId)
+        .addLong(comment.posterId)
+        .add(comment.posterName)
+        .add(comment.posterImgUrl)
+        .add(comment.content)
+        .run();
+
+    setShown();
 }
 
 void 
@@ -264,10 +207,9 @@ void
 HippoBubble::doSetIdle()
 {
     if (window_) {
-        variant_t idleVariant(effectiveIdle_);
-        variant_t result;
-    
-        ie_->invokeJavascript(L"dhSetIdle", &result, 1, &idleVariant);
+        ie_->createInvocation(L"dhSetIdle")
+            .addBool(effectiveIdle_)
+            .run();
     }
 }
 
@@ -295,7 +237,7 @@ HippoBubble::doShow(void)
 void 
 HippoBubble::showMissedBubbles()
 {
-    invokeJavascript(L"dhDisplayMissed", NULL, 0);
+    ie_->createInvocation(L"dhDisplayMissed").run();
     setShown();
 }
 

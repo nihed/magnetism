@@ -10,6 +10,7 @@
 #include <mshtmhst.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
+#include "HippoInvocation.h"
 
 class HippoUI;
 
@@ -71,8 +72,7 @@ public:
     IWebBrowser2 *getBrowser();
 
     void resize(RECT *rect);
-    HRESULT invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, ...);
-    HRESULT invokeJavascript(WCHAR * funcName, VARIANT *invokeResult, int nargs, va_list args);
+    HippoInvocation createInvocation(const HippoBSTR &functionName);
 
     ~HippoIE(void);
 

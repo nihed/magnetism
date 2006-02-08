@@ -10,6 +10,7 @@
 #include "HippoHTTP.h"
 #include "HippoIEWindow.h"
 #include "HippoExternalBrowser.h"
+#include "HippoInvocation.h"
 
 class HippoUI;
 
@@ -66,7 +67,7 @@ private:
         }
         void handleError(HRESULT res);
         void handleComplete(void *responseData, long responseBytes);
-        void handleError(WCHAR *text);
+        void handleError(const HippoBSTR &text);
         bool findFirstNamedChild(IXMLDOMElement *top, WCHAR *expectedName, HippoPtr<IXMLDOMElement> &eltRet);
         bool findFirstNamedChildTextValue(IXMLDOMElement *top, WCHAR *expectedName, HippoBSTR &ret);
 
@@ -274,7 +275,7 @@ private:
 
     void showIEWindow(WCHAR *title, WCHAR *relUrl, HippoIEWindowCallback *cb);
     void showShareWindow(void);
-    bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
+    HippoInvocation createInvocation(const HippoBSTR &functionName);
 
     void sortParamArrays(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBSTR> &paramValues,
                 HippoArray<HippoBSTR> &sortedParamNames,

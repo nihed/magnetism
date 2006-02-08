@@ -136,23 +136,11 @@ HippoFlickr::setState(State newState)
     state_ = newState;
 }
 
-bool
-HippoFlickr::invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...)
+HippoInvocation
+HippoFlickr::createInvocation(const HippoBSTR &functionName)
 {
-    variant_t dummyResult;
-
-    va_list args;
-    va_start (args, nargs);
-
-    ui_->debugLogW(L"invoking javascript method %s", funcName);
-    if (!invokeResult)
-        invokeResult = &dummyResult;
-    HRESULT result = ie_->invokeJavascript(funcName, invokeResult, nargs, args);
-    bool ret = SUCCEEDED(result);
-    if (!ret)
-        ui_->logError(L"failed to invoke javascript", result);
-    va_end (args);
-    return ret;
+    ui_->debugLogW(L"invoking javascript method %s", functionName.m_str);
+    return ie_->createInvocation(functionName);
 }
 
 void
@@ -342,12 +330,10 @@ HippoFlickr::HippoFlickrRESTInvocation::handleError(HRESULT result)
 }
 
 void 
-HippoFlickr::HippoFlickrRESTInvocation::handleError(WCHAR *text)
+HippoFlickr::HippoFlickrRESTInvocation::handleError(const HippoBSTR &text)
 {
     flickr_->ui_->debugLogW(L"HippoFlickr failure: %s", text);
-    HippoBSTR textStr(text);
-    variant_t vText(textStr.m_str);
-    flickr_->invokeJavascript(L"dhFlickrError", NULL, 1, &vText);
+    flickr_->createInvocation(L"dhFlickrError").add(text).run();
     if (flickr_->state_ == HippoFlickr::State::CANCELLED)
         return;
     this->onError();
@@ -577,7 +563,7 @@ HippoFlickr::HippoFlickrAuthBrowserCallback::onQuit(HippoExternalBrowser *browse
 {
     flickr_->ui_->debugLogW(L"got onQuit for auth browser");
     if (flickr_->state_ == HippoFlickr::State::REQUESTING_AUTH) {
-        flickr_->invokeJavascript(L"dhFlickrAuthComplete", NULL, 0);
+        flickr_->createInvocation(L"dhFlickrAuthComplete").run();
         flickr_->getToken();
     } else if (flickr_->state_ == HippoFlickr::State::CREATING_ACCOUNT) {
         flickr_->showShareWindow();
@@ -625,7 +611,7 @@ HippoFlickr::setFrob(WCHAR *frob)
 
     getAuthUrl(authURL);
 
-    invokeJavascript(L"dhFlickrAwaitingAuth", NULL, 0);
+    createInvocation(L"dhFlickrAwaitingAuth").run();
     if (authBrowser_ != NULL) {
         // We already have a browser open for the account creation, reuse it
         authBrowser_->navigate(authURL);
@@ -702,9 +688,10 @@ HippoFlickr::prepareUpload(BSTR filename)
     assert(state_ > LOADING_STATUSDISPLAY);
     HippoFlickrPhoto *photo = new HippoFlickrPhoto(this, filename);
     pendingUploads_.append(photo);
-    variant_t vFilename(photo->getFilename());
-    variant_t vThumbnailFilename(photo->getThumbnailFilename());
-    invokeJavascript(L"dhFlickrAddPhoto", NULL, 2, &vFilename, &vThumbnailFilename);
+    createInvocation(L"dhFlickrAddPhoto")
+        .add(photo->getFilename())
+        .add(photo->getThumbnailFilename())
+        .run();
     if (state_ == IDLE_AWAITING_SHARE)
         processUploads();
 }
@@ -724,9 +711,10 @@ HippoFlickr::onUploadComplete(WCHAR *photoId)
 {
     ui_->debugLogW(L"got upload complete for photo %s", photoId);
     activeUploadPhoto_->setFlickrId(photoId);
-    variant_t vFilename(activeUploadPhoto_->getFilename());
-    variant_t vPhotoId(HippoBSTR(activeUploadPhoto_->getFlickrId()));
-    invokeJavascript(L"dhFlickrPhotoUploadComplete", NULL, 2, &vFilename, &vPhotoId);
+    createInvocation(L"dhFlickrPhotoUploadComplete")
+        .add(activeUploadPhoto_->getFilename())
+        .add(activeUploadPhoto_->getFlickrId())
+        .run();
     activeUploadPhoto_->setState(HippoFlickr::HippoFlickrPhoto::PhotoState::UPLOADING_THUMBNAIL);
 
     HGLOBAL hg = NULL;
@@ -757,9 +745,10 @@ HippoFlickr::onUploadThumbnailComplete(WCHAR *url)
 {
     activeUploadPhoto_->setThumbnailUrl(url);
     activeUploadPhoto_->setState(HippoFlickr::HippoFlickrPhoto::PhotoState::REQUESTING_INFO);
-    variant_t vFilename(activeUploadPhoto_->getFilename());
-    variant_t vThumbnailUrl(activeUploadPhoto_->getThumbnailUrl());
-    invokeJavascript(L"dhFlickrPhotoThumbnailUploadComplete", NULL, 2, &vFilename, &vThumbnailUrl);
+    createInvocation(L"dhFlickrPhotoThumbnailUploadComplete")
+        .add(activeUploadPhoto_->getFilename())
+        .add(activeUploadPhoto_->getThumbnailUrl())
+        .run();
     HippoFlickr::HippoFlickrGetInfoInvocation *invocation = new HippoFlickr::HippoFlickrGetInfoInvocation(this);
     invokeMethod(invocation, L"flickr.photos.getInfo", L"auth_token", authToken_.m_str, L"photo_id", activeUploadPhoto_->getFlickrId(), NULL);
 }
@@ -818,9 +807,10 @@ HippoFlickr::onGetInfoComplete(IXMLDOMElement *photo)
         return;
     }
     activeUploadPhoto_->setInfoXml(xml);
-    variant_t vFilename(activeUploadPhoto_->getFilename());
-    variant_t vXml(activeUploadPhoto_->getInfoXml());
-    invokeJavascript(L"dhFlickrPhotoSetInfoXml", NULL, 2, &vFilename, &vXml);
+    createInvocation(L"dhFlickrPhotoSetInfoXml")
+        .add(activeUploadPhoto_->getFilename())
+        .add(activeUploadPhoto_->getInfoXml())
+        .run();
     activeUploadPhoto_->setState(HippoFlickr::HippoFlickrPhoto::PhotoState::PRESHARE);
     completedUploads_.append(activeUploadPhoto_);
     activeUploadPhoto_ = NULL;
@@ -933,8 +923,7 @@ HippoFlickr::HippoFlickrPhoto::getThumbnailStream(IStream **bufRet, ULONG *lenRe
 void
 HippoFlickr::notifyUserId() 
 {
-    variant_t vUserId(userId_.m_str);
-    invokeJavascript(L"dhFlickrSetUserId", NULL, 1, &vUserId);
+    createInvocation(L"dhFlickrSetUserId").add(userId_).run();
 }
 
 // IHippoFlickr implementation
@@ -956,7 +945,7 @@ HippoFlickr::HaveFlickrAccount(BOOL haveAccount)
         setState(HippoFlickr::State::CREATING_ACCOUNT);
         authCb_ = new HippoFlickrAuthBrowserCallback(this);
         authBrowser_ = new HippoExternalBrowser(signupUrl_, TRUE, authCb_);
-        invokeJavascript(L"dhFlickrAwaitingAccount", NULL, 0);
+        createInvocation(L"dhFlickrAwaitingAccount").run();
     }
     return S_OK;
 }
@@ -980,9 +969,7 @@ HippoFlickr::CreatePhotoset(BSTR title)
         }
     }
 
-    variant_t vResult;
-    variant_t vTagName(tagTitle_.m_str);
-    invokeJavascript(L"dhFlickrSetTagName", &vResult, 1, &vTagName);
+    createInvocation(L"dhFlickrSetTagName").add(tagTitle_).run();
     switch (state_) {
         case IDLE_AWAITING_SHARE:
             setState(PROCESSING_FINALIZING);
@@ -1002,8 +989,7 @@ void
 HippoFlickr::HippoFlickrTagPhotoInvocation::handleCompleteXML(IXMLDOMElement *top)
 {
     flickr_->activeTaggingPhoto_->setState(HippoFlickr::HippoFlickrPhoto::PhotoState::COMPLETE);
-    variant_t vFilename(flickr_->activeTaggingPhoto_->getFilename());
-    flickr_->invokeJavascript(L"dhFlickrPhotoComplete", NULL, 1, &vFilename);
+    flickr_->createInvocation(L"dhFlickrPhotoComplete").add(flickr_->activeTaggingPhoto_->getFilename()).run();
     flickr_->processed_.append(flickr_->activeTaggingPhoto_);
     flickr_->activeTaggingPhoto_ = NULL;
     flickr_->processPhotoset();
@@ -1104,8 +1090,7 @@ HippoFlickr::processUploads()
 
     buf = GlobalLock(hg);
 
-    variant_t vFilename(activeUploadPhoto_->getFilename());
-    invokeJavascript(L"dhFlickrPhotoUploadStarted", NULL, 1, &vFilename);
+    createInvocation(L"dhFlickrPhotoUploadStarted").add(activeUploadPhoto_->getFilename()).run();
     ui_->debugLogW(L"doing POST to %s", uploadServiceUrl_.m_str);
     request->doMultipartFormPost(uploadServiceUrl_, invocation, 
         L"api_key", FALSE, apiKey_.m_str,
