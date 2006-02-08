@@ -273,6 +273,10 @@ public class Account extends Resource {
 	public boolean canSendInvitations(int count) {
 		return count <= invitations;
 	}
+
+	public void addInvitations(int count) {
+		setInvitations(invitations + count);
+	}
 	
 	public void deductInvitations(int count) {
 		if (count > invitations)

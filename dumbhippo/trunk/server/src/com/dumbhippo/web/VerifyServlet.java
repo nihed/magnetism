@@ -191,6 +191,14 @@ public class VerifyServlet extends AbstractServlet {
 		assert token != null;
 		
 		if (token instanceof InvitationToken) {
+			// because tokens being deleted is unique to the InvitationTokens for
+			// now, we'll deal with that possibility here and not in the getTokenByKey method
+			if (!token.isValid()) {
+				// expired is ruled out because of the above checks, so the invitation must
+				// have been deleted, but we'll be gentle to the impressionable public and display
+				// the same message that shows up when the invitation has really expired
+				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
+			}
 			doInvitationToken(request, response, (InvitationToken) token);
 		} else if (token instanceof LoginToken) {
 			doLoginToken(request, response, (LoginToken) token);

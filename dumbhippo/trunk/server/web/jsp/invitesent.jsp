@@ -34,7 +34,7 @@
 					we'll expand the site soon.</p>
 			</c:otherwise>
 		</c:choose>
-		
+		<p><a class="manage-invites" href="/invites">Manage Invites</a></p>
 		<p><a href="/home">Home</a></p>
 		<p><a href="/main">Main</a></p>
 	</div>

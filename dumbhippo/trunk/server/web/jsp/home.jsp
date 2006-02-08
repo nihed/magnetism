@@ -69,9 +69,15 @@
 		<div class="dh-right-box dh-right-box-last">
 			<h5 class="dh-title">People You Know</h5>
 			<p class="dh-right-box-text">
-			<c:if test="${home.invitations > 0}">
-			You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
-			</c:if>
+            <c:choose>           
+			    <c:when test="${home.invitations > 0}">
+			        You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
+			    </c:when>
+			    <c:otherwise>
+			        You don't have invitations to send out available to you at the moment.
+			    </c:otherwise>
+			</c:choose>    
+            <br>You can manage your invites <a class="manage-invites" href="/invites">here</a>.
 			</p>
 			<div class="dh-people">
 			<c:choose>

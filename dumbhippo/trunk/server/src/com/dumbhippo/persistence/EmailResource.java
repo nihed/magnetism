@@ -7,6 +7,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import com.dumbhippo.StringUtils;
+
 
 /**
  * @author hp
@@ -41,6 +43,10 @@ public class EmailResource extends Resource {
 		return email;
 	}
 	
+	@Transient
+	public String getEncodedEmail() {
+		return StringUtils.urlEncode(email);
+	}
 	
 	/**
 	 * This is protected so only the container calls it. 

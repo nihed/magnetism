@@ -89,7 +89,7 @@
 			<div class="dh-groups">
 			<c:choose>
 				<c:when test="${viewperson.groups.size > 0}">
-					<dh:entityList value="${viewperson.groups.list}" photos="true"/>
+					<dh:entityList value="${viewperson.groups.list}" photos="true" bodyLengthLimit="12"/>
 				</c:when>
 				<c:otherwise>
 					<!-- FIXME: need class definition for this -->
@@ -103,7 +103,7 @@
 			<div class="dh-people">
 			<c:choose>
 				<c:when test="${viewperson.contacts.size > 0}">
-					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true"/>
+					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="12"/>
 				</c:when>
 				<c:otherwise>
 					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>

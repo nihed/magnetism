@@ -5,6 +5,7 @@
 @import "sitewide.css";
 @import "bubbles.css";
 
+/* FIXME: dh-right-box-text is no longer specific to home? */
 .dh-right-box-text {
 	font-size:				x-small;
 	color:					#cecece;

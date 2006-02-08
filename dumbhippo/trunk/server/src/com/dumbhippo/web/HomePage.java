@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
@@ -18,45 +16,23 @@ import com.dumbhippo.server.PostingBoard;
  * Displays information for the logged in user, such as links recently
  * shared with him.
  */
-public class HomePage {
+public class HomePage extends AbstractSigninPage {
 	static private final Logger logger = GlobalSetup.getLogger(HomePage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 4;
 	
-	@Signin
-	private SigninBean signin;
-	
-	private IdentitySpider identitySpider;
 	private PostingBoard postBoard;
-	private PersonView person;
 	private GroupSystem groupSystem;
-	private InvitationSystem invitationSystem;
 
 	private ListBean<PostView> receivedPosts;
 	private ListBean<PostView> contactPosts;
 	private ListBean<GroupView> groups;
 	private ListBean<PersonView> contacts;	
-	private int invitations;
 
-
-	public HomePage() {
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
+	public HomePage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
-		invitations = -1;
-	}
-	
-	public SigninBean getSignin() {
-		return signin;
 	}
 
-	public PersonView getPerson() {
-		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
-		
-		return person;
-	}
-	
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
 			logger.debug("Getting received posts for " + signin.getUser().getId());
@@ -91,10 +67,4 @@ public class HomePage {
 		return MAX_RECEIVED_POSTS_SHOWN;
 	}
 	
-	public int getInvitations() {
-		if (invitations < 0) {
-			invitations = invitationSystem.getInvitations(signin.getUser()); 
-		}
-		return invitations;
-	}
 }

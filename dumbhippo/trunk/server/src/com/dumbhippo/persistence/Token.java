@@ -22,6 +22,8 @@ public class Token extends DBUnique {
 	// store date in this form since it's immutable and lightweight
 	private long creationDate;
 	
+	private boolean deleted;
+	
 	// constructor for hibernate to use
 	protected Token() {
 	}
@@ -31,6 +33,7 @@ public class Token extends DBUnique {
 		if (initialize) {
 			this.authKey = RandomToken.createNew().toString();
 			this.creationDate = System.currentTimeMillis();
+			this.deleted = false;
 		}
 	}
 	
@@ -47,8 +50,17 @@ public class Token extends DBUnique {
 		return new Date(creationDate);
 	}
 
-	protected void setCreationDate(Date creationDate) {
+	public void setCreationDate(Date creationDate) {
 		this.creationDate = creationDate.getTime();
+	}
+
+	@Column(nullable=false)
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 	
 	@Transient
@@ -85,6 +97,11 @@ public class Token extends DBUnique {
 	public boolean isExpired() {
 		long age = (System.currentTimeMillis() - getCreationDate().getTime()) / 1000;
 		return (age < 0 || age > getExpirationPeriodInSeconds());	
+	}
+	
+	@Transient
+	public boolean isValid() {
+	    return (!isDeleted() && !isExpired());	
 	}
 	
 	@Override

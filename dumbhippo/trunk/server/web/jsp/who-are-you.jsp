@@ -33,7 +33,7 @@
 							OR
 						</div>
 						<div>
-							I have a password:
+							I might have a password:
 							<input type="password" class="dhText" name="password"/>
 							<input type="submit" value="Sign in with password" name="checkpassword"/>
 						</div>

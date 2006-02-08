@@ -1,42 +1,25 @@
 package com.dumbhippo.web;
 
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.InvitationView;
 
 /**
  * InvitePage corresponds to invite.jsp
  * 
- * @author dff
+ * @author dff, marinaz
  * 
  */
+public class InvitePage extends AbstractInvitePage {
 
-public class InvitePage {
-	// Information about person to invite
+	// information about person to invite
 	private String email;
 	
-	@Signin
-	private SigninBean signin;
-
-	private InvitationSystem invitationSystem;
-	private IdentitySpider identitySpider;
-	
-	// information about person doing the inviting
-	private int invitations;
-	private PersonView person;
-
+	// previous invitation by the inviter to the invitee 
+	private InvitationView previousInvitation;
+	private boolean checkedForPreviousInvitation;
+ 
 	public InvitePage() {
-		invitations = -1;
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-	}
-	
-	public PersonView getPerson() {
-		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.PRIMARY_EMAIL);
-		
-		return person;
+		checkedForPreviousInvitation = false;
 	}
 	
 	public String getEmail() {
@@ -45,16 +28,60 @@ public class InvitePage {
 
 	public void setEmail(String newValue) {
 		email = newValue;
-	}
-
-	public SigninBean getSignin() {
-		return signin;
-	}
-		
-	public int getInvitations() {
-		if (invitations < 0) {
-			invitations = invitationSystem.getInvitations(signin.getUser()); 
+	}		
+	
+	public InvitationView getPreviousInvitation() {
+		if (checkedForPreviousInvitation) {
+			return previousInvitation;
 		}
-		return invitations;
+		
+    	checkedForPreviousInvitation = true;
+    	
+		if (email == null) {
+			// we need to know invitee's e-mail to check for the previous invitatation
+			// previousInvitation is probably null anyway, but set it to null just in case
+            previousInvitation = null;
+		} else {
+		    Resource emailRes = identitySpider.getEmail(email);
+	        previousInvitation = invitationSystem.lookupInvitationViewFor(signin.getUser(), emailRes);
+	    }
+	    
+	    return previousInvitation;
 	}
+	
+	public boolean isValidPreviousInvitation() {
+		if (getPreviousInvitation() == null) {
+			return false;
+		}
+
+		// we want to make sure the invitation token did not expire
+		// also, having the invitation token not deleted in the system
+		// (as opposed to this particular inviter not having deleted
+		// the invitation) is sufficient for the invitation to be valid
+		// and ready to be resent without using up invitations
+		return getPreviousInvitation().getInvite().isValid();
+	}
+	
+	/**
+	 * @return invitation subject
+	 */
+	public String getSubject() {
+        if (getPreviousInvitation() != null) {
+        	return previousInvitation.getInviterData().getInvitationSubject();
+        } else {
+        	return "Invitation from " + getPerson().getName() + " to use Dumb Hippo";
+        }        	
+	}
+	
+	/**
+	 * @return invitation message
+	 */
+	public String getMessage() {
+        if (getPreviousInvitation() != null) {
+        	return previousInvitation.getInviterData().getInvitationMessage();
+        } else {
+        	return "[your message goes here]";
+        }        	
+	}	
+	
 }

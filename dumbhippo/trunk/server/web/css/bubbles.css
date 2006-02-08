@@ -117,3 +117,9 @@ a.dh-share-search {
 	color:					blue;
 	background-color:		inherit;
 }
+
+#dhSharesArea h2.dh-title {
+    position:               relative; 
+	left:					50px;
+    margin-right:           80px;  
+}

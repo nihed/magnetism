@@ -1,0 +1,50 @@
+package com.dumbhippo.web;
+
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
+
+
+/**
+ * This class contains some information required by pages for which
+ * the user has to be signed in, such as home page and invite pages.
+ * 
+ * @author marinaz
+ */
+public abstract class AbstractSigninPage {
+
+	@Signin
+	protected SigninBean signin;
+
+	protected IdentitySpider identitySpider;
+	protected InvitationSystem invitationSystem;
+	protected int invitations;
+	
+	protected PersonView person;
+
+	protected AbstractSigninPage() {
+		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		invitations = -1;
+	}
+	
+	public SigninBean getSignin() {
+		return signin;
+	}
+
+	public PersonView getPerson() {
+		if (person == null)
+			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
+		
+		return person;
+	}
+	
+	public int getInvitations() {
+		if (invitations < 0) {
+			invitations = invitationSystem.getInvitations(signin.getUser()); 
+		}
+		return invitations;
+	}
+	
+}

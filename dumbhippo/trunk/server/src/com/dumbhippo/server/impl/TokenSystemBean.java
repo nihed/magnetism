@@ -39,6 +39,9 @@ public class TokenSystemBean implements TokenSystem {
 			throw new TokenUnknownException(authKey, e);
 		}
 		
+		// if we ever care about deleted tokens on this level, could change
+		// ret.isExpired() to !ret.isValid() and rename the exception appropriately
+		// we probably should not remove tokens that were marked as deleted though
 		if (ret != null && ret.isExpired()) {
 			// em.remove(ret);	// FIXME is this a good idea? probably it should just be in a cron job
 			throw new TokenExpiredException(ret.getClass()); 
