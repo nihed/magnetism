@@ -30,6 +30,9 @@
 #include "Guid.h"
 #pragma data_seg()
 
+// Generated code for HippoUI.idl
+#include "HippoUI_i.c"
+
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
 

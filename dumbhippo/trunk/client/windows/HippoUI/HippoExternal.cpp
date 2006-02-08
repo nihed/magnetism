@@ -17,7 +17,7 @@ HippoExternal::HippoExternal(void)
     refCount_ = 1;
     application_ = NULL;
 
-    hippoLoadTypeInfo(L"HippoUtil.dll", &IID_IHippoExternal, &ifaceTypeInfo_, NULL);
+    hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoExternal, &ifaceTypeInfo_, NULL);
 }
 
 HippoExternal::~HippoExternal(void)

@@ -1,0 +1,69 @@
+/* HippoUI.idl: IDL interfaces used only within the HippoUI client. These are generally
+ *  interfaces that we export to Javascript. (See also HippoUtil.idl for interfaces used
+ *  between our modules.)
+ *
+ * Copyright Red Hat, Inc. 2006
+ **/
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+    uuid(015773B1-22A6-4368-9F79-37513D8F1801),
+    helpstring("DumbUI Interfaces"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoUI {
+    [
+        uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
+        helpstring("DumbHippo Notification Bubble"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoBubble : IUnknown
+    {
+        [id(120), helpstring("Open an external URL")]
+        HRESULT OpenExternalURL([in] BSTR url);
+        [id(121), helpstring("Close notification window")]
+        HRESULT Close();
+        [id(122), helpstring("Display a shared link")]
+        HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
+        [id(123), helpstring("Debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
+        HRESULT SetViewerSpace([in] DWORD viewerSpace);
+        [id(126), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        [id(127), helpstring("Signal whether or not we have missed notifications")]
+        HRESULT SetHaveMissedBubbles([in] BOOL haveMissed);
+        // up to 130
+    }
+    [
+        uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
+        helpstring("DumbHippo Javascript external object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoExternal : IUnknown
+    {
+        [id(130), propget, helpstring("Get the application object")]
+        HRESULT Application([out, retval] IDispatch **application);
+        [id(135), helpstring("Log to the debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(136), helpstring("Create an xmlhttp object")]
+        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
+    }
+    [
+        uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr
+        helpstring("DumbHippo Flickr Uploader"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoFlickr : IUnknown
+    {
+        [id(150), helpstring("Create a photoset from current photos")]
+        HRESULT CreatePhotoset([in] BSTR title);
+        [id(151), helpstring("Signal whether or not user has a Flickr account")]
+        HRESULT HaveFlickrAccount([in] BOOL haveAccount);
+    }
+}

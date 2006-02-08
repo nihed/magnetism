@@ -14,3 +14,6 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <wininet.h>
+
+// Generated from HippUI.idl
+#include "HippoUI_h.h"

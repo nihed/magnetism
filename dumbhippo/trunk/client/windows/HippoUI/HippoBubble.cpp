@@ -29,7 +29,7 @@ HippoBubble::HippoBubble(void)
     setTitle(L"Hippo Notification");
     setApplication(this);
 
-    hippoLoadTypeInfo(L"HippoUtil.dll", &IID_IHippoBubble, &ifaceTypeInfo_, NULL);
+    hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoBubble, &ifaceTypeInfo_, NULL);
 }
 
 HippoBubble::~HippoBubble(void)

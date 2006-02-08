@@ -36,7 +36,7 @@ HippoFlickr::HippoFlickr(HippoUI *ui) : baseServiceUrl_(L"http://www.flickr.com/
     ui_ = ui;
     authBrowser_ = NULL;
 
-    hippoLoadTypeInfo(L"HippoUtil.dll",
+    hippoLoadTypeInfo((WCHAR *)0,
                       &IID_IHippoFlickr, &ifaceTypeInfo_,
                       NULL);
 

@@ -50,7 +50,8 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="$(IntDir)"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -184,6 +185,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUI.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoUI.idl">
 			</File>
 			<File
 				RelativePath=".\HippoUIUtil.cpp">
