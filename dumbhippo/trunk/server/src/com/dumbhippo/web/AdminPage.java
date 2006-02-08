@@ -6,6 +6,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.User;
@@ -49,5 +50,9 @@ public class AdminPage {
 			ret.add(identitySpider.getSystemView(user));					
 		}
 		return ret;
+	}
+	
+	public Set<LivePost> getLivePosts() {
+		return liveState.getLivePostSnapshot();
 	}
 }

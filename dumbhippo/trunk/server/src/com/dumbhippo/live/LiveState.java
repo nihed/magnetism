@@ -149,6 +149,10 @@ public class LiveState {
 		return livePost;
 	}
 	
+	public synchronized Set<LivePost> getLivePostSnapshot() {
+		return postMap.values();
+	}
+	
 	/**
 	 * Create a new LiveXmppServer object representing a newly connected
 	 * instance of a Jabber server. The object can be looked up in

@@ -7,7 +7,6 @@
 
 <head>
 	<title>Admin Console</title>
-	<dht:stylesheets/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
         dojo.require("dh.util");
@@ -17,9 +16,12 @@
 <div id="dhContainer">
 <h2>Current live users: </h2>
   <c:forEach items="${admin.liveUsers}" var="user">
-    <c:out value="${user.liveUser.userId}"/> (<c:out value="${user.name}"/>)  hotness: <c:out value="${user.liveUser.hotness}"/>
+    <c:out value="${user.liveUser.userId}"/> (<c:out value="${user.name}"/>)  hotness: <c:out value="${user.liveUser.hotness}"/><br/>
+  </c:forEach>
+<h2>Current live posts: </h2>
+  <c:forEach items="${admin.livePosts}" var="post">
+    <c:out value="${post.postId}"/>  score: <c:out value="${post.score}"/><br/>
   </c:forEach>
 </div>
-
 </body>
 </html>
