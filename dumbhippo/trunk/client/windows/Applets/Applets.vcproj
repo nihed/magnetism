@@ -65,6 +65,15 @@
 			RelativePath=".\Makefile">
 		</File>
 		<File
+			RelativePath=".\menu.css">
+		</File>
+		<File
+			RelativePath=".\menu.js">
+		</File>
+		<File
+			RelativePath=".\menu.xml">
+		</File>
+		<File
 			RelativePath=".\notification.css"
 			DeploymentContent="TRUE">
 		</File>

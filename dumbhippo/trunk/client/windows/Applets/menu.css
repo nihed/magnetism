@@ -1,0 +1,52 @@
+body
+{
+    border: solid 1px gray;
+    font: menu;
+    width: 100%;
+    height: 100%;
+}
+
+.dh-menu-div
+{
+    width: 100%;
+    text-align: center;
+}
+
+.dh-menu-div .dh-menu-link
+{
+    width: 100%;
+}
+
+.dh-menu-link
+{
+    color: WindowText;
+    background-color: #eedd88;
+    padding: 5px;
+    margin: 2px;
+    text-decoration: none;
+}
+
+.dh-menu-link:visited
+{
+    color: WindowText;
+}
+
+.dh-menu-link:hover
+{
+    color: HighlightText;
+    background-color: Highlight;
+}
+
+#dhMenuExit
+{
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+}
+
+#dhMenuHush
+{
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+}

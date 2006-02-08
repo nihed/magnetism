@@ -9,7 +9,6 @@
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
-class HippoUI;
 struct HippoLinkShare;
 
 class HippoBubble :
@@ -55,6 +54,11 @@ protected:
     virtual void initializeWindow();
     virtual void initializeIE();
     virtual void initializeBrowser();
+
+    virtual bool processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam);
+
     virtual void onClose(bool fromScript);
 
 private:
@@ -72,8 +76,6 @@ private:
     DWORD viewerSpace_;
 
     void setShown();
-    bool appendTransform(BSTR src, BSTR style, ...);
-    bool invokeJavascript(WCHAR *funcName, VARIANT *invokeResult, int nargs, ...);
     void moveResizeWindow(void);
     void checkMouse();
     void updateIdle();
@@ -82,10 +84,6 @@ private:
     void doClose();
 
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
-
-    bool processMessage(UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
 
     DWORD refCount_;
 };

@@ -68,6 +68,9 @@
 	        	        <File Id="dhCss"           Name="dh.css"                                   src="applets\dh.css"           DiskId="1" Vital="yes"/>
 	        	        <File Id="dhJs"            Name="dh.js"                                    src="applets\dh.js"            DiskId="1" Vital="yes"/>
 	        	        <File Id="flickrJs"        Name="flickr.js"                                src="applets\flickr.js"        DiskId="1" Vital="yes"/>
+	        	        <File Id="menuCss"         Name="menu.css" LongName="menu.css" src="applets\menu.css"         DiskId="1" Vital="yes"/>
+	        	        <File Id="menuJs"          Name="menu.js"  LongName="menu.js"  src="applets\menu.js"          DiskId="1" Vital="yes"/>
+	        	        <File Id="menuXml"         Name="menu.xml" LongName="menu.xml" src="applets\menu.xml"         DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationCss" Name="notifica.css" LongName="notification.css" src="applets\notification.css" DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationJs"  Name="notifica.js"  LongName="notification.js"  src="applets\notification.js"  DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationXml" Name="notifica.xml" LongName="notification.xml" src="applets\notification.xml" DiskId="1" Vital="yes"/>

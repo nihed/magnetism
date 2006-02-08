@@ -14,6 +14,7 @@ static const int BASE_HEIGHT = 600;
 HippoAbstractWindow::HippoAbstractWindow()
 {
     animate_ = false;
+    classStyle_ = CS_HREDRAW | CS_VREDRAW;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
     extendedStyle_ = 0;
 
@@ -48,6 +49,12 @@ void
 HippoAbstractWindow::setAnimate(bool animate)
 {
     animate_ = animate;
+}
+
+void 
+HippoAbstractWindow::setClassStyle(UINT classStyle)
+{
+    classStyle_ = classStyle;
 }
 
 void 
@@ -200,7 +207,7 @@ HippoAbstractWindow::registerClass()
     ZeroMemory(&wcex, sizeof(WNDCLASSEX));
     wcex.cbSize = sizeof(WNDCLASSEX); 
 
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.style = classStyle_;
     wcex.lpfnWndProc = windowProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
@@ -283,8 +290,8 @@ HippoAbstractWindow::hookMessage(MSG *msg)
 
 bool
 HippoAbstractWindow::processMessage(UINT   message,
-                                WPARAM wParam,
-                                LPARAM lParam)
+                                    WPARAM wParam,
+                                    LPARAM lParam)
 {
     switch (message) 
     {
@@ -293,7 +300,7 @@ HippoAbstractWindow::processMessage(UINT   message,
             // It's not completely clear that this is necessary
             HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());
             if (active)
-                active->OnDocWindowActivate(wParam == WA_ACTIVE);
+                active->OnDocWindowActivate(LOWORD(wParam) != WA_INACTIVE);
             return true;
         }
     case WM_CLOSE:

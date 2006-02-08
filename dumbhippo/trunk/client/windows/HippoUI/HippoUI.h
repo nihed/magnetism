@@ -11,6 +11,7 @@
 #include "HippoChatWindow.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
+#include "HippoMenu.h"
 #include "HippoPreferences.h"
 #include "HippoUpgrader.h"
 #include "HippoFlickr.h"
@@ -214,13 +215,14 @@ private:
     HICON bigIcon_;
     HICON smallIcon_;
     HippoBSTR tooltip_;
-    HMENU menu_;
+    HMENU oldMenu_;
     HMENU debugMenu_;
     HWND preferencesDialog_;
 
     HippoBSTR currentURL_;
 
     HippoBubble bubble_;
+    HippoMenu menu_;
     HippoPreferences preferences_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;

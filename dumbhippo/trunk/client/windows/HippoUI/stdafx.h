@@ -6,7 +6,7 @@
 #pragma once
 
 #define _WIN32_IE 0x0600                // Get newest shell icon API
-#define _WIN32_WINNT 0x0500             // For GetLastInputInfo
+#define _WIN32_WINNT 0x0501             // For GetLastInputInfo, CS_DROPSHADOW
 #include "HippoStdAfx.h"
 
 // Windows Header Files:

@@ -89,6 +89,13 @@ protected:
     void setAnimate(bool animate);
 
     /**
+     * Set the class style passed to RegisterClassEx. The default value is
+     * CS_HREDRAW | CS_VREDRAE.
+     * @param classStyle the new class style
+     **/
+    void setClassStyle(UINT classStyle);
+
+    /**
      * Set the window style flags that will be passed to CreateWindow()
      * @param windowStyle the window style flags. (See CreateWindow() docs)
      */
@@ -142,6 +149,20 @@ protected:
     virtual void initializeBrowser();
 
     /**
+     * Called on incoming messages sent to the window. If you
+     * don't handle the event yourself, you should chain up to
+     * to the parent class's implementation.
+     * @param message the message type
+     * @wParam WPARAM from the window procedure
+     * @lParam LPARAM from the window procedure
+     * @return true if the event was handled, otherwise false (default
+     *   handle will be done)
+     */
+    virtual bool processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam);
+
+    /**
      * Callback when the document finishes loading 
      **/
     virtual void onDocumentComplete();
@@ -162,6 +183,7 @@ protected:
 
 private:
     bool animate_;
+    UINT classStyle_;
     DWORD windowStyle_;
     DWORD extendedStyle_;
     HippoBSTR className_;
@@ -187,10 +209,6 @@ private:
     bool embedIE(void);
     bool createWindow(void);
     bool registerClass();
-
-    bool processMessage(UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,

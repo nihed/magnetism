@@ -105,6 +105,19 @@ HippoBubble::onClose(bool fromScript)
     Close();
 }
 
+bool 
+HippoBubble::processMessage(UINT   message,
+                            WPARAM wParam,
+                            LPARAM lParam)
+{
+    if (message == WM_TIMER && wParam == CHECK_MOUSE) {
+        checkMouse();
+        return true;
+    }
+
+    return HippoAbstractWindow::processMessage(message, wParam, lParam);
+}
+
 void 
 HippoBubble::setLinkNotification(HippoLinkShare &share)
 {
@@ -287,28 +300,6 @@ HippoBubble::checkMouse()
             haveMouse_ = FALSE;
             updateIdle();
         }
-    }
-}
-
-bool
-HippoBubble::processMessage(UINT   message,
-                            WPARAM wParam,
-                            LPARAM lParam)
-{
-    switch (message) 
-    {
-    case WM_TIMER:
-        if (wParam == CHECK_MOUSE) {
-            checkMouse();
-            return true;
-        } else {
-            return false;
-        }
-    case WM_CLOSE:
-        Close();
-        return true;
-    default:
-        return false;
     }
 }
 

@@ -66,4 +66,19 @@ library HippoUI {
         [id(151), helpstring("Signal whether or not user has a Flickr account")]
         HRESULT HaveFlickrAccount([in] BOOL haveAccount);
     }
+    [
+        uuid(CECA44AA-12EE-4697-A81E-B6C94F8038AF), // IID_IHippoMenu
+        helpstring("DumbHippo Menu Window"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoMenu : IUnknown
+    {
+        [id(180), helpstring("Exit the client and remove the notification icon")]
+        HRESULT Exit();
+        [id(181), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *result);
+        [id(182), helpstring("Go into hush mode")]
+        HRESULT Hush();
+    }
 }

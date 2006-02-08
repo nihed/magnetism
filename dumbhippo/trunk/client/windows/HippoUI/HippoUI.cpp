@@ -59,6 +59,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
     notificationIcon_.setUI(this);
     bubble_.setUI(this);
+    menu_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
 
@@ -434,7 +435,7 @@ HippoUI::create(HINSTANCE instance)
     instance_ = instance;
    
     setIcons();
-    menu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
+    oldMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
     debugMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_DEBUG));
 
     if (!registerClass())
@@ -677,29 +678,36 @@ void
 HippoUI::showMenu(UINT buttonFlag)
 {
     POINT pt;
-    HMENU menu;
-    HMENU popupMenu;
-
-    if (buttonFlag == TPM_RIGHTBUTTON && GetAsyncKeyState(VK_CONTROL)) {
-        menu = debugMenu_;
-    } else {
-        updateMenu();
-        menu = menu_;
-    }
-
-    // We:
-    //  - Set the foreground window to our (non-shown) window so that clicking
-    //    away elsewhere works
-    //  - Send the dummy event to force a context switch to our app
-    // See Microsoft knowledgebase Q135788
-
     GetCursorPos(&pt);
-    popupMenu = GetSubMenu(menu, 0);
 
-    SetForegroundWindow(window_);
-    TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, window_, NULL);
+    if (GetAsyncKeyState(VK_CONTROL)) {
+        HMENU menu;
+        HMENU popupMenu;
 
-    PostMessage(window_, WM_NULL, 0, 0);
+        if (buttonFlag == TPM_RIGHTBUTTON) {
+            menu = debugMenu_;
+        } else {
+            updateMenu();
+            menu = oldMenu_;
+        }
+
+        // We:
+        //  - Set the foreground window to our (non-shown) window so that clicking
+        //    away elsewhere works
+        //  - Send the dummy event to force a context switch to our app
+        // See Microsoft knowledgebase Q135788
+
+        popupMenu = GetSubMenu(menu, 0);
+
+        SetForegroundWindow(window_);
+        TrackPopupMenu(popupMenu, buttonFlag, pt.x, pt.y, 0, window_, NULL);
+
+        PostMessage(window_, WM_NULL, 0, 0);
+    } else {
+        SetForegroundWindow(window_);
+        menu_.popup(pt.x, pt.y);
+        PostMessage(window_, WM_NULL, 0, 0);
+    }
 }
 
 bool
@@ -1253,7 +1261,7 @@ urlIsLocal(const WCHAR *url)
 void
 HippoUI::updateMenu()
 {
-    HMENU popupMenu = GetSubMenu(menu_, 0);
+    HMENU popupMenu = GetSubMenu(oldMenu_, 0);
 
     // Delete previous dynamic menuitems
     while (TRUE) {
