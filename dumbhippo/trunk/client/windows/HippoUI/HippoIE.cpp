@@ -271,18 +271,20 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
 {
     // Cases here:
     //
-    // 1. If it's normal navigation (of the toplevel window, not a post),
+    // 1. If it's to one of the specific whitelisted pages, allow it
+    //
+    // 2. If it's normal navigation (of the toplevel window, not a post),
     //    to a normal looking URL (http, https, ftp protocol), then open
     //    the link in a new IE window, and cancel navigation.
     //
-    // 2. If it's navigation not of the toplevel window (of an internal
+    // 3. If it's navigation not of the toplevel window (of an internal
     //    frame) and the link points to our site (via http or https)
     //    then allow the navigation.
     //
-    // 3. If it's a javascript: URL, then it is code in the page and
+    // 4. If it's a javascript: URL, then it is code in the page and
     //    not really a link at all, so allow navigation.
     //
-    // 4. Otherwise, cancel navigation
+    // 5. Otherwise, cancel navigation
     
     HippoQIPtr<IWebBrowser2> targetWebBrowser = targetDispatch;
     bool toplevelNavigation = (IWebBrowser2 *)targetWebBrowser == (IWebBrowser2 *)browser_;
@@ -328,7 +330,19 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
         }
     }
 
-    if (toplevelNavigation && !isPost && normalURL) {
+    const WCHAR *whitelistedNavigation[] = { L"/signinpost" };
+    bool isWhitelisted = false;
+    for (UINT i = 0; i < sizeof(whitelistedNavigation)/sizeof(whitelistedNavigation[0]); i++) {
+        if (wcscmp(whitelistedNavigation[i], components.lpszUrlPath) == 0) {
+            isWhitelisted = true;
+            break;
+        }
+    }
+
+    if (ourSite && isWhitelisted) {
+        hippoDebugLogW(L"Allowing whitelisted navigation to %ls", url);
+        return false;
+    } else if (toplevelNavigation && !isPost && normalURL) {
         ui_->launchBrowser(url);
         return true;
     } else if (!toplevelNavigation && ourSite) {
