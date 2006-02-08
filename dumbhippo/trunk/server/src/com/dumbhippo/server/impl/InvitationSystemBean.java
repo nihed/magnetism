@@ -161,6 +161,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			"ORDER BY iv.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);
+		@SuppressWarnings("unchecked")
 		List<InvitationToken> outstandingInvitations = q.getResultList();
 		
 		List<InvitationView> outstandingInvitationViews = new Vector<InvitationView> ();
