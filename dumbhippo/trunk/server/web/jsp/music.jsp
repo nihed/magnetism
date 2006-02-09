@@ -90,7 +90,7 @@
 				<h5 class="dh-title">Music</h5>
 				<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
 				</p>
-			<c:if test="${viewperson.signin.musicSharingEnabled}">
+			<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
 				<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
 			</c:if>	
 			</div>		
