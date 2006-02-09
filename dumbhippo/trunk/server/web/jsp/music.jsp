@@ -25,6 +25,12 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
+		<c:if test="${!viewperson.disabled}">
+		    <dht:toolbar account="false">
+				&#151; <a class="dh-toolbar-item" style="font-weight:bold" href='/person?who=${personId}'>Public Page for <c:out value="${personName}"/></a>
+			</dht:toolbar>
+		</c:if>
+
 		<c:if test="${viewperson.disabled}">
 			<div id="dhInformationBar">This person's account is not active</div>
 		</c:if>
@@ -40,9 +46,10 @@
 			</c:when>
 			<c:when test="${!viewperson.signin.musicSharingEnabled}">
 				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
-				You haven't turned on music sharing. Turn it on to see what your friends are listening 
-				to lately, and share your music with them. 
-					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
+				<div>
+				<p><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
+				<p>You haven't turned on music sharing. Turn it on to see what your friends are listening to lately, and share your music with them.</p>
+				</div>
 			</c:when>
 			<c:when test="${!viewperson.musicSharingEnabled}">
 				<c:out value="${personName}"/> hasn't turned on music sharing. Ask them to
@@ -64,9 +71,6 @@
 						<dht:track track="${track}"/>
 					</c:forEach>
 				</div>
-				<div>
-					<a href="javascript:dh.actions.setMusicSharingEnabled(false);">Turn off music sharing</a>
-				</div>
 			</c:otherwise>
 		</c:choose>
 	</div>
@@ -82,7 +86,15 @@
 		</div>
 
 		<div class="dh-right-box-area">
-		
+			<div class="dh-right-box">
+				<h5 class="dh-title">Music</h5>
+				<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
+				</p>
+			<c:if test="${viewperson.signin.musicSharingEnabled}">
+				<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
+			</c:if>	
+			</div>		
+
 			<div class="dh-right-box">
 				<h5 class="dh-title">Groups' Music</h5>
 				<div class="dh-groups">

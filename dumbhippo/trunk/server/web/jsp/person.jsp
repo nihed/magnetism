@@ -76,13 +76,27 @@
 
 		<div class="dh-right-box-area">
 		
-		<c:if test="${!empty viewperson.currentTrack}">
+		<c:choose>
+			<c:when test="${!empty viewperson.currentTrack}">
 			<div class="dh-right-box">
 				<h5 class="dh-title">Latest Song</h5>
-				<dht:track track="${viewperson.currentTrack}"/>
-				<a href="/music?who=${personId}">More songs</a>
+				<dht:track track="${viewperson.currentTrack}" linkifySong="false" playItLink="false"/>
+				<div class="dh-more-songs"><a class="dh-more-songs" href="/music?who=${personId}">More songs</a></div>
 			</div>
-		</c:if>
+			</c:when>
+			<c:when test="${empty viewperson.currentTrack && viewperson.signin.musicSharingEnabled}">
+			<div class="dh-right-box">
+				<h5 class="dh-title">Latest Song</h5>
+				<p>Play some songs in iTunes and refresh this page.</p>
+			</div>
+			</c:when>
+			<c:otherwise>
+			<div class="dh-right-box">
+				<h5 class="dh-title">Share Music</h5>
+				<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
+			</div>
+			</c:otherwise>
+		</c:choose>
 		
 		<div class="dh-right-box">
 			<h5 class="dh-title">Groups They're In</h5>

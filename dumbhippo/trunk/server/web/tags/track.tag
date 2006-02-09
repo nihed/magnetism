@@ -1,9 +1,14 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty linkifySong}">
 	<c:set var="linkifySong" value="true"/>
+</c:if>
+
+<c:if test="${empty playItLink}">
+	<c:set var="playItLink" value="true"/>
 </c:if>
 
 <c:url value="/album" var="albumlink">
@@ -48,6 +53,7 @@
 				</a>
 			</div>
 		</c:if>
+	<c:if test="${playItLink}">
 		<c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl}">
 			<div class="dh-track-links">Play It: 
 			<c:if test="${!empty track.itunesUrl}">
@@ -69,5 +75,6 @@
 			</c:if>
 			</div>
 		</c:if>
+	</c:if>
 	</div>
 </div>
