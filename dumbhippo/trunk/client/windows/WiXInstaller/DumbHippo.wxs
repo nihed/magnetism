@@ -41,7 +41,7 @@
 	    <ComponentRef Id="applets" />
 	</Feature>
 	
-	<CustomAction Id="DhQuitApp" FileKey="hippoUIExe" ExeCommand="--quit"/>	
+	<CustomAction Id="DhQuitApp" FileKey="hippoUIExe" Return="ignore" ExeCommand="--quit"/>	
 	<!-- Specifying Return="ignore" prevents the installation from being rolled back if 
 	     launching DumbHippo fails; while the launch failure almost certainly indicates
 	     a broken install, it will be easier to debug what is going on if the user can
