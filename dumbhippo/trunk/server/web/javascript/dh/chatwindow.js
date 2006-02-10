@@ -84,6 +84,8 @@ dh.chatwindow._addMessage = function(message, before) {
     messagesDiv.insertBefore(message.div, before ? before.div : null)
 	if (!before && wasAtBottom)
 		this._scrollToBottom(messagesDiv)
+		
+	window.external.application.DemandAttention()
 }
 
 dh.chatwindow._removeMessage = function(message) {
