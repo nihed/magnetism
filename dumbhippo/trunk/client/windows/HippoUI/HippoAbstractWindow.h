@@ -180,12 +180,12 @@ protected:
     HippoPtr<IWebBrowser2> browser_;
     HippoUI* ui_;
     HWND window_;
+    DWORD windowStyle_;
+    DWORD extendedStyle_;
 
 private:
     bool animate_;
     UINT classStyle_;
-    DWORD windowStyle_;
-    DWORD extendedStyle_;
     HippoBSTR className_;
     HippoBSTR url_;
     HippoBSTR title_;

@@ -67,6 +67,22 @@ library HippoUI {
         HRESULT HaveFlickrAccount([in] BOOL haveAccount);
     }
     [
+        uuid(7C14E15B-463D-4A62-A3F8-E4CB4C962514),
+        helpstring("DumbHippo Bubble List"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoBubbleList : IUnknown
+    {
+        [id(190), helpstring("Display a shared link")]
+        HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
+        [id(181), helpstring("Set the size of the window")]
+        HRESULT Resize([in] int width, [in] int height);
+        [id(126), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        // up to 130
+    }
+    [
         uuid(CECA44AA-12EE-4697-A81E-B6C94F8038AF), // IID_IHippoMenu
         helpstring("DumbHippo Menu Window"),
         dual,

@@ -269,6 +269,8 @@ dh.bubble.Bubble = function(includeNavigation) {
         
         // Now set the height of the body element to be fixed to the remaining space
         var desiredHeight = this.getHeight() - this._titleDiv.offsetHeight - this._bottomrightDiv.offsetHeight
+        //alert(this._showViewers + " " + this.getHeight() + " " + this._bottomrightDiv.offsetHeight + " " + desiredHeight)
+        //alert(this._titleDiv.offsetHeight)
         
         // Hack - we don't want partial lines to be shown, so compute how many 
         // full lines fit. We do this by knowing that titleDiv is one line high

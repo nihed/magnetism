@@ -48,6 +48,15 @@
 			RelativePath=".\bubble.js">
 		</File>
 		<File
+			RelativePath=".\bubbleList.css">
+		</File>
+		<File
+			RelativePath=".\bubbleList.js">
+		</File>
+		<File
+			RelativePath=".\bubbleList.xml">
+		</File>
+		<File
 			RelativePath=".\clientstyle.xml"
 			DeploymentContent="TRUE">
 		</File>

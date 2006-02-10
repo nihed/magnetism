@@ -65,6 +65,9 @@
 	        	        <File Id="activeRightPng"  Name="activeRi.png" LongName="activeRight.png"  src="applets\activeRight.png"  DiskId="1" Vital="yes"/>
 	        	        <File Id="bubbleCss"       Name="bubble.css"   LongName="bubble.css"       src="applets\bubble.css"       DiskId="1" Vital="yes"/>
 	        	        <File Id="bubbleJs"        Name="bubble.js"    LongName="bubble.js"        src="applets\bubble.js"        DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListCss"   Name="bubbleLi.css" LongName="bubbleList.css"   src="applets\bubbleList.css"   DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListJs"    Name="bubbleLi.js"  LongName="bubbleList.js"    src="applets\bubbleList.js"    DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListXml"   Name="bubbleLi.xml" LongName="bubbleList.xml"   src="applets\bubbleList.xml"   DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"  Name="clientst.xml" LongName="clientstyle.xml"  src="applets\clientstyle.xml"  DiskId="1" Vital="yes"/>
 	        	        <File Id="closePng"        Name="close.png"                                src="applets\close.png"        DiskId="1" Vital="yes"/>
 	        	        <File Id="dhCss"           Name="dh.css"                                   src="applets\dh.css"           DiskId="1" Vital="yes"/>

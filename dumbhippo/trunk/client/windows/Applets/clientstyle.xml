@@ -4,6 +4,11 @@
         version="1.0">
     <xsl:param name="appleturl"/>
     <xsl:output method="html" encoding="UTF-8"/>
+    <xsl:template match="dh:bubbleListScript">
+        <script language="javascript" src="{$appleturl}bubble.js"></script>
+        <script language="javascript" src="{$appleturl}bubbleList.js"></script>
+        <script language="javascript" src="{$appleturl}flickr.js"></script>        
+    </xsl:template>
     <xsl:template match="dh:coreScript"> 
         <script language="javascript" src="{$appleturl}dh.js"></script>
     </xsl:template>
@@ -17,6 +22,9 @@
         <script language="javascript" src="{$appleturl}bubble.js"></script>
         <script language="javascript" src="{$appleturl}notification.js"></script>
         <script language="javascript" src="{$appleturl}flickr.js"></script>        
+    </xsl:template>
+    <xsl:template match="dh:bubbleListStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}bubbleList.css"/>    
     </xsl:template>
     <xsl:template match="dh:coreStyle">
         <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    

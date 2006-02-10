@@ -23,10 +23,6 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the bubble is showing
     this._visible = false
     
-    // Whether we're reserving space for viewer information 
-    // (should be true or false, we reserve null for "uninitialized")
-    this._showViewers = null
-    
     this._pageTimeoutId = null
     
     // postid -> notification
