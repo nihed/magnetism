@@ -491,6 +491,7 @@ HippoUI::create(HINSTANCE instance)
         personRecipient.name = L"person@example.com";
         linkshare.personRecipients.append(personRecipient);
         linkshare.groupRecipients.append(HippoBSTR(L"Some Group"));
+        linkshare.timeout = 7;
         onLinkMessage(linkshare);
 
         linkshare.postId.setUTF8("24");
