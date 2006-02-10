@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- note this file must actually be XML to make XSLT work -->
+<html xmlns:dh="http://dumbhippo.com/schema/clientjs">
+    <head>
+        <dh:coreStyle/>
+        <dh:bubbleListStyle/>
+        <title>dumbhippo notification</title>
+        <dh:coreScript/>
+        <dh:bubbleListScript/>           
+    </head>
+    <body scroll="no">
+    </body>    
+</html>

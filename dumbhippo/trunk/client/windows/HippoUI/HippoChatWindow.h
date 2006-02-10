@@ -18,6 +18,10 @@ public:
 protected:
     void onClose(bool fromScript);
 
+    virtual bool processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam);
+
 private:
     HippoBSTR postId_;
 };
