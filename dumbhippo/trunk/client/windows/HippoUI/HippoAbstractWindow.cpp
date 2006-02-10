@@ -300,7 +300,7 @@ HippoAbstractWindow::processMessage(UINT   message,
             // It's not completely clear that this is necessary
             HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());
             if (active)
-                active->OnDocWindowActivate(LOWORD(wParam) != WA_INACTIVE);
+                active->OnFrameWindowActivate(LOWORD(wParam) != WA_INACTIVE);
             return true;
         }
     case WM_CLOSE:
