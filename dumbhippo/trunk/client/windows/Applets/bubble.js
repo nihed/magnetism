@@ -25,6 +25,9 @@ dh.bubble.getPersonName = function (personId) {
 // Generic display code for a single notification bubble
 //////////////////////////////////////////////////////////////////////////////
     
+dh.bubble.BASE_WIDTH = 400
+dh.bubble.BASE_HEIGHT = 150
+    
 // Create a new bubble object    
 // @param includeNavigation whether the navigation arrows and close button 
 //        should be included in the result
@@ -55,6 +58,9 @@ dh.bubble.Bubble = function(includeNavigation) {
     //      the URL we take the user to; we redirect them through our
     //      site instead.)
     this.onLinkClick = function(postId, url) {}
+    
+    // Called when the size of the bubble changes
+    this.onSizeChange = function() {}
     
     // Build the DOM tree for the bubble
     // @return the DOM node of the top node for the bubble
@@ -174,6 +180,22 @@ dh.bubble.Bubble = function(includeNavigation) {
             }
         }  
     }
+    
+    // Get the width of the bubble's desired area
+    // @return the desired width, in pixels
+    this.getWidth = function() {
+        return dh.bubble.BASE_WIDTH
+    }
+
+    // Get the height of the bubble's desired area
+    // @return the desired width, in pixels
+    this.getHeight = function() {
+        var height = dh.bubble.BASE_HEIGHT
+        if (this._showViewers)
+            height += this._viewersOuterDiv.offsetHeight
+            
+        return height
+    }
 
     // Render a single recipient
     this._renderRecipient = function (recipient, normalCssClass, selfCssClass) {
@@ -246,7 +268,7 @@ dh.bubble.Bubble = function(includeNavigation) {
             this._titleDiv.style.width = (this._rightsideDiv.clientWidth - this._closeButton.offsetWidth) + "px"
         
         // Now set the height of the body element to be fixed to the remaining space
-        var desiredHeight = this._topDiv.clientHeight - this._titleDiv.offsetHeight - this._bottomrightDiv.offsetHeight
+        var desiredHeight = this.getHeight() - this._titleDiv.offsetHeight - this._bottomrightDiv.offsetHeight
         
         // Hack - we don't want partial lines to be shown, so compute how many 
         // full lines fit. We do this by knowing that titleDiv is one line high
@@ -264,19 +286,13 @@ dh.bubble.Bubble = function(includeNavigation) {
         if (this._showViewers != showViewers) {
             this._showViewers = showViewers
             
-            var space
-            
             if (showViewers) {
                 this._viewersOuterDiv.style.display = "block"
-                space = this._viewersOuterDiv.offsetHeight
             } else {
                 this._viewersOuterDiv.style.display = "none"
-                space = 0
             }
             
-            dh.util.debug("showing viewers area: " + showViewers + ", reserving " + space + " additional pixels of height")
-            
-            window.external.application.SetViewerSpace(space)
+            this.onSizeChange()
         }
     }   
 }

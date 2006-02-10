@@ -30,8 +30,8 @@ library HippoUI {
         HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
         [id(123), helpstring("Debug log")]
         HRESULT DebugLog([in] BSTR msg);
-        [id(125), helpstring("Set the number of pixels to reserve for viewer information")]
-        HRESULT SetViewerSpace([in] DWORD viewerSpace);
+        [id(125), helpstring("Set the size of the bubble window")]
+        HRESULT Resize([in] int width, [in] int height);
         [id(126), helpstring("Return the base Url for the DumbHippo server")]
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
         [id(127), helpstring("Signal whether or not we have missed notifications")]

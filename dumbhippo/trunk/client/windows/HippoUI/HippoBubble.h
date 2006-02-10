@@ -46,7 +46,7 @@ public:
     STDMETHODIMP GetServerBaseUrl(BSTR *ret);
     STDMETHODIMP OpenExternalURL(BSTR url);
     STDMETHODIMP Close();
-    STDMETHODIMP SetViewerSpace(DWORD viewerSpace);
+    STDMETHODIMP Resize(int width, int height);
     STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
 
 protected:
@@ -73,7 +73,8 @@ private:
     bool haveMouse_;
     bool effectiveIdle_;
     bool screenSaverRunning_;
-    DWORD viewerSpace_;
+    int desiredWidth_;
+    int desiredHeight_;
 
     void setShown();
     void moveResizeWindow(void);

@@ -20,7 +20,6 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
     this._idle = false
     
-    
     // Whether the bubble is showing
     this._visible = false
     
@@ -46,7 +45,6 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this._bubble.onClose = function() {
         display._markCurrentAsSeen();
         display.close();
-        
     }
     this._bubble.onPrevious = function() {
         display.goPrevious();
@@ -61,6 +59,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     document.body.appendChild(this._bubble.create())
+    
+    this._bubble.onSizeChange = function() {
+        window.external.application.Resize(display._bubble.getWidth(), display._bubble.getHeight())
+    }
+    this._bubble.onSizeChange()
     
     this._pushNotification = function (nType, data, timeout) {
         this.notifications.push({notificationType: nType,

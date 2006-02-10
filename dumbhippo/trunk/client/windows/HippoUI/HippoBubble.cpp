@@ -9,6 +9,8 @@
 #include "HippoBubble.h"
 #include "HippoUI.h"
 
+// These values basically don't matter, since the bubble picks its own
+// size, but matching the values from bubble.js may save a bit on resizing
 static const int BASE_WIDTH = 400;
 static const int BASE_HEIGHT = 150;
 static const UINT_PTR CHECK_MOUSE = 1;
@@ -21,7 +23,8 @@ HippoBubble::HippoBubble(void)
     haveMouse_ = FALSE;
     effectiveIdle_ = FALSE;
     shown_ = FALSE;
-    viewerSpace_ = 0;
+    desiredWidth_ = BASE_WIDTH;
+    desiredHeight_ = BASE_HEIGHT;
 
     setWindowStyle(WS_POPUP);
     setExtendedStyle(WS_EX_TOPMOST);
@@ -39,14 +42,11 @@ HippoBubble::~HippoBubble(void)
 void
 HippoBubble::moveResizeWindow() 
 {
-    int width = BASE_WIDTH;
-    int height = BASE_HEIGHT + viewerSpace_;
-
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-    moveResize(desktopRect.right - width, (desktopRect.bottom - height),
-               width, height);
+    moveResize(desktopRect.right - desiredWidth_, (desktopRect.bottom - desiredHeight_),
+               desiredWidth_, desiredHeight_);
 }
 
 HippoBSTR
@@ -367,10 +367,11 @@ HippoBubble::Close()
 }
 
 STDMETHODIMP 
-HippoBubble::SetViewerSpace(DWORD viewerSpace)
+HippoBubble::Resize(int width, int height)
 {
-    if (viewerSpace != viewerSpace_) {
-        viewerSpace_ = viewerSpace;
+    if (width != desiredWidth_ || height != desiredHeight_) {
+        desiredWidth_ = width;
+        desiredHeight_ = height;
         if (window_)
             moveResizeWindow();
     }
