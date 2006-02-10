@@ -516,7 +516,30 @@ HippoUI::create(HINSTANCE instance)
         linkshare.postId.setUTF8("2");
         linkshare.title.setUTF8("funny photo");
         linkshare.description.setUTF8("Wow, this photo is funny");
+        linkshare.info.setUTF8(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            "<postInfo>"
+            "    <flickr>"
+            "        <photos>"
+            "             <photo>"
+            "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
+            "                  <photoId>73029609</photoId>"
+            "             </photo>"
+            "        </photos>"
+            "    </flickr>"
+            "</postInfo>");
         onLinkMessage(linkshare);
+
+        HippoMySpaceBlogComment blogComment;
+
+        // Bryan commenting on Colin's blog
+        blogComment.commentId = -1;
+        blogComment.posterId = 29366619;
+        blogComment.posterImgUrl.setUTF8("http://myspace-714.vo.llnwd.net/00227/41/75/227675714_s.jpg");
+        blogComment.posterName.setUTF8("Bryan");
+        blogComment.content.setUTF8("Blah, blah, blah... Blah!");
+
+        bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
     }
 
     return true;
