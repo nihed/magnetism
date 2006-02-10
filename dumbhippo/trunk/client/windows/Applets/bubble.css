@@ -1,0 +1,173 @@
+.dh-close-button 
+{
+    position: absolute;
+    margin: 2px;
+    top: 0px;
+    right: 0px;
+}
+
+.dh-notification-leftside
+{
+    position: absolute;
+    width: 6em;
+    height: 100%;
+    text-align: center;
+}
+
+.dh-notification-photo-div
+{
+    border-style: none; 
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1em;
+}
+
+.dh-notification-photo
+{
+    /* Right now the Java code scales headshots to a max of 48px in each
+     * dimension, but preserving aspect ratio. If height < width the below
+     * will mangle the aspect again. If changing from 48px, also change the 
+     * Java code. We need to fix the Java code to always produce exactly 
+     * 48x48 images though (i.e. pad images with transparency) since 
+     * css can't be smart about "max size of largest dimension".
+     * height is fixed here because for a headshot height>width seems more 
+     * likely than width>height.
+     */
+    width: 48px;
+    height: 48px;
+}
+
+.dh-notification-photolink {
+    text-align:             center;
+    width:                  100%;
+    text-overflow:          ellipsis;
+    overflow:               hidden;
+    font-size: x-small;
+}
+
+.dh-notification-navigation
+{
+    position: absolute;
+    text-align: center;
+    left: 0px;
+    width: 100%;
+    bottom: 0px;
+}
+
+.dh-notification-navigation-text
+{
+    color: Gray;
+}
+
+img.dh-notification-navigation-img
+{
+    text-align: center;
+    border-style: none;
+}
+
+.dh-notification-rightside
+{
+    position: absolute;
+    top: 0em;
+    left: 6em;
+    right: 0px;
+    height: 100%;
+}
+
+/* See comment in dh.notification.display._fixupLayout() if you change this */
+.dh-notification-title 
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-size: small;
+    width: 100%;
+}
+
+.dh-notification-body
+{
+    width: 100%;
+    vertical-align: top;
+    overflow: hidden;
+    font-size: small;
+}
+
+.dh-notification-bottomright
+{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+}
+
+.dh-notification-viewers-outer
+{
+    margin: 0.25em;
+}
+
+.dh-notification-viewers-bubble
+{
+    background-color: #88cc66;
+    line-height: 1.2;
+    height: 2.9em; /* Should be 2.4em in standards mode */
+    overflow: hidden;
+    font-size: x-small;
+    padding: 0.25em;
+}
+
+.dh-notification-viewers-photo
+{
+    float: left;
+}
+
+.dh-notification-viewers-photo
+{
+    width: 2.4em;
+    height: 2.4em;
+}
+
+span.dh-notification-viewers-label
+{
+    color: White;
+}
+
+.dh-notification-meta-outer
+{
+    font-size: small;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.dh-notification-meta
+{
+    font-size: x-small;
+}
+
+span.dh-notification-recipient
+{
+    font-weight: bold
+}
+
+span.dh-notification-self-recipient
+{
+    font-weight: bold;
+    font-style: italic;
+}
+
+span.dh-notification-group-recipient
+{
+    font-weight: bold;
+    font-size: 120%;
+}
+
+span.dh-notification-viewer
+{
+}
+
+span.dh-notification-self-viewer
+{
+    font-weight: bold;
+}

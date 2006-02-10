@@ -9,29 +9,5 @@
         <dh:notificationScript/>           
     </head>
     <body>
-        <div id="dh-notification-leftside">
-            <div id="dh-notification-photo"></div>
-            <div id="dh-notification-photolink"></div>
-            <div id="dh-notification-navigation">
-                <div id="dh-notification-navigation-text"></div>
-                <div id="dh-notification-navigation-buttons"></div>
-            </div>
-        </div>
-        <div id="dh-notification-rightside">
-            <div id="dh-notification-title"></div>
-            <div id="dh-notification-body"></div>
-            <div id="dh-notification-bottomright">
-                <div id="dh-notification-viewers-outer">
-                    <div id="dh-notification-viewers-bubble">
-                        <div id="dh-notification-viewers-photo"></div>
-                        <span id="dh-notification-viewers"></span>
-                    </div>
-                </div>
-                <div id="dh-notification-meta-outer">
-                    <span id="dh-notification-meta"></span>
-                </div>
-            </div>
-        </div>
-        <dh:closeButton />
     </body>    
 </html>

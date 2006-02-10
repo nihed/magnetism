@@ -63,14 +63,16 @@
         		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
 	        	        <File Id="activeLeftPng"   Name="activeLe.png" LongName="activeLeft.png"   src="applets\activeLeft.png"   DiskId="1" Vital="yes"/>
 	        	        <File Id="activeRightPng"  Name="activeRi.png" LongName="activeRight.png"  src="applets\activeRight.png"  DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleCss"       Name="bubble.css"   LongName="bubble.css"       src="applets\bubble.css"       DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleJs"        Name="bubble.js"    LongName="bubble.js"        src="applets\bubble.js"        DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"  Name="clientst.xml" LongName="clientstyle.xml"  src="applets\clientstyle.xml"  DiskId="1" Vital="yes"/>
 	        	        <File Id="closePng"        Name="close.png"                                src="applets\close.png"        DiskId="1" Vital="yes"/>
 	        	        <File Id="dhCss"           Name="dh.css"                                   src="applets\dh.css"           DiskId="1" Vital="yes"/>
 	        	        <File Id="dhJs"            Name="dh.js"                                    src="applets\dh.js"            DiskId="1" Vital="yes"/>
 	        	        <File Id="flickrJs"        Name="flickr.js"                                src="applets\flickr.js"        DiskId="1" Vital="yes"/>
-	        	        <File Id="menuCss"         Name="menu.css" LongName="menu.css" src="applets\menu.css"         DiskId="1" Vital="yes"/>
-	        	        <File Id="menuJs"          Name="menu.js"  LongName="menu.js"  src="applets\menu.js"          DiskId="1" Vital="yes"/>
-	        	        <File Id="menuXml"         Name="menu.xml" LongName="menu.xml" src="applets\menu.xml"         DiskId="1" Vital="yes"/>
+	        	        <File Id="menuCss"         Name="menu.css"     LongName="menu.css"         src="applets\menu.css"         DiskId="1" Vital="yes"/>
+	        	        <File Id="menuJs"          Name="menu.js"      LongName="menu.js"          src="applets\menu.js"          DiskId="1" Vital="yes"/>
+	        	        <File Id="menuXml"         Name="menu.xml"     LongName="menu.xml"         src="applets\menu.xml"         DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationCss" Name="notifica.css" LongName="notification.css" src="applets\notification.css" DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationJs"  Name="notifica.js"  LongName="notification.js"  src="applets\notification.js"  DiskId="1" Vital="yes"/>
 	        	        <File Id="notificationXml" Name="notifica.xml" LongName="notification.xml" src="applets\notification.xml" DiskId="1" Vital="yes"/>

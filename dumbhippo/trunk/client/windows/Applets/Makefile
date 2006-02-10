@@ -2,6 +2,8 @@ all: *.xml *.css *.png *.js
     -mkdir $(OUTDIR)\applets
     copy activeLeft.png $(OUTDIR)\applets
     copy activeRight.png $(OUTDIR)\applets
+    copy bubble.css $(OUTDIR)\applets
+    copy bubble.js $(OUTDIR)\applets
     copy clientstyle.xml $(OUTDIR)\applets
     copy close.png $(OUTDIR)\applets
     copy dh.css $(OUTDIR)\applets	    

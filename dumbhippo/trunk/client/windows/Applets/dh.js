@@ -104,6 +104,11 @@ dh.util.dom.clearNode = function (elt) {
     while (elt.firstChild) { elt.removeChild(elt.firstChild); }
 }
 
+dh.util.dom.replaceContents = function (elt, child) {
+    dh.util.dom.clearNode(elt)
+    elt.appendChild(child)
+}
+
 dh.util.dom.getClearedElementById = function (id) {
     var elt = document.getElementById(id)
     if (elt) 

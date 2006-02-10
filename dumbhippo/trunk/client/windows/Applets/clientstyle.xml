@@ -14,6 +14,7 @@
         <script language="javascript" src="{$appleturl}menu.js"></script>
     </xsl:template>
     <xsl:template match="dh:notificationScript">
+        <script language="javascript" src="{$appleturl}bubble.js"></script>
         <script language="javascript" src="{$appleturl}notification.js"></script>
         <script language="javascript" src="{$appleturl}flickr.js"></script>        
     </xsl:template>

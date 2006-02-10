@@ -42,6 +42,12 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\bubble.css">
+		</File>
+		<File
+			RelativePath=".\bubble.js">
+		</File>
+		<File
 			RelativePath=".\clientstyle.xml"
 			DeploymentContent="TRUE">
 		</File>

@@ -1,4 +1,6 @@
-dh.notification.extension.Flickr = function () {
+dh.flickr = {}
+
+dh.flickr.Extension = function () {
 
     this.getPhotoset = function(post) {
         return dh.util.dom.selectNode(post.info, "/postInfo/flickr/photos")
@@ -37,4 +39,4 @@ dh.notification.extension.Flickr = function () {
     }
 }
 
-dh.notification.extensions.flickr = new dh.notification.extension.Flickr()
+dh.bubble.postExtensions.flickr = new dh.flickr.Extension()
