@@ -66,6 +66,7 @@ dh.chatwindow._addMessage = function(message, before) {
     
     var image = this._createHeadShot(message.userId, message.version)
     image.className = "dh-chat-message-image"
+    image.title = message.name
     message.div.appendChild(image)
 
     var textDiv = document.createElement("div")
