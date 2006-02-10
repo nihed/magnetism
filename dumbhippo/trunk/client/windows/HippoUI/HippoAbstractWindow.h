@@ -82,6 +82,14 @@ public:
 
 protected:
     /**
+     * Whether to set the parent window of the window to ui_->window.
+     * This is needed for transient popups, but causes problems for
+     * more "windowy" windows. (Defaults to false
+     * @param useParent true if we should set the parent window.
+     **/
+    void setUseParent(bool useParent);
+
+    /**
      * Set whether showing and hiding of the window will be done with fade-in
      * and fade-out
      * @param animate true if animation should be done
@@ -184,6 +192,7 @@ protected:
     DWORD extendedStyle_;
 
 private:
+    bool useParent_;
     bool animate_;
     UINT classStyle_;
     HippoBSTR className_;

@@ -14,6 +14,7 @@ static const int BASE_HEIGHT = 600;
 HippoAbstractWindow::HippoAbstractWindow()
 {
     animate_ = false;
+    useParent_ = false;
     classStyle_ = CS_HREDRAW | CS_VREDRAW;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
     extendedStyle_ = 0;
@@ -43,6 +44,12 @@ void
 HippoAbstractWindow::setApplication(IDispatch *application)
 {
     application_ = application;
+}
+
+void
+HippoAbstractWindow::setUseParent(bool useParent)
+{
+    useParent_ = useParent;
 }
 
 void 
@@ -123,7 +130,8 @@ HippoAbstractWindow::createWindow(void)
 {
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
                              CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             ui_->getWindow(), NULL, instance_, NULL);
+                             useParent_ ? ui_->getWindow() : NULL, 
+                             NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
         return false;

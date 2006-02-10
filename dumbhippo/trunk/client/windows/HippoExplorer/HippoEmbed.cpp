@@ -43,6 +43,7 @@ ShowChatLaunchListener::ShowChatLaunchListener(BSTR postId)
 void 
 ShowChatLaunchListener::onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui)
 {
+    AllowSetForegroundWindow(ASFW_ANY);
     ui->ShowChatWindow(postId_);
     delete launcher;
     delete this;
@@ -331,6 +332,9 @@ HippoEmbed::ShowChatWindow(BSTR userId, BSTR postId)
     HippoUILauncher *launcher = new HippoUILauncher();
     HippoPtr<IHippoUI> ui;
     if (SUCCEEDED(launcher->getUI(&ui, userId))) {
+        // In theory, we should restrict setting the foreground to the HippoUI process, 
+        // the chance of some other app getting in the way is small
+        AllowSetForegroundWindow(ASFW_ANY);
         ui->ShowChatWindow(postId);
         delete launcher;
     } else {

@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#define _WIN32_WINNT 0x0500             // For AllowSetForegroundWindow
 #include "HippoStdAfx.h"
 
 /* We want to use __uuidof() for type-safe QueryInterface, but a bunch

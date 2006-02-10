@@ -39,6 +39,17 @@ library HippoUI {
         // up to 130
     }
     [
+        uuid(A2B1B344-F645-4EF0-B5A6-0C310353D2A6),
+        helpstring("DumbHippo Chat Window"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoChatWindow : IUnknown
+    {
+        [id(210), helpstring("Activate or flash the window on an incoming message")]
+        HRESULT DemandAttention();
+    }
+    [
         uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
         helpstring("DumbHippo Javascript external object"),
         dual,
@@ -76,9 +87,9 @@ library HippoUI {
     {
         [id(190), helpstring("Display a shared link")]
         HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
-        [id(181), helpstring("Set the size of the window")]
+        [id(191), helpstring("Set the size of the window")]
         HRESULT Resize([in] int width, [in] int height);
-        [id(126), helpstring("Return the base Url for the DumbHippo server")]
+        [id(192), helpstring("Return the base Url for the DumbHippo server")]
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
         // up to 130
     }

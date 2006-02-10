@@ -26,6 +26,7 @@ HippoBubble::HippoBubble(void)
     desiredWidth_ = BASE_WIDTH;
     desiredHeight_ = BASE_HEIGHT;
 
+    setUseParent(true);
     setWindowStyle(WS_POPUP);
     setExtendedStyle(WS_EX_TOPMOST);
     setClassName(L"HippoBubbleClass");

@@ -19,6 +19,7 @@ HippoMenu::HippoMenu(void)
     mouseX_ = 0;
     mouseY_ = 0;
 
+    setUseParent(true);
     setClassName(L"HippoMenuClass");
     setClassStyle(CS_HREDRAW | CS_VREDRAW | CS_DROPSHADOW);
     setWindowStyle(WS_POPUP);
