@@ -31,4 +31,6 @@ public interface MessageSender {
 	public void sendMySpaceContactCommentNotification(User user);
 
 	public void sendHotnessChanged(User newUser, Hotness hotness);
+
+	public void sendActivePostsChanged(User user);
 }

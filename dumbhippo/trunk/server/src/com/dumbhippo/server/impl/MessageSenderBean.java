@@ -311,7 +311,31 @@ public class MessageSenderBean implements MessageSender {
 
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("hotness", "xmlns", NAMESPACE, "value", hotness.name());
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "value", hotness.name());
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
+	
+	private class ActivePostsChangedExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "activePostsChanged";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/posts";
+		
+		public ActivePostsChangedExtension() {
+		}
+
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -486,6 +510,14 @@ public class MessageSenderBean implements MessageSender {
 			message.addExtension(new HotnessChangedExtension(hotness));
 			logger.info("Sending hotnessChanged message to " + message.getTo());			
 			connection.sendPacket(message);
+		}
+
+		public void sendActivePostsChanged(User user) {
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
+			message.addExtension(new ActivePostsChangedExtension());
+			logger.info("Sending activePostsChanged message to " + message.getTo());			
+			connection.sendPacket(message);						
 		}
 	}
 
@@ -698,5 +730,9 @@ public class MessageSenderBean implements MessageSender {
 
 	public void sendHotnessChanged(User user, Hotness hotness) {
 		xmppSender.sendHotnessChanged(user, hotness);
+	}
+
+	public void sendActivePostsChanged(User user) {
+		xmppSender.sendActivePostsChanged(user);
 	}
 }

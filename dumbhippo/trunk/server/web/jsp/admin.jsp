@@ -20,7 +20,8 @@
   </c:forEach>
 <h2>Current live posts: </h2>
   <c:forEach items="${admin.livePosts}" var="post">
-    <c:out value="${post.postId}"/>  score: <c:out value="${post.score}"/><br/>
+    <c:out value="${post.postId}"/>  score: <c:out value="${post.score}"/> recent msgs: <c:out value="${post.recentMessageCount}"/> 
+    chatting users: <c:out value="${post.chattingUserCount}"/><br/>
   </c:forEach>
 </div>
 </body>

@@ -2,18 +2,18 @@ package com.dumbhippo.jive;
 
 import java.io.File;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQRouter;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentException;
 
-import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.jive.rooms.RoomHandler;
 
 /**
  * Our plugin for Jive Messenger
@@ -34,13 +34,14 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new MySpaceIQHandler());					
 			iqRouter.addHandler(new MusicIQHandler());
 			iqRouter.addHandler(new PrefsIQHandler());
-			iqRouter.addHandler(new HotnessIQHandler());			
+			iqRouter.addHandler(new HotnessIQHandler());		
 			Log.debug("Adding PresenceMonitor");
+			roomHandler = new RoomHandler();			
 			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(presenceMonitor);
 					
-			roomHandler = new RoomHandler();
+
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
 			} catch (ComponentException e) {

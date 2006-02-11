@@ -70,6 +70,10 @@ public class LiveXmppServer implements Ageable {
 		}
 	}
 	
+	public void postPresenceChange(Guid postId, Guid userId, boolean present) {
+		state.postPresenceChange(postId, userId, present);
+	}
+	
 	/**
 	 * Keeps an LiveXmppServer object alive, cached, and referencing
 	 * it's users. This must be called within 

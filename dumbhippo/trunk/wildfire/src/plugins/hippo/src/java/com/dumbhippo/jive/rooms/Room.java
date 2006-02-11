@@ -18,6 +18,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.ChatRoomInfo;
@@ -26,8 +28,7 @@ import com.dumbhippo.server.MessengerGlueRemote.ChatRoomUser;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import com.dumbhippo.xmppcom.XmppEventRoomPresenceChange;
 
 public class Room {
 	private static class UserInfo {
@@ -234,6 +235,9 @@ public class Room {
 			if (userInfo.getPresentCount() == 1) {
 				presentUsers.put(username, userInfo);
 				needNotify = true;
+				XmppEventRoomPresenceChange event = new XmppEventRoomPresenceChange(roomName, username, true);
+		        ObjectMessage message = queue.createObjectMessage(event);
+		        queue.send(message);
 			}
 		}
 
@@ -290,6 +294,9 @@ public class Room {
 		if (userInfo.getPresentCount() == 0) {
 			presentUsers.remove(username);
 			needNotify = true;
+			XmppEventRoomPresenceChange event = new XmppEventRoomPresenceChange(roomName, username, false);
+	        ObjectMessage message = queue.createObjectMessage(event);
+	        queue.send(message);			
 		}
 		
 		if (participantResources.get(jid) != null) {
@@ -395,5 +402,9 @@ public class Room {
 	 */
 	public boolean userCanJoin(String username) {
 		return allowedUsers.containsKey(username);
+	}
+
+	public int getPresenceCount() {
+		return presentUsers.size(); 
 	}
 }

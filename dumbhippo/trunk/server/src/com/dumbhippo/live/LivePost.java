@@ -16,7 +16,7 @@ import com.dumbhippo.identity20.Guid;
  * 
  * @author otaylor
  */
-public class LivePost implements Ageable {
+public class LivePost extends LiveObject {
 	/**
 	 * Get the "score" of a post. The score of a post is a
 	 * measure of how active a post is. It is independent of
@@ -50,7 +50,9 @@ public class LivePost implements Ageable {
 	static final int MAX_STORED_VIEWERS = 5;
 
 	private Guid postId;
-	private int cacheAge;
+
+	private int recentMessageCount;
+	private int chattingUserCount;
 	
 	private static class Viewer {
 		private Guid userId;
@@ -89,14 +91,46 @@ public class LivePost implements Ageable {
 
 	/*************************************************************/
 
-	public int getCacheAge() {
-		return cacheAge;
-	}
-
-	public void setCacheAge(int cacheAge) {
-		this.cacheAge = cacheAge;
-	}
-	
 	public void discard() {
 	}
+
+	public int getRecentMessageCount() {
+		return recentMessageCount;
+	}
+
+	public void setRecentMessageCount(int recentMessageCount) {
+		this.recentMessageCount = recentMessageCount;
+	}
+
+	public int getChattingUserCount() {
+		return chattingUserCount;
+	}
+
+	public void setChattingUserCount(int chattingUserCount) {
+		this.chattingUserCount = chattingUserCount;
+	}
+	
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public boolean equals(Object arg) {
+		if (!(arg instanceof LivePost))
+			return false;
+		LivePost post = (LivePost) arg;
+		return post.postId.equals(postId) 
+				&& post.recentMessageCount == recentMessageCount
+				&& post.chattingUserCount == chattingUserCount;
+	}
+
+	@Override
+	public int hashCode() {
+		return postId.hashCode();
+	}	
 }

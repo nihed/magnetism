@@ -3,6 +3,7 @@ package com.dumbhippo.live;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,7 +80,6 @@ public class LiveState {
 			liveUser = new LiveUser(userId);
 			LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
 			userUpdater.initialize(liveUser);
-
 			userMap.poke(userId, liveUser);
 		}
 		
@@ -98,6 +98,9 @@ public class LiveState {
 	 * @return the inserted LiveUser object
 	 */
 	public synchronized LiveUser updateLiveUser(LiveUser user) {
+		if (availableUsers.contains(user))
+			availableUsers.add(user);
+		userMap.poke(user.getUserId(), user);
 		cachedUsers.add(user);
 		user.setCacheAge(0);		
 		return user;
@@ -107,7 +110,7 @@ public class LiveState {
 	 * Returns a snapshot of the current set of live users.
 	 */
 	public synchronized Set<LiveUser> getLiveUserSnapshot() {
-		return userMap.values();
+		return Collections.unmodifiableSet(availableUsers);
 	}
 	
 	/**
@@ -148,9 +151,23 @@ public class LiveState {
 		
 		return livePost;
 	}
+
+	/**
+	 * Insert an updated LivePost object into the cache.  See updateLiveUser.
+	 * 
+	 * @param user new LiveUser object to insert
+	 * @return the inserted LiveUser object
+	 */
+	public synchronized LivePost updateLivePost(LivePost post) {
+		if (activePosts.contains(post.getPostId()))
+			activePosts.add(post);
+		cachedPosts.add(post);
+		post.setCacheAge(0);		
+		return post;
+	}	
 	
 	public synchronized Set<LivePost> getLivePostSnapshot() {
-		return postMap.values();
+		return Collections.unmodifiableSet(activePosts);
 	}
 	
 	/**
@@ -206,7 +223,7 @@ public class LiveState {
 		
 		try {
 			cleaner.join();
-			logger.debug("Successfully stoped LiveState cleanup thread");
+			logger.debug("Successfully stopped LiveState cleanup thread");
 		} catch (InterruptedException e) {
 			// Shouldn't happen, just ignore
 		}
@@ -223,8 +240,9 @@ public class LiveState {
 	private Set<LiveUser> cachedUsers;
 	private WeakGuidMap<LiveUser> userMap;
 	
-	// Cache of LivePost objects. See comments for LiveUser above; there is
-	// no 'availablePosts' set, since presence is a user-only concept
+
+	// Cache of LivePost objects, similar to LiveUser cache.
+	private Set<LivePost> activePosts;	
 	private Set<LivePost> cachedPosts;
 	private WeakGuidMap<LivePost> postMap;
 
@@ -247,6 +265,7 @@ public class LiveState {
 		cachedUsers = new HashSet<LiveUser>();
 		userMap = new WeakGuidMap<LiveUser>();
 
+		activePosts = new HashSet<LivePost>();
 		cachedPosts = new HashSet<LivePost>();
 		postMap = new WeakGuidMap<LivePost>();
 		
@@ -281,6 +300,23 @@ public class LiveState {
 			availableUsers.remove(liveUser);
 			logger.debug("User " + liveUser.getUserId() + " is no longer available");
 		}
+	}
+	
+	public synchronized void postPresenceChange(Guid postId, Guid userId, boolean present) {
+		LivePost lpost = getLivePost(postId);
+		if (present) {
+			if (lpost.getChattingUserCount() == 0) {
+				activePosts.add(lpost);
+			}
+			lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);	
+		} else {
+			int newCount = lpost.getChattingUserCount() - 1;
+			lpost.setChattingUserCount(newCount);			
+			if (newCount == 0) {
+				activePosts.remove(lpost);
+			}
+		}
+			
 	}
 	
 	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
@@ -416,5 +452,5 @@ public class LiveState {
 				}
 			}
 		}
-	}	
+	}
 }

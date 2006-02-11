@@ -1,5 +1,6 @@
 package com.dumbhippo.live;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,30 +39,41 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	@EJB
 	MessageSender msgSender;
 	
+	static final int MAX_ACTIVE_POSTS = 3;
+	
 	static final int RECENT_POSTS_MAX_HISTORY = 20;
 	
 	static final int RECENT_POSTS_SEC = 60 * 60;
 	
-	private double computeInitTemperature(LiveUser user) {
-		double ret = 0.0;	
+	private List<PostView> getRecentReceivedPosts(LiveUser user) {
 		User dbUser;
 		try {
 			dbUser = identitySpider.lookupGuid(User.class, user.getUserId());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
-		}
-		// Look for max of 3 unviewed posts
+		}		
 		List<PostView> lastPosts = postingBoard.getReceivedPosts(new Viewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
-		for (PostView post : lastPosts) {
-			if (ret >= 3.0)
-				break;
+		List<PostView> ret = new ArrayList<PostView>();
+		for (PostView post: lastPosts) {
 			Date postDate = post.getPost().getPostDate();
 			Date cur = new Date();
 			long timeDiff = cur.getTime() - postDate.getTime();
 			// Should probably push this into DB query
-			if (timeDiff < (RECENT_POSTS_SEC * 1000) && !post.isViewerHasViewed()) {
-				ret += 1.0;
-			}
+			if (timeDiff < (RECENT_POSTS_SEC * 1000)) {
+				ret.add(post);
+			}			
+		}
+		return ret;
+	}
+	
+	private double computeInitTemperature(LiveUser user, List<PostView> posts) {
+		double ret = 0.0;	
+		for (PostView post : posts) {
+			// Look for max of 3 unviewed posts			
+			if (ret >= 3.0)
+				break;
+			 if (!post.isViewerHasViewed())
+				 ret += 1.0;
 		}
 		return ret;
 	}
@@ -83,43 +95,64 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	}
 	
 	public void initialize(LiveUser user) {
-		double score = computeInitTemperature(user);
-		Hotness hotness = hotnessFromScore(user, score);
-		user.setHotness(hotness);
+		initializeFromPosts(user, getRecentReceivedPosts(user));
 	}
 	
-	public void updateHotness(LiveUser user) {
-		LiveState state = LiveState.getInstance();
-		if (user.getCacheAge() > 0) {
-			LiveUser newUser = (LiveUser) user.clone();
-			initialize(newUser); // FIXME - This is extremely inefficient
-			logger.debug("computing hotness for user " + user.getUserId() 
-					     + " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());			
-			if (newUser.getHotness() != user.getHotness()) {
-				state.updateLiveUser(newUser);
-				User dbUser;
-				try {
-					dbUser = identitySpider.lookupGuid(User.class, user.getUserId());
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				msgSender.sendHotnessChanged(dbUser, newUser.getHotness());
+	private void initializeFromPosts(LiveUser user, List<PostView> recentPosts) {
+		LiveState state = LiveState.getInstance();		
+		double score = computeInitTemperature(user, recentPosts);
+		Hotness hotness = hotnessFromScore(user, score);
+		user.setHotness(hotness);
+		List<Guid> activePosts = new ArrayList<Guid>();
+		for (PostView post : recentPosts) {
+			if (activePosts.size() >= MAX_ACTIVE_POSTS)
+				break;
+			// Right now we don't hold any kind of strong reference to the posts
+			LivePost livePost = state.getLivePost(post.getPost().getGuid());
+			if (livePost.getRecentMessageCount() > 0) {
+				activePosts.add(livePost.getPostId());
 			}
-		} else {
-			// If the user hasn't aged it was updated recently, wait for an age
-			logger.debug("delaying hotness update for user " + user.getUserId());			
+		}
+		user.setActivePosts(activePosts);
+	}
+	
+	private boolean checkUpdate(LiveUser user) {
+		return user.getCacheAge() > 0; 
+	}
+	
+	private void update(LiveUser user) {
+		LiveState state = LiveState.getInstance();
+		LiveUser newUser = (LiveUser) user.clone();
+		List<PostView> recentPosts = getRecentReceivedPosts(user);
+		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
+		logger.debug("computing hotness for user " + user.getUserId() 
+				+ " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());		
+		if (!newUser.equals(user)) {
+			state.updateLiveUser(newUser);
+			User dbUser;
+			try {
+				dbUser = identitySpider.lookupGuid(User.class, user.getUserId());
+			} catch (NotFoundException e) {
+				throw new RuntimeException(e);
+			}
+			if (!newUser.getHotness().equals(user.getHotness()))
+				msgSender.sendHotnessChanged(dbUser, newUser.getHotness());
+			if (!newUser.getActivePosts().equals(user.getActivePosts()))
+				msgSender.sendActivePostsChanged(dbUser);
 		}
 	}
 
 	public void handlePostViewed(Guid userGuid, LivePost post) {
 		LiveState state = LiveState.getInstance();
 		LiveUser user = state.peekLiveUser(userGuid);
-		if (user == null)
+		if (user == null || !checkUpdate(user))
 			return;
-		updateHotness(user);
+		update(user);
 	}
 
 	public void periodicUpdate(LiveUser user) {
-		updateHotness(user);
+		if (!checkUpdate(user))
+			return;		
+		update(user);
 	}
 }

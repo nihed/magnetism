@@ -1,5 +1,8 @@
 package com.dumbhippo.live;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.dumbhippo.identity20.Guid;
 
 /**
@@ -11,7 +14,7 @@ import com.dumbhippo.identity20.Guid;
  * 
  * @author otaylor
  */
-public class LiveUser implements Ageable, Cloneable {
+public class LiveUser extends LiveObject {
 	/**
 	 * Get the User ID for which the LivePost object was created. 
 	 * 
@@ -22,15 +25,18 @@ public class LiveUser implements Ageable, Cloneable {
 	}
 	
 	/**********************************************************************/
-	private Guid userId;
-	private int availableCount;
-	private int cacheAge;
 	
+	private int availableCount;
+	
+	// Externally interesting variables - update .equals when adding one of these
+	private Guid userId;	
 	private Hotness hotness;
+	private List<Guid> activePosts;
 
 	LiveUser(Guid userId) {
 		this.hotness = Hotness.UNKNOWN;
 		this.userId = userId;
+		this.activePosts = new ArrayList<Guid>();
 	}
 		
 	void setAvailableCount(int availableCount) {
@@ -41,14 +47,14 @@ public class LiveUser implements Ageable, Cloneable {
 		return availableCount;
 	}
 
-	public int getCacheAge() {
-		return cacheAge;
+	public List<Guid> getActivePosts() {
+		return activePosts;
 	}
 
-	public void setCacheAge(int cacheAge) {
-		this.cacheAge = cacheAge;
+	public void setActivePosts(List<Guid> activePosts) {
+		this.activePosts = new ArrayList<Guid>(activePosts);
 	}
-	
+
 	public Hotness getHotness() {
 		return hotness;
 	}
@@ -67,6 +73,21 @@ public class LiveUser implements Ageable, Cloneable {
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public boolean equals(Object arg) {
+		if (!(arg instanceof LiveUser))
+			return false;
+		LiveUser user = (LiveUser) arg;
+		return user.userId.equals(userId) 
+				&& user.hotness.equals(hotness)
+				&& user.activePosts.equals(activePosts);
+	}
+
+	@Override
+	public int hashCode() {
+		return userId.hashCode();
 	}
 }
 

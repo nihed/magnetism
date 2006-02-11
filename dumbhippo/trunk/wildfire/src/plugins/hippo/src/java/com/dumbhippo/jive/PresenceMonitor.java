@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 import javax.ejb.EJBException;
 import javax.naming.NamingException;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManagerListener;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.NoSuchServerException;
@@ -26,6 +26,8 @@ public class PresenceMonitor implements SessionManagerListener {
 	private Map<String, Integer> sessionCounts;
 	private BlockingQueue<Notification> notificationQueue;
 	private NotifierThread notifierThread;
+	
+	private String serverIdentifier;
 	
 	// Time between pings. Must be less than 
 	// LiveState.CLEANER_INTERVAL * LiveState.MAX_XMPP_SERVER_CACHE_AGE
@@ -51,7 +53,6 @@ public class PresenceMonitor implements SessionManagerListener {
 			// server times us out despite our efforts to ping it, then we
 			// have to start over from scratch with registration.
 			
-			String serverIdentifier = null;
 			long lastPingTime = -1;
 		
 			try {
@@ -78,15 +79,14 @@ public class PresenceMonitor implements SessionManagerListener {
 										users.add(entry.getKey());
 								}
 							}
-							
+
 							long now = lastPingTime = System.currentTimeMillis();
-							serverIdentifier = glue.serverStartup(now);
+							String serverIdentifier = glue.serverStartup(now);
+							setServerIdentifier(serverIdentifier);
 							
 							for (String user : users) {
 								glue.onUserAvailable(serverIdentifier, user);
 							}
-	
-							Log.debug("Registered as " + serverIdentifier);
 						} else {
 							long now = System.currentTimeMillis();
 	
@@ -144,6 +144,11 @@ public class PresenceMonitor implements SessionManagerListener {
 		// and so we're thread safe automatically (note that our notification queue
 		// calls this from another thread)
 		return EJBUtil.defaultLookupChecked(MessengerGlueRemote.class);
+	}
+
+	private void setServerIdentifier(String serverIdentifier) {	
+		Log.debug("Registering as " + serverIdentifier);			
+		this.serverIdentifier = serverIdentifier;
 	}
 	
 	public PresenceMonitor() {

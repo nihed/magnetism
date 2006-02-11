@@ -597,7 +597,7 @@ public class PostingBoardBean implements PostingBoard {
 
 		return getPostViews(viewpoint, q, search, start, max);
 	}
-	
+
 	static final String GET_GROUP_POSTS_QUERY = 
 		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
 	
@@ -768,14 +768,28 @@ public class PostingBoardBean implements PostingBoard {
 		return getGroupPosts(viewpoint, recipient, null, start, max);
 	}
 	
+	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
+	private static final String POST_MESSAGE_RECENT = " and (pm.timestamp - current_timestamp()) < :recentTime";
+	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.timestamp";
+	
 	public List<PostMessage> getPostMessages(Post post) {
 		@SuppressWarnings("unchecked")
-		List<PostMessage> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
+		List<PostMessage> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_ORDER)
 		.setParameter("post", post)
 		.getResultList();
 		
 		return messages;
 	}
+	
+	public List<PostMessage> getRecentPostMessages(Post post, int seconds) {
+		@SuppressWarnings("unchecked")
+		List<PostMessage> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_RECENT +
+													POST_MESSAGE_ORDER)
+		.setParameter("post", post)
+		.setParameter("recentTime", seconds)
+		.getResultList();		
+		return messages;
+	}	
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
 		if (serial < 0) 
@@ -796,5 +810,6 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		return url;
 	}
+
 }
 

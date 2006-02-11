@@ -66,7 +66,7 @@ public class RoomHandler implements Component {
 		
 		room.processPacket(packet);			
 	}
-
+	
 	private Room getRoom(String roomName, String userId) {
 		Room room = rooms.get(roomName);
 		if (room != null) {

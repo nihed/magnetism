@@ -177,7 +177,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.userUnavailable(Guid.parseJabberId(username));
 		} catch (ParseException e) {
-			logger.debug("Corrupt username passed to onUserUnavailable");
+			logger.debug("Corrupt username passed to onUserUnavailable", e);
 		}
 	}
 

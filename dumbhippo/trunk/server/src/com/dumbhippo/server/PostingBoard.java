@@ -25,7 +25,7 @@ public interface PostingBoard {
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max);
+	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max);	
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
@@ -63,12 +63,20 @@ public interface PostingBoard {
 	public void postViewedBy(String postId, User clicker);
 	
 	/**
-	 * Get all messages that where posted in the chatroom about this post,
+	 * Get all messages that where posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
 	public List<PostMessage> getPostMessages(Post post);
+	
+	/**
+	 * Get recent messages that where posted in the chatroom about this post.
+	 * 
+	 * @param post the post the look up the messages for
+	 * @return the list of mesages, sorted by date (newest last)
+	 */
+	public List<PostMessage> getRecentPostMessages(Post post, int seconds);	
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this post
