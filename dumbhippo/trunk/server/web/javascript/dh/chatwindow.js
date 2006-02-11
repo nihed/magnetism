@@ -105,13 +105,15 @@ dh.chatwindow._addUser = function(user, before) {
     nameDiv.className = "dh-chat-person-name"
     user.div.appendChild(nameDiv)
 
-    var nameSpan = document.createElement("span")
-    nameSpan.appendChild(document.createTextNode(user.name))
-    nameSpan.className = "dh-chat-person-name-inner"
-    nameDiv.appendChild(nameSpan)
+    var nameInnerDiv = document.createElement("div")
+    nameInnerDiv.appendChild(document.createTextNode(user.name))
+    nameInnerDiv.className = "dh-chat-person-name-inner"
+    nameDiv.appendChild(nameInnerDiv)
 
     var peopleDiv = document.getElementById("dhChatPeopleDiv")
     peopleDiv.insertBefore(user.div, before ? before.div : null)
+    
+    nameInnerDiv.style.width = (peopleDiv.clientWidth - image.offsetWidth) + "px"    
 }
 
 dh.chatwindow._removeUser = function(user) {

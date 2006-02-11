@@ -24,8 +24,8 @@ body
     position: absolute;
     top: 10px;
     left: 10px;
-    width: 10em;
-    overflow: hidden;
+    width: 12em;
+    overflow: auto;
     background-color: White;
 }
 
@@ -37,7 +37,7 @@ body
     position: absolute;
     top: 10px;
     left: 10px;
-    width: 10em;
+    width: 12em;
     overflow: hidden;
     background-color: White;
 }
@@ -80,25 +80,15 @@ body
 
 .dh-chat-person
 {
+	position: relative;
     margin: 5px;
+	height: 48px;
+	overflow: hidden;
 }
 
 .dh-chat-person-image
 {
     float: left;
-}
-
-.dh-chat-person-name
-{
-    height: 		48px;
-    font-size: 		48px;
-	vertical-align:	middle;
-}
-
-.dh-chat-person-name-inner
-{
-    vertical-align: middle;
-    font-size: 		medium;
 }
 
 .dh-chat-message {
