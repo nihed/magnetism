@@ -230,7 +230,7 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
 {
     // Cases here:
     //
-    // 1. If it's to one of the specific whitelisted pages, allow it
+    // 1. If it's a POST to our site, allow it
     //
     // 2. If it's normal navigation (of the toplevel window, not a post),
     //    to a normal looking URL (http, https, ftp protocol), then open
@@ -289,17 +289,8 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
         }
     }
 
-    const WCHAR *whitelistedNavigation[] = { L"/signinpost" };
-    bool isWhitelisted = false;
-    for (UINT i = 0; i < sizeof(whitelistedNavigation)/sizeof(whitelistedNavigation[0]); i++) {
-        if (wcscmp(whitelistedNavigation[i], components.lpszUrlPath) == 0) {
-            isWhitelisted = true;
-            break;
-        }
-    }
-
-    if (ourSite && isWhitelisted) {
-        hippoDebugLogW(L"Allowing whitelisted navigation to %ls", url);
+    if (ourSite && isPost) {
+        hippoDebugLogW(L"Allowing POST navigation to %ls", url);
         return false;
     } else if (toplevelNavigation && !isPost && normalURL) {
         ui_->launchBrowser(url);
