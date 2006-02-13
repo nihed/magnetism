@@ -37,13 +37,13 @@ public class AdminPage {
 	}
 
 	public Set<PersonView> getLiveUsers() {
-		Set<LiveUser> lusers = liveState.getLiveUserSnapshot();
+		Set<LiveUser> lusers = liveState.getLiveUserCacheSnapshot();
 		Set<PersonView> ret = new HashSet<PersonView>();
 
 		for (LiveUser luser : lusers) {
 			User user;
 			try {
-				user = identitySpider.lookupGuid(User.class, luser.getUserId());
+				user = identitySpider.lookupGuid(User.class, luser.getGuid());
 			} catch (NotFoundException e) {
 				throw new RuntimeException(e);
 			}

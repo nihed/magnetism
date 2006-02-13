@@ -15,27 +15,15 @@ import com.dumbhippo.identity20.Guid;
  * @author otaylor
  */
 public class LiveUser extends LiveObject {
-	/**
-	 * Get the User ID for which the LivePost object was created. 
-	 * 
-	 * @return the post ID for the post
-	 */
-	public Guid getUserId() {
-		return userId;
-	}
-	
-	/**********************************************************************/
-	
 	private int availableCount;
 	
 	// Externally interesting variables - update .equals when adding one of these
-	private Guid userId;	
 	private Hotness hotness;
 	private List<Guid> activePosts;
 
 	LiveUser(Guid userId) {
+		super(userId);
 		this.hotness = Hotness.UNKNOWN;
-		this.userId = userId;
 		this.activePosts = new ArrayList<Guid>();
 	}
 		
@@ -80,14 +68,9 @@ public class LiveUser extends LiveObject {
 		if (!(arg instanceof LiveUser))
 			return false;
 		LiveUser user = (LiveUser) arg;
-		return user.userId.equals(userId) 
+		return super.equals(user) 
 				&& user.hotness.equals(hotness)
 				&& user.activePosts.equals(activePosts);
-	}
-
-	@Override
-	public int hashCode() {
-		return userId.hashCode();
 	}
 }
 

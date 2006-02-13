@@ -20,13 +20,13 @@ public class LivePostUpdaterBean implements LivePostUpdater {
 	PostingBoard postingBoard;
 	
 	public void initialize(LivePost livePost) {
-		List<PersonPostData> viewers = postingBoard.getPostViewers(null, livePost.getPostId(), LivePost.MAX_STORED_VIEWERS);
+		List<PersonPostData> viewers = postingBoard.getPostViewers(null, livePost.getGuid(), LivePost.MAX_STORED_VIEWERS);
 		for (PersonPostData viewerData : viewers) {
 			livePost.addViewer(viewerData.getPerson().getGuid(), viewerData.getClickedDate());
 		}
 		PostView pv;
 		try {
-			pv = postingBoard.loadPost(new Viewpoint(null), livePost.getPostId());
+			pv = postingBoard.loadPost(new Viewpoint(null), livePost.getGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}

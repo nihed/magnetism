@@ -52,6 +52,156 @@ public class LiveState {
 		}
 	}
 	
+
+	// Helper object for WeakGuidMap
+	private static class GuidReference<T> extends WeakReference<T> {
+		private Guid guid;
+		
+		GuidReference(T t, Guid guid) {
+			super(t);
+			this.guid = guid;
+		}
+	}
+	
+	/* This class maintains several possible references to a LiveObject.
+	   First, an object can be explicitly strongly referenced; e.g. for
+	   a LiveUser, we strongly reference users which are currently present.
+	   Second, there is a cache of recently touched objects which can 
+	   be updated via the touch method.
+	   Finally, a pure memory cache of the objects is maintained.  This
+	   may be cleared at any time by the JVM if the object is neither
+	   explicitly strongly referenced nor recently touched.
+	*/
+	private static class LiveObjectCache<T extends LiveObject> {
+		private HashMap<Guid, T> strongReferences;
+		private HashMap<Guid, T> recentReferences;
+		private HashMap<Guid, GuidReference<T>> weakReferences;
+		private ReferenceQueue<T> queue;
+		
+		public LiveObjectCache() {
+			strongReferences = new HashMap<Guid, T>();
+			recentReferences = new HashMap<Guid, T>();			
+			weakReferences = new HashMap<Guid, GuidReference<T>>();
+			queue = new ReferenceQueue<T>();
+		}
+		
+		/**
+		 * Add a LiveObject to the weak cache.
+		 * 
+		 * @param t object to be inserted
+		 */
+		public void poke(T t) {
+			Guid guid = t.getGuid();			
+			GuidReference<T> reference = new GuidReference<T>(t, guid);
+			weakReferences.put(guid, reference);
+		}
+		
+		/**
+		 * Look for a LiveObject in the weak cache.
+		 * 
+		 * @param guid Guid whose associated owner to check for in the weak cache
+		 * @return associated LiveObject, or null
+		 */
+		public T peek(Guid guid) {
+			GuidReference<T> reference = weakReferences.get(guid);
+			if (reference != null)
+				return reference.get();
+			else
+				return null;			
+		}
+		
+		/**
+		 * Records a LiveObject as having been recently accessed.
+		 * 
+		 * @param obj
+		 */
+		public void touch(T obj) {
+			recentReferences.put(obj.getGuid(), obj);
+			obj.setCacheAge(0);			
+			poke(obj);
+		}
+		
+		/**
+		 * Adds an explicit "strong" reference to a LiveObject;
+		 * the object will not be evicted until dropStrongReference
+		 * is invoked.
+		 * 
+		 * @param obj
+		 */
+		public void addStrongReference(T obj) {
+			Guid guid = obj.getGuid();
+			strongReferences.put(guid, obj);
+			poke(obj);
+		}
+		
+		/**
+		 * Records a LiveObject as being a candidate for eviction,
+		 * assuming it has not been recently accessed.
+		 * 
+		 * @param obj
+		 */
+		public void dropStrongReference(T obj) {
+			Guid guid = obj.getGuid();
+			strongReferences.remove(guid);
+		}
+		
+		/**
+		 * Returns a modifiable collection view of the recent
+		 * references; this is used by the aging thread.
+		 */
+		public Collection<T> getRecentCache() {
+			return recentReferences.values();
+		}
+		
+		/**
+		 * Returns an unmodifiable copy of the current set
+		 * of strong references.
+		 */
+		public Set<T> getStrongReferenceCopy() {
+			return Collections.unmodifiableSet(new HashSet<T>(strongReferences.values()));
+		}		
+		
+		/**
+		 * Returns an unmodifiable copy of the entire weak
+		 * cache; this is useful for debugging purposes, e.g.
+		 * the admin page.
+		 */
+		public Set<T> getWeakCacheCopy() {
+			Set<T> ret = new HashSet<T>();
+			for (GuidReference<T> ref : weakReferences.values()) {
+				ret.add(ref.get());
+			}
+			return Collections.unmodifiableSet(ret);
+		}
+		
+		/**
+		 * Insert a modified LiveObject into the cache.    
+		 */
+		public void update(T obj) {
+			T old = peek(obj.getGuid());
+			assert(old != null);
+			assert(peek(obj.getGuid()) != obj);
+			if (strongReferences.containsKey(obj.getGuid())) {
+				strongReferences.put(obj.getGuid(), obj);
+			}
+			poke(obj);
+			touch(obj);
+		}		
+		
+		/**
+		 * Invoke periodically to clean up the weak reference cache.
+		 */
+		public void clean() {
+			while (true) {
+				GuidReference<? extends T> reference = (GuidReference<? extends T>)queue.poll();
+				if (reference == null)
+					break;
+				weakReferences.remove(reference.guid);
+			}
+		}
+	}
+		
+	
 	/**
 	 * Get a LiveUser cache object for a particular user if one is
 	 * loaded, but does not create one if one doesn't currently
@@ -64,7 +214,7 @@ public class LiveState {
 	 *    otherwise null.
 	 */
 	public synchronized LiveUser peekLiveUser(Guid userId) {
-		return userMap.peek(userId);
+		return userCache.peek(userId);
 	}
 	
 	/**
@@ -80,7 +230,7 @@ public class LiveState {
 			liveUser = new LiveUser(userId);
 			LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
 			userUpdater.initialize(liveUser);
-			userMap.poke(userId, liveUser);
+			userCache.poke(liveUser);
 		}
 		
 		updateLiveUser(liveUser);
@@ -98,19 +248,15 @@ public class LiveState {
 	 * @return the inserted LiveUser object
 	 */
 	public synchronized LiveUser updateLiveUser(LiveUser user) {
-		if (availableUsers.contains(user))
-			availableUsers.add(user);
-		userMap.poke(user.getUserId(), user);
-		cachedUsers.add(user);
-		user.setCacheAge(0);		
+		userCache.update(user);
 		return user;
 	}
 	
 	/**
 	 * Returns a snapshot of the current set of live users.
 	 */
-	public synchronized Set<LiveUser> getLiveUserSnapshot() {
-		return Collections.unmodifiableSet(availableUsers);
+	public synchronized Set<LiveUser> getLiveUserCacheSnapshot() {
+		return userCache.getWeakCacheCopy();
 	}
 	
 	/**
@@ -125,7 +271,7 @@ public class LiveState {
 	 *    otherwise null.
 	 */
 	public synchronized LivePost peekLivePost(Guid postId) {
-		return postMap.peek(postId);
+		return postCache.peek(postId);
 	}
 	
 	/**
@@ -143,11 +289,10 @@ public class LiveState {
 			LivePostUpdater postUpdater = EJBUtil.defaultLookup(LivePostUpdater.class);
 			postUpdater.initialize(livePost);
 			
-			postMap.poke(postId, livePost);
+			postCache.poke(livePost);
 		}
 
-		cachedPosts.add(livePost);
-		livePost.setCacheAge(0);
+		postCache.touch(livePost);
 		
 		return livePost;
 	}
@@ -159,15 +304,12 @@ public class LiveState {
 	 * @return the inserted LiveUser object
 	 */
 	public synchronized LivePost updateLivePost(LivePost post) {
-		if (activePosts.contains(post.getPostId()))
-			activePosts.add(post);
-		cachedPosts.add(post);
-		post.setCacheAge(0);		
+		postCache.update(post);	
 		return post;
 	}	
 	
 	public synchronized Set<LivePost> getLivePostSnapshot() {
-		return Collections.unmodifiableSet(activePosts);
+		return postCache.getWeakCacheCopy();
 	}
 	
 	/**
@@ -231,20 +373,9 @@ public class LiveState {
 	
 	/**************************************************************************/
 
-	// Cache of LiveUser objects. availableUsers strongly references users
-	// that are present at the current time. cachedUsers strongly references
-	// users that have been recently accessed. userMap allows us to look
-	// up any existent LiveUser object by Guid, whether it is in 
-	// availableUsers, cachedUsers, or in neither but referenced elsewhere.
-	private Set<LiveUser> availableUsers;
-	private Set<LiveUser> cachedUsers;
-	private WeakGuidMap<LiveUser> userMap;
+	private LiveObjectCache<LiveUser> userCache;
 	
-
-	// Cache of LivePost objects, similar to LiveUser cache.
-	private Set<LivePost> activePosts;	
-	private Set<LivePost> cachedPosts;
-	private WeakGuidMap<LivePost> postMap;
+	private LiveObjectCache<LivePost> postCache;
 
 	// Current LiveXmppServer objects. This is simpler than the post and
 	// user caches, since we don't want to keep around stray LiveXmppServer
@@ -261,13 +392,8 @@ public class LiveState {
 	private JmsProducer updateQueue;
 	
 	private LiveState() {
-		availableUsers = new HashSet<LiveUser>();
-		cachedUsers = new HashSet<LiveUser>();
-		userMap = new WeakGuidMap<LiveUser>();
-
-		activePosts = new HashSet<LivePost>();
-		cachedPosts = new HashSet<LivePost>();
-		postMap = new WeakGuidMap<LivePost>();
+		userCache = new LiveObjectCache<LiveUser>();
+		postCache = new LiveObjectCache<LivePost>();
 		
 		xmppServers = new HashMap<String, LiveXmppServer>();
 		
@@ -284,10 +410,11 @@ public class LiveState {
 	// see LiveXmppServer.userAvailable().
 	synchronized void userAvailable(Guid userId) {
 		LiveUser liveUser = getLiveUser(userId);
+		liveUser = (LiveUser) liveUser.clone(); // Create a copy to update
 		liveUser.setAvailableCount(liveUser.getAvailableCount() + 1);
 		if (liveUser.getAvailableCount() == 1) {
-			availableUsers.add(liveUser);
-			logger.debug("User " + liveUser.getUserId() + " is now available");
+			logger.debug("User " + liveUser.getGuid() + " is now available");			
+			userCache.addStrongReference(liveUser);
 		}
 	}
 
@@ -295,25 +422,27 @@ public class LiveState {
 	// see LiveXmppServer.userUnavailable().
 	synchronized void userUnavailable(Guid userId) {
 		LiveUser liveUser = getLiveUser(userId);
+		liveUser = (LiveUser) liveUser.clone();		
 		liveUser.setAvailableCount(liveUser.getAvailableCount() - 1);
 		if (liveUser.getAvailableCount() == 0) {
-			availableUsers.remove(liveUser);
-			logger.debug("User " + liveUser.getUserId() + " is no longer available");
+			logger.debug("User " + liveUser.getGuid() + " is no longer available");			
+			userCache.dropStrongReference(liveUser);
 		}
 	}
 	
 	public synchronized void postPresenceChange(Guid postId, Guid userId, boolean present) {
 		LivePost lpost = getLivePost(postId);
+		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
 		if (present) {
 			if (lpost.getChattingUserCount() == 0) {
-				activePosts.add(lpost);
+				postCache.addStrongReference(lpost);
 			}
 			lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);	
 		} else {
 			int newCount = lpost.getChattingUserCount() - 1;
 			lpost.setChattingUserCount(newCount);			
 			if (newCount == 0) {
-				activePosts.remove(lpost);
+				postCache.dropStrongReference(lpost);
 			}
 		}
 			
@@ -335,74 +464,15 @@ public class LiveState {
 	
 	private synchronized void clean() {
 		// Bump the age of all objects, removing ones that pass the maximum age
-		age(cachedUsers, MAX_USER_CACHE_AGE);
-		age(cachedPosts, MAX_POST_CACHE_AGE);
+		age(userCache.getRecentCache(), MAX_USER_CACHE_AGE);
+		age(postCache.getRecentCache(), MAX_POST_CACHE_AGE);
 		age(xmppServers.values(), MAX_XMPP_SERVER_CACHE_AGE);
 		
 		// Clean up the WeakGuidMap objects
-		userMap.clean();
-		postMap.clean();
+		userCache.clean();
+		postCache.clean();
 	}
 
-	// Helper object for WeakGuidMap
-	private static class GuidReference<T> extends WeakReference<T> {
-		private Guid guid;
-		
-		GuidReference(T t, Guid guid) {
-			super(t);
-			this.guid = guid;
-		}
-	}
-	
-	// A map from Guid to a cache object for that Guid. The reference
-	// to the object is weak, so if all other references to the object
-	// are released, it will be freed and the WeakGuidMap won't keep
-	// it alive. We build a cache by combining a WeakGuidMap with
-	// other mechanisms for strongly referencing an object. (For
-	// LiveUser, the user object is strongly referenced if the user
-	// is present, and also for an interval after it is last 
-	// looked up from the cache.)
-	private static class WeakGuidMap<T> {
-		private HashMap<Guid, GuidReference<T>> map;
-		private ReferenceQueue<T> queue;
-		
-		public WeakGuidMap() {
-			map = new HashMap<Guid, GuidReference<T>>();
-			queue = new ReferenceQueue<T>();
-		}
-		
-		public void poke(Guid guid, T t) {
-			GuidReference<T> reference = new GuidReference<T>(t, guid);
-			map.put(guid, reference);
-		}
-		
-		public T peek(Guid guid) {
-			GuidReference<T> reference = map.get(guid);
-			if (reference != null)
-				return reference.get();
-			else
-				return null;			
-		}
-		
-		public Set<T> values() {
-			Set<T> ret = new HashSet<T>();
-			for (GuidReference<T> ref : map.values()) {
-				ret.add(ref.get());
-			}
-			return ret;
-		}
-		
-		// Remove any pending weak references
-		public void clean() {
-			while (true) {
-				GuidReference<? extends T> reference = (GuidReference<? extends T>)queue.poll();
-				if (reference == null)
-					break;
-				map.remove(reference.guid);
-			}
-		}
-	}
-	
 	// Thread that ages the different types of objects we keep around, and
 	// also takes care of removing stale entries from WeakGuidMap objects.
 	private class Cleaner extends Thread {
@@ -438,7 +508,7 @@ public class LiveState {
 					Set<LiveUser> users;
 					// Grab a copy of the current user map to avoid locking the whole
 					// object for a long time
-					users = getLiveUserSnapshot();
+					users = getLiveUserCacheSnapshot();
 					
 					for (LiveUser user : users) {
 						userUpdater.periodicUpdate(user);

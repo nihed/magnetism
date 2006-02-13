@@ -35,21 +35,9 @@ public class LivePost extends LiveObject {
 		
 		return score;
 	}
-	
-	/**
-	 * Get the Post ID for which the LivePost object was created. 
-	 * 
-	 * @return the post ID for the post
-	 */
-	public Guid getPostId() {
-		return postId;
-	}
-	
 	/**********************************************************************/
 
 	static final int MAX_STORED_VIEWERS = 5;
-
-	private Guid postId;
 
 	private int recentMessageCount;
 	private int chattingUserCount;
@@ -67,7 +55,7 @@ public class LivePost extends LiveObject {
 	private List<Viewer> viewers;
 	
 	LivePost(Guid userId) {
-		this.postId = userId;
+		super(userId);
 		this.viewers = new LinkedList<Viewer>();
 	}
 	
@@ -124,13 +112,8 @@ public class LivePost extends LiveObject {
 		if (!(arg instanceof LivePost))
 			return false;
 		LivePost post = (LivePost) arg;
-		return post.postId.equals(postId) 
+		return super.equals(post)
 				&& post.recentMessageCount == recentMessageCount
 				&& post.chattingUserCount == chattingUserCount;
 	}
-
-	@Override
-	public int hashCode() {
-		return postId.hashCode();
-	}	
 }

@@ -48,7 +48,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	private List<PostView> getRecentReceivedPosts(LiveUser user) {
 		User dbUser;
 		try {
-			dbUser = identitySpider.lookupGuid(User.class, user.getUserId());
+			dbUser = identitySpider.lookupGuid(User.class, user.getGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -110,7 +110,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			// Right now we don't hold any kind of strong reference to the posts
 			LivePost livePost = state.getLivePost(post.getPost().getGuid());
 			if (livePost.getRecentMessageCount() > 0) {
-				activePosts.add(livePost.getPostId());
+				activePosts.add(livePost.getGuid());
 			}
 		}
 		user.setActivePosts(activePosts);
@@ -125,13 +125,13 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		LiveUser newUser = (LiveUser) user.clone();
 		List<PostView> recentPosts = getRecentReceivedPosts(user);
 		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
-		logger.debug("computing hotness for user " + user.getUserId() 
+		logger.debug("computing hotness for user " + user.getGuid() 
 				+ " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());		
 		if (!newUser.equals(user)) {
 			state.updateLiveUser(newUser);
 			User dbUser;
 			try {
-				dbUser = identitySpider.lookupGuid(User.class, user.getUserId());
+				dbUser = identitySpider.lookupGuid(User.class, user.getGuid());
 			} catch (NotFoundException e) {
 				throw new RuntimeException(e);
 			}
