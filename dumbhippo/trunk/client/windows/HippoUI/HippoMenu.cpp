@@ -9,7 +9,18 @@
 #include "HippoUI.h"
 
 static const int BASE_WIDTH = 150;
-static const int BASE_HEIGHT = 120;
+static const int BASE_HEIGHT = 200;
+
+HippoActivePost::HippoActivePost(const HippoBSTR &postId, 
+                                 const HippoBSTR &title,
+                                 const HippoBSTR &senderName,
+                                 int              chattingUserCount)
+{
+    postId_ = postId;
+    title_ = title;
+    senderName_ = senderName;
+    chattingUserCount_ = chattingUserCount;
+}
 
 HippoMenu::HippoMenu(void)
 {
@@ -41,6 +52,54 @@ HippoMenu::popup(int mouseX, int mouseY)
     create();
     moveResizeWindow();
     show();
+}
+
+void 
+HippoMenu::clearActivePosts()
+{
+    for (int i = (int)activePosts_.size() - 1; i >= 0; i--) {
+        invokeRemoveActivePost(i);
+    }
+    activePosts_.clear();
+}
+    
+void 
+HippoMenu::addActivePost(const HippoActivePost &post)
+{
+    int i = 0;
+    for (std::vector<HippoActivePost>::iterator iter = activePosts_.begin();
+         iter != activePosts_.end();
+         iter++, i++) 
+    {
+        if (iter->getPostId() == post.getPostId()) {
+            activePosts_.erase(iter);
+            invokeRemoveActivePost(i);
+            break;
+        }
+    }
+
+    activePosts_.insert(activePosts_.begin(), post);
+    invokeInsertActivePost(0, post);
+}
+ 
+void 
+HippoMenu::invokeRemoveActivePost(int i)
+{
+    if (ie_)
+        ie_->createInvocation(L"dhMenuRemoveActivePost").addLong(i).run();
+}
+
+void 
+HippoMenu::invokeInsertActivePost(int i, const HippoActivePost &post)
+{
+   if (ie_)
+        ie_->createInvocation(L"dhMenuInsertActivePost")
+            .addLong(i)
+            .add(post.getPostId())
+            .add(post.getTitle())
+            .add(post.getSenderName())
+            .addLong(post.getChattingUserCount())
+            .run();
 }
 
 void
@@ -86,6 +145,18 @@ HippoMenu::initializeIE()
     HippoBSTR styleURL;
     ui_->getAppletURL(L"clientstyle.xml", &styleURL);
     ie_->setXsltTransform(styleURL, L"appleturl", appletURL.m_str, NULL);
+}
+
+void 
+HippoMenu::initializeBrowser()
+{
+    int i = 0;
+    for (std::vector<HippoActivePost>::iterator iter = activePosts_.begin();
+         iter != activePosts_.end();
+         iter++, i++) 
+    {
+        invokeInsertActivePost(i, *iter);
+    }
 }
 
 bool 

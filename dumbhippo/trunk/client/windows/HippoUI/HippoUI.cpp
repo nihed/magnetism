@@ -474,6 +474,18 @@ HippoUI::create(HINSTANCE instance)
 
     registerStartup();
 
+    HippoActivePost post0(L"lAw0DANjmRQxcu", L"Unseen stuff", L"Owen", 3);
+    menu_.addActivePost(post0);
+    menu_.clearActivePosts();
+    HippoActivePost post1(L"lAw0DANjmRQxcv", L"Uncool stuff", L"Owen", 3);
+    menu_.addActivePost(post1);
+    HippoActivePost post2(L"lAw0DANjmRQxcw", L"Cool stuff", L"Havoc", 5);
+    menu_.addActivePost(post2);
+    HippoActivePost post3(L"lAw0DANjmRQxcx", L"Cooler stuff!", L"Bryan", 7);
+    menu_.addActivePost(post3);
+    HippoActivePost post4(L"lAw0DANjmRQxcx", L"k00ler stuff!", L"Bryan", 7);
+    menu_.addActivePost(post4);
+
     if (this->initialShowDebugShare_) {
         HippoLinkShare linkshare;
 
@@ -1651,6 +1663,18 @@ HippoUI::onReceivingMySpaceContactPost()
     mySpace_->onReceivingMySpaceContactPost();
 }
 
+
+void 
+HippoUI::clearActivePosts()
+{
+    menu_.clearActivePosts();
+}
+    
+void 
+HippoUI::addActivePost(const HippoActivePost &post)
+{
+    menu_.addActivePost(post);
+}
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32
  * message handling; this isn't very generalized, since we hardcode the handling

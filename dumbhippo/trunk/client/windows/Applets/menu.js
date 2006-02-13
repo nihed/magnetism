@@ -32,3 +32,33 @@ dh.menu.showRecent = function() {
     window.close()
     this._openSiteLink("/home")
 }
+
+// The parameters must be kept in sync with HippoMenu.cpp
+function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCount) {
+    var activePostsDiv = document.getElementById("dhActivePosts")
+    
+    var postDiv = document.createElement("div")
+    postDiv.className = "dh-menu-div"
+    
+    var postAnchor = document.createElement("a")
+    postDiv.appendChild(postAnchor)
+    
+    postAnchor.className = "dh-menu-link"
+    postAnchor.href = window.external.application.GetServerBaseUrl() + "visit?post=" + id
+    
+    postAnchor.appendChild(document.createTextNode(title))
+    
+    var before
+    if (position < activePostsDiv.childNodes.length)
+        before = activePostsDiv.childNodes[position]
+    else
+        before = null
+        
+    activePostsDiv.insertBefore(postDiv, before)
+}
+
+// The parameters must be kept in sync with HippoMenu.cpp
+function dhMenuRemoveActivePost(position) {
+    var activePostsDiv = document.getElementById("dhActivePosts")
+    activePostsDiv.removeChild(activePostsDiv.childNodes[position])
+}

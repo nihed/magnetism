@@ -17,6 +17,7 @@
 #include "HippoFlickr.h"
 #include "HippoIM.h"
 #include "HippoExternalBrowser.h"
+#include "HippoMenu.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoMySpace.h"
@@ -129,6 +130,9 @@ public:
     void setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts);
     void onCreatingMySpaceContactPost(HippoMySpaceContact *contact);
     void onReceivingMySpaceContactPost();
+
+    void clearActivePosts();
+    void addActivePost(const HippoActivePost &post);
 
     typedef enum {
         UNKNOWN,
