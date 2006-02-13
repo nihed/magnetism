@@ -53,29 +53,29 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			throw new RuntimeException(e);
 		}		
 		List<PostView> lastPosts = postingBoard.getReceivedPosts(new Viewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
-		List<PostView> ret = new ArrayList<PostView>();
+		List<PostView> result = new ArrayList<PostView>();
 		for (PostView post: lastPosts) {
 			Date postDate = post.getPost().getPostDate();
 			Date cur = new Date();
 			long timeDiff = cur.getTime() - postDate.getTime();
 			// Should probably push this into DB query
 			if (timeDiff < (RECENT_POSTS_SEC * 1000)) {
-				ret.add(post);
+				result.add(post);
 			}			
 		}
-		return ret;
+		return result;
 	}
 	
-	private double computeInitTemperature(LiveUser user, List<PostView> posts) {
-		double ret = 0.0;	
+	private double computeInitialTemperature(LiveUser user, List<PostView> posts) {
+		double score = 0.0;	
 		for (PostView post : posts) {
 			// Look for max of 3 unviewed posts			
-			if (ret >= 3.0)
+			if (score >= 3.0)
 				break;
 			 if (!post.isViewerHasViewed())
-				 ret += 1.0;
+				 score += 1.0;
 		}
-		return ret;
+		return score;
 	}
 	
 	// This probably needs to scale dynamically somehow based on
@@ -100,7 +100,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	private void initializeFromPosts(LiveUser user, List<PostView> recentPosts) {
 		LiveState state = LiveState.getInstance();		
-		double score = computeInitTemperature(user, recentPosts);
+		double score = computeInitialTemperature(user, recentPosts);
 		Hotness hotness = hotnessFromScore(user, score);
 		user.setHotness(hotness);
 		List<Guid> activePosts = new ArrayList<Guid>();
