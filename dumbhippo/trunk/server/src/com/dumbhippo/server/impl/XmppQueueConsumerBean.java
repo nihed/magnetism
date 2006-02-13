@@ -25,7 +25,6 @@ import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
-import com.dumbhippo.xmppcom.XmppEventRoomPresenceChange;
 
 @MessageDriven(activateConfig =
 {
@@ -62,9 +61,6 @@ public class XmppQueueConsumerBean implements MessageListener {
 				} else if (obj instanceof XmppEventChatMessage) {
 					XmppEventChatMessage event = (XmppEventChatMessage) obj;
 					processChatMessageEvent(event);					
-				} else if (obj instanceof XmppEventRoomPresenceChange) {
-					XmppEventRoomPresenceChange event = (XmppEventRoomPresenceChange) obj;
-					processRoomPresenceChangeEvent(event);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}
@@ -118,12 +114,5 @@ public class XmppQueueConsumerBean implements MessageListener {
 		User fromUser = getUserFromUsername(event.getFromUsername());
 		Post post = getPostFromRoomName(fromUser, event.getRoomName());		
 		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
-	}
-	
-	private void processRoomPresenceChangeEvent(XmppEventRoomPresenceChange event) {
-		User user = getUserFromUsername(event.getUsername());
-		Post post = getPostFromRoomName(user, event.getRoomName());
-		LiveState live = LiveState.getInstance();
-		live.postPresenceChange(post.getGuid(), user.getGuid(), event.isPresent());
 	}
 }

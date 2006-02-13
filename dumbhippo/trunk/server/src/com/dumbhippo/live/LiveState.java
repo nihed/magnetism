@@ -443,24 +443,37 @@ public class LiveState {
 		userCache.update(liveUser);
 	}
 	
-	public synchronized void postPresenceChange(Guid postId, Guid userId, boolean present) {
+	// Internal function to record a user joining the chat room for a post;
+	// see LiveXmppServer.postRoomUserAvailable
+	synchronized void postRoomUserAvailable(Guid postId, Guid userId) {
 		LivePost lpost = getLivePost(postId);
 		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
-		if (present) {
-			if (lpost.getChattingUserCount() == 0) {
-				postCache.addStrongReference(lpost);
-			}
-			lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);	
-		} else {
-			int newCount = lpost.getChattingUserCount() - 1;
-			lpost.setChattingUserCount(newCount);			
-			if (newCount == 0) {
-				postCache.dropStrongReference(lpost);
-			}
-		}
+
+		if (lpost.getChattingUserCount() == 0)
+			postCache.addStrongReference(lpost);
+
+		lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);	
 		postCache.update(lpost);
+
+		logger.debug("Chatting user count for " + postId + " is now " + lpost.getChattingUserCount());
 	}
-	
+
+	// Internal function to record a user leaving the chat room for a post;
+	// see LiveXmppServer.postRoomUserUnavailable
+	synchronized void postRoomUserUnavailable(Guid postId, Guid userId) {
+		LivePost lpost = getLivePost(postId);
+		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
+
+		int newCount = lpost.getChattingUserCount() - 1;
+		lpost.setChattingUserCount(newCount);
+		postCache.update(lpost);
+		
+		if (newCount == 0) 
+			postCache.dropStrongReference(lpost);
+					
+		logger.debug("Chatting user count for " + postId + " is now " + newCount);
+	}
+		
 	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
 		for (Iterator<T> i = set.iterator(); i.hasNext();) {
 			T t = i.next();

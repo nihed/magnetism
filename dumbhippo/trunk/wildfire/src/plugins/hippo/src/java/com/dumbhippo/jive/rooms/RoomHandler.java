@@ -10,7 +10,10 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import com.dumbhippo.jive.PresenceMonitor;
+
 public class RoomHandler implements Component {
+	private PresenceMonitor presenceMonitor;
 	private JID address;
 	private Map<String, Room> rooms;
 	
@@ -38,9 +41,14 @@ public class RoomHandler implements Component {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
-	public RoomHandler() {
+	public RoomHandler(PresenceMonitor presenceMonitor) {
+		this.presenceMonitor = presenceMonitor;
 		address = new JID(null, getServiceDomain(), null);
 		rooms = new HashMap<String, Room>();
+	}
+	
+	public PresenceMonitor getPresenceMonitor() {
+		return presenceMonitor;
 	}
 	
 	public JID getAddress() {
@@ -79,7 +87,7 @@ public class RoomHandler implements Component {
 			}
 		}
 		
-		room = Room.loadFromServer(roomName, userId);
+		room = Room.loadFromServer(this, roomName, userId);
 		if (room == null) {
 			Log.debug("  room doesn't seem to exist");
 			return null;

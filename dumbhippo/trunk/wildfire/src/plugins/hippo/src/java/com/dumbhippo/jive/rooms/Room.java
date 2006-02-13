@@ -28,9 +28,10 @@ import com.dumbhippo.server.MessengerGlueRemote.ChatRoomUser;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
-import com.dumbhippo.xmppcom.XmppEventRoomPresenceChange;
 
 public class Room {
+	private RoomHandler handler;
+	
 	private static class UserInfo {
 		private String username;
 		private String name;
@@ -114,7 +115,8 @@ public class Room {
 	
 	private JmsProducer queue;
 
-	private Room(ChatRoomInfo info) {
+	private Room(RoomHandler handler, ChatRoomInfo info) {
+		this.handler = handler; 
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
 		
 		allowedUsers = new HashMap<String, UserInfo>();
@@ -148,7 +150,7 @@ public class Room {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
-	public static Room loadFromServer(String roomName, String username) {
+	public static Room loadFromServer(RoomHandler handler, String roomName, String username) {
 		Log.debug("Querying server for information on post " + roomName);
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 		
@@ -160,7 +162,7 @@ public class Room {
 
 		Log.debug("  got response from server, title is " + info.getPostTitle());
 		
-		return new Room(info);
+		return new Room(handler, info);
 	}
 	
 	private void sendPresenceAvailable(JID to, UserInfo userInfo) {
@@ -235,9 +237,7 @@ public class Room {
 			if (userInfo.getPresentCount() == 1) {
 				presentUsers.put(username, userInfo);
 				needNotify = true;
-				XmppEventRoomPresenceChange event = new XmppEventRoomPresenceChange(roomName, username, true);
-		        ObjectMessage message = queue.createObjectMessage(event);
-		        queue.send(message);
+				handler.getPresenceMonitor().onRoomUserAvailable(roomName, username);
 			}
 		}
 
@@ -294,9 +294,7 @@ public class Room {
 		if (userInfo.getPresentCount() == 0) {
 			presentUsers.remove(username);
 			needNotify = true;
-			XmppEventRoomPresenceChange event = new XmppEventRoomPresenceChange(roomName, username, false);
-	        ObjectMessage message = queue.createObjectMessage(event);
-	        queue.send(message);			
+			handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
 		}
 		
 		if (participantResources.get(jid) != null) {

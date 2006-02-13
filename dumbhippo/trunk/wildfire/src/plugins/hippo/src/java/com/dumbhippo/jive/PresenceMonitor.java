@@ -2,8 +2,10 @@ package com.dumbhippo.jive;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,7 +25,7 @@ import com.dumbhippo.server.util.EJBUtil;
 
 public class PresenceMonitor implements SessionManagerListener {
 
-	private Map<String, Integer> sessionCounts;
+	private Map<String, UserInfo> userInfo;
 	private BlockingQueue<Notification> notificationQueue;
 	private NotifierThread notifierThread;
 	
@@ -39,6 +41,26 @@ public class PresenceMonitor implements SessionManagerListener {
 	private static final long RETRY_SLEEP = 10 * 1000; // 10 seconds
 
 	private class NotifierThread extends Thread {
+		private void sendNotification(MessengerGlueRemote glue, String serverIdentifier, Notification notification) throws NoSuchServerException {
+			if (notification.room != null) {
+				if (notification.available) {
+					Log.debug("Sending notification of user joining room");
+					glue.onRoomUserAvailable(serverIdentifier, notification.room, notification.user);
+				} else {
+					Log.debug("Sending notification of user leaving room");
+					glue.onRoomUserUnavailable(serverIdentifier, notification.room, notification.user);
+				}
+			} else {
+				if (notification.available) {
+					Log.debug("Sending user available notification");
+					glue.onUserAvailable(serverIdentifier, notification.user);
+				} else {
+					Log.debug("Sending user unavailable notification");
+					glue.onUserUnavailable(serverIdentifier, notification.user);
+				}
+			}		
+		}
+		
 		public void run() {
 			// This thread is responsible for keeping the application server 
 			// notified of the current set of present users. Three things are 
@@ -69,14 +91,19 @@ public class PresenceMonitor implements SessionManagerListener {
 							// we don't want to block the connection while sending
 							// out the initial notifications, so we use a temporary
 							// array.
-							List<String> users = new ArrayList<String>();
+							List<Notification> notifications = new ArrayList<Notification>();
 							
-							synchronized(sessionCounts) {
+							synchronized(userInfo) {
 								notificationQueue.clear();
 								
-								for (Entry<String, Integer> entry : sessionCounts.entrySet()) {
-									if (entry.getValue() > 0)
-										users.add(entry.getKey());
+								for (Entry<String, UserInfo> entry : userInfo.entrySet()) {
+									UserInfo info = entry.getValue();
+									if (info.sessionCount > 0)
+										notifications.add(new Notification(entry.getKey(), true));
+									if (info.rooms != null) {
+										for (String room : info.rooms)
+											notifications.add(new Notification(room, entry.getKey(), true));
+									}
 								}
 							}
 
@@ -84,8 +111,8 @@ public class PresenceMonitor implements SessionManagerListener {
 							String serverIdentifier = glue.serverStartup(now);
 							setServerIdentifier(serverIdentifier);
 							
-							for (String user : users) {
-								glue.onUserAvailable(serverIdentifier, user);
+							for (Notification notification : notifications) {
+								sendNotification(glue, serverIdentifier, notification);
 							}
 						} else {
 							long now = System.currentTimeMillis();
@@ -100,13 +127,7 @@ public class PresenceMonitor implements SessionManagerListener {
 							long sleepTime = (lastPingTime + PING_INTERVAL) - now;
 							Notification notification = notificationQueue.poll(sleepTime, TimeUnit.MILLISECONDS);
 							if (notification != null) {
-								if (notification.available) {
-									Log.debug("Sending user available notification");
-									glue.onUserAvailable(serverIdentifier, notification.user);
-								} else {
-									Log.debug("Sending user unavailable notification");
-									glue.onUserUnavailable(serverIdentifier, notification.user);
-								}
+								sendNotification(glue, serverIdentifier, notification);
 							}
 						}
 					} catch (NamingException e) {
@@ -114,7 +135,7 @@ public class PresenceMonitor implements SessionManagerListener {
 						serverIdentifier = null;
 						Thread.sleep(RETRY_SLEEP);
 					} catch (EJBException e) {
-						Log.debug("Got exception communicating with the application server, restarting presence tracking");
+						Log.debug("Got exception communicating with the application server, restarting presence tracking", e);
 						serverIdentifier = null;
 						Thread.sleep(RETRY_SLEEP);
 					} catch (NoSuchServerException e) {
@@ -128,12 +149,36 @@ public class PresenceMonitor implements SessionManagerListener {
 			}
 		}
 	}
+	
+	private static class UserInfo {
+		private int sessionCount;
+		private Set<String> rooms;
+		
+		void addRoom(String room) {
+			if (rooms == null)
+				rooms = new HashSet<String>();
+			rooms.add(room);
+		}
+		
+		void removeRoom(String room) {
+			rooms.remove(room);
+		}
+	}
 
 	private static class Notification {
+		private String room;
 		private String user;
 		private boolean available;
 
+		// Global presence
 		Notification(String user, boolean available) {
+			this.user = user;
+			this.available = available;
+		}
+
+		// Presence in a chat room
+		Notification(String room, String user, boolean available) {
+			this.room = room;
 			this.user = user;
 			this.available = available;
 		}
@@ -152,7 +197,7 @@ public class PresenceMonitor implements SessionManagerListener {
 	}
 	
 	public PresenceMonitor() {
-		sessionCounts = new HashMap<String, Integer>();
+		userInfo = new HashMap<String, UserInfo>();
 		notificationQueue = new LinkedBlockingQueue<Notification>();
 		notifierThread = new NotifierThread();
 		notifierThread.start();
@@ -176,25 +221,23 @@ public class PresenceMonitor implements SessionManagerListener {
 		
 		Log.debug("User '" + user + "' session count incrementing by " + increment);
 		
-		synchronized (sessionCounts) {			
-			Integer tmp = sessionCounts.get(user);
-			if (tmp == null)
-				oldCount = 0;
-			else
-				oldCount = tmp;
+		synchronized (userInfo) {			
+			UserInfo info = userInfo.get(user);
+			if (info == null) {
+				info = new UserInfo();
+				userInfo.put(user, info);
+			}
 			
+			oldCount = info.sessionCount;
 			newCount = oldCount + increment;
-			
 			if (newCount < 0) {
 				Log.error("Bug! decremented user session count below 0, old count " + oldCount + " increment " + increment);
 				newCount = 0; // "fix it"
 			}
-				
-			if (oldCount != newCount)
-				sessionCounts.put(user, newCount);
-			
 			Log.debug("User " + user + " now has " + newCount + " sessions was " + oldCount);
 		
+			info.sessionCount = newCount;
+			
 			// We queue this stuff so we aren't invoking some database operation in jboss
 			// with the lock held and blocking all new clients in the meantime
 			if (oldCount > 0 && newCount == 0) {
@@ -214,5 +257,31 @@ public class PresenceMonitor implements SessionManagerListener {
 	public void onClientSessionUnavailable(ClientSession session) {
 		Log.debug("Client session now unavailable: " + session.getStreamID());
 		onSessionCountChange(session, -1);
+	}
+	
+	public void onRoomUserAvailable(String room, String user) {
+		synchronized (userInfo) {
+			UserInfo info = userInfo.get(user);
+			if (info == null) {
+				Log.warn("Got chat room presence for unavailable user " + user);
+				return;
+			}
+			
+			info.addRoom(room);
+			
+			notificationQueue.add(new Notification(room, user, true));
+		}
+	}
+	
+	public void onRoomUserUnavailable(String room, String user) {
+		synchronized (userInfo) {
+			UserInfo info = userInfo.get(user);
+			if (info == null)
+				return;
+			
+			info.removeRoom(room);
+			
+			notificationQueue.add(new Notification(room, user, false));
+		}
 	}
 }

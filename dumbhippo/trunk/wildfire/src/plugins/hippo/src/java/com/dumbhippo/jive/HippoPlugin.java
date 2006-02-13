@@ -36,12 +36,11 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new PrefsIQHandler());
 			iqRouter.addHandler(new HotnessIQHandler());		
 			Log.debug("Adding PresenceMonitor");
-			roomHandler = new RoomHandler();			
 			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(presenceMonitor);
 					
-
+			roomHandler = new RoomHandler(presenceMonitor);			
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
 			} catch (ComponentException e) {

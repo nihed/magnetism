@@ -181,6 +181,32 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 	}
 
+	public void onRoomUserAvailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException  {
+		logger.debug("Jabber user " + username + " has joined chatroom " + roomname);
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+		
+		try {
+			server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
+		} catch (ParseException e) {
+			logger.debug("Corrupt roomname or username passed to onUserUnavailable", e);
+		}
+	}
+
+	public void onRoomUserUnavailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException {
+		logger.debug("Jabber user " + username + " has left chatroom " + roomname);
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+		
+		try {
+			server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
+		} catch (ParseException e) {
+			logger.debug("Corrupt roomname or username passed to onUserUnavailable", e);
+		}
+	}
+	
 	public String getMySpaceName(String username) {
 		User user = userFromTrustedUsername(username);
 		return user.getAccount().getMySpaceName();
