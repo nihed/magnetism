@@ -53,7 +53,7 @@ public class LiveState {
 	}
 	
 
-	// Helper object for WeakGuidMap
+	// Helper object for LiveObjectCache
 	private static class GuidReference<T> extends WeakReference<T> {
 		private Guid guid;
 		
@@ -179,8 +179,10 @@ public class LiveState {
 		 */
 		public void update(T obj) {
 			T old = peek(obj.getGuid());
-			assert(old != null);
-			assert(peek(obj.getGuid()) != obj);
+			// This guid must already exist in the cache, and
+			// the object being inserted must not be the same
+			// one as already exists.
+			assert(old != null && old != obj);
 			if (strongReferences.containsKey(obj.getGuid())) {
 				strongReferences.put(obj.getGuid(), obj);
 			}
