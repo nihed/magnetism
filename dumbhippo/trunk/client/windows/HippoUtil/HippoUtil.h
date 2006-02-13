@@ -94,6 +94,10 @@ public:
     }
 };
 
+#define HIPPO_DECLARE_REFCOUNTING           \
+    STDMETHODIMP_(DWORD) AddRef();          \
+    STDMETHODIMP_(DWORD) Release()
+
 #define HIPPO_DEFINE_REFCOUNTING(C) \
    STDMETHODIMP_(DWORD)             \
    C::AddRef()                      \

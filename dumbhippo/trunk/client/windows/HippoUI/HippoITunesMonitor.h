@@ -4,7 +4,7 @@
 class HippoITunesMonitorImpl;
 
 class HippoITunesMonitor :
-	public HippoMusicMonitor
+	public HippoPlaylistSource
 {
 public:
 	HippoITunesMonitor();
@@ -12,7 +12,10 @@ public:
 
 	virtual bool hasCurrentTrack() const;
 	virtual const HippoTrackInfo& getCurrentTrack() const;
-    virtual const std::vector<HippoTrackInfo> getPrimingData() const;
+
+    virtual std::vector<HippoPlaylist::Id> getPlaylists() const;
+    virtual HippoPtr<HippoPlaylist> getPlaylist(const HippoPlaylist::Id &id) const;
+    virtual HippoPtr<HippoPlaylist> getPrimingTracks() const;
 
 private:
 	friend class HippoITunesMonitorImpl;

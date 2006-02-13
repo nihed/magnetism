@@ -78,8 +78,7 @@ public:
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
-    STDMETHODIMP_(DWORD) AddRef();
-    STDMETHODIMP_(DWORD) Release();
+    HIPPO_DECLARE_REFCOUNTING;
 
     // IDispatch methods
     STDMETHODIMP GetIDsOfNames (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
@@ -432,6 +431,7 @@ HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
     //GET_PROPERTY_STRING(track, Format, Format);
     GET_PROPERTY_STRING(fileTrack_, Name, Name);
     GET_PROPERTY_STRING_IF_NOT_SET(urlTrack_, Name, Name);
+    GET_PROPERTY_STRING(fileTrack_, Location, Location);
     GET_PROPERTY_STRING(track, Artist, Artist);
     GET_PROPERTY_STRING(track, Album, Album);
     GET_PROPERTY_STRING(urlTrack_, URL, Url);
@@ -661,9 +661,23 @@ HippoITunesMonitor::getCurrentTrack() const
 	return impl_->track_;
 }
 
-const std::vector<HippoTrackInfo>
-HippoITunesMonitor::getPrimingData() const
+std::vector<HippoPlaylist::Id>
+HippoITunesMonitor::getPlaylists() const
 {
-    std::vector<HippoTrackInfo> empty;
-    return empty;
+    // FIXME
+    return std::vector<HippoPlaylist::Id>();
+}
+
+HippoPtr<HippoPlaylist>
+HippoITunesMonitor::getPlaylist(const HippoPlaylist::Id &id) const
+{
+    // FIXME
+    return 0;    
+}
+
+HippoPtr<HippoPlaylist>
+HippoITunesMonitor::getPrimingTracks() const
+{
+    // FIXME
+    return 0;
 }

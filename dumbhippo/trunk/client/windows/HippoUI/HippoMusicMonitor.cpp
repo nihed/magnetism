@@ -32,14 +32,22 @@ HippoMusicMonitor::fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo 
 	}
 }
 
-HippoMusicMonitor*
-HippoMusicMonitor::createITunesMonitor()
-{
-	return new HippoITunesMonitor();
-}
-
-HippoMusicMonitor*
+HippoPtr<HippoMusicMonitor>
 HippoMusicMonitor::createYahooMonitor()
 {
-	return new HippoYahooMonitor();
+	HippoPtr<HippoMusicMonitor> m = new HippoYahooMonitor();
+    m->Release();
+    return m;
 }
+
+HIPPO_DEFINE_REFCOUNTING(HippoMusicMonitor);
+
+HippoPtr<HippoPlaylistSource>
+HippoPlaylistSource::createITunesMonitor()
+{
+    HippoPtr<HippoPlaylistSource> m = new HippoITunesMonitor();
+    m->Release();
+    return m;
+}
+
+HIPPO_DEFINE_REFCOUNTING(HippoPlaylist);

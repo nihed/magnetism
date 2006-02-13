@@ -20,6 +20,6 @@ public:
 
 private:
     HippoUI *ui_;
-	HippoMusicMonitor *iTunes_;
-    HippoMusicMonitor *yahoo_;
+	HippoPtr<HippoPlaylistSource> iTunes_;
+    HippoPtr<HippoMusicMonitor> yahoo_;
 };

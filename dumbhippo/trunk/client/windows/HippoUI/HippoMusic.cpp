@@ -3,7 +3,7 @@
 #include "HippoUI.h"
 
 HippoMusic::HippoMusic()
-    : ui_(0), iTunes_(0), yahoo_(0)
+    : ui_(0)
 {
 
 }
@@ -12,12 +12,10 @@ HippoMusic::~HippoMusic()
 {
     if (iTunes_ != 0) {
         iTunes_->removeListener(this);
-	    delete iTunes_;
     }
 
     if (yahoo_ != 0) {
         yahoo_->removeListener(this);
-        delete yahoo_;
     }
 }
 
@@ -26,7 +24,7 @@ HippoMusic::setUI(HippoUI *ui)
 {
     ui_ = ui;
     if (iTunes_ == 0) {
-        iTunes_ = HippoMusicMonitor::createITunesMonitor();
+        iTunes_ = HippoPlaylistSource::createITunesMonitor();
         iTunes_->addListener(this);
     }
 

@@ -67,8 +67,7 @@ public:
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
-    STDMETHODIMP_(DWORD) AddRef();
-    STDMETHODIMP_(DWORD) Release();
+    HIPPO_DECLARE_REFCOUNTING;
 
     // IDispatch methods
     STDMETHODIMP GetIDsOfNames (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
@@ -310,7 +309,8 @@ HippoYahooMonitorImpl::getSongInfoString(PredefinedMetadataField field, BSTR *va
 }
 
 bool
-HippoYahooMonitorImpl::getSongInfoInt(PredefinedMetadataField field, INT32 *val) {
+HippoYahooMonitorImpl::getSongInfoInt(PredefinedMetadataField field, INT32 *val)
+{
     VARIANT retval;
     if (!getSongInfoVariant(field, &retval))
         return false;
@@ -334,6 +334,10 @@ HippoYahooMonitorImpl::tryReadTrackOnce(HippoTrackInfo *info)
     HippoBSTR isrc;
     HippoBSTR fileSize;
     HippoBSTR discNumber;
+
+    // FIXME we don't try to get the local path to the file (HippoTrackInfo::Location) 
+    // because it's not available via the Remote interface; we'd have to write a DLL 
+    // plugin to get at this, or the playlist stuff.
 
     if (!getSongInfoInt(METADATA_DURATION, &duration))
         return COM_FAILURE;
@@ -641,11 +645,4 @@ HippoYahooMonitor::getCurrentTrack() const
 {
 	assert(hasCurrentTrack());
 	return impl_->track_;
-}
-
-const std::vector<HippoTrackInfo>
-HippoYahooMonitor::getPrimingData() const
-{
-    std::vector<HippoTrackInfo> empty;
-    return empty;
 }

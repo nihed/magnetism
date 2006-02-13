@@ -38,6 +38,8 @@ public:                                                                         
 // Keep the fields here in sync with Java Track class on the server,
 // and with the code that stuffs HippoTrackInfo into an XMPP message,
 // and with any music player backends...
+// one exception is the Location property which doesn't leave the local 
+// system since it would have no meaning on the server
 class HippoTrackInfo
 {
 public:
@@ -55,6 +57,7 @@ public:
     HIPPO_TRACK_INFO_PROP_LONG(FileSize);
     HIPPO_TRACK_INFO_PROP_LONG(TrackNumber);
     HIPPO_TRACK_INFO_PROP(DiscIdentifier);
+    HIPPO_TRACK_INFO_PROP(Location);
 
 public:
     void clear() {
@@ -68,6 +71,7 @@ public:
         FileSize_ = 0;
         TrackNumber_ = 0;
         DiscIdentifier_ = 0;
+        Location_ = 0;
     }
 
     bool operator==(const HippoTrackInfo &other) const {
@@ -82,7 +86,8 @@ public:
             Duration_ == other.Duration_ &&
             FileSize_ == other.FileSize_ &&
             TrackNumber_ == other.TrackNumber_ && 
-            DiscIdentifier_ == other.DiscIdentifier_;
+            DiscIdentifier_ == other.DiscIdentifier_ && 
+            Location_ == other.Location_;
     }
 
     bool operator!=(const HippoTrackInfo &other) const {
@@ -108,20 +113,20 @@ public:
 	
 	virtual bool hasCurrentTrack() const = 0;
 	virtual const HippoTrackInfo& getCurrentTrack() const = 0;
-    virtual const std::vector<HippoTrackInfo> getPrimingData() const = 0;
 
 	void addListener(HippoMusicListener *listener);
 	void removeListener(HippoMusicListener *listener);
 
 	virtual ~HippoMusicMonitor() {}
 
-	static HippoMusicMonitor* createITunesMonitor();
-    static HippoMusicMonitor* createYahooMonitor();
+    static HippoPtr<HippoMusicMonitor> createYahooMonitor();
+
+    HIPPO_DECLARE_REFCOUNTING;
 
 protected:
 	void fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
 
-	HippoMusicMonitor() {}
+    HippoMusicMonitor() : refCount_(1) {}
 
 private:
 	HippoArray<HippoMusicListener*> listeners_;
@@ -129,6 +134,77 @@ private:
 	// private so they aren't used
 	HippoMusicMonitor(const HippoMusicMonitor &other);
 	HippoMusicMonitor& operator=(const HippoMusicMonitor &other);
+
+    DWORD refCount_;
+};
+
+// making this implement the STL container contract is just way too much work,
+// so doing something ad hoc instead
+class HippoPlaylist
+{
+public:
+    class Id {
+    public:
+        // implicit copy and assignment are fine
+
+        explicit Id(const std::string & str)
+            : id_(str)
+        {
+        }
+
+        bool operator==(const Id &other) const {
+            return id_ == other.id_;
+        }
+
+        bool operator!=(const Id &other) const {
+            return id_ != other.id_;
+        }
+
+    private:
+        std::string id_;
+        Id();
+    };
+
+    HIPPO_DECLARE_REFCOUNTING;
+
+    virtual ~HippoPlaylist() {}
+
+    // each playlist has an opaque ID
+    virtual const Id& getId() const = 0;
+    virtual int size() const = 0;
+    virtual const HippoTrackInfo& getTrack(int i) const = 0;
+
+protected:
+    HippoPlaylist() : refCount_(1) {}
+
+private:
+  	HippoPlaylist(const HippoPlaylist &other);
+	HippoPlaylist& operator=(const HippoPlaylist &other);
+
+    DWORD refCount_;
+};
+
+class HippoPlaylistSource
+    : public HippoMusicMonitor
+{
+public:
+
+    virtual std::vector<HippoPlaylist::Id> getPlaylists() const = 0;
+    virtual HippoPtr<HippoPlaylist> getPlaylist(const HippoPlaylist::Id &id) const = 0;
+    virtual HippoPtr<HippoPlaylist> getPrimingTracks() const = 0;
+
+    virtual ~HippoPlaylistSource() {}
+
+	static HippoPtr<HippoPlaylistSource> createITunesMonitor();
+
+protected:
+    HippoPlaylistSource() {}
+
+private:
+    // private so they aren't used
+	HippoPlaylistSource(const HippoPlaylistSource &other);
+	HippoPlaylistSource& operator=(const HippoPlaylistSource &other);
+
 };
 
 class HippoMusicListener
