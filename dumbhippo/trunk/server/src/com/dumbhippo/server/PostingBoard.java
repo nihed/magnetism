@@ -63,7 +63,7 @@ public interface PostingBoard {
 	public void postViewedBy(String postId, User clicker);
 	
 	/**
-	 * Get all messages that where posted in the chatroom about this post.
+	 * Get all messages that were posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
 	 * @return the list of mesages, sorted by date (newest last)
@@ -71,7 +71,7 @@ public interface PostingBoard {
 	public List<PostMessage> getPostMessages(Post post);
 	
 	/**
-	 * Get recent messages that where posted in the chatroom about this post.
+	 * Get recent messages that were posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
 	 * @return the list of mesages, sorted by date (newest last)
