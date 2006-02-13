@@ -25,13 +25,14 @@ public class LiveUser extends LiveObject {
 		super(userId);
 		this.hotness = Hotness.UNKNOWN;
 		this.activePosts = new ArrayList<Guid>();
+		this.availableCount = 0;
 	}
 		
-	void setAvailableCount(int availableCount) {
+	public void setAvailableCount(int availableCount) {
 		this.availableCount = availableCount;
 	}
 	
-	int getAvailableCount() {
+	public int getAvailableCount() {
 		return availableCount;
 	}
 

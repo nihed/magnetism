@@ -35,10 +35,9 @@ public class AdminPage {
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
 	}
-
-	public Set<PersonView> getLiveUsers() {
-		Set<LiveUser> lusers = liveState.getLiveUserCacheSnapshot();
-		Set<PersonView> ret = new HashSet<PersonView>();
+	
+	private Set<PersonView> liveUserSetToPersonView(Set<LiveUser> lusers) {
+		Set<PersonView> result = new HashSet<PersonView>();
 
 		for (LiveUser luser : lusers) {
 			User user;
@@ -47,10 +46,18 @@ public class AdminPage {
 			} catch (NotFoundException e) {
 				throw new RuntimeException(e);
 			}
-			ret.add(identitySpider.getSystemView(user));					
+			result.add(identitySpider.getSystemView(user));					
 		}
-		return ret;
+		return result;		
 	}
+
+	public Set<PersonView> getCachedLiveUsers() {
+		return liveUserSetToPersonView(liveState.getLiveUserCacheSnapshot());
+	}
+	
+	public Set<PersonView> getAvailableLiveUsers() {
+		return liveUserSetToPersonView(liveState.getLiveUserAvailableSnapshot());
+	}	
 	
 	public Set<LivePost> getLivePosts() {
 		return liveState.getLivePostSnapshot();

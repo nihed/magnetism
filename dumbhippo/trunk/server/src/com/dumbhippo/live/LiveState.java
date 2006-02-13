@@ -131,7 +131,7 @@ public class LiveState {
 		public void addStrongReference(T obj) {
 			Guid guid = obj.getGuid();
 			strongReferences.put(guid, obj);
-			poke(obj);
+
 		}
 		
 		/**
@@ -255,11 +255,20 @@ public class LiveState {
 	}
 	
 	/**
-	 * Returns a snapshot of the current set of live users.
+	 * Returns a snapshot of the current set of LiveUser objects in
+	 * the memory cache.
 	 */
 	public synchronized Set<LiveUser> getLiveUserCacheSnapshot() {
 		return userCache.getWeakCacheCopy();
 	}
+	
+
+	/**
+	 * Returns a snapshot of the current set of available users.
+	 */
+	public Set<LiveUser> getLiveUserAvailableSnapshot() {
+		return userCache.getStrongReferenceCopy();
+	}	
 	
 	/**
 	 * Get a LivePost cache object for a particular post if one is
@@ -418,6 +427,7 @@ public class LiveState {
 			logger.debug("User " + liveUser.getGuid() + " is now available");			
 			userCache.addStrongReference(liveUser);
 		}
+		userCache.update(liveUser);
 	}
 
 	// Internal function to update the availability count for the user;
@@ -430,6 +440,7 @@ public class LiveState {
 			logger.debug("User " + liveUser.getGuid() + " is no longer available");			
 			userCache.dropStrongReference(liveUser);
 		}
+		userCache.update(liveUser);
 	}
 	
 	public synchronized void postPresenceChange(Guid postId, Guid userId, boolean present) {
@@ -447,7 +458,7 @@ public class LiveState {
 				postCache.dropStrongReference(lpost);
 			}
 		}
-			
+		postCache.update(lpost);
 	}
 	
 	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
