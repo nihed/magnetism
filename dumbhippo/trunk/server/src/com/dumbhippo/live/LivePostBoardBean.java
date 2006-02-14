@@ -43,7 +43,8 @@ public class LivePostBoardBean implements LivePostBoard {
 		builder.appendTextNode("id", post.getId());
 		builder.appendTextNode("senderName", pv.getPoster().getName());		
 		builder.appendTextNode("title", post.getTitle());
-		builder.appendTextNode("activeChatCount", Integer.toString(livePost.getChattingUserCount()));
+		builder.appendTextNode("chattingUserCount", Integer.toString(livePost.getChattingUserCount()));
+		builder.appendTextNode("viewingUserCount", Integer.toString(livePost.getChattingUserCount()));
 		
 		return builder.toString();
 	}
