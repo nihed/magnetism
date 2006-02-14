@@ -24,6 +24,7 @@
   </c:forEach>  
 <h2>Current live posts: </h2>
   <c:forEach items="${admin.livePosts}" var="post">
+  	<dht:livePostDebug post="${post}"/>
   </c:forEach>
 </div>
 </body>

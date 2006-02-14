@@ -7,4 +7,5 @@
 <c:out value="${user.liveUser.guid}"/> (<c:out value="${user.name}"/>)  
 hotness: <c:out value="${user.liveUser.hotness}"/>
 avail count: <c:out value="${user.liveUser.availableCount}"/>
+hot posts: <c:forEach items="${user.liveUser.activePosts}" var="guid"><c:out value="${guid}"/> </c:forEach>
 <br/>

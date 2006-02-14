@@ -104,16 +104,26 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		Hotness hotness = hotnessFromScore(user, score);
 		user.setHotness(hotness);
 		List<Guid> activePosts = new ArrayList<Guid>();
+		List<LivePost> livePosts = new ArrayList<LivePost>();
 		for (PostView post : recentPosts) {
+			livePosts.add(state.getLivePost(post.getPost().getGuid()));
+		}
+		// First add in all the posts with active chats
+		for (LivePost post : livePosts) {
 			if (activePosts.size() >= MAX_ACTIVE_POSTS)
 				break;
-			// Right now we don't hold any kind of strong reference to the posts
-			LivePost livePost = state.getLivePost(post.getPost().getGuid());
-			if (livePost.getRecentMessageCount() > 0) {
-				activePosts.add(livePost.getGuid());
-			}
+			if (post.getChattingUserCount() > 0)
+				activePosts.add(post.getGuid());			
 		}
-		user.setActivePosts(activePosts);
+		// Now add in less interesting ones
+		while (activePosts.size() < MAX_ACTIVE_POSTS 
+				&& livePosts.size() > 0) {
+			LivePost post = livePosts.get(0);
+			if (!activePosts.contains(post.getGuid())) {
+				activePosts.add(post.getGuid());
+			}
+			livePosts.remove(0);
+		}
 	}
 	
 	private boolean checkUpdate(LiveUser user) {
