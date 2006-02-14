@@ -1,9 +1,8 @@
 package com.dumbhippo.live;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 
@@ -25,6 +24,14 @@ public class LiveXmppServer implements Ageable {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(LiveXmppServer.class);
 
+	// This is the same as com.dumbhippo.jive.rooms.RoomUserStatus; we 
+	// cut-and-paste rather than sharing to keep the build simple
+	private enum RoomUserStatus {
+		NONMEMBER,     // Not looking at the post
+		VISITOR,       // Viewing the post
+		PARTICIPANT    // Chatting in the post's chat room
+	}
+
 	private LiveState state;
 	private Map<Guid, UserInfo> availableUsers;
 	private int cacheAge;
@@ -32,28 +39,43 @@ public class LiveXmppServer implements Ageable {
 	
 	private static class UserInfo {
 		Guid userId;
-		Set<Guid> postRooms;
+		Map<Guid, RoomUserStatus> postRooms;
 		
 		UserInfo(Guid userId) {
 			this.userId = userId;
 		}
 		
-		void addPostRoom(Guid postId) {
+		void addPostRoom(Guid postId, boolean participant) {
 			if (postRooms == null)
-				postRooms = new HashSet<Guid>();
+				postRooms = new HashMap<Guid, RoomUserStatus>();
 			
-			postRooms.add(postId);
+			postRooms.put(postId, participant ? RoomUserStatus.PARTICIPANT : RoomUserStatus.VISITOR);
 		}
 		
-		void removePostRoom(Guid postId) {
+		RoomUserStatus removePostRoom(Guid postId) {
 			if (postRooms != null)
-				postRooms.remove(postId);
+				return postRooms.remove(postId);
+			else
+				return RoomUserStatus.NONMEMBER;
 		}
 		
-		boolean containsPostRoom(Guid postId) {
+		RoomUserStatus getPostRoomStatus(Guid postId) {
 			if (postRooms == null)
-				return false;
-			return postRooms.contains(postId);
+				return RoomUserStatus.NONMEMBER;
+			RoomUserStatus result = postRooms.get(postId);
+			if (result == null)
+				return RoomUserStatus.NONMEMBER;
+			else
+				return result;
+		}
+		
+		void sendUnavailable(LiveState state) {
+			if (postRooms != null) {
+				for (Entry<Guid,RoomUserStatus> entry : postRooms.entrySet())
+					state.postRoomUserUnavailable(entry.getKey(), userId, entry.getValue() == RoomUserStatus.PARTICIPANT);
+			}
+			
+			state.userUnavailable(userId);
 		}
 	}
 	
@@ -99,13 +121,8 @@ public class LiveXmppServer implements Ageable {
 		synchronized (state) {
 			UserInfo info = availableUsers.get(userId);
 			if (info != null) {
-				if (info.postRooms != null) {
-					for (Guid postId : info.postRooms)
-						state.postRoomUserUnavailable(postId, userId);
-				}
-				
 				availableUsers.remove(userId);
-				state.userUnavailable(userId);
+				info.sendUnavailable(state);
 			}
 		}
 	}
@@ -117,15 +134,24 @@ public class LiveXmppServer implements Ageable {
 	 * 
 	 * @param postId the post ID for the chat room 
 	 * @param userId the user who has joined the room
+	 * @param participant whether the user is a participant (chatting about the post)
+	 *        as compared to a guest (just viewing the post). If a user switches
+	 *        from participant to user or vice-versa, postRoomUserUnavailable.
+	 *        must be called in between.
 	 */
-	public void postRoomUserAvailable(Guid postId, Guid userId) {
+	public void postRoomUserAvailable(Guid postId, Guid userId, boolean participant) {
 		UserInfo info = availableUsers.get(userId);
-		if (info != null && !info.containsPostRoom(postId)) {
-			info.addPostRoom(postId);
-			state.postRoomUserAvailable(postId, userId);			
-		} else {
+		if (info == null) {
 			logger.warn("onPostRoomUserAvailable called for an unavailable user");
+			return;
 		}
+		if (info.getPostRoomStatus(postId) != RoomUserStatus.NONMEMBER) {
+			logger.warn("onPostRoomUserAvailable called for user already in room");
+			return;
+		}
+			
+		info.addPostRoom(postId, participant);
+		state.postRoomUserAvailable(postId, userId, participant);			
 	}
 
 	/**
@@ -137,10 +163,12 @@ public class LiveXmppServer implements Ageable {
 	 */
 	public void postRoomUserUnavailable(Guid postId, Guid userId) {
 		UserInfo info = availableUsers.get(userId);
-		if (info != null && info.containsPostRoom(postId)) {
-			info.removePostRoom(postId);
-			state.postRoomUserUnavailable(postId, userId);
-		}
+		if (info == null)
+			return;
+		
+		RoomUserStatus oldStatus = info.removePostRoom(postId);
+		if (oldStatus != RoomUserStatus.NONMEMBER)
+			state.postRoomUserUnavailable(postId, userId, oldStatus == RoomUserStatus.PARTICIPANT);
 	}
 	
 
@@ -178,12 +206,7 @@ public class LiveXmppServer implements Ageable {
 	
 	public void discard() {
 		for (UserInfo info : availableUsers.values()) {
-			if (info.postRooms != null) {
-				for (Guid postId : info.postRooms)
-					state.postRoomUserUnavailable(postId, info.userId);
-			}
-			
-			state.userUnavailable(info.userId);
+			info.sendUnavailable(state);
 		}
 		availableUsers = null;
 	}

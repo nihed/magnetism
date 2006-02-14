@@ -445,33 +445,38 @@ public class LiveState {
 	
 	// Internal function to record a user joining the chat room for a post;
 	// see LiveXmppServer.postRoomUserAvailable
-	synchronized void postRoomUserAvailable(Guid postId, Guid userId) {
+	synchronized void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
 		LivePost lpost = getLivePost(postId);
 		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
 
-		if (lpost.getChattingUserCount() == 0)
+		if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
 			postCache.addStrongReference(lpost);
 
-		lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);	
+		if (isParticipant)
+			lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);
+		else
+			lpost.setViewingUserCount(lpost.getViewingUserCount() + 1);
 		postCache.update(lpost);
 
-		logger.debug("Chatting user count for " + postId + " is now " + lpost.getChattingUserCount());
+		logger.debug("Post " + postId + " now has " + lpost.getViewingUserCount() + " viewing users and " + lpost.getChattingUserCount() + " chatting users");  
 	}
 
 	// Internal function to record a user leaving the chat room for a post;
 	// see LiveXmppServer.postRoomUserUnavailable
-	synchronized void postRoomUserUnavailable(Guid postId, Guid userId) {
+	synchronized void postRoomUserUnavailable(Guid postId, Guid userId, boolean wasParticipant) {
 		LivePost lpost = getLivePost(postId);
 		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
 
-		int newCount = lpost.getChattingUserCount() - 1;
-		lpost.setChattingUserCount(newCount);
+		if (wasParticipant)
+			lpost.setChattingUserCount(lpost.getChattingUserCount() - 1);
+		else
+			lpost.setViewingUserCount(lpost.getViewingUserCount() - 1);
 		postCache.update(lpost);
 		
-		if (newCount == 0) 
+		if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
 			postCache.dropStrongReference(lpost);
 					
-		logger.debug("Chatting user count for " + postId + " is now " + newCount);
+		logger.debug("Post " + postId + " now has " + lpost.getViewingUserCount() + " viewing users and " + lpost.getChattingUserCount() + " chatting users");  
 	}
 	
 

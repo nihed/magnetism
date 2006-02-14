@@ -41,6 +41,7 @@ public class LivePost extends LiveObject {
 
 	private int recentMessageCount;
 	private int chattingUserCount;
+	private int viewingUserCount;
 	
 	private static class Viewer {
 		private Guid userId;
@@ -98,6 +99,14 @@ public class LivePost extends LiveObject {
 		this.chattingUserCount = chattingUserCount;
 	}
 	
+	public int getViewingUserCount() {
+		return viewingUserCount;
+	}
+
+	public void setViewingUserCount(int chattingUserCount) {
+		this.viewingUserCount = chattingUserCount;
+	}
+	
 	@Override
 	public Object clone() {
 		try {
@@ -114,6 +123,7 @@ public class LivePost extends LiveObject {
 		LivePost post = (LivePost) arg;
 		return super.equals(post)
 				&& post.recentMessageCount == recentMessageCount
-				&& post.chattingUserCount == chattingUserCount;
+				&& post.chattingUserCount == chattingUserCount
+				&& post.viewingUserCount == viewingUserCount;
 	}
 }

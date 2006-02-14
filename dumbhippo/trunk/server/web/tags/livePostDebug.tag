@@ -7,4 +7,5 @@
 <c:out value="${post.guid}"/>  score: <c:out value="${post.score}"/> 
 recent msgs: <c:out value="${post.recentMessageCount}"/> 
 chatting users: <c:out value="${post.chattingUserCount}"/>
+viewing users: <c:out value="${post.viewingUserCount}"/>
 <br/>

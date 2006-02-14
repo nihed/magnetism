@@ -2,10 +2,8 @@ package com.dumbhippo.jive;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,6 +17,7 @@ import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManagerListener;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 
+import com.dumbhippo.jive.rooms.RoomUserStatus;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.NoSuchServerException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -44,12 +43,12 @@ public class PresenceMonitor implements SessionManagerListener {
 		private void sendNotification(MessengerGlueRemote glue, String serverIdentifier, Notification notification) throws NoSuchServerException {
 			if (notification instanceof RoomNotification) {
 				RoomNotification roomNotification = (RoomNotification) notification;
-				if (roomNotification.available) {
-					Log.debug("Sending notification of user joining room");
-					glue.onRoomUserAvailable(serverIdentifier, roomNotification.room, notification.user);
-				} else {
+				if (roomNotification.status == RoomUserStatus.NONMEMBER) {
 					Log.debug("Sending notification of user leaving room");
 					glue.onRoomUserUnavailable(serverIdentifier, roomNotification.room, notification.user);
+				} else {
+					Log.debug("Sending notification of user joining room");
+					glue.onRoomUserAvailable(serverIdentifier, roomNotification.room, notification.user, roomNotification.status == RoomUserStatus.PARTICIPANT);
 				}
 			} else if (notification instanceof UserNotification) {
 				UserNotification userNotification = (UserNotification) notification;
@@ -108,8 +107,8 @@ public class PresenceMonitor implements SessionManagerListener {
 										notifications.add(new ResourceConnectedNotification(entry.getKey()));
 									}
 									if (info.rooms != null) {
-										for (String room : info.rooms)
-											notifications.add(new RoomNotification(entry.getKey(), true, room));
+										for (Entry<String, RoomUserStatus> roomEntry : info.rooms.entrySet())
+											notifications.add(new RoomNotification(entry.getKey(), roomEntry.getKey(), roomEntry.getValue()));
 									}
 								}
 							}
@@ -159,12 +158,12 @@ public class PresenceMonitor implements SessionManagerListener {
 	
 	private static class UserInfo {
 		private int sessionCount;
-		private Set<String> rooms;
+		private Map<String, RoomUserStatus> rooms;
 		
-		void addRoom(String room) {
+		void addRoom(String room, RoomUserStatus status) {
 			if (rooms == null)
-				rooms = new HashSet<String>();
-			rooms.add(room);
+				rooms = new HashMap<String, RoomUserStatus>();
+			rooms.put(room, status);
 		}
 		
 		void removeRoom(String room) {
@@ -195,12 +194,14 @@ public class PresenceMonitor implements SessionManagerListener {
 		}
 	};
 	
-	private static class RoomNotification extends PresenceNotification {
+	private static class RoomNotification extends Notification {
 		private String room;
+		private RoomUserStatus status;
 		
-		RoomNotification(String user, boolean available, String roomName) {
-			super(user, available);
-			room = roomName;
+		RoomNotification(String user, String room, RoomUserStatus status) {
+			super(user);
+			this.room = room;
+			this.status = status;
 		}
 	}
 	
@@ -288,7 +289,7 @@ public class PresenceMonitor implements SessionManagerListener {
 		onSessionCountChange(session, -1);
 	}
 	
-	public void onRoomUserAvailable(String room, String user) {
+	public void onRoomUserAvailable(String room, String user, RoomUserStatus status) {
 		synchronized (userInfo) {
 			UserInfo info = userInfo.get(user);
 			if (info == null) {
@@ -296,9 +297,9 @@ public class PresenceMonitor implements SessionManagerListener {
 				return;
 			}
 			
-			info.addRoom(room);
+			info.addRoom(room, status);
 			
-			notificationQueue.add(new RoomNotification(user, true, room));
+			notificationQueue.add(new RoomNotification(user, room, status));
 		}
 	}
 	
@@ -310,7 +311,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			info.removeRoom(room);
 			
-			notificationQueue.add(new RoomNotification(user, false, room));
+			notificationQueue.add(new RoomNotification(user, room, RoomUserStatus.NONMEMBER));
 		}
 	}
 }

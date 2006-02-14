@@ -72,6 +72,15 @@ public class Room {
 		public void setPresentCount(int presentCount) {
 			this.presentCount = presentCount; 
 		}
+		
+		public RoomUserStatus getStatus() {
+			if (presentCount == 0)
+				return RoomUserStatus.NONMEMBER;
+			else if (participantCount == 0)
+				return RoomUserStatus.VISITOR;
+			else
+				return RoomUserStatus.PARTICIPANT;
+		}
 	}
 	
 	private static class MessageInfo {
@@ -179,7 +188,7 @@ public class Room {
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
-		info.addAttribute("role", userInfo.getParticipantCount() > 0 ? "participant" : "visitor");
+		info.addAttribute("role", userInfo.getStatus() == RoomUserStatus.PARTICIPANT ? "participant" : "visitor");
 		
 		XMPPServer.getInstance().getPacketRouter().route(presence);
 	}
@@ -237,7 +246,6 @@ public class Room {
 			if (userInfo.getPresentCount() == 1) {
 				presentUsers.put(username, userInfo);
 				needNotify = true;
-				handler.getPresenceMonitor().onRoomUserAvailable(roomName, username);
 			}
 		}
 
@@ -256,6 +264,9 @@ public class Room {
 		}
 
 		if (needNotify) {
+			if (resourceWasPresent)
+				handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
+			handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
 			for (JID member : presentResources.keySet()) {
 				sendPresenceAvailable(member, userInfo);
 			}
@@ -294,7 +305,6 @@ public class Room {
 		if (userInfo.getPresentCount() == 0) {
 			presentUsers.remove(username);
 			needNotify = true;
-			handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
 		}
 		
 		if (participantResources.get(jid) != null) {
@@ -305,11 +315,14 @@ public class Room {
 		}
 
 		if (needNotify) {
+			handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
+			if (userInfo.getStatus() != RoomUserStatus.NONMEMBER)
+				handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
 			for (JID member : presentResources.keySet()) {
-				if (userInfo.getPresentCount() > 0)
-					sendPresenceAvailable(member, userInfo);
-				else
+				if (userInfo.getStatus() == RoomUserStatus.NONMEMBER)
 					sendPresenceUnavailable(member, userInfo);
+				else
+					sendPresenceAvailable(member, userInfo);
 			}
 		}
 	}
