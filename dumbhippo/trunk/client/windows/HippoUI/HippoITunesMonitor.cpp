@@ -124,6 +124,7 @@ public:
 	HippoTrackInfo track_;
 	bool haveTrack_;
 	DWORD refCount_;
+    HippoPtr<IiTunes> iTunes_;
 	HippoPtr<ITypeInfo> ifaceTypeInfo_;
 	HippoPtr<IConnectionPoint> connectionPoint_;
 	DWORD connectionCookie_;
@@ -135,6 +136,7 @@ public:
 	void disconnect();
 	void setTrack(IITTrack *track);
 	bool readTrackInfo(IITTrack *track, HippoTrackInfo *info);
+    void readPlaylists();
 
     static gboolean checkRunningTimeout(void *data);
 
@@ -319,6 +321,9 @@ HippoITunesMonitorImpl::attemptConnect()
 		connectionCookie_ = 0;
 		return;
 	}
+
+    iTunes_ = iTunesPtr;
+
 	hippoDebugLogW(L"All connected up, supposedly; cookie: %d", (int) connectionCookie_);
 
 	listConnections(connectionPoint_);
@@ -334,6 +339,8 @@ HippoITunesMonitorImpl::attemptConnect()
 	}
 
 	setTrack(trackPtr);
+
+    readPlaylists();
 }
 
 void
@@ -358,6 +365,8 @@ HippoITunesMonitorImpl::disconnect() {
 	} else {
 		hippoDebugLogW(L"Connection point was null");
 	}
+    
+    iTunes_ = 0;
 
 	state_ = NO_ITUNES;
 }
@@ -530,6 +539,156 @@ HippoITunesMonitorImpl::setTrack(IITTrack *track)
 	hippoDebugLogW(L"itunes fired track change event");
 }
 
+static const wchar_t*
+sourceKindToString(ITSourceKind kind)
+{
+    switch (kind)
+    {
+    case ITSourceKindAudioCD:
+        return L"AudioCD";
+    case ITSourceKindDevice:
+        return L"Device";
+    case ITSourceKindIPod:
+        return L"IPod";
+    case ITSourceKindLibrary:
+        return L"Library";
+    case ITSourceKindMP3CD:
+        return L"MP3CD";
+    case ITSourceKindRadioTuner:
+        return L"RadioTuner";
+    case ITSourceKindSharedLibrary:
+        return L"SharedLibrary";
+    case ITSourceKindUnknown:
+        return L"Unknown";
+    default:
+        return L"Unhandled";
+    }
+}
+
+static const wchar_t*
+playlistKindToString(ITPlaylistKind kind)
+{
+    switch (kind)
+    {
+    case ITPlaylistKindCD:
+        return L"CD";
+    case ITPlaylistKindDevice:
+        return L"Device";
+    case ITPlaylistKindLibrary:
+        return L"Library";
+    case ITPlaylistKindRadioTuner:
+        return L"RadioTuner";
+    case ITPlaylistKindUser:
+        return L"User";
+    case ITPlaylistKindUnknown:
+        return L"Unknown";
+    default:
+        return L"Unhandled";
+    }
+}
+
+void
+HippoITunesMonitorImpl::readPlaylists()
+{
+	if (state_ == NO_ITUNES)
+		return;
+
+    HippoPtr<IITSourceCollection> sources;
+
+    HRESULT hRes = iTunes_->get_Sources(&sources);
+    if (FAILED(hRes)) {
+        disconnect();
+        return;
+    }
+
+    // this has to be sort of a race, getting the sources by 
+    // index using multiple calls, but no clear solution
+
+    long sourceCount;
+    hRes = sources->get_Count(&sourceCount);
+    if (FAILED(hRes)) {
+        disconnect();
+        return;
+    }
+
+     // yes, 1-based, yay
+    for (long i = 1; i <= sourceCount; ++i) {
+        HippoPtr<IITSource> source;
+        hRes = sources->get_Item(i, &source);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }
+
+        long sourceId;
+        hRes = source->get_sourceID(&sourceId);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }
+
+        HippoBSTR sourceName;
+        hRes = source->get_Name(&sourceName);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }
+
+        ITSourceKind sourceKind;
+        hRes = source->get_Kind(&sourceKind);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }        
+
+        ITunesObjectId id(sourceId, 0, 0, 0);
+        hippoDebugLogW(L"Source %s, %s '%s'", id.toString().c_str(), sourceKindToString(sourceKind), sourceName.m_str);
+
+        HippoPtr<IITPlaylistCollection> playlists;
+        hRes = source->get_Playlists(&playlists);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }
+
+        long listCount;
+        hRes = playlists->get_Count(&listCount);
+        if (FAILED(hRes)) {
+            disconnect();
+            return;
+        }
+        for (long j = 1; j <= listCount; ++j) {
+            HippoPtr<IITPlaylist> list;
+            hRes = playlists->get_Item(j, &list);
+            if (FAILED(hRes)) {
+                disconnect();
+                return;
+            }
+            HippoBSTR listName;
+            hRes = list->get_Name(&listName);
+            if (FAILED(hRes)) {
+                disconnect();
+                return;
+            }
+            long playlistId;
+            hRes = list->get_playlistID(&playlistId);
+            if (FAILED(hRes)) {
+                disconnect();
+                return;
+            }
+            ITPlaylistKind listKind;
+            hRes = list->get_Kind(&listKind);
+            if (FAILED(hRes)) {
+                disconnect();
+                return;
+            }
+
+            ITunesObjectId id(sourceId, playlistId, 0, 0);
+            hippoDebugLogW(L"Playlist %s, %s '%s'", id.toString().c_str(), playlistKindToString(listKind), listName.m_str);
+        }
+    }
+}
+
 /////////////////////// IUnknown implementation ///////////////////////
 
 STDMETHODIMP 
@@ -638,19 +797,19 @@ getIdFromArray(SAFEARRAY *array, long i, ITunesObjectId *id_p)
     HRESULT hRes = getBounds(array, 2, &lower, &upper);
     if (FAILED(hRes))
         return hRes;
-    hippoDebugLogW(L"Bounds of dimension 2 are [%ld,%ld)", lower, upper);
+    hippoDebugLogW(L"Bounds of dimension 2 are [%ld,%ld]", lower, upper);
 
     // it appears that iTunes will return less than 4 ids if the extra ones are 0? 
     // not really sure what's going on with that...
-    if ((upper - lower) > 4) {
-        hippoDebugLogW(L"Bad array bounds on dimension 2, [%ld,%ld)", lower, upper);
+    if ((upper - lower) != 3) {
+        hippoDebugLogW(L"Bad array bounds on dimension 2, [%ld,%ld]", lower, upper);
         return DISP_E_BADVARTYPE;
     }
 
     long idComponents[4] = { 0, 0, 0, 0 };
     long coord[2];
     coord[0] = i;
-    for (coord[1] = lower; coord[1] < upper; coord[1] += 1) {
+    for (coord[1] = lower; coord[1] <= upper; coord[1] += 1) {
         VARIANT vt;
         VariantInit(&vt);
         // hippoDebugLogW(L"asking for coord %d,%d", coord[0], coord[1]);
@@ -678,10 +837,10 @@ getIdsFromArray(SAFEARRAY *array, std::vector<ITunesObjectId> *ids_p)
     HRESULT hRes = getBounds(array, 1, &lower, &upper);
     if (FAILED(hRes))
         return hRes;
-    // if the array is empty we seem to get lower=0 upper=-1 for some reason...
-    hippoDebugLogW(L"Bounds of dimension 1 are [%ld,%ld)", lower, upper);
+    // if the array is empty we seem to get lower=0 upper=-1 since upper=0 would mean 0 is valid...
+    hippoDebugLogW(L"Bounds of dimension 1 are [%ld,%ld]", lower, upper);
 
-    for (long i = lower; i < upper; ++i) {
+    for (long i = lower; i <= upper; ++i) {
         ITunesObjectId id;
         hRes = getIdFromArray(array, i, &id);
         if (FAILED(hRes))
@@ -784,10 +943,14 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
                 hippoDebugLogW(L"null changedObjects array");
             }
 
+            if (deleted.size() == 0)
+                hippoDebugLogW(L"No deleted items");
             for (std::vector<ITunesObjectId>::const_iterator i = deleted.begin(); i != deleted.end(); ++i) {
                 hippoDebugLogW(L"Deleted %s", i->toString().c_str());
             }
 
+            if (changed.size() == 0)
+                hippoDebugLogW(L"No changed items");
             for (std::vector<ITunesObjectId>::const_iterator i = changed.begin(); i != changed.end(); ++i) {
                 hippoDebugLogW(L"Changed %s", i->toString().c_str());
             }

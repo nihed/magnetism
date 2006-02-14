@@ -339,6 +339,10 @@ HippoYahooMonitorImpl::tryReadTrackOnce(HippoTrackInfo *info)
     // because it's not available via the Remote interface; we'd have to write a DLL 
     // plugin to get at this, or the playlist stuff.
 
+    // FIXME apparently if no song is playing, we get the wrong type in the variant 
+    // return, and we disconnect and reconnect over and over; should fix, though 
+    // it's harmless really afaik
+
     if (!getSongInfoInt(METADATA_DURATION, &duration))
         return COM_FAILURE;
 
@@ -366,6 +370,7 @@ HippoYahooMonitorImpl::tryReadTrackOnce(HippoTrackInfo *info)
         return COM_FAILURE;
     EMPTY_TO_NULL(discNumber);
 
+#if 0
     hippoDebugLogW(L"Duration %d", duration);
 #define SPAM_STRING(s) if (s != 0) hippoDebugLogW(L#s L" %s", (s).m_str); else hippoDebugLogW(L#s L" not set")
     SPAM_STRING(artist);
@@ -375,6 +380,7 @@ HippoYahooMonitorImpl::tryReadTrackOnce(HippoTrackInfo *info)
     SPAM_STRING(isrc);
     SPAM_STRING(fileSize);
     SPAM_STRING(discNumber);
+#endif
 
     // YME does weird stuff, like have a track with only a title 
     // and the title is its window title, when it isn't playing anything.
