@@ -118,6 +118,7 @@ private:
     void handleMySpaceContactCommentMessage();
 
     bool handleHotnessMessage(LmMessage *message);
+    bool handleActivePostsMessage(LmMessage *message);
 
     void connectFailure(char *message);
     void authFailure(char *message);
