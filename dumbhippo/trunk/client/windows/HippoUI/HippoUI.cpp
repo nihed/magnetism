@@ -1394,14 +1394,14 @@ HippoUI::getAppletURL(BSTR  filename,
     WCHAR baseBuf[MAX_PATH];
 
     if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
-        throw HResultException::create(GetLastError());
+        throw HResultException(GetLastError());
 
     for (size_t i = wcslen(baseBuf); i > 0; i--)
         if (baseBuf[i - 1] == '\\')
             break;
 
     if (i == 0)  // No \ in path?
-        throw HResultException::create(E_FAIL);
+        throw HResultException(E_FAIL);
 
     HippoBSTR path((UINT)i, baseBuf);
     path.Append(L"applets\\");
@@ -1412,7 +1412,7 @@ HippoUI::getAppletURL(BSTR  filename,
     DWORD urlLength = INTERNET_MAX_URL_LENGTH;
     hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
     if (!SUCCEEDED (hr))
-        throw HResultException::create(hr);
+        throw HResultException(hr);
 
     *url = SysAllocString(urlBuf);
     if (*url == 0)
@@ -1848,7 +1848,7 @@ test_alloc_failure_behavior()
         void *t = new char[maxSize];
         hippoDebugLogW(L"allocated t is %p", t);
         delete t; // in case it succeeded, but may be 0...
-    } catch (std::bad_alloc e) {
+    } catch (std::bad_alloc &e) {
         hippoDebugLogU("exception is %s", e.what());
     } catch (...) {
         hippoDebugLogW(L"caught generic exception on alloc failure");

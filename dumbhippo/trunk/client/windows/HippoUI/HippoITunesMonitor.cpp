@@ -43,6 +43,70 @@ public:
     virtual HRESULT __stdcall OnSoundVolumeChangedEvent (long newVolume ) = 0;
 };
 
+ 
+// From iTunes developer docs:
+// 
+// An IITObject will always have a valid, non-zero source ID.
+//
+// An IITObject corresponding to a playlist or track will always have a valid playlist ID.
+// The playlist ID will be zero for a source.
+//
+// An IITObject corresponding to a track will always have a valid track and track database ID.
+// These IDs will be zero for a source or playlist.
+//
+// A track ID is unique within the track's playlist. A track database ID is unique across all playlists.
+// For example, if the same music file is in two different playlists, each of the tracks could have different track IDs, but they will have the same track database ID. 
+//
+
+class ITunesObjectId
+{
+public:
+    ITunesObjectId()
+    {
+        ITunesObjectId(0,0,0,0);
+    }
+
+    ITunesObjectId(long source, long playlist, long track, long trackDB)
+    {
+        data_[0] = source;
+        data_[1] = playlist;
+        data_[2] = track;
+        data_[3] = trackDB;
+    }
+
+    // default assignment and copy should be OK
+
+    bool isSource() const {
+        return data_[0] != 0 && data_[1] == 0;
+    }
+
+    bool isPlaylist() const {
+        return data_[0] != 0 && data_[1] != 0 && data_[2] == 0;
+    }
+
+    bool isTrack() const {
+        return data_[0] != 0 && data_[1] != 0 && data_[2] != 0;
+    }
+
+    // javatastic!
+    std::wstring toString() const {
+        std::wostringstream s;
+        if (isSource())
+            s << "Source ";
+        else if (isPlaylist())
+            s << "Playlist ";
+        else if (isTrack())
+            s << "Track ";
+        else
+            s << "Unknown ";
+        s << data_[0] << L":" << data_[1] << L":" << data_[2] << L":" << data_[3];
+        return s.str();
+    }
+
+private:
+    long data_[4];
+};
+
 class HippoITunesMonitorImpl
 	: public IDispatch
 {
@@ -543,7 +607,90 @@ HippoITunesMonitorImpl::GetIDsOfNames (REFIID    riid,
     ret = DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
     return ret;
 }
-        
+
+static HRESULT
+getBounds(SAFEARRAY *array, unsigned int dimension, long *lower, long *upper)
+{
+    *lower = -500;
+    *upper = -500;
+
+    HRESULT hRes = SafeArrayGetLBound(array, dimension, lower);
+    if (FAILED(hRes)) {
+        hippoDebugLogU("Failed to get array lower bound for dimension %d: %s", dimension,
+            HResultException(hRes).what());
+        return hRes;
+    }
+    hRes = SafeArrayGetUBound(array, dimension, upper);
+    if (FAILED(hRes)) {
+        hippoDebugLogU("Failed to get array upper bound for dimension %d: %s", dimension,
+            HResultException(hRes).what());
+        return hRes;
+    }
+    return S_OK;
+}
+
+static HRESULT
+getIdFromArray(SAFEARRAY *array, long i, ITunesObjectId *id_p)
+{
+    long lower;
+    long upper;
+
+    HRESULT hRes = getBounds(array, 2, &lower, &upper);
+    if (FAILED(hRes))
+        return hRes;
+    hippoDebugLogW(L"Bounds of dimension 2 are [%ld,%ld)", lower, upper);
+
+    // it appears that iTunes will return less than 4 ids if the extra ones are 0? 
+    // not really sure what's going on with that...
+    if ((upper - lower) > 4) {
+        hippoDebugLogW(L"Bad array bounds on dimension 2, [%ld,%ld)", lower, upper);
+        return DISP_E_BADVARTYPE;
+    }
+
+    long idComponents[4] = { 0, 0, 0, 0 };
+    long coord[2];
+    coord[0] = i;
+    for (coord[1] = lower; coord[1] < upper; coord[1] += 1) {
+        VARIANT vt;
+        VariantInit(&vt);
+        // hippoDebugLogW(L"asking for coord %d,%d", coord[0], coord[1]);
+        HRESULT hRes = SafeArrayGetElement(array, &coord[0], &vt);
+        idComponents[coord[1]] = vt.intVal; // safe (but useless) even if we failed the hresult
+        VariantClear(&vt);
+        if (FAILED(hRes)) {
+            if (hRes == DISP_E_BADINDEX)
+                hippoDebugLogW(L"Coordinate out of bounds");
+            hippoDebugLogW(L"Failed to get element %d,%d", coord[0], coord[1]);
+            return hRes;
+        }
+    }
+    *id_p = ITunesObjectId(idComponents[0], idComponents[1], idComponents[2], idComponents[3]);
+    return S_OK;
+}
+
+static HRESULT
+getIdsFromArray(SAFEARRAY *array, std::vector<ITunesObjectId> *ids_p)
+{
+    long lower;
+    long upper;
+
+    // dimensions are counted 1-based apparently
+    HRESULT hRes = getBounds(array, 1, &lower, &upper);
+    if (FAILED(hRes))
+        return hRes;
+    // if the array is empty we seem to get lower=0 upper=-1 for some reason...
+    hippoDebugLogW(L"Bounds of dimension 1 are [%ld,%ld)", lower, upper);
+
+    for (long i = lower; i < upper; ++i) {
+        ITunesObjectId id;
+        hRes = getIdFromArray(array, i, &id);
+        if (FAILED(hRes))
+            return hRes;
+        ids_p->push_back(id);
+    }
+    return S_OK;
+}
+
 STDMETHODIMP
 HippoITunesMonitorImpl::Invoke (DISPID        member,
 								const IID    &iid,
@@ -559,22 +706,99 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 	if (!ifaceTypeInfo_)
         return E_OUTOFMEMORY;
 
+#define BITS_SET(val, flags) (((val) & (flags)) == flags)
+#define ARG_HAS_TYPE(i, flags) BITS_SET(dispParams->rgvarg[(i)].vt, (flags))
+#define CHECK_ARG_TYPE(i, types) do {                                   \
+    if (!ARG_HAS_TYPE(i, types)) {                                      \
+        hippoDebugLogU("arg %d missing types %s", i, #types);           \
+        return DISP_E_BADVARTYPE;                                       \
+    } } while(0)
+#define CHECK_ARG_COUNT(expected) do {                  \
+     	if (dispParams->cArgs != 2) {                   \
+			hippoDebugLogW(L"wrong number of args");    \
+			return DISP_E_BADPARAMCOUNT;                \
+        } } while (0)
+
+#if 0
+    // debug spew of args when trying to figure out what's up
+    for (unsigned int argc = 0; argc < dispParams->cArgs; ++argc) {
+#define SPAM_ARG_TYPE(i, type) if (ARG_HAS_TYPE(i, type)) hippoDebugLogU("Arg %d has type %s", (i), #type)
+        SPAM_ARG_TYPE(argc, VT_UNKNOWN);
+        SPAM_ARG_TYPE(argc, VT_VARIANT);
+        SPAM_ARG_TYPE(argc, VT_ARRAY);
+        SPAM_ARG_TYPE(argc, VT_SAFEARRAY);
+        SPAM_ARG_TYPE(argc, VT_I4);
+        SPAM_ARG_TYPE(argc, VT_PTR);
+    }
+#endif
+
 	switch (member) {
 	case DISPID_ONDATABASECHANGEDEVENT:
-		hippoDebugLogW(L"database changed");
+        hippoDebugLogW(L"database changed");
+        // Two parameters, deletedObjects / changedOrAddedObjects
+        // each parameter is a 2D SAFEARRAY of VARIANT with the variants
+        // containing type VT_I4
+        // The first dimension is of size # of objects, the second is size 4
+        // the 4 items in the second dimension are the 
+        // source, playlist, track, track database) IDs
+
+        CHECK_ARG_COUNT(2);
+
+        CHECK_ARG_TYPE(0, VT_ARRAY | VT_VARIANT);
+        CHECK_ARG_TYPE(1, VT_ARRAY | VT_VARIANT);
+
+        {
+            // dispParams is BACKWARD so in the IDL, deletedObjects is first
+            SAFEARRAY *deletedObjects = dispParams->rgvarg[1].parray;
+            SAFEARRAY *changedObjects = dispParams->rgvarg[0].parray;
+
+            std::vector<ITunesObjectId> deleted;
+            if (deletedObjects != 0) {
+                if (SafeArrayGetDim(deletedObjects) != 2) {
+                    hippoDebugLogW(L"Wrong number of dimensions in deletedObjects array");
+                    return DISP_E_BADVARTYPE;
+                }
+
+                HRESULT hRes = getIdsFromArray(deletedObjects, &deleted);
+                if (FAILED(hRes)) {
+                    hippoDebugLogW(L"Failed to get IDs from the deletedObjects array");
+                    return hRes;
+                }
+            } else {
+                hippoDebugLogW(L"null deletedObjects array");
+            }
+
+            std::vector<ITunesObjectId> changed;
+            if (changedObjects != 0) {                
+                if (SafeArrayGetDim(changedObjects) != 2) {
+                    hippoDebugLogW(L"Wrong number of dimensions in changedObjects array");
+                    return DISP_E_BADVARTYPE;
+                }
+
+                HRESULT hRes = getIdsFromArray(changedObjects, &changed);
+                if (FAILED(hRes)) {
+                    hippoDebugLogW(L"Failed to get IDs from the changedObjects array");
+                    return hRes;
+                }
+            } else {
+                hippoDebugLogW(L"null changedObjects array");
+            }
+
+            for (std::vector<ITunesObjectId>::const_iterator i = deleted.begin(); i != deleted.end(); ++i) {
+                hippoDebugLogW(L"Deleted %s", i->toString().c_str());
+            }
+
+            for (std::vector<ITunesObjectId>::const_iterator i = changed.begin(); i != changed.end(); ++i) {
+                hippoDebugLogW(L"Changed %s", i->toString().c_str());
+            }
+        }
 		break;
 	case DISPID_ONPLAYERPLAYEVENT:
 		hippoDebugLogW(L"player play");
-		if (dispParams->cArgs != 1) {
-			hippoDebugLogW(L"wrong number of args");
-			return DISP_E_BADPARAMCOUNT;
-		}
 
-		// VT_VARIANT, VT_PTR, VT_UNKNOWN are all set in my experiments
-		if (!(dispParams->rgvarg[0].vt & VT_UNKNOWN)) {
-			hippoDebugLogW(L"no VT_UNKNOWN");
-			return DISP_E_BADVARTYPE;
-		}
+        CHECK_ARG_COUNT(1);
+
+        CHECK_ARG_TYPE(0, VT_UNKNOWN | VT_PTR | VT_VARIANT);
 
 		// FIXME it's probably better to just queue an idle that gets the 
 		// current track
@@ -592,17 +816,11 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 		hippoDebugLogW(L"playing track changed");
 		// this is if the properties of the track change, not if we change tracks.
 		// it's apparently most likely for something called "joined CD tracks"
-		if (dispParams->cArgs != 1) {
-			hippoDebugLogW(L"wrong number of args");
-			return DISP_E_BADPARAMCOUNT;
-		}
+        CHECK_ARG_COUNT(1);
 
-		// VT_VARIANT, VT_PTR, VT_UNKNOWN are all set in my experiments
-		if (!(dispParams->rgvarg[0].vt & VT_UNKNOWN)) {
-			hippoDebugLogW(L"VT_UNKNOWN not there");
-			return DISP_E_BADVARTYPE;
-		}
-		{
+        CHECK_ARG_TYPE(0, VT_UNKNOWN | VT_PTR | VT_VARIANT);
+
+        {
 			HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].punkVal);
 			setTrack(track);
 		}

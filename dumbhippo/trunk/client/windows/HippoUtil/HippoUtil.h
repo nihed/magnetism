@@ -24,17 +24,6 @@ private:
     HRESULT hResult_;
     mutable std::string what_;
 
-    HResultException(HRESULT hResult)
-        : hResult_(hResult)
-    {
-    }
-
-    HResultException(HRESULT hResult, const std::string & what)
-        : hResult_(hResult), what_(what)
-    {
-        appendHResultMessage();
-    }
-
     HResultException() {
     }
 
@@ -44,6 +33,9 @@ private:
 
             std::ostringstream ost(what_);
 
+            if (what_.size() > 0)
+                ost << ": ";
+
             if (!FormatMessageA (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
                 FORMAT_MESSAGE_FROM_SYSTEM,
                 NULL,
@@ -51,17 +43,17 @@ private:
                 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
                 reinterpret_cast<LPSTR>(&s),
                 0, NULL)) {
-                ost << ": HRESULT: Failed to format hresult ";
-                ost << hResult_;
+                ost << "HRESULT: Failed to format hresult (";
+                ost << hResult_ << ")";
             } else {
-                ost << ": HRESULT: ";
+                ost << "HRESULT: ";
                 ost << s;
-                ost << " ";
-                ost << hResult_;
+                ost << " (";
+                ost << hResult_ << ")";
                 LocalFree (s);
             }
             what_ = ost.str();
-        } catch (std::bad_alloc e) {
+        } catch (std::bad_alloc) {
             return;
         }
     }
@@ -78,19 +70,16 @@ public:
         }
         return what_.c_str();
     }
-
-    static std::exception create(HRESULT result) {
-        if (result == E_OUTOFMEMORY)
-            return std::bad_alloc();
-        else
-            return HResultException(result);
+    
+    HResultException(HRESULT hResult)
+        : hResult_(hResult)
+    {
     }
 
-    static std::exception create(HRESULT result, const std::string & what) {
-        if (result == E_OUTOFMEMORY)
-            return std::bad_alloc(what.c_str());
-        else
-            return HResultException(result, what);
+    HResultException(HRESULT hResult, const std::string & what)
+        : hResult_(hResult), what_(what)
+    {
+        appendHResultMessage();
     }
 };
 
@@ -289,7 +278,7 @@ public:
 
     void setUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
         if (utf8 == 0) {
-            throw HResultException::create(E_INVALIDARG, "null UTF-8 string");
+            throw HResultException(E_INVALIDARG, "null UTF-8 string");
         }
         if (len < 0)
             len = static_cast<int>(strlen(utf8));
@@ -299,14 +288,14 @@ public:
 
         int reqlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
         if (reqlen == 0)
-            throw HResultException::create(GetLastError(), "MultiByteToWideChar returned 0");
+            throw HResultException(GetLastError(), "MultiByteToWideChar returned 0");
         WCHAR *buf = new WCHAR[reqlen+1]; // add 1 so we can nul-terminate.
         buf[reqlen] = 0; // nul-terminate
         int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, len, buf, reqlen);
         assert(buf[reqlen] == 0); // still nul
         if (ret == 0) {
             delete [] buf;
-            throw HResultException::create(GetLastError(), "MultiByteToWideChar returned 0");
+            throw HResultException(GetLastError(), "MultiByteToWideChar returned 0");
         }
         assert(ret == reqlen);
         assign(buf, ret);
