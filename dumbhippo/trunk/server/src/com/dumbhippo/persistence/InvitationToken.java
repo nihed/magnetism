@@ -9,11 +9,17 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.AgeUtils;
 
 @Entity
+@Table(name="InvitationToken", 
+		   uniqueConstraints = 
+		      {@UniqueConstraint(columnNames={"id", "invitee_id"})}
+	   )
 public class InvitationToken extends Token {
 	private static final long serialVersionUID = 1L;
 	
@@ -21,9 +27,6 @@ public class InvitationToken extends Token {
 	private Set<InviterData> inviters;
 	private boolean viewed;
 	private Person resultingPerson;
-	
-	// @PersistenceContext(unitName = "dumbhippo")
-	// private EntityManager em;	
 	
 	/**
 	 * When an invitation goes through, a person is created.
@@ -50,19 +53,10 @@ public class InvitationToken extends Token {
 		this.viewed = false;
 		this.invitee = invitee;
 		this.inviters = new HashSet<InviterData>();
-		/*
-		if (inviter != null) {
-			InviterData inviterData = 
-				new InviterData(inviter, this.getCreationDate().getTime());
-			em.persist(inviterData);
-			this.inviters.add(inviterData);
-		}
-		*/
 		if (inviter != null) {
 			inviter.setInvitationDate(this.getCreationDate());
 			addInviter(inviter);
-		}		
-		
+		}				
 	}
 
 	/**
@@ -70,46 +64,25 @@ public class InvitationToken extends Token {
 	 * because the old one was expired. 
 	 * 
 	 * @param original the old token
-	 * @inviter User who reinitiated the invitation
+	 * @param inviter InviterData for the inviter who reinitiated the invitation
 	 */
-	public InvitationToken(InvitationToken original, InviterData inviterData) {
+	public InvitationToken(InvitationToken original, InviterData inviter) {
 		super(true);
 		this.viewed = original.viewed;
 		this.invitee = original.invitee;
 		this.inviters = new HashSet<InviterData>(original.inviters);
         // make sure the creation dates agree
-		inviterData.setInvitationDate(this.getCreationDate());
-        if (!this.inviters.contains(inviterData)) {
-    		addInviter(inviterData);
+		inviter.setInvitationDate(this.getCreationDate());
+        if (!this.inviters.contains(inviter)) {
+    		addInviter(inviter);
         }
-        
-		// update the invitation dates only in the new set of inviters
-        /*
-		for (InviterData localInviterData : this.inviters) {
-			if (localInviterData.getInviter().equals(inviterData.getInviter())) {
-				localInviterData.setInvitationDate(this.getCreationDate());
-				localInviterData.setDeleted(false);
-				return;
-			}
-		}
-		*/
-		// we did not find this inviter in the list of inviters, so should add him
-
-
 	}
 
 	@OneToOne
-	@JoinColumn(nullable=false,unique=true)
+	@JoinColumn(nullable=false)
 	public Resource getInvitee() {
 		return invitee;
 	}
-	
-    /*
-	@ManyToMany(fetch=FetchType.EAGER)
-	public Set<User> getInviters() {
-		return inviters;
-	}
-	*/
 
 	@OneToMany(fetch=FetchType.EAGER)
 	public Set<InviterData> getInviters() {
@@ -118,10 +91,10 @@ public class InvitationToken extends Token {
 
 	/**
 	 * 
-	 * @param inviterData inviter data to be added
+	 * @param inviter inviterData for an inviter to be added
 	 */
-	public void addInviter(InviterData inviterData) {
-		inviters.add(inviterData);
+	public void addInviter(InviterData inviter) {
+		inviters.add(inviter);
 	}
     
 	protected void setInvitee(Resource invitee) {

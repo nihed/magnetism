@@ -17,9 +17,10 @@ public class InvitePage extends AbstractInvitePage {
 	// previous invitation by the inviter to the invitee 
 	private InvitationView previousInvitation;
 	private boolean checkedForPreviousInvitation;
- 
+	
 	public InvitePage() {
 		checkedForPreviousInvitation = false;
+		maxInvitationsShown = 3;
 	}
 	
 	public String getEmail() {
@@ -83,5 +84,4 @@ public class InvitePage extends AbstractInvitePage {
         	return "[your message goes here]";
         }        	
 	}	
-	
 }

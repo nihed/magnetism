@@ -60,14 +60,24 @@ public interface InvitationSystem {
 	
 	
 	/**
-	 * Find all current invitations sent by the inviter, return them in a form
+	 * Find a selection of current invitations sent by the inviter, return them in a form
 	 * of inviter's views of them.
 	 * 
 	 * @param inviter a person that has been sending invitations
+	 * @param start invitation to start with
+	 * @param max maximum number of invitations to get
 	 * @return a list of InvitationViews that correspond to outstanding invitations
 	 * sent by the inviter
 	 */
-	public List<InvitationView> findOutstandingInvitations(User inviter);
+	public List<InvitationView> findOutstandingInvitations(User inviter, int start, int max);
+	
+	/**
+	 * Count all current invitations sent by the inviter.
+	 * 
+	 * @param inviter a person that has been sending invitations
+	 * @return the number of outstanding invitations sent by the inviter
+	 */
+	public int countOutstandingInvitations(User inviter);
 	
 	/**
 	 * Deletes an invitation created by a given user with a given authentication key.

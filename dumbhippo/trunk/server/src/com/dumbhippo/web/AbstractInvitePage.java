@@ -15,13 +15,50 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 	
 	// information about existing outstanding invitations
 	private ListBean<InvitationView> outstandingInvitations;
+	private int start;
+	private int totalInvitations;
+	protected int maxInvitationsShown;
+	
+	
+	protected AbstractInvitePage() {
+		start = 0;
+		totalInvitations = -1;
+		maxInvitationsShown = 4;
+	}
 	
 	public ListBean<InvitationView> getOutstandingInvitations() {
 		if (outstandingInvitations == null) {
 			logger.debug("Getting outstanding invitations by " + signin.getUser().getId());
-			outstandingInvitations = new ListBean<InvitationView>(invitationSystem.findOutstandingInvitations(signin.getUser()));
+			outstandingInvitations = 
+				new ListBean<InvitationView>(
+				    invitationSystem.findOutstandingInvitations(signin.getUser(), 
+				    		                                    start, 
+				    		                                    maxInvitationsShown+1));
 		}
 		return outstandingInvitations;
 	}
 
+	public int getTotalInvitations() {
+		if (totalInvitations < 0) {
+			totalInvitations = 
+				invitationSystem.countOutstandingInvitations(signin.getUser());
+		}
+		return totalInvitations;
+	}
+	
+	public void setStart(int start) {
+		if (start < 0) {
+			this.start = 0;
+		} else {		
+	        this.start = start;
+		}
+	}
+	
+	public int getStart() {
+		return start;
+	}
+	
+	public int getMaxInvitationsShown() {
+		return maxInvitationsShown;
+	}
 }

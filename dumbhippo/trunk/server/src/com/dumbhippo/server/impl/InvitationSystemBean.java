@@ -132,7 +132,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 								     "where inviterData member of invite.inviters and " +
 								     "inviterData.deleted = FALSE and " +
 								     "ar.resource = invite.invitee and " +
-								     "ar.owner = :invitee");
+								     "ar.owner = :invitee and " +
+								     "invite.creationDate = " +
+								     "(SELECT MAX(invite2.creationDate) " +
+								     " FROM InvitationToken invite2, AccountClaim ar2 " +
+								     " WHERE ar2.resource = invite2.invitee AND " +
+								     " ar2.owner = :invitee)");
 		query.setParameter("invitee", invitee);
 		
 		@SuppressWarnings("unchecked")
@@ -147,7 +152,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public List<InvitationView> findOutstandingInvitations(User inviter) {
+	public List<InvitationView> findOutstandingInvitations(User inviter, int start, int max) {
 				
 		// get only the InvitationTokens for which ResultingPerson is null,
 		// sorted by date in descending order
@@ -161,6 +166,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			"ORDER BY iv.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);
+		
+		if (max > 0)
+			q.setMaxResults(max);
+		
+		q.setFirstResult(start);
+		
 		@SuppressWarnings("unchecked")
 		List<InvitationToken> outstandingInvitations = q.getResultList();
 		
@@ -183,6 +194,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 			
 		return outstandingInvitationViews; 
+	}
+	
+	public int countOutstandingInvitations(User inviter) {		
+		// it would have been nice to use a COUNT query here, but because 
+		// we want to not count expired invitations, we need to query
+		// for invitation tokens
+		// next, it seems to be better to construct an unneeded InvitationView
+		// list, than to duplicate the filtering in findOutstandingInvitations
+		return findOutstandingInvitations(inviter, 0, -1).size();
 	}
 	
 	public InvitationView deleteInvitation(User inviter, String authKey) {
@@ -318,7 +338,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// be sure the invitee is our contact (even if we 
 		// end up not sending the invite)
 		spider.createContact(inviter, invitee);
-		
 		// this also catches inviting yourself and keeps us from 
 		// sending mail to disabled accounts 
 		User user = spider.lookupUserByResource(invitee);
@@ -329,7 +348,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		CreateInvitationResult result = CreateInvitationResult.REPEAT_INVITE;
 		InvitationToken iv = lookupInvitationFor(null, invitee);
-		if (iv == null || !iv.isValid()) {
+		if (iv == null || !iv.isValid()) {	
 			Account account = getAccount(inviter);
 			// if we messed up and let them send too many invitations,
 			// we just live with it here; we should have blocked
@@ -347,29 +366,29 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			
 			// renewing an expiration counts as creating (causes us to send new email)
 			result = CreateInvitationResult.INVITE_CREATED; 
-			if (iv != null) {
-				updateInvitation(iv, inviter, subject, message, invitationDeducted);				
-			} else {
+			if (iv != null) {	
+				iv = updateInvitation(iv, inviter, subject, message, invitationDeducted);				
+			} else {		
 				InviterData inviterData = new InviterData(inviter, subject, message, invitationDeducted);
 				em.persist(inviterData);
 				iv = new InvitationToken(invitee, inviterData);
 				em.persist(iv);
 			}			
-		} else {
+		} else {	
 			InviterData ivd = getInviterData(iv, inviter); 
-			if (ivd == null) {
+			if (ivd == null) {	
 				// adding a person as an inviter causes us to send e-mail and update
 				// invite information, though not deduct invitations available to
 				// the inviter
 				result = CreateInvitationResult.NEW_INVITER; 
-				updateInvitation(iv, inviter, subject, message, false);				
-			} else {
+				iv = updateInvitation(iv, inviter, subject, message, false);				
+			} else {	
 				// this is the default case of CreateInvitationResult.REPEAT_INVITE
 				// when someone wants to resend an invitation
 				// we want update the invitation with the new subject and message,
 				// but want to preserve the information on whether the person
 				// previously spent an invitation on the invite
-				updateInvitation(iv, inviter, subject, message, ivd.isInvitationDeducted());
+				iv = updateInvitation(iv, inviter, subject, message, ivd.isInvitationDeducted());
 			}
 		}
 	    return new Pair<CreateInvitationResult,InvitationToken>(result, iv);
@@ -387,20 +406,20 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	 * @param invitationDeducted flag indicating if invitations were deducted from the inviter
 	 *                           to send out this invitation
 	 */
-	private void updateInvitation(InvitationToken iv, User inviter, 
-			                     String subject, String message, 
-			                     boolean invitationDeducted) {
+	private InvitationToken updateInvitation(InvitationToken iv, User inviter, 
+			                                 String subject, String message, 
+			                                 boolean invitationDeducted) {
 		// in case it has been deleted previously
 		iv.setDeleted(false);
 		InviterData ivd = getInviterData(iv, inviter);
 		long currentTime = System.currentTimeMillis();
-		if (ivd == null) {
+		if (ivd == null) {	
 			ivd = new InviterData(inviter, currentTime, subject, message, invitationDeducted);
 			em.persist(ivd);
             // in some cases, this will add a new inviter to an expired invitation, 
 			// but it's ok
 			iv.addInviter(ivd);
-		} else {
+		} else {		
 			ivd.setInvitationDate(new Date(currentTime));
 			ivd.setInvitationSubject(subject);
 			ivd.setInvitationMessage(message);
@@ -412,14 +431,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// extend expiration period if not expired; if it
 		// is expired, create a new invitation token and move over
 		// all the inveterData
-		if (!iv.isExpired()) {
+		if (!iv.isExpired()) {	
 			iv.setCreationDate(new Date(currentTime));
-		} else {
+		} else {		
 		    // create a new auth key that isn't expired,
 		    // preserving current inviter list etc.
 		    iv = new InvitationToken(iv, ivd);
 			em.persist(iv);			
 		}
+		return iv;
 	}
 	
 	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {	

@@ -104,7 +104,7 @@
 		<div class="dh-right-box dh-right-box-last">
 			<h5 class="dh-title">Outstanding Invites</h5>
 			<div class="dh-people">
-           <dht:inviteList outstandingInvitations="${invite.outstandingInvitations}" invitesPage="false"/>
+            <dht:inviteList outstandingInvitations="${invite.outstandingInvitations}" invitesPage="false" start="0" maxInvitations="${invite.maxInvitationsShown}" totalInvitations="${invite.totalInvitations}"/>
 			</div>
 		</div>		
 		</div>

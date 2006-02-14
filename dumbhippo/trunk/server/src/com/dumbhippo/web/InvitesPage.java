@@ -47,5 +47,5 @@ public class InvitesPage extends AbstractInvitePage {
 		this.invitationToRestore = invitationToRestore;
 		invitationSystem.restoreInvitation(signin.getUser(), invitationToRestore);
 	}
-
+	
 }

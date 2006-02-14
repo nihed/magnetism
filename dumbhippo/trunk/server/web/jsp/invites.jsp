@@ -6,6 +6,7 @@
 <dh:bean id="invites" class="com.dumbhippo.web.InvitesPage" scope="request"/>
 <jsp:setProperty name="invites" property="invitationToDelete" param="invitationToDelete"/>
 <jsp:setProperty name="invites" property="invitationToRestore" param="invitationToRestore"/>
+<jsp:setProperty name="invites" property="start" param="start"/>
 
 <head>
 	<title>Manage Invites</title>
@@ -38,13 +39,13 @@
             </div>                 
             <br>
             <div class="dh-invite-actions">
-            <a href="/invites?invitationToRestore=${invites.deletedInvitation.invite.authKey}">Restore</a> 
+            <a href="/invites?start=${invites.start}&invitationToRestore=${invites.deletedInvitation.invite.authKey}">Restore</a> 
             </div>           
             <br>
             </div> <!-- dh-share-shadow -->
             </div> <!-- dh-share -->
 		</c:if>
-		<dht:inviteList outstandingInvitations="${invites.outstandingInvitations}" invitesPage="true"/>      
+		<dht:inviteList outstandingInvitations="${invites.outstandingInvitations}" invitesPage="true" start="${invites.start}" maxInvitations="${invites.maxInvitationsShown}" totalInvitations="${invites.totalInvitations}"/>      
         </div> <!-- dhSharesArea -->
 	</div>
 

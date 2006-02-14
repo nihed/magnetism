@@ -100,5 +100,21 @@ a.dh-invite-actions {
 }	
 
 input.dh-send-invite {
-
 }
+
+.dh-newer-invitations {
+    position:                   relative; 
+	left:					    50px;
+    margin-right:               80px; 
+    margin-bottom:              6px;
+    color:                      #fff500;	
+}
+
+.dh-later-invitations {
+    text-align:                 right;
+    margin-right:               53px;     
+    margin-top:                 14px;
+    color:                      #fff500;    
+}
+
+						
