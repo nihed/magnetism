@@ -15,12 +15,14 @@ static const int BASE_HEIGHT = 250;
 HippoActivePost::HippoActivePost(const HippoBSTR &postId, 
                                  const HippoBSTR &title,
                                  const HippoBSTR &senderName,
-                                 int              chattingUserCount)
+                                 int              chattingUserCount,
+                                 int              viewingUserCount)
 {
     postId_ = postId;
     title_ = title;
     senderName_ = senderName;
     chattingUserCount_ = chattingUserCount;
+    viewingUserCount_ = viewingUserCount;
 }
 
 HippoMenu::HippoMenu(void)
@@ -102,6 +104,7 @@ HippoMenu::invokeInsertActivePost(int i, const HippoActivePost &post)
             .add(post.getTitle())
             .add(post.getSenderName())
             .addLong(post.getChattingUserCount())
+            .addLong(post.getViewingUserCount())
             .run();
 }
 

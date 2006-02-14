@@ -1321,12 +1321,14 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/liveposts", "activePostsChanged");
         LmMessageNode *subchild;
         ui_->debugLogU("handling activePostsChanged message");
+        ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
             LmMessageNode *elt;
             HippoBSTR postId;
             HippoBSTR title;
             HippoBSTR senderName;
-            int chattingCount;
+            int chattingUserCount;
+            int viewingUserCount;
     
             if (strcmp (subchild->name, "livePost") != 0)
                 continue;
@@ -1349,13 +1351,19 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
             }
             title.setUTF8(elt->value);
 
-            elt = lm_message_node_get_child (subchild, "title");
+            elt = lm_message_node_get_child (subchild, "chattingUserCount");
             if (!(elt && elt->value)) {
                 return LM_HANDLER_RESULT_REMOVE_MESSAGE;
             }
-            chattingCount = strtol(elt->value, NULL, 10);
+            chattingUserCount = strtol(elt->value, NULL, 10);
 
-            HippoActivePost activePost(postId, title, senderName, chattingCount);
+            elt = lm_message_node_get_child (subchild, "viewingUserCount");
+            if (!(elt && elt->value)) {
+                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+            }
+            viewingUserCount = strtol(elt->value, NULL, 10);
+
+            HippoActivePost activePost(postId, title, senderName, chattingUserCount, viewingUserCount);
             ui_->debugLogW(L"adding active post, postId=%s", postId.m_str);
             ui_->addActivePost(activePost);
         }

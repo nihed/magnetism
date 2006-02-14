@@ -13,12 +13,14 @@ public:
     HippoActivePost(const HippoBSTR &postId, 
                     const HippoBSTR &title,
                     const HippoBSTR &senderName,
-                    int              chattingUserCount);
+                    int              chattingUserCount,
+                    int              viewingUserCount);
 
     const HippoBSTR &getPostId() const { return postId_; }
     const HippoBSTR &getTitle() const { return title_; }
     const HippoBSTR &getSenderName() const { return senderName_; }
     int getChattingUserCount() const { return chattingUserCount_; }
+    int getViewingUserCount() const { return viewingUserCount_; }
 
     // Default copy constructor and assignment operator work
 
@@ -27,6 +29,7 @@ private:
     HippoBSTR title_;
     HippoBSTR senderName_;
     int chattingUserCount_;
+    int viewingUserCount_;
 };
 
 class HippoMenu :

@@ -68,7 +68,7 @@ dh.menu.Menu = function() {
         window.external.application.Resize(dh.menu.WIDTH, height)
     }
     
-    this.insertActivePost = function(position, id, title, senderName, chattingUserCount) {
+    this.insertActivePost = function(position, id, title, senderName, chattingUserCount, viewingUserCount) {
         var activePostsDiv = document.getElementById("dhActivePosts")
         
         var postDiv = document.createElement("div")
@@ -107,6 +107,10 @@ dh.menu.Menu = function() {
             post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") people chatting right now"))
         else if (chattingUserCount > 0)
             post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") person chatting right now"))
+        else if (viewingUserCount > 1)
+            post.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") people looking at this now"))
+        else if (viewingUserCount > 0)
+            post.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") person looking at this now"))
         else
             post.metaDiv.appendChild(document.createTextNode("Sent by " + senderName))
         postDiv.appendChild(post.metaDiv)
@@ -148,8 +152,8 @@ var dhInit = function(appletUrl) {
 }
 
 // The parameters must be kept in sync with HippoMenu.cpp
-function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCount) {
-    dh.display.insertActivePost(position, id, title, senderName, chattingUserCount)
+function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCount, viewingUserCount) {
+    dh.display.insertActivePost(position, id, title, senderName, chattingUserCount, viewingUserCount)
 }
 
 // The parameters must be kept in sync with HippoMenu.cpp
