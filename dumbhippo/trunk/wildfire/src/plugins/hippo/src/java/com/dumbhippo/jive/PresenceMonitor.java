@@ -42,23 +42,28 @@ public class PresenceMonitor implements SessionManagerListener {
 
 	private class NotifierThread extends Thread {
 		private void sendNotification(MessengerGlueRemote glue, String serverIdentifier, Notification notification) throws NoSuchServerException {
-			if (notification.room != null) {
-				if (notification.available) {
+			if (notification instanceof RoomNotification) {
+				RoomNotification roomNotification = (RoomNotification) notification;
+				if (roomNotification.available) {
 					Log.debug("Sending notification of user joining room");
-					glue.onRoomUserAvailable(serverIdentifier, notification.room, notification.user);
+					glue.onRoomUserAvailable(serverIdentifier, roomNotification.room, notification.user);
 				} else {
 					Log.debug("Sending notification of user leaving room");
-					glue.onRoomUserUnavailable(serverIdentifier, notification.room, notification.user);
+					glue.onRoomUserUnavailable(serverIdentifier, roomNotification.room, notification.user);
 				}
-			} else {
-				if (notification.available) {
+			} else if (notification instanceof UserNotification) {
+				UserNotification userNotification = (UserNotification) notification;
+				if (userNotification.available) {
 					Log.debug("Sending user available notification");
 					glue.onUserAvailable(serverIdentifier, notification.user);
 				} else {
 					Log.debug("Sending user unavailable notification");
 					glue.onUserUnavailable(serverIdentifier, notification.user);
 				}
-			}		
+			} else if (notification instanceof ResourceConnectedNotification) {
+				ResourceConnectedNotification resNotification = (ResourceConnectedNotification) notification;
+				glue.onResourceConnected(serverIdentifier, resNotification.user);
+			}
 		}
 		
 		public void run() {
@@ -98,11 +103,13 @@ public class PresenceMonitor implements SessionManagerListener {
 								
 								for (Entry<String, UserInfo> entry : userInfo.entrySet()) {
 									UserInfo info = entry.getValue();
-									if (info.sessionCount > 0)
-										notifications.add(new Notification(entry.getKey(), true));
+									if (info.sessionCount > 0) {
+										notifications.add(new UserNotification(entry.getKey(), true));
+										notifications.add(new ResourceConnectedNotification(entry.getKey()));
+									}
 									if (info.rooms != null) {
 										for (String room : info.rooms)
-											notifications.add(new Notification(room, entry.getKey(), true));
+											notifications.add(new RoomNotification(entry.getKey(), true, room));
 									}
 								}
 							}
@@ -165,23 +172,42 @@ public class PresenceMonitor implements SessionManagerListener {
 		}
 	}
 
-	private static class Notification {
+	private static abstract class Notification {
+		String user;
+
+		Notification(String user) {
+			this.user = user;
+		}
+	}
+	
+	private static abstract class PresenceNotification extends Notification {
+		boolean available;
+		
+		PresenceNotification(String user, boolean available) {
+			super(user);
+			this.available = available;
+		}
+	}
+	
+	private static class UserNotification extends PresenceNotification {
+		UserNotification(String userName, boolean available) {
+			super(userName, available);
+		}
+	};
+	
+	private static class RoomNotification extends PresenceNotification {
 		private String room;
-		private String user;
-		private boolean available;
-
-		// Global presence
-		Notification(String user, boolean available) {
-			this.user = user;
-			this.available = available;
+		
+		RoomNotification(String user, boolean available, String roomName) {
+			super(user, available);
+			room = roomName;
 		}
-
-		// Presence in a chat room
-		Notification(String room, String user, boolean available) {
-			this.room = room;
-			this.user = user;
-			this.available = available;
-		}
+	}
+	
+	private static class ResourceConnectedNotification extends Notification {
+		ResourceConnectedNotification(String userName) {
+			super(userName);
+		}		
 	}
 	
 	private MessengerGlueRemote getGlue() throws NamingException {
@@ -241,9 +267,12 @@ public class PresenceMonitor implements SessionManagerListener {
 			// We queue this stuff so we aren't invoking some database operation in jboss
 			// with the lock held and blocking all new clients in the meantime
 			if (oldCount > 0 && newCount == 0) {
-				notificationQueue.add(new Notification(user, false));
+				notificationQueue.add(new UserNotification(user, false));
 			} else if (oldCount == 0 && newCount > 0) {
-				notificationQueue.add(new Notification(user, true));
+				notificationQueue.add(new UserNotification(user, true));
+			}
+			if (newCount > oldCount) {
+				notificationQueue.add(new ResourceConnectedNotification(user));
 			}
 		}
 	}
@@ -269,7 +298,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			info.addRoom(room);
 			
-			notificationQueue.add(new Notification(room, user, true));
+			notificationQueue.add(new RoomNotification(user, true, room));
 		}
 	}
 	
@@ -281,7 +310,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			info.removeRoom(room);
 			
-			notificationQueue.add(new Notification(room, user, false));
+			notificationQueue.add(new RoomNotification(user, false, room));
 		}
 	}
 }

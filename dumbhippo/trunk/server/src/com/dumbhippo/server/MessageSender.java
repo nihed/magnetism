@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -30,7 +30,7 @@ public interface MessageSender {
 	
 	public void sendMySpaceContactCommentNotification(User user);
 
-	public void sendHotnessChanged(User newUser, Hotness hotness);
+	public void sendHotnessChanged(LiveUser user);
 
-	public void sendActivePostsChanged(User user);
+	public void sendActivePostsChanged(LiveUser user);
 }

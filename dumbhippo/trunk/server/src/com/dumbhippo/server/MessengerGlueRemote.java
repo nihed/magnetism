@@ -256,7 +256,7 @@ public interface MessengerGlueRemote {
 	
 	/**
 	 * Called when Jabber server starts up. After calling this method you must
-	 * calling serverPing periodically or it will be assumed that the server
+	 * call serverPing periodically or it will be assumed that the server
 	 * has died and cached state for the server will be discarded. 
 	 * (Once a minute is the recommended ping period.)
 	 *  
@@ -309,6 +309,16 @@ public interface MessengerGlueRemote {
 	 */
 	public void onRoomUserUnavailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException;
 
+
+	/**
+	 * Called whenever a new resource connects associated with a user.
+	 * 
+	 * @param serverIdentifier identifying string for the server returned from serverStartup()
+	 * @param user the username associated with resource
+	 * @throws NoSuchServerException 
+	 */
+	public void onResourceConnected(String serverIdentifier, String user) throws NoSuchServerException;	
+	
 	/**
 	 * Get the information needed to manage a chatroom for a post.
 	 * 

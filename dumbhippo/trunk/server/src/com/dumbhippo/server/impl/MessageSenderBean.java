@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +22,10 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LivePost;
+import com.dumbhippo.live.LivePostBoard;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -75,6 +80,9 @@ public class MessageSenderBean implements MessageSender {
 
 	@EJB
 	private NoMailSystem noMail;
+	
+	@EJB 
+	private LivePostBoard livePostBoard;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -320,9 +328,12 @@ public class MessageSenderBean implements MessageSender {
 	private class ActivePostsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "activePostsChanged";
 
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/posts";
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/liveposts";
 		
-		public ActivePostsChangedExtension() {
+		List<String> livePosts;
+		
+		public ActivePostsChangedExtension(List<String> livePosts) {
+			this.livePosts = livePosts;
 		}
 
 		public String getElementName() {
@@ -336,6 +347,11 @@ public class MessageSenderBean implements MessageSender {
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+			for (String postXml : livePosts) {
+				builder.openElement("livePost");
+				builder.append(postXml);
+				builder.closeElement();
+			}
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -504,18 +520,29 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendHotnessChanged(User user, Hotness hotness) {
+		public void sendHotnessChanged(LiveUser user) {
 			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new HotnessChangedExtension(hotness));
+			User dbUser = identitySpider.lookupUser(user);			
+			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
+			message.addExtension(new HotnessChangedExtension(user.getHotness()));
 			logger.info("Sending hotnessChanged message to " + message.getTo());			
 			connection.sendPacket(message);
 		}
 
-		public void sendActivePostsChanged(User user) {
+		public void sendActivePostsChanged(LiveUser user) {
 			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new ActivePostsChangedExtension());
+			User dbUser = identitySpider.lookupUser(user);
+			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
+			List<String> livePosts = new ArrayList<String>();
+			LiveState state = LiveState.getInstance();
+			for (Guid guid : user.getActivePosts()) {
+				LivePost post = state.peekLivePost(guid);
+				if (post == null)
+					continue;
+				String xml = livePostBoard.getLivePostXML(new Viewpoint(dbUser), post);
+				livePosts.add(xml);
+			}
+			message.addExtension(new ActivePostsChangedExtension(livePosts));
 			logger.info("Sending activePostsChanged message to " + message.getTo());			
 			connection.sendPacket(message);						
 		}
@@ -728,11 +755,11 @@ public class MessageSenderBean implements MessageSender {
 		xmppSender.sendMySpaceContactCommentNotification(user);
 	}
 
-	public void sendHotnessChanged(User user, Hotness hotness) {
-		xmppSender.sendHotnessChanged(user, hotness);
+	public void sendHotnessChanged(LiveUser user) {
+		xmppSender.sendHotnessChanged(user);
 	}
 
-	public void sendActivePostsChanged(User user) {
+	public void sendActivePostsChanged(LiveUser user) {
 		xmppSender.sendActivePostsChanged(user);
 	}
 }

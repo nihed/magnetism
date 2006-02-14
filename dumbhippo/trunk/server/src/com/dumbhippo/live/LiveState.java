@@ -473,6 +473,13 @@ public class LiveState {
 					
 		logger.debug("Chatting user count for " + postId + " is now " + newCount);
 	}
+	
+
+	public synchronized void resendAllNotifications(Guid guid) {
+		LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
+		LiveUser luser = getLiveUser(guid);
+		userUpdater.sendAllNotifications(luser);
+	}	
 		
 	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
 		for (Iterator<T> i = set.iterator(); i.hasNext();) {

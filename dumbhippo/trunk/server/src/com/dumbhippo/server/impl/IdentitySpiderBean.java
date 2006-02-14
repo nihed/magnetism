@@ -20,6 +20,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
@@ -106,6 +107,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null;
 		}
 	}
+
+	public User lookupUser(LiveUser luser) {
+		return em.find(User.class, luser.getGuid().toString());
+	}	
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException {
 		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid

@@ -143,6 +143,16 @@ public class LiveXmppServer implements Ageable {
 		}
 	}
 	
+
+	/**
+	 * Notify that a resource has connected.
+	 * 
+	 * @param guid Guid associated with a user
+	 */
+	public void resourceConnected(Guid guid) {
+		state.resendAllNotifications(guid);
+	}	
+	
 	/**
 	 * Keeps an LiveXmppServer object alive, cached, and referencing
 	 * it's users. This must be called within 

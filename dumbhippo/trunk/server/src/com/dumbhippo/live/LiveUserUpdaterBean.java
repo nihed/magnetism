@@ -129,16 +129,11 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 				+ " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());		
 		if (!newUser.equals(user)) {
 			state.updateLiveUser(newUser);
-			User dbUser;
-			try {
-				dbUser = identitySpider.lookupGuid(User.class, user.getGuid());
-			} catch (NotFoundException e) {
-				throw new RuntimeException(e);
-			}
+			// Remember to update sendAllNotifications if you add a new one here
 			if (!newUser.getHotness().equals(user.getHotness()))
-				msgSender.sendHotnessChanged(dbUser, newUser.getHotness());
+				msgSender.sendHotnessChanged(user);
 			if (!newUser.getActivePosts().equals(user.getActivePosts()))
-				msgSender.sendActivePostsChanged(dbUser);
+				msgSender.sendActivePostsChanged(user);
 		}
 	}
 
@@ -154,5 +149,12 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		if (!checkUpdate(user))
 			return;		
 		update(user);
+	}
+
+	public void sendAllNotifications(LiveUser luser) {
+		// Remember to change the update method as well when adding
+		// a new notification
+		msgSender.sendHotnessChanged(luser);
+		msgSender.sendActivePostsChanged(luser);		
 	}
 }

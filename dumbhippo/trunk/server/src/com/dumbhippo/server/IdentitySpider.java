@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -95,6 +96,11 @@ public interface IdentitySpider {
 	 * @return the owning person, or null if none
 	 */
 	public User lookupUserByResource(Resource resource);
+	
+	/**
+	 * Return the database User object associated with a LiveUser.
+	 */
+	public User lookupUser(LiveUser luser);
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException;

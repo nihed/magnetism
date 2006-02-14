@@ -20,10 +20,10 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MySpaceBlogComment;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
@@ -206,6 +206,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			logger.debug("Corrupt roomname or username passed to onUserUnavailable", e);
 		}
 	}
+	
+	public void onResourceConnected(String serverIdentifier, String username) throws NoSuchServerException {
+		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
+		if (server == null)
+			throw new NoSuchServerException(null);
+		try {
+			server.resourceConnected(Guid.parseJabberId(username));
+		} catch (ParseException e) {
+			logger.debug("Corrupt username passed to onResourceConnected", e);
+		}		
+	}	
 	
 	public String getMySpaceName(String username) {
 		User user = userFromTrustedUsername(username);
