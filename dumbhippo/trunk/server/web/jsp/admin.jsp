@@ -22,7 +22,7 @@
   <c:forEach items="${admin.availableLiveUsers}" var="user">
 	<dht:liveUserDebug user="${user}"/>
   </c:forEach>  
-<h2>Current live posts: </h2>
+<h2>Cached live posts: </h2>
   <c:forEach items="${admin.livePosts}" var="post">
   	<dht:livePostDebug post="${post}"/>
   </c:forEach>

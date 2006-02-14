@@ -235,7 +235,7 @@ public class LiveState {
 			userCache.poke(liveUser);
 		}
 		
-		updateLiveUser(liveUser);
+		userCache.touch(liveUser);
 		
 		return liveUser;
 	}

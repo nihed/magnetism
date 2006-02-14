@@ -16,7 +16,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
@@ -43,36 +42,28 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	static final int RECENT_POSTS_MAX_HISTORY = 20;
 	
-	static final int RECENT_POSTS_SEC = 60 * 60;
+	static final int CURRENT_POSTS_SEC = 60 * 60;
 	
-	private List<PostView> getRecentReceivedPosts(LiveUser user) {
-		User dbUser;
-		try {
-			dbUser = identitySpider.lookupGuid(User.class, user.getGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}		
-		List<PostView> lastPosts = postingBoard.getReceivedPosts(new Viewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
-		List<PostView> result = new ArrayList<PostView>();
-		for (PostView post: lastPosts) {
-			Date postDate = post.getPost().getPostDate();
-			Date cur = new Date();
-			long timeDiff = cur.getTime() - postDate.getTime();
-			// Should probably push this into DB query
-			if (timeDiff < (RECENT_POSTS_SEC * 1000)) {
-				result.add(post);
-			}			
-		}
-		return result;
+	private boolean postIsCurrent(PostView post) {
+		Date postDate = post.getPost().getPostDate();
+		Date cur = new Date();
+		long timeDiff = cur.getTime() - postDate.getTime();
+		// Should probably push this into DB query
+		return timeDiff < (CURRENT_POSTS_SEC * 1000);		
 	}
 	
+	private List<PostView> getRecentPosts(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);
+		return postingBoard.getReceivedPosts(new Viewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
+	}
+
 	private double computeInitialTemperature(LiveUser user, List<PostView> posts) {
 		double score = 0.0;	
 		for (PostView post : posts) {
 			// Look for max of 3 unviewed posts			
 			if (score >= 3.0)
 				break;
-			 if (!post.isViewerHasViewed())
+			 if (postIsCurrent(post) && !post.isViewerHasViewed())
 				 score += 1.0;
 		}
 		return score;
@@ -95,7 +86,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	}
 	
 	public void initialize(LiveUser user) {
-		initializeFromPosts(user, getRecentReceivedPosts(user));
+		initializeFromPosts(user, getRecentPosts(user));
 	}
 	
 	private void initializeFromPosts(LiveUser user, List<PostView> recentPosts) {
@@ -124,6 +115,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			}
 			livePosts.remove(0);
 		}
+		user.setActivePosts(activePosts);
 	}
 	
 	private boolean checkUpdate(LiveUser user) {
@@ -133,7 +125,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	private void update(LiveUser user) {
 		LiveState state = LiveState.getInstance();
 		LiveUser newUser = (LiveUser) user.clone();
-		List<PostView> recentPosts = getRecentReceivedPosts(user);
+		List<PostView> recentPosts = getRecentPosts(user);
 		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
 		logger.debug("computing hotness for user " + user.getGuid() 
 				+ " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());		
