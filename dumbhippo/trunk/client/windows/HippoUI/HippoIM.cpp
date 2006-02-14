@@ -1387,6 +1387,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (im->handleActivePostsMessage(message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
     if (im->checkMySpaceContactCommentMessage(message)) {
         im->handleMySpaceContactCommentMessage();
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
