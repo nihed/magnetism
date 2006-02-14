@@ -1,3 +1,7 @@
+/* Note that if you change things like the border around the menu or
+ * the margin around menu items, the sizing code in menu.js needs to 
+ * be adjusted as well 
+ */
 body
 {
     border: solid 1px gray;
@@ -6,10 +10,43 @@ body
     height: 100%;
 }
 
+.dh-active-post
+{
+    color: WindowText;
+    background-color: #eedd88;
+    margin: 3px;
+    white-space: nowrap;
+}
+
+.dh-active-post-hover
+{
+    color: HighlightText;
+    background-color: Highlight;
+}
+
+.dh-active-post-title
+{
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dh-active-post-meta
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dh-active-post-icon
+{
+    float: left;
+}
+
 .dh-menu-div
 {
     width: 100%;
     text-align: center;
+    margin: 3px;
 }
 
 .dh-menu-div .dh-menu-link
@@ -22,7 +59,6 @@ body
     color: WindowText;
     background-color: #eedd88;
     padding: 5px;
-    margin: 2px;
     text-decoration: none;
 }
 
@@ -40,13 +76,13 @@ body
 #dhMenuExit
 {
     position: absolute;
-    left: 0px;
-    bottom: 0px;
+    left: 3px;
+    bottom: 3px;
 }
 
 #dhMenuHush
 {
     position: absolute;
-    right: 0px;
-    bottom: 0px;
+    right: 3px;
+    bottom: 3px;
 }

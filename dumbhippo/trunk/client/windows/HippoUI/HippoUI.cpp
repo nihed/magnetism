@@ -477,9 +477,9 @@ HippoUI::create(HINSTANCE instance)
     HippoActivePost post0(L"lAw0DANjmRQxcu", L"Unseen stuff", L"Owen", 3);
     menu_.addActivePost(post0);
     menu_.clearActivePosts();
-    HippoActivePost post1(L"lAw0DANjmRQxcv", L"Uncool stuff", L"Owen", 3);
+    HippoActivePost post1(L"lAw0DANjmRQxcv", L"Uncool stuff", L"Owen", 0);
     menu_.addActivePost(post1);
-    HippoActivePost post2(L"lAw0DANjmRQxcw", L"Cool stuff", L"Havoc", 5);
+    HippoActivePost post2(L"lAw0DANjmRQxcw", L"Cool stuff", L"Havoc", 1);
     menu_.addActivePost(post2);
     HippoActivePost post3(L"lAw0DANjmRQxcx", L"Cooler stuff!", L"Bryan", 7);
     menu_.addActivePost(post3);

@@ -3,62 +3,156 @@
 
 dh.menu = {}
 
-dh.menu.exit = function() {
-    window.close()
-    window.external.application.Exit()
+dh.menu.WIDTH = 200
+// Border around the entire menu
+dh.menu.BORDER = 1
+// Margin around individual items (note that the margins collapse between items)
+dh.menu.MARGIN = 3
+// Number of standard menu items (vertically - Hush and Exit count as the same)
+dh.menu.NUM_STANDARD = 4
+
+dh.menu.Menu = function() {
+    // List of the currently displayed posts; we use this mostly to get references
+    // to the post objects when computing our desired size
+    this.posts = []
+
+    this.exit = function() {
+        window.close()
+        window.external.application.Exit()
+    }
+
+    this.hush = function() {
+        window.close()
+        window.external.application.Hush()
+    }
+
+    this._openSiteLink = function(page) {
+        var base = window.external.application.GetServerBaseUrl()
+        window.open(base + page)
+    }
+
+    this.showHome = function() {
+        window.close()
+        this._openSiteLink("/home")
+    }
+
+    this.showHot = function() {
+        window.close()
+        this._openSiteLink("/home")
+    }
+
+    this.showRecent = function() {
+        window.close()
+        this._openSiteLink("/home")
+    }
+    
+    // Compute our desired size
+    this.resize = function() {
+        // Margins and border
+        var height = 2 * (dh.menu.MARGIN + dh.menu.BORDER)
+        
+        // Standard menu items; we assume they are all the same
+        var exitDiv = document.getElementById("dhMenuExit")
+        height += dh.menu.NUM_STANDARD * exitDiv.clientHeight + (dh.menu.NUM_STANDARD - 1) * dh.menu.MARGIN
+        
+        // Active posts; again we assume they are all the same
+        if (this.posts.length > 0) {
+            var post = this.posts[0] 
+            var postHeight = post.titleDiv.clientHeight + post.metaDiv.clientHeight
+            if (post.image.clientHeight > postHeight)
+                postHeight = post.image.clientHeight
+                
+            height += this.posts.length * (postHeight + dh.menu.MARGIN)
+        }
+        
+        window.external.application.Resize(dh.menu.WIDTH, height)
+    }
+    
+    this.insertActivePost = function(position, id, title, senderName, chattingUserCount) {
+        var activePostsDiv = document.getElementById("dhActivePosts")
+        
+        var postDiv = document.createElement("div")
+        postDiv.className = "dh-active-post"
+        
+        postDiv.onclick = dh.util.dom.stdEventHandler(function (e) {
+            dh.menu._openSiteLink("visit?post=" + id)
+            return false
+        })
+        postDiv.onmouseenter = dh.util.dom.stdEventHandler(function (e) {
+            postDiv.className = "dh-active-post dh-active-post-hover"
+            return true
+        })
+        postDiv.onmouseleave = dh.util.dom.stdEventHandler(function (e) {
+            postDiv.className = "dh-active-post"
+            return true
+        })
+        
+        var post = {}
+        
+        post.image = dh.util.createPngElement(dh.appletUrl + "groupChat.png", 24, 24)
+        post.image.className = "dh-active-post-icon"
+        postDiv.appendChild(post.image)
+        
+        if (chattingUserCount == 0)
+            post.image.style.visibility = "hidden"
+            
+        post.titleDiv = document.createElement("div")
+        post.titleDiv.className = "dh-active-post-title"
+        post.titleDiv.appendChild(document.createTextNode(title))
+        postDiv.appendChild(post.titleDiv)
+        
+        post.metaDiv = document.createElement("div")
+        post.metaDiv.className = "dh-active-post-meta"
+        if (chattingUserCount > 1)
+            post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") people chatting right now"))
+        else if (chattingUserCount > 0)
+            post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") person chatting right now"))
+        else
+            post.metaDiv.appendChild(document.createTextNode("Sent by " + senderName))
+        postDiv.appendChild(post.metaDiv)
+
+        var before
+        if (position < activePostsDiv.childNodes.length)
+            before = activePostsDiv.childNodes[position]
+        else
+            before = null
+            
+        activePostsDiv.insertBefore(postDiv, before)
+
+        // Fix up widths to deal with limitations of CSS in doing 2-D layout without tables
+        // the '4' is a mysterious fudge factor, probably having to do with some extra padding
+        // around the floated image
+        var textWidth = dh.menu.WIDTH - post.image.offsetWidth - 2 * (dh.menu.MARGIN + dh.menu.BORDER) - 4
+        post.titleDiv.style.width = textWidth + "px"
+        post.metaDiv.style.width = textWidth + "px"
+        
+        this.posts.splice(position, 0, post)
+        
+        this.resize()
+    }
+    
+    this.removeActivePost = function(position) {
+        var activePostsDiv = document.getElementById("dhActivePosts")
+        activePostsDiv.removeChild(activePostsDiv.childNodes[position])
+        
+        this.posts.splice(position, 1)
+    }
 }
 
-dh.menu.hush = function() {
-    window.close()
-    window.external.application.Hush()
-}
-
-dh.menu._openSiteLink = function(page) {
-    var base = window.external.application.GetServerBaseUrl()
-    window.open(base + page)
-}
-
-dh.menu.showHome = function() {
-    window.close()
-    this._openSiteLink("/home")
-}
-
-dh.menu.showHot = function() {
-    window.close()
-    this._openSiteLink("/home")
-}
-
-dh.menu.showRecent = function() {
-    window.close()
-    this._openSiteLink("/home")
+// Global function called immediately after document.write
+var dhInit = function(appletUrl) {
+    // Set some global parameters
+    dh.appletUrl = appletUrl // Base URL to local content files
+    dh.display = new dh.menu.Menu()
+    dh.display.resize()
 }
 
 // The parameters must be kept in sync with HippoMenu.cpp
 function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCount) {
-    var activePostsDiv = document.getElementById("dhActivePosts")
-    
-    var postDiv = document.createElement("div")
-    postDiv.className = "dh-menu-div"
-    
-    var postAnchor = document.createElement("a")
-    postDiv.appendChild(postAnchor)
-    
-    postAnchor.className = "dh-menu-link"
-    postAnchor.href = window.external.application.GetServerBaseUrl() + "visit?post=" + id
-    
-    postAnchor.appendChild(document.createTextNode(title))
-    
-    var before
-    if (position < activePostsDiv.childNodes.length)
-        before = activePostsDiv.childNodes[position]
-    else
-        before = null
-        
-    activePostsDiv.insertBefore(postDiv, before)
+    dh.display.insertActivePost(position, id, title, senderName, chattingUserCount)
 }
 
 // The parameters must be kept in sync with HippoMenu.cpp
 function dhMenuRemoveActivePost(position) {
-    var activePostsDiv = document.getElementById("dhActivePosts")
-    activePostsDiv.removeChild(activePostsDiv.childNodes[position])
+    dh.display.removeActivePost(position)
 }

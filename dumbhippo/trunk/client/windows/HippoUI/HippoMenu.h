@@ -72,6 +72,7 @@ public:
     STDMETHODIMP Exit();
     STDMETHODIMP GetServerBaseUrl(BSTR *result);
     STDMETHODIMP Hush();
+    STDMETHODIMP Resize(int width, int height);
 
 protected:
     virtual HippoBSTR getURL();
@@ -90,6 +91,8 @@ private:
     DWORD refCount_;
     std::vector<HippoActivePost> activePosts_;
 
+    int desiredWidth_;
+    int desiredHeight_;
     int mouseX_;
     int mouseY_;
 

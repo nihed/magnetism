@@ -8,8 +8,9 @@
 #include "HippoMenu.h"
 #include "HippoUI.h"
 
-static const int BASE_WIDTH = 150;
-static const int BASE_HEIGHT = 200;
+// These values basically don't matter, since the javascript code drives the size
+static const int BASE_WIDTH = 200;
+static const int BASE_HEIGHT = 250;
 
 HippoActivePost::HippoActivePost(const HippoBSTR &postId, 
                                  const HippoBSTR &title,
@@ -27,6 +28,8 @@ HippoMenu::HippoMenu(void)
     refCount_ = 1;
     hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoMenu, &ifaceTypeInfo_, NULL);
 
+    desiredWidth_ = BASE_WIDTH;
+    desiredHeight_ = BASE_HEIGHT;
     mouseX_ = 0;
     mouseY_ = 0;
 
@@ -107,8 +110,8 @@ HippoMenu::moveResizeWindow()
 {
     int x = mouseX_;
     int y = mouseY_;
-    int width = BASE_WIDTH;
-    int height = BASE_HEIGHT;
+    int width = desiredWidth_;
+    int height = desiredHeight_;
 
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
@@ -150,6 +153,11 @@ HippoMenu::initializeIE()
 void 
 HippoMenu::initializeBrowser()
 {
+    HippoBSTR appletURL;
+    ui_->getAppletURL(HippoBSTR(L""), &appletURL);
+
+    ie_->createInvocation(L"dhInit").add(appletURL).run();
+
     int i = 0;
     for (std::vector<HippoActivePost>::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
@@ -200,6 +208,19 @@ HippoMenu::GetServerBaseUrl(BSTR *result)
 STDMETHODIMP 
 HippoMenu::Hush()
 {
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoMenu::Resize(int width, int height)
+{
+    if (width != desiredWidth_ || height != desiredHeight_) {
+        desiredWidth_ = width;
+        desiredHeight_ = height;
+        if (window_)
+            moveResizeWindow();
+    }
+
     return S_OK;
 }
 

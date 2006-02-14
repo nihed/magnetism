@@ -107,5 +107,7 @@ library HippoUI {
         HRESULT GetServerBaseUrl([out, retval] BSTR *result);
         [id(182), helpstring("Go into hush mode")]
         HRESULT Hush();
+        [id(183), helpstring("Set the size of the window")]
+        HRESULT Resize([in] int width, [in] int height);
     }
 }

@@ -15,6 +15,7 @@ all: *.xml *.css *.png *.js
     copy flickr.js $(OUTDIR)\applets	
     copy flickrstatus.xml $(OUTDIR)\applets
     copy flickrstatus.js $(OUTDIR)\applets    
+    copy groupChat.png $(OUTDIR)\applets
     copy menu.css $(OUTDIR)\applets	
     copy menu.js $(OUTDIR)\applets
     copy menu.xml $(OUTDIR)\applets

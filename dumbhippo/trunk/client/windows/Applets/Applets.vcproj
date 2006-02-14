@@ -82,6 +82,9 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\groupChat.png">
+		</File>
+		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File
