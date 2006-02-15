@@ -31,10 +31,12 @@ private:
         try {
             char *s;
 
-            std::ostringstream ost(what_);
+            std::ostringstream ost;
 
-            if (what_.size() > 0)
+            if (what_.size() > 0) {
+                ost << what_;
                 ost << ": ";
+            }
 
             if (!FormatMessageA (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
                 FORMAT_MESSAGE_FROM_SYSTEM,

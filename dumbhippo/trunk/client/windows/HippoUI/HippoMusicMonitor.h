@@ -143,34 +143,10 @@ private:
 class HippoPlaylist
 {
 public:
-    class Id {
-    public:
-        // implicit copy and assignment are fine
-
-        explicit Id(const std::string & str)
-            : id_(str)
-        {
-        }
-
-        bool operator==(const Id &other) const {
-            return id_ == other.id_;
-        }
-
-        bool operator!=(const Id &other) const {
-            return id_ != other.id_;
-        }
-
-    private:
-        std::string id_;
-        Id();
-    };
-
     HIPPO_DECLARE_REFCOUNTING;
 
     virtual ~HippoPlaylist() {}
 
-    // each playlist has an opaque ID
-    virtual const Id& getId() const = 0;
     virtual int size() const = 0;
     virtual const HippoTrackInfo& getTrack(int i) const = 0;
 
@@ -189,8 +165,7 @@ class HippoPlaylistSource
 {
 public:
 
-    virtual std::vector<HippoPlaylist::Id> getPlaylists() const = 0;
-    virtual HippoPtr<HippoPlaylist> getPlaylist(const HippoPlaylist::Id &id) const = 0;
+    virtual std::vector<HippoPtr<HippoPlaylist> > getPlaylists() const = 0;
     virtual HippoPtr<HippoPlaylist> getPrimingTracks() const = 0;
 
     virtual ~HippoPlaylistSource() {}

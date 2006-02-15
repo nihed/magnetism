@@ -13,11 +13,10 @@ public:
 	virtual bool hasCurrentTrack() const;
 	virtual const HippoTrackInfo& getCurrentTrack() const;
 
-    virtual std::vector<HippoPlaylist::Id> getPlaylists() const;
-    virtual HippoPtr<HippoPlaylist> getPlaylist(const HippoPlaylist::Id &id) const;
+    virtual std::vector<HippoPtr<HippoPlaylist> > getPlaylists() const;
     virtual HippoPtr<HippoPlaylist> getPrimingTracks() const;
 
 private:
 	friend class HippoITunesMonitorImpl;
-	HippoPtr<HippoITunesMonitorImpl> impl_;
+	mutable HippoPtr<HippoITunesMonitorImpl> impl_;
 };

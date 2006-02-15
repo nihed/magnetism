@@ -3,6 +3,7 @@
 #include "HippoITunesMonitor.h"
 #include "HippoLogWindow.h"
 #include <glib.h>
+#include <map>
 
 #undef GetFreeSpace
 // iTunesLib
@@ -103,8 +104,69 @@ public:
         return s.str();
     }
 
+    // so we can be a map key
+    bool operator<(const ITunesObjectId &other) {
+        for (int i = 0; i < 4; ++i) {
+            if (data_[i] < other.data_[i])
+                return true;
+            else if (data_[i] > other.data_[i])
+                return false;
+            else
+                continue;
+        }
+    }
+
+    bool operator==(const ITunesObjectId &other) {
+        for (int i = 0; i < 4; ++i) {
+            if (data_[i] != other.data_[i])
+                return false;
+        }
+        return true;
+    }
+
 private:
     long data_[4];
+};
+
+class BasicPlaylist
+    : public HippoPlaylist
+{
+public:
+    virtual int size() const {
+        return static_cast<int>(tracks_.size());
+    }
+    
+    virtual const HippoTrackInfo& getTrack(int i) const {
+        return tracks_.at(i);
+    }
+
+    void add(const HippoTrackInfo &track) {
+        tracks_.push_back(track);
+    }
+
+    void clear() {
+        tracks_.clear();
+    }
+
+private:
+    std::vector<HippoTrackInfo> tracks_;
+};
+
+class ITunesPlaylist
+    : public BasicPlaylist
+{
+public:
+    ITunesPlaylist(const ITunesObjectId & id)
+        : id_(id)
+    {
+    }
+
+    const ITunesObjectId& getId() const {
+        return id_;
+    }
+
+private:
+    ITunesObjectId id_;
 };
 
 class HippoITunesMonitorImpl
@@ -137,6 +199,7 @@ public:
 	void setTrack(IITTrack *track);
 	bool readTrackInfo(IITTrack *track, HippoTrackInfo *info);
     void readPlaylists();
+    HippoPtr<HippoPlaylist> getPrimingTracks();
 
     static gboolean checkRunningTimeout(void *data);
 
@@ -341,6 +404,7 @@ HippoITunesMonitorImpl::attemptConnect()
 	setTrack(trackPtr);
 
     readPlaylists();
+    getPrimingTracks(); // FIXME this is debug-only
 }
 
 void
@@ -390,8 +454,8 @@ HippoITunesMonitorImpl::disconnect() {
     do {                                                        \
 	if (obj != 0) {                                             \
         info->set ## hProp (val ## hProp);                      \
-        hippoDebugLogU("  got prop %s", #hProp);                \
-        hippoDebugLogW(L" %s", val ## hProp .m_str);            \
+        if(0) hippoDebugLogU("  got prop %s", #hProp);          \
+        if(0) hippoDebugLogW(L" %s", val ## hProp .m_str);      \
     }                                                           \
     } while(0)
 
@@ -399,8 +463,8 @@ HippoITunesMonitorImpl::disconnect() {
     do {                                                        \
 	if (obj != 0) {                                             \
         info->set ## hProp (val ## hProp);                      \
-        hippoDebugLogU("  got prop %s", #hProp);                \
-        hippoDebugLogW(L" %ld", val ## hProp );                 \
+        if(0) hippoDebugLogU("  got prop %s", #hProp);          \
+        if(0) hippoDebugLogW(L" %ld", val ## hProp );           \
     }                                                           \
     } while(0)
 
@@ -429,8 +493,8 @@ HippoITunesMonitorImpl::disconnect() {
             break;                                              \
         }                                                       \
         info->set ## hProp (k);                                 \
-        hippoDebugLogU("  got prop %s", #hProp);                \
-        hippoDebugLogW(L" %ld", (long) val ## hProp );          \
+        if(0) hippoDebugLogU("  got prop %s", #hProp);          \
+        if(0) hippoDebugLogW(L" %ld", (long) val ## hProp );    \
     }                                                           \
     } while(0)
 
@@ -686,6 +750,154 @@ HippoITunesMonitorImpl::readPlaylists()
             ITunesObjectId id(sourceId, playlistId, 0, 0);
             hippoDebugLogW(L"Playlist %s, %s '%s'", id.toString().c_str(), playlistKindToString(listKind), listName.m_str);
         }
+    }
+}
+
+HippoPtr<HippoPlaylist>
+HippoITunesMonitorImpl::getPrimingTracks()
+{
+  	if (state_ == NO_ITUNES)
+		return 0;
+    
+    try {
+        HippoPtr<IITLibraryPlaylist> library;
+        HRESULT hRes = iTunes_->get_LibraryPlaylist(&library);
+        if (FAILED(hRes)) {
+            throw HResultException(hRes, "Failed to get library playlist");
+        }
+
+        long librarySourceId;
+        hRes = library->get_sourceID(&librarySourceId);
+        if (FAILED(hRes)) {
+            throw HResultException(hRes, "Failed to get library source ID");
+        }
+        long libraryPlaylistId;
+        hRes = library->get_playlistID(&libraryPlaylistId);
+        if (FAILED(hRes)) {
+            throw HResultException(hRes, "Failed to get library playlist ID");
+        }
+
+        HippoPtr<IITTrackCollection> tracks;
+        hRes = library->get_Tracks(&tracks);
+        if (FAILED(hRes)) {
+            throw HResultException(hRes, "Failed to get library playlist tracks");
+        }
+
+        long numTracks;
+        hRes = tracks->get_Count(&numTracks);
+        if (FAILED(hRes)) {
+            throw HResultException(hRes, "Failed to get number of tracks in library");
+        }
+        
+        std::multimap<long,long> playCounts;
+        std::multimap<DATE,long> playDates;
+        std::map<long,long> trackIds; // track IDs in the library playlist, by database id
+
+        // yucky race condition here if numTracks changes while we're doing this, also 
+        // this could take a long time, I'm not sure how fast it is
+        for (int i = 1; i <= numTracks; ++i) {
+            
+            HippoPtr<IITTrack> track;
+            hRes = tracks->get_Item(i, &track);
+            if (FAILED(hRes)) {
+                throw HResultException(hRes, "Failed to get track");
+            }
+
+            long databaseId;
+            hRes = track->get_TrackDatabaseID(&databaseId);
+            if (FAILED(hRes)) {
+                throw HResultException(hRes, "Failed to get track database ID");
+            }
+
+            long trackId;
+            hRes = track->get_trackID(&trackId);
+            if (FAILED(hRes)) {
+                throw HResultException(hRes, "Failed to get track ID");
+            }
+            trackIds[databaseId] = trackId;
+
+            long playedCount;
+            hRes = track->get_PlayedCount(&playedCount);
+            if (FAILED(hRes)) {
+                throw HResultException(hRes, "Failed to get track play count");
+            }
+            playCounts.insert(std::pair<long,long>(playedCount, databaseId));
+
+            DATE playedDate;
+            hRes = track->get_PlayedDate(&playedDate);
+            if (FAILED(hRes)) {
+                throw HResultException(hRes, "Failed to get track play date");
+            }
+            playDates.insert(std::pair<DATE,long>(playedDate, databaseId));
+        }
+
+        assert(playCounts.size() == playDates.size());
+
+        // compute a "top 25" based on both frequency and recency, using some 
+        // crappy wasteful algorithm
+
+        std::map<long,int> ranks;
+
+        // from least to most played
+        int rank = 0;
+        for (std::multimap<long,long>::iterator i = playCounts.begin(); i != playCounts.end(); ++i) {
+            hippoDebugLogW(L"Track %ld played %ld times", i->second, i->first);
+            ranks[i->second] = rank;
+            ++rank;
+        }
+
+        // from oldest to newest
+        rank = 0;
+        for (std::multimap<DATE,long>::iterator i = playDates.begin(); i != playDates.end(); ++i) {
+            hippoDebugLogW(L"Track %ld played at %g", i->second, i->first);
+            ranks[i->second] += rank;
+            ++rank;
+        }
+
+        std::multimap<int,long> byRank;
+        for (std::map<long,int>::iterator i = ranks.begin(); i != ranks.end(); ++i) {
+            byRank.insert(std::pair<int,long>(i->second, i->first));
+        }
+
+        HippoPtr<BasicPlaylist> tracksList;
+        *(&tracksList) = new BasicPlaylist();
+
+        // we want the highest rank number, i.e. newest and most played
+        for (std::multimap<int,long>::reverse_iterator i = byRank.rbegin(); i != byRank.rend(); ++i) {
+            long databaseId = i->second;
+
+            HippoPtr<IITObject> object;
+            hRes = iTunes_->raw_GetITObjectByID(librarySourceId, libraryPlaylistId,
+                trackIds[databaseId], databaseId, &object);
+            if (FAILED(hRes))
+                throw HResultException(hRes, "Failed to get track by database ID");
+            HippoQIPtr<IITTrack> track(object);
+            if (track == 0)
+                throw HResultException(GetLastError(), "Failed to convert looked-up track to a track object");
+
+            HippoTrackInfo info;
+            if (!readTrackInfo(track, &info))
+                throw HResultException(GetLastError(), "Failed to read information for track"); // GetLastError() kinda bogus here
+            tracksList->add(info);
+
+            // hippoDebugLogW(L"Rank %d %s", i->first, info.getName().m_str);
+
+            if (tracksList->size() > 24) {
+                hippoDebugLogW(L"Got enough tracks for priming, not loading any more");
+                break;
+            }
+        }
+
+        for (int i = 0; i < tracksList->size(); ++i) {
+            const HippoTrackInfo &info(tracksList->getTrack(i));
+            hippoDebugLogW(L"Priming %d track %s", i, info.getName().m_str);
+        }
+
+        return HippoPtr<HippoPlaylist>(tracksList);
+    } catch (HResultException &e) {
+        hippoDebugLogU("%s", e.what());
+        disconnect();
+        return 0;
     }
 }
 
@@ -1042,23 +1254,15 @@ HippoITunesMonitor::getCurrentTrack() const
 	return impl_->track_;
 }
 
-std::vector<HippoPlaylist::Id>
+std::vector<HippoPtr<HippoPlaylist> >
 HippoITunesMonitor::getPlaylists() const
 {
     // FIXME
-    return std::vector<HippoPlaylist::Id>();
-}
-
-HippoPtr<HippoPlaylist>
-HippoITunesMonitor::getPlaylist(const HippoPlaylist::Id &id) const
-{
-    // FIXME
-    return 0;    
+    return std::vector<HippoPtr<HippoPlaylist> >();
 }
 
 HippoPtr<HippoPlaylist>
 HippoITunesMonitor::getPrimingTracks() const
 {
-    // FIXME
-    return 0;
+    return impl_->getPrimingTracks();
 }
