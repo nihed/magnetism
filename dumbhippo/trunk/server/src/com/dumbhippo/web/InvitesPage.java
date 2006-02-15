@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationView;
+import com.dumbhippo.server.Viewpoint;
 
 /**
  * InvitesPage corresponds to invites.jsp
@@ -28,7 +29,8 @@ public class InvitesPage extends AbstractInvitePage {
 		this.invitationToDelete = invitationToDelete;
         if (invitationToDelete != null) { //&& (invitationToDeleteView == null)
         	invitationToDeleteView = 
-		    	invitationSystem.deleteInvitation(signin.getUser(), invitationToDelete);        	
+		    	invitationSystem.deleteInvitation(new Viewpoint(signin.getUser()), 
+		    			                          invitationToDelete);        	
 	    } else {
 	    	invitationToDeleteView = null;
 	    }
@@ -45,7 +47,8 @@ public class InvitesPage extends AbstractInvitePage {
 
 	public void setInvitationToRestore(String invitationToRestore) {
 		this.invitationToRestore = invitationToRestore;
-		invitationSystem.restoreInvitation(signin.getUser(), invitationToRestore);
+		invitationSystem.restoreInvitation(new Viewpoint(signin.getUser()), 
+				                           invitationToRestore);
 	}
 	
 }

@@ -31,7 +31,7 @@
             </c:when>
             <c:otherwise>
                 <p class="dh-right-box-text">
-                You can manage your invites <a class="manage-invites" href="/invites">here</a>.
+                    You can manage your invites <a class="manage-invites" href="/invites">here</a>.
                 </p>
             </c:otherwise>
         </c:choose>
@@ -47,15 +47,15 @@
                         </c:when>
                         <c:otherwise>
                             <p class="dh-right-box-text">
-                            You have <c:out value="${totalInvitations-maxInvitations}"/> <a class="manage-invites" href="/invites">more</a>
-                            <c:choose> 
-                                <c:when test="${totalInvitations-maxInvitations > 1}">
-                                    invites.
-                                </c:when>
-                                <c:otherwise>
-                                    invite.
-                                </c:otherwise>    
-                            </c:choose> 
+                                You have <c:out value="${totalInvitations-maxInvitations}"/> <a class="manage-invites" href="/invites">more</a>
+                                <c:choose> 
+                                    <c:when test="${totalInvitations-maxInvitations > 1}">
+                                        invites.
+                                    </c:when>
+                                    <c:otherwise>
+                                        invite.
+                                    </c:otherwise>    
+                                </c:choose> 
                             </p>
                         </c:otherwise>
                     </c:choose>    
@@ -66,35 +66,32 @@
                         <div class="dh-share">
                     </c:if>		
                     <div class="dh-invitee">
-                    <c:out value="${outstandingInvitation.invite.humanReadableInvitee}"/>
+                        <c:out value="${outstandingInvitation.invite.humanReadableInvitee}"/>
                     </div>
                     <div class="dh-invite-age">
-                    <c:out value="${outstandingInvitation.inviterData.humanReadableAge}"/>
+                        <c:out value="${outstandingInvitation.inviterData.humanReadableAge}"/>
                     </div>
                     <br>
                     <c:if test="${invitesPage}"> 
                         <div class="dh-invite-subject">
-                        <c:out value="${outstandingInvitation.inviterData.invitationSubject}"/>
+                            <c:out value="${outstandingInvitation.inviterData.invitationSubject}"/>
                         </div>            
                         <div class="dh-invite-message">
-                        <c:out value="${outstandingInvitation.inviterData.invitationMessage}"/>
+                            <c:out value="${outstandingInvitation.inviterData.invitationMessage}"/>
                         </div>  
                         <!-- let's display the links -->
                         <br>
                         <div class="dh-invite-actions">
-                        <a href="/invite?email=${outstandingInvitation.invite.invitee.encodedEmail}">Resend</a>&nbsp;
-                        <a href="/invites?start=${start}&invitationToDelete=${outstandingInvitation.invite.authKey}">Remove</a> 
+                            <a href="/invite?email=${outstandingInvitation.invite.invitee.encodedEmail}">Resend</a>&nbsp;
+                            <a href="/invites?start=${start}&invitationToDelete=${outstandingInvitation.invite.authKey}">Remove</a> 
                         </div>           
                         <br>
-                        </div> <!-- dh-share-shadow -->
                         </div> <!-- dh-share -->
+                        </div> <!-- dh-share-shadow -->
                     </c:if>		
                 </c:otherwise>
             </c:choose>                  		
-        </c:forEach>	
-         <!--- <c:if test="${invitesPage}"> -->
-         <!---   </div> <!-- dhSharesArea -->
-         <!-- </c:if>  -->      
+        </c:forEach>	     
     </c:when>
     <c:otherwise>
         <c:choose> 

@@ -91,12 +91,10 @@ a.dh-invite-actions {
 
 .dhText {
 	width:						22em;
-	maxlength:                  255;
 }
 
 .dhTextArea {
 	width:						22em;
-	maxlength:                  255;
 }	
 
 input.dh-send-invite {

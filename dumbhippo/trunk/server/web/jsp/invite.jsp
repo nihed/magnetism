@@ -53,7 +53,7 @@
 						</tr>
 						<tr>
 							<td>Subject:</td>
-							<td><input name="subject" class="dhText" value="${invite.subject}"></td>
+							<td><input name="subject" class="dhText" maxlength="225" value="${invite.subject}"></td>
 						</tr>							
 					</table>
 				</div>
@@ -74,47 +74,51 @@
 	</div>
 
 	<div id="dhPersonalArea">
+		
 		<div id="dhPhotoNameArea">
-		<dht:headshot person="${invite.person}" size="192" />
-		<div id="dhName"><dht:userNameEdit value="${invite.person.name}"/></div>
+		    <dht:headshot person="${invite.person}" size="192" />
+		    <div id="dhName">
+		        <dht:userNameEdit value="${invite.person.name}"/>
+		    </div>
 		</div>
 
 		<div class="dh-right-box-area">
-		<div class="dh-right-box dh-right-box">
-			<h5 class="dh-title">People Who Need Invites</h5>
-			<div class="dh-people">
-			<!-- FIXME: need to figure out what we really want to display here -->
-			<!-- perhaps just people who still need invites -->
-			<!-- for some reason, it used to be checking groups, not contacts size, -->
-			<!-- it should probably be contacts size, but it's such a mess what it -->
-			<!-- displays if the condition is true, that it is better to leave it -->
-			<!-- off for now; if this is enabled, more stuff from HomePage needs -->
-			<!-- to be moved to AbstractSigninPage -->
-			<c:choose>
-				<c:when test="false"> <!-- this is the original condition ${home.groups.size > 0}" -->
-					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
-				</c:when>
-				<c:otherwise>
-					<!-- FIXME: need class definition for this -->
-					<div class="dh-friends-none">You Need Peeps!!</div>
-				</c:otherwise>
-			</c:choose>
-			</div>
+		    <div class="dh-right-box">
+			    <h5 class="dh-title">People Who Need Invites</h5>
+		  	    <div class="dh-people">
+			        <!-- FIXME: need to figure out what we really want to display here -->
+			        <!-- perhaps just people who still need invites -->
+			        <!-- for some reason, it used to be checking groups, not contacts size, -->
+			        <!-- it should probably be contacts size, but it's such a mess what it -->
+			        <!-- displays if the condition is true, that it is better to leave it -->
+			        <!-- off for now; if this is enabled, more stuff from HomePage needs -->
+			        <!-- to be moved to AbstractSigninPage -->
+			        <c:choose>
+				        <c:when test="false"> <!-- this is the original condition ${home.groups.size > 0}" -->
+					        <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true"/>
+				        </c:when>
+				        <c:otherwise>
+					        <!-- FIXME: need class definition for this -->
+					        <div class="dh-friends-none">You Need Peeps!!</div>
+			 	        </c:otherwise>
+			        </c:choose>
+		    	</div>
+		    </div>
+		    <div class="dh-right-box dh-right-box-last">
+			    <h5 class="dh-title">Outstanding Invites</h5>
+		  	    <div class="dh-people">
+                    <dht:inviteList outstandingInvitations="${invite.outstandingInvitations}" invitesPage="false" start="0" maxInvitations="${invite.maxInvitationsShown}" totalInvitations="${invite.totalInvitations}"/>
+			    </div>
+		    </div>		
 		</div>
-		<div class="dh-right-box dh-right-box-last">
-			<h5 class="dh-title">Outstanding Invites</h5>
-			<div class="dh-people">
-            <dht:inviteList outstandingInvitations="${invite.outstandingInvitations}" invitesPage="false" start="0" maxInvitations="${invite.maxInvitationsShown}" totalInvitations="${invite.totalInvitations}"/>
-			</div>
-		</div>		
-		</div>
-		
+				
 	</div>
 
 </div>
 
 <div id="dhOTP">
-<dht:rightColumn/>
+    <dht:rightColumn/>
+</div>
 
 </body>
 </html>

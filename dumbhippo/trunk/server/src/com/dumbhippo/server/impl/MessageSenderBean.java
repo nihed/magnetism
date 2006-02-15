@@ -559,7 +559,7 @@ public class MessageSenderBean implements MessageSender {
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
 			// may be null!
-			InvitationToken invitation = invitationSystem.getValidInvitation(post.getPoster(), recipient); 
+			InvitationToken invitation = invitationSystem.updateValidInvitation(post.getPoster(), recipient); 
 			String recipientInviteUrl;
 			if (invitation != null) 
 				recipientInviteUrl = invitation.getAuthURL(config.getProperty(HippoProperty.BASEURL)); 

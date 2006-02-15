@@ -16,7 +16,9 @@ public class AgeUtils {
 	 */
 	public static String formatAge(long age) {
         // this output can be refined
-        int days = (int)Math.floor(age / (24 * 3600));
+		// this is an integer division, so the result will be rounded down,
+		// which is what we want
+        int days = (int)(age / (24 * 3600));
         if (days == 0) {
         	return "within 24 hours";
         } else if (days == 1) {

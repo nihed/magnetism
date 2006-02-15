@@ -37,15 +37,15 @@ public interface InvitationSystem {
 	public InvitationToken lookupInvitation(User inviter, String authKey); 
 	
 	/**
-	 * Returns an InvitationView of an invite sent by the inviter to the invitee, or
+	 * Returns an InvitationView of an invite sent by the viewer to the invitee, or
 	 * null if there was no such invite. Returns an invitation even if it was deleted 
 	 * and it is up to the caller to sort that out.
 	 * 
-	 * @param inviter the inviter
+	 * @param viewpoint the person viewing an invitation for which they must be an inviter
 	 * @param invitee the invitee
 	 * @return invitation view or null
 	 */
-	public InvitationView lookupInvitationViewFor(User inviter, Resource invitee);
+	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint, Resource invitee);
 	
 	/**
 	 * Find all inviters for resources provably owned by a person.
@@ -60,41 +60,44 @@ public interface InvitationSystem {
 	
 	
 	/**
-	 * Find a selection of current invitations sent by the inviter, return them in a form
-	 * of inviter's views of them.
+	 * Find a selection of current invitations sent by the viewer.
 	 * 
-	 * @param inviter a person that has been sending invitations
+	 * @param viewpoint a person who is viewing invitations they sent
 	 * @param start invitation to start with
 	 * @param max maximum number of invitations to get
 	 * @return a list of InvitationViews that correspond to outstanding invitations
 	 * sent by the inviter
 	 */
-	public List<InvitationView> findOutstandingInvitations(User inviter, int start, int max);
+	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint, 
+			                                               int start, 
+			                                               int max);
 	
 	/**
-	 * Count all current invitations sent by the inviter.
+	 * Count all current invitations sent by the viewer.
 	 * 
 	 * @param inviter a person that has been sending invitations
 	 * @return the number of outstanding invitations sent by the inviter
 	 */
-	public int countOutstandingInvitations(User inviter);
+	public int countOutstandingInvitations(Viewpoint viewpoint);
 	
 	/**
-	 * Deletes an invitation created by a given user with a given authentication key.
+	 * Deletes an invitation created by a given viewer with a given authentication key.
 	 * 
-	 * @param inviter creator of the invitation
+	 * @param viewpoint viewer of the invitation to be deleted, must be the person who 
+	 *        created the invitation
 	 * @param authKey authentication key for the invitation to be deleted
 	 * @return deleted invitation or null
 	 */
-	public InvitationView deleteInvitation(User inviter, String authKey);
+	public InvitationView deleteInvitation(Viewpoint viewpoint, String authKey);
 
 	/**
-	 * Restores an invitation created by a given user with a given authentication key.
+	 * Restores an invitation created by a given viewer with a given authentication key.
 	 * 
-	 * @param inviter creator of the invitation
+	 * @param viewpoint viewer of the invitation to be restored, must be the person who 
+	 *        created the invitation
 	 * @param authKey authentication key for the invitation to be restored
 	 */
-	public void restoreInvitation(User inviter, String authKey);
+	public void restoreInvitation(Viewpoint viewpoint, String authKey);
 	
 	/**
 	 * If invitee has already been invited and the invitation is not expired, 
@@ -106,7 +109,7 @@ public interface InvitationSystem {
 	 * @param invitee possible invitee
 	 * @return invitation if any, or null
 	 */
-	public InvitationToken getValidInvitation(User inviter, Resource invitee);
+	public InvitationToken updateValidInvitation(User inviter, Resource invitee);
 	
 	/**
 	 * Ensure the invitation from inviter to invitee exists, if it makes sense. 

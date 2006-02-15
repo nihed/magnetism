@@ -2,13 +2,13 @@ package com.dumbhippo.server.impl;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -108,7 +108,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return invite;		
 	}
 
-	public InvitationView lookupInvitationViewFor(User inviter, Resource invitee) {
+	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint, Resource invitee) {
+		// when someone is viewing an invitation, they can see it only if they
+		// are an inviter
+		User inviter = viewpoint.getViewer();
 		InvitationToken invite = lookupInvitationFor(inviter, invitee);
 		if (invite == null) {
 			return null;
@@ -121,18 +124,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras) {
-		// FIXME this is slightly odd since it merges the inviter lists for all 
-		// invitations to the resource ever, instead of using the newest InvitationToken
-		// (right now, all InvitationToken after the earliest are based on the old 
-		// ones, so it makes no difference however)
+		// All InvitationTokens after the earliest one are based on the old 
+		// ones, so we only want to get the InviterData for the newest InvitationToken
+		// for the invitee. This helps us avoid returning duplicate inviters.
 		// This will return inviters whose invitations are expired, but will not return
 		// inviters who deleted their invitation.
-		Query query = em.createQuery("select inviterData from " +
+		Query query = em.createQuery("SELECT inviterData FROM " +
 								     "InviterData inviterData, InvitationToken invite, AccountClaim ar " + 
-								     "where inviterData member of invite.inviters and " +
-								     "inviterData.deleted = FALSE and " +
-								     "ar.resource = invite.invitee and " +
-								     "ar.owner = :invitee and " +
+								     "WHERE inviterData MEMBER OF invite.inviters AND " +
+								     "inviterData.deleted = FALSE AND " +
+								     "ar.resource = invite.invitee AND " +
+								     "ar.owner = :invitee AND " +
 								     "invite.creationDate = " +
 								     "(SELECT MAX(invite2.creationDate) " +
 								     " FROM InvitationToken invite2, AccountClaim ar2 " +
@@ -152,8 +154,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public List<InvitationView> findOutstandingInvitations(User inviter, int start, int max) {
-				
+	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint, 
+			                                               int start, 
+			                                               int max) {	
+		// we want to provide the invitations for which the person viewing the 
+		// invitations is the inviter
+		User inviter = viewpoint.getViewer();
 		// get only the InvitationTokens for which ResultingPerson is null,
 		// sorted by date in descending order
 		Query q = em.createQuery(
@@ -175,7 +181,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		@SuppressWarnings("unchecked")
 		List<InvitationToken> outstandingInvitations = q.getResultList();
 		
-		List<InvitationView> outstandingInvitationViews = new Vector<InvitationView> ();
+		List<InvitationView> outstandingInvitationViews = new ArrayList<InvitationView> ();
 		
 		// can we mix accessing data through the database with accessing it through 
 		// the persistence classes? should this also be a database query?
@@ -196,16 +202,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return outstandingInvitationViews; 
 	}
 	
-	public int countOutstandingInvitations(User inviter) {		
+	public int countOutstandingInvitations(Viewpoint viewpoint) {		
 		// it would have been nice to use a COUNT query here, but because 
 		// we want to not count expired invitations, we need to query
 		// for invitation tokens
 		// next, it seems to be better to construct an unneeded InvitationView
 		// list, than to duplicate the filtering in findOutstandingInvitations
-		return findOutstandingInvitations(inviter, 0, -1).size();
+		return findOutstandingInvitations(viewpoint, 0, -1).size();
 	}
 	
-	public InvitationView deleteInvitation(User inviter, String authKey) {
+	public InvitationView deleteInvitation(Viewpoint viewpoint, String authKey) {
+		User inviter = viewpoint.getViewer();
 		// Could have used lookupInvitationFor if made the deletion based on the
 		// e-mail address, and not the authentication key. Would have to make
 		// sure to go through all InvitationTokens for the invitee then. There
@@ -236,9 +243,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// this invitation ends up being "free" 
 		// not sure if it is worth it to do anything about it now		
         if (ivd.isInvitationDeducted()) {
-        	//reimburse
+        	// reimburse
     		Account account = getAccount(inviter);
     		account.addInvitations(1);
+    	    // We do not want to unset invitationDeducted here, because we want to
+    		// preserve the information on whether an invitation voucher was originally 
+    		// deducted for logic in restoring an invitation. 
         }
         
         // go through all the inviters, if they all have deleted their invitation,
@@ -259,7 +269,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         return invitationView;		
 	}
 	
-	public void restoreInvitation(User inviter, String authKey) {
+	public void restoreInvitation(Viewpoint viewpoint, String authKey) {
+		User inviter = viewpoint.getViewer();
 		InvitationToken invite = lookupInvitation(inviter, authKey);
 		
 		if (invite == null) {
@@ -313,7 +324,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	 * @param invitee possible invitee
 	 * @return invitation if any, or null
 	 */
-	public InvitationToken getValidInvitation(User inviter, Resource invitee) {
+	public InvitationToken updateValidInvitation(User inviter, Resource invitee) {
 		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null || !iv.isValid())
 			return null;
@@ -438,6 +449,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		    // preserving current inviter list etc.
 		    iv = new InvitationToken(iv, ivd);
 			em.persist(iv);			
+			// for all inviters other than the current inviter, 
+			// unset invitationDeducted
+			// even if they did spend an invitation voucher on this
+			// invitation in the past, they allowed the invitation
+			// to expire, so they should not be reimbursed if they
+			// choose to delete this invitation
+			for (InviterData inviterData : iv.getInviters()) {
+				if (!inviterData.getInviter().equals(inviter)) {
+					inviterData.setInvitationDeducted(false);
+				}
+			}			
 		}
 		return iv;
 	}

@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.InvitationView;
+import com.dumbhippo.server.Viewpoint;
 
 /**
  * InvitePage corresponds to invite.jsp
@@ -44,12 +45,22 @@ public class InvitePage extends AbstractInvitePage {
             previousInvitation = null;
 		} else {
 		    Resource emailRes = identitySpider.getEmail(email);
-	        previousInvitation = invitationSystem.lookupInvitationViewFor(signin.getUser(), emailRes);
+	        previousInvitation = 
+	        	invitationSystem.lookupInvitationViewFor(new Viewpoint(signin.getUser()), 
+	        			                                 emailRes);
 	    }
 	    
 	    return previousInvitation;
 	}
 	
+	/**
+	 * This function checks if previousInvitation is currently a valid invitation.
+	 * It is useful when we want to allow someone who is out of invitation vouchers to
+	 * resend an invitation. From an interface point of view, we want to make the 
+	 * invitee e-mail field read-only in that case. 
+	 * 
+	 * @return a flag indicating if previousInvitation is currently a valid invitation
+	 */
 	public boolean isValidPreviousInvitation() {
 		if (getPreviousInvitation() == null) {
 			return false;

@@ -45,59 +45,64 @@
 	</div>
 
 	<div id="dhPersonalArea">
+	
 		<div id="dhPhotoNameArea">
-		<dht:headshot person="${home.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="change photo" reloadTo="/home"/>
-		<div id="dhName"><dht:userNameEdit value="${home.person.name}"/></div>
+		    <dht:headshot person="${home.person}" size="192" />
+		    <dht:uploadPhoto location="/headshots" linkText="change photo" reloadTo="/home"/>
+		    <div id="dhName">
+		        <dht:userNameEdit value="${home.person.name}"/>
+		    </div>
 		</div>
 
-		<div class="dh-right-box-area">
-		<div class="dh-right-box">
-			<h5 class="dh-title">Groups You're In</h5>
-			<div class="dh-groups">
-			<c:choose>
-				<c:when test="${home.groups.size > 0}">
-					<dh:entityList value="${home.groups.list}" photos="true" bodyLengthLimit="12"/>
-				</c:when>
-				<c:otherwise>
-					<!-- FIXME: need class definition for this -->
-					<div class="dh-groups-none">You Need Groups!!</div>
-				</c:otherwise>
-			</c:choose>
-			</div>
+		<div class="dh-right-box-area">		
+		    <div class="dh-right-box">
+			    <h5 class="dh-title">Groups You're In</h5>
+			    <div class="dh-groups">
+			        <c:choose>
+				        <c:when test="${home.groups.size > 0}">
+					        <dh:entityList value="${home.groups.list}" photos="true" bodyLengthLimit="12"/>
+				        </c:when>
+				        <c:otherwise>
+					        <!-- FIXME: need class definition for this -->
+					        <div class="dh-groups-none">You Need Groups!!</div>
+				        </c:otherwise>
+			        </c:choose>
+			    </div>
+		    </div>		
+		    <div class="dh-right-box dh-right-box-last">
+			    <h5 class="dh-title">People You Know</h5>
+		  	    <p class="dh-right-box-text">
+                    <c:choose>           
+			            <c:when test="${home.invitations > 0}">
+			                You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
+			            </c:when>
+			            <c:otherwise>
+			                You don't have invitations to send out available to you at the moment.
+			            </c:otherwise>
+			        </c:choose>    
+                    <br/>
+                    You can manage your invites <a class="manage-invites" href="/invites">here</a>.
+			    </p>
+			    <div class="dh-people">
+			        <c:choose>
+			   	        <c:when test="${home.contacts.size > 0}">
+				    	    <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="12"/>
+				        </c:when>
+				        <c:otherwise>
+				  	        <!-- FIXME: need class definition for this -->
+					        <div class="dh-people-none">You Need Peeps!!</div>
+				        </c:otherwise>
+			        </c:choose>
+		    	</div>
+		    </div>		    		    
 		</div>
-		<div class="dh-right-box dh-right-box-last">
-			<h5 class="dh-title">People You Know</h5>
-			<p class="dh-right-box-text">
-            <c:choose>           
-			    <c:when test="${home.invitations > 0}">
-			        You can <a class="dh-invites-left" href="/invite">invite</a> ${home.invitations} more people to join DumbHippo.
-			    </c:when>
-			    <c:otherwise>
-			        You don't have invitations to send out available to you at the moment.
-			    </c:otherwise>
-			</c:choose>    
-            <br>You can manage your invites <a class="manage-invites" href="/invites">here</a>.
-			</p>
-			<div class="dh-people">
-			<c:choose>
-				<c:when test="${home.contacts.size > 0}">
-					<dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="12"/>
-				</c:when>
-				<c:otherwise>
-					<!-- FIXME: need class definition for this -->
-					<div class="dh-people-none">You Need Peeps!!</div>
-				</c:otherwise>
-			</c:choose>
-			</div>
-		</div>
-		</div>
+		
 	</div>
 
 </div>
 
 <div id="dhOTP">
-<dht:rightColumn/>
+    <dht:rightColumn/>
 </div>
 
 <script>
