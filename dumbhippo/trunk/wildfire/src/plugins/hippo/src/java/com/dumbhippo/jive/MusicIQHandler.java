@@ -82,7 +82,7 @@ public class MusicIQHandler extends AbstractIQHandler {
         		String key = element.attributeValue("key");
         		String value = element.getText();
 
-        		Log.debug("Adding track property key='" + key + "' value='" + value + "'");
+        		// Log.debug("Adding track property key='" + key + "' value='" + value + "'");
         	
         		properties.put(key, value);
         	}
@@ -115,6 +115,8 @@ public class MusicIQHandler extends AbstractIQHandler {
 		
 		XmppEventPrimingTracks event = new XmppEventPrimingTracks(from.getNode());
 
+		// Log.debug("priming tracks xml: " + iq.asXML());
+		
 		for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;
         	

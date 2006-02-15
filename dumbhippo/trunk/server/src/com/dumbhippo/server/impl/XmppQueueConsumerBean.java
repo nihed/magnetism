@@ -57,7 +57,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in " + XmppEvent.QUEUE + ": " + obj);
+				logger.debug("Got object in " + XmppEvent.QUEUE + ": {}", obj);
 				
 				if (obj instanceof XmppEventMusicChanged) {
 					XmppEventMusicChanged event = (XmppEventMusicChanged) obj;
@@ -102,6 +102,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
+		logger.debug("Primed user with " + tracks.size() + " tracks");
 	}
 	
 	private User getUserFromUsername(String username) {

@@ -9,6 +9,6 @@ public abstract class XmppEvent implements Serializable {
 
 	@Override
 	public String toString() {
-		return "{XMPP event}";
+		return "{XMPP event " + getClass().getName() + "}";
 	}
 }
