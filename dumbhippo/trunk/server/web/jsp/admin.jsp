@@ -5,6 +5,10 @@
 
 <dh:bean id="admin" class="com.dumbhippo.web.AdminPage" scope="request"/>
 
+<c:if test="${!admin.valid}">
+	<dht:errorPage>Permission Denied</dht:errorPage>
+</c:if>
+
 <head>
 	<title>Admin Console</title>
 	<dht:scriptIncludes/>

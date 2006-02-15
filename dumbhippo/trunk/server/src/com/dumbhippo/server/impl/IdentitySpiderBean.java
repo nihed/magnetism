@@ -23,6 +23,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.Administrator;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
@@ -757,6 +758,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		logger.debug("New disabled = " + disabled + " for account " + account);
 		account.setDisabled(disabled);
 	}
+	static final String GET_ADMIN_QUERY = 
+		"SELECT adm FROM Administrator adm WHERE adm.account = :acct";
+
+	public boolean isAdministrator(User user) {
+		Account acct = getAttachedAccount(user);
+		if (acct == null)
+			return false;
+		try {
+			Administrator adm = (Administrator)em.createQuery(GET_ADMIN_QUERY)
+			.setParameter("acct", acct)
+			.getSingleResult();
+			return adm != null;
+		} catch (EntityNotFoundException e) {
+			return false;
+		}
+	}	
 	
 	public boolean getMusicSharingEnabled(User user) {
 		// we only share your music if your account is enabled, AND music sharing is enabled.

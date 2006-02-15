@@ -218,6 +218,8 @@ public interface IdentitySpider {
 	 */
 	public User getTheMan();
 	
+	public boolean isAdministrator(User user);
+	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person.
 	 * 

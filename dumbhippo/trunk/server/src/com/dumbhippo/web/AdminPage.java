@@ -13,39 +13,37 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 
-public class AdminPage {
+public class AdminPage extends AbstractSigninPage {
 
 	protected static final Logger logger = GlobalSetup.getLogger(AdminPage.class);
 
 	private Configuration config;
-	private IdentitySpider identitySpider;
 	
 	private LiveState liveState;
 
 	public AdminPage() throws HumanVisibleException {
+		super();
 		liveState = LiveState.getInstance();		
 		config = WebEJBUtil.defaultLookup(Configuration.class);
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
 		logger.debug("checking whether admin console is enabled: " + isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
+
+	}
+	
+	public boolean isValid() throws HumanVisibleException {
+		PersonView person = getPerson();
+		return identitySpider.isAdministrator(person.getUser());
 	}
 	
 	private Set<PersonView> liveUserSetToPersonView(Set<LiveUser> lusers) {
 		Set<PersonView> result = new HashSet<PersonView>();
 
 		for (LiveUser luser : lusers) {
-			User user;
-			try {
-				user = identitySpider.lookupGuid(User.class, luser.getGuid());
-			} catch (NotFoundException e) {
-				throw new RuntimeException(e);
-			}
+			User user = identitySpider.lookupUser(luser);
 			result.add(identitySpider.getSystemView(user));					
 		}
 		return result;		
