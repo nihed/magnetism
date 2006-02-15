@@ -59,6 +59,7 @@ HippoIM::HippoIM()
     // queue of OutgoingMessage
     pending_messages_ = g_queue_new();
     musicSharingEnabled_ = false;
+    musicSharingPrimed_ = false;
 }
 
 static void
@@ -262,15 +263,27 @@ addPropValue(LmMessageNode *node, const char *key, const HippoBSTR &value)
     g_free(valueU);
 }
 
+static void
+addTrackProps(LmMessageNode *node, const HippoTrackInfo & track)
+{
+#define ADD_PROP(lower, upper) \
+    if (track.has ## upper ()) addPropValue(node, #lower, track.get ## upper ())
+
+    ADD_PROP(type, Type);
+    ADD_PROP(format, Format);
+    ADD_PROP(name, Name);
+    ADD_PROP(artist, Artist);
+    ADD_PROP(album, Album);
+    ADD_PROP(url, Url);
+    ADD_PROP(duration, Duration);
+    ADD_PROP(fileSize, FileSize);
+    ADD_PROP(trackNumber, TrackNumber);
+    ADD_PROP(discIdentifier, DiscIdentifier);
+}
+
 void
 HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
 {
-    // FIXME hack, we should have change notification on prefs, but for now there's only
-    // one pref and we just refetch it if you are doing track changes, since that's when it 
-    // could be relevant. lame.
-
-    updatePrefs(); // note this is async, so doesn't change musicSharingEnabled_ for the below check
-
     if (!musicSharingEnabled_) {
         hippoDebugLogW(L"Music sharing disabled, not sending track changed notification");
         return;
@@ -285,26 +298,52 @@ HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
     lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
     lm_message_node_set_attribute(music, "type", "musicChanged");
 
-#define ADD_PROP(lower, upper) \
-    if (track.has ## upper ()) addPropValue(music, #lower, track.get ## upper ())
-
     if (haveTrack) {
-        ADD_PROP(type, Type);
-        ADD_PROP(format, Format);
-        ADD_PROP(name, Name);
-        ADD_PROP(artist, Artist);
-        ADD_PROP(album, Album);
-        ADD_PROP(url, Url);
-        ADD_PROP(duration, Duration);
-        ADD_PROP(fileSize, FileSize);
-        ADD_PROP(trackNumber, TrackNumber);
-        ADD_PROP(discIdentifier, DiscIdentifier);
+        addTrackProps(music, track);
     }
 
     sendMessage(message);
 
     lm_message_unref(message);
     hippoDebugLogW(L"Sent music changed xmpp message");
+}
+
+bool
+HippoIM::getNeedPrimingTracks()
+{
+    return musicSharingEnabled_ && !musicSharingPrimed_;
+}
+
+void
+HippoIM::providePrimingTracks(HippoPlaylist *playlist)
+{
+    if (!musicSharingEnabled_ || musicSharingPrimed_) {
+        hippoDebugLogW(L"Didn't need the priming after all");
+        return;
+    }
+
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    LmMessageNode *node = lm_message_get_node(message);
+
+    LmMessageNode *music = lm_message_node_add_child (node, "music", NULL);
+    lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
+    lm_message_node_set_attribute(music, "type", "primingTracks");
+
+    for (int i = 0; i < playlist->size(); ++i) {
+        LmMessageNode *track = lm_message_node_add_child(music, "track", NULL);
+        addTrackProps(track, playlist->getTrack(i));
+    }
+
+    sendMessage(message);
+
+    lm_message_unref(message);
+    hippoDebugLogW(L"Sent priming tracks xmpp message");
+
+    // we should also get back a notification from the server when this changes,
+    // but we want to avoid re-priming so this adds robustness
+    musicSharingPrimed_ = true;
 }
 
 void 
@@ -1735,9 +1774,15 @@ HippoIM::onPrefsReply(LmMessageHandler *handler,
         if (strcmp(key, "musicSharingEnabled") == 0) {
             im->musicSharingEnabled_ = value != 0 && strcmp(value, "true") == 0;
             im->ui_->debugLogW(L"musicSharingEnabled set to %d", (int) im->musicSharingEnabled_);
+        } else if (strcmp(key, "musicSharingPrimed") == 0) {
+            im->musicSharingPrimed_ = value != 0 && strcmp(value, "true") == 0;
+            im->ui_->debugLogW(L"musicSharingPrimed set to %d", (int) im->musicSharingPrimed_);
         } else {
             im->ui_->debugLogU("Unknown pref '%s'", key);
         }
+
+        // notify the music monitor engines that they may want to kick in or out
+        im->ui_->setMusicSharingEnabled(im->musicSharingEnabled_);
     }
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;

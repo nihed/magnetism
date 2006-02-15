@@ -70,6 +70,10 @@ public:
     void sendChatRoomMessage(HippoChatRoom *chatRoom, BSTR text);
     void removeChatRoom(HippoChatRoom *chatRoom);
 
+    // called by HippoUI
+    bool getNeedPrimingTracks();
+    void providePrimingTracks(HippoPlaylist *playlist);
+
 private:
     void getAuthURL(BSTR *result) throw (std::bad_alloc);
 
@@ -218,4 +222,5 @@ private:
     GQueue *pending_messages_;
 
     bool musicSharingEnabled_;
+    bool musicSharingPrimed_;
 };

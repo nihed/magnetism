@@ -14,12 +14,17 @@ public:
 	~HippoMusic();
 
     void setUI(HippoUI *ui);
+    void setEnabled(bool enabled);
 
     ////// HippoMusicListener methods
     virtual void onCurrentTrackChanged(HippoMusicMonitor *monitor, bool haveTrack, const HippoTrackInfo & newTrack);
+    virtual void onMusicAppRunning(HippoMusicMonitor *monitor, bool nowRunning);
 
 private:
+    bool enabled_;
     HippoUI *ui_;
 	HippoPtr<HippoPlaylistSource> iTunes_;
     HippoPtr<HippoMusicMonitor> yahoo_;
+
+    void updateEnabled();
 };

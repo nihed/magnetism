@@ -406,6 +406,18 @@ HippoUI::setHotness(BSTR str)
     }
 }
 
+bool
+HippoUI::getNeedPrimingTracks()
+{
+    return im_.getNeedPrimingTracks();
+}
+
+void
+HippoUI::providePrimingTracks(HippoPlaylist *playlist)
+{
+    im_.providePrimingTracks(playlist);
+}
+
 int
 HippoUI::idleHotnessBlink(gpointer data)
 {

@@ -32,6 +32,14 @@ HippoMusicMonitor::fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo 
 	}
 }
 
+void
+HippoMusicMonitor::fireMusicAppRunning(bool nowRunning)
+{
+	for (unsigned int i = 0; i < listeners_.length(); ++i) {
+		listeners_[i]->onMusicAppRunning(this, nowRunning);
+	}
+}
+
 HippoPtr<HippoMusicMonitor>
 HippoMusicMonitor::createYahooMonitor()
 {

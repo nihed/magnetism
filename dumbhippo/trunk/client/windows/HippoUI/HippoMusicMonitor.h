@@ -111,6 +111,7 @@ class HippoMusicMonitor
 {
 public:
 	
+    virtual void setEnabled(bool enabled) = 0;
 	virtual bool hasCurrentTrack() const = 0;
 	virtual const HippoTrackInfo& getCurrentTrack() const = 0;
 
@@ -125,6 +126,7 @@ public:
 
 protected:
 	void fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
+    void fireMusicAppRunning(bool nowRunning);
 
     HippoMusicMonitor() : refCount_(1) {}
 
@@ -186,5 +188,6 @@ class HippoMusicListener
 {
 public:
 	virtual void onCurrentTrackChanged(HippoMusicMonitor *monitor, bool haveTrack, const HippoTrackInfo & newTrack) = 0;
+    virtual void onMusicAppRunning(HippoMusicMonitor *monitor, bool nowRunning) = 0;
 	virtual ~HippoMusicListener() {}
 };

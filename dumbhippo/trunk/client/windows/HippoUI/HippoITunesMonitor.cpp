@@ -193,7 +193,9 @@ public:
 #define CHECK_RUNNING_TIMEOUT (1000*30)
     unsigned int timeout_id_;
     bool firstTimeout_;
+    bool enabled_;
 
+    void setEnabled(bool enabled);
 	void attemptConnect();
 	void disconnect();
 	void setTrack(IITTrack *track);
@@ -277,7 +279,7 @@ HippoITunesMonitorImpl::checkRunningTimeout(void *data)
 }
 
 HippoITunesMonitorImpl::HippoITunesMonitorImpl(HippoITunesMonitor *wrapper)
-	: wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1), firstTimeout_(true)
+	: wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1), firstTimeout_(true), enabled_(false)
 {
     // one-shot idle immediately, which converts itself to a periodic timeout
     timeout_id_ = g_timeout_add(0, checkRunningTimeout, 
@@ -311,11 +313,23 @@ listConnections(IConnectionPoint *point)
 }
 
 void
+HippoITunesMonitorImpl::setEnabled(bool enabled)
+{
+    if (enabled == enabled_)
+        return;
+    enabled_ = enabled;
+    if (enabled_)
+        attemptConnect();
+    else
+        disconnect();
+}
+
+void
 HippoITunesMonitorImpl::attemptConnect()
 {
 	hippoDebugLogU("ITUNES CONNECT %s", __FUNCTION__);
 
-	if (state_ == CONNECTED)
+	if (state_ == CONNECTED || !enabled_)
 		return;
 
 	HRESULT hRes;
@@ -392,19 +406,23 @@ HippoITunesMonitorImpl::attemptConnect()
 	listConnections(connectionPoint_);
 
 	state_ = CONNECTED;
+    wrapper_->fireMusicAppRunning(true);
 
-	HippoPtr<IITTrack> trackPtr;
-	hRes = iTunesPtr->get_CurrentTrack(&trackPtr);
-	if (FAILED(hRes)) {
-		hippoDebugLogW(L"Failed to get current track after reconnecting");
-		disconnect();
-		return;
-	}
+    if (state_ == CONNECTED) {
+	    HippoPtr<IITTrack> trackPtr;
+	    hRes = iTunesPtr->get_CurrentTrack(&trackPtr);
+	    if (FAILED(hRes)) {
+		    hippoDebugLogW(L"Failed to get current track after reconnecting");
+		    disconnect();
+		    return;
+	    }
 
-	setTrack(trackPtr);
+	    setTrack(trackPtr);
+    }
 
-    readPlaylists();
-    getPrimingTracks(); // FIXME this is debug-only
+    // debug-only to have these here instead of "as needed"
+    // readPlaylists();
+    // getPrimingTracks();
 }
 
 void
@@ -433,6 +451,7 @@ HippoITunesMonitorImpl::disconnect() {
     iTunes_ = 0;
 
 	state_ = NO_ITUNES;
+    wrapper_->fireMusicAppRunning(false);
 }
 
 
@@ -841,7 +860,7 @@ HippoITunesMonitorImpl::getPrimingTracks()
         // from least to most played
         int rank = 0;
         for (std::multimap<long,long>::iterator i = playCounts.begin(); i != playCounts.end(); ++i) {
-            hippoDebugLogW(L"Track %ld played %ld times", i->second, i->first);
+            // hippoDebugLogW(L"Track %ld played %ld times", i->second, i->first);
             ranks[i->second] = rank;
             ++rank;
         }
@@ -849,7 +868,7 @@ HippoITunesMonitorImpl::getPrimingTracks()
         // from oldest to newest
         rank = 0;
         for (std::multimap<DATE,long>::iterator i = playDates.begin(); i != playDates.end(); ++i) {
-            hippoDebugLogW(L"Track %ld played at %g", i->second, i->first);
+            // hippoDebugLogW(L"Track %ld played at %g", i->second, i->first);
             ranks[i->second] += rank;
             ++rank;
         }
@@ -888,10 +907,12 @@ HippoITunesMonitorImpl::getPrimingTracks()
             }
         }
 
+#if 0
         for (int i = 0; i < tracksList->size(); ++i) {
             const HippoTrackInfo &info(tracksList->getTrack(i));
             hippoDebugLogW(L"Priming %d track %s", i, info.getName().m_str);
         }
+#endif
 
         return HippoPtr<HippoPlaylist>(tracksList);
     } catch (HResultException &e) {
@@ -1239,6 +1260,12 @@ HippoITunesMonitor::~HippoITunesMonitor()
 {
 	impl_->wrapper_ = 0;
 	impl_ = 0;
+}
+
+void
+HippoITunesMonitor::setEnabled(bool enabled)
+{
+    impl_->setEnabled(enabled);
 }
 
 bool 

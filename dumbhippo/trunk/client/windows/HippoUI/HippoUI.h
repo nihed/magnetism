@@ -145,6 +145,12 @@ public:
 
     void setHotness(BSTR hotness);
 
+    bool getNeedPrimingTracks();
+    void providePrimingTracks(HippoPlaylist *playlist);
+    void setMusicSharingEnabled(bool enabled) { 
+        music_.setEnabled(enabled);
+    }
+
 private:
     bool registerActive();
     bool registerClass();

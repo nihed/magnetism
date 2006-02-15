@@ -40,6 +40,7 @@ public:
 	DWORD connectionCookie_;
     long remoteCookie_;
     HippoPtr<IRMPRemote> yahooRemote_;
+    bool enabled_;
 
 #define CHECK_RUNNING_TIMEOUT (1000*30)
     unsigned int timeout_id_;
@@ -49,6 +50,7 @@ public:
 
 	void attemptConnect();
 	void disconnect();
+    void setEnabled(bool enabled);
 
     static gboolean checkRunningTimeout(void *data);
 
@@ -137,7 +139,7 @@ HippoYahooMonitorImpl::checkRunningTimeout(void *data)
 }
 
 HippoYahooMonitorImpl::HippoYahooMonitorImpl(HippoYahooMonitor *wrapper)
-: wrapper_(wrapper), haveTrack_(false), state_(NO_YAHOO), refCount_(1), firstTimeout_(true), updateTrackTimeout_(0)
+: wrapper_(wrapper), haveTrack_(false), state_(NO_YAHOO), refCount_(1), firstTimeout_(true), updateTrackTimeout_(0), enabled_(false)
 {
     // one-shot idle immediately, which converts itself to a periodic timeout
     timeout_id_ = g_timeout_add(0, checkRunningTimeout, 
@@ -156,11 +158,23 @@ HippoYahooMonitorImpl::~HippoYahooMonitorImpl()
 }
 
 void
+HippoYahooMonitorImpl::setEnabled(bool enabled)
+{
+    if (enabled == enabled_)
+        return;
+    enabled_ = enabled;
+    if (enabled_)
+        attemptConnect();
+    else
+        disconnect();
+}
+
+void
 HippoYahooMonitorImpl::attemptConnect()
 {
 	hippoDebugLogU("YAHOO CONNECT %s", __FUNCTION__);
 
-	if (state_ == CONNECTED)
+	if (state_ == CONNECTED || !enabled_)
 		return;
 
 	HRESULT hRes;
@@ -236,6 +250,7 @@ HippoYahooMonitorImpl::attemptConnect()
 	hippoDebugLogW(L"Yahoo all connected up, supposedly; cookie: %d", (int) connectionCookie_);
 
 	state_ = CONNECTED;
+    wrapper_->fireMusicAppRunning(true);
 
     trackNeedsUpdate();
 }
@@ -274,6 +289,7 @@ HippoYahooMonitorImpl::disconnect()
     }
 
 	state_ = NO_YAHOO;
+    wrapper_->fireMusicAppRunning(false);
 }
 
 bool
@@ -638,6 +654,12 @@ HippoYahooMonitor::~HippoYahooMonitor()
 {
 	impl_->wrapper_ = 0;
 	impl_ = 0;
+}
+
+void
+HippoYahooMonitor::setEnabled(bool enabled)
+{
+    impl_->setEnabled(enabled);
 }
 
 bool 
