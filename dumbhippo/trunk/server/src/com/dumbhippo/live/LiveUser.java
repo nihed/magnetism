@@ -64,6 +64,8 @@ public class LiveUser extends LiveObject {
 		}
 	}
 
+	// note this is only OK because LiveObject is abstract, if 
+	// concrete LiveObject existed this would break transitivity
 	@Override
 	public boolean equals(Object arg) {
 		if (!(arg instanceof LiveUser))
@@ -74,5 +76,3 @@ public class LiveUser extends LiveObject {
 				&& user.activePosts.equals(activePosts);
 	}
 }
-
-

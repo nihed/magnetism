@@ -179,6 +179,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		setCurrentTrack(user, track);
 	}
 	
+	public void addHistoricalTrack(User user, Map<String,String> properties) {
+		// for now there's no difference here, but eventually we might have the 
+		// client supply some properties like the date of listening instead of 
+		// pretending we "just" listened to this track.
+		setCurrentTrack(user, properties);
+	}
+	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
 		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 1);
 		assert !list.isEmpty(); // supposed to throw NotFoundException if empty

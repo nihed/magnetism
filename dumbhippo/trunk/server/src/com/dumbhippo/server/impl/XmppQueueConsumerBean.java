@@ -1,5 +1,10 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -13,7 +18,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
@@ -24,6 +28,7 @@ import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
+import com.dumbhippo.xmppcom.XmppEventPrimingTracks;
 
 @MessageDriven(activateConfig =
 {
@@ -60,6 +65,9 @@ public class XmppQueueConsumerBean implements MessageListener {
 				} else if (obj instanceof XmppEventChatMessage) {
 					XmppEventChatMessage event = (XmppEventChatMessage) obj;
 					processChatMessageEvent(event);					
+				} else if (obj instanceof XmppEventPrimingTracks) {
+					XmppEventPrimingTracks event = (XmppEventPrimingTracks) obj;
+					processPrimingTracksEvent(event);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}
@@ -74,21 +82,26 @@ public class XmppQueueConsumerBean implements MessageListener {
 	}
 
 	private void processMusicChangedEvent(XmppEventMusicChanged event) {
-		Guid guid;
-		try {
-			guid = Guid.parseJabberId(event.getJabberId());
-		} catch (ParseException e) {
-			logger.warn("Invalid jabber ID in music changed event: " + event.getJabberId());
-			throw new RuntimeException(e);
-		}
-		User user;
-		try {
-			user = identitySpider.lookupGuid(User.class, guid);
-		} catch (NotFoundException e) {
-			logger.warn("Unknown user in music changed event");
-			throw new RuntimeException(e);
-		}
+		User user = getUserFromUsername(event.getJabberId());
 		musicSystem.setCurrentTrack(user, event.getProperties());
+	}
+	
+	private void processPrimingTracksEvent(XmppEventPrimingTracks event) {
+		User user = getUserFromUsername(event.getJabberId());
+		if (identitySpider.getMusicSharingPrimed(user)) {
+			logger.debug("Ignoring priming data for music sharing, already primed");
+			return;
+		}
+		List<Map<String,String>> tracks = event.getTracks();
+		// the tracks are in order from most to least highly-ranked, we want to 
+		// timestamp the most highly-ranked one as most recent, so do this backward
+		tracks = new ArrayList<Map<String,String>>(tracks);
+		Collections.reverse(tracks);
+		for (Map<String,String> properties : tracks) {
+			musicSystem.addHistoricalTrack(user, properties);
+		}
+		// don't do this again
+		identitySpider.setMusicSharingPrimed(user, true);
 	}
 	
 	private User getUserFromUsername(String username) {

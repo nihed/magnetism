@@ -303,6 +303,10 @@ public interface IdentitySpider {
 	public boolean getMusicSharingEnabled(User user);
 	
 	public void setMusicSharingEnabled(User user, boolean enabled);
+
+	public boolean getMusicSharingPrimed(User user);
+	
+	public void setMusicSharingPrimed(User user, boolean primed);
 	
 	/**
 	 * Associate a MySpace identity with an account holder.

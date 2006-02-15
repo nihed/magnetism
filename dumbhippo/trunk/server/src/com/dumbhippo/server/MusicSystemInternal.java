@@ -29,6 +29,14 @@ public interface MusicSystemInternal extends MusicSystem {
 	public void setCurrentTrack(User user, Track track);
 
 	public void setCurrentTrack(User user, Map<String,String> properties);
+
+	/**
+	 * 
+	 * Add this track as if it were one we have listened to, but don't set it as current.
+	 * @param user who listened
+	 * @param properties props of the track
+	 */
+	public void addHistoricalTrack(User user, Map<String,String> properties);
 	
 	public void hintNeedsRefresh(Track track);
 

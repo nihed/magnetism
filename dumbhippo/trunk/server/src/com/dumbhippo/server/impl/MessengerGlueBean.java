@@ -315,13 +315,14 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			account = accountFromUsername(username);
 		} catch (JabberUserNotFoundException e) {
-			logger.debug("Returning empty prefs for user we've never heard of");
+			logger.warn("Returning empty prefs for user we've never heard of");
 			return prefs;
 		}
 		
-		// right now we have only one pref
-		
 		prefs.put("musicSharingEnabled", Boolean.toString(!account.isDisabled() && account.isMusicSharingEnabled()));
+
+		// not strictly a "pref" but this is a convenient place to send this to the client
+		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
 		
 		return prefs;
 	}

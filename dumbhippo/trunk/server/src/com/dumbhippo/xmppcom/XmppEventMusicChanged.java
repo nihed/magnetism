@@ -25,4 +25,8 @@ public class XmppEventMusicChanged extends XmppEvent {
 	public void setProperty(String key, String value) {
 		properties.put(key, value);
 	}
+	
+	public void addProperties(Map<String,String> properties) {
+		this.properties.putAll(properties);
+	}
 }

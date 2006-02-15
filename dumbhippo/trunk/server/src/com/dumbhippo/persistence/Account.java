@@ -62,6 +62,8 @@ public class Account extends Resource {
 	private String mySpaceFriendId;
 	
 	private boolean musicSharingEnabled;
+	// whether we've "primed" music sharing with some sample music
+	private boolean musicSharingPrimed;
 	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
@@ -84,6 +86,8 @@ public class Account extends Resource {
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
+		musicSharingEnabled = false;
+		musicSharingPrimed = false;
 		
 		if (owner != null) {
 			this.owner = owner;
@@ -367,6 +371,15 @@ public class Account extends Resource {
 
 	public void setMusicSharingEnabled(boolean musicSharingEnabled) {
 		this.musicSharingEnabled = musicSharingEnabled;
+	}
+
+	@Column(nullable=false)
+	public boolean isMusicSharingPrimed() {
+		return musicSharingPrimed;
+	}
+
+	public void setMusicSharingPrimed(boolean musicSharingPrimed) {
+		this.musicSharingPrimed = musicSharingPrimed;
 	}
 	
 	@Override

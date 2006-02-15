@@ -1,5 +1,8 @@
 package com.dumbhippo.jive;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.jms.ObjectMessage;
 
 import org.dom4j.Element;
@@ -13,6 +16,7 @@ import org.xmpp.packet.JID;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
+import com.dumbhippo.xmppcom.XmppEventPrimingTracks;
 
 public class MusicIQHandler extends AbstractIQHandler {
 
@@ -44,29 +48,35 @@ public class MusicIQHandler extends AbstractIQHandler {
 			return reply;
 		}
 		
-		if (!type.equals("musicChanged")) {
-			makeError(reply, "Unknown music IQ type, known types are: musicChanged");
+		if (type.equals("musicChanged")) {
+			return processMusicChanged(from, iq, reply);	
+		} else if (type.equals("primingTracks")) {
+			return processPrimingTracks(from, iq, reply);
+		} else {
+			
+			makeError(reply, "Unknown music IQ type, known types are: musicChanged, primingTracks");
 			return reply;
 		}
-		
-		return processMusicChanged(from, iq, reply);
 	}
 
-	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
-		
-		XmppEventMusicChanged event = new XmppEventMusicChanged(from.getNode());
+	static class ParseException extends Exception {
+		private static final long serialVersionUID = 1L;
 
-		for (Object argObj : iq.elements()) {
+		ParseException(String message) {
+			super(message);
+		}
+	}
+	
+	private Map<String,String> parseTrackNode(Element track) throws ParseException {
+		Map<String,String> properties = new HashMap<String,String>();
+		for (Object argObj : track.elements()) {
         	Node node = (Node) argObj;
-        	
-        	Log.debug("parsing expected arg node " + node);
         	
         	if (node.getNodeType() == Node.ELEMENT_NODE) {
         		Element element = (Element) node;
         		
         		if (!element.getName().equals("prop")) {
-        			makeError(reply, "Unknown node type: " + element.getName());
-        			return reply;
+        			throw new ParseException("Unknown node type: " + element.getName());
         		}
         		
         		String key = element.attributeValue("key");
@@ -74,7 +84,58 @@ public class MusicIQHandler extends AbstractIQHandler {
 
         		Log.debug("Adding track property key='" + key + "' value='" + value + "'");
         	
-        		event.setProperty(key, value);
+        		properties.put(key, value);
+        	}
+        }
+    	return properties;
+	}
+	
+	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
+		
+		XmppEventMusicChanged event = new XmppEventMusicChanged(from.getNode());
+
+		Map<String,String> properties;
+		try {
+			properties = parseTrackNode(iq);
+		} catch (ParseException e) {
+			Log.debug(e);
+			makeError(reply, e.getMessage());
+			return reply;
+		}
+		
+		event.addProperties(properties);
+		
+        ObjectMessage message = queue.createObjectMessage(event);
+        queue.send(message);
+		
+		return reply;
+	}
+
+	private IQ processPrimingTracks(JID from, Element iq, IQ reply) {
+		
+		XmppEventPrimingTracks event = new XmppEventPrimingTracks(from.getNode());
+
+		for (Object argObj : iq.elements()) {
+        	Node node = (Node) argObj;
+        	
+        	if (node.getNodeType() == Node.ELEMENT_NODE) {
+        		Element element = (Element) node;
+        		
+        		if (!element.getName().equals("track")) {
+        			makeError(reply, "Unknown node type: " + element.getName());
+        			return reply;
+        		}
+        		
+        		Map<String,String> properties;
+        		try {
+					 properties = parseTrackNode(element);
+				} catch (ParseException e) {
+					Log.debug(e);
+					makeError(reply, e.getMessage());
+					return reply;
+				}
+        		
+				event.addTrack(properties);
         	}
         }
         
@@ -83,7 +144,7 @@ public class MusicIQHandler extends AbstractIQHandler {
 		
 		return reply;
 	}
-
+	
 	@Override
 	public IQHandlerInfo getInfo() {
 		return info;
