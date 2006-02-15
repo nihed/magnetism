@@ -134,6 +134,9 @@ HippoShellExt::Initialize(LPCITEMIDLIST folderId, IDataObject *dataObj, HKEY reg
 STDMETHODIMP 
 HippoShellExt::QueryContextMenu(HMENU menu, UINT indexMenu, UINT cmdFirst, UINT cmdLast, UINT flags)
 {
+    // Disabled for now
+    if (true)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
     if ((flags & CMF_DEFAULTONLY)
         || !ui_ || !fileData_ || fileNames_.length() == 0)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
