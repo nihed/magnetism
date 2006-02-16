@@ -65,6 +65,7 @@ public:
    void onDocumentComplete();
    void launchBrowser(const HippoBSTR &url);
    bool isOurServer(const HippoBSTR &host);
+   HRESULT getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser);
 
 protected:
     DWORD refCount_;

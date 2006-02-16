@@ -25,8 +25,10 @@ library HippoExplorer {
         HRESULT CloseWindow(void);
         [helpstring("Show a chat window for the given post")]
         HRESULT ShowChatWindow(BSTR userId, BSTR postId);
-        [helpstring("Open the post information bar for the given post")]
-        HRESULT OpenBrowserBar(BSTR userId, BSTR postId);
+        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
+        HRESULT OpenBrowserBar();
+        [helpstring("Close the post information bar")]
+        HRESULT CloseBrowserBar();
     }
     [
         uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents

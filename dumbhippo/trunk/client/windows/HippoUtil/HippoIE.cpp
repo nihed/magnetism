@@ -32,9 +32,9 @@ class HippoIEImpl :
     public IOleInPlaceSite, // <- IOleWindow
     public IOleContainer, // <- IParseDisplayName
     public IDocHostUIHandler,
-    public DWebBrowserEvents2 // <- IDispatch
+    public DWebBrowserEvents2, // <- IDispatch
+    public IServiceProvider
 #if 0
-    public IServiceProvider,
     public IOleCommandTarget,
 #endif
 {
@@ -138,13 +138,13 @@ public:
     STDMETHODIMP TranslateUrl(DWORD translate, OLECHAR *chURLIn, OLECHAR **chURLOut);
     STDMETHODIMP UpdateUI(VOID);
 
-#if 0
-    // We don't have a use for the following two interfaces at the current
-    // time, but keeping the skeleton code around in case we need to implement
-    // them later.
-
     // IServiceProvider methods
     STDMETHODIMP QueryService(const GUID &, const IID &, void **);
+
+#if 0
+    // We don't have a use for the following interface at the current
+    // time, but keeping the skeleton code around in case we need to implement
+    // it later.
 
     // IOleCommandTarget methods
     STDMETHODIMP QueryStatus (const GUID *commandGroup,
@@ -915,9 +915,9 @@ HippoIEImpl::QueryInterface(const IID &ifaceID,
         *result = static_cast<IDocHostUIHandler *>(this);
     else if (IsEqualIID(ifaceID, DIID_DWebBrowserEvents2))
         *result = static_cast<IDispatch *>(this);
-#if 0
     else if (IsEqualIID(ifaceID, IID_IServiceProvider))
         *result = static_cast<IServiceProvider *>(this);
+#if 0
     else if (IsEqualIID(ifaceID, IID_IOleCommandTarget))
         *result = static_cast<IOleCommandTarget *>(this);
 #endif
@@ -926,8 +926,7 @@ HippoIEImpl::QueryInterface(const IID &ifaceID,
         // Can be used to print out interfaces that are being
         // queried for that we don't implement; some known
         // interfaces that are queried for against this object
-        // are IServiceProvider, IOleCommandTarget, and 
-        // IOleControlSite
+        // are IOleCommandTarget and IOleControlSite
 
         WCHAR *ifaceStr;
         if (SUCCEEDED(StringFromIID(ifaceID, &ifaceStr))) {
@@ -1062,7 +1061,6 @@ HippoIEImpl::Invoke (DISPID        member,
      }
  }
 
-#if 0
 ////////////////// IServiceProvider implementation ///////////////////
 
 STDMETHODIMP 
@@ -1072,18 +1070,16 @@ HippoIEImpl::QueryService(const GUID &serviceID,
 {
     // Query service is called on the HTML with a wide range of 
     // Service ID's .... IID_IHttpNegiotiate2, IID_ITargetFrame2,
-    // SID_STopLevelBrowser, and many others. We don't need to
-    // handle any of them currently.
+    // any many others. We just chain this one to our embedder
+    // for now.
 
-    WCHAR *serviceStr;
-
-    if (SUCCEEDED(StringFromIID(serviceID, &serviceStr))) {
-        hippoDebugLogW(L"QueryService for:%s\n", serviceStr);
-        CoTaskMemFree(serviceStr);
-    }
-
-    return E_UNEXPECTED;
+    if (IsEqualGUID(serviceID, SID_STopLevelBrowser))
+        return callback_->getToplevelBrowser(ifaceID, result);
+    else
+        return E_UNEXPECTED;
 }
+
+#if 0
 
 /////////////////// IOleCommandTarget implementation ///////////////////
 

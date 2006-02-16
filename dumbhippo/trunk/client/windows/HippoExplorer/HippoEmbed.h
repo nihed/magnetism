@@ -46,12 +46,15 @@ public:
    // IHippoEmbed methods
    STDMETHODIMP CloseWindow (void);
    STDMETHODIMP ShowChatWindow (BSTR userId, BSTR postId);
-   STDMETHODIMP OpenBrowserBar(BSTR userId, BSTR postId);
+   STDMETHODIMP OpenBrowserBar();
+   STDMETHODIMP CloseBrowserBar();
 
 private:
     void clearSite();
     void onDocumentComplete(IDispatch *dispatch, BSTR url);
     bool checkURL(BSTR url);
+
+    HRESULT showHideBrowserBar(bool doShow);
 
     HippoConnectionPointContainer connectionPointContainer_;
 

@@ -14,7 +14,7 @@
 #include <strsafe.h>
 
 static const int MIN_HEIGHT = 10;
-static const int DEFAULT_HEIGHT = 50;
+static const int DEFAULT_HEIGHT = 165;
 static const WCHAR *TITLE = L"DumbHippo";
 static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
 
@@ -403,6 +403,16 @@ HippoExplorerBar::isOurServer(const HippoBSTR &host)
     return hippoIsOurServer(host);
 }
 
+HRESULT 
+HippoExplorerBar::getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser)
+{
+    HippoQIPtr<IServiceProvider> serviceProvider = site_;
+    if (!serviceProvider)
+        return E_UNEXPECTED;
+
+    return serviceProvider->QueryService(SID_STopLevelBrowser, ifaceID, toplevelBrowser);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 
 bool
@@ -510,7 +520,7 @@ HippoExplorerBar::getFramerUrl(const HippoBSTR &pageUrl)
         StringCchPrintf(buf, sizeof(buf) / sizeof(buf[0]), L":%d", parser.getPort());
         framerUrl.Append(buf);
     }
-    framerUrl.Append(L"/framer?postId=");
+    framerUrl.Append(L"/framer?browserBar=true&postId=");
     framerUrl.Append(postId);
 
     return framerUrl;

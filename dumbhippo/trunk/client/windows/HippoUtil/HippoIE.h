@@ -37,6 +37,9 @@ public:
     // second layer of safety where the first layer of safety comes
     // from not allowing untrusted HTML in the container.
     virtual bool isOurServer(const HippoBSTR &host) = 0;
+
+    // Implementation of QueryService(SID_SToplevelBrowser, ...);
+    virtual HRESULT getToplevelBrowser(const IID  &ifaceID, void **toplevelBrowser) = 0;
 };
 
 /*

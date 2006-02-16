@@ -270,8 +270,13 @@ HippoEmbed::GetIDsOfNames (REFIID    riid,
  {
     if (!ifaceTypeInfo_) 
          return E_OUTOFMEMORY;
-    
-    return DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
+
+    HRESULT hr = DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
+
+    if (cNames == 1)
+        hippoDebugLogW(L"%ls = %d (%x)", rgszNames[0], hr, rgDispId[0]);
+
+    return hr;
  }
         
 STDMETHODIMP
@@ -305,9 +310,7 @@ HippoEmbed::Invoke (DISPID        member,
     HRESULT hr = DispInvoke(hippoEmbed, ifaceTypeInfo_, member, flags, 
                              dispParams, result, excepInfo, argErr);
 
-#if 0
-    hippoDebug(L"Invoke: %#x - result %#x\n", member, hr);
-#endif
+    hippoDebugLogW(L"Invoke: %d: result %#x\n", member, hr);
     
     return hr;
 }
@@ -348,35 +351,15 @@ HippoEmbed::ShowChatWindow(BSTR userId, BSTR postId)
 }
 
 STDMETHODIMP 
-HippoEmbed::OpenBrowserBar(BSTR userId, BSTR postId)
+HippoEmbed::OpenBrowserBar()
 {
-    if (!toplevelBrowser_)
-        return E_FAIL;
+    return showHideBrowserBar(true);
+}
 
-    variant_t classId(L"{174D2323-9AF2-4257-B8BD-849865E4F1AE}"); // CLSID_HippoExplorerBar
-    variant_t show(true);
-    variant_t size;
-
-    // We want to show our browser bar for this window, but we don't want the change
-    // to stick in the registry, so we save the value of the relevant registry key
-    // and restore it afterwards.
-
-    BYTE *oldRegistryData = NULL;
-    DWORD oldRegistryLength = 0;
-
-    {
-        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", false);
-        key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
-    }
-
-    HRESULT hr = toplevelBrowser_->ShowBrowserBar(&classId, &show, &size);
-
-    {
-        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", true);
-        key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
-    }
-
-    return hr;
+STDMETHODIMP 
+HippoEmbed::CloseBrowserBar()
+{
+    return showHideBrowserBar(false);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -459,4 +442,36 @@ HippoEmbed::checkURL(BSTR url)
         return false;
 
     return true;
+}
+
+HRESULT 
+HippoEmbed::showHideBrowserBar(bool doShow)
+{
+    if (!toplevelBrowser_)
+        return E_FAIL;
+
+    variant_t classId(L"{174D2323-9AF2-4257-B8BD-849865E4F1AE}"); // CLSID_HippoExplorerBar
+    variant_t show(doShow);
+    variant_t size;
+
+    // We want to change our browser bar for this window, but we don't want the change
+    // to stick in the registry, so we save the value of the relevant registry key
+    // and restore it afterwards.
+
+    BYTE *oldRegistryData = NULL;
+    DWORD oldRegistryLength = 0;
+
+    {
+        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", false);
+        key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
+    }
+
+    HRESULT hr = toplevelBrowser_->ShowBrowserBar(&classId, &show, &size);
+
+    {
+        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", true);
+        key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
+    }
+
+    return hr;
 }

@@ -176,6 +176,12 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR 
     return host == serverHost;
 }
 
+HRESULT 
+HippoAbstractWindow::getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser)
+{
+    return E_UNEXPECTED;
+}
+
 bool
 HippoAbstractWindow::embedIE(void)
 {
