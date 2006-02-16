@@ -123,6 +123,7 @@ private:
 
     bool handleHotnessMessage(LmMessage *message);
     bool handleActivePostsMessage(LmMessage *message);
+    bool handlePrefsChangedMessage(LmMessage *message);
 
     void connectFailure(char *message);
     void authFailure(char *message);
@@ -132,6 +133,7 @@ private:
     void flushPending();
 
     void updatePrefs();
+    void processPrefsNode(LmMessageNode *node);
 
     static gboolean onSignInTimeout(gpointer data);
     static gboolean onRetryTimeout(gpointer data);

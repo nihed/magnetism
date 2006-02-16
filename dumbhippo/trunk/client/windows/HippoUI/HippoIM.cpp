@@ -1413,6 +1413,22 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
    return false;
 }
    
+bool
+HippoIM::handlePrefsChangedMessage(LmMessage *message)
+{
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return false;
+
+    LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/prefs", "prefs");
+    if (child == 0)
+        return false;
+    ui_->debugLogU("handling prefsChanged message");
+
+    processPrefsNode(child);
+
+    return true;
+}
+
 LmHandlerResult 
 HippoIM::onMessage (LmMessageHandler *handler,
                     LmConnection     *connection,
@@ -1442,6 +1458,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
 
     if (im->checkMySpaceContactCommentMessage(message)) {
         im->handleMySpaceContactCommentMessage();
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (im->handlePrefsChangedMessage(message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -1744,6 +1764,33 @@ HippoIM::updatePrefs()
     ui_->debugLogU("Sent request for prefs");
 }
 
+void
+HippoIM::processPrefsNode(LmMessageNode *prefsNode)
+{
+    for (LmMessageNode *child = prefsNode->children; child != 0; child = child->next) {
+        const char *key = lm_message_node_get_attribute(child, "key");
+        const char *value = lm_message_node_get_value(child);
+
+        if (key == 0) {
+            ui_->debugLogU("ignoring node '%s' with no 'key' attribute in prefs reply",
+                child->name);
+            continue;
+        }
+        
+        if (strcmp(key, "musicSharingEnabled") == 0) {
+            musicSharingEnabled_ = value != 0 && strcmp(value, "true") == 0;
+            ui_->debugLogW(L"musicSharingEnabled set to %d", (int) musicSharingEnabled_);
+        } else if (strcmp(key, "musicSharingPrimed") == 0) {
+            musicSharingPrimed_ = value != 0 && strcmp(value, "true") == 0;
+            ui_->debugLogW(L"musicSharingPrimed set to %d", (int) musicSharingPrimed_);
+        } else {
+            ui_->debugLogU("Unknown pref '%s'", key);
+        }
+    }
+    // notify the music monitor engines that they may want to kick in or out
+    ui_->setMusicSharingEnabled(musicSharingEnabled_);
+}
+
 LmHandlerResult
 HippoIM::onPrefsReply(LmMessageHandler *handler,
                       LmConnection     *connection,
@@ -1763,29 +1810,7 @@ HippoIM::onPrefsReply(LmMessageHandler *handler,
     if (prefsNode == 0 || strcmp(prefsNode->name, "prefs") != 0)
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 
-    for (LmMessageNode *child = prefsNode->children; child != 0; child = child->next) {
-        const char *key = lm_message_node_get_attribute(child, "key");
-        const char *value = lm_message_node_get_value(child);
-
-        if (key == 0) {
-            im->ui_->debugLogU("ignoring node '%s' with no 'key' attribute in prefs reply",
-                child->name);
-            continue;
-        }
-        
-        if (strcmp(key, "musicSharingEnabled") == 0) {
-            im->musicSharingEnabled_ = value != 0 && strcmp(value, "true") == 0;
-            im->ui_->debugLogW(L"musicSharingEnabled set to %d", (int) im->musicSharingEnabled_);
-        } else if (strcmp(key, "musicSharingPrimed") == 0) {
-            im->musicSharingPrimed_ = value != 0 && strcmp(value, "true") == 0;
-            im->ui_->debugLogW(L"musicSharingPrimed set to %d", (int) im->musicSharingPrimed_);
-        } else {
-            im->ui_->debugLogU("Unknown pref '%s'", key);
-        }
-
-        // notify the music monitor engines that they may want to kick in or out
-        im->ui_->setMusicSharingEnabled(im->musicSharingEnabled_);
-    }
+    im->processPrefsNode(prefsNode);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
