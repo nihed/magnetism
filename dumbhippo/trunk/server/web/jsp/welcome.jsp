@@ -105,6 +105,7 @@
 		</tr>
 		</table>
 	</div>
+	<dht:bottom/>
 </div>
 </body>
 </html>

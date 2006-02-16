@@ -31,5 +31,6 @@
   	<dht:livePostDebug post="${post}"/>
   </c:forEach>
 </div>
+<dht:bottom/>
 </body>
 </html>

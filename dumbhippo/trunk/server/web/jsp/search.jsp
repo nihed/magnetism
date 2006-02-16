@@ -101,6 +101,7 @@
 				
 		</div>
 	</div>
+	<dht:bottom/>
 </div>
 </body>
 </html>

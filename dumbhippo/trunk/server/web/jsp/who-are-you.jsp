@@ -62,6 +62,7 @@
 			We'll test more browsers as soon as we can.
 		</c:if>
 	</div>
+	<dht:bottom/>	
 </div>
 </body>
 </html>

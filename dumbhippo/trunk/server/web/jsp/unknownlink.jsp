@@ -22,6 +22,7 @@
 		<p><a href="/home">Home</a></p>
 		
 	</div>
+	<dht:bottom/>
 </div>	
 </body>
 </html>

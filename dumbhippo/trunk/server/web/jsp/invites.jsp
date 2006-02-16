@@ -81,11 +81,12 @@
 		</div>
 		
 	</div>
-
+	<dht:bottom/>
 </div>
 
 <div id="dhOTP">
     <dht:rightColumn/>
 </div>
+
 </body>
 </html>

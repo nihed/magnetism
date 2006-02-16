@@ -83,6 +83,7 @@
 			</div>
 		</div>
 	</div>
+	<dht:bottom/>
 </div>
 
 <div id="dhOTP">

@@ -38,6 +38,8 @@
 		<p><a href="/home">Home</a></p>
 		<p><a href="/main">Main</a></p>
 	</div>
+	<dht:bottom/>
 </div>
+
 </body>
 </html>

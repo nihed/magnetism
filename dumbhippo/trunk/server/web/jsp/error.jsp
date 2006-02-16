@@ -37,6 +37,7 @@
 		</c:choose>
 		
 	</div>
+	<dht:bottom/>
 </div>
 	
 </body>

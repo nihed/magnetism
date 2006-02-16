@@ -32,6 +32,8 @@
 		</c:otherwise>
 	</c:choose>
 	</div>
+	<dht:bottom/>
 </div>
+
 </body>
 </html>

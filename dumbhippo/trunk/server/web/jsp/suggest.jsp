@@ -45,6 +45,7 @@
 		
 	</div>
 
+	<dht:bottom/>
 </div>
 
 <!-- check out this classy layout!!!  it's getting chilly in here! -->
@@ -72,10 +73,6 @@
 <div id="dhOTP">
 <dht:rightColumn/>
 </div>
-
-<script>
-
-</script>
 
 </body>
 </html>

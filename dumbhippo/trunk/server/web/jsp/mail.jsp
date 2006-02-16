@@ -58,6 +58,8 @@
 	<br/>
 	<p><a href="/privacy">Our privacy policy</a></p>
 	</div>
+	<dht:bottom/>
 </div>
+
 </body>
 </html>

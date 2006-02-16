@@ -83,7 +83,7 @@
 		<div class="dh-right-box-area">
 		</div>
 	</div>
-
+	<dht:bottom/>
 </div>
 
 <div id="dhOTP">

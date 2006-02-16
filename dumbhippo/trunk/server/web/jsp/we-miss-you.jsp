@@ -40,6 +40,7 @@
 		Otherwise, <a href="javascript:dh.actions.signOut();">click here to sign out</a>.
 		</p>
 	</div>
+	<dht:bottom/>
 </div>
 </body>
 </html>

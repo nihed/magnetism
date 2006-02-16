@@ -221,5 +221,6 @@
 <dht:rightColumn/>
 </div>
 
+<dht:bottom/>
 </body>
 </html>

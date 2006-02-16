@@ -98,16 +98,12 @@
 		</div>
 		
 	</div>
-
+	<dht:bottom/>
 </div>
 
 <div id="dhOTP">
     <dht:rightColumn/>
 </div>
-
-<script>
-
-</script>
 
 </body>
 </html>
