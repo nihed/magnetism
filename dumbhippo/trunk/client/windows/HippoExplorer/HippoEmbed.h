@@ -46,6 +46,7 @@ public:
    // IHippoEmbed methods
    STDMETHODIMP CloseWindow (void);
    STDMETHODIMP ShowChatWindow (BSTR userId, BSTR postId);
+   STDMETHODIMP OpenBrowserBar(BSTR userId, BSTR postId);
 
 private:
     void clearSite();

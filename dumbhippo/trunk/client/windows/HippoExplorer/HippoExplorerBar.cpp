@@ -4,15 +4,18 @@
  **/
 
 #include "stdafx.h"
+#include <HippoURLParser.h>
 #include "HippoExplorerBar.h"
+#include "HippoExplorerUtil.h"
 #include "Guid.h"
 #include "Globals.h"
 #include "Resource.h"
+#include <ExDispid.h>
 #include <strsafe.h>
 
 static const int MIN_HEIGHT = 10;
-static const int DEFAULT_HEIGHT = 50; // The registry value will be used instead, I think
-static const WCHAR *TITLE = L"Hippo Explorer Bar";
+static const int DEFAULT_HEIGHT = 50;
+static const WCHAR *TITLE = L"DumbHippo";
 static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
 
 HippoExplorerBar::HippoExplorerBar()
@@ -49,6 +52,8 @@ HippoExplorerBar::QueryInterface(const IID &ifaceID,
         *result = static_cast<IObjectWithSite *>(this);
     else if (IsEqualIID(ifaceID, IID_IPersistStream))
         *result = static_cast<IPersistStream *>(this);
+    else if (IsEqualIID(ifaceID, IID_IDispatch))
+        *result = static_cast<IDispatch *>(this);
     else {
         *result = NULL;
         return E_NOINTERFACE;
@@ -165,10 +170,31 @@ HippoExplorerBar::SetSite(IUnknown *site)
         if (FAILED(site->QueryInterface<IInputObjectSite>(&site_)))
             return E_FAIL;
 
+        HippoQIPtr<IServiceProvider> serviceProvider = site_;
+        if (serviceProvider) 
+            serviceProvider->QueryService<IWebBrowser2>(SID_SWebBrowserApp, &browser_);
+
+        if (browser_) {
+            HippoQIPtr<IConnectionPointContainer> container(browser_);
+            if (container)
+            {
+                if (SUCCEEDED(container->FindConnectionPoint(DIID_DWebBrowserEvents2,
+                                                            &connectionPoint_))) 
+                {
+                    // The COM-safe downcast here is a little overkill ... 
+                    // we actually just need to disambiguate
+                    HippoQIPtr<IUnknown> unknown(static_cast<IDispatch *>(this));
+                    connectionPoint_->Advise(unknown, &connectionCookie_);
+                }
+            }
+        }
+
         if (!createWindow(parentWindow)) {
             site_ = NULL;
             return E_FAIL;
         }
+
+        createIE();
     }
     
     return S_OK;
@@ -271,6 +297,112 @@ HippoExplorerBar::GetSizeMax(ULARGE_INTEGER *pul)
     return 0;
 }
 
+//////////////////// IDispatch implementation ////////////////////////
+
+STDMETHODIMP
+HippoExplorerBar::GetIDsOfNames (const IID   &iid,
+                                 OLECHAR    **names,  
+                                 unsigned int cNames,          
+                                 LCID         lcid,                   
+                                 DISPID *     dispID)
+{
+    return DISP_E_UNKNOWNNAME;
+}
+
+STDMETHODIMP
+HippoExplorerBar::GetTypeInfo (unsigned int infoIndex,  
+                               LCID         lcid,                  
+                               ITypeInfo  **ppTInfo)
+{
+   if (ppTInfo == NULL)
+      return E_INVALIDARG;
+
+    return DISP_E_BADINDEX;
+}
+
+ STDMETHODIMP 
+ HippoExplorerBar::GetTypeInfoCount (unsigned int *pcTInfo)
+ {
+    if (pcTInfo == NULL)
+      return E_INVALIDARG;
+
+    *pcTInfo = 0;
+
+    return S_OK;
+ }
+  
+ STDMETHODIMP
+ HippoExplorerBar::Invoke (DISPID        member,
+                           const IID    &iid,
+                           LCID          lcid,              
+                           WORD          flags,
+                           DISPPARAMS   *dispParams,
+                           VARIANT      *result,
+                           EXCEPINFO    *excepInfo,  
+                           unsigned int *argErr)
+ {
+      /* See note in HippoTracker::Invoke() for why we listen to 
+       * both DocumentComplete and TitleChange
+       */
+      switch (member) {
+        case DISPID_DOCUMENTCOMPLETE:
+             if (dispParams->cArgs == 2 &&
+                 dispParams->rgvarg[1].vt == VT_DISPATCH &&
+                 dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
+             {
+                 checkPageChange();
+
+                 return S_OK;
+             } else {
+                 return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+             }
+             break;
+        case DISPID_TITLECHANGE:
+             if (dispParams->cArgs == 1 &&
+                 dispParams->rgvarg[0].vt == VT_BSTR)
+             {
+                 checkPageChange();
+
+                 return S_OK;
+             } else {
+                 return DISP_E_BADVARTYPE; // Or DISP_E_BADPARAMCOUNT
+             }
+             break;
+         default:
+             return DISP_E_MEMBERNOTFOUND; // Or S_OK
+     }
+}
+
+//////////////////// HippoIECallback implementation ////////////////////////
+
+void 
+HippoExplorerBar::onClose()
+{
+}
+
+void 
+HippoExplorerBar::onDocumentComplete()
+{
+}
+
+void 
+HippoExplorerBar::launchBrowser(const HippoBSTR &url)
+{
+    if (browser_) {
+        variant_t flags;
+        variant_t targetFrameName("_self");
+        variant_t postData;
+        variant_t headers;
+        browser_->Navigate(url.m_str, &flags, &targetFrameName, &postData, &headers);
+    }
+}
+
+bool 
+HippoExplorerBar::isOurServer(const HippoBSTR &host)
+{
+    return hippoIsOurServer(host);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 
 bool
@@ -325,6 +457,90 @@ HippoExplorerBar::registerWindowClass()
 }
 
 bool
+HippoExplorerBar::createIE() 
+{
+    if (!browser_)
+        return false;
+
+    if (FAILED(browser_->get_LocationURL(&currentUrl_)))
+        return false;
+
+    HippoBSTR framerUrl = getFramerUrl(currentUrl_);
+    if (!framerUrl)
+        framerUrl = L"about:blank";
+
+    ie_ = HippoIE::create(window_, framerUrl.m_str, this, NULL);
+    ie_->embedBrowser();
+
+    return true;
+}
+
+HippoBSTR 
+HippoExplorerBar::getFramerUrl(const HippoBSTR &pageUrl)
+{
+    // We look at the toplevel URL of the page (it should be /visit?post=<postId>)
+    // to figure out what URL we want to navigate to
+
+    HippoURLParser parser(pageUrl);
+    if (!parser.ok())
+        return NULL;
+
+    if (parser.getScheme() != INTERNET_SCHEME_HTTP)
+        return NULL;
+    
+    if (!hippoIsOurServer(parser.getHostName()))
+        return NULL;
+
+    HippoBSTR urlPath = parser.getUrlPath();
+    if (!urlPath || wcscmp(urlPath.m_str, L"/visit") != 0)
+        return NULL;
+
+    HippoBSTR extraInfo = parser.getExtraInfo();
+    if (!extraInfo || wcsncmp(extraInfo.m_str, L"?post=", 6) != 0)
+        return NULL;
+
+    HippoBSTR postId(extraInfo.m_str + 6);
+    if (!hippoVerifyGuid(postId))
+        return NULL;
+
+    HippoBSTR framerUrl(L"http://");
+    framerUrl.Append(parser.getHostName());
+    if (parser.getPort() != 80) {
+        WCHAR buf[32];
+        StringCchPrintf(buf, sizeof(buf) / sizeof(buf[0]), L":%d", parser.getPort());
+        framerUrl.Append(buf);
+    }
+    framerUrl.Append(L"/framer?postId=");
+    framerUrl.Append(postId);
+
+    return framerUrl;
+}
+
+void
+HippoExplorerBar::checkPageChange()
+{
+    if (!browser_)
+        return;
+    
+    HippoBSTR url;
+    if (FAILED(browser_->get_LocationURL(&url)))
+        return;
+
+    if (!url)
+        return;
+
+    if (url == currentUrl_)
+        return;
+
+    currentUrl_ = url;
+
+    HippoBSTR framerUrl = getFramerUrl(currentUrl_);
+    if (framerUrl) {
+        ie_->setLocation(framerUrl);
+    }
+}
+
+bool
 HippoExplorerBar::processMessage(UINT   message,
                                  WPARAM wParam,
                                  LPARAM lParam)
@@ -336,9 +552,11 @@ HippoExplorerBar::processMessage(UINT   message,
         case WM_KILLFOCUS:
             setHasFocus(false);
             return true;
-        case WM_PAINT:
-            onPaint();
-            return true;
+        case WM_SIZE:
+            if (ie_) {
+                RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
+                ie_->resize(&rect);
+            }
         default:
             return false;
     }

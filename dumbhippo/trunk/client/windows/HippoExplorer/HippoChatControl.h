@@ -76,9 +76,6 @@ private:
     // Helper for isSiteSafe();
     bool checkURL(BSTR url);
 
-    // Verifies that a string looks like a DumbHippo GUID
-    bool verifyGUID(BSTR guid);
-
     void connectToUI();
     void clearUI();
 

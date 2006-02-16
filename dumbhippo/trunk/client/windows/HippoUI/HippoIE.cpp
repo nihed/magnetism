@@ -3,33 +3,205 @@
  * Copyright Red Hat, Inc. 2005
  */
 #include "StdAfx.h"
-#include "HippoIE.h"
 #include <mshtml.h>
 
 #import <msxml3.dll>  named_guids
 
 #include <mshtml.h>
+#include <mshtmhst.h>
 #include "exdisp.h"
 #include <strsafe.h>
 #include <stdarg.h>
 #include <ExDispid.h>
+#include <HippoArray.h>
 #include <HippoUtil.h>
+#include <HippoURLParser.h>
 #include "HippoExternal.h"
-#include "HippoLogWindow.h"
-#include "HippoUI.h"
+#include "HippoIE.h"
+#include "HippoInvocation.h"
 
 using namespace MSXML2;
 
 #define NOTIMPLEMENTED assert(0); return E_NOTIMPL
 
-HippoIE::HippoIE(HippoUI *ui, HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
+class HippoIEImpl : 
+    public HippoIE,
+    public IStorage,
+    public IOleInPlaceFrame, // <- IOleInplaceUIWindow <- IOleWindow
+    public IOleClientSite,
+    public IOleInPlaceSite, // <- IOleWindow
+    public IOleContainer, // <- IParseDisplayName
+    public IDocHostUIHandler,
+    public DWebBrowserEvents2 // <- IDispatch
+#if 0
+    public IServiceProvider,
+    public IOleCommandTarget,
+#endif
 {
-    ui_ = ui;
+public:
+    // Only sets up object
+    HippoIEImpl(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application);
+    ~HippoIEImpl(void);
+
+    void setXsltTransform(WCHAR *styleSrc, ...);
+    void setThreeDBorder(bool threeDBorder);
+    void embedBrowser();
+    void setLocation(const HippoBSTR &location);
+    IWebBrowser2 *getBrowser();
+    void resize(RECT *rect);
+    HippoInvocation createInvocation(const HippoBSTR &functionName);
+
+    // IUnknown methods
+    STDMETHODIMP QueryInterface(REFIID, LPVOID*);
+    STDMETHODIMP_(DWORD) AddRef();
+    STDMETHODIMP_(DWORD) Release();
+
+    // IDispatch methods
+    STDMETHOD (GetIDsOfNames) (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
+    STDMETHOD (GetTypeInfo) (unsigned int, LCID, ITypeInfo **);                    
+    STDMETHOD (GetTypeInfoCount) (unsigned int *);
+    STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
+                        VARIANT *, EXCEPINFO *, unsigned int *);
+
+    // IStorage
+    STDMETHODIMP CreateStream(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStream ** ppstm);
+    STDMETHODIMP OpenStream(const WCHAR * pwcsName,void * reserved1,DWORD grfMode,DWORD reserved2,IStream ** ppstm);
+    STDMETHODIMP CreateStorage(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStorage ** ppstg);
+    STDMETHODIMP OpenStorage(const WCHAR * pwcsName,IStorage * pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage ** ppstg);
+    STDMETHODIMP CopyTo(DWORD ciidExclude,IID const * rgiidExclude,SNB snbExclude,IStorage * pstgDest);
+    STDMETHODIMP MoveElementTo(const OLECHAR * pwcsName,IStorage * pstgDest,const OLECHAR* pwcsNewName,DWORD grfFlags);
+    STDMETHODIMP Commit(DWORD grfCommitFlags);
+    STDMETHODIMP Revert(void);
+    STDMETHODIMP EnumElements(DWORD reserved1,void * reserved2,DWORD reserved3,IEnumSTATSTG ** ppenum);
+    STDMETHODIMP DestroyElement(const OLECHAR * pwcsName);
+    STDMETHODIMP RenameElement(const WCHAR * pwcsOldName,const WCHAR * pwcsNewName);
+    STDMETHODIMP SetElementTimes(const WCHAR * pwcsName,FILETIME const * pctime,FILETIME const * patime,FILETIME const * pmtime);
+    STDMETHODIMP SetClass(REFCLSID clsid);
+    STDMETHODIMP SetStateBits(DWORD grfStateBits,DWORD grfMask);
+    STDMETHODIMP Stat(STATSTG * pstatstg,DWORD grfStatFlag);
+
+    // IOleWindow
+    STDMETHODIMP GetWindow(HWND FAR* lphwnd);
+    STDMETHODIMP ContextSensitiveHelp(BOOL fEnterMode);
+    // IOleInPlaceUIWindow
+    STDMETHODIMP GetBorder(LPRECT lprectBorder);
+    STDMETHODIMP RequestBorderSpace(LPCBORDERWIDTHS pborderwidths);
+    STDMETHODIMP SetBorderSpace(LPCBORDERWIDTHS pborderwidths);
+    STDMETHODIMP SetActiveObject(IOleInPlaceActiveObject *pActiveObject,LPCOLESTR pszObjName);
+    // IOleInPlaceFrame
+    STDMETHODIMP InsertMenus(HMENU hmenuShared,LPOLEMENUGROUPWIDTHS lpMenuWidths);
+    STDMETHODIMP SetMenu(HMENU hmenuShared,HOLEMENU holemenu,HWND hwndActiveObject);
+    STDMETHODIMP RemoveMenus(HMENU hmenuShared);
+    STDMETHODIMP SetStatusText(LPCOLESTR pszStatusText);
+    STDMETHODIMP TranslateAccelerator(  LPMSG lpmsg,WORD wID);
+
+    // IOleClientSite
+    STDMETHODIMP SaveObject();
+    STDMETHODIMP GetMoniker(DWORD dwAssign,DWORD dwWhichMoniker,IMoniker ** ppmk);
+    STDMETHODIMP GetContainer(LPOLECONTAINER FAR* ppContainer);
+    STDMETHODIMP ShowObject();
+    STDMETHODIMP OnShowWindow(BOOL fShow);
+    STDMETHODIMP RequestNewObjectLayout();
+
+    // IOleInPlaceSite methods
+    STDMETHODIMP CanInPlaceActivate();
+    STDMETHODIMP OnInPlaceActivate();
+    STDMETHODIMP OnUIActivate();
+    STDMETHODIMP GetWindowContext(LPOLEINPLACEFRAME FAR* lplpFrame,LPOLEINPLACEUIWINDOW FAR* lplpDoc,LPRECT lprcPosRect,LPRECT lprcClipRect,LPOLEINPLACEFRAMEINFO lpFrameInfo);
+    STDMETHODIMP Scroll(SIZE scrollExtent);
+    STDMETHODIMP OnUIDeactivate(BOOL fUndoable);
+    STDMETHODIMP OnInPlaceDeactivate();
+    STDMETHODIMP DiscardUndoState();
+    STDMETHODIMP DeactivateAndUndo();
+    STDMETHODIMP OnPosRectChange(LPCRECT lprcPosRect);
+
+    // IParseDisplayName
+    STDMETHODIMP ParseDisplayName(IBindCtx *pbc,LPOLESTR pszDisplayName,ULONG *pchEaten,IMoniker **ppmkOut);
+    // IOleContainer
+    STDMETHODIMP EnumObjects(DWORD grfFlags,IEnumUnknown **ppenum);
+    STDMETHODIMP LockContainer(BOOL fLock);
+
+    // IDocHostUIHandler
+    STDMETHODIMP EnableModeless(BOOL enable);
+    STDMETHODIMP FilterDataObject(IDataObject *dobj, IDataObject **dobjRet);
+    STDMETHODIMP GetDropTarget(IDropTarget *dropTarget, IDropTarget **dropTargetRet);
+    STDMETHODIMP GetExternal(IDispatch **dispatch);
+    STDMETHODIMP GetHostInfo(DOCHOSTUIINFO *info);
+    STDMETHODIMP GetOptionKeyPath(LPOLESTR *chKey, DWORD dw);
+    STDMETHODIMP HideUI(VOID);
+    STDMETHODIMP OnDocWindowActivate(BOOL activate);
+    STDMETHODIMP OnFrameWindowActivate(BOOL activate);
+    STDMETHODIMP ResizeBorder(LPCRECT border, IOleInPlaceUIWindow *uiWindow, BOOL frameWindow);
+    STDMETHODIMP ShowContextMenu(DWORD id, POINT *pt, IUnknown *cmdtReserved, IDispatch *dispReserved);
+    STDMETHODIMP ShowUI(DWORD id, IOleInPlaceActiveObject *activeObject, IOleCommandTarget *commandTarget, IOleInPlaceFrame *frame, IOleInPlaceUIWindow *doc);
+    STDMETHODIMP TranslateAccelerator(LPMSG msg, const GUID *guidCmdGroup, DWORD cmdID);
+    STDMETHODIMP TranslateUrl(DWORD translate, OLECHAR *chURLIn, OLECHAR **chURLOut);
+    STDMETHODIMP UpdateUI(VOID);
+
+#if 0
+    // We don't have a use for the following two interfaces at the current
+    // time, but keeping the skeleton code around in case we need to implement
+    // them later.
+
+    // IServiceProvider methods
+    STDMETHODIMP QueryService(const GUID &, const IID &, void **);
+
+    // IOleCommandTarget methods
+    STDMETHODIMP QueryStatus (const GUID *commandGroup,
+                              ULONG nCommands,
+                              OLECMD *commands,
+                              OLECMDTEXT *commandText);
+    STDMETHODIMP Exec (const GUID *commandGroup,
+                       DWORD       commandId,
+                       DWORD       nCommandExecOptions,
+                       VARIANTARG *commandInput,
+                       VARIANTARG *commandOutput);
+#endif
+
+private:
+    bool handleNavigation(IDispatch *targetDispatch,
+                          BSTR       url,
+                          bool       isPost);
+
+    HippoIECallback *callback_;
+    HWND window_;
+    HippoPtr<IOleObject> ie_;
+    HippoPtr<IDispatch> external_;
+    HippoPtr<IWebBrowser2> browser_;
+
+    HippoBSTR docSrc_;
+
+    HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2
+    DWORD connectionCookie_; // cookie for DWebBrowserEvents2 connection
+
+    HippoPtr<ITypeInfo> eventsTypeInfo_;
+
+    bool haveTransform_;
+    HippoBSTR styleSrc_;
+    HippoArray<HippoBSTR> styleParamNames_;
+    HippoArray<HippoBSTR> styleParamValues_;
+
+    bool threeDBorder_;
+
+    bool inNavigation_; // Set temporarily while we are navigating to a new location programmatically
+
+    DWORD refCount_;
+};
+
+HippoIE *
+HippoIE::create(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
+{
+    return new HippoIEImpl(window, src, cb, application);
+}
+
+HippoIEImpl::HippoIEImpl(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
+{
     window_ = window;
     docSrc_ = src;
     callback_ = cb;
     haveTransform_ = false;
     threeDBorder_ = true;
+    inNavigation_ = false;
 
     HippoExternal *external = new HippoExternal();
     if (external)
@@ -42,7 +214,7 @@ HippoIE::HippoIE(HippoUI *ui, HWND window, WCHAR *src, HippoIECallback *cb, IDis
                          NULL);
 }
 
-HippoIE::~HippoIE(void)
+HippoIEImpl::~HippoIEImpl(void)
 {
     if (connectionPoint_) {
         if (connectionCookie_) {
@@ -55,7 +227,7 @@ HippoIE::~HippoIE(void)
 }
 
 HippoInvocation
-HippoIE::createInvocation(const HippoBSTR &functionName) 
+HippoIEImpl::createInvocation(const HippoBSTR &functionName) 
 {
     HippoPtr<IDispatch> docDispatch;
     browser_->get_Document(&docDispatch);
@@ -70,12 +242,12 @@ HippoIE::createInvocation(const HippoBSTR &functionName)
 }
 
 IWebBrowser2 *
-HippoIE::getBrowser()
+HippoIEImpl::getBrowser()
 {
     return browser_;
 }
 void
-HippoIE::setXsltTransform(WCHAR *stylesrc, ...)
+HippoIEImpl::setXsltTransform(WCHAR *stylesrc, ...)
 {
     va_list vap;
     va_start(vap, stylesrc);
@@ -96,26 +268,13 @@ HippoIE::setXsltTransform(WCHAR *stylesrc, ...)
 }
 
 void 
-HippoIE::setThreeDBorder(bool threeDBorder)
+HippoIEImpl::setThreeDBorder(bool threeDBorder)
 {
     threeDBorder_ = threeDBorder;
 }
     
 void
-HippoIE::signalError(WCHAR *text, ...)
-{
-    WCHAR buf[1024];
-    va_list args;
-    va_start(args, text);
-    
-    StringCchVPrintfW(buf, sizeof(buf)/sizeof(buf[0]), text, args);
-    callback_->onError(buf);
-
-    va_end(args);
-}
-
-void
-HippoIE::create()
+HippoIEImpl::embedBrowser()
 {
     RECT rect;
     GetClientRect(window_,&rect);
@@ -157,8 +316,7 @@ HippoIE::create()
         xmlResult = xmlsrc->load(variant_t(docSrc_.m_str));
         xmlResult = clientXSLT->load(variant_t(styleSrc_.m_str));
     } catch(_com_error &e) {
-        signalError(L"Error loading XML files : %s\n",
-            HippoBSTR(e.Description()).m_str);
+        hippoDebugLogW(L"HippIE: Error loading XML files : %s\n",  HippoBSTR(e.Description()).m_str);
         return;
     }
 
@@ -168,7 +326,7 @@ HippoIE::create()
         xmlResult = xsltTemplate->putref_stylesheet(clientXSLT);
         processor = xsltTemplate->createProcessor();
     } catch(_com_error &e) {
-        signalError(L"Error setting XSL style sheet : %s\n", HippoBSTR(e.Description()).m_str);
+        hippoDebugLogW(L"HippoIE: Error setting XSL style sheet : %s\n", HippoBSTR(e.Description()).m_str);
         return;
     }
     IStream *iceCream;
@@ -216,19 +374,38 @@ HippoIE::create()
     iceCream->Release();
 }
 
+void 
+HippoIEImpl::setLocation(const HippoBSTR &location)
+{
+    if (!browser_) {
+        docSrc_ = location;
+        return;
+    }
+
+    inNavigation_ = true;
+
+    variant_t flags;
+    variant_t targetFrameName("_self");
+    variant_t postData;
+    variant_t headers;
+    browser_->Navigate(location.m_str, &flags, &targetFrameName, &postData, &headers);
+}
+
 void
-HippoIE::resize(RECT *rect)
+HippoIEImpl::resize(RECT *rect)
 {
     HippoQIPtr<IOleInPlaceObject> inPlace = ie_;
     inPlace->SetObjectRects(rect, rect);
 }
 
 bool 
-HippoIE::handleNavigation(IDispatch *targetDispatch,
-                          BSTR       url,
-                          bool       isPost)
+HippoIEImpl::handleNavigation(IDispatch *targetDispatch,
+                              BSTR       url,
+                              bool       isPost)
 {
     // Cases here:
+    //
+    // 0. If we're navigating programmatically via setLocation(), allow it
     //
     // 1. If it's a POST to our site, allow it
     //
@@ -251,83 +428,75 @@ HippoIE::handleNavigation(IDispatch *targetDispatch,
     bool ourSite = false;
     bool normalURL = false;
     bool javascript = false;
-    
-    URL_COMPONENTS components;
-    ZeroMemory(&components, sizeof(components));
-    components.dwStructSize = sizeof(components);
 
-    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
-    // to return pointers into the passed in URL along with lengths. The 
-    // specific non-zero value is irrelevant
-    components.dwHostNameLength = 1;
-    components.dwUserNameLength = 1;
-    components.dwPasswordLength = 1;
-    components.dwUrlPathLength = 1;
-    components.dwExtraInfoLength = 1;
+    HippoURLParser parser(url);
+    if (parser.ok()) {
+        INTERNET_SCHEME scheme = parser.getScheme();
 
-    if (InternetCrackUrl(url, 0, 0, &components)) {
         // Note that this blocks things like itms: and aim:, we may need to loosen
         // that eventually for desired functionality, but be safe for now.
-        if (components.nScheme == INTERNET_SCHEME_HTTP ||
-            components.nScheme == INTERNET_SCHEME_HTTPS ||
-            components.nScheme == INTERNET_SCHEME_FTP)
+        if (scheme == INTERNET_SCHEME_HTTP ||
+            scheme == INTERNET_SCHEME_HTTPS ||
+            scheme == INTERNET_SCHEME_FTP)
             normalURL = true;
-        else if (components.nScheme == INTERNET_SCHEME_JAVASCRIPT)
+        else if (scheme == INTERNET_SCHEME_JAVASCRIPT)
             javascript = true;
 
-
-        if (components.nScheme == INTERNET_SCHEME_HTTP ||
-            components.nScheme == INTERNET_SCHEME_HTTPS) 
+        if (scheme == INTERNET_SCHEME_HTTP ||
+            scheme == INTERNET_SCHEME_HTTPS) 
         {
-            HippoBSTR webServer;
-            unsigned int port;
-            ui_->getPreferences()->parseWebServer(&webServer, &port);
-
-            if (components.dwHostNameLength == webServer.Length() &&
-                wcsncmp(components.lpszHostName, webServer, components.dwHostNameLength) == 0)
-                ourSite = true;
+            
+            ourSite = callback_->isOurServer(parser.getHostName());
         }
     }
 
-    if (ourSite && isPost) {
-        hippoDebugLogW(L"Allowing POST navigation to %ls", url);
+    hippoDebugLogW(L"handleNavigation: %ls\r\n   oursite=%d, normalURL=%d, javascript=%d, toplevelNavigation=%d, inNavigation=%d", 
+                   url, ourSite, normalURL, javascript, toplevelNavigation, inNavigation_);
+
+    if (ourSite && toplevelNavigation && inNavigation_) {
+        hippoDebugLogW(L"   Allowing navigation via SetLocation");
+        inNavigation_ = false;
+        return false;
+    } if (ourSite && isPost) {
+        hippoDebugLogW(L"   Allowing POST navigation to our site");
         return false;
     } else if (toplevelNavigation && !isPost && normalURL) {
-        ui_->launchBrowser(url);
+        hippoDebugLogW(L"   Opening URL in separate window");
+        callback_->launchBrowser(url);
         return true;
     } else if (!toplevelNavigation && ourSite) {
-        hippoDebugLogW(L"Allowing internal frame navigation to %ls", url);
+        hippoDebugLogW(L"   Allowing internal frame navigation");
         return false;
     } else if (javascript) {
-        hippoDebugLogW(L"Allowing navigation to javascript URL");
+        hippoDebugLogW(L"   Allowing navigation to javascript URL");
         return false;
     } else {
-        hippoDebugLogW(L"Denying navigation to %ls", url);
+        hippoDebugLogW(L"   Denying navigation");
         return true;
     }
 }
 
 // IDocHostUIHandler
 STDMETHODIMP 
-HippoIE::EnableModeless(BOOL enable)
+HippoIEImpl::EnableModeless(BOOL enable)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::FilterDataObject(IDataObject *dobj, IDataObject **dobjRet)
+HippoIEImpl::FilterDataObject(IDataObject *dobj, IDataObject **dobjRet)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::GetDropTarget(IDropTarget *dropTarget, IDropTarget **dropTargetRet)
+HippoIEImpl::GetDropTarget(IDropTarget *dropTarget, IDropTarget **dropTargetRet)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::GetExternal(IDispatch **dispatch)
+HippoIEImpl::GetExternal(IDispatch **dispatch)
 {
     *dispatch = external_;
     if (*dispatch) {
@@ -339,7 +508,7 @@ HippoIE::GetExternal(IDispatch **dispatch)
 }
 
 STDMETHODIMP 
-HippoIE::GetHostInfo(DOCHOSTUIINFO *info)
+HippoIEImpl::GetHostInfo(DOCHOSTUIINFO *info)
 {
     if (info->cbSize < sizeof(DOCHOSTUIINFO))
         return E_FAIL;
@@ -353,152 +522,152 @@ HippoIE::GetHostInfo(DOCHOSTUIINFO *info)
 }
 
 STDMETHODIMP 
-HippoIE::GetOptionKeyPath(LPOLESTR *chKey, DWORD dw)
+HippoIEImpl::GetOptionKeyPath(LPOLESTR *chKey, DWORD dw)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::HideUI(VOID)
+HippoIEImpl::HideUI(VOID)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::OnDocWindowActivate(BOOL activate)
+HippoIEImpl::OnDocWindowActivate(BOOL activate)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::OnFrameWindowActivate(BOOL activate)
+HippoIEImpl::OnFrameWindowActivate(BOOL activate)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::ResizeBorder(LPCRECT border, IOleInPlaceUIWindow *uiWindow, BOOL frameWindow)
+HippoIEImpl::ResizeBorder(LPCRECT border, IOleInPlaceUIWindow *uiWindow, BOOL frameWindow)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::ShowContextMenu(DWORD id, POINT *pt, IUnknown *cmdtReserved, IDispatch *dispReserved)
+HippoIEImpl::ShowContextMenu(DWORD id, POINT *pt, IUnknown *cmdtReserved, IDispatch *dispReserved)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::ShowUI(DWORD id, IOleInPlaceActiveObject *activeObject, IOleCommandTarget *commandTarget, IOleInPlaceFrame *frame, IOleInPlaceUIWindow *doc)
+HippoIEImpl::ShowUI(DWORD id, IOleInPlaceActiveObject *activeObject, IOleCommandTarget *commandTarget, IOleInPlaceFrame *frame, IOleInPlaceUIWindow *doc)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::TranslateAccelerator(LPMSG msg, const GUID *guidCmdGroup, DWORD cmdID)
+HippoIEImpl::TranslateAccelerator(LPMSG msg, const GUID *guidCmdGroup, DWORD cmdID)
 {
     return S_FALSE;
 }
 
 STDMETHODIMP 
-HippoIE::TranslateUrl(DWORD translate, OLECHAR *chURLIn, OLECHAR **chURLOut)
+HippoIEImpl::TranslateUrl(DWORD translate, OLECHAR *chURLIn, OLECHAR **chURLOut)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::UpdateUI(VOID)
+HippoIEImpl::UpdateUI(VOID)
 {
     return S_OK;
 }
 
 // IStorage
 STDMETHODIMP 
-HippoIE::CreateStream(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStream ** ppstm)
+HippoIEImpl::CreateStream(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStream ** ppstm)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::OpenStream(const WCHAR * pwcsName,void * reserved1,DWORD grfMode,DWORD reserved2,IStream ** ppstm)
+HippoIEImpl::OpenStream(const WCHAR * pwcsName,void * reserved1,DWORD grfMode,DWORD reserved2,IStream ** ppstm)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::CreateStorage(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStorage ** ppstg)
+HippoIEImpl::CreateStorage(const WCHAR * pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2,IStorage ** ppstg)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::OpenStorage(const WCHAR * pwcsName,IStorage * pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage ** ppstg)
+HippoIEImpl::OpenStorage(const WCHAR * pwcsName,IStorage * pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage ** ppstg)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::CopyTo(DWORD ciidExclude,IID const * rgiidExclude,SNB snbExclude,IStorage * pstgDest)
+HippoIEImpl::CopyTo(DWORD ciidExclude,IID const * rgiidExclude,SNB snbExclude,IStorage * pstgDest)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::MoveElementTo(const OLECHAR * pwcsName,IStorage * pstgDest,const OLECHAR* pwcsNewName,DWORD grfFlags)
+HippoIEImpl::MoveElementTo(const OLECHAR * pwcsName,IStorage * pstgDest,const OLECHAR* pwcsNewName,DWORD grfFlags)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::Commit(DWORD grfCommitFlags)
+HippoIEImpl::Commit(DWORD grfCommitFlags)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::Revert(void)
+HippoIEImpl::Revert(void)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::EnumElements(DWORD reserved1,void * reserved2,DWORD reserved3,IEnumSTATSTG ** ppenum)
+HippoIEImpl::EnumElements(DWORD reserved1,void * reserved2,DWORD reserved3,IEnumSTATSTG ** ppenum)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::DestroyElement(const OLECHAR * pwcsName)
+HippoIEImpl::DestroyElement(const OLECHAR * pwcsName)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::RenameElement(const WCHAR * pwcsOldName,const WCHAR * pwcsNewName)
+HippoIEImpl::RenameElement(const WCHAR * pwcsOldName,const WCHAR * pwcsNewName)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetElementTimes(const WCHAR * pwcsName,FILETIME const * pctime,FILETIME const * patime,FILETIME const * pmtime)
+HippoIEImpl::SetElementTimes(const WCHAR * pwcsName,FILETIME const * pctime,FILETIME const * patime,FILETIME const * pmtime)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetClass(REFCLSID clsid)
+HippoIEImpl::SetClass(REFCLSID clsid)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::SetStateBits(DWORD grfStateBits,DWORD grfMask)
+HippoIEImpl::SetStateBits(DWORD grfStateBits,DWORD grfMask)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::Stat(STATSTG * pstatstg,DWORD grfStatFlag)
+HippoIEImpl::Stat(STATSTG * pstatstg,DWORD grfStatFlag)
 {
     NOTIMPLEMENTED;
 }
@@ -506,7 +675,7 @@ HippoIE::Stat(STATSTG * pstatstg,DWORD grfStatFlag)
 // IOleWindow
 
 STDMETHODIMP 
-HippoIE::GetWindow(HWND FAR* lphwnd)
+HippoIEImpl::GetWindow(HWND FAR* lphwnd)
 {
     *lphwnd = window_;
 
@@ -514,32 +683,32 @@ HippoIE::GetWindow(HWND FAR* lphwnd)
 }
 
 STDMETHODIMP 
-HippoIE::ContextSensitiveHelp(BOOL fEnterMode)
+HippoIEImpl::ContextSensitiveHelp(BOOL fEnterMode)
 {
     NOTIMPLEMENTED;
 }
 
 // IOleInPlaceUIWindow
 STDMETHODIMP 
-HippoIE::GetBorder(LPRECT lprectBorder)
+HippoIEImpl::GetBorder(LPRECT lprectBorder)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::RequestBorderSpace(LPCBORDERWIDTHS pborderwidths)
+HippoIEImpl::RequestBorderSpace(LPCBORDERWIDTHS pborderwidths)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetBorderSpace(LPCBORDERWIDTHS pborderwidths)
+HippoIEImpl::SetBorderSpace(LPCBORDERWIDTHS pborderwidths)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetActiveObject(IOleInPlaceActiveObject *pActiveObject,LPCOLESTR pszObjName)
+HippoIEImpl::SetActiveObject(IOleInPlaceActiveObject *pActiveObject,LPCOLESTR pszObjName)
 {
     return S_OK;
 }
@@ -547,32 +716,32 @@ HippoIE::SetActiveObject(IOleInPlaceActiveObject *pActiveObject,LPCOLESTR pszObj
 
 // IOleInPlaceFrame
 STDMETHODIMP 
-HippoIE::InsertMenus(HMENU hmenuShared,LPOLEMENUGROUPWIDTHS lpMenuWidths)
+HippoIEImpl::InsertMenus(HMENU hmenuShared,LPOLEMENUGROUPWIDTHS lpMenuWidths)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetMenu(HMENU hmenuShared,HOLEMENU holemenu,HWND hwndActiveObject)
+HippoIEImpl::SetMenu(HMENU hmenuShared,HOLEMENU holemenu,HWND hwndActiveObject)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::RemoveMenus(HMENU hmenuShared)
+HippoIEImpl::RemoveMenus(HMENU hmenuShared)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::SetStatusText(LPCOLESTR pszStatusText)
+HippoIEImpl::SetStatusText(LPCOLESTR pszStatusText)
 {
     return S_OK;
 }
 
 // EnableModeless already covered
 
-STDMETHODIMP HippoIE::TranslateAccelerator(  LPMSG lpmsg,WORD wID)
+STDMETHODIMP HippoIEImpl::TranslateAccelerator(  LPMSG lpmsg,WORD wID)
 {
     NOTIMPLEMENTED;
 }
@@ -580,19 +749,19 @@ STDMETHODIMP HippoIE::TranslateAccelerator(  LPMSG lpmsg,WORD wID)
 // IOleClientSite
 
 STDMETHODIMP 
-HippoIE::SaveObject()
+HippoIEImpl::SaveObject()
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::GetMoniker(DWORD dwAssign,DWORD dwWhichMoniker,IMoniker ** ppmk)
+HippoIEImpl::GetMoniker(DWORD dwAssign,DWORD dwWhichMoniker,IMoniker ** ppmk)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::GetContainer(LPOLECONTAINER FAR* ppContainer)
+HippoIEImpl::GetContainer(LPOLECONTAINER FAR* ppContainer)
 {
     // We are a simple object and don't support a container.
     *ppContainer = NULL;
@@ -601,46 +770,46 @@ HippoIE::GetContainer(LPOLECONTAINER FAR* ppContainer)
 }
 
 STDMETHODIMP 
-HippoIE::ShowObject()
+HippoIEImpl::ShowObject()
 {
     return NOERROR;
 }
 
 STDMETHODIMP 
-HippoIE::OnShowWindow(BOOL fShow)
+HippoIEImpl::OnShowWindow(BOOL fShow)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::RequestNewObjectLayout()
+HippoIEImpl::RequestNewObjectLayout()
 {
     NOTIMPLEMENTED;
 }
 
 // IOleInPlaceSite
 STDMETHODIMP 
-HippoIE::CanInPlaceActivate()
+HippoIEImpl::CanInPlaceActivate()
 {
     // Yes we can
     return S_OK;
 }
 
 STDMETHODIMP
-HippoIE::OnInPlaceActivate()
+HippoIEImpl::OnInPlaceActivate()
 {
     // Why disagree.
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::OnUIActivate()
+HippoIEImpl::OnUIActivate()
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::GetWindowContext(
+HippoIEImpl::GetWindowContext(
     LPOLEINPLACEFRAME FAR* ppFrame,
     LPOLEINPLACEUIWINDOW FAR* ppDoc,
     LPRECT prcPosRect,
@@ -661,57 +830,57 @@ HippoIE::GetWindowContext(
 }
 
 STDMETHODIMP 
-HippoIE::Scroll(SIZE scrollExtent)
+HippoIEImpl::Scroll(SIZE scrollExtent)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::OnUIDeactivate(BOOL fUndoable)
+HippoIEImpl::OnUIDeactivate(BOOL fUndoable)
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::OnInPlaceDeactivate()
+HippoIEImpl::OnInPlaceDeactivate()
 {
     return S_OK;
 }
 
 STDMETHODIMP 
-HippoIE::DiscardUndoState()
+HippoIEImpl::DiscardUndoState()
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::DeactivateAndUndo()
+HippoIEImpl::DeactivateAndUndo()
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::OnPosRectChange(LPCRECT lprcPosRect)
+HippoIEImpl::OnPosRectChange(LPCRECT lprcPosRect)
 {
     return S_OK;
 }
 
 // IParseDisplayName
 STDMETHODIMP 
-HippoIE::ParseDisplayName(IBindCtx *pbc,LPOLESTR pszDisplayName,ULONG *pchEaten,IMoniker **ppmkOut)
+HippoIEImpl::ParseDisplayName(IBindCtx *pbc,LPOLESTR pszDisplayName,ULONG *pchEaten,IMoniker **ppmkOut)
 {
     NOTIMPLEMENTED;
 }
 
 // IOleContainer
 STDMETHODIMP 
-HippoIE::EnumObjects(DWORD grfFlags,IEnumUnknown **ppenum)
+HippoIEImpl::EnumObjects(DWORD grfFlags,IEnumUnknown **ppenum)
 {
     NOTIMPLEMENTED;
 }
 
 STDMETHODIMP 
-HippoIE::LockContainer(BOOL fLock)
+HippoIEImpl::LockContainer(BOOL fLock)
 {
     NOTIMPLEMENTED;
 }
@@ -719,8 +888,8 @@ HippoIE::LockContainer(BOOL fLock)
 /////////////////////// IUnknown implementation ///////////////////////
 
 STDMETHODIMP 
-HippoIE::QueryInterface(const IID &ifaceID, 
-                        void    **result)
+HippoIEImpl::QueryInterface(const IID &ifaceID, 
+                            void    **result)
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
         *result = static_cast<IUnknown *>(static_cast<IDocHostUIHandler*>(this));
@@ -774,13 +943,13 @@ HippoIE::QueryInterface(const IID &ifaceID,
     return S_OK;    
 }                                             
 
-HIPPO_DEFINE_REFCOUNTING(HippoIE)
+HIPPO_DEFINE_REFCOUNTING(HippoIEImpl)
 
 
 //////////////////////// IDispatch implementation ///////////////////
 
 STDMETHODIMP
-HippoIE::GetIDsOfNames (const IID   &iid,
+HippoIEImpl::GetIDsOfNames (const IID   &iid,
                              OLECHAR    **names,  
                              unsigned int cNames,          
                              LCID         lcid,                   
@@ -790,9 +959,9 @@ HippoIE::GetIDsOfNames (const IID   &iid,
 }
 
 STDMETHODIMP
-HippoIE::GetTypeInfo (unsigned int infoIndex,  
-                           LCID         lcid,                  
-                           ITypeInfo  **ppTInfo)
+HippoIEImpl::GetTypeInfo (unsigned int infoIndex,  
+                          LCID         lcid,                  
+                          ITypeInfo  **ppTInfo)
 {
    if (ppTInfo == NULL)
       return E_INVALIDARG;
@@ -809,7 +978,7 @@ HippoIE::GetTypeInfo (unsigned int infoIndex,
 }
 
 STDMETHODIMP 
-HippoIE::GetTypeInfoCount (unsigned int *pcTInfo)
+HippoIEImpl::GetTypeInfoCount (unsigned int *pcTInfo)
 {
     if (pcTInfo == NULL)
         return E_INVALIDARG;
@@ -820,14 +989,14 @@ HippoIE::GetTypeInfoCount (unsigned int *pcTInfo)
 }
   
 STDMETHODIMP
-HippoIE::Invoke (DISPID        member,
-                      const IID    &iid,
-                      LCID          lcid,              
-                      WORD          flags,
-                      DISPPARAMS   *dispParams,
-                      VARIANT      *result,
-                      EXCEPINFO    *excepInfo,  
-                      unsigned int *argErr)
+HippoIEImpl::Invoke (DISPID        member,
+                     const IID    &iid,
+                     LCID          lcid,              
+                     WORD          flags,
+                     DISPPARAMS   *dispParams,
+                     VARIANT      *result,
+                     EXCEPINFO    *excepInfo,  
+                     unsigned int *argErr)
 {
     switch (member) {
         case DISPID_BEFORENAVIGATE2:
@@ -897,9 +1066,9 @@ HippoIE::Invoke (DISPID        member,
 ////////////////// IServiceProvider implementation ///////////////////
 
 STDMETHODIMP 
-HippoIE::QueryService(const GUID &serviceID, 
-                      const IID  &ifaceID, 
-                      void      **result)
+HippoIEImpl::QueryService(const GUID &serviceID, 
+                          const IID  &ifaceID, 
+                          void      **result)
 {
     // Query service is called on the HTML with a wide range of 
     // Service ID's .... IID_IHttpNegiotiate2, IID_ITargetFrame2,
@@ -932,10 +1101,10 @@ HippoIE::QueryService(const GUID &serviceID,
 // this is needed, but we provide an implementation anyways for
 // correctness sake.
 STDMETHODIMP
-HippoIE::QueryStatus (const GUID *commandGroup,
-                      ULONG       nCommands,
-                      OLECMD     *commands,
-                      OLECMDTEXT *commandText)
+HippoIEImpl::QueryStatus (const GUID *commandGroup,
+                          ULONG       nCommands,
+                          OLECMD     *commands,
+                          OLECMDTEXT *commandText)
 {
     for (ULONG i = 0; i < nCommands; i++) {
         if (commandGroup == NULL && commands[i].cmdID == OLECMDID_CLOSE) {
@@ -961,11 +1130,11 @@ HippoIE::QueryStatus (const GUID *commandGroup,
 }
 
 STDMETHODIMP
-HippoIE::Exec (const GUID *commandGroup,
-               DWORD       commandId,
-               DWORD       nCommandExecOptions,
-               VARIANTARG *commandInput,
-               VARIANTARG *commandOutput)
+HippoIEImpl::Exec (const GUID *commandGroup,
+                   DWORD       commandId,
+                   DWORD       nCommandExecOptions,
+                   VARIANTARG *commandInput,
+                   VARIANTARG *commandOutput)
 {
     // OLECMDID_CLOSE isn't actually invoked, even when IWebBrowser2->Quit()
     // is called; we leave it in here as a stub; quite a few other commands

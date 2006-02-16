@@ -365,31 +365,17 @@ hippoHresultToString(HRESULT hr, HippoBSTR &str)
     }
 }
 
-inline void hippoDebug(WCHAR *format, ...)
-{
-    WCHAR buf[1024];
-    va_list vap;
-    va_start(vap, format);
-    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
-    va_end(vap);
-    MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
-}
+DLLEXPORT void
+hippoDebug(WCHAR *format, ...);
 
-inline void hippoDebugLastErr(WCHAR *fmt, ...) 
-{
-    HippoBSTR str;
-    HippoBSTR errstr;
-    WCHAR buf[1024];
-    HRESULT res = GetLastError();
-    va_list vap;
-    va_start(vap, fmt);
-    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), fmt, vap);
-    va_end(vap);
-    str.Append(buf);
-    hippoHresultToString(res, errstr);
-    str.Append(errstr);
-    MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
-}
+DLLEXPORT void 
+hippoDebugLastErr(WCHAR *fmt, ...);
+
+DLLEXPORT void 
+hippoDebugLogW(const WCHAR *format, ...); // UTF-16
+
+DLLEXPORT void 
+hippoDebugLogU(const char *format, ...);  // UTF-8
 
 /* Avoid (incorrect) warnings that you get because SetWindowLongPtr()
  * is #defined to SetWindowLong() on win32

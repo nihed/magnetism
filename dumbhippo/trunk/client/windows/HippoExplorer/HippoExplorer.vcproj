@@ -142,6 +142,9 @@
 				RelativePath=".\HippoExplorerBar.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoExplorerUtil.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoToolbarAction.cpp">
 			</File>
 			<File
@@ -194,6 +197,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoExplorerDispID.h">
+			</File>
+			<File
+				RelativePath=".\HippoExplorerUtil.h">
 			</File>
 			<File
 				RelativePath=".\HippoToolbarAction.h">

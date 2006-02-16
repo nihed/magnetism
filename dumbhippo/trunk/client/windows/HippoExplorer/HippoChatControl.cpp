@@ -5,9 +5,11 @@
 #include "stdafx.h"
 
 #include "HippoChatControl.h"
+#include <HippoURLParser.h>
 #include <HippoUtilDispId.h>
 #include "HippoExplorer_h.h"
 #include "HippoExplorerDispID.h"
+#include "HippoExplorerUtil.h"
 #include "HippoUILauncher.h"
 #include "Guid.h"
 #include "Globals.h"
@@ -18,12 +20,6 @@
 
 // This needs to be registered in the registry to be used; see 
 // DllRegisterServer() (for self-registry during development) and Components.wxs
-
-// "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 
-// changing things so that the control can only be used from *exactly* the web
-// server specified in the preferences. (You'd have to check for either the
-// normal or debug server.
-static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
 
 HippoChatControl::HippoChatControl(void)
 {
@@ -246,7 +242,7 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
     if (FAILED(hr))
         return hr;
 
-    if (userIdVariant.vt != VT_BSTR || userIdVariant.bstrVal == NULL || !verifyGUID(userIdVariant.bstrVal)) {
+    if (userIdVariant.vt != VT_BSTR || userIdVariant.bstrVal == NULL || !hippoVerifyGuid(userIdVariant.bstrVal)) {
         hippoDebug(L"Error setting UserID property");
         return E_FAIL;
     }
@@ -257,7 +253,7 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
     if (FAILED(hr))
         return hr;
 
-    if (postIdVariant.vt != VT_BSTR || postIdVariant.bstrVal == NULL || !verifyGUID(postIdVariant.bstrVal)) {
+    if (postIdVariant.vt != VT_BSTR || postIdVariant.bstrVal == NULL || !hippoVerifyGuid(postIdVariant.bstrVal)) {
         hippoDebug(L"Error setting PostID property");
         return E_FAIL;
     }
@@ -488,60 +484,16 @@ HippoChatControl::isSiteSafe()
 bool
 HippoChatControl::checkURL(BSTR url)
 {
-    URL_COMPONENTS components;
-    ZeroMemory(&components, sizeof(components));
-    components.dwStructSize = sizeof(components);
+    HippoURLParser parser(url);
 
-    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
-    // to return pointers into the passed in URL along with lengths. The 
-    // specific non-zero value is irrelevant
-    components.dwHostNameLength = 1;
-    components.dwUserNameLength = 1;
-    components.dwPasswordLength = 1;
-    components.dwUrlPathLength = 1;
-    components.dwExtraInfoLength = 1;
-
-    if (!InternetCrackUrl(url, 0, 0, &components))
+    if (!parser.ok())
         return false;
 
-    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+    INTERNET_SCHEME scheme = parser.getScheme();
+    if (scheme != INTERNET_SCHEME_HTTP && scheme != INTERNET_SCHEME_HTTPS)
         return false;
 
-    HippoBSTR foo(components.dwHostNameLength, components.lpszHostName);
-
-    size_t allowedHostLength = wcslen(ALLOWED_HOST_SUFFIX);
-    if (components.dwHostNameLength < allowedHostLength)
-        return false;
-
-    // check for "SUFFIX" or "<foo>.SUFFIX"
-    if (wcsncmp(components.lpszHostName + components.dwHostNameLength - allowedHostLength,
-                ALLOWED_HOST_SUFFIX,
-                allowedHostLength) != 0)
-        return false;
-
-    if (components.dwHostNameLength > allowedHostLength && 
-        *(components.lpszHostName + components.dwHostNameLength - allowedHostLength - 1) != '.')
-        return false;
-
-    return true;
-}
-
-bool 
-HippoChatControl::verifyGUID(BSTR guid)
-{
-    WCHAR *p;
-
-    // Contents are alphanumeric (we don't generate a,e,i,o,u,E,I,O,U in our
-    // GUID's at the moment, but there is no harm in allowing them)
-    for (p = guid; *p; p++) {
-        if (!((*p >= '0' && *p <= '9') ||
-              (*p >= 'A' && *p <= 'Z') ||
-              (*p >= 'a' && *p <= 'z')))
-            return false;
-    }
-
-    // Length is 14
-    if (p - guid != 14) 
+    if (!hippoIsOurServer(parser.getHostName()))
         return false;
 
     return true;

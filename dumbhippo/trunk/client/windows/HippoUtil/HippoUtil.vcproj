@@ -19,6 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="."
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILDING_HIPPO_UTIL;NOMINMAX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -33,6 +34,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				RegisterOutput="TRUE"
+				AdditionalDependencies="wininet.lib"
 				OutputFile="$(OutDir)/HippoUtil.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="HippoUtil.def"
@@ -125,10 +127,25 @@
 				RelativePath=".\HippoConnectionPointContainer.cpp">
 			</File>
 			<File
+				RelativePath="..\HippoUI\HippoExternal.cpp">
+			</File>
+			<File
+				RelativePath="..\HippoUI\HippoIE.cpp">
+			</File>
+			<File
+				RelativePath="..\HippoUI\HippoInvocation.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoRegistrar.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoRegKey.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoRegKey.h">
+			</File>
+			<File
+				RelativePath=".\HippoURLParser.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoUtil.cpp">
@@ -175,13 +192,22 @@
 				RelativePath=".\HippoConnectionPointContainer.h">
 			</File>
 			<File
+				RelativePath="..\HippoUI\HippoExternal.h">
+			</File>
+			<File
+				RelativePath="..\HippoUI\HippoIE.h">
+			</File>
+			<File
+				RelativePath="..\HippoUI\HippoInvocation.h">
+			</File>
+			<File
 				RelativePath=".\HippoRegistrar.h">
 			</File>
 			<File
-				RelativePath=".\HippoRegKey.h">
+				RelativePath=".\HippoStdAfx.h">
 			</File>
 			<File
-				RelativePath=".\HippoStdAfx.h">
+				RelativePath=".\HippoURLParser.h">
 			</File>
 			<File
 				RelativePath=".\HippoUtil.h">

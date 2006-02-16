@@ -136,9 +136,6 @@
 				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoExternal.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoExternalBrowser.cpp">
 			</File>
 			<File
@@ -151,16 +148,10 @@
 				RelativePath=".\HippoIcon.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoIE.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoIEWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoIM.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoInvocation.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.cpp">
@@ -243,9 +234,6 @@
 				RelativePath=".\HippoChatWindow.h">
 			</File>
 			<File
-				RelativePath=".\HippoExternal.h">
-			</File>
-			<File
 				RelativePath=".\HippoExternalBrowser.h">
 			</File>
 			<File
@@ -258,16 +246,10 @@
 				RelativePath=".\HippoIcon.h">
 			</File>
 			<File
-				RelativePath=".\HippoIE.h">
-			</File>
-			<File
 				RelativePath=".\HippoIEWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoIM.h">
-			</File>
-			<File
-				RelativePath=".\HippoInvocation.h">
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.h">

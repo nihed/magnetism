@@ -6,6 +6,9 @@
 #include "HippoUtil.h"
 #include "HippoRegistrar.h"
 
+// Generated code for HippoUtil.idl
+#include "HippoUtil_i.c"
+
 extern "C" BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID);
 
 HINSTANCE   g_hInst;
@@ -160,4 +163,63 @@ out:
     }
 
     return hr;
+}
+
+void
+hippoDebug(WCHAR *format, ...)
+{
+    WCHAR buf[1024];
+    va_list vap;
+    va_start(vap, format);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
+    va_end(vap);
+    MessageBoxW(NULL, buf, L"Hippo Debug", MB_OK);
+}
+
+void 
+hippoDebugLastErr(WCHAR *fmt, ...) 
+{
+    HippoBSTR str;
+    HippoBSTR errstr;
+    WCHAR buf[1024];
+    HRESULT res = GetLastError();
+    va_list vap;
+    va_start(vap, fmt);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), fmt, vap);
+    va_end(vap);
+    str.Append(buf);
+    hippoHresultToString(res, errstr);
+    str.Append(errstr);
+    MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
+}
+
+void 
+hippoDebugLogW(const WCHAR *format, ...) 
+{
+    WCHAR buf[1024];
+    va_list vap;
+    va_start (vap, format);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]) - 2, format, vap);
+    va_end (vap);
+
+    StringCchCatW(buf, sizeof(buf) / sizeof(buf[0]) - 2, L"\r\n");
+
+    OutputDebugStringW(buf);
+}
+
+void 
+hippoDebugLogU(const char *format, ...)
+{
+    char buf[1024];
+    va_list vap;
+    va_start (vap, format);
+    StringCchVPrintfA(buf, sizeof(buf) / sizeof(buf[0]) - 2, format, vap);
+    va_end (vap);
+
+    StringCchCatA(buf, sizeof(buf) / sizeof(buf[0]) - 2, "\r\n");
+
+    HippoBSTR strW;
+    strW.setUTF8(buf);
+
+    OutputDebugStringW(strW);
 }

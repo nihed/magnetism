@@ -5,6 +5,98 @@
 #include "StdAfx.h"
 #include "HippoInvocation.h"
 
+class HippoInvocationImpl
+{
+public:
+    HippoInvocationImpl(IDispatch *script, const HippoBSTR &functionName);
+    void add(const HippoBSTR &value); // Common, so gets the simple name
+    void addBool(bool value);
+    void addLong(long value);
+    void addStringVector(const std::vector<HippoBSTR> &value);
+    HRESULT run();
+    HRESULT getResult(variant_t *result);
+
+    HIPPO_DECLARE_REFCOUNTING;
+
+private:
+    unsigned refCount_;
+    HippoPtr<IDispatch> script_;
+    HippoBSTR functionName_;
+    std::vector<variant_t> params_;
+};
+
+HippoInvocation::HippoInvocation(IDispatch *script, const HippoBSTR &functionName)
+{
+    impl_ = new HippoInvocationImpl(script, functionName);
+}
+
+HippoInvocation::HippoInvocation(const HippoInvocation &other)
+{
+    impl_ = other.impl_;
+    impl_->AddRef();
+}
+
+HippoInvocation::~HippoInvocation()
+{
+    impl_->Release();
+}
+
+HippoInvocation &
+HippoInvocation::operator=(const HippoInvocation &other)
+{
+    impl_->Release();
+    impl_ = other.impl_;
+    impl_->AddRef();
+
+    return *this;
+}
+
+
+HippoInvocation &
+HippoInvocation::add(const HippoBSTR &value)
+{
+    impl_->add(value);
+
+    return *this;
+}
+
+HippoInvocation &
+HippoInvocation::addBool(bool value)
+{
+    impl_->addBool(value);
+
+    return *this;
+}
+
+HippoInvocation &
+HippoInvocation::addLong(long value)
+{
+    impl_->addLong(value);
+
+    return *this;
+}
+
+HippoInvocation &
+HippoInvocation::addStringVector(const std::vector<HippoBSTR> &value)
+{
+    impl_->addStringVector(value);
+    
+    return *this;
+}
+
+HRESULT 
+HippoInvocation::run()
+{
+    return impl_->run();
+}
+
+HRESULT 
+HippoInvocation::getResult(variant_t *result)
+{
+    return impl_->getResult(result);
+}
+
+
 static SAFEARRAY *
 stringVectorToSafeArray(const std::vector<HippoBSTR> &args)
 {
@@ -26,39 +118,36 @@ stringVectorToSafeArray(const std::vector<HippoBSTR> &args)
     return result;
 }
 
-HippoInvocation::HippoInvocation(IDispatch       *script, 
-                                 const HippoBSTR &functionName)
+HIPPO_DEFINE_REFCOUNTING(HippoInvocationImpl)
+
+HippoInvocationImpl::HippoInvocationImpl(IDispatch       *script, 
+                                         const HippoBSTR &functionName)
 {
+    refCount_ = 1;
     script_ = script;
     functionName_ = functionName;
 }
 
-HippoInvocation &
-HippoInvocation::addBool(bool value)
+void
+HippoInvocationImpl::addBool(bool value)
 {
     params_.push_back(variant_t(value));
-
-    return *this;
 }
 
-HippoInvocation &
-HippoInvocation::addLong(long value)
+void
+HippoInvocationImpl::addLong(long value)
 {
     params_.push_back(variant_t(value));
-
-    return *this;
 }
 
-HippoInvocation &
-HippoInvocation::add(const HippoBSTR &value)
+void
+HippoInvocationImpl::add(const HippoBSTR &value)
 {
     params_.push_back(variant_t(value.m_str));
-
-    return *this;
 }
     
-HippoInvocation &
-HippoInvocation::addStringVector(const std::vector<HippoBSTR> &value)
+void
+HippoInvocationImpl::addStringVector(const std::vector<HippoBSTR> &value)
 {
     // We directly store the string array into the vector element
     // rather than creating an variant and then appending that
@@ -67,12 +156,10 @@ HippoInvocation::addStringVector(const std::vector<HippoBSTR> &value)
     params_.push_back(variant_t());
     params_.back().vt = VT_ARRAY | VT_VARIANT;
     params_.back().parray = stringVectorToSafeArray(value);
-
-    return *this;
 }
 
 HRESULT 
-HippoInvocation::run()
+HippoInvocationImpl::run()
 {
     variant_t dummy;
 
@@ -80,7 +167,7 @@ HippoInvocation::run()
 }
 
 HRESULT 
-HippoInvocation::getResult(variant_t *result)
+HippoInvocationImpl::getResult(variant_t *result)
 {
     DISPID id = NULL;
 

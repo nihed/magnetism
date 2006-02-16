@@ -931,7 +931,7 @@ HippoUI::debugLogW(const WCHAR *format, ...)
     StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), format, vap);
     va_end (vap);
 
-    logWindow_.logString(buf);
+    hippoDebugLogW(L"%ls", buf);
 }
 
 void
@@ -944,7 +944,7 @@ HippoUI::debugLogU(const char *format, ...)
 
     WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
     if (strW) 
-        logWindow_.logString(strW);
+        hippoDebugLogW(L"%ls", strW);
     
     g_free(str);
     g_free(strW);

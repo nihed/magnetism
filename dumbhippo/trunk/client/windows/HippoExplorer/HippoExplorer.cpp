@@ -181,18 +181,17 @@ DllRegisterServer(void)
     if (FAILED(hr))
         return hr;
 
-#if 0
     hr = registrar.registerInprocServer(CLSID_HippoExplorerBar,
                                         TEXT("Hi&ppo Bar"));
     if (FAILED(hr))
         return hr;
 
+    CLSID catids[1];
     catids[0] = CATID_CommBand;
     hr = registrar.registerClassImplCategories(CLSID_HippoExplorerBar,
                                                1, catids);
     if (FAILED (hr))
         return hr;
-#endif
 
     hr = registrar.registerInprocServer(CLSID_HippoTracker,
                                         TEXT("Hippo Tracker"));

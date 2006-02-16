@@ -7,22 +7,19 @@
 #include "HippoEmbed.h"
 #include "HippoExplorer_h.h"
 #include "HippoExplorerDispID.h"
+#include "HippoExplorerUtil.h"
 #include "HippoUILauncher.h"
+#include <HippoRegKey.h>
+#include <HippoURLParser.h>
 #include "Guid.h"
 #include "Globals.h"
+#include <comutil.h>
 #include <strsafe.h>
 #include <stdarg.h>
 #include <ExDispid.h>
-#include <wininet.h> // For InternetCrackUr
 
 // This needs to be registered in the registry to be used; see 
 // DllRegisterServer() (for self-registry during development) and Components.wxs
-
-// "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 
-// changing things so that the control can only be used from *exactly* the web
-// server specified in the preferences. (You'd have to check for either the
-// normal or debug server.
-static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
 
 class ShowChatLaunchListener : public HippoUILaunchListener {
 public:
@@ -350,6 +347,38 @@ HippoEmbed::ShowChatWindow(BSTR userId, BSTR postId)
     return S_OK;
 }
 
+STDMETHODIMP 
+HippoEmbed::OpenBrowserBar(BSTR userId, BSTR postId)
+{
+    if (!toplevelBrowser_)
+        return E_FAIL;
+
+    variant_t classId(L"{174D2323-9AF2-4257-B8BD-849865E4F1AE}"); // CLSID_HippoExplorerBar
+    variant_t show(true);
+    variant_t size;
+
+    // We want to show our browser bar for this window, but we don't want the change
+    // to stick in the registry, so we save the value of the relevant registry key
+    // and restore it afterwards.
+
+    BYTE *oldRegistryData = NULL;
+    DWORD oldRegistryLength = 0;
+
+    {
+        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", false);
+        key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
+    }
+
+    HRESULT hr = toplevelBrowser_->ShowBrowserBar(&classId, &show, &size);
+
+    {
+        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", true);
+        key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
+    }
+
+    return hr;
+}
+
 /////////////////////////////////////////////////////////////////////
 
  void
@@ -417,39 +446,16 @@ HippoEmbed::onDocumentComplete(IDispatch *dispatch,
 bool
 HippoEmbed::checkURL(BSTR url)
 {
-    URL_COMPONENTS components;
-    ZeroMemory(&components, sizeof(components));
-    components.dwStructSize = sizeof(components);
+    HippoURLParser parser(url);
 
-    // The case where lpszHostName is NULL and dwHostNameLength is non-0 means
-    // to return pointers into the passed in URL along with lengths. The 
-    // specific non-zero value is irrelevant
-    components.dwHostNameLength = 1;
-    components.dwUserNameLength = 1;
-    components.dwPasswordLength = 1;
-    components.dwUrlPathLength = 1;
-    components.dwExtraInfoLength = 1;
-
-    if (!InternetCrackUrl(url, 0, 0, &components))
+    if (!parser.ok())
         return false;
 
-    if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
+    INTERNET_SCHEME scheme = parser.getScheme();
+    if (scheme != INTERNET_SCHEME_HTTP && scheme != INTERNET_SCHEME_HTTPS)
         return false;
 
-    HippoBSTR foo(components.dwHostNameLength, components.lpszHostName);
-
-    size_t allowedHostLength = wcslen(ALLOWED_HOST_SUFFIX);
-    if (components.dwHostNameLength < allowedHostLength)
-        return false;
-
-    // check for "SUFFIX" or "<foo>.SUFFIX"
-    if (wcsncmp(components.lpszHostName + components.dwHostNameLength - allowedHostLength,
-                ALLOWED_HOST_SUFFIX,
-                allowedHostLength) != 0)
-        return false;
-
-    if (components.dwHostNameLength > allowedHostLength && 
-        *(components.lpszHostName + components.dwHostNameLength - allowedHostLength - 1) != '.')
+    if (!hippoIsOurServer(parser.getHostName()))
         return false;
 
     return true;

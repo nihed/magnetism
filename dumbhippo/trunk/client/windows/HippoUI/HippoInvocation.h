@@ -7,7 +7,15 @@
 #include <HippoUtil.h>
 #include <vector>
 
-class HippoInvocation
+#ifdef BUILDING_HIPPO_UTIL
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT __declspec(dllimport)
+#endif
+
+class HippoInvocationImpl;
+
+class DLLEXPORT HippoInvocation
 {
 public:
     /**
@@ -19,6 +27,11 @@ public:
      */
     HippoInvocation(IDispatch *script, const HippoBSTR &functionName);
 
+    HippoInvocation(const HippoInvocation &other);
+    ~HippoInvocation();
+
+    HippoInvocation &operator=(const HippoInvocation &other);
+    
     /**
      * Add a string parameter to the list of parameters to provide to the function
      * @param value parameter value
@@ -67,7 +80,5 @@ public:
     // The default copy constructor and operator = work for this class
 
 private:
-    HippoPtr<IDispatch> script_;
-    HippoBSTR functionName_;
-    std::vector<variant_t> params_;
+    HippoInvocationImpl *impl_;
 };

@@ -210,8 +210,10 @@ private:
         }
         HippoAbstractWindow *abstractWindow_;
         void onDocumentComplete();
-        void onError(WCHAR *text);
         void onClose();
+        void launchBrowser(const HippoBSTR &url);
+        bool isOurServer(const HippoBSTR &host);
+
     };
     HippoAbstractWindowIECallback *ieCallback_;
 

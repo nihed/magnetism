@@ -159,20 +159,31 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::onDocumentComplete()
     abstractWindow_->onDocumentComplete();
 }
 
-void
-HippoAbstractWindow::HippoAbstractWindowIECallback::onError(WCHAR *text) 
+void 
+HippoAbstractWindow::HippoAbstractWindowIECallback::launchBrowser(const HippoBSTR &url)
 {
-    abstractWindow_->ui_->debugLogW(L"HippoIE error: %s", text);
+    abstractWindow_->ui_->launchBrowser(url.m_str);
+}
+
+bool
+HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR &host)
+{
+    HippoBSTR serverHost;
+    unsigned int serverPort;
+
+    abstractWindow_->ui_->getPreferences()->parseWebServer(&serverHost, &serverPort);
+
+    return host == serverHost;
 }
 
 bool
 HippoAbstractWindow::embedIE(void)
 {
-    ie_ = new HippoIE(ui_, window_, getURL(), ieCallback_, application_);
+    ie_ = HippoIE::create(window_, getURL(), ieCallback_, application_);
     ie_->setThreeDBorder(false);
     initializeIE();
 
-    ie_->create();
+    ie_->embedBrowser();
     browser_ = ie_->getBrowser();
 
     initializeBrowser();

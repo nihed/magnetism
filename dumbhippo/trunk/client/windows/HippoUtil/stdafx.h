@@ -4,3 +4,4 @@
 //
 
 #include "HippoStdAfx.h"
+#include <comutil.h>
