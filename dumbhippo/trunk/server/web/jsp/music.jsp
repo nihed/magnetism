@@ -25,7 +25,7 @@
 	<div id="dhMainArea">
 		<dht:logo/>
 
-		<c:if test="${!viewperson.disabled}">
+		<c:if test="${viewperson.signin.valid && !viewperson.disabled}">
 		    <dht:toolbar account="false">
 				&#151; <a class="dh-toolbar-item" style="font-weight:bold" href='/person?who=${personId}'>Public Page for <c:out value="${personName}"/></a>
 			</dht:toolbar>
@@ -110,43 +110,43 @@
 		</div>
 
 		<div class="dh-right-box-area">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Music</h5>
-				<c:if test="${viewperson.signin.valid}">
+			<c:if test="${viewperson.signin.valid}">
+				<div class="dh-right-box">
+					<h5 class="dh-title">Music</h5>
 					<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
 					</p>
-				</c:if>
-				<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
-					<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
-				</c:if>	
-			</div>		
-
-			<div class="dh-right-box">
-				<h5 class="dh-title">Groups' Music</h5>
-				<div class="dh-groups">
-				<c:choose>
-					<c:when test="${viewperson.groups.size > 0}">
-						<dh:entityList value="${viewperson.groups.list}" photos="true" music="true"/>
-					</c:when>
-					<c:otherwise>
-					</c:otherwise>
-				</c:choose>
-				</div>
-			</div>
-		
-			<div class="dh-right-box">
-				<h5 class="dh-title">Friends' Music</h5>
-				<div class="dh-people">
+					<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
+						<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
+					</c:if>	
+				</div>		
+	
+				<div class="dh-right-box">
+					<h5 class="dh-title">Groups' Music</h5>
+					<div class="dh-groups">
 					<c:choose>
-						<c:when test="${viewperson.contacts.size > 0}">
-							<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" music="true"/>
+						<c:when test="${viewperson.groups.size > 0}">
+							<dh:entityList value="${viewperson.groups.list}" photos="true" music="true"/>
 						</c:when>
 						<c:otherwise>
-							<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
 						</c:otherwise>
 					</c:choose>
+					</div>
 				</div>
-			</div>
+			
+				<div class="dh-right-box">
+					<h5 class="dh-title">Friends' Music</h5>
+					<div class="dh-people">
+						<c:choose>
+							<c:when test="${viewperson.contacts.size > 0}">
+								<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" music="true"/>
+							</c:when>
+							<c:otherwise>
+								<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
+							</c:otherwise>
+						</c:choose>
+					</div>
+				</div>
+			</c:if>
 		</div>
 	</div>
 
