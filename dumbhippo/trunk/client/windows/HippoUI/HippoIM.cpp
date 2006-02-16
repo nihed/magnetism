@@ -1359,6 +1359,8 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/liveposts", "activePostsChanged");
         LmMessageNode *subchild;
+        if (!child)
+            return false;
         ui_->debugLogU("handling activePostsChanged message");
         ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
@@ -1374,31 +1376,31 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
 
             elt = lm_message_node_get_child (subchild, "id");
             if (!(elt && elt->value)) {
-                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+                return false;
             }
             postId.setUTF8(elt->value);
 
             elt = lm_message_node_get_child (subchild, "senderName");
             if (!(elt && elt->value)) {
-                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+                return false;
             }
             senderName.setUTF8(elt->value);
 
             elt = lm_message_node_get_child (subchild, "title");
             if (!(elt && elt->value)) {
-                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+                return false;
             }
             title.setUTF8(elt->value);
 
             elt = lm_message_node_get_child (subchild, "chattingUserCount");
             if (!(elt && elt->value)) {
-                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+                return false;
             }
             chattingUserCount = strtol(elt->value, NULL, 10);
 
             elt = lm_message_node_get_child (subchild, "viewingUserCount");
             if (!(elt && elt->value)) {
-                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+                return false;
             }
             viewingUserCount = strtol(elt->value, NULL, 10);
 
