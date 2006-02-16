@@ -33,4 +33,6 @@ public interface MessageSender {
 	public void sendHotnessChanged(LiveUser user);
 
 	public void sendActivePostsChanged(LiveUser user);
+	
+	public void sendPrefChanged(User user, String key, String value);
 }

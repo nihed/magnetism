@@ -785,7 +785,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void setMusicSharingEnabled(User user, boolean enabled) {
 		Account account = getAttachedAccount(user);
-		account.setMusicSharingEnabled(enabled);
+		if (account.isMusicSharingEnabled() != enabled) {
+			account.setMusicSharingEnabled(enabled);
+			messageSender.sendPrefChanged(user, "musicSharingEnabled", Boolean.toString(enabled));
+		}
 	}
 
 	public boolean getMusicSharingPrimed(User user) {
@@ -795,7 +798,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void setMusicSharingPrimed(User user, boolean primed) {
 		Account account = getAttachedAccount(user);
-		account.setMusicSharingPrimed(primed);
+		if (account.isMusicSharingPrimed() != primed) {
+			account.setMusicSharingPrimed(primed);
+			messageSender.sendPrefChanged(user, "musicSharingPrimed", Boolean.toString(primed));
+		}
 	}
 	
 	public int incrementUserVersion(final String userId) {

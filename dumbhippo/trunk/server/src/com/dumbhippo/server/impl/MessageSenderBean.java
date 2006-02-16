@@ -1,8 +1,11 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -247,7 +250,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}	
 	
-	private class MySpaceNameChangedExtension implements PacketExtension {
+	private static class MySpaceNameChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "mySpaceNameChanged";
 
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
@@ -274,7 +277,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 	
-	private class MySpaceContactCommentExtension implements PacketExtension {
+	private static class MySpaceContactCommentExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "mySpaceContactComment";
 
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
@@ -298,7 +301,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 	
-	private class HotnessChangedExtension implements PacketExtension {
+	private static class HotnessChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "hotness";
 
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/hotness";
@@ -325,7 +328,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 	
-	private class ActivePostsChangedExtension implements PacketExtension {
+	private static class ActivePostsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "activePostsChanged";
 
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/liveposts";
@@ -351,6 +354,40 @@ public class MessageSenderBean implements MessageSender {
 				builder.openElement("livePost");
 				builder.append(postXml);
 				builder.closeElement();
+			}
+			builder.closeElement();
+			return builder.toString();
+		}
+	}
+
+	private static class PrefsChangedExtension implements PacketExtension {
+		private static final String ELEMENT_NAME = "prefs";
+
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/prefs";
+		
+		Map<String,String> prefs;
+		
+		public PrefsChangedExtension(Map<String,String> prefs) {
+			this.prefs = new HashMap<String,String>(prefs);
+		}
+
+		public PrefsChangedExtension(String key, String value) {
+			this(Collections.singletonMap(key, value)); 
+		}
+		
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+			for (String key : prefs.keySet()) {
+				builder.appendTextNode("prop", prefs.get(key), "key", key);
 			}
 			builder.closeElement();
 			return builder.toString();
@@ -545,6 +582,14 @@ public class MessageSenderBean implements MessageSender {
 			message.addExtension(new ActivePostsChangedExtension(livePosts));
 			logger.info("Sending activePostsChanged message to " + message.getTo());			
 			connection.sendPacket(message);						
+		}
+		
+		public void sendPrefChanged(User user, String key, String value) {
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
+			message.addExtension(new PrefsChangedExtension(key, value));
+			logger.info("Sending prefs changed message to " + message.getTo());			
+			connection.sendPacket(message);
 		}
 	}
 
@@ -761,5 +806,9 @@ public class MessageSenderBean implements MessageSender {
 
 	public void sendActivePostsChanged(LiveUser user) {
 		xmppSender.sendActivePostsChanged(user);
+	}
+	
+	public void sendPrefChanged(User user, String key, String value) {
+		xmppSender.sendPrefChanged(user, key, value);
 	}
 }
