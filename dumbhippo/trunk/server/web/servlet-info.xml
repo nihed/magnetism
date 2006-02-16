@@ -175,11 +175,11 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>person,group,main,search</param-value>
+          <param-value>person,group,main,search,musicgroup,song,album,artist,suggest</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,we-miss-you,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,newphoto,framer,visit</param-value>
+          <param-value>home,welcome,we-miss-you,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,framer,visit,invites,nowplaying,chatwindow,admin</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

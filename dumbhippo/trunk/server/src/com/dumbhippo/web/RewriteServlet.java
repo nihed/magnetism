@@ -1,7 +1,9 @@
 package com.dumbhippo.web;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.servlet.ServletConfig;
@@ -31,8 +33,11 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> htmlPages;
 	private String buildStamp;
 	
-	private ServletContext context;
-
+	private List<String> psaLinks; // used to choose a random one
+	private int nextPsa;
+	
+	private ServletContext context; 
+	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
 	}
@@ -49,6 +54,14 @@ public class RewriteServlet extends HttpServlet {
 			return null;
 		}
 	}
+     
+    private synchronized String getNextPsa() {
+    	if (nextPsa >= psaLinks.size())
+    		nextPsa = 0;
+    	String s = psaLinks.get(nextPsa);
+    	++nextPsa;
+    	return s;
+    }
     
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
@@ -140,6 +153,16 @@ public class RewriteServlet extends HttpServlet {
 		// Now handle the primary set of user visible pages, which is a merge
 		// of static HTML and JSP's.
 		
+		// Set variables with rotating PSAs; it's important to avoid 
+		// using up "getNextPsa()" with pages that won't use these though,
+		// so we get the full rotation. e.g. with 3 PSAs, if you getNextPsa()
+		// when loading 2 PSAs on the page itself, then each page load goes through 6 PSAs which
+		// means you always skip certain ones on the JSP
+		if (!afterSlash.startsWith("psa-")) {
+			request.setAttribute("psa1", getNextPsa());
+			request.setAttribute("psa2", getNextPsa());
+		}
+		
 		if (jspPages.contains(afterSlash)) {
 			// We can't use RewrittenRequest for JSP's because it breaks the
 			// handling of <jsp:forward/> and is generally unreliable.
@@ -205,15 +228,23 @@ public class RewriteServlet extends HttpServlet {
 		
 		for (String p : jspPages) {
 			if (!withSigninRequirements.contains(p)) {
-				logger.warn(".jsp " + p + " does not have its signin requirements specified");
-				requiresSigninStealth.add(p);
+				if (p.startsWith("psa-"))
+					noSignin.add(p);
+				else {
+					logger.warn(".jsp " + p + " does not have its signin requirements specified");
+					requiresSigninStealth.add(p);
+				}
 			}
 		}
 
 		for (String p : htmlPages) {
 			if (!withSigninRequirements.contains(p)) {
-				logger.warn(".html " + p + " does not have its signin requirements specified");
-				requiresSigninStealth.add(p);
+				if (p.startsWith("psa-"))
+					noSignin.add(p);
+				else {
+					logger.warn(".html " + p + " does not have its signin requirements specified");
+					requiresSigninStealth.add(p);
+				}
 			}
 		}
 		
@@ -222,6 +253,13 @@ public class RewriteServlet extends HttpServlet {
 				logger.warn("Page '" + p + "' in servlet config is not a .jsp or .html we know about");
 			}
 		}
+		
+		psaLinks = new ArrayList<String>();
+		for (String p : noSignin) {
+			if (p.startsWith("psa-"))
+				psaLinks.add(p);
+		}
+		logger.debug("Added " + psaLinks.size() + " PSAs: " + psaLinks);
 		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);

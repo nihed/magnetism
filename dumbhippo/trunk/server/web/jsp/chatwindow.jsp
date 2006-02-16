@@ -58,8 +58,7 @@
     <div id="dhChatPeopleDiv"></div>
     <div id="dhChatAdsDiv">
         <div id="dhChatAdsInnerDiv">
-            Make money fast.<br/>
-            Get a green card today.<br/>
+        	<dht:ad src="${psa1}"/>
         </div>
     </div>
     <div id="dhChatMessagesDiv"></div>

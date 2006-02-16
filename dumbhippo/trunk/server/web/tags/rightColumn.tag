@@ -1,11 +1,9 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
-<dht:ad/>
+<dht:ad src="${psa1}"/>
 <br/>
-<dht:ad/>
+<dht:ad src="${psa2}"/>
 <br/>
-<div>Check it out!</div>
-<br/>
-<!-- required by yahoo terms of use -->
+<% /* required by yahoo terms of use */ %>
 <a href="http://developer.yahoo.net/about"> 
 <img src="http://us.dev1.yimg.com/us.yimg.com/i/us/nt/bdg/websrv_120_1.gif" border="0" width="127" height="17"> 
 </a>
