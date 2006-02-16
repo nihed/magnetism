@@ -47,6 +47,14 @@ dh.framer.onReconnect = function() {
 	this._messageList.clear()
 }
 
+// Go back to the user's home page, possibly closing the browser bar
+dh.framer.goHome = function() {
+	var embed = document.getElementById("dhEmbedObject")
+    if (embed && embed.readyState && embed.readyState >= 3)
+    	embed.CloseBrowserBar()
+	window.open("/home", "_self")
+}
+
 dh.framer._addMessage = function(message, before) {
 	message.div = document.createElement("div")
     message.div.className = "dh-chat-preview-message"
@@ -97,4 +105,10 @@ dh.framer.setSelfId = function(id) {
 }
 
 dh.framer.init = function() {
+	// If we don't have the ActiveX controls available to chat, hide them
+	var chatControl = document.getElementById("dhChatControl")
+    if (!(chatControl && chatControl.readyState && chatControl.readyState == 4)) {
+    	document.getElementById("dhChatLinkRow").style.visibility = "hidden"
+    	document.getElementById("dhChatPreviewRow").style.visibility = "hidden"    
+    }
 }

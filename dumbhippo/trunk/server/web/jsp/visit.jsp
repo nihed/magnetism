@@ -40,7 +40,7 @@
 		function dhInit() {
 			var embedObject = document.getElementById("dhEmbedObject")
 	        if (embedObject && embedObject.readyState && embedObject.readyState == 4) {
-				embedObject.OpenBrowserBar("${framer.signin.userId}", "${framer.post.post.id}")
+				embedObject.OpenBrowserBar()
 		        window.open("${framer.post.url}", "_self", "", true)
 			} else {
 				dhWriteFramesPage()

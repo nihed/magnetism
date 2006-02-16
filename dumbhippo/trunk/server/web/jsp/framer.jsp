@@ -48,11 +48,8 @@
 			window.setTimeout(function() { chatControl.Rescan() }, 0)
 		}
 	</script>
-	<script defer type="text/javascript">
-		dh.framer.init()
-	</script>
 </head>
-<body>
+<body onload="dh.framer.init()">
 
   <div>
 	<table>
@@ -73,25 +70,27 @@
 	</td>
 	<td class="action-area">
 	   <table class="action-area" cellspacing="2px">
+	   <c:if test="${!param.browserBar}">
+		   <tr>
+		       <td class="action" nowrap><a class="action action-box" href="${url}" target=_top>X</a></td>
+		       <td class="action" nowrap><a class="action" href="${url}" target=_top>Remove Frame</a></td>
+		   </tr>
+	   </c:if>
 	   <tr>
-	       <td class="action" nowrap><a class="action action-box" href="${url}" target=_top>X</a></td>
-	       <td class="action" nowrap><a class="action" href="${url}" target=_top>Remove Frame</a></td>
-	   </tr>
-	   <tr>
-	       <td class="action" nowrap><a class="action action-box" href="/home" target=_top>&#171;</a></td>	
-	       <td class="action" nowrap><a class="action" href="/home" target=_top>Back Home</a></td>       
+	       <td class="action" nowrap><a class="action action-box" href="javascript:dh.framer.goHome()" target=_top>&#171;</a></td>	
+	       <td class="action" nowrap><a class="action" href="javascript:dh.framer.goHome()" target=_top>Back Home</a></td>       
 	   </tr>
 	   <tr>
 	       <td class="action" nowrap><a class="action action-box highlight-action" href="${forwardUrl}" target="_blank">&#187</a></td>
 	       <td class="action" nowrap><a class="action highlight-action" href="${forwardUrl}" target="_blank">Forward To Others</a></td>
 	   </tr>
 	   <c:if test="${framer.signin.userId != null}">
-	       <tr>
+	       <tr id="dhChatLinkRow">
 		       <td class="action" nowrap><a class="action highlight-action" href='javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")'><dh:png klass="dh-chat-icon" src="/images/${buildStamp}/chat.png" style="width: 16; height: 16;"/></a></td>
 	    	   <td class="action" nowrap><a class="action highlight-action" href='javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")'>Chat About This</a></td>
 		   </tr>
 	   </c:if>
-	   <tr>
+	   <tr id="dhChatPreviewRow">
 	       <td id="dhChatPreview" nowrap colspan=2>
 			    <div>Just looking at the page: <span id="dhChatVisitorList"></span></div>
 			    <div>Currently chatting: <span id="dhChatParticipantList"></span></div>
