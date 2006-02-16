@@ -127,13 +127,13 @@
 				RelativePath=".\HippoConnectionPointContainer.cpp">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoExternal.cpp">
+				RelativePath=".\HippoExternal.cpp">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoIE.cpp">
+				RelativePath=".\HippoIE.cpp">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoInvocation.cpp">
+				RelativePath=".\HippoInvocation.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoRegistrar.cpp">
@@ -192,13 +192,13 @@
 				RelativePath=".\HippoConnectionPointContainer.h">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoExternal.h">
+				RelativePath=".\HippoExternal.h">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoIE.h">
+				RelativePath=".\HippoIE.h">
 			</File>
 			<File
-				RelativePath="..\HippoUI\HippoInvocation.h">
+				RelativePath=".\HippoInvocation.h">
 			</File>
 			<File
 				RelativePath=".\HippoRegistrar.h">
