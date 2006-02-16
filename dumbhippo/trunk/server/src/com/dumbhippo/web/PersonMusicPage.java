@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 
@@ -15,12 +17,14 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	static private final int LIST_SIZE = 5;
 	
+	private Configuration configuration;
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
+	private ListBean<TrackView> popularTracks;
 	private boolean musicSharingEnabled;
 	
 	public PersonMusicPage() {
-		
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 	}
 
 	public ListBean<TrackView> getFrequentTracks() {
@@ -51,8 +55,26 @@ public class PersonMusicPage extends AbstractPersonPage {
 		return latestTracks;
 	}
 	
+	public ListBean<TrackView> getPopularTracks() {
+		if (popularTracks == null) {
+			try {
+				popularTracks = new ListBean<TrackView>(getMusicSystem().getPopularTrackViews(LIST_SIZE));
+			} catch (NotFoundException e) {
+				logger.debug("Failed to load popular tracks");
+				List<TrackView> list = Collections.emptyList();
+				popularTracks = new ListBean<TrackView>(list);
+			}
+		}
+		
+		return popularTracks;
+	}
+	
 	public boolean isMusicSharingEnabled() {
 		return musicSharingEnabled;
+	}
+	
+	public String getDownloadUrlWindows() {
+		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
 	}
 	
 	@Override

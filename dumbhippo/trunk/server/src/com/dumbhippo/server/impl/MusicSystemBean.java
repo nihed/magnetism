@@ -33,6 +33,10 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentTrackView(viewpoint, user);
 	}
 
+	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
+		return internal.getPopularTrackViews(maxResults);
+	}
+	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		return internal.getLatestTrackViews(viewpoint, user, maxResults);
 	}

@@ -3,10 +3,8 @@ package com.dumbhippo.web;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.TrackView;
 
 /**
  * Displays a list of posts from a person
@@ -22,13 +20,9 @@ public class ViewPersonPage extends AbstractPersonPage {
 	private PostingBoard postBoard;
 	
 	private ListBean<PostView> posts;
-	
-	private boolean lookedUpCurrentTrack;
-	private TrackView currentTrack;
-	
+		
 	public ViewPersonPage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
-		lookedUpCurrentTrack = false;
 	}
 	
 	public ListBean<PostView> getPosts() {
@@ -43,14 +37,4 @@ public class ViewPersonPage extends AbstractPersonPage {
 		return MAX_POSTS_SHOWN;
 	}
 	
-	public TrackView getCurrentTrack() {
-		if (!lookedUpCurrentTrack) {
-			lookedUpCurrentTrack = true;
-			try {
-				currentTrack = getMusicSystem().getCurrentTrackView(getSignin().getViewpoint(), getViewedUser());
-			} catch (NotFoundException e) {
-			}
-		}
-		return currentTrack;
-	}
 }

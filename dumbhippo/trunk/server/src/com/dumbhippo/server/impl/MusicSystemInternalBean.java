@@ -200,9 +200,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
 		logger.debug("getTrackHistory() type " + type + " for " + user + " max results " + maxResults);
 		
-		if (!identitySpider.isViewerFriendOf(viewpoint, user)) {
+		if (!identitySpider.isViewerFriendOf(viewpoint, user) && maxResults != 1) {
 			logger.debug("Not allowed to see track history");
-			throw new NotFoundException("Not allowed to see this user's track history");
+			throw new NotFoundException("Not allowed to see more than 1 item from track history");
 		}
 
 		if (!identitySpider.getMusicSharingEnabled(user)) {
@@ -910,6 +910,39 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		return views;
+	}
+	
+	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
+	// to get, but I guess we could try to be fancier
+	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
+		logger.debug("getPopularTrackViews() globally");
+		List<Track> tracks = new ArrayList<Track>(maxResults);
+		
+		Query q;
+	
+		// FIXME this should try to get only one track per user or something, but 
+		// I can't figure out the sql in a brief attempt
+		q = em.createQuery("FROM TrackHistory h ORDER BY h.lastUpdated DESC");
+		q.setMaxResults(maxResults);
+		
+		List<TrackHistory> results = new ArrayList<TrackHistory>();
+		List<?> rawResults = q.getResultList();
+		for (Object o : rawResults) {
+			TrackHistory h = (TrackHistory) o;
+			if (h.getTrack() != null) // force-loads the track if it wasn't
+				results.add(h);
+			else
+				logger.debug("Ignoring TrackHistory with null track");
+		}
+	
+		for (TrackHistory h : results)
+			tracks.add(h.getTrack());
+		
+		if (tracks.isEmpty()) {
+			throw new NotFoundException("No track history in database at all");
+		}
+		
+		return getViewsFromTracks(tracks);
 	}
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {

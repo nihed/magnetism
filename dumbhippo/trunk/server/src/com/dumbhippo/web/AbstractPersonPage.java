@@ -13,6 +13,7 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.TrackView;
 
 public abstract class AbstractPersonPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
@@ -32,10 +33,14 @@ public abstract class AbstractPersonPage {
 	private ListBean<Group> groups;
 	private ListBean<PersonView> contacts;
 	
+	private boolean lookedUpCurrentTrack;
+	private TrackView currentTrack;
+	
 	protected AbstractPersonPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		lookedUpCurrentTrack = false;
 	}
 	
 	protected IdentitySpider getIdentitySpider() { 
@@ -136,5 +141,16 @@ public abstract class AbstractPersonPage {
 					PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
 		}
 		return contacts;
+	}
+	
+	public TrackView getCurrentTrack() {
+		if (!lookedUpCurrentTrack) {
+			lookedUpCurrentTrack = true;
+			try {
+				currentTrack = getMusicSystem().getCurrentTrackView(getSignin().getViewpoint(), getViewedUser());
+			} catch (NotFoundException e) {
+			}
+		}
+		return currentTrack;
 	}
 }

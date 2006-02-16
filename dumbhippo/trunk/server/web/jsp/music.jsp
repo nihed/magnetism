@@ -39,12 +39,12 @@
 			<c:when test="${viewperson.disabled && !viewperson.self}">
 				This account is disabled. Ask your friend to switch it back on!
 			</c:when>
-			<c:when test="${viewperson.signin.disabled}">
+			<c:when test="${viewperson.signin.valid && viewperson.signin.disabled}">
 				<% /* note this message appears even when viewing other people's pages */ %>
 				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
 				to share stuff with friends.
 			</c:when>
-			<c:when test="${!viewperson.signin.musicSharingEnabled}">
+			<c:when test="${viewperson.signin.valid && !viewperson.signin.musicSharingEnabled}">
 				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
 				<div>
 				<p><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
@@ -54,6 +54,30 @@
 			<c:when test="${!viewperson.musicSharingEnabled}">
 				<c:out value="${personName}"/> hasn't turned on music sharing. Ask them to
 				switch it on and you can see each other's impeccable musical tastes.
+			</c:when>
+			<c:when test="${!viewperson.signin.valid}">
+				<% /* anonymous viewer */ %>
+				<h2 class="dh-title"><c:out value="${personName}"/> is listening to:</h2>
+				<div>
+					<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
+				</div>
+				<h2 class="dh-title">LIMITED TIME OFFER</h2>
+				<div>
+					AS SEEN ON TV: <a href="${viewperson.downloadUrlWindows}">Download Now</a>
+					to take advantage! Create an account to see more of this person's music and publish your own.
+				</div>
+				
+				<h2 class="dh-title">Popular Songs on DumbHippo</h2>
+	
+				<div>
+					Stuff people are listening to:
+				</div>
+				<div>
+					<c:forEach items="${viewperson.popularTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+				</div>
+				
 			</c:when>
 			<c:otherwise>
 				<h2 class="dh-title"><c:out value="${personName}"/>'s Recent Songs</h2>
@@ -88,11 +112,13 @@
 		<div class="dh-right-box-area">
 			<div class="dh-right-box">
 				<h5 class="dh-title">Music</h5>
-				<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
-				</p>
-			<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
-				<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
-			</c:if>	
+				<c:if test="${viewperson.signin.valid}">
+					<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
+					</p>
+				</c:if>
+				<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
+					<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
+				</c:if>	
 			</div>		
 
 			<div class="dh-right-box">

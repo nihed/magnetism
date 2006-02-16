@@ -11,7 +11,9 @@ import com.dumbhippo.persistence.User;
 public interface MusicSystem {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
-		
+
+	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException;
+	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException;
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException;
