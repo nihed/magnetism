@@ -59,10 +59,14 @@
     color: Gray;
 }
 
-img.dh-notification-navigation-img
+.dh-notification-navigation-button
 {
-    text-align: center;
-    border-style: none;
+    border:           0px solid black;
+    margin-left:      3px;
+    margin-right:     3px;
+    background-color: #c8d6e8;
+    padding:          1px;
+    font:             bold 10px Verdana;
 }
 
 .dh-notification-rightside

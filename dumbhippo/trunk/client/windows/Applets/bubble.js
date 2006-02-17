@@ -134,18 +134,22 @@ dh.bubble.Bubble = function(includeNavigation) {
         dh.util.dom.replaceContents(this._navText, document.createTextNode((position + 1) + " of " + numNotifications))
         
         dh.util.dom.clearNode(this._navButtons)
-        var img = dh.util.dom.createHrefImg(dh.appletUrl + "activeLeft.png", "")
-        img.firstChild.setAttribute("className", "dh-notification-navigation-img")
-        this._navButtons.appendChild(img)
-        img.onclick = dh.util.dom.stdEventHandler(function (e) {
+        var button = document.createElement("button")
+        button.className = "dh-notification-navigation-button"
+        button.value = "&lt;"
+        button.disabled = position == 0
+        this._navButtons.appendChild(button)
+        button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onPrevious()
             return false;
         })
         
-        img = dh.util.dom.createHrefImg(dh.appletUrl + "activeRight.png", "")
-        img.firstChild.setAttribute("className", "dh-notification-navigation-img")
-        this._navButtons.appendChild(img)
-        img.onclick = dh.util.dom.stdEventHandler(function (e) {
+        button = document.createElement("button")
+        button.className = "dh-notification-navigation-button"
+        button.value = "&gt;"
+        button.disabled = position == numNotifications - 1
+        this._navButtons.appendChild(button)
+        button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onNext()
             return false;
         })
