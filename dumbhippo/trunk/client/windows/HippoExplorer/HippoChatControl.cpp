@@ -374,7 +374,9 @@ HippoChatControl::Invoke (DISPID        member,
                                       DISPATCH_METHOD, dispParams, 
                                       NULL /* result */, NULL /* exception */, NULL /* argError */);
 
-                // we simply ignore failure
+                // we debug log failure but otherwise ignore it
+                if (FAILED(hr))
+                    hippoDebugLogW(L"Invoke of notification %d failed: %x", member, hr);
             }
         }
 

@@ -310,8 +310,6 @@ HippoEmbed::Invoke (DISPID        member,
     HRESULT hr = DispInvoke(hippoEmbed, ifaceTypeInfo_, member, flags, 
                              dispParams, result, excepInfo, argErr);
 
-    hippoDebugLogW(L"Invoke: %d: result %#x\n", member, hr);
-    
     return hr;
 }
 
