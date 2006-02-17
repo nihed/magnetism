@@ -288,15 +288,46 @@ public class PersonView extends EntityView {
 	 * @return a newly created List containing the sorted groups
 	 */
 	static public List<PersonView> sortedList(Set<PersonView> views) {
-		ArrayList<PersonView> list = new ArrayList<PersonView>();
-		list.addAll(views);
-
-		final Collator collator = Collator.getInstance();
-		Collections.sort(list, new Comparator<PersonView>() {
-			public int compare (PersonView v1, PersonView v2) {
-				return collator.compare(v1.getName(), v2.getName());
+		// sort the set into four categories: people who have accounts,
+		// people who have been invited, and people who need invites,
+		// people for whom their invited status is not set
+		// then sort each category alphabetically		
+		ArrayList<PersonView> listOfUsers = new ArrayList<PersonView>();
+		ArrayList<PersonView> listOfPeopleWithInvites = new ArrayList<PersonView>();
+		ArrayList<PersonView> listOfPeopleWithNoInvites = new ArrayList<PersonView>();
+		ArrayList<PersonView> listOfPeopleWithNoInvitedStatus = new ArrayList<PersonView>();
+		
+		for (PersonView pv : views) {
+			if (pv.getUser() != null) {
+  		        listOfUsers.add(pv);
+			} else if (!pv.getExtra(PersonViewExtra.INVITED_STATUS)) {
+				listOfPeopleWithNoInvitedStatus.add(pv);				
+			} else if (pv.isInvited()) {
+			    listOfPeopleWithInvites.add(pv);
+			} else {
+				listOfPeopleWithNoInvites.add(pv);
 			}
-		});
+		}
+		
+		final Collator collator = Collator.getInstance();
+		Comparator<PersonView> comparator = 
+			new Comparator<PersonView>() {
+			    public int compare (PersonView v1, PersonView v2) {
+				    return collator.compare(v1.getName(), v2.getName());
+			    }
+		    };
+		    
+		Collections.sort(listOfUsers, comparator);
+		Collections.sort(listOfPeopleWithInvites, comparator);
+		Collections.sort(listOfPeopleWithNoInvites, comparator);
+		Collections.sort(listOfPeopleWithNoInvitedStatus, comparator);
+		
+		// combine the above lists in the list to return
+		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		list.addAll(listOfUsers);
+		list.addAll(listOfPeopleWithInvites);
+		list.addAll(listOfPeopleWithNoInvites);
+		list.addAll(listOfPeopleWithNoInvitedStatus);
 		
 		return list;
 	}

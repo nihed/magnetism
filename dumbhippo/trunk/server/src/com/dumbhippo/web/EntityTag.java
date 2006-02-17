@@ -26,7 +26,11 @@ public class EntityTag extends SimpleTagSupport {
 	private boolean photo;
 	private String cssClass;
 	private int bodyLengthLimit;
-	private boolean music;
+	private boolean music;	
+	
+	public EntityTag() {
+		bodyLengthLimit = -1;
+	}
 	
 	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId,
 			boolean showInviteLinks, boolean photo, boolean music,
@@ -48,9 +52,11 @@ public class EntityTag extends SimpleTagSupport {
 				else
 					link = "/person?who=" + id;
 				photoUrl = view.getSmallPhotoUrl();
+				defaultCssClass = "dh-person";
+			} else {
+				defaultCssClass = "dh-listed-person";
 			}
 			body = view.getName();
-			defaultCssClass = "dh-person";
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
 			Group group = groupView.getGroup();
@@ -92,28 +98,34 @@ public class EntityTag extends SimpleTagSupport {
 		
 		XmlBuilder xml = new XmlBuilder();
 
+		// truncateString would return the original String if bodyLengthLimit is negative
 		String bodyOriginal = body;
-		if (bodyLengthLimit != 0 && (body.length() > bodyLengthLimit)) {
-			if (bodyLengthLimit > 3) {
-				body = body.substring(0, bodyLengthLimit - 3);
-				body += "...";
-			} else {
-				body = body.substring(0, bodyLengthLimit);
-			}
-		}
+		String longerBody = 
+			StringUtils.truncateString(bodyOriginal, bodyLengthLimit*2);
+		body = StringUtils.truncateString(bodyOriginal, bodyLengthLimit);
 		
+		boolean openElement = false;
 		if (photo && photoUrl != null) {
-			if (link != null)
+			if (link != null) {
 				xml.openElement("a", "href", link, "target", "_top", "class", cssClass, "title", bodyOriginal);
-
+				openElement = true;
+			}
+			
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
 			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
 			xml.append("<br/>");
 			xml.appendEscaped(body);
 		}
 		else {
-			/** For Listing Recipients in comma separated list  **/
-			xml.appendTextNode("a", body, "href", link, "target", "_top");
+			// for listing recipients in comma separated list or
+			// for listing contacts with no accounts
+			if (link != null) { 
+			    xml.appendTextNode("a", body, "href", link, "target", "_top");
+			} else {
+				xml.openElement("div", "class", cssClass, "title", bodyOriginal);
+				openElement=true;
+				xml.appendEscaped(longerBody);
+			}
 		}
 		
 		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
@@ -124,9 +136,11 @@ public class EntityTag extends SimpleTagSupport {
 			xml.append(")");
 		}
 
-		if (photo && photoUrl != null && link != null)
+		if (openElement) {
 			xml.closeElement();
-
+			openElement = false;
+		}
+		
 		return xml.toString();
 	}
 	

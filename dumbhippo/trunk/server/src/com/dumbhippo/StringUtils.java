@@ -67,4 +67,25 @@ public class StringUtils {
 			throw new RuntimeException("No UTF-8 support in JRE, totally busted");
 		}
 	}
+	/**
+	 * Make sure the returned String is no longer than maxLength characters,
+	 * appending "..." if the original String had to be truncated.
+	 * 
+	 * @param s a String to be truncated if necessary
+	 * @param the maximum length of the resulting String
+	 * @return a truncated String
+	 */
+	public static String truncateString(String s, int maxLength) {
+		String truncatedString = s;
+		if (maxLength >= 0 && (s.length() > maxLength)) {
+			if (maxLength > 3) {
+				truncatedString = truncatedString.substring(0, maxLength - 3);
+				truncatedString += "...";	
+			} else {
+				truncatedString = truncatedString.substring(0, maxLength);
+			}
+		}
+		
+		return truncatedString;
+	}
 }

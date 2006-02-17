@@ -24,7 +24,7 @@
 		        <h2 class="dh-title">Your Last Deleted Invite</h2>
                 <div class="dh-share-shadow">
                     <div class="dh-share">	
-                        <div class="dh-invitee">
+                        <div class="dh-invitee" title="${invites.deletedInvitation.invite.humanReadableInvitee}">
                             <c:out value="${invites.deletedInvitation.invite.humanReadableInvitee}"/>
                         </div>
                         <div class="dh-invite-age">

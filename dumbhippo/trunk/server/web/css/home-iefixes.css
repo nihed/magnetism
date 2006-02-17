@@ -19,6 +19,11 @@ a.dh-person {
 a.dh-person:link {
 	font-size:				x-small;
 }
+
+.dh-listed-person {
+	font-size:				x-small;
+}
+
 span.dh-headshot {
 	font-size:				x-small;
 }

@@ -66,19 +66,44 @@ a.dh-group:visited {
 	color:					#fff500;
 	background-color:		inherit;
 }
-a.dh-person {
+
+.dh-person {
 	font-size:				small;
 	width:					58px;
 	height:					60px;
 	display:				block;
-	margin:					0px;
+	margin:					1px;
 	padding:				0px;
 	text-align:				center;
-	color:					#fff500;
+	color:					white;
 	background-color:		inherit;
 	border:					0;
 	float:					left;
 }
+
+a.dh-person {
+	color:					#fff500;
+}
+
+.dh-listed-person {
+	font-size:				small;
+	width:					145px;	
+	display:				block;	
+	margin-left:            1px;
+	margin-top:			    15px;
+	margin-bottom:			15px;
+	padding:				0px;
+	text-align:				left;
+	color:					white;
+	background-color:		inherit;
+	border:					0;
+	float:                  left;
+}
+
+a.dh-listed-person {
+	color:					#fff500;
+}
+
 a.dh-person img.dh-headshot {
 	cursor:					pointer;
 }

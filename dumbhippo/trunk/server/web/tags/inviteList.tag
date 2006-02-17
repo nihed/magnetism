@@ -65,7 +65,7 @@
                         <div class="dh-share-shadow">
                         <div class="dh-share">
                     </c:if>		
-                    <div class="dh-invitee">
+                    <div class="dh-invitee" title="${outstandingInvitation.invite.humanReadableInvitee}">
                         <c:out value="${outstandingInvitation.invite.humanReadableInvitee}"/>
                     </div>
                     <div class="dh-invite-age">

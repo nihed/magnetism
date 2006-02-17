@@ -8,6 +8,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+
 public class EntityListTag extends SimpleTagSupport {
 	private List<Object> entities;
 	private String skipRecipientId;
@@ -17,6 +18,10 @@ public class EntityListTag extends SimpleTagSupport {
 	private int bodyLengthLimit;
 	private String separator;
 	private boolean music;
+	
+	public EntityListTag() {
+		bodyLengthLimit = -1;
+	}
 
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
@@ -35,13 +40,14 @@ public class EntityListTag extends SimpleTagSupport {
 		
 		while (it.hasNext()) {
 			Object o = it.next();
-			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
-											   photos, music, cssClass, bodyLengthLimit);
-			String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
-		
-			if (html == null)
-				continue;
 			
+			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
+					   photos, music, cssClass, bodyLengthLimit);
+            String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
+
+            if (html == null)
+                continue;
+            
 			if (presenceHtml != null) {
 				html = html + presenceHtml;
 			}
