@@ -45,7 +45,6 @@
 		var chatControl = document.getElementById("dhChatControl")
         if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
 			chatControl.Join(false)
-			window.setTimeout(function() { chatControl.Rescan() }, 0)
 		}
 	</script>
 </head>

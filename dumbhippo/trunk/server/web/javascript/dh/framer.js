@@ -105,9 +105,11 @@ dh.framer.setSelfId = function(id) {
 }
 
 dh.framer.init = function() {
-	// If we don't have the ActiveX controls available to chat, hide them
 	var chatControl = document.getElementById("dhChatControl")
-    if (!(chatControl && chatControl.readyState && chatControl.readyState == 4)) {
+    if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+		chatControl.Rescan()
+	} else {
+		// If we don't have the ActiveX controls available to chat, hide them
     	document.getElementById("dhChatLinkRow").style.visibility = "hidden"
     	document.getElementById("dhChatPreviewRow").style.visibility = "hidden"    
     }
