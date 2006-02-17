@@ -8,8 +8,8 @@ dh.menu.WIDTH = 200
 dh.menu.BORDER = 1
 // Margin around individual items (note that the margins collapse between items)
 dh.menu.MARGIN = 3
-// Number of standard menu items (vertically - Hush and Exit count as the same)
-dh.menu.NUM_STANDARD = 4
+// Number of rows of standard menu items
+dh.menu.NUM_STANDARD = 2
 
 dh.menu.Menu = function() {
     // List of the currently displayed posts; we use this mostly to get references
@@ -33,17 +33,17 @@ dh.menu.Menu = function() {
 
     this.showHome = function() {
         window.close()
-        this._openSiteLink("/home")
+        this._openSiteLink("home")
     }
 
-    this.showHot = function() {
-        window.close()
-        this._openSiteLink("/home")
-    }
+//    this.showHot = function() {
+//        window.close()
+//        this._openSiteLink("home")
+//    }
 
     this.showRecent = function() {
         window.close()
-        this._openSiteLink("/home")
+        this._openSiteLink("home")
     }
     
     // Compute our desired size
@@ -52,8 +52,8 @@ dh.menu.Menu = function() {
         var height = 2 * (dh.menu.MARGIN + dh.menu.BORDER)
         
         // Standard menu items; we assume they are all the same
-        var exitDiv = document.getElementById("dhMenuExit")
-        height += dh.menu.NUM_STANDARD * exitDiv.clientHeight + (dh.menu.NUM_STANDARD - 1) * dh.menu.MARGIN
+        var homeDiv = document.getElementById("dhMenuHome")
+        height += dh.menu.NUM_STANDARD * homeDiv.clientHeight + (dh.menu.NUM_STANDARD - 1) * dh.menu.MARGIN
         
         // Active posts; again we assume they are all the same
         if (this.posts.length > 0) {
