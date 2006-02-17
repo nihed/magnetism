@@ -3,8 +3,6 @@
 // Used by HippoUI.rc
 //
 #define IDC_MYICON                      2
-#define IDI_DUMBHIPPO                   5
-#define IDI_DUMBHIPPO_DISCONNECTED      6
 #define IDD_HIPPOUI_DIALOG              102
 #define IDD_PREFERENCES                 102
 #define IDS_APP_TITLE                   103
@@ -28,21 +26,15 @@
 #define IDR_NOTIFY                      134
 #define IDI_HIPPOUI                     136
 #define IDD_LOGIN                       137
-#define IDI_DUMBHIPPO_DEBUG_DISCONNECTED 140
 #define IDR_HTML1                       142
 #define IDR_DEBUG                       144
-#define IDI_DUMBHIPPO_MISSED            145
 #define IDB_BITMAP1                     148
 #define IDI_DUMBHIPPO_1                 152
 #define IDI_DUMBHIPPO_2                 153
 #define IDI_DUMBHIPPO_3                 154
 #define IDI_DUMBHIPPO_4                 155
 #define IDI_DUMBHIPPO_5                 157
-#define IDI_ICON1                       159
 #define IDI_DUMBHIPPO_0                 159
-#define IDI_DUMBHIPPO_DEBUG             204
-#define IDI_DUMBHIPPO_DOGFOOD           205
-#define IDI_DUMBHIPPO_DOGFOOD_DISCONNECTED 206
 #define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001

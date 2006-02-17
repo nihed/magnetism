@@ -90,6 +90,6 @@
 	<!-- Used for the page header -->
 	<Binary Id="fogJpg" src="../WixInstaller/fog.jpg"/>
 	
-	<Icon Id="dumbHippoIcon" src="../HippoUI/DumbHippo.ico"/>
+	<Icon Id="dumbHippoIcon" src="../HippoUI/Logo1.ico"/>
     </Product>
 </Wix>
