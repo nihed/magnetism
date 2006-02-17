@@ -122,6 +122,8 @@ public:
     void registerWindowMsgHook(HWND window, HippoMessageHook *hook);
     void unregisterWindowMsgHook(HWND window);
     HWND getWindow() { return window_; }
+    HICON getSmallIcon() { return smallIcon_; }
+    HICON getBigIcon() { return bigIcon_; }
 
     void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
 
@@ -224,6 +226,7 @@ private:
     HWND window_;
     HICON bigIcon_;
     HICON smallIcon_;
+    HICON trayIcon_;
     HippoBSTR tooltip_;
     HMENU oldMenu_;
     HMENU debugMenu_;

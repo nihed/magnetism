@@ -241,6 +241,10 @@ HippoAbstractWindow::registerClass()
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName   = NULL;
     wcex.lpszClassName  = className_.m_str;
+    if (ui_) {
+        wcex.hIcon = ui_->getBigIcon();
+        wcex.hIconSm = ui_->getSmallIcon();;
+    }
 
     if (RegisterClassEx(&wcex) == 0) {
         if (GetClassInfoEx(instance_, className_.m_str, &wcex) != 0)

@@ -82,6 +82,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
     smallIcon_ = NULL;
     bigIcon_ = NULL;
+    trayIcon_ = NULL;
     tooltip_ = L"Initializing General Purpose Architecture";  // thanks jboss
 
     idle_ = FALSE;
@@ -97,6 +98,7 @@ HippoUI::~HippoUI()
 {
     DestroyIcon(smallIcon_);
     DestroyIcon(bigIcon_);
+    DestroyIcon(trayIcon_);
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -311,6 +313,16 @@ HippoUI::setIcons(void)
 {
     TCHAR *icon;
 
+    // Load the standard icons if not loaded before
+    if (smallIcon_ == NULL) {
+        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
+        smallIcon_ = (HICON)LoadImage(instance_, icon,
+                                      IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+        bigIcon_ = (HICON)LoadImage(instance_, icon,
+                                    IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+    }
+
+    // And always load the notification icon
     if (!connected_) {
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0);
     } else if (hotnessBlinkCount_ % 2 == 1) {
@@ -338,15 +350,11 @@ HippoUI::setIcons(void)
             break;
         }
     }
-    if (smallIcon_ != NULL)
-        DestroyIcon(smallIcon_);
-    if (bigIcon_ != NULL)
-        DestroyIcon(bigIcon_);
+    if (trayIcon_ != NULL)
+        DestroyIcon(trayIcon_);
 
-    smallIcon_ = (HICON)LoadImage(instance_, icon,
-                                IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-    bigIcon_ = (HICON)LoadImage(instance_, icon,
-                                IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+    trayIcon_ = (HICON)LoadImage(instance_, icon,
+                                 IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
     const WCHAR *currentDesc = preferences_.getInstanceDescription();
     tooltip_ = currentDesc;
@@ -367,7 +375,7 @@ void
 HippoUI::updateIcon()
 {
     setIcons();
-    notificationIcon_.updateIcon(smallIcon_);
+    notificationIcon_.updateIcon(trayIcon_);
     notificationIcon_.updateTip(tooltip_.m_str);
 }
 
@@ -462,7 +470,7 @@ HippoUI::create(HINSTANCE instance)
         return false;
     }
 
-    notificationIcon_.setIcon(smallIcon_);
+    notificationIcon_.setIcon(trayIcon_);
     if (!notificationIcon_.create(window_)) {
         revokeActive();
         return false;
