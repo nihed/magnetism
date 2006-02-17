@@ -177,7 +177,7 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR 
 }
 
 HRESULT 
-HippoAbstractWindow::getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser)
+HippoAbstractWindow::HippoAbstractWindowIECallback::getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser)
 {
     return E_UNEXPECTED;
 }
