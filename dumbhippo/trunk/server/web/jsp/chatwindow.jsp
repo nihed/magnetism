@@ -44,14 +44,13 @@
 		var chatControl = document.getElementById("dhChatControl")
         if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
 			chatControl.Join(true)
-			window.setTimeout(function() { chatControl.Rescan() }, 0)
 		}
 	</script>
 	<script defer type="text/javascript">
 		dh.chatwindow.init()
 	</script>
 </head>
-<body scroll="no">
+<body scroll="no" onload="dh.chatwindow.rescan()">
     <div id="dhChatPostInfoDiv">
     	${framer.post.titleAsHtml} (from <dh:entity value="${framer.post.poster}" photo="false"/>)
 	</div>

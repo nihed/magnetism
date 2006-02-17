@@ -198,3 +198,10 @@ dh.chatwindow.init = function() {
 
 	messageInput.focus()
 }
+
+dh.chatwindow.rescan = function() {
+	var chatControl = document.getElementById("dhChatControl")
+    if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+		chatControl.Rescan()
+	}
+}
