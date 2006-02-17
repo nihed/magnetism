@@ -16,6 +16,7 @@ body
     background-color: #eedd88;
     margin: 3px;
     white-space: nowrap;
+    cursor: pointer; /* For IE 5 and earlier you'd need 'hand' instead */
 }
 
 .dh-active-post-hover

@@ -75,7 +75,7 @@ dh.menu.Menu = function() {
         postDiv.className = "dh-active-post"
         
         postDiv.onclick = dh.util.dom.stdEventHandler(function (e) {
-            dh.menu._openSiteLink("visit?post=" + id)
+            dh.display._openSiteLink("visit?post=" + id)
             return false
         })
         postDiv.onmouseenter = dh.util.dom.stdEventHandler(function (e) {
