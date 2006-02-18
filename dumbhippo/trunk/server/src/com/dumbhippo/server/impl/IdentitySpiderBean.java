@@ -43,6 +43,7 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 
@@ -258,36 +259,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null; // not reached
 		}
 	}
-	
-	private static final String theManNickname = "The Man";
-	private static final String theManGuid = "09mfAhfd7wzVRq";
-	private static final String theManEmail = "theman@dumbhippo.com";
 
-	// This needs to be synchronized since the stateless session bean might be shared
-	// between threads.
-	public synchronized User getTheMan() {
+	public User getCharacter(final Character whichOne) {
 		try {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
-				public User call() {	
-					User result;
-					Guid guid;
-					try {
-						guid = new Guid(theManGuid);
-					} catch (ParseException e1) {
-						throw new RuntimeException("Guid could not parse theManGuid, should never happen", e1);
+				public User call() {
+					EmailResource email = getEmail(whichOne.getEmail());
+					User user = getUser(email);
+					if (user == null) {
+						// don't add any special handling in here - it should be OK if 
+						// someone just creates the character accounts manually without running
+						// this code. We don't want to start doing "if (character) ; else ;" all
+						// over the place.
+						logger.debug("Creating special user " + whichOne);
+						Account account = accountSystem.createAccountFromResource(email);
+						return account.getOwner();
+					} else {
+						return user;
 					}
-					try {
-						result = lookupGuid(User.class, guid);
-					} catch (NotFoundException e) {
-						logger.debug("Creating theman@dumbhippo.com");
-						EmailResource resource = getEmail(theManEmail);
-						result = new User(guid);
-						result.setNickname(theManNickname);
-						em.persist(result);
-						addVerifiedOwnershipClaim(result, resource);
-					}
-					
-					return result;
 				}
 			});
 		} catch (Exception e) {

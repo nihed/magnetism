@@ -205,18 +205,14 @@ public interface IdentitySpider {
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user);
 	
 	/**
-	 * The Man is an internal person who we use for various nefarious purposes.
+	 * Gets one of our special users, like the music butterfly or 
+	 * photo hippo or whatever. Supposed to be like any other user in 
+	 * all respects, to avoid weird special cases. The only special case
+	 * is that we autocreate the account.
 	 *
-	 * (More helpfully: The Man is the system user; his opinions 
-	 * are taken as true for everyone)
-	 * 
-	 * Note that the result is a detached entity.
-	 * 
-	 * This function is going away, along with theMan. 
-	 *
-	 * @return The Man
+	 * @return the character's User
 	 */
-	public User getTheMan();
+	public User getCharacter(Character whichOne);
 	
 	public boolean isAdministrator(User user);
 	

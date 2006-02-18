@@ -61,6 +61,7 @@ import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
@@ -268,7 +269,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public void doShareLinkTutorialPost(User recipient) {
 		logger.debug("Sending share link tutorial post");
-		User poster = identitySpider.getTheMan();
+		User poster = identitySpider.getCharacter(Character.MUSIC_GEEK);
 		URL url;
 		String urlText = configuration.getProperty(HippoProperty.BASEURL) + "/account";
 		try {
