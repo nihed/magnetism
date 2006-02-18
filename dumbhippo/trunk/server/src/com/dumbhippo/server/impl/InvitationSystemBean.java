@@ -477,10 +477,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
 				note = "The invitation to " + invitee.getHumanReadableString() + " was resent.";				
 			} else if (result == CreateInvitationResult.NEW_INVITER) {
-				note = "Your invitations number did not decrease because " + invitee.getHumanReadableString() 
+				note = "You didn't have to spend an invitation because " + invitee.getHumanReadableString() 
 				       + " was already invited by someone else. We sent out an invitation from you as well.";  			
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
-				// note can stay null in this case			
+				// note can stay null in this case
 			} else {
 				// unknown case, return null
 				return null;

@@ -155,6 +155,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		boolean foundMethod = false;
 		
 		for (Class<?> iface : interfaces) {
+			
 			logger.debug("Looking for method " + requestedMethod + " on " + iface.getCanonicalName());
 			for (Method m : iface.getMethods()) {
 				HttpContentTypes contentAnnotation = m.getAnnotation(HttpContentTypes.class);
@@ -235,8 +236,11 @@ public class HttpMethodsServlet extends AbstractServlet {
 				logger.debug("Reply for " + m.getName() + " sent");
 		
 				foundMethod = true;
-				break; // don't call two different methods!
+				break; // stop scanning this interface
 			}
+			
+			if (foundMethod)
+				break; // also stop scanning this object
 		}
 		
 		if (!foundMethod) {

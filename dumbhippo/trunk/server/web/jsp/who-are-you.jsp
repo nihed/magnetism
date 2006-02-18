@@ -48,10 +48,7 @@
 				but right now it's "members only." If you want in, leave us 
 				your email address and we'll let you know when you can sign up.
 			</p>
-			<form method="post" action="/wantsin">
-				<input type="text" value="let@me.in.please" name="address" class="dhText"/>
-				<input type="submit" value="Want In?"/>
-			</form>
+			<dht:wantsIn/>
 		</c:if>
 		<c:if test="${!who.browser.supported}">
 			<p><b>Your Web Browser</b></p>

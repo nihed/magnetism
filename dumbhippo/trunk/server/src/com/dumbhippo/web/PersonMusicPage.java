@@ -7,9 +7,12 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.TrackView;
 
 public class PersonMusicPage extends AbstractPersonPage {
@@ -18,13 +21,17 @@ public class PersonMusicPage extends AbstractPersonPage {
 	static private final int LIST_SIZE = 5;
 	
 	private Configuration configuration;
+	private InvitationSystem invitationSystem;
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
 	private ListBean<TrackView> popularTracks;
-	private boolean musicSharingEnabled;
+	private boolean musicSharingEnabled; 
+	private int selfInvitations;
 	
 	public PersonMusicPage() {
+		selfInvitations = -1;
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}
 
 	public ListBean<TrackView> getFrequentTracks() {
@@ -81,5 +88,16 @@ public class PersonMusicPage extends AbstractPersonPage {
 	public void setViewedPerson(User person) {
 		super.setViewedPerson(person);
 		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(person);
+	}
+	
+	public int getSelfInvitations() {
+		if (selfInvitations < 0) {
+			selfInvitations = invitationSystem.getInvitations(getIdentitySpider().getCharacter(Character.MUSIC_GEEK));
+		}
+		return selfInvitations;
+	}
+	
+	public String getPromotion() {
+		return PromotionCode.MUSIC_INVITE_PAGE_200602.getCode();
 	}
 }

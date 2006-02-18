@@ -32,16 +32,19 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.Viewpoint;
@@ -73,6 +76,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private MusicSystem musicSystem;
 
+	@EJB
+	private InvitationSystem invitationSystem;
+	
 	private void startReturnObjectsXml(HttpResponseData contentType,
 			XmlBuilder xml) {
 		if (contentType != HttpResponseData.XML)
@@ -460,6 +466,60 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("songTitle", tv.getName());
 		xml.appendTextNode("artist", tv.getArtist());
 		xml.appendTextNode("album", tv.getAlbum());
+		xml.closeElement();
+		out.write(xml.getBytes());
+		out.flush();
+	}
+	
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException {
+		if (contentType != HttpResponseData.XML)
+			throw new IllegalArgumentException("only support XML replies");
+
+		String note = null;
+		
+		Character character;
+		
+		try {
+			PromotionCode code = PromotionCode.check(promotion);
+			switch (code) {
+			case MUSIC_INVITE_PAGE_200602:
+				character = Character.MUSIC_GEEK;
+				break;
+			default:
+				character = null;
+				break;
+			}
+		
+		} catch (NotFoundException e) {
+			character = null;
+		}
+		
+		if (character == null) {
+			note = "The limited-time offer has expired!";
+		} else {
+			User inviter = identitySpider.getCharacter(character);
+			
+			if (!inviter.getAccount().canSendInvitations(1)) {
+				note = "Someone got there first! No more invitations available right now.";
+			} else {
+				// this does NOT check whether the account has invitations left,
+				// that's why we do it above. 
+				note = invitationSystem.sendEmailInvitation(inviter, address,
+							"Welcome!", "Thanks for inviting yourself.");
+				if (note == null)
+					note = "Your invitation is on its way (check your email)";
+			}
+		}
+		
+		if (note == null)
+			throw new RuntimeException("bug! note was null in InviteSelf");
+		
+		logger.debug("invite self message: '{}'", note);
+		
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("inviteSelfReply");
+		xml.appendTextNode("message", note);
 		xml.closeElement();
 		out.write(xml.getBytes());
 		out.flush();

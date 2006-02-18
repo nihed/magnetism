@@ -112,4 +112,8 @@ public interface HttpMethods {
 	@HttpParams( { "who" })
 	public void getCurrentTrack(OutputStream out, HttpResponseData contentType, String who)
 			throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "address", "promotion" })
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException;
 }

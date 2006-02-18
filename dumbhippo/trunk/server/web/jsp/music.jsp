@@ -61,12 +61,24 @@
 				<div>
 					<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
 				</div>
-				<h2 class="dh-title">LIMITED TIME OFFER</h2>
-				<div>
-					AS SEEN ON TV: <a href="${viewperson.downloadUrlWindows}">Download Now</a>
-					to take advantage! Create an account to see more of this person's music and publish your own.
-				</div>
-				
+				<c:choose>
+					<c:when test="${viewperson.selfInvitations > 0}">
+						<h2 class="dh-title">LIMITED TIME OFFER</h2>
+						<div>
+							AS SEEN ON TV: Create an account to see more of this person's music and publish your own.
+							<dht:selfInvite promotion="${viewperson.promotion}" invitesAvailable="${viewperson.selfInvitations}"/>
+						</div>
+					</c:when>
+					<c:otherwise>
+						<h2 class="dh-title">CHECK BACK SOON</h2>
+						<div>
+							Sometimes we have invites to DumbHippo available 
+							on this page. Right now we're all out. If you leave your 
+							email address, we'll let you know when we have something.
+							<dht:wantsIn/>
+						</div>
+					</c:otherwise>
+				</c:choose>
 				<h2 class="dh-title">Popular Songs on DumbHippo</h2>
 	
 				<div>
