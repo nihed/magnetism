@@ -57,10 +57,12 @@
 			</c:when>
 			<c:when test="${!viewperson.signin.valid}">
 				<% /* anonymous viewer */ %>
-				<h2 class="dh-title"><c:out value="${personName}"/> is listening to:</h2>
-				<div>
-					<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
-				</div>
+				<c:if test="${!empty viewperson.currentTrack}">
+					<h2 class="dh-title"><c:out value="${personName}"/> is listening to:</h2>
+					<div>
+						<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
+					</div>
+				</c:if>
 				<c:choose>
 					<c:when test="${viewperson.selfInvitations > 0}">
 						<h2 class="dh-title">LIMITED TIME OFFER</h2>
