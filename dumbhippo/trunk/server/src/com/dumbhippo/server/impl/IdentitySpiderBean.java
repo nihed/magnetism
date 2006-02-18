@@ -273,10 +273,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						// over the place.
 						logger.debug("Creating special user " + whichOne);
 						Account account = accountSystem.createAccountFromResource(email);
-						return account.getOwner();
-					} else {
-						return user;
+						user = account.getOwner();
+						user.setNickname(whichOne.getDefaultNickname());
 					}
+					return user;
 				}
 			});
 		} catch (Exception e) {
