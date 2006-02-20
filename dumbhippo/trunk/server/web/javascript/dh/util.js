@@ -250,11 +250,20 @@ dh.util.clearNode = function (node) {
 	while (node.firstChild) { node.removeChild(node.firstChild) }
 }
 
-dh.util.openShareGroupWindow = function(groupId) {
-	var url = dhServerUri + 'sharegroup?groupId=' + groupId + '&v=1&next=close';
+dh.util.openShareWindow = function(url) {
 	window.open(url,
 	'_NEW',
 	'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));
+}
+
+dh.util.openShareGroupWindow = function(groupId) {
+	var url = dhServerUri + 'sharegroup?groupId=' + groupId + '&v=1&next=close';
+	dh.util.openShareWindow(url);
+}
+
+dh.util.openShareLinkWindow = function(link, title) {
+	var url = dhServerUri + 'sharelink?url=' + encodeURIComponent(link) + '&title=' + encodeURIComponent(title);
+	dh.util.openShareWindow(url);
 }
 
 dh.util.openFrameSet = function(window, event, obj, postID) {

@@ -11,11 +11,6 @@
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
 
-<c:url var="forwardUrl" value="/sharelink">
-	<c:param name="url" value="${url}"/>
-	<c:param name="title" value="${title}"/>
-</c:url>
-
 <head>
 	<title><c:out value="${title}"/></title>
 	<dht:stylesheets href="frames.css" iehref="frames-iefixes.css" />
@@ -23,6 +18,11 @@
     <script type="text/javascript">
     	dojo.require("dh.framer")
     	dh.framer.setSelfId("${framer.signin.userId}")
+    	dh.framer.forwardUrl = <dh:jsString value="${url}"/>;
+		dh.framer.forwardTitle = <dh:jsString value="${title}"/>;
+    	dh.framer.openForwardWindow = function() {
+    		dh.util.openShareLinkWindow(dh.framer.forwardUrl, dh.framer.forwardTitle);
+    	}
 	</script>
 	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
 	<object classid="clsid:2D40665F-8139-4cb5-BA39-A6E25A147F5D" id="dhChatControl">
@@ -80,8 +80,8 @@
 	       <td class="action" nowrap><a class="action" href="javascript:dh.framer.goHome()" target=_top>Back Home</a></td>       
 	   </tr>
 	   <tr>
-	       <td class="action" nowrap><a class="action action-box highlight-action" href="${forwardUrl}" target="_blank">&#187</a></td>
-	       <td class="action" nowrap><a class="action highlight-action" href="${forwardUrl}" target="_blank">Forward To Others</a></td>
+	       <td class="action" nowrap><a class="action action-box highlight-action" href="javascript:dh.framer.openForwardWindow();">&#187</a></td>
+	       <td class="action" nowrap><a class="action highlight-action" href="javascript:dh.framer.openForwardWindow();">Forward To Others</a></td>
 	   </tr>
 	   <c:if test="${framer.signin.userId != null}">
 	       <tr id="dhChatLinkRow">

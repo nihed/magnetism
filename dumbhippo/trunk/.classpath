@@ -84,5 +84,6 @@
 	<classpathentry kind="lib" path="server/lib/slf4j-log4j12.jar"/>
 	<classpathentry kind="lib" path="taste/taste.jar"/>
 	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
+	<classpathentry kind="src" path="server/tests"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -162,5 +162,16 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>        
         <dynamic-attributes>true</dynamic-attributes>
+    </tag>
+        <tag>
+        <name>jsString</name>
+        <tagclass>com.dumbhippo.web.JavascriptStringTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Output a JavaScript string literal</info>
+	    <attribute>
+           <name>value</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
     </tag>    
 </taglib>
