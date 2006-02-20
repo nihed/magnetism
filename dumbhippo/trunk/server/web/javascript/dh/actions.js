@@ -107,3 +107,25 @@ dh.actions.fillAlphaPng = function(image) {
     span.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
     span.style.background = "transparent";
 }
+
+dh.actions.showChangePhoto = function(n) {
+	dh.util.hideId("dhChangePhotoLink" + n)
+	dh.util.showId("dhPhotoUploadFileEntry" + n)
+	// We set the image here to start it loading so that we hopefully
+	// have it already loaded by the time we need to display progress
+	var progress = document.getElementById("dhPhotoUploadProgress" + n)
+	if (Math.random() < 0.5)
+		progress.src = dhImageRoot + "HulaHippo.gif"
+	else
+		progress.src = dhImageRoot + "HulaPhotographer.gif"
+}
+
+dh.actions.doChangePhoto = function(n) {
+	dh.util.hideId("dhPhotoUploadFileEntry" + n)
+	document.forms["dhPhotoUploadForm" + n].submit()
+	var progress = document.getElementById("dhPhotoUploadProgress" + n)
+	progress.src = progress.src // Restarts the animation after post in IE
+	dh.util.hideId("dhPhoto-192")
+	dh.util.show(progress)
+	document.getElementById("dhChangePhotoLink" + n).disabled = true
+}
