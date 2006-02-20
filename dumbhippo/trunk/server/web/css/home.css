@@ -23,6 +23,8 @@
 }
 a.dh-group {
 	width:					58px;
+    height:				    80px;
+	overflow:               hidden;
 	display:				block;
 	padding:				0px;
 	font-size:				small;
@@ -69,8 +71,9 @@ a.dh-group:visited {
 
 .dh-person {
 	font-size:				small;
-	width:					58px;
-	height:					60px;
+	width:				    58px;
+	height:				    80px;
+	overflow:               hidden;
 	display:				block;
 	margin:					1px;
 	padding:				0px;

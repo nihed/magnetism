@@ -51,7 +51,7 @@
 			    <div class="dh-groups">
 			        <c:choose>
 				        <c:when test="${home.groups.size > 0}">
-					        <dh:entityList value="${home.groups.list}" photos="true" bodyLengthLimit="12"/>
+					        <dh:entityList value="${home.groups.list}" photos="true" bodyLengthLimit="8" twoLineBody="true"/>
 				        </c:when>
 				        <c:otherwise>
 					        <!-- FIXME: need class definition for this -->
@@ -77,7 +77,7 @@
 			    <div class="dh-people">
 			        <c:choose>
 			   	        <c:when test="${home.contacts.size > 0}">
-				    	    <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="12"/>
+				    	    <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="8" twoLineBody="true"/>
 				        </c:when>
 				        <c:otherwise>
 				  	        <!-- FIXME: need class definition for this -->

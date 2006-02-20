@@ -18,9 +18,11 @@ public class EntityListTag extends SimpleTagSupport {
 	private int bodyLengthLimit;
 	private String separator;
 	private boolean music;
+	private boolean twoLineBody;
 	
 	public EntityListTag() {
 		bodyLengthLimit = -1;
+		twoLineBody = false;
 	}
 
 	public void doTag() throws IOException {
@@ -42,7 +44,7 @@ public class EntityListTag extends SimpleTagSupport {
 			Object o = it.next();
 			
 			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
-					   photos, music, cssClass, bodyLengthLimit);
+					   photos, music, cssClass, bodyLengthLimit, twoLineBody);
             String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
 
             if (html == null)
@@ -89,5 +91,9 @@ public class EntityListTag extends SimpleTagSupport {
 	
 	public void setMusic(boolean music) {
 		this.music = music;
+	}
+
+	public void setTwoLineBody(boolean twoLineBody) {
+		this.twoLineBody = twoLineBody;
 	}
 }

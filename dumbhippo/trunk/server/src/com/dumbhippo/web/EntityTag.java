@@ -27,14 +27,16 @@ public class EntityTag extends SimpleTagSupport {
 	private String cssClass;
 	private int bodyLengthLimit;
 	private boolean music;	
+	private boolean twoLineBody;
 	
 	public EntityTag() {
 		bodyLengthLimit = -1;
+		twoLineBody = false;
 	}
 	
 	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId,
 			boolean showInviteLinks, boolean photo, boolean music,
-			String cssClass, int bodyLengthLimit) {
+			String cssClass, int bodyLengthLimit, boolean twoLineBody) {
 		String link = null;
 		String body;
 		String photoUrl = null;
@@ -101,8 +103,28 @@ public class EntityTag extends SimpleTagSupport {
 		// truncateString would return the original String if bodyLengthLimit is negative
 		String bodyOriginal = body;
 		String longerBody = 
-			StringUtils.truncateString(bodyOriginal, bodyLengthLimit*2);
-		body = StringUtils.truncateString(bodyOriginal, bodyLengthLimit);
+			StringUtils.truncateString(bodyOriginal, bodyLengthLimit*3);
+		
+		int finalIndexOfSpace = -1;
+		
+		if (twoLineBody) {
+		    // this is a String that can be displayed over the two lines, so if it starts with a word or
+		    // a number of words that are shorter than bodyLengthLimit, leave them intact, and truncate 
+		    // after them
+		    int indexOfSpace = bodyOriginal.indexOf(" "); 
+
+		    // because indexOfSpace is 0-based, when indexOfSpace is equal to bodyLengthLimit, 
+		    // it means that the space is the bodyLengthLimit+1st character, so we still want
+		    // to leave the String up to that point for the first line
+		    while ((indexOfSpace > 0) && (indexOfSpace <= bodyLengthLimit)) {
+			    finalIndexOfSpace = indexOfSpace;
+			    indexOfSpace = bodyOriginal.indexOf(" ", finalIndexOfSpace+1);			
+		    }
+		}
+		
+		// if finalIndexOfSpace is -1, than -1+1 will be 0, and we do not need a special case
+		// to check that
+		body = StringUtils.truncateString(bodyOriginal, finalIndexOfSpace+1+bodyLengthLimit);
 		
 		boolean openElement = false;
 		if (photo && photoUrl != null) {
@@ -152,7 +174,8 @@ public class EntityTag extends SimpleTagSupport {
 		} catch (ELException e) {
 			throw new RuntimeException(e);
 		}
-		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, photo, music, cssClass, bodyLengthLimit));
+		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, 
+				                photo, music, cssClass, bodyLengthLimit, twoLineBody));
 	}
 	
 	public void setValue(Object value) {
@@ -177,5 +200,9 @@ public class EntityTag extends SimpleTagSupport {
 
 	public void setMusic(boolean music) {
 		this.music = music;
+	}
+	
+	public void setTwoLineBody(boolean twoLineBody) {
+		this.twoLineBody = twoLineBody;
 	}
 }
