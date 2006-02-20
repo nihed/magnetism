@@ -42,6 +42,7 @@
 				</c:choose>
 			</c:if>
 		</dht:toolbar>
+		<dht:infobar/>		
 
 		<c:if test="${viewperson.disabled}">
 			<div id="dhInformationBar">This person's account is not active</div>

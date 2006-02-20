@@ -70,6 +70,7 @@
 		<dht:logo/>
 
 		<dht:toolbar account="false" publicPageId="${account.signin.userId}"/>
+		<dht:infobar/>		
 
 		<h2 class="dh-title">Comics!</h2>
 

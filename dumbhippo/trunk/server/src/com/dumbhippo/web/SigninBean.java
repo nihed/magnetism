@@ -30,7 +30,7 @@ public class SigninBean implements Serializable {
 	private static final Logger logger = GlobalSetup.getLogger(SigninBean.class);
 	
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
-	private static final String SIGNIN_BEAN_KEY = "dumbhippo.signin";
+	private static final String SIGNIN_BEAN_KEY = "signin";
 	
 	private Guid userGuid;
 	private User user; // lazily initialized

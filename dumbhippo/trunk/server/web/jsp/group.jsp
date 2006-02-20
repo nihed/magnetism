@@ -39,6 +39,9 @@
 				</c:when>
 			</c:choose>
 		</dht:toolbar>
+		<c:if test="${!viewgroup.fromInvite}"> <!-- we don't want to duplicate the download link -->
+			<dht:infobar/>		
+		</c:if>
 
 		<c:choose>
 			<c:when test="${viewgroup.justAdded}">
