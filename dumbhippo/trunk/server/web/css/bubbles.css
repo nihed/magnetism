@@ -68,9 +68,8 @@ a.dh-share-link:link {
 	background-color:		inherit;
 }
 .dh-favicon {
-	position:				absolute;
-	right:					6px;
-	top:					12px;	
+	float:					left;
+	margin-right:			10px;
 }
 .dh-share-description {
 	font-size:				smaller;
@@ -84,7 +83,6 @@ div.dh-share-to {
 	position:				absolute;
 	bottom:					4px;
 	right:					12px;
-	display:				block;
 	color:					#e5e920;
 	background-color:		inherit;
 	font-size:				small;
