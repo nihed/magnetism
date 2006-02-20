@@ -3,6 +3,7 @@ dojo.provide("dh.share");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
+dojo.require("dojo.string");
 dojo.require("dojo.widget.RichText");
 dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
@@ -152,9 +153,9 @@ dhRemoveRecipientClicked = function(event) {
 }
 
 dh.share.createNewContactFromCombo = function() {
-	var email = dh.share.autoSuggest.inputText;
+	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
 	
-	if (email.length == 0 || email.indexOf("@") < 0) {
+	if (email.length == 0 || email.indexOf("@") < 0 || email.indexOf(" ") >= 0 || email.indexOf(",") >= 0) {
 		alert("invalid email address: '" + email + "'");
 		return;
 	}
@@ -422,7 +423,7 @@ dh.share.getEligibleRecipients = function() {
 		return false;
 	}
 
-	var searchStr = dh.share.autoSuggest.inputText;
+	var searchStr = dojo.string.trim(dh.share.autoSuggest.inputText);
 
 	if (searchStr.length == 0)
 		return results; // no eligible when the input is empty
