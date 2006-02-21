@@ -48,7 +48,7 @@ public class ShareGroupFormatter extends DefaultFormatter {
 			
 			if (postView.getContext() == PostView.Context.MAIL_NOTIFICATION)
 				member = groupSystem.getGroupMember(group, postView.getMailRecipient());
-			else
+			else if (postView.getViewpoint().getViewer() != null)
 				member = groupSystem.getGroupMember(postView.getViewpoint(), group, postView.getViewpoint().getViewer());;
 		} catch (ParseException e) {
 			logger.warn("Bad group ID " + groupId + " in post " + postView.getPost().getId(), e);
