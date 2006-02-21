@@ -29,7 +29,7 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 	
 	public ListBean<InvitationView> getOutstandingInvitations() {
 		if (outstandingInvitations == null) {
-			logger.debug("Getting outstanding invitations by " + signin.getUser().getId());
+			//logger.debug("Getting outstanding invitations by {}", signin.getUser().getId());
 			outstandingInvitations = 
 				new ListBean<InvitationView>(
 				    invitationSystem.findOutstandingInvitations(new Viewpoint(signin.getUser()), 

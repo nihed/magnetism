@@ -73,8 +73,12 @@ public class BeanTag extends SimpleTagSupport {
 	}
 	
 	private void setField(Object o, Field f, Object value) {
-		logger.debug("injecting value of type " + (value != null ? value.getClass().getName() : "null")
-				+ " into field " + f.getName() + " of object " + o.getClass().getName());
+		/*
+		if (logger.isDebugEnabled())
+			logger.debug("injecting value of type " + (value != null ? value.getClass().getName() : "null")
+					+ " into field " + f.getName() + " of object " + o.getClass().getName());
+		*/
+		
 		try {
 			// Like EJB3, we support private-field injection
 			f.setAccessible(true);
@@ -85,7 +89,8 @@ public class BeanTag extends SimpleTagSupport {
 	}
 	
 	private Object instantiateObject() {
-		logger.debug("Instantiating " + clazz.getName());
+		//logger.debug("Instantiating " + clazz.getName());
+		
 		// We special-case the SigninBean
 		if (clazz == SigninBean.class) 
 			return getSigninBean();
@@ -118,7 +123,8 @@ public class BeanTag extends SimpleTagSupport {
 					if (toInject != null)
 						setField(o, f, toInject);
 					else
-						logger.debug("no value " + key + " found in scope " + s + " not injecting into " + o.getClass().getName());
+						logger.warn("no value {} found in scope {} not injecting into " + o.getClass().getName(),
+								key, s);
 				}
 			}
 		}

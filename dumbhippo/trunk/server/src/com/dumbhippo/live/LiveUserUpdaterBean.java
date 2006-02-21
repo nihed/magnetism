@@ -127,8 +127,8 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		LiveUser newUser = (LiveUser) user.clone();
 		List<PostView> recentPosts = getRecentPosts(user);
 		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
-		logger.debug("computing hotness for user " + user.getGuid() 
-				+ " old: " + user.getHotness().name() + " new: " + newUser.getHotness().name());		
+		logger.debug("computing hotness for user {} old: {} new: " + newUser.getHotness().name(),
+				user.getGuid(), user.getHotness().name());
 		if (!newUser.equals(user)) {
 			state.updateLiveUser(newUser);
 			// Remember to update sendAllNotifications if you add a new one here

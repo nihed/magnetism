@@ -47,10 +47,10 @@ public class EbayWebServices {
 		try {
 			return saxFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
-			logger.error("creating ebay sax parser", e);
+			logger.error("creating ebay sax parser {}", e.getMessage());
 			throw new RuntimeException(e);
 		} catch (SAXException e) {
-			logger.error("creating ebay sax parser", e);
+			logger.error("creating ebay sax parser {}", e.getMessage());
 			throw new RuntimeException(e);
 		}
 	}
@@ -110,21 +110,21 @@ public class EbayWebServices {
 			
 			connection.addRequestProperty("Content-Length", Integer.toString(contentBytes.length));
 			
-			logger.debug("Sending call " + callName + " to " + url);
+			//logger.debug("Sending call {} to {}", callName, url);
 			OutputStream os = connection.getOutputStream();
 			os.write(contentBytes);
 			os.flush();
 			os.close();
 		
-			logger.debug("Reading reply");
+			//logger.debug("Reading reply");
 			// we block at this point to get response code...
-			logger.debug("Result code " + connection.getResponseCode());
-			logger.debug("Result message " + connection.getResponseMessage());
-			logger.debug("Content length " + connection.getContentLength());
-			logger.debug("Content type " + connection.getContentType());
+			//logger.debug("Result code " + connection.getResponseCode());
+			//logger.debug("Result message " + connection.getResponseMessage());
+			//logger.debug("Content length " + connection.getContentLength());
+			//logger.debug("Content type " + connection.getContentType());
 			return connection.getInputStream();
 		} catch (IOException e) {
-			logger.warn("exception in ebay web services request", e);
+			logger.warn("exception in ebay web services request {}", e.getMessage());
 			return null;
 		}
 	}
@@ -140,14 +140,14 @@ public class EbayWebServices {
 		try {
 			parser.parse(is, handler);
 		} catch (SAXException e) {
-			logger.error("Failed to parse ebay return stuff", e);
+			logger.error("Failed to parse ebay return stuff: {}", e.getMessage());
 			return null;
 		} catch (IOException e) {
-			logger.warn("io error talking to ebay", e);
+			logger.warn("io error talking to ebay: {}", e.getMessage());
 			return null;
 		}
 		
-		logger.debug("eBay request complete");
+		//logger.debug("eBay request complete");
 		return handler;		
 	}
 		
@@ -165,8 +165,8 @@ public class EbayWebServices {
 			
 			if (Math.abs(t - now) > (1000 * 60 * 59)) {
 				logger.error("eBay is more than an hour out of sync with our time; something is going very wrong");
-				logger.error("eBay time is: " + ret);
-				logger.error("our time is: " + new Date(now));
+				logger.error("eBay time is: {}", ret);
+				logger.error("our time is: {}", new Date(now));
 				ret = null;
 			}
 		}

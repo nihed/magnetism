@@ -38,7 +38,7 @@ public class MySpaceScraper {
 			throw new RuntimeException(e);
 		}
 		URLConnection connection;
-		logger.debug("opening connection to " + u);		
+		logger.debug("opening connection to {}", u);		
 		connection = u.openConnection();
 		connection.setConnectTimeout(REQUEST_TIMEOUT);
 		connection.setReadTimeout(REQUEST_TIMEOUT);

@@ -50,7 +50,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		sb.append(StringUtils.urlEncode(name));
 
 		String wsUrl = sb.toString();
-		logger.debug("Loading yahoo song search " + wsUrl);
+		logger.debug("Loading yahoo song search {}", wsUrl);
 		
 		// we could double-check that the song result is the right one, but 
 		// really it seems more harmful to reject some correct results
@@ -61,7 +61,6 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			logger.debug("Song search failed, returning nothing");
 			return Collections.emptyList();
 		} else {
-			logger.debug("Returning search results");
 			return handler.getBestSongs();
 		}
 	}
@@ -75,7 +74,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		sb.append(StringUtils.urlEncode(songId));
 
 		String wsUrl = sb.toString();
-		logger.debug("Loading yahoo song download search " + wsUrl);
+		logger.debug("Loading yahoo song download search {}", wsUrl);
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {

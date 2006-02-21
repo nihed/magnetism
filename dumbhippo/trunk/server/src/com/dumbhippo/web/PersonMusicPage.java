@@ -39,7 +39,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 			try {
 				frequentTracks = new ListBean<TrackView>(getMusicSystem().getFrequentTrackViews(getSignin().getViewpoint(), getViewedUser(), LIST_SIZE));
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load frequent tracks");
+				logger.debug("Failed to load frequent tracks {}", e.getMessage());
 				List<TrackView> list = Collections.emptyList();
 				frequentTracks = new ListBean<TrackView>(list);
 			}
@@ -53,7 +53,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 			try {
 				latestTracks = new ListBean<TrackView>(getMusicSystem().getLatestTrackViews(getSignin().getViewpoint(), getViewedUser(), LIST_SIZE));
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest tracks");
+				logger.debug("Failed to load latest tracks {}", e.getMessage());
 				List<TrackView> list = Collections.emptyList();
 				latestTracks = new ListBean<TrackView>(list);
 			}
@@ -67,7 +67,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 			try {
 				popularTracks = new ListBean<TrackView>(getMusicSystem().getPopularTrackViews(LIST_SIZE));
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load popular tracks");
+				logger.debug("Failed to load popular tracks {}", e.getMessage());
 				List<TrackView> list = Collections.emptyList();
 				popularTracks = new ListBean<TrackView>(list);
 			}

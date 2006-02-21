@@ -111,7 +111,7 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 					String friendId = MySpaceScraper.getFriendId(name);
 					tracker.setFriendId(acct, friendId);
 				} catch (IOException e) {
-					logger.error("Failed to retrieve MySpace friend ID", e);
+					logger.warn("Failed to retrieve MySpace friend ID", e);
 				}
 			} 
 		});

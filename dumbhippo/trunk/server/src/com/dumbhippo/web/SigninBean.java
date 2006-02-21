@@ -50,7 +50,7 @@ public class SigninBean implements Serializable {
 				user = CookieAuthentication.authenticate(request);
 				userGuid = user.getGuid();
 				request.getSession().setAttribute(USER_ID_KEY, userGuid);
-				logger.debug("storing authenticated user ID " + user + " in session");
+				logger.debug("storing authenticated user {} in session", user);
 			} catch (BadTastingException e) {
 				logger.debug("Cookie was malformed", e);
 				userGuid = null;
@@ -61,10 +61,10 @@ public class SigninBean implements Serializable {
 				user = null;
 			}
 		} else {
-			logger.debug("loaded authenticated user ID " + userGuid + " from session");
+			logger.debug("loaded authenticated user ID {} from session", userGuid);
 		}
 		
-		logger.debug("storing SigninBean on request, valid = " + isValid());
+		logger.debug("storing SigninBean on request, valid = {}", isValid());
 		request.setAttribute(SIGNIN_BEAN_KEY, this);
 	}
 
@@ -77,7 +77,7 @@ public class SigninBean implements Serializable {
 		try {
 			result = (SigninBean) request.getAttribute(SIGNIN_BEAN_KEY);
 		} catch (ClassCastException e) {
-			logger.debug("Value of dumbhippo.signin wasn't a SigninBean");
+			logger.error("Value of {} wasn't a SigninBean", SIGNIN_BEAN_KEY);
 			result = null;
 		}
 		
@@ -105,7 +105,7 @@ public class SigninBean implements Serializable {
 				
 		LoginCookie loginCookie = new LoginCookie(host, personId, authKey);
 		response.addCookie(loginCookie.getCookie());
-		logger.debug("Set cookie for personId = " + personId + " authKey = " + authKey);
+		logger.debug("Set cookie for personId = {} authKey = {}", personId, authKey);
 	}
 
 	public static void unsetCookie(HttpServletResponse response) {
@@ -151,7 +151,7 @@ public class SigninBean implements Serializable {
 		if (disabled == null) {
 			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 			disabled = Boolean.valueOf(identitySpider.getAccountDisabled(getUser()));
-			logger.debug("AccountPage loaded disabled = " + disabled);
+			logger.debug("AccountPage loaded disabled = {}", disabled);
 		}
 		return disabled;
 	}

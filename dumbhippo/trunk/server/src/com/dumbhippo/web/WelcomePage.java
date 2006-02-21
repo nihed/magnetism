@@ -22,6 +22,7 @@ import com.dumbhippo.server.PostingBoard;
  * shared with him.
  */
 public class WelcomePage {
+	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(WelcomePage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 6;
 	
@@ -65,7 +66,6 @@ public class WelcomePage {
 	}
 	
 	public ListBean<PostView> getReceivedPosts() {
-		logger.debug("Getting received posts for " + signin.getUser().getId());
 		if (receivedPosts == null)
 			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
 		return receivedPosts;

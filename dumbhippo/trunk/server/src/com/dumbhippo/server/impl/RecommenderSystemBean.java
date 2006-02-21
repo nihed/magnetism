@@ -84,6 +84,9 @@ public class RecommenderSystemBean implements RecommenderSystem {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<Boolean>() {
 
 				public Boolean call() {
+					
+					logger.debug("Update rating data for user={} item={}", user.getId(), item.getId());
+					
 					Rating rating;
 					
 					// TODO: maybe more efficient to use INSERT IGNORE; is that MySQL specific?
@@ -114,11 +117,10 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * @param viewer  The user who clicked through on it
 	 */
 	public void addRatingForPostViewedBy(Post post, User viewer) {
-		logger.debug("Adding view rating for user=" + viewer.getId() + ", post=" + post.getId());
 		if (updateRatingData(viewer, post, VIEW_SCORE, VIEW_REASON, Rating.POST_TYPE)) {
-			logger.debug("created new rating");
+			//logger.debug("created new rating");
 		} else {
-			logger.debug("left old rating");
+			//logger.debug("left old rating");
 		}
 	}
 	
@@ -128,11 +130,10 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * @param viewer  The user who shared it
 	 */
 	public void addRatingForPostCreatedBy(Post post, User viewer) { 
-		logger.info("Adding view create rating for user=" + viewer.getId() + ", post=" + post.getId());
 		if (updateRatingData(viewer, post, CREATE_POST_SCORE, CREATE_POST_REASON, Rating.POST_TYPE)) {
-			logger.debug("created new rating");
+			//logger.debug("created new rating");
 		} else {
-			logger.debug("left old rating");
+			//logger.debug("left old rating");
 		}
 	}
 	
@@ -175,7 +176,8 @@ public class RecommenderSystemBean implements RecommenderSystem {
 				try {
 					recommendedPostViews.add(postingBoard.loadPost(viewpoint, postIdGuid));
 				} catch (NotFoundException nfe) {
-					logger.warn("NotFoundException in getRecommendedPosts for " + postIdGuid, nfe);
+					logger.warn("NotFoundException in getRecommendedPosts for {}: {}", postIdGuid, nfe.getMessage());
+					logger.warn("post not found trace", nfe);
 				}
 			}
 			return recommendedPostViews;
@@ -220,10 +222,10 @@ public class RecommenderSystemBean implements RecommenderSystem {
 				Post post = postingBoard.loadRawPost(viewpoint, new Guid(postId));
 				return postingBoard.canViewPost(viewpoint, post);				
 			} catch (NotFoundException nfe) {
-				logger.warn("NotFoundException for " + item.getID() + " in isAccepted; defaulting false", nfe);
+				logger.warn("NotFoundException for {} in isAccepted; defaulting false: {}", item.getID(), nfe.getMessage());
 				return false;
 			} catch (Guid.ParseException gpe) {
-				logger.error("GuidParseException for " + item.getID() + " in isAccepted; defaulting false", gpe);
+				logger.error("GuidParseException for {} in isAccepted; defaulting false: {}", item.getID(), gpe.getMessage());
 				return false;
 			}
 		}

@@ -51,9 +51,11 @@ public class ShareGroupFormatter extends DefaultFormatter {
 			else if (postView.getViewpoint().getViewer() != null)
 				member = groupSystem.getGroupMember(postView.getViewpoint(), group, postView.getViewpoint().getViewer());;
 		} catch (ParseException e) {
-			logger.warn("Bad group ID " + groupId + " in post " + postView.getPost().getId(), e);
+			logger.warn("Bad group ID {} in post {}", groupId, postView.getPost().getId());
+			logger.warn("Parse exception on group id", e);
 		} catch (NotFoundException e) {
-			logger.warn("Bad group ID " + groupId + " in post " + postView.getPost().getId() + " or recipient has no GroupMember", e);
+			logger.warn("Bad group ID {} in post {} or recipient has no GroupMember", groupId, postView.getPost().getId());
+			logger.warn("NotFoundException on group id", e);
 		}
 		
 		if (member != null) {

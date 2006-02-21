@@ -376,7 +376,7 @@ public class LiveState {
 		
 		try {
 			cleaner.join();
-			logger.debug("Successfully stopped LiveState cleanup thread");
+			logger.info("Successfully stopped LiveState cleanup thread");
 		} catch (InterruptedException e) {
 			// Shouldn't happen, just ignore
 		}
@@ -424,7 +424,7 @@ public class LiveState {
 		liveUser = (LiveUser) liveUser.clone(); // Create a copy to update
 		liveUser.setAvailableCount(liveUser.getAvailableCount() + 1);
 		if (liveUser.getAvailableCount() == 1) {
-			logger.debug("User " + liveUser.getGuid() + " is now available");			
+			logger.debug("User {} is now available", liveUser.getGuid());			
 			userCache.addStrongReference(liveUser);
 		}
 		userCache.update(liveUser);
@@ -437,7 +437,7 @@ public class LiveState {
 		liveUser = (LiveUser) liveUser.clone();		
 		liveUser.setAvailableCount(liveUser.getAvailableCount() - 1);
 		if (liveUser.getAvailableCount() == 0) {
-			logger.debug("User " + liveUser.getGuid() + " is no longer available");			
+			logger.debug("User {} is no longer available", liveUser.getGuid());
 			userCache.dropStrongReference(liveUser);
 		}
 		userCache.update(liveUser);
@@ -458,7 +458,8 @@ public class LiveState {
 			lpost.setViewingUserCount(lpost.getViewingUserCount() + 1);
 		postCache.update(lpost);
 
-		logger.debug("Post " + postId + " now has " + lpost.getViewingUserCount() + " viewing users and " + lpost.getChattingUserCount() + " chatting users");  
+		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
+				postId, lpost.getViewingUserCount());
 	}
 
 	// Internal function to record a user leaving the chat room for a post;
@@ -476,7 +477,8 @@ public class LiveState {
 		if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
 			postCache.dropStrongReference(lpost);
 					
-		logger.debug("Post " + postId + " now has " + lpost.getViewingUserCount() + " viewing users and " + lpost.getChattingUserCount() + " chatting users");  
+		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
+				postId, lpost.getViewingUserCount());  
 	}
 	
 

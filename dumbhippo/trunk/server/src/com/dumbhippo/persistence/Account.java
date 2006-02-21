@@ -40,6 +40,7 @@ import com.dumbhippo.GlobalSetup;
 @Entity
 public class Account extends Resource {
 
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(Account.class);	
 	
 	private static final long serialVersionUID = 0L;
@@ -137,11 +138,10 @@ public class Account extends Resource {
 	 * @param authKey
 	 * @return true if the cookie is OK for authorization
 	 */
-	public boolean checkClientCookie(String authKey) {
-		logger.debug("comparing auth key");		
+	public boolean checkClientCookie(String authKey) {		
 		for (Client client : clients) {
 			String validKey = client.getAuthKey();
-			logger.debug("comparing provided key \"" + authKey + "\" to valid key \"" + validKey + "\"");
+			//logger.debug("comparing provided key \"{}\" to valid key \"{}\"", authKey, validKey);
 			if (validKey.equals(authKey))
 				return true;
 		}

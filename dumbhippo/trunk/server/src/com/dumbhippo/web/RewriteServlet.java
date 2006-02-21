@@ -231,7 +231,7 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					logger.warn(".jsp " + p + " does not have its signin requirements specified");
+					logger.warn(".jsp {} does not have its signin requirements specified", p);
 					requiresSigninStealth.add(p);
 				}
 			}
@@ -242,7 +242,7 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					logger.warn(".html " + p + " does not have its signin requirements specified");
+					logger.warn(".html {} does not have its signin requirements specified", p);
 					requiresSigninStealth.add(p);
 				}
 			}
@@ -250,7 +250,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		for (String p : withSigninRequirements) {
 			if (!jspPages.contains(p) && !htmlPages.contains(p)) {
-				logger.warn("Page '" + p + "' in servlet config is not a .jsp or .html we know about");
+				logger.warn("Page '{}' in servlet config is not a .jsp or .html we know about", p);
 			}
 		}
 		
@@ -259,7 +259,7 @@ public class RewriteServlet extends HttpServlet {
 			if (p.startsWith("psa-"))
 				psaLinks.add(p);
 		}
-		logger.debug("Added " + psaLinks.size() + " PSAs: " + psaLinks);
+		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);
 		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);

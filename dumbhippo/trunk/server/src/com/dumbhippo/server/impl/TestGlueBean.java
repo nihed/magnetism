@@ -22,6 +22,9 @@ import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.TestGlueRemote;
 
 /**
+ * 
+ * FIXME we aren't using this anymore, I don't think.
+ * 
  * @author hp
  * 
  */
@@ -41,7 +44,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 
 	public TestGlueBean() {
 	}
-	
+	 
 	/*
 	 * (non-Javadoc)
 	 * 

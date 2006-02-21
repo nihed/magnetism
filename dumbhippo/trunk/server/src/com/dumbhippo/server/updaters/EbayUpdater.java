@@ -47,7 +47,9 @@ public class EbayUpdater extends AbstractUpdater<EbayPostInfo> {
 	protected void update(EbayPostInfo postInfo, URL url) {
 		String itemId = extractItemId(url);
 		if (itemId == null) {
-			logger.debug("no item id found in ebay url: " + url);
+			// log at info level so on production server we can see any urls we 
+			// need to handle. Some won't be item urls though, so don't warn.
+			logger.info("consider handling this ebay url: {}", url);
 			return;
 		}
 		EbayScreenScraper scraper = new EbayScreenScraper(getUpdateTimeoutMilliseconds());

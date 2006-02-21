@@ -41,7 +41,7 @@ public class VerifyServlet extends AbstractServlet {
 
 	private void doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) throws HttpException, ServletException, IOException {
 		
-		logger.debug("Processing invitation token " + invite);
+		logger.debug("Processing invitation token {}", invite);
 		
 		boolean disable = false;
 		String disableParam = request.getParameter("disable");
@@ -98,7 +98,7 @@ public class VerifyServlet extends AbstractServlet {
 						urlParam = urlParam + "&fromInvite=true";
 				} catch (MalformedURLException e) {
 					// eh, just proceed, the redirect will fail maybe
-					logger.debug("bad url redirect after invite: " + urlParam);
+					logger.debug("bad url redirect after invite: {}", urlParam);
 				}
 			}
 			
@@ -111,7 +111,7 @@ public class VerifyServlet extends AbstractServlet {
 	
 	private void doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws HumanVisibleException, ServletException, IOException {
 		
-		logger.debug("Processing resource claim token " + token);
+		logger.debug("Processing resource claim token {}", token);
 		
 		ClaimVerifier verifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		
@@ -121,7 +121,7 @@ public class VerifyServlet extends AbstractServlet {
 
 	private void doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws HumanVisibleException, ServletException, IOException {
 		
-		logger.debug("Processing login token " + token);
+		logger.debug("Processing login token {}", token);
 		
 		LoginVerifier verifier = WebEJBUtil.defaultLookup(LoginVerifier.class);		
 		
@@ -132,7 +132,7 @@ public class VerifyServlet extends AbstractServlet {
 	}
 	
 	private void doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
-		logger.debug("Processing toggle email token " + token);
+		logger.debug("Processing toggle email token {}", token);
 		
 		NoMailSystem.Action action = NoMailSystem.Action.TOGGLE_MAIL;
 		String actionParam = request.getParameter("action");
@@ -142,7 +142,7 @@ public class VerifyServlet extends AbstractServlet {
 			else if (actionParam.equals("disable"))
 				action = NoMailSystem.Action.NO_MAIL_PLEASE;
 			else
-				logger.warn("Unknown action on email toggle '" + actionParam + "'");
+				logger.warn("Unknown action on email toggle '{}'", actionParam);
 		}
 		NoMailSystem noMail = WebEJBUtil.defaultLookup(NoMailSystem.class);
 		
@@ -171,7 +171,7 @@ public class VerifyServlet extends AbstractServlet {
 		try {
 			token = tokenSystem.getTokenByKey(authKey);
 		} catch (TokenExpiredException e) {
-			logger.debug("token expired", e);
+			logger.debug("token expired: {}", e.getMessage());
 			if (e.getTokenClass() == InvitationToken.class)
 				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
@@ -184,7 +184,7 @@ public class VerifyServlet extends AbstractServlet {
 			else
 				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		} catch (TokenUnknownException e) {
-			logger.debug("token unknown", e);
+			logger.debug("token unknown: {}", e.getMessage());
 			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
 		}
 		

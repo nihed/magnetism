@@ -189,7 +189,7 @@ public class EbayScreenScraper {
 			++order;
 		}
 		
-		logger.debug("possible=" + possible);
+		//logger.debug("possible={}", possible);
 		ScrapedImageCandidate best = null;
 		for (ScrapedImageCandidate scraped : possible) {
 			if (best == null)
@@ -212,7 +212,7 @@ public class EbayScreenScraper {
 		String html;
 		try {
 			URL url = new URL("http://cgi.ebay.com/ws/eBayISAPI.dll?ViewItem&item=" + itemId);
-			logger.debug("loading ebay url " + url);
+			logger.debug("loading ebay url {}", url);
 
 			URLConnection connection = url.openConnection();
 			connection.setConnectTimeout(timeoutMilliseconds);
@@ -220,7 +220,7 @@ public class EbayScreenScraper {
 			html = StreamUtils.readStreamUTF8(connection.getInputStream());
 		
 		} catch (IOException e) {
-			logger.warn("http error getting ebay item", e);
+			logger.warn("http error getting ebay item: {}", e.getMessage());
 			return null;
 		}
 		

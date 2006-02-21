@@ -31,10 +31,10 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 		try {
 			return saxFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
-			logger.error("creating sax parser: ", e);
+			logger.error("failed to create sax parser: {}", e.getMessage());
 			throw new RuntimeException(e);
 		} catch (SAXException e) {
-			logger.error("creating sax parser: ", e);
+			logger.error("failed to create sax parser: {}", e.getMessage());
 			throw new RuntimeException(e);
 		}
 	}
@@ -50,12 +50,12 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 			connection.setAllowUserInteraction(false);
 			
 			parser.parse(connection.getInputStream(), handler);
-			logger.debug("Successfully parsed web service URL contents");
+			//logger.debug("Successfully parsed web service URL contents");
 		} catch (SAXException e) {
 			logger.warn("parse error on web server reply", e);
 			return null;
 		} catch (IOException e) {
-			logger.warn("IO error talking to web server", e);
+			logger.debug("IO error talking to web server: {}", e.getMessage());
 			return null;
 		}
 		

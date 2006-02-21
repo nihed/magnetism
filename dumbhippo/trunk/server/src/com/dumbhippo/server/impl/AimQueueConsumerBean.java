@@ -55,7 +55,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
 		JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
 		ObjectMessage jmsMessage = producer.createObjectMessage(message);
-		logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
+		//logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
 		producer.send(jmsMessage);
 	}
 	
@@ -75,7 +75,8 @@ public class AimQueueConsumerBean implements MessageListener {
 			return;
 		} 
 		if (!(token instanceof ResourceClaimToken)) {
-			logger.debug("Event token was of the wrong type");
+			logger.warn("Event token was of the wrong type, expecting ResourceClaimToken, got {}", 
+					token.getClass().getName());
 			sendReplyMessage(event, event.getAimName(), "It looks like your code has expired!");
 			return;
 		}
@@ -86,7 +87,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		try {
 			resource = identitySpider.getAim(event.getAimName());
 		} catch (ValidationException e) {
-			logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '" + event.getAimName() + "'", e);
+			logger.error("Got invalid screen name from AIM: probably should not have been considered invalid: '{}': {}", event.getAimName(), e.getMessage());
 			throw new RuntimeException("broken, invalid screen name from AIM bot", e);
 		}
 		
@@ -94,7 +95,7 @@ public class AimQueueConsumerBean implements MessageListener {
 			claimVerifier.verify(null, claim, resource);
 			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your account");
 		} catch (HumanVisibleException e) {
-			logger.debug("exception verifying claim", e);
+			logger.debug("exception verifying claim, sending back to user: {}", e.getMessage());
 			sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
 		}
 	}
@@ -107,41 +108,39 @@ public class AimQueueConsumerBean implements MessageListener {
 	 */
 	private void processUserPresence(BotEventUserPresence event) {
 		
-		logger.debug("processing user presence event " + event.toString());
+		logger.debug("processing user presence event {}", event);
 		
 		Map<String,Boolean> userOnlineMap = event.getUserOnlineMap();
 		
 		for (String screenName: userOnlineMap.keySet()) {
-			Boolean isOnline = (Boolean)userOnlineMap.get(screenName);
-			
-			logger.debug("processing user presence event part for '" + screenName + "' of " + (isOnline.booleanValue() ? "online" : "offline"));
+			//boolean isOnline = userOnlineMap.get(screenName);
+			//logger.debug("processing user presence event part for '" + screenName + "' of " + (isOnline ? "online" : "offline"));
 			
 			AimResource aimResource = identitySpider.lookupAim(screenName);
 			if (aimResource == null) {
-				logger.debug("no AimResource found for screen name '" + screenName + "'");
+				logger.debug("no AimResource found for screen name '{}'", screenName);
 			} else {
-				logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
+				//logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
 				
 				User user = identitySpider.getUser(aimResource);
 				
 				if (user == null) {
-					logger.debug("didn't find a matching user for " + aimResource.getId());
+					logger.debug("didn't find a matching user for {}", aimResource.getId());
 					return;
 				}
 				
-				logger.debug("matching user for screen name '" + screenName + "' is " + user.getNickname() + "/" + user.getGuid().toString());
+				logger.debug("matching user for screen name '{}': {}", screenName, user.getGuid());
 			}
 		}
 	}
 	
 	public void onMessage(Message message) {
 		try {
-			logger.debug("Got message from " + BotEvent.QUEUE + ": " + message);
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in " + BotEvent.QUEUE + ": " + obj);
+				logger.debug("Got object in {}: {}", BotEvent.QUEUE, obj);
 				
 				if (obj instanceof BotEventToken) {
 					BotEventToken event = (BotEventToken) obj;
@@ -153,10 +152,10 @@ public class AimQueueConsumerBean implements MessageListener {
 					logger.warn("Got unknown object: " + obj);
 				}
 			} else {
-				logger.warn("Got unknown jms message: " + message);
+				logger.warn("Got unknown jms message: {}", message);
 			}
 		} catch (JMSException e) {
-			logger.warn("JMS exception", e);
+			logger.warn("JMS exception in bot event queue", e);
 		}
 	}
 }

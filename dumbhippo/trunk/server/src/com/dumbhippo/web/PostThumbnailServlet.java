@@ -22,6 +22,7 @@ import com.dumbhippo.server.HumanVisibleException;
 
 public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(PostThumbnailServlet.class);
 
 	@Override
@@ -34,7 +35,7 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 		}
 		byte[] sum = digest.digest(photo.get());
 		String filename = StringUtils.hexEncode(sum);
-		logger.debug("computed sha1=" + filename + " for uploaded object");
+		//logger.debug("computed sha1={} for uploaded object", filename);
 		BufferedImage image = readPhoto(photo);
 		
 		/* FIXME there's no check on the size of this image, we're just 

@@ -15,7 +15,6 @@ import javax.jms.ObjectMessage;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
@@ -52,12 +51,11 @@ public class XmppQueueConsumerBean implements MessageListener {
 	
 	public void onMessage(Message message) {
 		try {
-			logger.debug("Got message from " + XmppEvent.QUEUE + ": " + message);
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in " + XmppEvent.QUEUE + ": {}", obj);
+				logger.debug("Got object in {}: {}", XmppEvent.QUEUE, obj);
 				
 				if (obj instanceof XmppEventMusicChanged) {
 					XmppEventMusicChanged event = (XmppEventMusicChanged) obj;
@@ -69,15 +67,15 @@ public class XmppQueueConsumerBean implements MessageListener {
 					XmppEventPrimingTracks event = (XmppEventPrimingTracks) obj;
 					processPrimingTracksEvent(event);
 				} else {
-					logger.warn("Got unknown object: " + obj);
+					logger.warn("Got unknown object: {}", obj);
 				}
 			} else {
-				logger.warn("Got unknown jms message: " + message);
+				logger.warn("Got unknown jms message: {}", message);
 			}
 		} catch (JMSException e) {
-			logger.warn("JMS exception", e);
+			logger.warn("JMS exception in xmpp queue consumer", e);
 		} catch (Exception e) {
-			logger.warn("Exception processing Xmpp JMS message: " + ExceptionUtils.getRootCause(e).getMessage(), e);
+			logger.warn("Exception processing Xmpp JMS message", e);
 		}
 	}
 
@@ -89,7 +87,9 @@ public class XmppQueueConsumerBean implements MessageListener {
 	private void processPrimingTracksEvent(XmppEventPrimingTracks event) {
 		User user = getUserFromUsername(event.getJabberId());
 		if (identitySpider.getMusicSharingPrimed(user)) {
-			logger.debug("Ignoring priming data for music sharing, already primed");
+			// at log .info, since it isn't really a problem, but if it happened a lot we'd 
+			// want to investigate why
+			logger.info("Ignoring priming data for music sharing, already primed");
 			return;
 		}
 		List<Map<String,String>> tracks = event.getTracks();
@@ -102,7 +102,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
-		logger.debug("Primed user with " + tracks.size() + " tracks");
+		logger.debug("Primed user with {} tracks", tracks.size());
 	}
 	
 	private User getUserFromUsername(String username) {

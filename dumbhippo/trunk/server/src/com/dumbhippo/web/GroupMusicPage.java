@@ -23,7 +23,7 @@ public class GroupMusicPage extends AbstractGroupPage {
 			try {
 				frequentTracks = new ListBean<TrackView>(musicSystem.getFrequentTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load frequent tracks");
+				logger.debug("Failed to load frequent tracks, displaying empty list: {}", e.getMessage());
 				List<TrackView> list = Collections.emptyList();
 				frequentTracks = new ListBean<TrackView>(list);
 			}
@@ -37,7 +37,7 @@ public class GroupMusicPage extends AbstractGroupPage {
 			try {
 				latestTracks = new ListBean<TrackView>(musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest tracks");
+				logger.debug("Failed to load latest tracks: {}", e.getMessage());
 				List<TrackView> list = Collections.emptyList();
 				latestTracks = new ListBean<TrackView>(list);
 			}

@@ -353,7 +353,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// sending mail to disabled accounts 
 		User user = spider.lookupUserByResource(invitee);
 		if (user != null) {
-			logger.debug("not inviting '" + invitee + "' due to existing account " + user);
+			logger.debug("not inviting '{}' due to existing user {}", invitee, user);
 			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
 		}
 
@@ -505,7 +505,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
 		if (!noMail.getMailEnabled(invitee)) {
-			logger.debug("Mail is disabled to " + invitee + " not sending invitation");
+			logger.debug("Mail is disabled to {} not sending invitation", invitee);
 			return;
 		}
 		

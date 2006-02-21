@@ -28,10 +28,9 @@ public class AdminPage extends AbstractSigninPage {
 		liveState = LiveState.getInstance();		
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
-		logger.debug("checking whether admin console is enabled: " + isAdminEnabled);
+		logger.debug("admin console enabled: {}", isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
-
 	}
 	
 	public boolean isValid() throws HumanVisibleException {

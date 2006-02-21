@@ -77,8 +77,6 @@ public class PostInfoSystemBean implements PostInfoSystem {
 	@PostConstruct
 	public void init() {
 		
-		logger.debug("loading post updaters");
-		
 		final Class<?> updaters[] = {
 				AmazonUpdater.class,
 				EbayUpdater.class
@@ -128,7 +126,7 @@ public class PostInfoSystemBean implements PostInfoSystem {
 				if (!getDomain(d).equals(d))
 					throw new RuntimeException("right now updaters can't cover subdomains, " + d);
 				
-				logger.debug("mapping domain " + d + " to " + c.getName());
+				logger.debug("mapping domain {} to {}", d, c.getName());
 				factoryMethods.put(d, newInstance);
 			}
 		}
@@ -153,14 +151,14 @@ public class PostInfoSystemBean implements PostInfoSystem {
 			Object result = factoryMethod.invoke(null, configuration);
 			return (PostUpdater) result;
 		} catch (IllegalArgumentException e) {
-			logger.error("Failed to invoke PostUpdater factory method", e);
+			logger.error("Failed to invoke PostUpdater factory method {}", e.getMessage());
 			throw new RuntimeException(e);
 		} catch (IllegalAccessException e) {
-			logger.error("Failed to invoke PostUpdater factory method", e);
+			logger.error("Failed to invoke PostUpdater factory method {}", e.getMessage());
 			throw new RuntimeException(e);
 		} catch (InvocationTargetException e) {
-			logger.error("Failure in PostUpdater factory method", e);
-			throw new RuntimeException(e.getCause());
+			logger.error("Failure in PostUpdater factory method {}", e.getCause().getMessage());
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -184,7 +182,8 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		Date maxUpdateAgo = new Date(System.currentTimeMillis() - MAX_UPDATE_RATE);
 		Date lastUpdate = post.getInfoDate();
 		if (lastUpdate != null && lastUpdate.after(maxUpdateAgo)) {
-			logger.debug("Post was updated in the last " + MAX_UPDATE_RATE / 1000 / 60 + " minutes, not updating");
+			logger.debug("Post was updated in the last {} minutes, not updating", 
+					MAX_UPDATE_RATE / 1000 / 60);
 			return null; // nothing to do
 		}
 
@@ -196,13 +195,13 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		
 		String domain = getDomain(url.getHost());
 		
-		logger.debug("matching updater on '" + domain + "' from link '" + url + "'");
+		//logger.debug("matching updater on '{}' from link '{}'", domain, url);
 		
 		Method factoryMethod = factoryMethods.get(domain);
 		if (factoryMethod == null)
 			return null;
 		
-		logger.debug("updating post with " + factoryMethod.getDeclaringClass().getName());
+		logger.debug("updating post with {}", factoryMethod.getDeclaringClass().getName());
 		
 		final PostUpdater updater = newInstance(factoryMethod);
 		
@@ -218,7 +217,7 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		
 		if (updater.isUpdated()) {
 			// just synchronously finish the task
-			logger.debug("Running updater synchronously");
+			//logger.debug("Running updater synchronously");
 			task.run();
 		} else {
 			// we'll have to do some async work, so get it started.
@@ -236,18 +235,21 @@ public class PostInfoSystemBean implements PostInfoSystem {
 	public void updatePostInfo(Post post) {
 		if (post == null)
 			throw new IllegalArgumentException("null post");
+		/*
 		String info = post.getInfo();
+
 		if (info != null)
-			logger.debug("Updating, old post info: " + info.replace("\n",""));
+			logger.debug("Updating, old post info: {}", info.replace("\n",""));
 		else
 			logger.debug("Updating, no previous post info");
+		*/
 		
 		Future<PostInfo> task = getUpdateTask(post);
 		PostInfo newPostInfo = null;
 		if (task != null) {
 			while (true) {
 				try {
-					logger.debug("Getting result from updater for " + post);
+					//logger.debug("Getting result from updater for {}", post);
 					newPostInfo = task.get();
 					break;
 				} catch (InterruptedException e) {
@@ -257,15 +259,15 @@ public class PostInfoSystemBean implements PostInfoSystem {
 				}
 			}
 		} else {
-			logger.debug("No updater for " + post);
+			//logger.debug("No updater for {}", post);
 		}
 		
 		if (newPostInfo == null) {
-			logger.debug("No new post info for post " + post + " keeping old: " + post.getInfo());
+			//logger.debug("No new post info for post {} keeping old: {}", post, post.getInfo());
 			return; // nothing to update
 		}
 		
-		logger.debug("Got new post info for post " + post + ": " + newPostInfo);
+		logger.debug("Got new post info for post {}: {}", post, newPostInfo);
 		post.setInfoDate(new Date());
 		post.setPostInfo(newPostInfo);
 	}

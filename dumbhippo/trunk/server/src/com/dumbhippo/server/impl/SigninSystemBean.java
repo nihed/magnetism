@@ -98,7 +98,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		boolean noAuthentication = configuration.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true"); 
 		if (noAuthentication) {
-			logger.warn("Not requiring authentication for address " + address );
+			logger.warn("Not requiring authentication for address {}", address);
 		}
 		
 		if (address.contains("@")) {
@@ -115,7 +115,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		User user = identitySpider.lookupUserByResource(resource);
 		if (user == null && noAuthentication) {
-			logger.warn("Creating new account for resource: " + resource);
+			logger.warn("Creating new account for resource: {}", resource);
 			account = accountSystem.createAccountFromResource(resource);
 			user = account.getOwner();
 		} else if (user == null) {

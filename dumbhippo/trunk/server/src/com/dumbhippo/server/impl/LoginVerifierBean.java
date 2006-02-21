@@ -89,7 +89,7 @@ public class LoginVerifierBean implements LoginVerifier {
 	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException {
 		
 		if (token.isExpired()) {
-			logger.debug("Expired login token");
+			logger.debug("Expired login token {}", token);
 			throw new HumanVisibleException("The link you followed has expired; you'll need to start over.");
 		}
 		
@@ -103,13 +103,13 @@ public class LoginVerifierBean implements LoginVerifier {
 			account = null;
 		
 		if (account == null) {
-			logger.debug("No account for this login token");
+			logger.debug("No account for this login token {}", token);
 			throw new HumanVisibleException("We don't have an account associated with '" + resource.getHumanReadableString() + "'");
 		}
 		
 		Client client = accounts.authorizeNewClient(account, clientName);
 
-		logger.debug("Signed in in LoginVerifier");
+		logger.debug("Signin completed for client={} user={}", client, user);
 		return new Pair<Client,Person>(client, user);
 	}
 }

@@ -61,7 +61,7 @@ public class PostViewedProcessor implements LiveEventProcessor {
 			concernedUsers.add(liveUser);
 		}
 
-		logger.debug(event.getViewerId() + " clicked on " + event.getPostId());
-		logger.debug("Post score is now " + livePost.getScore());
+		logger.debug("{} clicked on {}", event.getViewerId(), event.getPostId());
+		logger.debug("Post score is now {}", livePost.getScore());
 	}
 }

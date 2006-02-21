@@ -18,6 +18,10 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.XMPPMethods;
 
+/**
+ * FIXME not in use anymore?
+ *
+ */
 @Stateless
 public class XMPPMethodsBean implements XMPPMethods, Serializable {
 	
@@ -37,7 +41,7 @@ public class XMPPMethodsBean implements XMPPMethods, Serializable {
 	private PostingBoard postingBoard;
 
 	public void postClicked(Guid clickerId, String postId) throws NotFoundException, ParseException {
-		logger.debug("postClicked invoked: " + clickerId + " " + postId);
+		logger.debug("postClicked invoked over xmpp, clicker {} post {}", clickerId, postId);
 		User clicker = identitySpider.lookupGuid(User.class, clickerId);
 		postingBoard.postViewedBy(postId, clicker);
 	}

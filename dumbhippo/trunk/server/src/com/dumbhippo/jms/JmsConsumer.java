@@ -60,8 +60,6 @@ public class JmsConsumer extends JmsQueue {
 		protected void openSub() throws NamingException, JMSException {
 			messageConsumer = getSession().createConsumer(getDestination());
 			
-			logger.debug("New JMS consumer object created");
-			
 			// is it OK to do this more than once? of course right now 
 			// we always close consumer and connection at the same time
 			getConnection().start();				
@@ -71,7 +69,6 @@ public class JmsConsumer extends JmsQueue {
 		protected void closeSub() throws JMSException {
 			try {
 				if (messageConsumer != null) {
-					logger.debug("Closing JMS consumer object");
 					messageConsumer.close();
 				}
 			} finally {

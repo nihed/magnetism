@@ -30,7 +30,7 @@ public class ConfigurationBean implements Configuration {
 	
 	@PostConstruct
 	public void init() {
-		logger.debug("Loading dumbhippo configuration...");
+		logger.debug("Loading dumbhippo configuration properties");
 		
 		props = new Properties(System.getProperties());
 		try {
@@ -49,7 +49,7 @@ public class ConfigurationBean implements Configuration {
 			// whether it's allowed or something. But right now empty doesn't make sense for any of
 			// our properties.
 			if (loaded != null && loaded.trim().length() == 0) {
-				logger.debug("Clearing empty property value for " + prop.getKey());
+				//logger.debug("Clearing empty property value for " + prop.getKey());
 				props.remove(prop.getKey());
 			}
 			

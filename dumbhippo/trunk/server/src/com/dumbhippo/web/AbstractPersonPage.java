@@ -79,7 +79,7 @@ public abstract class AbstractPersonPage {
 				this.disabled = true;
 		}
 		
-		logger.debug("viewing person: " + this.viewedPerson + " disabled = " + disabled);
+		logger.debug("viewing person: {} disabled = {}", this.viewedPerson, disabled);
 	}
 	
 	public String getName() {
@@ -94,9 +94,9 @@ public abstract class AbstractPersonPage {
 			try {
 				setViewedPerson(identitySpider.lookupGuidString(User.class, personId));
 			} catch (ParseException e) {
-				logger.debug("bad personId as person parameter " + personId);
+				logger.debug("bad personId as person parameter {}", personId);
 			} catch (NotFoundException e) {
-				logger.debug("bad personId as person parameter " + personId);
+				logger.debug("bad personId as person parameter {}", personId);
 			}
 		}
 	}

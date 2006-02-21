@@ -72,7 +72,7 @@ public class BrowserBean implements Serializable {
 			browserVersion = 60;
 		}
 		
-		logger.debug("User agent is '" + userAgent + "' analysis " + this);
+		logger.debug("User agent is '{}' analysis {}", userAgent, this);
 	}
 	
 	public static BrowserBean getForRequest(HttpServletRequest request) {

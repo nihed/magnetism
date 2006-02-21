@@ -44,7 +44,7 @@ public class JmsProducer extends JmsQueue {
 			try {
 				return getSession().createObjectMessage(payload);
 			} catch (JMSException e) {
-				logger.debug("Error creating object message", e);
+				logger.warn("Error creating object message", e);
 				close();
 			}
 		}
@@ -54,10 +54,10 @@ public class JmsProducer extends JmsQueue {
 		while (true) {
 			try {
 				getProducer().send(message);
-				logger.debug("Sent message OK " + message);
+				logger.debug("Sent JMS message");
 				break;
 			} catch (JMSException e) {
-				logger.debug("Error sending message", e);
+				logger.warn("Error sending message", e);
 				close();
 			}
 		}
@@ -72,15 +72,13 @@ public class JmsProducer extends JmsQueue {
 		
 		@Override
 		protected void openSub() throws NamingException, JMSException {
-			messageProducer = getSession().createProducer(getDestination());
-			logger.debug("New JMS producer object created");		
+			messageProducer = getSession().createProducer(getDestination());		
 		}
 		
 		@Override
 		protected void closeSub() throws JMSException {
 			try {
 				if (messageProducer != null) {
-					logger.debug("Closing JMS producer object");
 					messageProducer.close();
 				}
 			} finally {

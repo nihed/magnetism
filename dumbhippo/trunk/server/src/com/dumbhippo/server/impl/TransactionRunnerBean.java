@@ -34,10 +34,11 @@ public class TransactionRunnerBean implements TransactionRunner {
 				return runTaskInNewTransaction(callable);
 			} catch (Exception e) {
 				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					logger.debug("Constraint violation race condition detected, retrying: " + e.getClass().getName(), e);
+					// log at .info so we can get a sense of whether/how-often this happens
+					logger.info("Constraint violation race condition detected, retrying. {}: {}", e.getClass().getName(), e.getMessage());
 					retries--;
 				} else {
-					logger.error("Fatal error running task: " + e.getClass().getName(), e);
+					logger.error("Fatal error running task: {} {}", e.getClass().getName(), e.getMessage());
 					throw e;
 				}
 			}

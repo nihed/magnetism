@@ -58,7 +58,7 @@ public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHand
 		sb.append(StringUtils.urlEncode(itemId));		
 
 		String wsUrl = sb.toString();
-		logger.debug("Loading amazon web services url " + wsUrl);
+		logger.debug("Loading amazon web services url {}", wsUrl);
 		
 		AmazonItemLookupSaxHandler handler = parseUrl(new AmazonItemLookupSaxHandler(), wsUrl);
 		
@@ -68,15 +68,14 @@ public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHand
 	public AmazonItemData getItemForUrl(String amazonAccessKeyId, URL url) {
 		String itemId = parseItemIdFromUrl(url);
 		if (itemId == null) {
-			logger.debug("could not extract item ID from amazon url " + url);
+			// at .info so we can find new kinds of url to handle
+			logger.info("amazon url we might want to handle: {}", url);
 			return null;
 		}
 		
 		AmazonItemData itemData = getItem(amazonAccessKeyId, itemId); 
-		if (itemData != null)
-			logger.debug("successfully loaded amazon data");
-		else {
-			logger.debug("failed to load amazon data, we parsed item ID '" + itemId + "' from url " + url);
+		if (itemData == null) {
+			logger.debug("failed to load amazon data, we parsed item ID '{}' from url {}", itemId, url);
 		}
 		return itemData;
 	}

@@ -121,7 +121,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public String serverStartup(long timestamp) {
-		logger.debug("Jabber server startup at " + new Date(timestamp));
+		logger.info("Jabber server startup at {}", new Date(timestamp));
 		
 		return LiveState.getInstance().createXmppServer().getServerIdentifier();
 	}
@@ -135,7 +135,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 	
 	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user " + username + " now available");
+		logger.debug("Jabber user {} now available", username);
 
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
@@ -149,7 +149,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			try {
 				account = accountFromUsername(username);
 			} catch (JabberUserNotFoundException e) {
-				logger.debug("username signed on that we don't know: " + username);
+				if (!username.equals("admin"))
+					logger.warn("username signed on that we don't know: {}", username);
 				return;
 			}
 			
@@ -163,13 +164,13 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				account.setWasSentShareLinkTutorial(true);
 			}
 		} catch (RuntimeException e) {
-			logger.error("Failed to do share link tutorial", e);
+			logger.error("Failed to do share link tutorial");
 			throw e;
 		}
 	}
 
 	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user " + username + " now unavailable");
+		logger.debug("Jabber user {} now unavailable", username);
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
 			throw new NoSuchServerException(null);
@@ -177,12 +178,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.userUnavailable(Guid.parseJabberId(username));
 		} catch (ParseException e) {
-			logger.debug("Corrupt username passed to onUserUnavailable", e);
+			logger.warn("Corrupt username passed to onUserUnavailable", e);
 		}
 	}
 
 	public void onRoomUserAvailable(String serverIdentifier, String roomname, String username, boolean participant) throws NoSuchServerException  {
-		logger.debug("Jabber user " + username + " has joined chatroom " + roomname);
+		logger.debug("Jabber user {} has joined chatroom {}", username, roomname);
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
 			throw new NoSuchServerException(null);
@@ -190,12 +191,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username), participant);
 		} catch (ParseException e) {
-			logger.debug("Corrupt roomname or username passed to onUserUnavailable", e);
+			logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
 		}
 	}
 
 	public void onRoomUserUnavailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException {
-		logger.debug("Jabber user " + username + " has left chatroom " + roomname);
+		logger.debug("Jabber user {} has left chatroom {}", username, roomname);
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
 			throw new NoSuchServerException(null);
@@ -203,7 +204,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
 		} catch (ParseException e) {
-			logger.debug("Corrupt roomname or username passed to onUserUnavailable", e);
+			logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
 		}
 	}
 	
@@ -214,7 +215,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.resourceConnected(Guid.parseJabberId(username));
 		} catch (ParseException e) {
-			logger.debug("Corrupt username passed to onResourceConnected", e);
+			logger.warn("Corrupt username passed to onResourceConnected", e);
 		}		
 	}	
 	

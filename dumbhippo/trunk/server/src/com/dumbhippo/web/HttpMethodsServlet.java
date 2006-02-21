@@ -135,10 +135,10 @@ public class HttpMethodsServlet extends AbstractServlet {
 		String doRequestedMethod = null;
 		if (isPost) {
 			doRequestedMethod = "do" + requestedMethod;
-			logger.debug("is a post, will also look for " + doRequestedMethod);
+			//logger.debug("is a POST, will also look for {}", doRequestedMethod);
 		}
 
-		logger.debug("trying to invoke http request at " + requestUri);
+		//logger.debug("trying to invoke http request at {}", requestUri);
 		
 		HttpResponseData requestedContentType;
 		if (typeDir.equals("xml"))
@@ -156,14 +156,14 @@ public class HttpMethodsServlet extends AbstractServlet {
 		
 		for (Class<?> iface : interfaces) {
 			
-			logger.debug("Looking for method " + requestedMethod + " on " + iface.getCanonicalName());
+			logger.debug("Looking for method {} on {}", requestedMethod, iface.getCanonicalName());
 			for (Method m : iface.getMethods()) {
 				HttpContentTypes contentAnnotation = m.getAnnotation(HttpContentTypes.class);
 				HttpParams paramsAnnotation = m.getAnnotation(HttpParams.class);
 				HttpOptions optionsAnnotation = m.getAnnotation(HttpOptions.class);
 
 				if (contentAnnotation == null) {
-					logger.debug("Method " + m.getName() + " has no content type annotation, skipping");
+					logger.debug("Method {} has no content type annotation, skipping", m.getName());
 					continue;
 				}
 
@@ -173,12 +173,14 @@ public class HttpMethodsServlet extends AbstractServlet {
 				
 				String lowercase = m.getName().toLowerCase();
 				if (!(lowercase.equals(getRequestedMethod) || lowercase.equals(doRequestedMethod))) {
+					/*
 					logger.debug("Method " + m.getName() + " does not match " + getRequestedMethod + " or "
 							+ doRequestedMethod + ", skipping");
+					*/
 					continue;
 				}
 
-				logger.debug("found method " + m.getName());
+				//logger.debug("found method " + m.getName());
 
 				if (m.getReturnType() != void.class)
 					throw new RuntimeException("HTTP method " + m.getName() + " must return void not "
@@ -205,13 +207,14 @@ public class HttpMethodsServlet extends AbstractServlet {
 					response.setContentType(requestedContentType.getMimeType());
 
 				try {
-					logger.debug("Invoking method " + m.getName() + " with args " + Arrays.toString(methodArgs));
+					if (logger.isDebugEnabled())
+						logger.debug("Invoking method {} with args {}", m.getName(), Arrays.toString(methodArgs));
 					m.invoke(object, methodArgs);
 				} catch (IllegalArgumentException e) {
-					logger.error("invoking method on http methods bean", e);
+					logger.error("invoking method on http methods bean {}", e.getMessage());
 					throw new RuntimeException(e);
 				} catch (IllegalAccessException e) {
-					logger.error("invoking method on http methods bean", e);
+					logger.error("invoking method on http methods bean {}", e.getMessage());
 					throw new RuntimeException(e);
 				} catch (InvocationTargetException e) {
 					Throwable cause = e.getCause();
@@ -220,7 +223,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 					
 					if (cause instanceof HumanVisibleException) {
 						throw (HumanVisibleException) cause;
-					} else {					
+					} else {
 						throw new RuntimeException(e);
 					}
 				}
@@ -233,7 +236,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 				out.flush();
 
-				logger.debug("Reply for " + m.getName() + " sent");
+				logger.debug("Reply for {} sent", m.getName());
 		
 				foundMethod = true;
 				break; // stop scanning this interface
@@ -270,8 +273,6 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 			
 		User user = doLogin(request);
-		
-		logger.debug("sending checklogin reply");
 			
 		response.setContentType("text/plain");
 		OutputStream out = response.getOutputStream();

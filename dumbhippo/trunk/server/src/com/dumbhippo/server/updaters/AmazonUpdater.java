@@ -39,7 +39,7 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 		}
 		
 		if (amazonAccessKeyId == null)
-			logger.warn("Amazon web services access key is not set");
+			logger.warn("Amazon web services access key is not set, can't make Amazon calls.");
 	}
 
 	@Override

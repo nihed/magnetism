@@ -35,7 +35,7 @@ public class HomePage extends AbstractSigninPage {
 
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
-			logger.debug("Getting received posts for " + signin.getUser().getId());
+			logger.debug("Getting received posts for {}", signin.getUser());
 			// + 1 as a marker for whether there are more
 			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
 		}

@@ -28,14 +28,14 @@ public class TokenSystemBean implements TokenSystem {
 				"SELECT t FROM Token t WHERE t.authKey = :key")
 				.setParameter("key", authKey).getSingleResult();
 		} catch (EntityNotFoundException e) {
-			logger.debug("Token key " + authKey + " not found in db");
+			logger.debug("Token key {} not found in db", authKey);
 			throw new TokenUnknownException(authKey, e);
 		} catch (Exception e) {
 			// FIXME !  needed because an org.hibernate. exception gets thrown
 			// probably a jboss bug
 			// hp: not sure this is a jboss bug - it happens if you throw an exception
 			// from the entity beans somehow, which can be our fault
-			logger.debug("Token key " + authKey + " exception loading " + e.getMessage(), e);
+			logger.warn("Token key {} exception loading: {}", authKey, e.getMessage());
 			throw new TokenUnknownException(authKey, e);
 		}
 		

@@ -57,7 +57,7 @@ abstract public class AbstractUpdater<T extends PostInfo> implements PostUpdater
 			postInfo = PostInfo.newInstance(getType(), postInfoClass);
 		}
 		
-		logger.debug("Old post info: " + old + " new post info base: " + postInfo);
+		//logger.debug("Old post info: {} new post info base: {}", old, postInfo);
 		
 		boundUrl = url;
 		
@@ -65,7 +65,7 @@ abstract public class AbstractUpdater<T extends PostInfo> implements PostUpdater
 		Date lastUpdate = post.getInfoDate();
 		
 		if (lastUpdate != null  && lastUpdate.after(maxAgeAgo)) {
-			logger.debug("Post info is recent enough, not updating (" + lastUpdate + " is after " + maxAgeAgo + ")");
+			logger.debug("Post info is recent enough, not updating ({} is after {})", lastUpdate, maxAgeAgo);
 			updated = true;
 		}
 		

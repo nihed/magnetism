@@ -163,7 +163,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			if (c == Element.Url || c == Element.Width || c == Element.Height)
 				currentResult().setValue(c, getCurrentContent());
 		} else if (c == Element.Message && parent() == Element.Error) {
-			logger.debug("Error reply from Yahoo: " + getCurrentContent());
+			logger.debug("Error reply from Yahoo: {}", getCurrentContent());
 			throw new SAXException("Yahoo! search failed: " + getCurrentContent());	
 		}
 	}
@@ -222,12 +222,12 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		String sourceStr = r.getValue(Element.Source);
 		SongDownloadSource source = SongDownloadSource.parseYahooSourceName(sourceStr);
 		if (source == null) {
-			logger.debug("Ignoring download result from unknown source " + sourceStr);
+			//logger.debug("Ignoring download result from unknown source {}", sourceStr);
 			return null;
 		}
 		String url = r.getValue(Element.Url);
 		if (url == null) {
-			logger.debug("Ignoring download result with no url");
+			//logger.debug("Ignoring download result with no url");
 			return null;
 		}
 		
@@ -253,7 +253,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			if (d != null)
 				list.add(d);
 		}
-		logger.debug("Got " + list.size() + " download results: " + list);
+		logger.debug("Got {} download results: {}", list.size(), list);
 		return list;		
 	}
 }

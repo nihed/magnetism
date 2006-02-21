@@ -400,7 +400,7 @@ public class MessageSenderBean implements MessageSender {
 				
 		private synchronized XMPPConnection getConnection() {
 			if (connection != null && !connection.isConnected()) {
-				logger.debug("got disconnected from XMPP server");
+				logger.info("Disconnected from XMPP server");
 			}
 			if (connection == null || !connection.isConnected()) {			
 				try {
@@ -413,14 +413,12 @@ public class MessageSenderBean implements MessageSender {
 					// TODO create an overoptimized XMPP connection pool 
 					RandomToken token = RandomToken.createNew();
 					connection.login(user, password, StringUtils.hexEncode(token.getBytes()));
-					logger.debug("logged in OK");
+					logger.info("Successfully reconnected to XMPP server");
 				} catch (XMPPException e) {
-					e.printStackTrace(System.out);
-					logger.error("Failed to log in to xmpp", e);
+					logger.error("Failed to log in to XMPP server", e);
 					connection = null;
 				} catch (PropertyNotFoundException e) {
-					e.printStackTrace(System.out);
-					logger.error("configuration is f'd up", e);
+					logger.error("configuration is f'd up, can't connect to XMPP", e);
 					connection = null;
 				}
 			}
@@ -441,7 +439,7 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 
 			if (connection == null || !connection.isConnected()) {
-				logger.error("Connection to XMPP is not active, not sending notification");
+				logger.warn("Connection to XMPP is not active, not sending notification for post {}", post.getId());
 				return;
 			}
 			
@@ -453,7 +451,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			if (url == null) {
 				// this particular jabber message protocol has no point without an url
-				logger.debug("no url found on post");
+				logger.debug("no url found on post, not sending xmpp");
 				return;
 			}
 			
@@ -499,7 +497,7 @@ public class MessageSenderBean implements MessageSender {
 
 			message.setBody(String.format("%s\n%s", title, url));
 
-			logger.info("Sending jabber message to " + message.getTo());
+			logger.debug("Sending jabber message to {}", message.getTo());
 			connection.sendPacket(message);
 		}
 		
@@ -509,7 +507,9 @@ public class MessageSenderBean implements MessageSender {
 			for (Resource recipientResource : post.getExpandedRecipients()) {
 				User recipient = identitySpider.getUser(recipientResource);
 				if (recipient == null) {
-					logger.debug("No user for " + recipientResource.getId());
+					logger.debug("No user for resource {}", recipientResource.getId());
+					// FIXME it looks like a bug that recipient can be null here and we
+					// go on to use it below - investigate
 				}
 				
 				Message message = createMessageFor(recipient);
@@ -535,7 +535,7 @@ public class MessageSenderBean implements MessageSender {
 				}
 				message.addExtension(new LinkClickedExtension(recipient.getGuid(), clickerName, post.getGuid(), title));
 				message.setBody("");
-				logger.info("Sending jabber message to " + message.getTo());
+				logger.debug("Sending jabber message to {}", message.getTo());
 				connection.sendPacket(message);
 			}
 		}
@@ -545,7 +545,7 @@ public class MessageSenderBean implements MessageSender {
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			String newMySpaceName = user.getAccount().getMySpaceName();
 			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
-			logger.info("Sending mySpaceNameChanged message to " + message.getTo());			
+			logger.debug("Sending mySpaceNameChanged message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 
@@ -553,7 +553,7 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
-			logger.info("Sending mySpaceContactComment message to " + message.getTo());			
+			logger.debug("Sending mySpaceContactComment message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 
@@ -562,7 +562,7 @@ public class MessageSenderBean implements MessageSender {
 			User dbUser = identitySpider.lookupUser(user);			
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
 			message.addExtension(new HotnessChangedExtension(user.getHotness()));
-			logger.info("Sending hotnessChanged message to " + message.getTo());			
+			logger.debug("Sending hotnessChanged message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 
@@ -580,7 +580,7 @@ public class MessageSenderBean implements MessageSender {
 				livePosts.add(xml);
 			}
 			message.addExtension(new ActivePostsChangedExtension(livePosts));
-			logger.info("Sending activePostsChanged message to " + message.getTo());			
+			logger.debug("Sending activePostsChanged message to {}", message.getTo());			
 			connection.sendPacket(message);						
 		}
 		
@@ -588,7 +588,7 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
-			logger.info("Sending prefs changed message to " + message.getTo());			
+			logger.debug("Sending prefs changed message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -597,7 +597,7 @@ public class MessageSenderBean implements MessageSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post) {
 			if (!noMail.getMailEnabled(recipient)) {
-				logger.debug("Mail is disabled to " + recipient + " not sending post notification");
+				logger.debug("Mail is disabled to {} not sending post notification", recipient);
 				return;
 			}
 			
@@ -752,7 +752,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			mailer.setMessageContent(msg, postView.getTitle(), messageText.toString(), messageHtml.toString());
 			
-			logger.debug("Sending mail to " + recipient.toString());
+			logger.debug("Sending mail to {}", recipient);
 			mailer.sendMessage(msg);
 		}
 	}

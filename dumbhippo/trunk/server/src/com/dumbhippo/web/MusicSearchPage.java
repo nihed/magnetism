@@ -157,7 +157,7 @@ public class MusicSearchPage {
 					trackView = musicSystem.songSearch(signin.getViewpoint(),
 							artist, album, song);
 				} catch (NotFoundException e) {
-					logger.debug("Track not found");
+					logger.debug("Track not found {}", e.getMessage());
 				}
 			}
 			
@@ -166,7 +166,7 @@ public class MusicSearchPage {
 				try {
 					albumView = musicSystem.albumSearch(signin.getViewpoint(), artist, album);
 				} catch (NotFoundException e) {
-					logger.debug("Album not found");
+					logger.debug("Album not found {}", e.getMessage());
 				}
 			}
 			
@@ -180,7 +180,7 @@ public class MusicSearchPage {
 				try {
 					artistView = musicSystem.artistSearch(signin.getViewpoint(), artist);
 				} catch (NotFoundException e) {
-					logger.debug("Artist not found");
+					logger.debug("Artist not found {}", e.getMessage());
 				}
 			}
 			

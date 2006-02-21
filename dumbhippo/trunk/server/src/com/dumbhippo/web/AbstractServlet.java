@@ -55,7 +55,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 		
 		void send(HttpServletResponse response, String message) throws IOException {
-			logger.debug("Sending HTTP response code " + this + ": " + message);
+			logger.debug("Sending HTTP response code {}: {}", this, message);
 			response.sendError(code, message);
 		}
 	}
@@ -104,12 +104,15 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	protected void logRequest(HttpServletRequest request, String type) {
-		logger.debug(type + " uri=" + request.getRequestURI() + " content-type=" + request.getContentType());
+		if (!logger.isDebugEnabled()) // avoid this expense entirely in production
+			return;
+		
+		logger.debug("{} uri={} content-type=" + request.getContentType(), type, request.getRequestURI());
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			
-			logger.debug("request attr " + name + " = " + request.getAttribute(name));
+			logger.debug("request attr {} = {}", name, request.getAttribute(name));
 		}
 		
 		names = request.getParameterNames();		
@@ -122,7 +125,7 @@ public abstract class AbstractServlet extends HttpServlet {
 			}
 			builder.deleteCharAt(builder.length() - 1); // drop comma
 			
-			logger.debug("param " + name + " = " + builder.toString());
+			logger.debug("param {} = {}", name, builder);
 		}
 	}
 	
@@ -154,7 +157,8 @@ public abstract class AbstractServlet extends HttpServlet {
 	}	
 	
 	void sendFile(HttpServletRequest request, HttpServletResponse response, String contentType, File file) throws IOException {
-		logger.debug("sending file " + file.getCanonicalPath());
+		if (logger.isDebugEnabled())
+			logger.debug("sending file {}", file.getCanonicalPath());
 		response.setContentType(contentType);
 		InputStream in = new FileInputStream(file);
 		OutputStream out = response.getOutputStream();
@@ -209,7 +213,7 @@ public abstract class AbstractServlet extends HttpServlet {
 			logger.debug("http exception processing POST", e);
 			e.send(response);
 		} catch (HumanVisibleException e) {
-			logger.debug("human visible exception", e);
+			logger.debug("human visible exception: {}", e.getMessage());
 			forwardToErrorPage(request, response, e);
 		}
 	}
@@ -221,10 +225,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		try {
 			wrappedDoGet(request, response);
 		} catch (HttpException e) {
-			logger.debug("http exception processing GET", e);
+			logger.debug("http exception processing GET {}", e.getMessage());
 			e.send(response);
 		} catch (HumanVisibleException e) {
-			logger.debug("human visible exception", e);
+			logger.debug("human visible exception: {}", e.getMessage());
 			forwardToErrorPage(request, response, e);
 		}
 	}

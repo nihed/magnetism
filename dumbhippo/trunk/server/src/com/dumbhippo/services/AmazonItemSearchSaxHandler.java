@@ -70,9 +70,9 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 			// will be absent and thus isValid() will return false,
 			// assuming the error was fatal at least
 			if (c == Element.Code) {
-				logger.warn("Amazon error code " + getCurrentContent());
+				logger.warn("Amazon error code {}", getCurrentContent());
 			} else if (c == Element.Message) {
-				logger.warn("Amazon error message " + getCurrentContent());
+				logger.warn("Amazon error message {}", getCurrentContent());
 			}
 		}
 	
@@ -80,7 +80,7 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	
 	@Override 
 	public void endDocument() throws SAXException {
-		logger.debug("Parsed album results ASIN = " + ASIN + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
+		//logger.debug("Parsed album results ASIN = " + ASIN + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
 		if (!isValid())
 			throw new SAXException("Missing needed amazon fields");
 	}

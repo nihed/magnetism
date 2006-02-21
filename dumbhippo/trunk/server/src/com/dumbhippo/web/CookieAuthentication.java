@@ -53,7 +53,7 @@ public class CookieAuthentication {
 					LoginCookie possibleCookie = new LoginCookie(c);
 					String cookieHost = possibleCookie.getHost();
 					if (cookieHost == null || cookieHost.equals(host)) {
-						logger.debug("Found login cookie");
+						//logger.debug("Found login cookie");
 						loginCookie = possibleCookie;
 						if (cookieHost != null)
 							break;
@@ -76,7 +76,6 @@ public class CookieAuthentication {
 	public static User authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
 
 		if (loginCookie == null) {
-			logger.debug("loginCookie == null");
 			throw new NotLoggedInException("No login cookie set");
 		}
 
@@ -101,7 +100,7 @@ public class CookieAuthentication {
 		User user;		
 		try {
 			user = identitySpider.lookupGuidString(User.class, userId);
-			logger.debug("Loaded new user in authenticate(): " + user);
+			logger.debug("Loaded new user in authenticate(): {}", user);
 		} catch (NotFoundException e) {
 			throw new BadTastingException("Cookie had unknown person ID '" + userId + "'");
 		} catch (ParseException e) {
@@ -110,7 +109,6 @@ public class CookieAuthentication {
 		if (!accountSystem.checkClientCookie(user, authKey)) {
 			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
-		logger.debug("Authenticated cookie successfully");
 		return user;
 	}
 }

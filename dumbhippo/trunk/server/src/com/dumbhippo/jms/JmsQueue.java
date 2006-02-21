@@ -91,11 +91,11 @@ public abstract class JmsQueue {
 		public void close() {
 			try {
 				if (session != null) {
-					logger.debug("Closing JMS session object");
+					//logger.debug("Closing JMS session object");
 					session.close();
 				}
 				if (connection != null) {
-					logger.debug("Closing JMS connection object");
+					//logger.debug("Closing JMS connection object");
 					connection.close();
 				}
 				closeSub();
@@ -139,7 +139,7 @@ public abstract class JmsQueue {
 		// these protect lazily filling in the connection, etc.
 		initLock = new ReentrantLock();
 		initCondition = initLock.newCondition();
-		logger.debug("construct JMS queue = " + queue + " local = " + local);
+		//logger.debug("construct JMS queue = " + queue + " local = " + local);
 	}
 	
 	protected Connection getConnection() {
@@ -206,7 +206,6 @@ public abstract class JmsQueue {
 					closeAndWaitRetryInterval();
 				} else {
 					try {
-						logger.debug("New JMS connection object created");
 						init.getConnection().setExceptionListener(new ExceptionListener() {
 	
 							public void onException(JMSException e) {
@@ -226,7 +225,7 @@ public abstract class JmsQueue {
 						logger.error("Failed to set exception listener on JMS connection");
 					}
 					
-					logger.debug("Successful init of JMS queue");
+					//logger.debug("Successful init of JMS queue");
 					
 					// wake up anyone else waiting for init
 					initCondition.signalAll();
@@ -243,7 +242,6 @@ public abstract class JmsQueue {
 		initLock.lock();
 		try {
 			if (init != null) {
-				logger.debug("Closing JMS init object");
 				init.close();
 			}
 		} finally {

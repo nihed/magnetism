@@ -164,7 +164,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 				StringBuilder sampleMembers = new StringBuilder();
 				Set<PersonView> members = groupSystem.getMembers(viewpoint, g);
-				logger.debug(members.size() + " members of " + g.getName());
+				//logger.debug(members.size() + " members of " + g.getName());
 				for (PersonView member : members) {
 					if (sampleMembers.length() > PersonView.MAX_SHORT_NAME_LENGTH * 5) {
 						sampleMembers.append(" ...");
@@ -514,7 +514,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (note == null)
 			throw new RuntimeException("bug! note was null in InviteSelf");
 		
-		logger.debug("invite self message: '{}'", note);
+		//logger.debug("invite self message: '{}'", note);
 		
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();

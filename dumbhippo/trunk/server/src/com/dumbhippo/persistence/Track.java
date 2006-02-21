@@ -127,7 +127,7 @@ public class Track extends DBUnique {
 			try {
 				setType(TrackType.valueOf(s));
 			} catch (IllegalArgumentException e) {
-				logger.debug("Invalid track type " + s);
+				logger.warn("Invalid track type {}", s);
 			}
 		}
 		s = copy.remove("format");
@@ -135,7 +135,7 @@ public class Track extends DBUnique {
 			try {
 				setFormat(MediaFileFormat.valueOf(s));
 			} catch (IllegalArgumentException e) {
-				logger.debug("Invalid format type " + s);
+				logger.warn("Invalid format type {}", s);
 			}
 		}
 		s = copy.remove("name");
@@ -154,7 +154,7 @@ public class Track extends DBUnique {
 				new URL(s);
 				setUrl(s);
 			} catch (MalformedURLException e) {
-				logger.debug("Invalid track url " + s);
+				logger.warn("Invalid track url {}", s);
 			}
 		}
 		s = copy.remove("duration");
@@ -162,11 +162,11 @@ public class Track extends DBUnique {
 			try {
 				int v = Integer.parseInt(s);
 				if (v < -1)
-					logger.debug("Negative duration " + v);
+					logger.warn("Negative duration {}", v);
 				else
 					setDuration(v);
 			} catch (NumberFormatException e) {
-				logger.debug("Invalid track duration: " + s);
+				logger.warn("Invalid track duration: {}", s);
 			}
 		}
 		s = copy.remove("fileSize");
@@ -174,11 +174,11 @@ public class Track extends DBUnique {
 			try {
 				long v = Long.parseLong(s);
 				if (v < -1)
-					logger.debug("Negative fileSize " + v);
+					logger.warn("Negative fileSize {}", v);
 				else
 					setFileSize(v);
 			} catch (NumberFormatException e) {
-				logger.debug("Invalid track fileSize: " + s);
+				logger.warn("Invalid track fileSize: {}", s);
 			}
 		}
 		s = copy.remove("trackNumber");
@@ -186,11 +186,11 @@ public class Track extends DBUnique {
 			try {
 				int v = Integer.parseInt(s);
 				if (v < -1 || v == 0)
-					logger.debug("Invalid track number " + v);
+					logger.warn("Invalid track number {}", v);
 				else
 					setTrackNumber(v);
 			} catch (NumberFormatException e) {
-				logger.debug("Invalid track number: " + s);
+				logger.warn("Invalid track number: {}", s);
 			}
 		}
 		s = copy.remove("discIdentifier");
@@ -198,7 +198,7 @@ public class Track extends DBUnique {
 			setDiscIdentifier(s);
 		
 		if (copy.size() > 0) {
-			logger.warn("Leftover properties setting up Track: " + copy.keySet());
+			logger.warn("Leftover properties setting up Track: {}", copy.keySet());
 		}
 		
 		// locks the track so it can't be changed further

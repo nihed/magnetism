@@ -43,7 +43,7 @@ public class FramerPage {
     protected void setPost(PostView post) {
 		this.post = post;
 		this.postId = post.getPost().getId();
-		logger.debug("viewing post: " + this.postId);
+		logger.debug("viewing post: {}", this.postId);
 		if (signin.isValid()) {
 			postBoard.postViewedBy(this.postId, signin.getUser());
 		}
@@ -54,7 +54,7 @@ public class FramerPage {
 			logger.debug("no post id");
 			return;
 		} else {
-			// Fixme - don't backtrace if the user isn't authorized to view the post
+			// FIXME - don't backtrace if the user isn't authorized to view the post
 			setPost(postBoard.loadPost(signin.getViewpoint(), new Guid(postId)));
 		}
     }

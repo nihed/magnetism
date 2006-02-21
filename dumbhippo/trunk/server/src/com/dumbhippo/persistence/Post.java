@@ -207,7 +207,7 @@ public class Post extends GuidPersistable {
 	}
 
 	protected void setInfo(String info) {
-		logger.debug(this + " setting info: " + info + " was: " + this.info);
+		//logger.debug(this + " setting info: " + info + " was: " + this.info);
 		
 		// we probably need some better way to handle this, but 
 		// we definitely don't want to let the database to silently truncate it
@@ -258,7 +258,8 @@ public class Post extends GuidPersistable {
 				cachedPostInfo.makeImmutable();
 				return cachedPostInfo;
 			} catch (SAXException e) {
-				logger.error("post " + getId() + " appears to have corrupt PostInfo XML string: " + e.getMessage(), e);
+				logger.error("post {} appears to have corrupt PostInfo XML string: {}", getId(), e.getMessage());
+				logger.error("SAX exception trace", e);
 				
 				// We enter a "do no harm" mode when this happens; it's probably some bug
 				// in our XML parser and we don't want to lose any data from the PostInfo
@@ -281,7 +282,7 @@ public class Post extends GuidPersistable {
 				throw new RuntimeException("Don't modify the post info from Post.getPostInfo() and then set it back. Make a copy.");
 			
 			if (cachedPostInfo != null && cachedPostInfo.equals(postInfo)) {
-				logger.debug("Cached post info is the same as new post info, doing nothing. old: " + cachedPostInfo + " new: " + postInfo);
+				//logger.debug("Cached post info is the same as new post info, doing nothing. old: {} new: {}", cachedPostInfo, postInfo);
 				return; // nothing to do
 			}
 			
@@ -316,7 +317,7 @@ public class Post extends GuidPersistable {
 				try {
 					cachedUrl = new URL(link);
 				} catch (MalformedURLException e) {
-					logger.debug("Invalid link in database: " + link);
+					logger.warn("Invalid link in database: " + link);
 				}
 			}
 			cachedUrlUpdated = true;

@@ -74,9 +74,9 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 				values.put(c, getCurrentContent());	
 		} else if (parent() == Element.Errors) {
 			if (c != Element.IGNORED)
-				logger.debug("eBay error:" + c + ": '" + getCurrentContent() + "'");
+				logger.debug("eBay error: {}: '{}'", c, getCurrentContent());
 		} else if (c == Element.RuName) {
-			logger.debug("RuName = " + getCurrentContent());
+			logger.debug("RuName = {}", getCurrentContent());
 		} else if (c == Element.Timestamp) {
 			values.put(c, getCurrentContent());
 		}
@@ -89,7 +89,7 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	
 	@Override 
 	public void endDocument() throws SAXException {
-		logger.debug("Ebay fields loaded " + values);
+		//logger.debug("Ebay fields loaded " + values);
 		if (!isValid())
 			throw new SAXException("Missing needed ebay fields");
 	}
@@ -125,7 +125,7 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 					parser.setTimeZone(tz);
 					cachedTimestamp = parser.parse(s);
 				} catch (ParseException e) {
-					logger.warn("Could not parse ebay date '" + s + "': " + e.getMessage());
+					logger.warn("Could not parse ebay date '{}': {}", s, e.getMessage());
 				}
 			}
 		}

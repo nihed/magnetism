@@ -85,7 +85,8 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		File saveDest = new File(saveDir, fileName);
 		if (!overwrite && saveDest.exists())
 			throw new IOException("Can't overwrite existing file");
-		logger.debug("saving to " + saveDest.getCanonicalPath());
+		if (logger.isDebugEnabled())
+			logger.debug("saving to {}", saveDest.getCanonicalPath());
 
 		// FIXME this should be JPEG, but Java appears to fuck that up
 		// on a lot of images and produce a corrupt image
@@ -115,13 +116,13 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		
 		location = getRelativePath();
 		
-		logger.debug("uploading photo to " + saveDir);
+		logger.debug("uploading photo to {}", saveDir);
 
 		Map<String,String> formParameters = new HashMap<String,String>();
 		for (Object o : items) {
 			FileItem item = (FileItem) o;
 			if (item.isFormField()) {
-				logger.debug("Form field " + item.getFieldName() + " = " + item.getString());
+				logger.debug("Form field {} = {}", item.getFieldName(), item.getString());
 				formParameters.put(item.getFieldName(), item.getString());
 			} else {
 				photo = item;
@@ -138,8 +139,8 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		reloadTo = formParameters.get("reloadTo");
 		
 		request.setAttribute("photoLocation", location);
-		logger.debug("File " + photo.getName() + " size " + photo.getSize() + " content-type "
-				+ photo.getContentType());			
+		logger.debug("File {} size {} content-type " + photo.getContentType(), 
+				photo.getName(), photo.getSize());
 		doUpload(request, response, user, formParameters, photo);
 	}
 	
@@ -152,7 +153,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 				startUpload(request, response, upload, upload.parseRequest(request));
 		} catch (FileUploadException e) {
 			// I don't have any real clue what this exception might be or indicate
-			logger.error("File upload exception", e);
+			logger.warn("File upload exception, investigate what this was", e);
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "file upload malformed somehow; we aren't sure what went wrong");
 		}
 	}

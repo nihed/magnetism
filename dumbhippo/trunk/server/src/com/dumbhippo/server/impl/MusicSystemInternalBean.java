@@ -198,10 +198,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
-		logger.debug("getTrackHistory() type " + type + " for " + user + " max results " + maxResults);
+		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
 		
 		if (!identitySpider.isViewerFriendOf(viewpoint, user) && maxResults != 1) {
-			logger.debug("Not allowed to see track history");
+			//logger.debug("Not allowed to see track history");
 			throw new NotFoundException("Not allowed to see more than 1 item from track history");
 		}
 
@@ -251,7 +251,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) throws NotFoundException {
-		logger.debug("getTrackHistory() type " + type + " for " + group + " max results " + maxResults);
+		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, group);
 
 		// This is not very efficient now is it...
 		
@@ -328,7 +328,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public List<YahooSongResult> call() {
-			logger.debug("Running YahooSongTask thread");
+			logger.debug("Entering YahooSongTask thread");
 			
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
@@ -346,7 +346,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public List<YahooSongDownloadResult> call() {
-			logger.debug("Running YahooSongDownloadTask thread");
+			logger.debug("Entering YahooSongDownloadTask thread");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -363,7 +363,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public AmazonAlbumResult call() {
-			logger.debug("Running AmazonAlbumSearchTask thread");
+			logger.debug("Entering AmazonAlbumSearchTask thread");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -380,7 +380,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public TrackView call() {
-			logger.debug("Running GetTrackViewTask thread");
+			logger.debug("Entering GetTrackViewTask thread");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -397,7 +397,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public AlbumView call() {
-			logger.debug("Running GetAlbumViewTask thread");
+			logger.debug("Entering GetAlbumViewTask thread");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -460,7 +460,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (track.getArtist() == null ||
 				track.getAlbum() == null ||
 				track.getName() == null) {
-			logger.debug("Track " + track + " missing artist album or name, can't get yahoo stuff");
+			logger.debug("Track {} missing artist album or name, can't get yahoo stuff", track);
 			return Collections.emptyList();
 		}
 		
@@ -490,8 +490,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					break;
 				}
 			}
-		} else {
-			logger.debug("No Yahoo results for track, will need to search for them");
 		}
 		
 		if (needNewQuery) {
@@ -571,8 +569,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					break;
 				}
 			}
-		} else {
-			logger.debug("No Yahoo download results for song id, will need to search for them");
 		}
 		
 		if (needNewQuery) {
@@ -696,10 +692,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			try {
 				album = futureAlbum.get();
 			} catch (InterruptedException e) {
-				logger.debug("amazon album get thread interrupted", e);
+				logger.warn("amazon album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
 			} catch (ExecutionException e) {
-				logger.debug("amazon album get thread execution exception", e.getCause());
+				logger.warn("amazon album get thread execution exception {}", e.getMessage());
 				throw new RuntimeException(e);
 			}
 			if (album != null) {
@@ -711,7 +707,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		} catch (Exception e) {
 			logger.debug("Failed to get Amazon album information", e);
-		}		
+		}
 	}
 	
 	public TrackView getTrackView(Track track) {
@@ -737,10 +733,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				try {
 					ds = futureDownloads.get();
 				} catch (InterruptedException e) {
-					logger.debug("Thread interrupted getting song download info from yahoo", e);
+					logger.warn("Thread interrupted getting song download info from yahoo {}", e.getMessage());
 					throw new RuntimeException(e);
 				} catch (ExecutionException e) {
-					logger.debug("Exception getting song download info from yahoo", e);
+					logger.warn("Exception getting song download info from yahoo {}", e.getMessage());
 					throw new RuntimeException(e);
 				}
 				for (YahooSongDownloadResult d : ds) {
@@ -824,7 +820,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
 		
-		logger.debug("Getting TrackViews from tracks list with " + tracks.size() + " items");
+		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
 		
 		// spawn a bunch of yahoo updater threads in parallel
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
@@ -854,7 +850,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	private List<AlbumView> getAlbumViewsFromTracks(List<Track> tracks) {
 		
-		logger.debug("Getting AlbumViews from tracks list with " + tracks.size() + " items");
+		logger.debug("Getting AlbumViews from tracks list with {} items", tracks.size());
 		
 		// spawn threads in parallel
 		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
@@ -884,7 +880,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	private List<ArtistView> getArtistViewsFromTracks(List<Track> tracks) {
 		
-		logger.debug("Getting ArtistViews from tracks list with " + tracks.size() + " items");
+		logger.debug("Getting ArtistViews from tracks list with {} items", tracks.size());
 		
 		// spawn threads in parallel
 		List<Future<ArtistView>> futureViews = new ArrayList<Future<ArtistView>>(tracks.size());
@@ -915,7 +911,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
 	// to get, but I guess we could try to be fancier
 	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
-		logger.debug("getPopularTrackViews() globally");
 		List<Track> tracks = new ArrayList<Track>(maxResults);
 		
 		Query q;
@@ -946,7 +941,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
-		logger.debug("getLatestTrackViews() for user " + user);
+		//logger.debug("getLatestTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -956,7 +951,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
-		logger.debug("getFrequentTrackViews() for user " + user);
+		//logger.debug("getFrequentTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -966,7 +961,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
-		logger.debug("getLatestTrackViews() for group {}", group);
+		//logger.debug("getLatestTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -976,7 +971,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
-		logger.debug("getFrequentTrackViews() for group {}", group);
+		//logger.debug("getFrequentTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
 		
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -986,7 +981,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
-		logger.debug("getLatestAlbumViews() for user " + user);
+		//logger.debug("getLatestAlbumViews() for user {}", user);
 		
 		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
 		// unique albums. For now, just heuristically ask for more results so we have a better shot
@@ -1011,7 +1006,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
-		logger.debug("getLatestArtistViews() for user " + user);
+		//logger.debug("getLatestArtistViews() for user {}", user);
 		
 		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
 		// unique artists. For now, just heuristically ask for more results so we have a better shot
@@ -1111,7 +1106,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		logger.debug("song search artist " + artist + " album " + album + " name " + name);
+		//logger.debug("song search artist " + artist + " album " + album + " name " + name);
 		
 		return getTrackView(getMatchingTrack(viewpoint, artist, album, name));
 	}
@@ -1142,8 +1137,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 		if (viewpoint == null)
 			throw new IllegalArgumentException("System view not supported here");
-		
-		logger.debug("Related people search");
 		
 		List<PersonMusicView> ret = new ArrayList<PersonMusicView>();
 		

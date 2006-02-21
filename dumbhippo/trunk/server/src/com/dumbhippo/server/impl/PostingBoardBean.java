@@ -162,11 +162,11 @@ public class PostingBoardBean implements PostingBoard {
 		
 		URL replacement = post.getUrl();
 		if (replacement == null) {
-			logger.warn("Old post does not have an URL: " + post);
+			logger.debug("Old post does not have an URL: {}", post);
 			return original;
 		}
 		
-		logger.debug("Changing URL to '" + replacement.toExternalForm() + "'");
+		logger.debug("Changing URL to '{}'", replacement);
 		
 		return replacement;
 	}
@@ -268,14 +268,14 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public void doShareLinkTutorialPost(User recipient) {
-		logger.debug("Sending share link tutorial post");
+		logger.debug("Sending share link tutorial post to {}", recipient);
 		User poster = identitySpider.getCharacter(Character.MUSIC_GEEK);
 		URL url;
 		String urlText = configuration.getProperty(HippoProperty.BASEURL) + "/account";
 		try {
 			url = new URL(urlText);
 		} catch (MalformedURLException e) {
-			logger.error("Malformed tutorial url: " + urlText, e);
+			logger.error("Malformed tutorial url: {}", urlText);
 			throw new RuntimeException(e);
 		}
 		String title = "What is this DumbHippo thing?";
@@ -285,10 +285,10 @@ public class PostingBoardBean implements PostingBoard {
 		try {
 			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null, true);
 		} catch (NotFoundException e) {
-			logger.error("Failed to post: " + e.getMessage(), e);
+			logger.error("Failed to post: {}", e.getMessage());
 			throw new RuntimeException(e);
 		}
-		logger.debug("Tutorial post done: " + post);
+		logger.debug("Tutorial post done: {}", post);
 	}
 	
 	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
@@ -296,11 +296,11 @@ public class PostingBoardBean implements PostingBoard {
 		try {
 			return runner.runTaskInNewTransaction(new Callable<Post>() {
 				public Post call() {
-					logger.debug("saving new Post");
 					Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
-				
+					logger.debug("saved new Post {}", post);
+					
 					return post;
 				}
 			});
@@ -456,11 +456,13 @@ public class PostingBoardBean implements PostingBoard {
 		// Ensure we're updated (potentially blocks for a while)
 		infoSystem.updatePostInfo(post);
 		
+		/*
 		String info = post.getInfo();
 		if (info != null)
-			logger.debug("Updated, post info now: " + info.replace("\n",""));
+			logger.debug("Updated, post info now: {}", info.replace("\n",""));
 		else
 			logger.debug("Updated, post info now null");
+		*/
 		
 		try {
 			
@@ -470,7 +472,6 @@ public class PostingBoardBean implements PostingBoard {
 					recipients,
 					viewpoint);
 		} catch (Exception e) {
-			logger.debug("The exception was: " + e);
 			throw new RuntimeException(e);
 		}
 	}
@@ -526,21 +527,21 @@ public class PostingBoardBean implements PostingBoard {
 		Query q;
 		StringBuilder queryText = new StringBuilder(GET_SPECIFIC_POST_QUERY + " AND ");
 		queryText.append(CAN_VIEW);
-		logger.debug("Full canViewPost query is: '" + queryText.toString() + "'");
+		//logger.debug("Full canViewPost query is: '{}'", queryText);
 		
 		q = em.createQuery(queryText.toString());
 		q.setParameter("post", post);
 		q.setParameter("viewer", viewer);
 		
 		try {
-			Post resultPost = (Post)em.createQuery(queryText.toString())
+			/*Post resultPost = (Post) */em.createQuery(queryText.toString())
 	            .setParameter("post", post)
 	            .setParameter("viewer", viewer)
 	            .getSingleResult();
-			logger.debug("canViewPost query got one result: " + resultPost + "; returning true/access granted");
+			//logger.debug("canViewPost query got one result: {}; returning true/access granted", resultPost);
 			return true;
 		} catch (EntityNotFoundException e) {
-			logger.debug("canViewPost query got no result; returning false/access denied");
+			//logger.debug("canViewPost query got no result; returning false/access denied");
 			return false;
 		}
 	}
@@ -563,7 +564,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		queryText.append(ORDER_RECENT);
 		
-		logger.debug("Full getPostsFor search query is: '" + queryText.toString() + "'");
+		//logger.debug("Full getPostsFor search query is: '{}'", queryText);
 		
 		q = em.createQuery(queryText.toString());
 		q.setParameter("poster", poster);
@@ -590,7 +591,7 @@ public class PostingBoardBean implements PostingBoard {
 
 		queryText.append(ORDER_RECENT);
 		
-		logger.debug("Full getReceivedPosts search query is: '" + queryText.toString() + "'");
+		//logger.debug("Full getReceivedPosts search query is: '{}'", queryText);
 		
 		q = em.createQuery(queryText.toString());
 		
@@ -686,7 +687,7 @@ public class PostingBoardBean implements PostingBoard {
     }
 	
 	public void postViewedBy(String postId, User clicker) {
-		logger.debug("Post " + postId + " clicked by " + clicker);
+		logger.debug("Post {} clicked by {}", postId, clicker);
 		
 		Post post;
 		

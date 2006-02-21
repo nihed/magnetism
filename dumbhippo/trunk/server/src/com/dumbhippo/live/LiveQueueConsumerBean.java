@@ -11,7 +11,6 @@ import javax.jms.ObjectMessage;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 
 //
@@ -50,7 +49,8 @@ public class LiveQueueConsumerBean implements MessageListener {
 
 	public void onMessage(Message message) {
 		try {
-			logger.debug("Got message from " + LiveEvent.QUEUE + ": " + message);
+			// Message.toString() is kind of crap, so this isn't useful debug most of the time
+			//logger.debug("Got message from {}: {}", LiveEvent.QUEUE, message);
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
@@ -66,9 +66,9 @@ public class LiveQueueConsumerBean implements MessageListener {
 				logger.warn("Got unknown JMS message: " + message);
 			}
 		} catch (JMSException e) {
-			logger.warn("JMS exception", e);
+			logger.warn("JMS exception in live event queue onMessage", e);
 		} catch (Exception e) {
-			logger.warn("Exception processing JMS message: " + ExceptionUtils.getRootCause(e).getMessage(), e);
+			logger.warn("Exception processing JMS message", e);
 		}
 	}
 }

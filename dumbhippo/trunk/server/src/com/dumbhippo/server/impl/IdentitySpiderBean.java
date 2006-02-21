@@ -271,7 +271,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						// someone just creates the character accounts manually without running
 						// this code. We don't want to start doing "if (character) ; else ;" all
 						// over the place.
-						logger.debug("Creating special user " + whichOne);
+						logger.info("Creating special user " + whichOne);
 						Account account = accountSystem.createAccountFromResource(email);
 						user = account.getOwner();
 						user.setNickname(whichOne.getDefaultNickname());
@@ -316,7 +316,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		} catch (EntityNotFoundException e) {
 			// this should not happen I don't think ... but I'm not 
 			// quite sure enough to throw an exception so we just return an empty set
-			logger.error("No resources for person " + person, e);
+			logger.error("No resources for person {}", person);
+			logger.error("Failed to find person's resources", e);
 		}
 		
 		return resources;		
@@ -344,11 +345,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (person instanceof User)
 			return (User)person;
 		else {
-			logger.debug("getUser: contact = " + person);
+			//logger.debug("getUser: contact = {}", person);
 
 			User user = getUserForContact((Contact)person);
 			
-			logger.debug("getUserForContact: user = " + user);
+			//logger.debug("getUserForContact: user = {}", user);
 			
 			return user;
 		}
@@ -573,9 +574,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				User contactUser = lookupUserByResource(resource);
 				
 				if (contactUser != null) {
-					logger.debug("Adding contact resource pointing to account");
 					ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());
 					em.persist(cc);
+					logger.debug("Added contact resource {} pointing to account {}",
+							cc.getContact(), cc.getAccount());
 				}
 			}
 		}
@@ -601,7 +603,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public void removeContactPerson(User user, Person contactPerson) {
-		logger.debug("removing contact " + contactPerson + " from account " + user.getAccount());
+		logger.debug("removing contact {} from account {}", contactPerson, user.getAccount());
 
 		Contact contact;
 		if (contactPerson instanceof Contact)
@@ -744,8 +746,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void setAccountDisabled(User user, boolean disabled) {
 		Account account = getAttachedAccount(user);
-		logger.debug("New disabled = " + disabled + " for account " + account);
 		account.setDisabled(disabled);
+		logger.debug("Disabled flag toggled to {} on account {}", disabled, account);
 	}
 	static final String GET_ADMIN_QUERY = 
 		"SELECT adm FROM Administrator adm WHERE adm.account = :acct";

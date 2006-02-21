@@ -46,14 +46,15 @@ public class AbnormalErrorServlet extends AbstractServlet {
     	try {
     		logger.error("Abnormal error occurred");
     		for (String var : errorVars) {
-    			logger.error(var + " = " + request.getAttribute(var));
+    			logger.error("{} = {}", var, request.getAttribute(var));
     		}
     		Throwable t = (Throwable) request.getAttribute("javax.servlet.error.exception");
     		if (t != null) {
     			logger.error("Backtrace:", t);
     			Throwable root = ExceptionUtils.getRootCause(t);
     			if (root != t) {
-    				logger.error("Root cause is " + root.getClass().getName() + " message: " + root.getMessage());
+    				logger.error("Root cause is {} message: {}", 
+    						root.getClass().getName(), root.getMessage());
     			}
     		}
     	} catch (Throwable t) {

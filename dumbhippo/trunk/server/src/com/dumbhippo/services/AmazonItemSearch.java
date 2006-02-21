@@ -27,7 +27,7 @@ public class AmazonItemSearch extends
 		sb.append(StringUtils.urlEncode(albumTitle));		
 
 		String wsUrl = sb.toString();
-		logger.debug("Loading amazon web services url " + wsUrl);
+		logger.debug("Loading amazon web services url {}", wsUrl);
 		
 		AmazonItemSearchSaxHandler handler = parseUrl(new AmazonItemSearchSaxHandler(), wsUrl);
 		
