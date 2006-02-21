@@ -12,8 +12,8 @@
 	</c:otherwise>
 </c:choose>
 
-<!--[if lt IE 7]>
-<link rel="stylesheet" href="/css/${buildStamp}/sitewide-lt-ie7.css" type="text/css" />
+<!--[if lt IE 8]>
+<link rel="stylesheet" href="/css/${buildStamp}/sitewide-iefixes.css" type="text/css" />
 <c:if test="${!empty iehref}">
 	<link rel="stylesheet" href="/css/${buildStamp}/${iehref}" type="text/css" />
 </c:if>
