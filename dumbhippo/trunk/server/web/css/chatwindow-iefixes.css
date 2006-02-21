@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-@import "sitewide-lt-ie7.css";
+@import "sitewide-iefixes.css";
 
 /* IE-specific centering hack for the person name; could be
  * done CSS compliant using display: table and display: table-cell

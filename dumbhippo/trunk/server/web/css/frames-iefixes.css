@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-@import "sitewide-lt-ie7.css";
+@import "sitewide-iefixes.css";
 @import "bubbles-iefixes.css";
 
 body {
