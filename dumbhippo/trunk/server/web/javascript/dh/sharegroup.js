@@ -39,9 +39,9 @@ dh.sharegroup.updateInvitations = function() {
 		dh.sharegroup.inviteCountMessage.style.display = 'inline';
 }
 
-dh.sharegroup.submitButtonClicked = function() {
+dh.sharegroup.doSubmit = function() {
 	dojo.debug("clicked share link button");
-	
+
 	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText);
 	
 	var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
@@ -75,6 +75,12 @@ dh.sharegroup.submitButtonClicked = function() {
 						});
 }
 
+dh.sharegroup.submitButtonClicked = function() {
+	dojo.debug("clicked share link button");
+
+	dh.share.checkAndSubmit(dh.sharegroup.doSubmit)
+}
+		
 dh.sharegroup.loadContacts = function() {
 	if (dh.share.haveLoadedContacts)
 		return;

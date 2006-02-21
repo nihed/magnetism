@@ -423,9 +423,8 @@ dojo.inherits(dh.flickrupload.UploadSet, dh.flickrupload.PhotoContainer);
 dojo.debug("creating photoset instance"); 
 dh.sharephotoset.instance = new dh.flickrupload.UploadSet()
 
-dh.sharephotoset.submitButtonClicked = function() {
+dh.sharephotoset.doSubmit = function() {
 	try {
-	dojo.debug("clicked share photo button");
 	var title = dh.sharelink.urlTitleToShareEditBox.textValue
 	dojo.debug("title = " + title)
 	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText)
@@ -440,6 +439,13 @@ dh.sharephotoset.submitButtonClicked = function() {
 		dojo.debug("error in submitButtonClicked:" + e.message)
 	}
 }
+
+dh.sharephotoset.submitButtonClicked = function() {
+	dojo.debug("clicked share photo button");
+	
+	dh.share.checkAndSubmit(dh.sharephotoset.doSubmit)
+}
+	
 
 dhFlickrSetUserId = function (userId) {
 	try {

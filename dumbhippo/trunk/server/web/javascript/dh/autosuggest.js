@@ -242,7 +242,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			me.checkUpdate(false);
 		}
 	};
-
+	
 	if (this.button) {
 		this.button.onmousedown = function(ev) {
 			me.cancelEvent(ev);
@@ -316,6 +316,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		this.onSelected(selectedId);
 
 		this.elem.value = ''; //this.eligible[this.highlighted];
+		this.inputText = '';
 		this.hideDiv();
 	};
 	

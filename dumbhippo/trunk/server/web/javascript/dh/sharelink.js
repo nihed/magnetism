@@ -250,9 +250,7 @@ dh.sharelink.updateActionLinks = function() {
 	}
 }
 
-dh.sharelink.submitButtonClicked = function() {
-	dojo.debug("clicked share link button");
-	
+dh.sharelink.doSubmit = function() {
 	var title = dh.sharelink.urlTitleToShareEditBox.textValue;
 
 	var url = dh.sharelink.urlToShareEditBox.value;
@@ -296,6 +294,12 @@ dh.sharelink.submitButtonClicked = function() {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
 
 						});
+}
+
+dh.sharelink.submitButtonClicked = function() {
+	dojo.debug("clicked share link button");
+	
+	dh.share.checkAndSubmit(dh.sharelink.doSubmit)
 }
 
 // Invoked from native client

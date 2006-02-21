@@ -152,16 +152,11 @@ dhRemoveRecipientClicked = function(event) {
 	dh.share.removeRecipient(idToRemove, node);
 }
 
-dh.share.createNewContactFromCombo = function() {
-	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
-	
-	if (email.length == 0 || email.indexOf("@") < 0 || email.indexOf(" ") >= 0 || email.indexOf(",") >= 0) {
-		alert("invalid email address: '" + email + "'");
-		return;
-	}
-	
-	dojo.debug("looking up contact " + email);
+dh.share.isValidEmail = function(email) {
+	return email.length > 0 && email.indexOf("@") >= 0 && email.indexOf(" ") < 0 && email.indexOf(",") < 0
+}
 
+dh.share.addEmailContactAsync = function(email, onComplete) {
 	dh.server.getXmlPOST("createorgetcontact",
 			{ "email" : email },
 			function(type, data, http) {
@@ -176,11 +171,30 @@ dh.share.createNewContactFromCombo = function() {
 					dojo.debug("adding newly-created contact as recipient");
 					dh.share.doAddRecipient(newContacts[i].id);
 				}
+				
+				if (onComplete)
+					onComplete()
 			},
 			function(type, error, http) {
 				dojo.debug(" got back error " + dhAllPropsAsString(error));
 				// FIXME display
 			});
+}
+
+dh.share.createNewContactFromCombo = function() {
+	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
+	
+	if (email.length == 0) // Silently ignore empty
+		return
+	
+	if (!dh.share.isValidEmail(email)) {
+		alert("invalid email address: '" + email + "'");
+		return;
+	}
+	
+	dojo.debug("looking up contact " + email);
+	
+	dh.share.addEmailContactAsync(email)
 }
 	
 dh.share.recipientSelected = function(selectedId) {
@@ -477,6 +491,64 @@ dh.share.getEligibleRecipients = function() {
 	}
 	
 	return dh.share.sortEligible(results);
+}
+
+// Returns the ID of an exact match for 'str', if any. (Case is ignored;
+// if there are multiple exact matches differing in case, a random
+// one is returned)
+dh.share.findExactMatch = function(str) {
+	str = str.toLowerCase()
+	for (var id in dh.share.allKnownIds) {
+		var obj = dh.share.allKnownIds[id];
+
+		if (str == obj.displayName.toLowerCase() ||
+			(obj.email && str == obj.email.toLowerCase()) ||
+			(obj.aim && str == obj.aim.toLowerCase())) {
+				return obj.id
+		}
+	}
+	
+	return null
+}
+
+// Called when the user clicks on the Submit button; enters any
+// outstanding text from the recipients field then calls 
+// doSubmit. doSubmit may be called asynchronously or 
+// synchronously
+dh.share.checkAndSubmit = function(doSubmit) {
+	var recipient = dojo.string.trim(dh.share.autoSuggest.inputText)
+	if (recipient.length > 0) {
+		// Check for an exact match	
+		var eligible = dh.share.getEligibleRecipients()
+		var exactMatch = dh.share.findExactMatch(recipient)
+		
+		if (exactMatch) {
+			dh.share.doAddRecipient(exactMatch, true)
+		} else if (eligible.length == 1) {
+			dh.share.doAddRecipient(eligible[0][1], true)
+		} else if (eligible.length > 1) {
+			alert("'" + recipient + "' matches multiple recipients")
+			return
+		} else if (dh.share.isValidEmail(recipient)) {
+			// We have to do a round trip to the server to create
+			// the new email contact
+			dh.share.addEmailContactAsync(recipient, doSubmit)
+			return 	
+		} else {
+			alert("invalid email address: '" + recipient + "'")
+			return;
+		}
+	}
+	
+	// It might be better to sensitize and desensitize the
+	// Send button, but sending a message without any recipients
+	// has the bizarre effect of sending it just to yourself
+	if (dh.share.selectedRecipients.length == 0) {
+		alert("Please enter some recipients")
+		return
+	}
+	
+	doSubmit()
 }
 
 dh.share.init = function() {
