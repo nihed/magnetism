@@ -152,10 +152,12 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
 			PersonView view = (PersonView)o;
-			xml.append(" (");
-			String inviteUrl = "/invite?fullName=" + StringUtils.urlEncode(view.getName()) + "&email=" + StringUtils.urlEncode(view.getEmail().getEmail()); 
-			xml.appendTextNode("a", "invite", "href", inviteUrl);
-			xml.append(")");
+			if (view.getEmail() != null) {
+				xml.append(" (");
+				String inviteUrl = "/invite?fullName=" + StringUtils.urlEncode(view.getName()) + "&email=" + StringUtils.urlEncode(view.getEmail().getEmail()); 
+				xml.appendTextNode("a", "invite", "href", inviteUrl);
+				xml.append(")");
+			}
 		}
 
 		if (openElement) {
