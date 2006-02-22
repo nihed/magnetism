@@ -29,7 +29,6 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.InviterData;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
@@ -588,7 +587,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// problem here. 4.1.16 didn't.)
 		if (!em.contains (invite)) {
 			// re-attach
-			invite = (InvitationToken)em.find(Token.class, invite.getId());
+			invite = em.find(InvitationToken.class, invite.getId());
 		}
 
 		if (invite.isViewed()) {
