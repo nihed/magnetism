@@ -190,6 +190,18 @@
    	and I'm guessing there's a STDERR too.  for now, don't configure these 
    	specially though -->
 
+	<!-- send these two servlets to NOISE *in addition* to the normal log, 
+		so we get the markers when each web request begins/ends  -->
+   <category name="com.dumbhippo.web.RewriteServlet">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@dumbhippoLogLevel@@"/>
+   </category>
+
+   <category name="com.dumbhippo.web.AbstractServlet">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@dumbhippoLogLevel@@"/>
+   </category>
+
    <!-- allow changing log level for our packages from super.conf -->
    <category name="com.dumbhippo">
      <priority value="@@dumbhippoLogLevel@@"/>
@@ -197,7 +209,7 @@
 
    <root>
       	<!-- this gets overridden for various specific sub-loggers above -->
-	  	<priority value="INFO"/>
+	  	<priority value="@@rootLogLevel@@"/>
       	<appender-ref ref="FILE"/>
    </root>
 
