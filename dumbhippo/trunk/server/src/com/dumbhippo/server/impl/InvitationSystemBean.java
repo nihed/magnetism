@@ -616,8 +616,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (!disable)
 			notifyInvitationViewed(invite);
 		
-		// FIXME this cast is just laziness to avoid changing the db schema of InvitationToken
-		return new Pair<Client,User>(client, (User) invite.getResultingPerson());
+		return new Pair<Client,User>(client, invite.getResultingPerson());
 	}
 
 	public Collection<String> getInviterNames(InvitationToken invite) {
