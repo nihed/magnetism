@@ -5,8 +5,10 @@
     	for settings -->
     <jta-data-source>java:/DumbHippoDS</jta-data-source>
 	<properties>
+		<!-- DO NOT turn this on, it prints sql to stdout. Instead
+		mess with org.hibernate.SQL logger in log4j.xml -->
     	<property name="hibernate.show_sql"
-              value="true"/>
+              value="false"/>
         <!-- This means to blow away tables when our app is 
         	removed ... there is no "magic right thing" setting
         	apparently, "update" means "don't blow away tables,

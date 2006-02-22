@@ -52,11 +52,11 @@ public class SigninBean implements Serializable {
 				request.getSession().setAttribute(USER_ID_KEY, userGuid);
 				logger.debug("storing authenticated user {} in session", user);
 			} catch (BadTastingException e) {
-				logger.debug("Cookie was malformed", e);
+				logger.warn("Cookie was malformed", e);
 				userGuid = null;
 				user = null;
 			} catch (NotLoggedInException e) {
-				logger.debug("Cookie not valid", e);
+				logger.debug("Cookie not valid: {}", e.getMessage());
 				userGuid = null;
 				user = null;
 			}

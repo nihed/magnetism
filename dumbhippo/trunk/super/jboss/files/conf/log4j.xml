@@ -84,7 +84,8 @@
    <!-- verbose junk that we don't want to turn off entirely can be diverted to NOISE 
    		by creating a logger with appender NOISE and additivity false. If you don't set 
    		additivity false, the logger will append to NOISE _and_ then chain up to the root
-   		logger's appenders -->
+   		logger's appenders.
+   		Also, set the log level on loggers to NOISE to \@\@noiseLogLevel\@\@ -->
    <!-- note though, that this can only be done at logger granularity, not log level granularity.
    		i.e. if you want org.jboss:INFO to go to FILE, and org.jboss:DEBUG to go to NOISE,
    		I have no idea how to do that really, though there's probably a way -->
@@ -136,29 +137,58 @@
    <category name="org.jboss.management">
       <priority value="INFO"/>
    </category>
-
-   <!-- chill out hibernate spam -->
-   <category name="org.hibernate">
-      <priority value="WARN"/>
-   </category>
    
-   <category name="net.sf.ehcache">
-      <priority value="WARN"/>
-   </category>
 
-  	<!--  to get hibernate verbosity, some sub-categories are:
-	org.hibernate.transaction.JDBCTransaction
-	org.hibernate.SQL
-	org.hibernate.tool.hbm2ddl
-	You might want to set those to DEBUG instead of setting all of org.hibernate to DEBUG
-	 -->
+ 	<!--  HIBERNATE SPAM -->
+	<!-- default hibernate to WARN -->
+	<category name="org.hibernate">
+       <priority value="WARN"/>
+    </category>
+    <!-- hibernate uses ehcache -->
+    <category name="net.sf.ehcache">
+       <priority value="WARN"/>
+    </category>
+  
+    <!--  see http://www.hibernate.org/hib_docs/v3/reference/en/html/session-configuration.html
+    for a table of loggers you might want to enable for hibernate, pasted here as of early 
+    2006:
+    
+    org.hibernate.SQL			Log all SQL DML statements as they are executed
+	org.hibernate.type			Log all JDBC parameters
+	org.hibernate.tool.hbm2ddl	Log all SQL DDL statements as they are executed
+	org.hibernate.pretty		Log the state of all entities (max 20 entities) associated with the session at flush time
+	org.hibernate.cache			Log all second-level cache activity
+	org.hibernate.transaction	Log transaction related activity
+	org.hibernate.jdbc			Log all JDBC resource acquisition
+	org.hibernate.hql.ast.AST	Log HQL and SQL ASTs during query parsing
+	org.hibernate.secure		Log all JAAS authorization requests
+	org.hibernate				Log everything (a lot of information, but very useful for troubleshooting)
+     -->
+  
+	<!-- the same as the hibernate.show_sql property, except hibernate uses
+		JCL (chaining to log4j) instead of stdout. This is really verbose so 
+		it goes to NOISE -->
+   <category name="org.hibernate.SQL" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@noiseLogLevel@@"/>
+   </category>
+   <category name="org.hibernate.transaction" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@noiseLogLevel@@"/>
+   </category>
+   <category name="org.hibernate.tool.hbm2ddl" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@noiseLogLevel@@"/>
+   </category>
+   <category name="org.hibernate.type" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@noiseLogLevel@@"/>
+   </category>
+	<!-- END HIBERNATE SPAM -->
 
    <!-- jboss seems to divert anything printed to System.out to a logger called STDOUT at level INFO,
-   	and I'm guessing there's a STDERR too. Hibernate prints junk to System.out, which we divert here. 
-   	Leaving STDERR if it exists going to the root logger for now -->
-   <category name="STDOUT" additivity="false">
-   		<appender-ref ref="NOISE"/>
-   </category> 
+   	and I'm guessing there's a STDERR too.  for now, don't configure these 
+   	specially though -->
 
    <!-- allow changing log level for our packages from super.conf -->
    <category name="com.dumbhippo">
