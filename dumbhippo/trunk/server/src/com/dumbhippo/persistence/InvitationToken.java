@@ -26,19 +26,17 @@ public class InvitationToken extends Token {
 	private Resource invitee;
 	private Set<InviterData> inviters;
 	private boolean viewed;
-	private Person resultingPerson;
+	private User resultingPerson;
 	
 	/**
 	 * When an invitation goes through, a person is created.
 	 */
-	// FIXME is OneToOne correct?
-	// FIXME should be User
 	@OneToOne
-	public Person getResultingPerson() {
+	public User getResultingPerson() {
 		return resultingPerson;
 	}
 
-	public void setResultingPerson(Person resultingPerson) {
+	public void setResultingPerson(User resultingPerson) {
 		this.resultingPerson = resultingPerson;
 	}
 
