@@ -90,7 +90,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@PostConstruct
 	public void init() {
-		threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
+		threadPool = Executors.newFixedThreadPool(8, new ThreadFactory() {
 			private int nextThreadId = 0;
 			
 			public synchronized Thread newThread(Runnable r) {
@@ -331,7 +331,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public List<YahooSongResult> call() {
-			logger.debug("Entering YahooSongTask thread");
+			logger.debug("Entering YahooSongTask thread for track {}", track);
 			
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
@@ -349,7 +349,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public List<YahooSongDownloadResult> call() {
-			logger.debug("Entering YahooSongDownloadTask thread");
+			logger.debug("Entering YahooSongDownloadTask thread for songId {}", songId);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -366,7 +366,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public AmazonAlbumResult call() {
-			logger.debug("Entering AmazonAlbumSearchTask thread");
+			logger.debug("Entering AmazonAlbumSearchTask thread for track {}", track);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -383,7 +383,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public TrackView call() {
-			logger.debug("Entering GetTrackViewTask thread");
+			logger.debug("Entering GetTrackViewTask thread for track {}", track);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -400,7 +400,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		public AlbumView call() {
-			logger.debug("Entering GetAlbumViewTask thread");
+			logger.debug("Entering GetAlbumViewTask thread for track {}", track);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
@@ -417,6 +417,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
 		List<YahooSongResult> newResults = ws.lookupSong(track.getArtist(), track.getAlbum(), track.getName(),
 				track.getDuration(), track.getTrackNumber());
+		
+		logger.debug("New Yahoo song results from web service for track {}: {}", track, newResults);
+		
 		// Match new results to old results with same song id, updating the old row.
 		// For new rows, create the row.
 		// For rows not in the new yahoo return, drop the row.
@@ -489,7 +492,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			for (YahooSongResult r : results) {
 				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
 					needNewQuery = true;
-					logger.debug("Outdated Yahoo result, will need to renew the search");
+					logger.debug("Outdated Yahoo result, will need to renew the search for track {}", track);
 					break;
 				}
 			}
@@ -498,7 +501,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (needNewQuery) {
 			return updateSongResultsSync(results, track);
 		} else {
-			logger.debug("Returning Yahoo song results from database cache");
+			logger.debug("Returning Yahoo song results from database cache for track {}: {}", track, results);
 			return results;
 		}
 	}
@@ -506,6 +509,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private List<YahooSongDownloadResult> updateSongDownloadResultsSync(List<YahooSongDownloadResult> oldResults, String songId) {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
 		List<YahooSongDownloadResult> newResults = ws.lookupDownloads(songId);
+		
+		logger.debug("New song download results for songId {}: {}", songId, newResults);
+		
 		// Match new results to old results with same song id, updating the old row.
 		// For new rows, create the row.
 		// For rows not in the new yahoo return, drop the row.
@@ -568,7 +574,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			for (YahooSongDownloadResult r : results) {
 				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
 					needNewQuery = true;
-					logger.debug("Outdated Yahoo download result, will need to renew the search");
+					logger.debug("Outdated Yahoo download result, will need to renew the search for songId {}", songId);
 					break;
 				}
 			}
@@ -580,7 +586,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// get results once in a while
 			return updateSongDownloadResultsSync(results, songId);
 		} else {
-			logger.debug("Returning Yahoo song download results from database cache");
+			logger.debug("Returning Yahoo song download results from database cache for songId {}: {}", songId, results);
 			return results;
 		}
 	}
@@ -625,7 +631,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		final String artist = track.getArtist();
 		final String album = track.getAlbum();
 		if (artist == null || album == null) {
-			logger.debug("track missing artist or album, not looking up on amazon");
+			logger.debug("track missing artist or album, not looking up track {} on amazon", track);
 			return null;
 		}
 		
@@ -639,8 +645,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		}
 
-		if (result != null)
+		if (result != null) {
+			logger.debug("Using amazon search result from database for track {}: {}", track, result);
 			return result;
+		}
 		
 		AmazonItemSearch search = new AmazonItemSearch(REQUEST_TIMEOUT);
 		String amazonKey;
@@ -679,6 +687,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			result = null;
 		}
 		
+		if (result != null)
+			logger.debug("Using new amazon search result for track {}: {}", track, result);
 		return result;
 	}
 	
@@ -745,14 +755,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					// if two search results are for the same source, first is assumed better
 					if (view.getDownloadUrl(d.getSource()) == null) {
 						view.setDownloadUrl(d.getSource(), d.getUrl());
-						logger.debug("adding download url for " + d.getSource().getYahooSourceName());
+						//logger.debug("adding download url for {}", d.getSource().getYahooSourceName());
 					} else {
-						logger.debug("ignoring second download url for " + d.getSource().getYahooSourceName());
+						logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
 					}
 				}
 			}
 		} catch (Exception e) {
-			logger.debug("Failed to get Yahoo! search information for TrackView " + view, e);
+			logger.warn("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
 		}
 		
 		fillAlbumInfo(futureAlbum, view.getAlbumView());

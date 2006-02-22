@@ -255,7 +255,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			if (d != null)
 				list.add(d);
 		}
-		logger.debug("Got {} download results: {}", list.size(), list);
+		//logger.debug("Got {} download results: {}", list.size(), list);
 		return list;		
 	}
 }

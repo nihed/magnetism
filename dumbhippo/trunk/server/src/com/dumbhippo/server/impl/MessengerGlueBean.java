@@ -215,7 +215,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		try {
 			server.resourceConnected(Guid.parseJabberId(username));
 		} catch (ParseException e) {
-			logger.warn("Corrupt username passed to onResourceConnected", e);
+			if (!username.equals("admin"))
+				logger.warn("Corrupt username passed to onResourceConnected", e);
 		}		
 	}	
 	

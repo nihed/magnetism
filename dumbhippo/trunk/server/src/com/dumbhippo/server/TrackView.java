@@ -108,4 +108,9 @@ public class TrackView {
 	public void setSmallImageWidth(int smallImageWidth) {
 		album.setSmallImageWidth(smallImageWidth);
 	}
+	
+	@Override
+	public String toString() {
+		return "{trackView artist=" + getArtist() + " album=" + getAlbum() + " name=" + getName() + "}";
+	}
 }

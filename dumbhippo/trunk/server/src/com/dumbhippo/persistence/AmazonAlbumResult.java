@@ -126,4 +126,9 @@ public class AmazonAlbumResult extends DBUnique {
 	public void setSmallImageWidth(int smallImageWidth) {
 		this.smallImageWidth = smallImageWidth;
 	}
+	
+	@Override
+	public String toString() {
+		return "{albumResult album=" + album + " imageUrl=" + smallImageUrl + "}";
+	}
 }
