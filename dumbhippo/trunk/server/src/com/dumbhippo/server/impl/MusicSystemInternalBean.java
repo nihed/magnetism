@@ -658,10 +658,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				public AmazonAlbumResult call() {
 					AmazonAlbumResult r = albumResultQuery(artist, album);
 					if (r == null) {
-						if (data != null)
-							r = new AmazonAlbumResult(artist, album, data);
-						else
-							r = new AmazonAlbumResult();
+						// data may be null, in which case the AmazonAlbumResult just 
+						// caches that we have no result
+						r = new AmazonAlbumResult(artist, album, data);
 						r.setLastUpdated(new Date());
 						em.persist(r);
 					} else {

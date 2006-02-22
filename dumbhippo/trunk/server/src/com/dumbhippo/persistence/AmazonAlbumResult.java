@@ -30,23 +30,31 @@ public class AmazonAlbumResult extends DBUnique {
 	private int smallImageHeight;
 	
 	public AmazonAlbumResult() {
-		smallImageWidth = -1;
-		smallImageHeight = -1;
 		lastUpdated = -1;
+		updateData(null);
 	}
 	
 	public AmazonAlbumResult(String artist, String album, AmazonAlbumData data) {
+		lastUpdated = -1;
 		this.artist = artist;
 		this.album = album;
 		updateData(data);
 	}
 
 	public void updateData(AmazonAlbumData data) {
-		this.ASIN = data.getASIN();
-		this.productUrl = data.getProductUrl();
-		this.smallImageUrl = data.getSmallImageUrl();
-		this.smallImageWidth = data.getSmallImageWidth();
-		this.smallImageHeight = data.getSmallImageHeight();		
+		if (data != null) {
+			ASIN = data.getASIN();
+			productUrl = data.getProductUrl();
+			smallImageUrl = data.getSmallImageUrl();
+			smallImageWidth = data.getSmallImageWidth();
+			smallImageHeight = data.getSmallImageHeight();
+		} else {
+			ASIN = null;
+			productUrl = null;
+			smallImageUrl = null;
+			smallImageWidth = -1;
+			smallImageHeight = -1;
+		}
 	}
 	
 	// length of the whole unique key (album+artist) has to be 
