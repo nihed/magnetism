@@ -45,48 +45,44 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
-public class InvitationSystemBean implements InvitationSystem,
-		InvitationSystemRemote {
+public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
 
-	static private final Logger logger = GlobalSetup
-			.getLogger(InvitationSystemBean.class);
-
+	static private final Logger logger = GlobalSetup.getLogger(InvitationSystemBean.class);
+	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-
+	
 	@EJB
 	private AccountSystem accounts;
-
+	
 	@EJB
 	private IdentitySpider spider;
-
+	
 	@EJB
 	private Mailer mailer;
-
+	
 	@EJB
 	private Configuration configuration;
-
+	
 	@EJB
 	private NoMailSystem noMail;
-
+	
 	public InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
 		InvitationToken invite;
 		try {
 			String inviterClause = "";
 			if (inviter != null)
 				inviterClause = "AND EXISTS (SELECT ivd FROM InviterData ivd WHERE ivd MEMBER OF iv.inviters AND ivd.inviter = :inviter)";
-
-			// we get the newest invitation token, sort by date in descending
-			// order
-			Query q = em
-					.createQuery("FROM InvitationToken AS iv WHERE iv.invitee = :resource "
-							+ inviterClause + " ORDER BY iv.creationDate DESC");
+			
+			// we get the newest invitation token, sort by date in descending order
+			Query q = em.createQuery(
+				"FROM InvitationToken AS iv WHERE iv.invitee = :resource " + inviterClause + " ORDER BY iv.creationDate DESC");
 			q.setParameter("resource", invitee);
 			if (inviter != null)
 				q.setParameter("inviter", inviter);
 			q.setMaxResults(1); // only need the first one
 			invite = (InvitationToken) q.getSingleResult();
-
+			
 		} catch (EntityNotFoundException e) {
 			invite = null;
 		}
@@ -97,23 +93,22 @@ public class InvitationSystemBean implements InvitationSystem,
 		InvitationToken invite;
 		try {
 
-			Query q = em
-					.createQuery("FROM InvitationToken AS iv WHERE iv.authKey = :authKey AND "
-							+ "EXISTS (SELECT ivd FROM InviterData ivd WHERE "
-							+ "ivd MEMBER OF iv.inviters AND "
-							+ "ivd.inviter = :inviter)");
+			Query q = em.createQuery(
+				"FROM InvitationToken AS iv WHERE iv.authKey = :authKey AND " + 
+				"EXISTS (SELECT ivd FROM InviterData ivd WHERE " +
+				         "ivd MEMBER OF iv.inviters AND " +
+				         "ivd.inviter = :inviter)");		
 			q.setParameter("authKey", authKey);
-			q.setParameter("inviter", inviter);
+            q.setParameter("inviter", inviter);
 			q.setMaxResults(1); // there can be only one... result
-			invite = (InvitationToken) q.getSingleResult();
+			invite = (InvitationToken) q.getSingleResult();			
 		} catch (EntityNotFoundException e) {
 			invite = null;
 		}
-		return invite;
+		return invite;		
 	}
 
-	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint,
-			Resource invitee) {
+	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint, Resource invitee) {
 		// when someone is viewing an invitation, they can see it only if they
 		// are an inviter
 		User inviter = viewpoint.getViewer();
@@ -121,105 +116,101 @@ public class InvitationSystemBean implements InvitationSystem,
 		if (invite == null) {
 			return null;
 		}
-
+		
 		InviterData ivd = getInviterData(invite, inviter);
-
-		InvitationView invitationView = new InvitationView(invite, ivd);
-		return invitationView;
+	
+        InvitationView invitationView = new InvitationView(invite, ivd);
+        return invitationView;		
 	}
-
+	
 	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras) {
-		// All InvitationTokens after the earliest one are based on the old
-		// ones, so we only want to get the InviterData for the newest
-		// InvitationToken
+		// All InvitationTokens after the earliest one are based on the old 
+		// ones, so we only want to get the InviterData for the newest InvitationToken
 		// for the invitee. This helps us avoid returning duplicate inviters.
-		// This will return inviters whose invitations are expired, but will not
-		// return
+		// This will return inviters whose invitations are expired, but will not return
 		// inviters who deleted their invitation.
-		Query query = em
-				.createQuery("SELECT inviterData FROM "
-						+ "InviterData inviterData, InvitationToken invite, AccountClaim ar "
-						+ "WHERE inviterData MEMBER OF invite.inviters AND "
-						+ "inviterData.deleted = FALSE AND "
-						+ "ar.resource = invite.invitee AND "
-						+ "ar.owner = :invitee AND " + "invite.creationDate = "
-						+ "(SELECT MAX(invite2.creationDate) "
-						+ " FROM InvitationToken invite2, AccountClaim ar2 "
-						+ " WHERE ar2.resource = invite2.invitee AND "
-						+ " ar2.owner = :invitee)");
+		Query query = em.createQuery("SELECT inviterData FROM " +
+								     "InviterData inviterData, InvitationToken invite, AccountClaim ar " + 
+								     "WHERE inviterData MEMBER OF invite.inviters AND " +
+								     "inviterData.deleted = FALSE AND " +
+								     "ar.resource = invite.invitee AND " +
+								     "ar.owner = :invitee AND " +
+								     "invite.creationDate = " +
+								     "(SELECT MAX(invite2.creationDate) " +
+								     " FROM InvitationToken invite2, AccountClaim ar2 " +
+								     " WHERE ar2.resource = invite2.invitee AND " +
+								     " ar2.owner = :invitee)");
 		query.setParameter("invitee", invitee);
-
+		
 		@SuppressWarnings("unchecked")
-		List<InviterData> inviters = query.getResultList();
-
+		List<InviterData> inviters = query.getResultList(); 
+		
 		Viewpoint viewpoint = new Viewpoint(invitee);
-
+		
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (InviterData inviter : inviters)
-			result.add(spider.getPersonView(viewpoint, inviter.getInviter(),
-					extras));
-
-		return result;
+			result.add(spider.getPersonView(viewpoint, inviter.getInviter(), extras));
+		
+		return result; 
 	}
 
-	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint,
-			int start, int max) {
-		// we want to provide the invitations for which the person viewing the
+	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint, 
+			                                               int start, 
+			                                               int max) {	
+		// we want to provide the invitations for which the person viewing the 
 		// invitations is the inviter
 		User inviter = viewpoint.getViewer();
 		// get only the InvitationTokens for which ResultingPerson is null,
 		// sorted by date in descending order
-		Query q = em.createQuery("FROM InvitationToken AS iv WHERE EXISTS "
-				+ "(SELECT ivd FROM InviterData ivd WHERE "
-				+ "ivd MEMBER OF iv.inviters AND "
-				+ "ivd.inviter = :inviter AND " + "ivd.deleted = FALSE AND "
-				+ "iv.resultingPerson = NULL) "
-				+ "ORDER BY iv.creationDate DESC");
-
+		Query q = em.createQuery(
+			"FROM InvitationToken AS iv WHERE EXISTS " +
+			"(SELECT ivd FROM InviterData ivd WHERE " +
+			"ivd MEMBER OF iv.inviters AND " +
+			"ivd.inviter = :inviter AND " +
+			"ivd.deleted = FALSE AND " +
+			"iv.resultingPerson = NULL) " +
+			"ORDER BY iv.creationDate DESC");
+		
 		q.setParameter("inviter", inviter);
-
+		
 		if (max > 0)
 			q.setMaxResults(max);
-
+		
 		q.setFirstResult(start);
-
+		
 		@SuppressWarnings("unchecked")
 		List<InvitationToken> outstandingInvitations = q.getResultList();
-
-		List<InvitationView> outstandingInvitationViews = new ArrayList<InvitationView>();
-
-		// can we mix accessing data through the database with accessing it
-		// through
+		
+		List<InvitationView> outstandingInvitationViews = new ArrayList<InvitationView> ();
+		
+		// can we mix accessing data through the database with accessing it through 
 		// the persistence classes? should this also be a database query?
 		for (InvitationToken invite : outstandingInvitations) {
 			if (!invite.isValid()) {
-				// deleted invitations should have been filtered out by the
-				// query,
+				// deleted invitations should have been filtered out by the query,
 				// but we also want to filter out expired invitations
 				continue;
-			}
+			}			
 			InviterData inviterData = getInviterData(invite, inviter);
-			// inviterData should not come back null, because we just obtained
-			// all
+			// inviterData should not come back null, because we just obtained all 
 			// the invitations sent out by this particular inviter, but if it
 			// is null, it's ok to pass it to the invitationView constructor too
-			InvitationView invitationView = new InvitationView(invite,
-					inviterData);
-			outstandingInvitationViews.add(invitationView);
+            InvitationView invitationView = new InvitationView(invite, inviterData);
+            outstandingInvitationViews.add(invitationView);
 		}
-
-		return outstandingInvitationViews;
+			
+		return outstandingInvitationViews; 
 	}
-
-	public int countOutstandingInvitations(Viewpoint viewpoint) {
-		// it would have been nice to use a COUNT query here, but because
+	
+	public int countOutstandingInvitations(Viewpoint viewpoint) {		
+		// it would have been nice to use a COUNT query here, but because 
 		// we want to not count expired invitations, we need to query
 		// for invitation tokens
 		// next, it seems to be better to construct an unneeded InvitationView
 		// list, than to duplicate the filtering in findOutstandingInvitations
 		return findOutstandingInvitations(viewpoint, 0, -1).size();
 	}
-
+	
 	public InvitationView deleteInvitation(Viewpoint viewpoint, String authKey) {
 		User inviter = viewpoint.getViewer();
 		// Could have used lookupInvitationFor if made the deletion based on the
@@ -227,117 +218,110 @@ public class InvitationSystemBean implements InvitationSystem,
 		// sure to go through all InvitationTokens for the invitee then. There
 		// has to be only one that is valid, but can be multiple expired ones.
 		InvitationToken invite = lookupInvitation(inviter, authKey);
-
+		
 		if (invite == null) {
 			return null;
 		}
-
+		
 		InviterData ivd = getInviterData(invite, inviter);
-
-		// based on the result of lookupInvitation, ivd shouldn't be null,
+		
+		// based on the result of lookupInvitation, ivd shouldn't be null, 
 		// but just in case
 		if (ivd == null) {
 			return null;
 		}
-
+		
 		if (ivd.isDeleted()) {
 			// if it is already marked deleted, there is nothing to "delete"
 			return null;
 		}
-
+		
 		ivd.setDeleted(true);
 		// there is still a loophole here, because if someone spent their
-		// invitation on this invitation and is getting reimbursed now,
-		// while someone else piled on or used to have an old expired
-		// invitation,
-		// this invitation ends up being "free"
-		// not sure if it is worth it to do anything about it now
-		if (ivd.isInvitationDeducted()) {
-			// reimburse
-			Account account = getAccount(inviter);
-			account.addInvitations(1);
-			// We do not want to unset invitationDeducted here, because we want
-			// to
-			// preserve the information on whether an invitation voucher was
-			// originally
-			// deducted for logic in restoring an invitation.
+		// invitation on this invitation and is getting reimbursed now, 
+		// while someone else piled on or used to have an old expired invitation, 
+		// this invitation ends up being "free" 
+		// not sure if it is worth it to do anything about it now		
+        if (ivd.isInvitationDeducted()) {
+        	// reimburse
+    		Account account = getAccount(inviter);
+    		account.addInvitations(1);
+    	    // We do not want to unset invitationDeducted here, because we want to
+    		// preserve the information on whether an invitation voucher was originally 
+    		// deducted for logic in restoring an invitation. 
+        }
+        
+        // go through all the inviters, if they all have deleted their invitation,
+        // the token should be marked as deleted
+        boolean deleteToken = true;
+        for (InviterData inviterData : invite.getInviters()) {
+        	if (!inviterData.isDeleted()) {
+        		deleteToken = false;
+        		break;
+        	}
 		}
-
-		// go through all the inviters, if they all have deleted their
-		// invitation,
-		// the token should be marked as deleted
-		boolean deleteToken = true;
-		for (InviterData inviterData : invite.getInviters()) {
-			if (!inviterData.isDeleted()) {
-				deleteToken = false;
-				break;
-			}
-		}
-
-		if (deleteToken) {
-			invite.setDeleted(true);
-		}
-
-		InvitationView invitationView = new InvitationView(invite, ivd);
-		return invitationView;
+        
+        if (deleteToken) {
+        	invite.setDeleted(true);
+        }
+		
+        InvitationView invitationView = new InvitationView(invite, ivd);
+        return invitationView;		
 	}
-
+	
 	public void restoreInvitation(Viewpoint viewpoint, String authKey) {
 		User inviter = viewpoint.getViewer();
 		InvitationToken invite = lookupInvitation(inviter, authKey);
-
+		
 		if (invite == null) {
 			return;
 		}
-
+		
 		InviterData ivd = getInviterData(invite, inviter);
-
-		// based on the result of lookupInvitation, ivd shouldn't be null,
+		
+		// based on the result of lookupInvitation, ivd shouldn't be null, 
 		// but just in case
 		if (ivd == null) {
 			return;
 		}
-
+			
 		if (!ivd.isDeleted()) {
 			// nothing to restore
 			return;
 		}
-
-		ivd.setDeleted(false);
-		if (ivd.isInvitationDeducted()) {
-			// if the invitation was originally deducted, it must have been
-			// reimbursed, so deduct it again
-			Account account = getAccount(inviter);
-			// this is a loophole, but normally the user would not do anything
-			// between deleting an invitation and trying to restore it
-			if (account.canSendInvitations(1)) {
-				account.deductInvitations(1);
+		
+		ivd.setDeleted(false);		
+        if (ivd.isInvitationDeducted()) {
+        	// if the invitation was originally deducted, it must have been 
+        	// reimbursed, so deduct it again
+    		Account account = getAccount(inviter);
+    		// this is a loophole, but normally the user would not do anything
+    		// between deleting an invitation and trying to restore it
+			if (account.canSendInvitations(1)) {				
+    		    account.deductInvitations(1);
 			}
-		}
-
-		invite.setDeleted(false);
+        }
+        	
+        invite.setDeleted(false);	
 	}
-
+	
 	private Account getAccount(User inviter) {
 		Account account = inviter.getAccount();
 		if (account == null || !em.contains(account))
 			account = accounts.lookupAccountByUser(inviter);
 		if (account == null)
-			throw new RuntimeException("user " + inviter
-					+ " with no account???");
+			throw new RuntimeException("user " + inviter + " with no account???");
 		return account;
 	}
 
 	/**
-	 * If invitee has already been invited and the invitation is not expired,
-	 * ensures inviter is in the inviter set and returns the invitation. If the
-	 * inviter is new to the inviter set, the invitation date is updated. Else
-	 * returns null.
+	 * If invitee has already been invited and the invitation is not expired, 
+	 * ensures inviter is in the inviter set and returns the invitation. 
+	 * If the inviter is new to the inviter set, the invitation date is updated.
+	 * Else returns null.
 	 * 
-	 * @param inviter
-	 *            possible inviter
-	 * @param invitee
-	 *            possible invitee
+	 * @param inviter possible inviter
+	 * @param invitee possible invitee
 	 * @return invitation if any, or null
 	 */
 	public InvitationToken updateValidInvitation(User inviter, Resource invitee) {
@@ -348,118 +332,105 @@ public class InvitationSystemBean implements InvitationSystem,
 			// it's a new inviter for this invitation, so we can add him to
 			// the inviters list and update the invitation date
 			long currentTime = System.currentTimeMillis();
-			InviterData ivd = new InviterData(inviter, currentTime,
-					"You joined an existing invitation.", "", false);
+			InviterData ivd = 
+				new InviterData(inviter, currentTime, 
+						        "You joined an existing invitation.", 
+						        "", false);
 			em.persist(ivd);
 			iv.addInviter(ivd);
 			iv.setCreationDate(new Date(currentTime));
 		}
 		return iv;
 	}
-
-	public Pair<CreateInvitationResult, InvitationToken> createInvitation(
-			User inviter, Resource invitee, String subject, String message) {
-		// be sure the invitee is our contact (even if we
+	
+	public Pair<CreateInvitationResult,InvitationToken> 
+	    createInvitation(User inviter, Resource invitee, 
+	    		         String subject, String message) {
+		// be sure the invitee is our contact (even if we 
 		// end up not sending the invite)
 		spider.createContact(inviter, invitee);
-		// this also catches inviting yourself and keeps us from
-		// sending mail to disabled accounts
+		// this also catches inviting yourself and keeps us from 
+		// sending mail to disabled accounts 
 		User user = spider.lookupUserByResource(invitee);
 		if (user != null) {
-			logger.debug("not inviting '{}' due to existing user {}", invitee,
-					user);
-			return new Pair<CreateInvitationResult, InvitationToken>(
-					CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
+			logger.debug("not inviting '{}' due to existing user {}", invitee, user);
+			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
 		}
 
 		CreateInvitationResult result = CreateInvitationResult.REPEAT_INVITE;
 		InvitationToken iv = lookupInvitationFor(null, invitee);
-		if (iv == null || !iv.isValid()) {
+		if (iv == null || !iv.isValid()) {	
 			Account account = getAccount(inviter);
 			// if we messed up and let them send too many invitations,
 			// we just live with it here; we should have blocked
 			// it or displayed an error in the UI before now.
-			// Yes this is a race that could let someone send more
-			// invitations than they were allowed to, but that's
+			// Yes this is a race that could let someone send more 
+			// invitations than they were allowed to, but that's 
 			// better than throwing a mysterious error at this stage.
-			// I can't figure out how you'd exploit it to
+			// I can't figure out how you'd exploit it to 
 			// go crazy and send hundreds of extra invitations.
-			boolean invitationDeducted = false;
+            boolean invitationDeducted = false;
 			if (account.canSendInvitations(1)) {
 				account.deductInvitations(1);
 				invitationDeducted = true;
 			}
-
-			// renewing an expiration counts as creating (causes us to send new
-			// email)
-			result = CreateInvitationResult.INVITE_CREATED;
-			if (iv != null) {
-				iv = updateInvitation(iv, inviter, subject, message,
-						invitationDeducted);
-			} else {
-				InviterData inviterData = new InviterData(inviter, subject,
-						message, invitationDeducted);
+			
+			// renewing an expiration counts as creating (causes us to send new email)
+			result = CreateInvitationResult.INVITE_CREATED; 
+			if (iv != null) {	
+				iv = updateInvitation(iv, inviter, subject, message, invitationDeducted);				
+			} else {		
+				InviterData inviterData = new InviterData(inviter, subject, message, invitationDeducted);
 				em.persist(inviterData);
 				iv = new InvitationToken(invitee, inviterData);
 				em.persist(iv);
-			}
-		} else {
-			InviterData ivd = getInviterData(iv, inviter);
-			if (ivd == null) {
-				// adding a person as an inviter causes us to send e-mail and
-				// update
-				// invite information, though not deduct invitations available
-				// to
+			}			
+		} else {	
+			InviterData ivd = getInviterData(iv, inviter); 
+			if (ivd == null) {	
+				// adding a person as an inviter causes us to send e-mail and update
+				// invite information, though not deduct invitations available to
 				// the inviter
-				result = CreateInvitationResult.NEW_INVITER;
-				iv = updateInvitation(iv, inviter, subject, message, false);
-			} else {
-				// this is the default case of
-				// CreateInvitationResult.REPEAT_INVITE
+				result = CreateInvitationResult.NEW_INVITER; 
+				iv = updateInvitation(iv, inviter, subject, message, false);				
+			} else {	
+				// this is the default case of CreateInvitationResult.REPEAT_INVITE
 				// when someone wants to resend an invitation
-				// we want update the invitation with the new subject and
-				// message,
+				// we want update the invitation with the new subject and message,
 				// but want to preserve the information on whether the person
 				// previously spent an invitation on the invite
-				iv = updateInvitation(iv, inviter, subject, message, ivd
-						.isInvitationDeducted());
+				iv = updateInvitation(iv, inviter, subject, message, ivd.isInvitationDeducted());
 			}
 		}
-		return new Pair<CreateInvitationResult, InvitationToken>(result, iv);
+	    return new Pair<CreateInvitationResult,InvitationToken>(result, iv);
 	}
-
+	
 	/**
 	 * Creates new inviter data for the invitation or updates the existing one.
-	 * Creates a new invitation token with the same data as the old invitation
-	 * token, if the old one has expired.
+	 * Creates a new invitation token with the same data as the old invitation token,
+	 * if the old one has expired.
 	 * 
-	 * @param iv
-	 *            the invitation token
-	 * @param inviter
-	 *            the inviter for the inviter data
-	 * @param subject
-	 *            subject of inviter's invitation
-	 * @param message
-	 *            message of inviter's invitation
-	 * @param invitationDeducted
-	 *            flag indicating if invitations were deducted from the inviter
-	 *            to send out this invitation
+	 * @param iv the invitation token
+	 * @param inviter the inviter for the inviter data
+	 * @param subject subject of inviter's invitation
+	 * @param message message of inviter's invitation
+	 * @param invitationDeducted flag indicating if invitations were deducted from the inviter
+	 *                           to send out this invitation
 	 */
-	private InvitationToken updateInvitation(InvitationToken iv, User inviter,
-			String subject, String message, boolean invitationDeducted) {
+	private InvitationToken updateInvitation(InvitationToken iv, User inviter, 
+			                                 String subject, String message, 
+			                                 boolean invitationDeducted) {
 		// in case it has been deleted previously
 		iv.setDeleted(false);
 		InviterData ivd = getInviterData(iv, inviter);
 		long currentTime = System.currentTimeMillis();
-		if (ivd == null) {
-			ivd = new InviterData(inviter, currentTime, subject, message,
-					invitationDeducted);
+		if (ivd == null) {	
+			ivd = new InviterData(inviter, currentTime, subject, message, invitationDeducted);
 			em.persist(ivd);
-			// in some cases, this will add a new inviter to an expired
-			// invitation,
+            // in some cases, this will add a new inviter to an expired invitation, 
 			// but it's ok
 			iv.addInviter(ivd);
-		} else {
+		} else {		
 			ivd.setInvitationDate(new Date(currentTime));
 			ivd.setInvitationSubject(subject);
 			ivd.setInvitationMessage(message);
@@ -471,14 +442,14 @@ public class InvitationSystemBean implements InvitationSystem,
 		// extend expiration period if not expired; if it
 		// is expired, create a new invitation token and move over
 		// all the inveterData
-		if (!iv.isExpired()) {
+		if (!iv.isExpired()) {	
 			iv.setCreationDate(new Date(currentTime));
-		} else {
-			// create a new auth key that isn't expired,
-			// preserving current inviter list etc.
-			iv = new InvitationToken(iv, ivd);
-			em.persist(iv);
-			// for all inviters other than the current inviter,
+		} else {		
+		    // create a new auth key that isn't expired,
+		    // preserving current inviter list etc.
+		    iv = new InvitationToken(iv, ivd);
+			em.persist(iv);			
+			// for all inviters other than the current inviter, 
 			// unset invitationDeducted
 			// even if they did spend an invitation voucher on this
 			// invitation in the past, they allowed the invitation
@@ -488,77 +459,63 @@ public class InvitationSystemBean implements InvitationSystem,
 				if (!inviterData.getInviter().equals(inviter)) {
 					inviterData.setInvitationDeducted(false);
 				}
-			}
+			}			
 		}
 		return iv;
 	}
-
-	public String sendInvitation(User inviter, Resource invitee,
-			String subject, String message) {
-		Pair<CreateInvitationResult, InvitationToken> p = createInvitation(
-				inviter, invitee, subject, message);
+	
+	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {	
+		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
 		InvitationToken iv = p.getSecond();
 		String note = null;
 		if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
 			User user = spider.lookupUserByResource(invitee);
-			return invitee.getHumanReadableString()
-					+ " already has an account '" + user.getNickname()
-					+ "', now added to your friends list.";
-		} else {
-
+			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
+		} else { 
+			
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
-				note = "The invitation to " + invitee.getHumanReadableString()
-						+ " was resent.";
+				note = "The invitation to " + invitee.getHumanReadableString() + " was resent.";				
 			} else if (result == CreateInvitationResult.NEW_INVITER) {
-				note = "You didn't have to spend an invitation because "
-						+ invitee.getHumanReadableString()
-						+ " was already invited by someone else. We sent out an invitation from you as well.";
+				note = "You didn't have to spend an invitation because " + invitee.getHumanReadableString() 
+				       + " was already invited by someone else. We sent out an invitation from you as well.";  			
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
 				// note can stay null in this case
 			} else {
 				// unknown case, return null
 				return null;
 			}
-
-			// In all the three of the above cases, we want to send a
-			// notification
+			
+			// In all the three of the above cases, we want to send a notification				
 			if (invitee instanceof EmailResource) {
 				sendEmailNotification(iv, inviter, subject, message);
 			} else {
-				throw new RuntimeException(
-						"no way to send this invite! unhandled resource type "
-								+ invitee.getClass().getName());
+				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
 			return note;
 		}
 	}
 
-	public String sendEmailInvitation(User inviter, String email,
-			String subject, String message) {
+	public String sendEmailInvitation(User inviter, String email, String subject, String message) {
 		Resource emailRes = spider.getEmail(email);
 		return sendInvitation(inviter, emailRes, subject, message);
 	}
-
-	private void sendEmailNotification(InvitationToken invite, User inviter,
-			String subject, String message) {
+	
+	private void sendEmailNotification(InvitationToken invite, User inviter, String subject, String message) {
 		EmailResource invitee = (EmailResource) invite.getInvitee();
-
+		
 		if (!noMail.getMailEnabled(invitee)) {
-			logger.debug("Mail is disabled to {} not sending invitation",
-					invitee);
+			logger.debug("Mail is disabled to {} not sending invitation", invitee);
 			return;
 		}
-
+		
 		String inviteeEmail = invitee.getEmail();
+		
+		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
-		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION,
-				inviteeEmail);
-
-		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter),
-				inviter);
+		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);
 		String inviterName = viewedInviter.getName();
-
+		
 		String baseurl;
 		URL baseurlObject;
 		try {
@@ -567,35 +524,33 @@ public class InvitationSystemBean implements InvitationSystem,
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
-
+		
 		if (subject == null || subject.trim().length() == 0)
 			subject = "Invitation from " + inviterName + " to join Dumb Hippo";
-
+		
 		StringBuilder messageText = new StringBuilder();
 		XmlBuilder messageHtml = new XmlBuilder();
-
+		
 		messageHtml.appendHtmlHead("");
 		messageHtml.append("<body>\n");
-
+		
 		messageHtml.append("<div style=\"padding: 1em;\">\n");
-		messageHtml.appendTextNode("a", "Click here to start using Dumb Hippo",
-				"href", invite.getAuthURL(baseurlObject));
+		messageHtml.appendTextNode("a", "Click here to start using Dumb Hippo", "href", invite.getAuthURL(baseurlObject));
 		messageHtml.append("</div>\n");
 
-		messageText
-				.append("\nFollow this link to start using Dumb Hippo:\n      ");
+		messageText.append("\nFollow this link to start using Dumb Hippo:\n      ");
 		messageText.append(invite.getAuthURL(baseurlObject));
 		messageText.append("\n\n");
-
+		
 		if (message != null && message.trim().length() > 0) {
 			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
 			messageHtml.appendTextAsHtml(message, null);
 			messageHtml.append("</div>\n");
-
+			
 			messageText.append(message);
 			messageText.append("\n\n");
 		}
-
+		
 		messageHtml.append("<div style=\"padding: 1em;\">\n");
 		messageHtml.append("This was sent to you by <a href=\"");
 		messageHtml.appendEscaped(baseurl + "/person?who=" + inviter.getId());
@@ -604,101 +559,96 @@ public class InvitationSystemBean implements InvitationSystem,
 		messageHtml.append("</a> using ");
 		messageHtml.appendTextNode("a", "Dumb Hippo", "href", baseurl);
 		messageHtml.append("</div>\n");
-
+		
 		messageText.append("This was sent to you by ");
 		messageText.append(inviterName);
 		messageText.append(" using Dumb Hippo at ");
 		messageText.append(baseurl);
 		messageText.append("\n");
-
+		
 		messageHtml.append("</body>\n</html>\n");
-
-		mailer.setMessageContent(msg, subject, messageText.toString(),
-				messageHtml.toString());
+		
+		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
 
 		mailer.sendMessage(msg);
 	}
 
 	protected void notifyInvitationViewed(InvitationToken invite) {
 		// adding @suppresswarnings here makes javac crash, whee
-		// for (InviterData inviterData : invite.getInviters()) {
+		//for (InviterData inviterData : invite.getInviters()) {
 		// TODO send notification via xmpp to inviter that invitee viewed
-		// }
+		//}
 	}
-
-	public Pair<Client, User> viewInvitation(InvitationToken invite,
-			String firstClientName, boolean disable) {
+	
+	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
 		if (invite.isViewed()) {
-			throw new IllegalArgumentException("InvitationToken " + invite
-					+ " has already been viewed");
+			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
-
+		
 		Resource invitationResource = invite.getInvitee();
 		Account acct = accounts.createAccountFromResource(invitationResource);
 		if (disable)
 			acct.setDisabled(true);
-
+		
 		Client client = null;
 		if (firstClientName != null) {
 			client = accounts.authorizeNewClient(acct, firstClientName);
 		}
 
-		// If we don't flush here, only part of our changes may be written
-		// to the database, and the call to em.find() below can fail
-		em.flush();
-
 		User newUser = acct.getOwner();
 		
-		if (!em.contains(invite)) {
+		if (!em.contains (invite)) {
 			// re-attach
 			invite = em.find(InvitationToken.class, invite.getId());
 		}
 		invite.setViewed(true);
 		invite.setResultingPerson(newUser);
-
+		
+		// needed to fix newUser.getAccount() returning null inside identitySpider?
+		em.flush();
+		
 		// add all inviters as our contacts
 		for (InviterData inviterData : invite.getInviters()) {
 			Account inviterAccount = inviterData.getInviter().getAccount();
 			spider.createContact(newUser, inviterAccount);
 		}
-
+		
 		if (!disable)
 			notifyInvitationViewed(invite);
-
-		return new Pair<Client, User>(client, invite.getResultingPerson());
+		
+		// FIXME this cast is just laziness to avoid changing the db schema of InvitationToken
+		return new Pair<Client,User>(client, (User) invite.getResultingPerson());
 	}
 
 	public Collection<String> getInviterNames(InvitationToken invite) {
-		Set<String> names = new HashSet<String>();
+		Set<String> names = new HashSet<String>();  
 		for (InviterData inviterData : invite.getInviters()) {
 			PersonView view = spider.getSystemView(inviterData.getInviter());
-			String readable = view.getName();
-			if (readable != null) {
-				names.add(readable);
-			}
+	        String readable = view.getName();
+	        if (readable != null) {    
+	        	names.add(readable);
+	        }
 		}
 		return Collections.unmodifiableCollection(names);
 	}
-
+	
 	/**
 	 * Returns InviterData if there is one that corresponds to the given user
 	 * for the given invitation or null.
 	 * 
-	 * @param invite
-	 *            the invitation
-	 * @param inviter
-	 *            the inviter
+	 * @param invite the invitation
+	 * @param inviter the inviter
 	 * @return InviterData if there is one that corresponds to the given user
-	 *         for the given invitation or null
+	 * for the given invitation or null
 	 */
-	private InviterData getInviterData(InvitationToken invite, User inviter) {
+    private InviterData getInviterData(InvitationToken invite, User inviter) {
 		for (InviterData inviterData : invite.getInviters()) {
 			if (inviterData.getInviter().equals(inviter)) {
 				return inviterData;
 			}
 		}
-		return null;
-	}
+        return null;	  	
+    }
 
 	public int getInvitations(User user) {
 		Account account = getAccount(user);
@@ -708,12 +658,12 @@ public class InvitationSystemBean implements InvitationSystem,
 	public boolean hasInvited(User user, Resource invitee) {
 		if (user == null)
 			throw new IllegalArgumentException("null user to hasInvited");
-
+		
 		// iv will be null if user is not among the inviters
 		InvitationToken iv = lookupInvitationFor(user, invitee);
 		if (iv != null && iv.isValid())
 			return true;
-		else
+		else 
 			return false;
 	}
 }
