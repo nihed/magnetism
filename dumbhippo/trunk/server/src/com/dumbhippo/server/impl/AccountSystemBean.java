@@ -76,8 +76,11 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public long getNumberOfActiveAccounts() {
-		long count = (Long) em.createQuery("SELECT SIZE(*) FROM Account a").getSingleResult();
-		return count;
+		try {
+			return (Long) em.createQuery("SELECT SIZE(*) FROM Account a").getSingleResult();
+		} catch (EntityNotFoundException e) {
+			throw new RuntimeException("Failed to count number of accounts", e);
+		}
 	}
 
 	public Set<Account> getActiveAccounts() {

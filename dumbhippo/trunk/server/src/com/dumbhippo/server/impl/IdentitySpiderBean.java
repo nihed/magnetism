@@ -669,12 +669,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private boolean isContactNoViewpoint(User user, User contactUser) {
 		// According to the spec, a count query should return a Long, Hibernate
 		// returns an Integer. We use (Number) to be robust
-		Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
-			.setParameter("contactUser", contactUser)
-			.setParameter("contactOfAccount", user.getAccount())
-			.getSingleResult();
-		
-		return count.longValue() > 0;		
+		try {
+			Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
+				.setParameter("contactUser", contactUser)
+				.setParameter("contactOfAccount", user.getAccount())
+				.getSingleResult();
+			
+			return count.longValue() > 0;
+		} catch (EntityNotFoundException e) {
+			throw new RuntimeException("count query should never fail in isContactNoViewpoint", e);
+		}
 	}
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
