@@ -70,7 +70,8 @@ public class RewriteServlet extends HttpServlet {
 		
 		String path = request.getServletPath();
 		
-		// logger.debug("Handling request for " + path);
+		// this line of debug is cut-and-pasted over to AbstractServlet also
+		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), request.getMethod(), path);
 		
 		// The root URL is special-cased, we redirect it depending
 		// on whether the user is signed in and depending on our

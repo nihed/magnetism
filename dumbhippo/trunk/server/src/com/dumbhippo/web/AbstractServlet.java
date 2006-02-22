@@ -107,7 +107,9 @@ public abstract class AbstractServlet extends HttpServlet {
 		if (!logger.isDebugEnabled()) // avoid this expense entirely in production
 			return;
 		
-		logger.debug("{} uri={} content-type=" + request.getContentType(), type, request.getRequestURI());
+		// this line of debug is cut-and-pasted over to RewriteServlet also
+		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), type, request.getRequestURI());
+		
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
