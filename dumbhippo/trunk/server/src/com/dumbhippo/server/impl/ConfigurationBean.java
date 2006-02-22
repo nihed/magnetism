@@ -32,7 +32,11 @@ public class ConfigurationBean implements Configuration {
 	public void init() {
 		logger.debug("Loading dumbhippo configuration properties");
 		
-		props = new Properties(System.getProperties());
+		Properties systemProperties = System.getProperties();
+		
+		// We don't want to use System.getProperties() as the default here, since 
+		// then we couldn't substitute "" with null, as we do below
+		props = new Properties();
 		try {
 			InputStream str = ConfigurationBean.class.getResourceAsStream("dumbhippo.properties");
 			if (str != null)
@@ -40,25 +44,34 @@ public class ConfigurationBean implements Configuration {
 		} catch (IOException e) {
 			logger.warn("Exception reading dumbhippo.properties", e);
 		}
-		// put in our hardcoded defaults if no other defaults were found
+		
+		// use values System.getProperties() or our hardcoded defaults
 		for (HippoProperty prop : HippoProperty.values()) {
-			//logger.debug("--system property was " + prop.getKey() + "=" + System.getProperties().getProperty(prop.getKey()));
+			// logger.debug("Finding value for property {}", prop.getKey());
 			String loaded = props.getProperty(prop.getKey());
+			// logger.debug("  dumbhippo.properties has value {}", loaded);
+			if (loaded == null) {
+				loaded = systemProperties.getProperty(prop.getKey());
+				// logger.debug("  falling back to system value {}", loaded);
+			}
+			if (loaded == null) {
+				loaded = prop.getDefault();
+				// logger.debug("  falling back to default value {}", loaded);
+			}
 			
 			// if we ever want an empty/whitespace string, we can add a flag to HippoProperty for 
 			// whether it's allowed or something. But right now empty doesn't make sense for any of
-			// our properties.
+			// our properties. We do this trimming after the fallbacks to allow unsetting
+			// a property that was set in a lower-priority source.
 			if (loaded != null && loaded.trim().length() == 0) {
-				//logger.debug("Clearing empty property value for " + prop.getKey());
-				props.remove(prop.getKey());
+				// logger.debug("  clearing empty property value");
+				loaded = null;
 			}
 			
-			if (prop.getDefault() != null && props.getProperty(prop.getKey()) == null) {
-				//logger.debug("--loading hardcoded default " + prop.getKey() + "=" + prop.getDefault());
-				props.put(prop.getKey(), prop.getDefault());
-			} else {
-				//logger.debug("--using property " + prop.getKey() + "=" + props.getProperty(prop.getKey()));
-			}
+			if (loaded != null)
+				props.put(prop.getKey(), loaded);
+			else
+				props.remove(prop.getKey());
 		}
 	}
 
