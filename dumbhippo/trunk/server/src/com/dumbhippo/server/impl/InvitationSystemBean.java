@@ -29,6 +29,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.InviterData;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
@@ -581,6 +582,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
+		// Reattaching has been known to fail because of bugs in older
+		// versions of MySQL ... doing it first means we don't get the
+		// account half-created before things fail. (MySQL 4.1.11 had a
+		// problem here. 4.1.16 didn't.)
+		if (!em.contains (invite)) {
+			// re-attach
+			invite = (InvitationToken)em.find(Token.class, invite.getId());
+		}
+
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
@@ -597,10 +607,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		User newUser = acct.getOwner();
 		
-		if (!em.contains (invite)) {
-			// re-attach
-			invite = em.find(InvitationToken.class, invite.getId());
-		}
 		invite.setViewed(true);
 		invite.setResultingPerson(newUser);
 		
