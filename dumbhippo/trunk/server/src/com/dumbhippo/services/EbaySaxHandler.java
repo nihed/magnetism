@@ -49,7 +49,7 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	};	
 
 	private EnumMap<Element,String> values;
-	private Date cachedTimestamp;
+	private Date cachedTimestamp; 
 	
 	EbaySaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -73,8 +73,10 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 			if (c != Element.IGNORED)
 				values.put(c, getCurrentContent());	
 		} else if (parent() == Element.Errors) {
-			if (c != Element.IGNORED)
+			if (c != Element.IGNORED) {
 				logger.debug("eBay error: {}: '{}'", c, getCurrentContent());
+				values.put(c, getCurrentContent());
+			}
 		} else if (c == Element.RuName) {
 			logger.debug("RuName = {}", getCurrentContent());
 		} else if (c == Element.Timestamp) {
@@ -90,8 +92,36 @@ public class EbaySaxHandler extends EnumSaxHandler<EbaySaxHandler.Element> imple
 	@Override 
 	public void endDocument() throws SAXException {
 		//logger.debug("Ebay fields loaded " + values);
-		if (!isValid())
-			throw new SAXException("Missing needed ebay fields");
+		if (!isValid()) {
+			String shortMessage = values.get(Element.ShortMessage);
+			String longMessage = values.get(Element.LongMessage);
+			String severityCode = values.get(Element.SeverityCode);
+			String errorClassification = values.get(Element.ErrorClassification);
+			StringBuilder sb = new StringBuilder();
+			if (severityCode != null) {
+				sb.append(severityCode);
+				sb.append(": ");
+			}
+			if (errorClassification != null) {
+				sb.append(errorClassification);
+				sb.append(": ");
+			}
+			if (shortMessage != null) {
+				sb.append(shortMessage);
+				sb.append(": ");
+			}
+			if (longMessage != null) {
+				sb.append(longMessage);
+				sb.append(": ");
+			}
+			String errorString = sb.toString().trim();
+			if (errorString.length() == 0)
+				errorString = null;
+			if (errorString != null)
+				throw new ServiceException(true, "eBay error: " + errorString);
+			else
+				throw new SAXException("Missing needed ebay fields");
+		}
 	}
 
 	public String getPictureUrl() {

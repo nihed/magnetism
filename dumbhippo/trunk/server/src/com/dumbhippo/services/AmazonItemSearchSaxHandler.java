@@ -35,6 +35,8 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
+	private String errorCode;
+	private String errorMessage;
 	
 	AmazonItemSearchSaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -70,9 +72,11 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 			// will be absent and thus isValid() will return false,
 			// assuming the error was fatal at least
 			if (c == Element.Code) {
-				logger.warn("Amazon error code {}", getCurrentContent());
+				errorCode = getCurrentContent();
+				logger.debug("Amazon error code {}", errorCode);
 			} else if (c == Element.Message) {
-				logger.warn("Amazon error message {}", getCurrentContent());
+				errorMessage = getCurrentContent();
+				logger.debug("Amazon error message {}", errorMessage);
 			}
 		}
 	
@@ -80,9 +84,15 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	
 	@Override 
 	public void endDocument() throws SAXException {
-		//logger.debug("Parsed album results ASIN = " + ASIN + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
-		if (!isValid())
-			throw new SAXException("Missing needed amazon fields");
+		//logger.debug("Parsed album results ASIN = " + ASIN + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);	
+		if (!isValid()) {
+			if (errorCode != null) {
+				boolean unexpected = !errorCode.equals("AWS.ECommerceService.NoExactMatches");
+				throw new ServiceException(unexpected, errorCode + (errorMessage != null ? errorMessage : "no message"));
+			} else {
+				throw new SAXException("Missing needed amazon fields");
+			}
+		}
 	}
 
 	private boolean isValid() {

@@ -32,6 +32,8 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 	private int smallImageWidth;
 	private int smallImageHeight;
 	private EnumMap<Element,String> prices;
+	private String errorCode;
+	private String errorMessage;
 	
 	AmazonItemLookupSaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -65,9 +67,11 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 			// will be absent and thus isValid() will return false,
 			// assuming the error was fatal at least
 			if (c == Element.Code) {
-				logger.warn("Amazon error code {}", getCurrentContent());
+				errorCode = getCurrentContent();
+				logger.debug("Amazon error code {}", errorCode);
 			} else if (c == Element.Message) {
-				logger.warn("Amazon error message {}", getCurrentContent());
+				errorMessage = getCurrentContent();
+				logger.debug("Amazon error message {}", errorMessage);
 			}
 		}
 	}
@@ -75,8 +79,14 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 	@Override 
 	public void endDocument() throws SAXException {
 		//logger.debug("Parsed ASIN = " + ASIN + " prices = " + prices + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
-		if (!isValid())
-			throw new SAXException("Missing needed amazon fields");
+		if (!isValid()) {
+			if (errorCode != null) {
+				boolean unexpected = !errorCode.equals("AWS.ECommerceService.NoExactMatches");
+				throw new ServiceException(unexpected, errorCode + (errorMessage != null ? errorMessage : "no message"));
+			} else {
+	 			throw new SAXException("Missing needed amazon fields");
+			}
+		}
 	}
 	
 	private boolean isValid() {

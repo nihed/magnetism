@@ -91,10 +91,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	@PostConstruct
 	public void init() {
 		threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
-			public Thread newThread(Runnable r) {
+			private int nextThreadId = 0;
+			
+			public synchronized Thread newThread(Runnable r) {
 				Thread t = new Thread(r);
 				t.setDaemon(true);
-				t.setName("MusicSystemBean");
+				t.setName("music pool " + nextThreadId);
+				nextThreadId += 1;
 				return t;
 			}
 		});

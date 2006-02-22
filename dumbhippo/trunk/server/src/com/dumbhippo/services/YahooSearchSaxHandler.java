@@ -115,6 +115,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	private List<Result> results;
+	private String errorMessage;
 	
 	YahooSearchSaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -163,8 +164,9 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			if (c == Element.Url || c == Element.Width || c == Element.Height)
 				currentResult().setValue(c, getCurrentContent());
 		} else if (c == Element.Message && parent() == Element.Error) {
-			logger.debug("Error reply from Yahoo: {}", getCurrentContent());
-			throw new SAXException("Yahoo! search failed: " + getCurrentContent());	
+			errorMessage = getCurrentContent();
+			logger.debug("Error reply from Yahoo: {}", errorMessage);
+			throw new ServiceException(true, "Yahoo! search failed: " + errorMessage);	
 		}
 	}
 	
