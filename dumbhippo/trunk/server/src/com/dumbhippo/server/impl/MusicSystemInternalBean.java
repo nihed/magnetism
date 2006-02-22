@@ -232,17 +232,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q.setMaxResults(maxResults);
 		
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
- 		try {
-			List<?> rawResults = q.getResultList();
-			for (Object o : rawResults) {
-				TrackHistory h = (TrackHistory) o;
-				if (h.getTrack() != null) // force-loads the track if it wasn't
-					results.add(h);
-				else
-					logger.debug("Ignoring TrackHistory with null track");
-			}
-		} catch (EntityNotFoundException e) {
-			logger.debug("No track history found in query");
+		List<?> rawResults = q.getResultList();
+		for (Object o : rawResults) {
+			TrackHistory h = (TrackHistory) o;
+			if (h.getTrack() != null) // force-loads the track if it wasn't
+				results.add(h);
+			else
+				logger.debug("Ignoring TrackHistory with null track");
 		}
 
 		if (results.isEmpty()) {
@@ -476,14 +472,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q.setParameter("track", track);
 		
 		List<YahooSongResult> results;
-		try {
-			List<?> objects = q.getResultList();
-			results = new ArrayList<YahooSongResult>(); 
-			for (Object o : objects) {
-				results.add((YahooSongResult) o);
-			}
-		} catch (EntityNotFoundException e) {
-			results = Collections.emptyList();
+		List<?> objects = q.getResultList();
+		results = new ArrayList<YahooSongResult>(); 
+		for (Object o : objects) {
+			results.add((YahooSongResult) o);
 		}
 		
 		boolean needNewQuery = results.isEmpty();
@@ -558,14 +550,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q.setParameter("songId", songId);
 		
 		List<YahooSongDownloadResult> results;
-		try {
-			List<?> objects = q.getResultList();
-			results = new ArrayList<YahooSongDownloadResult>(); 
-			for (Object o : objects) {
-				results.add((YahooSongDownloadResult) o);
-			}
-		} catch (EntityNotFoundException e) {
-			results = Collections.emptyList();
+		List<?> objects = q.getResultList();
+		results = new ArrayList<YahooSongDownloadResult>(); 
+		for (Object o : objects) {
+			results.add((YahooSongDownloadResult) o);
 		}
 		
 		boolean needNewQuery = results.isEmpty();

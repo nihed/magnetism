@@ -294,30 +294,23 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
-		try {
-			String query;
-			if (person instanceof User) {
-				query = GET_RESOURCES_FOR_USER_QUERY;
-			} else if (person instanceof Contact){
-				query = GET_RESOURCES_FOR_CONTACT_QUERY;
-			} else {
-				throw new IllegalArgumentException("person is not User or Contact: " + person);
-			}
-			
-			List results = em.createQuery(query).setParameter("person", person).getResultList();
-			
-			for (Object r : results) {
-				if (r instanceof EmailResource)
-					resources.add((Resource) r);
-				else if (r instanceof AimResource)
-					resources.add((Resource) r);
-				// we filter out any non-"primary" resources for now
-			}
-		} catch (EntityNotFoundException e) {
-			// this should not happen I don't think ... but I'm not 
-			// quite sure enough to throw an exception so we just return an empty set
-			logger.error("No resources for person {}", person);
-			logger.error("Failed to find person's resources", e);
+		String query;
+		if (person instanceof User) {
+			query = GET_RESOURCES_FOR_USER_QUERY;
+		} else if (person instanceof Contact){
+			query = GET_RESOURCES_FOR_CONTACT_QUERY;
+		} else {
+			throw new IllegalArgumentException("person is not User or Contact: " + person);
+		}
+		
+		List results = em.createQuery(query).setParameter("person", person).getResultList();
+		
+		for (Object r : results) {
+			if (r instanceof EmailResource)
+				resources.add((Resource) r);
+			else if (r instanceof AimResource)
+				resources.add((Resource) r);
+			// we filter out any non-"primary" resources for now
 		}
 		
 		return resources;		
