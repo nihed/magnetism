@@ -420,13 +420,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// For new rows, create the row.
 		// For rows not in the new yahoo return, drop the row.
 		// If the new search returned nothing, just change the updated 
-		// times so we don't re-query too often.
+		// times so we don't re-query too often, if there are no rows add a "no results marker"
 		if (newResults.isEmpty()) {
 			// ensure we won't update for FAILED_QUERY_TIMEOUT
 			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
 			for (YahooSongResult old : oldResults) {
 				old.setLastUpdated(new Date(updateTime));
 			}
+			
+			if (oldResults.isEmpty()) {
+				YahooSongResult marker = new YahooSongResult();
+				marker.setTrack(track);
+				marker.setNoResultsMarker(true);
+				marker.setLastUpdated(new Date(updateTime));
+				em.persist(marker);
+				// we don't want to return this marker though, return empty oldResults
+			}
+			
 			return oldResults;
 		}
 		
@@ -434,7 +444,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (YahooSongResult old : oldResults) {
 			boolean stillFound = false;
 			for (YahooSongResult n : newResults) {
-				if (n.getSongId().equals(old.getSongId())) {
+				if (!old.isNoResultsMarker() &&
+						n.getSongId().equals(old.getSongId())) {
 					newResults.remove(n);
 					old.update(n); // old is attached, so this gets saved
 					results.add(old);
@@ -442,6 +453,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					break;
 				}
 			}
+			// this should drop the no results marker if we now have results 
 			if (!stillFound) {
 				em.remove(old);
 			}
@@ -480,6 +492,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		boolean needNewQuery = results.isEmpty();
 		if (!needNewQuery) {
+			// the outdated results, if any, could be a special magic result with the NoResultsMarker 
+			// flag set, or could be real results
 			long now = System.currentTimeMillis();
 			for (YahooSongResult r : results) {
 				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
@@ -515,6 +529,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			for (YahooSongDownloadResult old : oldResults) {
 				old.setLastUpdated(new Date(updateTime));
 			}
+			if (oldResults.isEmpty()) {
+				YahooSongDownloadResult marker = new YahooSongDownloadResult();
+				marker.setSongId(songId);
+				marker.setNoResultsMarker(true);
+				marker.setLastUpdated(new Date(updateTime));
+				em.persist(marker);
+				// we don't want to return this marker though, return empty oldResults				
+			}
 			return oldResults;
 		}
 		
@@ -522,7 +544,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (YahooSongDownloadResult old : oldResults) {
 			boolean stillFound = false;
 			for (YahooSongDownloadResult n : newResults) {
-				if (n.getSource() == old.getSource()) {
+				if (!old.isNoResultsMarker() &&
+					n.getSource() == old.getSource()) {
 					newResults.remove(n);
 					old.update(n); // old is attached, so this gets saved
 					results.add(old);
@@ -530,6 +553,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					break;
 				}
 			}
+			// drops the no results marker, and any sources no longer found
 			if (!stillFound) {
 				em.remove(old);
 			}
@@ -558,6 +582,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		boolean needNewQuery = results.isEmpty();
 		if (!needNewQuery) {
+			// the outdated results, if any, could be a special magic result with the NoResultsMarker 
+			// flag set, or could be real results
 			long now = System.currentTimeMillis();
 			for (YahooSongDownloadResult r : results) {
 				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {

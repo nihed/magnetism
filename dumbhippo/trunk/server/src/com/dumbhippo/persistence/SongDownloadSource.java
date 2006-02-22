@@ -3,7 +3,9 @@ package com.dumbhippo.persistence;
 public enum SongDownloadSource {
 	ITUNES("iTunes"),
 	YAHOO("Yahoo! Music Unlimited"),
-	RHAPSODY("Rhapsody");
+	RHAPSODY("Rhapsody"),
+	// this is used to create a db row indicating that yahoo returned no results
+	NONE_MARKER("[not found in yahoo]");
 	
 	private String yahooSourceName;
 	

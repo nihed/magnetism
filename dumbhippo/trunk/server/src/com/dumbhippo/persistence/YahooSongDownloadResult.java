@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
@@ -22,7 +23,7 @@ public class YahooSongDownloadResult extends DBUnique {
 	private String price;
 	private String restrictions;
 	private String formats;
-
+	
 	public YahooSongDownloadResult() {
 		
 	}
@@ -41,7 +42,8 @@ public class YahooSongDownloadResult extends DBUnique {
 		url = results.url;
 	}
 
-	@Column(nullable=false)
+	// this can be null only if isNoResultsMarker()
+	@Column(nullable=true)
 	public String getUrl() {
 		return url;
 	}
@@ -85,7 +87,7 @@ public class YahooSongDownloadResult extends DBUnique {
 	public void setRestrictions(String restrictions) {
 		this.restrictions = restrictions;
 	}
-
+ 
 	@Column(nullable=false)
 	public String getSongId() {
 		return songId;
@@ -104,8 +106,30 @@ public class YahooSongDownloadResult extends DBUnique {
 		this.source = source;
 	}
 	
+	/**
+	 * For each Yahoo web services request, we can get back multiple 
+	 * YahooSongDownloadResult. If we get back 0, then we save one as a 
+	 * marker that we got no results. If a song has no rows in the db,
+	 * that means we haven't ever done the web services request.
+	 * @return whether this row marks that we did the request and got nothing
+	 */
+	@Transient
+	public boolean isNoResultsMarker() {
+		return this.source == SongDownloadSource.NONE_MARKER;
+	}
+	
+	public void setNoResultsMarker(boolean noResultsMarker) {
+		if (noResultsMarker)
+			this.source = SongDownloadSource.NONE_MARKER;
+		else
+			this.source = null; // probably a bug if this is reached though
+	}
+	
 	@Override
 	public String toString() {
-		return "{songId=" + songId + " source=" + source + " url=" + url + "}";
+		if (isNoResultsMarker())
+			return "{YahooSongDownloadResult:NoResultsMarker}";
+		else
+			return "{songId=" + songId + " source=" + source + " url=" + url + "}";
 	}
 }

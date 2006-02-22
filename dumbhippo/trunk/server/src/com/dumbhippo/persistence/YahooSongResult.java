@@ -27,6 +27,7 @@ public class YahooSongResult extends DBUnique {
 	private int duration;
 	private String releaseDate;
 	private int trackNumber;
+	private boolean noResultsMarker;
 	
 	public YahooSongResult() {
 		
@@ -44,6 +45,7 @@ public class YahooSongResult extends DBUnique {
 		duration = results.duration;
 		releaseDate = results.releaseDate;
 		trackNumber = results.trackNumber;
+		noResultsMarker = results.noResultsMarker;
 	}
 	
 	// each track can have a couple of different song IDs that 
@@ -95,6 +97,22 @@ public class YahooSongResult extends DBUnique {
 		this.lastUpdated = lastUpdated.getTime();
 	}
 
+	/**
+	 * For each Yahoo web services request, we can get back multiple 
+	 * YahooSongResult. If we get back 0, then we save one as a 
+	 * marker that we got no results. If a song has no rows in the db,
+	 * that means we haven't ever done the web services request.
+	 * @return whether this row marks that we did the request and got nothing
+	 */
+	@Column(nullable=false)
+	public boolean isNoResultsMarker() {
+		return this.noResultsMarker;
+	}
+	
+	public void setNoResultsMarker(boolean noResultsMarker) {
+		this.noResultsMarker = noResultsMarker;
+	}
+	
 	@Column(nullable=true)
 	public String getPublisher() {
 		return publisher;
@@ -133,6 +151,9 @@ public class YahooSongResult extends DBUnique {
 
 	@Override
 	public String toString() {
-		return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
+		if (isNoResultsMarker())
+			return "{YahooSongResult:NoResultsMarker}";
+		else
+			return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
 	}
 }
