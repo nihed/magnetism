@@ -10,9 +10,38 @@
 <!-- $Id: log4j.xml,v 1.26.2.5 2005/09/15 09:31:02 dimitris Exp $ -->
 
 <!--
-   | For more configuration infromation and examples see the Jakarta Log4j
-   | owebsite: http://jakarta.apache.org/log4j
+   | For more configuration information and examples see the Jakarta Log4j
+   | website: http://jakarta.apache.org/log4j
  -->
+
+<!-- 
+### Loggers are in a tree based on the prefixes of the logger names,
+### so "com.dumbhippo.foo" logger chains up to "com.dumbhippo" logger, which 
+### in turn would go to the "com" logger and finally to the special-cased "rootLogger"
+### 
+### Each logger in the tree has a "log level" (possibly unset) and list of "appenders"
+### (possibly empty)
+###
+### The logger tree works differently for log level and log appender.
+###
+### For log appenders, a message gets logged to all appenders in a logger's hierarchy.
+###  
+### For log level, children "win" i.e. the most-derived applicable logger with a log 
+### level set determines whether to log the message. I *think* a message is either logged to 
+### all appenders, or not logged at all; i.e. the log level of the logger containing the 
+### appender is not relevant, only the log level of the most-derived logger.
+###
+### So there's no need to set the log level for any logger unless you need to override
+### the parent logger's log level.
+###
+### There's no need to set an appender unless you want to add an extra appender in addition to 
+### the root appenders.
+###
+### The <category> element below means "logger", log4j used to call them categories and now 
+### calls them loggers
+###
+### JBoss has a wiki page with directions on how to avoid using log4j at all and other wacky setups
+-->
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
 
@@ -21,10 +50,16 @@
    <!-- ================================= -->
 
    <!-- A time/date based rolling appender -->
+   <!--  jboss DailyRollingFileAppender is just a subclass of the standard log4j one that 
+   		also creates directories as needed or something like that -->
    <appender name="FILE" class="org.jboss.logging.appender.DailyRollingFileAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="File" value="${jboss.server.home.dir}/log/server.log"/>
-      <param name="Append" value="false"/>
+       <!-- don't truncate, just append -->
+      <param name="Append" value="true"/>
+       <!-- I believe you usually want to change the log level of the root logger,
+       	instead of this which is the log threshold for the appender, but I could be wrong -->
+      <param name="Threshold" value="DEBUG"/>
 
       <!-- Rollover at midnight each day -->
       <param name="DatePattern" value="'.'yyyy-MM-dd"/>
@@ -34,8 +69,11 @@
       -->
 
       <layout class="org.apache.log4j.PatternLayout">
+	     <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c] (%t): %m%n"/>
+         
          <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+         <!-- <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+         -->
 
          <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
          <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
@@ -43,37 +81,41 @@
       </layout>
    </appender>
 
-   <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+   <!-- verbose junk that we don't want to turn off entirely can be diverted to NOISE 
+   		by creating a logger with appender NOISE and additivity false. If you don't set 
+   		additivity false, the logger will append to NOISE _and_ then chain up to the root
+   		logger's appenders -->
+   <!-- note though, that this can only be done at logger granularity, not log level granularity.
+   		i.e. if you want org.jboss:INFO to go to FILE, and org.jboss:DEBUG to go to NOISE,
+   		I have no idea how to do that really, though there's probably a way -->
+   <appender name="NOISE" class="org.jboss.logging.appender.DailyRollingFileAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
-      <param name="Target" value="System.out"/>
-      <param name="Threshold" value="INFO"/>
+      <param name="File" value="${jboss.server.home.dir}/log/noise.log"/>
+      <param name="Append" value="true"/> <!-- don't truncate, just append -->
+      <param name="Threshold" value="DEBUG"/>
+
+      <!-- Rollover at midnight each day -->
+      <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+
+      <!-- Rollover at the top of each hour
+      <param name="DatePattern" value="'.'yyyy-MM-dd-HH"/>
+      -->
 
       <layout class="org.apache.log4j.PatternLayout">
+	     <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c] (%t): %m%n"/>
+         
          <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
-      </layout>
-   </appender>
+         <!-- <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+         -->
 
- 	<appender name="dumbHippoLog" class="org.apache.log4j.FileAppender">
-      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
-      <param name="Append" value="false"/>
-	  <param name="Threshold" value="DEBUG"/>      
-      <param name="File" value="${jboss.server.home.dir}/log/dumbhippo.log"/>
-      <layout class="org.apache.log4j.PatternLayout">
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
+         <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
+         <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
+          -->
       </layout>
-      <filter class="org.jboss.logging.filter.TCLFilter">
-         <param name="AcceptOnMatch" value="true"/>
-         <param name="DeployURL" value="dumbhippo.ear"/>
-      </filter>
    </appender>
-   
-   <category name="com.dumbhippo">
-     <priority value="DEBUG"/>
-     <appender-ref ref="dumbHippoLog"/>
-   </category>
 
    <!-- Limit the org.apache category to INFO as its DEBUG is verbose -->
+   <!-- (does nothing right now as root logger defaults to INFO) -->
    <category name="org.apache">
       <priority value="INFO"/>
    </category>
@@ -84,18 +126,49 @@
    </category>
 
    <!-- Limit jboss axis to INFO as its DEBUG is even more verbose -->
+   <!-- (does nothing right now as root logger defaults to INFO) -->
    <category name="org.jboss.axis">
       <priority value="INFO"/>
    </category>
 
    <!-- Limit the JSR77 categories -->
+   <!-- (does nothing right now as root logger defaults to INFO) -->
    <category name="org.jboss.management">
       <priority value="INFO"/>
    </category>
 
+   <!-- chill out hibernate spam -->
+   <category name="org.hibernate">
+      <priority value="WARN"/>
+   </category>
+   
+   <category name="net.sf.ehcache">
+      <priority value="WARN"/>
+   </category>
+
+  	<!--  to get hibernate verbosity, some sub-categories are:
+	org.hibernate.transaction.JDBCTransaction
+	org.hibernate.SQL
+	org.hibernate.tool.hbm2ddl
+	You might want to set those to DEBUG instead of setting all of org.hibernate to DEBUG
+	 -->
+
+   <!-- jboss seems to divert anything printed to System.out to a logger called STDOUT at level INFO,
+   	and I'm guessing there's a STDERR too. Hibernate prints junk to System.out, which we divert here. 
+   	Leaving STDERR if it exists going to the root logger for now -->
+   <category name="STDOUT" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   </category> 
+
+   <!-- allow changing log level for our packages from super.conf -->
+   <category name="com.dumbhippo">
+     <priority value="@@dumbhippoLogLevel@@"/>
+   </category>
+
    <root>
-      <appender-ref ref="CONSOLE"/>
-      <appender-ref ref="FILE"/>
+      	<!-- this gets overridden for various specific sub-loggers above -->
+	  	<priority value="INFO"/>
+      	<appender-ref ref="FILE"/>
    </root>
 
 </log4j:configuration>

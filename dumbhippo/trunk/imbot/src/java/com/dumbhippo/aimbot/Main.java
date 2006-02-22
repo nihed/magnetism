@@ -4,6 +4,9 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -147,6 +150,16 @@ public class Main {
 	}
 	
 	public static void main(String[] args) {
+		
+		// init log4j, if we weren't lazy we might load it from a config file, 
+		// but we are lazy
+		org.apache.log4j.Logger log4jRoot = org.apache.log4j.Logger.getRootLogger();
+		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
+		log4jRoot.addAppender(appender);
+		log4jRoot.setLevel(Level.DEBUG);
+		
+		// now start up our daemon
+		
 		BotPool pool = new BotPool();
 		
 		// outgoing queue is outgoing from jboss, incoming goes to jboss

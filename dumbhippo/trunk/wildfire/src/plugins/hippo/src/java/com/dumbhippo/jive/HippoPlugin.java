@@ -12,7 +12,6 @@ import org.jivesoftware.wildfire.container.PluginManager;
 import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.ExceptionUtils;
-import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.jive.rooms.RoomHandler;
 
 /**
@@ -26,7 +25,6 @@ public class HippoPlugin implements Plugin {
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
 			Log.debug("Initializing Hippo plugin");
-			GlobalSetup.disableLog4j();
 			
 			IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
 			iqRouter.addHandler(new ClientMethodIQHandler());		
