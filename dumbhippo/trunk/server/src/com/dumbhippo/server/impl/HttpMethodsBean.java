@@ -479,9 +479,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Character character;
 		
+		PromotionCode promotionCode = null;
+		
 		try {
-			PromotionCode code = PromotionCode.check(promotion);
-			switch (code) {
+			promotionCode = PromotionCode.check(promotion);
+			switch (promotionCode) {
 			case MUSIC_INVITE_PAGE_200602:
 				character = Character.MUSIC_GEEK;
 				break;
@@ -504,7 +506,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			} else {
 				// this does NOT check whether the account has invitations left,
 				// that's why we do it above. 
-				note = invitationSystem.sendEmailInvitation(inviter, address,
+				note = invitationSystem.sendEmailInvitation(inviter, promotionCode, address,
 							"Welcome!", "Thanks for inviting yourself.");
 				if (note == null)
 					note = "Your invitation is on its way (check your email)";

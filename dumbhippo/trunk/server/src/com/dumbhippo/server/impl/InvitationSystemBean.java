@@ -42,6 +42,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -344,7 +345,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public Pair<CreateInvitationResult,InvitationToken> 
-	    createInvitation(User inviter, Resource invitee, 
+	    createInvitation(User inviter, PromotionCode promotionCode, Resource invitee, 
 	    		         String subject, String message) {
 		// be sure the invitee is our contact (even if we 
 		// end up not sending the invite)
@@ -383,6 +384,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				InviterData inviterData = new InviterData(inviter, subject, message, invitationDeducted);
 				em.persist(inviterData);
 				iv = new InvitationToken(invitee, inviterData);
+				iv.setPromotionCode(promotionCode);
 				em.persist(iv);
 			}			
 		} else {	
@@ -401,6 +403,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				// previously spent an invitation on the invite
 				iv = updateInvitation(iv, inviter, subject, message, ivd.isInvitationDeducted());
 			}
+			
+			// If the invitation doesn't already have a promotion code, set
+			// one, but if does, then we simply ingore the new code;
+			// keeping a list of promotion codes isn't worth the complexity.
+			if (promotionCode != null && iv.getPromotion() == null)
+				iv.setPromotionCode(promotionCode);
 		}
 	    return new Pair<CreateInvitationResult,InvitationToken>(result, iv);
 	}
@@ -464,8 +472,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 	
-	public String sendInvitation(User inviter, Resource invitee, String subject, String message) {	
-		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, invitee, subject, message);
+	public String sendInvitation(User inviter, PromotionCode promotionCode, Resource invitee, String subject, String message) {	
+		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, promotionCode, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
 		InvitationToken iv = p.getSecond();
 		String note = null;
@@ -496,9 +504,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public String sendEmailInvitation(User inviter, String email, String subject, String message) {
+	public String sendEmailInvitation(User inviter, PromotionCode promotionCode, String email, String subject, String message) {
 		Resource emailRes = spider.getEmail(email);
-		return sendInvitation(inviter, emailRes, subject, message);
+		return sendInvitation(inviter, promotionCode, emailRes, subject, message);
 	}
 	
 	private void sendEmailNotification(InvitationToken invite, User inviter, String subject, String message) {
@@ -653,6 +661,16 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
         return null;	  	
     }
+	
+	public InvitationToken getCreatingInvitation(Account account) {
+		try {
+			return (InvitationToken)em.createQuery("SELECT it FROM InvitationToken it WHERE it.resultingPerson = :owner")
+				.setParameter("owner", account.getOwner())
+				.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+	}
 
 	public int getInvitations(User user) {
 		Account account = getAccount(user);

@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
@@ -14,6 +15,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PromotionCode;
 
 /**
  * @author otaylor
@@ -41,6 +43,7 @@ public class WelcomePage {
 	
 	private ListBean<PostView> receivedPosts;
 	private ListBean<GroupView> groups;
+	private InvitationToken creatingInvitation;
 	
 	public WelcomePage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
@@ -91,5 +94,23 @@ public class WelcomePage {
 	
 	public int getMaxReceivedPostsShown() {
 		return MAX_RECEIVED_POSTS_SHOWN;
-	}	
+	}
+	
+	private InvitationToken getCreatingInvitation() {
+		if (creatingInvitation == null)
+			creatingInvitation = invitationSystem.getCreatingInvitation(getPerson().getAccount());
+		
+		return creatingInvitation;
+	}
+	
+	public boolean isFromMySpace() {
+		InvitationToken invite = getCreatingInvitation();
+		if (invite == null)
+			return false;
+		PromotionCode promotionCode = invite.getPromotionCode();
+		if (promotionCode == null)
+			return false;
+		
+		return promotionCode.isFromMySpace(); 
+	}
 }

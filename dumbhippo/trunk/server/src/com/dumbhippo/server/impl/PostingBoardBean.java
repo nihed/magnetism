@@ -196,7 +196,7 @@ public class PostingBoardBean implements PostingBoard {
 					// or already has an account (it's also very cheap if bestResource is an Account)
 					// this does not send out an e-mail to invitee, but prepares an invite
 					// to be sent out with the post, if applicable
-					invitationSystem.createInvitation(poster, bestResource, "", "");
+					invitationSystem.createInvitation(poster, null, bestResource, "", "");
 				}
 				
 				if (p.equals(poster)) {

@@ -63,7 +63,7 @@ public class SendInviteServlet extends AbstractServlet {
 	        }
 		}
 		
-		String note = invitationSystem.sendEmailInvitation(user, email, subject, message);
+		String note = invitationSystem.sendEmailInvitation(user, null, email, subject, message);
 		
 		request.setAttribute("email", email);
 		request.setAttribute("remaining", invitationSystem.getInvitations(user));

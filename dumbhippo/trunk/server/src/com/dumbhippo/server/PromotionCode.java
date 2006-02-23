@@ -29,6 +29,15 @@ public enum PromotionCode {
 		return code;
 	}
 	
+	public boolean isFromMySpace() {
+		switch(this) {
+		case MUSIC_INVITE_PAGE_200602:
+			return true;
+		}
+		
+		return false;
+	}
+
 	public static PromotionCode check(String code) throws NotFoundException {
 		for (PromotionCode c : PromotionCode.values()) {
 			if (c.getCode().equals(code))

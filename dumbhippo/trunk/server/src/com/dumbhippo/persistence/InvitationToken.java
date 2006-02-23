@@ -14,6 +14,8 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.AgeUtils;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PromotionCode;
 
 @Entity
 @Table(name="InvitationToken", 
@@ -26,6 +28,7 @@ public class InvitationToken extends Token {
 	private Resource invitee;
 	private Set<InviterData> inviters;
 	private boolean viewed;
+	private String promotion;
 	private User resultingPerson;
 	
 	/**
@@ -113,6 +116,31 @@ public class InvitationToken extends Token {
 	public void setViewed(boolean viewed) {
 		this.viewed = viewed;
 	}	
+	
+	public String getPromotion() {
+		return promotion;
+	}
+	
+	public void setPromotion(String promotion) {
+		this.promotion = promotion;
+	}
+	
+	@Transient
+	public void setPromotionCode(PromotionCode promotionCode) {
+		setPromotion(promotionCode.getCode());
+	}
+	
+	@Transient
+	public PromotionCode getPromotionCode() {
+		if (promotion != null) {
+			try {
+				return PromotionCode.check(promotion);
+			} catch (NotFoundException e) {
+			}
+		}
+		
+		return null;
+	}
 		
 	public String toString() {
 		return "{InvitationToken invitee " + invitee + " token " + super.toString() + "}";

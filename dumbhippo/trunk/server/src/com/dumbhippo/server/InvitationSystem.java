@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.Pair;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
@@ -120,13 +121,15 @@ public interface InvitationSystem {
 	 * Use this for "implicit invitation" when sharing something with someone.
 	 * 
 	 * @param inviter the inviter
+	 * @param promotionCode code of a promotion (like a web page offering open 
+	 *    invites) that the invitation comes from, or null.
 	 * @param invitee who to invite
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
 	 * @return the outcome
 	 */
 	public Pair<CreateInvitationResult,InvitationToken> 
-	    createInvitation(User inviter, Resource invitee,
+	    createInvitation(User inviter, PromotionCode promotionCode, Resource invitee,
 			             String subject, String message);
 	
 	/**
@@ -135,12 +138,14 @@ public interface InvitationSystem {
 	 * the invitation to the resource if needed. This is an "explicit invitation"
 	 * 
 	 * @param inviter the person doing the inviting
+	 * @param promotionCode code of a promotion (like a web page offering open 
+	 *    invites) that the invitation comes from, or null.
 	 * @param invitee the person being invited
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
 	 * @returns note for the user or null
 	 */
-	public String sendInvitation(User inviter, Resource invitee, 
+	public String sendInvitation(User inviter, PromotionCode promotionCode, Resource invitee, 
 			                     String subject, String message);
 	
 	
@@ -153,12 +158,14 @@ public interface InvitationSystem {
 	 * @see createGetInvitation
 	 * 
 	 * @param inviter
+	 * @param promotionCode code of a promotion (like a web page offering open 
+	 *    invites) that the invitation comes from, or null.
 	 * @param email
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
 	 * @returns note for the user or null
 	 */
-	public String sendEmailInvitation(User inviter, String email, 
+	public String sendEmailInvitation(User inviter, PromotionCode promotionCode, String email, 
 			                          String subject, String message);
 	
 	/**
@@ -191,6 +198,13 @@ public interface InvitationSystem {
 	 * @return number of invitations
 	 */
 	public int getInvitations(User user);
+	
+	
+	/**
+	 * Get the invite that resulted in the account being created.
+	 * @return the invite, or null if the account wasn't created from an invitation
+	 */
+	public InvitationToken getCreatingInvitation(Account account);
 	
 	/** 
 	 * See if user has invited the resource.

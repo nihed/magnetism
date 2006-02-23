@@ -13,6 +13,8 @@
 	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes/>
+	<script type="text/javascript" src="/javascript/dh/welcome.js">
+	</script>
 </head>
 <body>
 <c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>
@@ -25,8 +27,31 @@
   
 		<div class="dh-welcome-message">
 			<p class="dh-welcome-headline">Welcome to DumbHippo</p>
-	
+			
 			<c:choose>
+				<c:when test="${welcome.browser.windows && welcome.fromMySpace}">
+					<%-- For now, we don't provide a no-Windows + MySpace Music option,
+					     since we consider our live Music features the most interesting part
+					     for the MySpace crowd --%>
+					<p>
+						DumbHippo is a new way to share things with your friends. Letting
+						your friends see what music you are playing currently is one
+						of our features, but there's lots more too: for example, you can send
+						interesting web pages to your friends and chat about them live. 
+						If you tell us our MySpace name, you'll  even get bubble notifications 
+						when your buddies add comments on your MySpace page!
+					</p>
+					<input type="radio" name="dhMySpaceRadio" id="dhMySpaceRadioNow" value="now" checked="yes" onclick="dh.welcome.onNowSelected()"></input> 
+					My MySpace name is: <input id="dhMySpaceName" class="dhText" onkeyup="dh.welcome.updateDownload()" onchange="dh.welcome.updateDownload()" value="${welcome.person.account.mySpaceName}"></input>
+					<br/>
+					<input type="radio" name="dhMySpaceRadio" id="dhMySpaceRadioLater" value="later" onclick="dh.welcome.onLaterSelected()">I'll tell you my MySpace name later.</input>
+					<p>
+						To take advantage of the features of DumbHippo, you'll want to
+						download and install our client software.
+					</p>
+					<input type="button" value="Download Now" id="dhMySpaceDownload" onclick="dh.welcome.doDownload('${welcome.downloadUrlWindows}')"></input>
+				</c:when>
+				
 				<c:when test="${welcome.browser.windows}">
 					<div class="dh-big-download-box">
 						<div class="dh-center-children">
