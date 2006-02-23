@@ -12,6 +12,10 @@ import com.dumbhippo.server.PersonViewExtra;
  * 
  */
 public class ContactsPage extends AbstractPersonPage {
+	static private final int ROWS_IN_A_GRID = 4;
+	static private final int USERS_PER_ROW = 5;
+	static private final int NON_USERS_PER_ROW = 2;
+	
 	private int start;
 	private int nextStart;
 	private int stop;
@@ -36,11 +40,18 @@ public class ContactsPage extends AbstractPersonPage {
 						                   PersonViewExtra.PRIMARY_AIM);
 			
 			if (stop > 0) {
-				start = PersonView.computeStart(mingledContacts,stop, 4, 5, 2);
+				start = PersonView.computeStart(mingledContacts, 
+						                        stop, 
+						                        ROWS_IN_A_GRID,
+						                        USERS_PER_ROW,
+						                        NON_USERS_PER_ROW);
 			} 
 			    
 			contacts = new ListBean<PersonView>(PersonView.sortedList(mingledContacts,
-					                                                      start, 4, 5, 2));		
+					                                                  start, 
+					                                                  ROWS_IN_A_GRID,
+					      						                      USERS_PER_ROW,
+					      						                      NON_USERS_PER_ROW));		
 		    nextStart = start + contacts.getSize();
 			if (nextStart <= mingledContacts.size()) {
 				hasMoreContacts = true;
