@@ -690,7 +690,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						em.persist(r);
 					} else {
 						if (data != null)
-							r.updateData(data); // if we got no data, just keep whatever the old data was
+							r.updateData(data);
+						else 
+							; // if we got no data, just keep whatever the old data was
 						r.setLastUpdated(new Date());
 					}
 					return r;
@@ -1038,7 +1040,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// unique artists. For now, just heuristically ask for more results so we have a better shot
 		// at getting several albums, but probably some real solution would be nice.
 		// The case to think about is someone playing an entire album, so their last dozen 
-		// tracks or so are all from the same album.
+		// tracks or so are all from the same album/artist.
 		
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults*12);
 		
