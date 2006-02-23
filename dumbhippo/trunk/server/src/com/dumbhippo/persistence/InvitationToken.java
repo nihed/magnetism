@@ -127,7 +127,10 @@ public class InvitationToken extends Token {
 	
 	@Transient
 	public void setPromotionCode(PromotionCode promotionCode) {
-		setPromotion(promotionCode.getCode());
+		if (promotionCode != null)
+			setPromotion(promotionCode.getCode());
+		else
+			setPromotion(null);
 	}
 	
 	@Transient
