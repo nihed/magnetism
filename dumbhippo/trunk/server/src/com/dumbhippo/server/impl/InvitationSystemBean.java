@@ -362,18 +362,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null || !iv.isValid()) {	
 			Account account = getAccount(inviter);
-			// if we messed up and let them send too many invitations,
-			// we just live with it here; we should have blocked
-			// it or displayed an error in the UI before now.
-			// Yes this is a race that could let someone send more 
-			// invitations than they were allowed to, but that's 
-			// better than throwing a mysterious error at this stage.
-			// I can't figure out how you'd exploit it to 
-			// go crazy and send hundreds of extra invitations.
+			// first things first, do they have the dough
             boolean invitationDeducted = false;
 			if (account.canSendInvitations(1)) {
 				account.deductInvitations(1);
 				invitationDeducted = true;
+			} else {
+				result = CreateInvitationResult.INVITE_WAS_NOT_CREATED;
+				return new Pair<CreateInvitationResult,InvitationToken>(result, null);
 			}
 			
 			// renewing an expiration counts as creating (causes us to send new email)
@@ -477,21 +473,23 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		CreateInvitationResult result = p.getFirst();
 		InvitationToken iv = p.getSecond();
 		String note = null;
-		if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
+		if (result == CreateInvitationResult.INVITE_WAS_NOT_CREATED) {
+			return "Your invitation was not sent because you are out of invitation vouchers."; 
+		} else if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
 			User user = spider.lookupUserByResource(invitee);
 			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
 		} else { 
 			
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
-				note = "The invitation to " + invitee.getHumanReadableString() + " was resent.";				
+				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was resent.";				
 			} else if (result == CreateInvitationResult.NEW_INVITER) {
-				note = "You didn't have to spend an invitation because " + invitee.getHumanReadableString() 
-				       + " was already invited by someone else. We sent out an invitation from you as well.";  			
+				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was sent."
+				       + " You didn't have to spend an invitation because they were already invited by someone else."; 			
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
-				// note can stay null in this case
+				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was sent.";
 			} else {
-				// unknown case, return null
-				return null;
+				// unknown case
+				return "Your invitation was not sent.";
 			}
 			
 			// In all the three of the above cases, we want to send a notification				
@@ -683,7 +681,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		// iv will be null if user is not among the inviters
 		InvitationToken iv = lookupInvitationFor(user, invitee);
-		if (iv != null && iv.isValid())
+		
+		if (iv == null)
+			return false;
+		
+		InviterData ivd = getInviterData(iv, user);
+		
+		// ivd should not be null because we just got back an iv because the
+		// user was among the inviters, but just in case check if ivd != null
+		if (ivd != null && iv.isValid() && !ivd.isDeleted())
 			return true;
 		else 
 			return false;

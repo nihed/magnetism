@@ -8,6 +8,7 @@ package com.dumbhippo.server;
  */
 public enum CreateInvitationResult {
 	INVITE_CREATED,
+	INVITE_WAS_NOT_CREATED,
 	NEW_INVITER,
 	REPEAT_INVITE,
 	ALREADY_HAS_ACCOUNT,

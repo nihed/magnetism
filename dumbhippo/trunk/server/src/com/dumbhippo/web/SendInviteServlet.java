@@ -9,11 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 
 public class SendInviteServlet extends AbstractServlet {
@@ -47,24 +44,11 @@ public class SendInviteServlet extends AbstractServlet {
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
-		// one last check, because createEmailInvitation doesn't check it
-		if (invitationSystem.getInvitations(user) < 1) {
-			// if the user has no invitations available to him, we can only allow the 
-			// invitation to go through if it is already valid
-			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-		    Resource emailRes = identitySpider.getEmail(email);
-	        InvitationToken invite = invitationSystem.lookupInvitationFor(user, emailRes);   
-	        boolean throwException = true;
-	        if (invite != null) {
-	        	throwException = !invite.isValid();
-	        }
-	        if (throwException) {
-			    throw new HumanVisibleException("You can't invite anyone else for now");
-	        }
-		}
-		
+		// we no longer need to check if the user has an invitation voucher to spend, 
+		// because invitationSystem will take care of it
 		String note = invitationSystem.sendEmailInvitation(user, null, email, subject, message);
 		
+		if (note == null)
 		request.setAttribute("email", email);
 		request.setAttribute("remaining", invitationSystem.getInvitations(user));
 		request.setAttribute("note", note);

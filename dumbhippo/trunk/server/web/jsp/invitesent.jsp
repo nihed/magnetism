@@ -16,15 +16,8 @@
 
 		<dht:toolbar/>
 
-		<h3>
-			Congratulations, the invitation to 
-		    <c:out value="${email}"/> was sent.
-		</h3>
-
-		<c:if test="${!empty note}">
-			<p>${note}</p>
-		</c:if>
-
+		<h3>${note}</h3>
+                
 		<c:choose>
 			<c:when test="${remaining > 0}">
 				<p>You can invite ${remaining} more people. <a href="/invite">Invite someone else now.</a></p>

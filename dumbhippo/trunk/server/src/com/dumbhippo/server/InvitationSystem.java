@@ -135,7 +135,8 @@ public interface InvitationSystem {
 	/**
 	 * Add inviter as a person wanting to invite invitee into the system.
 	 * Adds the invitee as a contact if they weren't already. Sends out
-	 * the invitation to the resource if needed. This is an "explicit invitation"
+	 * the invitation to the resource if appropriate. This is an "explicit 
+	 * invitation".
 	 * 
 	 * @param inviter the person doing the inviting
 	 * @param promotionCode code of a promotion (like a web page offering open 
@@ -143,19 +144,17 @@ public interface InvitationSystem {
 	 * @param invitee the person being invited
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
-	 * @returns note for the user or null
+	 * @returns note that will be displayed to the user or null
 	 */
 	public String sendInvitation(User inviter, PromotionCode promotionCode, Resource invitee, 
 			                     String subject, String message);
 	
 	
 	/**
-	 * Does an "explicit invitation"
-	 * Add inviter as a person wanting to invite the owner
-	 * of an email address.  Adds invitee as contact of inviter 
-	 * if they aren't already; sends out the invite via email. Doesn't do 
-	 * anything if the inviter has already invited the invitee.
-	 * @see createGetInvitation
+	 * Add inviter as a person wanting to invite invitee into the system.
+	 * Adds the invitee as a contact if they weren't already. Sends out
+	 * the invitation to the resource if appropriate. This is an "explicit 
+	 * invitation".
 	 * 
 	 * @param inviter
 	 * @param promotionCode code of a promotion (like a web page offering open 
@@ -163,7 +162,7 @@ public interface InvitationSystem {
 	 * @param email
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
-	 * @returns note for the user or null
+	 * @returns note that will be displayed to the user or null
 	 */
 	public String sendEmailInvitation(User inviter, PromotionCode promotionCode, String email, 
 			                          String subject, String message);
@@ -207,10 +206,11 @@ public interface InvitationSystem {
 	public InvitationToken getCreatingInvitation(Account account);
 	
 	/** 
-	 * See if user has invited the resource.
+	 * See if user has invited the resource and has not deleted their invitation.
 	 * @param user the user
 	 * @param invitee invitee resource
-	 * @return true if this user has invited this invitee
+	 * @return true if this user has invited this invitee and has not deleted 
+	 *         their invitation
 	 */
 	public boolean hasInvited(User user, Resource invitee);
 }
