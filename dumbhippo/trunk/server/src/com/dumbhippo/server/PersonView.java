@@ -279,19 +279,18 @@ public class PersonView extends EntityView {
 	}
 	
 	/**
-	 * Convert an (unordered) set of PersonView into a a list and
-	 * sort alphabetically with the default collator. You generally
-	 * want to do this before displaying things to user, since
-	 * iteration through Set will be in hash table order.
+	 * Divide an (unordered) set of PersonView into lists based on the 
+	 * type of person, then, if the sort flag is on, sort alphabetically 
+	 * with the default collator. The types of people are: people who 
+	 * have accounts, people who have been invited, people who need 
+	 * invites, and people for whom their invited status is not set. 
+	 * Return the list that contains the four lists. 
 	 * 
-	 * @param groups a set of Person objects
-	 * @return a newly created List containing the sorted groups
+	 * @param views a set of PersonView objects
+	 * @param sort a flag indicating whether to sort the formed lists alphabetically
+	 * @return a List of created Lists
 	 */
-	static public List<PersonView> sortedList(Set<PersonView> views) {
-		// sort the set into four categories: people who have accounts,
-		// people who have been invited, and people who need invites,
-		// people for whom their invited status is not set
-		// then sort each category alphabetically		
+	static private List<List<PersonView>> generatePeopleLists(Set<PersonView> views, boolean sort) {	
 		ArrayList<PersonView> listOfUsers = new ArrayList<PersonView>();
 		ArrayList<PersonView> listOfPeopleWithInvites = new ArrayList<PersonView>();
 		ArrayList<PersonView> listOfPeopleWithNoInvites = new ArrayList<PersonView>();
@@ -309,28 +308,261 @@ public class PersonView extends EntityView {
 			}
 		}
 		
-		final Collator collator = Collator.getInstance();
-		Comparator<PersonView> comparator = 
-			new Comparator<PersonView>() {
-			    public int compare (PersonView v1, PersonView v2) {
-				    return collator.compare(v1.getName(), v2.getName());
-			    }
-		    };
+		if (sort) {
+		    final Collator collator = Collator.getInstance();
+		    Comparator<PersonView> comparator = 
+			    new Comparator<PersonView>() {
+			        public int compare (PersonView v1, PersonView v2) {
+				        return collator.compare(v1.getName(), v2.getName());
+			        }
+		        };
 		    
-		Collections.sort(listOfUsers, comparator);
-		Collections.sort(listOfPeopleWithInvites, comparator);
-		Collections.sort(listOfPeopleWithNoInvites, comparator);
-		Collections.sort(listOfPeopleWithNoInvitedStatus, comparator);
+		    Collections.sort(listOfUsers, comparator);
+		    Collections.sort(listOfPeopleWithInvites, comparator);
+		    Collections.sort(listOfPeopleWithNoInvites, comparator);
+		    Collections.sort(listOfPeopleWithNoInvitedStatus, comparator);
+		}
+	  
+		ArrayList<List<PersonView>> listOfLists = new ArrayList<List<PersonView>>();
+		listOfLists.add(listOfUsers);
+		listOfLists.add(listOfPeopleWithInvites);
+		listOfLists.add(listOfPeopleWithNoInvites);
+		listOfLists.add(listOfPeopleWithNoInvitedStatus);
+		
+		return listOfLists;
+	}
+	
+	
+	/**
+	 * Divide an (unordered) set of PersonView into lists based on the 
+	 * type of person, then sort alphabetically with the default collator. 
+	 * The types of people are: people who have accounts, people who have 
+	 * been invited, people who need invites, and people for whom their 
+	 * invited status is not set. Return the list that combines the members
+	 * of the four lists in the above order. You generally want to do this 
+	 * before displaying things to user, since iteration through Set will 
+	 * be in hash table order.
+	 * 
+	 * @param views a set of PersonView objects
+	 * @return a newly created List containing the sorted people
+	 */
+	static public List<PersonView> sortedList(Set<PersonView> views) {
+		
+		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
 		
 		// combine the above lists in the list to return
 		ArrayList<PersonView> list = new ArrayList<PersonView>();
-		list.addAll(listOfUsers);
-		list.addAll(listOfPeopleWithInvites);
-		list.addAll(listOfPeopleWithNoInvites);
-		list.addAll(listOfPeopleWithNoInvitedStatus);
+		list.addAll(listOfLists.get(0));
+		list.addAll(listOfLists.get(1));
+		list.addAll(listOfLists.get(2));
+		list.addAll(listOfLists.get(3));
 		
 		return list;
 	}
+	
+	/**
+	 * Divide an (unordered) set of PersonView into lists based on the 
+	 * type of person, then sort alphabetically with the default collator. 
+	 * The types of people are: people who have accounts, people who have 
+	 * been invited, people who need invites, and people for whom their 
+	 * invited status is not set. Return the list that contains a subset
+	 * of a list with the members of the four lists in the above order. 
+	 * The subset is defined by the index of the element to start with 
+	 * (1-based), number of rows the elements need to fill in, and the 
+	 * number of different types of elements that fit per one row.  
+	 * 
+	 * @param views a set of PersonView objects
+	 * @param start an index of element to start with, the order is 1-based, 
+	 *              0 is treated as 1
+	 * @param rows number of rows elements are expected to fill in
+	 * @param usersPerRow number of users that fit per one row
+	 * @param nonUsersPerRow number of non-users that fit per one row
+	 * @return a newly created List containing the specified sorted subset 
+	 *         of people
+	 */
+	static public List<PersonView> sortedList(Set<PersonView> views, int start, 
+			                                  int rows, int usersPerRow, 
+			                                  int nonUsersPerRow) {
+		
+		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
+
+		ArrayList<PersonView> listOfUsers = (ArrayList<PersonView>)listOfLists.get(0);
+		ArrayList<PersonView> listOfPeopleWithInvites = (ArrayList<PersonView>)listOfLists.get(1);
+		ArrayList<PersonView> listOfPeopleWithNoInvites = (ArrayList<PersonView>)listOfLists.get(2);
+		ArrayList<PersonView> listOfPeopleWithNoInvitedStatus = (ArrayList<PersonView>)listOfLists.get(3);
+		
+		// combine appropriate members of the above lists in the list to return
+		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		
+		int count = 0;
+		int index = start-1;
+		if (start == 0) {
+			index = 0;
+		}
+		
+		while ((listOfUsers.size() > index) && (count < rows*usersPerRow)) {
+				list.add(listOfUsers.get(index));
+				count++;
+				index++;
+		}
+		
+		// this is an integer division
+		int rowsUsed = count/usersPerRow;
+		
+		// want to add one if there was a row that was partially used
+		if (rowsUsed*usersPerRow < count) {
+			rowsUsed++;
+		}
+	
+		int spacesLeft = (rows-rowsUsed)*nonUsersPerRow;
+		
+		if (count > 0) {
+			index = 0;
+		} else {
+			index = index-listOfUsers.size();
+		}
+				
+		while ((listOfPeopleWithInvites.size() > index) && (spacesLeft > 0)) {
+			list.add(listOfPeopleWithInvites.get(index));
+			spacesLeft--;
+			count++;
+			index++;
+		}
+		
+		if (count > 0) {
+			index = 0;
+		} else {
+			index = index-listOfPeopleWithInvites.size();
+		}		
+		
+		while ((listOfPeopleWithNoInvites.size() > index) && (spacesLeft > 0)) {
+			list.add(listOfPeopleWithNoInvites.get(index));
+			spacesLeft--;
+			count++;
+			index++;
+		}
+		
+		if (count > 0) {
+			index = 0;
+		} else {
+			index = index-listOfPeopleWithNoInvites.size();
+		}		
+		
+		while ((listOfPeopleWithNoInvitedStatus.size() > index) && (spacesLeft > 0)) {
+			list.add(listOfPeopleWithNoInvitedStatus.get(index));
+			spacesLeft--;
+			count++;
+			index++;
+		}
+		
+		return list;
+	}
+	
+	/**
+	 * Divide an (unordered) set of PersonView into lists based on the 
+	 * type of person. The types of people are: people who have accounts, 
+	 * people who have been invited, people who need invites, and people 
+	 * for whom their invited status is not set. Then identify an 
+	 * ndex of an appropriate start element, given the index of the stop 
+	 * element and the layout constraints.
+	 * 
+	 * In this context, the stop element means that we want to get the 
+	 * maximum number of elements it is possible to display up to and 
+	 * including this element. More elements can be added past that
+	 * element, if space allows. Therefore, we provide the function that 
+	 * identifies a start element index, rather than the function that 
+	 * assembles a list based on the stop element index.
+	 * 
+     * If a function that returns a list that ends with a given element
+     * turns out to be useful, having a function just like this one and
+     * assembling a list in it by adding elements to the front of it would 
+     * do the trick.
+	 * 
+	 * @param views a set of PersonView objects
+	 * @param stop an index of an element up to which we want to display a 
+	 *             maximum possible number of elements, the order is 1-based
+	 * @param rows number of rows elements are expected to fill in
+	 * @param usersPerRow number of users that fit per one row
+	 * @param nonUsersPerRow number of non-users that fit per one row
+	 * @return an index of an appropriate start element
+	 */
+	static public int computeStart(Set<PersonView> views, int stop, 
+                                   int rows, int usersPerRow, 
+                                   int nonUsersPerRow) {	   
+		// we do not need lists to be sorted for this function
+		List<List<PersonView>> listOfLists = generatePeopleLists(views, false);
+
+		ArrayList<PersonView> listOfUsers = (ArrayList<PersonView>)listOfLists.get(0);
+		ArrayList<PersonView> listOfPeopleWithInvites = (ArrayList<PersonView>)listOfLists.get(1);
+		ArrayList<PersonView> listOfPeopleWithNoInvites = (ArrayList<PersonView>)listOfLists.get(2);
+		ArrayList<PersonView> listOfPeopleWithNoInvitedStatus = (ArrayList<PersonView>)listOfLists.get(3);
+		
+        int index = listOfPeopleWithNoInvitedStatus.size()-1;
+		int spacesLeft = rows*nonUsersPerRow;
+		
+		int sizeOfFirstTwoLists =  listOfUsers.size() + listOfPeopleWithInvites.size();
+		int sizeOfFirstThreeLists = sizeOfFirstTwoLists + listOfPeopleWithNoInvites.size();
+		// should be the same as the size of the views Set
+		int sizeOfAllFourLists = sizeOfFirstThreeLists + listOfPeopleWithNoInvitedStatus.size();
+
+        // if stop is less than or equal to the sizeOfFirstThreeLists, the index will be negative,
+        // an we won't add any elements in the while loop
+        if (stop < sizeOfAllFourLists ) {
+        	index = stop - sizeOfFirstThreeLists - 1;
+        }
+        while ((index >= 0) && (spacesLeft > 0)) {
+        	// imagine adding listOfPeopleWithNoInvitedStatus.get(index) to the front of the list
+        	index--;
+        	spacesLeft--;
+        	
+        }
+        
+        index = listOfPeopleWithNoInvites.size()-1;
+        if  (stop < sizeOfFirstThreeLists) {
+        	index = stop - sizeOfFirstTwoLists - 1;
+        }
+    	while ((index >= 0) && (spacesLeft > 0)) {
+        	// imagine adding listOfPeopleWithNoInvites.get(index) to the front of the list
+    		index--;
+    		spacesLeft--;
+    	}
+    	
+        index = listOfPeopleWithInvites.size()-1;
+        if  (stop < sizeOfFirstTwoLists) {
+        	index = stop - listOfUsers.size() - 1;
+        }
+    	while ((index >= 0) && (spacesLeft > 0)) {
+        	// imagine adding listOfPeopleWithInvites.get(index) to the front of the list
+    		index--;
+    		spacesLeft--;
+    	}        
+    	
+    	int spacesUsed = (rows*nonUsersPerRow)-spacesLeft;
+    	// this is an integer division, so it would round down
+    	int rowsUsed = spacesUsed/nonUsersPerRow;
+        if (rowsUsed*nonUsersPerRow < spacesUsed) {
+            rowsUsed++;	
+        }
+        
+        int count = 0;
+        index = listOfUsers.size()-1;
+        if (stop < listOfUsers.size()) {
+        	index = stop - 1;
+        }
+    	while ((index >= 0) && (count < (rows-rowsUsed)*usersPerRow)) {
+        	// imagine adding listOfUsers.get(index) to the front of the list
+    		index--;
+    		count++;
+    	}        
+        
+    	// spacesUsed + count is how many items we definitely want to display
+    	int start = stop - spacesUsed - count + 1; 
+    	if (stop > sizeOfAllFourLists) {
+    		start = sizeOfAllFourLists - spacesUsed - count + 1;
+    	}
+    	
+        return start;
+    }
 	
 	/**
 	 * Is this user currently online?

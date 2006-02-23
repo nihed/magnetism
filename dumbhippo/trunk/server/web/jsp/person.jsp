@@ -118,7 +118,10 @@
 			<div class="dh-people">
 			<c:choose>
 				<c:when test="${viewperson.contacts.size > 0}">
-					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="8" twoLineBody="true"/>
+					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="8" longBodyLengthLimit="24" twoLineBody="true"/>
+					<p class="dh-right-box-text">
+				        They have a total of ${viewperson.totalContacts} contacts. You can view all their contacts <a href="/contacts?who=${personId}">here</a>.
+				    </p> 
 				</c:when>
 				<c:otherwise>
 					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>

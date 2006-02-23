@@ -15,7 +15,7 @@ public class ViewPersonPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ViewPersonPage.class);	
 
-	static private final int MAX_POSTS_SHOWN = 10;
+	static private final int MAX_POSTS_SHOWN = 4;
 
 	private PostingBoard postBoard;
 	

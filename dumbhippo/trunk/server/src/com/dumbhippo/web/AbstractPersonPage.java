@@ -1,5 +1,7 @@
 package com.dumbhippo.web;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -15,29 +17,27 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
 
-public abstract class AbstractPersonPage {
+public abstract class AbstractPersonPage extends AbstractSigninPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
+	
+	static private final int MAX_CONTACTS_SHOWN = 9;
 	
 	private User viewedPerson;
 	private String viewedPersonId;
 	private boolean disabled;
 	
-	@Signin
-	private SigninBean signin;
-	
-	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
 	private PersonView person;
 	
 	private ListBean<Group> groups;
-	private ListBean<PersonView> contacts;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
 	
-	protected AbstractPersonPage() {
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
+	private int totalContacts;
+	
+	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		lookedUpCurrentTrack = false;
@@ -61,6 +61,10 @@ public abstract class AbstractPersonPage {
 
 	public String getViewedPersonId() {
 		return viewedPersonId;
+	}
+
+	public User getViewedPerson() {
+		return viewedPerson;
 	}
 	
 	public User getViewedUser() {
@@ -137,10 +141,30 @@ public abstract class AbstractPersonPage {
 	
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), viewedPerson, false,
-					PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
+			Set<PersonView> mingledContacts = 
+				identitySpider.getContacts(signin.getViewpoint(), viewedPerson, 
+						                   false, PersonViewExtra.INVITED_STATUS, 
+						                   PersonViewExtra.PRIMARY_EMAIL, 
+						                   PersonViewExtra.PRIMARY_AIM);
+			contacts = new ListBean<PersonView>(PersonView.sortedList(mingledContacts,
+					                                                  1, MAX_CONTACTS_SHOWN, 
+					                                                  1, 1));
+			
+			totalContacts = mingledContacts.size();
 		}
 		return contacts;
+	}
+	
+	public void setTotalContacts(int totalContacts) {		
+	    this.totalContacts = totalContacts;
+	}
+	
+	public int getTotalContacts() {
+		if (contacts == null) {
+			getContacts();
+		}
+		
+		return totalContacts;
 	}
 	
 	public TrackView getCurrentTrack() {

@@ -1,5 +1,7 @@
 package com.dumbhippo.web;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -19,6 +21,7 @@ import com.dumbhippo.server.PostingBoard;
 public class HomePage extends AbstractSigninPage {
 	static private final Logger logger = GlobalSetup.getLogger(HomePage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 4;
+	static private final int MAX_CONTACTS_SHOWN = 9;
 	
 	private PostingBoard postBoard;
 	private GroupSystem groupSystem;
@@ -26,11 +29,13 @@ public class HomePage extends AbstractSigninPage {
 	private ListBean<PostView> receivedPosts;
 	private ListBean<PostView> contactPosts;
 	private ListBean<GroupView> groups;
-	private ListBean<PersonView> contacts;	
+	
+	private int totalContacts;
 
 	public HomePage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		totalContacts = 0;
 	}
 
 	public ListBean<PostView> getReceivedPosts() {
@@ -49,13 +54,6 @@ public class HomePage extends AbstractSigninPage {
 		return groups;
 	}
 	
-	public ListBean<PersonView> getContacts() {
-		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
-		}
-		return contacts;
-	}
-	
 	public ListBean<PostView> getContactPosts() {
 		if (contactPosts == null) {
 			contactPosts = new ListBean<PostView>(postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0, 0));
@@ -67,4 +65,31 @@ public class HomePage extends AbstractSigninPage {
 		return MAX_RECEIVED_POSTS_SHOWN;
 	}
 	
+	public ListBean<PersonView> getContacts() {
+		if (contacts == null) {
+			Set<PersonView> mingledContacts = 
+				identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), 
+						                   false, PersonViewExtra.INVITED_STATUS, 
+						                   PersonViewExtra.PRIMARY_EMAIL, 
+						                   PersonViewExtra.PRIMARY_AIM);
+			contacts = new ListBean<PersonView>(PersonView.sortedList(mingledContacts,
+					                                                  1, MAX_CONTACTS_SHOWN, 
+					                                                  1, 1));
+			
+			totalContacts = mingledContacts.size();
+		}
+		return contacts;
+	}
+	
+	public void setTotalContacts(int totalContacts) {		
+	    this.totalContacts = totalContacts;
+	}
+	
+	public int getTotalContacts() {
+		if (contacts == null) {
+			getContacts();
+		}
+		
+		return totalContacts;
+	}
 }

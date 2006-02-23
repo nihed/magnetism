@@ -24,6 +24,14 @@ a.dh-person:link {
 	font-size:				x-small;
 }
 
+.dh-listed-person-with-invite-link {
+	font-size:				x-small;
+}
+
+.dh-invite-link {
+    font-size:              x-small;
+}
+
 span.dh-headshot {
 	font-size:				x-small;
 }

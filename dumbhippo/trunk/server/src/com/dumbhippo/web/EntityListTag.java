@@ -16,12 +16,14 @@ public class EntityListTag extends SimpleTagSupport {
 	private boolean showInviteLinks;
 	private boolean photos;
 	private int bodyLengthLimit;
+	private int longBodyLengthLimit;
 	private String separator;
 	private boolean music;
 	private boolean twoLineBody;
 	
 	public EntityListTag() {
 		bodyLengthLimit = -1;
+		longBodyLengthLimit = -1;
 		twoLineBody = false;
 	}
 
@@ -43,8 +45,12 @@ public class EntityListTag extends SimpleTagSupport {
 		while (it.hasNext()) {
 			Object o = it.next();
 			
-			String html = EntityTag.entityHTML(getJspContext(), o, buildStamp, skipRecipientId, showInviteLinks, 
-					   photos, music, cssClass, bodyLengthLimit, twoLineBody);
+			String html = 
+				EntityTag.entityHTML(getJspContext(), o, buildStamp, 
+						             skipRecipientId, showInviteLinks, 
+					                 photos, music, cssClass, 
+					                 bodyLengthLimit, longBodyLengthLimit, 
+					                 twoLineBody);
             String presenceHtml = PresenceTag.presenceHTML(o, skipRecipientId);
 
             if (html == null)
@@ -85,6 +91,10 @@ public class EntityListTag extends SimpleTagSupport {
 		this.bodyLengthLimit = bodyLengthLimit;
 	}
 
+	public void setLongBodyLengthLimit(int longBodyLengthLimit) {
+		this.longBodyLengthLimit = longBodyLengthLimit;
+	}
+	
 	public void setSeparator(String separator) {
 		this.separator = separator;
 	}

@@ -26,22 +26,25 @@ public class EntityTag extends SimpleTagSupport {
 	private boolean photo;
 	private String cssClass;
 	private int bodyLengthLimit;
+	private int longBodyLengthLimit;
 	private boolean music;	
 	private boolean twoLineBody;
 	
 	public EntityTag() {
 		bodyLengthLimit = -1;
+		longBodyLengthLimit = -1;
 		twoLineBody = false;
 	}
 	
 	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId,
 			boolean showInviteLinks, boolean photo, boolean music,
-			String cssClass, int bodyLengthLimit, boolean twoLineBody) {
+			String cssClass, int bodyLengthLimit, int longBodyLengthLimit, boolean twoLineBody) {
 		String link = null;
 		String body;
 		String photoUrl = null;
 		String defaultCssClass = "dh-headshot";
-
+		String cssArea = "";
+		
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
 			User user = view.getUser();
@@ -57,6 +60,7 @@ public class EntityTag extends SimpleTagSupport {
 				defaultCssClass = "dh-person";
 			} else {
 				defaultCssClass = "dh-listed-person";
+				cssArea = "dh-listed-person-area";
 			}
 			body = view.getName();
 		} else if (o instanceof GroupView) {
@@ -100,10 +104,16 @@ public class EntityTag extends SimpleTagSupport {
 		
 		XmlBuilder xml = new XmlBuilder();
 
+		boolean showInviteLink = false;
+		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
+			showInviteLink = true;
+			cssClass = cssClass + "-with-invite-link";
+		}
+		
 		// truncateString would return the original String if bodyLengthLimit is negative
 		String bodyOriginal = body;
 		String longerBody = 
-			StringUtils.truncateString(bodyOriginal, bodyLengthLimit*3);
+			StringUtils.truncateString(bodyOriginal, longBodyLengthLimit);
 		
 		int finalIndexOfSpace = -1;
 		
@@ -126,11 +136,11 @@ public class EntityTag extends SimpleTagSupport {
 		// to check that
 		body = StringUtils.truncateString(bodyOriginal, finalIndexOfSpace+1+bodyLengthLimit);
 		
-		boolean openElement = false;
+		int openElements = 0;	
 		if (photo && photoUrl != null) {
 			if (link != null) {
 				xml.openElement("a", "href", link, "target", "_top", "class", cssClass, "title", bodyOriginal);
-				openElement = true;
+				openElements++;
 			}
 			
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
@@ -144,25 +154,31 @@ public class EntityTag extends SimpleTagSupport {
 			if (link != null) { 
 			    xml.appendTextNode("a", body, "href", link, "target", "_top");
 			} else {
+				if (!cssArea.equals("")) {
+					xml.openElement("div", "class", cssArea);
+					openElements++;
+				}
 				xml.openElement("div", "class", cssClass, "title", bodyOriginal);
-				openElement=true;
 				xml.appendEscaped(longerBody);
+				xml.closeElement();				
 			}
 		}
 		
-		if (showInviteLinks && o instanceof PersonView && !((PersonView)o).isInvited()) {
+		if (showInviteLink) {
 			PersonView view = (PersonView)o;
 			if (view.getEmail() != null) {
-				xml.append(" (");
-				String inviteUrl = "/invite?fullName=" + StringUtils.urlEncode(view.getName()) + "&email=" + StringUtils.urlEncode(view.getEmail().getEmail()); 
-				xml.appendTextNode("a", "invite", "href", inviteUrl);
-				xml.append(")");
+			    xml.openElement("div", "class", "dh-invite-link");
+			    xml.append(" (");
+			    String inviteUrl = "/invite?fullName=" + StringUtils.urlEncode(view.getName()) + "&email=" + StringUtils.urlEncode(view.getEmail().getEmail()); 
+			    xml.appendTextNode("a", "invite", "href", inviteUrl);
+			    xml.append(")");
+			    xml.closeElement();
 			}
 		}
 
-		if (openElement) {
+		while (openElements > 0) {
 			xml.closeElement();
-			openElement = false;
+			openElements--;
 		}
 		
 		return xml.toString();
@@ -177,7 +193,8 @@ public class EntityTag extends SimpleTagSupport {
 			throw new RuntimeException(e);
 		}
 		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, 
-				                photo, music, cssClass, bodyLengthLimit, twoLineBody));
+				                photo, music, cssClass, bodyLengthLimit, longBodyLengthLimit, 
+				                twoLineBody));
 	}
 	
 	public void setValue(Object value) {
@@ -200,6 +217,10 @@ public class EntityTag extends SimpleTagSupport {
 		this.bodyLengthLimit = bodyLengthLimit;
 	}
 
+	public void setLongBodyLengthLimit(int longBodyLengthLimit) {
+		this.longBodyLengthLimit = longBodyLengthLimit;
+	}
+	
 	public void setMusic(boolean music) {
 		this.music = music;
 	}

@@ -41,9 +41,9 @@
 			        <!-- extra result is a marker that we have more coming, but don't display it -->
                     <c:choose>
                         <c:when test="${invitesPage}">
-                        <div class="dh-later-invitations">
-                            <a href="/invites?start=${start+maxInvitations}">Later invitations</a></h2>
-						</div>
+                            <div class="dh-later-invitations">
+                                <a href="/invites?start=${start+maxInvitations}">Later invitations</a></h2>
+						    </div>
                         </c:when>
                         <c:otherwise>
                             <p class="dh-right-box-text">

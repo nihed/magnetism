@@ -20,9 +20,9 @@ public abstract class AbstractSigninPage {
 	protected IdentitySpider identitySpider;
 	protected InvitationSystem invitationSystem;
 	protected int invitations;
-	
 	protected PersonView person;
-
+	protected ListBean<PersonView> contacts;	
+	
 	protected AbstractSigninPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
@@ -45,6 +45,13 @@ public abstract class AbstractSigninPage {
 			invitations = invitationSystem.getInvitations(signin.getUser()); 
 		}
 		return invitations;
+	}
+	
+	public ListBean<PersonView> getContacts() {
+		if (contacts == null) {
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
+		}
+		return contacts;
 	}
 	
 }

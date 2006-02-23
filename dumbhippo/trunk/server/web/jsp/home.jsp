@@ -77,7 +77,10 @@
 			    <div class="dh-people">
 			        <c:choose>
 			   	        <c:when test="${home.contacts.size > 0}">
-				    	    <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="8" twoLineBody="true"/>
+				    	    <dh:entityList value="${home.contacts.list}" showInviteLinks="${home.invitations > 0}" photos="true" bodyLengthLimit="8" longBodyLengthLimit="24" twoLineBody="true"/>
+				    	    <p class="dh-right-box-text">
+				    	        You have a total of ${home.totalContacts} contacts. You can view all your contacts <a href="/contacts">here</a>.
+				    	    </p>    
 				        </c:when>
 				        <c:otherwise>
 				  	        <!-- FIXME: need class definition for this -->

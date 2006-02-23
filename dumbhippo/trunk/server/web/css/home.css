@@ -9,6 +9,7 @@
 /* FIXME: dh-right-box-text is no longer specific to home? */
 .dh-right-box-text {
 	font-size:				x-small;
+	width:                  180px;
 	color:					#cecece;
 	text-align:				justify;
 	padding:				3px;
@@ -90,20 +91,51 @@ a.dh-person {
 
 .dh-listed-person {
 	font-size:				small;
-	width:					145px;	
+}
+
+.dh-people .dh-listed-person {
+	width:					145px;
+	text-align:				left;	
 	display:				block;	
-	margin-left:            1px;
-	margin-top:			    15px;
+	margin-left:            2px;
+	margin-top:			    5px;
 	margin-bottom:			15px;
 	padding:				0px;
-	text-align:				left;
 	color:					white;
 	background-color:		inherit;
 	border:					0;
 	float:                  left;
 }
 
+.dh-people .dh-listed-person-with-invite-link {
+	width:					145px;
+	text-align:				left;	
+	display:				block;	
+	margin-left:            2px;
+	margin-top:			    5px;
+	padding:				0px;
+	color:					white;
+	background-color:		inherit;
+	border:					0;
+	float:                  left;
+}
+
+.dh-invite-link {
+    font-size:              small;
+	text-align:				left;	
+	margin-bottom:          15px;
+	margin-left:            2px;
+}
+
 a.dh-listed-person {
+	color:					#fff500;
+}
+
+a.dh-listed-person-with-invite-link {
+	color:					#fff500;
+}
+
+a.dh-invite-link {
 	color:					#fff500;
 }
 
