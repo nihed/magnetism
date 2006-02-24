@@ -20,7 +20,7 @@ public class HotnessIQHandler extends AbstractIQHandler {
 	public HotnessIQHandler() {
 		super("DumbHippo Hotness IQ Handler");
 		
-		Log.debug("creating Prefs handler");
+		Log.debug("creating Hotness handler");
 		info = new IQHandlerInfo("prefs", "http://dumbhippo.com/protocol/hotness");
 	}
 

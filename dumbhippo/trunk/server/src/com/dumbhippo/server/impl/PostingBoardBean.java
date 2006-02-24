@@ -221,6 +221,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
+		em.refresh(post); // Grab the post in this session
 		
 		sendPostNotifications(post, expandedRecipients, isTutorialPost);
 		
@@ -440,7 +441,7 @@ public class PostingBoardBean implements PostingBoard {
 		return results;
 	}
 	
-	private PostView getPostView(Viewpoint viewpoint, Post post) {
+	public PostView getPostView(Viewpoint viewpoint, Post post) {
 		List<Object> recipients = new ArrayList<Object>();
 		
 		addGroupRecipients(viewpoint, post, recipients);
@@ -668,7 +669,7 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-     public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
+    public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
     	 if (viewpoint != null)
     		 throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
     	 
@@ -684,6 +685,13 @@ public class PostingBoardBean implements PostingBoard {
     	 
     	 return viewers;
     }
+    
+	public int getPostViewerCount(Guid guid) {	
+		Query q = em.createQuery("SELECT COUNT(ppd) FROM PersonPostData ppd WHERE ppd.post = :postId");
+		q.setParameter("postId", guid.toString());
+		Number count = (Number) q.getSingleResult();
+		return count.intValue();
+	}    
 	
 	public void postViewedBy(String postId, User clicker) {
 		logger.debug("Post {} clicked by {}", postId, clicker);
@@ -707,18 +715,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (!updatePersonPostData(clicker, post))
 			return;
-				
-		// We send out notifications afterwards, so that the new clicker
-		// is included in the list of viewers
-		@SuppressWarnings("unchecked")
-		List<User> viewers = em.createQuery("SELECT ppd.person FROM PersonPostData ppd " +
-				   						    "WHERE ppd.post = :post ORDER BY clickedDate DESC")
-					   			 .setParameter("post", post)
-					   			 .getResultList();
-		
-		
-		messageSender.sendPostClickedNotification(post, viewers, clicker);
-		
+	
         LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, clicker.getGuid(), new Date()));
 	}
 	
@@ -811,6 +808,5 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		return url;
 	}
-
 }
 

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -200,5 +201,30 @@ public class PostView {
 		} else {
 			return Collections.emptyList();
 		}
+	}
+	
+	public String toXml() {
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement("post", "id", post.getId());
+		builder.appendTextNode("sender", posterView.getUser().getId());
+		builder.appendTextNode("href", post.getUrl().toString());
+		builder.appendTextNode("title", post.getTitle());
+		builder.appendTextNode("text", post.getText());
+		builder.appendTextNode("postDate", "" + (post.getPostDate().getTime()/1000));
+		PostInfo pi = post.getPostInfo();
+		if (pi != null)
+			builder.appendTextNode("postInfo", pi.toXml());
+		builder.openElement("recipients");
+		for (Object o : recipients) {
+			if (o instanceof PersonView) {
+				PersonView pv = (PersonView) o;
+				builder.append(pv.toIdentifyingXml());
+			} else if (o instanceof GroupView) {
+				GroupView gv = (GroupView) o;
+				builder.append(gv.toIdentifyingXml());
+			}			
+		}
+		builder.closeElement();
+		return builder.toString();
 	}
 }

@@ -246,6 +246,10 @@ public class PresenceMonitor implements SessionManagerListener {
 			return;
 		}
 		
+		// TODO remove this later when we don't have a special admin user
+		if (user.equals("admin"))
+			return;
+		
 		Log.debug("User '" + user + "' session count incrementing by " + increment);
 		
 		synchronized (userInfo) {			

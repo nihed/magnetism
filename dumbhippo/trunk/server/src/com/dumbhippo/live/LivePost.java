@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 
 /**
@@ -42,6 +43,7 @@ public class LivePost extends LiveObject {
 	private int recentMessageCount;
 	private int chattingUserCount;
 	private int viewingUserCount;
+	private int totalViewerCount;
 	
 	private static class Viewer {
 		private Guid userId;
@@ -126,6 +128,29 @@ public class LivePost extends LiveObject {
 		return super.equals(post)
 				&& post.recentMessageCount == recentMessageCount
 				&& post.chattingUserCount == chattingUserCount
-				&& post.viewingUserCount == viewingUserCount;
+				&& post.viewingUserCount == viewingUserCount
+				&& post.totalViewerCount == totalViewerCount;
+	}
+	
+	public int getTotalViewerCount() {
+		return totalViewerCount;
+	}
+
+	public void setTotalViewerCount(int totalViewerCount) {
+		this.totalViewerCount = totalViewerCount;
+	}	
+	
+	public String toXml() {
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement("livepost", "id", getGuid().toString());
+		builder.openElement("recentViewers");
+		for (Viewer viewer : viewers) {
+			builder.appendTextNode("viewer", "", "id", viewer.userId.toString());
+		}
+		builder.closeElement(); // recentViewers
+		builder.appendTextNode("chattingUserCount", ""+getChattingUserCount());
+		builder.appendTextNode("totalViewers", ""+getTotalViewerCount());
+		builder.closeElement(); // livepost
+		return builder.toString();
 	}
 }

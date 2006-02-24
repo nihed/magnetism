@@ -51,7 +51,11 @@ public interface PostingBoard {
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
+	public PostView getPostView(Viewpoint viewpoint, Post post);
+	
 	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
+	
+	public int getPostViewerCount(Guid guid);
 
 	/**
 	 * Notifies system that the post was viewed by the given person.

@@ -3,10 +3,8 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.EJBContext;
@@ -26,27 +24,27 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LivePost;
-import com.dumbhippo.live.LivePostBoard;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NoMailSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
@@ -79,13 +77,13 @@ public class MessageSenderBean implements MessageSender {
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	private PostingBoard postingBoard;
+	
+	@EJB
 	private InvitationSystem invitationSystem;
 
 	@EJB
 	private NoMailSystem noMail;
-	
-	@EJB 
-	private LivePostBoard livePostBoard;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -95,99 +93,36 @@ public class MessageSenderBean implements MessageSender {
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
 	
-	private static class LinkExtension implements PacketExtension {
+	private static class NewPostExtension implements PacketExtension {
 
-		private static final String ELEMENT_NAME = "link";
+		private static final String ELEMENT_NAME = "newPost";
 
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
-		private String senderName;
-		private Guid senderGuid;
-		private String senderPhotoUrl;
-		
-		private Set<PersonView> recipients;
-		
-		private String url;
-		private String postInfo;
+		private PostView postView;
 
-		private Guid guid;
-
-		private String title;
-		
-		private String description;
-
-		private Set<String> groupRecipients;
-		
-		private Set<PersonView> viewers;
-		
-		private String timeout;
-
-		public LinkExtension() {
-		}
-		
-		public void setSenderName(String senderName) {
-			this.senderName = senderName;
-		}
-		public void setSenderGuid(Guid senderGuid) {
-			this.senderGuid = senderGuid;
-		}
-		public void setPostId(Guid postId) {
-			this.guid = postId;
-		}
-		public void setRecipients(Set<PersonView> recipients) {
-			this.recipients = recipients;
-		}
-		public void setGroupRecipients(Set<String> groupRecipients) {
-			this.groupRecipients = groupRecipients;
-		}
-		public void setUrl(String url) {
-			this.url = url;
-		}
-		public void setTitle(String title) {
-			this.title = title;
-		}
-		public void setDescription(String description) {
-			this.description = description;
-		}
-		public void setViewers(Set<PersonView> viewers) {
-			this.viewers = viewers;
-		}
-		
-		private static void appendPersonViews(XmlBuilder builder, String outerNode, String nodeName, Set<PersonView> views) {
-			builder.openElement(outerNode);
-			for (PersonView recipient : views) {
-				Account acct = recipient.getAccount();
-				if (acct != null)
-					builder.appendTextNode(nodeName, recipient.getName(), "id", acct.getId());
-				else
-					builder.appendTextNode(nodeName, recipient.getName());
-			}
-			builder.closeElement();
+		public NewPostExtension(PostView pv) {
+			postView = pv;
 		}
 
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("link", "id", guid.toString(), "xmlns", NAMESPACE, "href", url);
-			builder.appendTextNode("senderName", senderName, "isCache", "true");
-			builder.appendTextNode("senderGuid", senderGuid.toString());
-			builder.appendTextNode("senderPhotoUrl", senderPhotoUrl);
-			builder.appendTextNode("title", title);
-			builder.appendTextNode("description", description);
-			builder.appendTextNode("postInfo", postInfo);
-			if (timeout != null)
-				builder.appendTextNode("timeout", timeout);			
-			appendPersonViews(builder, "recipients", "recipient", recipients);
-			builder.openElement("groupRecipients");
-			for (String recipient : groupRecipients) {
-				builder.appendTextNode("recipient", recipient);
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+			builder.append(postView.getPoster().toXml());
+			for (Object o : postView.getRecipients()) {
+				if (o instanceof PersonView) {
+					PersonView pv = (PersonView) o;
+					builder.append(pv.toXml());
+				} else if (o instanceof GroupView) {
+					GroupView gv = (GroupView) o;
+					builder.append(gv.toXml());
+				}
 			}
-			builder.closeElement();
-			if (viewers != null) {
-				appendPersonViews(builder, "viewers", "viewer", viewers);			
-			}
+			builder.append(postView.toXml());
 			builder.closeElement();
 			return builder.toString();
 		}
+		
 		public String getElementName() {
 			return ELEMENT_NAME;
 		}
@@ -195,50 +130,26 @@ public class MessageSenderBean implements MessageSender {
 		public String getNamespace() {
 			return NAMESPACE;
 		}
-
-		public String getPostInfo() {
-			return postInfo;
-		}
-
-		public void setPostInfo(String postInfo) {
-			this.postInfo = postInfo;
-		}
-
-		public void setSenderPhotoUrl(String senderPhotoUrl) {
-			this.senderPhotoUrl = senderPhotoUrl;
-		}
-
-		public void setTimeout(String timeout) {
-			this.timeout = timeout;
-		}
 	}
 	
-	private static class LinkClickedExtension implements PacketExtension {
+	private static class LivePostChangedExtension implements PacketExtension {
 
-		private static final String ELEMENT_NAME = "linkClicked";
+		private static final String ELEMENT_NAME = "livePostChanged";
 
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/linkshare";
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
-		private Guid swarmerGuid;
-		private String clickerName;
-
-		private Guid guid;
-
-		private String title;
+		private LivePost lpost;
 		
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("linkClicked", "xmlns", NAMESPACE, "id", guid.toString(), "swarmerId", swarmerGuid.toString());
-			builder.appendTextNode("swarmerName", clickerName, "isCache", "true");	
-			builder.appendTextNode("postTitle", title, "isCache", "true");
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+			builder.append(lpost.toXml());
 			builder.closeElement();
 			return builder.toString();
 		}
-		public LinkClickedExtension(Guid swarmerGuid, String clickerName, Guid postId, String title) {
-			this.swarmerGuid = swarmerGuid;
-			this.clickerName = clickerName;
-			this.guid = postId;
-			this.title = title;
+		
+		public LivePostChangedExtension(LivePost lpost) {
+			this.lpost = lpost;
 		}
 
 		public String getElementName() {
@@ -331,12 +242,14 @@ public class MessageSenderBean implements MessageSender {
 	private static class ActivePostsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "activePostsChanged";
 
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/liveposts";
+		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
-		List<String> livePosts;
+		List<PostView> postViews;
+		List<LivePost> livePosts;
 		
-		public ActivePostsChangedExtension(List<String> livePosts) {
-			this.livePosts = livePosts;
+		public ActivePostsChangedExtension(List<PostView> postViews, List<LivePost> posts) {
+			this.postViews = new ArrayList<PostView>(postViews);
+			this.livePosts = new ArrayList<LivePost>(posts);
 		}
 
 		public String getElementName() {
@@ -350,10 +263,9 @@ public class MessageSenderBean implements MessageSender {
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (String postXml : livePosts) {
-				builder.openElement("livePost");
-				builder.append(postXml);
-				builder.closeElement();
+			for (int i = 0; i < livePosts.size(); i++) {
+				builder.append(postViews.get(i).toXml());
+				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();
 			return builder.toString();
@@ -457,42 +369,9 @@ public class MessageSenderBean implements MessageSender {
 			
 			Viewpoint viewpoint = new Viewpoint(recipient);
 
-			PersonView recipientView = identitySpider.getPersonView(viewpoint, post.getPoster());
-			String senderName = recipientView.getName();
-			Set<PersonView> recipientViews = new HashSet<PersonView>();
-			for (Resource r : post.getPersonRecipients()) {
-				PersonView viewedP = identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE);
-				recipientViews.add(viewedP);
-			}
+			PostView postView = postingBoard.getPostView(viewpoint, post);
 			
-			Set<String> groupRecipientNames = new HashSet<String>();
-			for (Group g : post.getGroupRecipients()) {
-				groupRecipientNames.add(g.getName());
-			}
-			
-			LinkExtension extension = new LinkExtension();
-			extension.setPostId(post.getGuid());
-			extension.setSenderName(senderName);
-			extension.setSenderGuid(post.getPoster().getGuid());
-			extension.setSenderPhotoUrl(recipientView.getSmallPhotoUrl());
-			extension.setRecipients(recipientViews);
-			extension.setGroupRecipients(groupRecipientNames);
-			extension.setUrl(url);
-			extension.setTitle(title);
-			extension.setDescription(post.getText());
-			extension.setPostInfo(post.getInfo());
-			if (isTutorialPost)
-				extension.setTimeout("-1");
-			
-			if (viewers != null) {
-				Set<PersonView> viewerNames = new HashSet<PersonView>();
-				for (User u : viewers) {
-					PersonView viewedP = identitySpider.getPersonView(viewpoint, u);
-					viewerNames.add(viewedP);
-				}
-				extension.setViewers(viewerNames);
-			}
-			
+			NewPostExtension extension = new NewPostExtension(postView);
 			message.addExtension(extension);
 
 			message.setBody(String.format("%s\n%s", title, url));
@@ -501,43 +380,12 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public synchronized void sendPostClickedNotification(Post post, User clicker) {
+		public synchronized void sendLivePostChanged(User user, LivePost lpost) {
 			XMPPConnection connection = getConnection();
-
-			for (Resource recipientResource : post.getExpandedRecipients()) {
-				User recipient = identitySpider.getUser(recipientResource);
-				if (recipient == null) {
-					logger.debug("No user for resource {}", recipientResource.getId());
-					// FIXME it looks like a bug that recipient can be null here and we
-					// go on to use it below - investigate
-				}
-				
-				Message message = createMessageFor(recipient);
-
-				Viewpoint viewpoint = new Viewpoint(recipient);
-				PersonView senderView = identitySpider.getPersonView(viewpoint, clicker);
-				String clickerName = senderView.getName();
-				String title = post.getTitle();
-				if (title == null || title.equals("")) {
-					LinkResource link = null;
-					// FIXME don't assume link resources
-					Set<Resource> resources = post.getResources();					
-					for (Resource r : resources) {
-						if (r instanceof LinkResource) {
-							link = (LinkResource) r;
-							break;
-						}
-					}
-					if (link != null)
-						title = link.getHumanReadableString();
-					else
-						title = "(unknown)";
-				}
-				message.addExtension(new LinkClickedExtension(recipient.getGuid(), clickerName, post.getGuid(), title));
-				message.setBody("");
-				logger.debug("Sending jabber message to {}", message.getTo());
-				connection.sendPacket(message);
-			}
+			Message message = createMessageFor(user, Message.Type.HEADLINE);
+			message.addExtension(new LivePostChangedExtension(lpost));
+			logger.info("Sending jabber message to {}", message.getTo());
+			connection.sendPacket(message);
 		}
 
 		public void sendMySpaceNameChangedNotification(User user) {
@@ -570,17 +418,21 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(user);
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			List<String> livePosts = new ArrayList<String>();
-			LiveState state = LiveState.getInstance();
-			for (Guid guid : user.getActivePosts()) {
-				LivePost post = state.peekLivePost(guid);
-				if (post == null)
-					continue;
-				String xml = livePostBoard.getLivePostXML(new Viewpoint(dbUser), post);
-				livePosts.add(xml);
+			List<LivePost> lposts = new ArrayList<LivePost>();
+			List<PostView> posts = new ArrayList<PostView>();
+			for (Guid id : user.getActivePosts()) {
+				LivePost lpost = LiveState.getInstance().getLivePost(id);
+				PostView pv;
+				try {
+					pv = postingBoard.loadPost(new Viewpoint(dbUser), id);
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				lposts.add(lpost);
+				posts.add(pv);
 			}
-			message.addExtension(new ActivePostsChangedExtension(livePosts));
-			logger.debug("Sending activePostsChanged message to {}", message.getTo());			
+			message.addExtension(new ActivePostsChangedExtension(posts, lposts));
+			logger.info("Sending activePostsChanged message to {}; {} active posts" + message.getTo(), + posts.size());			
 			connection.sendPacket(message);						
 		}
 		
@@ -774,14 +626,21 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	public void sendPostClickedNotification(Post post, List<User> viewers, User clicker) {
-		for (Resource recipientResource : post.getExpandedRecipients()) {
+	public void sendLivePostChanged(LivePost lpost) {
+		PostView post;
+		try {
+			post = postingBoard.loadPost(new Viewpoint(null), lpost.getGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		User poster = post.getPost().getPoster();
+		for (Resource recipientResource : post.getPost().getExpandedRecipients()) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
-				if (!recipient.equals(clicker))
-					xmppSender.sendPostNotification(recipient, post, viewers, false);
+				xmppSender.sendLivePostChanged(recipient, lpost);
 			}
 		}
+		xmppSender.sendLivePostChanged(poster, lpost);
 	}
 
 	public void sendMySpaceNameChangedNotification(User user) {

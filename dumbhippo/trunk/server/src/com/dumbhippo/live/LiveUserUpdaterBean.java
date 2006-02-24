@@ -106,14 +106,11 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			if (post.getChattingUserCount() > 0)
 				activePosts.add(post.getGuid());			
 		}
-		// Now add in less interesting ones
-		while (activePosts.size() < MAX_ACTIVE_POSTS 
-				&& livePosts.size() > 0) {
-			LivePost post = livePosts.get(0);
-			if (!activePosts.contains(post.getGuid())) {
-				activePosts.add(post.getGuid());
-			}
-			livePosts.remove(0);
+		for (LivePost post : livePosts) {
+			if (activePosts.size() >= MAX_ACTIVE_POSTS)
+				break;
+			if (post.getViewingUserCount() > 0)
+				activePosts.add(post.getGuid());			
 		}
 		user.setActivePosts(activePosts);
 	}
@@ -133,9 +130,9 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			state.updateLiveUser(newUser);
 			// Remember to update sendAllNotifications if you add a new one here
 			if (!newUser.getHotness().equals(user.getHotness()))
-				msgSender.sendHotnessChanged(user);
+				msgSender.sendHotnessChanged(newUser);
 			if (!newUser.getActivePosts().equals(user.getActivePosts()))
-				msgSender.sendActivePostsChanged(user);
+				msgSender.sendActivePostsChanged(newUser);
 		}
 	}
 

@@ -169,7 +169,9 @@ public class LiveState {
 		public Set<T> getWeakCacheCopy() {
 			Set<T> ret = new HashSet<T>();
 			for (GuidReference<T> ref : weakReferences.values()) {
-				ret.add(ref.get());
+				T obj = ref.get();
+				if (obj != null)
+					ret.add(obj);
 			}
 			return Collections.unmodifiableSet(ret);
 		}

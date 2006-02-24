@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.dumbhippo.TypeFilteredCollection;
+import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
@@ -584,4 +586,36 @@ public class PersonView extends EntityView {
 	protected String getFilePath() {
 		return Configuration.HEADSHOTS_RELATIVE_PATH;
 	}
+	
+	public String toXml() {
+		XmlBuilder builder = new XmlBuilder();
+		if (user != null) {
+			builder.appendTextNode("user", "", "id", user.getId(), 
+				               	   "name", getName(),
+				               	   "smallPhotoUrl", getSmallPhotoUrl());
+		} else {
+			Resource primary = getPrimaryResource();
+			builder.appendTextNode("resource", "", "id", primary.getId(), "name", getName());
+		}
+		return builder.toString();		
+	}
+	
+	public String toIdentifyingXml() {
+		XmlBuilder builder = new XmlBuilder();		
+		if (user != null) {
+			builder.appendTextNode("user", "", "id", user.getId());
+		} else {
+			Resource primary = getPrimaryResource();
+			builder.appendTextNode("resource", "", "id", primary.getId());
+		}
+		return builder.toString();					
+	}
+	
+	public Guid getIdentifyingGuid() {
+		if (user != null)
+			return user.getGuid();
+		else
+			return getPrimaryResource().getGuid();
+	}
 }
+ 
