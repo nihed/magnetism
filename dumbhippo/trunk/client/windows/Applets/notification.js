@@ -141,7 +141,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         var shouldDisplayShare = isRedisplay || this._shouldDisplayShare(share)
         if (prevShareData) {
             // Update the viewer data
-            prevShareData.notification.data.viewers = share.viewers        
+            prevShareData.notification.data.viewers = share.viewers
         }
         if (!prevShareData || (prevShareData.position < 0 && shouldDisplayShare)) {   
             // We don't have it at all, or it was saved and needs to be redisplayed
@@ -149,8 +149,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             return true
         } else if (prevShareData && prevShareData.position == this.position) {
             // We're currently displaying this share, set it again in the bubble to force rerendering
+            dh.util.debug("rerendering bubble")
             this._bubble.setData(share)
             return true
+        } else {
+            dh.util.debug("not rerendering bubble");
         }
         return false
     }
@@ -348,8 +351,10 @@ dhAddLinkShare = function (isRedisplay, senderId, postId, linkTitle,
                            linkURL, linkDescription, recipients, 
                            viewers, postInfo, timeout) {
     dh.display.setVisible(true)
+    viewers = dh.core.adaptExternalArray(viewers)
     recipients = dh.core.adaptExternalArray(recipients)
     
+    dh.util.debug("adding link share id=" + postId + " " + viewers.length + " viewers")
     var data = new dh.bubble.PostData(senderId, postId, linkTitle, 
                                       linkURL, linkDescription, recipients, 
                                       viewers, postInfo)

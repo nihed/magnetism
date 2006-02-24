@@ -185,9 +185,9 @@ dh.bubble.Bubble = function(includeNavigation) {
     }
 
     // Render a single recipient
-    this._renderRecipient = function (recipient, normalCssClass, selfCssClass) {
+    this._renderRecipient = function (recipient, normalCssClass, selfCssClass) {  
         var name = recipient.name
-        dh.util.debug("rendering recipient with name=" + name)
+        dh.util.debug("rendering recipient with id=" + recipient + ", name=" + name)
         var cssClass = normalCssClass;
         if (recipient.id == dh.selfId) {
             name = "you"
@@ -369,7 +369,11 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     }
             
     this.appendViewersContent = function(bubble, parent) {
-        var viewers = this.viewers
+        var viewers = []
+        for (var i = 0; i < this.viewers.length; i++) {
+            var ent = dh.notification.findEntity(this.viewers[i])
+            viewers.push(ent)          
+        }
         if (viewers.length > 0) {
             dh.util.dom.appendSpanText(parent, "Viewed by: ", "dh-notification-viewers-label")
             bubble.renderRecipients(parent, viewers, "dh-notification-viewer", "dh-notification-self-viewer")

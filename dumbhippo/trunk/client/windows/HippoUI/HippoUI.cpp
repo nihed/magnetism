@@ -505,33 +505,33 @@ HippoUI::create(HINSTANCE instance)
     if (this->initialShowDebugShare_) {
         HippoPost linkshare;
 
-        HippoEntity viewer1;
-        viewer1.isGroup = false;
-        viewer1.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
-        viewer1.name = L"person@example.com";
-        viewer1.id = L"15a1fbae7f2807";
-        dataCache_.addEntity(viewer1);
+        HippoEntity person1;
+        person1.isGroup = false;
+        person1.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person1.name = L"person@example.com";
+        person1.id = L"15a1fbae7f2807";
+        dataCache_.addEntity(person1);
 
-        HippoEntity viewer2;
-        viewer2.isGroup = false;
-        viewer2.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
-        viewer2.name = L"Owen Taylor";
-        viewer2.id = L"25a1fbae7f2807";
-        dataCache_.addEntity(viewer2);
+        HippoEntity person2;
+        person2.isGroup = false;
+        person2.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person2.name = L"Owen Taylor";
+        person2.id = L"25a1fbae7f2807";
+        dataCache_.addEntity(person2);
 
-        HippoEntity viewer3;
-        viewer3.isGroup = false;
-        viewer3.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
-        viewer3.name = L"Colin Walters";
-        viewer3.id = L"35a1fbae7f2807";
-        dataCache_.addEntity(viewer3);
+        HippoEntity person3;
+        person3.isGroup = false;
+        person3.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person3.name = L"Colin Walters";
+        person3.id = L"35a1fbae7f2807";
+        dataCache_.addEntity(person3);
 
-        HippoEntity viewer4;
-        viewer4.isGroup = false;
-        viewer4.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
-        viewer4.id = L"a35baeea7f2807";
-        viewer4.name = L"Bryan Clark";
-        dataCache_.addEntity(viewer4);
+        HippoEntity person4;
+        person4.isGroup = false;
+        person4.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person4.id = L"a35baeea7f2807";
+        person4.name = L"Bryan Clark";
+        dataCache_.addEntity(person4);
 
         linkshare.url.setUTF8("http://www.gnome.org");
         linkshare.postId.setUTF8("42");
@@ -541,16 +541,16 @@ HippoUI::create(HINSTANCE instance)
                                       "we can see wrapping and all sorts of fun things like that which will "
                                       "cause differences from what we would have if we had a short title without "
                                       "the kind of excessive length that you see here.");
-        linkshare.recipients.push_back(viewer1.id);
-        linkshare.recipients.push_back(viewer2.id);
+        linkshare.recipients.push_back(person1.id);
+        linkshare.recipients.push_back(person2.id);
         linkshare.info.setUTF8("");
         linkshare.timeout = 7;
         onLinkMessage(linkshare);
 
-        linkshare.viewers.push_back(viewer1.id);
-        linkshare.viewers.push_back(viewer2.id);
-        linkshare.viewers.push_back(viewer3.id);
-        linkshare.viewers.push_back(viewer4.id);
+        linkshare.viewers.push_back(person1.id);
+        linkshare.viewers.push_back(person2.id);
+        linkshare.viewers.push_back(person3.id);
+        linkshare.viewers.push_back(person4.id);
         linkshare.timeout = 0;
 
         onLinkMessage(linkshare);
