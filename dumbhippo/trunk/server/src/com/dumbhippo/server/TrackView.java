@@ -19,7 +19,9 @@ public class TrackView {
 	private AlbumView album;
 	
 	private String name;
-	private Map<SongDownloadSource,String> downloads;
+	private Map<SongDownloadSource,String> downloads; 
+	private int durationSeconds;
+	private long lastListenTime;
 	
 	public TrackView() {
 		album = new AlbumView();
@@ -28,6 +30,7 @@ public class TrackView {
 	public TrackView(Track track) {
 		this.album = new AlbumView(track);
 		this.name = track.getName();
+		this.durationSeconds = track.getDuration();
 	}
 
 	public AlbumView getAlbumView() {
@@ -108,9 +111,26 @@ public class TrackView {
 	public void setSmallImageWidth(int smallImageWidth) {
 		album.setSmallImageWidth(smallImageWidth);
 	}
+
+	public int getDurationSeconds() {
+		return durationSeconds;
+	}
+	
+	public void setDurationSeconds(int durationSeconds) {
+		this.durationSeconds = durationSeconds;
+	}
+
+	public long getLastListenTime() {
+		return lastListenTime;
+	}
+
+	public void setLastListenTime(long lastListenTime) {
+		this.lastListenTime = lastListenTime;
+	}	
 	
 	@Override
 	public String toString() {
 		return "{trackView artist=" + getArtist() + " album=" + getAlbum() + " name=" + getName() + "}";
 	}
+
 }

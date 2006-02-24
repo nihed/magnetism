@@ -373,9 +373,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	static private class GetTrackViewTask implements Callable<TrackView> {
 
 		private Track track;
+		private long lastListen;
 		
-		public GetTrackViewTask(Track track) {
+		public GetTrackViewTask(Track track, long lastListen) {
 			this.track = track;
+			this.lastListen = lastListen;
 		}
 		
 		public TrackView call() {
@@ -383,7 +385,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
-			return musicSystem.getTrackView(track);
+			return musicSystem.getTrackView(track, lastListen);
 		}
 	}
 
@@ -406,7 +408,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public void hintNeedsRefresh(Track track) {
 		// called for side effect to kick off querying the results
-		getTrackViewAsync(track);
+		getTrackViewAsync(track, -1);
 	}
 	
 	private List<YahooSongResult> updateSongResultsSync(List<YahooSongResult> oldResults, Track track) {
@@ -739,7 +741,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public TrackView getTrackView(Track track) {
+		return getTrackView(track, -1);
+	}
+	
+	public TrackView getTrackView(Track track, long lastListen) {
 		TrackView view = new TrackView(track);
+		if (lastListen >= 0)
+			view.setLastListenTime(lastListen);
 
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
@@ -808,19 +816,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackView(current.getTrack());
+		return getTrackView(current.getTrack(), current.getLastUpdated().getTime());
 	}
 	
-	public Future<TrackView> getTrackViewAsync(Track track) {
+	public Future<TrackView> getTrackViewAsync(Track track, long lastListen) {
 		FutureTask<TrackView> futureView =
-			new FutureTask<TrackView>(new GetTrackViewTask(track));
+			new FutureTask<TrackView>(new GetTrackViewTask(track, lastListen));
 		threadPool.execute(futureView);
 		return futureView;
 	}
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackViewAsync(current.getTrack());
+		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
 	}
 	
 	public Future<AlbumView> getAlbumViewAsync(Track track) {
@@ -846,14 +854,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return futureView;
 	}
 	
-	private List<TrackView> getViewsFromTracks(List<Track> tracks) {
+	private List<TrackView> getViewsFromTrackHistories(List<TrackHistory> tracks) {
 		
 		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
 		
 		// spawn a bunch of yahoo updater threads in parallel
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
-		for (Track t : tracks) {
-			futureViews.add(getTrackViewAsync(t));
+		for (TrackHistory t : tracks) {
+			futureViews.add(getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
 		}
 	
 		// now harvest all the results
@@ -939,8 +947,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
 	// to get, but I guess we could try to be fancier
 	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
-		List<Track> tracks = new ArrayList<Track>(maxResults);
-		
 		Query q;
 	
 		// FIXME this should try to get only one track per user or something, but 
@@ -957,55 +963,39 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			else
 				logger.debug("Ignoring TrackHistory with null track");
 		}
-	
-		for (TrackHistory h : results)
-			tracks.add(h.getTrack());
 		
-		if (tracks.isEmpty()) {
+		if (results.isEmpty()) {
 			throw new NotFoundException("No track history in database at all");
 		}
 		
-		return getViewsFromTracks(tracks);
+		return getViewsFromTrackHistories(results);
 	}
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		//logger.debug("getLatestTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
-		
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history)
-			tracks.add(h.getTrack());
-		return getViewsFromTracks(tracks);
+		return getViewsFromTrackHistories(history);
 	}
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
 		//logger.debug("getFrequentTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
 		
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history)
-			tracks.add(h.getTrack());
-		return getViewsFromTracks(tracks);
+		return getViewsFromTrackHistories(history);
 	}
 
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
 		//logger.debug("getLatestTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
 		
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history)
-			tracks.add(h.getTrack());
-		return getViewsFromTracks(tracks);
+		return getViewsFromTrackHistories(history);
 	}
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
 		//logger.debug("getFrequentTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
 		
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history)
-			tracks.add(h.getTrack());
-		return getViewsFromTracks(tracks);
+		return getViewsFromTrackHistories(history);
 	}
 
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {

@@ -459,6 +459,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (NotFoundException e) {
 			throw new RuntimeException("no current track for this person", e);
 		}
+		
+		long now = System.currentTimeMillis();
+		long songEnd = tv.getLastListenTime() + (tv.getDurationSeconds() * 1000);
+		boolean stillPlaying = songEnd + (30*1000) > now; 
+		
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("song");
@@ -466,6 +471,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("songTitle", tv.getName());
 		xml.appendTextNode("artist", tv.getArtist());
 		xml.appendTextNode("album", tv.getAlbum());
+		xml.appendTextNode("stillPlaying", Boolean.toString(stillPlaying));
 		xml.closeElement();
 		out.write(xml.getBytes());
 		out.flush();

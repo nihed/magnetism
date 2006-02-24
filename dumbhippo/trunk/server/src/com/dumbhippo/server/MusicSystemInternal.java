@@ -50,9 +50,9 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public Future<List<YahooSongDownloadResult>> getYahooSongDownloadResultsAsync(String songId);
 	
-	public TrackView getTrackView(Track track);
+	public TrackView getTrackView(Track track, long lastListen);
 	
-	public Future<TrackView> getTrackViewAsync(Track track);
+	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 
