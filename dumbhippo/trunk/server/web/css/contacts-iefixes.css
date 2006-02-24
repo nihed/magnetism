@@ -6,12 +6,18 @@
 
 .dh-prev-contacts {
     position:                   absolute;
-    top:                        543px;
+    top:                        595px;
     left:                       53px;     
+}
+
+.dh-viewing-contacts {
+    position:                   absolute;
+    top:                        595px; 
+    left:                       160px;      
 }
 
 .dh-next-contacts {
     position:                   absolute;
-    top:                        543px;
+    top:                        595px;
     right:                      53px;   
 }

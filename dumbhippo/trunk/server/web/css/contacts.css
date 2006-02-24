@@ -21,9 +21,11 @@
 	background-color:		white;
 	height:                 31px;
 	width:	    			296px;
+	display:                block;
+	float:                  left;	
 	overflow:               hidden;
 	margin-top:             3px;
-	margin-bottom:          10px;
+	margin-bottom:          7px;
 	vertical-align:         middle;
 	text-align:				center;
 	color:					#A1D759;
@@ -45,14 +47,21 @@
 
 .dh-prev-contacts {
     position:                   absolute;
-    top:                        557px;
+    top:                        606px;
     left:                       53px;    
     color:                      #fff500;   
 }
 
+.dh-viewing-contacts {
+    position:                   absolute;
+    top:                        606px;
+    left:                       164px;    
+    color:                      #4EAA71;   
+}
+
 .dh-next-contacts {
     position:                   absolute;
-    top:                        557px;
+    top:                        606px;
     right:                      33px;   
     color:                      #fff500;   
 }

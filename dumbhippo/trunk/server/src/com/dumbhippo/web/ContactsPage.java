@@ -38,6 +38,7 @@ public class ContactsPage extends AbstractPersonPage {
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);
+			totalContacts = mingledContacts.size();
 			
 			if (stop > 0) {
 				start = PersonView.computeStart(mingledContacts, 
@@ -110,5 +111,10 @@ public class ContactsPage extends AbstractPersonPage {
 		return hasMoreContacts;
 	}
 	
-	
+	public boolean isSelf() {
+		if (getViewedPersonId() == null) {
+			setViewedPerson(signin.getUser());
+		}    
+		return super.isSelf();
+	}
 }

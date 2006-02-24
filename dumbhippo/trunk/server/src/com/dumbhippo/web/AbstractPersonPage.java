@@ -35,7 +35,7 @@ public abstract class AbstractPersonPage extends AbstractSigninPage {
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
 	
-	private int totalContacts;
+	protected int totalContacts;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);

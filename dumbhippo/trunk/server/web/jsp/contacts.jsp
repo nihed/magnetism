@@ -20,8 +20,17 @@
 		<dht:logo/>
 		<dht:toolbar/> 
 
+		<c:choose>
+		    <c:when test="${contacts.self}"> 
+                <h2 class="dh-title">Your Contacts</h2>
+			</c:when>
+			<c:otherwise>
+			    <h2 class="dh-title"> <c:out value="${contacts.person.name}"/>'s Contacts</h2>        
+			</c:otherwise>   
+        </c:choose>     
+		
 	    <c:choose>		
-			<c:when test="${contacts.contacts.size > 0}">		              	    
+			<c:when test="${contacts.totalContacts > 0}">		              	    
                 <div class="dh-people-grid">
 				    <dh:entityList value="${contacts.contacts.list}" showInviteLinks="${contacts.self and (contacts.invitations > 0)}" photos="true" bodyLengthLimit="8" longBodyLengthLimit="30" twoLineBody="true"/>
 		        </div>
@@ -29,13 +38,24 @@
 		            <c:set var="whoParam" value="&who=${contacts.viewedPersonId}" scope="page"/>
 		        </c:if>    
 				<c:if test="${contacts.start > 1}">
+				    <c:choose>
+				        <c:when test="${contacts.start > contacts.totalContacts}">
+				            <c:set var="prevNumber" value="${contacts.totalContacts}" scope="page"/>
+				        </c:when>
+				        <c:otherwise>
+				            <c:set var="prevNumber" value="${contacts.start-1}" scope="page"/>
+				        </c:otherwise>
+				    </c:choose>    				            
                     <div class="dh-prev-contacts">
-                        <a href="/contacts?stop=${contacts.start-1}${whoParam}">Prev</a>
+                        <a href="/contacts?stop=${contacts.start-1}${whoParam}">Prev <c:out value="${prevNumber}"/></a>
 		   		    </div>
                 </c:if>
+                <div class="dh-viewing-contacts">
+                    <c:out value="${contacts.contacts.size}"/> out of <c:out value="${contacts.totalContacts}"/> 
+		   		</div>                
 				<c:if test="${contacts.hasMoreContacts}">
                     <div class="dh-next-contacts">
-                        <a href="/contacts?start=${contacts.nextStart}${whoParam}">Next</a>
+                        <a href="/contacts?start=${contacts.nextStart}${whoParam}">Next <c:out value="${contacts.totalContacts-contacts.nextStart+1}"/></a>
 				    </div>
                 </c:if>
 		    </c:when>
