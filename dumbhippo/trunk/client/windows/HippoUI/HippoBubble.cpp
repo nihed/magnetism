@@ -26,6 +26,13 @@ HippoBubble::HippoBubble(void)
     desiredWidth_ = BASE_WIDTH;
     desiredHeight_ = BASE_HEIGHT;
 
+    // Note that if you are tempted to call setAnimate(true) here to enable fading in,
+    // as well as fading out, then you'll probably have difficulties the second time
+    // you show the window ... it appears that the web browser control has some 
+    // bugs with WM_PRINTCLIENT; the first time the contents of the window are properly
+    // initialized before fade-in, but on subsequent shows they are not. A crude
+    // workaround might be to reembed a new control every time, but there are probably
+    // less sledgehammer methods.
     setUseParent(true);
     setWindowStyle(WS_POPUP);
     setExtendedStyle(WS_EX_TOPMOST);
@@ -346,11 +353,12 @@ HippoBubble::doClose()
         updateIdle();
     }
 
-    // Don't animate if the screenSaver is starting
+    // Don't animate if the screenSaver is starting, otherwise we fade out (see comments
+    // in the constructor for problems if you want to fade *in* as well.)
     if (!screenSaverRunning_)
         setAnimate(true);
     hide();
-    if (screenSaverRunning_)
+    if (!screenSaverRunning_)
         setAnimate(false);
 }
 
