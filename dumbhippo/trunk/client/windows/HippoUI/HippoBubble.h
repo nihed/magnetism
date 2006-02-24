@@ -5,11 +5,12 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoDataCache.h"
 #include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
-struct HippoLinkShare;
+struct HippoPost;
 
 class HippoBubble :
     public IHippoBubble,
@@ -20,7 +21,7 @@ public:
     HippoBubble();
     ~HippoBubble();
 
-    void setLinkNotification(HippoLinkShare &share);
+    void setLinkNotification(bool isRedisplay, HippoPost &share);
     void addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);
@@ -75,6 +76,9 @@ private:
     bool screenSaverRunning_;
     int desiredWidth_;
     int desiredHeight_;
+
+    void addEntity(const HippoBSTR &id);
+    void addEntity(const HippoEntity &entity);
 
     void setShown();
     void moveResizeWindow(void);

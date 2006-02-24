@@ -1,4 +1,4 @@
-/* HippoFlickr.cpp: Integration with Flickr services
+/* HippoFlickr.h: Integration with Flickr services
  *
  * Copyright Red Hat, Inc. 2005
  */

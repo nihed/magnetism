@@ -12,19 +12,6 @@
 static const int BASE_WIDTH = 200;
 static const int BASE_HEIGHT = 250;
 
-HippoActivePost::HippoActivePost(const HippoBSTR &postId, 
-                                 const HippoBSTR &title,
-                                 const HippoBSTR &senderName,
-                                 int              chattingUserCount,
-                                 int              viewingUserCount)
-{
-    postId_ = postId;
-    title_ = title;
-    senderName_ = senderName;
-    chattingUserCount_ = chattingUserCount;
-    viewingUserCount_ = viewingUserCount;
-}
-
 HippoMenu::HippoMenu(void)
 {
     refCount_ = 1;
@@ -57,6 +44,10 @@ HippoMenu::popup(int mouseX, int mouseY)
     create();
     moveResizeWindow();
     show();
+    if (ie_)
+        ie_->createInvocation(L"dhMenuSetRecentCount")
+        .addLong(ui_->getRecentMessageCount())
+        .run();
 }
 
 void 
@@ -69,14 +60,14 @@ HippoMenu::clearActivePosts()
 }
     
 void 
-HippoMenu::addActivePost(const HippoActivePost &post)
+HippoMenu::addActivePost(const HippoPost &post)
 {
     int i = 0;
-    for (std::vector<HippoActivePost>::iterator iter = activePosts_.begin();
+    for (std::vector<HippoPost>::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {
-        if (iter->getPostId() == post.getPostId()) {
+        if (iter->postId == post.postId) {
             activePosts_.erase(iter);
             invokeRemoveActivePost(i);
             break;
@@ -95,16 +86,18 @@ HippoMenu::invokeRemoveActivePost(int i)
 }
 
 void 
-HippoMenu::invokeInsertActivePost(int i, const HippoActivePost &post)
+HippoMenu::invokeInsertActivePost(int i, const HippoPost &post)
 {
-   if (ie_)
+    HippoEntity entity;
+    ui_->getEntity(post.senderId.m_str, &entity);
+    if (ie_)
         ie_->createInvocation(L"dhMenuInsertActivePost")
             .addLong(i)
-            .add(post.getPostId())
-            .add(post.getTitle())
-            .add(post.getSenderName())
-            .addLong(post.getChattingUserCount())
-            .addLong(post.getViewingUserCount())
+            .add(post.postId)
+            .add(post.title)
+            .add(entity.name)
+            .addLong(post.chattingUserCount)
+            .addLong(post.totalViewers)
             .run();
 }
 
@@ -162,7 +155,7 @@ HippoMenu::initializeBrowser()
     ie_->createInvocation(L"dhInit").add(appletURL).run();
 
     int i = 0;
-    for (std::vector<HippoActivePost>::iterator iter = activePosts_.begin();
+    for (std::vector<HippoPost>::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {
@@ -224,6 +217,19 @@ HippoMenu::Resize(int width, int height)
             moveResizeWindow();
     }
 
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoMenu::ShowRecent()
+{
+    return ui_->ShowRecent();
+}
+
+STDMETHODIMP
+HippoMenu::GetRecentMessageCount(int *result)
+{
+    *result = ui_->getRecentMessageCount();
     return S_OK;
 }
 

@@ -2,24 +2,7 @@
 //   user of posts, MySpace comments ,and so forth
 // Copyright Red Hat, Inc. 2006
 
-dh.bubble = {}
-
-//////////////////////////////////////////////////////////////////////////////
-// Global cache from personId => name
-//////////////////////////////////////////////////////////////////////////////
-
-dh.bubble._nameCache = {}
-    
-dh.bubble.addPersonName = function (personId, name) {
-    dh.bubble._nameCache[personId] = name
-}
-
-dh.bubble.getPersonName = function (personId) {
-    var ret = this._nameCache[personId]
-    if (!ret)
-        ret = "(unknown)"
-    return ret;
-}    
+dh.bubble = {} 
 
 //////////////////////////////////////////////////////////////////////////////
 // Generic display code for a single notification bubble
@@ -203,11 +186,10 @@ dh.bubble.Bubble = function(includeNavigation) {
 
     // Render a single recipient
     this._renderRecipient = function (recipient, normalCssClass, selfCssClass) {
-        var id = recipient.id
         var name = recipient.name
         dh.util.debug("rendering recipient with name=" + name)
         var cssClass = normalCssClass;
-        if (id == dh.selfId) {
+        if (recipient.id == dh.selfId) {
             name = "you"
             cssClass = selfCssClass
         }
@@ -310,17 +292,15 @@ dh.bubble.Bubble = function(includeNavigation) {
 // Extension point for specific post types
 dh.bubble.postExtensions = {}
     
-dh.bubble.PostData = function(senderName, senderId, senderPhotoUrl, postId, linkTitle, 
-                              linkURL, linkDescription, personRecipients, groupRecipients, 
+dh.bubble.PostData = function(senderId, postId, linkTitle, 
+                              linkURL, linkDescription, recipients, 
                               viewers, postInfo) {
     this.senderId = senderId
-    this.senderPhotoUrl = senderPhotoUrl
     this.postId = postId
     this.linkTitle = linkTitle
     this.linkURL = linkURL
     this.linkDescription = linkDescription
-    this.personRecipients = personRecipients
-    this.groupRecipients = groupRecipients
+    this.recipients = recipients
     this.viewers = viewers
     if (postInfo != null && !postInfo.match(/^\s*$/)) {
         this.info = dh.parseXML(postInfo)
@@ -328,15 +308,19 @@ dh.bubble.PostData = function(senderName, senderId, senderPhotoUrl, postId, link
         this.info = null
 
     this.getPhotoLink = function() {
-        return dh.serverUrl + "person?who=" + this["senderId"]
+        return dh.serverUrl + "person?who=" + this.senderId
     }
     
     this.getPhotoSrc = function() {
-        return dh.serverUrl + this.senderPhotoUrl
+        var ent = dh.notification.findEntity(this.senderId)
+        var result = dh.serverUrl + ent.smallPhotoUrl
+        dh.util.debug("small photo url: " + result)        
+        return result
     }
     
     this.getPhotoTitle = function() {
-        return dh.bubble.getPersonName(this.senderId)
+        var ent = dh.notification.findEntity(this.senderId)    
+        return ent.name
     }
     
     this.appendTitleContent = function(bubble, parent) {
@@ -355,8 +339,20 @@ dh.bubble.PostData = function(senderName, senderId, senderPhotoUrl, postId, link
     
     this.appendMetaContent = function(bubble, parent) {
         parent.appendChild(document.createTextNode("This was sent to "))
-        var personRecipients = this.personRecipients
-        var groupRecipients = this.groupRecipients
+       
+        var personRecipients = []
+        var groupRecipients = []        
+        var i;
+        dh.util.debug("recipient count: " + this.recipients.length)
+        for (i = 0; i < this.recipients.length; i++) {
+            var recipId = this.recipients[i]
+            var ent = dh.notification.findEntity(recipId)
+            if ((ent instanceof dh.notification.Person) || (ent instanceof dh.notification.Resource)) {
+                personRecipients.push(ent)
+            } else if (ent instanceof dh.notification.Group) {
+                groupRecipients.push(ent)
+            }
+        }
         // FIXME this is all hostile to i18n
         bubble.renderRecipients(parent, personRecipients, "dh-notification-recipient", "dh-notification-self-recipient")
         if (personRecipients.length > 0 && groupRecipients.length > 0) {
@@ -364,10 +360,10 @@ dh.bubble.PostData = function(senderName, senderId, senderPhotoUrl, postId, link
         }
         if (groupRecipients.length > 1) {
             parent.appendChild(document.createTextNode("the groups "))            
-            dh.util.dom.joinSpannedText(parent, groupRecipients, "dh-notification-group-recipient", ", ")
+            bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
         } else if (groupRecipients.length == 1) {
             parent.appendChild(document.createTextNode("the "))
-            dh.util.dom.appendSpanText(parent, groupRecipients[0], "dh-notification-group-recipient")
+            bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
             parent.appendChild(document.createTextNode(" group"))
         }
     }

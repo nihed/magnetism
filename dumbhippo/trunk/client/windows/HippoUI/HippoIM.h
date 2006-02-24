@@ -6,6 +6,7 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoDataCache.h"
 #include "HippoChatRoom.h"
 #include "HippoMusicMonitor.h"
 #include <loudmouth/loudmouth.h>
@@ -124,6 +125,7 @@ private:
     bool handleHotnessMessage(LmMessage *message);
     bool handleActivePostsMessage(LmMessage *message);
     bool handlePrefsChangedMessage(LmMessage *message);
+    bool handleLivePostChangedMessage(LmMessage *message);
 
     void connectFailure(char *message);
     void authFailure(char *message);
@@ -150,7 +152,12 @@ private:
                              LmDisconnectReason  reason,
                              gpointer            userData);
 
+    static bool nodeMatches(LmMessageNode *node, const char *name, const char *expectedNamespace);
     static bool messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *expectedNamespace, const char *documentElementName);
+    bool parseEntityIdentifier(LmMessageNode *node, HippoBSTR &id);
+    bool parseEntity(LmMessageNode *node, HippoEntity *person);
+    bool parseLivePost(LmMessageNode *postNode, HippoPost *post);
+    bool parsePost(LmMessageNode *postNode, HippoPost *post);
 
     static LmHandlerResult onClientInfoReply(LmMessageHandler *handler,
                                              LmConnection     *connection,

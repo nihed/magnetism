@@ -1137,22 +1137,26 @@ HippoIM::onDisconnect(LmConnection       *connection,
 }
 
 bool
+HippoIM::nodeMatches(LmMessageNode *node, const char *name, const char *expectedNamespace)
+{
+    const char *ns = lm_message_node_get_attribute(node, "xmlns");
+    if (expectedNamespace && !ns)
+        return false;
+    return strcmp(name, node->name) == 0 && (expectedNamespace == NULL || strcmp(expectedNamespace, ns) == 0);
+}
+
+bool
 HippoIM::messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *expectedNamespace, const char *documentElementName)
 {
     LmMessageNode *child = message->node->children;
 
-    const char *ns;
-    if (child)
-        ns = lm_message_node_get_attribute(child, "xmlns");
-
     if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
         lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
         !child || child->next ||
-        !ns || strcmp(ns, expectedNamespace) != 0 ||
-        strcmp(child->name, documentElementName) != 0)
+        !nodeMatches(child, documentElementName, expectedNamespace))
     {
-        im->ui_->debugLogU("Got a bad reply to IQ, expected ns '%s' elem '%s' got '%s' '%s'",
-            expectedNamespace, documentElementName, ns, child->name);
+        im->ui_->debugLogU("Got a bad reply to IQ, expected ns '%s' elem '%s'",
+            expectedNamespace, documentElementName);
         char *s = lm_message_node_to_string(lm_message_get_node(message));
         im->ui_->debugLogU("Node is '%s'", s);
         g_free(s);
@@ -1356,57 +1360,27 @@ HippoIM::handleHotnessMessage(LmMessage *message)
 bool
 HippoIM::handleActivePostsMessage(LmMessage *message)
 {
-   if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/liveposts", "activePostsChanged");
+   if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE
+       || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET) {
+        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "activePostsChanged");
         LmMessageNode *subchild;
         if (!child)
             return false;
         ui_->debugLogU("handling activePostsChanged message");
-        ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
             LmMessageNode *elt;
-            HippoBSTR postId;
-            HippoBSTR title;
-            HippoBSTR senderName;
+            const char *attr;
+            HippoPost post;
             int chattingUserCount;
             int viewingUserCount;
-    
-            if (strcmp (subchild->name, "livePost") != 0)
+
+            if (parsePost(subchild, &post)) {
+                ui_->addActivePost(post);
                 continue;
-
-            elt = lm_message_node_get_child (subchild, "id");
-            if (!(elt && elt->value)) {
-                return false;
+            } else if (parseLivePost(subchild, &post)) {
+                ui_->addActivePost(post);
+                continue;
             }
-            postId.setUTF8(elt->value);
-
-            elt = lm_message_node_get_child (subchild, "senderName");
-            if (!(elt && elt->value)) {
-                return false;
-            }
-            senderName.setUTF8(elt->value);
-
-            elt = lm_message_node_get_child (subchild, "title");
-            if (!(elt && elt->value)) {
-                return false;
-            }
-            title.setUTF8(elt->value);
-
-            elt = lm_message_node_get_child (subchild, "chattingUserCount");
-            if (!(elt && elt->value)) {
-                return false;
-            }
-            chattingUserCount = strtol(elt->value, NULL, 10);
-
-            elt = lm_message_node_get_child (subchild, "viewingUserCount");
-            if (!(elt && elt->value)) {
-                return false;
-            }
-            viewingUserCount = strtol(elt->value, NULL, 10);
-
-            HippoActivePost activePost(postId, title, senderName, chattingUserCount, viewingUserCount);
-            ui_->debugLogW(L"adding active post, postId=%s", postId.m_str);
-            ui_->addActivePost(activePost);
         }
         return true;
    }
@@ -1426,6 +1400,166 @@ HippoIM::handlePrefsChangedMessage(LmMessage *message)
 
     processPrefsNode(child);
 
+    return true;
+}
+
+bool
+HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
+{
+    LmMessageNode *node;
+    const char *attr;
+
+    attr = lm_message_node_get_attribute (child, "id");
+    if (!attr)
+        return false;
+    HippoBSTR postId;
+    postId.setUTF8(attr);
+
+    if (!ui_->getPost(postId, post))
+        return false;
+
+    node = lm_message_node_get_child (child, "recentViewers");
+    if (!node)
+        return false;
+    LmMessageNode *subchild;
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        HippoBSTR id;
+        if (!parseEntityIdentifier(subchild, id))
+            return false;
+        post->viewers.push_back(id);
+    }
+
+    node = lm_message_node_get_child (child, "chattingUserCount");
+    if (!(node && node->value))
+        return false;
+    post->chattingUserCount = strtol(node->value, NULL, 10);
+
+    node = lm_message_node_get_child (child, "totalViewers");
+    if (!(node && node->value))
+        return false;
+    post->totalViewers = strtol(node->value, NULL, 10);
+    return true;
+}
+
+bool
+HippoIM::handleLivePostChangedMessage(LmMessage *message)
+{
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE
+        && lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NOT_SET)
+        return false;
+
+    LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "livePostChanged");
+    if (child == NULL)
+        return false;   
+
+    ui_->debugLogU("handling livePostChanged message");
+
+    HippoPost post;
+    if (!parseLivePost(child, &post))
+        return false;
+
+    ui_->onLinkMessage(post);
+
+    return true;
+}
+
+bool
+HippoIM::parseEntity(LmMessageNode *node, HippoEntity *person)
+{
+    bool isResource = strcmp(node->name, "resource") == 0;
+    bool isGroup = strcmp(node->name, "group") == 0;
+    if (!isResource && !isGroup && strcmp(node->name, "user") != 0)
+        return false;
+
+    person->isGroup = isGroup;
+
+    const char *attr = lm_message_node_get_attribute(node, "id");
+    if (!attr)
+        return false;
+    person->id.setUTF8(attr);
+
+    if (isResource)
+        person->name = NULL;
+    else {
+        attr = lm_message_node_get_attribute(node, "name");
+        if (!attr)
+            return false;
+        person->name.setUTF8(attr);
+    }
+
+    if (isResource)
+        person->smallPhotoUrl = NULL;
+    else {
+        attr = lm_message_node_get_attribute(node, "smallPhotoUrl");
+        if (!attr)
+            return false;
+        person->smallPhotoUrl.setUTF8(attr);
+    }
+    return true;
+}
+
+bool
+HippoIM::parseEntityIdentifier(LmMessageNode *node, HippoBSTR &id)
+{
+    const char *attr = lm_message_node_get_attribute(node, "id");
+    if (!attr)
+        return false;
+    id.setUTF8(attr);
+    return true;
+}
+
+bool
+HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
+{
+    LmMessageNode *node;
+    const char *attr;
+
+    attr = lm_message_node_get_attribute (postNode, "id");
+    if (!attr)
+        return false;
+    post->postId.setUTF8(attr);
+
+    node = lm_message_node_get_child (postNode, "sender");
+    if (!(node && node->value))
+        return false;
+    post->senderId.setUTF8(node->value);
+
+    node = lm_message_node_get_child (postNode, "href");
+    if (!(node && node->value))
+        return false;
+    post->url.setUTF8(node->value);
+
+    node = lm_message_node_get_child (postNode, "title");
+    if (!(node && node->value))
+        return false;
+    post->title.setUTF8(node->value);
+
+    node = lm_message_node_get_child (postNode, "text");
+    if (!(node && node->value))
+        return false;
+    post->description.setUTF8(node->value);
+
+    node = lm_message_node_get_child (postNode, "postInfo");
+    if (!(node && node->value))
+        post->info = NULL;
+    else
+        post->info.setUTF8(node->value);
+
+    node = lm_message_node_get_child (postNode, "postDate");
+    if (!(node && node->value))
+        return false;
+    post->postDate = strtol(node->value, NULL, 10);
+
+    node = lm_message_node_get_child (postNode, "recipients");
+    if (!node)
+        return false;
+    LmMessageNode *subchild;
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        HippoBSTR id;
+        if (!parseEntityIdentifier(subchild, id))
+            return false;
+        post->recipients.push_back(id);
+    }
     return true;
 }
 
@@ -1456,6 +1590,10 @@ HippoIM::onMessage (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (im->handleLivePostChangedMessage(message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
     if (im->checkMySpaceContactCommentMessage(message)) {
         im->handleMySpaceContactCommentMessage();
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -1469,112 +1607,22 @@ HippoIM::onMessage (LmMessageHandler *handler,
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET // Shouldn't need this, default should be normal
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/linkshare", "link");
+        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "newPost");
         if (child) {
-            HippoLinkShare linkshare;
-            LmMessageNode *node;
-
-            const char *url = lm_message_node_get_attribute(child, "href");
-            if (!url) {
-                im->ui_->debugLogU("Malformed link message, no URL");
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            }
-            linkshare.url.setUTF8(url);
-
-            const char *postId = lm_message_node_get_attribute(child, "id");
-            if (!postId) {
-                im->ui_->debugLogU("Malformed link message, no post ID");
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            }
-            linkshare.postId.setUTF8(postId);
-
-            node = lm_message_node_get_child (child, "title");
-            if (!(node && node->value))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            linkshare.title.setUTF8(node->value);
-
-            node = lm_message_node_get_child (child, "senderName");
-            if (!(node && node->value))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            linkshare.senderName.setUTF8(node->value);
-
-            node = lm_message_node_get_child (child, "senderGuid");
-            if (!(node && node->value))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            linkshare.senderId.setUTF8(node->value);
-
-            node = lm_message_node_get_child (child, "senderPhotoUrl");
-            if (!(node && node->value))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            linkshare.senderPhotoUrl.setUTF8(node->value);
-
-            node = lm_message_node_get_child (child, "description");
-            if (!(node))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            if (node->value)
-                linkshare.description.setUTF8(node->value);
-            else
-                linkshare.description = L"";
-
-            node = lm_message_node_get_child (child, "postInfo");
-            if (!(node))
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            if (node->value)
-                linkshare.info.setUTF8(node->value);
-            else
-                linkshare.info = L"";
-
-            node = lm_message_node_get_child (child, "timeout");
-            if (node && node->value)
-                linkshare.timeout = atoi(node->value);
-            else
-                linkshare.timeout = 0; // Default
-
-            node = lm_message_node_get_child (child, "recipients");
-            if (!node)
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
             LmMessageNode *subchild;
-            for (subchild = node->children; subchild; subchild = subchild->next) {
-                if (strcmp (subchild->name, "recipient") != 0)
-                    continue;
-                if (!subchild->value)
-                    continue;
-                HippoLinkRecipient recipient;
-                recipient.name.setUTF8(subchild->value);
-                const char *id = lm_message_node_get_attribute(subchild, "id");
-                if (id)
-                    recipient.id.setUTF8(id);
-                linkshare.personRecipients.append(recipient);
-            }
-            node = lm_message_node_get_child (child, "groupRecipients");
-            if (!node)
-                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-            for (subchild = node->children; subchild; subchild = subchild->next) {
-                if (strcmp (subchild->name, "recipient") != 0)
-                    continue;
-                if (!subchild->value)
-                    continue;
-                HippoBSTR str;
-                str.setUTF8(subchild->value);
-                linkshare.groupRecipients.append(str);
-            }
-            node = lm_message_node_get_child (child, "viewers");
-            if (node) {
-                for (subchild = node->children; subchild; subchild = subchild->next) {
-                    if (strcmp (subchild->name, "viewer") != 0)
-                        continue;
-                    if (!subchild->value)
-                        continue;
-                    HippoLinkRecipient recipient;
-                    recipient.name.setUTF8(subchild->value);
-                    const char *id = lm_message_node_get_attribute(subchild, "id");
-                    if (id)
-                        recipient.id.setUTF8(id);
-                    linkshare.viewers.append(recipient);
+            for (subchild = child->children; subchild; subchild = subchild->next) {
+                if (nodeMatches(subchild, "post", NULL)) {
+                    HippoPost link;
+                    if (im->parsePost(subchild, &link))
+                        im->ui_->onLinkMessage(link);
+                } else if (nodeMatches(subchild, "user", NULL) || nodeMatches(subchild, "group", NULL)
+                    || nodeMatches(subchild, "resource", NULL))
+                {
+                    HippoEntity entity;
+                    if (im->parseEntity(subchild, &entity))
+                        im->ui_->addEntity(entity);
                 }
             }
-
-            im->ui_->onLinkMessage(linkshare);
         } 
     }
 

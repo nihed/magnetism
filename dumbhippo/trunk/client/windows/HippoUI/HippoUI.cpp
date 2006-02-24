@@ -265,9 +265,15 @@ HippoUI::ShowMissed()
 STDMETHODIMP
 HippoUI::ShowRecent()
 {
-    HippoBSTR recentURL;
-    getRemoteURL(HippoBSTR(L"home"), &recentURL);
-    launchBrowser(recentURL);
+    std::vector<HippoPost> recent;
+    dataCache_.getRecentPosts(recent);
+    std::vector<HippoPost>::const_iterator it = recent.begin();
+    while (it != recent.end()) {
+        HippoPost post = *it;
+        bubble_.setLinkNotification(true, post);
+        bubble_.show();
+        it++;
+    }
     return S_OK;
 }
 
@@ -432,6 +438,7 @@ HippoUI::idleHotnessBlink(gpointer data)
 {
     HippoUI *ui = (HippoUI*) data;
 
+    ui->debugLogU("doing blink, count=%d", ui->hotnessBlinkCount_);
     if (ui->hotnessBlinkCount_ > 4) {
         ui->idleHotnessBlinkId_ = 0;
         return FALSE;
@@ -496,43 +503,56 @@ HippoUI::create(HINSTANCE instance)
     registerStartup();
 
     if (this->initialShowDebugShare_) {
-        HippoLinkShare linkshare;
+        HippoPost linkshare;
+
+        HippoEntity viewer1;
+        viewer1.isGroup = false;
+        viewer1.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        viewer1.name = L"person@example.com";
+        viewer1.id = L"15a1fbae7f2807";
+        dataCache_.addEntity(viewer1);
+
+        HippoEntity viewer2;
+        viewer2.isGroup = false;
+        viewer2.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        viewer2.name = L"Owen Taylor";
+        viewer2.id = L"25a1fbae7f2807";
+        dataCache_.addEntity(viewer2);
+
+        HippoEntity viewer3;
+        viewer3.isGroup = false;
+        viewer3.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        viewer3.name = L"Colin Walters";
+        viewer3.id = L"35a1fbae7f2807";
+        dataCache_.addEntity(viewer3);
+
+        HippoEntity viewer4;
+        viewer4.isGroup = false;
+        viewer4.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        viewer4.id = L"a35baeea7f2807";
+        viewer4.name = L"Bryan Clark";
+        dataCache_.addEntity(viewer4);
 
         linkshare.url.setUTF8("http://www.gnome.org");
         linkshare.postId.setUTF8("42");
         linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
-        linkshare.senderName.setUTF8("Owen Taylor");
         linkshare.senderId.setUTF8("15a1fbae7f2807");
-        linkshare.senderPhotoUrl.setUTF8("/files/headshots/48/15a1fbae7f2807");
         linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
                                       "we can see wrapping and all sorts of fun things like that which will "
                                       "cause differences from what we would have if we had a short title without "
                                       "the kind of excessive length that you see here.");
-        HippoLinkRecipient personRecipient;
-        personRecipient.name = L"person@example.com";
-        linkshare.personRecipients.append(personRecipient);
-        linkshare.groupRecipients.append(HippoBSTR(L"Some Group"));
+        linkshare.recipients.push_back(viewer1.id);
+        linkshare.recipients.push_back(viewer2.id);
         linkshare.info.setUTF8("");
         linkshare.timeout = 7;
         onLinkMessage(linkshare);
 
-        linkshare.postId.setUTF8("24");
-        HippoLinkRecipient viewer1;
-        HippoLinkRecipient viewer2;
-        HippoLinkRecipient viewer3;
-        HippoLinkRecipient viewer4;
-        viewer1.name = L"person@example.com";
-        viewer2.id = L"15a1fbae7f2807";
-        viewer2.name = L"Owen Taylor";
-        viewer3.id = L"25a1fbae7f2807";
-        viewer3.name = L"Colin Walters";
-        viewer4.id = L"35a1fbae7f2807";
-        viewer4.name = L"Bryan Clark";
-        linkshare.viewers.append(viewer1);
-        linkshare.viewers.append(viewer2);
-        linkshare.viewers.append(viewer3);
-        linkshare.viewers.append(viewer4);
+        linkshare.viewers.push_back(viewer1.id);
+        linkshare.viewers.push_back(viewer2.id);
+        linkshare.viewers.push_back(viewer3.id);
+        linkshare.viewers.push_back(viewer4.id);
         linkshare.timeout = 0;
+
         onLinkMessage(linkshare);
 
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
@@ -653,6 +673,7 @@ HippoUI::ShareLink(BSTR url, BSTR title)
         delete currentShare_;
     currentShare_ = new HippoRemoteWindow(this, L"Share Link", NULL);
     currentShare_->showShare(url, title);
+    currentShare_->setForegroundWindow();
 
     return S_OK;
 }
@@ -1060,10 +1081,23 @@ HippoUI::onUpgradeReady()
     }
 }
 
-void 
-HippoUI::onLinkMessage(HippoLinkShare &linkshare)
+void
+HippoUI::addEntity(HippoEntity &entity)
 {
-    bubble_.setLinkNotification(linkshare);
+    dataCache_.addEntity(entity);
+}
+
+void 
+HippoUI::onLinkMessage(HippoPost &linkshare)
+{
+    dataCache_.addPost(linkshare);
+    bubble_.setLinkNotification(false, linkshare);
+}
+
+void 
+HippoUI::getEntity(BSTR id, HippoEntity *entity)
+{
+    dataCache_.getEntity(id, entity);
 }
 
 void 
@@ -1073,6 +1107,14 @@ HippoUI::setHaveMissedBubbles(bool haveMissed)
         haveMissedBubbles_ = haveMissed;
     }
     updateIcon();
+}
+
+int
+HippoUI::getRecentMessageCount()
+{
+    std::vector<HippoPost> recent;
+    dataCache_.getRecentPosts(recent);
+    return (int) recent.size();
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
@@ -1673,17 +1715,23 @@ HippoUI::onReceivingMySpaceContactPost()
     mySpace_->onReceivingMySpaceContactPost();
 }
 
+void 
+HippoUI::addActivePost(const HippoPost &post)
+{
+    dataCache_.addPost(post);
+    menu_.addActivePost(post);
+}
+
+bool 
+HippoUI::getPost(const HippoBSTR postId, HippoPost *post)
+{
+    return dataCache_.getPost(postId.m_str, post);
+}
 
 void 
-HippoUI::clearActivePosts()
+HippoUI::updatePost(const HippoPost &post)
 {
-    menu_.clearActivePosts();
-}
-    
-void 
-HippoUI::addActivePost(const HippoActivePost &post)
-{
-    menu_.addActivePost(post);
+    dataCache_.addPost(post);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32

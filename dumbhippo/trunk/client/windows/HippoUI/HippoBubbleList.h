@@ -5,11 +5,12 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include "HippoDataCache.h"
 #include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
-struct HippoLinkShare;
+struct HippoPost;
 
 class HippoBubbleList :
     public IHippoBubbleList,
@@ -20,7 +21,7 @@ public:
     HippoBubbleList();
     ~HippoBubbleList();
 
-    void addLinkShare(const HippoLinkShare &share);
+    void addLinkShare(const HippoPost &share);
     void addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceBlogComment &comment);
     void clear();
 
@@ -50,6 +51,9 @@ protected:
     virtual void onClose(bool fromScript);
 
 private:
+    void addEntity(const HippoBSTR &id);
+    void addEntity(const HippoEntity &entity);
+
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
     int desiredWidth_;

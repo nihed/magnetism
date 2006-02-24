@@ -420,9 +420,7 @@ HippoIEImpl::handleNavigation(IDispatch *targetDispatch,
     // 4. If it's a javascript: URL, then it is code in the page and
     //    not really a link at all, so allow navigation.
     //
-    // 5. Allow navigation to about:blank, since that's how HippoIE builds pages
-    //
-    // 6. Otherwise, cancel navigation
+    // 5. Otherwise, cancel navigation
     
     HippoQIPtr<IWebBrowser2> targetWebBrowser = targetDispatch;
     bool toplevelNavigation = (IWebBrowser2 *)targetWebBrowser == (IWebBrowser2 *)browser_;
@@ -473,8 +471,8 @@ HippoIEImpl::handleNavigation(IDispatch *targetDispatch,
         hippoDebugLogW(L"   Allowing navigation to javascript URL");
         return false;
     } else if (wcscmp(url, L"about:blank#") == 0) {
-        hippoDebugLogW(L"   Allowing navigation to about:blank");
-        return false;
+        hippoDebugLogW(L"   Denying navigation to about:blank (this is a bug workaround)");
+        return true;
     } else {
         hippoDebugLogW(L"   Denying navigation");
         return true;

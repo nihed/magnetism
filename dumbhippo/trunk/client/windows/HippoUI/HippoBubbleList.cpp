@@ -97,43 +97,59 @@ HippoBubbleList::onClose(bool fromScript)
     hide();
 }
 
+void
+HippoBubbleList::addEntity(const HippoBSTR &id)
+{
+    HippoEntity entity;
+    ui_->getEntity(id.m_str, &entity);
+    addEntity(entity);
+}
+
+void
+HippoBubbleList::addEntity(const HippoEntity &entity)
+{
+    const WCHAR *method;
+    if (entity.isGroup) {
+        method = L"dhAddGroup";
+    } else if (entity.isResource()) {
+        method = L"dhAddResource";
+    } else {
+        method = L"dhAddPerson";
+    }
+    HippoInvocation invocation = ie_->createInvocation(method)
+        .add(entity.id)
+        .add(entity.name);
+    if (entity.isGroup || entity.isResource())
+        invocation.add(entity.smallPhotoUrl);
+    invocation.run();
+}
+
 void 
-HippoBubbleList::addLinkShare(const HippoLinkShare &share)
+HippoBubbleList::addLinkShare(const HippoPost &share)
 {
     if (!create())
         return;
 
-    std::vector<HippoBSTR> personRecipients;
-    for (unsigned long i = 0; i < share.personRecipients.length(); i++) {
-        personRecipients.push_back(share.personRecipients[i].id);
-        personRecipients.push_back(share.personRecipients[i].name);
+    addEntity(share.senderId.m_str);
+    for (unsigned long i = 0; i < share.recipients.size(); i++) {
+        addEntity(share.recipients[i]);
     }
 
-    std::vector<HippoBSTR> groupRecipients;
-    for (unsigned long i = 0; i < share.groupRecipients.length(); i++) {
-        groupRecipients.push_back(share.groupRecipients[i]);
-    }
-
-    std::vector<HippoBSTR> viewers;
-    for (unsigned long i = 0; i < share.viewers.length(); i++) {
-        viewers.push_back(share.viewers[i].id);
-        viewers.push_back(share.viewers[i].name);
+    for (unsigned long i = 0; i < share.viewers.size(); i++) {
+        addEntity(share.viewers[i]);
     }
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
     // Note if you change the arguments to this function, you must change bubbleList.js
     ie_->createInvocation(L"dhAddLinkShare")
-        .add(share.senderName)
         .add(share.senderId)
-        .add(share.senderPhotoUrl)
         .add(share.postId)
         .add(share.title)
         .add(share.url)
         .add(share.description)
-        .addStringVector(personRecipients)
-        .addStringVector(groupRecipients)
-        .addStringVector(viewers)
+        .addStringVector(share.recipients)
+        .addStringVector(share.viewers)
         .add(share.info)
         .addLong(share.timeout)
         .getResult(&result);

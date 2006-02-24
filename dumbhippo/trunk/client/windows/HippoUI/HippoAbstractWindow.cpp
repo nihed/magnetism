@@ -188,7 +188,6 @@ HippoAbstractWindow::embedIE(void)
     ie_ = HippoIE::create(window_, getURL(), ieCallback_, application_);
     ie_->setThreeDBorder(false);
     initializeIE();
-
     ie_->embedBrowser();
     browser_ = ie_->getBrowser();
 
@@ -261,6 +260,7 @@ HippoAbstractWindow::show(void)
         AnimateWindow(window_, 400, AW_BLEND);
     else
         ShowWindow(window_, SW_SHOW);
+    UpdateWindow(window_);
 
     // Probably not really necessary
     BringWindowToTop(window_);

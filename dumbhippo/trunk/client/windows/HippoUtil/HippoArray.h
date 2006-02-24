@@ -6,6 +6,7 @@
 #pragma once
 
 #include <limits.h>
+#include <new>
 
 template <class T>
 class HippoArray {
@@ -14,6 +15,10 @@ public:
         elements_ = NULL;
         length_ = 0;
         maxLength_ = 0;
+    }
+
+    HippoArray(const HippoArray<T> &other) {
+        copyFrom(other);
     }
 
     ~HippoArray() {
@@ -33,6 +38,11 @@ public:
         return length_;
     }
 
+    HippoArray<T> & operator=(const HippoArray<T> &other) throw (std::bad_alloc) {
+        copyFrom(other);
+        return *this;
+    }
+
     HRESULT copyFrom(const HippoArray<T> &other);
     HRESULT append(const T& t);
     void remove(ULONG element);
@@ -41,10 +51,6 @@ private:
     T *elements_;
     ULONG length_;
     ULONG maxLength_;
-
-	// kill default copying
-	HippoArray(const HippoArray &other);
-	HippoArray& operator=(const HippoArray &other);
 };
 
 template <class T>

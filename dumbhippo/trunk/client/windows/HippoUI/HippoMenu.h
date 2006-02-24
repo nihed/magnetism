@@ -6,31 +6,8 @@
 
 #include <HippoUtil.h>
 #include "HippoAbstractWindow.h"
+#include "HippoDataCache.h"
 #include <vector>
-
-class HippoActivePost {
-public:
-    HippoActivePost(const HippoBSTR &postId, 
-                    const HippoBSTR &title,
-                    const HippoBSTR &senderName,
-                    int              chattingUserCount,
-                    int              viewingUserCount);
-
-    const HippoBSTR &getPostId() const { return postId_; }
-    const HippoBSTR &getTitle() const { return title_; }
-    const HippoBSTR &getSenderName() const { return senderName_; }
-    int getChattingUserCount() const { return chattingUserCount_; }
-    int getViewingUserCount() const { return viewingUserCount_; }
-
-    // Default copy constructor and assignment operator work
-
-private:
-    HippoBSTR postId_;
-    HippoBSTR title_;
-    HippoBSTR senderName_;
-    int chattingUserCount_;
-    int viewingUserCount_;
-};
 
 class HippoMenu :
     public IHippoMenu,
@@ -57,7 +34,7 @@ public:
      * Add an active post to the list at the top of the menu; if a post
      * with the same ID is already in the list, it will be removed first.
      */
-    void addActivePost(const HippoActivePost &post);
+    void addActivePost(const HippoPost &post);
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -76,6 +53,8 @@ public:
     STDMETHODIMP GetServerBaseUrl(BSTR *result);
     STDMETHODIMP Hush();
     STDMETHODIMP Resize(int width, int height);
+    STDMETHODIMP ShowRecent();
+    STDMETHODIMP GetRecentMessageCount(int *result);
 
 protected:
     virtual HippoBSTR getURL();
@@ -92,7 +71,7 @@ protected:
 private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
-    std::vector<HippoActivePost> activePosts_;
+    std::vector<HippoPost> activePosts_;
 
     int desiredWidth_;
     int desiredHeight_;
@@ -101,5 +80,5 @@ private:
 
     void moveResizeWindow(void);
     void invokeRemoveActivePost(int i);
-    void invokeInsertActivePost(int i, const HippoActivePost &post);
+    void invokeInsertActivePost(int i, const HippoPost &post);
 };

@@ -345,6 +345,12 @@ public:
         return wcscmp(m_str, other.m_str) == 0;
     }
 
+    bool operator<(const HippoBSTR &other) const {
+        if (m_str == NULL)
+            return false;
+        return wcscmp(m_str, other.m_str) < 0;
+    }
+
     BSTR m_str;
 };
 

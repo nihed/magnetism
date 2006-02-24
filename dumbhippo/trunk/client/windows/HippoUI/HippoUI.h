@@ -11,6 +11,7 @@
 #include "HippoChatWindow.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
+#include "HippoDataCache.h"
 #include "HippoMenu.h"
 #include "HippoPreferences.h"
 #include "HippoUpgrader.h"
@@ -28,28 +29,6 @@ struct HippoBrowserInfo
     HippoBSTR url;
     HippoBSTR title;
     DWORD cookie;
-};
-
-struct HippoLinkRecipient
-{
-    HippoBSTR id;
-    HippoBSTR name;
-};
-
-struct HippoLinkShare
-{
-    HippoBSTR postId;
-    HippoBSTR senderId;
-    HippoBSTR senderPhotoUrl;
-    HippoBSTR senderName;
-    HippoBSTR url;
-    HippoBSTR title;
-    HippoBSTR description;
-    HippoArray<HippoLinkRecipient> personRecipients;
-    HippoArray<HippoBSTR> groupRecipients;
-    HippoArray<HippoLinkRecipient> viewers;
-    HippoBSTR info;
-    int timeout;
 };
 
 class HippoUI 
@@ -107,9 +86,14 @@ public:
     void getSeenMySpaceComments();
     void getMySpaceContacts();
     void onUpgradeReady();
-    void onLinkMessage(HippoLinkShare &link);
+    void addEntity(HippoEntity &entity);
+    void onLinkMessage(HippoPost &link);
+
+    void getEntity(BSTR id, HippoEntity *entity);
 
     void setHaveMissedBubbles(bool haveMissed);
+
+    int getRecentMessageCount();
 
     bool isShareActive(BSTR postId);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
@@ -134,7 +118,10 @@ public:
     void onReceivingMySpaceContactPost();
 
     void clearActivePosts();
-    void addActivePost(const HippoActivePost &post);
+    void addActivePost(const HippoPost &post);
+
+    bool getPost(const HippoBSTR postId, HippoPost *post);
+    void updatePost(const HippoPost &post);
 
     typedef enum {
         UNKNOWN,
@@ -244,6 +231,7 @@ private:
     HippoUpgrader upgrader_;
     HippoMusic music_;
     HippoMySpace *mySpace_;
+    HippoDataCache dataCache_;
 
     HippoRemoteWindow *currentShare_;
     HippoRemoteWindow *signinWindow_;

@@ -43,8 +43,15 @@ dh.menu.Menu = function() {
 
     this.showRecent = function() {
         window.close()
-        this._openSiteLink("home")
+        window.external.application.ShowRecent()
     }
+    
+    this.setRecentCount = function(count) {
+        var linkCountSpan = document.getElementById("recentLinkCount")
+        dh.util.dom.clearNode(linkCountSpan)
+        dh.util.debug("recent link count: " + count)
+        linkCountSpan.appendChild(document.createTextNode(count))
+    }    
     
     // Compute our desired size
     this.resize = function() {
@@ -159,4 +166,8 @@ function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCou
 // The parameters must be kept in sync with HippoMenu.cpp
 function dhMenuRemoveActivePost(position) {
     dh.display.removeActivePost(position)
+}
+
+function dhMenuSetRecentCount(count) {
+    dh.display.setRecentCount(count)
 }
