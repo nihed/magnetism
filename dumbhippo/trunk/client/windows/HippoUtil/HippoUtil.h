@@ -285,6 +285,10 @@ public:
         if (len < 0)
             len = static_cast<int>(strlen(utf8));
 
+        if (len == 0) {
+            assign(L"");
+            return;
+        }
         // "len" is WITHOUT nul. That means that MultiByteToWideChar will not 
         // nul-terminate the wide char string it returns.
 

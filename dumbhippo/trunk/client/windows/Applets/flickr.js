@@ -7,6 +7,8 @@ dh.flickr.Extension = function () {
     }
 
     this.accept = function(post) {
+        if (!post.info)
+            return false
         dh.util.debug("checking whether post is flickr")    
         var flickrElt = this.getPhotoset(post)
         var ret = (flickrElt != null)

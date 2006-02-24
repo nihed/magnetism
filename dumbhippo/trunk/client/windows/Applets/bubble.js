@@ -322,7 +322,10 @@ dh.bubble.PostData = function(senderName, senderId, senderPhotoUrl, postId, link
     this.personRecipients = personRecipients
     this.groupRecipients = groupRecipients
     this.viewers = viewers
-    this.info = dh.parseXML(postInfo)
+    if (postInfo != null && !postInfo.match(/^\s*$/)) {
+        this.info = dh.parseXML(postInfo)
+    } else
+        this.info = null
 
     this.getPhotoLink = function() {
         return dh.serverUrl + "person?who=" + this["senderId"]

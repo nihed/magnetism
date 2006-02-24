@@ -225,7 +225,8 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
         if (browsers_[i].cookie == cookie) {
             browsers_[i].url = url;
             browsers_[i].title = title;
-            mySpace_->browserChanged(browsers_[i]);
+            if (mySpace_)
+                mySpace_->browserChanged(browsers_[i]);
             return S_OK;
         }
     }
@@ -511,6 +512,7 @@ HippoUI::create(HINSTANCE instance)
         personRecipient.name = L"person@example.com";
         linkshare.personRecipients.append(personRecipient);
         linkshare.groupRecipients.append(HippoBSTR(L"Some Group"));
+        linkshare.info.setUTF8("");
         linkshare.timeout = 7;
         onLinkMessage(linkshare);
 
