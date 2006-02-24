@@ -183,8 +183,6 @@ public class PostingBoardBean implements PostingBoard {
 		Set<Group> groupRecipients = new HashSet<Group>();
 		Set<Resource> expandedRecipients = new HashSet<Resource>();
 		
-		boolean addedPoster = false;
-		
 		// sort into persons and groups
 		for (GuidPersistable r : recipients) {
 			if (r instanceof Person) {
@@ -199,10 +197,6 @@ public class PostingBoardBean implements PostingBoard {
 					invitationSystem.createInvitation(poster, null, bestResource, "", "");
 				}
 				
-				if (p.equals(poster)) {
-					addedPoster = true;
-				}
-				
 			} else if (r instanceof Group) {
 				groupRecipients.add((Group) r);
 			} else {
@@ -211,11 +205,13 @@ public class PostingBoardBean implements PostingBoard {
 			}
 		}
 
-		if (!addedPoster)
-			personRecipients.add(identitySpider.getBestResource(poster));
-		
 		// build expanded recipients
+		// FIXME: a recipient will be added to the list twice if they are in
+		//    a group with something other than their "best resource"; we
+		//    probably should spider the best resource from the group
+		//    member.
 		expandedRecipients.addAll(personRecipients);
+		expandedRecipients.add(identitySpider.getBestResource(poster));
 		for (Group g : groupRecipients) {
 			for (GroupMember groupMember : g.getMembers()) {
 				if (groupMember.isParticipant())
@@ -360,6 +356,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	static final String CAN_VIEW = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
+			  "post.poster = :viewer OR " + 
               "EXISTS (SELECT ac FROM AccountClaim ac WHERE ac.owner = :viewer " +
               "        AND ac.resource MEMBER OF post.personRecipients) OR " +
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP + "))";
@@ -427,8 +424,10 @@ public class PostingBoardBean implements PostingBoard {
 	}
 
 	static final String VISIBLE_PERSON_RECIPIENTS_QUERY = 
-		"SELECT resource from Post post, Resource resource, AccountClaim ac " +
-		"WHERE post = :post AND ac.owner = :viewer AND ac.resource MEMBER OF post.personRecipients AND " +
+		"SELECT resource from Post post, Resource resource " +
+		"WHERE post = :post AND " +
+		"      (post.poster = :viewer OR " +
+		"       EXISTS(SELECT ac from AccountClaim ac WHERE ac.owner = :viewer AND ac.resource MEMBER OF post.personRecipients)) AND " +
 		"      resource MEMBER OF post.personRecipients";
 	
 	private List<Resource> getVisiblePersonRecipients(Viewpoint viewpoint, Post post) {

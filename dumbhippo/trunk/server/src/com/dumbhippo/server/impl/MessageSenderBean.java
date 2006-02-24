@@ -775,21 +775,13 @@ public class MessageSenderBean implements MessageSender {
 	}
 
 	public void sendPostClickedNotification(Post post, List<User> viewers, User clicker) {
-		boolean seenPoster = false;
-		
 		for (Resource recipientResource : post.getExpandedRecipients()) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
 				if (!recipient.equals(clicker))
 					xmppSender.sendPostNotification(recipient, post, viewers, false);
-				if (recipient.equals(post.getPoster()))
-					seenPoster = true;
 			}
 		}
-		
-		// Send to the poster, but not if they were in expandedRecipients
-		if (!seenPoster)
-			xmppSender.sendPostNotification(post.getPoster(), post, viewers, false);
 	}
 
 	public void sendMySpaceNameChangedNotification(User user) {
