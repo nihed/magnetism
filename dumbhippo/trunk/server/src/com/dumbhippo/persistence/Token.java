@@ -54,6 +54,13 @@ public class Token extends DBUnique {
 		this.creationDate = creationDate.getTime();
 	}
 
+	/**
+	 * For now only used for InvitationToken, but probably should be cleaned up to 
+	 * be used for all of them. Since it's only used by InvitationToken it's checked in
+	 * VerifyServlet instead of TokenSystemBean.
+	 * 
+	 * @return whether the token is deleted
+	 */
 	@Column(nullable=false)
 	public boolean isDeleted() {
 		return deleted;
@@ -99,6 +106,10 @@ public class Token extends DBUnique {
 		return (age < 0 || age > getExpirationPeriodInSeconds());	
 	}
 	
+	/**
+	 * For now this only applies to InvitationToken, since isDeleted only does
+	 * @return whether the token should be honored
+	 */
 	@Transient
 	public boolean isValid() {
 	    return (!isDeleted() && !isExpired());	
