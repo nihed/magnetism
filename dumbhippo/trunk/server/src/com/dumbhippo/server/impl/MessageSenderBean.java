@@ -108,7 +108,6 @@ public class MessageSenderBean implements MessageSender {
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			builder.append(postView.getPoster().toXml());
 			for (Object o : postView.getRecipients()) {
 				if (o instanceof PersonView) {
 					PersonView pv = (PersonView) o;
