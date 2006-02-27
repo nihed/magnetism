@@ -360,10 +360,11 @@ HippoIM::addMySpaceComment(const HippoMySpaceBlogComment &comment)
     LmMessageNode *prop = lm_message_node_add_child(subnode, "commentId", NULL);
     char *commentIdStr = g_strdup_printf("%d", comment.commentId);
     lm_message_node_set_value(prop, commentIdStr);
-    prop = lm_message_node_add_child(subnode, "posterId", NULL);
     g_free(commentIdStr);
+    prop = lm_message_node_add_child(subnode, "posterId", NULL);
     char *posterIdStr = g_strdup_printf("%d", comment.posterId);
     lm_message_node_set_value(prop, posterIdStr);
+    g_free(posterIdStr);
 
     sendMessage(message);
     lm_message_unref(message);
