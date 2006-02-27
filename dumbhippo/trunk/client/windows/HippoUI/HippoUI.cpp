@@ -409,6 +409,7 @@ HippoUI::setHotness(BSTR str)
         return;
     if (idleHotnessBlinkId_ > 0)
         g_source_remove(idleHotnessBlinkId_);
+    idleHotnessBlinkId_ = 0;
     hotnessBlinkCount_ = 0;
     debugLogU("hotness changing from %d to %d", hotness_, hotness);
     HippoUI::Hotness oldHotness = hotness_;
@@ -440,6 +441,7 @@ HippoUI::idleHotnessBlink(gpointer data)
 
     ui->debugLogU("doing blink, count=%d", ui->hotnessBlinkCount_);
     if (ui->hotnessBlinkCount_ > 4) {
+        ui->hotnessBlinkCount_ = 0;
         ui->idleHotnessBlinkId_ = 0;
         return FALSE;
     }
