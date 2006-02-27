@@ -508,28 +508,28 @@ HippoUI::create(HINSTANCE instance)
         HippoPost linkshare;
 
         HippoEntity person1;
-        person1.isGroup = false;
+        person1.type = HippoEntity::EntityType::PERSON;
         person1.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
         person1.name = L"person@example.com";
         person1.id = L"15a1fbae7f2807";
         dataCache_.addEntity(person1);
 
         HippoEntity person2;
-        person2.isGroup = false;
+        person2.type = HippoEntity::EntityType::PERSON;
         person2.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
         person2.name = L"Owen Taylor";
         person2.id = L"25a1fbae7f2807";
         dataCache_.addEntity(person2);
 
         HippoEntity person3;
-        person3.isGroup = false;
+        person3.type = HippoEntity::EntityType::PERSON;
         person3.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
         person3.name = L"Colin Walters";
         person3.id = L"35a1fbae7f2807";
         dataCache_.addEntity(person3);
 
         HippoEntity person4;
-        person4.isGroup = false;
+        person4.type = HippoEntity::EntityType::PERSON;
         person4.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
         person4.id = L"a35baeea7f2807";
         person4.name = L"Bryan Clark";
@@ -1717,6 +1717,12 @@ HippoUI::onReceivingMySpaceContactPost()
     mySpace_->onReceivingMySpaceContactPost();
 }
 
+void
+HippoUI::clearActivePosts()
+{
+    menu_.clearActivePosts();
+}
+
 void 
 HippoUI::addActivePost(const HippoPost &post)
 {
@@ -1724,16 +1730,10 @@ HippoUI::addActivePost(const HippoPost &post)
     menu_.addActivePost(post);
 }
 
-bool 
-HippoUI::getPost(const HippoBSTR postId, HippoPost *post)
+HippoDataCache &
+HippoUI::getDataCache()
 {
-    return dataCache_.getPost(postId.m_str, post);
-}
-
-void 
-HippoUI::updatePost(const HippoPost &post)
-{
-    dataCache_.addPost(post);
+    return dataCache_;
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32

@@ -54,7 +54,6 @@ public:
     STDMETHODIMP Hush();
     STDMETHODIMP Resize(int width, int height);
     STDMETHODIMP ShowRecent();
-    STDMETHODIMP GetRecentMessageCount(int *result);
 
 protected:
     virtual HippoBSTR getURL();

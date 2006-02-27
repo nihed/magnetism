@@ -43,11 +43,10 @@ HippoMenu::popup(int mouseX, int mouseY)
 
     create();
     moveResizeWindow();
-    show();
-    if (ie_)
-        ie_->createInvocation(L"dhMenuSetRecentCount")
+    ie_->createInvocation(L"dhMenuSetRecentCount")
         .addLong(ui_->getRecentMessageCount())
         .run();
+    show();
 }
 
 void 
@@ -224,13 +223,6 @@ STDMETHODIMP
 HippoMenu::ShowRecent()
 {
     return ui_->ShowRecent();
-}
-
-STDMETHODIMP
-HippoMenu::GetRecentMessageCount(int *result)
-{
-    *result = ui_->getRecentMessageCount();
-    return S_OK;
 }
 
 /////////////////////// IUnknown implementation ///////////////////////

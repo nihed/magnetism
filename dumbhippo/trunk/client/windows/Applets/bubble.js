@@ -313,8 +313,7 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     
     this.getPhotoSrc = function() {
         var ent = dh.notification.findEntity(this.senderId)
-        var result = dh.serverUrl + ent.smallPhotoUrl
-        dh.util.debug("small photo url: " + result)        
+        var result = dh.serverUrl + ent.smallPhotoUrl       
         return result
     }
     
@@ -343,7 +342,6 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
         var personRecipients = []
         var groupRecipients = []        
         var i;
-        dh.util.debug("recipient count: " + this.recipients.length)
         for (i = 0; i < this.recipients.length; i++) {
             var recipId = this.recipients[i]
             var ent = dh.notification.findEntity(recipId)

@@ -96,7 +96,5 @@ library HippoUI {
         HRESULT Resize([in] int width, [in] int height);
         [id(184), helpstring("Show recent links")]
         HRESULT ShowRecent();
-        [id(185), helpstring("Get recent message count")]
-        HRESULT GetRecentMessageCount([out, retval] int *count);
     }
 }

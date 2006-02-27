@@ -1368,12 +1368,9 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
         if (!child)
             return false;
         ui_->debugLogU("handling activePostsChanged message");
+        ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
-            LmMessageNode *elt;
-            const char *attr;
             HippoPost post;
-            int chattingUserCount;
-            int viewingUserCount;
 
             if (parsePost(subchild, &post)) {
                 ui_->addActivePost(post);
@@ -1415,8 +1412,11 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
         return false;
     HippoBSTR postId;
     postId.setUTF8(attr);
+    HippoDataCache cache;
 
-    if (!ui_->getPost(postId, post))
+    cache = ui_->getDataCache();
+
+    if (!cache.getPost(postId, post))
         return false;
 
     node = lm_message_node_get_child (child, "recentViewers");
@@ -1467,19 +1467,21 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
 bool
 HippoIM::parseEntity(LmMessageNode *node, HippoEntity *person)
 {
-    bool isResource = strcmp(node->name, "resource") == 0;
-    bool isGroup = strcmp(node->name, "group") == 0;
-    if (!isResource && !isGroup && strcmp(node->name, "user") != 0)
+    if (strcmp(node->name, "resource") == 0)
+        person->type = HippoEntity::EntityType::RESOURCE;
+    else if (strcmp(node->name, "group") == 0)
+        person->type = HippoEntity::EntityType::GROUP;
+    else if (strcmp(node->name, "user") == 0)
+        person->type = HippoEntity::EntityType::PERSON;
+    else
         return false;
-
-    person->isGroup = isGroup;
 
     const char *attr = lm_message_node_get_attribute(node, "id");
     if (!attr)
         return false;
     person->id.setUTF8(attr);
 
-    if (isResource)
+    if (person->type == HippoEntity::EntityType::RESOURCE)
         person->name = NULL;
     else {
         attr = lm_message_node_get_attribute(node, "name");
@@ -1488,7 +1490,7 @@ HippoIM::parseEntity(LmMessageNode *node, HippoEntity *person)
         person->name.setUTF8(attr);
     }
 
-    if (isResource)
+    if (person->type == HippoEntity::EntityType::RESOURCE)
         person->smallPhotoUrl = NULL;
     else {
         attr = lm_message_node_get_attribute(node, "smallPhotoUrl");

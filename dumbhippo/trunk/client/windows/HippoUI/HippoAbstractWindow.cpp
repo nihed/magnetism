@@ -260,7 +260,6 @@ HippoAbstractWindow::show(void)
         AnimateWindow(window_, 400, AW_BLEND);
     else
         ShowWindow(window_, SW_SHOW);
-    UpdateWindow(window_);
 
     // Probably not really necessary
     BringWindowToTop(window_);

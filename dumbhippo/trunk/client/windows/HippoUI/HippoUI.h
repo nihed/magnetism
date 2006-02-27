@@ -118,6 +118,9 @@ public:
     void onReceivingMySpaceContactPost();
 
     void clearActivePosts();
+
+    HippoDataCache &getDataCache();
+
     void addActivePost(const HippoPost &post);
 
     bool getPost(const HippoBSTR postId, HippoPost *post);

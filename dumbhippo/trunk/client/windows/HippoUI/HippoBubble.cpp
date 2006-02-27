@@ -139,17 +139,24 @@ void
 HippoBubble::addEntity(const HippoEntity &entity)
 {
     const WCHAR *method;
-    if (entity.isGroup) {
-        method = L"dhAddGroup";
-    } else if (entity.isResource()) {
-        method = L"dhAddResource";
-    } else {
-        method = L"dhAddPerson";
+    switch (entity.type) {
+        case HippoEntity::EntityType::GROUP:
+            method = L"dhAddGroup";
+            break;
+        case HippoEntity::EntityType::RESOURCE:
+            method = L"dhAddResource";
+            break;
+        case HippoEntity::EntityType::PERSON:
+            method = L"dhAddPerson";
+            break;
+        default:
+            return;
     }
+
     HippoInvocation invocation = ie_->createInvocation(method)
         .add(entity.id)
         .add(entity.name);
-    if (!entity.isResource())
+    if (entity.type != HippoEntity::EntityType::RESOURCE)
         invocation.add(entity.smallPhotoUrl);
     invocation.run();
 }

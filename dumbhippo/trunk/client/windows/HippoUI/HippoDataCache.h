@@ -12,14 +12,16 @@
 
 struct HippoEntity
 {
-    bool isGroup;
+    enum EntityType {
+        RESOURCE,
+        PERSON,
+        GROUP
+    };
+
+    EntityType type;
     HippoBSTR id;
     HippoBSTR name;
     HippoBSTR smallPhotoUrl;
-
-    bool isResource () const {
-        return !isGroup && smallPhotoUrl.m_str == NULL;
-    }
 };
 
 struct HippoPost
