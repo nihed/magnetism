@@ -1519,7 +1519,7 @@ HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
         return false;
     post->postId.setUTF8(attr);
 
-    node = lm_message_node_get_child (postNode, "sender");
+    node = lm_message_node_get_child (postNode, "poster");
     if (!(node && node->value))
         return false;
     post->senderId.setUTF8(node->value);
