@@ -144,20 +144,22 @@
 			position:	absolute;
 			top:		0px;
 			left:		315px;
-			width:		100%;
+			right:		170px;
 		}
 		#dhPostChatLog {
 			position: 	relative;
 			color:		white;
+			height:		78px;
+			overflow:	hidden; /* don't go over underneath the actions section */
 		}
 		#dhPostChatNames {
 			position: 		absolute;
 			width:			55px;
 			left:			0px;
-			top:			6px;
-			height:			66px;
+			top:			3px;
+			height:			70px;
 			font-size:		smaller;
-			overflow: 		hidden;
+			overflow: 		hidden; /* don't bleed out of blue background */
 		}
 		#dhPostChatDivider {
 			position: 	absolute;
@@ -171,12 +173,11 @@
 		#dhPostChatMessages {
 			position:		absolute;
 			left:			62px;
-			top:			6px;
-			height: 		66px;
-			width:			100%;
+			top:			3px;
+			height: 		70px;
 			margin-left:	6px;
 			font-size:		smaller;
-			overflow: 		hidden;
+			overflow: 		hidden; /* don't bleed out of blue background */
 		}
 		
 		.dh-chat-name {
@@ -188,7 +189,10 @@
 		.dh-chat-message {
 			position:		relative;
 			left:			0px;
+			right:			10px;
 			text-align: 	left;
+			white-space:	nowrap;
+			text-overflow:	ellipsis; /* doesn't work, please fix if you dare */
 		}
 		
 		#dhPostViewingList {
@@ -332,14 +336,19 @@
 					<div id="dhPostActionsSW"></div>
 					<div id="dhPostActionsSE"></div>
 					<div id="dhPostActions">
+					   <!--<c:if test="${framer.signin.userId != null}"> -->
+							<div class="dh-post-action">
+								<a href="javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")">Join Chat</a>
+							</div>
+						<!-- </c:if> -->
 						<div class="dh-post-action">
-							<a href="/notvisited"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="/notvisited">Join Chat</a>
+							<a href="${url}" target="_top"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="${url}" target="_top">Remove Frame</a>
 						</div>
 						<div class="dh-post-action">
-							<a href="/notvisited"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="/notvisited">Back Home</a>
+							<a href="javascript:dh.framer.goHome();" target="_top"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.goHome()" target="_top">Back Home</a>
 						</div>
 						<div class="dh-post-action">
-							<a href="/notvisited"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="/notvisited">Forward to Others</a>
+							<a href="javascript:dh.framer.openForwardWindow();"><img class="dh-post-action-arrow" src="../images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.openForwardWindow();">Forward to Others</a>
 						</div>
 					</div><!-- dhPostActions -->
 				</div><!-- dhPostActionsContainer -->
