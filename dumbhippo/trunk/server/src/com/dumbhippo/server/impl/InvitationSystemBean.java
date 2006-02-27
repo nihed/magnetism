@@ -15,6 +15,7 @@ import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -101,10 +102,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				         "ivd.inviter = :inviter)");		
 			q.setParameter("authKey", authKey);
             q.setParameter("inviter", inviter);
-			q.setMaxResults(1); // there can be only one... result
-			invite = (InvitationToken) q.getSingleResult();			
+			// we expect there to be at most one result because authentication key must be unique
+			invite = (InvitationToken) q.getSingleResult();		
 		} catch (EntityNotFoundException e) {
 			invite = null;
+		} catch (NonUniqueResultException e) {
+			throw new RuntimeException("Multiple InvitationToken results for authentication key " 
+					                   + authKey + " while authentication key must be unique. " 
+					                   + e.getMessage());
 		}
 		return invite;		
 	}
