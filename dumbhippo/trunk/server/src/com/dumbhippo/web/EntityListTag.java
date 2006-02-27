@@ -42,6 +42,8 @@ public class EntityListTag extends SimpleTagSupport {
 		
 		Iterator it = entities.iterator();
 		
+		boolean first = true;
+		
 		while (it.hasNext()) {
 			Object o = it.next();
 			
@@ -56,14 +58,15 @@ public class EntityListTag extends SimpleTagSupport {
             if (html == null)
                 continue;
             
+			if (separator != null && !first)
+				writer.print(separator);
+            first = false;
+            
 			if (presenceHtml != null) {
 				html = html + presenceHtml;
 			}
 				
 			writer.print(html);
-			if (separator != null && it.hasNext()) {
-				writer.print(separator);
-			}
 		}
 	}
 	

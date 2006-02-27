@@ -17,7 +17,11 @@
 		<a href="${post.url}" onClick="return dh.util.openFrameSet(window,event,this,'${post.post.id}');" title="${post.url}" class="dh-share-link"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
 		<div class="dh-share-description"><c:out value="${post.textAsHtml}" escapeXml="false"/></div>
 	</div>
-	<div class="dh-share-to"><dh:favicon link="${post.url}"/>  Sent to <dh:entityList value="${post.recipients}" skipRecipientId="${hideRecipientId}" separator=", "/></div>
+	<div class="dh-share-to"><dh:favicon link="${post.url}"/>  
+		<dh:skipList value="${post.recipients}" skipId="${hideRecipientId}">
+			Sent to <dh:entityList value="${post.recipients}" separator=", "/>
+		</dh:skipList>
+	</div>
 </div>
 </div>
 
