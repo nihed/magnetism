@@ -206,7 +206,7 @@ public class PostView {
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		builder.openElement("post", "id", post.getId());
-		builder.appendTextNode("sender", posterView.getUser().getId());
+		builder.appendTextNode("poster", posterView.getUser().getId());
 		builder.appendTextNode("href", post.getUrl().toString());
 		builder.appendTextNode("title", post.getTitle());
 		builder.appendTextNode("text", post.getText());

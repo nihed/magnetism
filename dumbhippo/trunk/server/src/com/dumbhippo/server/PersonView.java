@@ -587,6 +587,12 @@ public class PersonView extends EntityView {
 		return Configuration.HEADSHOTS_RELATIVE_PATH;
 	}
 	
+	/**
+	 * This method gives an XML fragment containing most of the interesting
+	 * information about the person or resource being viewed.
+	 * 
+	 * @return an XML fragment
+	 */	
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		if (user != null) {
@@ -600,6 +606,12 @@ public class PersonView extends EntityView {
 		return builder.toString();		
 	}
 	
+	/**
+	 * This method gives an XML fragment sufficient for identifying the 
+	 * person or resource being viewed.
+	 * 
+	 * @return an XML fragment
+	 */
 	public String toIdentifyingXml() {
 		XmlBuilder builder = new XmlBuilder();		
 		if (user != null) {
@@ -611,6 +623,12 @@ public class PersonView extends EntityView {
 		return builder.toString();					
 	}
 	
+	/**
+	 * This method returns the identifying Guid of the person or
+	 * resource being viewed.
+	 * 
+	 * @return an identifying Guid
+	 */
 	public Guid getIdentifyingGuid() {
 		if (user != null)
 			return user.getGuid();

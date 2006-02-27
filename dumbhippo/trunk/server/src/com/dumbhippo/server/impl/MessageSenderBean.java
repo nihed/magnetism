@@ -384,7 +384,7 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new LivePostChangedExtension(lpost));
-			logger.info("Sending jabber message to {}", message.getTo());
+			logger.debug("Sending jabber message to {}", message.getTo());
 			connection.sendPacket(message);
 		}
 
@@ -633,14 +633,12 @@ public class MessageSenderBean implements MessageSender {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		User poster = post.getPost().getPoster();
 		for (Resource recipientResource : post.getPost().getExpandedRecipients()) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
 				xmppSender.sendLivePostChanged(recipient, lpost);
 			}
 		}
-		xmppSender.sendLivePostChanged(poster, lpost);
 	}
 
 	public void sendMySpaceNameChangedNotification(User user) {
