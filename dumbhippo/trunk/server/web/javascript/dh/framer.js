@@ -130,5 +130,8 @@ dh.framer.init = function() {
     	document.getElementById("dhPostViewingList").style.visibility = "hidden"
     	document.getElementById("dhPostChatLog").style.visibility = "hidden"
     	document.getElementById("dhPostChatLabel").style.visibility = "hidden"
+    	var joinChat = document.getElementById("dhPostJoinChat")
+    	if (joinChat)
+	    	joinChat.style.display = "none"
     }
 }

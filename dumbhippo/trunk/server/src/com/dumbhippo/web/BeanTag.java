@@ -91,9 +91,11 @@ public class BeanTag extends SimpleTagSupport {
 	private Object instantiateObject() {
 		//logger.debug("Instantiating " + clazz.getName());
 		
-		// We special-case the SigninBean
+		// We special-case the SigninBean and BrowserBean
 		if (clazz == SigninBean.class) 
 			return getSigninBean();
+		if (clazz == BrowserBean.class)
+			return getBrowserBean();
 		
 		Object o;
 		try {

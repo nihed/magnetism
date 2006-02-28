@@ -5,6 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
+<dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="postId"/>
 
 <c:set var="title" value="${framer.post.title}" scope="page"/>
@@ -60,6 +61,7 @@
 			<div id="dhPostChatArea">
 			
 				<div id="dhChatAreaNE"></div>
+				<div id="dhChatAreaBorderWhiteout"></div>
 			
 				<div id="dhPostChatLabel">Chat <span id="dhPostChatCount"></span></div><!-- dhPostChatLabel -->
 				
@@ -81,9 +83,13 @@
 					<!-- in Z-order -->
 					<div id="dhPostActionsSW"></div>
 					<div id="dhPostActionsSE"></div>
+					<div id="dhPostActionsBorderBlueout"></div>
 					<div id="dhPostActions">
-					   <c:if test="${framer.signin.userId != null}">
-							<div class="dh-post-action">
+					   <%-- The browser.gecko check is here because the dynamic hiding of
+					        the control when the chat object fails to load doesn't work
+					        correctly in firefox 1.0 --%>
+					   <c:if test="${framer.signin.userId != null && !browser.gecko}">
+							<div class="dh-post-action" id="dhPostJoinChat">
 								<a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')">Join Chat</a>
 							</div>
 						</c:if>

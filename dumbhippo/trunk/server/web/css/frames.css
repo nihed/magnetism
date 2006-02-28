@@ -8,6 +8,7 @@ body {
 	font-family: 		sans-serif;
 	margin:				0px;
 	overflow: 			hidden; /* no scrollbar */
+	font-size:          13px;
 }
 #dhMain {
 	position: 	relative;
@@ -53,6 +54,7 @@ body {
 	background-position: bottom;
 	width:		30px;
 	height:		24px;
+	overflow:   hidden;
 }
 #dhPostBubbleNE {
 	position: 	absolute;
@@ -61,6 +63,7 @@ body {
 	background-image: url(/images/framerBubbleNEFFFFFF.gif);
 	width:		23px;
 	height:		21px;
+	overflow:   hidden;
 }
 #dhPostBubbleNW {
 	position: 	absolute;
@@ -69,16 +72,16 @@ body {
 	background-image: url(/images/framerBubbleNWFFFFFF.gif);
 	width:		21px;
 	height:		20px;
+	overflow:   hidden;
 }
 #dhPostBubbleSW {
 	position: 	absolute;
 	bottom:		0px;
 	left:		0px;
 	background-image: url(/images/framerBubbleSWmixed.gif);
-	background-repeat: no-repeat;
-	background-position: bottom;
 	width:		21px;
 	height:		21px;
+	overflow:   hidden;
 }
 		
 #dhBottomShadow {
@@ -123,10 +126,27 @@ body {
 #dhChatAreaNE {
 	position: 	absolute;
 	top:		0px;
-	right:		0px;
+	right: 		0px;
 	background-image: url(/images/framerBackgroundNEFFFFFF.gif);
 	width:		16px;
 	height:		18px;
+	overflow:   hidden;
+}
+/* If the width of the page is odd, then right aligned elements
+ * like dhChatAreaNE are positioned one pixel too far to the
+ * left. We use a 1px white div aligned in the same way to trim off 
+ * a pixel from the the block to match, leaving only a very hard
+ * to detect problem. (A margin of 7px instead of 6px.) If the browser
+ * is non-buggy, then this div ends up in the white margin and
+ * has no effect.
+ */
+#dhChatAreaBorderWhiteout {
+	position: 	absolute;
+	width:		1px;
+	height:		100%;
+	right:		-1px;
+	top:		0px;
+	background-color: white;
 }
 #dhPostChatLabel {
 	position: 		absolute;
@@ -232,21 +252,29 @@ body {
 	bottom:		0px;
 	left:		0px;
 	background-image: url(/images/framerActionsSW2266AB.gif);
-	background-repeat: no-repeat;
-	background-position: bottom;
 	width:		14px;
 	height:		15px;
+	overflow:   hidden;
 }
 #dhPostActionsSE {
 	position: 	absolute;
 	bottom:		0px;
 	right:		0px;
 	background-image: url(/images/framerActionsSE2266AB.gif);
-	background-repeat: no-repeat;
-	background-position: bottom;
 	width:		15px;
 	height:		15px;
+	overflow:   hidden;
 }
+/* See comment for dhChatAreaBorderWhiteout */
+#dhPostActionsBorderBlueout {
+	position: 	absolute;
+	width:		1px;
+	height:		78px;
+	top:		0px;
+	right:		-1px;
+	background-color: #2266AB;
+}
+
 .dh-post-action {
 	position:		relative;
 	margin-top:		3px;
@@ -255,6 +283,7 @@ body {
 	margin-right:	10px;
 	
 	font-size:		smaller;
+	white-space:    nowrap;
 }
 .dh-post-action-arrow {
 	border:	0px;
