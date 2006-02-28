@@ -71,12 +71,12 @@ dh.framer._addMessage = function(message, before) {
 }
 
 dh.framer._removeMessage = function(message) {
-	if (message.div && message.div.parent) {
-	    message.div.parent.removeChild(message.div)
+	if (message.div && message.div.parentNode) {
+	    message.div.parentNode.removeChild(message.div)
 	    message.div = null
 	}
-	if (message.nameDiv && message.nameDiv.parent) {
-	    message.nameDiv.parent.removeChild(message.nameDiv)
+	if (message.nameDiv && message.nameDiv.parentNode) {
+	    message.nameDiv.parentNode.removeChild(message.nameDiv)
 	    message.nameDiv = null;
 	}
 }
