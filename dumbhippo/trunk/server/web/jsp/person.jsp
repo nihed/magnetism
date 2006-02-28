@@ -120,7 +120,7 @@
 				<c:when test="${viewperson.contacts.size > 0}">
 					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="8" longBodyLengthLimit="24" twoLineBody="true"/>
 					<p class="dh-right-box-text">
-				        <c:out value="${personName}/"> has a total of ${viewperson.totalContacts} friends on DumbHippo. You can view all their friends <a href="/contacts?who=${personId}">here</a>.
+				        <c:out value="${personName}"/> has a total of ${viewperson.totalContacts} friends on DumbHippo. You can view all their friends <a href="/friends?who=${personId}">here</a>.
 				    </p> 
 				</c:when>
 				<c:otherwise>

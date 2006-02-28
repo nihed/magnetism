@@ -47,7 +47,7 @@
 				        </c:otherwise>
 				    </c:choose>    				            
                     <div class="dh-prev-contacts">
-                        <a href="/contacts?stop=${contacts.start-1}${whoParam}">Prev <c:out value="${prevNumber}"/></a>
+                        <a href="/friends?stop=${contacts.start-1}${whoParam}">Prev <c:out value="${prevNumber}"/></a>
 		   		    </div>
                 </c:if>
                 <div class="dh-viewing-contacts">
@@ -55,7 +55,7 @@
 		   		</div>                
 				<c:if test="${contacts.hasMoreContacts}">
                     <div class="dh-next-contacts">
-                        <a href="/contacts?start=${contacts.nextStart}${whoParam}">Next <c:out value="${contacts.totalContacts-contacts.nextStart+1}"/></a>
+                        <a href="/friends?start=${contacts.nextStart}${whoParam}">Next <c:out value="${contacts.totalContacts-contacts.nextStart+1}"/></a>
 				    </div>
                 </c:if>
 		    </c:when>
