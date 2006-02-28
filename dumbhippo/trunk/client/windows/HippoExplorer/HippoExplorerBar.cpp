@@ -13,8 +13,9 @@
 #include <ExDispid.h>
 #include <strsafe.h>
 
-static const int MIN_HEIGHT = 10;
-static const int DEFAULT_HEIGHT = 165;
+static const int MIN_HEIGHT = 125;
+static const int MAX_HEIGHT = 125; // -1 is no max
+static const int DEFAULT_HEIGHT = 125;
 static const WCHAR *TITLE = L"DumbHippo";
 static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
 
@@ -226,7 +227,7 @@ HippoExplorerBar::GetBandInfo(DWORD          bandID,
 
     if (deskBandInfo->dwMask & DBIM_MAXSIZE) {
         deskBandInfo->ptMaxSize.x = (LONG)-1;
-        deskBandInfo->ptMaxSize.y = (LONG)-1;
+        deskBandInfo->ptMaxSize.y = MAX_HEIGHT;
     }
 
     if (deskBandInfo->dwMask & DBIM_INTEGRAL) {
