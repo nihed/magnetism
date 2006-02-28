@@ -1030,7 +1030,7 @@ getIdFromArray(SAFEARRAY *array, long i, ITunesObjectId *id_p)
     HRESULT hRes = getBounds(array, 2, &lower, &upper);
     if (FAILED(hRes))
         return hRes;
-    hippoDebugLogW(L"Bounds of dimension 2 are [%ld,%ld]", lower, upper);
+    //hippoDebugLogW(L"Bounds of dimension 2 are [%ld,%ld]", lower, upper);
 
     // it appears that iTunes will return less than 4 ids if the extra ones are 0? 
     // not really sure what's going on with that...
@@ -1071,7 +1071,7 @@ getIdsFromArray(SAFEARRAY *array, std::vector<ITunesObjectId> *ids_p)
     if (FAILED(hRes))
         return hRes;
     // if the array is empty we seem to get lower=0 upper=-1 since upper=0 would mean 0 is valid...
-    hippoDebugLogW(L"Bounds of dimension 1 are [%ld,%ld]", lower, upper);
+    //hippoDebugLogW(L"Bounds of dimension 1 are [%ld,%ld]", lower, upper);
 
     for (long i = lower; i <= upper; ++i) {
         ITunesObjectId id;
@@ -1081,6 +1081,54 @@ getIdsFromArray(SAFEARRAY *array, std::vector<ITunesObjectId> *ids_p)
         ids_p->push_back(id);
     }
     return S_OK;
+}
+
+#define ALL_VARIANT_FLAGS (VT_VECTOR | VT_ARRAY | VT_BYREF | VT_RESERVED)
+
+static inline VARTYPE
+getBaseType(VARTYPE type)
+{
+    return (type) & ~ALL_VARIANT_FLAGS;
+}
+
+static inline bool
+argHasBaseType(DISPPARAMS *dispParams, int argc, VARTYPE type)
+{
+    assert((type & ALL_VARIANT_FLAGS) == 0); // not a flag type 
+
+    return getBaseType(dispParams->rgvarg[argc].vt) == type;
+}
+
+static inline bool
+argHasTypeFlags(DISPPARAMS *dispParams, int argc, VARTYPE flags)
+{
+    assert((flags & ~ALL_VARIANT_FLAGS) == 0); // not a base type
+
+    return ((dispParams->rgvarg[argc].vt) & flags) == flags;
+}
+
+static bool
+checkArgType(DISPPARAMS *dispParams, int argc, VARTYPE expectedBase, VARTYPE expectedFlags)
+{
+    if (!argHasBaseType(dispParams, argc, expectedBase)) {
+        hippoDebugLogU("arg %d expecting base type %d, got %d", argc, expectedBase, dispParams->rgvarg[argc].vt & ~ALL_VARIANT_FLAGS);
+        return false;
+    }
+    if (!argHasTypeFlags(dispParams, argc, expectedFlags)) {
+        hippoDebugLogU("arg %d expecting type flags 0x%x, got 0x%x", argc, expectedFlags, dispParams->rgvarg[argc].vt & ALL_VARIANT_FLAGS);
+        return false;
+    }
+    return true;
+}
+
+static bool
+checkArgCount(DISPPARAMS *dispParams, int expected)
+{
+    if (dispParams->cArgs != expected) {
+        hippoDebugLogW(L"Expected %d args got %d", expected, dispParams->cArgs);
+        return false;
+    }
+    return true;
 }
 
 STDMETHODIMP
@@ -1098,32 +1146,6 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 	if (!ifaceTypeInfo_)
         return E_OUTOFMEMORY;
 
-#define BITS_SET(val, flags) (((val) & (flags)) == flags)
-#define ARG_HAS_TYPE(i, flags) BITS_SET(dispParams->rgvarg[(i)].vt, (flags))
-#define CHECK_ARG_TYPE(i, types) do {                                   \
-    if (!ARG_HAS_TYPE(i, types)) {                                      \
-        hippoDebugLogU("arg %d missing types %s", i, #types);           \
-        return DISP_E_BADVARTYPE;                                       \
-    } } while(0)
-#define CHECK_ARG_COUNT(expected) do {                  \
-     	if (dispParams->cArgs != 2) {                   \
-			hippoDebugLogW(L"wrong number of args");    \
-			return DISP_E_BADPARAMCOUNT;                \
-        } } while (0)
-
-#if 0
-    // debug spew of args when trying to figure out what's up
-    for (unsigned int argc = 0; argc < dispParams->cArgs; ++argc) {
-#define SPAM_ARG_TYPE(i, type) if (ARG_HAS_TYPE(i, type)) hippoDebugLogU("Arg %d has type %s", (i), #type)
-        SPAM_ARG_TYPE(argc, VT_UNKNOWN);
-        SPAM_ARG_TYPE(argc, VT_VARIANT);
-        SPAM_ARG_TYPE(argc, VT_ARRAY);
-        SPAM_ARG_TYPE(argc, VT_SAFEARRAY);
-        SPAM_ARG_TYPE(argc, VT_I4);
-        SPAM_ARG_TYPE(argc, VT_PTR);
-    }
-#endif
-
 	switch (member) {
 	case DISPID_ONDATABASECHANGEDEVENT:
         hippoDebugLogW(L"database changed");
@@ -1134,10 +1156,13 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
         // the 4 items in the second dimension are the 
         // source, playlist, track, track database) IDs
 
-        CHECK_ARG_COUNT(2);
+        if (!checkArgCount(dispParams, 2))
+            return DISP_E_BADPARAMCOUNT;
 
-        CHECK_ARG_TYPE(0, VT_ARRAY | VT_VARIANT);
-        CHECK_ARG_TYPE(1, VT_ARRAY | VT_VARIANT);
+        if (!checkArgType(dispParams, 0, VT_VARIANT, VT_ARRAY))
+            return DISP_E_BADVARTYPE;
+        if (!checkArgType(dispParams, 1, VT_VARIANT, VT_ARRAY))
+            return DISP_E_BADVARTYPE;
 
         {
             // dispParams is BACKWARD so in the IDL, deletedObjects is first
@@ -1192,15 +1217,17 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 	case DISPID_ONPLAYERPLAYEVENT:
 		hippoDebugLogW(L"player play");
 
-        CHECK_ARG_COUNT(1);
+        if (!checkArgCount(dispParams, 1))
+            return DISP_E_BADPARAMCOUNT;
 
-        CHECK_ARG_TYPE(0, VT_UNKNOWN | VT_PTR | VT_VARIANT);
+        if (!checkArgType(dispParams, 0, VT_DISPATCH, 0))
+            return DISP_E_BADVARTYPE;
 
 		// FIXME it's probably better to just queue an idle that gets the 
 		// current track
 
 		{
-			HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].punkVal);
+            HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].pdispVal);
 			setTrack(track);
 		}
 		break;
@@ -1212,12 +1239,15 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 		hippoDebugLogW(L"playing track changed");
 		// this is if the properties of the track change, not if we change tracks.
 		// it's apparently most likely for something called "joined CD tracks"
-        CHECK_ARG_COUNT(1);
 
-        CHECK_ARG_TYPE(0, VT_UNKNOWN | VT_PTR | VT_VARIANT);
+        if (!checkArgCount(dispParams, 1))
+            return DISP_E_BADPARAMCOUNT;
+
+        if (!checkArgType(dispParams, 0, VT_DISPATCH, 0))
+            return DISP_E_BADVARTYPE;
 
         {
-			HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].punkVal);
+			HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].pdispVal);
 			setTrack(track);
 		}
 		break;
@@ -1242,6 +1272,7 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
 		hippoDebugLogW(L"sound volume changed");
 		break;
 	default:
+        hippoDebugLogW(L"Unknown dispid %d", member);
 		break;
 	}
 

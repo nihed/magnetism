@@ -285,7 +285,7 @@ void
 HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
 {
     if (!musicSharingEnabled_) {
-        hippoDebugLogW(L"Music sharing disabled, not sending track changed notification");
+        hippoDebugLogW(L"Music sharing disabled, not sending track changed notification for '%s'", track.toString().m_str);
         return;
     }
 
@@ -305,7 +305,7 @@ HippoIM::notifyMusicTrackChanged(bool haveTrack, const HippoTrackInfo & track)
     sendMessage(message);
 
     lm_message_unref(message);
-    hippoDebugLogW(L"Sent music changed xmpp message");
+    hippoDebugLogW(L"Sent music changed xmpp message for '%s'", track.toString().m_str);
 }
 
 bool
@@ -645,6 +645,9 @@ HippoIM::sendMessage(LmMessage *message, LmMessageHandler *handler)
 void
 HippoIM::flushPending()
 {
+    if (pending_messages_->length > 1 && state_ == AUTHENTICATED)
+        hippoDebugLogW(L"%d messages backlog to clear", pending_messages_->length);
+
     while (state_ == AUTHENTICATED && pending_messages_->length > 0) {
         OutgoingMessage *om = static_cast<OutgoingMessage*>(g_queue_pop_head(pending_messages_));
         LmMessage *message = om->getMessage();
@@ -660,6 +663,9 @@ HippoIM::flushPending()
         }
         delete om;
     }
+
+    if (pending_messages_->length > 0)
+        hippoDebugLogW(L"%d messages could not be sent now, since we aren't connected; deferring", pending_messages_->length);
 }
 
 void

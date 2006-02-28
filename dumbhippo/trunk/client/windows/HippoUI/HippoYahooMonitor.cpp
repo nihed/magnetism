@@ -610,7 +610,7 @@ HippoYahooMonitorImpl::Invoke (DISPID        member,
 			return DISP_E_BADPARAMCOUNT;
 		}
 
-		if (!(dispParams->rgvarg[0].vt & VT_I4)) {
+		if (!(dispParams->rgvarg[0].vt == VT_I4)) {
 			hippoDebugLogW(L"no VT_I4");
 			return DISP_E_BADVARTYPE;
 		}

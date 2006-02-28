@@ -96,6 +96,15 @@ public:
 
     // default operator= and copy should be OK in theory...
 
+    HippoBSTR toString() const {
+        if (hasName())
+            return getName();
+        else if (hasArtist())
+            return getArtist();
+        else
+            return HippoBSTR(L"[track ???]");
+    }
+
 private:
     void fromLong(HippoBSTR &s, long val) {
         WCHAR buf[32];
