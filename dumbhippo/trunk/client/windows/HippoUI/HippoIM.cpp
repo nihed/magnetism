@@ -1371,8 +1371,11 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
         ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
             HippoPost post;
+            HippoEntity entity;
 
-            if (parsePost(subchild, &post)) {
+            if (parseEntity(subchild, &entity)) {
+                ui_->addEntity(entity);
+            } else if (parsePost(subchild, &post)) {
                 ui_->addActivePost(post);
                 continue;
             } else if (parseLivePost(subchild, &post)) {
@@ -1618,12 +1621,16 @@ HippoIM::onMessage (LmMessageHandler *handler,
                     HippoPost link;
                     if (im->parsePost(subchild, &link))
                         im->ui_->onLinkMessage(link);
+                    else
+                        im->ui_->logErrorU("failed to parse post");
                 } else if (nodeMatches(subchild, "user", NULL) || nodeMatches(subchild, "group", NULL)
                     || nodeMatches(subchild, "resource", NULL))
                 {
                     HippoEntity entity;
                     if (im->parseEntity(subchild, &entity))
                         im->ui_->addEntity(entity);
+                    else
+                        im->ui_->logErrorU("failed to parse entity");
                 }
             }
         } 

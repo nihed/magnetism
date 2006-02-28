@@ -872,12 +872,12 @@ HippoFlickr::HippoFlickrPhoto::genericGetStream(WCHAR *filename, IStream **bufRe
 {
     HANDLE fd = CreateFile(filename, FILE_READ_DATA, 0, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if (fd == INVALID_HANDLE_VALUE) {
-        flickr_->ui_->logLastError(L"Couldn't open photo");
+        flickr_->ui_->logLastHresult(L"Couldn't open photo");
         return FALSE;
     }
     DWORD size = GetFileSize(fd, NULL);
     if (size == INVALID_FILE_SIZE) {
-        flickr_->ui_->logLastError(L"failed to get photo size");
+        flickr_->ui_->logLastHresult(L"failed to get photo size");
         CloseHandle(fd);
         return FALSE;
     }
@@ -890,7 +890,7 @@ HippoFlickr::HippoFlickrPhoto::genericGetStream(WCHAR *filename, IStream **bufRe
     BOOL ret;
     while (totalBytesRead < size && (ret = ReadFile(fd, buf, sizeof(buf), &bytesRead, NULL))) {
         if (!ret) {
-            flickr_->ui_->logLastError(L"failed to read from photo");
+            flickr_->ui_->logLastHresult(L"failed to read from photo");
             retStream->Release();
             CloseHandle(fd);
             return FALSE;
@@ -1065,7 +1065,7 @@ HippoFlickr::processUploads()
     buf = GlobalLock(hg);
     res = FindMimeFromData(NULL, NULL, buf, len, NULL, 0, &mimeType, 0);
     if (FAILED(res)) {
-        ui_->logError(L"couldn't determine mime type for photo", res);
+        ui_->logHresult(L"couldn't determine mime type for photo", res);
         GlobalUnlock(hg);
         uploadStream->Release();
         return;

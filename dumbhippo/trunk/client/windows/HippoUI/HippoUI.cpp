@@ -983,8 +983,24 @@ HippoUI::debugLogU(const char *format, ...)
     g_free(strW);
 }
 
+void
+HippoUI::logErrorU(const char *fmt, ...)
+{
+    WCHAR buf[1024];
+    HippoBSTR fmtUtf16;
+    fmtUtf16.setUTF8(fmt);
+    va_list vap;
+    va_start(vap, fmt);
+    StringCchVPrintfW(buf, sizeof(buf) / sizeof(buf[0]), fmtUtf16.m_str, vap);
+    va_end(vap);
+    HippoBSTR msg;
+    msg.Append(L"ERROR: ");
+    msg.Append(buf);
+    hippoDebugLogW(L"%s", msg.m_str);
+}
+
 void 
-HippoUI::logError(const WCHAR *text, HRESULT result)
+HippoUI::logHresult(const WCHAR *text, HRESULT result)
 {
     HippoBSTR errstr;
     hippoHresultToString(result, errstr);
@@ -992,9 +1008,9 @@ HippoUI::logError(const WCHAR *text, HRESULT result)
 }
 
 void
-HippoUI::logLastError(const WCHAR *text)
+HippoUI::logLastHresult(const WCHAR *text)
 {
-    logError(text, GetLastError());
+    logHresult(text, GetLastError());
 }
 
 void 

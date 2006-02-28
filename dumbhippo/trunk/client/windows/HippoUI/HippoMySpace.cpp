@@ -145,7 +145,7 @@ HippoMySpace::idleRefreshContacts(void *data)
 void
 HippoMySpace::HippoMySpaceFriendIdHandler::handleError(HRESULT res) 
 {
-    myspace_->ui_->logError(L"got error while retriving MySpace friend id, queuing retry", res);
+    myspace_->ui_->logHresult(L"got error while retriving MySpace friend id, queuing retry", res);
     myspace_->idleGetFriendIdId_ = g_timeout_add(HIPPO_MYSPACE_RETRY_FRIENDID_SECS * 1000, (GSourceFunc) HippoMySpace::idleGetFriendId, myspace_);
     delete this;
 }
@@ -219,7 +219,7 @@ HippoMySpace::idleRefreshComments(void *data)
 void
 HippoMySpace::HippoMySpaceCommentHandler::handleError(HRESULT res) 
 {
-    myspace_->ui_->logError(L"error while retriving MySpace blog feed", res);
+    myspace_->ui_->logHresult(L"error while retriving MySpace blog feed", res);
 }
 
 void

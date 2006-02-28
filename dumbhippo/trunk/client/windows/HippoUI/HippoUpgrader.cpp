@@ -164,7 +164,7 @@ HippoUpgrader::performUpgrade()
 void 
 HippoUpgrader::handleError(HRESULT result)
 {
-    ui_->logError(L"Error downloading upgrade", result);
+    ui_->logHresult(L"Error downloading upgrade", result);
     state_ = STATE_ERROR;
     delete http_;  
     http_ = NULL;
@@ -177,7 +177,7 @@ HippoUpgrader::handleBytesRead(void *responseData, long responseBytes)
 
     while (responseBytes > 0) {
         if (!WriteFile(downloadFile_, responseData, responseBytes, &bytesWritten, NULL)) {
-            ui_->logError(L"Error writing upgrade to disk", GetLastError());
+            ui_->logHresult(L"Error writing upgrade to disk", GetLastError());
             state_ = STATE_ERROR;
             return;
         }

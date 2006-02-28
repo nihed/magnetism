@@ -73,8 +73,9 @@ public:
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
-    void logError(const WCHAR *text, HRESULT result);
-    void logLastError(const WCHAR *text);
+    void logErrorU(const char *format, ...); // UTF-8
+    void logHresult(const WCHAR *text, HRESULT result);
+    void logLastHresult(const WCHAR *text);
 
     void onConnectionChange(bool connected);
     void onAuthFailure();
