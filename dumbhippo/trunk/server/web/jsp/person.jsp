@@ -114,20 +114,20 @@
 			</div>
 		</div>
 		<div class="dh-right-box dh-right-box-last">
-			<h5 class="dh-title">People They Know</h5>
-			<div class="dh-people">
 			<c:choose>
 				<c:when test="${viewperson.contacts.size > 0}">
-					<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="8" longBodyLengthLimit="24" twoLineBody="true"/>
-					<p class="dh-right-box-text">
-				        <c:out value="${personName}"/> has a total of ${viewperson.totalContacts} friends on DumbHippo. You can view all their friends <a href="/friends?who=${personId}">here</a>.
-				    </p> 
+					<h5 class="dh-title">People They Know</h5>
+					<div class="dh-people">
+						<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" bodyLengthLimit="8" longBodyLengthLimit="24" twoLineBody="true"/>
+						<p class="dh-right-box-text">
+				        	<c:out value="${personName}"/> has a total of ${viewperson.totalContacts} friends on DumbHippo. You can view all their friends <a href="/friends?who=${personId}">here</a>.
+					    </p> 
+					</div>
 				</c:when>
 				<c:otherwise>
 					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
 				</c:otherwise>
 			</c:choose>
-			</div>
 		</div>
 		</div>
 	</div>
