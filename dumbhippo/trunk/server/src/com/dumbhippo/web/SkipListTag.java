@@ -32,7 +32,7 @@ public class SkipListTag extends SimpleTagSupport {
 			for (Object object : value) {
 				if (object instanceof PersonView) {
 					PersonView personView = (PersonView)object;
-					if (personView.getUser().getId().equals(skipId)) {
+					if ((personView.getUser() != null ) && personView.getUser().getId().equals(skipId)) {
 						continue;
 					}	
 				} else if (object instanceof GroupView) {
