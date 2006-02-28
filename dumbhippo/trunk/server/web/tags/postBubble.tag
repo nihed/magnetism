@@ -6,10 +6,12 @@
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView"%>
 <%@ attribute name="hidePoster" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="hideRecipientId" required="false" type="java.lang.String"%>
+<%@ attribute name="noBorder" required="false" type="java.lang.Boolean"%>
 
-
-<div class="dh-share-shadow">
-<div class="dh-share">
+<c:if test="${!noBorder}">
+	<div class="dh-share-shadow">
+	<div class="dh-share">
+</c:if>
 	<div class="dh-share-from">
 		<dh:entity value="${post.poster}" photo="true" bodyLengthLimit="14"/>
 	</div>
@@ -22,9 +24,10 @@
 			Sent to <dh:entityList value="${post.recipients}" separator=", "/>
 		</dh:skipList>
 	</div>
-</div>
-</div>
-
+<c:if test="${!noBorder}">	
+	</div>
+	</div>
+</c:if>	
 
 <% /*
 <dh:presence value="${post.poster}"/>

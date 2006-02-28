@@ -30,12 +30,12 @@
 	padding-top:			24px;
 	text-align:				center;
 }
-div.dh-share-from img.dh-person {
+.dh-share-from img.dh-person {
 	width:					48px;
 	height:					48px;
 	border:					0;
 }
-div.dh-share a.dh-person {
+.dh-share a.dh-person {
 	display:				block;
 	color:					#e5e920;
 	background-color:		inherit;
@@ -79,7 +79,7 @@ a.dh-share-link:link {
 .dh-share-description p {
 	margin:					0;
 }
-div.dh-share-to {
+.dh-share-to {
 	position:				absolute;
 	bottom:					4px;
 	right:					12px;
@@ -87,13 +87,13 @@ div.dh-share-to {
 	background-color:		inherit;
 	font-size:				small;
 }
-div.dh-share-to a {
+.dh-share-to a {
 	color:					#e5e920;
 	background-color:		inherit;
 	font-size:				small;
 }
 
-div.dh-share-search {
+.dh-share-search {
 	position:				relative;
 	text-align:				right;
 	right:					30px;

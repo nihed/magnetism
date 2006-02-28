@@ -42,64 +42,89 @@
 		dh.framer.onReconnect()
 	</script>
 	<script type="text/javascript">
-		var chatControl = document.getElementById("dhChatControl")
+		var chatControl = document.getElementById("dhChatControl");
         if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
-			chatControl.Join(false)
+			chatControl.Join(false);
 		}
 	</script>
 </head>
 <body onload="dh.framer.init()">
+	<div id="dhMain">
 
-  <div>
-	<table>
-	<td>
-	<div class="dh-share-shadow">
-      <div class="dh-share">
-	    <div class="dh-share-from">
-	  	  <dh:entity value="${framer.post.poster}" photo="true"/>
-	    </div>
-	    <div class="dh-share-text">
-	  	  <c:out value="${framer.post.titleAsHtml}" escapeXml="false"/>
-		  <dh:favicon link="${framer.post.url}"/>
-		  <div class="dh-share-description"><c:out value="${framer.post.textAsHtml}" escapeXml="false"/></div>
-	    </div>
-	    <div class="dh-share-to">Shared with <dh:entityList value="${framer.post.recipients}" skipRecipientId="${hideRecipientId}"/> by <dh:entity value="${framer.post.poster}" photo="false"/>&nbsp;<dh:presence value="${framer.post.poster}"/></div>    
-      </div> <!-- share -->
-    </div> <!-- share-shadow -->
-	</td>
-	<td class="action-area">
-	   <table class="action-area" cellspacing="2px">
-	   <c:if test="${!param.browserBar}">
-		   <tr>
-		       <td class="action" nowrap><a class="action action-box" href="${url}" target=_top>X</a></td>
-		       <td class="action" nowrap><a class="action" href="${url}" target=_top>Remove Frame</a></td>
-		   </tr>
-	   </c:if>
-	   <tr>
-	       <td class="action" nowrap><a class="action action-box" href="javascript:dh.framer.goHome()" target=_top>&#171;</a></td>	
-	       <td class="action" nowrap><a class="action" href="javascript:dh.framer.goHome()" target=_top>Back Home</a></td>       
-	   </tr>
-	   <tr>
-	       <td class="action" nowrap><a class="action action-box highlight-action" href="javascript:dh.framer.openForwardWindow();">&#187</a></td>
-	       <td class="action" nowrap><a class="action highlight-action" href="javascript:dh.framer.openForwardWindow();">Forward To Others</a></td>
-	   </tr>
-	   <c:if test="${framer.signin.userId != null}">
-	       <tr id="dhChatLinkRow">
-		       <td class="action" nowrap><a class="action highlight-action" href='javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")'><dh:png klass="dh-chat-icon" src="/images/${buildStamp}/chat.png" style="width: 16; height: 16;"/></a></td>
-	    	   <td class="action" nowrap><a class="action highlight-action" href='javascript:dh.actions.requestJoinRoom("${framer.signin.userId}","${framer.post.post.id}")'>Chat About This</a></td>
-		   </tr>
-	   </c:if>
-	   <tr id="dhChatPreviewRow">
-	       <td id="dhChatPreview" nowrap colspan=2>
-			    <div>Just looking at the page: <span id="dhChatVisitorList"></span></div>
-			    <div>Currently chatting: <span id="dhChatParticipantList"></span></div>
-	       </td>
-	   </tr>
-	   </table>
-	</td>
-	</tr>
-	</table>
-  </div>
+		<!-- under everything -->
+		<div id="dhTopShadow">
+		</div>
+		
+		<!--  first in page so it's on the bottom -->
+		<div id="dhPostChatAreaContainer">
+			<div id="dhPostChatArea">
+			
+				<div id="dhChatAreaNE"></div>
+			
+				<div id="dhPostChatLabel">Chat <span id="dhPostChatCount"></span></div><!-- dhPostChatLabel -->
+				
+				<div id="dhPostChatLogContainer">
+					<div id="dhPostChatLog">
+					
+						<div id="dhPostChatNames">
+							<!-- dynamically gets div class="dh-chat-name" -->
+						</div>
+						<div id="dhPostChatDivider"></div>
+						<div id="dhPostChatMessages">
+							<!-- dynamically gets div class="dh-chat-message" -->
+						</div>
+					
+					</div><!-- dhPostChatLog -->
+				</div><!-- dhPostChatLogContainer -->
+	
+				<div id="dhPostActionsContainer">
+					<!-- in Z-order -->
+					<div id="dhPostActionsSW"></div>
+					<div id="dhPostActionsSE"></div>
+					<div id="dhPostActions">
+					   <c:if test="${framer.signin.userId != null}">
+							<div class="dh-post-action">
+								<a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')">Join Chat</a>
+							</div>
+						</c:if>
+					   <c:if test="${!param.browserBar}">
+							<div class="dh-post-action">
+								<a href="${url}" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${url}" target="_top">Remove Frame</a>
+							</div>
+						</c:if>
+						<div class="dh-post-action">
+							<a href="javascript:dh.framer.goHome();" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.goHome()" target="_top">Back Home</a>
+						</div>
+						<div class="dh-post-action">
+							<a href="javascript:dh.framer.openForwardWindow();"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.openForwardWindow();">Forward to Others</a>
+						</div>
+					</div><!-- dhPostActions -->
+				</div><!-- dhPostActionsContainer -->
+	
+			</div><!-- dhPostChatArea -->
+		</div><!-- dhPostChatAreaContainer -->
 
+		<!-- on top of stuff in the chat area, under other stuff -->
+		<div id="dhBottomShadow">
+		</div>
+		
+		<div id="dhPostBubbleContainer">
+			<!-- in Z-order -->
+			<div id="dhPostBubbleBackground"></div>
+			<div id="dhPostBubbleSE"></div>
+			<div id="dhPostBubbleNE"></div>
+			<div id="dhPostBubbleNW"></div>
+			<div id="dhPostBubbleSW"></div>
+			<div id="dhPostBubble">
+				<dht:postBubble noBorder="true" post="${framer.post}" hideRecipientId="${framer.signin.userId}"/>
+			</div><!-- dhPostBubble -->
+		</div>
+		
+		<div id="dhPostViewingList">
+			<div id="dhPostViewingListLabel">Who's viewing this page:</div>
+			<div id="dhPostViewingListPeople"></div>
+		</div><!-- dhPostViewingList -->
+	
+	</div>
 </body>
 </html>

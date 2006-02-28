@@ -56,42 +56,59 @@ dh.framer.goHome = function() {
 }
 
 dh.framer._addMessage = function(message, before) {
-	message.div = document.createElement("div")
-    message.div.className = "dh-chat-preview-message"
-    var text = message.name + ": " + message.text + "  (" + message.timeString() + ")"
-	message.div.appendChild(document.createTextNode(text))
+	message.nameDiv = document.createElement("div")
+    message.nameDiv.className = "dh-chat-name"
+  	message.nameDiv.appendChild(document.createTextNode(message.name))
+  	
+  	message.div = document.createElement("div")
+  	message.div.className = "dh-chat-message"
+  	message.div.appendChild(document.createTextNode(message.text))
 	
-    var previewArea = document.getElementById("dhChatPreview")
-	previewArea.insertBefore(message.div, before ? before.div : null)
+	var namesArea = document.getElementById('dhPostChatNames')
+	namesArea.insertBefore(message.nameDiv, before ? before.nameDiv : null)
+	var messageArea = document.getElementById('dhPostChatMessages')
+	messageArea.insertBefore(message.div, before ? before.div : null)
 }
 
 dh.framer._removeMessage = function(message) {
-    var previewArea = document.getElementById("dhChatPreview")
-	previewArea.removeChild(message.div)
-}
-
-dh.framer._getUserListSpan = function(participant) {
-	if (participant)
-	    return document.getElementById("dhChatParticipantList")
-    else
-	    return document.getElementById("dhChatVisitorList")
+	if (message.div && message.div.parent) {
+	    message.div.parent.removeChild(message.div)
+	    message.div = null
+	}
+	if (message.nameDiv && message.nameDiv.parent) {
+	    message.nameDiv.parent.removeChild(message.nameDiv)
+	    message.nameDiv = null;
+	}
 }
 
 dh.framer._addUser = function(user, before, participant) {
-	var userList = this._getUserListSpan(participant)
+	var userList = document.getElementById("dhPostViewingListPeople")
     
     user.span = document.createElement("span")
     user.span.appendChild(document.createTextNode(user.name))
 
 	userList.insertBefore(user.span, before ? before.span : null)
 	if (user.span.nextSibling)
-		userList.insertBefore(document.createTextNode(", "), user.span.nextSibling)
+		userList.insertBefore(document.createTextNode(", "), user.span.nextSibling);
 	else if (user.span.previousSibling)
-		userList.insertBefore(document.createTextNode(", "), user.span)
+		userList.insertBefore(document.createTextNode(", "), user.span);
+		
+	var chatCountNode = document.getElementById('dhPostChatCount')
+	var count = dh.framer._participantList.numUsers() // only chatters, not viewers
+	var countText;
+	
+	if (count == 0)
+		countText = "(nobody chatting)"
+	else if (count == 1)
+		countText = "(1 person)"
+	else
+		countText = "(" + count + " people)"
+	
+	dojo.dom.textContent(chatCountNode, countText)
 }
 
 dh.framer._removeUser = function(user, participant) {
-	var userList = this._getUserListSpan(participant)
+	var userList = document.getElementById("dhPostViewingListPeople")
     
     if (user.span.nextSibling)
 	    userList.removeChild(user.span.nextSibling)
@@ -110,7 +127,8 @@ dh.framer.init = function() {
 		chatControl.Rescan()
 	} else {
 		// If we don't have the ActiveX controls available to chat, hide them
-    	document.getElementById("dhChatLinkRow").style.visibility = "hidden"
-    	document.getElementById("dhChatPreviewRow").style.visibility = "hidden"    
+    	document.getElementById("dhPostViewingList").style.visibility = "hidden"
+    	document.getElementById("dhPostChatLog").style.visibility = "hidden"
+    	document.getElementById("dhPostChatLabel").style.visibility = "hidden"
     }
 }
