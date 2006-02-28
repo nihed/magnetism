@@ -416,6 +416,7 @@ public class LiveState {
 		cleaner.start();
 		
 		liveUserUpdater = new LiveUserPeriodicUpdater();
+		liveUserUpdater.setName("LiveUserUpdater");		
 		liveUserUpdater.start();
 	}
 	
