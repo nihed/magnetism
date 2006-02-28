@@ -17,7 +17,23 @@
 
 		<dht:toolbar/>
 	
-		<h2>Bookmark this link:</h2>
+		<c:choose>
+			<c:when test="${bookmark.browser.ieAtLeast60}">
+				<p>If you have Internet Explorer, <a href="/welcome">the DumbHippo software</a>
+				adds a toolbar button for sharing links. Go there now and don't worry about this page.
+				</p>
+			</c:when>
+			<c:otherwise>
+				<p>For Firefox and Safari users, bookmarking this link is an alternative to
+					the Internet Explorer toolbar button
+					included in <a href="/welcome">the DumbHippo software</a>.
+				</p>
+			</c:otherwise>
+		</c:choose>
+		
+		<p>
+		The link to bookmark:
+		</p>
 		
 		<p>
 		&nbsp;
@@ -26,14 +42,15 @@
 		<p style="text-align: center;">
 			<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));void(0);" style="font-size: 200%;">Dumb Hippo It!</a>
 		<br/>
-		Use the bookmark to share a web site with your friends.
+		Bookmark this, then click on the bookmark when you visit a web site you want to share
+		with friends.
 		</p>
 		
 		<p>
 		&nbsp;
 		</p>
 		
-		<p><b>Tip:</b>
+		<p>
 	
 			<c:choose>
 				<c:when test="${bookmark.browser.geckoAtLeast10}">
@@ -50,6 +67,9 @@
 					If you have a bookmarks toolbar but the DumbHippo link is not on it,
 					try choosing Manage Bookmarks from the Bookmarks menu, and 
 					moving the bookmark to your Personal Toolbar folder.
+				</c:when>
+				<c:when test="${bookmark.browser.khtml && bookmark.browser.mac}">
+					To bookmark the link in Safari, drag-and-drop it onto the toolbar.
 				</c:when>
 				<c:when test="${bookmark.browser.ieAtLeast60}">
 					To bookmark the link in Internet Explorer, click it with the <b>right</b> mouse

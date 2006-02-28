@@ -60,7 +60,7 @@
 			        </c:choose>
 			    </div>
 		    </div>		
-		    <div class="dh-right-box dh-right-box-last">
+		    <div class="dh-right-box">
 			    <h5 class="dh-title">People You Know</h5>
 		  	    <p class="dh-right-box-text">
                     <c:choose>           
@@ -88,7 +88,13 @@
 				        </c:otherwise>
 			        </c:choose>
 		    	</div>
-		    </div>		    		    
+		    </div>
+	        <div class="dh-right-box dh-right-box-last">
+	  	    <p class="dh-right-box-text">
+	  	    	<div><a href="/welcome">Download</a> the DumbHippo software for Windows</div>
+	  	    	<div><a href="/bookmark">Create a bookmark</a> in Firefox or Safari</div>
+	  	    	<div><a href="/nowplaying">Add a "Now Playing" music embed</a> to your blog</div>
+		    </p>
 		</div>
 		
 	</div>
