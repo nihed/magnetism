@@ -239,6 +239,8 @@ public class PostView {
 				builder.append(gv.toXml());
 			}
 		}
+		// Poster is not in the filtered recipient list, add it here
+		builder.append(posterView.toXml());
 		builder.append(toXml());
 		return builder.toString();
 	}
