@@ -227,4 +227,19 @@ public class PostView {
 		builder.closeElement();
 		return builder.toString();
 	}
+	
+	public String toXmlDump() {
+		XmlBuilder builder = new XmlBuilder();		
+		for (Object o : getRecipients()) {
+			if (o instanceof PersonView) {
+				PersonView pv = (PersonView) o;
+				builder.append(pv.toXml());
+			} else if (o instanceof GroupView) {
+				GroupView gv = (GroupView) o;
+				builder.append(gv.toXml());
+			}
+		}
+		builder.append(toXml());
+		return builder.toString();
+	}
 }

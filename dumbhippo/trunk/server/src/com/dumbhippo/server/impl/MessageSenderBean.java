@@ -108,16 +108,7 @@ public class MessageSenderBean implements MessageSender {
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (Object o : postView.getRecipients()) {
-				if (o instanceof PersonView) {
-					PersonView pv = (PersonView) o;
-					builder.append(pv.toXml());
-				} else if (o instanceof GroupView) {
-					GroupView gv = (GroupView) o;
-					builder.append(gv.toXml());
-				}
-			}
-			builder.append(postView.toXml());
+			builder.append(postView.toXmlDump());
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -263,7 +254,7 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (int i = 0; i < livePosts.size(); i++) {
-				builder.append(postViews.get(i).toXml());
+				builder.append(postViews.get(i).toXmlDump());
 				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();
