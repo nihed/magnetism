@@ -9,7 +9,7 @@
 <jsp:setProperty name="contacts" property="viewedPersonId" param="who"/>
 
 <head>
-	<title>View Contacts</title>
+	<title>View Friends</title>
 	<dht:stylesheets href="contacts.css" iehref="contacts-iefixes.css"/>
 	<dht:scriptIncludes/>
 </head>
@@ -22,10 +22,10 @@
 
 		<c:choose>
 		    <c:when test="${contacts.self}"> 
-                <h2 class="dh-title">Your Contacts</h2>
+                <h2 class="dh-title">Your Friends</h2>
 			</c:when>
 			<c:otherwise>
-			    <h2 class="dh-title"> <c:out value="${contacts.person.name}"/>'s Contacts</h2>        
+			    <h2 class="dh-title"> <c:out value="${contacts.person.name}"/>'s Friends</h2>        
 			</c:otherwise>   
         </c:choose>     
 		
@@ -100,9 +100,12 @@
 			            </p>   
 		            </div>
 		            <div class="dh-right-box dh-right-box-last">
-			            <h5 class="dh-title">Contacts Tips</h5>
+			            <h5 class="dh-title">Friends Tips</h5>
                         <p class="dh-right-box-text">
-		                    Your contacts are the people you know. 
+		                    Your friends are the people you know and communicate with on
+		                    DumbHippo. Sending a message to someone adds them to your
+		                    friends list. Your friends can see more information about
+		                    you; for example, they can see your other friends.
 			            </p>
 		            </div>
 		        </c:when>
@@ -116,9 +119,9 @@
 		            <div class="dh-right-box dh-right-box-last">
 			            <h5 class="dh-title">Contacts Tips</h5>
                         <p class="dh-right-box-text">
-		                    Their contacts are the people they know.
-		                    You would not see their contacts, if they
-		                    did not claim to know you. 
+		                    Your friends are the people you know and communicate with on
+		                    DumbHippo. Once you are on someone's friends list, you can 
+		                    see their other friends.
 			            </p>
 		            </div>
 		        </c:otherwise>
