@@ -1,15 +1,5 @@
 @CHARSET "UTF-8";
 
 @import "group.css";
-@import "music.css";
+@import "musicelements.css";
 
-#dhMainArea .dh-track {
-	position: relative;
-	margin-bottom: 7px;
-	/* this doesn't seem like the right way to do it... */
-	left: 30px;
-}
-
-.dh-track-name {
-	font-weight:		bold;
-}
