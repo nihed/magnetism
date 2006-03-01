@@ -79,7 +79,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"SELECT gm FROM GroupMember gm, AccountClaim ac " +
 		"WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :user";
 	
-	private GroupMember getGroupMemberForUser(Group group, User user) {
+	private GroupMember getGroupMemberForUser(Group group, User user) throws NotFoundException {
 		try {
 			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_USER_QUERY)
 				.setParameter("group", group)
@@ -87,7 +87,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				.setMaxResults(1)
 				.getSingleResult();
 		} catch (EntityNotFoundException e) {
-			return null;
+			throw new NotFoundException("GroupMember for user " + user + " not found", e);
 		}
 	}
 	
@@ -298,7 +298,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :member AND g = :group";
 	
-	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) {
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
 		Person viewer = viewpoint.getViewer();
 		Query query;
 		
@@ -316,7 +316,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		try {
 			return (GroupMember)query.getSingleResult();
 		} catch (EntityNotFoundException e) {
-			return null;
+			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
 		}
 	}
 

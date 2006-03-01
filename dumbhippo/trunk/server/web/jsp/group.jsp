@@ -103,7 +103,8 @@
 			</div>
 			<div class="dh-right-box dh-right-box-last">
 				<h5 class="dh-title">Invited Group Members</h5>
-				<p class="dh-right-box-text">What Are <a class="dh-invited-group-members" href="http://info.dumbhippo.com/Invited Group Members">Invited Group Members</a>?</p>
+				<!-- FIXME: create an info page on Invited Group Members and uncomment the next line -->
+				<!-- <p class="dh-right-box-text">What Are <a class="dh-invited-group-members" href="http://info.dumbhippo.com/Invited Group Members">Invited Group Members</a>?</p> -->
 				<div class="dh-people">
 					<dh:entityList value="${invitedMembers}" photos="true"/>
 				</div>

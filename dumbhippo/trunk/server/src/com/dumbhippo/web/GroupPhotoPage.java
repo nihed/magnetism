@@ -47,17 +47,21 @@ public class GroupPhotoPage {
 		// the handling of REMOVED members from lookupGroupById to getGroupMember
 		
 		if (groupId != null) {
-			viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
-			if (viewedGroup == null)
-				viewedGroupId = null;
+			try {
+			    viewedGroup = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
+			} catch (NotFoundException e) {
+		        viewedGroup = null;
+			    viewedGroupId = null;
+			}
 		}
 		
 		if (viewedGroup != null) {
-			groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
-			
-			// Create a detached GroupMember to avoid null checks 
-			if (groupMember == null)
+			try {
+			    groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+			} catch (NotFoundException e) {
+			    // Create a detached GroupMember to avoid null checks 
 				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+			}
 		}
 	}
 

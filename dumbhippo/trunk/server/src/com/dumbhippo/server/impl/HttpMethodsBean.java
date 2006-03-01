@@ -319,8 +319,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<Person> memberPeople = identitySpider.lookupGuidStrings(
 				Person.class, memberGuids);
 
-		Group group = groupSystem.createGroup(user, name,
-				secret ? GroupAccess.PUBLIC_INVITE : GroupAccess.SECRET);
+		Group group = 
+			groupSystem.createGroup(user, name,
+			 	                    secret ? GroupAccess.SECRET : GroupAccess.PUBLIC_INVITE);
 		for (Person p : memberPeople)
 			groupSystem.addMember(user, group, p);
 
