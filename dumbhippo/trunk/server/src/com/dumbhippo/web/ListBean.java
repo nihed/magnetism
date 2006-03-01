@@ -3,8 +3,10 @@ package com.dumbhippo.web;
 import java.util.List;
 
 /**
- * Use this if you need to do anything to a list in JSTL 
- * other than iterate over it or index into it. 
+ * This is a wrapper for List that adds bean-style getters/setters,
+ * right now it's just a way to rename size() to getSize().
+ * This allows you to access the list from JSTL.
+ * 
  * Don't try to add an isEmpty() property because "empty" 
  * is a keyword in JSTL
  * 
