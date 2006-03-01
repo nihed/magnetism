@@ -49,13 +49,14 @@ HippoDataCache::getRecentPosts(std::vector<HippoPost> &result)
     std::map<HippoBSTR, HippoPost>::const_iterator it = posts_.begin();
     while (it != posts_.end()) {
         // Convert from unix time (seconds since jan 1 1970) to windows time
-        long postDate = (*it).second.postDate;
+        const HippoPost *post = &((*it).second);
+        long postDate = post->postDate;
         LONGLONG ltime = Int32x32To64(postDate, 10000000) + 116444736000000000;
         LONGLONG diff = curtime.QuadPart - ltime;
         diff /= 10000; // convert to milliseconds
         diff /= 1000; // convert to seconds
         if (diff <= 60 * 60 * 24) {
-            result.push_back((*it).second);
+            result.push_back(*post);
         }
         it++;
     }

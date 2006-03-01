@@ -36,14 +36,19 @@ struct HippoPost
     HippoBSTR info;
     long postDate;
     int chattingUserCount;
+    int viewingUserCount;
     int totalViewers;
     int timeout;
+  
+    bool haveViewed;
 
     HippoPost() {
         postDate = 0;
         chattingUserCount = 0;
+        viewingUserCount = 0;
         totalViewers = 0;
         timeout = 0;
+        haveViewed = false;
     }
 };
 

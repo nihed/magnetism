@@ -1379,13 +1379,25 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
             HippoPost post;
             HippoEntity entity;
 
-            if (parseEntity(subchild, &entity)) {
-                ui_->addEntity(entity);
-            } else if (parsePost(subchild, &post)) {
-                ui_->addActivePost(post);
+            if (isEntity(subchild)) {
+                if (!parseEntity(subchild, &entity)) {
+                    ui_->logErrorU("failed to parse entity in activePostsChanged");
+                } else {
+                    ui_->addEntity(entity);
+                }
+            } else if (isPost(subchild)) {
+                if (!parsePost(subchild, &post)) {
+                    ui_->logErrorU("failed to parse post in activePostsChanged");
+                } else {
+                    ui_->addActivePost(post);
+                }
                 continue;
-            } else if (parseLivePost(subchild, &post)) {
-                ui_->addActivePost(post);
+            } else if (isLivePost(subchild)) {
+                if (!parseLivePost(subchild, &post)) {
+                    ui_->logErrorU("failed to parse live post in activePostsChanged");
+                } else {
+                    ui_->addActivePost(post);
+                }
                 continue;
             }
         }
@@ -1408,6 +1420,12 @@ HippoIM::handlePrefsChangedMessage(LmMessage *message)
     processPrefsNode(child);
 
     return true;
+}
+
+bool
+HippoIM::isLivePost(LmMessageNode *node)
+{
+    return nodeMatches(node, "livepost", NULL);
 }
 
 bool
@@ -1444,10 +1462,16 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
         return false;
     post->chattingUserCount = strtol(node->value, NULL, 10);
 
+    node = lm_message_node_get_child (child, "viewingUserCount");
+    if (!(node && node->value))
+        return false;
+    post->viewingUserCount = strtol(node->value, NULL, 10);
+
     node = lm_message_node_get_child (child, "totalViewers");
     if (!(node && node->value))
         return false;
     post->totalViewers = strtol(node->value, NULL, 10);
+
     return true;
 }
 
@@ -1465,12 +1489,39 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
     ui_->debugLogU("handling livePostChanged message");
 
     HippoPost post;
-    if (!parseLivePost(child, &post))
-        return false;
+    LmMessageNode *subchild;
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        if (isEntity(subchild)) {
+            HippoEntity entity;
+            if (!parseEntity(subchild, &entity)) {
+                ui_->logErrorU("failed to parse entity referenced in live post");
+                return false;
+            }
+            ui_->addEntity(entity);
+        } else if (isLivePost(subchild)) {
+            if (!parseLivePost(subchild, &post)) {
+                ui_->logErrorU("failed to parse live post");
+                return false;
+            }
+        } else if (nodeMatches(subchild, "viewerHasViewed", NULL)) {
+            post.haveViewed = true;
+        } else {
+            ui_->debugLogU("unknown node %s in livePostChanged", subchild->name);
+        }
+    }
 
     ui_->onLinkMessage(post);
 
     return true;
+}
+
+bool
+HippoIM::isEntity(LmMessageNode *node)
+{
+    if (strcmp(node->name, "resource") == 0 || strcmp(node->name, "group") == 0
+        || strcmp(node->name, "user") == 0)
+        return true;
+    return false;
 }
 
 bool
@@ -1518,6 +1569,12 @@ HippoIM::parseEntityIdentifier(LmMessageNode *node, HippoBSTR &id)
         return false;
     id.setUTF8(attr);
     return true;
+}
+
+bool
+HippoIM::isPost(LmMessageNode *node)
+{
+    return nodeMatches(node, "post", NULL);
 }
 
 bool
@@ -1623,20 +1680,20 @@ HippoIM::onMessage (LmMessageHandler *handler,
         if (child) {
             LmMessageNode *subchild;
             for (subchild = child->children; subchild; subchild = subchild->next) {
-                if (nodeMatches(subchild, "post", NULL)) {
+                if (im->isPost(subchild)) {
                     HippoPost link;
                     if (im->parsePost(subchild, &link))
                         im->ui_->onLinkMessage(link);
                     else
                         im->ui_->logErrorU("failed to parse post");
-                } else if (nodeMatches(subchild, "user", NULL) || nodeMatches(subchild, "group", NULL)
-                    || nodeMatches(subchild, "resource", NULL))
-                {
+                } else if (im->isEntity(subchild)) {
                     HippoEntity entity;
                     if (im->parseEntity(subchild, &entity))
                         im->ui_->addEntity(entity);
                     else
                         im->ui_->logErrorU("failed to parse entity");
+                } else {
+                    im->ui_->debugLogU("unknown node %s in newPost message", subchild->name);
                 }
             }
         } 

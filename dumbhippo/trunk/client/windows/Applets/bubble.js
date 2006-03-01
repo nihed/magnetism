@@ -312,7 +312,11 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     }
     
     this.getPhotoSrc = function() {
+        dh.util.debug("looking up entity" + this.senderId)
         var ent = dh.notification.findEntity(this.senderId)
+        dh.util.debug("got entity " + ent)
+        if (!ent)
+            return ""
         var result = dh.serverUrl + ent.smallPhotoUrl       
         return result
     }
