@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
@@ -91,5 +92,10 @@ import com.dumbhippo.persistence.VersionedEntity;
 		XmlBuilder builder = new XmlBuilder();
 		builder.appendTextNode("group", "", "id", group.getId());		
 		return builder.toString();					
+	}
+
+	@Override
+	public Guid getIdentifyingGuid() {
+		return group.getGuid(); 
 	}	
 }

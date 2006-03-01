@@ -53,6 +53,17 @@ public interface PostingBoard {
 	
 	public PostView getPostView(Viewpoint viewpoint, Post post);
 	
+	/**
+	 * Returns a set of EntityView (i.e. PersonView and GroupView) which contains all entities
+	 * referenced by this post.  At the moment, this is just the expanded recipients and the
+	 * group recipients.
+	 * 
+	 * @param viewpoint viewpoint from which the post is viewed
+	 * @param post the post in question
+	 * @return set of EntityView
+	 */
+	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post);
+	
 	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
 	
 	public int getPostViewerCount(Guid guid);

@@ -149,6 +149,7 @@ public class LivePost extends LiveObject {
 		}
 		builder.closeElement(); // recentViewers
 		builder.appendTextNode("chattingUserCount", ""+getChattingUserCount());
+		builder.appendTextNode("viewingUserCount", ""+getViewingUserCount());
 		builder.appendTextNode("totalViewers", ""+getTotalViewerCount());
 		builder.closeElement(); // livepost
 		return builder.toString();

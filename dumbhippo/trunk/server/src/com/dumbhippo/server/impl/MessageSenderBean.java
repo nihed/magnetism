@@ -3,8 +3,10 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.EJBContext;
@@ -33,7 +35,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.GroupView;
+import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -100,15 +102,20 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
 		private PostView postView;
+		private Set<EntityView> referencedEntities;
 
-		public NewPostExtension(PostView pv) {
+		public NewPostExtension(PostView pv, Set<EntityView> referenced) {
 			postView = pv;
+			referencedEntities = referenced;
 		}
 
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			builder.append(postView.toXmlDump());
+			for (EntityView ev: referencedEntities) {
+				builder.append(ev.toXml());
+			}
+			builder.append(postView.toXml());
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -129,17 +136,20 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
 		private LivePost lpost;
+		private boolean viewerHasViewed;
 		
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			builder.append(lpost.toXml());
+			builder.appendTextNode("viewerHasViewed", "", viewerHasViewed ? "true" : "false");
 			builder.closeElement();
 			return builder.toString();
 		}
 		
-		public LivePostChangedExtension(LivePost lpost) {
+		public LivePostChangedExtension(LivePost lpost, boolean viewerHasViewed) {
 			this.lpost = lpost;
+			this.viewerHasViewed = viewerHasViewed;
 		}
 
 		public String getElementName() {
@@ -236,10 +246,12 @@ public class MessageSenderBean implements MessageSender {
 		
 		List<PostView> postViews;
 		List<LivePost> livePosts;
+		Set<EntityView> referencedEntities;
 		
-		public ActivePostsChangedExtension(List<PostView> postViews, List<LivePost> posts) {
-			this.postViews = new ArrayList<PostView>(postViews);
-			this.livePosts = new ArrayList<LivePost>(posts);
+		public ActivePostsChangedExtension(List<PostView> postViews, List<LivePost> posts, Set<EntityView> referencedEntities) {
+			this.postViews = postViews;
+			this.livePosts = posts;
+			this.referencedEntities = referencedEntities;
 		}
 
 		public String getElementName() {
@@ -254,7 +266,10 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (int i = 0; i < livePosts.size(); i++) {
-				builder.append(postViews.get(i).toXmlDump());
+				for (EntityView ev: referencedEntities) {
+					builder.append(ev.toXml());
+				}				
+				builder.append(postViews.get(i).toXml());
 				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();
@@ -360,8 +375,9 @@ public class MessageSenderBean implements MessageSender {
 			Viewpoint viewpoint = new Viewpoint(recipient);
 
 			PostView postView = postingBoard.getPostView(viewpoint, post);
+			Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
 			
-			NewPostExtension extension = new NewPostExtension(postView);
+			NewPostExtension extension = new NewPostExtension(postView, referenced);
 			message.addExtension(extension);
 
 			message.setBody(String.format("%s\n%s", title, url));
@@ -370,10 +386,10 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public synchronized void sendLivePostChanged(User user, LivePost lpost) {
+		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new LivePostChangedExtension(lpost));
+			message.addExtension(new LivePostChangedExtension(lpost, post.isViewerHasViewed()));
 			logger.debug("Sending jabber message to {}", message.getTo());
 			connection.sendPacket(message);
 		}
@@ -410,6 +426,7 @@ public class MessageSenderBean implements MessageSender {
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
 			List<LivePost> lposts = new ArrayList<LivePost>();
 			List<PostView> posts = new ArrayList<PostView>();
+			Set<EntityView> referencedEntities = new HashSet<EntityView>();			
 			for (Guid id : user.getActivePosts()) {
 				LivePost lpost = LiveState.getInstance().getLivePost(id);
 				PostView pv;
@@ -420,8 +437,10 @@ public class MessageSenderBean implements MessageSender {
 				}
 				lposts.add(lpost);
 				posts.add(pv);
+				referencedEntities.addAll(postingBoard.getReferencedEntities(new Viewpoint(dbUser), pv.getPost()));
 			}
-			message.addExtension(new ActivePostsChangedExtension(posts, lposts));
+
+			message.addExtension(new ActivePostsChangedExtension(posts, lposts, referencedEntities));
 			logger.info("Sending activePostsChanged message to {}; {} active posts" + message.getTo(), + posts.size());			
 			connection.sendPacket(message);						
 		}
@@ -626,7 +645,7 @@ public class MessageSenderBean implements MessageSender {
 		for (Resource recipientResource : post.getPost().getExpandedRecipients()) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
-				xmppSender.sendLivePostChanged(recipient, lpost);
+				xmppSender.sendLivePostChanged(recipient, lpost, post);
 			}
 		}
 	}

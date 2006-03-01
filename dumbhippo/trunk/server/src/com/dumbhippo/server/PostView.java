@@ -202,7 +202,7 @@ public class PostView {
 			return Collections.emptyList();
 		}
 	}
-	
+
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		builder.openElement("post", "id", post.getId());
@@ -225,23 +225,6 @@ public class PostView {
 			}			
 		}
 		builder.closeElement();
-		return builder.toString();
-	}
-	
-	public String toXmlDump() {
-		XmlBuilder builder = new XmlBuilder();		
-		for (Object o : getRecipients()) {
-			if (o instanceof PersonView) {
-				PersonView pv = (PersonView) o;
-				builder.append(pv.toXml());
-			} else if (o instanceof GroupView) {
-				GroupView gv = (GroupView) o;
-				builder.append(gv.toXml());
-			}
-		}
-		// Poster is not in the filtered recipient list, add it here
-		builder.append(posterView.toXml());
-		builder.append(toXml());
 		return builder.toString();
 	}
 }

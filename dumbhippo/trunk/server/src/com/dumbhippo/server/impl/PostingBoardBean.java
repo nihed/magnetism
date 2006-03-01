@@ -48,6 +48,7 @@ import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
@@ -807,6 +808,22 @@ public class PostingBoardBean implements PostingBoard {
 			throw new IllegalArgumentException(e);
 		}
 		return url;
+	}
+
+	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
+		Set<EntityView> result = new HashSet<EntityView>();
+		for (Group g : post.getGroupRecipients()) {
+			// FIXME for now we always add anonymous group views, since at the moment
+			// all the callers of this function just need anonymously viewable
+			// information.  Later, if for example we add the viewer's membership status
+			// to the toXml() method of GroupView, we should fix this function, probably 
+			// by adding a GroupSystem.getGroupView(viewpoint, g).
+			result.add(new GroupView(g, null, null));
+		}
+		for (Resource r : post.getExpandedRecipients()) {
+			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
+		}
+		return result;
 	}
 }
 
