@@ -15,14 +15,16 @@ body {
 	height: 	125px;
 }
 /* white border, without using border attribute
-   which messes us up for firefox vs. ie */
+   which messes us up for firefox vs. ie. Note 
+   that it's important that the width here is 
+   even, or it will trigger an ie bug. */
 #dhPostBubbleContainer {
 	position: absolute;
 	background-color: white;
 	height:	98px;
 	top:	12px;
 	left: 	3px;
-	width:	306px;
+	width:	330px;
 }
 /* blue background */
 #dhPostBubbleBackground {
@@ -31,7 +33,7 @@ body {
 	height:	92px;
 	top:	3px;
 	left: 	3px;
-	width:	300px;
+	width:	324px;
 }
 #dhPostBubble {
 	position: 		absolute;
@@ -39,7 +41,7 @@ body {
 	height:			92px;
 	top:			3px;
 	left: 			3px;
-	width:			297px;
+	width:			321px;
 	margin-right:	3px;
 	color:			white;
 	overflow:		hidden;
@@ -151,7 +153,7 @@ body {
 #dhPostChatLabel {
 	position: 		absolute;
 	bottom: 		100%;
-	left: 			307px;
+	left: 			331px;
 	margin-bottom: 	2px;
 	font-weight:	bold;
 	color: 		 #014AC4;
@@ -162,7 +164,7 @@ body {
 #dhPostChatLogContainer {
 	position:	absolute;
 	top:		0px;
-	left:		315px;
+	left:		339px;
 	right:		170px;
 }
 #dhPostChatLog {
@@ -297,10 +299,15 @@ body {
 .dh-share-text {
 	position:	absolute;
 	left:		72px;
+	width:      245px;
 	overflow:	hidden;
 }
 .dh-share-link {
-	font-size:	small;
+	font-size:	 small;
+	white-space: nowrap;
+	overflow:      hidden;
+	width:         100%;
+	text-overflow: ellipsis;
 }
 .dh-share-description {
 	font-size:		x-small;
