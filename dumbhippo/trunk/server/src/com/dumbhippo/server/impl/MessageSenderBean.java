@@ -31,6 +31,7 @@ import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -136,20 +137,25 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
 		private LivePost lpost;
+		private Set<EntityView> viewerEntities;
 		private boolean viewerHasViewed;
 		
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+			for (EntityView ev : viewerEntities) {
+				builder.append(ev.toXml());
+			}
 			builder.append(lpost.toXml());
-			builder.appendTextNode("viewerHasViewed", "", viewerHasViewed ? "true" : "false");
+			builder.appendTextNode("viewerHasViewed", viewerHasViewed ? "true" : "false");
 			builder.closeElement();
 			return builder.toString();
 		}
 		
-		public LivePostChangedExtension(LivePost lpost, boolean viewerHasViewed) {
+		public LivePostChangedExtension(LivePost lpost, boolean viewerHasViewed, Set<EntityView> viewerEntities) {
 			this.lpost = lpost;
 			this.viewerHasViewed = viewerHasViewed;
+			this.viewerEntities = viewerEntities;
 		}
 
 		public String getElementName() {
@@ -389,8 +395,19 @@ public class MessageSenderBean implements MessageSender {
 		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new LivePostChangedExtension(lpost, post.isViewerHasViewed()));
-			logger.debug("Sending jabber message to {}", message.getTo());
+			Set<EntityView> viewerEntities = new HashSet<EntityView>();
+			Viewpoint viewpoint = new Viewpoint(user);
+			for (Guid guid : lpost.getViewers()) {
+				Person viewer;
+				try {
+					viewer = identitySpider.lookupGuid(Person.class, guid);
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+			}
+			message.addExtension(new LivePostChangedExtension(lpost, post.isViewerHasViewed(), viewerEntities));
+			logger.debug("Sending livePostChanged message to {}", message.getTo());
 			connection.sendPacket(message);
 		}
 

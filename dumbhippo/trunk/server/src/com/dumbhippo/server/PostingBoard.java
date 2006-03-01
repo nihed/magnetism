@@ -54,9 +54,9 @@ public interface PostingBoard {
 	public PostView getPostView(Viewpoint viewpoint, Post post);
 	
 	/**
-	 * Returns a set of EntityView (i.e. PersonView and GroupView) which contains all entities
-	 * referenced by this post.  At the moment, this is just the expanded recipients and the
-	 * group recipients.
+	 * Returns a set of EntityView (i.e. PersonView and GroupView) which contains the entities directly
+	 * referenced by this post.  At the moment, this is just the person recipients, the poster, and the
+	 * group recipients.  This does not include indirectly referenced entities (e.g. the members of a group).
 	 * 
 	 * @param viewpoint viewpoint from which the post is viewed
 	 * @param post the post in question

@@ -820,9 +820,10 @@ public class PostingBoardBean implements PostingBoard {
 			// by adding a GroupSystem.getGroupView(viewpoint, g).
 			result.add(new GroupView(g, null, null));
 		}
-		for (Resource r : post.getExpandedRecipients()) {
+		for (Resource r : post.getPersonRecipients()) {
 			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
 		}
+		result.add(identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.PRIMARY_RESOURCE));
 		return result;
 	}
 }

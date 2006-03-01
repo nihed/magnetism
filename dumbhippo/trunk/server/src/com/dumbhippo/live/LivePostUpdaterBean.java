@@ -24,7 +24,7 @@ public class LivePostUpdaterBean implements LivePostUpdater {
 	MessageSender messageSender;
 	
 	private boolean numIsPow2(long num) {
-		return (num & (num - 1)) == 0;
+		return num != 0 && ((num & (num - 1)) == 0);
 	}
 	
 	private boolean countIsInteresting(long count) {

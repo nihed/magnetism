@@ -1,8 +1,10 @@
 package com.dumbhippo.live;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -78,6 +80,14 @@ public class LivePost extends LiveObject {
 		if (viewers.size() == MAX_STORED_VIEWERS) 
 			viewers.remove(viewers.size() -1);
 		viewers.add(pos, new Viewer(userId, viewedDate));
+	}
+	
+	public Set<Guid> getViewers() {
+		Set<Guid> viewerGuids = new HashSet<Guid>();
+		for (Viewer v : this.viewers) {
+			viewerGuids.add(v.userId);
+		}
+		return viewerGuids;
 	}
 
 	/*************************************************************/
