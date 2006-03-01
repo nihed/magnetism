@@ -32,8 +32,10 @@ public class PresenceMonitor implements SessionManagerListener {
 	
 	// Time between pings. Must be less than 
 	// LiveState.CLEANER_INTERVAL * LiveState.MAX_XMPP_SERVER_CACHE_AGE
-	// or we'll be timed out.
-	private static final long PING_INTERVAL = 60 * 1000; // 1 minute
+	// or we'll be timed out. Also, we want to be less than the JBoss
+	// timeout for remoting sockets, which is 60 seconds, or we'll
+	// keep on recreating new connections to the server.
+	private static final long PING_INTERVAL = 30 * 1000; // 50 seconds
 	
 	// How long to wait before retrying if we need to reconnect to 
 	// the application server
@@ -80,11 +82,13 @@ public class PresenceMonitor implements SessionManagerListener {
 			// have to start over from scratch with registration.
 			
 			long lastPingTime = -1;
+			MessengerGlueRemote glue = null;			
 		
 			try {
 				while (true) {
 					try {
-						MessengerGlueRemote glue = getGlue();
+						if (glue == null)
+							glue = getGlue();
 	
 						if (serverIdentifier == null) {
 							Log.debug("Registering with application server");
@@ -139,14 +143,17 @@ public class PresenceMonitor implements SessionManagerListener {
 					} catch (NamingException e) {
 						Log.debug("Couldn't get handle to MessengerGlue object, restarting presence tracking");
 						serverIdentifier = null;
+						glue = null;
 						Thread.sleep(RETRY_SLEEP);
 					} catch (EJBException e) {
 						Log.debug("Got exception communicating with the application server, restarting presence tracking", e);
 						serverIdentifier = null;
+						glue = null;
 						Thread.sleep(RETRY_SLEEP);
 					} catch (NoSuchServerException e) {
 						Log.debug("Application server doesn't recognize us, restarting presence tracking");
 						serverIdentifier = null;
+						glue = null;
 						Thread.sleep(RETRY_SLEEP);
 					}
 				}
