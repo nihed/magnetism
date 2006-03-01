@@ -80,7 +80,8 @@ dh.model.groupFromXmlNode = function(element) {
 	var displayName = element.getAttribute("display");
 	var sampleMembers = element.getAttribute("sampleMembers");
 
-	// note, empty string is "false"	
+	// note, empty string is "false", so group name, which is what is usually
+	// used for the display attribute, must not be blank	
 	if (!id)
 		dojo.raise("no id attr on <group> node");
 	if (!displayName)

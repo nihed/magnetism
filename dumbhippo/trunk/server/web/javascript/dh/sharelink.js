@@ -352,9 +352,9 @@ dh.sharelink.init = function() {
 	dh.sharelink.createGroupPrivateRadio = document.getElementById("dhCreateGroupPrivateRadio");
 	dh.sharelink.createGroupPublicRadio = document.getElementById("dhCreateGroupPublicRadio");
 	// HTML is stupid; you only get the signal on the one that changed, not the whole group
-	dojo.event.connect(dh.sharelink.createGroupPrivateRadio, "onchange",
+	dojo.event.connect(dh.sharelink.createGroupPrivateRadio, "onclick",
 						dj_global, "dhCreateGroupAccessChanged");
-	dojo.event.connect(dh.sharelink.createGroupPublicRadio, "onchange",
+	dojo.event.connect(dh.sharelink.createGroupPublicRadio, "onclick",
 						dj_global, "dhCreateGroupAccessChanged");
 	dh.sharelink.updateAccessTip();
 	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");

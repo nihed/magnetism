@@ -211,15 +211,74 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 	node.checked = !node.checked;
 	
 	// fixup the radio group
+	// if a button in a radio group got deselected, we want to select the next
+	// button in the group after it, or if it was the last button in a radio group
+	// that got deselected, we want to select the first one 
+	// if a button in a radio group got selected, we want to make sure that all
+	// other buttons are deselected
+	if (node.type == "radio") {
+		var deselectedNodeIndex = -1;
+		var newNodeToSelectIndex = -1;
+		var firstNodeIndex = -1;
+		var allInputs = document.getElementsByTagName("input");
+		for (var i = 0; i < allInputs.length; ++i) {
+			var n = allInputs[i];
+			if (n != node && n.name == node.name) {
+			    // whether we just selected the radio button or deselected it, 
+			    // set all other ones to be deselected first 
+				n.checked = false;
+				
+				// because there might be other elements with the "input" tag, 
+				// we want to know what is the first node and the node following 
+				// the deselected node in this specific group of radio buttons
+				if (firstNodeIndex == -1) {
+				    firstNodeIndex = i;
+				}
+				if (deselectedNodeIndex >= 0 && newNodeToSelectIndex == -1) {
+				    newNodeToSelectIndex = i;
+				}
+			} else if (n == node && !node.checked) {
+			    // we just deselected a radio button, we need to select 
+			    // a new one, so memorize the deselected node index
+			    deselectedNodeIndex = i;
+			}		
+		}
+		
+	    if (deselectedNodeIndex >= 0) {
+	        if (newNodeToSelectIndex >= 0) {
+	            allInputs[newNodeToSelectIndex].checked = true;
+	        } else {
+		        // last button got deselected, so select the first one
+	            allInputs[firstNodeIndex].checked = true;
+	        }
+		}	
+	}
+}
+
+dh.util.selectCheckBox = function(boxNameOrNode) {
+	var node = boxNameOrNode;
+	if (dojo.lang.isString(boxNameOrNode)) {
+		node = document.getElementById(boxNameOrNode);
+	}
+	node.checked = true;
+	
+	// fixup the radio group
 	if (node.type == "radio") {
 		var allInputs = document.getElementsByTagName("input");
 		for (var i = 0; i < allInputs.length; ++i) {
 			var n = allInputs[i];
 			if (n != node && n.name == node.name) {
-				n.checked = !node.checked;
+				n.checked = false;
 			}
 		}
 	}
+}
+
+// disable the button if the textbox is blank, enable otherwise
+dh.util.updateButton = function(textboxName, buttonName) {
+    var textbox = document.getElementById(textboxName);
+    var button = document.getElementById(buttonName);
+    button.disabled = (dojo.string.trim(textbox.value)=='');
 }
 
 // Yes, this is IE specific.  It's used on pages

@@ -12,16 +12,17 @@
 				<div id="dhCreateGroupPopup" class="dhItemBox dhInvisible">
 					<div class="dhLabel">New <u>G</u>roup Name</div>
 					<div>
-						<input id="dhCreateGroupName"/>
-						<input type="button" accesskey="g" class="dhButton" value="Create" 
-							onclick="dh.sharelink.doCreateGroup();"/>
+						<input id="dhCreateGroupName" 
+						       onkeyup="dh.util.updateButton('dhCreateGroupName', 'dhCreateGroupButton');"/>
+						<input type="button" id="dhCreateGroupButton" accesskey="g" class="dhButton" 
+						       value="Create" onclick="dh.sharelink.doCreateGroup();" disabled="true"/>
 					</div>
 					<div id="dhCreateGroupAccessButtons">
 						<input type="radio" id="dhCreateGroupPrivateRadio" name="groupAccess" />
-						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPrivateRadio');dh.sharelink.updateAccessTip();">Private</a>
+						<a href="javascript:dh.util.selectCheckBox('dhCreateGroupPrivateRadio');dh.sharelink.updateAccessTip();">Private</a>
 						<input type="radio" id="dhCreateGroupPublicRadio" name="groupAccess" checked="checked"/>
-						<a href="javascript:dh.util.toggleCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
-			
+						<a href="javascript:dh.util.selectCheckBox('dhCreateGroupPublicRadio');dh.sharelink.updateAccessTip();">Public</a>
+			           									            
 						<div id="dhPrivateGroupAccessTip" class="dh-help-bubble">
 							<dh:png style="left:27px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/>
 							<div class="dh-help-bubble-message">
