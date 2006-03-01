@@ -28,7 +28,19 @@ public class PostViewedProcessor implements LiveEventProcessor {
 	IdentitySpider identitySpider;
 	
 	@EJB
-	MessageSender msgSender;
+	MessageSender messageSender;
+	
+	private boolean numIsPow2(long num) {
+		return num != 0 && ((num & (num - 1)) == 0);
+	}
+	
+	private boolean countIsInteresting(long count) {
+		if (count >= 3 && count <= 5)
+			return true;
+		if (count > 128)
+			return false;
+		return numIsPow2(count);		
+	}	
 	
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		PostViewedEvent event = (PostViewedEvent)abstractEvent;
@@ -47,6 +59,9 @@ public class PostViewedProcessor implements LiveEventProcessor {
 	
 		logger.debug("{} clicked on {}", event.getViewerId(), event.getPostId());
 		logger.debug("Post score is now {}", livePost.getScore());
-		msgSender.sendLivePostChanged(livePost);
+		if (countIsInteresting(livePost.getTotalViewerCount()) || countIsInteresting(livePost.getRecentMessageCount())) {
+			messageSender.sendLivePostChanged(livePost);
+		}		
+		messageSender.sendLivePostChanged(livePost);
 	}
 }
