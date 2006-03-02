@@ -54,6 +54,9 @@ private:
     void uiWaitTimer();
     void updateCommandEnabled();
     void stopUIWait();
+    void doShareLink(IHippoUI        *ui, 
+                     const HippoBSTR &url, 
+                     const HippoBSTR &title);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,

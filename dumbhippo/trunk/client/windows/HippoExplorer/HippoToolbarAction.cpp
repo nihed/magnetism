@@ -148,7 +148,7 @@ HippoToolbarAction::Exec (const GUID *commandGroup,
     HippoPtr<IHippoUI> ui;
 
     if (SUCCEEDED(launcher_.getUI(&ui))) {
-        ui->ShareLink(url, title);
+        doShareLink(ui, url, title);
     } else {
         // Stash away the URL and Title to use when the UI shows up
         shareUrl_ = url;
@@ -182,7 +182,7 @@ HippoToolbarAction::onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui)
     shareTitle_ = NULL;
     updateCommandEnabled();
 
-    ui->ShareLink(url, title);
+    doShareLink(ui, url, title);
 }
 
 void 
@@ -216,4 +216,15 @@ HippoToolbarAction::updateCommandEnabled()
     if (frameTarget) {
         frameTarget->Exec(NULL, OLECMDID_UPDATECOMMANDS, 0, NULL, NULL);
     }
+}
+
+void
+HippoToolbarAction::doShareLink(IHippoUI        *ui, 
+                                const HippoBSTR &url, 
+                                const HippoBSTR &title) 
+{
+    // In theory, we should restrict setting the foreground to the HippoUI process, 
+    // the chance of some other app getting in the way is small
+    AllowSetForegroundWindow(ASFW_ANY);
+    ui->ShareLink(url.m_str, title.m_str);
 }
