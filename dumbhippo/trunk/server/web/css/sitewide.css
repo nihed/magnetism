@@ -226,6 +226,9 @@ a.dh-name-edit {
 	left:		70px;
 }
 
+a.dh-bottom-bar {
+	color:							#fff500;
+}
 /* ------------ LEGACY IMPORTING ------------ */
 
 .dhLabel {
