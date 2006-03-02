@@ -100,7 +100,7 @@
 			            </p>   
 		            </div>
 		            <div class="dh-right-box dh-right-box-last">
-			            <h5 class="dh-title">Friends Tips</h5>
+			            <h5 class="dh-title">Friend Tips</h5>
                         <p class="dh-right-box-text">
 		                    Your friends are the people you know and communicate with on
 		                    DumbHippo. Sending a message to someone adds them to your
@@ -117,7 +117,7 @@
 			            </p>
 		            </div>
 		            <div class="dh-right-box dh-right-box-last">
-			            <h5 class="dh-title">Contacts Tips</h5>
+			            <h5 class="dh-title">Friend Tips</h5>
                         <p class="dh-right-box-text">
 		                    Your friends are the people you know and communicate with on
 		                    DumbHippo. Once you are on someone's friends list, you can 
