@@ -1210,37 +1210,42 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			TrackHistory h = (TrackHistory) o;
 			
 			User user = h.getUser();
-			
-			if (user.equals(viewpoint.getViewer()))
-				continue; // don't recommend stuff from our own history
+
+			// If the viewer is the user themself, we want to include
+			// them in the result, because that prevents our pages
+			// from looking strangely empty, but we don't want the
+			// recommendation lists, since that is just strange.
+			boolean isSelf = user.equals(viewpoint.getViewer());
 			
 			PersonMusicView pmv = views.get(user);
 			if (pmv == null) {
-				if (contacts.contains(user)) {
+				if (isSelf || contacts.contains(user)) {
 					if (contactViews < MAX_RELATED_FRIENDS_RESULTS) {
 						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
-	
-						try {
-							switch (type) {
-							case TRACKS: {
-								List<TrackView> latest = getLatestTrackViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setTracks(latest);
+
+						if (!isSelf) {
+							try {
+								switch (type) {
+								case TRACKS: {
+									List<TrackView> latest = getLatestTrackViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+									pmv.setTracks(latest);
+								}
+								break;
+								case ALBUMS: {
+									List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+									pmv.setAlbums(latest);
+								}
+								break;
+								case ARTISTS: {
+									List<ArtistView> latest = getLatestArtistViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+									pmv.setArtists(latest);
+								}
+								break;
+								}
+							} catch (NotFoundException e) {
+								// just leave the tracks list empty,
+								// but still display the friend
 							}
-							break;
-							case ALBUMS: {
-								List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setAlbums(latest);
-							}
-							break;
-							case ARTISTS: {
-								List<ArtistView> latest = getLatestArtistViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setArtists(latest);
-							}
-							break;
-							}
-						} catch (NotFoundException e) {
-							// just leave the tracks list empty,
-							// but still display the friend
 						}
 						++contactViews;
 					}
