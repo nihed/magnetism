@@ -17,12 +17,6 @@
 	<c:param name="album" value="${track.album}"/>
 </c:url>
 
-<c:url value="/artist" var="artistlink">
-	<c:param name="track" value="${track.name}"/>
-	<c:param name="artist" value="${track.artist}"/>
-	<c:param name="album" value="${track.album}"/>
-</c:url>
-
 <div class="dh-track">
 	<div class="dh-track-image">
 		<a href="${albumlink}">
@@ -48,9 +42,7 @@
 		</c:if>
 		<c:if test="${!empty track.artist}">
 			<div class="dh-track-artist">
-				<a href="${artistlink}">
-					<c:out value="${track.artist}"/>
-				</a>
+				<c:out value="${track.artist}"/>
 			</div>
 		</c:if>
 	<c:if test="${playItLink}">
