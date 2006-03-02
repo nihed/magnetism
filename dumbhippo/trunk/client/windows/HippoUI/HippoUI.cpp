@@ -92,6 +92,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     checkIdleTimeoutId_ = 0;
 
     currentShare_ = NULL;
+    upgradeWindow_ = NULL;
     signinWindow_ = NULL;
 }
 
@@ -733,6 +734,13 @@ HippoUI::GetLoginId(BSTR *ret)
     return S_OK;
 }
 
+STDMETHODIMP
+HippoUI::DoUpgrade()
+{
+    upgrader_.performUpgrade();
+    return S_OK;
+}
+
 void
 HippoUI::showSignInWindow()
 {
@@ -1091,13 +1099,13 @@ HippoUI::getMySpaceContacts()
 void 
 HippoUI::onUpgradeReady()
 {
-    if (MessageBox(NULL, 
-                   L"A new version of the DumbHippo client has been downloaded. Install now?",
-                   L"DumbHippo upgrade ready", 
-                   MB_OKCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_SETFOREGROUND) == IDOK) 
-    {
-        upgrader_.performUpgrade();
-    }
+    if (upgradeWindow_)
+        delete upgradeWindow_;
+    upgradeWindow_ = new HippoRemoteWindow(this, L"New version of DumbHippo!", NULL);
+    HippoBSTR url;
+    getRemoteURL(HippoBSTR(L"upgrade"), &url);
+    upgradeWindow_->navigate(url);
+    upgradeWindow_->setForegroundWindow();
 }
 
 void

@@ -43,6 +43,8 @@ library HippoUtil {
         HRESULT GetLoginId([out, retval] BSTR *loginId);
         [id(109), helpstring("Get a chat room object for a post")]
         HRESULT GetChatRoom([in] BSTR postId, [out, retval] IHippoChatRoom **chatRoom);
+        [id(110), helpstring("Start upgrade process")]
+        HRESULT DoUpgrade();
         // up to 120
     }
     [

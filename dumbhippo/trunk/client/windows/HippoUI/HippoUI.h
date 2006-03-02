@@ -61,6 +61,7 @@ public:
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
     STDMETHODIMP GetChatRoom(BSTR postId, IHippoChatRoom **result);
+    STDMETHODIMP DoUpgrade();
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -238,6 +239,7 @@ private:
     HippoDataCache dataCache_;
 
     HippoRemoteWindow *currentShare_;
+    HippoRemoteWindow *upgradeWindow_;
     HippoRemoteWindow *signinWindow_;
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
