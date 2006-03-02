@@ -27,8 +27,14 @@ dh.menu.Menu = function() {
     }
 
     this._openSiteLink = function(page) {
+        // This is a little tricky ... we don't actually want to 
+        // open it in _self, but doing so will cause HippoIE to
+        // open in a new window anyways, and in that code path
+        // we are a bit smarter about reusing existing windows
+        // on our site. If we just did window.open() IE would
+        // handle the request directly bypassing us.
         var base = window.external.application.GetServerBaseUrl()
-        window.open(base + page)
+        window.open(base + page, "_self")
     }
 
     this.showHome = function() {
