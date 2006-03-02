@@ -128,7 +128,7 @@ setValuePrintf(HKEY         key,
     return S_OK;
 }
 
-// Delete a key, using a printf string to define the subkey
+// Delete a value under a key, using a printf string to define the subkey
 static HRESULT
 deleteValuePrintf(HKEY         key,
                   const WCHAR *subkeyFormat,
@@ -154,6 +154,34 @@ deleteValuePrintf(HKEY         key,
         return E_FAIL;
 
     RegCloseKey(newKey);
+
+    return S_OK;
+}
+
+// Delete a key, using a printf string to define the subkey
+static HRESULT
+deleteKeyPrintf(HKEY         key,
+               const WCHAR *subkeyFormat,
+               ...)
+{
+    va_list vap;
+    WCHAR subkey[MAX_PATH];
+    LONG result;
+    HKEY newKey;
+
+    va_start(vap, subkeyFormat);
+    StringCchVPrintf(subkey, MAX_PATH, subkeyFormat, vap);
+    va_end(vap);
+
+    result = RegOpenKeyEx(key, subkey, 0,KEY_WRITE, &newKey);
+    // We assume that if we can't open the key, we don't need to delete the value
+    if (result != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+    RegCloseKey(newKey);
+
+    result = RegDeleteKey(key, subkey);
+    if (result != ERROR_SUCCESS)
+        return E_FAIL;
 
     return S_OK;
 }
@@ -252,5 +280,14 @@ HippoRegistrar::registerGlobalShellCtxMenu(const CLSID &classID,
 
     CoTaskMemFree(classStr);
 
+    return hr;
+}
+
+HRESULT
+HippoRegistrar::unregisterGlobalShellCtxMenu(const WCHAR *title)
+{
+    HRESULT hr;
+    hr = deleteKeyPrintf(HKEY_CLASSES_ROOT,
+        L"*\\shellex\\ContextMenuHandlers\\%ls", title); 
     return hr;
 }

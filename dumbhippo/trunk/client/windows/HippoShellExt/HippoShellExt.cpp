@@ -230,8 +230,9 @@ DllRegisterServer(void)
     if (FAILED(hr))
         return hr;
 
-    hr = registrar.registerGlobalShellCtxMenu(CLSID_HippoShellExt,
-                                              L"Hippo Shell Extension");
+    // *un*register, since this module isn't used at the moment
+    hr = registrar.unregisterGlobalShellCtxMenu(// CLSID_HippoShellExt,
+                                                L"Hippo Shell Extension");
     if (FAILED(hr))
         return hr;
 
