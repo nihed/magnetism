@@ -375,10 +375,40 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<Resource> userResources = null;
 		Set<Resource> resources = null;
 		
-		if (pv.getContact() != null)
-			contactResources = getResourcesForPerson(pv.getContact());
-		if (pv.getUser() != null)
+		if (pv.getContact() != null) {
+			Contact contact = pv.getContact();
+			contactResources = getResourcesForPerson(contact);
+			
+			//logger.debug("Contact has owner {} viewpoint is {}", contact.getAccount().getOwner(),
+			//		viewpoint != null ? viewpoint.getViewer() : null);
+			
+			// can only see resources if we're the system view or this is our own
+			// Contact
+			boolean ownContact = viewpoint == null ||
+				contact.getAccount().getOwner().equals(viewpoint.getViewer());
+
+			if (!ownContact) {
+				// we want to set a fallback name from an email resource if we 
+				// have one, but otherwise not disclose these resources
+
+				for (Resource r : contactResources) {
+					if (r instanceof EmailResource) {
+						pv.setFallbackName(r.getDerivedNickname());
+					}
+				}
+				
+				// don't disclose
+				contactResources = null;
+			}
+		}
+		
+		// can only get user resources if we are a contact of the user
+		if (pv.getUser() != null && isViewerFriendOf(viewpoint, pv.getUser()))
 			userResources = getResourcesForPerson(pv.getUser());
+		
+		// If it's not our own contact, we don't merge in the contact resources, 
+		// but we do use them later to set a fallback name
+		
 		if (contactResources != null) {
 			resources = contactResources;
 			if (userResources != null)
@@ -457,8 +487,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 		PersonView pv = new PersonView(contact, user);
 		
-		// FIXME we need to filter this - resources from the viewed User 
-		// should not be offered if viewpoint is not a contact of user
 		addPersonViewExtras(viewpoint, pv, null, extras);
 		
 		return pv;
@@ -537,11 +565,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// the interception on getResources().
 		
 		Contact contact = new Contact(user.getAccount());
-		// call the contact whatever resource we used to create it
-		// Don't use resource.getDerivedNickname() here, because 
-		// only the account holder who typed in the email address will 
-		// see it, so no need to munge it - we want what they typed in
-		contact.setNickname(resource.getHumanReadableString());
+
+		// FIXME we don't want contacts to have nicknames, so leave it null for 
+		// now, but eventually we should change the db schema 
+		//contact.setNickname(resource.getHumanReadableString());
 		em.persist(contact);
 		
 		ContactClaim cc = new ContactClaim(contact, resource);
@@ -682,19 +709,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
+			// see if we're allowed to look at who user's contacts are
 			if (!isViewerFriendOf(viewpoint, user))
 				return false;
-			else
-				return isContactNoViewpoint(user, contactUser);
+
+			// if we can see their contacts, return whether this person is one of them
+			return isContactNoViewpoint(user, contactUser);
 	}
 	
 	public boolean isViewerFriendOf(Viewpoint viewpoint, User user) {
 		// You can see someone's "friends only" stuff if you are them, or you are a contact of them
 		// viewpoint == null means omniscient
-		if (viewpoint == null || user.equals(viewpoint.getViewer()) || isContactNoViewpoint(user, viewpoint.getViewer()))
+		if (viewpoint == null)
 			return true;
-		else
-			return false;
+		if (user.equals(viewpoint.getViewer()))
+			return true;
+		if (viewpoint.isFriendOfStatusCached(user))
+			return viewpoint.getCachedFriendOfStatus(user);
+		
+		boolean isFriendOf = isContactNoViewpoint(user, viewpoint.getViewer());
+		viewpoint.setCachedFriendOfStatus(user, isFriendOf);
+		return isFriendOf;
 	}
 	
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {

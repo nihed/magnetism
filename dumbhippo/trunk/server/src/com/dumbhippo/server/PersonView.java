@@ -43,6 +43,7 @@ public class PersonView extends EntityView {
 	private Set<Resource> resources;
 	private EnumSet<PersonViewExtra> extras;
 	private boolean invited; 
+	private String fallbackName;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -168,27 +169,35 @@ public class PersonView extends EntityView {
 	private String getNickname() {
 		String name = null;
 		
-		// we prefer the user name, then the contact alias for now;
-		// eventually we might get more sophisticated and just drop 
-		// the contact alias "one time" when the user first appears
-
 		if (user != null)
 			name = user.getNickname();
 		
+		// Contacts just should not have a nickname field, unless/until 
+		// we ever have a way for people to set it to something. So 
+		// we ignore this (but left commented out to show logically 
+		// how it would work, until we drop the field for good)
+		/*
 		if ((name == null || name.length() == 0) && contact != null)
 			name = contact.getNickname();	
-
-		// if both user/contact are null then this is a "resources only" person
-		// used when returning lists of group members for example
-		if ((name == null || name.length() == 0) && 
-			(contact == null && user == null)) {
+        */
+		
+		// we may not have had a User, we try to use a resource instead
+		// or the "fallback name"
+		// resources won't be included in the PersonView by IdentitySpider
+		// if the viewer should not see them.
+		if (name == null || name.length() == 0) {
 			
-			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE))
-				throw new RuntimeException("PersonView has no User, Contact, or Resource; totally useless: " + this);
-			
-			Resource r = getPrimaryResource();
-			if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
-				name = r.getHumanReadableString();
+			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
+				// try fallback name then
+				if (fallbackName != null)
+					name = fallbackName;
+				else
+					throw new RuntimeException("PersonView has no User, Contact, or Resource; totally useless: " + this);
+			} else {
+				Resource r = getPrimaryResource();
+				if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
+					name = r.getHumanReadableString();
+			}
 		}
 		
 		if (name == null || name.length() == 0) {
@@ -635,5 +644,21 @@ public class PersonView extends EntityView {
 		else
 			return getPrimaryResource().getGuid();
 	}
+
+	/**
+	 * A name we use if we don't have anything else (no contact/user/resources),
+	 * typically null but we set it sometimes when we know we'll need it.
+	 * Specifically this was added when viewing someone else's contact we 
+	 * create a fallback name which is a truncated/obfuscated version of one
+	 * of the resources on the contact
+	 * 
+	 * @return the fallback name or null
+	 */
+	public String getFallbackName() {
+		return fallbackName;
+	}
+
+	public void setFallbackName(String fallbackName) {
+		this.fallbackName = fallbackName;
+	}
 }
- 
