@@ -190,6 +190,7 @@ HippoBubble::setLinkNotification(bool isRedisplay, HippoPost &share)
         .addStringVector(share.viewers)
         .add(share.info)
         .addLong(share.timeout)
+        .addBool(share.haveViewed)
         .getResult(&result);
 
     if (result.vt != VT_BOOL) {

@@ -124,6 +124,13 @@ dh.util.dom.selectNodes = function (doc, path) {
     return doc.selectNodes(path)
 }
 
+dh.util.prependCssClass = function (node, className) {
+    if (node.className)
+        node.className = className + " " + node.className
+    else
+        node.className = className
+}
+
 dh.util.fillAlphaPng = function(image) {
     var span = image.parentNode
     var src = image.src

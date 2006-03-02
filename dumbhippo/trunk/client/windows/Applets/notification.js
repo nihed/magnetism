@@ -297,13 +297,13 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     
     this._markCurrentAsMissed = function () {
         var notification = this.notifications[this.position]
-        if (notification.state == "pending")
+        if (notification && notification.state == "pending")
             notification.state = "missed"               
     }
     
     this._markCurrentAsSeen = function () {
         var notification = this.notifications[this.position]
-        if (notification.state == "pending")
+        if (notification && notification.state == "pending")
             notification.state = "seen"            
     }
 
@@ -349,7 +349,7 @@ dhAddGroup = function (id, name, smallPhotoUrl)
 // HippoBubble.cpp
 dhAddLinkShare = function (isRedisplay, senderId, postId, linkTitle, 
                            linkURL, linkDescription, recipients, 
-                           viewers, postInfo, timeout) {
+                           viewers, postInfo, timeout, viewerHasViewed) {
     dh.display.setVisible(true)
     viewers = dh.core.adaptExternalArray(viewers)
     recipients = dh.core.adaptExternalArray(recipients)
@@ -357,7 +357,7 @@ dhAddLinkShare = function (isRedisplay, senderId, postId, linkTitle,
     dh.util.debug("adding link share id=" + postId + " " + viewers.length + " viewers")
     var data = new dh.bubble.PostData(senderId, postId, linkTitle, 
                                       linkURL, linkDescription, recipients, 
-                                      viewers, postInfo)
+                                      viewers, postInfo, viewerHasViewed)
     return dh.display.addLinkShare(data, timeout, isRedisplay)                   
 }
 

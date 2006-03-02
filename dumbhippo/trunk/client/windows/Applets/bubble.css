@@ -88,6 +88,11 @@
     width: 100%;
 }
 
+.dh-notification-title-seen
+{
+    color: Gray;
+}
+
 .dh-notification-body
 {
     width: 100%;

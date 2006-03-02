@@ -1106,10 +1106,13 @@ HippoUI::addEntity(HippoEntity &entity)
 }
 
 void 
-HippoUI::onLinkMessage(HippoPost &linkshare)
+HippoUI::onLinkMessage(HippoPost &post)
 {
-    dataCache_.addPost(linkshare);
-    bubble_.setLinkNotification(false, linkshare);
+    dataCache_.addPost(post);
+    bubble_.setLinkNotification(false, post);
+    HippoPost postCopy = post;
+    postCopy.haveViewed = true;
+    dataCache_.addPost(postCopy);
 }
 
 void 

@@ -294,7 +294,7 @@ dh.bubble.postExtensions = {}
     
 dh.bubble.PostData = function(senderId, postId, linkTitle, 
                               linkURL, linkDescription, recipients, 
-                              viewers, postInfo) {
+                              viewers, postInfo, viewerHasViewed) {
     this.senderId = senderId
     this.postId = postId
     this.linkTitle = linkTitle
@@ -304,8 +304,10 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     this.viewers = viewers
     if (postInfo != null && !postInfo.match(/^\s*$/)) {
         this.info = dh.parseXML(postInfo)
-    } else
+    } else {
         this.info = null
+    }
+    this.viewerHasViewed = viewerHasViewed
 
     this.getPhotoLink = function() {
         return dh.serverUrl + "person?who=" + this.senderId
@@ -327,7 +329,10 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     }
     
     this.appendTitleContent = function(bubble, parent) {
-        parent.appendChild(bubble.createSharedLinkLink(this.linkTitle, this.postId, this.linkURL))
+        var a = bubble.createSharedLinkLink(this.linkTitle, this.postId, this.linkURL)    
+        if (this.viewerHasViewed)
+            dh.util.prependCssClass(a, "dh-notification-title-seen") 
+        parent.appendChild(a)
     }
         
     this.appendBodyContent = function(bubble, parent) {

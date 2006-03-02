@@ -1450,6 +1450,7 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
     if (!node)
         return false;
     LmMessageNode *subchild;
+    post->viewers.clear();
     for (subchild = node->children; subchild; subchild = subchild->next) {
         HippoBSTR id;
         if (!parseEntityIdentifier(subchild, id))
@@ -1503,8 +1504,6 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
                 ui_->logErrorU("failed to parse live post");
                 return false;
             }
-        } else if (nodeMatches(subchild, "viewerHasViewed", NULL)) {
-            post.haveViewed = true;
         } else {
             ui_->debugLogU("unknown node %s in livePostChanged", subchild->name);
         }
