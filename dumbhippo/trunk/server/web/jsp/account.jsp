@@ -29,7 +29,7 @@
 			p.appendChild(document.createTextNode("Then share that link with yourself, go on do it!!"));
 			p.setAttribute("class", "dh-slideshow-text");
 			var link = document.createElement("a");
-			link.setAttribute("href", "http://blog.myspace.com/index.cfm?fuseaction=blog.view&blogID=93514975");
+			link.setAttribute("href", "http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=59629551&blogID=93514975");
 //			link.setAttribute("target", "_new");
 			link.setAttribute("class", "dh-slideshow-link");
 			link.appendChild(document.createTextNode("Click This Link"));
