@@ -102,7 +102,7 @@
 				</c:when>
 				<c:otherwise>
 					<!-- FIXME: need class definition for this -->
-					<div class="dh-groups-none">Invite <c:out value="${personName}"/> To Your Groups!!</div>
+					<div class="dh-groups-none"><c:out value="${personName}"/> has no public groups</div>
 				</c:otherwise>
 			</c:choose>
 			</div>
