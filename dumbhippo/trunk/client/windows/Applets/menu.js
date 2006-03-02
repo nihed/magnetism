@@ -153,6 +153,8 @@ dh.menu.Menu = function() {
         activePostsDiv.removeChild(activePostsDiv.childNodes[position])
         
         this.posts.splice(position, 1)
+        
+        this.resize()
     }
 }
 
