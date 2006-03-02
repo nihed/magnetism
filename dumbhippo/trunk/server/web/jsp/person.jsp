@@ -69,7 +69,7 @@
 					</c:when>
 					<c:when test="${!viewperson.signin.musicSharingEnabled && viewperson.self}">
 						<h5 class="dh-title">Share Music</h5>
-						<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
+						<p><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
 					</c:when>
 				</c:choose>
 		
