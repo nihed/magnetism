@@ -240,9 +240,6 @@
 				RelativePath=".\HippoDataCache.h">
 			</File>
 			<File
-				RelativePath=".\HippoExternal.h">
-			</File>
-			<File
 				RelativePath=".\HippoExternalBrowser.h">
 			</File>
 			<File

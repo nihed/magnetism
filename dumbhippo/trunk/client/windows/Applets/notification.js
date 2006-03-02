@@ -100,6 +100,10 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this._shouldDisplayShare = function (share) {
+        if (share.viewers.length > 0 && share.viewers[0] == dh.selfId) {
+            dh.util.debug("Not displaying notification of self-view")
+            return false;
+        }
         // We only display bubbles if the viewers are at a certain
         // threshold: http://devel.dumbhippo.com/wiki/Bubble_Behavior#States
         if (share.viewers.length > 127) {
