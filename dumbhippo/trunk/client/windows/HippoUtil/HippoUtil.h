@@ -308,6 +308,12 @@ public:
         delete [] buf;
     }
 
+    bool endsWidth(const HippoBSTR &suffix) {
+        if (Length() < suffix.Length())
+            return false;
+        return wcscmp(m_str + Length() - suffix.Length(), suffix.m_str) == 0;
+    }
+
 #if 1
     // FIXME this is almost certainly a Bad Idea. Just type .m_str, just like std::string::c_str()
     // unfortunately it's already used all over the place so fixing it is sort of a PITA

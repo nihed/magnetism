@@ -10,6 +10,7 @@
 #include <exdisp.h>
 #include <HippoUtil.h>
 #include <HippoRegistrar.h>
+#include <HippoURLParser.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
 #include "cleangdiplus.h"
@@ -1638,23 +1639,24 @@ HippoUI::preferencesProc(HWND   dialog,
     return FALSE;
 }
 
-/* Finds all IE and Explorer windows on the system. Needs some refinement
- * to distinguish the two.
+/* Finds all IE and Explorer windows on the system, and closes any pointing
+ * to http://*.dumbhippo.com/welcome. This is meant for the initial install
+ * when the user has installed our software from /welcome and we don't want
+ * to leave the /welcome page there in an internet explorer window without
+ * instrumentation.
  */
-#if 0
 static void
-findExplorerWindows()
+closeWelcome()
 {
     HippoPtr<IShellWindows> shellWindows;
     HRESULT hr = CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL, IID_IShellWindows, (void **)&shellWindows);
     if (FAILED(hr)) {
-        hippoDebug(L"Couldn't create: %x", hr);
+        hippoDebugLogW(L"Couldn't create CLSID_ShellWindows: %x", hr);
         return;
     }
 
     LONG count;
     shellWindows->get_Count(&count);
-    hippoDebug(L"%d", count);
     for (LONG i = 0; i < count; i++) {
         HippoPtr<IDispatch> dispatch;
         VARIANT item;
@@ -1664,18 +1666,35 @@ findExplorerWindows()
         if (SUCCEEDED(hr)) {
             HippoQIPtr<IWebBrowser2> browser(dispatch);
 
-            if (browser) {
-                HippoBSTR browserURL;
-                browser->get_LocationURL(&browserURL);
+            if (!browser)
+                continue;
 
-                if (browserURL)
-                    hippoDebug(L"URL: %ls\n", (WCHAR *)browserURL);
-            }
+            HippoBSTR browserURL;
+            browser->get_LocationURL(&browserURL);
+            if (!browserURL)
+                continue;
+
+            HippoURLParser parser(browserURL);
+            if (!parser.ok())
+                continue;
+
+            if (parser.getScheme() != INTERNET_SCHEME_HTTP)
+                continue;
+
+            HippoBSTR urlPath = parser.getUrlPath();
+            if (!(urlPath.m_str && wcscmp(urlPath.m_str, L"/welcome") == 0))
+                continue;
+
+            HippoBSTR hostName = parser.getHostName();
+            if (!(hostName &&
+                  (wcscmp(hostName.m_str, L"dumbhippo.com") == 0 || hostName.endsWidth(L".dumbhippo.com"))))
+                continue;
+
+            browser->Quit();
         }
     }
 
 }
-#endif
 
 static HippoArray<HWND> *windowHookKeys = NULL;
 static HippoArray<HippoMessageHook*> *windowHookValues = NULL;
@@ -1996,6 +2015,9 @@ WinMain(HINSTANCE hInstance,
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (doInstallLaunch) {
+        CoInitialize(NULL);
+        closeWelcome();
+        CoUninitialize();
         installLaunch(hInstance);
         return 0;
     }
