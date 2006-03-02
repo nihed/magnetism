@@ -4,8 +4,17 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="viewperson" class="com.dumbhippo.web.PersonMusicPage" scope="request"/>
+
+<%-- If there's no who= param, we want to redirect to the signed-in user's who=, 
+     but if who=invalid, we want an error message --%>
+<c:if test="${empty param.who && viewperson.signin.valid}">
+	<c:redirect url="/music?who=${viewperson.signin.userId}"></c:redirect>
+</c:if>
+
 <jsp:setProperty name="viewperson" property="viewedPersonId" param="who"/>
 
+<%-- this treats an invalid guid and missing who= the same, thus the other check above 
+	since we want to special-case missing who= --%>
 <c:if test="${!viewperson.valid}">
 	<dht:errorPage>There's nobody here!</dht:errorPage>
 </c:if>
