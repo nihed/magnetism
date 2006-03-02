@@ -44,3 +44,12 @@ div.dh-track-link {
 a.dh-track-rhapsody-link:link {
 	text-decoration:	none;
 }
+
+.dh-more-songs {
+       text-align:                             center;
+}
+
+.dh-music-sharing-toggle {
+       font-family:            mono;
+       vertical-align:         middle;
+}

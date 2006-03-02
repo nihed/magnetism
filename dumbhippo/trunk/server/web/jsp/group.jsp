@@ -74,8 +74,16 @@
 				</p>
 			</div>
 		</c:if>
+		
+		<h2 class="dh-title">The <c:out value="${viewgroup.name}"/> Group</h2>
 
-		<h2 class="dh-title">Links This Group Shared</h2>
+		<c:if test="${!empty viewgroup.latestTrack}">
+			<h5 class="dh-title"><c:out value="${viewgroup.name}"/>'s Latest Song</h5>
+			<dht:track track="${viewgroup.latestTrack}" linkifySong="false" playItLink="false"/>
+			<div class="dh-more-songs"><a class="dh-more-songs" href="/musicgroup?who=${viewgroup.viewedGroupId}">More songs</a></div>
+		</c:if>
+
+		<h3 class="dh-title">Recent Links Shared with <c:out value="${viewgroup.name}"/></h3>
 
 		<div id="dhSharesArea">
 			<dht:postList posts="${viewgroup.posts}" maxPosts="${viewgroup.maxPostsShown}" groupId="${viewgroup.viewedGroupId}" groupName="${viewgroup.name}"/>

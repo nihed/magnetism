@@ -14,7 +14,7 @@
 <c:set var="personId" value="${viewperson.person.viewPersonPageId}" scope="page"/>
 
 <head>
-	<title><c:out value="${personName}"/></title>
+	<title><c:out value="${personName}"/>'s Public Page</title>
 	<dht:stylesheets href="person.css" iehref="person-iefixes.css" />
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
@@ -33,7 +33,7 @@
 		    	<c:choose>
 		    		<c:when test="${viewperson.contact}">
 		    			&#151;
-		    			<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my contacts</a>
+		    			<a class="dh-toolbar-item" style="font-weight:bold" href='javascript:dh.actions.removeContact("${personId}")'>Remove <c:out value="${personName}"/> from my friends</a>
 			    	</c:when>
 					<c:otherwise>
 			    		&#151;
@@ -56,11 +56,27 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
-			<h2 class="dh-title">Links Shared By <c:out value="${personName}"/></h2>
-
-			<div id="dhSharesArea">
-				<dht:postList posts="${viewperson.posts.list}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
-			</div>
+				<h2><c:out value="${personName}"/>'s Public Page</h2>
+				<c:choose>
+					<c:when test="${!empty viewperson.currentTrack}">
+						<h5 class="dh-title">What <c:out value="${personName}"/> is listening to</h5>
+						<dht:track track="${viewperson.currentTrack}" linkifySong="false" playItLink="false"/>
+						<div class="dh-more-songs"><a class="dh-more-songs" href="/music?who=${personId}">More songs</a></div>
+					</c:when>
+					<c:when test="${empty viewperson.currentTrack && viewperson.signin.musicSharingEnabled && viewperson.self}">
+						<h5 class="dh-title">What <c:out value="${personName}"/> is listening to</h5>
+						<p>Play some songs in iTunes and refresh this page.</p>
+					</c:when>
+					<c:when test="${!viewperson.signin.musicSharingEnabled && viewperson.self}">
+						<h5 class="dh-title">Share Music</h5>
+						<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
+					</c:when>
+				</c:choose>
+		
+				<h3 class="dh-title"><c:out value="${personName}"/>'s Links</h3>
+				<div id="dhSharesArea">
+					<dht:postList posts="${viewperson.posts.list}" maxPosts="${viewperson.maxPostsShown}" posterId="${personId}" posterName="${personName}"/>
+				</div>
 			</c:otherwise>
 		</c:choose>
 	</div>
@@ -76,28 +92,6 @@
 		</div>
 
 		<div class="dh-right-box-area">
-		
-		<c:choose>
-			<c:when test="${!empty viewperson.currentTrack}">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Latest Song</h5>
-				<dht:track track="${viewperson.currentTrack}" linkifySong="false" playItLink="false"/>
-				<div class="dh-more-songs"><a class="dh-more-songs" href="/music?who=${personId}">More songs</a></div>
-			</div>
-			</c:when>
-			<c:when test="${empty viewperson.currentTrack && viewperson.signin.musicSharingEnabled && viewperson.self}">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Play Songs</h5>
-				<p>Play some songs in iTunes and refresh this page.</p>
-			</div>
-			</c:when>
-			<c:when test="${!viewperson.signin.musicSharingEnabled && viewperson.self}">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Share Music</h5>
-				<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
-			</div>
-			</c:when>
-		</c:choose>
 		
 		<div class="dh-right-box">
 			<h5 class="dh-title">Groups They're In</h5>
