@@ -93,7 +93,7 @@ a.dh-share-link:link {
 	font-size:				small;
 }
 
-.dh-share-search {
+div.dh-share-search {
 	position:				relative;
 	text-align:				right;
 	right:					30px;
