@@ -52,7 +52,11 @@
 		    <Component Id="hippoShellExt" Guid="4A7068C1-20B6-423A-B51A-5195E69FEED2">
 		        <File Id="hippoShellExtDll" Name="HippoShe.dll" LongName="HippoShellExt.dll" src="HippoShellExt.dll"  DiskId="1" Vital="yes"/>
 		        <Class Id="BD176713-C30F-4C24-97D8-134DEADC97E8" Server="hippoShellExtDll" Description="Hippo Shell Extension" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Registry Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
+		        <!-- when we want to use HippoShellExt again, delete this line and uncomment the one below -->
+                <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension"/>		        
+                <!--
+		        <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
+		        -->
 		    </Component>
 		    
 		    <Component Id="hippoUI" Guid="10D21177-EC47-4FA7-BEE5-06F6DEBECFE5">
