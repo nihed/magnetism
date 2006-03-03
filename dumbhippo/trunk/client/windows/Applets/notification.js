@@ -104,25 +104,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             dh.util.debug("Not displaying notification of self-view")
             return false;
         }
-        // We only display bubbles if the viewers are at a certain
-        // threshold: http://devel.dumbhippo.com/wiki/Bubble_Behavior#States
-        if (share.viewers.length > 127) {
-            dh.util.debug("> 127 viewers, not displaying")
-            return false
-        }
-        if (share.viewers.length >= 3 &&
-            share.viewers.length <= 5) {
-            dh.util.debug("between 3 and 5 viewers inclusive, displaying share")                     
-            return true
-        }
-        // Compute log_2 of viewers
-        var logViewerLen = Math.LOG2E * Math.log(share.viewers.length)
-        if (share.viewers.length > 5 && Math.ceil(logViewerLen) == Math.floor(logViewerLen)) {
-            dh.util.debug("viewers is a power of 2, displaying share")
-            return true
-        }
-        dh.util.debug("not displaying share")                
-        return false    
+        return true
     }
     
     this._findLinkShare = function (postId) {
@@ -147,15 +129,17 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             // Update the viewer data
             prevShareData.notification.data.viewers = share.viewers
         }
-        if (!prevShareData || (prevShareData.position < 0 && shouldDisplayShare)) {   
+        if (!shouldDisplayShare)
+            return false
+        if (!prevShareData || prevShareData.position < 0) {   
             // We don't have it at all, or it was saved and needs to be redisplayed
             this._pushNotification('linkShare', share, timeout)
             return true
         } else if (prevShareData && prevShareData.position == this.position) {
             // We're currently displaying this share, set it again in the bubble to force rerendering
-            dh.util.debug("rerendering bubble")
+            dh.util.debug("resetting current bubble data")
             this._bubble.setData(share)
-            return true
+            return shouldDisplayShare
         } else {
             dh.util.debug("not rerendering bubble");
         }
