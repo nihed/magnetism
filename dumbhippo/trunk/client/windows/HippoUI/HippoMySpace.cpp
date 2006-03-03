@@ -168,12 +168,20 @@ HippoMySpace::HippoMySpaceFriendIdHandler::handleComplete(void *responseData, lo
         char *next = strstr(friendIdStart, blogIdParam);
         if (next && ((next - friendIdStart) <= myspace_->mySpaceIdSize_)) {
             char *blogIdStr = next + strlen(blogIdParam);
-            char *end = strchr(blogIdStr, '"');
+            char *endHref = strchr(blogIdStr, '"');
+            char *endParam = strchr(blogIdStr, '&');
+            char *end;
+            if (endHref < endParam)
+                end = endHref;
+            else
+                end = endParam;
             if (end && (end - blogIdStr) <= myspace_->mySpaceIdSize_) {
                 myspace_->friendId_ = strtol(friendIdStart, NULL, 10);
                 myspace_->blogId_ = strtol(blogIdStr, NULL, 10);
                 myspace_->ui_->debugLogU("got myspace friend id: %d, blogid: %d", myspace_->friendId_, myspace_->blogId_);
                 myspace_->refreshComments();
+            } else {
+                myspace_->ui_->logErrorU("failed to parse MySpace friend it");
             }
             return;
         }
