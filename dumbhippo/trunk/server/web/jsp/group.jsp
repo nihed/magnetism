@@ -55,12 +55,14 @@
 		<c:if test="${viewgroup.fromInvite}">
 			<div>
 				<p>
-					DumbHippo is a new way to share things with your friends. 
-					You were invited to this "<c:out value="${viewgroup.name}"/>" group
-					by <dh:entity value="${viewgroup.inviter}" photo="true"/>.
+					DumbHippo is a new way to share things with your friends.
+				</p>
+				<p> 
+					<dh:entity value="${viewgroup.inviter}" photo="true"/> invited you to
+					this "<c:out value="${viewgroup.name}"/>" group.
 					<c:if test="${viewgroup.canLeave}">
-					You can 
-					<a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave this group at any time</a>.
+						You can 
+						<a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave this group at any time</a>.
 					</c:if>
 				</p>
 				<p>
