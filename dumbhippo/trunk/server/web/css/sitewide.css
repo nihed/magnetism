@@ -57,9 +57,7 @@ div {
 img {
 	border:							0;
 }
-#dhContainer {
-	z-index:						1;
-}
+
 #dhMainArea {
 	min-height:						1080px;
 	max-width:						422px;
@@ -68,6 +66,7 @@ img {
 	background-color:				#ffffff;
 	position:						relative;
 	left:							70px;
+	top:							0px;
 }
 #dhPersonalArea {
 	min-height:						1080px;
@@ -199,6 +198,7 @@ a.dh-name-edit {
 	background-color:		#626262;
 	padding:				3px;
 	padding-top:			10px;
+	overflow:				hidden;
 }
 .dh-right-box-last {
 	border-bottom:			0;
@@ -211,10 +211,16 @@ a.dh-name-edit {
 	background-color:				#626262;
 	color:							#919191;
 	width:							175px;
-	z-index:						0;
 	border:							0;
 	margin:							0;
 	padding:						0;
+	/* for firefox only, overridden to -1 in iefixes */
+	z-index:						0;
+}
+
+/* on top of OTP */
+#dhMainArea, #dhPersonalArea, #dhBottomBarContainer {
+	z-index:						1;
 }
 
 /* ------------ BOTTOM ------------ */
