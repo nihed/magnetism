@@ -75,7 +75,7 @@
 		    <div class="dh-right-box dh-right-box-last">
 			    <h5 class="dh-title">Invite Tips</h5>
                 <p class="dh-right-box-text">
-		            Here are some explanations about how invites work.
+					Every now and then Dumb Hippo opens up to accept more people to try it out, when that happens feel free to invite friends to use it.  You'll see your number of invites available change on this site.
 			    </p>
 		    </div>
 		</div>
