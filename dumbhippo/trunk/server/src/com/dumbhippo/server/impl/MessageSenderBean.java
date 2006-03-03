@@ -137,8 +137,8 @@ public class MessageSenderBean implements MessageSender {
 		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
 		
 		private LivePost lpost;
+		private PostView post;
 		private Set<EntityView> viewerEntities;
-		private boolean viewerHasViewed;
 		
 		public String toXML() {
 			XmlBuilder builder = new XmlBuilder();
@@ -146,15 +146,15 @@ public class MessageSenderBean implements MessageSender {
 			for (EntityView ev : viewerEntities) {
 				builder.append(ev.toXml());
 			}
+			builder.append(post.toXml());
 			builder.append(lpost.toXml());
-			builder.appendTextNode("viewerHasViewed", viewerHasViewed ? "true" : "false");
 			builder.closeElement();
 			return builder.toString();
 		}
 		
-		public LivePostChangedExtension(LivePost lpost, boolean viewerHasViewed, Set<EntityView> viewerEntities) {
+		public LivePostChangedExtension(PostView pv, LivePost lpost, Set<EntityView> viewerEntities) {
+			this.post = pv;
 			this.lpost = lpost;
-			this.viewerHasViewed = viewerHasViewed;
 			this.viewerEntities = viewerEntities;
 		}
 
@@ -406,7 +406,10 @@ public class MessageSenderBean implements MessageSender {
 				}
 				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
 			}
-			message.addExtension(new LivePostChangedExtension(lpost, post.isViewerHasViewed(), viewerEntities));
+			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, post.getPost())) {
+				viewerEntities.add(ev);
+			}
+			message.addExtension(new LivePostChangedExtension(post, lpost, viewerEntities));
 			logger.debug("Sending livePostChanged message to {}", message.getTo());
 			connection.sendPacket(message);
 		}

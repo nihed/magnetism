@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -877,7 +878,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint.getViewer());
 		
 		// filter out ourselves and anyone with no myspace
-		for (User user : contacts) {
+		Iterator<User> iterator = contacts.iterator();
+		while (iterator.hasNext()) {
+			User user = iterator.next();
 			
 			if (user.equals(viewpoint.getViewer()))
 				continue;
@@ -887,7 +890,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				continue;
 			
 			
-			contacts.remove(user);
+			iterator.remove();
 		}
 		return contacts;
 	}
