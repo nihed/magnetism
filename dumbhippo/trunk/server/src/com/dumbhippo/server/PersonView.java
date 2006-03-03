@@ -43,6 +43,7 @@ public class PersonView extends EntityView {
 	private EnumSet<PersonViewExtra> extras;
 	private boolean invited; 
 	private String fallbackName;
+	private Guid fallbackIdentifyingGuid;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -182,19 +183,20 @@ public class PersonView extends EntityView {
 		
 		// we may not have had a User, we try to use a resource instead
 		// or the "fallback name"
-		// resources have to be included in the PersonView by IdentitySpider
-		// even if the viewer should not see them, because the primary resource 
-		// is used as Guid, but if the "fallback name" is set, that's what we 
-		// should return
-		if (name == null || name.length() == 0) {			
-			if (fallbackName != null) {
-				name = fallbackName;
-			} else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
+		// resources won't be included in the PersonView by IdentitySpider
+		// if the viewer should not see them
+		if (name == null || name.length() == 0) {
+			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
+				// try fallback name then
+				if (fallbackName != null) {
+					name = fallbackName;
+				} else  {
+					throw new RuntimeException("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
+				}
+			} else {
 				Resource r = getPrimaryResource();
 				if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
 					name = r.getHumanReadableString();
-			} else {
-				throw new RuntimeException("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
 			}
 		}
 		
@@ -637,12 +639,25 @@ public class PersonView extends EntityView {
 	 * @return an identifying Guid
 	 */
 	public Guid getIdentifyingGuid() {
-		if (user != null)
+		if (user != null) {
 			return user.getGuid();
-		else
+		} else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
 			return getPrimaryResource().getGuid();
+		} else {
+			return fallbackIdentifyingGuid;
+		}
 	}
 
+	/**
+	 * If the PersonView has no User or resources stored in it, then this should be set to the guid of a 
+	 * resource that the contact owns.
+	 * 
+	 * @param guid the fallback guid used if there's no user or resources
+	 */
+	public void setFallbackIdentifyingGuid(Guid guid) {
+		fallbackIdentifyingGuid = guid;
+	}
+	
 	/**
 	 * A name we use if we don't have anything else (no contact/user/resources),
 	 * typically null but we set it sometimes when we know we'll need it.

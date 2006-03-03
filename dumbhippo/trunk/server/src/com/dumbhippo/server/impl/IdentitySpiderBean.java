@@ -386,14 +386,25 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 			if (!ownContact) {
 				// we want to set a fallback name from an email resource if we 
-				// have one, having a fallback name set signals PersonView not 
-				// to disclose the email
+				// have one, since we won't disclose the resources and PersonView
+				// ideally doesn't show as <Unknown> in the UI
+				Guid emailGuid = null; // we want to prefer email as the identifying guid
+				Guid anyGuid = null;
 				for (Resource r : contactResources) {
 					if (r instanceof EmailResource) {
 						pv.setFallbackName(r.getDerivedNickname());
+						emailGuid = r.getGuid();
+					} else {
+						anyGuid = r.getGuid();
 					}
 				}
+				if (emailGuid != null)
+					pv.setFallbackIdentifyingGuid(emailGuid);
+				else if (anyGuid != null)
+					pv.setFallbackIdentifyingGuid(anyGuid);
 				
+				// don't disclose
+				contactResources = null;
 			}
 		}
 		
@@ -402,9 +413,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			userResources = getResourcesForPerson(pv.getUser());
 		}
 		
-		// If it's not our own contact, we still merge the contact resources, 
-		// because we want the primary resource to be available in the PersonView
-		// to be used as a Guid.
+		// If it's not our own contact, contactResources should be null here
 		if (contactResources != null) {
 			resources = contactResources;
 			if (userResources != null) {
