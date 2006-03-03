@@ -1388,9 +1388,9 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
             } else if (isPost(subchild)) {
                 if (!parsePost(subchild, &post)) {
                     ui_->logErrorU("failed to parse post in activePostsChanged");
-                } else {
-                    ui_->addActivePost(post);
                 }
+                // The ordering is important here - we expect the post node to come first,
+                // when the live post data is seen we add it
                 continue;
             } else if (isLivePost(subchild)) {
                 if (!parseLivePost(subchild, &post)) {
@@ -1490,24 +1490,8 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
     ui_->debugLogU("handling livePostChanged message");
 
     HippoPost post;
-    LmMessageNode *subchild;
-    for (subchild = child->children; subchild; subchild = subchild->next) {
-        if (isEntity(subchild)) {
-            HippoEntity entity;
-            if (!parseEntity(subchild, &entity)) {
-                ui_->logErrorU("failed to parse entity referenced in live post");
-                return false;
-            }
-            ui_->addEntity(entity);
-        } else if (isLivePost(subchild)) {
-            if (!parseLivePost(subchild, &post)) {
-                ui_->logErrorU("failed to parse live post");
-                return false;
-            }
-        } else {
-            ui_->debugLogU("unknown node %s in livePostChanged", subchild->name);
-        }
-    }
+    if (!parsePostStream(child, "livePostChanged", &post))
+        ui_->logErrorU("failed to parse post stream from livePostChanged");
 
     ui_->onLinkMessage(post);
 
@@ -1631,6 +1615,34 @@ HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
     return true;
 }
 
+bool
+HippoIM::parsePostStream(LmMessageNode *node, const char *funcName, HippoPost *post)
+{
+    LmMessageNode *subchild;
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        HippoEntity entity;
+        if (isEntity(subchild)) {
+            if (!parseEntity(subchild, &entity)) {
+                ui_->logErrorU("failed to parse entity in %s", funcName);
+                return false;
+            } else {
+                ui_->addEntity(entity);
+            }
+        } else if (isPost(subchild)) {
+            if (!parsePost(subchild, post)) {
+                ui_->logErrorU("failed to parse post in %s", funcName);
+                return false;
+            }
+        } else if (isLivePost(subchild)) {
+            if (!parseLivePost(subchild, post)) {
+                ui_->logErrorU("failed to parse live post in %s", funcName);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 LmHandlerResult 
 HippoIM::onMessage (LmMessageHandler *handler,
                     LmConnection     *connection,
@@ -1677,23 +1689,11 @@ HippoIM::onMessage (LmMessageHandler *handler,
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "newPost");
         if (child) {
-            LmMessageNode *subchild;
-            for (subchild = child->children; subchild; subchild = subchild->next) {
-                if (im->isPost(subchild)) {
-                    HippoPost link;
-                    if (im->parsePost(subchild, &link))
-                        im->ui_->onLinkMessage(link);
-                    else
-                        im->ui_->logErrorU("failed to parse post");
-                } else if (im->isEntity(subchild)) {
-                    HippoEntity entity;
-                    if (im->parseEntity(subchild, &entity))
-                        im->ui_->addEntity(entity);
-                    else
-                        im->ui_->logErrorU("failed to parse entity");
-                } else {
-                    im->ui_->debugLogU("unknown node %s in newPost message", subchild->name);
-                }
+            HippoPost post;
+            if (im->parsePostStream(child, "newPost", &post)) {
+                im->ui_->onLinkMessage(post);
+            } else {
+                im->ui_->logErrorU("failed to parse post stream in newPost");
             }
         } 
     }

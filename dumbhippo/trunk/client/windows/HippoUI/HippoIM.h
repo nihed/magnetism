@@ -161,6 +161,7 @@ private:
     bool parseLivePost(LmMessageNode *postNode, HippoPost *post);
     bool isPost(LmMessageNode *node);
     bool parsePost(LmMessageNode *postNode, HippoPost *post);
+    bool parsePostStream(LmMessageNode *node, const char *funcName, HippoPost *post);
 
     static LmHandlerResult onClientInfoReply(LmMessageHandler *handler,
                                              LmConnection     *connection,
