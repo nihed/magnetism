@@ -91,6 +91,7 @@ compareVersions(const char *versionA, const char *versionB)
 HippoUpgrader::HippoUpgrader()
 {
     state_ = STATE_UNKNOWN;
+    progressVersion_ = NULL;
     currentVersion_ = NULL;
     minVersion_ = NULL;
     downloadFile_ = NULL;
@@ -101,6 +102,7 @@ HippoUpgrader::~HippoUpgrader()
     if (downloadFile_)
         CloseHandle(downloadFile_);
 
+    g_free(progressVersion_);
     g_free(currentVersion_);
     g_free(minVersion_);
 }
