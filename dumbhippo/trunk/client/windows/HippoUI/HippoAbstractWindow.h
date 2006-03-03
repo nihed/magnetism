@@ -97,6 +97,14 @@ protected:
     void setAnimate(bool animate);
 
     /**
+     * Set whether to force an update after showing the window. This is a 
+     * bug workaround for undiagnosed problems where HippoBubble can end up 
+     * shown without the embedded IE being redrawn.
+     * @param updateOnShow true if we should force an update after showing the window.
+     */
+    void setUpdateOnShow(bool updateOnShow);
+
+    /**
      * Set the class style passed to RegisterClassEx. The default value is
      * CS_HREDRAW | CS_VREDRAE.
      * @param classStyle the new class style
@@ -194,6 +202,7 @@ protected:
 private:
     bool useParent_;
     bool animate_;
+    bool updateOnShow_;
     UINT classStyle_;
     HippoBSTR className_;
     HippoBSTR url_;

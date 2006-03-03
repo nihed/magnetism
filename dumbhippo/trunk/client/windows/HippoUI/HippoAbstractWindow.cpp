@@ -15,6 +15,7 @@ HippoAbstractWindow::HippoAbstractWindow()
 {
     animate_ = false;
     useParent_ = false;
+    updateOnShow_ = false;
     classStyle_ = CS_HREDRAW | CS_VREDRAW;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
     extendedStyle_ = 0;
@@ -56,6 +57,12 @@ void
 HippoAbstractWindow::setAnimate(bool animate)
 {
     animate_ = animate;
+}
+
+void 
+HippoAbstractWindow::setUpdateOnShow(bool updateOnShow)
+{
+    updateOnShow_ = updateOnShow;
 }
 
 void 
@@ -263,6 +270,9 @@ HippoAbstractWindow::show(void)
 
     // Probably not really necessary
     BringWindowToTop(window_);
+
+    if (updateOnShow_) 
+        RedrawWindow(window_, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
 void

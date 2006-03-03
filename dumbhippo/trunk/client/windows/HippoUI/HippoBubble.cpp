@@ -32,8 +32,10 @@ HippoBubble::HippoBubble(void)
     // bugs with WM_PRINTCLIENT; the first time the contents of the window are properly
     // initialized before fade-in, but on subsequent shows they are not. A crude
     // workaround might be to reembed a new control every time, but there are probably
-    // less sledgehammer methods.
+    // less sledgehammer methods. Even without animation there are sometimes problems
+    // with reshowing the window, which is why we turn on updateOnShow();
     setUseParent(true);
+    setUpdateOnShow(true);
     setWindowStyle(WS_POPUP);
     setExtendedStyle(WS_EX_TOPMOST);
     setClassName(L"HippoBubbleClass");
