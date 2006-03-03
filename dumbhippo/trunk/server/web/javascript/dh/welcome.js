@@ -27,19 +27,17 @@ dh.welcome.doDownload = function(url) {
 	var mySpaceName = document.getElementById("dhMySpaceName")
 	var name = dojo.string.trim(mySpaceName.value)
 
+	window.open(url, "_self")	
 	if (dh.welcome.nameNow) {
 		dh.server.doPOST("setmyspacename",
 						{ 
 							"name" : name
 						},
 						function(type, data, http) {
-							window.open(url, "_self")	
 						},
 						function(type, error, http) {
 							alert("Oops! Couldn't set your myspace name, please try again later");
 						});
-	} else {
-		window.open(url, "_self")	
 	}
 }
 
