@@ -44,7 +44,7 @@
 										</tr>
 										<tr>
 											<td>I might have a password:</td>
-											<td style="text-align: right;"><input type="text" class="dhText" name="password"/></td>
+											<td style="text-align: right;"><input type="password" class="dhText" name="password"/></td>
 										</tr>
 										<tr>
 											<td colspan="2" style="text-align: center;">								
