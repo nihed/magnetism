@@ -17,7 +17,7 @@ package com.dumbhippo.server;
  *
  */
 public enum PromotionCode {
-	MUSIC_INVITE_PAGE_200602("xQSw27DsbYs3Hu");
+	MUSIC_INVITE_PAGE_200602("music_invite_page_200602");
 	
 	private String code;
 	
