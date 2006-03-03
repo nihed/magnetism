@@ -34,8 +34,15 @@
 		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Hippo Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Hippo Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Hippo Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="Hippo Explorer Bar" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="Hi&ppo Bar" Context="InprocServer32" ThreadingModel="apartment"/>
                         <Registry Root="HKCR" Key="CLSID\{174D2323-9AF2-4257-B8BD-849865E4F1AE}\Implemented Categories\{00021494-0000-0000-C000-000000000046}"/>
+                        <!-- Remove registry entries to force rescan of explorer bars; the first of these is documented in 
+                             explorer bar creation docs, but I think it is obsolete. The second is found in KB q247705 and
+                             seems more relevant. We can only do it for the current users, but the rescan seems to happen
+                             eventually anyways, so hopefully if multiple users are using DumbHippo on a system things
+                             won't go too wrong. -->              
+                        <Registry Action="removeKeyOnInstall" Root="HKCR" Key="Component Categories\{00021494-0000-0000-C000-000000000046}\Enum"/>
+                        <Registry Action="removeKeyOnInstall" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Explorer\Discardable\PostSetup\Component Categories\{00021494-0000-0000-C000-000000000046}\Enum"/>
                         <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Internet Explorer\Extensions\{7197AC86-5F8A-43BE-806C-C03BB363C85E}">
                             <Registry Name="Default Visible" Value="Yes" Type="string" />
                             <Registry Name="ButtonText" Value="Share Link" Type="string" />
@@ -55,7 +62,7 @@
 		        <!-- when we want to use HippoShellExt again, delete this line and uncomment the one below -->
                 <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension"/>		        
                 <!--
-		        <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
+		        <Registry Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
 		        -->
 		    </Component>
 		    
