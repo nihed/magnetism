@@ -365,16 +365,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {
-		
+	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the database work, even though we only return the requested information to keep 
-		// other code honest
-		
+		// other code honest		
 		Set<Resource> contactResources = null;
 		Set<Resource> userResources = null;
 		Set<Resource> resources = null;
-		
 		if (pv.getContact() != null) {
 			Contact contact = pv.getContact();
 			contactResources = getResourcesForPerson(contact);
@@ -389,37 +386,38 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 			if (!ownContact) {
 				// we want to set a fallback name from an email resource if we 
-				// have one, but otherwise not disclose these resources
-
+				// have one, having a fallback name set signals PersonView not 
+				// to disclose the email
 				for (Resource r : contactResources) {
 					if (r instanceof EmailResource) {
 						pv.setFallbackName(r.getDerivedNickname());
 					}
 				}
 				
-				// don't disclose
-				contactResources = null;
 			}
 		}
 		
 		// can only get user resources if we are a contact of the user
-		if (pv.getUser() != null && isViewerFriendOf(viewpoint, pv.getUser()))
+		if (pv.getUser() != null && isViewerFriendOf(viewpoint, pv.getUser())) {
 			userResources = getResourcesForPerson(pv.getUser());
+		}
 		
-		// If it's not our own contact, we don't merge in the contact resources, 
-		// but we do use them later to set a fallback name
-		
+		// If it's not our own contact, we still merge the contact resources, 
+		// because we want the primary resource to be available in the PersonView
+		// to be used as a Guid.
 		if (contactResources != null) {
 			resources = contactResources;
-			if (userResources != null)
+			if (userResources != null) {
 				resources.addAll(userResources); // contactResources won't be overwritten in case of conflict
+			}
 		} else if (userResources != null) {
 			resources = userResources;
 		} else {
-			if (fromResource != null)
+			if (fromResource != null) {
 				resources = Collections.singleton(fromResource);
-			else
+			} else {
 				resources = Collections.emptySet();
+			}
 		}
 		
 		// this does extra work right now (adding some things more than once)
@@ -481,12 +479,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
-		
+				
 		Contact contact = p instanceof Contact ? (Contact) p : null;
 		User user = getUser(p); // user for contact, or p itself if it's already a user
 		
 		PersonView pv = new PersonView(contact, user);
-		
+				
 		addPersonViewExtras(viewpoint, pv, null, extras);
 		
 		return pv;

@@ -74,6 +74,17 @@
 				</p>
 			</div>
 		</c:if>
+				
+		<div class="dh-group-access"> 
+		    <c:choose>
+		        <c:when test="${viewgroup.private}">
+		            This is a private group.
+		        </c:when>
+		        <c:otherwise>
+		            This is a public group.
+		        </c:otherwise>
+		    </c:choose>
+		</div>
 		
 		<h2 class="dh-title">The <c:out value="${viewgroup.name}"/> Group</h2>
 

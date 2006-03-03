@@ -145,6 +145,14 @@ public abstract class AbstractGroupPage {
 	public boolean isForum() {
 		return viewedGroup.getAccess() == GroupAccess.PUBLIC;
 	}
+	
+	public boolean isPublic() {
+		return viewedGroup.getAccess() == GroupAccess.PUBLIC_INVITE;
+	}
+	
+	public boolean isPrivate() {
+		return viewedGroup.getAccess() == GroupAccess.SECRET;		
+	}
 
 	public boolean isInvitedNotAccepted() {
 		return getGroupMember().getStatus() == MembershipStatus.INVITED;

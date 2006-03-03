@@ -35,7 +35,6 @@ import com.dumbhippo.persistence.VersionedEntity;
  * PersonView primarily in not being a session bean.
  */
 public class PersonView extends EntityView {
-	
 	public static final int MAX_SHORT_NAME_LENGTH = 15;
 	
 	private Contact contact;
@@ -121,7 +120,7 @@ public class PersonView extends EntityView {
 		
 		if (resource instanceof AimResource)
 			addPrimaryAim((AimResource) resource);
-		else if (resource instanceof AimResource)
+		else if (resource instanceof EmailResource)
 			addPrimaryEmail((EmailResource) resource);
 		else {
 			addExtras(EnumSet.of(PersonViewExtra.PRIMARY_RESOURCE));
@@ -183,20 +182,19 @@ public class PersonView extends EntityView {
 		
 		// we may not have had a User, we try to use a resource instead
 		// or the "fallback name"
-		// resources won't be included in the PersonView by IdentitySpider
-		// if the viewer should not see them.
-		if (name == null || name.length() == 0) {
-			
-			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
-				// try fallback name then
-				if (fallbackName != null)
-					name = fallbackName;
-				else
-					throw new RuntimeException("PersonView has no User, Contact, or Resource; totally useless: " + this);
-			} else {
+		// resources have to be included in the PersonView by IdentitySpider
+		// even if the viewer should not see them, because the primary resource 
+		// is used as Guid, but if the "fallback name" is set, that's what we 
+		// should return
+		if (name == null || name.length() == 0) {			
+			if (fallbackName != null) {
+				name = fallbackName;
+			} else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
 				Resource r = getPrimaryResource();
 				if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
 					name = r.getHumanReadableString();
+			} else {
+				throw new RuntimeException("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
 			}
 		}
 		
@@ -240,11 +238,11 @@ public class PersonView extends EntityView {
 		if (!getExtra(extra))
 			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
 
-		
 		for (Resource r : getResources()) {
 			if (resourceClass.isAssignableFrom(r.getClass()))
 				return resourceClass.cast(r);
 		}
+		
 		return null;
 	}
 	
