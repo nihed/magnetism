@@ -13,7 +13,9 @@
 	<title>Welcome <c:out value="${welcome.person.name}"/>!</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/dh/welcome.js">
+	<script type="text/javascript">
+		dojo.require("dh.util");
+		dojo.require("dh.welcome");
 	</script>
 </head>
 <body>

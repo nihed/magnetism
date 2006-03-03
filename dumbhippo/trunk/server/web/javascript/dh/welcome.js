@@ -27,7 +27,7 @@ dh.welcome.doDownload = function(url) {
 	var mySpaceName = document.getElementById("dhMySpaceName")
 	var name = dojo.string.trim(mySpaceName.value)
 
-	if (dh.welcome.namenow) {
+	if (dh.welcome.nameNow) {
 		dh.server.doPOST("setmyspacename",
 						{ 
 							"name" : name
@@ -44,8 +44,12 @@ dh.welcome.doDownload = function(url) {
 }
 
 dh.welcome.init = function() {
-	dh.welcome.nameNow = document.getElementById("dhMySpaceRadioNow").checked
-	dh.welcome.updateDownload()
+	// this node only exists if coming from myspace stuff
+	var myspaceNowNode = document.getElementById("dhMySpaceRadioNow")
+	if (myspaceNowNode) {
+		dh.welcome.nameNow = myspaceNowNode.checked
+		dh.welcome.updateDownload()
+	}
 }
 
 dojo.event.connect(dojo, "loaded", function () { dh.welcome.init() })
