@@ -193,6 +193,10 @@ DllRegisterServer(void)
     if (FAILED (hr))
         return hr;
 
+    /* This forces a rescan of (horizontal) explorer bar categories. See comments in Components.wxs */
+    RegDeleteKey(HKEY_CLASSES_ROOT, L"Component Categories\\{00021494-0000-0000-C000-000000000046}\\Enum");
+    RegDeleteKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Discardable\\PostSetup\\Component Categories\\{00021494-0000-0000-C000-000000000046}\\Enum");
+
     hr = registrar.registerInprocServer(CLSID_HippoTracker,
                                         TEXT("Hippo Tracker"));
     if (FAILED(hr))
