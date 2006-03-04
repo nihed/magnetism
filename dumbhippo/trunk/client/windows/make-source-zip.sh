@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DIRECTORIES="Applets dependencies HippoExplorer HippoShellExt HippoUI HippoUtil Installer loudmouth TestLoudmouth TestShareLink WiXInstaller"
+DIRECTORIES="Applets dependencies HippoExplorer HippoShellExt HippoUI HippoUtil loudmouth TestLoudmouth WiXInstaller"
 
 version=`grep VERSION HippoUI/Version.h  | sed 's/[^"]*"\([^"]*\).*/\1/'`
 
