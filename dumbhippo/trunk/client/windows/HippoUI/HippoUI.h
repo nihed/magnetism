@@ -89,7 +89,7 @@ public:
     void getMySpaceContacts();
     void onUpgradeReady();
     void addEntity(HippoEntity &entity);
-    void onLinkMessage(HippoPost &link);
+    void onLinkMessage(HippoPost &link, bool isNew);
 
     void getEntity(BSTR id, HippoEntity *entity);
 

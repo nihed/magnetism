@@ -1493,7 +1493,7 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
     if (!parsePostStream(child, "livePostChanged", &post))
         ui_->logErrorU("failed to parse post stream from livePostChanged");
 
-    ui_->onLinkMessage(post);
+    ui_->onLinkMessage(post, false);
 
     return true;
 }
@@ -1691,7 +1691,7 @@ HippoIM::onMessage (LmMessageHandler *handler,
         if (child) {
             HippoPost post;
             if (im->parsePostStream(child, "newPost", &post)) {
-                im->ui_->onLinkMessage(post);
+                im->ui_->onLinkMessage(post, true);
             } else {
                 im->ui_->logErrorU("failed to parse post stream in newPost");
             }

@@ -549,7 +549,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.recipients.push_back(person2.id);
         linkshare.info.setUTF8("");
         linkshare.timeout = 7;
-        onLinkMessage(linkshare);
+        onLinkMessage(linkshare, true);
 
         linkshare.viewers.push_back(person1.id);
         linkshare.viewers.push_back(person2.id);
@@ -557,7 +557,7 @@ HippoUI::create(HINSTANCE instance)
         linkshare.viewers.push_back(person4.id);
         linkshare.timeout = 0;
 
-        onLinkMessage(linkshare);
+        onLinkMessage(linkshare, false);
 
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
         linkshare.postId.setUTF8("2");
@@ -575,7 +575,7 @@ HippoUI::create(HINSTANCE instance)
             "        </photos>"
             "    </flickr>"
             "</postInfo>");
-        onLinkMessage(linkshare);
+        onLinkMessage(linkshare, true);
 
         HippoMySpaceBlogComment blogComment;
 
@@ -1115,13 +1115,15 @@ HippoUI::addEntity(HippoEntity &entity)
 }
 
 void 
-HippoUI::onLinkMessage(HippoPost &post)
+HippoUI::onLinkMessage(HippoPost &post, bool isNew)
 {
+    if (!isNew) {
+        post.haveViewed = true;
+    }
     dataCache_.addPost(post);
     bubble_.setLinkNotification(false, post);
-    HippoPost postCopy = post;
-    postCopy.haveViewed = true;
-    dataCache_.addPost(postCopy);
+    post.haveViewed = true;
+    dataCache_.addPost(post);
 }
 
 void 
