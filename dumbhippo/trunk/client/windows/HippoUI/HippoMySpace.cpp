@@ -66,7 +66,9 @@ HippoMySpace::sanitizeCommentHTML(BSTR html, HippoBSTR &ret)
             }
             if (i < len)
                 i++;
-        } else if (iswalnum(html[i]) || iswspace(html[i])) {
+        } 
+        // This isn't an exhaustive list but it's reasonable and safe
+        if (iswalnum(html[i]) || isspace(html[i]) || html[i] == '!' || html[i] == ',' || html[i] == '.' || html[i] == '?') {
             ret.Append(html[i]);
         }
     }
