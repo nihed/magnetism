@@ -10,8 +10,7 @@
         <dht:stylesheets />
         <dht:scriptIncludes/>
 </head>
-<body>
-<div id="dhContainer">
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -86,9 +85,7 @@
 	
 		</p>
 	</div>
-	<dht:bottom/>
-</div>
 	
-</body>
+</dht:bodyWithAds>
 </html>
 

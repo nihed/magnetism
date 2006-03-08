@@ -15,9 +15,7 @@
 	<dht:stylesheets />
 	<dht:scriptIncludes />
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:body>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -41,6 +39,5 @@
 		</p>
 	</div>
 	<dht:bottom/>
-</div>
-</body>
+</dht:body>
 </html>

@@ -19,9 +19,7 @@
 		dojo.require("dh.util");
 	</script>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -101,7 +99,5 @@
 				
 		</div>
 	</div>
-	<dht:bottom/>
-</div>
-</body>
+</dht:bodyWithAds>
 </html>

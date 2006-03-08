@@ -21,10 +21,7 @@
 	        dojo.require("dh.util");
 	</script>
 </head>
-<body>
-
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -119,18 +116,11 @@
 					</div>
 				</c:when>
 				<c:otherwise>
-					<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
+					<%-- no contacts shown, probably because viewer isn't a contact of viewee --%>
 				</c:otherwise>
 			</c:choose>
 		</div>
 		</div>
 	</div>
-	<dht:bottom/>
-</div>
-
-<div id="dhOTP">
-<dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>

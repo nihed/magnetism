@@ -18,10 +18,8 @@
 		dojo.require("dh.welcome");
 	</script>
 </head>
-<body>
-<c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>
-<div id="dhContainer">
-
+<dht:body>
+	<c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -133,6 +131,5 @@
 		</table>
 	</div>
 	<dht:bottom/>
-</div>
-</body>
+</dht:body>
 </html>

@@ -2,7 +2,8 @@
 
 /* This file contains or imports css that applies to 
  * general categories of page element we use on 
- * multiple pages. Classes like "dhFooBar" are specific 
+ * multiple pages. Ids like "dhFooBar" and 
+ * classes like "dh-foo-bar" are specific 
  * to our site.
  * 
  * Dojo widgets have classes of their own, one approach is 

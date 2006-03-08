@@ -7,10 +7,7 @@
 	<title>Error</title>
 	<dht:stylesheets />
 </head>
-<body>
-
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -37,8 +34,6 @@
 		</c:choose>
 		
 	</div>
-	<dht:bottom/>
-</div>
-	
-</body>
+
+</dht:bodyWithAds>
 </html>

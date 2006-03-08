@@ -7,9 +7,7 @@
 	<title>Unknown Page</title>
 	<dht:stylesheets />
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -22,7 +20,5 @@
 		<p><a href="/home">Home</a></p>
 		
 	</div>
-	<dht:bottom/>
-</div>	
-</body>
+</dht:bodyWithAds>
 </html>

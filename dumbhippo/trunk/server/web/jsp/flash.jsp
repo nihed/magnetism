@@ -13,16 +13,12 @@
 		dh.util.goToNextPage("<c:out value="${next}"/>", "<c:out value="${flashMessage}"/>");
 	</script>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:body>
 	<div id="dhMainArea">
 		<dht:logo/>
 
 		<dht:toolbar/>
 		<c:out value="${flashMessage}"/>
 	</div>
-</div>
-
-</body>
+</dht:body>
 </html>

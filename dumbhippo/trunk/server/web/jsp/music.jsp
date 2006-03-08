@@ -27,9 +27,7 @@
 	<dht:stylesheets href="music.css" iehref="person-iefixes.css" />
 	<dht:scriptIncludes/>
 </head>
-<body>
-
-<div id="dhContainer">
+<dht:bodyWithAds>
 
 	<div id="dhMainArea">
 		<dht:logo/>
@@ -172,12 +170,6 @@
 			</c:if>
 		</div>
 	</div>
-	<dht:bottom/>
-</div>
 
-<div id="dhOTP">
-<dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>

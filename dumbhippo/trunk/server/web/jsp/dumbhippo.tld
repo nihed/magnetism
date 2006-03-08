@@ -183,7 +183,29 @@
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
-    </tag>    
+    </tag>
+    <tag>
+        <name>relocate</name>
+        <tagclass>com.dumbhippo.web.RelocateTag</tagclass>
+        <bodycontent>scriptless</bodycontent>
+        <info>Move this stuff to a later relocateDest tag</info>
+	    <attribute>
+           <name>where</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
+        <name>relocateDest</name>
+        <tagclass>com.dumbhippo.web.RelocateDestTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Print out the stuff from an earlier relocate tag</info>
+	    <attribute>
+           <name>where</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
     <tag>
         <name>skipList</name>
         <tagclass>com.dumbhippo.web.SkipListTag</tagclass>

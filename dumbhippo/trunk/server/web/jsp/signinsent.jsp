@@ -7,13 +7,12 @@
 	<title>Sign-in Link Sent</title>
 	<dht:stylesheets />
 </head>
-<body>
-	<div id="dhContainer">
+<dht:bodyWithAds>
 		<dht:header>
 			Link Sent
 		</dht:header>
 		<dht:toolbar/>
-		<div id="dhMain">
+		<div id="dhMainArea">
 	
 			<h3>
 				Sign-in link sent to <c:out value="${address}"/>; click on that link to sign in.
@@ -22,7 +21,5 @@
 			<p><a href="/home">Home</a></p>
 			<p><a href="/main">Main</a></p>
 		</div>
-		<dht:bottom/>
-	</div>
-</body>
+</dht:bodyWithAds>
 </html>

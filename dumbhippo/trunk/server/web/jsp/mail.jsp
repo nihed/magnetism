@@ -9,9 +9,7 @@
 	<title>Mail Settings</title>
 	<dht:stylesheets />
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:body>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -59,7 +57,5 @@
 	<p><a href="/privacy">Our privacy policy</a></p>
 	</div>
 	<dht:bottom/>
-</div>
-
-</body>
+</dht:body>
 </html>

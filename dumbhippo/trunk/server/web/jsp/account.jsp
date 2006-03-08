@@ -62,10 +62,7 @@
 		dojo.event.connect(dojo, "loaded", dj_global, "accountSlideshowInit");	
 	</script>
 </head>
-<body>
-
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -216,12 +213,5 @@
 		</div>
 	</div>
 
-</div>
-
-<div id="dhOTP">
-<dht:rightColumn/>
-</div>
-
-<dht:bottom/>
-</body>
+</dht:bodyWithAds>
 </html>

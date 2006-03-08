@@ -15,9 +15,9 @@
 	<script type="text/javascript">
         dojo.require("dh.util");
 	</script>
-<body>
+</head>
+<dht:body>
 
-<div id="dhContainer">
 <h2>Available live users: </h2>
   <c:forEach items="${admin.cachedLiveUsers}" var="user">
 	<dht:liveUserDebug user="${user}"/>
@@ -30,7 +30,6 @@
   <c:forEach items="${admin.livePosts}" var="post">
   	<dht:livePostDebug post="${post}"/>
   </c:forEach>
-</div>
-<dht:bottom/>
-</body>
+
+</dht:body>
 </html>

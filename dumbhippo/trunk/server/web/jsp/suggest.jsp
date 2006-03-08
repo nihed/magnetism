@@ -18,9 +18,7 @@
 	        dojo.require("dh.util");
 	</script>
 </head>
-<body>
-
-<div id="dhContainer">
+<dht:bodyWithAds>
 
 	<div id="dhMainArea">
 		<dht:logo/>
@@ -45,9 +43,7 @@
 		
 	</div>
 
-	<dht:bottom/>
-</div>
-
+<dht:fixed>
 <!-- check out this classy layout!!!  it's getting chilly in here! -->
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
@@ -69,10 +65,7 @@
 		   <dht:rating rating="${rating}"/>
 		</c:forEach>
 		</table>
+</dht:fixed>
 
-<div id="dhOTP">
-<dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>

@@ -10,30 +10,26 @@
 	<dht:stylesheets />
 	<dht:scriptIncludes/>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
 		<dht:toolbar/>
 
-	<h3>This is the main page.</h3>
-
-    <c:choose>
-		<c:when test="${signin.valid}">
-			<c:url value="home" var="homeurl"/>
-		   	<p><a href="${homeurl}">Your home page</a></p>
-			<p><a href="javascript:dh.actions.signOut()">Sign out</a></p>
-	  	</c:when>
-		<c:otherwise>
-	 		<c:url value="who-are-you?next=home" var="signinurl"/>
-	  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
-		</c:otherwise>
-	</c:choose>
+		<h3>This is the main page.</h3>
+	
+	    <c:choose>
+			<c:when test="${signin.valid}">
+				<c:url value="home" var="homeurl"/>
+			   	<p><a href="${homeurl}">Your home page</a></p>
+				<p><a href="javascript:dh.actions.signOut()">Sign out</a></p>
+		  	</c:when>
+			<c:otherwise>
+		 		<c:url value="who-are-you?next=home" var="signinurl"/>
+		  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
+			</c:otherwise>
+		</c:choose>
 	</div>
-	<dht:bottom/>
-</div>
 
-</body>
+</dht:bodyWithAds>
 </html>

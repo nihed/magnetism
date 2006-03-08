@@ -13,9 +13,7 @@
 	<dht:stylesheets href="invites.css"/>
 	<dht:scriptIncludes/>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 		<dht:toolbar/> 
@@ -81,12 +79,6 @@
 		</div>
 		
 	</div>
-	<dht:bottom/>
-</div>
 
-<div id="dhOTP">
-    <dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>

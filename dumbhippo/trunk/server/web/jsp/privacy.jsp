@@ -7,9 +7,7 @@
 	<title>Privacy</title>
 	<dht:stylesheets />
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -89,7 +87,6 @@
 		<a href="mailto:feedback@dumbhippo.com">feedback@dumbhippo.com</a>.
 		</p>
 	</div>
-</div>
 
-</body>
+</dht:bodyWithAds>
 </html>

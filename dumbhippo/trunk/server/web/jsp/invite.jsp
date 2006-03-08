@@ -11,9 +11,7 @@
 	<dht:stylesheets href="invite.css"/>
 	<dht:scriptIncludes/>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 
@@ -113,12 +111,6 @@
 		</div>
 				
 	</div>
-	<dht:bottom/>
-</div>
 
-<div id="dhOTP">
-    <dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>

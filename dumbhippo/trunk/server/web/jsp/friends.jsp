@@ -13,9 +13,7 @@
 	<dht:stylesheets href="contacts.css" iehref="contacts-iefixes.css"/>
 	<dht:scriptIncludes/>
 </head>
-<body>
-<div id="dhContainer">
-
+<dht:bodyWithAds>
 	<div id="dhMainArea">
 		<dht:logo/>
 		<dht:toolbar/> 
@@ -128,12 +126,6 @@
 		    </c:choose>    
 		</div>		
 	</div>
-	<dht:bottom/>
-</div>
 
-<div id="dhOTP">
-    <dht:rightColumn/>
-</div>
-
-</body>
+</dht:bodyWithAds>
 </html>
