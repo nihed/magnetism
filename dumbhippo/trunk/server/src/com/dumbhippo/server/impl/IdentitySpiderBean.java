@@ -446,6 +446,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					boolean invited = false;
 					for (Resource r : resources) {
 						invited = invitationSystem.hasInvited(viewpoint.getViewer(), r);
+						if (invited)
+							break;
 					}
 					pv.addInvitedStatus(invited);
 				}
