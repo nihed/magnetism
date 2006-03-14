@@ -6,12 +6,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import org.slf4j.Logger;
 
@@ -62,6 +71,77 @@ public class RewriteServlet extends HttpServlet {
     	++nextPsa;
     	return s;
     }
+    
+	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
+		// Instead of just forwarding JSP's to the right handler, we surround
+		// them in a transaction; this doesn't have anything to do with 
+		// making atomic modifications - JSP pages are pretty much entirely
+		// readonly. Instead, the point is to get the entire page to use
+		// a single Hibernate session. This improves performance, since
+		// persistance beans are cached across the session, and also means
+		// that persistance beans returned to the web tier won't be detached.
+		//
+		// While we are add it, we time the page for performancing monitoring
+		
+		long startTime = System.currentTimeMillis();
+		UserTransaction tx;
+		try {
+			InitialContext initialContext = new InitialContext();
+			tx = (UserTransaction)initialContext.lookup("UserTransaction");
+		} catch (NamingException e) {
+			throw new RuntimeException("Cannot create UserTransaction");
+		}
+		
+		try {
+			tx.begin();
+		} catch (NotSupportedException e) {
+			throw new RuntimeException("Error starting transaction", e); 
+		} catch (SystemException e) {
+			throw new RuntimeException("Error starting transaction", e); 
+		}
+		
+		try {
+			// Deleting the user from SigninBean means that next time it
+			// is accessed, we'll get a copy attached to this hibernate Session
+			SigninBean.getForRequest(request).reattachUser();
+			
+			context.getRequestDispatcher(newPath).forward(request, response);
+			
+			logger.debug("Handled {} in {} milliseconds", newPath, System.currentTimeMillis() - startTime);
+		} catch (Throwable t) {
+			try {
+				// We don't try to duplicate the complicated EJB logic for whether
+				// the transaction should be rolled back; we just roll it back
+				// always if an exception occurs. After all, the transaction
+				// probably didn't do any writing to start with.
+				tx.setRollbackOnly();
+			} catch (SystemException e) {
+				throw new RuntimeException("Error setting transaction for rollback");
+			}
+			
+			if (t instanceof Error)
+				throw (Error)t;
+			else if (t instanceof RuntimeException)
+				throw (RuntimeException)t;
+			else
+				throw new RuntimeException(t);
+		} finally {
+			try {
+				if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
+					tx.rollback();
+				else
+					tx.commit();
+			} catch (SystemException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (RollbackException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (HeuristicMixedException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (HeuristicRollbackException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			}
+		}		
+	}
     
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
@@ -168,7 +248,9 @@ public class RewriteServlet extends HttpServlet {
 			// We can't use RewrittenRequest for JSP's because it breaks the
 			// handling of <jsp:forward/> and is generally unreliable.
 			newPath = "/jsp" + path + ".jsp";
-			context.getRequestDispatcher(newPath).forward(request, response);
+			
+			handleJsp(request, response, newPath);
+			
 		} else if (htmlPages.contains(afterSlash)) {
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml

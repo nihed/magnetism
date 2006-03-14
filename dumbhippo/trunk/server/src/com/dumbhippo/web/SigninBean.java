@@ -117,6 +117,18 @@ public class SigninBean implements Serializable {
 		return userGuid != null;
 	}
 	
+	/**
+	 * Clear any cached User object. We use this in RewriteServlet to avoid
+	 * having the User object in the SigninBean be detached from the 
+	 * the transaction we create when handling a JSP page. This is a bit
+	 * hacky ... with some reorganization it should be possible to
+	 * scope the transaction around the lookup of the User as well ...
+	 * but it keeps things simple. 
+	 */
+	public void reattachUser() {
+		user = null;
+	}
+	
 	public User getUser() {
 		if (userGuid != null && user == null) {
 			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);

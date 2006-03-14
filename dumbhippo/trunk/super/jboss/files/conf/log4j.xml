@@ -184,6 +184,10 @@
    		<appender-ref ref="NOISE"/>
    		<priority value="@@noiseLogLevel@@"/>
    </category>
+   <category name="org.hibernate.cache" additivity="false">
+   		<appender-ref ref="NOISE"/>
+   		<priority value="@@noiseLogLevel@@"/>
+   </category>
 	<!-- END HIBERNATE SPAM -->
 
    <!-- jboss seems to divert anything printed to System.out to a logger called STDOUT at level INFO,

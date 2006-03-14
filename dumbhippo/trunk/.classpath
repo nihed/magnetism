@@ -34,6 +34,7 @@
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/activation.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-annotations.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/javax.servlet.jsp.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/jbossall-client.jar"/>

@@ -6,6 +6,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * ContactClaim represents knowledge by a user that one
@@ -25,6 +27,7 @@ import javax.persistence.UniqueConstraint;
 	   uniqueConstraints = 
 	      {@UniqueConstraint(columnNames={"account_id", "resource_id"})}
       )
+@Cache(usage=CacheConcurrencyStrategy.READ_ONLY)
 public class ContactClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Contact contact;
