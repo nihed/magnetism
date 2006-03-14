@@ -29,10 +29,12 @@ class Config:
         self.services={}
 
         self._load_config(os.path.join(superdir, 'base.conf'), True)
+        if (os.environ.has_key('HOME')):
+            self.params['home'] = os.environ['HOME'];
+            
         if conffile is not None:
             self._load_config(conffile, True)
         elif (os.environ.has_key('HOME')):
-            self.params['home'] = os.environ['HOME'];
             self._load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
         for (name, value) in init_params.items():
             self._set_init_parameter(name, value)
