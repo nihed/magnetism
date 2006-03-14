@@ -81,9 +81,21 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     document.body.appendChild(this._bubble.create())
+
+    this._updateIdle = null;
+    this._idleUpdateDisplay = function() {
+        if (this._updateIdle)
+            return;
+    
+        window.setTimeout(function () {
+            this._updateIdle = null;
+            window.external.application.UpdateDisplay();
+        }, 0)
+    }
     
     this._bubble.onSizeChange = function() {
         window.external.application.Resize(display._bubble.getWidth(), display._bubble.getHeight())
+        display._idleUpdateDisplay()
     }
     this._bubble.onSizeChange()
     

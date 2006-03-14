@@ -9,10 +9,13 @@
 #include "HippoBubble.h"
 #include "HippoUI.h"
 
+#include "cleangdiplus.h"
+
 // These values basically don't matter, since the bubble picks its own
 // size, but matching the values from bubble.js may save a bit on resizing
-static const int BASE_WIDTH = 400;
-static const int BASE_HEIGHT = 150;
+static const int BASE_WIDTH = 450;
+static const int BASE_HEIGHT = 123;
+static const int SWARM_HEIGHT = 180;
 static const UINT_PTR CHECK_MOUSE = 1;
 
 HippoBubble::HippoBubble(void)
@@ -25,6 +28,9 @@ HippoBubble::HippoBubble(void)
     shown_ = FALSE;
     desiredWidth_ = BASE_WIDTH;
     desiredHeight_ = BASE_HEIGHT;
+    layerDC_ = NULL;
+    oldBitmap_ = NULL;
+ 
 
     // Note that if you are tempted to call setAnimate(true) here to enable fading in,
     // as well as fading out, then you'll probably have difficulties the second time
@@ -37,7 +43,7 @@ HippoBubble::HippoBubble(void)
     setUseParent(true);
     setUpdateOnShow(true);
     setWindowStyle(WS_POPUP);
-    setExtendedStyle(WS_EX_TOPMOST);
+    setExtendedStyle(WS_EX_TOPMOST | WS_EX_LAYERED);
     setClassName(L"HippoBubbleClass");
     setTitle(L"Hippo Notification");
     setApplication(this);
@@ -47,6 +53,14 @@ HippoBubble::HippoBubble(void)
 
 HippoBubble::~HippoBubble(void)
 {
+    if (layerDC_) {
+        // We have to select the original bitmap back into the DC before freeing
+        // it or we'll leak the last bitmap we installed
+        if (oldBitmap_)
+            SelectObject(layerDC_, oldBitmap_);
+
+        DeleteDC(layerDC_);
+    }
 }
 
 void
@@ -55,7 +69,7 @@ HippoBubble::moveResizeWindow()
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-    moveResize(desktopRect.right - desiredWidth_, (desktopRect.bottom - desiredHeight_),
+    moveResize(desktopRect.right - desiredWidth_, (desktopRect.bottom - desiredHeight_) - 5,
                desiredWidth_, desiredHeight_);
 }
 
@@ -420,6 +434,135 @@ STDMETHODIMP
 HippoBubble::SetHaveMissedBubbles(BOOL haveMissed)
 {
     ui_->setHaveMissedBubbles(!!haveMissed);
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoBubble::UpdateDisplay()
+{
+    bool firstTime = layerDC_ == NULL;
+
+    if (firstTime)
+        layerDC_ = CreateCompatibleDC(NULL);
+
+    int width = desiredWidth_;
+    int height = desiredHeight_;
+
+    BITMAPINFO bitmapInfo;
+
+    ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
+    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth = width;
+    bitmapInfo.bmiHeader.biHeight = height;
+    bitmapInfo.bmiHeader.biSizeImage = 4 * width * height;
+    bitmapInfo.bmiHeader.biPlanes = 1;
+    bitmapInfo.bmiHeader.biBitCount = 32;
+    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+    void *bits;
+    HBITMAP bitmap = CreateDIBSection(layerDC_, &bitmapInfo, DIB_RGB_COLORS, &bits, NULL, 0);
+
+    HBITMAP lastBitmap = (HBITMAP)SelectObject(layerDC_, bitmap);
+    if (!lastBitmap) {
+        hippoDebugLastErr(L"Can't select bitmap into DC");
+        return E_FAIL;
+    }
+
+    if (firstTime)
+        oldBitmap_ = lastBitmap;
+
+    HRESULT hr;
+
+    IWebBrowser2 *browser = ie_->getBrowser();
+    HippoPtr<IDispatch> dispatch;
+    hr = browser->get_Document(&dispatch);
+    if (FAILED(hr))
+        return hr;
+
+    // Using IViewObject works better than IHTMLElementRender; IHTMLElementRender
+    // doesn't handle, for example, alpha-blended PNGs, probably because it 
+    // is intended for printing, where alpha-blending wouldn't work
+    HippoQIPtr<IViewObject> viewObject = dispatch;
+    if (!viewObject)
+        return E_FAIL;
+
+    RECTL bounds = { 0, 0, width, height };
+    hr = viewObject->Draw(DVASPECT_CONTENT, 1, NULL, NULL, NULL, layerDC_, &bounds, NULL, NULL, 0);
+    if (FAILED(hr))
+        return hr;
+
+    hippoDebugLogU("redrawing layered window, height=%d width=%d", height, width);
+
+    // This makes the entire image default to opaque
+    unsigned char *p = (unsigned char *)bits;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            p[3] = 0xff;
+            p += 4;
+        }
+    }
+
+    p = (unsigned char *)bits;
+
+    // Black means transparent - go over top right and bottom right corners
+    int radius = 3;
+    for (int i = 0; i < radius; i++) {
+        for (int j = 0; j < radius; j++) {
+            int x = (width-i);
+            int y = (height-j);
+            unsigned char *pos = (p + (width*y + x)*4);
+            if (pos[0] == 0 && pos[1] == 0 && pos[2] == 0)
+                pos[3] = 0;
+        }
+    }
+    radius = 20;
+    for (int i = 0; i < radius; i++) {
+        for (int j = 0; j < radius; j++) {
+            int x = (width-i);
+            int y = j;
+            unsigned char *pos = (p + (width*y + x)*4);
+            if (pos[0] == 0 && pos[1] == 0 && pos[2] == 0)
+                pos[3] = 0;
+        }
+    }
+
+    HippoBSTR maskPath;
+    ui_->getAppletPath(height == BASE_HEIGHT ? L"bubbleNavMask.png" : L"bubbleNavMaskSwarm.png", &maskPath);
+    Gdiplus::Bitmap navMask(maskPath.m_str, false);
+    Gdiplus::Status st = navMask.GetLastStatus();
+
+    for (UINT i = 0; i < navMask.GetWidth(); i++) {
+        for (UINT j = 0; j < navMask.GetHeight(); j++) {
+            Gdiplus::Color pixel;
+            navMask.GetPixel(i, j, &pixel);
+            // We use blue as a mask
+            if (pixel.GetBlue() != 255) {
+                unsigned char *pos = (p + (width*j + i)*4);
+                pos[0] = pixel.GetBlue();
+                pos[1] = pixel.GetGreen();
+                pos[2] = pixel.GetRed();
+                pos[3] = pixel.GetAlpha() / 4;
+            }
+        }
+    }
+
+    POINT srcPoint = { 0, 0 };
+    SIZE size = { width, height };
+    
+    BLENDFUNCTION blend;
+    blend.BlendOp = AC_SRC_OVER;
+    blend.BlendFlags = 0;
+    blend.SourceConstantAlpha = 0xff;
+    blend.AlphaFormat = AC_SRC_ALPHA;
+
+    if (!UpdateLayeredWindow(window_, NULL, NULL, &size, layerDC_, &srcPoint, 0, &blend, ULW_ALPHA)) {
+        hippoDebugLastErr(L"Can't update layered window");
+        return E_FAIL;
+    }
+
+    // The bitmap will be kept referenced by layerDC_, we can drop our reference now
+    DeleteObject(bitmap);
+
     return S_OK;
 }
 

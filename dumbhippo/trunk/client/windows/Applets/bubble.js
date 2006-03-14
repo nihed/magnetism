@@ -8,8 +8,9 @@ dh.bubble = {}
 // Generic display code for a single notification bubble
 //////////////////////////////////////////////////////////////////////////////
     
-dh.bubble.BASE_WIDTH = 400
-dh.bubble.BASE_HEIGHT = 150
+dh.bubble.BASE_WIDTH = 450
+dh.bubble.BASE_HEIGHT = 123
+dh.bubble.SWARM_HEIGHT = 180
     
 // Create a new bubble object    
 // @param includeNavigation whether the navigation arrows and close button 
@@ -61,37 +62,41 @@ dh.bubble.Bubble = function(includeNavigation) {
     
         var bubble = this  // for callback closures
 
-        this._topDiv = document.createElement("div") 
+        this._topDiv = document.createElement("div")
         this._topDiv.setAttribute("className", "dh-notification-top")
-            var leftSide = appendDiv(this._topDiv, "dh-notification-leftside")
-                this._photoDiv = appendDiv(leftSide, "dh-notification-photo-div")
-                this._photoLinkDiv = appendDiv(leftSide, "dh-notification-photolink")
-                
-                if (this._includeNavigation) {
-                    var navDiv = appendDiv(leftSide, "dh-notification-navigation")
-                        this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
-                        this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
-                }
-            this._rightsideDiv = appendDiv(this._topDiv, "dh-notification-rightside")
-                this._titleDiv = appendDiv(this._rightsideDiv, "dh-notification-title")
-                this._bodyDiv = appendDiv(this._rightsideDiv, "dh-notification-body")
-                this._bottomrightDiv = appendDiv(this._rightsideDiv, "dh-notification-bottomright")
-                    this._viewersOuterDiv = appendDiv(this._bottomrightDiv, "dh-notification-viewers-outer")
-                        var viewersBubbleDiv = appendDiv(this._viewersOuterDiv, "dh-notification-viewers-bubble")
-                            this._viewersPhotoDiv = appendDiv(viewersBubbleDiv, "dh-notification-viewers-photo")
-                            this._viewersSpan = append(viewersBubbleDiv, "span", "dh-notification-viewers")
-                    var metaOuterDiv = appendDiv(this._bottomrightDiv, "dh-notification-viewers-outer")
-                        this._metaSpan = append(metaOuterDiv, "span", "dh-notification-meta")
         
-            if (this._includeNavigation) {
-                this._closeButton = append(this._topDiv, "img", "dh-close-button")
-                this._closeButton.setAttribute("src", dh.appletUrl + "close.png")
-                this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
-                    bubble.onClose();
-                    e.stopPropagation();
-                    return false;
-                })
-            }
+        if (this._includeNavigation) {
+            var navDiv = appendDiv(this._topDiv, "dh-notification-navigation")
+            this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
+            this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
+        }
+        
+        var leftSide = appendDiv(this._topDiv, "dh-notification-leftside")
+        this._leftImgSpan = append(this._topDiv, "span") 
+        this._photoDiv = appendDiv(leftSide, "dh-notification-photo-div")
+        this._photoLinkDiv = appendDiv(leftSide, "dh-notification-photolink")
+        this._rightsideDiv = appendDiv(this._topDiv, "dh-notification-rightside")
+        this._titleDiv = appendDiv(this._rightsideDiv, "dh-notification-title")
+        this._bodyDiv = appendDiv(this._rightsideDiv, "dh-notification-body")
+        this._rightImgSpan = append(this._topDiv, "span")       
+        this._bottomrightDiv = appendDiv(this._rightsideDiv, "dh-notification-bottomright")
+        var metaOuterDiv = appendDiv(this._bottomrightDiv, "dh-notification-viewers-outer")
+        this._metaSpan = append(metaOuterDiv, "span", "dh-notification-meta")
+        
+        this._swarmNavDiv = appendDiv(this._topDiv, "dh-notification-swarm-nav")
+        // Until we implement more of the mockup
+        this._swarmNavDiv.appendChild(document.createTextNode("seen by:"))
+        this._swarmDiv = appendDiv(this._topDiv, "dh-notification-swarm")
+        
+        if (this._includeNavigation) {
+            this._closeButton = append(this._topDiv, "img", "dh-close-button")
+            this._closeButton.setAttribute("src", dh.appletUrl + "bubbleTR.png")
+            this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
+                bubble.onClose();
+                e.stopPropagation();
+                return false;
+            })
+        }
         
         return this._topDiv
     }
@@ -117,20 +122,18 @@ dh.bubble.Bubble = function(includeNavigation) {
         dh.util.dom.replaceContents(this._navText, document.createTextNode((position + 1) + " of " + numNotifications))
         
         dh.util.dom.clearNode(this._navButtons)
-        var button = document.createElement("button")
+        var button = document.createElement("img")
         button.className = "dh-notification-navigation-button"
-        button.value = "&lt;"
-        button.disabled = position == 0
+        button.setAttribute("src", dh.appletUrl + "activeLeft.png")
         this._navButtons.appendChild(button)
         button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onPrevious()
             return false;
         })
         
-        button = document.createElement("button")
+        button = document.createElement("img")
         button.className = "dh-notification-navigation-button"
-        button.value = "&gt;"
-        button.disabled = position == numNotifications - 1
+        button.src = dh.appletUrl + "activeRight.png"
         this._navButtons.appendChild(button)
         button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onNext()
@@ -177,11 +180,10 @@ dh.bubble.Bubble = function(includeNavigation) {
     // Get the height of the bubble's desired area
     // @return the desired width, in pixels
     this.getHeight = function() {
-        var height = dh.bubble.BASE_HEIGHT
-        if (this._showViewers)
-            height += this._viewersOuterDiv.offsetHeight
-            
-        return height
+        if (this._swarmDisplay)
+            return dh.bubble.SWARM_HEIGHT
+        else
+            return dh.bubble.BASE_HEIGHT
     }
 
     // Render a single recipient
@@ -234,16 +236,29 @@ dh.bubble.Bubble = function(includeNavigation) {
         dh.util.dom.clearNode(this._metaSpan)
         this._data.appendMetaContent(this, this._metaSpan)
 
-        dh.util.dom.clearNode(this._viewersSpan)
-        this._data.appendViewersContent(this, this._viewersSpan)
-        this._setShowViewers(this._viewersSpan.firstChild != null)
-
-        var viewersPhotoSrc = this._data.getViewersPhotoSrc()
-        if (viewersPhotoSrc != null) {
-            alert("Viewer photo not currently implemented")
+        dh.util.dom.clearNode(this._swarmDiv)
+        this._data.appendViewersContent(this, this._swarmDiv)
+        this._setSwarmDisplay(this._swarmDiv.firstChild != null)
+        
+        dh.util.dom.clearNode(this._leftImgSpan)
+        dh.util.dom.clearNode(this._rightImgSpan)
+        var leftImg;
+        var rightImg;
+        if (this._swarmDisplay) {
+            leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
+            leftImg.className = "dh-left-img"
+            rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
+            rightImg.className = "dh-right-img"              
         } else {
-            this._viewersPhotoDiv.style.display = "None"
+            leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
+            leftImg.className = "dh-left-img"
+            rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
+            rightImg.className = "dh-right-img"          
         }
+        leftImg.zIndex = 1
+        rightImg.zIndex = 1
+        this._leftImgSpan.appendChild(leftImg)
+        this._rightImgSpan.appendChild(rightImg)
         
         this._fixupLayout()
     }
@@ -252,32 +267,18 @@ dh.bubble.Bubble = function(includeNavigation) {
     this._fixupLayout = function() {
         if (this._includeNavigation)
             this._titleDiv.style.width = (this._rightsideDiv.clientWidth - this._closeButton.offsetWidth) + "px"
-        
-        // Now set the height of the body element to be fixed to the remaining space
-        var desiredHeight = this.getHeight() - this._titleDiv.offsetHeight - this._bottomrightDiv.offsetHeight
-        //alert(this._showViewers + " " + this.getHeight() + " " + this._bottomrightDiv.offsetHeight + " " + desiredHeight)
-        //alert(this._titleDiv.offsetHeight)
-        
-        // Hack - we don't want partial lines to be shown, so compute how many 
-        // full lines fit. We do this by knowing that titleDiv is one line high
-        // this will break if the title is changed to a different font, etc.
-        var lineHeight = this._titleDiv.clientHeight
-        if (lineHeight > 0)
-            desiredHeight = Math.floor(desiredHeight / lineHeight) * lineHeight
-            
-        this._bodyDiv.style.height = desiredHeight + "px"
     }
     
     // Set whether the viewer bubble is currently showing
-    this._setShowViewers = function(showViewers) {
-        showViewers = !!showViewers
-        if (this._showViewers != showViewers) {
-            this._showViewers = showViewers
+    this._setSwarmDisplay = function(swarmDisplay) {
+        swarmDisplay = !!swarmDisplay
+        if (this._swarmDisplay != swarmDisplay) {
+            this._swarmDisplay = swarmDisplay
             
-            if (showViewers) {
-                this._viewersOuterDiv.style.display = "block"
+            if (swarmDisplay) {
+                this._swarmDiv.style.display = "block"
             } else {
-                this._viewersOuterDiv.style.display = "none"
+                this._swarmDiv.style.display = "none"
             }
             
             this.onSizeChange()
@@ -346,7 +347,7 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     }
     
     this.appendMetaContent = function(bubble, parent) {
-        parent.appendChild(document.createTextNode("This was sent to "))
+        parent.appendChild(document.createTextNode("Sent to "))
        
         var personRecipients = []
         var groupRecipients = []        
@@ -361,18 +362,11 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
             }
         }
         // FIXME this is all hostile to i18n
-        bubble.renderRecipients(parent, personRecipients, "dh-notification-recipient", "dh-notification-self-recipient")
+        bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
         if (personRecipients.length > 0 && groupRecipients.length > 0) {
-            parent.appendChild(document.createTextNode(" and "))
-        }
-        if (groupRecipients.length > 1) {
-            parent.appendChild(document.createTextNode("the groups "))            
-            bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
-        } else if (groupRecipients.length == 1) {
-            parent.appendChild(document.createTextNode("the "))
-            bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
-            parent.appendChild(document.createTextNode(" group"))
-        }
+            parent.appendChild(document.createTextNode(", "))
+        }        
+        bubble.renderRecipients(parent, personRecipients, "dh-notification-recipient", "dh-notification-self-recipient")
     }
             
     this.appendViewersContent = function(bubble, parent) {
@@ -382,7 +376,6 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
             viewers.push(ent)          
         }
         if (viewers.length > 0) {
-            dh.util.dom.appendSpanText(parent, "Viewed by: ", "dh-notification-viewers-label")
             bubble.renderRecipients(parent, viewers, "dh-notification-viewer", "dh-notification-self-viewer")
         }
     }

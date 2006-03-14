@@ -101,6 +101,7 @@ public:
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
+    void getAppletPath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
     void getAppletURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
@@ -125,7 +126,6 @@ public:
 
     void addActivePost(const HippoPost &post);
 
-    bool getPost(const HippoBSTR postId, HippoPost *post);
     void updatePost(const HippoPost &post);
 
     typedef enum {

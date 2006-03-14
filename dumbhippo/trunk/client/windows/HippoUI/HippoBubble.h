@@ -49,6 +49,7 @@ public:
     STDMETHODIMP Close();
     STDMETHODIMP Resize(int width, int height);
     STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
+    STDMETHODIMP UpdateDisplay();
 
 protected:
     virtual HippoBSTR getURL();
@@ -76,6 +77,8 @@ private:
     bool screenSaverRunning_;
     int desiredWidth_;
     int desiredHeight_;
+    HDC layerDC_;
+    HBITMAP oldBitmap_;
 
     void addEntity(const HippoBSTR &id);
     void addEntity(const HippoEntity &entity);

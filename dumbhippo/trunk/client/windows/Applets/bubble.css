@@ -1,22 +1,55 @@
+body 
+{
+    border: none;
+    background-color: White;    
+}
+
 .dh-close-button 
 {
     position: absolute;
-    margin: 2px;
+    margin-left: 2px;
+    margin-bottom: 2px;
+    top: 0px;
+    right: 0px;
+}
+
+.dh-nav-mask-img
+{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.dh-left-img
+{
+    position: absolute;
+    top: 0px;
+    left: 51px;
+}
+
+.dh-right-img
+{
+    position: absolute;
     top: 0px;
     right: 0px;
 }
 
 .dh-notification-leftside
 {
+    background-color: rgb(20%,60%,100%);        
     position: absolute;
-    width: 6em;
-    height: 100%;
+    width: 90px;
+    left: 66px;
+    top: 3px;
+    height: 117px;
+    color: White;
     text-align: center;
 }
 
 .dh-notification-photo-div
 {
     border-style: none; 
+    display: block;
     margin-left: auto;
     margin-right: auto;
     margin-top: 1em;
@@ -33,6 +66,7 @@
      * height is fixed here because for a headshot height>width seems more 
      * likely than width>height.
      */
+    display: block;
     width: 48px;
     height: 48px;
 }
@@ -42,15 +76,18 @@
     width:                  100%;
     text-overflow:          ellipsis;
     overflow:               hidden;
-    font-size: x-small;
+    font-size:              x-small;
+    color:                  White;
 }
 
 .dh-notification-navigation
 {
+    color: Blue;
+    font-size: x-small;
     position: absolute;
     text-align: center;
     left: 0px;
-    width: 100%;
+    width: 66px;
     bottom: 0px;
 }
 
@@ -61,21 +98,18 @@
 
 .dh-notification-navigation-button
 {
-    border:           0px solid black;
-    margin-left:      3px;
-    margin-right:     3px;
-    background-color: #c8d6e8;
-    padding:          1px;
-    font:             bold 10px Verdana;
+    border: none;
 }
 
 .dh-notification-rightside
 {
+    color: White;
+    background-color: rgb(20%,60%,100%);    
     position: absolute;
-    top: 0em;
-    left: 6em;
-    right: 0px;
-    height: 100%;
+    top: 3px;
+    left: 156px;
+    right: 3px;
+    height: 117px;
 }
 
 /* See comment in dh.notification.display._fixupLayout() if you change this */
@@ -98,7 +132,7 @@
     width: 100%;
     vertical-align: top;
     overflow: hidden;
-    font-size: small;
+    font-size: x-small;
 }
 
 .dh-notification-bottomright
@@ -106,37 +140,6 @@
     position: absolute;
     bottom: 0px;
     width: 100%;
-}
-
-.dh-notification-viewers-outer
-{
-    margin: 0.25em;
-}
-
-.dh-notification-viewers-bubble
-{
-    background-color: #88cc66;
-    line-height: 1.2;
-    height: 2.9em; /* Should be 2.4em in standards mode */
-    overflow: hidden;
-    font-size: x-small;
-    padding: 0.25em;
-}
-
-.dh-notification-viewers-photo
-{
-    float: left;
-}
-
-.dh-notification-viewers-photo
-{
-    width: 2.4em;
-    height: 2.4em;
-}
-
-span.dh-notification-viewers-label
-{
-    color: White;
 }
 
 .dh-notification-meta-outer
@@ -170,6 +173,28 @@ span.dh-notification-group-recipient
 {
     font-weight: bold;
     font-size: 120%;
+}
+
+.dh-notification-swarm-nav
+{
+    position: absolute;
+    left: 156px;
+    top: 121px;
+    right: 3px;
+    text-overflow: ellipsis;
+    text-align: center;
+    color: Blue;
+}
+
+.dh-notification-swarm
+{
+    position: absolute;
+    left: 156px;
+    top: 143px;
+    right: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
 
 span.dh-notification-viewer

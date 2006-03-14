@@ -36,6 +36,8 @@ library HippoUI {
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
         [id(127), helpstring("Signal whether or not we have missed notifications")]
         HRESULT SetHaveMissedBubbles([in] BOOL haveMissed);
+        [id(128), helpstring("Refresh the display of notification window")]
+        HRESULT UpdateDisplay();
         // up to 130
     }
     [

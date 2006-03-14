@@ -461,6 +461,25 @@ testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusIn
     HippoUI *ui = (HippoUI*) uctx;
 }
 
+static gboolean
+idleAddTestViewers(gpointer data)
+{
+    HippoUI *ui = (HippoUI*)data;
+    HippoDataCache cache;
+    HippoPost linkshare;
+
+    cache = ui->getDataCache();
+    if (!cache.getPost(HippoBSTR(L"42"), &linkshare))
+        return FALSE;
+
+    linkshare.viewers.push_back(linkshare.recipients[0]);
+    linkshare.viewers.push_back(linkshare.recipients[1]);
+    linkshare.timeout = 0;
+
+    ui->onLinkMessage(linkshare, false);
+    return FALSE;
+}
+
 bool
 HippoUI::create(HINSTANCE instance)
 {
@@ -511,28 +530,28 @@ HippoUI::create(HINSTANCE instance)
 
         HippoEntity person1;
         person1.type = HippoEntity::EntityType::PERSON;
-        person1.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
-        person1.name = L"person@example.com";
+        person1.smallPhotoUrl = L"/files/headshots/48/PfqZScwvsH0R9f";
+        person1.name = L"Colin";
         person1.id = L"15a1fbae7f2807";
         dataCache_.addEntity(person1);
 
         HippoEntity person2;
         person2.type = HippoEntity::EntityType::PERSON;
-        person2.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person2.smallPhotoUrl = person1.smallPhotoUrl;
         person2.name = L"Owen Taylor";
         person2.id = L"25a1fbae7f2807";
         dataCache_.addEntity(person2);
 
         HippoEntity person3;
         person3.type = HippoEntity::EntityType::PERSON;
-        person3.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person3.smallPhotoUrl = person1.smallPhotoUrl;
         person3.name = L"Colin Walters";
         person3.id = L"35a1fbae7f2807";
         dataCache_.addEntity(person3);
 
         HippoEntity person4;
         person4.type = HippoEntity::EntityType::PERSON;
-        person4.smallPhotoUrl = L"http://127.0.0.1/unknown.png";
+        person4.smallPhotoUrl = person1.smallPhotoUrl;
         person4.id = L"a35baeea7f2807";
         person4.name = L"Bryan Clark";
         dataCache_.addEntity(person4);
@@ -548,17 +567,12 @@ HippoUI::create(HINSTANCE instance)
         linkshare.recipients.push_back(person1.id);
         linkshare.recipients.push_back(person2.id);
         linkshare.info.setUTF8("");
-        linkshare.timeout = 7;
+        linkshare.timeout = 0;
         onLinkMessage(linkshare, true);
 
-        linkshare.viewers.push_back(person1.id);
-        linkshare.viewers.push_back(person2.id);
-        linkshare.viewers.push_back(person3.id);
-        linkshare.viewers.push_back(person4.id);
-        linkshare.timeout = 0;
+        g_timeout_add(2000, idleAddTestViewers, this);
 
-        onLinkMessage(linkshare, false);
-
+        /*
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
         linkshare.postId.setUTF8("2");
         linkshare.title.setUTF8("funny photo");
@@ -587,6 +601,7 @@ HippoUI::create(HINSTANCE instance)
         blogComment.content.setUTF8("Blah, blah, blah... Blah!");
 
         bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
+        */
     }
 
     return true;
@@ -1463,15 +1478,9 @@ HippoUI::updateMenu()
     EnableMenuItem(popupMenu, IDM_MISSED, haveMissedBubbles_ ? MF_ENABLED : MF_GRAYED);
 }
 
-// Find the pathname for a local HTML file, based on the location of the .exe
-// We could alternatively use res: URIs and embed the HTML files in the
-// executable, but this is probably more flexible
 void
-HippoUI::getAppletURL(BSTR  filename, 
-                      BSTR *url)
+HippoUI::getAppletPath(BSTR filename, BSTR *result)
 {
-    HRESULT hr;
-
     // XXX can theoretically truncate if we have a \?\\foo\bar\...
     // path which isn't limited to the short Windows MAX_PATH
     // Could use dynamic allocation here
@@ -1491,6 +1500,21 @@ HippoUI::getAppletURL(BSTR  filename,
     path.Append(L"applets\\");
 
     path.Append(filename);
+    *result = ::SysAllocString(path);
+}
+
+// Find the pathname for a local HTML file, based on the location of the .exe
+// We could alternatively use res: URIs and embed the HTML files in the
+// executable, but this is probably more flexible
+void
+HippoUI::getAppletURL(BSTR  filename, 
+                      BSTR *url)
+{
+    HRESULT hr;
+
+    HippoBSTR path;
+
+    getAppletPath(filename, &path);
 
     WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
     DWORD urlLength = INTERNET_MAX_URL_LENGTH;
