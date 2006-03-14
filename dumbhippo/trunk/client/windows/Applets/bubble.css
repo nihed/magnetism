@@ -178,11 +178,11 @@ span.dh-notification-group-recipient
 .dh-notification-swarm-nav
 {
     position: absolute;
-    left: 156px;
+    left: 220px;
     top: 121px;
     right: 3px;
+    width: 100%;    
     text-overflow: ellipsis;
-    text-align: center;
     color: Blue;
 }
 
@@ -192,9 +192,10 @@ span.dh-notification-group-recipient
     left: 156px;
     top: 143px;
     right: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
+    overflow: hidden;    
 }
 
 span.dh-notification-viewer
