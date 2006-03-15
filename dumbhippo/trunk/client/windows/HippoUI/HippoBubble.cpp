@@ -531,17 +531,24 @@ HippoBubble::UpdateDisplay()
     Gdiplus::Bitmap navMask(maskPath.m_str, false);
     Gdiplus::Status st = navMask.GetLastStatus();
 
-    for (UINT i = 0; i < navMask.GetWidth(); i++) {
-        for (UINT j = 0; j < navMask.GetHeight(); j++) {
+    UINT navWidth = navMask.GetWidth();
+    UINT navHeight = navMask.GetHeight();
+    for (UINT i = 0; i < navWidth; i++) {
+        for (UINT j = 0; j < navHeight; j++) {
             Gdiplus::Color pixel;
-            navMask.GetPixel(i, j, &pixel);
+            // GDI+ bitmap coordinates differ from GDI bitmaps
+            UINT y = (navHeight - j) - 1;
+            navMask.GetPixel(i, y, &pixel);
             // We use blue as a mask
+            UINT alpha = pixel.GetAlpha();
+            unsigned char *pos = (p + (width*j + i)*4);
             if (pixel.GetBlue() != 255) {
-                unsigned char *pos = (p + (width*j + i)*4);
                 pos[0] = pixel.GetBlue();
                 pos[1] = pixel.GetGreen();
                 pos[2] = pixel.GetRed();
-                pos[3] = pixel.GetAlpha() / 4;
+                pos[3] = pixel.GetAlpha();
+            } else if (alpha == 0) {
+                pos[0] = pos[1] = pos[2] = pos[3] = 0;
             }
         }
     }
