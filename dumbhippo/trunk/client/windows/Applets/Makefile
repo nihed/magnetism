@@ -8,7 +8,7 @@ all: *.xml *.css *.png *.js
     copy bubbleList.js $(OUTDIR)\applets
     copy bubbleList.xml $(OUTDIR)\applets
     copy clientstyle.xml $(OUTDIR)\applets
-    copy close.png $(OUTDIR)\applets
+    copy close.png $(OUTDIR)\applets  
     copy bubbleLeft.png $(OUTDIR)\applets
     copy bubbleLeftSwarm.png $(OUTDIR)\applets    
     copy bubbleNavMask.png $(OUTDIR)\applets

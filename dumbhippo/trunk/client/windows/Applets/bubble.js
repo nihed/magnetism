@@ -90,7 +90,7 @@ dh.bubble.Bubble = function(includeNavigation) {
         
         if (this._includeNavigation) {
             this._closeButton = append(this._topDiv, "img", "dh-close-button")
-            this._closeButton.setAttribute("src", dh.appletUrl + "bubbleTR.png")
+            this._closeButton.setAttribute("src", dh.appletUrl + "close.png")
             this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
                 bubble.onClose();
                 e.stopPropagation();
