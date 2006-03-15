@@ -20,9 +20,7 @@
 	</script>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 	
 		<div>
@@ -98,6 +96,6 @@
 			</div>
 				
 		</div>
-	</div>
+	</dht:mainArea>
 </dht:bodyWithAds>
 </html>

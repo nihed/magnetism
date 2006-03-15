@@ -10,9 +10,7 @@
 	<dht:stylesheets />
 </head>
 <dht:body>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 
 		<c:choose>
@@ -55,7 +53,7 @@
 		</c:choose>		
 	<br/>
 	<p><a href="/privacy">Our privacy policy</a></p>
-	</div>
+	</dht:mainArea>
 	<dht:bottom/>
 </dht:body>
 </html>

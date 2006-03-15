@@ -19,9 +19,7 @@
 	</script>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar publicPageId="${home.signin.userId}" home="false"/>
 		<dht:infobar/>		
 
@@ -30,7 +28,7 @@
 		<div id="dhSharesArea">
 			<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>
 		</div>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 	

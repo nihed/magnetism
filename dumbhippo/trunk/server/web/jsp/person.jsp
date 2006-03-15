@@ -22,9 +22,7 @@
 	</script>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 	    <dht:toolbar account="false">
 	    	<c:if test="${!viewperson.disabled && !viewperson.self}">
 		    	<c:choose>
@@ -76,7 +74,7 @@
 				</div>
 			</c:otherwise>
 		</c:choose>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">

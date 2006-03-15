@@ -11,9 +11,7 @@
         <dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 	
 		<c:choose>
@@ -84,7 +82,7 @@
 			</c:choose>
 	
 		</p>
-	</div>
+	</dht:mainArea>
 	
 </dht:bodyWithAds>
 </html>

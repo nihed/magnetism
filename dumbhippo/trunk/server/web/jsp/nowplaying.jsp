@@ -11,9 +11,7 @@
         <dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 	
 		<h2>Now Playing</h2>
@@ -48,7 +46,7 @@
 			<textarea readonly="readonly" rows="17" wrap="off"><c:out value="${nowplaying.nowPlayingObjectHtml}" escapeXml="true"/></textarea>
 		</div>
 		
-	</div>
+	</dht:mainArea>
 	
 </dht:bodyWithAds>
 </html>

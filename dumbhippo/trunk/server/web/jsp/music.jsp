@@ -29,9 +29,7 @@
 </head>
 <dht:bodyWithAds>
 
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<c:if test="${viewperson.signin.valid && !viewperson.disabled}">
 		    <dht:toolbar account="false">
 				&#151; <a class="dh-toolbar-item" style="font-weight:bold" href='/person?who=${personId}'>Public Page for <c:out value="${personName}"/></a>
@@ -47,12 +45,12 @@
 				This account is disabled. Ask your friend to switch it back on!
 			</c:when>
 			<c:when test="${viewperson.signin.valid && viewperson.signin.disabled}">
-				<% /* note this message appears even when viewing other people's pages */ %>
+				<%-- note this message appears even when viewing other people's pages --%>
 				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
 				to share stuff with friends.
 			</c:when>
 			<c:when test="${viewperson.signin.valid && !viewperson.signin.musicSharingEnabled}">
-				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
+				<%-- again, we're using viewperson.signin, so appears even for others' pages --%>
 				<div>
 				<p><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
 				<p>You haven't turned on music sharing. Turn it on to see what your friends are listening to lately, and share your music with them.</p>
@@ -63,7 +61,7 @@
 				switch it on and you can see each other's impeccable musical tastes.
 			</c:when>
 			<c:when test="${!viewperson.signin.valid}">
-				<% /* anonymous viewer */ %>
+				<%-- anonymous viewer --%>
 				<c:if test="${!empty viewperson.currentTrack}">
 					<h2 class="dh-title"><c:out value="${personName}"/> is listening to:</h2>
 					<div>
@@ -118,7 +116,7 @@
 				</div>
 			</c:otherwise>
 		</c:choose>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">
@@ -162,7 +160,7 @@
 								<dh:entityList value="${viewperson.contacts.list}" showInviteLinks="false" photos="true" music="true"/>
 							</c:when>
 							<c:otherwise>
-								<% /* no contacts shown, probably because viewer isn't a contact of viewee */ %>
+								<%-- no contacts shown, probably because viewer isn't a contact of viewee --%>
 							</c:otherwise>
 						</c:choose>
 					</div>

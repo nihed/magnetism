@@ -20,18 +20,16 @@
 </head>
 <dht:bodyWithAds>
 
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar publicPageId="${suggest.signin.userId}" home="false"/>
 
 		<c:choose>
 			<c:when test="${suggest.signin.disabled}">
-				<% /* FIXME: Seems ridiculous to show this instead of just forward them to the account page */ %>
+				<%-- FIXME: Seems ridiculous to show this instead of just forward them to the account page --%>
 				<div id="dhInformationBar"><a class="dh-information" href="/account">(re-enable your account)</a></div>
 			</c:when>
 			<c:otherwise>
-				<% /* FIXME: Leaving this option in case we want other messages */ %>
+				<%-- FIXME: Leaving this option in case we want other messages --%>
 			</c:otherwise>
 		</c:choose>
 
@@ -41,7 +39,7 @@
 			<dht:postList posts="${suggest.recommendedPosts.list}" maxPosts="${suggest.maxRecommendedPostsShown}" recipientId="${suggest.person.user.id}" recipientName="${suggest.person.name}"/>
 		</div>
 		
-	</div>
+	</dht:mainArea>
 
 <dht:fixed>
 <!-- check out this classy layout!!!  it's getting chilly in here! -->

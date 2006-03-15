@@ -8,9 +8,7 @@
 	<dht:stylesheets />
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 		
 		<h2>Privacy</h2>
@@ -86,7 +84,7 @@
 		Please send any suggestions or concerns to us at 
 		<a href="mailto:feedback@dumbhippo.com">feedback@dumbhippo.com</a>.
 		</p>
-	</div>
+	</dht:mainArea>
 
 </dht:bodyWithAds>
 </html>

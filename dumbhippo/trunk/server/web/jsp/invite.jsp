@@ -12,9 +12,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar publicPageId="${invite.signin.userId}" home="true"/>
 		
 		<c:choose>
@@ -69,7 +67,7 @@
 				<input class="dh-send-invite" type="submit" value="Send Invite"/>
 			</form>
 		</c:if>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		

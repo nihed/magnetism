@@ -16,9 +16,7 @@
 	<dht:scriptIncludes />
 </head>
 <dht:body>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 
 		<p>
@@ -37,7 +35,7 @@
 		<p>
 		Otherwise, <a href="javascript:dh.actions.signOut();">click here to sign out</a>.
 		</p>
-	</div>
+	</dht:mainArea>
 	<dht:bottom/>
 </dht:body>
 </html>

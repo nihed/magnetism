@@ -20,9 +20,7 @@
 </head>
 <dht:body>
 	<c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
   
 		<div class="dh-welcome-message">
@@ -129,7 +127,7 @@
 		</td>
 		</tr>
 		</table>
-	</div>
+	</dht:mainArea>
 	<dht:bottom/>
 </dht:body>
 </html>

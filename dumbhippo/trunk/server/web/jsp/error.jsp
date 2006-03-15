@@ -8,9 +8,7 @@
 	<dht:stylesheets />
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 		
 		<h2>Oops!</h2>
@@ -33,7 +31,7 @@
 			</c:otherwise>
 		</c:choose>
 		
-	</div>
+	</dht:mainArea>
 
 </dht:bodyWithAds>
 </html>

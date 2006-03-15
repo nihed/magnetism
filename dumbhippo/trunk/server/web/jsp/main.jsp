@@ -11,9 +11,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 
 		<h3>This is the main page.</h3>
@@ -29,7 +27,7 @@
 		  		<p><a href="${signinurl}">Sign in to DumbHippo</a></p>
 			</c:otherwise>
 		</c:choose>
-	</div>
+	</dht:mainArea>
 
 </dht:bodyWithAds>
 </html>

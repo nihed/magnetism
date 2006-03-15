@@ -14,9 +14,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<c:choose>
 			<c:when test="${empty musicsearch.trackView}">
 				We got nothing! We couldn't find anything about
@@ -24,12 +22,12 @@
 				"<c:out value="${musicsearch.album}"/>" from the artist "<c:out value="${musicsearch.artist}"/>."
 			</c:when>
 			<c:when test="${musicsearch.signin.disabled}">
-				<% /* note this message appears even when viewing other people's pages */ %>
+				<%-- note this message appears even when viewing other people's pages --%>
 				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
 				to share stuff with friends.
 			</c:when>
 			<c:when test="${!musicsearch.signin.musicSharingEnabled}">
-				<% /* again, we're using .signin, so appears even for others' pages */ %>
+				<%-- again, we're using .signin, so appears even for others' pages --%>
 				You haven't turned on music sharing. Turn it on to see what your friends are listening 
 				to lately, and share your music with them. 
 					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
@@ -70,7 +68,7 @@
 				</c:if>
 			</c:otherwise>
 		</c:choose>
-	</div>
+	</dht:mainArea>
 
 </dht:bodyWithAds>
 </html>

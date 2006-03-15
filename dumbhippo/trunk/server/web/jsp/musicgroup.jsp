@@ -20,9 +20,7 @@
     </script>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<c:choose>
 			<c:when test="${viewgroup.justAdded}">
 				<div id="dhInformationBar"><dh:entity value="${viewgroup.inviter}" photo="true"/><p> invited you to this group, you can <a href='javascript:dh.actions.leaveGroup("${viewgroup.viewedGroupId}")'>leave</a> it any time.</p></div>
@@ -34,12 +32,12 @@
 
 		<c:choose>
 			<c:when test="${viewgroup.signin.disabled}">
-				<% /* note this message appears even when viewing other people's pages */ %>
+				<%-- note this message appears even when viewing other people's pages --%>
 				Your account is disabled; <a href="javascript:dh.actions.setAccountDisabled(false);">enable it again</a>
 				to share stuff with friends.
 			</c:when>
 			<c:when test="${!viewgroup.signin.musicSharingEnabled}">
-				<% /* again, we're using viewperson.signin, so appears even for others' pages */ %>
+				<%-- again, we're using viewperson.signin, so appears even for others' pages --%>
 				You haven't turned on music sharing. Turn it on to see what your friends in
 				<c:out value="${viewgroup.name}"/> are listening 
 				to lately, and share your music with them. 
@@ -63,7 +61,7 @@
 				</div>
 			</c:otherwise>
 		</c:choose>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">

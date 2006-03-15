@@ -14,8 +14,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
+	<dht:mainArea>
 		<dht:toolbar/> 
 		<div id="dhSharesArea">
 		    <c:if test="${!empty invites.deletedInvitation}">
@@ -45,7 +44,7 @@
 		    </c:if>
 		    <dht:inviteList outstandingInvitations="${invites.outstandingInvitations}" invitesPage="true" start="${invites.start}" maxInvitations="${invites.maxInvitationsShown}" totalInvitations="${invites.totalInvitations}"/>      
         </div> <!-- dhSharesArea -->
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 	

@@ -63,9 +63,7 @@
 	</script>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar account="false" publicPageId="${account.signin.userId}"/>
 		<dht:infobar/>		
 
@@ -150,7 +148,7 @@
 		</c:choose>
 
 		</div>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">

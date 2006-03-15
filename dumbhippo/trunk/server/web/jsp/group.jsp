@@ -21,9 +21,7 @@
 </head>
 <dht:bodyWithAds>
 
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar account="false">
 			<c:if test="${viewgroup.canShare}">
 				 &#151; <a class="dh-toolbar-item" title="Share <c:out value="${viewgroup.name}"/> with friends" href="javascript:dh.util.openShareGroupWindow('${viewgroup.viewedGroupId}');">Share Group</a>
@@ -99,7 +97,7 @@
 		<div id="dhSharesArea">
 			<dht:postList posts="${viewgroup.posts}" maxPosts="${viewgroup.maxPostsShown}" groupId="${viewgroup.viewedGroupId}" groupName="${viewgroup.name}"/>
 		</div>
-	</div>
+	</dht:mainArea>
 
 	<div id="dhPersonalArea">
 		<div id="dhPhotoNameArea">

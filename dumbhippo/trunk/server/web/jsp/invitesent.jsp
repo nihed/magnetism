@@ -9,9 +9,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:bodyWithAds>
-	<div id="dhMainArea">
-		<dht:logo/>
-
+	<dht:mainArea>
 		<dht:toolbar/>
 
 		<h3>${note}</h3>
@@ -28,6 +26,6 @@
 		<p><a class="manage-invites" href="/invites">Manage Invites</a></p>
 		<p><a href="/home">Home</a></p>
 		<p><a href="/main">Main</a></p>
-	</div>
+	</dht:mainArea>
 </dht:bodyWithAds>
 </html>
