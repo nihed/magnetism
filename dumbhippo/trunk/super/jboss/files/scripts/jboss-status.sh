@@ -17,7 +17,7 @@ if ps -p $pid > /dev/null ; then : ; else
     exit 1
 fi
 
-result="`$jbossdir/bin/twiddle.sh -s jnp://localhost:$jnpPort get jboss.system:type=Server Started --noprefix`"
+result="`JAVA_OPTS=-Dorg.jboss.logging.Logger.pluginClass=org.jboss.logging.NullLoggerPlugin $jbossdir/bin/twiddle.sh -s jnp://localhost:$jnpPort get jboss.system:type=Server Started --noprefix`"
 if [ $? == 0 -a x"$result" == x"true" ] ; then
     exit 0
 else
