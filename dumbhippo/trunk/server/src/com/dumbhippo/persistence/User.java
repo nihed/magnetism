@@ -1,17 +1,11 @@
 package com.dumbhippo.persistence;
 
-import java.util.Collections;
-import java.util.Set;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Person;
@@ -27,9 +21,7 @@ import com.dumbhippo.persistence.Person;
 public class User extends Person implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
 	
-	private Set<Account> accounts;
-	private Set<AccountClaim> accountClaims;
-
+	private Account account;
 	private int version;
 	
 	public User() {}
@@ -40,27 +32,14 @@ public class User extends Person implements VersionedEntity {
 		super(guid);
 	}
 	
-	// We use OneToMany here, because Hibernate can't cache
-	// a OneToOne inverse relationship (!). We then wrap it
-	// with a transient getter to get the singleton result.
-	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_ONLY)
-	protected Set<Account> getAccounts() {
-		return accounts;
-	}
-	
-	protected void setAccounts(Set<Account> accounts) {
-		this.accounts = accounts;
-	}
-	
-	@Transient
+	@OneToOne(fetch=FetchType.LAZY, mappedBy="owner")
+	@JoinColumn(nullable=false)
 	public Account getAccount() {
-		return accounts.iterator().next();
+		return account;
 	}
 	
-	@Transient
-	public void setAccount(Account account) {
-		this.accounts = Collections.singleton(account);
+	void setAccount(Account account) {
+		this.account = account;
 	}
 	
 	@Column(nullable=false)
@@ -71,16 +50,6 @@ public class User extends Person implements VersionedEntity {
 	public void setVersion(int version) {
 		this.version = version;
 	}
-	
-	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-	public Set<AccountClaim> getAccountClaims() {
-		return accountClaims;
-	}
-	
-	protected void setAccountClaims(Set<AccountClaim> accountClaims) {
-		this.accountClaims = accountClaims;
-	}	
 	
 	@Override
 	public String toString() {

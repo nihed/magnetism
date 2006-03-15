@@ -3,15 +3,8 @@
  */
 package com.dumbhippo.persistence;
 
-import java.util.Set;
-
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.identity20.Guid;
 
@@ -27,8 +20,6 @@ import com.dumbhippo.identity20.Guid;
  */
 @Entity
 public abstract class Resource extends GuidPersistable {
-	
-	private Set<AccountClaim> accountClaims;
 	
 	public Resource() {
 	}
@@ -51,28 +42,6 @@ public abstract class Resource extends GuidPersistable {
 	 */
 	@Transient
 	public abstract String getDerivedNickname();
-	
-	// We use OneToMany here rather than OneToOne, since OneToOne inverse
-	// relationships are not cached by hibernate; then we wrap the field
-	// with a transient getter that returns the single value 
-	@OneToMany(fetch=FetchType.LAZY, mappedBy="resource")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-	protected Set<AccountClaim> getAccountClaims() {
-		return accountClaims;		
-	}
-	
-	protected void setAccountClaims(Set<AccountClaim> accountClaims) {
-		this.accountClaims = accountClaims;
-	}
-	
-	@Transient
-	public AccountClaim getAccountClaim() {
-		Set<AccountClaim> claims = getAccountClaims();
-		if (claims == null || claims.size() == 0)
-			return null;
-		
-		return claims.iterator().next();
-	}
 	
 	@Override
 	public String toString() {

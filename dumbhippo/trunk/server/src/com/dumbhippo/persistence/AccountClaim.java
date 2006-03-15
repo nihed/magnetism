@@ -5,9 +5,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 /**
  * AccountClaim represents knowledge by the system that an Account
  * owns a particular resource. "Owner" in this context means the user of the
@@ -16,7 +13,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
  * @author otaylor
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_ONLY)
 public class AccountClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 

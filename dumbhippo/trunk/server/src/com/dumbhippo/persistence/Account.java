@@ -12,8 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
@@ -94,7 +92,11 @@ public class Account extends Resource {
 		
 		if (owner != null) {
 			this.owner = owner;
-			owner.setAccount(this);
+			if (owner.getAccount() == null) {
+				owner.setAccount(this);
+			} else {
+				throw new RuntimeException("creating an account with User that already has one: " + owner);
+			}
 		}
 	}
 	
@@ -207,7 +209,6 @@ public class Account extends Resource {
 	}
 
 	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	
 	public Set<Contact> getContacts() {
 		if (contacts == null)
 			throw new RuntimeException("no contacts set???");
