@@ -70,6 +70,19 @@ dh.bubble.Bubble = function(includeNavigation) {
             this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
             this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
         }
+
+        this._leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
+        this._leftImg.className = "dh-left-img"
+        this._leftImg.zIndex = 1         
+        this._rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
+        this._rightImg.className = "dh-right-img"
+        this._rightImg.zIndex = 1         
+        this._leftImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
+        this._leftImgSwarm.className = "dh-left-img"
+        this._leftImgSwarm.zIndex = 1            
+        this._rightImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
+        this._rightImgSwarm.className = "dh-right-img"              
+        this._rightImgSwarm.zIndex = 1
         
         var leftSide = appendDiv(this._topDiv, "dh-notification-leftside")
         this._leftImgSpan = append(this._topDiv, "span") 
@@ -245,18 +258,12 @@ dh.bubble.Bubble = function(includeNavigation) {
         var leftImg;
         var rightImg;
         if (this._swarmDisplay) {
-            leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
-            leftImg.className = "dh-left-img"
-            rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
-            rightImg.className = "dh-right-img"              
+            leftImg = this._leftImgSwarm
+            rightImg = this._rightImgSwarm            
         } else {
-            leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
-            leftImg.className = "dh-left-img"
-            rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
-            rightImg.className = "dh-right-img"          
+            leftImg = this._leftImg
+            rightImg = this._rightImg
         }
-        leftImg.zIndex = 1
-        rightImg.zIndex = 1
         this._leftImgSpan.appendChild(leftImg)
         this._rightImgSpan.appendChild(rightImg)
         
