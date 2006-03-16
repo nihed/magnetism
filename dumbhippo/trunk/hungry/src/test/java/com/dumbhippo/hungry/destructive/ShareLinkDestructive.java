@@ -28,6 +28,8 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 		super();
 	}
 	
+	private static final long PACKET_WAIT_TIME = 10000; // 10s
+	
 	private void shareLink(WebServices ws, String url, String title, String description, 
 			boolean secret, String... recipientIds) {
 		
@@ -69,14 +71,29 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 			if (!c.isConnected())
 				throw new RuntimeException("One of the recipients got kicked off jabber or something");
 			
-			//System.out.println("Waiting for recipient to be notified of post...");
-			Packet p = c.take();
-			//System.out.println("After post share, got packet: " + p.toXML());
-			if (!JabberClient.packetContains(p, url)) {
-				System.out.println("Packet was: " + p.toXML());
-				System.out.println("URL was: " + url);
-				throw new RuntimeException("xmpp packet received after link share didn't contain the link");
+			boolean gotPacket = false;
+			
+			// We might, for example, receive a hotness-changed message after the
+			// post before the link-share message so we just read packets until
+			// we get no packets for 10 seconds, and see if any of the packets we
+			// get is the one we were looking for. (This should be refactored
+			// rather than cut-and-pasted. Something like 
+			// for (Packet packet : c.getPacketsFor(PACKET_WAIT_TIME)) { ... }
+			// which could be more sophisticated and not wait forever if a
+			// non-matching packet comes in every 9 seconds.)
+			while (!gotPacket) {
+				//System.out.println("Waiting for recipient to be notified of post...");
+				Packet p = c.poll(PACKET_WAIT_TIME);
+				if (p == null)
+					break;
+				//System.out.println("After post share, got packet: " + p.toXML());
+				gotPacket = JabberClient.packetContains(p, url);
 			}
+						
+			if (!gotPacket) {
+				throw new RuntimeException("Didn't receive packet after link share containing the link");
+			}
+			
 			c.close();
 		}
 	}

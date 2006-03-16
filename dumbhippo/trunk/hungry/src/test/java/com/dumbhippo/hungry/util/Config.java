@@ -1,5 +1,7 @@
 package com.dumbhippo.hungry.util;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -20,7 +22,7 @@ public class Config {
 		String v = props.getProperty(value.getProperty());
 		if (v == null)
 			throw new IllegalStateException("Improperly configured, key " + value.getProperty() +
-					" not set (copy dhdeploy/files/conf/hungry.properties to src/test/java/com/dumbhippo/hungry/util/hungry.properties)");
+					" not set");
 		return v;
 	}
 	
@@ -37,8 +39,24 @@ public class Config {
 		
 		props = new Properties(System.getProperties());
 		try {
-			InputStream str = Config.class.getResourceAsStream("hungry.properties");
+			String propfile = System.getenv("HUNGRY_PROPERTIES");
+			InputStream str = null;
+			if (propfile != null) {
+				try {
+					str = new FileInputStream(propfile);
+				} catch (FileNotFoundException e) {
+					System.err.println("Hungry properties file '" + propfile + "' not found.");
+					System.exit(1);
+				}
+			} else {
+				str = Config.class.getResourceAsStream("hungry.properties");
+				if (str == null) {
+					System.err.println("hungry.properties not found");
+					System.exit(1);
+				}
+			}
 			props.load(str);
+			str.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.err.println("Exception reading hungry.properties: " + e);

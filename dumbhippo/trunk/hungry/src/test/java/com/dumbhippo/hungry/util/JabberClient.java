@@ -5,6 +5,7 @@ package com.dumbhippo.hungry.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.PacketCollector;
@@ -76,6 +77,18 @@ public class JabberClient {
 			} catch (InterruptedException e) {
 			}
 		}
+	}
+	
+	public Packet poll(long timeout) {
+		while (true) {
+			if (!thread.isConnected())
+				return null;
+
+			try {
+				return incoming.poll(timeout, TimeUnit.MILLISECONDS).getPacket();
+			} catch (InterruptedException e) {
+			}
+		}		
 	}
 	
 	private void put(Packet packet) {
