@@ -802,8 +802,8 @@ public class PostingBoardBean implements PostingBoard {
 		URL url;		
 		try {
 			url = new URL(urlStr);
-			if (!url.getProtocol().equals("http") || url.getProtocol().equals("https"))
-				throw new IllegalArgumentException("invalid protocol in url" + urlStr);
+			if (!(url.getProtocol().equals("http") || url.getProtocol().equals("https")))
+				throw new IllegalArgumentException("Invalid protocol in url " + urlStr);
 		} catch (MalformedURLException e) {
 			throw new IllegalArgumentException(e);
 		}
