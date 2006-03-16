@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
@@ -40,6 +42,9 @@ public class MailerBean implements Mailer {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private Configuration configuration;
 	
 	@javax.annotation.Resource(name="java:/Mail")
 	private Session mailSession;
@@ -123,11 +128,16 @@ public class MailerBean implements Mailer {
 	}
 	
 	public void sendMessage(MimeMessage message) {
-		try {
-			logger.debug("Sending email...");
-			Transport.send(message);
-		} catch (MessagingException e) {
-			throw new RuntimeException(e);
+		// The primary reason for DISABLE_EMAIL is for test configurations, so
+		// we check only at the end of the process to catch bugs earlier
+		// in the process.
+		if (!configuration.getProperty(HippoProperty.DISABLE_EMAIL).equals("true")) {
+			try {
+				logger.debug("Sending email...");
+				Transport.send(message);
+			} catch (MessagingException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }
