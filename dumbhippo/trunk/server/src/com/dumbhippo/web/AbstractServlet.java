@@ -10,11 +10,21 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import org.slf4j.Logger;
 
@@ -198,40 +208,145 @@ public abstract class AbstractServlet extends HttpServlet {
 		response.setHeader("Expires", expires);	
 	}
 	
+	protected abstract boolean requiresTransaction();
+	
+	private void runWithTransaction(HttpServletRequest request, Callable func) {
+		long startTime = System.currentTimeMillis();
+		UserTransaction tx;
+		try {
+			InitialContext initialContext = new InitialContext();
+			tx = (UserTransaction)initialContext.lookup("UserTransaction");
+		} catch (NamingException e) {
+			throw new RuntimeException("Cannot create UserTransaction");
+		}
+		
+		try {
+			tx.begin();
+		} catch (NotSupportedException e) {
+			throw new RuntimeException("Error starting transaction", e); 
+		} catch (SystemException e) {
+			throw new RuntimeException("Error starting transaction", e); 
+		}
+		try {
+			func.call();
+			logger.debug("Handled {} in {} milliseconds", request.getPathInfo(), System.currentTimeMillis() - startTime);
+		} catch (Throwable t) {
+			try {
+				// We don't try to duplicate the complicated EJB logic for whether
+				// the transaction should be rolled back; we just roll it back
+				// always if an exception occurs. After all, the transaction
+				// probably didn't do any writing to start with.
+				tx.setRollbackOnly();
+			} catch (SystemException e) {
+				throw new RuntimeException("Error setting transaction for rollback");
+			}
+			
+			if (t instanceof Error)
+				throw (Error)t;
+			else if (t instanceof RuntimeException)
+				throw (RuntimeException)t;
+			else
+				throw new RuntimeException(t);
+		} finally {
+			try {
+				if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
+					tx.rollback();
+				else
+					tx.commit();
+			} catch (SystemException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (RollbackException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (HeuristicMixedException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			} catch (HeuristicRollbackException e) {
+				throw new RuntimeException("Error ending transaction", e);
+			}
+		}						
+	}
+	
+	private void runWithErrorPage(HttpServletRequest request, HttpServletResponse response, Callable func) throws IOException, ServletException {
+		try {
+			try {
+				func.call();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		} catch (RuntimeException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof HttpException) {
+				logger.debug("http exception processing POST", e);
+				((HttpException) cause).send(response);
+			} else if (cause instanceof HumanVisibleException) {
+				logger.debug("human visible exception: {}", e.getMessage());
+				forwardToErrorPage(request, response, (HumanVisibleException) cause);
+			} else {
+				throw e;
+			}
+		}
+	}
+	
+	// Instead of just forwarding http requests to the right handler, we surround
+	// them in a transaction if requested.  For JSPs, this doesn't have anything to do with 
+	// making atomic modifications - JSP pages are pretty much entirely
+	// readonly. Instead, the point is to get the entire page to use
+	// a single Hibernate session. This improves performance, since
+	// persistance beans are cached across the session, and also means
+	// that persistance beans returned to the web tier won't be detached.
+	//
+	// While we are add it, we time the request for performancing monitoring	
+	private void runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable func) throws IOException, ServletException  {
+		runWithErrorPage(request, response, new Callable() {
+			public Object call() {
+				runWithTransaction(request, func);
+				return null;
+			}
+		});
+	}
+	
 	/*
 	 * In doPost/doGet if we throw ServletException it shows the user a
 	 * backtrace. We can also do UnavailableException which I think sends the
 	 * "temporarily unavailable" status code
 	 */
-	
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException,
 			IOException {
 		logRequest(request, "POST");
-		
-		try {
-			wrappedDoPost(request, response);
-		} catch (HttpException e) {
-			logger.debug("http exception processing POST", e);
-			e.send(response);
-		} catch (HumanVisibleException e) {
-			logger.debug("human visible exception: {}", e.getMessage());
-			forwardToErrorPage(request, response, e);
+		if (requiresTransaction()) {
+			runWithTransactionAndErrorPage(request, response, new Callable() { 
+				public Object call() throws Exception {
+					wrappedDoPost(request, response);
+					return null;
+				}
+			});
+		} else {
+			runWithErrorPage(request, response, new Callable() {
+				public Object call() throws Exception {
+					wrappedDoPost(request, response);
+					return null;
+				}
+			});
 		}
 	}
 	
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		logRequest(request, "GET");
-		
-		try {
-			wrappedDoGet(request, response);
-		} catch (HttpException e) {
-			logger.debug("http exception processing GET {}", e.getMessage());
-			e.send(response);
-		} catch (HumanVisibleException e) {
-			logger.debug("human visible exception: {}", e.getMessage());
-			forwardToErrorPage(request, response, e);
-		}
+		if (requiresTransaction()) {
+			runWithTransactionAndErrorPage(request, response, new Callable() { 
+				public Object call() throws Exception {
+					wrappedDoGet(request, response);
+					return null;
+				}
+			});
+		} else {
+			runWithErrorPage(request, response, new Callable() {
+				public Object call() throws Exception {
+					wrappedDoGet(request, response);
+					return null;
+				}
+			});
+		}		
 	}
 }

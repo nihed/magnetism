@@ -211,4 +211,9 @@ public class VerifyServlet extends AbstractServlet {
 			throw new RuntimeException("VerifyServlet not handling token type " + token.getClass().getName());
 		}
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return true;
+	}
 }

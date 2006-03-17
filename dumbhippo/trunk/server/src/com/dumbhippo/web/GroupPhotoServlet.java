@@ -70,4 +70,9 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		
 		doFinalRedirect(request, response);
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return true;
+	}
 }

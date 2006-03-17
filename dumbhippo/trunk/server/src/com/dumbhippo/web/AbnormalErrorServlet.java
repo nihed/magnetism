@@ -79,4 +79,9 @@ public class AbnormalErrorServlet extends AbstractServlet {
     	HumanVisibleException, IOException, ServletException {
     	handleRequest(request, response);				 
     }
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }

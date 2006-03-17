@@ -60,4 +60,9 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	protected String getDefaultFilename() {
 		return null;
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }

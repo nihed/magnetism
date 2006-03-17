@@ -45,4 +45,9 @@ public class WantsInServlet extends AbstractServlet {
 				+ " <body><p>We saved your address; we'll let you know when we have room for more.</p><p>Thanks!</p></body>\n").getBytes());
 		out.flush();
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }

@@ -25,7 +25,7 @@ public class LinkResource extends Resource {
 		this.url = url;
 	}
 	
-	@Column(unique=true, nullable=false)
+	@Column(unique=true, nullable=false, length=2085)
 	public String getUrl() {
 		return url;
 	}

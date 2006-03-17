@@ -326,4 +326,9 @@ public class HttpMethodsServlet extends AbstractServlet {
 		HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
 		invokeHttpRequest(glue, request, response);
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }

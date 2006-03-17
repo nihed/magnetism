@@ -91,4 +91,9 @@ public class SigninServlet extends AbstractServlet {
 			request.getRequestDispatcher("/signinsent").forward(request, response);
 		}
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return true;
+	}
 }

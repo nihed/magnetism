@@ -42,4 +42,9 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 				
 		doFinalRedirect(request, response);
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }

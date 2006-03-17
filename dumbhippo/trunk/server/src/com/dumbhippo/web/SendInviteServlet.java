@@ -60,4 +60,9 @@ public class SendInviteServlet extends AbstractServlet {
 			IOException, HttpException, HumanVisibleException {
 		doSendInvite(request, response);
 	}
+
+	@Override
+	protected boolean requiresTransaction() {
+		return false;
+	}
 }
