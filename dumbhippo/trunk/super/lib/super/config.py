@@ -39,8 +39,15 @@ class Config:
         for (name, value) in init_params.items():
             self._set_init_parameter(name, value)
 
+    def filter_runnable(self, services):
+        """Filter out non-runnable services from a list of services"""
+        def is_runnable(service_name):
+            return self.services[service_name].is_runnable()
+
+        return filter(is_runnable, services)
+
     def run_action(self, action, services):
-        """Run an action on a set of services."""
+        """Run an action on a set of services"""
         
         # Sort services in dependency order
         services = self._sort_services(services)
@@ -74,9 +81,12 @@ class Config:
                     dirtree.hot_update(hot_files)
                 else:
                     print >>sys.stderr, "Was OK"
-                print >>sys.stderr, "Starting:", service_name
-                self.services[service_name].start()
+                if service.is_runnable():
+                    print >>sys.stderr, "Starting:", service_name
+                    self.services[service_name].start()
         elif action == 'stop':
+            services = self.filter_runnable(services)
+            
             # Stop services before their dependencies
             stop_order = copy.copy(services)
             stop_order.reverse()
@@ -84,6 +94,8 @@ class Config:
                 print >>sys.stderr, "Stopping", service_name
                 self.services[service_name].stop()
         elif action == 'restart':
+            services = self.filter_runnable(services)
+            
             self.run_action('stop', services)
             self.run_action('start', services)
         elif action == 'reload':
@@ -92,8 +104,9 @@ class Config:
             stop_services = {}
             
             for service_name in services:
+                service = self.services[service_name]
                 all_services[service_name] = 1
-                if self.services[service_name].status():
+                if service.is_runnable() and service.status():
                     print >>sys.stderr, "%s is running" % service_name
                     running_services[service_name] = 1
             rebuild_services = []
@@ -160,57 +173,44 @@ class Config:
 
             # And start everything that isn't running
             for service_name in services:
-                if not running_services.has_key(service_name):
+                service = self.services[service_name]
+                if not running_services.has_key(service_name) and service.is_runnable():
                     print >>sys.stderr, "Starting %s" % service_name
-                    self.services[service_name].start()
+                    service.start()
                     did_something = True
 
             if not did_something:
                 print "Nothing to do"
             
         elif action == 'status':
+            services = self.filter_runnable(services)
+
             for service_name in services:
                 if self.services[service_name].status():
                     print >>sys.stdout, "%s is running" % service_name
                 else:
                     print >>sys.stdout, "%s is stopped" % service_name
+
+        elif action == 'nuke':
+            for service_name in services:
+                service = self.services[service_name]
+                if not service.has_nuke():
+                    print >>sys.stderr, "Don't know how to nuke state for %s" % service_name
+                    sys.exit(1)
+
+                print >>sys.stderr, "Really nuke state for %s? [N/y]" % service_name
+                ans = sys.stdin.readline().strip()
+                if (ans == 'y'):
+                    service.nuke()
+                else:
+                    print >>sys.stderr, "Not nuking state"
                     
         elif action == 'console':
-            print >>sys.stderr, "Welcome to the Dumb Hippo Nostril"
-            choice = ''
-            console_svcs = []
-            nuke_svcs = []
-            for svc_name in services:
-                service = self.services[svc_name]
-                if service.has_console():
-                    console_svcs.append(service)
-                if service.has_nuke():
-                    nuke_svcs.append(service)
-            while choice != 'q':
-                print >>sys.stderr, "Available actions:"
-                cmdidx = 1
-                actions={}
-                for svc in console_svcs:
-                    print >>sys.stderr, " [%d] Launch %s console" %(cmdidx, svc.get_name())
-                    actions[cmdidx] = ('console', svc)
-                    cmdidx = cmdidx + 1
-                for svc in nuke_svcs:
-                    print >>sys.stderr, " [%d] Nuke state for %s" %(cmdidx, svc.get_name())
-                    actions[cmdidx] = ('nuke', svc)                    
-                    cmdidx = cmdidx + 1                    
-                print >>sys.stderr, " [q] Quit"
-                choice = sys.stdin.readline()
-                choice = choice.strip()
-                if choice != 'q':
-                    (action, svc) = actions[int(choice)]
-                    if action == 'console':
-                        svc.console()
-                    elif action == 'nuke':
-                        print >>sys.stderr, "Really nuke state for %s? [N/y]" %(svc.get_name())
-                        ans = sys.stdin.readline()
-                        ans = ans.strip()
-                        if ans == 'y':
-                            svc.nuke()
+            if len(services) != 1:
+                print >>sys.stderr, "Can only run the console for one service at a time"
+                sys.exit(1)
+            self.services[services[0]].console()
+            
         elif action == 'watch':
             if len(services) > 1:
                 print >>sys.stderr, "You can only watch one service"

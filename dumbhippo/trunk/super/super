@@ -39,7 +39,7 @@ def main():
         usage()
         sys.exit(1)
 
-    known_actions = [ 'init', 'build', 'console', 'deploy', 'start', 'stop', 'restart', 'reload', 'status', 'watch' ]
+    known_actions = [ 'init', 'build', 'console', 'deploy', 'nuke', 'start', 'stop', 'restart', 'reload', 'status', 'watch' ]
     if not remaining[0] in known_actions:
         print >>sys.stderr, "Known actions are: %s" % ' '.join(known_actions)
         sys.exit(1)

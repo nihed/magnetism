@@ -151,31 +151,34 @@ class Service:
         os.system(stopCommand)
         
     def status(self):
+        if not self.has_parameter('statusCommand'):
+            return True
+            
         statusCommand = self.expand_parameter('statusCommand')
         return os.system(statusCommand) == 0
         
-    def has_console(self):
-        try:
-            self.expand_parameter('consoleCommand')
-            return True
-        except KeyError, e:
-            return False
-        
     def console(self):
+        if not self.has_parameter('consoleCommand'):
+            print >>sys.stderr, "Don't know how to show a console for %s" % self.get_name()
+            return
+            
         consoleCommand = self.expand_parameter('consoleCommand')
-        return os.system(consoleCommand) == 0
+        os.system(consoleCommand)
 
     def has_nuke(self):
-        try:
-            self.expand_parameter('nukeCommand')
-            return True
-        except KeyError, e:
-            return False
-        
-    def nuke(self):
-        nukeCommand = self.expand_parameter('nukeCommand')
-        return os.system(nukeCommand) == 0
+        return self.has_parameter('nukeCommand')
 
+    def nuke(self):
+        if not self.has_parameter('nukeCommand'):
+            print >>sys.stderr, "Don't know how to nuke state for %s" % self.get_name()
+            
+        nukeCommand = self.expand_parameter('nukeCommand')
+        os.system(nukeCommand)
+
+    def is_runnable(self):
+        """Return true if the service supports starting and stopping"""
+        return self.has_parameter('startCommand')
+        
     def playSound(self, soundFile):
         """Plays the given sound (as an alert during 'super watch')"""
         playCommand = self.expand_parameter("playSoundCommand")
