@@ -94,4 +94,17 @@ public class WebServices {
 		}
 	}
 	
+	public String getXmlPOST(String relativeUrl, String... parameters) throws WebServicesException {
+    	PostMethodWebRequest req = new PostMethodWebRequest(fullUrl("/xml", relativeUrl));
+    	marshalParameters(req, parameters);
+    	
+		WebResponse response;
+		response = doRequest(req, "text/xml");
+		
+		try {
+			return response.getText();
+		} catch (IOException e) {
+			throw new WebServicesException("error reading response", e);
+		}
+	}
 }

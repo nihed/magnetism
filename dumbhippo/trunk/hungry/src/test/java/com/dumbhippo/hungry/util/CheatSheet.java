@@ -125,6 +125,25 @@ public class CheatSheet {
 		}
 	}
 	
+	public String getGroupId(String groupName) {
+		try {
+			PreparedStatement statement =
+				getConnection().prepareStatement("SELECT HippoGroup.id "
+						+ "FROM HippoGroup "
+						+ "WHERE HippoGroup.name = ? LIMIT 1");
+			statement.setString(1, groupName);
+			ResultSet rs = statement.executeQuery();
+			String ret = null;
+			while (rs.next()) {
+				ret = rs.getString("id");
+			}
+			return ret;
+		} catch (SQLException e) {
+			fatalSqlException(e);
+			return null; // not reached
+		}
+	}
+	
 	public int getNumberOfInvitations(String userId) {
 		try {
 			PreparedStatement statement =

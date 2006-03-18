@@ -118,5 +118,15 @@
 			<classpath refid="tests.classpath"/>
 		</junit>
 	</target>
+
+	<target name="performance-data" depends="build">
+		<echo message="Creating data for performance tests" />
+            <java fork="yes" classname="com.dumbhippo.hungry.performance.TestData">
+            	<classpath>
+					<fileset dir="/usr/share/java" includes="junit.jar"/>
+				</classpath>
+    			<classpath refid="tests.classpath"/>
+			</java>
+	</target>
 	
 </project>
