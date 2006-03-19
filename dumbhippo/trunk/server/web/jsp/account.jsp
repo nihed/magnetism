@@ -150,12 +150,12 @@
 		</div>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
-		<div id="dhPhotoNameArea">
-		<dht:headshot person="${account.person}" size="192" />
-		<dht:uploadPhoto location="/headshots" linkText="change photo" reloadTo="/account"/>
-		<div id="dhName"><c:out value="${account.person.name}"/></div>
-		</div>
+	<dht:sidebarArea>
+		<dht:sidebarAreaHeader>
+			<dht:headshot person="${account.person}" size="192" />
+			<dht:uploadPhoto location="/headshots" linkText="change photo" reloadTo="/account"/>
+			<dht:sidebarAreaHeaderName value="${account.person.name}" canModify="true"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 		<c:if test="${!account.signin.disabled}">
@@ -209,7 +209,7 @@
 			</c:choose>		
 			</div>
 		</div>
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

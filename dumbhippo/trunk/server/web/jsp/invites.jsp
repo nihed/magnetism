@@ -46,13 +46,13 @@
         </div> <!-- dhSharesArea -->
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
+	<dht:sidebarArea>
 	
-		<div id="dhPhotoNameArea">
+		<dht:sidebarAreaHeader>
 		    <!-- might have these values come from the invites page -->
             <dht:headshot person="${invites.person}" size="192" />
-            <div id="dhName"><c:out value="${invites.person.name}"/></div>
-		</div>
+            <dht:sidebarAreaHeaderName value="${invites.person.name}" canModify="false"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 		    <div class="dh-right-box">
@@ -77,7 +77,7 @@
 		    </div>
 		</div>
 		
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

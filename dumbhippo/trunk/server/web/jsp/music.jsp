@@ -118,15 +118,13 @@
 		</c:choose>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
-		<div id="dhPhotoNameArea">
-		<c:if test="${!viewperson.disabled}">
-			<div class="person">
+	<dht:sidebarArea>
+		<dht:sidebarAreaHeader>
+			<c:if test="${!viewperson.disabled}">
 				<dht:headshot person="${viewperson.person}" size="192"/>
-				<div id="dhName"><c:out value="${personName}"/></div>
-			</div>
-		</c:if>
-		</div>
+				<dht:sidebarAreaHeaderName value="${personName}" canModify="false"/>
+			</c:if>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 			<c:if test="${viewperson.signin.valid}">
@@ -167,7 +165,7 @@
 				</div>
 			</c:if>
 		</div>
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

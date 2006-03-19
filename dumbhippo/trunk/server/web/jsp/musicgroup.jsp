@@ -63,11 +63,11 @@
 		</c:choose>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
-		<div id="dhPhotoNameArea">
-		<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
-		<div id="dhName"><c:out value="${viewgroup.name}"/></div>
-		</div>
+	<dht:sidebarArea>
+		<dht:sidebarAreaHeader>
+			<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
+			<dht:sidebarAreaHeaderName value="${viewgroup.name}" canModify="false"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 			<div class="dh-right-box dh-right-box-last">
@@ -77,7 +77,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

@@ -69,14 +69,12 @@
 		</c:if>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
+	<dht:sidebarArea>
 		
-		<div id="dhPhotoNameArea">
-		    <dht:headshot person="${invite.person}" size="192" />
-		    <div id="dhName">
-		        <dht:userNameEdit value="${invite.person.name}"/>
-		    </div>
-		</div>
+		<dht:sidebarAreaHeader>
+		    <dht:headshot person="${invite.person}" size="192" /
+		    <dht:sidebarAreaHeaderName value="${invite.person.name}" canModify="true"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 		    <div class="dh-right-box">
@@ -108,7 +106,7 @@
 		    </div>		
 		</div>
 				
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

@@ -20,6 +20,6 @@
     }
     dojo.event.connect(dojo, "loaded", dj_global, "dhNameEntryInit${N}");
 </script>
-<span dojoType="InlineEditBox" class="dhName" id="dhNameEntry${N}">
+<span dojoType="InlineEditBox" id="dhNameEntry${N}">
 	<c:out value="${value}"/>
 </span>

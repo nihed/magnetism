@@ -30,15 +30,13 @@
 		</div>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
+	<dht:sidebarArea>
 	
-		<div id="dhPhotoNameArea">
+		<dht:sidebarAreaHeader>
 		    <dht:headshot person="${home.person}" size="192" />
 		    <dht:uploadPhoto location="/headshots" linkText="change photo" reloadTo="/home"/>
-		    <div id="dhName">
-		        <dht:userNameEdit value="${home.person.name}"/>
-		    </div>
-		</div>
+		    <dht:sidebarAreaHeaderName value="${home.person.name}" canModify="true"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">		
 		    <div class="dh-right-box">
@@ -92,7 +90,7 @@
 			    </p>
 		    </div>
 		</div>		
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>

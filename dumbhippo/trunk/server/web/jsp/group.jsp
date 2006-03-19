@@ -99,14 +99,14 @@
 		</div>
 	</dht:mainArea>
 
-	<div id="dhPersonalArea">
-		<div id="dhPhotoNameArea">
-		<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
-		<c:if test="${viewgroup.canModify}">
-			<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="change group photo" reloadTo="/group?who=${viewgroup.viewedGroupId}"/>
-		</c:if>
-		<div id="dhName"><c:out value="${viewgroup.name}"/></div>
-		</div>
+	<dht:sidebarArea>
+		<dht:sidebarAreaHeader>
+			<dht:groupshot group="${viewgroup.viewedGroup}" size="192"/>
+			<c:if test="${viewgroup.canModify}">
+				<dht:uploadPhoto location="/groupshots" groupId="${viewgroup.viewedGroupId}" linkText="change group photo" reloadTo="/group?who=${viewgroup.viewedGroupId}"/>
+			</c:if>
+			<dht:sidebarAreaHeaderName value="${viewgroup.name}" canModify="false"/>
+		</dht:sidebarAreaHeader>
 
 		<div class="dh-right-box-area">
 		<c:set var="invitedMembers" value="${viewgroup.invitedMembers}"/>
@@ -137,7 +137,7 @@
 			</c:otherwise>
 		</c:choose>
 		</div>
-	</div>
+	</dht:sidebarArea>
 
 </dht:bodyWithAds>
 </html>
