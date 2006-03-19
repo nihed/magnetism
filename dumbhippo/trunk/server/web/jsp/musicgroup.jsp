@@ -69,14 +69,13 @@
 			<dht:sidebarAreaHeaderName value="${viewgroup.name}" canModify="false"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
-			<div class="dh-right-box dh-right-box-last">
-				<h5 class="dh-title">Group Members</h5>
+		<dht:sidebarPanes>
+			<dht:sidebarPane title="Group Members" last="true">
 				<div class="dh-people">
 					<dh:entityList value="${viewgroup.activeMembers}" photos="true" music="true"/>
 				</div>
-			</div>
-		</div>
+			</dht:sidebarPane>
+		</dht:sidebarPanes>
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>

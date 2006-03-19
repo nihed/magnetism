@@ -79,11 +79,10 @@
             <dht:sidebarAreaHeaderName value="${contacts.person.name}" canModify="false"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
+		<dht:sidebarPanes>
 		    <c:choose>
 		        <c:when test="${contacts.self}"> 
-		            <div class="dh-right-box">
-			            <h5 class="dh-title">Invite Someone Else</h5>
+		            <dht:sidebarPane title="Invite Someone Else">
 			            <p class="dh-right-box-text">
                             <c:choose>           
 			                    <c:when test="${contacts.invitations > 0}">
@@ -95,35 +94,32 @@
 			                </c:choose>    
 			                <br>
 			            </p>   
-		            </div>
-		            <div class="dh-right-box dh-right-box-last">
-			            <h5 class="dh-title">Friend Tips</h5>
+		            </dht:sidebarPane>
+		            <dht:sidebarPane title="Friend Tips" last="true">
                         <p class="dh-right-box-text">
 		                    Your friends are the people you know and communicate with on
 		                    DumbHippo. Sending a message to someone adds them to your
 		                    friends list. Your friends can see more information about
 		                    you; for example, they can see your other friends.
 			            </p>
-		            </div>
+		            </dht:sidebarPane>
 		        </c:when>
 		        <c:otherwise>
-		            <div class="dh-right-box">
-			            <h5 class="dh-title">Check Them Out</h5>
+		            <dht:sidebarPane title="Check Them Out">
                         <p class="dh-right-box-text">
 		                    All about <a href="/person?who=${contacts.viewedPersonId}"><c:out value="${contacts.person.name}"/></a>. 
 			            </p>
-		            </div>
-		            <div class="dh-right-box dh-right-box-last">
-			            <h5 class="dh-title">Friend Tips</h5>
+		            </dht:sidebarPane>
+		            <dht:sidebarPane title="Friend Tips" last="true">
                         <p class="dh-right-box-text">
 		                    Your friends are the people you know and communicate with on
 		                    DumbHippo. Once you are on someone's friends list, you can 
 		                    see their other friends.
 			            </p>
-		            </div>
+		            </dht:sidebarPane>
 		        </c:otherwise>
 		    </c:choose>    
-		</div>		
+		</dht:sidebarPanes>		
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>

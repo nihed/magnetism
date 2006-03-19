@@ -108,35 +108,32 @@
 			<dht:sidebarAreaHeaderName value="${viewgroup.name}" canModify="false"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
-		<c:set var="invitedMembers" value="${viewgroup.invitedMembers}"/>
-		<c:choose>
-			<c:when test="${!empty invitedMembers}">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Active Group Members</h5>
-				<div class="dh-people">
-					<dh:entityList value="${viewgroup.activeMembers}" photos="true"/><br/>
-				</div>
-			</div>
-			<div class="dh-right-box dh-right-box-last">
-				<h5 class="dh-title">Invited Group Members</h5>
-				<!-- FIXME: create an info page on Invited Group Members and uncomment the next line -->
-				<!-- <p class="dh-right-box-text">What Are <a class="dh-invited-group-members" href="http://info.dumbhippo.com/Invited Group Members">Invited Group Members</a>?</p> -->
-				<div class="dh-people">
-					<dh:entityList value="${invitedMembers}" photos="true"/>
-				</div>
-			</div>
-			</c:when>
-			<c:otherwise>
-			<div class="dh-right-box dh-right-box-last">
-				<h5 class="dh-title">Group Members</h5>
-				<div class="dh-people">
-					<dh:entityList value="${viewgroup.activeMembers}" photos="true"/>
-				</div>
-			</div>
-			</c:otherwise>
-		</c:choose>
-		</div>
+		<dht:sidebarPanes>
+			<c:set var="invitedMembers" value="${viewgroup.invitedMembers}"/>
+			<c:choose>
+				<c:when test="${!empty invitedMembers}">
+					<dht:sidebarPane title="Active Group Members">
+						<div class="dh-people">
+							<dh:entityList value="${viewgroup.activeMembers}" photos="true"/><br/>
+						</div>
+					</dht:sidebarPane>
+					<dht:sidebarPane title="Invited Group Members" last="true">
+						<!-- FIXME: create an info page on Invited Group Members and uncomment the next line -->
+						<!-- <p class="dh-right-box-text">What Are <a class="dh-invited-group-members" href="http://info.dumbhippo.com/Invited Group Members">Invited Group Members</a>?</p> -->
+						<div class="dh-people">
+							<dh:entityList value="${invitedMembers}" photos="true"/>
+						</div>
+					</dht:sidebarPane>
+				</c:when>
+				<c:otherwise>
+					<dht:sidebarPane title="Group Members" last="true">
+						<div class="dh-people">
+							<dh:entityList value="${viewgroup.activeMembers}" photos="true"/>
+						</div>
+					</dht:sidebarPane>
+				</c:otherwise>
+			</c:choose>
+		</dht:sidebarPanes>
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>

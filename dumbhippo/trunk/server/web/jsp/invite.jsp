@@ -72,13 +72,12 @@
 	<dht:sidebarArea>
 		
 		<dht:sidebarAreaHeader>
-		    <dht:headshot person="${invite.person}" size="192" /
+		    <dht:headshot person="${invite.person}" size="192"/>
 		    <dht:sidebarAreaHeaderName value="${invite.person.name}" canModify="true"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
-		    <div class="dh-right-box">
-			    <h5 class="dh-title">People Who Need Invites</h5>
+		<dht:sidebarPanes>
+		    <dht:sidebarPane title="People Who Need Invites">
 		  	    <div class="dh-people">
 			        <!-- FIXME: need to figure out what we really want to display here -->
 			        <!-- perhaps just people who still need invites -->
@@ -97,14 +96,13 @@
 			 	        </c:otherwise>
 			        </c:choose>
 		    	</div>
-		    </div>
-		    <div class="dh-right-box dh-right-box-last">
-			    <h5 class="dh-title">Outstanding Invites</h5>
+		    </dht:sidebarPane>
+		    <dht:sidebarPane title="Outstanding Invites" last="true">
 		  	    <div class="dh-people">
                     <dht:inviteList outstandingInvitations="${invite.outstandingInvitations}" invitesPage="false" start="0" maxInvitations="${invite.maxInvitationsShown}" totalInvitations="${invite.totalInvitations}"/>
 			    </div>
-		    </div>		
-		</div>
+		    </dht:sidebarPane>		
+		</dht:sidebarPanes>
 				
 	</dht:sidebarArea>
 

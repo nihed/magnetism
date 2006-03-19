@@ -54,9 +54,8 @@
             <dht:sidebarAreaHeaderName value="${invites.person.name}" canModify="false"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
-		    <div class="dh-right-box">
-			    <h5 class="dh-title">Invite Someone Else</h5>
+		<dht:sidebarPanes>
+		    <dht:sidebarPane title="Invite Someone Else">
 			    <p class="dh-right-box-text">
                     <c:choose>           
 			            <c:when test="${invites.invitations > 0}">
@@ -67,15 +66,14 @@
 			            </c:otherwise>
 			        </c:choose>    
 			        <br>
-			    </p>   
-		    </div>
-		    <div class="dh-right-box dh-right-box-last">
-			    <h5 class="dh-title">Invite Tips</h5>
+			    </p>
+		    </dht:sidebarPane>
+		    <dht:sidebarPane title="Invite Tips" last="true">
                 <p class="dh-right-box-text">
 					Every now and then Dumb Hippo opens up to accept more people to try it out, when that happens feel free to invite friends to use it.  You'll see your number of invites available change on this site.
 			    </p>
-		    </div>
-		</div>
+		    </dht:sidebarPane>
+		</dht:sidebarPanes>
 		
 	</dht:sidebarArea>
 

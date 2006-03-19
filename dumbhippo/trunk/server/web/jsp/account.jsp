@@ -157,58 +157,54 @@
 			<dht:sidebarAreaHeaderName value="${account.person.name}" canModify="true"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
-		<c:if test="${!account.signin.disabled}">
-			<div class="dh-right-box">
-				<h5 class="dh-title">Email Addresses</h5>
-					<c:forEach items="${account.person.allEmails}" var="email">
-						<p><c:out value="${email.humanReadableString}"/></p>
-					</c:forEach>
-					<!-- disabled for now
-					<p><input id="dhExtraEmailAddress" class="dhText"/><input type="button" value="Add Email Address"/></p>
-					<p class="dh-explanation">Click on the link you get in the mail.</p>
-					-->
-			</div>
-			<div class="dh-right-box">
-				<h5 class="dh-title">Screen Names</h5>
-					<c:forEach items="${account.person.allAims}" var="aim">
-						<p><c:out value="${aim.humanReadableString}"/></p>
-					</c:forEach>
-					<p><a href="${account.addAimLink}">AIM us your screen name</a></p>
-					<p class="dh-explanation">You can use it to login, we'll keep it private (just between us).</p>
-			</div>
-			<div class="dh-right-box">
-				<h5 class="dh-title">MySpace Name</h5>
-				<div id="dhMySpaceChangeDescription" style="display:none">Change your MySpace name:</div>
-				<div id="dhMySpaceDescription" style="display:none">Tell us your MySpace name, and you'll get bubble notifications when your buddies add comments on your MySpace page!</div>
-				<p><input id="dhMySpaceName" class="dhText" value="${account.person.account.mySpaceName}"/><input type="button" value="Set Name" id="dhMySpaceSubmit"/></p>
-			</div>
-		</c:if>
-			<div class="dh-right-box">
-				<h5 class="dh-title">Account Options</h5>
-			<c:choose>
-				<c:when test="${!account.signin.disabled}">
-				<div>
-				<a href="javascript:dh.actions.signOut();">Sign Out</a>
-				<p>Sign out to keep other people on this computer from using your account.</p>
-				</div>
-				<div>
-				<a href="javascript:dh.actions.setAccountDisabled(true);">Disable Account</a>
-				<p>Disabling your account means you have no public page and we will never send you email for any reason.	<a href="/privacy" target="_blank">Our privacy policy</a></p>
-				</div>
-				</c:when>
-				<c:otherwise>
-				<div>
-					<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
-					<p>Enabling your account will give you a public page and let you share links and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
-				</div>
-				<div>
+		<dht:sidebarPanes>
+			<c:if test="${!account.signin.disabled}">
+				<dht:sidebarPane title="Email Addresses">
+						<c:forEach items="${account.person.allEmails}" var="email">
+							<p><c:out value="${email.humanReadableString}"/></p>
+						</c:forEach>
+						<!-- disabled for now
+						<p><input id="dhExtraEmailAddress" class="dhText"/><input type="button" value="Add Email Address"/></p>
+						<p class="dh-explanation">Click on the link you get in the mail.</p>
+						-->
+				</dht:sidebarPane>
+				<dht:sidebarPane title="Screen Names">
+						<c:forEach items="${account.person.allAims}" var="aim">
+							<p><c:out value="${aim.humanReadableString}"/></p>
+						</c:forEach>
+						<p><a href="${account.addAimLink}">AIM us your screen name</a></p>
+						<p class="dh-explanation">You can use it to login, we'll keep it private (just between us).</p>
+				</dht:sidebarPane>
+				<dht:sidebarPane title="MySpace Name">
+					<div id="dhMySpaceChangeDescription" style="display:none">Change your MySpace name:</div>
+					<div id="dhMySpaceDescription" style="display:none">Tell us your MySpace name, and you'll get bubble notifications when your buddies add comments on your MySpace page!</div>
+					<p><input id="dhMySpaceName" class="dhText" value="${account.person.account.mySpaceName}"/><input type="button" value="Set Name" id="dhMySpaceSubmit"/></p>
+				</dht:sidebarPane>
+			</c:if>
+			<dht:sidebarPane title="Account Options" last="true">
+				<c:choose>
+					<c:when test="${!account.signin.disabled}">
+					<div>
 					<a href="javascript:dh.actions.signOut();">Sign Out</a>
-				</div>
-				</c:otherwise>
-			</c:choose>		
-			</div>
-		</div>
+					<p>Sign out to keep other people on this computer from using your account.</p>
+					</div>
+					<div>
+					<a href="javascript:dh.actions.setAccountDisabled(true);">Disable Account</a>
+					<p>Disabling your account means you have no public page and we will never send you email for any reason.	<a href="/privacy" target="_blank">Our privacy policy</a></p>
+					</div>
+					</c:when>
+					<c:otherwise>
+					<div>
+						<a href="javascript:dh.actions.setAccountDisabled(false);">Enable Account</a>
+						<p>Enabling your account will give you a public page and let you share links and photos with other people.  <a href="/privacy" target="_blank">Our privacy policy</a></p>
+					</div>
+					<div>
+						<a href="javascript:dh.actions.signOut();">Sign Out</a>
+					</div>
+					</c:otherwise>
+				</c:choose>		
+			</dht:sidebarPane>
+		</dht:sidebarPanes>
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>

@@ -38,9 +38,8 @@
 		    <dht:sidebarAreaHeaderName value="${home.person.name}" canModify="true"/>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">		
-		    <div class="dh-right-box">
-			    <h5 class="dh-title">Groups You're In</h5>
+		<dht:sidebarPanes>
+		    <dht:sidebarPane title="Groups You're In">
 			    <div class="dh-groups">
 			        <c:choose>
 				        <c:when test="${home.groups.size > 0}">
@@ -52,9 +51,8 @@
 				        </c:otherwise>
 			        </c:choose>
 			    </div>
-		    </div>
-		    <div class="dh-right-box">
-			    <h5 class="dh-title">People You Know</h5>
+		    </dht:sidebarPane>
+		    <dht:sidebarPane title="People You Know">
 		  	    <p class="dh-right-box-text">
                     <c:choose>           
 			            <c:when test="${home.invitations > 0}">
@@ -81,15 +79,15 @@
 				        </c:otherwise>
 			        </c:choose>
 		    	</div>
-		    </div>
-	        <div class="dh-right-box dh-right-box-last">
+		    </dht:sidebarPane>
+	        <dht:sidebarPane last="true">
 		  	    <p class="dh-right-box-text">
 		  	    	<div><a href="/welcome">Download</a> the DumbHippo software for Windows</div>
 		  	    	<div><a href="/bookmark">Create a bookmark</a> in Firefox or Safari</div>
 		  	    	<div><a href="/nowplaying">Add a "Now Playing" music embed</a> to your blog</div>
 			    </p>
-		    </div>
-		</div>		
+		    </dht:sidebarPane>
+		</dht:sidebarPanes>
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>

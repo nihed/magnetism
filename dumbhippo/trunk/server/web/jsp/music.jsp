@@ -126,32 +126,29 @@
 			</c:if>
 		</dht:sidebarAreaHeader>
 
-		<div class="dh-right-box-area">
+		<dht:sidebarPanes>
 			<c:if test="${viewperson.signin.valid}">
-				<div class="dh-right-box">
-					<h5 class="dh-title">Music</h5>
+				<dht:sidebarPane title="Music">
 					<p><a href="/nowplaying?who=${personId}">Show your music</a> on <strong>MySpace</strong> and other sites</p>
 					</p>
 					<c:if test="${viewperson.self && viewperson.signin.musicSharingEnabled}">
 						<p class="dh-right-box-text"><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/></p>
 					</c:if>	
-				</div>		
+				</dht:sidebarPane>		
 	
-				<div class="dh-right-box">
-					<h5 class="dh-title">Groups' Music</h5>
+				<dht:sidebarPane title="Groups' Music">
 					<div class="dh-groups">
-					<c:choose>
-						<c:when test="${viewperson.groups.size > 0}">
-							<dh:entityList value="${viewperson.groups.list}" photos="true" music="true"/>
-						</c:when>
-						<c:otherwise>
-						</c:otherwise>
-					</c:choose>
+						<c:choose>
+							<c:when test="${viewperson.groups.size > 0}">
+								<dh:entityList value="${viewperson.groups.list}" photos="true" music="true"/>
+							</c:when>
+							<c:otherwise>
+							</c:otherwise>
+						</c:choose>
 					</div>
-				</div>
+				</dht:sidebarPane>
 			
-				<div class="dh-right-box">
-					<h5 class="dh-title">Friends' Music</h5>
+				<dht:sidebarPane title="Friends' Music" last="true">
 					<div class="dh-people">
 						<c:choose>
 							<c:when test="${viewperson.contacts.size > 0}">
@@ -162,9 +159,9 @@
 							</c:otherwise>
 						</c:choose>
 					</div>
-				</div>
+				</dht:sidebarPane>
 			</c:if>
-		</div>
+		</dht:sidebarPanes>
 	</dht:sidebarArea>
 
 </dht:bodyWithAds>
