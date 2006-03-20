@@ -999,12 +999,12 @@ HippoUI::debugLogU(const char *format, ...)
     char *str = g_strdup_vprintf(format, vap);
     va_end (vap);
 
-    WCHAR *strW = g_utf8_to_utf16(str, -1, NULL, NULL, NULL);
+    HippoBSTR strW;
+    strW.setUTF8(str);
     if (strW) 
-        hippoDebugLogW(L"%ls", strW);
+        hippoDebugLogW(L"%ls", strW.m_str);
     
     g_free(str);
-    g_free(strW);
 }
 
 void
@@ -1489,7 +1489,8 @@ HippoUI::getAppletPath(BSTR filename, BSTR *result)
     if (!GetModuleFileName(instance_, baseBuf, sizeof(baseBuf) / sizeof(baseBuf[0])))
         throw HResultException(GetLastError());
 
-    for (size_t i = wcslen(baseBuf); i > 0; i--)
+    size_t i;
+    for (i = wcslen(baseBuf); i > 0; i--)
         if (baseBuf[i - 1] == '\\')
             break;
 

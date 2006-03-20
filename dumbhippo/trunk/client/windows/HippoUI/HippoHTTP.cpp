@@ -6,6 +6,7 @@
 #include "HippoHTTP.h"
 #include <glib.h>
 #include <wininet.h>
+#include "HippoUIUtil.h"
 #include <HippoUtil.h>
 #include "HippoLogWindow.h"
 
@@ -444,10 +445,9 @@ HippoHTTP::writeToStreamAsUTF8(IStream *stream,
                                HippoHTTPAsyncHandler *handler)
 {
 
-    char *utf = g_utf16_to_utf8(str, -1, NULL, NULL, NULL);
-    long bytesTotal = (long) strlen(utf);
-    bool ret = writeAllToStream(stream, utf, bytesTotal, handler);
-    g_free (utf);
+    HippoUStr utf(str);
+    long bytesTotal = (long) strlen(utf.c_str());
+    bool ret = writeAllToStream(stream, (void *)utf.c_str(), bytesTotal, handler);
     return ret;
 }
 

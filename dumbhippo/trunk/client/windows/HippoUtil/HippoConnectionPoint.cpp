@@ -129,7 +129,8 @@ HippoConnectionPoint::Next(ULONG        cConnections,
     if (!connections || !fetched)
         return E_POINTER;
 
-    for (ULONG i = 0; i < cConnections; i++) {
+    ULONG i;
+    for (i = 0; i < cConnections; i++) {
         if (curConnection_ == connections_.length())
             break;
 

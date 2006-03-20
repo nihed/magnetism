@@ -7,6 +7,7 @@
 #include "HippoChatRoom.h"
 #include "HippoIM.h"
 #include "HippoUI.h"
+#include "HippoUIUtil.h"
 #include "HippoMySpace.h"
 
 static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
@@ -199,9 +200,8 @@ HippoIM::sendChatRoomMessage(HippoChatRoom *chatRoom,
     char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
     LmMessage *message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
 
-    char *textU = g_utf16_to_utf8(text, -1, NULL, NULL, NULL);
-    LmMessageNode *body = lm_message_node_add_child(message->node, "body", textU);
-    g_free (textU);
+    HippoUStr textU(text);
+    LmMessageNode *body = lm_message_node_add_child(message->node, "body", textU.c_str());
 
     sendMessage(message);
     lm_message_unref(message);
@@ -252,15 +252,14 @@ HippoIM::notifyPostClickedU(const char *postGuid)
 static void
 addPropValue(LmMessageNode *node, const char *key, const HippoBSTR &value)
 {
-    char *valueU = g_utf16_to_utf8(value.m_str, value.Length(), NULL, NULL, NULL);
-    if (valueU == 0) {
+    HippoUStr valueU(value);
+    if (valueU.c_str() == 0) {
         hippoDebugLogU("Failed to convert property %s to UTF8", key);
         return;
     }
     LmMessageNode *propNode = lm_message_node_add_child(node, "prop", NULL);
     lm_message_node_set_attribute(propNode, "key", key);
-    lm_message_node_set_value(propNode, valueU);
-    g_free(valueU);
+    lm_message_node_set_value(propNode, valueU.c_str());
 }
 
 static void
@@ -382,9 +381,8 @@ HippoIM::notifyMySpaceContactPost(HippoMySpaceContact *contact)
     LmMessageNode *subnode = lm_message_node_add_child (node, "notifyContactComment", NULL);
     lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/myspace");
     lm_message_node_set_attribute(subnode, "type", "notifyContactComment");
-    char *nameU = g_utf16_to_utf8(contact->getName().m_str, -1, NULL, NULL, NULL);
-    lm_message_node_set_attribute(subnode, "name", nameU);
-    g_free(nameU);
+    HippoUStr nameU(contact->getName());
+    lm_message_node_set_attribute(subnode, "name", nameU.c_str());
 
     sendMessage(message);
     lm_message_unref(message);
@@ -525,22 +523,21 @@ void
 HippoIM::connect()
 {
     HippoBSTR messageServer;
-    char *messageServerU;
     unsigned int port;
 
     ui_->getPreferences()->parseMessageServer(&messageServer, &port);
-    messageServerU = g_utf16_to_utf8(messageServer.m_str, -1, NULL, NULL, NULL);
+    HippoUStr messageServerU(messageServer);
     
     if (lmConnection_) {
         hippoDebug(L"connect() called when there is an existing connection");
         return;
     }
 
-    lmConnection_ = lm_connection_new(messageServerU);
+    lmConnection_ = lm_connection_new(messageServerU.c_str());
     lm_connection_set_port(lmConnection_, port);
     lm_connection_set_keep_alive_rate(lmConnection_, KEEP_ALIVE_RATE);
 
-    ui_->debugLogU("Connecting to %s:%d", messageServerU, port);
+    ui_->debugLogU("Connecting to %s:%d", messageServerU.c_str(), port);
 
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 
@@ -572,8 +569,6 @@ HippoIM::connect()
         if (error)
             g_error_free(error);
     }
-
-    g_free(messageServerU);
 }
 
 void
@@ -597,7 +592,7 @@ HippoIM::authenticate()
 {
     if (username_ && password_) {
         char *usernameUTF = idToJabber(username_);
-        char *passwordUTF = g_utf16_to_utf8(password_, -1, NULL, NULL, NULL);
+        HippoUStr passwordUTF(password_);
 
         GError *error = NULL;
 
@@ -608,10 +603,10 @@ HippoIM::authenticate()
             hippoDebugLogW(L"Failed to get hardware profile!");
             return;
         }
-        gchar *guidUTF = g_utf16_to_utf8 (hwProfile.szHwProfileGuid, -1, NULL, NULL, NULL);
+        HippoUStr guidUTF(hwProfile.szHwProfileGuid);
 
         if (!lm_connection_authenticate(lmConnection_, 
-                                        usernameUTF, passwordUTF, guidUTF,
+                                        usernameUTF, passwordUTF.c_str(), guidUTF.c_str(),
                                         onConnectionAuthenticate, (gpointer)this, NULL, &error)) 
         {
             authFailure(error ? error->message : NULL);
@@ -621,8 +616,6 @@ HippoIM::authenticate()
             stateChange(AUTHENTICATING);
         }
         g_free(usernameUTF);
-        g_free(guidUTF);
-        g_free(passwordUTF);
     } else {
         authFailure("Not signed in");
     }

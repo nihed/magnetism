@@ -57,7 +57,7 @@ private:
     HippoHTTP *http_;
 
     HippoBSTR progressUrl_;
-    char *progressVersion_;
+    HippoBSTR progressVersion_;
     HippoBSTR progressFilename_;
     HippoBSTR progressModified_;
     long progressSize_;

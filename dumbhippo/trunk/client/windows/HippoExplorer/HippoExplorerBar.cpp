@@ -391,7 +391,7 @@ HippoExplorerBar::launchBrowser(const HippoBSTR &url)
 {
     if (browser_) {
         variant_t flags;
-        variant_t targetFrameName("_self");
+        variant_t targetFrameName(L"_self");
         variant_t postData;
         variant_t headers;
         browser_->Navigate(url.m_str, &flags, &targetFrameName, &postData, &headers);

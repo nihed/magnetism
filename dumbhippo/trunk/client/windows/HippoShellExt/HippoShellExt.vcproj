@@ -24,6 +24,8 @@
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				TreatWChar_tAsBuiltInType="TRUE"
+				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -33,6 +35,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				RegisterOutput="TRUE"
+				AdditionalDependencies="advapi32.lib shell32.lib"
 				OutputFile="$(OutDir)/HippoShellExt.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="HippoShellExt.def"

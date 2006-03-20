@@ -101,7 +101,8 @@ HippoConnectionPointContainer::Next(ULONG              cPoints,
     if (!points || !fetched)
         return E_POINTER;
 
-    for (ULONG i = 0; i < cPoints; i++) {
+    ULONG i;
+    for (i = 0; i < cPoints; i++) {
         if (curPoint_ == points_.length())
             break;
 

@@ -247,7 +247,6 @@ HippoFlickr::computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBS
                            HippoBSTR &sigMd5)
 {
     HippoBSTR sig(sharedSecret_);
-    unsigned char *utf;
     HippoArray<HippoBSTR> sortedParamNames;
     HippoArray<HippoBSTR> sortedParamValues;
 
@@ -260,12 +259,11 @@ HippoFlickr::computeAPISig(HippoArray<HippoBSTR> &paramNames, HippoArray<HippoBS
 
     unsigned char digest[16];
     WCHAR digestStr[33];
-    utf = (unsigned char *) g_utf16_to_utf8(sig, -1, NULL, NULL, NULL);
+    HippoUStr utf(sig);
     MD5Context md5Ctx;
     MD5Init(&md5Ctx);
-    MD5Update(&md5Ctx, utf, static_cast<unsigned int>(strlen((char*)utf)));
+    MD5Update(&md5Ctx, (unsigned char *)utf.c_str(), static_cast<unsigned int>(strlen((char *)utf.c_str())));
     MD5Final(digest, &md5Ctx);
-    g_free(utf);
     for (unsigned int i = 0; i < 16; i++) {
         WCHAR *digestPtr = digestStr;
         StringCchPrintfW(digestPtr+(2*i), sizeof(digestStr) - 2*i, L"%02X", digest[i]);

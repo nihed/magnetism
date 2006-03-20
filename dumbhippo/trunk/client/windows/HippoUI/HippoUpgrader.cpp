@@ -8,6 +8,7 @@
 #include "HippoHTTP.h"
 #include "HippoUpgrader.h"
 #include "HippoUI.h"
+#include "HippoUIUtil.h"
 #include "HippoRegKey.h"
 #include "Version.h"
 
@@ -102,7 +103,6 @@ HippoUpgrader::~HippoUpgrader()
     if (downloadFile_)
         CloseHandle(downloadFile_);
 
-    g_free(progressVersion_);
     g_free(currentVersion_);
     g_free(minVersion_);
 }
@@ -281,12 +281,8 @@ HippoUpgrader::loadProgress()
     progressUrl_ = NULL;
     key.loadString(L"DownloadUrl", &progressUrl_);
 
-    g_free(progressVersion_);
     progressVersion_ = NULL;
-    HippoBSTR tmp;
-    key.loadString(L"DownloadVersion", &tmp);
-    if (tmp)
-        progressVersion_ = g_utf16_to_utf8(tmp, -1, NULL, NULL, NULL);
+    key.loadString(L"DownloadVersion", &progressVersion_);
 
     progressFilename_ = NULL;
     key.loadString(L"DownloadFilename", &progressFilename_);
@@ -309,10 +305,7 @@ HippoUpgrader::saveProgress()
                     true);
 
     key.saveString(L"DownloadUrl", progressUrl_);
-    HippoBSTR tmp;
-    if (progressVersion_)
-        tmp.setUTF8(progressVersion_);
-    key.saveString(L"DownloadVersion", tmp);
+    key.saveString(L"DownloadVersion", progressVersion_);
     key.saveString(L"DownloadFilename", progressFilename_);
     key.saveString(L"DownloadModified", progressModified_);
     key.saveLong(L"DownloadSize", progressSize_);
@@ -333,8 +326,10 @@ HippoUpgrader::startDownload()
         HippoBSTR progressBase;
         getBase(progressFilename_, &progressBase, '\\');
 
+        HippoUStr progressVersionU(progressVersion_);
+
         if (progressUrl_ && wcscmp(progressUrl_, downloadUrl_) == 0 &&
-            progressVersion_ && strcmp(progressVersion_, currentVersion_) == 0 &&
+            progressVersionU.c_str() && strcmp(progressVersionU.c_str(), currentVersion_) == 0 &&
             progressBase && wcscmp(progressBase, downloadBase) == 0) 
         {
             if (progressCompleted_) {
@@ -374,8 +369,7 @@ HippoUpgrader::startDownload()
         http_->doGet(downloadUrl_, false, this);
 
         progressUrl_ = downloadUrl_;
-        g_free(progressVersion_);
-        progressVersion_ = g_strdup(currentVersion_);
+        progressVersion_.setUTF8(currentVersion_);
         progressFilename_ = filename;
         progressModified_ = NULL;
         progressSize_ = -1;

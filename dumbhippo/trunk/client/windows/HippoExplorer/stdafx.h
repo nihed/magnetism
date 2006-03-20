@@ -12,7 +12,11 @@
  * ComDef.h rather than the compiler ComDef.h. So force that to be 
  * included first.
  */
+#if _MSC_VER < 1400
 #include <../PlatformSDK/Include/ComDef.h>
+#else
+#include <ComDef.h>
+#endif
 #import <mshtml.tlb>
 #include <ole2.h>
 

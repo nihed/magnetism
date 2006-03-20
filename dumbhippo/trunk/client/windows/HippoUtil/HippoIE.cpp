@@ -337,7 +337,7 @@ HippoIEImpl::embedBrowser()
 
     // Append the specified parameters
     for (UINT i = 0; i < styleParamNames_.length(); i++) {
-        processor->addParameter(_bstr_t(styleParamNames_[i].m_str), variant_t(styleParamValues_[i].m_str), _bstr_t(""));
+        processor->addParameter(_bstr_t(styleParamNames_[i].m_str), variant_t(styleParamValues_[i].m_str), _bstr_t(L""));
     }
     processor->transform();
 
@@ -385,7 +385,7 @@ HippoIEImpl::setLocation(const HippoBSTR &location)
     inNavigation_ = true;
 
     variant_t flags;
-    variant_t targetFrameName("_self");
+    variant_t targetFrameName(L"_self");
     variant_t postData;
     variant_t headers;
     browser_->Navigate(location.m_str, &flags, &targetFrameName, &postData, &headers);

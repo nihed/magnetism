@@ -181,7 +181,8 @@ HippoUILauncher::spawnUI()
     if (!GetModuleFileName(module, fileBuf, sizeof(fileBuf) / sizeof(fileBuf[0])))
         return false;
 
-    for (size_t i = wcslen(fileBuf); i > 0; i--)
+    size_t i;
+    for (i = wcslen(fileBuf); i > 0; i--)
         if (fileBuf[i - 1] == '\\')
             break;
 

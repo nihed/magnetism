@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include <HippoUtil.h>
 #include <HippoArray.h>
+#include <glib.h>
 
 class HippoUIUtil
 {
@@ -32,4 +33,37 @@ public:
     static void splitString(const HippoBSTR       &str, 
                             WCHAR                  separator, 
                             HippoArray<HippoBSTR> &result);
+};
+
+// Basically just a wrapper for g_utf16_to_utf8(), think three times before extending it
+class HippoUStr 
+{
+public:
+    HippoUStr(HippoBSTR bstr) {
+        if (bstr.m_str)       
+            str = g_utf16_to_utf8((gunichar2 *)bstr.m_str, SysStringLen(bstr.m_str), NULL, NULL, NULL);
+        else
+            str = NULL;
+    }
+
+    HippoUStr(WCHAR wstr) {
+        if (wstr)
+            str = g_utf16_to_utf8((gunichar2 *)wstr, -1, NULL, NULL, NULL);
+        else
+            str = NULL;
+    }
+
+    ~HippoUStr() {
+        g_free(str);
+    }
+
+    const char *c_str() {
+        return str;
+    }
+
+private:
+    HippoUStr(const HippoUStr &other) {}
+    HippoUStr operator=(const HippoUStr &other) {}
+
+    char *str;
 };
