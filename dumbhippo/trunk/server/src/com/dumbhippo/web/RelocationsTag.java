@@ -16,6 +16,14 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
+/** 
+ * This is a kind of bogus base class shared by the tags that 
+ * manipulate "relocations" within the jsp page. It would be more 
+ * OO-correct to use composition instead of inheritance for this.
+ * 
+ * @author Havoc Pennington
+ *
+ */
 public abstract class RelocationsTag extends SimpleTagSupport {
 	
 	@SuppressWarnings("unused")

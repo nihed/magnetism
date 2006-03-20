@@ -6,8 +6,9 @@ import javax.servlet.jsp.JspException;
 
 /**
  * This tag moves some markup from one place to another,
- * later place. A Relocations tag with the same "where" marks where the
- * stuff goes. 
+ * later place. A RelocateDest tag with the same "where" marks where the
+ * stuff goes.
+ * 
  * @author Havoc Pennington
  *
  */
