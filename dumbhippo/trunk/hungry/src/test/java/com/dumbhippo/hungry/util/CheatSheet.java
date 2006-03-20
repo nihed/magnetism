@@ -144,6 +144,25 @@ public class CheatSheet {
 		}
 	}
 	
+	public String getUserId(String email) {
+		try {
+			PreparedStatement statement =
+				getConnection().prepareStatement("SELECT ac.owner_id "
+						+ "FROM AccountClaim ac, EmailResource er "
+						+ "WHERE er.email = ? AND ac.resource_id = er.id LIMIT 1");
+			statement.setString(1, email);
+			ResultSet rs = statement.executeQuery();
+			String ret = null;
+			while (rs.next()) {
+				ret = rs.getString("owner_id");
+			}
+			return ret;
+		} catch (SQLException e) {
+			fatalSqlException(e);
+			return null; // not reached
+		}		
+	}
+	
 	public int getNumberOfInvitations(String userId) {
 		try {
 			PreparedStatement statement =

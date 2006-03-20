@@ -3,6 +3,7 @@ package com.dumbhippo.hungry.performance;
 import java.util.List;
 
 import com.dumbhippo.hungry.util.SignedInPageTestCase;
+import com.dumbhippo.hungry.util.SkipTest;
 import com.dumbhippo.hungry.util.WebServices;
 
 /**
@@ -13,6 +14,7 @@ import com.dumbhippo.hungry.util.WebServices;
  * 
  * @author otaylor
  */
+@SkipTest
 public class ModifyUser extends SignedInPageTestCase {
 	
 	public ModifyUser(String userId) {

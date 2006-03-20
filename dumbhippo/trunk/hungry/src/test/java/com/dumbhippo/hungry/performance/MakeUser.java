@@ -1,6 +1,7 @@
 package com.dumbhippo.hungry.performance;
 
 import com.dumbhippo.hungry.readonly.Signin;
+import com.dumbhippo.hungry.util.SkipTest;
 import com.dumbhippo.hungry.util.WebServices;
 
 /**
@@ -11,6 +12,7 @@ import com.dumbhippo.hungry.util.WebServices;
  * 
  * @author otaylor
  */
+@SkipTest
 public class MakeUser extends Signin {
 	public String emailAddress;
 	public String name;

@@ -51,6 +51,19 @@ if $enable_destructive ; then
     add_command "Create performance data" "create_performance_data"
 fi
 
+run_performance() {
+    echo "Running Performance Tests"
+
+    (
+	cd $source_dir
+	HUNGRY_PROPERTIES=$target_dir/conf/hungry.properties ant test-performance
+    )
+}
+
+if $enable_destructive ; then
+    add_command "Run performance tests" "run_performance"
+fi
+
 while true ; do
     for i in `seq 1 $n_commands` ; do
 	eval "echo \$text$i"

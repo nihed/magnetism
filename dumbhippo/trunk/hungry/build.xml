@@ -119,6 +119,24 @@
 		</junit>
 	</target>
 
+	<target name="test-performance" depends="build">
+		<echo message="Run benchmarks against test performance data" />
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/performance/PerformanceTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
 	<target name="performance-data" depends="build">
 		<echo message="Creating data for performance tests" />
             <java fork="yes" classname="com.dumbhippo.hungry.performance.TestData">

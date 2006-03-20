@@ -49,7 +49,7 @@ public class PackageSuite extends TestSuite {
 				System.exit(1);
 			}
 			
-			if (TestCase.class.isAssignableFrom(c)) {
+			if (TestCase.class.isAssignableFrom(c) && c.getAnnotation(SkipTest.class) == null) {
 				System.out.println("Found test case: " + c.getCanonicalName());
 				tests.add(c);
 			}
