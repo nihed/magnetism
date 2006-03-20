@@ -48,6 +48,10 @@ public abstract class RelocationsTag extends SimpleTagSupport {
 		return list;
 	}
 	
+	protected boolean haveFragments() {
+		return getFragmentsList().size() > 0;
+	}
+	
 	protected void addFragment(JspFragment fragment) throws JspException, IOException {
 		Writer writer = new StringWriter();
 		fragment.invoke(writer);

@@ -207,6 +207,17 @@
         </attribute>
     </tag>
     <tag>
+        <name>whenRelocateDestNeeded</name>
+        <tagclass>com.dumbhippo.web.WhenRelocateDestNeededTag</tagclass>
+        <bodycontent>scriptless</bodycontent>
+        <info>Invoke body only if there's stuff to be relocated</info>
+	    <attribute>
+           <name>where</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
         <name>skipList</name>
         <tagclass>com.dumbhippo.web.SkipListTag</tagclass>
         <bodycontent>scriptless</bodycontent>
