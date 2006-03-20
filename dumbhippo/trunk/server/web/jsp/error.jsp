@@ -5,12 +5,10 @@
 
 <head>
 	<title>Error</title>
-	<dht:stylesheets />
+	<dht:stylesheets href="small-box.css"/>
 </head>
-<dht:bodyWithAds>
-	<dht:mainArea>
-		<dht:toolbar/>
-		
+<dht:bodySmallBox>
+	<dht:smallBoxTopArea>
 		<dht:largeTitle>Oops!</dht:largeTitle>
 		
 		<c:choose>
@@ -31,7 +29,7 @@
 			</c:otherwise>
 		</c:choose>
 		
-	</dht:mainArea>
+	</dht:smallBoxTopArea>
 
-</dht:bodyWithAds>
+</dht:bodySmallBox>
 </html>
