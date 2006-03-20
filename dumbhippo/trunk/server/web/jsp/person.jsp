@@ -54,16 +54,16 @@
 				<dht:largeTitle><c:out value="${personName}"/>'s Public Page</dht:largeTitle>
 				<c:choose>
 					<c:when test="${!empty viewperson.currentTrack}">
-						<h5 class="dh-title">What <c:out value="${personName}"/> is listening to</h5>
+						<dht:smallTitle>What <c:out value="${personName}"/> is listening to</dht:smallTitle>
 						<dht:track track="${viewperson.currentTrack}" linkifySong="false" playItLink="false"/>
 						<div class="dh-more-songs"><a class="dh-more-songs" href="/music?who=${personId}">More songs</a></div>
 					</c:when>
 					<c:when test="${empty viewperson.currentTrack && viewperson.signin.musicSharingEnabled && viewperson.self}">
-						<h5 class="dh-title">What <c:out value="${personName}"/> is listening to</h5>
+						<dht:smallTitle>What <c:out value="${personName}"/> is listening to</dht:smallTitle>
 						<p>Play some songs in iTunes and refresh this page.</p>
 					</c:when>
 					<c:when test="${!viewperson.signin.musicSharingEnabled && viewperson.self}">
-						<h5 class="dh-title">Share Music</h5>
+						<dht:smallTitle>Share Music</dht:smallTitle>
 						<p><dht:musicToggle musicOn="${viewperson.signin.musicSharingEnabled}"/> and try it out!(you can always turn it off later).  <a href="/music?who=${personId}">Learn more</a> about Music Sharing.</p>
 					</c:when>
 				</c:choose>

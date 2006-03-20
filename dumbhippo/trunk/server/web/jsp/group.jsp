@@ -87,7 +87,7 @@
 		<dht:largeTitle>The <c:out value="${viewgroup.name}"/> Group</dht:largeTitle>
 
 		<c:if test="${!empty viewgroup.latestTrack}">
-			<h5 class="dh-title"><c:out value="${viewgroup.name}"/>'s Latest Song</h5>
+			<dht:smallTitle><c:out value="${viewgroup.name}"/>'s Latest Song</dht:smallTitle>
 			<dht:track track="${viewgroup.latestTrack}" linkifySong="false" playItLink="false"/>
 			<div class="dh-more-songs"><a class="dh-more-songs" href="/musicgroup?who=${viewgroup.viewedGroupId}">More songs</a></div>
 		</c:if>
