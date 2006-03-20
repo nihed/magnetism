@@ -11,7 +11,7 @@
 	<dht:mainArea>
 		<dht:toolbar/>
 		
-		<h2>Unknown link</h2>
+		<dht:largeTitle>Unknown link</dht:largeTitle>
 		
 		<p>The link you followed doesn't exist; maybe check the spelling?</p>
 		

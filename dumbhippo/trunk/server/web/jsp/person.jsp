@@ -51,7 +51,7 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
-				<h2><c:out value="${personName}"/>'s Public Page</h2>
+				<dht:largeTitle><c:out value="${personName}"/>'s Public Page</dht:largeTitle>
 				<c:choose>
 					<c:when test="${!empty viewperson.currentTrack}">
 						<h5 class="dh-title">What <c:out value="${personName}"/> is listening to</h5>

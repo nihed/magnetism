@@ -34,7 +34,7 @@
 		<div id="dhShareForm" class="dhInvisible">
 			<div class="dhVerticalPadding"></div>
 
-			<h2>Invite friends to <c:out value="${viewgroup.name}"/></h2>			
+			<dht:largeTitle>Invite friends to <c:out value="${viewgroup.name}"/></dht:largeTitle>			
 			
 			<div class="dhVerticalPadding"></div>
 			<div class="dhLabel">Share <u>W</u>ith:</div>

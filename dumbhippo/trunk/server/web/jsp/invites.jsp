@@ -18,7 +18,7 @@
 		<dht:toolbar/> 
 		<div id="dhSharesArea">
 		    <c:if test="${!empty invites.deletedInvitation}">
-		        <h2 class="dh-title">Your Last Deleted Invite</h2>
+		        <dht:largeTitle>Your Last Deleted Invite</dht:largeTitle>
                 <div class="dh-share-shadow">
                     <div class="dh-share">	
                         <div class="dh-invitee" title="${invites.deletedInvitation.invite.humanReadableInvitee}">

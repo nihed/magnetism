@@ -33,7 +33,7 @@
 			</c:otherwise>
 		</c:choose>
 
-		<h2 class="dh-title">Suggestions</h2>
+		<dht:largeTitle>Suggestions</dht:largeTitle>
 
 		<div id="dhSharesArea">
 			<dht:postList posts="${suggest.recommendedPosts.list}" maxPosts="${suggest.maxRecommendedPostsShown}" recipientId="${suggest.person.user.id}" recipientName="${suggest.person.name}"/>
@@ -49,7 +49,7 @@
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-		<h2>Your Ratings</h2>
+		<dht:largeTitle>Your Ratings</dht:largeTitle>
 		
 		<table border=1 cellspacing=0 cellpadding=5>
 		<tr>  

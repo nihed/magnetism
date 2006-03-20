@@ -14,7 +14,7 @@
 	<dht:mainArea>
 		<dht:toolbar/>
 	
-		<h2>Now Playing</h2>
+		<dht:largeTitle>Now Playing</dht:largeTitle>
 		
 		<p>
 		&nbsp;
@@ -24,7 +24,7 @@
 			<c:out value="${nowplaying.nowPlayingObjectHtml}" escapeXml="false"/>
 		</div>
 		
-		<h2>MySpace HTML</h2>
+		<dht:largeTitle>MySpace HTML</dht:largeTitle>
 		
 		<p>
 		To put the above "now playing" on MySpace, cut-and-paste this HTML:
@@ -35,7 +35,7 @@
 			<textarea readonly="readonly" rows="7" wrap="off"><c:out value="${nowplaying.nowPlayingEmbedHtml}" escapeXml="true"/></textarea>
 		</div>
 
-		<h2>Alternative HTML</h2>
+		<dht:largeTitle>Alternative HTML</dht:largeTitle>
 		
 		<p>
 		The below HTML may improve browser compatibility, but won't work on MySpace.

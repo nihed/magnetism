@@ -23,7 +23,7 @@
 		<dht:toolbar publicPageId="${home.signin.userId}" home="false"/>
 		<dht:infobar/>		
 
-		<h2 class="dh-title">Stuff Shared With You</h2>
+		<dht:largeTitle>Stuff Shared With You</dht:largeTitle>
 
 		<div id="dhSharesArea">
 			<dht:postList posts="${home.receivedPosts.list}" maxPosts="${home.maxReceivedPostsShown}" recipientId="${home.person.user.id}" recipientName="${home.person.name}"/>

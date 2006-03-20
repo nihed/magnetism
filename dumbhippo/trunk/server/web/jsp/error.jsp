@@ -11,7 +11,7 @@
 	<dht:mainArea>
 		<dht:toolbar/>
 		
-		<h2>Oops!</h2>
+		<dht:largeTitle>Oops!</dht:largeTitle>
 		
 		<c:choose>
 			<c:when test="${!empty errorHtml}">

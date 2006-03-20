@@ -84,7 +84,7 @@
 		    </c:choose>
 		</div>
 		
-		<h2 class="dh-title">The <c:out value="${viewgroup.name}"/> Group</h2>
+		<dht:largeTitle>The <c:out value="${viewgroup.name}"/> Group</dht:largeTitle>
 
 		<c:if test="${!empty viewgroup.latestTrack}">
 			<h5 class="dh-title"><c:out value="${viewgroup.name}"/>'s Latest Song</h5>

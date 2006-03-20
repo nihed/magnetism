@@ -35,13 +35,11 @@
 					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
 			</c:when>
 			<c:otherwise>
-				<h2 class="dh-title"></h2>
-	
 				<div>
 					<dht:artist artist="${musicsearch.artistView}" linkifyArtist="false"/>
 				</div>
 				<c:if test="${musicsearch.relatedPeople.size > 0}">
-					<h2 class="dh-title">Some Friends Who Listened to This Artist</h2>
+					<dht:largeTitle>Some Friends Who Listened to This Artist</dht:largeTitle>
 		
 					<div>
 						<c:forEach items="${musicsearch.relatedPeople.list}" var="personmusic">
@@ -56,7 +54,7 @@
 					</div>
 				</c:if>
 				<c:if test="${musicsearch.artistRecommendations.size > 0}">
-					<h2 class="dh-title">Related Music</h2>
+					<dht:largeTitle>Related Music</dht:largeTitle>
 		
 					<div>
 						Other people who listened to <c:out value="${musicsearch.artist}"/> also listened to:

@@ -11,7 +11,7 @@
 	<dht:mainArea>
 		<dht:toolbar/>
 		
-		<h2>Privacy</h2>
+		<dht:largeTitle>Privacy</dht:largeTitle>
 		
 		<p>
 		Right now the DumbHippo site is experimental and open only to a select few

@@ -61,7 +61,7 @@
 						<c:if test="${param.wouldBePublic || !who.browser.supported}">
 							<div id="dhMessageArea">
 								<c:if test="${param.wouldBePublic}">
-									<h2>Don't have an account?</h2>
+									<dht:largeTitle>Don't have an account?</dht:largeTitle>
 									<p>
 										The page you're trying to get to will be public eventually, 
 										but right now it's "members only." If you want in, leave us 
@@ -70,7 +70,7 @@
 									<dht:wantsIn/>
 					 			</c:if>
 								<c:if test="${!who.browser.supported}">
-									<h2>Your Web Browser</h2>
+									<dht:largeTitle>Your Web Browser</dht:largeTitle>
 									Right now we've only tested the site with 
 									<c:out value="${who.browser.supportedBrowsers}"/>. Your browser
 									might work, but we haven't tried it ourselves.

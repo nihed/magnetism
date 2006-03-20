@@ -67,7 +67,7 @@
 		<dht:toolbar account="false" publicPageId="${account.signin.userId}"/>
 		<dht:infobar/>		
 
-		<h2 class="dh-title">Comics!</h2>
+		<dht:largeTitle>Comics!</dht:largeTitle>
 
 		<div style="overflow:hidden;">
 

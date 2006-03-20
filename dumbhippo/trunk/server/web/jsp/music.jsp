@@ -63,21 +63,21 @@
 			<c:when test="${!viewperson.signin.valid}">
 				<%-- anonymous viewer --%>
 				<c:if test="${!empty viewperson.currentTrack}">
-					<h2 class="dh-title"><c:out value="${personName}"/> is listening to:</h2>
+					<dht:largeTitle><c:out value="${personName}"/> is listening to:</dht:largeTitle>
 					<div>
 						<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
 					</div>
 				</c:if>
 				<c:choose>
 					<c:when test="${viewperson.selfInvitations > 0}">
-						<h2 class="dh-title">LIMITED TIME OFFER</h2>
+						<dht:largeTitle>LIMITED TIME OFFER</dht:largeTitle>
 						<div>
 							AS SEEN ON TV: Create an account to see more of this person's music and publish your own.
 							<dht:selfInvite promotion="${viewperson.promotion}" invitesAvailable="${viewperson.selfInvitations}"/>
 						</div>
 					</c:when>
 					<c:otherwise>
-						<h2 class="dh-title">CHECK BACK SOON</h2>
+						<dht:largeTitle>CHECK BACK SOON</dht:largeTitle>
 						<div>
 							Sometimes we have invites to DumbHippo available 
 							on this page. Right now we're all out. If you leave your 
@@ -86,7 +86,7 @@
 						</div>
 					</c:otherwise>
 				</c:choose>
-				<h2 class="dh-title">Popular Songs on DumbHippo</h2>
+				<dht:largeTitle>Popular Songs on DumbHippo</dht:largeTitle>
 	
 				<div>
 					Stuff people are listening to:
@@ -99,7 +99,7 @@
 				
 			</c:when>
 			<c:otherwise>
-				<h2 class="dh-title"><c:out value="${personName}"/>'s Recent Songs</h2>
+				<dht:largeTitle><c:out value="${personName}"/>'s Recent Songs</dht:largeTitle>
 	
 				<div>
 					<c:forEach items="${viewperson.latestTracks.list}" var="track">
@@ -107,7 +107,7 @@
 					</c:forEach>
 				</div>
 				
-				<h2 class="dh-title"><c:out value="${personName}"/>'s Most Played Songs</h2>
+				<dht:largeTitle><c:out value="${personName}"/>'s Most Played Songs</dht:largeTitle>
 	
 				<div>
 					<c:forEach items="${viewperson.frequentTracks.list}" var="track">

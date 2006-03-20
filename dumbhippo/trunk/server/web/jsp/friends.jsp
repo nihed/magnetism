@@ -19,10 +19,10 @@
 
 		<c:choose>
 		    <c:when test="${contacts.self}"> 
-                <h2 class="dh-title">Your Friends</h2>
+                <dht:largeTitle>Your Friends</dht:largeTitle>
 			</c:when>
 			<c:otherwise>
-			    <h2 class="dh-title"> <c:out value="${contacts.person.name}"/>'s Friends</h2>        
+			    <dht:largeTitle><c:out value="${contacts.person.name}"/>'s Friends</dht:largeTitle>        
 			</c:otherwise>   
         </c:choose>     
 		

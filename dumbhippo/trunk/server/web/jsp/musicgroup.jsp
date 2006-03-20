@@ -44,7 +44,7 @@
 					<a href="javascript:dh.actions.setMusicSharingEnabled(true);">Click here to turn it on</a>
 			</c:when>
 			<c:otherwise>
-				<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Recent Songs</h2>
+				<dht:largeTitle><c:out value="${viewgroup.name}"/>'s Recent Songs</dht:largeTitle>
 		
 				<div>
 					<c:forEach items="${viewgroup.latestTracks.list}" var="track">
@@ -52,7 +52,7 @@
 					</c:forEach>
 				</div>
 			
-				<h2 class="dh-title"><c:out value="${viewgroup.name}"/>'s Most Played Songs</h2>
+				<dht:largeTitle><c:out value="${viewgroup.name}"/>'s Most Played Songs</dht:largeTitle>
 		
 				<div>
 					<c:forEach items="${viewgroup.frequentTracks.list}" var="track">
