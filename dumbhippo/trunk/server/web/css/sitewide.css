@@ -123,7 +123,8 @@ a.dh-toolbar-item:visited {
 #dhInformationBar a {
 	color:					#fff500;
 }
-h2.dh-title {
+
+#dhMainArea h2.dh-title {
 	color:					#3399ff;
 	margin:					0;
 	margin-top:				18px;
@@ -131,7 +132,7 @@ h2.dh-title {
 	text-align:				left;
 }
 
-.dh-title {
+#dhMainArea .dh-title {
 	color:					#3399ff;
 	margin:					0;
 	margin-bottom:			3px;
