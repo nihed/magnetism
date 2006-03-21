@@ -145,7 +145,16 @@ public abstract class AbstractServlet extends HttpServlet {
 		return SigninBean.getForRequest(request).getUser();
 	}
 
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	/**
+	 * Override with the actual implementation of the POST request; if a non-NULL string
+	 * is returned, will forward the request to the (relative) URL represented by the
+	 * string. This replaces redirect use of request.getRequestDispatcher(<url>).forward()
+	 * because the the forward must be executed outside of the transaction that we may
+	 * add around wrappedDoPost(). If you want a redirect, just call request.sendRedirect(),
+	 * since there is no issue with transactions in that case ... the client will make
+	 * a new request.
+	 */
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 		  	HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "POST not implemented");				 
 	}
@@ -265,10 +274,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		}						
 	}
 	
-	private void runWithErrorPage(HttpServletRequest request, HttpServletResponse response, Callable func) throws IOException, ServletException {
+	private Object runWithErrorPage(HttpServletRequest request, HttpServletResponse response, Callable func) throws IOException, ServletException {
 		try {
 			try {
-				func.call();
+				return func.call();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -277,9 +286,11 @@ public abstract class AbstractServlet extends HttpServlet {
 			if (cause instanceof HttpException) {
 				logger.debug("http exception processing POST", e);
 				((HttpException) cause).send(response);
+				return null;
 			} else if (cause instanceof HumanVisibleException) {
 				logger.debug("human visible exception: {}", e.getMessage());
 				forwardToErrorPage(request, response, (HumanVisibleException) cause);
+				return null;
 			} else {
 				throw e;
 			}
@@ -295,8 +306,8 @@ public abstract class AbstractServlet extends HttpServlet {
 	// that persistance beans returned to the web tier won't be detached.
 	//
 	// While we are add it, we time the request for performancing monitoring	
-	private void runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable func) throws IOException, ServletException  {
-		runWithErrorPage(request, response, new Callable() {
+	private Object runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable func) throws IOException, ServletException  {
+		return runWithErrorPage(request, response, new Callable() {
 			public Object call() {
 				runWithTransaction(request, func);
 				return null;
@@ -313,21 +324,27 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException,
 			IOException {
 		logRequest(request, "POST");
+		String forwardUrl;
 		if (requiresTransaction()) {
-			runWithTransactionAndErrorPage(request, response, new Callable() { 
+			 forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
-					wrappedDoPost(request, response);
-					return null;
+					return wrappedDoPost(request, response);
 				}
 			});
+			if (forwardUrl != null) {
+				request.getRequestDispatcher(forwardUrl).forward(request, response);
+			}
 		} else {
-			runWithErrorPage(request, response, new Callable() {
+			forwardUrl = (String)runWithErrorPage(request, response, new Callable() {
 				public Object call() throws Exception {
 					wrappedDoPost(request, response);
 					return null;
 				}
 			});
 		}
+		
+		if (forwardUrl != null)
+			request.getRequestDispatcher(forwardUrl).forward(request, response);
 	}
 	
 	@Override

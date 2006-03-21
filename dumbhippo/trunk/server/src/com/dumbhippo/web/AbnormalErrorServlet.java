@@ -69,9 +69,10 @@ public class AbnormalErrorServlet extends AbstractServlet {
     }
     
     @Override
-    protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+    protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
     	HumanVisibleException, IOException, ServletException {
     	handleRequest(request, response);
+    	return null;
     }
     
     @Override

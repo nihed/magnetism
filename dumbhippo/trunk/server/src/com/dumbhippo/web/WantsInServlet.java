@@ -28,7 +28,7 @@ public class WantsInServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, HttpException, HumanVisibleException {
 		String address = request.getParameter("address");
 		if (address != null)
@@ -44,6 +44,8 @@ public class WantsInServlet extends AbstractServlet {
 		out.write(("<head><title>Saved your address</title></head>\n"
 				+ " <body><p>We saved your address; we'll let you know when we have room for more.</p><p>Thanks!</p></body>\n").getBytes());
 		out.flush();
+		
+		return null;
 	}
 
 	@Override

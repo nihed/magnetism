@@ -145,12 +145,13 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, HumanVisibleException {
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, HumanVisibleException {
 		DiskFileUpload upload = new DiskFileUpload();
 		upload.setSizeMax(MAX_FILE_SIZE);
 
 		try {
 				startUpload(request, response, upload, upload.parseRequest(request));
+				return null;
 		} catch (FileUploadException e) {
 			// I don't have any real clue what this exception might be or indicate
 			logger.warn("File upload exception, investigate what this was", e);

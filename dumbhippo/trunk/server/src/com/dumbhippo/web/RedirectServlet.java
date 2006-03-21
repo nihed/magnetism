@@ -111,13 +111,15 @@ public class RedirectServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException, HumanVisibleException {
 		
 		setNoCache(response);
 		
 		if (!tryRedirectRequests(request, response))
 			throw new HttpException(HttpResponseCode.NOT_FOUND, "unknown redirect");
+		
+		return null;
 	}
 	
 	@Override

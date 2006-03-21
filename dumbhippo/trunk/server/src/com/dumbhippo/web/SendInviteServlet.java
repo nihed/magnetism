@@ -52,17 +52,17 @@ public class SendInviteServlet extends AbstractServlet {
 		request.setAttribute("email", email);
 		request.setAttribute("remaining", invitationSystem.getInvitations(user));
 		request.setAttribute("note", note);
-		request.getRequestDispatcher("/invitesent").forward(request, response);
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, HttpException, HumanVisibleException {
 		doSendInvite(request, response);
+		return "/invitesent";
 	}
 
 	@Override
 	protected boolean requiresTransaction() {
-		return false;
+		return true;
 	}
 }

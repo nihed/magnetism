@@ -304,7 +304,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException, HumanVisibleException {
 		
 		setNoCache(response);
@@ -317,6 +317,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 			invokeHttpRequest(glue, request, response);
 		}
+		
+		return null;
 	}
 	
 	@Override
@@ -329,6 +331,6 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 	@Override
 	protected boolean requiresTransaction() {
-		return false;
+		return true;
 	}
 }

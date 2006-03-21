@@ -34,7 +34,7 @@ public class SigninServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, HttpException, HumanVisibleException {
 
 		String address = request.getParameter("address");
@@ -79,6 +79,7 @@ public class SigninServlet extends AbstractServlet {
 				sess.invalidate();
 			
 			redirectToNextPage(request, response, next, null);
+			return null;
 		} else {
 			try {
 				signinSystem.sendSigninLink(address);
@@ -88,7 +89,7 @@ public class SigninServlet extends AbstractServlet {
 				throw e;
 			}
 			request.setAttribute("address", address);
-			request.getRequestDispatcher("/signinsent").forward(request, response);
+			return "/signinsent";
 		}
 	}
 
