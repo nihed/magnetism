@@ -30,10 +30,10 @@ public class AccountSystemBean implements AccountSystem {
 	public Account createAccountFromResource(Resource res) {
 		User user = new User();
 		user.setNickname(res.getDerivedNickname());
-		em.persist(user);
-		spider.addVerifiedOwnershipClaim(user, res);
 		Account account = new Account(user);
+		em.persist(user);
 		em.persist(account);
+		spider.addVerifiedOwnershipClaim(user, res);
 		spider.addVerifiedOwnershipClaim(user, account);
 		return account;
 	}
