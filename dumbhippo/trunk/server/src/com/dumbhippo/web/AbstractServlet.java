@@ -219,7 +219,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	
 	protected abstract boolean requiresTransaction();
 	
-	private void runWithTransaction(HttpServletRequest request, Callable func) {
+	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
 		long startTime = System.currentTimeMillis();
 		UserTransaction tx;
 		try {
@@ -237,8 +237,9 @@ public abstract class AbstractServlet extends HttpServlet {
 			throw new RuntimeException("Error starting transaction", e); 
 		}
 		try {
-			func.call();
+			Object result = func.call();
 			logger.debug("Handled {} in {} milliseconds", request.getPathInfo(), System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Throwable t) {
 			try {
 				// We don't try to duplicate the complicated EJB logic for whether
@@ -252,6 +253,10 @@ public abstract class AbstractServlet extends HttpServlet {
 			
 			if (t instanceof Error)
 				throw (Error)t;
+			else if (t instanceof HumanVisibleException)
+				throw (HumanVisibleException)t;
+			else if (t instanceof HttpException)
+				throw (HttpException)t;
 			else if (t instanceof RuntimeException)
 				throw (RuntimeException)t;
 			else
@@ -298,19 +303,16 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	// Instead of just forwarding http requests to the right handler, we surround
-	// them in a transaction if requested.  For JSPs, this doesn't have anything to do with 
-	// making atomic modifications - JSP pages are pretty much entirely
-	// readonly. Instead, the point is to get the entire page to use
-	// a single Hibernate session. This improves performance, since
+	// them in a transaction if requested. The point is to get the entire request 
+	// to use a single Hibernate session. This improves performance, since
 	// persistance beans are cached across the session, and also means
 	// that persistance beans returned to the web tier won't be detached.
 	//
 	// While we are add it, we time the request for performancing monitoring	
 	private Object runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable func) throws IOException, ServletException  {
 		return runWithErrorPage(request, response, new Callable() {
-			public Object call() {
-				runWithTransaction(request, func);
-				return null;
+			public Object call() throws Exception {
+				return runWithTransaction(request, func);
 			}
 		});
 	}
@@ -331,17 +333,15 @@ public abstract class AbstractServlet extends HttpServlet {
 					return wrappedDoPost(request, response);
 				}
 			});
-			if (forwardUrl != null) {
-				request.getRequestDispatcher(forwardUrl).forward(request, response);
-			}
 		} else {
 			forwardUrl = (String)runWithErrorPage(request, response, new Callable() {
 				public Object call() throws Exception {
-					wrappedDoPost(request, response);
-					return null;
+					return wrappedDoPost(request, response);
 				}
 			});
 		}
+		
+		logger.debug("Got forward URL {}", forwardUrl);
 		
 		if (forwardUrl != null)
 			request.getRequestDispatcher(forwardUrl).forward(request, response);
