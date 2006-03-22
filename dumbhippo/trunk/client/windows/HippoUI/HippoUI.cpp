@@ -572,7 +572,6 @@ HippoUI::create(HINSTANCE instance)
 
         g_timeout_add(2000, idleAddTestViewers, this);
 
-        /*
         linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
         linkshare.postId.setUTF8("2");
         linkshare.title.setUTF8("funny photo");
@@ -601,7 +600,6 @@ HippoUI::create(HINSTANCE instance)
         blogComment.content.setUTF8("Blah, blah, blah... Blah!");
 
         bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
-        */
     }
 
     return true;

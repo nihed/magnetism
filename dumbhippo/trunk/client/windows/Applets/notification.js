@@ -222,6 +222,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._bubble.setData(notification.data)
         this._updateNavigation()
         this._resetPageTimeout()
+        this._idleUpdateDisplay()        
     }
 
     this._updateNavigation = function() {
