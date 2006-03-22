@@ -68,15 +68,7 @@ public class JabberClient {
 	}
 	
 	public Packet take() {
-		while (true) {
-			if (!thread.isConnected())
-				return null;
-
-			try {
-				return incoming.take().getPacket();
-			} catch (InterruptedException e) {
-			}
-		}
+		return poll(60000); // 60 seconds
 	}
 	
 	public Packet poll(long timeout) {
@@ -85,7 +77,11 @@ public class JabberClient {
 				return null;
 
 			try {
-				return incoming.poll(timeout, TimeUnit.MILLISECONDS).getPacket();
+				PacketWrapper wrapper = incoming.poll(timeout, TimeUnit.MILLISECONDS);
+				if (wrapper != null)
+					return wrapper.getPacket();
+				else
+					return null;
 			} catch (InterruptedException e) {
 			}
 		}		

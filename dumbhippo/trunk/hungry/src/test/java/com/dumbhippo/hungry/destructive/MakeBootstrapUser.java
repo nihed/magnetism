@@ -25,6 +25,9 @@ public class MakeBootstrapUser extends Signin {
 		c.login();
 		assertTrue(c.isConnected());
 		Packet p = c.take();
+		if (p == null) {
+			throw new RuntimeException("Didn't receive xmpp packet after first user sign-on");
+		}
 		//System.out.println("Signing on post-invite, got packet: " + p.toXML());
 		if (!JabberClient.packetContains(p, "/account")) {
 			throw new RuntimeException("xmpp packet received after bootstrap user first sign-on didn't contain /account");
