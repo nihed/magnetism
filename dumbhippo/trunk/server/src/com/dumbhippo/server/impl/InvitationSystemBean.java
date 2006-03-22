@@ -592,15 +592,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
-		// Reattaching has been known to fail because of bugs in older
-		// versions of MySQL ... doing it first means we don't get the
-		// account half-created before things fail. (MySQL 4.1.11 had a
-		// problem here. 4.1.16 didn't.)
-		if (!em.contains (invite)) {
-			// re-attach
-			invite = em.find(InvitationToken.class, invite.getId());
-		}
-
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}

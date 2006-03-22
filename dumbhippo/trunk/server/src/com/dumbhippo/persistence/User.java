@@ -1,11 +1,18 @@
 package com.dumbhippo.persistence;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Person;
@@ -21,7 +28,9 @@ import com.dumbhippo.persistence.Person;
 public class User extends Person implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
 	
-	private Account account;
+	private Set<Account> accounts;
+	private Set<AccountClaim> accountClaims;
+
 	private int version;
 	
 	public User() {}
@@ -32,14 +41,30 @@ public class User extends Person implements VersionedEntity {
 		super(guid);
 	}
 	
-	@OneToOne(fetch=FetchType.LAZY, mappedBy="owner")
-	@JoinColumn(nullable=false)
-	public Account getAccount() {
-		return account;
+	// We use OneToMany here, because Hibernate can't cache
+	// a OneToOne inverse relationship (!). We then wrap it
+	// with a transient getter to get the singleton result.
+	// This should be READ_ONLY, but it seems to be impossible
+	// to properly initialize the combination of Acount
+	// and User in that case.
+	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	protected Set<Account> getAccounts() {
+		return accounts;
 	}
 	
-	void setAccount(Account account) {
-		this.account = account;
+	protected void setAccounts(Set<Account> accounts) {
+		this.accounts = accounts;
+	}
+	
+	@Transient
+	public Account getAccount() {
+		return accounts.iterator().next();
+	}
+	
+	@Transient
+	public void setAccount(Account account) {
+		this.accounts = Collections.singleton(account);
 	}
 	
 	@Column(nullable=false)
@@ -50,6 +75,18 @@ public class User extends Person implements VersionedEntity {
 	public void setVersion(int version) {
 		this.version = version;
 	}
+	
+	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<AccountClaim> getAccountClaims() {
+		if (accountClaims == null)
+			accountClaims = new HashSet<AccountClaim>();
+		return accountClaims;
+	}
+	
+	protected void setAccountClaims(Set<AccountClaim> accountClaims) {
+		this.accountClaims = accountClaims;
+	}	
 	
 	@Override
 	public String toString() {

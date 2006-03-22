@@ -222,7 +222,6 @@ public class PostingBoardBean implements PostingBoard {
 		
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
-		em.refresh(post); // Grab the post in this session
 		
 		sendPostNotifications(post, expandedRecipients, isTutorialPost);
 		
@@ -292,7 +291,7 @@ public class PostingBoardBean implements PostingBoard {
 	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
 			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
 		try {
-			return runner.runTaskInNewTransaction(new Callable<Post>() {
+			Post detached = runner.runTaskInNewTransaction(new Callable<Post>() {
 				public Post call() {
 					Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
@@ -302,6 +301,7 @@ public class PostingBoardBean implements PostingBoard {
 					return post;
 				}
 			});
+			return em.find(Post.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached

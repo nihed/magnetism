@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -7,6 +8,9 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.persistence.Person;
 
@@ -16,6 +20,7 @@ import com.dumbhippo.persistence.Person;
  * 
  * @author otaylor
  */
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
 public class Contact extends Person {
 	private static final long serialVersionUID = 1L;
@@ -42,8 +47,11 @@ public class Contact extends Person {
 	// The main reason for the inverse mapping is so that we can
 	// cascade removal to resources if we remove a contact.
 	
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	@OneToMany(cascade={ CascadeType.REMOVE }, mappedBy="contact")
 	public Set<ContactClaim> getResources() {
+		if (resources == null)
+			resources = new HashSet<ContactClaim>();
 		return resources;
 	}
 	

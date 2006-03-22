@@ -107,7 +107,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		final Track key = new Track(properties);
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<Track>() {
+			Track detached = runner.runTaskRetryingOnConstraintViolation(new Callable<Track>() {
 				
 				public Track call() throws Exception {
 					Query q;
@@ -129,6 +129,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
+			return em.find(Track.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -680,7 +681,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			data = null;
 		
 		try {
-			result = runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumResult>() {
+			AmazonAlbumResult detached = runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumResult>() {
 				
 				public AmazonAlbumResult call() {
 					AmazonAlbumResult r = albumResultQuery(artist, album);
@@ -701,6 +702,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}
 				
 			});
+			
+			result = em.find(AmazonAlbumResult.class, detached.getId());
 		} catch (Exception e) {
 			result = null;
 		}

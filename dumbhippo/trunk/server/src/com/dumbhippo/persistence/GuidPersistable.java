@@ -11,11 +11,15 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Transient;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public abstract class GuidPersistable implements Serializable {
 	private Guid guid;
 	

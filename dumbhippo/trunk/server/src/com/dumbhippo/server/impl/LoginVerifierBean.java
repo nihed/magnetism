@@ -55,7 +55,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		}
 
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<LoginToken>() {
+			LoginToken detached = runner.runTaskRetryingOnConstraintViolation(new Callable<LoginToken>() {
 
 				public LoginToken call() {
 					Query q;
@@ -80,6 +80,7 @@ public class LoginVerifierBean implements LoginVerifier {
 				}
 				
 			});
+			return em.find(LoginToken.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached

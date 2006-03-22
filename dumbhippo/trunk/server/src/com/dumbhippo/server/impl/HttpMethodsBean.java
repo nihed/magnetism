@@ -13,8 +13,6 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -57,9 +55,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			.getLogger(HttpMethodsBean.class);
 
 	private static final long serialVersionUID = 0L;
-
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
 
 	@EJB
 	private IdentitySpider identitySpider;
@@ -304,11 +299,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRenamePerson(User user, String name) {
-		// We can't use merge() here because of a bug in Hiberaate with merge()
-		// and the inverse side of a OneToOne relationship.
-		// http://opensource2.atlassian.com/projects/hibernate/browse/HHH-1004
-		User attachedUser = em.find(User.class, user.getId());
-		attachedUser.setNickname(name);
+		user.setNickname(name);
 	}
 
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType,

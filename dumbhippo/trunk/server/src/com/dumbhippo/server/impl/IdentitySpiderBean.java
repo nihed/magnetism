@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -95,20 +94,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupUserByResource(res);
 	}
 
-	private static final String LOOKUP_PERSON_BY_RESOURCE_QUERY =
-		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
-	
 	public User lookupUserByResource(Resource resource) {
-		if (resource instanceof Account)
-			return ((Account)resource).getOwner();
-		
-		try {
-			return (User) em.createQuery(LOOKUP_PERSON_BY_RESOURCE_QUERY)
-			.setParameter("resource", resource)
-			.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
-		}
+		return getUser(resource);
 	}
 
 	public User lookupUser(LiveUser luser) {
@@ -149,9 +136,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 		
 	public EmailResource getEmail(final String email) {
-		EmailResource ret;
 		try {
-			ret = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
+			EmailResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
 				
 				public EmailResource call() throws Exception {
 					Query q;
@@ -170,17 +156,17 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					return res;	
 				}			
 			});
+			
+			return em.find(EmailResource.class, detached.getId()); 
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
 		}
-		
-		return ret;
 	}
 	
 	public AimResource getAim(final String screenName) throws ValidationException {
 		try {
-			AimResource ret = runner.runTaskRetryingOnConstraintViolation(new Callable<AimResource>() {
+			AimResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<AimResource>() {
 				public AimResource call() {
 					Query q;
 					
@@ -203,7 +189,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}
 			});
 			
-			return ret;
+			return em.find(AimResource.class, detached.getId());
 		} catch (ValidationException e) {
 			throw e;
 		} catch (Exception e) {
@@ -234,7 +220,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public LinkResource getLink(final String link) {
 		try {
-			LinkResource ret = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
+			LinkResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
 	
 				public LinkResource call() throws Exception {
 					Query q;
@@ -254,7 +240,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}
 				
 			});
-			return ret;
+			
+			return em.find(LinkResource.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -263,7 +250,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public User getCharacter(final Character whichOne) {
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
+			User detached = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
 				public User call() {
 					EmailResource email = getEmail(whichOne.getEmail());
 					User user = getUser(email);
@@ -280,59 +267,55 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					return user;
 				}
 			});
+			
+			return em.find(User.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
 		}
 	}
 	
-	private static final String GET_RESOURCES_FOR_USER_QUERY = 
-		"SELECT r FROM Resource r, AccountClaim ac " +
-		    "WHERE r.id = ac.resource and ac.owner = :person ";
-	private static final String GET_RESOURCES_FOR_CONTACT_QUERY = 
-		"SELECT r FROM Resource r, ContactClaim cc " +
-		    "WHERE r.id = cc.resource and cc.contact = :person ";
-	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
-		String query;
 		if (person instanceof User) {
-			query = GET_RESOURCES_FOR_USER_QUERY;
-		} else if (person instanceof Contact){
-			query = GET_RESOURCES_FOR_CONTACT_QUERY;
+			for (AccountClaim ac : ((User)person).getAccountClaims()) {
+				Resource r = ac.getResource();
+				if (r instanceof EmailResource)
+					resources.add((Resource) r);
+				else if (r instanceof AimResource)
+					resources.add((Resource) r);
+				// we filter out any non-"primary" resources for now
+			}
+		} else if (person instanceof Contact) {
+			for (ContactClaim cc : ((Contact)person).getResources()) {
+				Resource r = cc.getResource();
+				if (r instanceof EmailResource)
+					resources.add((Resource) r);
+				else if (r instanceof AimResource)
+					resources.add((Resource) r);
+				// we filter out any non-"primary" resources for now
+			}
 		} else {
 			throw new IllegalArgumentException("person is not User or Contact: " + person);
 		}
 		
-		List results = em.createQuery(query).setParameter("person", person).getResultList();
-		
-		for (Object r : results) {
-			if (r instanceof EmailResource)
-				resources.add((Resource) r);
-			else if (r instanceof AimResource)
-				resources.add((Resource) r);
-			// we filter out any non-"primary" resources for now
-		}
-		
-		return resources;		
+		return resources;
 	}
 	
-	// this can return multiple accounts, one for each resource 
-	// associated with the contact; in that case we pick an account
-	// arbitrarily
-	private static final String GET_USER_FOR_CONTACT_QUERY = 
-		"SELECT ac.owner FROM ContactClaim cc, AccountClaim ac " +
-		    "WHERE cc.contact = :contact AND ac.resource = cc.resource";
-	
 	private User getUserForContact(Contact contact) {
-		try {
-			return (User)em.createQuery(GET_USER_FOR_CONTACT_QUERY)
-				.setParameter("contact", contact)
-				.setMaxResults(1)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
-		}		
+		for (ContactClaim cc : contact.getResources()) {
+			Resource resource = cc.getResource();
+			if (resource instanceof Account)
+				return ((Account)resource).getOwner();
+			else {
+				AccountClaim ac = resource.getAccountClaim();
+				if (ac != null) {
+					return ac.getOwner();
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	public User getUser(Person person) {
@@ -349,20 +332,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	private static final String GET_USER_FOR_RESOURCE_QUERY = 
-		"SELECT ac.owner FROM AccountClaim ac WHERE ac.resource = :resource";
-	
 	public User getUser(Resource resource) {
 		if (resource instanceof Account)
 			return ((Account)resource).getOwner();
 		else {
-			try {
-				return (User)em.createQuery(GET_USER_FOR_RESOURCE_QUERY)
-					.setParameter("resource", resource)
-					.getSingleResult();
-			} catch (EntityNotFoundException e) {
-				return null;
-			}
+			AccountClaim ac = resource.getAccountClaim();
+			if (ac != null)
+				return ac.getOwner();
+			
+			return null;
 		}
 	}
 	
@@ -535,9 +513,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
 		AccountClaim ac = new AccountClaim(claimedOwner, res);
 		em.persist(ac);
+		
+		// Update inverse mappings
+		res.setAccountClaim(ac);
+		claimedOwner.getAccountClaims().add(ac);
 	}
 
-	static final String FIND_CONTACT_BY_USER_QUERY =
+	private static final String FIND_CONTACT_BY_USER_QUERY =
 		"SELECT cc.contact FROM Account contactAccount, ContactClaim cc " +
 		"WHERE contactAccount.owner = :contactUser " +
 		  "AND cc.account = :account AND cc.resource = contactAccount";
@@ -553,36 +535,47 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	static final String FIND_CONTACT_BY_RESOURCE_QUERY =
-		"SELECT cc.contact FROM ContactClaim cc " +
-		"WHERE cc.account = :account AND cc.resource = :resource";
-		
 	private Contact findContactByResource(User owner, Resource resource) {
-		try {
-			return (Contact)em.createQuery(FIND_CONTACT_BY_RESOURCE_QUERY)
-				.setParameter("account", owner.getAccount())
-				.setParameter("resource", resource)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
+		Account account = owner.getAccount();
+		Set<Contact> contacts = account.getContacts();
+		for (Contact contact : contacts) {
+			for (ContactClaim cc : contact.getResources()) {
+				Resource r = cc.getResource();
+				if (r != null && r.equals(resource))
+					return contact;
+			}
 		}
+		
+		return null;
 	}
 	
 	private Contact doCreateContact(User user, Resource resource) {
-		// FIXME: add to contact.getResources(). I'm not sure how
-		// to do that without causing a database query, however.
-		// I suppose we could have contact.addResource() that bypassed
-		// the interception on getResources().
-		
-		Contact contact = new Contact(user.getAccount());
+		Account account = user.getAccount();
+		Contact contact = new Contact(account);
 
 		// FIXME we don't want contacts to have nicknames, so leave it null for 
 		// now, but eventually we should change the db schema 
 		//contact.setNickname(resource.getHumanReadableString());
 		em.persist(contact);
 		
+
+		// Updating the inverse mappings is essential since they are cached; 
+		// if we don't update them the second-level cache will contain stale data. 
+		// Updating them won't actually update the data in the second-level cache for
+		// a non-transactional cache; rather it will flag the data to be reloaded
+		// from the database.
+		//
+		// In order to add the contact to the account's list of contacts
+		// or to add the contact claim to the account's list of resources
+		// we need to load the set of existing values; the second-level
+		// cache makes that cheap. 
+		
+		account.addContact(contact);
+
 		ContactClaim cc = new ContactClaim(contact, resource);
 		em.persist(cc);
+		
+		contact.getResources().add(cc);
 		
 		return contact;
 	}
@@ -599,19 +592,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 			// Things work better (especially for now, when we don't fully
 			// implement spidering) if contacts own the account resource for
-			// users.
+			// users, and not just the EmailResource
 			if (!(resource instanceof Account)) {
 				User contactUser = lookupUserByResource(resource);
 				
 				if (contactUser != null) {
 					ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());
-					em.persist(cc);
+					em.persist(cc);					
+					contact.getResources().add(cc);
 					logger.debug("Added contact resource {} pointing to account {}",
 							cc.getContact(), cc.getAccount());
 				}
 			}
 		}
-			
 		
 		return contact;
 	}
@@ -696,26 +689,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	static final String IS_CONTACT_QUERY = 
-		"SELECT COUNT(cc.contact) FROM Account contactAccount, AccountClaim ac, ContactClaim cc " +
-		"WHERE contactAccount.owner = :contactUser " +
-		"AND ac.owner = :contactUser " +
-		"AND cc.account = :contactOfAccount " + 
-		"AND cc.resource = ac.resource";
-	
 	private boolean isContactNoViewpoint(User user, User contactUser) {
-		// According to the spec, a count query should return a Long, Hibernate
-		// returns an Integer. We use (Number) to be robust
-		try {
-			Number count = (Number)em.createQuery(IS_CONTACT_QUERY)
-				.setParameter("contactUser", contactUser)
-				.setParameter("contactOfAccount", user.getAccount())
-				.getSingleResult();
-			
-			return count.longValue() > 0;
-		} catch (EntityNotFoundException e) {
-			throw new RuntimeException("count query should never fail in isContactNoViewpoint", e);
+		for (Contact contact : contactUser.getAccount().getContacts()) {
+			for (ContactClaim cc : contact.getResources()) {
+				AccountClaim ac = cc.getResource().getAccountClaim();
+				if (ac != null && ac.getOwner().equals(user))
+					return true;
+			}
 		}
+		
+		return false;
 	}
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
@@ -769,8 +752,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	private Account getMaybeDetachedAccount(User user) {
-		Account account = user.getAccount();
-		if (account == null) // must have been detached
+		Account account = null;
+		if (em.contains(user))
+			account = user.getAccount();
+		if (account == null || !em.contains(account))
 			account = accountSystem.lookupAccountByUser(user);
 		return account;
 	}
