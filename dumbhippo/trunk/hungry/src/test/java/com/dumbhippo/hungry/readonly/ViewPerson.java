@@ -27,6 +27,6 @@ public class ViewPerson extends SignedInPageTestCase {
 
 	public void validatePage() {
 		t.assertLinkPresentWithText("Home");
-		t.assertTextPresent("People They Know");
+		t.assertTextPresent("Public Page");
 	}
 }
