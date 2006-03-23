@@ -344,4 +344,6 @@ public interface MessengerGlueRemote {
 	public Map<String,String> getPrefs(String username);
 	
 	public Hotness getUserHotness(String username);
+	
+	public String getRecentPostsXML(String username);
 }

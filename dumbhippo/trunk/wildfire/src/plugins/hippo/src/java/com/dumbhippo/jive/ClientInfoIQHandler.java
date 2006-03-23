@@ -15,7 +15,7 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
 	public ClientInfoIQHandler() {
 		super("Dumbhippo clientInfo IQ Handler");
 		Log.debug("creating ClientInfoIQHandler");
-		info = new IQHandlerInfo("method", "http://dumbhippo.com/protocol/clientinfo");
+		info = new IQHandlerInfo("clientInfo", "http://dumbhippo.com/protocol/clientinfo");
 	}
 
 	@Override

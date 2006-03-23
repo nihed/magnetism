@@ -32,7 +32,8 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new MySpaceIQHandler());					
 			iqRouter.addHandler(new MusicIQHandler());
 			iqRouter.addHandler(new PrefsIQHandler());
-			iqRouter.addHandler(new HotnessIQHandler());		
+			iqRouter.addHandler(new HotnessIQHandler());
+			iqRouter.addHandler(new RecentPostsIQHandler());
 			Log.debug("Adding PresenceMonitor");
 			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();

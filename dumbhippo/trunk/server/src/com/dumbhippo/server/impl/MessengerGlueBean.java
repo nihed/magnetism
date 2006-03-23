@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,18 +14,22 @@ import javax.ejb.Stateless;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MySpaceBlogComment;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
@@ -32,6 +37,7 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Viewpoint;
 
@@ -333,5 +339,51 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		User user = userFromTrustedUsername(username);
 		LiveState state = LiveState.getInstance();
 		return state.getLiveUser(user.getGuid()).getHotness();
+	}
+	
+	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
+	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
+	
+	public String getRecentPostsXML(String username) {
+		User user = getUserFromUsername(username);
+		Viewpoint viewpoint = new Viewpoint(user);
+		List<PostView> views = postingBoard.getReceivedPosts(viewpoint, user, 0, 4);		
+		LiveState liveState = LiveState.getInstance();
+
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement(RECENT_POSTS_ELEMENT_NAME, "xmlns", RECENT_POSTS_NAMESPACE);
+		
+		Set<EntityView> viewerEntities = new HashSet<EntityView>();
+		
+		for (PostView postView : views) {
+			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid());
+			for (Guid guid : lpost.getViewers()) {
+				Person viewer;
+				try {
+					viewer = identitySpider.lookupGuid(Person.class, guid);
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+			}
+			
+			
+			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, postView.getPost())) {
+				viewerEntities.add(ev);
+			}			
+		}
+		
+		for (EntityView ev : viewerEntities) {
+			builder.append(ev.toXml());
+		}
+		
+		for (PostView postView : views) {
+			builder.append(postView.toXml());
+			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid()); 
+			builder.append(lpost.toXml());
+		}
+		
+		builder.closeElement();
+		return builder.toString();
 	}
 }
