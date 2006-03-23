@@ -723,6 +723,25 @@ HippoIM::getHotness()
 }
 
 void
+HippoIM::getRecentPosts()
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "recentPosts", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/post");
+    LmMessageHandler *handler = lm_message_handler_new(onGetRecentPostsReply, this, NULL);
+
+    sendMessage(message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    ui_->debugLogU("Sent request for recent posts");
+}
+
+void
 HippoIM::getMySpaceSeenBlogComments()
 {
     LmMessage *message;
@@ -1194,6 +1213,7 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
     // Next get the MySpace info and current hotness
     im->getMySpaceName();
     im->getHotness();
+    im->getRecentPosts();
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1338,6 +1358,29 @@ HippoIM::onGetHotnessReply(LmMessageHandler *handler,
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
+LmHandlerResult
+HippoIM::onGetRecentPostsReply(LmMessageHandler *handler,
+                               LmConnection     *connection,
+                               LmMessage        *message,
+                               gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    LmMessageNode *child = message->node->children;
+
+    hippoDebugLogW(L"Got reply for getRecentPosts");
+
+    if (!messageIsIqWithNamespace(im, message, "http://dumbhippo.com/protocol/post", "recentPosts")) {
+        hippoDebugLogW(L"Mismatched getRecentPosts reply");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    HippoPost post;
+    im->parsePostStream(child, "onGetRecentPostsReply", &post);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
 bool
 HippoIM::handleHotnessMessage(LmMessage *message)
 {
@@ -1432,9 +1475,7 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
         return false;
     HippoBSTR postId;
     postId.setUTF8(attr);
-    HippoDataCache cache;
-
-    cache = ui_->getDataCache();
+    HippoDataCache &cache = ui_->getDataCache();
 
     if (!cache.getPost(postId, post))
         return false;
@@ -1465,6 +1506,8 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
     if (!(node && node->value))
         return false;
     post->totalViewers = strtol(node->value, NULL, 10);
+
+    cache.addPost(*post);
 
     return true;
 }
@@ -1581,8 +1624,9 @@ HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
 
     node = lm_message_node_get_child (postNode, "text");
     if (!(node && node->value))
-        return false;
-    post->description.setUTF8(node->value);
+        post->description.setUTF8("");
+    else
+        post->description.setUTF8(node->value);
 
     node = lm_message_node_get_child (postNode, "postInfo");
     if (!(node && node->value))
@@ -1598,6 +1642,7 @@ HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
     node = lm_message_node_get_child (postNode, "recipients");
     if (!node)
         return false;
+    post->recipients.clear();
     LmMessageNode *subchild;
     for (subchild = node->children; subchild; subchild = subchild->next) {
         HippoBSTR id;
@@ -1605,6 +1650,9 @@ HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
             return false;
         post->recipients.push_back(id);
     }
+
+    ui_->getDataCache().addPost(*post);
+
     return true;
 }
 

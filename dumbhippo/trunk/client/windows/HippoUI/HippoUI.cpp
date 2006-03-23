@@ -478,10 +478,9 @@ static gboolean
 idleAddTestViewers(gpointer data)
 {
     HippoUI *ui = (HippoUI*)data;
-    HippoDataCache cache;
+    HippoDataCache &cache = ui->getDataCache();
     HippoPost linkshare;
 
-    cache = ui->getDataCache();
     if (!cache.getPost(HippoBSTR(L"42"), &linkshare))
         return FALSE;
 
@@ -1145,11 +1144,13 @@ HippoUI::onLinkMessage(HippoPost &post, bool isNew)
 {
     if (!isNew) {
         post.haveViewed = true;
+        dataCache_.addPost(post);
     }
-    dataCache_.addPost(post);
     bubble_.setLinkNotification(false, post);
-    post.haveViewed = true;
-    dataCache_.addPost(post);
+    if (isNew) {
+        post.haveViewed = true;
+        dataCache_.addPost(post);
+    }
 }
 
 void 
@@ -1810,7 +1811,6 @@ HippoUI::clearActivePosts()
 void 
 HippoUI::addActivePost(const HippoPost &post)
 {
-    dataCache_.addPost(post);
     menu_.addActivePost(post);
 }
 

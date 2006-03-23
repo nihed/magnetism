@@ -87,6 +87,7 @@ private:
     void getClientInfo();
     void getMySpaceName();
     void getHotness();
+    void getRecentPosts();
 
     void startSignInTimeout();
     void stopSignInTimeout();
@@ -183,6 +184,10 @@ private:
                                              LmConnection     *connection,
                                              LmMessage        *message,
                                              gpointer          userData);
+    static LmHandlerResult onGetRecentPostsReply(LmMessageHandler *handler,
+                                                 LmConnection     *connection,
+                                                 LmMessage        *message,
+                                                 gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,

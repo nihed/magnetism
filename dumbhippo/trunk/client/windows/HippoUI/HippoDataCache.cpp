@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "HippoDataCache.h"
 
+HippoDataCache::HippoDataCache()
+{
+}
+
 void
 HippoDataCache::addEntity(const HippoEntity &entity)
 {

@@ -55,6 +55,7 @@ struct HippoPost
 class HippoDataCache
 {
 public:
+    HippoDataCache();
     void addPost(const HippoPost &share);
     void addEntity(const HippoEntity &person);
     bool getPost(BSTR postId, HippoPost *post);
@@ -65,4 +66,7 @@ public:
 private:
     std::map<HippoBSTR, HippoEntity> entities_;
     std::map<HippoBSTR, HippoPost> posts_;
+
+    HippoDataCache(const HippoDataCache &other) {}
+    HippoDataCache &operator=(const HippoDataCache &other);
 };
