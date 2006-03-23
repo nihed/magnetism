@@ -31,15 +31,23 @@ HippoBubble::HippoBubble(void)
     layerDC_ = NULL;
     oldBitmap_ = NULL;
  
-
-    // Note that if you are tempted to call setAnimate(true) here to enable fading in,
-    // as well as fading out, then you'll probably have difficulties the second time
-    // you show the window ... it appears that the web browser control has some 
+    // Notes on animation
+    // 
+    // * Without our usage of UpdateLayeredWindow, it would fade the window in and
+    // out using AnimateWindow, but you turn on fading in then you'll probably have difficulties 
+    // the second time you show the window ... it appears that the web browser control has some 
     // bugs with WM_PRINTCLIENT; the first time the contents of the window are properly
     // initialized before fade-in, but on subsequent shows they are not. A crude
     // workaround might be to reembed a new control every time, but there are probably
     // less sledgehammer methods. Even without animation there are sometimes problems
-    // with reshowing the window, which is why we turn on updateOnShow();
+    // with reshowing the window, which is why we turn on updateOnShow(). (This may
+    // no longer be necessary with our usage of UpdateLayeredWindow())
+    //
+    // * AnimateWindow isn't compatible with UpdateLayeredWindow() ... when you start
+    // animating the window, the shape is removed. This is presumably because AnimateWindow
+    // internally uses SetLayeredWindowAttributes, which is exclusive with UpdateLayeredWindow
+    // So to animate a shaped window, we'd have to fade the bits in and out ourselves.
+    //
     setUseParent(true);
     setUpdateOnShow(true);
     setWindowStyle(WS_POPUP);
@@ -395,13 +403,13 @@ HippoBubble::doClose()
         updateIdle();
     }
 
-    // Don't animate if the screenSaver is starting, otherwise we fade out (see comments
-    // in the constructor for problems if you want to fade *in* as well.)
-    if (!screenSaverRunning_)
-        setAnimate(true);
+    // See comments in the constructor for why we'd want to only fade out, not in 
+    // and why we aren't turning on fading at all at the moment
+    // if (!screenSaverRunning_)
+    //    setAnimate(true);
     hide();
-    if (!screenSaverRunning_)
-        setAnimate(false);
+    // if (!screenSaverRunning_)
+    //    setAnimate(false);
 }
 
 STDMETHODIMP
@@ -562,9 +570,13 @@ HippoBubble::UpdateDisplay()
     blend.SourceConstantAlpha = 0xff;
     blend.AlphaFormat = AC_SRC_ALPHA;
 
-    if (!UpdateLayeredWindow(window_, NULL, NULL, &size, layerDC_, &srcPoint, 0, &blend, ULW_ALPHA)) {
-        hippoDebugLastErr(L"Can't update layered window");
-        return E_FAIL;
+    // If AnimateWindow() was used to fade the window out, we'd need to force the WS_EX_LAYERED back into 
+    // the extended attributes. But that's incompatible with the shape anyways so there isn't much point
+    // in using it
+    // SetWindowLong(window_, GWL_EXSTYLE, extendedStyle_);
+    if (!UpdateLayeredWindow(window_, NULL, NULL, &size, layerDC_, &srcPoint, NULL, &blend, ULW_ALPHA)) {
+        hippoDebugLogW(L"Can't update layered window");
+        // Ignore the failure, if we return an error, the user will get a Javascript dialog
     }
 
     // The bitmap will be kept referenced by layerDC_, we can drop our reference now
