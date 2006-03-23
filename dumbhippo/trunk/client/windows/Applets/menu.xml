@@ -11,7 +11,7 @@
     <body scroll="no">
             <div id="dhActivePosts">
             </div>
-            <div class="dh-menu-div"><span class="dh-menu-link"><a href="#" onclick="dh.display.showRecent()" id="dhMenuRecent">Recent Links</a> (<span id="recentLinkCount"/>)</span></div>
+            <div class="dh-menu-div"><a href="#" onclick="dh.display.showRecent()" id="dhMenuRecent" class="dh-menu-link">Recent Links (<span id="dhRecentLinkCount"/>)</a></div>
 <!--            <div class="dh-menu-div"><a href="#" onclick="dh.display.showHot()" id="dhMenuHot" class="dh-menu-link">What's Hot</a><br/></div> -->
             <div class="dh-menu-div"><a href="#" onclick="dh.display.showHome()" id="dhMenuHome" class="dh-menu-link">Your Home</a><br/></div>
 <!--            <a href="#" onclick="dh.display.exit()" id="dhMenuExit" class="dh-menu-link">Exit</a> -->

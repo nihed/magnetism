@@ -22,7 +22,7 @@ HippoBubbleList::HippoBubbleList(void)
     hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoBubbleList, &ifaceTypeInfo_, NULL);
 
     setClassName(L"HippoBubbleListClass");
-    setTitle(L"Hippo Bubble List");
+    setTitle(L"Recent Links");
     setApplication(this);
 }
 
@@ -83,11 +83,20 @@ HippoBubbleList::initializeBrowser()
     HippoBSTR selfID;
     ui_->GetLoginId(&selfID);
 
+    // Find the maximum vertical size that we can make the window's contents
+    RECT desktopRect;
+    HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
+
+    RECT r = { 0, 0, 100, 100 };
+    AdjustWindowRectEx(&r, windowStyle_, FALSE, extendedStyle_);
+    int maxVerticalSize = (desktopRect.bottom - desktopRect.top) - (r.bottom - r.top) + 100;
+
     ui_->debugLogU("Invoking dhInit");
     ie_->createInvocation(L"dhInit")
         .add(serverURL)
         .add(appletURL)
         .add(selfID)
+        .addLong(maxVerticalSize)
         .run();
 }
     
@@ -159,22 +168,8 @@ HippoBubbleList::addLinkShare(const HippoPost &share)
         .addStringVector(share.viewers)
         .add(share.info)
         .addLong(share.timeout)
+        .addBool(share.haveViewed)
         .getResult(&result);
-
-    if (result.vt != VT_BOOL) {
-        ui_->debugLogU("dhAddLinkShare returned invalid type");
-        return;
-    }
-    // Only show the bubble both if dhAddLinkShare says we should,
-    // and the share isn't active elsewhere (e.g. in a browser frame)
-    if (!result.boolVal) {
-        ui_->debugLogU("dhAddLinkShare returned false");
-        return;
-    }
-    if (ui_->isShareActive(share.postId.m_str)) {
-        ui_->debugLogW(L"chat is active for postId %s, not showing", share.postId);
-        return;
-    }
 }
 
 void

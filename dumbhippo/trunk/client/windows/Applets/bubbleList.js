@@ -8,16 +8,19 @@ dh.bubblelist = {}
 dh.display = null;
 
 // Global function called immediately after document.write
-var dhInit = function(serverUrl, appletUrl, selfId) {
+var dhInit = function(serverUrl, appletUrl, selfId, maxVerticalSize) {
     dh.util.debug("invoking dhInit")
     
     // Set some global parameters
     dh.selfId = selfId       // Current user ID
     dh.serverUrl = serverUrl // Base URL to server-side web pages
     dh.appletUrl = appletUrl // Base URL to local content files
+    dh.maxVerticalSize = maxVerticalSize // Maximum size of content area vertically
     
     dh.display = new dh.bubblelist.Display(serverUrl, appletUrl, selfId); 
 }
+
+dh.bubblelist.BUBBLE_MARGIN = 3 // Margin around bubbles (collapses between)
 
 dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -59,7 +62,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
                 
                 old.bubble.setData(share)
                 document.body.removeChild(old.div)
-                document.body.insertBefore(old.div, body)
+                document.body.insertBefore(old.div, document.body.firstChild)
                 return
             }
         }
@@ -88,18 +91,24 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     
     this._updateSize = function() {
         var width = 0
-        var height = 0
+        var height = dh.bubblelist.BUBBLE_MARGIN
         for (var i = 0; i < this.notifications.length; i++) {
             var bubble = this.notifications[i].bubble
-            var bubbleWidth = bubble.getWidth()
+            var bubbleWidth = bubble.getWidth() + 2 * dh.bubblelist.BUBBLE_MARGIN
             var bubbleHeight = bubble.getHeight()
             
-            this.notifications[i].div.style.height = (bubbleHeight + 2) + "px"
-            this.notifications[i].div.style.border = "solid 1px gray"
+            this.notifications[i].div.style.height = bubbleHeight + "px"
             
-            if (bubbleWidth + 2 > width)
-                width = bubbleWidth + 2
-            height += bubbleHeight + 2
+            if (bubbleWidth > width)
+                width = bubbleWidth
+            height += bubbleHeight + dh.bubblelist.BUBBLE_MARGIN
+        }
+        if (height > dh.maxVerticalSize) {
+            height = dh.maxVerticalSize
+            width += 17; // Scrollbar width
+            document.body.scroll = "yes"
+        } else {
+            document.body.scroll = "no"
         }
         window.external.application.Resize(width, height)
     }
@@ -116,20 +125,39 @@ dhAdaptLinkRecipients = function (recipients) {
 
 // Global namespace since it's painful to do anything else from C++
 
+dhAddPerson = function (id, name, smallPhotoUrl) 
+{
+    dh.util.debug("adding person " + id + " " + name + " " + smallPhotoUrl)
+    var person = new dh.bubble.Person(id, name, smallPhotoUrl)
+    dh.bubble.addEntity(person)
+}
+
+dhAddResource = function (id, name) 
+{
+    dh.util.debug("adding resource " + id + " " + name)
+    var res = new dh.bubble.Resource(id, name)
+    dh.bubble.addEntity(res)
+}
+
+dhAddGroup = function (id, name, smallPhotoUrl) 
+{
+    dh.util.debug("adding group " + id + " " + name + " " + smallPhotoUrl)
+    var grp = new dh.bubble.Group(id, name, smallPhotoUrl)
+    dh.bubble.addEntity(grp)
+}
+
 // Note if you change the parameters to these function, you must change HippoBubbleList.cpp
 
-dhAddLinkShare = function (senderName, senderId, senderPhotoUrl, postId, linkTitle, 
-                           linkURL, linkDescription, personRecipients, groupRecipients, 
-                           viewers, postInfo, timeout) {
-    dh.bubble.addPersonName(senderId, senderName)
-    personRecipients = dhAdaptLinkRecipients(personRecipients)
-    groupRecipients = dh.core.adaptExternalArray(groupRecipients)
-    viewers = dhAdaptLinkRecipients(viewers)
+dhAddLinkShare = function (senderId, postId, linkTitle,
+                           linkURL, linkDescription, recipients,
+                           viewers, postInfo, timeout, viewerHasViewed) {
+    viewers = dh.core.adaptExternalArray(viewers)
+    recipients = dh.core.adaptExternalArray(recipients)
     
-    var data = new dh.bubble.PostData(senderName, senderId, senderPhotoUrl, postId, linkTitle, 
-                                      linkURL, linkDescription, personRecipients, groupRecipients, 
-                                      viewers, postInfo)
-    return dh.display.addLinkShare(data)
+    var data = new dh.bubble.PostData(senderId, postId, linkTitle, 
+                                      linkURL, linkDescription, recipients, 
+                                      viewers, postInfo, viewerHasViewed)
+    dh.display.addLinkShare(data)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
@@ -137,6 +165,6 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
     dh.display.addMySpaceComment(data)
 }
 
-dhBubbleListCLear = function () {
+dhBubbleListClear = function () {
     dh.display.clear()
 }

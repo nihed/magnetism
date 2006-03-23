@@ -53,10 +53,19 @@ dh.menu.Menu = function() {
     }
     
     this.setRecentCount = function(count) {
-        var linkCountSpan = document.getElementById("recentLinkCount")
+        var linkCountSpan = document.getElementById("dhRecentLinkCount")
         dh.util.dom.clearNode(linkCountSpan)
-        dh.util.debug("recent link count: " + count)
         linkCountSpan.appendChild(document.createTextNode(count))
+        
+        var linkSpan = document.getElementById("dhMenuRecent")
+        if (count == 0) {
+            linkSpan.className = "dh-menu-link-disabled"
+            linkSpan.disabled = true
+        }
+        else {
+            linkSpan.className = "dh-menu-link"
+            linkSpan.disabled = false
+        }
     }    
     
     // Compute our desired size

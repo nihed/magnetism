@@ -8,6 +8,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoBubble.h"
+#include "HippoBubbleList.h"
 #include "HippoChatWindow.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
@@ -238,6 +239,7 @@ private:
     HippoMySpace *mySpace_;
     HippoDataCache dataCache_;
 
+    HippoBubbleList *recentPostList_;
     HippoRemoteWindow *currentShare_;
     HippoRemoteWindow *upgradeWindow_;
     HippoRemoteWindow *signinWindow_;

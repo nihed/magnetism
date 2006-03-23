@@ -91,6 +91,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     screenSaverRunning_ = FALSE;
     checkIdleTimeoutId_ = 0;
 
+    recentPostList_ = NULL;
     currentShare_ = NULL;
     upgradeWindow_ = NULL;
     signinWindow_ = NULL;
@@ -98,6 +99,9 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
 HippoUI::~HippoUI()
 {
+    if (recentPostList_)
+        delete recentPostList_;
+
     DestroyIcon(smallIcon_);
     DestroyIcon(bigIcon_);
     DestroyIcon(trayIcon_);
@@ -267,15 +271,24 @@ HippoUI::ShowMissed()
 STDMETHODIMP
 HippoUI::ShowRecent()
 {
+    if (!recentPostList_) {
+        recentPostList_ = new HippoBubbleList();
+        recentPostList_->setUI(this);
+        recentPostList_->create();
+    } else {
+        recentPostList_->clear();
+    }
+
     std::vector<HippoPost> recent;
     dataCache_.getRecentPosts(recent);
     std::vector<HippoPost>::const_iterator it = recent.begin();
     while (it != recent.end()) {
-        HippoPost post = *it;
-        bubble_.setLinkNotification(true, post);
-        bubble_.show();
+        recentPostList_->addLinkShare(*it);
         it++;
     }
+
+    recentPostList_->show();
+
     return S_OK;
 }
 

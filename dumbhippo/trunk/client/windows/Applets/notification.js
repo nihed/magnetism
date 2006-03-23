@@ -16,30 +16,6 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
     dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
-dh.notification.Person = function (id, name, smallPhotoUrl) {
-    this.id = id
-    this.name = name
-    this.smallPhotoUrl = smallPhotoUrl
-}
-
-dh.notification.Resource = function (id, name) {
-    this.id = id
-    this.name = name
-}
-
-dh.notification.Group = function (id, name, smallPhotoUrl) {
-    this.id = id
-    this.name = name
-    this.smallPhotoUrl = smallPhotoUrl
-}
-
-// Global hash of id -> entity  (a Person, Resource, or Group)
-dh.notification._entities = {};
-
-dh.notification.findEntity = function (id) {
-    return dh.notification._entities[id]
-}
-
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
     this._idle = false
@@ -328,22 +304,22 @@ dhAdaptLinkRecipients = function (recipients) {
 dhAddPerson = function (id, name, smallPhotoUrl) 
 {
     dh.util.debug("adding person " + id + " " + name + " " + smallPhotoUrl)
-    var person = new dh.notification.Person(id, name, smallPhotoUrl)
-    dh.notification._entities[id] = person
+    var person = new dh.bubble.Person(id, name, smallPhotoUrl)
+    dh.bubble.addEntity(person)
 }
 
 dhAddResource = function (id, name) 
 {
     dh.util.debug("adding resource " + id + " " + name)
-    var res = new dh.notification.Resource(id, name)
-    dh.notification._entities[id] = res
+    var res = new dh.bubble.Resource(id, name)
+    dh.bubble.addEntity(res)
 }
 
 dhAddGroup = function (id, name, smallPhotoUrl) 
 {
     dh.util.debug("adding group " + id + " " + name + " " + smallPhotoUrl)
-    var grp = new dh.notification.Group(id, name, smallPhotoUrl)
-    dh.notification._entities[id] = grp
+    var grp = new dh.bubble.Group(id, name, smallPhotoUrl)
+    dh.bubble.addEntity(grp)
 }
 
 // Note if you change the parameters to this function, you must change

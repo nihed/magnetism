@@ -5,10 +5,43 @@
 dh.bubble = {} 
 
 //////////////////////////////////////////////////////////////////////////////
+// Keep track about information about entities such as Persons, Groups, etc.
+//////////////////////////////////////////////////////////////////////////////
+
+dh.bubble.Person = function(id, name, smallPhotoUrl) {
+    this.id = id
+    this.name = name
+    this.smallPhotoUrl = smallPhotoUrl
+}
+
+dh.bubble.Resource = function(id, name) {
+    this.id = id
+    this.name = name
+}
+
+dh.bubble.Group = function(id, name, smallPhotoUrl) {
+    this.id = id
+    this.name = name
+    this.smallPhotoUrl = smallPhotoUrl
+}
+
+// Global hash of id -> entity  (a Person, Resource, or Group)
+dh.bubble._entities = {};
+
+dh.bubble.findEntity = function(id) {
+    return dh.bubble._entities[id]
+}
+
+dh.bubble.addEntity = function(entity) {
+    dh.bubble._entities[entity.id] = entity;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // Generic display code for a single notification bubble
 //////////////////////////////////////////////////////////////////////////////
     
-dh.bubble.BASE_WIDTH = 450
+dh.bubble.BASE_WIDTH = 399
+dh.bubble.NAVIGATION_WIDTH = 51
 dh.bubble.BASE_HEIGHT = 123
 dh.bubble.SWARM_HEIGHT = 180
     
@@ -187,7 +220,11 @@ dh.bubble.Bubble = function(includeNavigation) {
     // Get the width of the bubble's desired area
     // @return the desired width, in pixels
     this.getWidth = function() {
-        return dh.bubble.BASE_WIDTH
+        var width = dh.bubble.BASE_WIDTH
+        if (this._includeNavigation)
+            width += dh.bubble.NAVIGATION_WIDTH
+            
+        return width
     }
 
     // Get the height of the bubble's desired area
@@ -284,8 +321,10 @@ dh.bubble.Bubble = function(includeNavigation) {
             
             if (swarmDisplay) {
                 this._swarmDiv.style.display = "block"
+                this._swarmNavDiv.style.display = "block"
             } else {
                 this._swarmDiv.style.display = "none"
+                this._swarmNavDiv.style.display = "none"
             }
             
             this.onSizeChange()
@@ -323,7 +362,7 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     
     this.getPhotoSrc = function() {
         dh.util.debug("looking up entity" + this.senderId)
-        var ent = dh.notification.findEntity(this.senderId)
+        var ent = dh.bubble.findEntity(this.senderId)
         dh.util.debug("got entity " + ent)
         if (!ent)
             return ""
@@ -332,7 +371,7 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     }
     
     this.getPhotoTitle = function() {
-        var ent = dh.notification.findEntity(this.senderId)    
+        var ent = dh.bubble.findEntity(this.senderId)    
         return ent.name
     }
     
@@ -361,10 +400,10 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
         var i;
         for (i = 0; i < this.recipients.length; i++) {
             var recipId = this.recipients[i]
-            var ent = dh.notification.findEntity(recipId)
-            if ((ent instanceof dh.notification.Person) || (ent instanceof dh.notification.Resource)) {
+            var ent = dh.bubble.findEntity(recipId)
+            if ((ent instanceof dh.bubble.Person) || (ent instanceof dh.bubble.Resource)) {
                 personRecipients.push(ent)
-            } else if (ent instanceof dh.notification.Group) {
+            } else if (ent instanceof dh.bubble.Group) {
                 groupRecipients.push(ent)
             }
         }
@@ -379,7 +418,7 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
     this.appendViewersContent = function(bubble, parent) {
         var viewers = []
         for (var i = 0; i < this.viewers.length; i++) {
-            var ent = dh.notification.findEntity(this.viewers[i])
+            var ent = dh.bubble.findEntity(this.viewers[i])
             viewers.push(ent)          
         }
         if (viewers.length > 0) {

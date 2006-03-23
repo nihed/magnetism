@@ -3,4 +3,24 @@
 .dh-notification-top
 {
     position: relative;
+    margin: 3px;
 }
+
+.dh-left-img
+{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.dh-notification-leftside
+{
+    left: 13px;
+}
+
+.dh-notification-rightside
+{
+    left: 92px;
+}
+
+

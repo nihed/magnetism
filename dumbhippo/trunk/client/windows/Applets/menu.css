@@ -55,6 +55,11 @@ body
     width: 100%;
 }
 
+.dh-menu-div .dh-menu-link-disabled
+{
+    width: 100%;
+}
+
 .dh-menu-link
 {
     color: WindowText;
@@ -72,6 +77,19 @@ body
 {
     color: HighlightText;
     background-color: Highlight;
+}
+
+.dh-menu-link-disabled
+{
+    color: WindowText;
+    background-color: #eedd88;
+    padding: 5px;
+    text-decoration: none;
+}
+
+.dh-menu-link-disabled:visited
+{
+    color: WindowText;
 }
 
 #dhMenuExit

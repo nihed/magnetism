@@ -50,6 +50,12 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\bubbleLeft.png">
+		</File>
+		<File
+			RelativePath=".\bubbleLeftSwarm.png">
+		</File>
+		<File
 			RelativePath=".\bubbleList.css"
 			DeploymentContent="TRUE">
 		</File>
@@ -60,6 +66,18 @@
 		<File
 			RelativePath=".\bubbleList.xml"
 			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath=".\bubbleNavMask.png">
+		</File>
+		<File
+			RelativePath=".\bubbleNavMaskSwarm.png">
+		</File>
+		<File
+			RelativePath=".\bubbleRight.png">
+		</File>
+		<File
+			RelativePath=".\bubbleRightSwarm.png">
 		</File>
 		<File
 			RelativePath=".\clientstyle.xml"
