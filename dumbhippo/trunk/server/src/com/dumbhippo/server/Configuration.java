@@ -16,9 +16,12 @@ public interface Configuration {
 
 	static final public String HEADSHOTS_RELATIVE_PATH = "/headshots";
 	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
-	static final public String POSTINFO_RELATIVE_PATH = "/postinfo";
 	static final public int SHOT_SMALL_SIZE = 48;
 	static final public int SHOT_LARGE_SIZE = 192;
+	static final public String NOW_PLAYING_THEMES_RELATIVE_PATH = "/nowplaying-themes";
+	static final public int NOW_PLAYING_THEME_WIDTH = 440;
+	static final public int NOW_PLAYING_THEME_HEIGHT = 120;
+	static final public String POSTINFO_RELATIVE_PATH = "/postinfo";
 	
 	@ApplicationException
 	public class PropertyNotFoundException extends Exception {

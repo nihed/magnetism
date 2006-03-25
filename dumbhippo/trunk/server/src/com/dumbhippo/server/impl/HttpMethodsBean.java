@@ -17,6 +17,7 @@ import javax.ejb.Stateless;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
+import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -26,6 +27,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
@@ -430,8 +432,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicSharingEnabled(user, enabled);
 	}
 
-	public void getCurrentTrack(OutputStream out, HttpResponseData contentType,
-			String who) throws IOException {
+	public void getNowPlaying(OutputStream out, HttpResponseData contentType,
+			String who, String theme) throws IOException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 
@@ -443,6 +445,24 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (NotFoundException e) {
 			throw new RuntimeException("no such person", e);
 		}
+		
+		NowPlayingTheme themeObject;
+		if (theme == null)
+			themeObject = whoUser.getAccount().getNowPlayingTheme();
+		else {
+			try {
+				themeObject = musicSystem.lookupNowPlayingTheme(theme);
+			} catch (ParseException e) {
+				throw new RuntimeException("bad theme argument", e);
+			} catch (NotFoundException e) {
+				throw new RuntimeException("bad theme argument", e);
+			}
+		}
+		
+		if (themeObject == null) {
+			// FIXME we need some kind of default
+		}
+		
 		TrackView tv;
 		try {
 			// FIXME this is from the system viewpoint for now, but
@@ -458,6 +478,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
+		xml.openElement("nowPlaying");
+		
 		xml.openElement("song");
 		xml.appendTextNode("image", tv.getSmallImageUrl());
 		xml.appendTextNode("songTitle", tv.getName());
@@ -465,8 +487,78 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("album", tv.getAlbum());
 		xml.appendTextNode("stillPlaying", Boolean.toString(stillPlaying));
 		xml.closeElement();
+		
+		if (themeObject != null) {
+			xml.openElement("theme");
+			xml.appendTextNode("activeImageUrl", themeObject.getActiveImageRelativeUrl());
+			xml.appendTextNode("inactiveImageUrl", themeObject.getInactiveImageRelativeUrl());
+			xml.appendTextNode("text", null, "what", "album", "color", themeObject.getAlbumTextColor(),
+					"x", Integer.toString(themeObject.getAlbumTextX()),
+					"y", Integer.toString(themeObject.getAlbumTextY()));
+			xml.appendTextNode("text", null, "what", "artist", "color", themeObject.getArtistTextColor(),
+					"x", Integer.toString(themeObject.getArtistTextX()),
+					"y", Integer.toString(themeObject.getArtistTextY()));
+			xml.appendTextNode("text", null, "what", "songTitle", "color", themeObject.getTitleTextColor(),
+					"x", Integer.toString(themeObject.getTitleTextX()),
+					"y", Integer.toString(themeObject.getTitleTextY()));
+			xml.appendTextNode("albumArt", null, "x", Integer.toString(themeObject.getAlbumArtX()),
+					"y", Integer.toString(themeObject.getAlbumArtY()));
+			xml.closeElement();
+		}
+		
+		xml.closeElement();
 		out.write(xml.getBytes());
 		out.flush();
+	}
+	
+	public void doCreateNewNowPlayingTheme(OutputStream out, HttpResponseData contentType, User user, String basedOn)
+		throws IOException {
+		NowPlayingTheme basedOnObject;
+		if (basedOn != null) {
+			try {
+				basedOnObject = musicSystem.lookupNowPlayingTheme(basedOn);
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			} catch (NotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			basedOnObject = null;
+		}
+		
+		Viewpoint viewpoint = new Viewpoint(user);
+		NowPlayingTheme theme = musicSystem.createNewNowPlayingTheme(viewpoint, basedOnObject);
+		out.write(theme.getId().getBytes());
+		out.flush();
+	}
+	
+	public void doSetNowPlayingTheme(User user, String themeId) throws IOException {
+		NowPlayingTheme theme;
+		try {
+			theme = musicSystem.lookupNowPlayingTheme(themeId);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		musicSystem.setCurrentNowPlayingTheme(new Viewpoint(user), user, theme);
+	}
+	
+	public void doModifyNowPlayingTheme(User user, String themeId, String key, String value) throws IOException {
+		NowPlayingTheme theme;
+		try {
+			theme = musicSystem.lookupNowPlayingTheme(themeId);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		final String[] blacklist = { "id", "guid", "creator", "basedOn", "creationDate" };
+		for (String b : blacklist) {
+			if (key.equals(b))
+				throw new RuntimeException("property " + b + " can't be changed");
+		}
+		BeanUtils.setValue(theme, key, value);
 	}
 	
 	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException {

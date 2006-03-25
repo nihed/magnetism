@@ -109,9 +109,24 @@ public interface HttpMethods {
 	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "who" })
-	public void getCurrentTrack(OutputStream out, HttpResponseData contentType, String who)
+	@HttpParams( { "who", "theme" })
+	@HttpOptions( optionalParams = { "theme" } )
+	public void getNowPlaying(OutputStream out, HttpResponseData contentType, String who, String theme)
 			throws IOException;
+
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( { "basedOn" })
+	@HttpOptions( optionalParams = { "basedOn" } )
+	public void doCreateNewNowPlayingTheme(OutputStream out, HttpResponseData contentType, User user, String basedOn)
+			throws IOException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "theme" })
+	public void doSetNowPlayingTheme(User user, String themeId) throws IOException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "theme", "key", "value" })
+	public void doModifyNowPlayingTheme(User user, String themeId, String key, String value) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "promotion" })

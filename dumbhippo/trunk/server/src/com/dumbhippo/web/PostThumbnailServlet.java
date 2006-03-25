@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 
@@ -26,7 +26,8 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	private static final Logger logger = GlobalSetup.getLogger(PostThumbnailServlet.class);
 
 	@Override
-	protected void doUpload(HttpServletRequest request, HttpServletResponse response, Person person, Map<String, String> params, FileItem photo) throws HttpException, IOException, ServletException, HumanVisibleException {
+	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,
+			Map<String, String> params, FileItem photo) throws HttpException, IOException, ServletException, HumanVisibleException {
 		MessageDigest digest;
 		try {
 			digest = MessageDigest.getInstance("SHA1");

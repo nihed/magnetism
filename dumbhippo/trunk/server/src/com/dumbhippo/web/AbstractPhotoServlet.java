@@ -32,7 +32,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		return "default";
 	}	
 	
-	private BufferedImage scaleTo(BufferedImage image, int size) {
+	private BufferedImage scaleTo(BufferedImage image, int xSize, int ySize) {
 		/* To avoid questions of aspect ratio on the client side, we always 
 		 * generate a square image, adding transparent padding if required.
 		 * If it happens that image was originally a JPEG exactly size x size,
@@ -42,16 +42,15 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		int origWidth = image.getWidth();
 		int origHeight = image.getHeight();
 
-		double scale;
-		if (origHeight > origWidth)
-			scale = (double)size / origHeight;
-		else
-			scale = (double)size / origWidth;
+		double xScale = (double)xSize / origWidth;
+		double yScale = (double)ySize / origHeight;
+		
+		double scale = Math.min(xScale, yScale);
 		
 		int newWidth = (int)Math.round(scale * origWidth);
 		int newHeight = (int)Math.round(scale * origHeight);
-		int translateX = (size - newWidth) / 2;
-		int translateY = (size - newHeight) / 2;
+		int translateX = (xSize - newWidth) / 2;
+		int translateY = (ySize - newHeight) / 2;
 		
 		/* When upscaling, or scaling down by a small amount, we use Java2D and 
 		 * bi-cubic filtering. When scaling down by a larger factor, even using  
@@ -73,12 +72,16 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		
 		/* If the source is both square and doesn't have alpha, we could use
 		 * TYPE_INT_RGB instead. */
-		BufferedImage dest = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB_PRE);
+		BufferedImage dest = new BufferedImage(xSize, ySize, BufferedImage.TYPE_INT_ARGB_PRE);
 
 		Graphics2D graphics = dest.createGraphics();
 		graphics.drawImage(scaled, translateX, translateY, null);
 		
 		return dest;	
+	}
+	
+	private BufferedImage scaleTo(BufferedImage image, int size) {
+		return scaleTo(image, size, size);
 	}
 	
 	protected Collection<BufferedImage> readScaledPhotos(FileItem photo) throws IOException, HumanVisibleException {
@@ -93,6 +96,11 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 		return images;
 	}
 
+	protected BufferedImage readScaledPhoto(FileItem photo, int xSize, int ySize) throws IOException, HumanVisibleException {
+		BufferedImage image = readPhoto(photo);
+		return scaleTo(image, xSize, ySize);
+	}
+	
 	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, HumanVisibleException {
 		if (reloadTo == null)
 			reloadTo = "/home";

@@ -21,7 +21,7 @@
 		</p>
 		
 		<div>
-			<c:out value="${nowplaying.nowPlayingObjectHtml}" escapeXml="false"/>
+			<dh:nowPlaying userId="${nowplaying.signin.userId}"/>
 		</div>
 		
 		<dht:largeTitle>MySpace HTML</dht:largeTitle>
@@ -32,7 +32,7 @@
 		
 		<div>
 			<!--  don't add whitespace inside the textarea tag -->
-			<textarea readonly="readonly" rows="7" wrap="off"><c:out value="${nowplaying.nowPlayingEmbedHtml}" escapeXml="true"/></textarea>
+			<textarea readonly="readonly" rows="7" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true"/></textarea>
 		</div>
 
 		<dht:largeTitle>Alternative HTML</dht:largeTitle>
@@ -43,7 +43,7 @@
 		
 		<div>
 			<!--  don't add whitespace inside the textarea tag -->
-			<textarea readonly="readonly" rows="17" wrap="off"><c:out value="${nowplaying.nowPlayingObjectHtml}" escapeXml="true"/></textarea>
+			<textarea readonly="readonly" rows="17" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true"/></textarea>
 		</div>
 		
 	</dht:mainArea>

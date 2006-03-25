@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
@@ -31,14 +31,14 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		return Configuration.HEADSHOTS_RELATIVE_PATH;
 	}
 	
-	protected void doUpload(HttpServletRequest request, HttpServletResponse response, Person person,
+	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,
 			Map<String, String> formParameters, FileItem photo) throws HttpException, IOException, ServletException,
 			HumanVisibleException {
 		Collection<BufferedImage> scaled = readScaledPhotos(photo);
-		String personId = person.getId();
+		String personId = user.getId();
 		writePhotos(scaled, personId, true);
 		
-		identitySpider.incrementUserVersion(person.getId());
+		identitySpider.incrementUserVersion(user.getId());
 				
 		doFinalRedirect(request, response);
 	}

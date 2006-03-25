@@ -13,7 +13,6 @@ import org.apache.commons.fileupload.FileItem;
 
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
@@ -35,7 +34,8 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		return Configuration.GROUPSHOTS_RELATIVE_PATH;
 	}
 
-	protected void doUpload(HttpServletRequest request, HttpServletResponse response, Person person,
+	@Override
+	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,
 			Map<String, String> formParameters, FileItem photo) throws HttpException, IOException, ServletException,
 			HumanVisibleException {
 
@@ -44,9 +44,8 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "group ID not provided");
 
 		// FIXME this will get cleaned up with future changes to have
-		// doLogin return a viewpoint/user thingy
-		User u = identitySpider.getUser(person);
-		Viewpoint viewpoint = new Viewpoint(u);
+		// doLogin return a viewpoint
+		Viewpoint viewpoint = new Viewpoint(user);
 		Group group;
 		try {
 			group = groupSystem.lookupGroupById(viewpoint, groupId);
@@ -55,7 +54,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		}
 		GroupMember member;
 		try {
-			member = groupSystem.getGroupMember(viewpoint, group, u);
+			member = groupSystem.getGroupMember(viewpoint, group, user);
 		} catch (NotFoundException e) {
 			member = null;
 		}

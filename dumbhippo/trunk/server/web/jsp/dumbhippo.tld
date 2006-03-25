@@ -233,4 +233,30 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag>
+        <name>nowPlaying</name>
+        <tagclass>com.dumbhippo.web.NowPlayingTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Outputs the "now playing" flash embed object</info>
+	    <attribute>
+           <name>userId</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>themeId</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>escapeXml</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>forceMode</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
 </taglib>

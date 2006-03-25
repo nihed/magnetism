@@ -24,6 +24,12 @@
     </servlet>   
 
    <servlet>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.NowPlayingThemePhotoServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+   <servlet>
       <servlet-name>PersonPhotoServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.PersonPhotoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -133,6 +139,16 @@
    <servlet-mapping>
       <servlet-name>PostThumbnailServlet</servlet-name>
       <url-pattern>/files/postinfo/*</url-pattern>
+   </servlet-mapping>   
+
+   <servlet-mapping>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <url-pattern>/upload/nowplaying-themes</url-pattern>
+   </servlet-mapping>      
+   
+   <servlet-mapping>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <url-pattern>/files/nowplaying-themes/*</url-pattern>
    </servlet-mapping>   
 
    <servlet>

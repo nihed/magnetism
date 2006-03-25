@@ -22,7 +22,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
@@ -78,7 +78,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		return image;
 	}
 	
-	protected abstract void doUpload(HttpServletRequest request, HttpServletResponse response, Person person, Map<String,String> params, FileItem photo)
+	protected abstract void doUpload(HttpServletRequest request, HttpServletResponse response, User user, Map<String,String> params, FileItem photo)
 	throws HttpException, IOException, ServletException, HumanVisibleException;
 	
 	protected void writePhoto(BufferedImage scaled, String fileName, boolean overwrite) throws IOException, HumanVisibleException {
@@ -132,7 +132,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		if (photo == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "No photo uploaded?");
 		
-		Person user = doLogin(request);
+		User user = doLogin(request);
 		if (user == null)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in to change a photo");
 		

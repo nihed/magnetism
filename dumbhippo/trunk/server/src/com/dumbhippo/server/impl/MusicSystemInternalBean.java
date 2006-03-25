@@ -29,9 +29,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.AmazonAlbumResult;
+import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
@@ -45,6 +49,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
@@ -1316,5 +1321,181 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {
 		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.ARTISTS);
 	}
-}
+	
+	public NowPlayingTheme getCurrentNowPlayingTheme(User user) throws NotFoundException {
+		NowPlayingTheme theme = user.getAccount().getNowPlayingTheme();
+		
+		if (theme != null && theme.isDraft()) {
+			logger.warn("User {} got a draft theme {} as their current one", user, theme);
+			theme = null;
+		}
+		
+		// try to pick a default FIXME put it in the config or something
+		if (theme == null) {
+			Query q = em.createQuery("FROM NowPlayingTheme WHERE draft=0 ORDER BY creationDate ASC");
+			q.setMaxResults(1);
+			try {
+				theme = (NowPlayingTheme) q.getSingleResult();
+			} catch (EntityNotFoundException e) {
+				theme = null;
+			}
+		}
 
+		if (theme == null)
+			throw new NotFoundException("user has no now playing theme set and no default in the db");
+		
+		return theme;
+	}
+	
+	public void setCurrentNowPlayingTheme(Viewpoint viewpoint, User user, NowPlayingTheme theme) {
+		if (!viewpoint.getViewer().equals(user))
+			throw new RuntimeException("not allowed to set someone else's now playing theme");
+		if (!em.contains(user))
+			throw new RuntimeException("user is detached");
+		if (!em.contains(theme))
+			throw new RuntimeException("theme is detached");
+
+		user.getAccount().setNowPlayingTheme(theme);
+	}
+	
+	private NowPlayingTheme internalLookupNowPlayingTheme(String id) throws NotFoundException {
+		NowPlayingTheme obj = em.find(NowPlayingTheme.class, id);
+		if (obj == null)
+			throw new NotFoundException("no now playing theme " + id);
+		return obj;		
+	}
+	
+	public NowPlayingTheme lookupNowPlayingTheme(String id) throws ParseException, NotFoundException {
+		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid
+		return internalLookupNowPlayingTheme(id);
+	}
+	
+	public NowPlayingTheme lookupNowPlayingTheme(Guid id) throws NotFoundException {
+		return internalLookupNowPlayingTheme(id.toString());
+	}
+	
+	public void setNowPlayingThemeImage(Viewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
+		User user = viewpoint.getViewer();
+		NowPlayingTheme theme = lookupNowPlayingTheme(id);
+		if (!theme.getCreator().equals(user))
+			throw new NotFoundException("unauthorized user editing theme");
+		if (type.equals("active"))
+			theme.setActiveImage(shaSum);
+		else if (type.equals("inactive"))
+			theme.setInactiveImage(shaSum);
+		else
+			throw new RuntimeException("unknown theme image type '" + type + "'");
+	} 
+	
+	public NowPlayingThemesBundle getNowPlayingThemesBundle(Viewpoint viewpoint, User user) {
+		
+		// For now the viewpoint doesn't matter unless it's a "draft" theme
+		// in which case you can only see your own stuff
+		
+		NowPlayingThemesBundle bundle = new NowPlayingThemesBundle();
+		Set<NowPlayingTheme> alreadyUsed = new HashSet<NowPlayingTheme>();
+		
+		NowPlayingTheme current;
+		try {
+			current = getCurrentNowPlayingTheme(user);
+		} catch (NotFoundException e) {
+			current = null;
+		}
+		
+		if (current != null) {
+			bundle.setCurrentTheme(current);
+			alreadyUsed.add(current);
+		}
+		
+		Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator AND (t.draft=0 OR (t.draft=1 AND t.creator=:viewer))");
+		q.setParameter("creator", user);
+		q.setParameter("viewer", viewpoint.getViewer());
+		List<?> myThemes = q.getResultList();
+		List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
+		for (Object o : myThemes) {
+			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
+				myThemesFiltered.add((NowPlayingTheme) o);
+				alreadyUsed.add((NowPlayingTheme) o);
+			}
+		}
+		bundle.setMyThemes(myThemesFiltered);
+
+		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
+		
+		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE (t.draft=0 OR (t.draft=1 AND t.creator=:viewer))");
+		if (!friends.isEmpty()) {
+			sb.append(" AND t.creator.id IN (");
+			for (Contact c : friends) {
+				User u = identitySpider.getUser(c);
+				if (u != null) {
+					sb.append("'");
+					sb.append(u.getId());
+					sb.append("'");
+					sb.append(",");
+				}
+			}
+			if (sb.charAt(sb.length()-1) == ',') {
+				sb.setLength(sb.length() - 1);
+			}
+			sb.append(")");
+		}
+		
+		q = em.createQuery(sb.toString());
+		q.setParameter("viewer", viewpoint.getViewer());
+		List<?> friendsThemes = q.getResultList();
+		
+		List<NowPlayingTheme> friendsThemesFiltered = new ArrayList<NowPlayingTheme>();
+		for (Object o : friendsThemes) {
+			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
+				friendsThemesFiltered.add((NowPlayingTheme) o);
+				alreadyUsed.add((NowPlayingTheme) o);
+			}
+		}
+		bundle.setFriendsThemes(friendsThemesFiltered);
+				
+		/* Now pick 5 themes we don't have already, deterministically for now 
+		 * FIXME should be random in some way
+		 */
+		
+		sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0");
+		
+		if (!alreadyUsed.isEmpty()) {
+			sb.append(" AND t.id NOT IN (");
+			for (NowPlayingTheme t : alreadyUsed) {
+				sb.append("'");
+				sb.append(t.getId());
+				sb.append("'");
+				sb.append(",");
+			}
+			if (sb.charAt(sb.length()-1) == ',') {
+				sb.setLength(sb.length() - 1);
+			}
+			sb.append(")");
+		}
+		
+		q = em.createQuery(sb.toString());
+		q.setMaxResults(5);
+		List<?> randomThemes = q.getResultList();
+		
+		List<NowPlayingTheme> randomThemesFiltered = new ArrayList<NowPlayingTheme>();
+		for (Object o : randomThemes) {
+			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
+				randomThemesFiltered.add((NowPlayingTheme) o);
+				alreadyUsed.add((NowPlayingTheme) o);
+			} else {
+				throw new RuntimeException("we asked for themes we didn't already have, but got some we did");
+			}
+		}
+		bundle.setRandomThemes(randomThemesFiltered);		
+		
+		return bundle;
+	}
+	
+	public NowPlayingTheme createNewNowPlayingTheme(Viewpoint viewpoint, NowPlayingTheme basedOn) {
+		if (basedOn != null && !em.contains(basedOn))
+			basedOn = em.find(NowPlayingTheme.class, basedOn.getId()); // reattach
+		NowPlayingTheme theme = new NowPlayingTheme(basedOn, viewpoint.getViewer());
+		em.persist(theme);
+		return theme;
+	}
+}

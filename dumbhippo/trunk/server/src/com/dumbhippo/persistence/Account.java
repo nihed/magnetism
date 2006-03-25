@@ -68,12 +68,14 @@ public class Account extends Resource {
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
 	
+	private NowPlayingTheme nowPlayingTheme;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
 	 * you need to do.
 	 */
-	private Set<Client> clients;
+	private Set<Client> clients; 
 	
 	/**
 	 * Used only for Hibernate 
@@ -379,6 +381,20 @@ public class Account extends Resource {
 
 	public void setMusicSharingPrimed(boolean musicSharingPrimed) {
 		this.musicSharingPrimed = musicSharingPrimed;
+	}
+
+	/**
+	 * Get the name of the theme for the flash embed
+	 * @return name of theme or null for default
+	 */
+	@JoinColumn(nullable=true)
+	@OneToOne
+	public NowPlayingTheme getNowPlayingTheme() {
+		return nowPlayingTheme;
+	}
+
+	public void setNowPlayingTheme(NowPlayingTheme nowPlayingTheme) {
+		this.nowPlayingTheme = nowPlayingTheme;
 	}
 	
 	@Override

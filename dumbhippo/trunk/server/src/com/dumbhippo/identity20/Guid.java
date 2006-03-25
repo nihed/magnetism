@@ -125,7 +125,8 @@ final public class Guid implements Serializable {
 		// cross-site-scripting or whatever. We actually only
 		// generate a subset of these values, but don't check that.
 		if (guid.length() != NUM_CHARS)
-			throw new ParseException("GUID has wrong length");
+			throw new ParseException("GUID has wrong length " + guid.length() + ": " +
+					guid.substring(0, Math.min(guid.length(), 10)) + " ...");
 		
 		for (int i = 0; i < NUM_CHARS; i++) {
 			char c = guid.charAt(i);
