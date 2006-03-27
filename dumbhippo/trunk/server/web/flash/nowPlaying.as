@@ -67,6 +67,31 @@ var parseSong = function(songNode:XMLNode) {
 	return song;
 }
 
+// this is kinda bogus (e.g. won't work right if the two objects have different fields)
+var genericEquals = function(objA, objB) {
+	if (objA == objB)
+		return true;
+	if (objA == null && objB != null)
+		return false;
+	else if (objA != null && objB == null)
+		return false;
+	else if (objA == undefined && objB != undefined)
+		return false;
+	else if (objA != undefined && objB == undefined)
+		return false;
+		
+	for (var i in objA) {
+		if (objA[i] != objB[i])
+			return false;
+	}
+	return true;
+}
+
+var songEquals = genericEquals;
+var themeEquals = genericEquals;
+
+
+
 /////////////////// "view" movie stuff
 
 var rootMovie = createEmptyMovieClip("rootMovie", 0);
@@ -153,42 +178,29 @@ var createNewMovie = function() {
 	var clip:MovieClip = rootMovie.createEmptyMovieClip("holder" + clipNum, clipNum);
 	clipNum = clipNum + 1;
 	clip._visible = false;
-	clip.createEmptyMovieClip("albumArtInstance", 2);
-	clip.createEmptyMovieClip("backgroundActiveInstance", 1);
-	clip.createEmptyMovieClip("backgroundInactiveInstance", 0);
+	
+	clip.createEmptyMovieClip("songClips", 1);
+	clip.createEmptyMovieClip("themeClips", 0);
+	
+	clip.songClips.createEmptyMovieClip("albumArtInstance", 0);
+	clip.songClips.createTextField("online", 1, 20, 20, 30, 30);
+	clip.songClips.createTextField("artist", 2, 40, 40, 30, 30);
+	clip.songClips.createTextField("title", 3, 60, 60, 30, 30);
 
-	clip.createTextField("online", 3, 20, 20, 30, 30);
-	clip.createTextField("artist", 4, 40, 40, 30, 30);
-	clip.createTextField("songTitle", 5, 60, 60, 30, 30);
+	clip.themeClips.createEmptyMovieClip("backgroundActiveInstance", 1);
+	clip.themeClips.createEmptyMovieClip("backgroundInactiveInstance", 0);
 	
 	clip.defaultImages = { albumArt : baseUrl + "/images/no_image_available75x75light.gif",
 							activeBackground : null,
 							inactiveBackground : null };
-	clip.imageTargets = { albumArt : clip.albumArtInstance,
-							activeBackground : clip.backgroundActiveInstance,
-							inactiveBackground : clip.backgroundInactiveInstance };
+	clip.imageTargets = { albumArt : clip.songClips.albumArtInstance,
+							activeBackground : clip.themeClips.backgroundActiveInstance,
+							inactiveBackground : clip.themeClips.backgroundInactiveInstance };
 	clip.previousImages = {};
 	
 	clip.pendingLoadItems = 0;
 	
 	return clip;
-}
-
-var checkSwap = function() {
-	if (loadingMovie == null)
-		return;
-	if (loadingMovie.pendingLoadItems > 0) {
-		trace(loadingMovie.pendingLoadItems + " still pending");
-		return;
-	}
-	trace(loadingMovie.pendingLoadItems + " pending items, swapping in");
-	trace("currentMovie = " + currentMovie + " loadingMovie = " + loadingMovie);
-	var toRemove:MovieClip = currentMovie;
-	currentMovie = loadingMovie;
-	loadingMovie = null;
-	currentMovie._alpha = 0;
-	currentMovie._visible = true;
-	crossFade(toRemove, currentMovie, true);
 }
 
 // null fullUrl = load default
@@ -237,30 +249,57 @@ var loadImage = function(clip:MovieClip, which:String, fullUrl:String, depth:Num
 
 var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
 	if (stillPlaying) {
-		if (clip.backgroundActiveInstance.getDepth() < clip.backgroundInactiveInstance.getDepth())
-			clip.backgroundActiveInstance.swapDepths(clip.backgroundInactiveInstance);
-		clip.online.text = "";
+		if (clip.themeClips.backgroundActiveInstance.getDepth() < clip.themeClips.backgroundInactiveInstance.getDepth())
+			clip.themeClips.backgroundActiveInstance.swapDepths(clip.themeClips.backgroundInactiveInstance);
+		clip.songClips.online.text = "";
 	} else {
-		if (clip.backgroundInactiveInstance.getDepth() < clip.backgroundActiveInstance.getDepth())
-			clip.backgroundInactiveInstance.swapDepths(clip.backgroundActiveInstance);	
-		clip.online.text = "Music stopped";
+		if (clip.themeClips.backgroundInactiveInstance.getDepth() < clip.themeClips.backgroundActiveInstance.getDepth())
+			clip.themeClips.backgroundInactiveInstance.swapDepths(clip.themeClips.backgroundActiveInstance);	
+		clip.songClips.online.text = "Music stopped";
 	}
 }
 
-var loadSong = function(clip:MovieClip, songNode:XMLNode) {
-	var song = parseSong(songNode);
-	clip.songTitle.text = song.title;
-	clip.artist.text = song.artist;
+var setSong = function(clip:MovieClip, song:Object) {
+	if (songEquals(clip.song, song)) {
+		trace("song unchanged, not doing anything");
+		return;
+	}
+	
+	clip.song = song;
+	clip.songClips.title.text = song.title;
+	clip.songClips.artist.text = song.artist;
 	setStillPlaying(clip, song.stillPlaying);
 	loadImage(clip, "albumArt", song.albumArtUrl);
 }
 
-var loadTheme = function(clip:MovieClip, themeNode:XMLNode) {
-	var theme = parseTheme(themeNode);
+var setTheme = function(clip:MovieClip, theme:Object) {
+	if (themeEquals(clip.theme, theme)) {
+		trace("theme unchanged, not doing anything");
+		return;
+	}
+	
+	clip.theme = theme;
 	if (theme.activeImageUrl) 
 		loadImage(clip, 'activeBackground', baseUrl + theme.activeImageUrl);
 	if (theme.inactiveImageUrl)
-		loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);
+		loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);	
+}
+
+var checkSwap = function() {
+	if (loadingMovie == null)
+		return;
+	if (loadingMovie.pendingLoadItems > 0) {
+		trace(loadingMovie.pendingLoadItems + " still pending");
+		return;
+	}
+	trace(loadingMovie.pendingLoadItems + " pending items, swapping in");
+	trace("currentMovie = " + currentMovie + " loadingMovie = " + loadingMovie);
+	var toRemove:MovieClip = currentMovie;
+	currentMovie = loadingMovie;
+	loadingMovie = null;
+	currentMovie._alpha = 0;
+	currentMovie._visible = true;
+	crossFade(toRemove, currentMovie, true);
 }
 
 var songUpdateCount:Number = 0;
@@ -291,10 +330,13 @@ var updateSong = function() {
 		var root:XML = this.childNodes[0];
 		for (var i = 0; i < root.childNodes.length; ++i) {
 			var node:XMLNode = root.childNodes[i];
-			if (node.nodeName == "song")
-				loadSong(clip, node);
-			else if (node.nodeName == "theme")
-				loadTheme(clip, node);
+			if (node.nodeName == "song") {
+				var song = parseSong(node);
+				setSong(clip, song);
+			} else if (node.nodeName == "theme") {
+				var theme = parseTheme(node);
+				setTheme(clip, theme);
+			}
 		}
 	};
 	var reqUrl = baseUrl + "/xml/nowplaying?who=" + who;
