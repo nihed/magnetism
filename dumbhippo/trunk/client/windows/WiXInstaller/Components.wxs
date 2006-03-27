@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <!-- The granularity at which we break things into components doens't really matter
+    <!-- The granularity at which we break things into components doesn't really matter
          too much since we have only one feature; for simplicity, we simply mirror
          the division of the client source into projects -->
     <Fragment Id="dhComponents">
@@ -82,12 +82,16 @@
 	        	        <File Id="bubbleListJs"    Name="bubbleLi.js"  LongName="bubbleList.js"    src="applets\bubbleList.js"    DiskId="1" Vital="yes"/>
 	        	        <File Id="bubbleListXml"   Name="bubbleLi.xml" LongName="bubbleList.xml"   src="applets\bubbleList.xml"   DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"  Name="clientst.xml" LongName="clientstyle.xml"  src="applets\clientstyle.xml"  DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleNavMask"   Name="bubbleNM.png" LongName="bubbleNavMask.png" src="applets\bubbleNavMask.png" DiskId="1" Vital="yes"/>
-                        <File Id="bubbleNavMaskSwarm" Name="bubblNMS.png" LongName="bubbleNavMaskSwarm.png" src="applets\bubbleNavMaskSwarm.png" DiskId="1" Vital="yes"/>		        	        
-	        	        <File Id="bubbleLeft"      Name="bubbleL.png"  LongName="bubbleLeft.png"   src="applets\bubbleLeft.png"   DiskId="1" Vital="yes"/>
-                        <File Id="bubbleLeftSwarm" Name="bubbleLS.png" LongName="bubbleLeftSwarm.png" src="applets\bubbleLeftSwarm.png" DiskId="1" Vital="yes"/>	        	        	        	        
-	        	        <File Id="bubbleRight"     Name="bubbleR.png"  LongName="bubbleRight.png"  src="applets\bubbleRight.png"  DiskId="1" Vital="yes"/>
-                        <File Id="bubbleRightSwarm" Name="bubbleRS.png" LongName="bubbleRightSwarm.png" src="applets\bubbleRightSwarm.png" DiskId="1" Vital="yes"/>	                          
+	        	        <File Id="bubbleNavMask"        Name="bubbleNM.png" LongName="bubbleNavMask.png"        src="applets\bubbleNavMask.png"        DiskId="1" Vital="yes"/>
+                                <File Id="bubbleNavMaskSwarm"   Name="bubblNMS.png" LongName="bubbleNavMaskSwarm.png"   src="applets\bubbleNavMaskSwarm.png"   DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleLeft"           Name="bubbleL.png"  LongName="bubbleLeft.png"           src="applets\bubbleLeft.png"           DiskId="1" Vital="yes"/>
+                                <File Id="bubbleLeftSwarm"      Name="bubbleLS.png" LongName="bubbleLeftSwarm.png"      src="applets\bubbleLeftSwarm.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleRight"          Name="bubbleR.png"  LongName="bubbleRight.png"          src="applets\bubbleRight.png"          DiskId="1" Vital="yes"/>
+                                <File Id="bubbleRightSwarm"     Name="bubbleRS.png" LongName="bubbleRightSwarm.png"     src="applets\bubbleRightSwarm.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="listBubbleLeft"       Name="lBubL.png"    LongName="listBubbleLeft.png"       src="applets\listBubbleLeft.png"       DiskId="1" Vital="yes"/>
+                                <File Id="listBubbleLeftSwarm"  Name="lBubLS.png"   LongName="listBubbleLeftSwarm.png"  src="applets\listBubbleLeftSwarm.png"  DiskId="1" Vital="yes"/>
+	        	        <File Id="listBubbleRight"      Name="lBubR.png"    LongName="listBubbleRight.png"      src="applets\listBubbleRight.png"      DiskId="1" Vital="yes"/>
+                                <File Id="listBubbleRightSwarm" Name="lBubRS.png"   LongName="listBubbleRightSwarm.png" src="applets\listBubbleRightSwarm.png" DiskId="1" Vital="yes"/>
 	        	        <File Id="closePng"        Name="close.png"                                src="applets\close.png"        DiskId="1" Vital="yes"/>
 	        	        <File Id="dhCss"           Name="dh.css"                                   src="applets\dh.css"           DiskId="1" Vital="yes"/>
 	        	        <File Id="dhJs"            Name="dh.js"                                    src="applets\dh.js"            DiskId="1" Vital="yes"/>
