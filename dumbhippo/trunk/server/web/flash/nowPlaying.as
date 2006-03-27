@@ -94,17 +94,10 @@ var themeEquals = genericEquals;
 
 /////////////////// "view" movie stuff
 
-var rootMovie = createEmptyMovieClip("rootMovie", 0);
-
-var currentMovie:MovieClip = null;
-var loadingMovie:MovieClip = null;
+var rootMovie:MovieClip = null;
 
 var removeMovie = function(clip:MovieClip) {
 	trace("-------- removing clip: " + clip._name);
-	if (clip == currentMovie)
-		currentMovie = null;
-	if (clip == loadingMovie)
-		loadingMovie = null;
 	clip.removeMovieClip();
 }
 
@@ -179,148 +172,196 @@ var crossFade = function(oldClip:MovieClip, newClip:MovieClip, removeAtEnd:Boole
 	}
 }
 
-var clipNum:Number = 0;
-var createNewMovie = function() {
-	// we use clipNum for the depth, which changes each time; otherwise 
-	// the new movie would replace a previous movie at the old depth
-	var clip:MovieClip = rootMovie.createEmptyMovieClip("holder" + clipNum, clipNum);
-	clipNum = clipNum + 1;
-	clip._visible = false;
-	
-	clip.createEmptyMovieClip("songClips", 1);
-	clip.createEmptyMovieClip("themeClips", 0);
-	
-	clip.songClips.createEmptyMovieClip("albumArtInstance", 0);
-	clip.songClips.albumArtInstance._x = 102;
-	clip.songClips.albumArtInstance._y = 36;
-	clip.songClips.createTextField("online", 1, 0, 102, 203, 18);
-	clip.songClips.createTextField("artist", 2, 178, 63, 178, 22);
-	clip.songClips.createTextField("title", 3, 176, 41, 245, 30);
-
-	clip.themeClips.createEmptyMovieClip("backgroundActiveInstance", 1);
-	clip.themeClips.createEmptyMovieClip("backgroundInactiveInstance", 0);
-	
-	clip.defaultImages = { albumArt : baseUrl + "/images/no_image_available75x75light.gif",
-							activeBackground : null,
-							inactiveBackground : null };
-	clip.imageTargets = { albumArt : clip.songClips.albumArtInstance,
-							activeBackground : clip.themeClips.backgroundActiveInstance,
-							inactiveBackground : clip.themeClips.backgroundInactiveInstance };
-	clip.previousImages = {};
-	
-	clip.pendingLoadItems = 0;
-	
-	return clip;
+var createImageTracker = function() {
+	var tracker:Object = {};
+	tracker.pendingLoadItems = 0;
+	return tracker;
 }
 
-// null fullUrl = load default
-var loadImage = function(clip:MovieClip, which:String, fullUrl:String, depth:Number) {
-	if (!fullUrl)
-		fullUrl = clip.defaultImages[which];
-	if (!fullUrl) {
-		trace("nothing to load");
-		return;
-	}
-	if (arguments.length < 3)
-		depth = 1
-	if (depth > 2)
-		return; // give up
-	var previousUrl = clip.previousImages[which];
-	if (fullUrl == previousUrl) {
-		trace("already loaded " + previousUrl);
-		return;
-	}
+var setAllLoadedCallback = function(tracker:Object, callback:Function) {
+	tracker.allLoadedCallback = callback;
+}
 
-	trace("loading " + fullUrl + " previous was " + previousUrl);
+var recordOneImageLoadCompleted = function(tracker:Object) {
+	tracker.pendingLoadItems = tracker.pendingLoadItems - 1;
+	
+	if (tracker.pendingLoadItems > 0) {
+		trace("pending " + tracker.pendingLoadItems);
+		return;
+	}
+	
+	if (tracker.allLoadedCallback) {
+		trace("invoking callback since all images loaded");
+		tracker.allLoadedCallback();
+		tracker.allLoadedCallback = null;
+	} else {
+		trace("no callback set for completion of image loading");
+	}
+}
+
+// caution, this can synchronously call the "on all loaded completed" callback
+var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallbackUrl:String) {
+	trace("loading " + fullUrl);
 	var loader:MovieClipLoader = new MovieClipLoader();
 	var listener:Object = new Object();
 	listener.onLoadError = function(targetClip:MovieClip, errorCode:String) {
 		// note, we could be replaced as the loadingMovie already
 		trace("failed to load " + fullUrl);
-		loadImage(clip, which, null, depth + 1);
-		clip.pendingLoadItems = clip.pendingLoadItems - 1;
-		checkSwap();
+		if (fallbackUrl != null)
+			loadImage(tracker, target, fallbackUrl, null); // increments pending image loads
+		recordOneImageLoadCompleted(tracker);
 	}
 	listener.onLoadComplete = function(targetClip:MovieClip) {
 		// note, we could be replaced as the loadingMovie already
-		trace("completed load of " + fullUrl + " to " + targetClip);
-		clip.previousImages[which] = fullUrl;
-		clip.pendingLoadItems = clip.pendingLoadItems - 1;
-		checkSwap();
+		trace("completed load of " + fullUrl + " to " + target);
+		recordOneImageLoadCompleted(tracker);
 	}
 	loader.addListener(listener);
+	
+	tracker.pendingLoadItems = tracker.pendingLoadItems + 1;
+	trace("pending " + tracker.pendingLoadItems);
+	
 	 // returns false if failed to _send_ request
-	if (!loader.loadClip(fullUrl, clip.imageTargets[which])) {
+	if (!loader.loadClip(fullUrl, target)) {
 		trace("failed to send request for url " + fullUrl);
+		recordOneImageLoadCompleted();
+		return;
 	}
-	clip.pendingLoadItems = clip.pendingLoadItems + 1;
-	trace("pending " + clip.pendingLoadItems);
 }
 
-var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
-	clip.themeClips.backgroundInactiveInstance._visible = !stillPlaying;
-	clip.themeClips.backgroundActiveInstance._visible = stillPlaying;
-	if (stillPlaying) {
-		clip.songClips.online.text = "";
-	} else {
-		clip.songClips.online.text = "Music stopped";
+var getImageTracker = function(clip:MovieClip) {
+	if (!clip.imageTracker) {
+		clip.imageTracker = createImageTracker();
 	}
+	return clip.imageTracker;
+}
+
+var addImageToClip = function(clip:MovieClip, target:MovieClip, fullUrl:String, fallbackUrl:String) {
+	var tracker:Object = getImageTracker(clip);
+	loadImage(tracker, target, fullUrl, fallbackUrl);
+}
+
+var setAllImagesLoadedCallback = function(clip:MovieClip, callback:Function) {
+	var tracker:Object = getImageTracker(clip);	
+	setAllLoadedCallback(tracker, callback);
+}
+
+var songClipNum:Number = 0;
+var createNewSongMovie = function(parent:MovieClip) {
+	var songClip:MovieClip = parent.createEmptyMovieClip("songClip" + songClipNum, songClipNum);
+	songClipNum = songClipNum + 1;
+	songClip._visible = false;
+
+	songClip.createEmptyMovieClip("albumArt", 0);
+	songClip.albumArt._x = 102;
+	songClip.albumArt._y = 36;
+	songClip.createTextField("online", 1, 0, 102, 203, 18);
+	songClip.createTextField("artist", 2, 178, 63, 178, 22);
+	songClip.createTextField("title", 3, 176, 41, 245, 30);	
+	return songClip;
+}
+
+var themeClipNum:Number = 0;
+var createNewThemeMovie = function(parent:MovieClip) {
+	var themeClip:MovieClip = parent.createEmptyMovieClip("themeClip" + themeClipNum, themeClipNum);
+	themeClipNum = themeClipNum + 1;
+	themeClip._visible = false;
+
+	themeClip.createEmptyMovieClip("backgroundActiveInstance", 1);
+	themeClip.createEmptyMovieClip("backgroundInactiveInstance", 0);
+	
+	return themeClip;
+}
+
+var createRootMovie = function() {
+	var clip:MovieClip = createEmptyMovieClip("rootMovie", 0);
+	
+	// these contain all song clips and all theme clips respectively,
+	// in order to keep all the text on top of all the theme background images
+	
+	clip.createEmptyMovieClip("songClips", 1);
+	clip.createEmptyMovieClip("themeClips", 0);
+	
+	return clip;
 }
 
 var formatText = function(clip:MovieClip, fontSize:Number, color:Number) {
 	var fontFormat:TextFormat = new TextFormat();
-	fontFormat.font = "Arial";
+	fontFormat.font = "_sans";
 	fontFormat.size = fontSize;
 	fontFormat.color = color;
 	clip.setTextFormat(fontFormat);
 }
 
 var setSong = function(clip:MovieClip, song:Object) {
-	if (songEquals(clip.song, song)) {
-		trace("song unchanged, not doing anything");
+	if (songEquals(clip.loadingSong, song)) {
+		trace("song is already loading song, not doing anything");
+		return;
+	}
+	if (clip.loadingSong == null && songEquals(clip.currentSong, song)) {
+		trace("song is already current song, not doing anything");
 		return;
 	}
 	
-	clip.song = song;
-	clip.songClips.title.text = song.title;
-	clip.songClips.artist.text = "by " + song.artist;
-	setStillPlaying(clip, song.stillPlaying);
-		
-	formatText(clip.songClips.online, 12, 0x0000FF);
-	formatText(clip.songClips.artist, 14, 0x0000FF);
-	formatText(clip.songClips.title, 20, 0x0000FF);
+	// If there's a current loading song, we want to replace it
+	if (clip.loadingSongClip != null) {
+		removeMovie(clip.loadingSongClip);
+		clip.loadingSong = null;
+		clip.loadingSongClip = null;
+	}
 	
-	loadImage(clip, "albumArt", song.albumArtUrl);
+	var songClip:MovieClip = createNewSongMovie(clip.songClips);
+	clip.loadingSongClip = songClip;
+	clip.loadingSong = song;
+	
+	setAllImagesLoadedCallback(songClip, function() {
+		if (clip.loadingSongClip != songClip) {
+			trace("our images all loaded but we aren't the loading song anymore");
+			return;
+		}
+		// replace current song clip with ourselves
+		trace("swapping in the new song");
+		var toRemove:MovieClip = clip.currentSongClip;
+		clip.currentSong = clip.loadingSong;
+		clip.currentSongClip = clip.loadingSongClip;
+		clip.loadingSong = null;
+		clip.loadingSongClip = null;
+		songClip._alpha = 0;
+		songClip._visible = true;
+		crossFade(toRemove, songClip, true);
+		
+		// flip to the right background if needed
+		if (false) {
+			// FIXME
+			clip.themeClips.backgroundInactiveInstance._visible = !song.stillPlaying;
+			clip.themeClips.backgroundActiveInstance._visible = song.stillPlaying;
+		}
+	});
+	
+	songClip.title.text = song.title;
+	songClip.artist.text = "by " + song.artist;
+	if (song.stillPlaying) {
+		songClip.online.text = "";
+	} else {
+		songClip.online.text = "Music stopped";
+	}
+	
+	formatText(songClip.online, 12, 0x0000FF);
+	formatText(songClip.artist, 14, 0x0000FF);
+	formatText(songClip.title, 20, 0x0000FF);
+	
+	addImageToClip(songClip, songClip.albumArt, song.albumArtUrl,
+				   baseUrl + "/images/no_image_available75x75light.gif");
 }
 
 var setTheme = function(clip:MovieClip, theme:Object) {
-	if (themeEquals(clip.theme, theme)) {
-		trace("theme unchanged, not doing anything");
-		return;
-	}
-	
-	clip.theme = theme;
-	if (theme.activeImageUrl) 
-		loadImage(clip, 'activeBackground', baseUrl + theme.activeImageUrl);
-	if (theme.inactiveImageUrl)
-		loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);	
-}
 
-var checkSwap = function() {
-	if (loadingMovie == null)
-		return;
-	if (loadingMovie.pendingLoadItems > 0) {
-		trace(loadingMovie.pendingLoadItems + " still pending");
-		return;
+	if (false) {
+		if (theme.activeImageUrl) 
+			loadImage(clip, 'activeBackground', baseUrl + theme.activeImageUrl);
+		if (theme.inactiveImageUrl)
+			loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);	
 	}
-	trace(loadingMovie.pendingLoadItems + " pending items, swapping in");
-	trace("currentMovie = " + currentMovie + " loadingMovie = " + loadingMovie);
-	var toRemove:MovieClip = currentMovie;
-	currentMovie = loadingMovie;
-	loadingMovie = null;
-	currentMovie._alpha = 0;
-	currentMovie._visible = true;
-	crossFade(toRemove, currentMovie, true);
 }
 
 var songUpdateCount:Number = 0;
@@ -332,31 +373,21 @@ var updateSong = function() {
 	if (songUpdateCount > 2) // FIXME a larger number
 		return;
 	
-	if (loadingMovie != null) {
-		removeMovie(loadingMovie);
-	}
-	var clip:MovieClip = createNewMovie();
-	loadingMovie = clip;
-	
 	var meuXML:XML = new XML();
 	meuXML.ignoreWhite = true;
 	meuXML.onLoad = function(success:Boolean) {
 		if (!success) {
 			return;
 		}
-		if (clip != loadingMovie) {
-			trace("we aren't the loadingMovie anymore, not parsing xml");
-			return; // just get garbage collected
-		}
 		var root:XML = this.childNodes[0];
 		for (var i = 0; i < root.childNodes.length; ++i) {
 			var node:XMLNode = root.childNodes[i];
 			if (node.nodeName == "song") {
 				var song = parseSong(node);
-				setSong(clip, song);
+				setSong(rootMovie, song);
 			} else if (node.nodeName == "theme") {
 				var theme = parseTheme(node);
-				setTheme(clip, theme);
+				setTheme(rootMovie, theme);
 			}
 		}
 	};
@@ -365,6 +396,8 @@ var updateSong = function() {
 		reqUrl = reqUrl + "&theme=" + theme;
 	meuXML.load(reqUrl);
 };
+
+rootMovie = createRootMovie();
 
 // once per minute
 setInterval(updateSong, 1000*3); // FIXME put back
