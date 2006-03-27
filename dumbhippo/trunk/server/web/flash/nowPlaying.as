@@ -126,10 +126,25 @@ button.onRelease = function() {
 var fadeTime:Number = 1000;
 var fadeFrames:Number = 30;
 
+var stopFade = function(clip:MovieClip) {
+	if (!clip.fadeIntervalId)
+		return;
+	trace("removing fade interval " + clip.fadeIntervalId);
+	clearInterval(clip.fadeIntervalId);
+	clip.fadeIntervalId = null;
+	if (clip.removeAfterFade) {
+		removeMovie(clip);
+	} else {
+		trace("not removing clip: " + clip._name);
+	}	
+}
+
 var fade = function(clip:MovieClip, out:Boolean, removeAtEnd:Boolean) {
 	if (clip.fadeIntervalId)
-		return;
+		stopFade(clip); // replace this fade with a new one
+
 	clip.fadeCount = 0;
+	clip.removeAfterFade = removeAtEnd;
 	clip.fadeIntervalId = setInterval(function() {			
 		var newAlpha:Number = (clip.fadeCount / fadeFrames) * 100.0;
 		if (out)
@@ -137,14 +152,7 @@ var fade = function(clip:MovieClip, out:Boolean, removeAtEnd:Boolean) {
 		clip._alpha = newAlpha;
 		trace(clip._name +  "._alpha = " + clip._alpha + " count = " + clip.fadeCount);
 		if (clip.fadeCount == fadeFrames) {
-			trace("removing fade interval " + clip.fadeIntervalId);
-			clearInterval(clip.fadeIntervalId);
-			clip.fadeIntervalId = null;
-			if (removeAtEnd) {
-				removeMovie(clip);
-			} else {
-				trace("not removing clip: " + clip._name);
-			}
+			stopFade(clip);
 		} else {
 			clip.fadeCount = clip.fadeCount + 1;
 		}	 
