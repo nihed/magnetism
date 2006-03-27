@@ -169,6 +169,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		
 		String defaultFilename = getDefaultFilename();
 		String noPrefix = request.getPathInfo().substring(1); // Skip the leading slash
+		
 		File toServe = new File(saveDir, noPrefix);
 		if (!toServe.exists()) {
 			String parent = toServe.getParent();

@@ -43,14 +43,14 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 	private String albumTextColor;
 	private boolean draft;
 	
-	static public String toFilename(String type, String shaSum) {
-		return String.format("%dx%d/%s-%s",
+	static public String toFilename(String mode, String shaSum) {
+		return String.format("%dx%d/%s",
 				Configuration.NOW_PLAYING_THEME_WIDTH, Configuration.NOW_PLAYING_THEME_HEIGHT,
-				shaSum, type);
+				shaSum);
 	}
 	
-	static public String toRelativeUrl(String type, String shaSum) {
-		return "/files" + Configuration.NOW_PLAYING_THEMES_RELATIVE_PATH + "/" + toFilename(type, shaSum);
+	static public String toRelativeUrl(String mode, String shaSum) {
+		return "/files" + Configuration.NOW_PLAYING_THEMES_RELATIVE_PATH + "/" + toFilename(mode, shaSum);
 	}
 	
 	/**
