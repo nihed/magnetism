@@ -191,9 +191,11 @@ var createNewMovie = function() {
 	clip.createEmptyMovieClip("themeClips", 0);
 	
 	clip.songClips.createEmptyMovieClip("albumArtInstance", 0);
-	clip.songClips.createTextField("online", 1, 20, 20, 30, 30);
-	clip.songClips.createTextField("artist", 2, 40, 40, 30, 30);
-	clip.songClips.createTextField("title", 3, 60, 60, 30, 30);
+	clip.songClips.albumArtInstance._x = 102;
+	clip.songClips.albumArtInstance._y = 36;
+	clip.songClips.createTextField("online", 1, 0, 102, 203, 18);
+	clip.songClips.createTextField("artist", 2, 178, 63, 178, 22);
+	clip.songClips.createTextField("title", 3, 176, 41, 245, 30);
 
 	clip.themeClips.createEmptyMovieClip("backgroundActiveInstance", 1);
 	clip.themeClips.createEmptyMovieClip("backgroundInactiveInstance", 0);
@@ -265,6 +267,14 @@ var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
 	}
 }
 
+var formatText = function(clip:MovieClip, fontSize:Number, color:Number) {
+	var fontFormat:TextFormat = new TextFormat();
+	fontFormat.font = "Arial";
+	fontFormat.size = fontSize;
+	fontFormat.color = color;
+	clip.setTextFormat(fontFormat);
+}
+
 var setSong = function(clip:MovieClip, song:Object) {
 	if (songEquals(clip.song, song)) {
 		trace("song unchanged, not doing anything");
@@ -273,8 +283,13 @@ var setSong = function(clip:MovieClip, song:Object) {
 	
 	clip.song = song;
 	clip.songClips.title.text = song.title;
-	clip.songClips.artist.text = song.artist;
+	clip.songClips.artist.text = "by " + song.artist;
 	setStillPlaying(clip, song.stillPlaying);
+		
+	formatText(clip.songClips.online, 12, 0x0000FF);
+	formatText(clip.songClips.artist, 14, 0x0000FF);
+	formatText(clip.songClips.title, 20, 0x0000FF);
+	
 	loadImage(clip, "albumArt", song.albumArtUrl);
 }
 
