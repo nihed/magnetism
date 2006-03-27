@@ -7,6 +7,68 @@ if (!baseUrl) {
 		who = "c4a3fc1f528070";
 }
 
+var getNodeContent = function(node:XMLNode) {
+	if (node.nodeType == 3)
+		return node.nodeValue;
+	
+	var s:String = "";	
+	for (var i = 0; i < node.childNodes.length; ++i) {
+		var child:XMLNode = node.childNodes[i];
+		s = s + getNodeContent(child);
+	}
+	return s;
+}
+
+/////////////////// "model" data types
+// (not bothering to make "real" javascript objects, who wants to fight js object system)
+
+var parseTheme = function(themeNode:XMLNode) {
+	var theme:Object = {};
+	for (var i = 0; i < themeNode.childNodes.length; ++i) {
+		var node:XMLNode = themeNode.childNodes[i];
+		if (node.nodeName == "activeImageUrl") {
+			theme.activeImageUrl = getNodeContent(node);
+		} else if (node.nodeName == "inactiveImageUrl") {
+			theme.inactiveImageUrl = getNodeContent(node);
+		} else if (node.nodeName == "text") {
+			// FIXME
+		} else if (node.nodeName == "albumArt") {
+			// FIXME
+		}
+	}
+	return theme;
+}
+
+var parseSong = function(songNode:XMLNode) {
+	var song:Object = {};
+	for (var i = 0; i < songNode.childNodes.length; ++i) {
+		var node:XMLNode = songNode.childNodes[i];
+		if (node.nodeName == "songTitle")
+			song.title = getNodeContent(node);
+		else if (node.nodeName == "artist")
+			song.artist = getNodeContent(node);
+		else if (node.nodeName == "stillPlaying") {
+			if (forceMode) {
+				trace("forcing mode to " + forceMode);
+				if (forceMode == "active")
+					song.stillPlaying = true;
+				else
+					song.stillPlaying = false;
+			} else {
+				var stillPlayingStr:String = getNodeContent(node);
+				var stillPlaying = stillPlayingStr && (stillPlayingStr == "true");
+				song.stillPlaying = stillPlaying;
+			}
+		} else if (node.nodeName == "image") {
+			var fullUrl:String = getNodeContent(node);
+			song.albumArtUrl = fullUrl;
+		}
+	}
+	return song;
+}
+
+/////////////////// "view" movie stuff
+
 var rootMovie = createEmptyMovieClip("rootMovie", 0);
 
 var currentMovie:MovieClip = null;
@@ -173,18 +235,6 @@ var loadImage = function(clip:MovieClip, which:String, fullUrl:String, depth:Num
 	trace("pending " + clip.pendingLoadItems);
 }
 
-var getNodeContent = function(node:XMLNode) {
-	if (node.nodeType == 3)
-		return node.nodeValue;
-	
-	var s:String = "";	
-	for (var i = 0; i < node.childNodes.length; ++i) {
-		var child:XMLNode = node.childNodes[i];
-		s = s + getNodeContent(child);
-	}
-	return s;
-}
-
 var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
 	if (stillPlaying) {
 		if (clip.backgroundActiveInstance.getDepth() < clip.backgroundInactiveInstance.getDepth())
@@ -197,50 +247,20 @@ var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
 	}
 }
 
-var parseSong = function(clip:MovieClip, songNode:XMLNode) {
-	var gotImage:Boolean = false;
-	for (var i = 0; i < songNode.childNodes.length; ++i) {
-		var node:XMLNode = songNode.childNodes[i];
-		if (node.nodeName == "songTitle")
-			clip.songTitle.text = getNodeContent(node);
-		else if (node.nodeName == "artist")
-			clip.artist.text = getNodeContent(node);
-		else if (node.nodeName == "stillPlaying") {
-			if (forceMode) {
-				trace("forcing mode to " + forceMode);
-				if (forceMode == "active")
-					setStillPlaying(true);
-				else
-					setStillPlaying(false);
-			} else {
-				var stillPlayingStr:String = getNodeContent(node);
-				var stillPlaying = stillPlayingStr && (stillPlayingStr == "true");
-				setStillPlaying(clip, stillPlaying);
-			}
-		} else if (node.nodeName == "image") {
-			var fullUrl:String = getNodeContent(node);
-			loadImage(clip, "albumArt", fullUrl);
-			gotImage = true;
-		}
-	}
-	if (!gotImage)
-		loadImage(clip, "albumArt", null);
+var loadSong = function(clip:MovieClip, songNode:XMLNode) {
+	var song = parseSong(songNode);
+	clip.songTitle.text = song.title;
+	clip.artist.text = song.artist;
+	setStillPlaying(clip, song.stillPlaying);
+	loadImage(clip, "albumArt", song.albumArtUrl);
 }
 
-var parseTheme = function(clip:MovieClip, themeNode:XMLNode) {
-	for (var i = 0; i < themeNode.childNodes.length; ++i) {
-		var node:XMLNode = themeNode.childNodes[i];
-		
-		if (node.nodeName == "activeImageUrl") {
-			loadImage(clip, 'activeBackground', baseUrl + getNodeContent(node));
-		} else if (node.nodeName == "inactiveImageUrl") {
-			loadImage(clip, 'inactiveBackground', baseUrl + getNodeContent(node));
-		} else if (node.nodeName == "text") {
-			// FIXME
-		} else if (node.nodeName == "albumArt") {
-			// FIXME
-		}
-	}
+var loadTheme = function(clip:MovieClip, themeNode:XMLNode) {
+	var theme = parseTheme(themeNode);
+	if (theme.activeImageUrl) 
+		loadImage(clip, 'activeBackground', baseUrl + theme.activeImageUrl);
+	if (theme.inactiveImageUrl)
+		loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);
 }
 
 var songUpdateCount:Number = 0;
@@ -272,9 +292,9 @@ var updateSong = function() {
 		for (var i = 0; i < root.childNodes.length; ++i) {
 			var node:XMLNode = root.childNodes[i];
 			if (node.nodeName == "song")
-				parseSong(clip, node);
+				loadSong(clip, node);
 			else if (node.nodeName == "theme")
-				parseTheme(clip, node);
+				loadTheme(clip, node);
 		}
 	};
 	var reqUrl = baseUrl + "/xml/nowplaying?who=" + who;
