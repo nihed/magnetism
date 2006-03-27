@@ -7,12 +7,26 @@ if (!baseUrl) {
 		who = "c4a3fc1f528070";
 }
 
-// A big rectangle on top, to catch clicks and let us do fade-in
+var rootMovie = createEmptyMovieClip("rootMovie", 0);
+
+var currentMovie:MovieClip = null;
+var loadingMovie:MovieClip = null;
+
+var removeMovie = function(clip:MovieClip) {
+	trace("-------- removing clip: " + clip._name);
+	if (clip == currentMovie)
+		currentMovie = null;
+	if (clip == loadingMovie)
+		loadingMovie = null;
+	clip.removeMovieClip();
+}
+
+// A big rectangle on top, to catch clicks
 createEmptyMovieClip("invisibleButton", 30);
 var button:MovieClip = invisibleButton;
 var width:Number = 440;
 var height:Number = 120;
-button.beginFill(0xFFFFFF, 100); // rgb 24-bit, alpha 0-100
+button.beginFill(0xFFFFFF, 0); // rgb 24-bit, alpha 0-100
 button.lineTo(0, height);
 button.lineTo(width, height);
 button.lineTo(width, 0);
@@ -22,34 +36,59 @@ button.onRelease = function() {
 	getURL(baseUrl + "/music?who=" + who, "_self");
 }
 
-var fadeInTime:Number = 1000;
-var fadeInFrames:Number = 30;
-var fadeInCount:Number = 0;
-var startedFadeIn:Boolean = false;
-var fadeInIntervalId:Number = null;
+var fadeTime:Number = 1000;
+var fadeFrames:Number = 30;
 
-var updateFadeIn = function() {
-	// we're fading in the .swf by fading out the button on top
-	var newAlpha:Number = 100.0 - ((fadeInCount / fadeInFrames) * 100.0);
-	button._alpha = newAlpha;
-	trace("button._alpha = " + button._alpha);
-	if (fadeInCount == fadeInFrames) {
-		clearInterval(fadeInIntervalId);
-		// leave it non-null so we never add it again
-	} else {
-		fadeInCount = fadeInCount + 1;
-	}
+var fade = function(clip:MovieClip, out:Boolean, removeAtEnd:Boolean) {
+	if (clip.fadeIntervalId)
+		return;
+	clip.fadeCount = 0;
+	clip.fadeIntervalId = setInterval(function() {			
+		var newAlpha:Number = (clip.fadeCount / fadeFrames) * 100.0;
+		if (out)
+			newAlpha = 100 - newAlpha;
+		clip._alpha = newAlpha;
+		trace(clip._name +  "._alpha = " + clip._alpha + " count = " + clip.fadeCount);
+		if (clip.fadeCount == fadeFrames) {
+			trace("removing fade interval " + clip.fadeIntervalId);
+			clearInterval(clip.fadeIntervalId);
+			clip.fadeIntervalId = null;
+			if (removeAtEnd) {
+				removeMovie(clip);
+			} else {
+				trace("not removing clip: " + clip._name);
+			}
+		} else {
+			clip.fadeCount = clip.fadeCount + 1;
+		}	 
+	}, fadeTime / fadeFrames);
+	trace("started fade interval " + clip.fadeIntervalId + " on movie " + clip._name);
 }
 
-var fadeIn = function() {
-	if (fadeInIntervalId == null) {
-		fadeInIntervalId = setInterval(updateFadeIn, fadeInTime / fadeInFrames);
+var fadeIn = function(clip:MovieClip) {
+	fade(clip, false, false);
+}
+
+var fadeOut = function(clip:MovieClip, removeAtEnd:Boolean) {
+	fade(clip, true, removeAtEnd);
+}
+
+var crossFade = function(oldClip:MovieClip, newClip:MovieClip, removeAtEnd:Boolean) {
+	if (oldClip != null) {
+		fadeOut(oldClip, removeAtEnd);
+		trace("fading out old clip " + oldClip);
+	}
+	if (newClip != null) {
+		fadeIn(newClip);
+		trace("fading in new clip " + newClip);
 	}
 }
 
 var clipNum:Number = 0;
 var createNewMovie = function() {
-	var clip:MovieClip = createEmptyMovieClip("holder_" + clipNum, 0);
+	// we use clipNum for the depth, which changes each time; otherwise 
+	// the new movie would replace a previous movie at the old depth
+	var clip:MovieClip = rootMovie.createEmptyMovieClip("holder" + clipNum, clipNum);
 	clipNum = clipNum + 1;
 	clip._visible = false;
 	clip.createEmptyMovieClip("albumArtInstance", 2);
@@ -73,26 +112,21 @@ var createNewMovie = function() {
 	return clip;
 }
 
-var currentMovie:MovieClip = null;
-var loadingMovie:MovieClip = null;
-
 var checkSwap = function() {
-	if (!loadingMovie)
+	if (loadingMovie == null)
 		return;
 	if (loadingMovie.pendingLoadItems > 0) {
 		trace(loadingMovie.pendingLoadItems + " still pending");
 		return;
 	}
 	trace(loadingMovie.pendingLoadItems + " pending items, swapping in");
+	trace("currentMovie = " + currentMovie + " loadingMovie = " + loadingMovie);
 	var toRemove:MovieClip = currentMovie;
 	currentMovie = loadingMovie;
 	loadingMovie = null;
+	currentMovie._alpha = 0;
 	currentMovie._visible = true;
-	if (toRemove) {
-		toRemove._visible = false;
-		toRemove.removeMovieClip();
-	}
-	fadeIn(); // has no effect if it's already been done
+	crossFade(toRemove, currentMovie, true);
 }
 
 // null fullUrl = load default
@@ -218,12 +252,11 @@ var updateSong = function() {
 	if (songUpdateCount > 2) // FIXME a larger number
 		return;
 	
-	if (loadingMovie) {
-		loadingMovie.removeMovieClip();
-		loadingMovie = null;
+	if (loadingMovie != null) {
+		removeMovie(loadingMovie);
 	}
-	loadingMovie = createNewMovie();
-	var clip:MovieClip = loadingMovie;
+	var clip:MovieClip = createNewMovie();
+	loadingMovie = clip;
 	
 	var meuXML:XML = new XML();
 	meuXML.ignoreWhite = true;
