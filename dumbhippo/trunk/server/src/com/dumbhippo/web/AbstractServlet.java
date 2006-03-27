@@ -98,7 +98,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		request.getRequestDispatcher("/error").forward(request, response);
 	}
 	
-	protected void redirectToNextPage(HttpServletRequest request, HttpServletResponse response, String next, String flashMessage)
+	protected String redirectToNextPage(HttpServletRequest request, HttpServletResponse response, String next, String flashMessage)
 		throws ServletException, IOException {
 		// if we have a flash message or need to close the window, we have to load a special
 		// page that does that in JavaScript; otherwise we can just redirect you straightaway
@@ -106,10 +106,12 @@ public abstract class AbstractServlet extends HttpServlet {
 			request.setAttribute("next", next);
 			if (flashMessage != null)
 				request.setAttribute("flashMessage", flashMessage);
-			request.getRequestDispatcher("/flash").forward(request, response);
+			return "/flash";
 		} else {
 			String url = response.encodeRedirectURL(next);
 			response.sendRedirect(url);
+			
+			return null;
 		}
 	}
 	
@@ -171,7 +173,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "POST not implemented");				 
 	}
 
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
@@ -353,8 +355,6 @@ public abstract class AbstractServlet extends HttpServlet {
 			});
 		}
 		
-		logger.debug("Got forward URL {}", forwardUrl);
-		
 		if (forwardUrl != null)
 			request.getRequestDispatcher(forwardUrl).forward(request, response);
 	}
@@ -362,20 +362,22 @@ public abstract class AbstractServlet extends HttpServlet {
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		logRequest(request, "GET");
+		String forwardUrl;
 		if (requiresTransaction()) {
-			runWithTransactionAndErrorPage(request, response, new Callable() { 
+			forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
-					wrappedDoGet(request, response);
-					return null;
+					return wrappedDoGet(request, response);
 				}
 			});
 		} else {
-			runWithErrorPage(request, response, new Callable() {
+			forwardUrl = (String)runWithErrorPage(request, response, new Callable() {
 				public Object call() throws Exception {
-					wrappedDoGet(request, response);
-					return null;
+					return wrappedDoGet(request, response);
 				}
 			});
 		}		
+
+		if (forwardUrl != null)
+			request.getRequestDispatcher(forwardUrl).forward(request, response);
 	}
 }

@@ -322,11 +322,13 @@ public class HttpMethodsServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, HumanVisibleException {
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, HumanVisibleException {
 		setNoCache(response);
 		
 		HttpMethods glue = WebEJBUtil.defaultLookup(HttpMethods.class);
 		invokeHttpRequest(glue, request, response);
+		
+		return null;
 	}
 
 	@Override

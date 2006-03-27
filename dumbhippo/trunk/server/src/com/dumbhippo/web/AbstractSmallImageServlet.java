@@ -158,7 +158,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	}
 
 	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
 		
 		/* This is a little confusing. The web request is for something like 
@@ -192,5 +192,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 			setInfiniteExpires(response);
 		
 		sendFile(request, response, "image/png", toServe);
+		
+		return null;
 	}
 }

@@ -40,7 +40,7 @@ public class VerifyServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 
-	private void doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) throws HttpException, ServletException, IOException {
+	private String doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) throws HttpException, ServletException, IOException {
 		
 		logger.debug("Processing invitation token {}", invite);
 		
@@ -104,23 +104,24 @@ public class VerifyServlet extends AbstractServlet {
 			}
 			
 			response.sendRedirect(urlParam);
+			return null;
 		} else {
 			// this forwards to we-miss-you.jsp if the account is disabled
-			redirectToNextPage(request, response, "/welcome", null);
+			return redirectToNextPage(request, response, "/welcome", null);
 		}
 	}
 	
-	private void doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws HumanVisibleException, ServletException, IOException {
+	private String doResourceClaimToken(HttpServletRequest request, HttpServletResponse response, ResourceClaimToken token) throws HumanVisibleException, ServletException, IOException {
 		
 		logger.debug("Processing resource claim token {}", token);
 		
 		ClaimVerifier verifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		
 		verifier.verify(null, token, null);
-		redirectToNextPage(request, response, "/home", "Added address '" + token.getResource().getHumanReadableString() + "' to your account.");
+		return redirectToNextPage(request, response, "/home", "Added address '" + token.getResource().getHumanReadableString() + "' to your account.");
 	}
 
-	private void doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws HumanVisibleException, ServletException, IOException {
+	private String doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws HumanVisibleException, ServletException, IOException {
 		
 		logger.debug("Processing login token {}", token);
 		
@@ -129,10 +130,10 @@ public class VerifyServlet extends AbstractServlet {
 		Pair<Client, Person> result;
 		result = verifier.signIn(token, SigninBean.computeClientIdentifier(request));
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
-		redirectToNextPage(request, response, "/home", null);
+		return redirectToNextPage(request, response, "/home", null);
 	}
 	
-	private void doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
+	private String doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
 		logger.debug("Processing toggle email token {}", token);
 		
 		NoMailSystem.Action action = NoMailSystem.Action.TOGGLE_MAIL;
@@ -155,11 +156,11 @@ public class VerifyServlet extends AbstractServlet {
 		HttpSession session = request.getSession();
 		session.setAttribute("dumbhippo.toggleNoMailToken", token);
 		
-		redirectToNextPage(request, response, "/mail", null);
+		return redirectToNextPage(request, response, "/mail", null);
 	}
 	
 	@Override
-	protected void wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException {
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException {
 		String authKey = request.getParameter("authKey");
 		if (authKey != null)
 			authKey = authKey.trim();
@@ -200,13 +201,13 @@ public class VerifyServlet extends AbstractServlet {
 				// the same message that shows up when the invitation has really expired
 				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
 			}
-			doInvitationToken(request, response, (InvitationToken) token);
+			return doInvitationToken(request, response, (InvitationToken) token);
 		} else if (token instanceof LoginToken) {
-			doLoginToken(request, response, (LoginToken) token);
+			return doLoginToken(request, response, (LoginToken) token);
 		} else if (token instanceof ResourceClaimToken) {
-			doResourceClaimToken(request, response, (ResourceClaimToken) token);
+			return doResourceClaimToken(request, response, (ResourceClaimToken) token);
 		} else if (token instanceof ToggleNoMailToken) {
-			doToggleNoMailToken(request, response, (ToggleNoMailToken) token);
+			return doToggleNoMailToken(request, response, (ToggleNoMailToken) token);
 		} else {
 			// missing handling of some token subclass
 			throw new RuntimeException("VerifyServlet not handling token type " + token.getClass().getName());

@@ -78,8 +78,7 @@ public class SigninServlet extends AbstractServlet {
 			if (sess != null)
 				sess.invalidate();
 			
-			redirectToNextPage(request, response, next, null);
-			return null;
+			return redirectToNextPage(request, response, next, null);
 		} else {
 			try {
 				signinSystem.sendSigninLink(address);
