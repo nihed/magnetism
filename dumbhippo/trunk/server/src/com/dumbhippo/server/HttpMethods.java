@@ -9,7 +9,6 @@ import javax.ejb.Local;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.User;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -25,64 +24,64 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId" })
-	public void getAddableContacts(OutputStream out, HttpResponseData contentType, User user, String groupId)
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { })
-	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, User user)
+	public void getContactsAndGroups(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, User user, String email)
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email)
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "name", "members", "secret" })
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, User user, String name, String memberIds, boolean secret)
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String name, String memberIds, boolean secret)
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "members" })
-	public void doAddMembers(OutputStream out, HttpResponseData contentType, User user, String groupId, String memberIds)
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String memberIds)
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
 	@HttpOptions( optionalParams = { "postInfoXml" } )
-	public void doShareLink(User user, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
+	public void doShareLink(UserViewpoint viewpoint, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
 			NotFoundException, SAXException, MalformedURLException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })
-	public void doShareGroup(User user, String groupId, String recipientIds, String description) throws ParseException,
+	public void doShareGroup(UserViewpoint viewpoint, String groupId, String recipientIds, String description) throws ParseException,
 			NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
 	@HttpOptions(invalidatesSession = true)
-	public void doRenamePerson(User user, String name);
+	public void doRenamePerson(UserViewpoint viewpoint, String name);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "contactId" })
-	public void doAddContactPerson(User user, String contactId);
+	public void doAddContactPerson(UserViewpoint viewpoint, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "contactId" })
-	public void doRemoveContactPerson(User user, String contactId);
+	public void doRemoveContactPerson(UserViewpoint viewpoint, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doJoinGroup(User user, String groupId);
+	public void doJoinGroup(UserViewpoint viewpoint, String groupId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doLeaveGroup(User user, String groupId);
+	public void doLeaveGroup(UserViewpoint viewpoint, String groupId);
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doAddContact(OutputStream out, HttpResponseData contentType, User user, String email) throws IOException;
+	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
@@ -94,19 +93,19 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "disabled" })
-	public void doSetAccountDisabled(User user, boolean disabled) throws IOException, HumanVisibleException;
+	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "password" })
-	public void doSetPassword(User user, String password) throws IOException, HumanVisibleException;
+	public void doSetPassword(UserViewpoint viewpoint, String password) throws IOException, HumanVisibleException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
-	public void doSetMySpaceName(User user, String name) throws IOException;
+	public void doSetMySpaceName(UserViewpoint viewpoint, String name) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "enabled" })
-	public void doSetMusicSharingEnabled(User user, boolean enabled) throws IOException;
+	public void doSetMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "theme" })
@@ -117,16 +116,16 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.TEXT)
 	@HttpParams( { "basedOn" })
 	@HttpOptions( optionalParams = { "basedOn" } )
-	public void doCreateNewNowPlayingTheme(OutputStream out, HttpResponseData contentType, User user, String basedOn)
+	public void doCreateNewNowPlayingTheme(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String basedOn)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "theme" })
-	public void doSetNowPlayingTheme(User user, String themeId) throws IOException;
+	public void doSetNowPlayingTheme(UserViewpoint viewpoint, String themeId) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "theme", "key", "value" })
-	public void doModifyNowPlayingTheme(User user, String themeId, String key, String value) throws IOException;
+	public void doModifyNowPlayingTheme(UserViewpoint viewpoint, String themeId, String key, String value) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "promotion" })

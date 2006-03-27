@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
@@ -23,6 +22,7 @@ import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.UserViewpoint;
 
 public class HttpMethodsServlet extends AbstractServlet {
 
@@ -72,8 +72,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg " + i + " to return type " + replyContentType);
 		}
 		
-		if (args.length > i && Person.class.isAssignableFrom(args[i])) {
-			Person loggedIn = getLoggedInUser(request);
+		if (args.length > i && UserViewpoint.class.isAssignableFrom(args[i])) {
+			UserViewpoint loggedIn = getLoggedInUser(request);
 			toPassIn.add(loggedIn);
 			i += 1;
 		}
@@ -251,10 +251,10 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 	}
 	
-	private User getLoggedInUser(HttpServletRequest request) throws HttpException {
+	private UserViewpoint getLoggedInUser(HttpServletRequest request) throws HttpException {
 		SigninBean signin = SigninBean.getForRequest(request);
 		if (signin instanceof UserSigninBean) {
-			return ((UserSigninBean)signin).getUser();
+			return ((UserSigninBean)signin).getViewpoint();
 		}
 
 		// we have no UI so the user is pretty much jacked at this stage; but it 
