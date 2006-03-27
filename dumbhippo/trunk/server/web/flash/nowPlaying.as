@@ -256,13 +256,11 @@ var loadImage = function(clip:MovieClip, which:String, fullUrl:String, depth:Num
 }
 
 var setStillPlaying = function(clip:MovieClip, stillPlaying:Boolean) {
+	clip.themeClips.backgroundInactiveInstance._visible = !stillPlaying;
+	clip.themeClips.backgroundActiveInstance._visible = stillPlaying;
 	if (stillPlaying) {
-		if (clip.themeClips.backgroundActiveInstance.getDepth() < clip.themeClips.backgroundInactiveInstance.getDepth())
-			clip.themeClips.backgroundActiveInstance.swapDepths(clip.themeClips.backgroundInactiveInstance);
 		clip.songClips.online.text = "";
 	} else {
-		if (clip.themeClips.backgroundInactiveInstance.getDepth() < clip.themeClips.backgroundActiveInstance.getDepth())
-			clip.themeClips.backgroundInactiveInstance.swapDepths(clip.themeClips.backgroundActiveInstance);	
 		clip.songClips.online.text = "Music stopped";
 	}
 }

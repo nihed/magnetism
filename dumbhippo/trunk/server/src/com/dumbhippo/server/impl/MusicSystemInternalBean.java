@@ -1413,44 +1413,37 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			alreadyUsed.add(current);
 		}
 
-		// Only the creator can see draft themes
-		Query q;
-		if (viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint) {
-			q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator");
-		} else {
-			q = em.createQuery("FROM NowPlayingTheme t WHERE t.draft=0");	
-		}
-		q.setParameter("creator", user);
-		List<?> myThemes = q.getResultList();
-		List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
-		for (Object o : myThemes) {
-			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
-				myThemesFiltered.add((NowPlayingTheme) o);
-				alreadyUsed.add((NowPlayingTheme) o);
+		boolean viewingSelf = viewpoint.isOfUser(user);
+		
+		if (viewingSelf) {
+			// this query will include our draft themes
+			Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator");
+			q.setParameter("creator", user);
+			List<?> myThemes = q.getResultList();
+			List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
+			for (Object o : myThemes) {
+				if (!alreadyUsed.contains((NowPlayingTheme) o)) {
+					myThemesFiltered.add((NowPlayingTheme) o);
+					alreadyUsed.add((NowPlayingTheme) o);
+				}
 			}
+			bundle.setMyThemes(myThemesFiltered);
 		}
-		bundle.setMyThemes(myThemesFiltered);
 
+		// this will return no friends if we can't see this person's contacts
+		// from our viewpoint
 		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
-		
-		// If we have any friends, we show only a subset of their themes, but
-		// if we have no friends, we show themes from the entire system. This
-		// leads to the oddity that as soon as you have a friend, the set of
-		// themes that appear is reduced. 
-		//
-		// *** Havoc: Please check this comment / - Owen ***
-		//
-		
-		String draftClause; 
-		if (viewpoint instanceof SystemViewpoint)
-			draftClause = null;
-		else if (viewpoint instanceof UserViewpoint)
-			draftClause = "(t.draft=0 OR t.creator=:viewer)";
-		else
-			draftClause = "(t.draft=0)";
-		
-		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t ");
-		if (!friends.isEmpty()) {
+
+		if (!friends.isEmpty()) {	
+			String draftClause; 
+			if (viewpoint instanceof SystemViewpoint)
+				draftClause = null;
+			else if (viewpoint instanceof UserViewpoint)
+				draftClause = "(t.draft=0 OR t.creator=:viewer)";
+			else
+				draftClause = "(t.draft=0)";
+			
+			StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t ");
 			sb.append("WHERE t.creator.id IN (");
 			for (Contact c : friends) {
 				User u = identitySpider.getUser(c);
@@ -1470,32 +1463,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				sb.append("AND ");
 				sb.append(draftClause);
 			}
-		} else if (draftClause != null) {
-			sb.append("WHERE ");
-			sb.append(draftClause);
-		}
-		
-		q = em.createQuery(sb.toString());
-		if (viewpoint instanceof UserViewpoint) {			
-			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
-		}
-		
-		List<?> friendsThemes = q.getResultList();
-		
-		List<NowPlayingTheme> friendsThemesFiltered = new ArrayList<NowPlayingTheme>();
-		for (Object o : friendsThemes) {
-			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
-				friendsThemesFiltered.add((NowPlayingTheme) o);
-				alreadyUsed.add((NowPlayingTheme) o);
+			
+			Query q = em.createQuery(sb.toString());
+			if (viewpoint instanceof UserViewpoint) {			
+				q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
 			}
+			
+			List<?> friendsThemes = q.getResultList();
+			
+			List<NowPlayingTheme> friendsThemesFiltered = new ArrayList<NowPlayingTheme>();
+			for (Object o : friendsThemes) {
+				if (!alreadyUsed.contains((NowPlayingTheme) o)) {
+					friendsThemesFiltered.add((NowPlayingTheme) o);
+					alreadyUsed.add((NowPlayingTheme) o);
+				}
+			}
+			bundle.setFriendsThemes(friendsThemesFiltered);
 		}
-		bundle.setFriendsThemes(friendsThemesFiltered);
 				
 		/* Now pick 5 themes we don't have already, deterministically for now 
 		 * FIXME should be random in some way
 		 */
 		
-		sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0");
+		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0");
 		
 		if (!alreadyUsed.isEmpty()) {
 			sb.append(" AND t.id NOT IN (");
@@ -1511,7 +1501,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			sb.append(")");
 		}
 		
-		q = em.createQuery(sb.toString());
+		Query q = em.createQuery(sb.toString());
 		q.setMaxResults(5);
 		List<?> randomThemes = q.getResultList();
 		
