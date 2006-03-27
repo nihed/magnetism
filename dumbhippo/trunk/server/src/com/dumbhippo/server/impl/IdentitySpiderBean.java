@@ -44,7 +44,9 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 /*
@@ -360,8 +362,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 			// can only see resources if we're the system view or this is our own
 			// Contact
-			boolean ownContact = viewpoint == null ||
-				contact.getAccount().getOwner().equals(viewpoint.getViewer());
+			boolean ownContact = viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(contact.getAccount().getOwner());
 
 			if (!ownContact) {
 				// we want to set a fallback name from an email resource if we 
@@ -388,7 +389,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		
 		// can only get user resources if we are a contact of the user
-		if (pv.getUser() != null && isViewerFriendOf(viewpoint, pv.getUser())) {
+		if (pv.getUser() != null && isViewerSystemOrFriendOf(viewpoint, pv.getUser())) {
 			userResources = getResourcesForPerson(pv.getUser());
 		}
 		
@@ -421,13 +422,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				} else if (pv.getUser() != null) {
 					pv.addInvitedStatus(true); // they already have an account
 				} else {
-					boolean invited = false;
-					for (Resource r : resources) {
-						invited = invitationSystem.hasInvited(viewpoint.getViewer(), r);
-						if (invited)
-							break;
+					if (viewpoint instanceof UserViewpoint) {
+						boolean invited = false;
+						for (Resource r : resources) {
+							invited = invitationSystem.hasInvited((UserViewpoint)viewpoint, r);
+							if (invited)
+								break;
+						}
+						pv.addInvitedStatus(invited);
 					}
-					pv.addInvitedStatus(invited);
 				}
 			} else if (e == PersonViewExtra.ALL_RESOURCES) {
 				pv.addAllResources(resources);
@@ -484,7 +487,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		User user;
 		Contact contact;
 		
-		contact = findContactByResource(viewpoint.getViewer(), r);
+		if (viewpoint instanceof UserViewpoint)
+			contact = findContactByResource(((UserViewpoint)viewpoint).getViewer(), r);
+		else
+			contact = null;
 		
 		if (r instanceof Account) {
 			user = ((Account)r).getOwner();
@@ -506,7 +512,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
-		addPersonViewExtras(null, pv, null, extras);
+		addPersonViewExtras(SystemViewpoint.getInstance(), pv, null, extras);
 		return pv;
 	}
 	
@@ -641,7 +647,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
-		if (!isViewerFriendOf(viewpoint, user))
+		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
 
 		// We call lookupAccountByPerson to deal with possibly detached users
@@ -703,28 +709,29 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
 			// see if we're allowed to look at who user's contacts are
-			if (!isViewerFriendOf(viewpoint, user))
+			if (!isViewerSystemOrFriendOf(viewpoint, user))
 				return false;
 
 			// if we can see their contacts, return whether this person is one of them
 			return isContactNoViewpoint(user, contactUser);
 	}
 	
-	public boolean isViewerFriendOf(Viewpoint viewpoint, User user) {
-		// You can see someone's "friends only" stuff if you are them, or you are a contact of them
-		// viewpoint == null means omniscient
-		if (viewpoint == null)
+	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user) {
+		if (viewpoint instanceof SystemViewpoint) {
 			return true;
-		if (user.equals(viewpoint.getViewer()))
-			return true;
-		if (viewpoint.isFriendOfStatusCached(user))
-			return viewpoint.getCachedFriendOfStatus(user);
-		
-		if (viewpoint.getViewer() == null) // anonymous view
+		} else if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
+			if (user.equals(userViewpoint.getViewer()))
+				return true;
+			if (userViewpoint.isFriendOfStatusCached(user))
+				return userViewpoint.getCachedFriendOfStatus(user);
+			
+			boolean isFriendOf = isContactNoViewpoint(user, userViewpoint.getViewer());
+			userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
+			return isFriendOf;
+		} else {
 			return false;
-		boolean isFriendOf = isContactNoViewpoint(user, viewpoint.getViewer());
-		viewpoint.setCachedFriendOfStatus(user, isFriendOf);
-		return isFriendOf;
+		}
 	}
 	
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
@@ -863,7 +870,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		messageSender.sendMySpaceNameChangedNotification(user);
 	}
 
-	public Set<User> getMySpaceContacts(Viewpoint viewpoint) {
+	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {
 		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint.getViewer());
 		
 		// filter out ourselves and anyone with no myspace
@@ -884,7 +891,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return contacts;
 	}
 	
-	public Set<User> getUserContactsWithMySpaceName(Viewpoint viewpoint, String mySpaceName) {	
+	public Set<User> getUserContactsWithMySpaceName(UserViewpoint viewpoint, String mySpaceName) {	
 		Set<User> users = getMySpaceContacts(viewpoint);
 		Set<User> ret = new HashSet<User>();
 		for (User u : users) {

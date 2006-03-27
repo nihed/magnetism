@@ -103,7 +103,7 @@ public class RewriteServlet extends HttpServlet {
 		try {
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
-			SigninBean.getForRequest(request).reattachUser();
+			SigninBean.getForRequest(request).resetSessionObjects();
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
 			

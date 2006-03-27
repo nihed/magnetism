@@ -23,6 +23,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
@@ -114,7 +115,7 @@ public class XmppQueueConsumerBean implements MessageListener {
 	}
 	
 	private Post getPostFromRoomName(User user, String roomName) {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		try {
 			return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
 		} catch (NotFoundException e) {

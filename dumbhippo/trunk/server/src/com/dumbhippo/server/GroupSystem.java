@@ -34,9 +34,9 @@ public interface GroupSystem {
 	
 	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException;
 	
-	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member);	
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member);	
 	
-	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status);
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 
 	/**
 	 * Increase the version number of the group; increasing the group version means
@@ -66,7 +66,7 @@ public interface GroupSystem {
 	 * @param member the person being viewed
 	 * @return a list of GroupView objects for the groups member is in
 	 */
-	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member);	
+	public Set<GroupView> findGroups(UserViewpoint viewpoint, User member);	
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
@@ -80,5 +80,5 @@ public interface GroupSystem {
 	 * @param extras info to put in each PersonView
 	 * @return the contacts of owner that aren't already members of the group
 	 */
-	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
+	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
 }

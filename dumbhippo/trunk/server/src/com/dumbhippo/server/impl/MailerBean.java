@@ -17,14 +17,13 @@ import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 
 
 /**
@@ -78,9 +77,8 @@ public class MailerBean implements Mailer {
 		}
 	}
 
-	public MimeMessage createMessage(User from, String to) {
-		Viewpoint viewpoint = new Viewpoint(from);
-		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, from, PersonViewExtra.PRIMARY_EMAIL);
+	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
+		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);
 		
 		InternetAddress fromAddress;
 		InternetAddress toAddress;

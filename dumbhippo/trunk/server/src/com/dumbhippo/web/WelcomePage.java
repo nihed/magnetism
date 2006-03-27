@@ -29,7 +29,7 @@ public class WelcomePage {
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 6;
 	
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	@Browser
 	private BrowserBean browser;
@@ -85,7 +85,7 @@ public class WelcomePage {
 	}
 	
 	public List<PersonView> getInviters() {
-		return PersonView.sortedList(invitationSystem.findInviters(signin.getUser()));
+		return PersonView.sortedList(invitationSystem.findInviters(signin.getViewpoint()));
 	}
 	
 	public String getFeedbackEmail() {

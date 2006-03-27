@@ -18,7 +18,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 
 // Implementation of LiveUserUpdater
 @Stateless
@@ -54,7 +54,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	private List<PostView> getRecentPosts(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);
-		return postingBoard.getReceivedPosts(new Viewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
+		return postingBoard.getReceivedPosts(new UserViewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
 	}
 
 	private double computeInitialTemperature(LiveUser user, List<PostView> posts) {

@@ -47,6 +47,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -131,8 +132,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				String hasAccount = p.getUser() != null ? "true" : "false";
 
 				String display = p.getName();
-				if (p.getUser() != null
-						&& p.getUser().equals(viewpoint.getViewer())) {
+				if (p.getUser() != null && viewpoint.isOfUser(p.getUser())) {
 					display = display + " (myself)";
 				}
 
@@ -169,7 +169,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					}
 
 					User user = member.getUser(); // can return null
-					if (user != null && viewpoint.getViewer().equals(user))
+					if (user != null && viewpoint.isOfUser(user))
 						continue; // skip ourselves
 
 					if (sampleMembers.length() > 0)
@@ -204,7 +204,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getAddableContacts(OutputStream out,
 			HttpResponseData contentType, User user, String groupId)
 			throws IOException {
-		Viewpoint viewpoint = new Viewpoint(user);
+		UserViewpoint viewpoint = new UserViewpoint(user);
 
 		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint,
 				user, groupId, PersonViewExtra.ALL_RESOURCES);
@@ -214,7 +214,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void getContactsAndGroups(OutputStream out,
 			HttpResponseData contentType, User user) throws IOException {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 
 		Set<PersonView> persons = identitySpider.getContacts(viewpoint, user,
 				true, PersonViewExtra.ALL_RESOURCES);
@@ -227,7 +227,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			HttpResponseData contentType, User user, String email)
 			throws IOException {
 		XmlBuilder xml = new XmlBuilder();
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 
 		startReturnObjectsXml(contentType, xml);
 
@@ -284,7 +284,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doShareGroup(User user, String groupId, String recipientIds,
 			String description) throws ParseException, NotFoundException {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
@@ -318,7 +318,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		for (Person p : memberPeople)
 			groupSystem.addMember(user, group, p);
 
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		returnObjects(out, contentType, viewpoint, null, Collections
 				.singleton(group));
 	}
@@ -326,7 +326,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doAddMembers(OutputStream out, HttpResponseData contentType,
 			User user, String groupId, String memberIds) throws IOException,
 			ParseException, NotFoundException {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 
 		Set<String> memberGuids = splitIdList(memberIds);
 
@@ -347,7 +347,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			User user, String email) throws IOException {
 		EmailResource emailResource = identitySpider.getEmail(email);
 		Contact contact = identitySpider.createContact(user, emailResource);
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		PersonView contactView = identitySpider.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
 
@@ -356,7 +356,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doJoinGroup(User user, String groupId) {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		try {
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 			groupSystem.addMember(user, group, user);
@@ -366,7 +366,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doLeaveGroup(User user, String groupId) {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		try {
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 			groupSystem.removeMember(user, group, user);
@@ -526,7 +526,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			basedOnObject = null;
 		}
 		
-		Viewpoint viewpoint = new Viewpoint(user);
+		UserViewpoint viewpoint = new UserViewpoint(user);
 		NowPlayingTheme theme = musicSystem.createNewNowPlayingTheme(viewpoint, basedOnObject);
 		out.write(theme.getId().getBytes());
 		out.flush();
@@ -541,7 +541,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		musicSystem.setCurrentNowPlayingTheme(new Viewpoint(user), user, theme);
+		musicSystem.setCurrentNowPlayingTheme(new UserViewpoint(user), user, theme);
 	}
 	
 	public void doModifyNowPlayingTheme(User user, String themeId, String key, String value) throws IOException {
@@ -596,7 +596,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			} else {
 				// this does NOT check whether the account has invitations left,
 				// that's why we do it above. 
-				note = invitationSystem.sendEmailInvitation(inviter, promotionCode, address,
+				note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
 							"Welcome!", "Thanks for inviting yourself.");
 				if (note == null)
 					note = "Your invitation is on its way (check your email)";

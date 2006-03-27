@@ -21,6 +21,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -78,7 +79,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException {
 		if (user != null) {
 			if (!user.equals(token.getUser())) {
-				Viewpoint viewpoint = new Viewpoint(user);
+				Viewpoint viewpoint = new UserViewpoint(user);
 				PersonView self = identitySpider.getPersonView(viewpoint, user);
 				PersonView other = identitySpider.getPersonView(viewpoint, token.getUser());
 				throw new HumanVisibleException("You are signed in as " + self.getName() 

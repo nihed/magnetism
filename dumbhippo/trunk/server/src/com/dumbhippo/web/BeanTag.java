@@ -60,10 +60,15 @@ public class BeanTag extends SimpleTagSupport {
 		}		
 	}
 	
-	private SigninBean getSigninBean() {
+	private SigninBean getSigninBean(boolean mustBeSignedIn) {
 		PageContext context = (PageContext)getJspContext();
 		
-		return SigninBean.getForRequest((HttpServletRequest)context.getRequest());
+		SigninBean signin = SigninBean.getForRequest((HttpServletRequest)context.getRequest());
+		
+		if (mustBeSignedIn && !signin.isValid())
+			throw new RuntimeException("Sign-in only page accessed when not signed in");
+		
+		return signin;
 	}
 	
 	private BrowserBean getBrowserBean() {
@@ -93,7 +98,7 @@ public class BeanTag extends SimpleTagSupport {
 		
 		// We special-case the SigninBean and BrowserBean
 		if (clazz == SigninBean.class) 
-			return getSigninBean();
+			return getSigninBean(false);
 		if (clazz == BrowserBean.class)
 			return getBrowserBean();
 		
@@ -108,9 +113,12 @@ public class BeanTag extends SimpleTagSupport {
 		
 		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {
 			for (Field f : c.getDeclaredFields()) {
-				if (f.isAnnotationPresent(Signin.class) &&
-					f.getType().isAssignableFrom(SigninBean.class)) {
-					setField(o, f, getSigninBean());
+				if (f.isAnnotationPresent(Signin.class)) {
+					if (f.getType().isAssignableFrom(UserSigninBean.class)) {
+						setField(o, f, getSigninBean(true));
+					} else if (f.getType().isAssignableFrom(SigninBean.class)) {
+						setField(o, f, getSigninBean(false));
+					}
 				} else if (f.isAnnotationPresent(Browser.class) &&
 					f.getType().isAssignableFrom(BrowserBean.class)) {
 					setField(o, f, getBrowserBean());

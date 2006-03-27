@@ -70,14 +70,7 @@ public class RedirectServlet extends AbstractServlet {
 				// to get the jsessionid, at least in theory
 				url = response.encodeRedirectURL(url);
 			} else {
-				User user;
-				try {
-					user = doLogin(request);
-				} catch (HttpException e) {
-					// if we can't log in, we just don't send the post notification... 
-					// big deal.
-					user = null;
-				}
+				User user = getUser(request);
 				if (user != null) {
 					PostingBoard postingBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 					postingBoard.postViewedBy(postId, user);

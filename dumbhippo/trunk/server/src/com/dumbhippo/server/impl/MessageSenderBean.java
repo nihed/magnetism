@@ -48,6 +48,8 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
@@ -378,7 +380,7 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 			
-			Viewpoint viewpoint = new Viewpoint(recipient);
+			Viewpoint viewpoint = new UserViewpoint(recipient);
 
 			PostView postView = postingBoard.getPostView(viewpoint, post);
 			Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
@@ -396,7 +398,7 @@ public class MessageSenderBean implements MessageSender {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			Set<EntityView> viewerEntities = new HashSet<EntityView>();
-			Viewpoint viewpoint = new Viewpoint(user);
+			Viewpoint viewpoint = new UserViewpoint(user);
 			for (Guid guid : lpost.getViewers()) {
 				Person viewer;
 				try {
@@ -443,6 +445,7 @@ public class MessageSenderBean implements MessageSender {
 		public void sendActivePostsChanged(LiveUser user) {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(user);
+			Viewpoint viewpoint = new UserViewpoint(dbUser);
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
 			List<LivePost> lposts = new ArrayList<LivePost>();
 			List<PostView> posts = new ArrayList<PostView>();
@@ -451,13 +454,13 @@ public class MessageSenderBean implements MessageSender {
 				LivePost lpost = LiveState.getInstance().getLivePost(id);
 				PostView pv;
 				try {
-					pv = postingBoard.loadPost(new Viewpoint(dbUser), id);
+					pv = postingBoard.loadPost(viewpoint, id);
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
 				lposts.add(lpost);
 				posts.add(pv);
-				referencedEntities.addAll(postingBoard.getReferencedEntities(new Viewpoint(dbUser), pv.getPost()));
+				referencedEntities.addAll(postingBoard.getReferencedEntities(viewpoint, pv.getPost()));
 			}
 
 			message.addExtension(new ActivePostsChangedExtension(posts, lposts, referencedEntities));
@@ -477,6 +480,13 @@ public class MessageSenderBean implements MessageSender {
 	private class EmailSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post) {
+			// We really want to use the viewpoint of the recipient, not the
+			// viewpoint of the sender, but the recipient doesn't have an
+			// account and thus can't have a viewpoint. Using an anonymous
+			// viewpoint wouldn't work since the anonymous viewpoint wouldn't
+			// be able to see the post details.
+			UserViewpoint viewpoint = new UserViewpoint(post.getPoster());
+			
 			if (!noMail.getMailEnabled(recipient)) {
 				logger.debug("Mail is disabled to {} not sending post notification", recipient);
 				return;
@@ -502,7 +512,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
-			PersonView posterViewedBySelf = identitySpider.getPersonView(new Viewpoint(post.getPoster()), 
+			PersonView posterViewedBySelf = identitySpider.getPersonView(viewpoint, 
 					                                                     post.getPoster(),
 					                                                     PersonViewExtra.PRIMARY_EMAIL);
 			
@@ -629,7 +639,7 @@ public class MessageSenderBean implements MessageSender {
 			messageHtml.append("</div>\n");
 			messageHtml.append("</body>\n</html>\n");
 					
-			MimeMessage msg = mailer.createMessage(post.getPoster(), recipient.getEmail());
+			MimeMessage msg = mailer.createMessage(viewpoint, recipient.getEmail());
 			
 			mailer.setMessageContent(msg, postView.getTitle(), messageText.toString(), messageHtml.toString());
 			
@@ -658,7 +668,7 @@ public class MessageSenderBean implements MessageSender {
 	public void sendLivePostChanged(LivePost lpost) {
 		PostView post;
 		try {
-			post = postingBoard.loadPost(new Viewpoint(null), lpost.getGuid());
+			post = postingBoard.loadPost(SystemViewpoint.getInstance(), lpost.getGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}

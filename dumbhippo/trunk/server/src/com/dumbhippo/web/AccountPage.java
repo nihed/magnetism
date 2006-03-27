@@ -20,7 +20,7 @@ public class AccountPage {
 	static private final Logger logger = GlobalSetup.getLogger(AccountPage.class);
 
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	private IdentitySpider identitySpider;
 	private PersonView person;

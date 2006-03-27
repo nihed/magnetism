@@ -14,7 +14,7 @@ public class WelcomeDisabledPage {
 	static private final Logger logger = GlobalSetup.getLogger(WelcomeDisabledPage.class);
 
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	private Configuration configuration;
 	private IdentitySpider identitySpider;

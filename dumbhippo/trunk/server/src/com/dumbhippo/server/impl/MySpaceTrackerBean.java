@@ -25,7 +25,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
 
@@ -117,8 +117,8 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 		});
 	}
 
-	public void notifyNewContactComment(User user, String mySpaceContactName) {
-		Set<User> mySpaceNameOwners = identitySpider.getUserContactsWithMySpaceName(new Viewpoint(user), mySpaceContactName);
+	public void notifyNewContactComment(UserViewpoint viewpoint, String mySpaceContactName) {
+		Set<User> mySpaceNameOwners = identitySpider.getUserContactsWithMySpaceName(viewpoint, mySpaceContactName);
 		for (User u : mySpaceNameOwners) {
 			messageSender.sendMySpaceContactCommentNotification(u);
 		}

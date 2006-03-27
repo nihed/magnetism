@@ -253,13 +253,13 @@ public class HttpMethodsServlet extends AbstractServlet {
 	
 	private User getLoggedInUser(HttpServletRequest request) throws HttpException {
 		SigninBean signin = SigninBean.getForRequest(request);
-		User user = signin.getUser();
-		if (user == null) {
-			// we have no UI so the user is pretty much jacked at this stage; but it 
-			// should not happen in any non-broken situation
-			throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in");
+		if (signin instanceof UserSigninBean) {
+			return ((UserSigninBean)signin).getUser();
 		}
-		return user;
+
+		// we have no UI so the user is pretty much jacked at this stage; but it 
+		// should not happen in any non-broken situation
+		throw new HttpException(HttpResponseCode.FORBIDDEN, "You need to log in");
 	}
 	
 	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
@@ -272,7 +272,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 			return false;
 		}
 			
-		User user = doLogin(request);
+		User user = getUser(request);
 			
 		response.setContentType("text/plain");
 		OutputStream out = response.getOutputStream();

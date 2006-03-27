@@ -15,7 +15,7 @@ import com.dumbhippo.server.PersonViewExtra;
 public abstract class AbstractSigninPage {
 
 	@Signin
-	protected SigninBean signin;
+	protected UserSigninBean signin;
 
 	protected IdentitySpider identitySpider;
 	protected InvitationSystem invitationSystem;

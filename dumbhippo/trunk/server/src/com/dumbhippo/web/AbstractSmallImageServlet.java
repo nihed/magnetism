@@ -133,8 +133,6 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "No photo uploaded?");
 		
 		User user = doLogin(request);
-		if (user == null)
-			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in to change a photo");
 		
 		reloadTo = formParameters.get("reloadTo");
 		

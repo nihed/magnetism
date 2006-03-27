@@ -46,18 +46,18 @@ public interface InvitationSystem {
 	 * @param invitee the invitee
 	 * @return invitation view or null
 	 */
-	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint, Resource invitee);
+	public InvitationView lookupInvitationViewFor(UserViewpoint viewpoint, Resource invitee);
 	
 	/**
-	 * Find all inviters for resources provably owned by a person.
+	 * Find all inviters for resources provably owned by the current users
 	 * Will return inviters whose invitations are expired, but will not return
 	 * inviters who deleted their invitation.
-	 * @param invitee The person that was invited
+	 * @param viewpoint The current user (the person that was invited)
 	 * @param extras info to stuff in the PersonView objects
 	 * @return a set of all the inviters for the invitee; the
 	 *         resulting PersonView use invitee as the viewpoint.
 	 */
-	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras);
+	public Set<PersonView> findInviters(UserViewpoint viewpoint, PersonViewExtra... extras);
 	
 	
 	/**
@@ -69,7 +69,7 @@ public interface InvitationSystem {
 	 * @return a list of InvitationViews that correspond to outstanding invitations
 	 * sent by the inviter
 	 */
-	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint, 
+	public List<InvitationView> findOutstandingInvitations(UserViewpoint viewpoint, 
 			                                               int start, 
 			                                               int max);
 	
@@ -79,7 +79,7 @@ public interface InvitationSystem {
 	 * @param inviter a person that has been sending invitations
 	 * @return the number of outstanding invitations sent by the inviter
 	 */
-	public int countOutstandingInvitations(Viewpoint viewpoint);
+	public int countOutstandingInvitations(UserViewpoint viewpoint);
 	
 	/**
 	 * Deletes an invitation created by a given viewer with a given authentication key.
@@ -89,7 +89,7 @@ public interface InvitationSystem {
 	 * @param authKey authentication key for the invitation to be deleted
 	 * @return deleted invitation or null
 	 */
-	public InvitationView deleteInvitation(Viewpoint viewpoint, String authKey);
+	public InvitationView deleteInvitation(UserViewpoint viewpoint, String authKey);
 
 	/**
 	 * Restores an invitation created by a given viewer with a given authentication key.
@@ -98,7 +98,7 @@ public interface InvitationSystem {
 	 *        created the invitation
 	 * @param authKey authentication key for the invitation to be restored
 	 */
-	public void restoreInvitation(Viewpoint viewpoint, String authKey);
+	public void restoreInvitation(UserViewpoint viewpoint, String authKey);
 	
 	/**
 	 * If invitee has already been invited and the invitation is not expired, 
@@ -133,30 +133,12 @@ public interface InvitationSystem {
 			             String subject, String message);
 	
 	/**
-	 * Add inviter as a person wanting to invite invitee into the system.
+	 * Adds the current user as a person wanting to invite invitee into the system.
 	 * Adds the invitee as a contact if they weren't already. Sends out
 	 * the invitation to the resource if appropriate. This is an "explicit 
 	 * invitation".
 	 * 
-	 * @param inviter the person doing the inviting
-	 * @param promotionCode code of a promotion (like a web page offering open 
-	 *    invites) that the invitation comes from, or null.
-	 * @param invitee the person being invited
-	 * @param subject subject for the email, text format
-	 * @param message message to send (from the inviter to invitee), text format
-	 * @returns note that will be displayed to the user or null
-	 */
-	public String sendInvitation(User inviter, PromotionCode promotionCode, Resource invitee, 
-			                     String subject, String message);
-	
-	
-	/**
-	 * Add inviter as a person wanting to invite invitee into the system.
-	 * Adds the invitee as a contact if they weren't already. Sends out
-	 * the invitation to the resource if appropriate. This is an "explicit 
-	 * invitation".
-	 * 
-	 * @param inviter
+	 * @param viewpoint the current user (the person doing the inviting)
 	 * @param promotionCode code of a promotion (like a web page offering open 
 	 *    invites) that the invitation comes from, or null.
 	 * @param email
@@ -164,7 +146,7 @@ public interface InvitationSystem {
 	 * @param message message to send (from the inviter to invitee), text format
 	 * @returns note that will be displayed to the user or null
 	 */
-	public String sendEmailInvitation(User inviter, PromotionCode promotionCode, String email, 
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, 
 			                          String subject, String message);
 	
 	/**
@@ -207,10 +189,10 @@ public interface InvitationSystem {
 	
 	/** 
 	 * See if user has invited the resource and has not deleted their invitation.
-	 * @param user the user
+	 * @param viewpoint the current user
 	 * @param invitee invitee resource
 	 * @return true if this user has invited this invitee and has not deleted 
 	 *         their invitation
 	 */
-	public boolean hasInvited(User user, Resource invitee);
+	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee);
 }

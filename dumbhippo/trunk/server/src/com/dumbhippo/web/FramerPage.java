@@ -10,6 +10,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.UserViewpoint;
 
 /**
  * Displays a post in a frame with information about how it was shared
@@ -45,7 +46,8 @@ public class FramerPage {
 		this.postId = post.getPost().getId();
 		logger.debug("viewing post: {}", this.postId);
 		if (signin.isValid()) {
-			postBoard.postViewedBy(this.postId, signin.getUser());
+			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
+			postBoard.postViewedBy(this.postId, viewpoint.getViewer());
 		}
     }
 

@@ -18,6 +18,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 public class GroupPhotoServlet extends AbstractPhotoServlet {
@@ -45,7 +46,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 
 		// FIXME this will get cleaned up with future changes to have
 		// doLogin return a viewpoint
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		Group group;
 		try {
 			group = groupSystem.lookupGroupById(viewpoint, groupId);

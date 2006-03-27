@@ -12,7 +12,7 @@ import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.SystemViewpoint;
 
 // Implementation of LivePostUpdater
 @Stateless
@@ -32,7 +32,7 @@ public class LivePostUpdaterBean implements LivePostUpdater {
 		}
 		PostView pv;
 		try {
-			pv = postingBoard.loadPost(new Viewpoint(null), livePost.getGuid());
+			pv = postingBoard.loadPost(SystemViewpoint.getInstance(), livePost.getGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}

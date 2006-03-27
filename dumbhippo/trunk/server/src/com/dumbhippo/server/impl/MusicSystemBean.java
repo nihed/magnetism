@@ -18,6 +18,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 /**
@@ -37,7 +38,7 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getNowPlayingThemesBundle(viewpoint, user);
 	}
 	
-	public NowPlayingTheme createNewNowPlayingTheme(Viewpoint viewpoint, NowPlayingTheme basedOn) {
+	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {
 		return internal.createNewNowPlayingTheme(viewpoint, basedOn);
 	}
 	
@@ -45,7 +46,7 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentNowPlayingTheme(user);
 	}
 	
-	public void setCurrentNowPlayingTheme(Viewpoint viewpoint, User user, NowPlayingTheme theme) {
+	public void setCurrentNowPlayingTheme(UserViewpoint viewpoint, User user, NowPlayingTheme theme) {
 		internal.setCurrentNowPlayingTheme(viewpoint, user, theme);
 	}
 	
@@ -57,7 +58,7 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.lookupNowPlayingTheme(id);
 	}
 	
-	public void setNowPlayingThemeImage(Viewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
+	public void setNowPlayingThemeImage(UserViewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
 		internal.setNowPlayingThemeImage(viewpoint, id, type, shaSum);
 	}
 	

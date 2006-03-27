@@ -22,7 +22,7 @@ public class SuggestPage {
 	static private final int MAX_RECOMMENDED_POSTS_SHOWN = 10;
 	
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	private IdentitySpider identitySpider;
 	private PersonView person;

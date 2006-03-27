@@ -9,11 +9,12 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.UserViewpoint;
 
 public class SearchPage {
 	static private final Logger logger = GlobalSetup.getLogger(SearchPage.class);
@@ -35,8 +36,8 @@ public class SearchPage {
 	private String groupId;
 	
 	private ListBean<PostView> posts;
-	private Person recipient;
-	private Person poster;
+	private User recipient;
+	private User poster;
 	private Group group;
 
 	
@@ -48,11 +49,11 @@ public class SearchPage {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 
-	public Person getRecipient() {
+	public User getRecipient() {
 		if (recipient == null) {
 			if (recipientId != null && recipientId.length() > 0) {
 				try {
-					recipient = identitySpider.lookupGuidString(Person.class, recipientId);
+					recipient = identitySpider.lookupGuidString(User.class, recipientId);
 				} catch (ParseException e) {
 					logger.debug("bad recipientId", e);
 				} catch (NotFoundException e) {
@@ -63,11 +64,11 @@ public class SearchPage {
 		return recipient;
 	}
 	
-	public Person getPoster() {
+	public User getPoster() {
 		if (poster == null) {
 			if (posterId != null && posterId.length() > 0) {
 				try {
-					poster = identitySpider.lookupGuidString(Person.class, posterId);
+					poster = identitySpider.lookupGuidString(User.class, posterId);
 				} catch (ParseException e) {
 					logger.debug("bad posterId", e);
 				} catch (NotFoundException e) {
@@ -105,9 +106,10 @@ public class SearchPage {
 		// we always ask for getCount() + 1 so we can tell if we got them all
 		if (getPoster() != null)
 			results = postBoard.getPostsFor(signin.getViewpoint(), getPoster(), searchText, getStart(), getCount() + 1);
-		else if (getRecipient() != null)
-			results = postBoard.getReceivedPosts(signin.getViewpoint(), getRecipient(), searchText, getStart(), getCount() + 1);
-		else if (getGroup() != null)
+		else if (getRecipient() != null && signin.isValid()) {
+			UserViewpoint userViewpoint = (UserViewpoint)signin.getViewpoint();
+			results = postBoard.getReceivedPosts(userViewpoint, getRecipient(), searchText, getStart(), getCount() + 1);
+		} else if (getGroup() != null)
 			results = postBoard.getGroupPosts(signin.getViewpoint(), getGroup(), searchText, getStart(), getCount() + 1);
 		else
 			results = new ArrayList<PostView>(); // FIXME some kind of global search

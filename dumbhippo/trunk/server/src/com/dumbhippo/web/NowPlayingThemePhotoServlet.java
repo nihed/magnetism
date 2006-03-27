@@ -20,7 +20,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 
 public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 	private static final long serialVersionUID = 1L;
@@ -63,7 +63,7 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 		writePhoto(image, filename, true);
 		
 		try {
-			musicSystem.setNowPlayingThemeImage(new Viewpoint(user), themeId, mode, hexSum);
+			musicSystem.setNowPlayingThemeImage(new UserViewpoint(user), themeId, mode, hexSum);
 		} catch (ParseException e) {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Bad theme id", e);
 		} catch (NotFoundException e) {

@@ -17,6 +17,8 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
+import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class ShareGroupFormatter extends DefaultFormatter {
@@ -48,8 +50,11 @@ public class ShareGroupFormatter extends DefaultFormatter {
 			
 			if (postView.getContext() == PostView.Context.MAIL_NOTIFICATION)
 				member = groupSystem.getGroupMember(group, postView.getMailRecipient());
-			else if (postView.getViewpoint().getViewer() != null)
-				member = groupSystem.getGroupMember(postView.getViewpoint(), group, postView.getViewpoint().getViewer());;
+			else {
+				Viewpoint viewpoint = postView.getViewpoint();
+				if (viewpoint instanceof UserViewpoint)
+					member = groupSystem.getGroupMember(postView.getViewpoint(), group, ((UserViewpoint)viewpoint).getViewer());
+			}
 		} catch (ParseException e) {
 			logger.warn("Bad group ID {} in post {}", groupId, postView.getPost().getId());
 			logger.warn("Parse exception on group id", e);

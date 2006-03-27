@@ -186,13 +186,14 @@ public interface IdentitySpider {
 	public boolean isContact(Viewpoint viewpoint, User user, User contact);
 	
 	/**
-	 * Check whether viewpoint user as seen by this user is considered
-	 * a friend (contact or same user)
+	 * Check whether viewpoint has the rights to see this users
+	 * "friend stuff". (The viewpoint is the system view,point or the
+	 * viewpoint of a contact of the viewed user or the viewed user themself.)
 	 * @param viewpoint the currently logged-in user
 	 * @param user the user we want to see if we're a friend of
 	 * @return true if friendly
 	 */
-	public boolean isViewerFriendOf(Viewpoint viewpoint, User user);
+	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user);
 	
 
 	/**
@@ -320,7 +321,7 @@ public interface IdentitySpider {
 	 * @param viewpoint viewpoint from which we gather contacts
 	 * @return set of Users with MySpace names
 	 */
-	public Set<User> getMySpaceContacts(Viewpoint viewpoint);
+	public Set<User> getMySpaceContacts(UserViewpoint viewpoint);
 	
 	/**
 	 * Similar to getMySpaceContacts, but filtered by a particular name.
@@ -328,7 +329,7 @@ public interface IdentitySpider {
 	 * @param mySpaceName name to look for
 	 * @return a set of Users claiming mySpaceName
 	 */
-	public Set<User> getUserContactsWithMySpaceName(Viewpoint viewpoint, String mySpaceName); 	
+	public Set<User> getUserContactsWithMySpaceName(UserViewpoint viewpoint, String mySpaceName); 	
 	
 	/**
 	 * Increase the version number of the user; increasing the user version means

@@ -25,17 +25,17 @@ public interface PostingBoard {
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max);	
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);	
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
-	public List<PostView> getContactPosts(Viewpoint viewpoint, Person user, boolean include_received, int start, int max);
+	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
 
-	public boolean canViewPost(Viewpoint viewpoint, Post post);
+	public boolean canViewPost(UserViewpoint viewpoint, Post post);
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
 
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, String search, int start, int max);
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max);
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	

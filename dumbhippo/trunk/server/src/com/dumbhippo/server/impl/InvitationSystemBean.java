@@ -44,7 +44,7 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -114,7 +114,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return invite;		
 	}
 
-	public InvitationView lookupInvitationViewFor(Viewpoint viewpoint, Resource invitee) {
+	public InvitationView lookupInvitationViewFor(UserViewpoint viewpoint, Resource invitee) {
 		// when someone is viewing an invitation, they can see it only if they
 		// are an inviter
 		User inviter = viewpoint.getViewer();
@@ -129,7 +129,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         return invitationView;		
 	}
 	
-	public Set<PersonView> findInviters(User invitee, PersonViewExtra... extras) {
+	public Set<PersonView> findInviters(UserViewpoint viewpoint, PersonViewExtra... extras) {
+		User invitee = viewpoint.getViewer();
+		
 		// All InvitationTokens after the earliest one are based on the old 
 		// ones, so we only want to get the InviterData for the newest InvitationToken
 		// for the invitee. This helps us avoid returning duplicate inviters.
@@ -151,8 +153,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		@SuppressWarnings("unchecked")
 		List<InviterData> inviters = query.getResultList(); 
 		
-		Viewpoint viewpoint = new Viewpoint(invitee);
-		
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (InviterData inviter : inviters)
 			result.add(spider.getPersonView(viewpoint, inviter.getInviter(), extras));
@@ -160,7 +160,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return result; 
 	}
 
-	public List<InvitationView> findOutstandingInvitations(Viewpoint viewpoint, 
+	public List<InvitationView> findOutstandingInvitations(UserViewpoint viewpoint, 
 			                                               int start, 
 			                                               int max) {	
 		// we want to provide the invitations for which the person viewing the 
@@ -208,7 +208,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return outstandingInvitationViews; 
 	}
 	
-	public int countOutstandingInvitations(Viewpoint viewpoint) {		
+	public int countOutstandingInvitations(UserViewpoint viewpoint) {		
 		// it would have been nice to use a COUNT query here, but because 
 		// we want to not count expired invitations, we need to query
 		// for invitation tokens
@@ -217,7 +217,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return findOutstandingInvitations(viewpoint, 0, -1).size();
 	}
 	
-	public InvitationView deleteInvitation(Viewpoint viewpoint, String authKey) {
+	public InvitationView deleteInvitation(UserViewpoint viewpoint, String authKey) {
 		User inviter = viewpoint.getViewer();
 		// Could have used lookupInvitationFor if made the deletion based on the
 		// e-mail address, and not the authentication key. Would have to make
@@ -275,7 +275,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         return invitationView;		
 	}
 	
-	public void restoreInvitation(Viewpoint viewpoint, String authKey) {
+	public void restoreInvitation(UserViewpoint viewpoint, String authKey) {
 		User inviter = viewpoint.getViewer();
 		InvitationToken invite = lookupInvitation(inviter, authKey);
 		
@@ -473,7 +473,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 	
-	public String sendInvitation(User inviter, PromotionCode promotionCode, Resource invitee, String subject, String message) {	
+	private String sendInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, Resource invitee, String subject, String message) {
+		User inviter = viewpoint.getViewer();
 		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, promotionCode, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
 		InvitationToken iv = p.getSecond();
@@ -499,7 +500,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			
 			// In all the three of the above cases, we want to send a notification				
 			if (invitee instanceof EmailResource) {
-				sendEmailNotification(iv, inviter, subject, message);
+				sendEmailNotification(viewpoint, iv, subject, message);
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -507,12 +508,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public String sendEmailInvitation(User inviter, PromotionCode promotionCode, String email, String subject, String message) {
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, String subject, String message) {
 		Resource emailRes = spider.getEmail(email);
-		return sendInvitation(inviter, promotionCode, emailRes, subject, message);
+		return sendInvitation(viewpoint, promotionCode, emailRes, subject, message);
 	}
 	
-	private void sendEmailNotification(InvitationToken invite, User inviter, String subject, String message) {
+	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
+		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
 		if (!noMail.getMailEnabled(invitee)) {
@@ -524,7 +526,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, inviteeEmail);
 
-		PersonView viewedInviter = spider.getPersonView(new Viewpoint(inviter), inviter);
+		PersonView viewedInviter = spider.getPersonView(viewpoint, inviter);
 		String inviterName = viewedInviter.getName();
 		
 		String baseurl;
@@ -671,9 +673,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return account.getInvitations();
 	}
 
-	public boolean hasInvited(User user, Resource invitee) {
-		if (user == null)
-			throw new IllegalArgumentException("null user to hasInvited");
+	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee) {
+		User user = viewpoint.getViewer();
 		
 		// iv will be null if user is not among the inviters
 		InvitationToken iv = lookupInvitationFor(user, invitee);

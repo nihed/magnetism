@@ -29,7 +29,6 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -63,7 +62,9 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -308,15 +309,11 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 
-	private PersonPostData getPersonPostData(Viewpoint viewpoint, Post post) {
-		Person viewer = viewpoint.getViewer();
-		if (viewer == null)
-			return null;
-		
+	private PersonPostData getPersonPostData(UserViewpoint viewpoint, Post post) {
 		Query q = em.createQuery("SELECT ppd FROM PersonPostData ppd " +
 				                 "WHERE ppd.post = :post AND ppd.person = :viewer");
 		q.setParameter("post", post);
-		q.setParameter("viewer", viewer);
+		q.setParameter("viewer", viewpoint.getViewer());
 		try {
 			return (PersonPostData) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
@@ -391,23 +388,22 @@ public class PostingBoardBean implements PostingBoard {
 		"WHERE post = :post";
 	
 	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<Object> recipients) {
-		Person viewer = viewpoint.getViewer();
-
 		Query q;
-		if (viewer == null) {
-			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_ANONYMOUS);
-		} else {
+
+		if (viewpoint instanceof SystemViewpoint) {
+			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS);
+		} else if (viewpoint instanceof UserViewpoint) {
+			User viewer = ((UserViewpoint)viewpoint).getViewer();
+
 			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP_FOR_POST);
 			q.setParameter("viewer", viewer);
+		} else {
+			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_ANONYMOUS);
 		}
 
 		q.setParameter("post", post);
 		
-		if (viewer == null) {
-			for (Object o : q.getResultList()) {
-				recipients.add(new GroupView((Group)o, null, null));
-			}
-		} else {
+		if (viewpoint instanceof UserViewpoint) {
 			for (Object o : q.getResultList()) {
 				GroupQueryResult gr = (GroupQueryResult)o;
 				GroupMember groupMember = gr.getGroupMember();
@@ -422,6 +418,10 @@ public class PostingBoardBean implements PostingBoard {
 				}
 				recipients.add(new GroupView(gr.getGroup(), groupMember, inviter));
 			}
+		} else {
+			for (Object o : q.getResultList()) {
+				recipients.add(new GroupView((Group)o, null, null));
+			}			
 		}
 	}
 
@@ -432,7 +432,7 @@ public class PostingBoardBean implements PostingBoard {
 		"       EXISTS(SELECT ac from AccountClaim ac WHERE ac.owner = :viewer AND ac.resource MEMBER OF post.personRecipients)) AND " +
 		"      resource MEMBER OF post.personRecipients";
 	
-	private List<Resource> getVisiblePersonRecipients(Viewpoint viewpoint, Post post) {
+	private List<Resource> getVisiblePersonRecipients(UserViewpoint viewpoint, Post post) {
 		@SuppressWarnings("unchecked")
 		List<Resource> results = em.createQuery(VISIBLE_PERSON_RECIPIENTS_QUERY)
 			.setParameter("post", post)
@@ -447,9 +447,11 @@ public class PostingBoardBean implements PostingBoard {
 		
 		addGroupRecipients(viewpoint, post, recipients);
 		
-		// Person recipients are visible only if the viewer is also a person recipient
-		for (Resource recipient : getVisiblePersonRecipients(viewpoint, post))
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+		if (viewpoint instanceof UserViewpoint) {
+			// Person recipients are visible only if the viewer is also a person recipient
+			for (Resource recipient : getVisiblePersonRecipients((UserViewpoint)viewpoint, post))
+				recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+		}
 	
 		if (!em.contains(post))
 			throw new RuntimeException("can't update post info if Post is not attached");
@@ -466,10 +468,15 @@ public class PostingBoardBean implements PostingBoard {
 		*/
 		
 		try {
+			PersonPostData ppd;
+			if (viewpoint instanceof UserViewpoint)
+				ppd = getPersonPostData((UserViewpoint)viewpoint, post);
+			else
+				ppd = null;
 			
 			return new PostView(ejbContext, post, 
 					identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES),
-					getPersonPostData(viewpoint, post),
+					ppd,
 					recipients,
 					viewpoint);
 		} catch (Exception e) {
@@ -522,7 +529,7 @@ public class PostingBoardBean implements PostingBoard {
 	 * @param post
 	 * @return true if post is visible, false otherwise
 	 */
-	public boolean canViewPost(Viewpoint viewpoint, Post post) {
+	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
 		User viewer = viewpoint.getViewer();
 		
 		Query q;
@@ -551,14 +558,17 @@ public class PostingBoardBean implements PostingBoard {
 		"SELECT post FROM Post post WHERE post.poster = :poster";
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max) {
-		Person viewer = viewpoint.getViewer();
+		User viewer = null;
 		Query q;
 		
 		StringBuilder queryText = new StringBuilder(GET_POSTS_FOR_QUERY + " AND ");
-		if (viewer == null) {
-			queryText.append(CAN_VIEW_ANONYMOUS);
-		} else {
+		if (viewpoint instanceof SystemViewpoint) {
+			// No access-control clause
+		} else if (viewpoint instanceof UserViewpoint) {
+			viewer = ((UserViewpoint)viewpoint).getViewer();
 			queryText.append(CAN_VIEW);
+		} else {
+			queryText.append(CAN_VIEW_ANONYMOUS);
 		}
 		
 		appendPostLikeClause(queryText, search);
@@ -575,12 +585,12 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, String search, int start, int max) {
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
 		// now.
-		if (!recipient.equals(viewpoint.getViewer()))
+		if (!viewpoint.isOfUser(recipient))
 			throw new IllegalArgumentException("recipient isn't the viewer");
 		
 		Query q;
@@ -605,15 +615,18 @@ public class PostingBoardBean implements PostingBoard {
 		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max) {
-		Person viewer = viewpoint.getViewer();
+		User viewer = null;
 		Query q;
 
 		StringBuilder queryText = new StringBuilder(GET_GROUP_POSTS_QUERY + " AND ");
-		
-		if (viewer == null) {
-			queryText.append(CAN_VIEW_ANONYMOUS);
-		} else {
+
+		if (viewpoint instanceof SystemViewpoint) {
+		    // No access control clause
+		} else if (viewpoint instanceof UserViewpoint) {
+			viewer = ((UserViewpoint)viewpoint).getViewer();
 			queryText.append(CAN_VIEW);
+		} else {
+			queryText.append(CAN_VIEW_ANONYMOUS);
 		}
 		
 		appendPostLikeClause(queryText, search);
@@ -628,14 +641,9 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
-	public List<PostView> getContactPosts(Viewpoint viewpoint, Person person, boolean include_received, int start, int max) {
-		if (!person.equals(viewpoint.getViewer()))
+	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max) {
+		if (!viewpoint.isOfUser(user))
 			return Collections.emptyList();
-		
-		if (person instanceof Contact)
-			return Collections.emptyList();
-		
-		User user = (User) person;
 		
 		Account account = accountSystem.lookupAccountByUser(user); 
 		
@@ -706,7 +714,7 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException("postViewedBy, bad Guid for some reason " + postId, e);
 		}
 		try {
-			post = loadRawPost(new Viewpoint(clicker), postGuid);
+			post = loadRawPost(new UserViewpoint(clicker), postGuid);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
@@ -759,7 +767,7 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostsFor(viewpoint, poster, null, start, max);
 	}
 
-	public List<PostView> getReceivedPosts(Viewpoint viewpoint, Person recipient, int start, int max) {
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max) {
 		return getReceivedPosts(viewpoint, recipient, null, start, max);
 	}
 

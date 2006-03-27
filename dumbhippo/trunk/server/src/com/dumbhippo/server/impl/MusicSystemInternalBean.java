@@ -51,8 +51,10 @@ import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.PersonMusicView;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -209,7 +211,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
 		
-		if (!identitySpider.isViewerFriendOf(viewpoint, user) && maxResults != 1) {
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
 			//logger.debug("Not allowed to see track history");
 			throw new NotFoundException("Not allowed to see more than 1 item from track history");
 		}
@@ -1186,20 +1188,24 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		sb.append(")");
 		
-		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
-		// disabled for now since we want to return anonymous recommendations too
-		if (true && false) {
-			sb.append(" AND h.user.id IN (");
-			
-			for (User u : contacts) {
-				sb.append("'");
-				sb.append(u.getId());
-				sb.append("',");
+		Set<User> contacts = null;
+		if (viewpoint instanceof UserViewpoint) {
+			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+
+			// disabled for now since we want to return anonymous recommendations too
+			if (true && false) {
+				sb.append(" AND h.user.id IN (");
+				
+				for (User u : contacts) {
+					sb.append("'");
+					sb.append(u.getId());
+					sb.append("',");
+				}
+				if (sb.charAt(sb.length()-1) == ',') {
+					sb.setLength(sb.length() - 1);
+				}
+				sb.append(")");
 			}
-			if (sb.charAt(sb.length()-1) == ',') {
-				sb.setLength(sb.length() - 1);
-			}
-			sb.append(")");
 		}
 		
 		Query q = em.createQuery(sb.toString());
@@ -1223,7 +1229,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// them in the result, because that prevents our pages
 			// from looking strangely empty, but we don't want the
 			// recommendation lists, since that is just strange.
-			boolean isSelf = user.equals(viewpoint.getViewer());
+			boolean isSelf = viewpoint.isOfUser(user);
 			
 			PersonMusicView pmv = views.get(user);
 			if (pmv == null) {
@@ -1347,7 +1353,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return theme;
 	}
 	
-	public void setCurrentNowPlayingTheme(Viewpoint viewpoint, User user, NowPlayingTheme theme) {
+	public void setCurrentNowPlayingTheme(UserViewpoint viewpoint, User user, NowPlayingTheme theme) {
 		if (!viewpoint.getViewer().equals(user))
 			throw new RuntimeException("not allowed to set someone else's now playing theme");
 		if (!em.contains(user))
@@ -1374,7 +1380,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return internalLookupNowPlayingTheme(id.toString());
 	}
 	
-	public void setNowPlayingThemeImage(Viewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
+	public void setNowPlayingThemeImage(UserViewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
 		User user = viewpoint.getViewer();
 		NowPlayingTheme theme = lookupNowPlayingTheme(id);
 		if (!theme.getCreator().equals(user))
@@ -1406,10 +1412,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			bundle.setCurrentTheme(current);
 			alreadyUsed.add(current);
 		}
-		
-		Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator AND (t.draft=0 OR (t.draft=1 AND t.creator=:viewer))");
+
+		// Only the creator can see draft themes
+		Query q;
+		if (viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint) {
+			q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator");
+		} else {
+			q = em.createQuery("FROM NowPlayingTheme t WHERE t.draft=0");	
+		}
 		q.setParameter("creator", user);
-		q.setParameter("viewer", viewpoint.getViewer());
 		List<?> myThemes = q.getResultList();
 		List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
 		for (Object o : myThemes) {
@@ -1422,9 +1433,25 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
 		
-		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE (t.draft=0 OR (t.draft=1 AND t.creator=:viewer))");
+		// If we have any friends, we show only a subset of their themes, but
+		// if we have no friends, we show themes from the entire system. This
+		// leads to the oddity that as soon as you have a friend, the set of
+		// themes that appear is reduced. 
+		//
+		// *** Havoc: Please check this comment / - Owen ***
+		//
+		
+		String draftClause; 
+		if (viewpoint instanceof SystemViewpoint)
+			draftClause = null;
+		else if (viewpoint instanceof UserViewpoint)
+			draftClause = "(t.draft=0 OR t.creator=:viewer)";
+		else
+			draftClause = "(t.draft=0)";
+		
+		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t ");
 		if (!friends.isEmpty()) {
-			sb.append(" AND t.creator.id IN (");
+			sb.append("WHERE t.creator.id IN (");
 			for (Contact c : friends) {
 				User u = identitySpider.getUser(c);
 				if (u != null) {
@@ -1438,10 +1465,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				sb.setLength(sb.length() - 1);
 			}
 			sb.append(")");
+			
+			if (draftClause != null) {
+				sb.append("AND ");
+				sb.append(draftClause);
+			}
+		} else if (draftClause != null) {
+			sb.append("WHERE ");
+			sb.append(draftClause);
 		}
 		
 		q = em.createQuery(sb.toString());
-		q.setParameter("viewer", viewpoint.getViewer());
+		if (viewpoint instanceof UserViewpoint) {			
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
+		}
+		
 		List<?> friendsThemes = q.getResultList();
 		
 		List<NowPlayingTheme> friendsThemesFiltered = new ArrayList<NowPlayingTheme>();
@@ -1491,7 +1529,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return bundle;
 	}
 	
-	public NowPlayingTheme createNewNowPlayingTheme(Viewpoint viewpoint, NowPlayingTheme basedOn) {
+	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {
 		if (basedOn != null && !em.contains(basedOn))
 			basedOn = em.find(NowPlayingTheme.class, basedOn.getId()); // reattach
 		NowPlayingTheme theme = new NowPlayingTheme(basedOn, viewpoint.getViewer());

@@ -18,7 +18,7 @@ public class GroupPhotoPage {
 	private String viewedGroupId;
 
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	private GroupSystem groupSystem;	
 	private GroupMember groupMember;

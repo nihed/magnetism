@@ -19,5 +19,5 @@ public interface MySpaceTracker {
 	
 	public List<MySpaceBlogComment> getRecentComments(User user);
 
-	public void notifyNewContactComment(User user, String mySpaceContactName);
+	public void notifyNewContactComment(UserViewpoint viewpoint, String mySpaceContactName);
 }

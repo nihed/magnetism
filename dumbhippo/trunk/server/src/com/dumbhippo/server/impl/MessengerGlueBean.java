@@ -39,6 +39,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -254,11 +255,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
 		User requestingUser = userFromTrustedUsername(username);
-		return userSetToContactList(identitySpider.getMySpaceContacts(new Viewpoint(requestingUser)));
+		return userSetToContactList(identitySpider.getMySpaceContacts(new UserViewpoint(requestingUser)));
 	}
 	
 	public void notifyNewMySpaceContactComment(String username, String mySpaceContactName) {
-		mySpaceTracker.notifyNewContactComment(userFromTrustedUsername(username), mySpaceContactName);
+		User requestingUser = userFromTrustedUsername(username);
+		mySpaceTracker.notifyNewContactComment(new UserViewpoint(requestingUser), mySpaceContactName);
 	}
 	
 	private User getUserFromUsername(String username) {
@@ -270,7 +272,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 	
 	private Post getPostFromRoomName(User user, String roomName) throws NotFoundException {
-		Viewpoint viewpoint = new Viewpoint(user);
+		Viewpoint viewpoint = new UserViewpoint(user);
 		
 		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
 	}
@@ -346,7 +348,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public String getRecentPostsXML(String username) {
 		User user = getUserFromUsername(username);
-		Viewpoint viewpoint = new Viewpoint(user);
+		UserViewpoint viewpoint = new UserViewpoint(user);
 		List<PostView> views = postingBoard.getReceivedPosts(viewpoint, user, 0, 4);		
 		LiveState liveState = LiveState.getInstance();
 

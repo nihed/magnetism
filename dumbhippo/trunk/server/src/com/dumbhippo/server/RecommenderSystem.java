@@ -17,6 +17,6 @@ public interface RecommenderSystem {
 	
 	public List<Rating> getRatingsForUser(User user);
 	
-	public List<PostView> getRecommendedPosts(Viewpoint viewpoint, int howMany);
+	public List<PostView> getRecommendedPosts(UserViewpoint viewpoint, int howMany);
 	
 }

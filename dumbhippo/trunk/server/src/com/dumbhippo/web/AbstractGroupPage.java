@@ -15,6 +15,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.UserViewpoint;
 
 public abstract class AbstractGroupPage {
 
@@ -73,24 +74,25 @@ public abstract class AbstractGroupPage {
 			}
 		}
 		
-		if (viewedGroup != null) {
+		if (viewedGroup != null && signin.isValid()) {
+			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
 			
 			try {
-				groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+				groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, viewpoint.getViewer());
 			} catch (NotFoundException e) {
-				groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+				groupMember = new GroupMember(viewedGroup, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
 			}
 			
 			// If you view a group you were invited to, you get added; you can leave again and then 
 			// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
 			if (groupMember.getStatus() == MembershipStatus.INVITED) {
-				groupSystem.addMember(signin.getUser(), viewedGroup, signin.getUser());
+				groupSystem.addMember(viewpoint.getViewer(), viewedGroup, viewpoint.getViewer());
 				
 				// reload the groupMember to have the new state
 				try {
-					groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, signin.getUser());
+					groupMember = groupSystem.getGroupMember(signin.getViewpoint(), viewedGroup, viewpoint.getViewer());
 				} catch (NotFoundException e) {
-					groupMember = new GroupMember(viewedGroup, signin.getUser().getAccount(), MembershipStatus.NONMEMBER);
+					groupMember = new GroupMember(viewedGroup, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
 				}
 	
 				justAdded = true;
@@ -172,7 +174,12 @@ public abstract class AbstractGroupPage {
 
 	public int getInvitations() {
 		if (invitations < 0) {
-			invitations = invitationSystem.getInvitations(signin.getUser()); 
+			if (signin.isValid()) {
+				UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
+				invitations = invitationSystem.getInvitations(viewpoint.getViewer());
+			} else {
+				invitations = 0;
+			}
 		}
 		return invitations;
 	}

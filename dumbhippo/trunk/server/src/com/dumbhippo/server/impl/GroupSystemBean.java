@@ -32,7 +32,9 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 @Stateless
@@ -235,14 +237,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 	private List<Resource> getResourceMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
 		String statusClause = getStatusClause(status);
-		User viewer = viewpoint.getViewer();
 
 		Query q;
-		if (viewer == null) {
-			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
-		} else {
+		if (viewpoint instanceof SystemViewpoint) {
+			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + statusClause);
+		} else if (viewpoint instanceof UserViewpoint) {
+			User viewer = ((UserViewpoint)viewpoint).getViewer();
 			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + " AND " + CAN_SEE + statusClause)
 		    	.setParameter("viewer", viewer);
+		} else {
+			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -299,16 +303,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
         "WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :member AND g = :group";
 	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
-		Person viewer = viewpoint.getViewer();
 		Query query;
 		
-		if (member.equals(viewer)) {
+		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			query = em.createQuery(GET_GROUP_MEMBER_QUERY);
-		} else if (viewer == null) {
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
-		} else {
+		} else if (viewpoint instanceof UserViewpoint) {
+			User viewer = ((UserViewpoint)viewpoint).getViewer();
 			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE);
-			query.setParameter("viewer", viewpoint.getViewer());
+			query.setParameter("viewer", viewer);
+		} else  {
+			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
 		}
 		query.setParameter("group", group);
 		query.setParameter("member", member);
@@ -331,8 +335,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"WHERE cc.resource = gm.member AND cc.contact = :member AND g = gm.group AND " +
 		"      gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
-	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member, MembershipStatus status) {
-		Person viewer = viewpoint.getViewer();
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 		Query q;
 		
 		String baseQuery;
@@ -343,14 +346,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		String statusClause = getStatusClause(status);
 		
-		if (member.equals(viewpoint.getViewer())) {
+		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
 			q = em.createQuery(baseQuery + statusClause); 
-		} else if (viewer == null) {
-			q = em.createQuery(baseQuery + " AND " + CAN_SEE_ANONYMOUS + statusClause);
-		} else {
+		} else if (viewpoint instanceof UserViewpoint) {
 			q = em.createQuery(baseQuery + " AND " + CAN_SEE + statusClause);
-			q.setParameter("viewer", viewer);			
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
+		} else {
+			q = em.createQuery(baseQuery + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		}
 		q.setParameter("member", member);
 		Set<Group> ret = new HashSet<Group>();
@@ -360,7 +363,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ret;
 	}
 	
-	public Set<Group> findRawGroups(Viewpoint viewpoint, Person member) {
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member) {
 		return findRawGroups(viewpoint, member, null);
 	}
 
@@ -369,12 +372,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
         "WHERE ac.resource = gm.member AND ac.owner = :member AND " +
         "      gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
-	public Set<GroupView> findGroups(Viewpoint viewpoint, Person member) {
+	public Set<GroupView> findGroups(UserViewpoint viewpoint, User member) {
 		Query q;
 		
 		// See the usage of PostingBoardBean.VISIBLE_GROUP_WITH_MEMBER for
 		// how to implement the general case
-		if (!member.equals(viewpoint.getViewer()))
+		if (!viewpoint.isOfUser(member))
 			throw new RuntimeException("Not implemented");
 		
 		q = em.createQuery(FIND_GROUPS_QUERY); 
@@ -427,14 +430,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
 
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
-		Person viewer = viewpoint.getViewer();
 		Query query;
 		
-		if (viewer == null) {
-			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
-		} else {
+		if (viewpoint instanceof SystemViewpoint) {
+			query = em.createQuery(LOOKUP_GROUP_QUERY);
+		} else if (viewpoint instanceof UserViewpoint) {
+			User viewer = ((UserViewpoint)viewpoint).getViewer();
 			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_GROUP);
-			query.setParameter("viewer", viewpoint.getViewer());
+			query.setParameter("viewer", viewer);
+		} else {
+			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_ANONYMOUS);
 		}
 		query.setParameter("groupId", groupId);
 		
@@ -456,10 +461,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				         "WHERE gm.group = :groupid AND " + CONTACT_IS_MEMBER + " AND " +
 				               "gm.status >= " + MembershipStatus.INVITED.ordinal() + ")";
 
-	public Set<PersonView> findAddableContacts(Viewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras) {
+	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras) {
 		Person viewer = viewpoint.getViewer();
 		
-		if (!owner.equals(viewer))
+		if (!viewpoint.isOfUser(owner))
 			throw new RuntimeException("Not implemented");
 		
 		Query q = em.createQuery(FIND_ADDABLE_CONTACTS_QUERY);

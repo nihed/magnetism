@@ -1,58 +1,42 @@
 package com.dumbhippo.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.dumbhippo.persistence.User;
 
 /**
- * The Viewpoint class is simply a wrapper for Person to give us
- * type checking in functions that take both a Person that is viewing
- * and a person that is being viewed.
+ * The Viewpoint class represents the concept of "current user". 
+ * UserViewpoint is the normal case where we have a user authenticated
+ * to the system, but there is also AnonymousViewpoint, when no
+ * user is logged in, and SystemViewpoint, representing the omniscient
+ * (and omnipotent) system view.
  * 
- * It can also be used to cache information about the viewer with request 
+ * While the name Viewpoint implies the class is about viewing the
+ * database, not about modification, the concept is more general
+ * and can apply to checks on database modification as well as
+ * read-only acccess.
+ * 
+ * One of the primary uses of Viewpoint is to make better use of
+ * static type checking; instead of of passing two User to a function
+ * and risk mixing up the logged in User with some other User that
+ * is being acted upon, we can pass in a UserViewpoint and a User
+ * and make the distinction clear. The distinction between Viewpoint
+ * and UserViewpoint also allows us to clearly distinguish functions
+ * where we can take any sort of Viewpoint, or where we need a logged-in
+ * user.
+ * 
+ * Viewpoint can also be used to cache information about the viewer with request 
  * scope for the cache (i.e. a new Viewpoint has to be created per-request
  * and ideally we only create one per request)
  * 
- * Eventually this should maybe be a Request object even
- * 
  * @author otaylor
  */
-public class Viewpoint {
-	private final User viewer;
-	// are we a friend of User?
-	private Map<User,Boolean> cachedFriendOfStatus;
-	
-	public Viewpoint(User viewer) {
-		this.viewer = viewer;
-	}
-	
-	public User getViewer() {
-		return viewer;
-	}
-	 
-	public boolean isFriendOfStatusCached(User user) {
-		if (cachedFriendOfStatus == null)
-			return false;
-		else
-			return cachedFriendOfStatus.containsKey(user);
-	}
-	
+public abstract class Viewpoint {
 	/**
-	 * You must check isFriendOfStatusCached() first 
-	 * and call this only if it returns true...
-	 * indicates whether we are a friend of the user
+	 * Checks to see if the Viewpoint is the Viewpoint of a particular
+	 * user. This is useful because we frequently handle the case where
+	 * a user is viewing or modifying their own data.
 	 * 
-	 * @param user
-	 * @return
+	 * @param user a User object 
+	 * @return true if the Viewpoint is a UserViewpoint for the user
 	 */
-	public boolean getCachedFriendOfStatus(User user) {
-		return cachedFriendOfStatus.get(user);
-	}
-	
-	public void setCachedFriendOfStatus(User user, boolean isFriendOf) {
-		if (cachedFriendOfStatus == null)
-			cachedFriendOfStatus = new HashMap<User,Boolean>();
-		cachedFriendOfStatus.put(user, isFriendOf);
-	}
+	public abstract boolean isOfUser(User user);
 }

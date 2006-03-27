@@ -3,7 +3,6 @@ package com.dumbhippo.web;
 import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.InvitationView;
-import com.dumbhippo.server.Viewpoint;
 
 /**
  * This class contains some functions required by both invite
@@ -32,7 +31,7 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 			//logger.debug("Getting outstanding invitations by {}", signin.getUser().getId());
 			outstandingInvitations = 
 				new ListBean<InvitationView>(
-				    invitationSystem.findOutstandingInvitations(new Viewpoint(signin.getUser()), 
+				    invitationSystem.findOutstandingInvitations(signin.getViewpoint(), 
 				    		                                    start, 
 				    		                                    maxInvitationsShown+1));
 		}
@@ -42,7 +41,7 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 	public int getTotalInvitations() {
 		if (totalInvitations < 0) {
 			totalInvitations = 
-				invitationSystem.countOutstandingInvitations(new Viewpoint(signin.getUser()));
+				invitationSystem.countOutstandingInvitations(signin.getViewpoint());
 		}
 		return totalInvitations;
 	}

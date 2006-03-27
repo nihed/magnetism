@@ -15,7 +15,7 @@ public class MailSettingsPage {
 	@FromJspContext(value="dumbhippo.toggleNoMailToken", scope=Scope.SESSION)
 	private ToggleNoMailToken token;
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	private NoMailSystem noMail;
 	

@@ -4,7 +4,7 @@ package com.dumbhippo.web;
 public class NowPlayingPage {
 
 	@Signin
-	private SigninBean signin;
+	private UserSigninBean signin;
 	
 	public NowPlayingPage() {
 	}

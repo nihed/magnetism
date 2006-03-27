@@ -1,7 +1,5 @@
 package com.dumbhippo.web;
 
-import java.io.Serializable;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,8 +9,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -24,50 +20,12 @@ import com.dumbhippo.web.LoginCookie.BadTastingException;
  * @author walters
  *
  */
-public class SigninBean implements Serializable {
-	private static final long serialVersionUID = 1L;
-
+public abstract class SigninBean  {
 	private static final Logger logger = GlobalSetup.getLogger(SigninBean.class);
 	
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
 	private static final String SIGNIN_BEAN_KEY = "signin";
 	
-	private Guid userGuid;
-	private User user; // lazily initialized
-	private Boolean disabled; // lazily initialized
-	private Boolean musicSharingEnabled; // lazily initialized
-	
-	private SigninBean(HttpServletRequest request) {
-
-		// We can't cache the User or Account objects in session scope since we won't notice if 
-		// there are changes to them. So we cache SigninBean only with request scope and put 
-		// only the guid in session scope. This also nicely dodges threading issues since 
-		// Guid is immutable.
-		userGuid = (Guid) request.getSession().getAttribute(USER_ID_KEY);
-				
-		if (userGuid == null) {
-			try {
-				user = CookieAuthentication.authenticate(request);
-				userGuid = user.getGuid();
-				request.getSession().setAttribute(USER_ID_KEY, userGuid);
-				logger.debug("storing authenticated user {} in session", user);
-			} catch (BadTastingException e) {
-				logger.warn("Cookie was malformed", e);
-				userGuid = null;
-				user = null;
-			} catch (NotLoggedInException e) {
-				logger.debug("Cookie not valid: {}", e.getMessage());
-				userGuid = null;
-				user = null;
-			}
-		} else {
-			logger.debug("loaded authenticated user ID {} from session", userGuid);
-		}
-		
-		logger.debug("storing SigninBean on request, valid = {}", isValid());
-		request.setAttribute(SIGNIN_BEAN_KEY, this);
-	}
-
 	public static SigninBean getForRequest(HttpServletRequest request) {
 		SigninBean result = null;
 		
@@ -81,8 +39,44 @@ public class SigninBean implements Serializable {
 			result = null;
 		}
 		
-		if (result == null)
-			result = new SigninBean(request);
+		if (result == null) {
+			Guid userGuid = null;
+			User user = null;
+			
+			// We can't cache the User or Account objects in session scope since we won't notice if 
+			// there are changes to them. So we cache SigninBean only with request scope and put 
+			// only the guid in session scope. This also nicely dodges threading issues since 
+			// Guid is immutable.
+			userGuid = (Guid) request.getSession().getAttribute(USER_ID_KEY);
+					
+			if (userGuid == null) {
+				try {
+					user = CookieAuthentication.authenticate(request);
+					userGuid = user.getGuid();
+					request.getSession().setAttribute(USER_ID_KEY, userGuid);
+					logger.debug("storing authenticated user {} in session", user);
+				} catch (BadTastingException e) {
+					logger.warn("Cookie was malformed", e);
+					userGuid = null;
+					user = null;
+				} catch (NotLoggedInException e) {
+					logger.debug("Cookie not valid: {}", e.getMessage());
+					userGuid = null;
+					user = null;
+				}
+			} else {
+				logger.debug("loaded authenticated user ID {} from session", userGuid);
+			}
+			
+			if (userGuid != null)
+				result = new UserSigninBean(userGuid, user);
+			else
+				result = new AnonymousSigninBean();
+
+			logger.debug("storing SigninBean on request, valid = {}", result.isValid());
+			request.setAttribute(SIGNIN_BEAN_KEY, result);
+			
+		}
 				
 		return result;
 	}
@@ -112,67 +106,18 @@ public class SigninBean implements Serializable {
 		response.addCookie(LoginCookie.newDeleteCookie());
 		logger.debug("Unset auth cookie");
 	}
-
-	public boolean isValid() {
-		return userGuid != null;
-	}
+	
+	public abstract boolean isValid();
+	public abstract Viewpoint getViewpoint();
 	
 	/**
-	 * Clear any cached User object. We use this in RewriteServlet to avoid
-	 * having the User object in the SigninBean be detached from the 
+	 * Clear any cached objects that might be associated with a particular
+	 * Hibernate session and transaction. We use this in RewriteServlet 
+	 * to avoid having the User object in the SigninBean be detached from the 
 	 * the transaction we create when handling a JSP page. This is a bit
 	 * hacky ... with some reorganization it should be possible to
 	 * scope the transaction around the lookup of the User as well ...
 	 * but it keeps things simple. 
-	 */
-	public void reattachUser() {
-		user = null;
-	}
-	
-	public User getUser() {
-		if (userGuid != null && user == null) {
-			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			try {
-				user = spider.lookupGuid(User.class, userGuid);
-			} catch (NotFoundException e) {
-				user = null;
-				userGuid = null;
-			}
-		}
-
-		return user;
-	}
-	
-	public String getUserId() {
-		if (userGuid != null)
-			return userGuid.toString();
-		else
-			return null;
-	}
-	
-	public Guid getUserGuid() {
-		return userGuid;
-	}
-	
-	public Viewpoint getViewpoint() {
-		// FIXME: would it be better to cache the result? 
-		return new Viewpoint(getUser());
-	}
-	
-	public boolean isDisabled() {
-		if (disabled == null) {
-			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			disabled = Boolean.valueOf(identitySpider.getAccountDisabled(getUser()));
-			logger.debug("AccountPage loaded disabled = {}", disabled);
-		}
-		return disabled;
-	}
-	
-	public boolean isMusicSharingEnabled() {
-		if (musicSharingEnabled == null) {
-			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			musicSharingEnabled = Boolean.valueOf(identitySpider.getMusicSharingEnabled(getUser()));
-		}
-		return musicSharingEnabled;
-	}
+	 */	
+	public abstract void resetSessionObjects();
 }

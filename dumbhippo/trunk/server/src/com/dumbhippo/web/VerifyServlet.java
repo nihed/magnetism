@@ -33,6 +33,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
+import com.dumbhippo.server.UserViewpoint;
 
 public class VerifyServlet extends AbstractServlet {
 	private static final Logger logger = GlobalSetup.getLogger(VerifyServlet.class);
@@ -62,9 +63,9 @@ public class VerifyServlet extends AbstractServlet {
 			if (disable) {
 				SigninBean signin = SigninBean.getForRequest(request);
 				if (signin.isValid()) {
-					user = signin.getUser();
+					UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
 					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-					spider.setAccountDisabled(user, true);
+					spider.setAccountDisabled(viewpoint.getViewer(), true);
 					// now on to /welcome as normal
 				} else {
 					// just send them to the /account page where they can disable, not

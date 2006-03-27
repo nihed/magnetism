@@ -30,7 +30,7 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.UserViewpoint;
 import com.planetj.taste.common.TasteException;
 import com.planetj.taste.model.Item;
 import com.planetj.taste.recommender.ItemFilter;
@@ -163,7 +163,7 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * @return a List<PostView>, or null if there are no recommendatinos
 	 */
 	
-	public List<PostView> getRecommendedPosts(Viewpoint viewpoint, int howMany) {
+	public List<PostView> getRecommendedPosts(UserViewpoint viewpoint, int howMany) {
 		HippoAccessItemFilter viewpointAccessFilter = new HippoAccessItemFilter(viewpoint);
 		
 		List<PostView> recommendedPostViews = new ArrayList<PostView>();
@@ -202,9 +202,9 @@ public class RecommenderSystemBean implements RecommenderSystem {
 
 	public class HippoAccessItemFilter implements ItemFilter {
 
-		private Viewpoint viewpoint;
+		private UserViewpoint viewpoint;
 		
-		private HippoAccessItemFilter(Viewpoint viewpoint) {
+		private HippoAccessItemFilter(UserViewpoint viewpoint) {
 			this.viewpoint = viewpoint;
 		}
 

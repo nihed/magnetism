@@ -2,7 +2,6 @@ package com.dumbhippo.web;
 
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.InvitationView;
-import com.dumbhippo.server.Viewpoint;
 
 /**
  * InvitePage corresponds to invite.jsp
@@ -46,7 +45,7 @@ public class InvitePage extends AbstractInvitePage {
 		} else {
 		    Resource emailRes = identitySpider.getEmail(email);
 	        previousInvitation = 
-	        	invitationSystem.lookupInvitationViewFor(new Viewpoint(signin.getUser()), 
+	        	invitationSystem.lookupInvitationViewFor(signin.getViewpoint(), 
 	        			                                 emailRes);
 	    }
 	    

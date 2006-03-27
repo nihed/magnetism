@@ -12,6 +12,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.UserViewpoint;
 
 public class SendInviteServlet extends AbstractServlet {
 	@SuppressWarnings("unused")
@@ -22,8 +23,6 @@ public class SendInviteServlet extends AbstractServlet {
 	private void doSendInvite(HttpServletRequest request, HttpServletResponse response)
 	throws HttpException, HumanVisibleException, IOException, ServletException {
 		User user = doLogin(request);
-		if (user == null)
-			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Not logged in");
 		
 		String message = request.getParameter("message");
 		if (message != null)
@@ -46,7 +45,7 @@ public class SendInviteServlet extends AbstractServlet {
 		
 		// we no longer need to check if the user has an invitation voucher to spend, 
 		// because invitationSystem will take care of it
-		String note = invitationSystem.sendEmailInvitation(user, null, email, subject, message);
+		String note = invitationSystem.sendEmailInvitation(new UserViewpoint(user), null, email, subject, message);
 		
 		if (note == null)
 		request.setAttribute("email", email);

@@ -141,8 +141,20 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 	}
 	
+	protected User getUser(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (signin.isValid())
+			return ((UserSigninBean)signin).getUser();
+		else 
+			return null;
+	}
+	
 	protected User doLogin(HttpServletRequest request) throws IOException, HttpException {
-		return SigninBean.getForRequest(request).getUser();
+		User user = getUser(request);
+		if (user != null)
+			return user;
+		else 
+			throw new HttpException(HttpResponseCode.FORBIDDEN, "You must be logged in");
 	}
 
 	/**
