@@ -9,5 +9,6 @@
         <dh:bubbleListScript/>           
     </head>
     <body scroll="no">
+        <div id="dhBubbleListTop"></div>
     </body>    
 </html>

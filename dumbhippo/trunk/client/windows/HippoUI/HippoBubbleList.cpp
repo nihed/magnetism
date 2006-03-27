@@ -23,6 +23,7 @@ HippoBubbleList::HippoBubbleList(void)
 
     setClassName(L"HippoBubbleListClass");
     setTitle(L"Recent Links");
+    setWindowStyle(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX);
     setApplication(this);
 }
 

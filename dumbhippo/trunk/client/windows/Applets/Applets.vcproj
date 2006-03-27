@@ -103,6 +103,18 @@
 			RelativePath=".\groupChat.png">
 		</File>
 		<File
+			RelativePath=".\listBubbleLeft.png">
+		</File>
+		<File
+			RelativePath=".\listBubbleLeftSwarm.png">
+		</File>
+		<File
+			RelativePath=".\listBubbleRight.png">
+		</File>
+		<File
+			RelativePath=".\listBubbleRightSwarm.png">
+		</File>
+		<File
 			RelativePath=".\Makefile">
 		</File>
 		<File

@@ -20,7 +20,8 @@ var dhInit = function(serverUrl, appletUrl, selfId, maxVerticalSize) {
     dh.display = new dh.bubblelist.Display(serverUrl, appletUrl, selfId); 
 }
 
-dh.bubblelist.BUBBLE_MARGIN = 3 // Margin around bubbles (collapses between)
+dh.bubblelist.BORDER = 2 // Border around entire page
+dh.bubblelist.BUBBLE_MARGIN = 7 // Margin around bubbles (collapses between)
 
 dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -37,7 +38,14 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
         }
     
         var div = bubble.create()
-        document.body.insertBefore(div, document.body.firstChild)
+        
+        // Add a div that we'll use to hide a CSS positioning bug in IE
+        var borderFixupDiv = document.createElement("div")
+        borderFixupDiv.className = "dh-bubble-border-fixup"
+        div.appendChild(borderFixupDiv)
+        
+        var bubbleListTop = document.getElementById("dhBubbleListTop")
+        bubbleListTop.insertBefore(div, bubbleListTop.firstChild)
         bubble.setData(data)
     
         bubble.onSizeChange = function() {
@@ -61,8 +69,9 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
                 this.notifications.unshift(old)
                 
                 old.bubble.setData(share)
-                document.body.removeChild(old.div)
-                document.body.insertBefore(old.div, document.body.firstChild)
+                var bubbleListTop = document.getElementById("dhBubbleListTop")
+                bubbleListTop.removeChild(old.div)
+                bubbleListTop.insertBefore(old.div, bubbleListTop.firstChild)
                 return
             }
         }
@@ -86,15 +95,19 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     
     this.clear = function() {
         this.notifications = []
-        dh.util.dom.clearNode(document.body)
+        var bubbleListTop = document.getElementById("dhBubbleListTop")
+        dh.util.dom.clearNode(bubbleListTop)
     }
     
     this._updateSize = function() {
         var width = 0
-        var height = dh.bubblelist.BUBBLE_MARGIN
+        var height = dh.bubblelist.BUBBLE_MARGIN + 2 * dh.bubblelist.BORDER
         for (var i = 0; i < this.notifications.length; i++) {
             var bubble = this.notifications[i].bubble
-            var bubbleWidth = bubble.getWidth() + 2 * dh.bubblelist.BUBBLE_MARGIN
+            // The + 1 here is to make the default size even, so the borders match;
+            // see the comment for '.dh-bubble-border-fixup' in bubbleList.css for 
+            // why we'll end up with 1 pixel more on the right otherwise
+            var bubbleWidth = bubble.getWidth() + 2 * (dh.bubblelist.BUBBLE_MARGIN + dh.bubblelist.BORDER) + 1
             var bubbleHeight = bubble.getHeight()
             
             this.notifications[i].div.style.height = bubbleHeight + "px"
@@ -104,12 +117,24 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
             height += bubbleHeight + dh.bubblelist.BUBBLE_MARGIN
         }
         if (height > dh.maxVerticalSize) {
+            // Make the horizontal scrollbar not turn on and allow the user to
+            // scroll into regions unknown; this presumably has to
+            // do with some absolutely positioned element which is in the wrong
+            // place or is the wrong size, but it's easier to just fix the
+            // width here than track that down. There's also a height mismatch
+            // which is more identifiable; it's because of the dh-bubble-border-fixup 
+            // div which is not precisely sized to the size of each bubble
+            bubbleListTop = document.getElementById("dhBubbleListTop")
+            bubbleListTop.style.width = width
+            bubbleListTop.style.height = height
+
             height = dh.maxVerticalSize
-            width += 17; // Scrollbar width
+            width += 21; // Allow for the width of the scrollbar
             document.body.scroll = "yes"
         } else {
             document.body.scroll = "no"
         }
+        
         window.external.application.Resize(width, height)
     }
 }

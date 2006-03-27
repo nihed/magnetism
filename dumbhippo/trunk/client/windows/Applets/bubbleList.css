@@ -1,9 +1,32 @@
 @import "bubble.css";
 
+#dhBubbleListTop 
+{
+    margin: 2px;
+    background-color: #B9DCFF;
+    padding: 7px;
+    overflow: hidden;
+}
+
 .dh-notification-top
 {
+    margin-top: 7px;
+    margin-bottom: 7px;
+    background-color: White;
     position: relative;
-    margin: 3px;
+}
+
+/* This div is used to cover up a rounding error in IE when positioning
+   an image with "right:" in IE. We stick a div at right -1px that gets
+   offset by the same bug, and covers up the 1 pixel of background */
+.dh-bubble-border-fixup
+{
+    position: absolute;
+    top: 0px;
+    right: -1px;
+    height: 184px;
+    width: 1px;
+    background-color: #B9DCFF;
 }
 
 .dh-left-img
@@ -11,16 +34,21 @@
     position: absolute;
     top: 0px;
     left: 0px;
+    font-size: 0px;
+}
+
+.dh-right-img
+{
 }
 
 .dh-notification-leftside
 {
-    left: 13px;
+    left: 10px;
+    top: 5px;
 }
 
 .dh-notification-rightside
 {
     left: 92px;
+    top: 5px;
 }
-
-

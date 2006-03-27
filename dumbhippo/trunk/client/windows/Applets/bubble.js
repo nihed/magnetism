@@ -44,13 +44,19 @@ dh.bubble.BASE_WIDTH = 399
 dh.bubble.NAVIGATION_WIDTH = 51
 dh.bubble.BASE_HEIGHT = 123
 dh.bubble.SWARM_HEIGHT = 180
+// Extra amount of height to add when we are using the list images rather than 
+// the standalone images. The difference here is the difference between a 3
+// pixel and 5 pixel white border for the top and bottom of the bubble
+dh.bubble.LIST_EXTRA_HEIGHT = 4
     
 // Create a new bubble object    
-// @param includeNavigation whether the navigation arrows and close button 
-//        should be included in the result
-dh.bubble.Bubble = function(includeNavigation) {
+// @param isStandaloneBubble if true, then this is the standalone notification bubble,
+//        and should get the navigation arrows and close button, and the appropriate
+//        images for the sides.
+dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     // Whether to include the quit button and previous/next arrows
-    this._includeNavigation = includeNavigation
+    this._isStandaloneBubble = isStandaloneBubble
+
     
     // The notification currently being displayed
     this._data = null
@@ -98,24 +104,39 @@ dh.bubble.Bubble = function(includeNavigation) {
         this._topDiv = document.createElement("div")
         this._topDiv.setAttribute("className", "dh-notification-top")
         
-        if (this._includeNavigation) {
+        if (this._isStandaloneBubble) {
             var navDiv = appendDiv(this._topDiv, "dh-notification-navigation")
             this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
             this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
+            
+            this._leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
+            this._leftImg.className = "dh-left-img"
+            this._leftImg.zIndex = 1         
+            this._rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
+            this._rightImg.className = "dh-right-img"
+            this._rightImg.zIndex = 1         
+            this._leftImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
+            this._leftImgSwarm.className = "dh-left-img"
+            this._leftImgSwarm.zIndex = 1            
+            this._rightImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
+            this._rightImgSwarm.className = "dh-right-img"              
+            this._rightImgSwarm.zIndex = 1
+        } else {
+            function createImage(src, className, height) {
+                var img = document.createElement("img")
+                img.src = dh.appletUrl + src
+                img.width = 10
+                img.height = height
+                img.className = className
+                img.zIndex = 1
+                return img
+            }
+            
+            this._leftImg = createImage("listBubbleLeft.png", "dh-left-img", dh.bubble.BASE_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
+            this._rightImg = createImage("listBubbleRight.png", "dh-right-img", dh.bubble.BASE_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
+            this._leftImgSwarm = createImage("listBubbleLeftSwarm.png", "dh-left-img", dh.bubble.SWARM_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
+            this._rightImgSwarm = createImage("listBubbleRightSwarm.png", "dh-right-img", dh.bubble.SWARM_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
         }
-
-        this._leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
-        this._leftImg.className = "dh-left-img"
-        this._leftImg.zIndex = 1         
-        this._rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
-        this._rightImg.className = "dh-right-img"
-        this._rightImg.zIndex = 1         
-        this._leftImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
-        this._leftImgSwarm.className = "dh-left-img"
-        this._leftImgSwarm.zIndex = 1            
-        this._rightImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
-        this._rightImgSwarm.className = "dh-right-img"              
-        this._rightImgSwarm.zIndex = 1
         
         var leftSide = appendDiv(this._topDiv, "dh-notification-leftside")
         this._leftImgSpan = append(this._topDiv, "span") 
@@ -134,7 +155,7 @@ dh.bubble.Bubble = function(includeNavigation) {
         this._swarmNavDiv.appendChild(document.createTextNode("seen by:"))
         this._swarmDiv = appendDiv(this._topDiv, "dh-notification-swarm")
         
-        if (this._includeNavigation) {
+        if (this._isStandaloneBubble) {
             this._closeButton = append(this._topDiv, "img", "dh-close-button")
             this._closeButton.setAttribute("src", dh.appletUrl + "close.png")
             this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
@@ -160,7 +181,7 @@ dh.bubble.Bubble = function(includeNavigation) {
     // @param position position of current notification in a list of notifications (first is 0)
     // @param numNotifications total number of notifications    
     this.updateNavigation = function(position, numNotifications) {
-        if (!this._includeNavigation)
+        if (!this._isStandaloneBubble)
             return
     
         var bubble = this // for callback closures
@@ -221,7 +242,7 @@ dh.bubble.Bubble = function(includeNavigation) {
     // @return the desired width, in pixels
     this.getWidth = function() {
         var width = dh.bubble.BASE_WIDTH
-        if (this._includeNavigation)
+        if (this._isStandaloneBubble)
             width += dh.bubble.NAVIGATION_WIDTH
             
         return width
@@ -230,10 +251,15 @@ dh.bubble.Bubble = function(includeNavigation) {
     // Get the height of the bubble's desired area
     // @return the desired width, in pixels
     this.getHeight = function() {
-        if (this._swarmDisplay)
-            return dh.bubble.SWARM_HEIGHT
+        var extraHeight
+        if (this._isStandaloneBubble)
+            extraHeight = 0
         else
-            return dh.bubble.BASE_HEIGHT
+            extraHeight = dh.bubble.LIST_EXTRA_HEIGHT
+        if (this._swarmDisplay)
+            return extraHeight + dh.bubble.SWARM_HEIGHT
+        else
+            return extraHeight + dh.bubble.BASE_HEIGHT
     }
 
     // Render a single recipient
@@ -309,7 +335,7 @@ dh.bubble.Bubble = function(includeNavigation) {
     
     // Adjust various sizes that we can't make the CSS handle
     this._fixupLayout = function() {
-        if (this._includeNavigation)
+        if (this._isStandaloneBubble)
             this._titleDiv.style.width = (this._rightsideDiv.clientWidth - this._closeButton.offsetWidth) + "px"
     }
     
