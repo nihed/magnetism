@@ -16,10 +16,6 @@
         <dht:scriptIncludes/>
         <script type="text/javascript">
 	        dojo.require("dh.nowplaying");
-	        dh.nowplaying.applyValue = function(inputId, valueName) {
-	        	var node = document.getElementById(inputId);
-	        	dh.nowplaying.modify('${nowplaying.themeId}', valueName, node.value);
-	        }
 		</script>
 </head>
 <dht:bodyWithAds>
@@ -47,11 +43,54 @@
 		</div>
 		
 		<dht:largeTitle>Theme Properties</dht:largeTitle>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="name" currentValue="${nowplaying.theme.name}"
+			label="Theme Name"/>
 		
-		<div>
-			Title X Position: <input type="text" id="dhNowPlayingTitleX"
-				onchange="dh.nowplaying.applyValue('dhNowPlayingTitleX', 'titleTextX');" value="${nowplaying.theme.titleTextX}"/>
-		</div>
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="albumArtX" currentValue="${nowplaying.theme.albumArtX}"
+			label="Album Art X"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="albumArtY" currentValue="${nowplaying.theme.albumArtY}"
+			label="Album Art Y"/>
+		
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="titleTextX" currentValue="${nowplaying.theme.titleTextX}"
+			label="Song Title X"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="titleTextY" currentValue="${nowplaying.theme.titleTextY}"
+			label="Song Title Y"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="titleTextColor" currentValue="${nowplaying.theme.titleTextColor}"
+			label="Song Title Text Color"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="artistTextX" currentValue="${nowplaying.theme.artistTextX}"
+			label="Artist X"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="artistTextY" currentValue="${nowplaying.theme.artistTextY}"
+			label="Artist Y"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="artistTextColor" currentValue="${nowplaying.theme.artistTextColor}"
+			label="Artist Text Color"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="albumTextX" currentValue="${nowplaying.theme.albumTextX}"
+			label="Album Title X"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="albumTextY" currentValue="${nowplaying.theme.albumTextY}"
+			label="Album Title Y"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="albumTextColor" currentValue="${nowplaying.theme.albumTextColor}"
+			label="Album Title Text Color"/>
 			
 	</dht:mainArea>
 	

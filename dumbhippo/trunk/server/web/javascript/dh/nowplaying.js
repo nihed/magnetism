@@ -56,6 +56,11 @@ dh.nowplaying.modify = function(themeId, key, value) {
 		  	    	 });
 }
 
+dh.nowplaying.applyValue = function(themeId, inputId, valueName) {
+	var node = document.getElementById(inputId);
+	dh.nowplaying.modify(themeId, valueName, node.value);
+}
+
 dh.nowplaying.showChangePhoto = function(n) {
 	dh.util.hideId("dhNowPlayingChangePhotoLink" + n)
 	dh.util.showId("dhNowPlayingPhotoFileEntry" + n)
