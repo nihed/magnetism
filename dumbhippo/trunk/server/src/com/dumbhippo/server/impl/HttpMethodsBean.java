@@ -490,6 +490,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("text", null, "what", "title", "color", themeObject.getTitleTextColor(),
 					"x", Integer.toString(themeObject.getTitleTextX()),
 					"y", Integer.toString(themeObject.getTitleTextY()));
+			xml.appendTextNode("text", null, "what", "status", "color", themeObject.getStatusTextColor(),
+					"x", Integer.toString(themeObject.getStatusTextX()),
+					"y", Integer.toString(themeObject.getStatusTextY()));
 			xml.appendTextNode("albumArt", null, "x", Integer.toString(themeObject.getAlbumArtX()),
 					"y", Integer.toString(themeObject.getAlbumArtY()));
 			xml.closeElement();

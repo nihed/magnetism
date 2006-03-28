@@ -22,7 +22,7 @@ import com.dumbhippo.server.Configuration;
 @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public class NowPlayingTheme extends EmbeddedGuidPersistable {
 
-	static final private String WHITE = "#FFFFFF";
+	static final private String BLUE = "#0000FF";
 	
 	private NowPlayingTheme basedOn;
 	private User creator;
@@ -41,6 +41,9 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 	private int albumTextX;
 	private int albumTextY;
 	private String albumTextColor;
+	private int statusTextX;
+	private int statusTextY;
+	private String statusTextColor;
 	private boolean draft;
 	
 	static public String toFilename(String mode, String shaSum) {
@@ -81,11 +84,15 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			albumTextX = basedOn.albumTextX;
 			albumTextY = basedOn.albumTextY;
 			albumTextColor = basedOn.albumTextColor;
+			statusTextX = basedOn.statusTextX;
+			statusTextY = basedOn.statusTextY;
+			statusTextColor = basedOn.statusTextColor;
 			
 		} else {
-			this.titleTextColor = WHITE;
-			this.artistTextColor = WHITE;
-			this.albumTextColor = WHITE;
+			this.titleTextColor = BLUE;
+			this.artistTextColor = BLUE;
+			this.albumTextColor = BLUE;
+			this.statusTextColor = BLUE;
 		}
 	}
 	
@@ -292,5 +299,32 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 	@Override
 	public String toString() {
 		return "{NowPlayingTheme " + getId() + "}";
+	}
+
+	@Column(nullable=false)
+	public String getStatusTextColor() {
+		return statusTextColor;
+	}
+
+	public void setStatusTextColor(String statusTextColor) {
+		this.statusTextColor = statusTextColor;
+	}
+
+	@Column(nullable=false)
+	public int getStatusTextX() {
+		return statusTextX;
+	}
+
+	public void setStatusTextX(int statusTextX) {
+		this.statusTextX = statusTextX;
+	}
+
+	@Column(nullable=false)
+	public int getStatusTextY() {
+		return statusTextY;
+	}
+
+	public void setStatusTextY(int statusTextY) {
+		this.statusTextY = statusTextY;
 	}
 }

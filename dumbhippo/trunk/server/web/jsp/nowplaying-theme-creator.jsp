@@ -91,6 +91,18 @@
 		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
 			property="albumTextColor" currentValue="${nowplaying.theme.albumTextColor}"
 			label="Album Title Text Color"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="statusTextX" currentValue="${nowplaying.theme.statusTextX}"
+			label="Status Title X"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="statusTextY" currentValue="${nowplaying.theme.statusTextY}"
+			label="Status Title Y"/>
+
+		<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			property="statusTextColor" currentValue="${nowplaying.theme.statusTextColor}"
+			label="Status Text Color"/>
 			
 	</dht:mainArea>
 	

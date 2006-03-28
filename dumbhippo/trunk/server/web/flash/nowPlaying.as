@@ -36,7 +36,7 @@ var parseColor = function(str:String) {
 
 var parseTextAttributes = function(node:XMLNode, theme:Object) {
 	var what:String = node.attributes.what;
-	if (!(what == "album" || what == "artist" || what == "title" || what == "online")) {
+	if (!(what == "album" || what == "artist" || what == "title" || what == "status")) {
 		trace("unknown text field " + what);
 		return;
 	}
@@ -56,12 +56,12 @@ var parseTheme = function(themeNode:XMLNode) {
 	// returned in the xml right now though
 	theme.albumArtX = 102;
 	theme.albumArtY = 36;
-	theme.onlineX = 0;
-	theme.onlineY = 102;
-	theme.onlineWidth = 203;
-	theme.onlineHeight = 18;
-	theme.onlineFontSize = 12;
-	theme.onlineColor = 0x0000FF;
+	theme.statusX = 0;
+	theme.statusY = 102;
+	theme.statusWidth = 203;
+	theme.statusHeight = 18;
+	theme.statusFontSize = 12;
+	theme.statusColor = 0x0000FF;
 	theme.artistX = 178;
 	theme.artistY = 63;
 	theme.artistWidth = 178;
@@ -305,7 +305,7 @@ var createNewSongMovie = function(parent:MovieClip) {
 	songClip._visible = false;
 
 	songClip.createEmptyMovieClip("albumArt", 0);
-	songClip.createTextField("online", 1, 0, 0, 0, 0);
+	songClip.createTextField("status", 1, 0, 0, 0, 0);
 	songClip.createTextField("artist", 2, 0, 0, 0, 0);
 	songClip.createTextField("title", 3, 0, 0, 0, 0);	
 	return songClip;
@@ -367,7 +367,7 @@ var applyThemeToSong = function(songClip:MovieClip, theme:Object) {
 	songClip.albumArt._x = theme.albumArtX;
 	songClip.albumArt._y = theme.albumArtY;
 	
-	applyTextTheme(songClip, theme, "online");
+	applyTextTheme(songClip, theme, "status");
 	applyTextTheme(songClip, theme, "artist");
 	applyTextTheme(songClip, theme, "title");
 }
@@ -428,9 +428,9 @@ var setSong = function(clip:MovieClip, song:Object) {
 	songClip.title.text = song.title;
 	songClip.artist.text = "by " + song.artist;
 	if (song.stillPlaying) {
-		songClip.online.text = "";
+		songClip.status.text = "";
 	} else {
-		songClip.online.text = "Music stopped";
+		songClip.status.text = "Music stopped";
 	}
 	
 	// may synchronously invoke the all-loaded callback
