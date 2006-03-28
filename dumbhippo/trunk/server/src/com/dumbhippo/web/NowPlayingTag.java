@@ -20,9 +20,10 @@ public class NowPlayingTag extends SimpleTagSupport {
 	private String themeId;	
 	private boolean escapeXml;
 	private String forceMode;
+	private boolean hasLabel;
 	
 	public NowPlayingTag() {
-		
+		hasLabel = true;
 	}
 	
 	public void setUserId(String userId) {
@@ -55,6 +56,10 @@ public class NowPlayingTag extends SimpleTagSupport {
 		this.forceMode = forceMode;
 	}
 	
+	public void setHasLabel(boolean hasLabel) {
+		this.hasLabel = hasLabel;
+	}
+	
 	static private String getSrc(String userId, String themeId, String forceMode) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
 		String baseurl = config.getProperty(HippoProperty.BASEURL);
@@ -74,30 +79,33 @@ public class NowPlayingTag extends SimpleTagSupport {
 		return sb.toString();
 	}
 	
-	static public String getNowPlayingEmbedHtml(String userId, String themeId, String forceMode, String bgColor) {
+	static final private String LABEL = "<b>What I'm listening to right now</b>\n";
+	
+	static public String getNowPlayingEmbedHtml(String userId, String themeId, String forceMode, String bgColor, boolean hasLabel) {
 		if (bgColor == null)
 			bgColor = DEFAULT_BACKGROUND;
 		
 		// try to keep this nicely formatted, since we give it to people to cut-and-paste
 		String format = ""
 		+ "<div align=\"center\">\n"
-		+ "<strong>What I'm listening to right now</strong>\n"
+		+ "%s"
 		+ "<embed quality=\"high\" wmode=\"transparent\" bgcolor=\"%s\"\n"
 		+ "       width=\"440\" height=\"120\" name=\"nowPlaying\" align=\"middle\"\n"
 		+ "       allowScriptAccess=\"sameDomain\" type=\"application/x-shockwave-flash\"\n"
 		+ "       pluginspage=\"http://www.macromedia.com/go/getflashplayer\"\n"
 		+ "       src=\"%s\" />\n"
 		+ "</div>\n";
-		return String.format(format, bgColor, getSrc(userId, themeId, forceMode));
+		return String.format(format, hasLabel ? LABEL : "", 
+				bgColor, getSrc(userId, themeId, forceMode));
 	}
 	
-	static public String getNowPlayingObjectHtml(String userId, String themeId, String forceMode, String bgColor) {
+	static public String getNowPlayingObjectHtml(String userId, String themeId, String forceMode, String bgColor, boolean hasLabel) {
 		
 		if (bgColor == null)
 			bgColor = DEFAULT_BACKGROUND;
 		
 		// try to keep this nicely formatted, since we give it to people to cut-and-paste
-		String format = "" 
+		String format = "%s" 
 		+ "<object classid=\"clsid:d27cdb6e-ae6d-11cf-96b8-444553540000\"\n"
 		+ "        codebase=\"http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=7,0,0,0\"\n"
 		+ "        width=\"440\" height=\"120\" align=\"middle\">\n"
@@ -109,7 +117,7 @@ public class NowPlayingTag extends SimpleTagSupport {
 		+ "%s" // <embed> tag
 		+ "</object>\n";
 		
-		return String.format(format, bgColor, getSrc(userId, themeId, forceMode), getNowPlayingEmbedHtml(userId, themeId, forceMode, bgColor));
+		return String.format(format, hasLabel ? LABEL : "", bgColor, getSrc(userId, themeId, forceMode), getNowPlayingEmbedHtml(userId, themeId, forceMode, bgColor, false));
 	}
 	
 	public void doTag() throws IOException {
@@ -117,7 +125,7 @@ public class NowPlayingTag extends SimpleTagSupport {
 			throw new RuntimeException("no user provided to NowPlayingTag");
 		
 		JspWriter writer = getJspContext().getOut();
-		String output = getNowPlayingObjectHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND);
+		String output = getNowPlayingObjectHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
 		if (escapeXml)
 			output = XmlBuilder.escape(output);
 		writer.print(output);

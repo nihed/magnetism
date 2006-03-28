@@ -16,6 +16,10 @@
         <dht:scriptIncludes/>
         <script type="text/javascript">
 	        dojo.require("dh.nowplaying");
+	        dh.nowplaying.applyValue = function(inputId, valueName) {
+	        	var node = document.getElementById(inputId);
+	        	dh.nowplaying.modify('${nowplaying.themeId}', valueName, node.value);
+	        }
 		</script>
 </head>
 <dht:bodyWithAds>
@@ -25,14 +29,14 @@
 		<dht:largeTitle>Preview: While Music is Playing</dht:largeTitle>
 		
 		<div>
-			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="active"/>
+			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="active" hasLabel="false"/>
 			<dht:nowPlayingPhotoUpload themeId="${nowplaying.themeId}" mode="active" linkText="Change Active Background" reloadTo="/nowplaying-theme-creator?theme=${nowplaying.themeId}"/>
 		</div>
 		
 		<dht:largeTitle>Preview: When Not Listening</dht:largeTitle>
 		
 		<div>
-			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="inactive"/>
+			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="inactive" hasLabel="false"/>
 			<dht:nowPlayingPhotoUpload themeId="${nowplaying.themeId}" mode="inactive" linkText="Change Inactive Background" reloadTo="/nowplaying-theme-creator?theme=${nowplaying.themeId}"/>
 		</div>
 		
@@ -45,7 +49,8 @@
 		<dht:largeTitle>Theme Properties</dht:largeTitle>
 		
 		<div>
-		FIXME
+			Title X Position: <input type="text" id="dhNowPlayingTitleX"
+				onchange="dh.nowplaying.applyValue('dhNowPlayingTitleX', 'titleTextX');" value="${nowplaying.theme.titleTextX}"/>
 		</div>
 			
 	</dht:mainArea>

@@ -15,7 +15,7 @@
 		based on '<c:out value="${theme.basedOn.name}"/>' by <c:out value="${theme.basedOn.creator.nickname}"/>
 	</c:if>
 	<br/>
-	<dh:nowPlaying userId="${signin.userId}" themeId="${theme.id}"/>
+	<dh:nowPlaying userId="${signin.userId}" themeId="${theme.id}" hasLabel="false"/>
 	<br/>
 	<c:if test="${theme.draft && (theme.creator eq signin.user)}">
 		<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>

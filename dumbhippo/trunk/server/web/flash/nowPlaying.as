@@ -529,7 +529,7 @@ var updateNowPlaying = function() {
 rootMovie = createRootMovie();
 
 // once per minute
-setInterval(updateNowPlaying, 1000*3); // FIXME put back
+setInterval(updateNowPlaying, 1000*60);
 
 // update once on load
 updateNowPlaying();

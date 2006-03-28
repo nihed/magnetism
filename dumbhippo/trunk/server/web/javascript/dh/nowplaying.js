@@ -25,11 +25,31 @@ dh.nowplaying.setTheme = function(themeId) {
 		  	    	 });
 }
 
+dh.nowplaying.reloadAllEmbeds = function(themeId) {
+	var objects = document.getElementsByTagName("object");
+	for (var i = 0; i < objects.length; ++i) {
+		var object = objects[i];
+		var params = object.getElementsByTagName("param");
+		for (var j = 0; j < params.length; ++j) {
+			var param = params[j];
+			if (param.name == "movie" && param.value.indexOf("nowPlaying.swf") > 0 &&
+				param.value.indexOf(themeId) > 0) {
+				// take object node out and put it back to force a reload
+				var parent = object.parentNode;
+				var next = object.nextSibling;
+				parent.removeChild(object);
+				parent.insertBefore(object, next);
+				break;
+			}
+		}
+	}
+}
+
 dh.nowplaying.modify = function(themeId, key, value) {
 	dh.server.doPOST("modifynowplayingtheme",
 				     { "theme" : themeId, "key" : key, "value" : value },
 		  	    	 function(type, data, http) {	  
-		  	    	 	 document.location.reload();
+						dh.nowplaying.reloadAllEmbeds(themeId);
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't change the theme");
