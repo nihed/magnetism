@@ -1058,7 +1058,7 @@ HippoUI::onAuthFailure()
 bool 
 HippoUI::isShareActive(BSTR postId)
 {
-    IHippoChatRoom *chatRoom = NULL;
+    HippoPtr<IHippoChatRoom> chatRoom;
     HRESULT ret = im_.findChatRoom(postId, &chatRoom);
     if (SUCCEEDED(ret) && chatRoom != NULL)
         return TRUE;
