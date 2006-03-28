@@ -471,7 +471,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		xml.openElement("song");
 		xml.appendTextNode("image", tv.getSmallImageUrl());
-		xml.appendTextNode("songTitle", tv.getName());
+		xml.appendTextNode("title", tv.getName());
 		xml.appendTextNode("artist", tv.getArtist());
 		xml.appendTextNode("album", tv.getAlbum());
 		xml.appendTextNode("stillPlaying", Boolean.toString(stillPlaying));
@@ -487,7 +487,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("text", null, "what", "artist", "color", themeObject.getArtistTextColor(),
 					"x", Integer.toString(themeObject.getArtistTextX()),
 					"y", Integer.toString(themeObject.getArtistTextY()));
-			xml.appendTextNode("text", null, "what", "songTitle", "color", themeObject.getTitleTextColor(),
+			xml.appendTextNode("text", null, "what", "title", "color", themeObject.getTitleTextColor(),
 					"x", Integer.toString(themeObject.getTitleTextX()),
 					"y", Integer.toString(themeObject.getTitleTextY()));
 			xml.appendTextNode("albumArt", null, "x", Integer.toString(themeObject.getAlbumArtX()),

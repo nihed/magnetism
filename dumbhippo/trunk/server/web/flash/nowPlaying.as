@@ -22,8 +22,59 @@ var getNodeContent = function(node:XMLNode) {
 /////////////////// "model" data types
 // (not bothering to make "real" javascript objects, who wants to fight js object system)
 
+var parseColor = function(str:String) {
+	if (str.substring(0,1) != "#") {
+		trace("hex color doesn't start with #: '" + str + "'");
+		return;
+	}
+	if (str.length != 7) {
+		trace("hex string has wrong length: '" + str + "'");
+		return;
+	}
+	return parseInt(str.substring(1,7), 16);
+}
+
+var parseTextAttributes = function(node:XMLNode, theme:Object) {
+	var what:String = node.attributes.what;
+	if (!(what == "album" || what == "artist" || what == "title" || what == "online")) {
+		trace("unknown text field " + what);
+		return;
+	}
+	
+	if (node.attributes.x)
+		theme[what + "X"] = parseInt(node.attributes.x);
+	if (node.attributes.y)
+		theme[what + "Y"] = parseInt(node.attributes.y);
+	if (node.attributes.color)
+		theme[what + "Color"] = parseColor(node.attributes.color);
+}
+
 var parseTheme = function(themeNode:XMLNode) {
 	var theme:Object = {};
+	
+	// Fill in defaults, some of these things aren't even 
+	// returned in the xml right now though
+	theme.albumArtX = 102;
+	theme.albumArtY = 36;
+	theme.onlineX = 0;
+	theme.onlineY = 102;
+	theme.onlineWidth = 203;
+	theme.onlineHeight = 18;
+	theme.onlineFontSize = 12;
+	theme.onlineColor = 0x0000FF;
+	theme.artistX = 178;
+	theme.artistY = 63;
+	theme.artistWidth = 178;
+	theme.artistHeight = 22;
+	theme.artistFontSize = 14;
+	theme.artistColor = 0x0000FF;
+	theme.titleX = 176;
+	theme.titleY = 41;
+	theme.titleWidth = 245;
+	theme.titleHeight = 30;
+	theme.titleFontSize = 20;
+	theme.titleColor = 0x0000FF;
+	
 	for (var i = 0; i < themeNode.childNodes.length; ++i) {
 		var node:XMLNode = themeNode.childNodes[i];
 		if (node.nodeName == "activeImageUrl") {
@@ -31,9 +82,12 @@ var parseTheme = function(themeNode:XMLNode) {
 		} else if (node.nodeName == "inactiveImageUrl") {
 			theme.inactiveImageUrl = getNodeContent(node);
 		} else if (node.nodeName == "text") {
-			// FIXME
+			parseTextAttributes(node, theme);
 		} else if (node.nodeName == "albumArt") {
-			// FIXME
+			if (node.attributes.x)
+				theme.albumArtX = parseInt(node.attributes.x);
+			if (node.attributes.y)
+				theme.albumArtY = parseInt(node.attributes.y);
 		}
 	}
 	return theme;
@@ -43,7 +97,7 @@ var parseSong = function(songNode:XMLNode) {
 	var song:Object = {};
 	for (var i = 0; i < songNode.childNodes.length; ++i) {
 		var node:XMLNode = songNode.childNodes[i];
-		if (node.nodeName == "songTitle")
+		if (node.nodeName == "title")
 			song.title = getNodeContent(node);
 		else if (node.nodeName == "artist")
 			song.artist = getNodeContent(node);
@@ -89,8 +143,6 @@ var genericEquals = function(objA, objB) {
 
 var songEquals = genericEquals;
 var themeEquals = genericEquals;
-
-
 
 /////////////////// "view" movie stuff
 
@@ -143,7 +195,7 @@ var fade = function(clip:MovieClip, out:Boolean, removeAtEnd:Boolean) {
 		if (out)
 			newAlpha = 100 - newAlpha;
 		clip._alpha = newAlpha;
-		trace(clip._name +  "._alpha = " + clip._alpha + " count = " + clip.fadeCount);
+		//trace(clip._name +  "._alpha = " + clip._alpha + " count = " + clip.fadeCount);
 		if (clip.fadeCount == fadeFrames) {
 			stopFade(clip);
 		} else {
@@ -253,11 +305,9 @@ var createNewSongMovie = function(parent:MovieClip) {
 	songClip._visible = false;
 
 	songClip.createEmptyMovieClip("albumArt", 0);
-	songClip.albumArt._x = 102;
-	songClip.albumArt._y = 36;
-	songClip.createTextField("online", 1, 0, 102, 203, 18);
-	songClip.createTextField("artist", 2, 178, 63, 178, 22);
-	songClip.createTextField("title", 3, 176, 41, 245, 30);	
+	songClip.createTextField("online", 1, 0, 0, 0, 0);
+	songClip.createTextField("artist", 2, 0, 0, 0, 0);
+	songClip.createTextField("title", 3, 0, 0, 0, 0);	
 	return songClip;
 }
 
@@ -267,9 +317,13 @@ var createNewThemeMovie = function(parent:MovieClip) {
 	themeClipNum = themeClipNum + 1;
 	themeClip._visible = false;
 
-	themeClip.createEmptyMovieClip("backgroundActiveInstance", 1);
-	themeClip.createEmptyMovieClip("backgroundInactiveInstance", 0);
+	themeClip.createEmptyMovieClip("activeBackground", 1);
+	themeClip.createEmptyMovieClip("inactiveBackground", 0);
 	
+	// this will get fixed when we set stillPlaying
+	themeClip.activeBackground._visible = false;
+	themeClip.inactiveBackground._visible = false;
+
 	return themeClip;
 }
 
@@ -291,6 +345,31 @@ var formatText = function(clip:MovieClip, fontSize:Number, color:Number) {
 	fontFormat.size = fontSize;
 	fontFormat.color = color;
 	clip.setTextFormat(fontFormat);
+}
+
+var themeClipUpdateStillPlaying = function(themeClip:MovieClip, stillPlaying:Boolean) {
+	themeClip.inactiveBackground._visible = !stillPlaying;
+	themeClip.activeBackground._visible = stillPlaying;
+}
+
+var applyTextTheme = function(songClip:MovieClip, theme:Object, what:String) {
+	songClip[what]._x = theme[what + "X"];
+	songClip[what]._y = theme[what + "Y"];
+	songClip[what]._width = theme[what + "Width"];
+	songClip[what]._height = theme[what + "Height"];
+	formatText(songClip[what], theme[what + "FontSize"], theme[what + "Color"]);
+}
+
+var applyThemeToSong = function(songClip:MovieClip, theme:Object) {
+	
+	trace("applying theme " + theme + " to song " + songClip);
+	
+	songClip.albumArt._x = theme.albumArtX;
+	songClip.albumArt._y = theme.albumArtY;
+	
+	applyTextTheme(songClip, theme, "online");
+	applyTextTheme(songClip, theme, "artist");
+	applyTextTheme(songClip, theme, "title");
 }
 
 var setSong = function(clip:MovieClip, song:Object) {
@@ -326,16 +405,24 @@ var setSong = function(clip:MovieClip, song:Object) {
 		clip.currentSongClip = clip.loadingSongClip;
 		clip.loadingSong = null;
 		clip.loadingSongClip = null;
+		
+		// all present and future themes should reflect whether 
+		// the song is current playing
+		if (clip.loadingThemeClip)
+			themeClipUpdateStillPlaying(clip.loadingThemeClip, song.stillPlaying);
+		if (clip.currentThemeClip)
+			themeClipUpdateStillPlaying(clip.currentThemeClip, song.stillPlaying);
+
+		// the song should reflect the current theme, or the upcoming 
+		// theme only if no current theme
+		if (clip.currentTheme)
+			applyThemeToSong(songClip, clip.currentTheme);
+		else if (clip.loadingTheme)
+			applyThemeToSong(songClip, clip.loadingTheme);
+			
 		songClip._alpha = 0;
 		songClip._visible = true;
 		crossFade(toRemove, songClip, true);
-		
-		// flip to the right background if needed
-		if (false) {
-			// FIXME
-			clip.themeClips.backgroundInactiveInstance._visible = !song.stillPlaying;
-			clip.themeClips.backgroundActiveInstance._visible = song.stillPlaying;
-		}
 	});
 	
 	songClip.title.text = song.title;
@@ -346,31 +433,73 @@ var setSong = function(clip:MovieClip, song:Object) {
 		songClip.online.text = "Music stopped";
 	}
 	
-	formatText(songClip.online, 12, 0x0000FF);
-	formatText(songClip.artist, 14, 0x0000FF);
-	formatText(songClip.title, 20, 0x0000FF);
-	
+	// may synchronously invoke the all-loaded callback
 	addImageToClip(songClip, songClip.albumArt, song.albumArtUrl,
 				   baseUrl + "/images/no_image_available75x75light.gif");
 }
 
 var setTheme = function(clip:MovieClip, theme:Object) {
-
-	if (false) {
-		if (theme.activeImageUrl) 
-			loadImage(clip, 'activeBackground', baseUrl + theme.activeImageUrl);
-		if (theme.inactiveImageUrl)
-			loadImage(clip, 'inactiveBackground', baseUrl + theme.inactiveImageUrl);	
+	if (themeEquals(clip.loadingTheme, theme)) {
+		trace("theme is already loading theme, not doing anything");
+		return;
 	}
+	if (clip.loadingTheme == null && themeEquals(clip.currentTheme, theme)) {
+		trace("theme is already current theme, not doing anything");
+		return;
+	}
+	
+	// If there's a current loading theme, we want to replace it
+	if (clip.loadingThemeClip != null) {
+		removeMovie(clip.loadingThemeClip);
+		clip.loadingTheme = null;
+		clip.loadingThemeClip = null;
+	}
+	
+	var themeClip:MovieClip = createNewThemeMovie(clip.themeClips);
+	clip.loadingThemeClip = themeClip;
+	clip.loadingTheme = theme;
+	
+	setAllImagesLoadedCallback(themeClip, function() {
+		if (clip.loadingThemeClip != themeClip) {
+			trace("our images all loaded but we aren't the loading theme anymore");
+			return;
+		}
+		// replace current theme clip with ourselves
+		trace("swapping in the new theme");
+		var toRemove:MovieClip = clip.currentThemeClip;
+		clip.currentTheme = clip.loadingTheme;
+		clip.currentThemeClip = clip.loadingThemeClip;
+		clip.loadingTheme = null;
+		clip.loadingThemeClip = null;
+
+		// current theme should reflect whether the current song is playing
+		if (clip.currentSong)
+			themeClipUpdateStillPlaying(clip.currentThemeClip, clip.currentSong.stillPlaying);
+		
+		// all present and future song displays should get the now-current theme
+		if (clip.currentSongClip)
+			applyThemeToSong(clip.currentSongClip, clip.currentTheme);
+		if (clip.loadingSongClip)
+			applyThemeToSong(clip.loadingSongClip, clip.currentTheme);
+		
+		themeClip._alpha = 0;
+		themeClip._visible = true;
+		crossFade(toRemove, themeClip, true);
+	});
+	
+	if (theme.activeImageUrl) 
+		addImageToClip(themeClip, themeClip.activeBackground, baseUrl + theme.activeImageUrl, null);
+	if (theme.inactiveImageUrl)
+		addImageToClip(themeClip, themeClip.inactiveBackground, baseUrl + theme.inactiveImageUrl, null);
 }
 
-var songUpdateCount:Number = 0;
+var updateCount:Number = 0;
 
-var updateSong = function() {
+var updateNowPlaying = function() {
 	
-	songUpdateCount = songUpdateCount + 1;
+	updateCount = songUpdateCount + 1;
 	
-	if (songUpdateCount > 2) // FIXME a larger number
+	if (updateCount > 1000) // if someone just leaves a browser open, stop eventually
 		return;
 	
 	var meuXML:XML = new XML();
@@ -400,7 +529,7 @@ var updateSong = function() {
 rootMovie = createRootMovie();
 
 // once per minute
-setInterval(updateSong, 1000*3); // FIXME put back
+setInterval(updateNowPlaying, 1000*3); // FIXME put back
 
 // update once on load
-updateSong();
+updateNowPlaying();
