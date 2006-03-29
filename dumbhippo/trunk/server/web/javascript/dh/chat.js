@@ -28,10 +28,11 @@ dh.chat.Message = function(userId, version, name, text, timestamp, serial) {
 	}
 }
 
-dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
+dh.chat.MessageList = function(insertCallback, removeCallback, resizeCallback, limit) {
 	this._limit = limit
 	this._insertCallback = insertCallback
 	this._removeCallback = removeCallback
+	this._resizeCallback = resizeCallback
 	
 	this._messages = []
 	
@@ -95,6 +96,16 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 		}
 	}
 	
+	this.resizeMessages = function() {
+	    for (var i = 0; i < this._messages.length; i++) {
+	        var before = null
+		    if (i < this._messages.length - 1)
+			    before = this._messages[i + 1]
+	        
+			this._resizeCallback(this._messages[i], before)
+		}
+	}
+	
 	this.numMessages = function() {
 		return this._messages.length
 	}
@@ -106,9 +117,10 @@ dh.chat.User = function(userId, version, name) {
 	this.name = name
 }
 
-dh.chat.UserList = function(insertCallback, removeCallback) {
+dh.chat.UserList = function(insertCallback, removeCallback, updateMusicCallback) {
 	this._insertCallback = insertCallback
 	this._removeCallback = removeCallback
+	this._updateMusicCallback = updateMusicCallback;
 	
 	this._users = []
 	
@@ -142,6 +154,15 @@ dh.chat.UserList = function(insertCallback, removeCallback) {
 			}
 		}
 	}
+	
+	this.userMusicChange = function(userId, arrangementName, artist) {
+		for (var i = 0; i < this._users.length; i++) {
+			if (this._users[i].userId == userId) {
+				var melomaniac = this._users[i]
+				this._updateMusicCallback(melomaniac, arrangementName, artist)
+			}
+		}	
+	 }
 	
 	this.clear = function() {
 		while (this._users.length > 0) {

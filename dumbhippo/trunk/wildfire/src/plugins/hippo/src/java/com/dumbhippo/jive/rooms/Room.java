@@ -17,6 +17,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.IQ;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -283,7 +284,7 @@ public class Room {
 			// And a complete history of past messages
 			for (MessageInfo messageInfo : messages) {
 				Message outgoing = makeMessage(messageInfo);
-				sendMessage(outgoing, jid);
+				sendPacket(outgoing, jid);
 			}
 		}	
 	}
@@ -344,8 +345,16 @@ public class Room {
 		return outgoing;
 	}
 	
-	private void sendMessage(Message outgoing, JID to) {
-		Log.debug("  forwarding message to: " + to);
+	private IQ makeMusicChangeMessage(Element iq, String username) {
+		IQ outgoing = new IQ();
+		Log.debug("Creating IQ packet from " + roomName + " " + getServiceDomain() + " " + username);
+		outgoing.setFrom(new JID(roomName, getServiceDomain(), username));
+		outgoing.setChildElement(iq);
+		return outgoing;
+	}
+	
+	private void sendPacket(Packet outgoing, JID to) {
+		Log.debug("  forwarding packet to: " + to);
 
 		outgoing.setTo(to);
 		XMPPServer.getInstance().getPacketRouter().route(outgoing);		
@@ -374,13 +383,25 @@ public class Room {
 		messages.add(messageInfo);
 		
 		Message outgoing = makeMessage(messageInfo);
-		for (JID member : presentResources.keySet())
-			sendMessage(outgoing, member);
+		for (JID member : presentResources.keySet()) {
+			sendPacket(outgoing, member);
+		}
 		
 		// Send over to the server via JMS
 		XmppEventChatMessage event = new XmppEventChatMessage(roomName, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
         ObjectMessage message = queue.createObjectMessage(event);
         queue.send(message);
+	}
+
+	/*
+	 * @param iq an Element containing all the information about a new track
+	 * @param username username of a person whose music has changed
+	 */
+	public void processMusicChange(Element iq, String username) {
+		IQ outgoing = makeMusicChangeMessage(iq, username);
+		for (JID member : presentResources.keySet()) {
+			sendPacket(outgoing, member);
+		}
 	}
 	
 	/**
@@ -417,5 +438,9 @@ public class Room {
 
 	public int getPresenceCount() {
 		return presentUsers.size(); 
+	}
+	
+	public boolean userPresent(String username) {
+	    return presentUsers.containsKey(username);	
 	}
 }

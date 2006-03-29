@@ -9,10 +9,13 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import com.dumbhippo.jive.rooms.Room;
+import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
@@ -23,7 +26,10 @@ public class MusicIQHandler extends AbstractIQHandler {
 	private IQHandlerInfo info;
 	private JmsProducer queue;
 	
-	public MusicIQHandler() {
+	// we need it to know which rooms to send a message about a music change to
+	private RoomHandler roomHandler;
+	
+	public MusicIQHandler(RoomHandler roomHandler) {
 		super("DumbHippo Music IQ Handler");
 		
 		Log.debug("creaing Music handler");
@@ -31,12 +37,13 @@ public class MusicIQHandler extends AbstractIQHandler {
 		
 		Log.debug("Opening JmsProducer for " + XmppEvent.QUEUE);
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
+		
+		this.roomHandler = roomHandler;
 		Log.debug("Done constructing Music IQ handler");
 	}
 	
 	@Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
-		
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {		
 		Log.debug("handling IQ packet " + packet);
 		JID from = packet.getFrom();
 		IQ reply = IQ.createResultIQ(packet);
@@ -91,14 +98,12 @@ public class MusicIQHandler extends AbstractIQHandler {
 	}
 	
 	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
-		
 		XmppEventMusicChanged event = new XmppEventMusicChanged(from.getNode());
-
 		Map<String,String> properties;
 		try {
 			properties = parseTrackNode(iq);
 		} catch (ParseException e) {
-			Log.debug(e);
+		    Log.debug(e);
 			makeError(reply, e.getMessage());
 			return reply;
 		}
@@ -107,12 +112,23 @@ public class MusicIQHandler extends AbstractIQHandler {
 		
         ObjectMessage message = queue.createObjectMessage(event);
         queue.send(message);
-		
+        
+		// Let's make sure this is a DumbHippo user, so we can use the node name as an
+        // identifier
+		if (from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName())) {
+            String username = from.getNode();
+            for (Room room : roomHandler.getRoomsForUser(username))	{
+    			// createCopy creates a deep copy of the element. 
+    			// The new element is detached from its parent, 
+    			// and getParent() on the clone will return null, so we can have
+    			// it have a new parent!
+            	room.processMusicChange(iq.createCopy(), username);
+            }
+		}
 		return reply;
 	}
 
-	private IQ processPrimingTracks(JID from, Element iq, IQ reply) {
-		
+	private IQ processPrimingTracks(JID from, Element iq, IQ reply) {	
 		XmppEventPrimingTracks event = new XmppEventPrimingTracks(from.getNode());
 
 		// Log.debug("priming tracks xml: " + iq.asXML());

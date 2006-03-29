@@ -26,14 +26,6 @@ public class HippoPlugin implements Plugin {
 		try {
 			Log.debug("Initializing Hippo plugin");
 			
-			IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
-			iqRouter.addHandler(new ClientMethodIQHandler());		
-			iqRouter.addHandler(new ClientInfoIQHandler());
-			iqRouter.addHandler(new MySpaceIQHandler());					
-			iqRouter.addHandler(new MusicIQHandler());
-			iqRouter.addHandler(new PrefsIQHandler());
-			iqRouter.addHandler(new HotnessIQHandler());
-			iqRouter.addHandler(new RecentPostsIQHandler());
 			Log.debug("Adding PresenceMonitor");
 			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
@@ -45,7 +37,16 @@ public class HippoPlugin implements Plugin {
 			} catch (ComponentException e) {
 				throw new RuntimeException("Error adding Rooms component", e);
 			}
-
+			
+			IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+			iqRouter.addHandler(new ClientMethodIQHandler());		
+			iqRouter.addHandler(new ClientInfoIQHandler());
+			iqRouter.addHandler(new MySpaceIQHandler());					
+			iqRouter.addHandler(new MusicIQHandler(roomHandler));
+			iqRouter.addHandler(new PrefsIQHandler());
+			iqRouter.addHandler(new HotnessIQHandler());	
+			iqRouter.addHandler(new RecentPostsIQHandler());
+			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {
 			Log.debug("Failed to init hippo plugin: " + ExceptionUtils.getRootCause(e).getMessage(), e);

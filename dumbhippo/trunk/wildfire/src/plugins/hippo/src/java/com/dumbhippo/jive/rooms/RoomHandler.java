@@ -1,6 +1,8 @@
 package com.dumbhippo.jive.rooms;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jivesoftware.util.Log;
@@ -96,4 +98,20 @@ public class RoomHandler implements Component {
 		
 		return room;
 	}
-}
+	
+	/**
+	 * Returns all rooms the user is present in.
+	 * @param userId an id for the user
+	 * @return a list of rooms the user is present in
+	 */
+	public List<Room> getRoomsForUser(String userId) {
+		List<Room> roomsForUser = new ArrayList<Room>();
+		for (Room room : rooms.values()) {
+			if (room.userPresent(userId)) {
+				roomsForUser.add(room);
+			}			
+		}
+		return roomsForUser;
+	}
+}	
+	

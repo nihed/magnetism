@@ -40,6 +40,9 @@
 	<script for="dhChatControl" language="javascript" event="OnReconnect()">
 		dh.chatwindow.onReconnect()
 	</script>
+	<script for="dhChatControl" type="text/javascript" event="OnUserMusicChange(userId, arrangementName, artist)">
+		dh.chatwindow.onUserMusicChange(userId, arrangementName, artist)
+	</script>
 	<script type="text/javascript">
 		var chatControl = document.getElementById("dhChatControl")
         if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
@@ -54,8 +57,13 @@
     <div id="dhChatPostInfoDiv">
     	${framer.post.titleAsHtml} (from <dh:entity value="${framer.post.poster}" photo="false"/>)
 	</div>
-    <div id="dhChatPeopleDiv"></div>
+	<div id="dhChatPeopleContainer">
+        <div id="dhChatPeopleDiv"></div>
+        <div id="dhChatPeopleNE"></div>
+	    <div id="dhChatPeopleNW"></div>
+	</div> <!-- dhChatPeopleContainer -->
     <div id="dhChatAdsDiv">
+        <div id="dhChatAdsSE"></div>
         <div id="dhChatAdsInnerDiv">
         	<dht:ad src="${psa1}"/>
         </div>

@@ -329,3 +329,14 @@ dh.util.openFrameSet = function(window, event, obj, postID) {
 	top.window.location.href = "visit?post=" + postID;
 	return false;
 }
+
+dh.util.getTextWidth = function(text) {
+    // Only elements that are rendered have the offsetWidth property set. 
+    // So we add the text to the page, measure it, and then remove it.
+    var textSpan = document.createElement("span")
+    textSpan.innerHTML = text;
+    document.body.appendChild(textSpan)
+    var width = textSpan.offsetWidth
+    document.body.removeChild(textSpan)
+    return width;       
+}

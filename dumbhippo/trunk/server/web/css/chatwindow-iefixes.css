@@ -7,14 +7,63 @@
  */
 .dh-chat-person-name
 {
-	position: absolute;
-	top: 50%;
+	position:         absolute;
+	top:              8px;
+	left:             63px;
+    background-color: transparent;
+    
 }
 
 .dh-chat-person-name-inner
 {
-	position: relative;
-	top: -50%;
-	padding: 5px;
+	position:         relative;
+	background-color: transparent;
+	color:            white;
+	font-weight:      bold;
+	width:            97%; 
+    white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
 }
 
+.dh-chat-person-arrangement-name
+{
+	position:         absolute;
+	top:              25px;
+	left:             80px;
+    background-color: transparent;
+    
+}
+
+.dh-chat-person-arrangement-name-inner
+{
+	position:         relative;
+	background-color: transparent;
+	color:            #174675;
+	font-size:        x-small;
+	width:            95%; 
+    white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
+}
+
+.dh-chat-person-artist
+{
+	position:         absolute;
+	top:              38px;
+	left:             80px;
+    background-color: transparent;
+    
+}
+
+.dh-chat-person-artist-inner
+{
+	position:         relative;
+	background-color: transparent;
+	color:            #174675;
+	font-size:        x-small;
+	width:            95%; 
+	white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
+}
