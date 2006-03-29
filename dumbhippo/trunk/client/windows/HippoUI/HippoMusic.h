@@ -10,8 +10,8 @@ class HippoMusic
     : public HippoMusicListener
 {
 public:
-	HippoMusic();
-	~HippoMusic();
+    HippoMusic();
+    ~HippoMusic();
 
     void setUI(HippoUI *ui);
     void setEnabled(bool enabled);
@@ -23,7 +23,7 @@ public:
 private:
     bool enabled_;
     HippoUI *ui_;
-	HippoPtr<HippoPlaylistSource> iTunes_;
+    HippoPtr<HippoPlaylistSource> iTunes_;
     HippoPtr<HippoMusicMonitor> yahoo_;
 
     void updateEnabled();

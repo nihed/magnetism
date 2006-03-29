@@ -17,7 +17,7 @@ class IiTunesEvents : public IDispatch
 {
 public:
 #define DISPID_ONDATABASECHANGEDEVENT 1
-	virtual HRESULT __stdcall OnDatabaseChangedEvent (
+    virtual HRESULT __stdcall OnDatabaseChangedEvent (
         const _variant_t & deletedObjectIDs,
         const _variant_t & changedObjectIDs ) = 0;
 #define DISPID_ONPLAYERPLAYEVENT 2
@@ -25,10 +25,10 @@ public:
         const _variant_t & iTrack ) = 0;
 #define DISPID_ONPLAYERSTOPEVENT 3
     virtual HRESULT __stdcall OnPlayerStopEvent (
-		const _variant_t & iTrack ) = 0;
+        const _variant_t & iTrack ) = 0;
 #define DISPID_ONPLAYERPLAYINGTRACKCHANGEDEVENT 4
     virtual HRESULT __stdcall OnPlayerPlayingTrackChangedEvent (
-		const _variant_t & iTrack ) = 0;
+        const _variant_t & iTrack ) = 0;
 #define DISPID_ONUSERINTERFACEENABLEDEVENT 5
     virtual HRESULT __stdcall OnUserInterfaceEnabledEvent ( ) = 0;
 #define DISPID_ONCOMCALLSDISABLEDEVENT 6
@@ -37,7 +37,7 @@ public:
 #define DISPID_ONCOMCALLSENABLEDEVENT 7
     virtual HRESULT __stdcall OnCOMCallsEnabledEvent ( ) = 0;
 #define DISPID_ONQUITTINGEVENT 8
-	virtual HRESULT __stdcall OnQuittingEvent ( ) = 0;
+    virtual HRESULT __stdcall OnQuittingEvent ( ) = 0;
 #define DISPID_ONABOUTTOPROMPTUSERTOQUITEVENT 9
     virtual HRESULT __stdcall OnAboutToPromptUserToQuitEvent ( ) = 0;
 #define DISPID_ONSOUNDVOLUMECHANGEDEVENT 10
@@ -170,42 +170,42 @@ private:
 };
 
 class HippoITunesMonitorImpl
-	: public IDispatch
+    : public IDispatch
 {
 public:
-	HippoITunesMonitorImpl(HippoITunesMonitor *wrapper);
-	~HippoITunesMonitorImpl();
+    HippoITunesMonitorImpl(HippoITunesMonitor *wrapper);
+    ~HippoITunesMonitorImpl();
 
-	enum State {
-		NO_ITUNES,
-		CONNECTED
-	};
+    enum State {
+        NO_ITUNES,
+        CONNECTED
+    };
 
-	HippoITunesMonitor *wrapper_;
-	State state_;
-	HippoTrackInfo track_;
-	bool haveTrack_;
-	DWORD refCount_;
+    HippoITunesMonitor *wrapper_;
+    State state_;
+    HippoTrackInfo track_;
+    bool haveTrack_;
+    DWORD refCount_;
     HippoPtr<IiTunes> iTunes_;
-	HippoPtr<ITypeInfo> ifaceTypeInfo_;
-	HippoPtr<IConnectionPoint> connectionPoint_;
-	DWORD connectionCookie_;
+    HippoPtr<ITypeInfo> ifaceTypeInfo_;
+    HippoPtr<IConnectionPoint> connectionPoint_;
+    DWORD connectionCookie_;
 #define CHECK_RUNNING_TIMEOUT (1000*30)
     unsigned int timeout_id_;
     bool firstTimeout_;
     bool enabled_;
 
     void setEnabled(bool enabled);
-	void attemptConnect();
-	void disconnect();
-	void setTrack(IITTrack *track);
-	bool readTrackInfo(IITTrack *track, HippoTrackInfo *info);
+    void attemptConnect();
+    void disconnect();
+    void setTrack(IITTrack *track);
+    bool readTrackInfo(IITTrack *track, HippoTrackInfo *info);
     void readPlaylists();
     HippoPtr<HippoPlaylist> getPrimingTracks();
 
     static gboolean checkRunningTimeout(void *data);
 
-	/// COM goo
+    /// COM goo
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -222,34 +222,34 @@ public:
 static BOOL CALLBACK
 findITunesWindow(HWND hwnd, LPARAM lParam)
 {
-	bool *foundp = reinterpret_cast<bool*>(lParam);
+    bool *foundp = reinterpret_cast<bool*>(lParam);
 
-	WCHAR buf[32];
-	if (GetClassName(hwnd, &buf[0], 32) != 0) {
-		//hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
-		if (StrCmpW(L"iTunes", &buf[0]) == 0) {
-			*foundp = true;
-			// can stop looking now
-			return FALSE;
-		}
-	} else {
-		hippoDebugLogW(L"Failed to get class of window");
-	}
+    WCHAR buf[32];
+    if (GetClassName(hwnd, &buf[0], 32) != 0) {
+        //hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
+        if (StrCmpW(L"iTunes", &buf[0]) == 0) {
+            *foundp = true;
+            // can stop looking now
+            return FALSE;
+        }
+    } else {
+        hippoDebugLogW(L"Failed to get class of window");
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 static bool
 iTunesIsRunning()
 {
-	bool found = false;
-	// return value of this doesn't matter, but 
-	// it is 0 on error or if we ever return false from 
-	// our function. To check error you have to use GetLastError
-	// or something. See docs if you ever care.
-	EnumWindows(findITunesWindow, reinterpret_cast<LPARAM>(&found));
+    bool found = false;
+    // return value of this doesn't matter, but 
+    // it is 0 on error or if we ever return false from 
+    // our function. To check error you have to use GetLastError
+    // or something. See docs if you ever care.
+    EnumWindows(findITunesWindow, reinterpret_cast<LPARAM>(&found));
 
-	return found;
+    return found;
 }
 
 gboolean
@@ -279,7 +279,7 @@ HippoITunesMonitorImpl::checkRunningTimeout(void *data)
 }
 
 HippoITunesMonitorImpl::HippoITunesMonitorImpl(HippoITunesMonitor *wrapper)
-	: wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1), firstTimeout_(true), enabled_(false)
+    : wrapper_(wrapper), haveTrack_(false), state_(NO_ITUNES), refCount_(1), firstTimeout_(true), enabled_(false)
 {
     // one-shot idle immediately, which converts itself to a periodic timeout
     timeout_id_ = g_timeout_add(0, checkRunningTimeout, 
@@ -290,26 +290,26 @@ HippoITunesMonitorImpl::~HippoITunesMonitorImpl()
 {
     g_source_remove(timeout_id_);
     timeout_id_ = 0;
-	disconnect();
+    disconnect();
 }
 
 static void
 listConnections(IConnectionPoint *point) 
 {
-	HippoPtr<IEnumConnections> connections;
-	HRESULT hRes = point->EnumConnections(&connections);
-	if (FAILED(hRes)) {
-		hippoDebugLogU("Failed to list connections");
-		return;
-	}
+    HippoPtr<IEnumConnections> connections;
+    HRESULT hRes = point->EnumConnections(&connections);
+    if (FAILED(hRes)) {
+        hippoDebugLogU("Failed to list connections");
+        return;
+    }
 
-	hippoDebugLogU("connections:");
-	CONNECTDATA data;
-	while ((hRes = connections->Next(1, &data, 0)) == S_OK) {
-		hippoDebugLogU("  cookie %d", (int) data.dwCookie);
-		hippoDebugLogU("  unknown %p", data.pUnk);
-		data.pUnk->Release();
-	}
+    hippoDebugLogU("connections:");
+    CONNECTDATA data;
+    while ((hRes = connections->Next(1, &data, 0)) == S_OK) {
+        hippoDebugLogU("  cookie %d", (int) data.dwCookie);
+        hippoDebugLogU("  unknown %p", data.pUnk);
+        data.pUnk->Release();
+    }
 }
 
 void
@@ -327,97 +327,97 @@ HippoITunesMonitorImpl::setEnabled(bool enabled)
 void
 HippoITunesMonitorImpl::attemptConnect()
 {
-	hippoDebugLogU("ITUNES CONNECT %s", __FUNCTION__);
+    hippoDebugLogU("ITUNES CONNECT %s", __FUNCTION__);
 
-	if (state_ == CONNECTED || !enabled_)
-		return;
+    if (state_ == CONNECTED || !enabled_)
+        return;
 
-	HRESULT hRes;
+    HRESULT hRes;
     
-	ifaceTypeInfo_ = 0; // in case we half-connected earlier
-	connectionPoint_ = 0;
-	connectionCookie_ = 0;
+    ifaceTypeInfo_ = 0; // in case we half-connected earlier
+    connectionPoint_ = 0;
+    connectionCookie_ = 0;
 
-	hRes = hippoLoadRegTypeInfo(LIBID_iTunesLib, 1, 5, &DIID__IiTunesEvents, &ifaceTypeInfo_, 0);
+    hRes = hippoLoadRegTypeInfo(LIBID_iTunesLib, 1, 5, &DIID__IiTunesEvents, &ifaceTypeInfo_, 0);
 
-	if (FAILED(hRes)) {
-		HippoBSTR s;
-		hippoHresultToString(hRes, s);
-		hippoDebugLogW(L"%s", s.m_str);
-		return;
-	} else if (ifaceTypeInfo_ == 0) {
-		hippoDebugLogU("Type info was null");
-		return;
-	} else {
-		hippoDebugLogU("loaded type info OK");
-	}
+    if (FAILED(hRes)) {
+        HippoBSTR s;
+        hippoHresultToString(hRes, s);
+        hippoDebugLogW(L"%s", s.m_str);
+        return;
+    } else if (ifaceTypeInfo_ == 0) {
+        hippoDebugLogU("Type info was null");
+        return;
+    } else {
+        hippoDebugLogU("loaded type info OK");
+    }
 
-	HippoPtr<IiTunes> iTunesPtr;
+    HippoPtr<IiTunes> iTunesPtr;
 #if 0
-	// Does not work... iTunes doesn't register itself I guess
+    // Does not work... iTunes doesn't register itself I guess
     HippoPtr<IUnknown> unknown;
-	hRes = GetActiveObject(CLSID_iTunesApp, 0, &unknown);
-	if (SUCCEEDED(hRes)) {
-		hippoDebugLogW(L"iTunes already running");
-		unknown->QueryInterface<IiTunes>(&iTunesPtr);
-	}
+    hRes = GetActiveObject(CLSID_iTunesApp, 0, &unknown);
+    if (SUCCEEDED(hRes)) {
+        hippoDebugLogW(L"iTunes already running");
+        unknown->QueryInterface<IiTunes>(&iTunesPtr);
+    }
 #endif
-	if (!iTunesIsRunning()) {
-		hippoDebugLogW(L"iTunes doesn't have a window open, not monitoring it");
-		return;
-	} else {
-		hippoDebugLogW(L"Found an iTunes window, trying to connect");
-	}
+    if (!iTunesIsRunning()) {
+        hippoDebugLogW(L"iTunes doesn't have a window open, not monitoring it");
+        return;
+    } else {
+        hippoDebugLogW(L"Found an iTunes window, trying to connect");
+    }
 
-	// force-launches itunes if not running
-	hRes = ::CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID *)&iTunesPtr);
+    // force-launches itunes if not running
+    hRes = ::CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID *)&iTunesPtr);
 
-	if (FAILED(hRes) || iTunesPtr == 0) {
-		hippoDebugLogW(L"Failed to get the iTunes app");
-		return;
-	}
-	
-	HippoQIPtr<IConnectionPointContainer> container(iTunesPtr);
-	if (container == 0) {
-		hippoDebugLogW(L"Failed to get connection point container");
-		return;
-	}
-	
-	hRes = container->FindConnectionPoint(DIID__IiTunesEvents, &connectionPoint_);
-	if (FAILED(hRes)) {
-		hippoDebugLogW(L"Failed to get connection point");
-		return;
-	}
-	
-	listConnections(connectionPoint_);
+    if (FAILED(hRes) || iTunesPtr == 0) {
+        hippoDebugLogW(L"Failed to get the iTunes app");
+        return;
+    }
+    
+    HippoQIPtr<IConnectionPointContainer> container(iTunesPtr);
+    if (container == 0) {
+        hippoDebugLogW(L"Failed to get connection point container");
+        return;
+    }
+    
+    hRes = container->FindConnectionPoint(DIID__IiTunesEvents, &connectionPoint_);
+    if (FAILED(hRes)) {
+        hippoDebugLogW(L"Failed to get connection point");
+        return;
+    }
+    
+    listConnections(connectionPoint_);
 
-	hRes = connectionPoint_->Advise(this, &connectionCookie_);
-	if (FAILED(hRes)) {
-		hippoDebugLogW(L"Failed to connect to connection point");
-		connectionPoint_ = 0;
-		connectionCookie_ = 0;
-		return;
-	}
+    hRes = connectionPoint_->Advise(this, &connectionCookie_);
+    if (FAILED(hRes)) {
+        hippoDebugLogW(L"Failed to connect to connection point");
+        connectionPoint_ = 0;
+        connectionCookie_ = 0;
+        return;
+    }
 
     iTunes_ = iTunesPtr;
 
-	hippoDebugLogW(L"All connected up, supposedly; cookie: %d", (int) connectionCookie_);
+    hippoDebugLogW(L"All connected up, supposedly; cookie: %d", (int) connectionCookie_);
 
-	listConnections(connectionPoint_);
+    listConnections(connectionPoint_);
 
-	state_ = CONNECTED;
+    state_ = CONNECTED;
     wrapper_->fireMusicAppRunning(true);
 
     if (state_ == CONNECTED) {
-	    HippoPtr<IITTrack> trackPtr;
-	    hRes = iTunesPtr->get_CurrentTrack(&trackPtr);
-	    if (FAILED(hRes)) {
-		    hippoDebugLogW(L"Failed to get current track after reconnecting");
-		    disconnect();
-		    return;
-	    }
+        HippoPtr<IITTrack> trackPtr;
+        hRes = iTunesPtr->get_CurrentTrack(&trackPtr);
+        if (FAILED(hRes)) {
+            hippoDebugLogW(L"Failed to get current track after reconnecting");
+            disconnect();
+            return;
+        }
 
-	    setTrack(trackPtr);
+        setTrack(trackPtr);
     }
 
     // debug-only to have these here instead of "as needed"
@@ -427,51 +427,51 @@ HippoITunesMonitorImpl::attemptConnect()
 
 void
 HippoITunesMonitorImpl::disconnect() {
-	hippoDebugLogU("ITUNES DISCONNECT %s", __FUNCTION__);
+    hippoDebugLogU("ITUNES DISCONNECT %s", __FUNCTION__);
 
-	ifaceTypeInfo_ = 0;
+    ifaceTypeInfo_ = 0;
 
-	if (state_ == NO_ITUNES)
-		return;
+    if (state_ == NO_ITUNES)
+        return;
 
-	if (connectionPoint_ != 0) {
-		HRESULT hRes = connectionPoint_->Unadvise(connectionCookie_);
-		if (FAILED(hRes)) {
-			hippoDebugLogW(L"Failed to disconnect from connection point");
-			// continue anyway
-		} else {
-			connectionPoint_ = 0;
-			connectionCookie_ = 0;
-			hippoDebugLogW(L"Successfully unadvised");
-		}
-	} else {
-		hippoDebugLogW(L"Connection point was null");
-	}
+    if (connectionPoint_ != 0) {
+        HRESULT hRes = connectionPoint_->Unadvise(connectionCookie_);
+        if (FAILED(hRes)) {
+            hippoDebugLogW(L"Failed to disconnect from connection point");
+            // continue anyway
+        } else {
+            connectionPoint_ = 0;
+            connectionCookie_ = 0;
+            hippoDebugLogW(L"Successfully unadvised");
+        }
+    } else {
+        hippoDebugLogW(L"Connection point was null");
+    }
     
     iTunes_ = 0;
 
-	state_ = NO_ITUNES;
+    state_ = NO_ITUNES;
     wrapper_->fireMusicAppRunning(false);
 }
 
 
 #define GET_PROPERTY_START(obj, varType, iProp, hProp)          \
     do {                                                        \
-	if (obj != 0) {                                             \
+    if (obj != 0) {                                             \
         hRes = obj->get_ ## iProp(&val ## hProp);               \
-		if (FAILED(hRes)) {                                     \
-			HippoBSTR e;                                        \
-			hippoHresultToString(hRes, e);                      \
+        if (FAILED(hRes)) {                                     \
+            HippoBSTR e;                                        \
+            hippoHresultToString(hRes, e);                      \
             hippoDebugLogW(L"error getting prop: %s", e.m_str); \
-			disconnect();                                       \
-			return false;                                       \
+            disconnect();                                       \
+            return false;                                       \
         }                                                       \
     }                                                           \
     } while(0)
 
 #define GET_PROPERTY_END_STRING(obj, iProp, hProp)              \
     do {                                                        \
-	if (obj != 0) {                                             \
+    if (obj != 0) {                                             \
         info->set ## hProp (val ## hProp);                      \
         if(0) hippoDebugLogU("  got prop %s", #hProp);          \
         if(0) hippoDebugLogW(L" %s", val ## hProp .m_str);      \
@@ -480,7 +480,7 @@ HippoITunesMonitorImpl::disconnect() {
 
 #define GET_PROPERTY_END_LONG(obj, iProp, hProp)                \
     do {                                                        \
-	if (obj != 0) {                                             \
+    if (obj != 0) {                                             \
         info->set ## hProp (val ## hProp);                      \
         if(0) hippoDebugLogU("  got prop %s", #hProp);          \
         if(0) hippoDebugLogW(L" %ld", val ## hProp );           \
@@ -489,7 +489,7 @@ HippoITunesMonitorImpl::disconnect() {
 
 #define GET_PROPERTY_END_KIND(obj, iProp, hProp)                \
     do {                                                        \
-	if (obj != 0) {                                             \
+    if (obj != 0) {                                             \
         HippoBSTR k;                                            \
         switch (val ## hProp) {                                 \
         case ITTrackKindCD:                                     \
@@ -549,36 +549,36 @@ HippoITunesMonitorImpl::disconnect() {
 bool
 HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
 {
-	if (track == 0) {
-		hippoDebugLogW(L"null track");
-		return false;
-	}
+    if (track == 0) {
+        hippoDebugLogW(L"null track");
+        return false;
+    }
 
-	HippoQIPtr<IITFileOrCDTrack> fileTrack_(track);
-	HippoQIPtr<IITURLTrack> urlTrack_(track);
+    HippoQIPtr<IITFileOrCDTrack> fileTrack_(track);
+    HippoQIPtr<IITURLTrack> urlTrack_(track);
 
-	HRESULT hRes;
+    HRESULT hRes;
        
     // we need to know if it's a podcast to interpret the ITTrackKind value
     VARIANT_BOOL isPodcast = false;
     if (urlTrack_ != 0) {
         hRes = urlTrack_->get_Podcast(&isPodcast);
-		if (FAILED(hRes)) {                                     
-			HippoBSTR e;                                        
-			hippoHresultToString(hRes, e);                      
+        if (FAILED(hRes)) {                                     
+            HippoBSTR e;                                        
+            hippoHresultToString(hRes, e);                      
             hippoDebugLogW(L"error getting prop: %s", e.m_str); 
-			disconnect();                                       
-			return false;                                       
+            disconnect();                                       
+            return false;                                       
         }                                                       
     }
     if (fileTrack_ != 0) {
         hRes = fileTrack_->get_Podcast(&isPodcast);
-		if (FAILED(hRes)) {                                     
-			HippoBSTR e;                                        
-			hippoHresultToString(hRes, e);                      
+        if (FAILED(hRes)) {                                     
+            HippoBSTR e;                                        
+            hippoHresultToString(hRes, e);                      
             hippoDebugLogW(L"error getting prop: %s", e.m_str); 
-			disconnect();                                       
-			return false;                                       
+            disconnect();                                       
+            return false;                                       
         }                                                       
     }
 
@@ -597,29 +597,29 @@ HippoITunesMonitorImpl::readTrackInfo(IITTrack *track, HippoTrackInfo *info)
     // can't find an obvious way to get this from iTunes
     //GET_PROPERTY_STRING(track, DiscIdentifier, DiscIdentifier);
 
-	return true;
+    return true;
 }
 
 void
 HippoITunesMonitorImpl::setTrack(IITTrack *track)
 {
-	hippoDebugLogW(L"itunes setTrack");
+    hippoDebugLogW(L"itunes setTrack");
 
     bool oldHaveTrack = haveTrack_;
     HippoTrackInfo oldTrack = track_;
 
-	haveTrack_ = readTrackInfo(track, &track_);
+    haveTrack_ = readTrackInfo(track, &track_);
     if (!haveTrack_)
         track_.clear();
 
-	hippoDebugLogW(L"itunes track result: %d", haveTrack_);
+    hippoDebugLogW(L"itunes track result: %d", haveTrack_);
 
     if (oldHaveTrack != haveTrack_ || oldTrack != track_) {
-	    if (wrapper_)
-		    wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
+        if (wrapper_)
+            wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
     }
 
-	hippoDebugLogW(L"itunes fired track change event");
+    hippoDebugLogW(L"itunes fired track change event");
 }
 
 static const wchar_t*
@@ -673,8 +673,8 @@ playlistKindToString(ITPlaylistKind kind)
 void
 HippoITunesMonitorImpl::readPlaylists()
 {
-	if (state_ == NO_ITUNES)
-		return;
+    if (state_ == NO_ITUNES)
+        return;
 
     HippoPtr<IITSourceCollection> sources;
 
@@ -775,8 +775,8 @@ HippoITunesMonitorImpl::readPlaylists()
 HippoPtr<HippoPlaylist>
 HippoITunesMonitorImpl::getPrimingTracks()
 {
-  	if (state_ == NO_ITUNES)
-		return 0;
+    if (state_ == NO_ITUNES)
+        return 0;
     
     try {
         HippoPtr<IITLibraryPlaylist> library;
@@ -928,14 +928,14 @@ STDMETHODIMP
 HippoITunesMonitorImpl::QueryInterface(const IID &ifaceID,
                             void   **result)
 {
-	//hippoDebugLogU("%s", __FUNCTION__);
-	if (IsEqualIID(ifaceID, IID_IUnknown)) {
+    //hippoDebugLogU("%s", __FUNCTION__);
+    if (IsEqualIID(ifaceID, IID_IUnknown)) {
         *result = static_cast<IUnknown *>(this);
-	} else if (IsEqualIID(ifaceID, IID_IDispatch)) {
+    } else if (IsEqualIID(ifaceID, IID_IDispatch)) {
         *result = static_cast<IDispatch *>(this);
-	} else if (IsEqualIID(ifaceID, DIID__IiTunesEvents)) {
+    } else if (IsEqualIID(ifaceID, DIID__IiTunesEvents)) {
         *result = static_cast<IDispatch *>(this);
-	} else {
+    } else {
         *result = 0;
         return E_NOINTERFACE;
     }
@@ -953,7 +953,7 @@ HIPPO_DEFINE_REFCOUNTING(HippoITunesMonitorImpl)
 STDMETHODIMP
 HippoITunesMonitorImpl::GetTypeInfoCount(UINT *pctinfo)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     if (pctinfo == NULL)
         return E_INVALIDARG;
@@ -968,7 +968,7 @@ HippoITunesMonitorImpl::GetTypeInfo(UINT        iTInfo,
                          LCID        lcid,
                          ITypeInfo **ppTInfo)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     if (ppTInfo == NULL)
         return E_INVALIDARG;
@@ -990,7 +990,7 @@ HippoITunesMonitorImpl::GetIDsOfNames (REFIID    riid,
                             LCID      lcid,
                             DISPID   *rgDispId)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     HRESULT ret;
     if (!ifaceTypeInfo_) 
@@ -1133,21 +1133,21 @@ checkArgCount(DISPPARAMS *dispParams, int expected)
 
 STDMETHODIMP
 HippoITunesMonitorImpl::Invoke (DISPID        member,
-								const IID    &iid,
-								LCID          lcid,              
-								WORD          flags,
-								DISPPARAMS   *dispParams,
-								VARIANT      *result,
-								EXCEPINFO    *excepInfo,  
-								unsigned int *argErr)
+                                const IID    &iid,
+                                LCID          lcid,              
+                                WORD          flags,
+                                DISPPARAMS   *dispParams,
+                                VARIANT      *result,
+                                EXCEPINFO    *excepInfo,  
+                                unsigned int *argErr)
 {
-	//hippoDebugLogU("%s", __FUNCTION__);
+    //hippoDebugLogU("%s", __FUNCTION__);
 
-	if (!ifaceTypeInfo_)
+    if (!ifaceTypeInfo_)
         return E_OUTOFMEMORY;
 
-	switch (member) {
-	case DISPID_ONDATABASECHANGEDEVENT:
+    switch (member) {
+    case DISPID_ONDATABASECHANGEDEVENT:
         hippoDebugLogW(L"database changed");
         // Two parameters, deletedObjects / changedOrAddedObjects
         // each parameter is a 2D SAFEARRAY of VARIANT with the variants
@@ -1213,9 +1213,9 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
                 hippoDebugLogW(L"Changed %s", i->toString().c_str());
             }
         }
-		break;
-	case DISPID_ONPLAYERPLAYEVENT:
-		hippoDebugLogW(L"player play");
+        break;
+    case DISPID_ONPLAYERPLAYEVENT:
+        hippoDebugLogW(L"player play");
 
         if (!checkArgCount(dispParams, 1))
             return DISP_E_BADPARAMCOUNT;
@@ -1223,22 +1223,22 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
         if (!checkArgType(dispParams, 0, VT_DISPATCH, 0))
             return DISP_E_BADVARTYPE;
 
-		// FIXME it's probably better to just queue an idle that gets the 
-		// current track
+        // FIXME it's probably better to just queue an idle that gets the 
+        // current track
 
-		{
+        {
             HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].pdispVal);
-			setTrack(track);
-		}
-		break;
-	case DISPID_ONPLAYERSTOPEVENT:
-		hippoDebugLogW(L"player stop");
-		setTrack(0);
-		break;
-	case DISPID_ONPLAYERPLAYINGTRACKCHANGEDEVENT:
-		hippoDebugLogW(L"playing track changed");
-		// this is if the properties of the track change, not if we change tracks.
-		// it's apparently most likely for something called "joined CD tracks"
+            setTrack(track);
+        }
+        break;
+    case DISPID_ONPLAYERSTOPEVENT:
+        hippoDebugLogW(L"player stop");
+        setTrack(0);
+        break;
+    case DISPID_ONPLAYERPLAYINGTRACKCHANGEDEVENT:
+        hippoDebugLogW(L"playing track changed");
+        // this is if the properties of the track change, not if we change tracks.
+        // it's apparently most likely for something called "joined CD tracks"
 
         if (!checkArgCount(dispParams, 1))
             return DISP_E_BADPARAMCOUNT;
@@ -1247,50 +1247,50 @@ HippoITunesMonitorImpl::Invoke (DISPID        member,
             return DISP_E_BADVARTYPE;
 
         {
-			HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].pdispVal);
-			setTrack(track);
-		}
-		break;
-	case DISPID_ONUSERINTERFACEENABLEDEVENT:
-		hippoDebugLogW(L"UI enabled");
-		break;
-	case DISPID_ONCOMCALLSDISABLEDEVENT:
-		hippoDebugLogW(L"COM disabled");
-		break;
-	case DISPID_ONCOMCALLSENABLEDEVENT:
-		hippoDebugLogW(L"COM enabled");
-		break;
-	case DISPID_ONQUITTINGEVENT:
-		hippoDebugLogW(L"quitting");
-		disconnect();
-		break;
-	case DISPID_ONABOUTTOPROMPTUSERTOQUITEVENT:
-		hippoDebugLogW(L"about to prompt to quit");
-		disconnect();
-		break;
-	case DISPID_ONSOUNDVOLUMECHANGEDEVENT:
-		hippoDebugLogW(L"sound volume changed");
-		break;
-	default:
+            HippoQIPtr<IITTrack> track(dispParams->rgvarg[0].pdispVal);
+            setTrack(track);
+        }
+        break;
+    case DISPID_ONUSERINTERFACEENABLEDEVENT:
+        hippoDebugLogW(L"UI enabled");
+        break;
+    case DISPID_ONCOMCALLSDISABLEDEVENT:
+        hippoDebugLogW(L"COM disabled");
+        break;
+    case DISPID_ONCOMCALLSENABLEDEVENT:
+        hippoDebugLogW(L"COM enabled");
+        break;
+    case DISPID_ONQUITTINGEVENT:
+        hippoDebugLogW(L"quitting");
+        disconnect();
+        break;
+    case DISPID_ONABOUTTOPROMPTUSERTOQUITEVENT:
+        hippoDebugLogW(L"about to prompt to quit");
+        disconnect();
+        break;
+    case DISPID_ONSOUNDVOLUMECHANGEDEVENT:
+        hippoDebugLogW(L"sound volume changed");
+        break;
+    default:
         hippoDebugLogW(L"Unknown dispid %d", member);
-		break;
-	}
+        break;
+    }
 
-	return S_OK;
+    return S_OK;
 }
 
 /////////////////////// public API ///////////////////////
 
 HippoITunesMonitor::HippoITunesMonitor()
 {
-	impl_ = new HippoITunesMonitorImpl(this);
-	impl_->Release();
+    impl_ = new HippoITunesMonitorImpl(this);
+    impl_->Release();
 }
 
 HippoITunesMonitor::~HippoITunesMonitor()
 {
-	impl_->wrapper_ = 0;
-	impl_ = 0;
+    impl_->wrapper_ = 0;
+    impl_ = 0;
 }
 
 void
@@ -1302,14 +1302,14 @@ HippoITunesMonitor::setEnabled(bool enabled)
 bool 
 HippoITunesMonitor::hasCurrentTrack() const
 {
-	return impl_->haveTrack_;
+    return impl_->haveTrack_;
 }
 
 const HippoTrackInfo&
 HippoITunesMonitor::getCurrentTrack() const
 {
-	assert(hasCurrentTrack());
-	return impl_->track_;
+    assert(hasCurrentTrack());
+    return impl_->track_;
 }
 
 std::vector<HippoPtr<HippoPlaylist> >

@@ -10,9 +10,9 @@ public:
 
     virtual void setEnabled(bool enabled);
     virtual bool hasCurrentTrack() const;
-	virtual const HippoTrackInfo& getCurrentTrack() const;
+    virtual const HippoTrackInfo& getCurrentTrack() const;
 
 private:
-	friend class HippoYahooMonitorImpl;
-	HippoPtr<HippoYahooMonitorImpl> impl_;
+    friend class HippoYahooMonitorImpl;
+    HippoPtr<HippoYahooMonitorImpl> impl_;
 };

@@ -349,7 +349,7 @@ HippoChatControl::Invoke (DISPID        member,
         member == HIPPO_DISPID_ONUSERLEAVE ||
         member == HIPPO_DISPID_ONMESSAGE ||
         member == HIPPO_DISPID_ONRECONNECT ||
-		member == HIPPO_DISPID_ONUSERMUSICCHANGE) 
+        member == HIPPO_DISPID_ONUSERMUSICCHANGE) 
     {
         HRESULT hr;
 

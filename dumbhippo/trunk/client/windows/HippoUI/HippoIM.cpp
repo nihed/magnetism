@@ -551,7 +551,7 @@ HippoIM::connect()
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
-	handler = lm_message_handler_new(onIQ, (gpointer)this, NULL);
+    handler = lm_message_handler_new(onIQ, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 
                                            LM_MESSAGE_TYPE_IQ, 
                                            LM_HANDLER_PRIORITY_NORMAL);
@@ -1794,14 +1794,14 @@ HippoIM::onIQ (LmMessageHandler *handler,
                LmMessage        *message,
                gpointer          userData)
 {
-	HippoIM *im = (HippoIM *)userData;
+    HippoIM *im = (HippoIM *)userData;
 
     const char *from = lm_message_node_get_attribute(message->node, "from");
 
     HippoChatRoom *chatRoom;
     HippoBSTR userId;
 
-	// we only process IQ messages that apply to chat rooms for now
+    // we only process IQ messages that apply to chat rooms for now
     if (!im->checkRoomMessage(message, &chatRoom, &userId))
         return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
@@ -1809,37 +1809,37 @@ HippoIM::onIQ (LmMessageHandler *handler,
     if (!musicInfoNode) {
         im->ui_->logErrorU("Can't find musicInfo node");
         return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-	}
+    }
 
-	HippoBSTR artist = NULL;
+    HippoBSTR artist = NULL;
     HippoBSTR arrangementName = NULL;
-	for (LmMessageNode *propNode = musicInfoNode->children; propNode; propNode = propNode->next) {   
-		if (strcmp (propNode->name, "prop") != 0) {
-			im->ui_->logErrorU("encountered a child node of musicInfo node that is not named \"prop\"");
+    for (LmMessageNode *propNode = musicInfoNode->children; propNode; propNode = propNode->next) {   
+        if (strcmp (propNode->name, "prop") != 0) {
+            im->ui_->logErrorU("encountered a child node of musicInfo node that is not named \"prop\"");
             continue;
-		}
+        }
         const char *key = lm_message_node_get_attribute(propNode, "key");
          
-		if (key == 0) {
+        if (key == 0) {
             im->ui_->logErrorU("ignoring node '%s' with no 'key' attribute",
                                propNode->name);
             continue;
-		} else {
-		    if (strcmp (key, "artist") == 0) {
-			    artist.setUTF8(propNode->value);
-		    }
-		    if (strcmp (key, "name") == 0) {
+        } else {
+            if (strcmp (key, "artist") == 0) {
+                artist.setUTF8(propNode->value);
+            }
+            if (strcmp (key, "name") == 0) {
                 arrangementName.setUTF8(propNode->value);
-		    }
-		}
-		if (artist && arrangementName) {
-			break;
-		}
-	}
+            }
+        }
+        if (artist && arrangementName) {
+            break;
+        }
+    }
 
-	if (artist && arrangementName) {
-	    chatRoom->updateMusicForUser(userId, arrangementName, artist);
-	}
+    if (artist && arrangementName) {
+        chatRoom->updateMusicForUser(userId, arrangementName, artist);
+    }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }

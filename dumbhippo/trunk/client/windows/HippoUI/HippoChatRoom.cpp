@@ -107,7 +107,7 @@ HippoChatRoom::getTitle()
 void 
 HippoChatRoom::addListener(HippoChatRoomListener *listener)
 {
-	listeners_.append(listener);
+    listeners_.append(listener);
 }
 
 void 
@@ -115,9 +115,9 @@ HippoChatRoom::removeListener(HippoChatRoomListener *listener)
 {
     for (unsigned long i = listeners_.length(); i > 0; --i) {
         if (listeners_[i - 1] == listener) {
-	    listeners_.remove(i - 1);
-	    return;
-	}
+        listeners_.remove(i - 1);
+        return;
+    }
     }
 
     assert(false);
@@ -184,7 +184,7 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
 void 
 HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist)
 {   
-	 // could have a HippoChatUserMusic class, but let's do without it for now
+     // could have a HippoChatUserMusic class, but let's do without it for now
      notifyUserMusicChange(userId, arrangementName, artist);
 }
 
@@ -210,11 +210,11 @@ HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementNa
             DISPPARAMS dispParams;
             VARIANTARG args[3];
 
-			// order of these arguments gets reversed, so we need to supply
-			// the artist as the first argument, and the userId as the last one
-			args[0].vt = VT_BSTR;
-			args[0].bstrVal = artist;
-			args[1].vt = VT_BSTR;
+            // order of these arguments gets reversed, so we need to supply
+            // the artist as the first argument, and the userId as the last one
+            args[0].vt = VT_BSTR;
+            args[0].bstrVal = artist;
+            args[1].vt = VT_BSTR;
             args[1].bstrVal = arrangementName;
             args[2].vt = VT_BSTR;
             args[2].bstrVal = userId;

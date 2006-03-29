@@ -19,25 +19,25 @@ enum ReadTrackResult
 };
 
 class HippoYahooMonitorImpl
-	: public IDispatch
+    : public IDispatch
 {
 public:
-	HippoYahooMonitorImpl(HippoYahooMonitor *wrapper);
-	~HippoYahooMonitorImpl();
+    HippoYahooMonitorImpl(HippoYahooMonitor *wrapper);
+    ~HippoYahooMonitorImpl();
 
-	enum State {
-		NO_YAHOO,
-		CONNECTED
-	};
+    enum State {
+        NO_YAHOO,
+        CONNECTED
+    };
 
-	HippoYahooMonitor *wrapper_;
-	State state_;
-	HippoTrackInfo track_;
-	bool haveTrack_;
-	DWORD refCount_;
-	HippoPtr<ITypeInfo> ifaceTypeInfo_;
-	HippoPtr<IConnectionPoint> connectionPoint_;
-	DWORD connectionCookie_;
+    HippoYahooMonitor *wrapper_;
+    State state_;
+    HippoTrackInfo track_;
+    bool haveTrack_;
+    DWORD refCount_;
+    HippoPtr<ITypeInfo> ifaceTypeInfo_;
+    HippoPtr<IConnectionPoint> connectionPoint_;
+    DWORD connectionCookie_;
     long remoteCookie_;
     HippoPtr<IRMPRemote> yahooRemote_;
     bool enabled_;
@@ -48,8 +48,8 @@ public:
 
     unsigned int updateTrackTimeout_;
 
-	void attemptConnect();
-	void disconnect();
+    void attemptConnect();
+    void disconnect();
     void setEnabled(bool enabled);
 
     static gboolean checkRunningTimeout(void *data);
@@ -65,7 +65,7 @@ public:
     static gboolean updateTrackTimeout(void *data);
     void updateTrackNow();
 
-	/// COM goo
+    /// COM goo
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -82,34 +82,34 @@ public:
 static BOOL CALLBACK
 findYahooWindow(HWND hwnd, LPARAM lParam)
 {
-	bool *foundp = reinterpret_cast<bool*>(lParam);
+    bool *foundp = reinterpret_cast<bool*>(lParam);
 
-	WCHAR buf[32];
-	if (GetClassName(hwnd, &buf[0], 32) != 0) {
-		//hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
-		if (StrCmpW(L"YMPFrame", &buf[0]) == 0) {
-			*foundp = true;
-			// can stop looking now
-			return FALSE;
-		}
-	} else {
-		hippoDebugLogW(L"Failed to get class of window");
-	}
+    WCHAR buf[32];
+    if (GetClassName(hwnd, &buf[0], 32) != 0) {
+        //hippoDebugLogW(L"Window %p class='%s'", hwnd, &buf[0]);
+        if (StrCmpW(L"YMPFrame", &buf[0]) == 0) {
+            *foundp = true;
+            // can stop looking now
+            return FALSE;
+        }
+    } else {
+        hippoDebugLogW(L"Failed to get class of window");
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 static bool
 yahooIsRunning()
 {
-	bool found = false;
-	// return value of this doesn't matter, but 
-	// it is 0 on error or if we ever return false from 
-	// our function. To check error you have to use GetLastError
-	// or something. See docs if you ever care.
-	EnumWindows(findYahooWindow, reinterpret_cast<LPARAM>(&found));
+    bool found = false;
+    // return value of this doesn't matter, but 
+    // it is 0 on error or if we ever return false from 
+    // our function. To check error you have to use GetLastError
+    // or something. See docs if you ever care.
+    EnumWindows(findYahooWindow, reinterpret_cast<LPARAM>(&found));
 
-	return found;
+    return found;
 }
 
 gboolean
@@ -150,7 +150,7 @@ HippoYahooMonitorImpl::~HippoYahooMonitorImpl()
 {
     g_source_remove(timeout_id_);
     timeout_id_ = 0;
-	disconnect();
+    disconnect();
     if (updateTrackTimeout_ != 0) {
         g_source_remove(updateTrackTimeout_);
         updateTrackTimeout_ = 0;
@@ -172,84 +172,84 @@ HippoYahooMonitorImpl::setEnabled(bool enabled)
 void
 HippoYahooMonitorImpl::attemptConnect()
 {
-	hippoDebugLogU("YAHOO CONNECT %s", __FUNCTION__);
+    hippoDebugLogU("YAHOO CONNECT %s", __FUNCTION__);
 
-	if (state_ == CONNECTED || !enabled_)
-		return;
+    if (state_ == CONNECTED || !enabled_)
+        return;
 
-	HRESULT hRes;
+    HRESULT hRes;
     
-	ifaceTypeInfo_ = 0; // in case we half-connected earlier
-	connectionPoint_ = 0;
-	connectionCookie_ = 0;
+    ifaceTypeInfo_ = 0; // in case we half-connected earlier
+    connectionPoint_ = 0;
+    connectionCookie_ = 0;
 
     hRes = hippoLoadRegTypeInfo(LIBID_RMPMediaPlayerLib, 1, 0, &DIID_DRMPRemoteEvents, &ifaceTypeInfo_, 0);
 
-	if (FAILED(hRes)) {
-		HippoBSTR s;
-		hippoHresultToString(hRes, s);
-		hippoDebugLogW(L"%s", s.m_str);
-		return;
-	} else if (ifaceTypeInfo_ == 0) {
-		hippoDebugLogU("Type info was null");
-		return;
-	} else {
-		hippoDebugLogU("loaded type info OK");
-	}
+    if (FAILED(hRes)) {
+        HippoBSTR s;
+        hippoHresultToString(hRes, s);
+        hippoDebugLogW(L"%s", s.m_str);
+        return;
+    } else if (ifaceTypeInfo_ == 0) {
+        hippoDebugLogU("Type info was null");
+        return;
+    } else {
+        hippoDebugLogU("loaded type info OK");
+    }
 
 #if 0
-	// Does not work... yahoo doesn't register itself I guess
+    // Does not work... yahoo doesn't register itself I guess
     HippoPtr<IUnknown> unknown;
     hRes = GetActiveObject(CLSID_RMPRemote, 0, &unknown);
-	if (SUCCEEDED(hRes)) {
-		hippoDebugLogW(L"yahoo already running");
-		hRes = unknown->QueryInterface<IRMPRemote>(&yahooRemote_);
-	}
+    if (SUCCEEDED(hRes)) {
+        hippoDebugLogW(L"yahoo already running");
+        hRes = unknown->QueryInterface<IRMPRemote>(&yahooRemote_);
+    }
 #else
-	if (!yahooIsRunning()) {
-		hippoDebugLogW(L"yahoo doesn't have a window open, not monitoring it");
-		return;
-	} else {
-		hippoDebugLogW(L"Found an yahoo window, trying to connect");
-	}
+    if (!yahooIsRunning()) {
+        hippoDebugLogW(L"yahoo doesn't have a window open, not monitoring it");
+        return;
+    } else {
+        hippoDebugLogW(L"Found an yahoo window, trying to connect");
+    }
 
-	// force-launches yahoo if not running
+    // force-launches yahoo if not running
     hRes = ::CoCreateInstance(CLSID_RMPRemote, NULL, CLSCTX_LOCAL_SERVER, IID_IRMPRemote, (PVOID *)&yahooRemote_);
 #endif
 
-	if (FAILED(hRes) || yahooRemote_ == 0) {
-		hippoDebugLogW(L"Failed to get the yahoo app");
-		return;
-	}
-	
+    if (FAILED(hRes) || yahooRemote_ == 0) {
+        hippoDebugLogW(L"Failed to get the yahoo app");
+        return;
+    }
+    
     hRes = yahooRemote_->Initialize(&remoteCookie_);
     if (FAILED(hRes)) {
         hippoDebugLogW(L"Failed to initialize Yahoo remote");
         return;
     }
 
-	HippoQIPtr<IConnectionPointContainer> container(yahooRemote_);
-	if (container == 0) {
-		hippoDebugLogW(L"Failed to get connection point container");
-		return;
-	}
-	
-	hRes = container->FindConnectionPoint(DIID_DRMPRemoteEvents, &connectionPoint_);
-	if (FAILED(hRes)) {
-		hippoDebugLogW(L"Failed to get connection point");
-		return;
-	}
+    HippoQIPtr<IConnectionPointContainer> container(yahooRemote_);
+    if (container == 0) {
+        hippoDebugLogW(L"Failed to get connection point container");
+        return;
+    }
+    
+    hRes = container->FindConnectionPoint(DIID_DRMPRemoteEvents, &connectionPoint_);
+    if (FAILED(hRes)) {
+        hippoDebugLogW(L"Failed to get connection point");
+        return;
+    }
 
-	hRes = connectionPoint_->Advise(this, &connectionCookie_);
-	if (FAILED(hRes)) {
-		hippoDebugLogW(L"Failed to connect to connection point");
-		connectionPoint_ = 0;
-		connectionCookie_ = 0;
-		return;
-	}
-	hippoDebugLogW(L"Yahoo all connected up, supposedly; cookie: %d", (int) connectionCookie_);
+    hRes = connectionPoint_->Advise(this, &connectionCookie_);
+    if (FAILED(hRes)) {
+        hippoDebugLogW(L"Failed to connect to connection point");
+        connectionPoint_ = 0;
+        connectionCookie_ = 0;
+        return;
+    }
+    hippoDebugLogW(L"Yahoo all connected up, supposedly; cookie: %d", (int) connectionCookie_);
 
-	state_ = CONNECTED;
+    state_ = CONNECTED;
     wrapper_->fireMusicAppRunning(true);
 
     trackNeedsUpdate();
@@ -258,26 +258,26 @@ HippoYahooMonitorImpl::attemptConnect()
 void
 HippoYahooMonitorImpl::disconnect()
 {
-	hippoDebugLogU("YAHOO DISCONNECT %s", __FUNCTION__);
+    hippoDebugLogU("YAHOO DISCONNECT %s", __FUNCTION__);
 
-	ifaceTypeInfo_ = 0;
+    ifaceTypeInfo_ = 0;
 
-	if (state_ == NO_YAHOO)
-		return;
+    if (state_ == NO_YAHOO)
+        return;
 
-	if (connectionPoint_ != 0) {
-		HRESULT hRes = connectionPoint_->Unadvise(connectionCookie_);
-		if (FAILED(hRes)) {
-			hippoDebugLogW(L"Failed to disconnect from connection point");
-			// continue anyway
-		} else {
-			connectionPoint_ = 0;
-			connectionCookie_ = 0;
-			hippoDebugLogW(L"Successfully unadvised");
-		}
-	} else {
-		hippoDebugLogW(L"Connection point was null");
-	}
+    if (connectionPoint_ != 0) {
+        HRESULT hRes = connectionPoint_->Unadvise(connectionCookie_);
+        if (FAILED(hRes)) {
+            hippoDebugLogW(L"Failed to disconnect from connection point");
+            // continue anyway
+        } else {
+            connectionPoint_ = 0;
+            connectionCookie_ = 0;
+            hippoDebugLogW(L"Successfully unadvised");
+        }
+    } else {
+        hippoDebugLogW(L"Connection point was null");
+    }
 
     if (yahooRemote_ != 0) {
         // ignore errors on this one
@@ -288,7 +288,7 @@ HippoYahooMonitorImpl::disconnect()
         yahooRemote_ = 0;
     }
 
-	state_ = NO_YAHOO;
+    state_ = NO_YAHOO;
     wrapper_->fireMusicAppRunning(false);
 }
 
@@ -502,11 +502,11 @@ HippoYahooMonitorImpl::updateTrackNow()
         disconnect();
 
     if (oldHaveTrack != haveTrack_ || oldTrack != track_) {
-	    if (wrapper_)
-		    wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
+        if (wrapper_)
+            wrapper_->fireCurrentTrackChanged(haveTrack_, track_);
     }
 
-	hippoDebugLogW(L"yahoo fired track change event");
+    hippoDebugLogW(L"yahoo fired track change event");
 }
 
 /////////////////////// IUnknown implementation ///////////////////////
@@ -515,14 +515,14 @@ STDMETHODIMP
 HippoYahooMonitorImpl::QueryInterface(const IID &ifaceID,
                             void   **result)
 {
-	//hippoDebugLogU("%s", __FUNCTION__);
-	if (IsEqualIID(ifaceID, IID_IUnknown)) {
+    //hippoDebugLogU("%s", __FUNCTION__);
+    if (IsEqualIID(ifaceID, IID_IUnknown)) {
         *result = static_cast<IUnknown *>(this);
-	} else if (IsEqualIID(ifaceID, IID_IDispatch)) {
+    } else if (IsEqualIID(ifaceID, IID_IDispatch)) {
         *result = static_cast<IDispatch *>(this);
     } else if (IsEqualIID(ifaceID, DIID_DRMPRemoteEvents)) {
         *result = static_cast<IDispatch *>(this);
-	} else {
+    } else {
         *result = 0;
         return E_NOINTERFACE;
     }
@@ -540,7 +540,7 @@ HIPPO_DEFINE_REFCOUNTING(HippoYahooMonitorImpl)
 STDMETHODIMP
 HippoYahooMonitorImpl::GetTypeInfoCount(UINT *pctinfo)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     if (pctinfo == NULL)
         return E_INVALIDARG;
@@ -555,7 +555,7 @@ HippoYahooMonitorImpl::GetTypeInfo(UINT        iTInfo,
                          LCID        lcid,
                          ITypeInfo **ppTInfo)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     if (ppTInfo == NULL)
         return E_INVALIDARG;
@@ -577,7 +577,7 @@ HippoYahooMonitorImpl::GetIDsOfNames (REFIID    riid,
                             LCID      lcid,
                             DISPID   *rgDispId)
 {
-	hippoDebugLogU("%s", __FUNCTION__);
+    hippoDebugLogU("%s", __FUNCTION__);
 
     HRESULT ret;
     if (!ifaceTypeInfo_) 
@@ -589,31 +589,31 @@ HippoYahooMonitorImpl::GetIDsOfNames (REFIID    riid,
         
 STDMETHODIMP
 HippoYahooMonitorImpl::Invoke (DISPID        member,
-								const IID    &iid,
-								LCID          lcid,              
-								WORD          flags,
-								DISPPARAMS   *dispParams,
-								VARIANT      *result,
-								EXCEPINFO    *excepInfo,  
-								unsigned int *argErr)
+                                const IID    &iid,
+                                LCID          lcid,              
+                                WORD          flags,
+                                DISPPARAMS   *dispParams,
+                                VARIANT      *result,
+                                EXCEPINFO    *excepInfo,  
+                                unsigned int *argErr)
 {
-	//hippoDebugLogU("%s", __FUNCTION__);
+    //hippoDebugLogU("%s", __FUNCTION__);
 
-	if (!ifaceTypeInfo_)
+    if (!ifaceTypeInfo_)
         return E_OUTOFMEMORY;
 
 #define DISPID_ONINFO 0x4014
-	switch (member) {
+    switch (member) {
     case DISPID_ONINFO:
         if (dispParams->cArgs != 1) {
-			hippoDebugLogW(L"wrong number of args to OnInfo");
-			return DISP_E_BADPARAMCOUNT;
-		}
+            hippoDebugLogW(L"wrong number of args to OnInfo");
+            return DISP_E_BADPARAMCOUNT;
+        }
 
-		if (!(dispParams->rgvarg[0].vt == VT_I4)) {
-			hippoDebugLogW(L"no VT_I4");
-			return DISP_E_BADVARTYPE;
-		}
+        if (!(dispParams->rgvarg[0].vt == VT_I4)) {
+            hippoDebugLogW(L"no VT_I4");
+            return DISP_E_BADVARTYPE;
+        }
 
         {
             RemoteInfo info = static_cast<RemoteInfo>(dispParams->rgvarg[0].intVal);
@@ -634,26 +634,26 @@ HippoYahooMonitorImpl::Invoke (DISPID        member,
             }
         }
         break;
-	default:
+    default:
         hippoDebugLogW(L"Got event dispid %d", member);
-		break;
-	}
+        break;
+    }
 
-	return S_OK;
+    return S_OK;
 }
 
 /////////////////////// public API ///////////////////////
 
 HippoYahooMonitor::HippoYahooMonitor()
 {
-	impl_ = new HippoYahooMonitorImpl(this);
-	impl_->Release();
+    impl_ = new HippoYahooMonitorImpl(this);
+    impl_->Release();
 }
 
 HippoYahooMonitor::~HippoYahooMonitor()
 {
-	impl_->wrapper_ = 0;
-	impl_ = 0;
+    impl_->wrapper_ = 0;
+    impl_ = 0;
 }
 
 void
@@ -665,12 +665,12 @@ HippoYahooMonitor::setEnabled(bool enabled)
 bool 
 HippoYahooMonitor::hasCurrentTrack() const
 {
-	return impl_->haveTrack_;
+    return impl_->haveTrack_;
 }
 
 const HippoTrackInfo&
 HippoYahooMonitor::getCurrentTrack() const
 {
-	assert(hasCurrentTrack());
-	return impl_->track_;
+    assert(hasCurrentTrack());
+    return impl_->track_;
 }

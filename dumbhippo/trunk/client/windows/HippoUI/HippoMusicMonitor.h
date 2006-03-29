@@ -43,9 +43,9 @@ public:                                                                         
 class HippoTrackInfo
 {
 public:
-	HippoTrackInfo() 
+    HippoTrackInfo() 
     {
-	}
+    }
 
     HIPPO_TRACK_INFO_PROP(Type);
     HIPPO_TRACK_INFO_PROP(Format);
@@ -108,7 +108,7 @@ public:
 private:
 #define BUFSIZE 32
 
-	void fromLong(HippoBSTR &s, long val) {
+    void fromLong(HippoBSTR &s, long val) {
         WCHAR buf[BUFSIZE];
         StringCchPrintfW(buf, BUFSIZE, L"%ld", val);
         s = buf;
@@ -120,32 +120,32 @@ class HippoMusicListener;
 class HippoMusicMonitor
 {
 public:
-	
+    
     virtual void setEnabled(bool enabled) = 0;
-	virtual bool hasCurrentTrack() const = 0;
-	virtual const HippoTrackInfo& getCurrentTrack() const = 0;
+    virtual bool hasCurrentTrack() const = 0;
+    virtual const HippoTrackInfo& getCurrentTrack() const = 0;
 
-	void addListener(HippoMusicListener *listener);
-	void removeListener(HippoMusicListener *listener);
+    void addListener(HippoMusicListener *listener);
+    void removeListener(HippoMusicListener *listener);
 
-	virtual ~HippoMusicMonitor() {}
+    virtual ~HippoMusicMonitor() {}
 
     static HippoPtr<HippoMusicMonitor> createYahooMonitor();
 
     HIPPO_DECLARE_REFCOUNTING;
 
 protected:
-	void fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
+    void fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
     void fireMusicAppRunning(bool nowRunning);
 
     HippoMusicMonitor() : refCount_(1) {}
 
 private:
-	HippoArray<HippoMusicListener*> listeners_;
+    HippoArray<HippoMusicListener*> listeners_;
 
-	// private so they aren't used
-	HippoMusicMonitor(const HippoMusicMonitor &other);
-	HippoMusicMonitor& operator=(const HippoMusicMonitor &other);
+    // private so they aren't used
+    HippoMusicMonitor(const HippoMusicMonitor &other);
+    HippoMusicMonitor& operator=(const HippoMusicMonitor &other);
 
     DWORD refCount_;
 };
@@ -166,8 +166,8 @@ protected:
     HippoPlaylist() : refCount_(1) {}
 
 private:
-  	HippoPlaylist(const HippoPlaylist &other);
-	HippoPlaylist& operator=(const HippoPlaylist &other);
+    HippoPlaylist(const HippoPlaylist &other);
+    HippoPlaylist& operator=(const HippoPlaylist &other);
 
     DWORD refCount_;
 };
@@ -182,22 +182,22 @@ public:
 
     virtual ~HippoPlaylistSource() {}
 
-	static HippoPtr<HippoPlaylistSource> createITunesMonitor();
+    static HippoPtr<HippoPlaylistSource> createITunesMonitor();
 
 protected:
     HippoPlaylistSource() {}
 
 private:
     // private so they aren't used
-	HippoPlaylistSource(const HippoPlaylistSource &other);
-	HippoPlaylistSource& operator=(const HippoPlaylistSource &other);
+    HippoPlaylistSource(const HippoPlaylistSource &other);
+    HippoPlaylistSource& operator=(const HippoPlaylistSource &other);
 
 };
 
 class HippoMusicListener
 {
 public:
-	virtual void onCurrentTrackChanged(HippoMusicMonitor *monitor, bool haveTrack, const HippoTrackInfo & newTrack) = 0;
+    virtual void onCurrentTrackChanged(HippoMusicMonitor *monitor, bool haveTrack, const HippoTrackInfo & newTrack) = 0;
     virtual void onMusicAppRunning(HippoMusicMonitor *monitor, bool nowRunning) = 0;
-	virtual ~HippoMusicListener() {}
+    virtual ~HippoMusicListener() {}
 };

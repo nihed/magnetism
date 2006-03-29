@@ -6,44 +6,44 @@
 void
 HippoMusicMonitor::addListener(HippoMusicListener *listener)
 {
-	listeners_.append(listener);
+    listeners_.append(listener);
 }
 
 void
 HippoMusicMonitor::removeListener(HippoMusicListener *listener)
 {
-	for (int i = listeners_.length() - 1; i >= 0; --i)
-	{
-		if (listeners_[i] == listener) {
-			listeners_.remove(i);
-			return;
-		}
-	}
+    for (int i = listeners_.length() - 1; i >= 0; --i)
+    {
+        if (listeners_[i] == listener) {
+            listeners_.remove(i);
+            return;
+        }
+    }
 
-	assert(false);
+    assert(false);
 }
 
 void 
 HippoMusicMonitor::fireCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack)
 {
-	// totally unsafe, but not fixable without refcounting on the listeners
-	for (unsigned int i = 0; i < listeners_.length(); ++i) {
-		listeners_[i]->onCurrentTrackChanged(this, haveTrack, newTrack);
-	}
+    // totally unsafe, but not fixable without refcounting on the listeners
+    for (unsigned int i = 0; i < listeners_.length(); ++i) {
+        listeners_[i]->onCurrentTrackChanged(this, haveTrack, newTrack);
+    }
 }
 
 void
 HippoMusicMonitor::fireMusicAppRunning(bool nowRunning)
 {
-	for (unsigned int i = 0; i < listeners_.length(); ++i) {
-		listeners_[i]->onMusicAppRunning(this, nowRunning);
-	}
+    for (unsigned int i = 0; i < listeners_.length(); ++i) {
+        listeners_[i]->onMusicAppRunning(this, nowRunning);
+    }
 }
 
 HippoPtr<HippoMusicMonitor>
 HippoMusicMonitor::createYahooMonitor()
 {
-	HippoPtr<HippoMusicMonitor> m = new HippoYahooMonitor();
+    HippoPtr<HippoMusicMonitor> m = new HippoYahooMonitor();
     m->Release();
     return m;
 }

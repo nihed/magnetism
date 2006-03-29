@@ -311,7 +311,7 @@ private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
 
-	// private so they aren't used
-	HippoFlickr(const HippoFlickr &other);
-	HippoFlickr& operator=(const HippoFlickr &other);
+    // private so they aren't used
+    HippoFlickr(const HippoFlickr &other);
+    HippoFlickr& operator=(const HippoFlickr &other);
 };

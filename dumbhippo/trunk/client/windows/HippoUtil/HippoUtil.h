@@ -124,9 +124,9 @@ public:
         if (raw_)
             raw_->AddRef();
     }
-	HippoPtr(const HippoPtr &other) : raw_(0) {
-		assign(other.raw_);
-	}
+    HippoPtr(const HippoPtr &other) : raw_(0) {
+        assign(other.raw_);
+    }
     ~HippoPtr() {
         if (raw_) {
             raw_->Release();
@@ -142,7 +142,7 @@ public:
     T* operator->() {
         return raw_;
     }
-	const T* operator->() const {
+    const T* operator->() const {
         return raw_;
     }
 
@@ -151,26 +151,26 @@ public:
         return &raw_;
     }
     HippoPtr& operator=(T *t) {
-		assign(t);
-		return *this;
+        assign(t);
+        return *this;
     }
     HippoPtr& operator=(const HippoPtr &other) {
-		assign(other.raw_);
-		return *this;
+        assign(other.raw_);
+        return *this;
     }
 
 protected:
     T *raw_;
 
 private:
-	void assign(T *t) {
-		// ref first to protect against self-assignment
-		if (t)
-			t->AddRef();
+    void assign(T *t) {
+        // ref first to protect against self-assignment
+        if (t)
+            t->AddRef();
         if (raw_)
             raw_->Release();
         raw_ = t;
-	}
+    }
 };
 
 template<class T, const IID *piid = &__uuidof(T)>
@@ -247,8 +247,8 @@ public:
     }
 
     void Append(const HippoBSTR &str) throw (std::bad_alloc) {
-		Append(str.m_str);
-	}
+        Append(str.m_str);
+    }
 
     void Append(OLECHAR c) throw (std::bad_alloc) {
         OLECHAR str[2];
