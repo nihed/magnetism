@@ -80,7 +80,9 @@ library HippoUtil {
         [id(HIPPO_DISPID_ONMESSAGE)] HRESULT OnMessage([in] BSTR userId, [in] int userVersion, [in] BSTR name, [in] BSTR message, [in] double timestamp, [in] int serial);
         [helpstring("Reconnect to the chatroom, clear existing state")]
         [id(HIPPO_DISPID_ONRECONNECT)] HRESULT OnReconnect();
-    }
+        [helpstring("User's music changed")]
+        [id(HIPPO_DISPID_ONUSERMUSICCHANGE)] HRESULT OnUserMusicChange([in] BSTR userId, [in] BSTR arrangementName, [in] BSTR artist);
+	}
     [
         uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
         helpstring("DumbHippo Javascript external object"),

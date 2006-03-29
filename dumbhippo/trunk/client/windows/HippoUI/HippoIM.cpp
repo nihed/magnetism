@@ -551,6 +551,12 @@ HippoIM::connect()
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
+	handler = lm_message_handler_new(onIQ, (gpointer)this, NULL);
+    lm_connection_register_message_handler(lmConnection_, handler, 
+                                           LM_MESSAGE_TYPE_IQ, 
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
     lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
 
     stateChange(CONNECTING);
@@ -1782,6 +1788,62 @@ HippoIM::onPresence (LmMessageHandler *handler,
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+LmHandlerResult 
+HippoIM::onIQ (LmMessageHandler *handler,
+               LmConnection     *connection,
+               LmMessage        *message,
+               gpointer          userData)
+{
+	HippoIM *im = (HippoIM *)userData;
+
+    const char *from = lm_message_node_get_attribute(message->node, "from");
+
+    HippoChatRoom *chatRoom;
+    HippoBSTR userId;
+
+	// we only process IQ messages that apply to chat rooms for now
+    if (!im->checkRoomMessage(message, &chatRoom, &userId))
+        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+    LmMessageNode *musicInfoNode = lm_message_node_get_child(message->node, "music");
+    if (!musicInfoNode) {
+        im->ui_->logErrorU("Can't find musicInfo node");
+        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+	}
+
+	HippoBSTR artist = NULL;
+    HippoBSTR arrangementName = NULL;
+	for (LmMessageNode *propNode = musicInfoNode->children; propNode; propNode = propNode->next) {   
+		if (strcmp (propNode->name, "prop") != 0) {
+			im->ui_->logErrorU("encountered a child node of musicInfo node that is not named \"prop\"");
+            continue;
+		}
+        const char *key = lm_message_node_get_attribute(propNode, "key");
+         
+		if (key == 0) {
+            im->ui_->logErrorU("ignoring node '%s' with no 'key' attribute",
+                               propNode->name);
+            continue;
+		} else {
+		    if (strcmp (key, "artist") == 0) {
+			    artist.setUTF8(propNode->value);
+		    }
+		    if (strcmp (key, "name") == 0) {
+                arrangementName.setUTF8(propNode->value);
+		    }
+		}
+		if (artist && arrangementName) {
+			break;
+		}
+	}
+
+	if (artist && arrangementName) {
+	    chatRoom->updateMusicForUser(userId, arrangementName, artist);
+	}
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
 char *
 HippoIM::idToJabber(WCHAR *guid)
 {
@@ -1849,7 +1911,7 @@ HippoIM::parseRoomJid(const char *jid,
     *postId = NULL;
     *userId = NULL;
 
-    char *at = strchr(jid, '@');
+    char *at = strchr((char *)jid, '@');
     if (!at)
         return false;
 

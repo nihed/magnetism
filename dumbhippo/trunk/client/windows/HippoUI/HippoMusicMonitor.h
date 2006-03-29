@@ -106,10 +106,11 @@ public:
     }
 
 private:
-    void fromLong(HippoBSTR &s, long val) {
-        WCHAR buf[32];
-        StringCchPrintfW(buf, sizeof(buf), L"%ld", val);
-        buf[31]='\0';
+#define BUFSIZE 32
+
+	void fromLong(HippoBSTR &s, long val) {
+        WCHAR buf[BUFSIZE];
+        StringCchPrintfW(buf, BUFSIZE, L"%ld", val);
         s = buf;
     }
 };

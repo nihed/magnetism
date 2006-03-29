@@ -348,7 +348,8 @@ HippoChatControl::Invoke (DISPID        member,
     if (member == HIPPO_DISPID_ONUSERJOIN ||
         member == HIPPO_DISPID_ONUSERLEAVE ||
         member == HIPPO_DISPID_ONMESSAGE ||
-        member == HIPPO_DISPID_ONRECONNECT) 
+        member == HIPPO_DISPID_ONRECONNECT ||
+		member == HIPPO_DISPID_ONUSERMUSICCHANGE) 
     {
         HRESULT hr;
 

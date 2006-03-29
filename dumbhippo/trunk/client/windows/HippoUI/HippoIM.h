@@ -199,6 +199,11 @@ private:
                                       LmMessage        *message,
                                       gpointer          userData);
 
+    static LmHandlerResult onIQ(LmMessageHandler *handler,
+                                LmConnection     *connection,
+                                LmMessage        *message,
+                                gpointer          userData);
+
     static LmHandlerResult onPrefsReply(LmMessageHandler *handler,
                                         LmConnection     *connection,
                                         LmMessage        *message,

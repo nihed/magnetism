@@ -126,7 +126,7 @@ HippoChatRoom::removeListener(HippoChatRoomListener *listener)
 void 
 HippoChatRoom::addUser(BSTR userId, int userVersion, BSTR userName, bool participant)
 {
-    // Treat adding an existing user as adding then removing; this allows
+    // Treat adding an existing user as removing then adding; this allows
     // for version/name changes.
     removeUser(userId);
 
@@ -177,6 +177,59 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
                 hippoDebug(L"OnUserJoin invoke failed %x", hr);
+        }
+    }
+}
+
+void 
+HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist)
+{   
+	 // could have a HippoChatUserMusic class, but let's do without it for now
+     notifyUserMusicChange(userId, arrangementName, artist);
+}
+
+void
+HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementName, const BSTR artist)
+{
+    for (unsigned long i = 0; i < listeners_.length(); i++)
+        listeners_[i]->onUserMusicChange(this, userId, arrangementName, artist);
+
+    HippoPtr<IConnectionPoint> point;
+    if (FAILED(connectionPointContainer_.FindConnectionPoint(__uuidof(IHippoChatRoomEvents), &point)))
+        return;
+
+    HippoPtr<IEnumConnections> e;
+    if (FAILED(point->EnumConnections(&e)))
+        return;
+
+    CONNECTDATA data;
+    ULONG fetched;
+    while (e->Next(1, &data, &fetched) == S_OK) {
+        HippoQIPtr<IDispatch> dispatch(data.pUnk);
+        if (dispatch) {
+            DISPPARAMS dispParams;
+            VARIANTARG args[3];
+
+			// order of these arguments gets reversed, so we need to supply
+			// the artist as the first argument, and the userId as the last one
+			args[0].vt = VT_BSTR;
+			args[0].bstrVal = artist;
+			args[1].vt = VT_BSTR;
+            args[1].bstrVal = arrangementName;
+            args[2].vt = VT_BSTR;
+            args[2].bstrVal = userId;
+
+
+            dispParams.rgvarg = args;
+            dispParams.cArgs = 3;
+            dispParams.cNamedArgs = 0;
+            dispParams.rgdispidNamedArgs = NULL;
+
+            HRESULT hr = dispatch->Invoke(HIPPO_DISPID_ONUSERMUSICCHANGE, IID_NULL, 0 /* LCID */,
+                                          DISPATCH_METHOD, &dispParams, 
+                                          NULL /* result */, NULL /* exception */, NULL /* argError */);
+            if (!SUCCEEDED(hr))
+                hippoDebug(L"OnUserMusicChange invoke failed %x", hr);
         }
     }
 }
