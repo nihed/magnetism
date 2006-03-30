@@ -32,3 +32,12 @@
 .dhButton.share {
 	margin:						0.75em;	
 }
+
+#dhShareShareButton {
+  margin-right: -1px;
+}
+
+#dhShareDownArrow {
+  margin-top: -1px;
+  margin-bottom: -1px;
+}

@@ -7,89 +7,109 @@
 	<title>Sharing a Link</title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
 	<dht:scriptIncludes/>
-	<script type="text/javascript">
-		dojo.require("dh.sharelink");
-	</script>
+	<script type="text/javascript" src="javascript/dh/share.js"></script>
+	<script type="text/javascript" src="javascript/dh/sharelink.js"></script>
 </head>
 <body scroll="no">
-	<dht:header>
-		Sharing a Link
-	</dht:header>
+<div id="dhShareOuterDiv">
+<table id="dhShareOuter" cellspacing="0" cellpadding="0">
+    <tr><td id="dhShareTL"><img src="/images/${buildStamp}/shareLinkTL.png"/></td>
+    <td id="dhShareTop">&nbsp;</td>
+    <td id="dhShareTR"><img src="/images/${buildStamp}/shareLinkTR.png"/></td>
+    </tr>
+    <tr>
+    <td id="dhShareLeftBorder">&nbsp;</td>    
+    <td id="dhShareMain">
+    <table id="dhShareContainer" class="dhInvisible" cellspacing="0" cellpadding="0">
+        <tr>
+        <td id="dhShareLeft" width="46%">
+        <table id="dhShareLeftContainer" cellspacing="0" cellpadding="0">
+        <tr><td valign="top">
+        <img src="/images/${buildStamp}/dumbhippo_logo.gif"/><br/>
+		<div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
+     	<div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
+			Link: <input id="dhUrlToShare" type="text" class="dhText"/>
+		</div>
+		<div id="dhTitleError" class="dhValidityError"></div>		
+        </td>
+        <tr valign="bottom">
+        <td>
+        <div id="dhShareSendTo">Send to:</div>
+        <table id="dhShareRecipientsContainer" cellspacing="0" cellpadding="0">
+            <tr width="100%">
+            <td valign="center"><input autocomplete="off" accesskey="w"
+						type="text" id="dhShareRecipientComboBox" class="dhText" tabindex="1"/></td>
+            <td id="dhShareDownArrow"><img id="dhShareRecipientComboBoxButton" src="/images/${buildStamp}/downarrow.gif"/></td>       
+            <td><img onclick="dh.share.autoSuggest.activate();" accesskey="a" id="dhShareAddButton" src="/images/${buildStamp}/but_add.gif"/></td>
+            <td><div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div></td>
+            </tr>
+            <tr height="2px"><td></td></tr>
+        </table>
+        <div id="dhShareRecipientsBox">
+		<div id="dhShareRecipientsError" class="dhValidityError"></div>        
+        <div id="dhShareRecipientsBoxTop"><img src="/images/${buildStamp}/darkblue_tl.gif" class="dhShareTopCornerImg"/></div>
+		<dht:recipientList/>
+        <div id="dhShareRecipientsBoxBottom"><img src="/images/${buildStamp}/darkblue_bl.gif" class="dhShareBottomCornerImg"/></div>
+        </div>
+        </td></tr>
+        </table> <!-- end dhShareLeftContainer -->
+        </td> <!-- ends dhShareLeft -->
 
-	<div id="dhMain">
-		<!--  invisible at first to avoid flicker while we set up dojo widgets -->
-		<div id="dhShareForm" class="dhInvisible">
-			<div class="dhVerticalPadding"></div>
-			
-			<table cols="1" class="url">
-			<tbody>
-			<tr>
-			<td>
-				<div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
-				<div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
-					Link: <input id="dhUrlToShare" type="text" class="dhText"/>
-				</div>
-			</td>
-			</tr>
-			<tr>
-			<td>
-				<div id="dhTitleError" class="dhValidityError"></div>
-			</td>
-			</tr>
-<!-- Getting rid of this item for the short term as it's useless
-			<tr>
-			<td style="text-align: right;">
-				<input type="checkbox" id="dhSecretCheckbox"/>Secret
-			</td>
-			</tr>
--->
-			</tbody>
-			</table>
-			
-			<div class="dhVerticalPadding"></div>
-			<div class="dhLabel">Share <u>W</u>ith:</div>
-			
-			<table>
-			<tbody>
-			<tr>
-			<td>
-				<input autocomplete="off" accesskey="w"
-						type="text" id="dhRecipientComboBox" class="dhText" tabindex="1"/>
-				<!-- dh:png id="dhRecipientComboBoxButton" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/> -->
-				<img id="dhRecipientComboBoxButton" src="/images/${buildStamp}/arrow.gif" height="16" width="16"/>
-				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div>
-			</td>
-			<td>
-				<input type="button" value="Add" accesskey="a" class="dhButton" 
-						onclick="dh.share.autoSuggest.activate();"/>
-			</td>
-			</tr>
-			</tbody>
-			</table>
-			
-			<div id="dhRecipientsError" class="dhValidityError"></div>
-	
-			<div class="dhVerticalPadding"></div>
-			
-			<dht:recipientList/>
-	
-			<div class="dhVerticalPadding"></div>
-	
-			<dht:shareDescription/>
-				
-			<div class="dhVerticalPadding"></div>
-	
-			<input type="button" value="Share" accesskey="s"
-					class="dhButton share" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/>
-	
-			<div class="dhVerticalPadding"></div>
-			
-			<div id="dhFlickrPhotoUpload"></div>
-	
-			<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
-		</div><!-- end dhShareForm -->
+        <td style="width: 2px">&nbsp;</td>
 
-	</div>
+        <td id="dhShareRight">
+        <table id="dhShareRightOuterContainer" cellspacing="0" cellpadding="0">
+            <tr>
+            <td valign="top"><img src="/images/${buildStamp}/blue_tl.gif" class="dhShareTopCornerImg"/></td>
+            <td>&nbsp;</td>
+            <td valign="top"><img src="/images/${buildStamp}/blue_tr.gif" class="dhShareTopCornerImg"/></td>
+            </tr>
+            <tr>
+            <td></td><td><div id="dhShareDescriptionLabel">Description:</div>
+            </td><td></td>
+            </tr>
+            <tr>
+            <td></td><td id="dhShareDescriptionArea">
+            <table id="dhShareDescriptionContainer" cellspacing="0" cellpadding="0">
+                <tr>
+                <td valign="top"><img src="/images/${buildStamp}/whiteinner_tl.gif" class="dhShareTopCornerImg"/></td>
+                <td>&nbsp;</td>
+                <td valign="top"><img src="/images/${buildStamp}/whiteinner_tr.gif" class="dhShareTopCornerImg"/></td>
+                </tr>
+                <tr>
+                <td style="width: 5px;">&nbsp;</td><td valign="top" style="height=100%;width=100%;"> 
+                <textarea id="dhShareDescriptionTextArea" name="dhShareDescriptionTextArea"></textarea>
+                </td><td></td>
+                <tr>
+                <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_bl.gif" class="dhShareBottomCornerImg"/></td>
+                <td><div>&nbsp;</div></td>
+                <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_br.gif" class="dhShareBottomCornerImg"/></td>
+                </tr>
+            </table>
+            </td>
+            <td></td>
+            </tr>
+            <tr>
+            <td valign="bottom"><img src="/images/${buildStamp}/blue_bl.gif" class="dhShareBottomCornerImg"/></td>
+            <td valign="middle" align="left"><div id="dhShareDescriptionBottomFill"><dht:createGroupDialog/></div></td>
+            <td valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images/${buildStamp}/but_share.gif" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/></div></td>
+            </tr>
+        </table>    
+        <div></div>
 
+        </td> <!-- ends dhShareRight -->
+        </tr>
+    </table> <!-- ends dhShareContainer -->
+
+    <td id="dhShareRightBorder">&nbsp;</td>
+    </tr>
+    <tr>
+    <td valign="bottom" id="dhShareBL"><img src="/images/${buildStamp}/shareLinkBL.png"/></td>
+    <td valign="bottom" id="dhShareBottom">&nbsp;</td>
+    <td valign="bottom" id="dhShareBR"><img src="/images/${buildStamp}/shareLinkBR.png"></td>
+    </tr>
+</table>  
+</div>    
+<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->    
 </body>
 </html>

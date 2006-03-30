@@ -338,7 +338,7 @@ dh.sharelink.init = function() {
 	//dh.sharelink.secretCheckbox = document.getElementById("dhSecretCheckbox");
 
 	// most of the dojo is set up now, so show the widgets
-	dh.util.showId("dhShareForm");
+	dh.util.showId("dhShareContainer");
 	
 	dh.share.recipientCreatedCallback = dh.sharelink.initRecipient;
 	dh.share.recipientsChangedCallback = dh.sharelink.updateActionLinks;

@@ -5,73 +5,265 @@
 @import "sitewide.css";
 
 body {
-	margin:							0;
-	width:							100%;
-	max-width:						100%;
-	padding:						0;
-	color:							#000000;
-	background-color:				#ffffff;
-}
-div.header {
-	width:							100%;
-}
-#dhUrlTitleToShare {
-	font-size:	larger;
-	color:		blue;	
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+  background: White;
 }
 
-#dhShareForm {
-	margin: 						1em;	
-}
-#dhShareForm table.url {
-	width:							100%;		
+img {
+  border: none;
 }
 
-#dhRecipientListArea {
-	width:							100%;
-	/* designed to avoid resize on adding first recipient */
-	min-height:						7em;
-	/* we have to float so we expand to hold the floated 
-	 * recipients
-	 */
-	float:							left;
-	
-	/* we have to be positioned so sub-elements can be positioned relative to us
-	 */
-	position:						relative;
+table, tr, td {
+  padding: 0;
+  margin: 0;
 }
 
-/* list of people who will receive the link */
+#dhShareOuterDiv {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareOuter {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareTop {
+  padding: 0px 4px;
+  background: url("/images/shareLinkXBorder.png") top left repeat-x;
+}
+
+#dhShareLeftBorder {
+  height: 100%;
+  background-image: url("/images/shareLinkYBorder.png");
+  background-position: left;
+  background-repeat: repeat-y;
+}
+
+#dhShareRightBorder {
+  height: 100%;
+  background-image: url("/images/shareLinkYBorder.png");
+  background-position: right;
+  background-repeat: repeat-y;
+}
+
+#dhShareBottom {
+  background: url("/images/shareLinkXBorder.png") bottom right repeat-x;
+}
+
+#dhShareTL {
+  vertical-align: top;
+}
+
+#dhShareTR {
+  vertical-align: top;
+}
+
+#dhShareBL {
+  vertical-align: bottom;
+}
+
+#dhShareBR {
+  vertical-align: bottom;
+}
+
+#dhShareMain {
+  height: 100%;
+  width: 100%;
+  /* border: 1px solid red; */
+}
+
+#dhShareContainer {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareLeft {
+  /* border: 1px solid green; */
+  vertical-align: top;
+}
+
+#dhShareLeftContainer {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareTitle {
+  font-family: "Arial";
+  font-weight: bold;
+}
+
+#dhShareSendTo {
+  font-family: "Arial";
+  font-weight: bold;
+  color: #666666;
+}
+
+#dhShareRecipientsContainer {
+  height: 24px;
+  vertical-align: bottom;
+}
+
+.dhShareTopCornerImg {
+  vertical-align: top;
+  width: 5px;
+  height: 5px;
+}
+
+.dhShareBottomCornerImg {
+  vertical-align: bottom;
+  width: 5px;
+  height: 5px;
+}
+
+#dhShareRecipientComboBox {
+  border: none;
+  height: 24px;
+  background: #b9dcff;
+  padding: 0px;
+  margin: 0px 2px;
+}
+
+#dhShareDownArrow {
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  background: #b9dcff;
+  margin: 0px 2px;
+  padding-left: 2px;
+  padding-right: 2px;  
+}
+
+#dhShareAddButton {
+  margin: 0px 2px;
+}
+
+#dhShareRecipientsBox {
+  background: #2062a4;
+  min-height: 90px;
+}
+
+#dhShareRecipientsBoxTop {
+  background: url("/images/darkblue_tr.gif") no-repeat top right;
+}
+
+#dhShareRecipientsBoxBottom {
+  background: url("/images/darkblue_br.gif") no-repeat bottom right;
+}
+
 #dhRecipientList {
-	width: 							100%;
-	margin:							.5em;
-	/* we have to float so we expand to hold the floated 
-	 * recipients
-	 */
-	float:							left;
+  margin: 5px;
+  overflow: auto;
 }
 
-/* Don't set this style by id or it will bind too tightly and the 
- * .dhCouldBeInGroup style below can't override it.
- */
-.dhRecipient {
-	float:						left;
-	margin:						0.5em;
-	width:						150px;
+.dhShareRecipientPerson {
+  margin: 5px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 55px;
+  max-width: 55px;
 }
 
-.dhRecipient td {
-	text-align:					center;
+.dhShareRecipientPersonPhoto {
+  border: 2px solid White;
+  width: 48px;
+  height: 48px;
 }
 
+.dhShareRecipientPersonName {
+  color: White;
+  font-size: smaller;
+  width: 55px;
+  text-overflow: ellipsis;
+  height: 1.5em;
+}
+
+#dhShareRight {
+  /* border: 1px solid blue; */
+  vertical-align: top;
+  height: 100%;
+}
+
+#dhShareRightOuterContainer {
+  margin-top: 2px;
+  background: #2062a4;  
+  height: 100%;
+}
+
+.dhShareRightElt {
+  background: #2062a4;
+}
+
+#dhShareDescriptionLabel {
+  font-family: "Arial";
+  font-weight: bold;
+  color: White;
+}
+
+#dhShareDescriptionInnerBox {
+  margin: 2px 5px;
+  background: White;
+  height: 150px;
+}
+
+#dhShareDescriptionInnerBoxTop {
+  height: 1px;
+  background: url("/images/whiteinner_tr.gif") no-repeat top right;
+}
+
+#dhShareDescriptionInnerBoxBottom {
+  height: 1px;
+  width: 1px;
+  background: url("/images/whiteinner_br.gif") no-repeat bottom right;
+}
+
+#dhShareDescriptionArea {
+  height: 100%;
+  width: 100%;
+}
+
+#dhShareDescriptionContainer {
+  height: 100%;
+  width: 100%;
+  background: White;
+}
+
+#dhShareDescriptionTextArea {
+  background: White;
+  display: block;
+  border: none;
+  height: 100%;
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+#dhShareDescriptionBottomFill {
+    text-align: left;
+    height: 35px;
+}
+
+#dhShareShareButton {
+  position: absolute;
+  bottom: 1px;
+  right: 0px;
+  height: 27px;
+  width: 88px;  
+}
+
+/* A link that's basically a button (does something on click) */
+.dhActionLink, .dhActionLink * {
+	font-size: smaller;
+	text-decoration: underline;
+	color: White;
+}
 
 /* The highlight when a recipient would be put in a group */
 .dhCouldBeInGroup {
 	background-color:			#0f0;
-}
-
-#dhCreateGroupLink {
-	float:						right;
 }
 
 #dhCreateGroupPopup {
@@ -116,25 +308,9 @@ td.dhRecipientName {
 	font-size:					7pt;
 	font-style:					italic;
 }
-.dhButton.share {
-	float:						right;
-}
-
-#dhShareDescription {
-	min-height:					2em;
-	width:						100%;
-}
 
 #dhInvitationsRemainingMessage {
 	float:						right;
-}
-
-div.dhFlickrPhotoStatus {
-	text-align: center;
-}
-
-div.dhFlickrPhotoUploadMeta {
-	text-align: center;
 }
 
 /* ------------ IMPORT FROM SITEWIDE -------------- */

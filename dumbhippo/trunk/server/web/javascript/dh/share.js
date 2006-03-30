@@ -83,31 +83,35 @@ dh.share.mergeObjectsDocument = function(doc) {
 }
 
 dh.share.findIdNode = function(id) {
-	var list = document.getElementById("dhRecipientList");
+	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
-		var childId = child.getAttribute("dhId");
-		if (childId && id == childId) {
-			return child;
+		for (subchild in child.childNodes) {
+			var childId = subchild.getAttribute("dhId");
+			if (childId && id == childId) {
+				return subchild;
+			}
 		}
 	}
 	return null;
 }
 
 dh.share.forEachPossibleGroupMember = function(func) {
-	var list = document.getElementById("dhRecipientList");
+	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
 			
-		var id = child.getAttribute("dhId");
-		var obj = dh.share.allKnownIds[id];
-
-		if (obj.isPerson())
-			func(child);
+		for (subchild in child.childNodes) {			
+			var id = subchild.getAttribute("dhId");
+			var obj = dh.share.allKnownIds[id];
+	
+			if (obj.isPerson())
+				func(subchild);
+		}
 	}
 	return null;
 }
@@ -120,12 +124,13 @@ dh.share.removeRecipient = function(recipientId, node) {
 	var objIndex = dh.share.findGuid(dh.share.selectedRecipients, recipientId);
 	dh.share.selectedRecipients.splice(objIndex, 1);
 	
+	var tr = node.parentNode	
 	if (dh.util.disableOpacityEffects) {
-		node.parentNode.removeChild(node);
+	    tr.parentNode.removeChild(tr)
 	} else {
 		// remove the HTML representing this recipient
 		var anim = dojo.fx.html.fadeOut(node, 800, function(node, anim) {
-			node.parentNode.removeChild(node);
+			tr.parentNode.removeChild(tr)
 		});
 	}
 	
@@ -230,18 +235,18 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		
 		var idNode = document.createElement("table");
 		idNode.setAttribute("dhId", obj.id);
-		dojo.html.addClass(idNode, "dhRecipient");
-		dojo.html.addClass(idNode, "dhItemBox");
+		idNode.setAttribute("width", "55px")
+		dojo.html.addClass(idNode, "dhShareRecipientPerson");
 		if (dh.share.recipientCreatedCallback)
 			dh.share.recipientCreatedCallback(obj, idNode);
 		
-		// don't think tbody is used anymore?
+		// tbody is required in DOM, even if you can omit it in HTML
+		// if you do omit it all sorts of bizarre stuff happens
 		var tbody = document.createElement("tbody");
 		idNode.appendChild(tbody);
 		var tr1 = document.createElement("tr");
 		tbody.appendChild(tr1);
 		var td = document.createElement("td");
-		dojo.html.addClass(td, "dhHeadShot");
 		tr1.appendChild(td);
 		
 		var imgSrc;
@@ -254,33 +259,42 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		} else {
 			imgSrc = dhGroupshotsRoot + obj.id;
 		}
+		td.setAttribute("valign", "top")
+		td.setAttribute("align", "right")
+		var div = document.createElement("div")		
+		div.style.background = "url(" + imgSrc + ")";		
+		td.appendChild(div)
+		dojo.html.addClass(div, "dhShareRecipientPersonPhoto");				
 		
+		/*
 		var img = dh.util.createPngElement(imgSrc, 48, 48);
+		dojo.html.addClass(img, "dhShareRecipientPersonPhoto");		
 		td.appendChild(img);
+		*/
 		
-		var td = document.createElement("td");
-		dojo.html.addClass(td, "dhRemoveRecipient");
-		tr1.appendChild(td);
-		var removeLink = document.createElement("a");
-		removeLink.appendChild(document.createTextNode("[X]"));
-		removeLink.setAttribute("href", "javascript:void(0);");
-		dojo.html.addClass(removeLink, "dhRemoveRecipient");
-		removeLink.setAttribute("rowSpan", "2");
-		dojo.event.connect(removeLink, "onclick", dj_global, "dhRemoveRecipientClicked");
-		td.appendChild(removeLink);
+		var removeImg = document.createElement("img")
+		removeImg.setAttribute("src", "/images/xblue.gif")
+		removeImg.setAttribute("width", "13")
+		removeImg.setAttribute("height", "13")
+		dojo.event.connect(removeImg, "onclick", dj_global, "dhRemoveRecipientClicked");		
+		div.appendChild(removeImg)
 		
 		var tr2  = document.createElement("tr");
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
-		dojo.html.addClass(td, "dhRecipientName");
-		td.setAttribute("colSpan","2");
+		
+		var div = document.createElement("div")
+		td.appendChild(div)
+		dojo.html.addClass(div, "dhShareRecipientPersonName");
+		td.setAttribute("colSpan","2");	
 		tr2.appendChild(td);
-		td.appendChild(document.createTextNode(obj.displayName));
+		div.appendChild(document.createTextNode(obj.displayName));
 
 		var tr3  = document.createElement("tr");
 		tbody.appendChild(tr3);
 		var td = document.createElement("td");
 		dojo.html.addClass(td, "dhRecipientNote");
+		td.setAttribute("width", "55px");		
 		td.setAttribute("colSpan","2");
 		tr3.appendChild(td);
 		if (obj.isGroup()) {
@@ -293,8 +307,10 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		if (!dh.util.disableOpacityEffects)
 			dojo.html.setOpacity(idNode, 0);
 		
-		var recipientsListNode = document.getElementById("dhRecipientList");
-		recipientsListNode.appendChild(idNode);
+		var recipientsListNode = document.getElementById("dhRecipientListTableRow");
+		var td = document.createElement("td")
+		td.appendChild(idNode)
+		recipientsListNode.appendChild(td);
 	
 		if (!dh.util.disableOpacityEffects)	
 			var anim = dojo.fx.html.fadeIn(idNode, 800);
@@ -554,12 +570,12 @@ dh.share.checkAndSubmit = function(doSubmit) {
 dh.share.init = function() {
 	dojo.debug("dh.share.init");
 			
-	dh.share.recipientComboBox = document.getElementById('dhRecipientComboBox');
-	dh.share.recipientComboBoxButton = document.getElementById('dhRecipientComboBoxButton');
+	dh.share.recipientComboBox = document.getElementById('dhShareRecipientComboBox');
+	dh.share.recipientComboBoxButton = document.getElementById('dhShareRecipientComboBoxButton');
 	dh.share.autoSuggest = new dh.autosuggest.AutoSuggest(dh.share.recipientComboBox, dh.share.recipientComboBoxButton);
 	dh.share.autoSuggest.setOnSelectedFunc(dh.share.recipientSelected);
 	dh.share.autoSuggest.setGetEligibleFunc(dh.share.getEligibleRecipients);
-	
+
 	// rich text areas can't exist when display:none, so we have to create it after showing
-	dh.share.descriptionRichText = document.getElementById("dhShareDescription");
+	dh.share.descriptionRichText = document.getElementById("dhShareDescriptionTextArea");
 }
