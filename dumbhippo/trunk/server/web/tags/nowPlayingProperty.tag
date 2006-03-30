@@ -10,6 +10,6 @@
 <c:set var="nodeId" value="dh_${property}" scope="page"/>
 
 <div>
-	<c:out value="${label}"/>: <input type="text" id="${nodeId}"
+	<span style="font-size: smaller;"><c:out value="${label}"/>:</span> <input type="text" id="${nodeId}"
 		onchange="dh.nowplaying.applyValue('${themeId}', '${nodeId}', '${property}');" value="${currentValue}"/>
 </div>

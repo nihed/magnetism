@@ -21,6 +21,7 @@ public class NowPlayingTag extends SimpleTagSupport {
 	private boolean escapeXml;
 	private String forceMode;
 	private boolean hasLabel;
+	private boolean embedOnly;
 	
 	public NowPlayingTag() {
 		hasLabel = true;
@@ -58,6 +59,10 @@ public class NowPlayingTag extends SimpleTagSupport {
 	
 	public void setHasLabel(boolean hasLabel) {
 		this.hasLabel = hasLabel;
+	}
+	
+	public void setEmbedOnly(boolean embedOnly) {
+		this.embedOnly = embedOnly;
 	}
 	
 	static private String getSrc(String userId, String themeId, String forceMode) {
@@ -125,7 +130,11 @@ public class NowPlayingTag extends SimpleTagSupport {
 			throw new RuntimeException("no user provided to NowPlayingTag");
 		
 		JspWriter writer = getJspContext().getOut();
-		String output = getNowPlayingObjectHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
+		String output;
+		if (embedOnly)
+			output = getNowPlayingEmbedHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
+		else
+			output = getNowPlayingObjectHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
 		if (escapeXml)
 			output = XmlBuilder.escape(output);
 		writer.print(output);

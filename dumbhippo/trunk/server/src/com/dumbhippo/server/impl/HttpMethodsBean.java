@@ -549,6 +549,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			if (key.equals(b))
 				throw new RuntimeException("property " + b + " can't be changed");
 		}
+		
+		if (!viewpoint.isOfUser(theme.getCreator())) {
+			throw new RuntimeException("can only modify your own themes");
+		}
+		
 		BeanUtils.setValue(theme, key, value);
 	}
 	

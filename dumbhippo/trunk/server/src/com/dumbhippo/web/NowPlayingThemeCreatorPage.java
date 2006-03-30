@@ -22,9 +22,9 @@ public class NowPlayingThemeCreatorPage extends AbstractSigninPage {
 		try {
 			theme = musicSystem.lookupNowPlayingTheme(id);
 		} catch (ParseException e) {
-			throw new RuntimeException(e);
+			theme = null;
 		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
+			theme = null;
 		}
 	}
 	

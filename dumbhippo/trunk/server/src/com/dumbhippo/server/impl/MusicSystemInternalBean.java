@@ -1336,7 +1336,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			theme = null;
 		}
 		
-		// try to pick a default FIXME put it in the config or something
+		// try to pick a default FIXME put it in the config or something, not just "oldest theme"
 		if (theme == null) {
 			Query q = em.createQuery("FROM NowPlayingTheme WHERE draft=0 ORDER BY creationDate ASC");
 			q.setMaxResults(1);
@@ -1417,7 +1417,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		if (viewingSelf) {
 			// this query will include our draft themes
-			Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator");
+			Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator ORDER BY creationDate DESC");
 			q.setParameter("creator", user);
 			List<?> myThemes = q.getResultList();
 			List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
@@ -1464,6 +1464,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				sb.append(draftClause);
 			}
 			
+			sb.append(" ORDER BY creationDate DESC");
+			
 			Query q = em.createQuery(sb.toString());
 			if (viewpoint instanceof UserViewpoint) {			
 				q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
@@ -1485,7 +1487,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		 * FIXME should be random in some way
 		 */
 		
-		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0");
+		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0 ");
 		
 		if (!alreadyUsed.isEmpty()) {
 			sb.append(" AND t.id NOT IN (");
@@ -1500,6 +1502,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 			sb.append(")");
 		}
+		sb.append(" ORDER BY creationDate DESC");
 		
 		Query q = em.createQuery(sb.toString());
 		q.setMaxResults(5);
@@ -1514,7 +1517,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				throw new RuntimeException("we asked for themes we didn't already have, but got some we did");
 			}
 		}
-		bundle.setRandomThemes(randomThemesFiltered);		
+		bundle.setRandomThemes(randomThemesFiltered);
 		
 		return bundle;
 	}

@@ -5,6 +5,7 @@
 
 <%@ attribute name="theme" required="true" type="com.dumbhippo.persistence.NowPlayingTheme"%>
 <%@ attribute name="signin" required="true" type="com.dumbhippo.web.SigninBean"%>
+<%@ attribute name="alreadyCurrent" required="false" type="java.lang.Boolean"%>
 
 <div>
 	<c:if test="${theme.draft}">
@@ -12,7 +13,9 @@
 	</c:if>
 	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
 	<c:if test="${!empty theme.basedOn}">
-		based on '<c:out value="${theme.basedOn.name}"/>' by <c:out value="${theme.basedOn.creator.nickname}"/>
+		based on
+		<a href="/nowplaying-theme?theme=${theme.basedOn.id}">'<c:out value="${theme.basedOn.name}"/>'
+		by <c:out value="${theme.basedOn.creator.nickname}"/></a>
 	</c:if>
 	<br/>
 	<dh:nowPlaying userId="${signin.userId}" themeId="${theme.id}" hasLabel="false"/>
@@ -21,7 +24,7 @@
 		<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>
 	</c:if>
 	<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
-	<c:if test="${!theme.draft}">
-		<a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Use As Current Theme</a>
+	<c:if test="${!theme.draft && !alreadyCurrent}">
+		<a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
 	</c:if>
 </div>

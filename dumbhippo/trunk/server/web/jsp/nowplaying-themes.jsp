@@ -21,7 +21,7 @@
 			<dht:largeTitle>Your Current Theme</dht:largeTitle>
 			
 			<div>
-				<dht:nowPlayingTheme theme="${nowplaying.currentTheme}" signin="${nowplaying.signin}"/>
+				<dht:nowPlayingTheme theme="${nowplaying.currentTheme}" signin="${nowplaying.signin}" alreadyCurrent="true"/>
 			</div>
 		</c:if>
 	
@@ -46,7 +46,7 @@
 		</c:if>
 		
 		<c:if test="${nowplaying.randomThemes.size > 0}">
-			<dht:largeTitle>Some Random Picks</dht:largeTitle>
+			<dht:largeTitle>Recent Themes</dht:largeTitle>
 			
 			<div>
 				<c:forEach items="${nowplaying.randomThemes.list}" var="theme" varStatus="status">
@@ -55,6 +55,7 @@
 			</div>
 		</c:if>
 		
+		&nbsp;
 		<div>
 			Or, <a href="javascript:dh.nowplaying.createNewTheme(null);">create a new theme from scratch</a>
 		</div>

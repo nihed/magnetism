@@ -5,7 +5,7 @@ dojo.require("dh.server");
 
 dh.nowplaying.createNewTheme = function(basedOn) {
 	dh.server.getTextPOST("createnewnowplayingtheme",
-				     { "basedOn" : basedOn },
+				     basedOn ? { "basedOn" : basedOn } : {},
 		  	    	 function(type, data, http) {	  
 		  	    	 	 document.location.href = "/nowplaying-theme-creator?theme=" + data;
 		  	    	 },
@@ -45,11 +45,14 @@ dh.nowplaying.reloadAllEmbeds = function(themeId) {
 	}
 }
 
-dh.nowplaying.modify = function(themeId, key, value) {
+dh.nowplaying.modify = function(themeId, key, value, newPage) {
 	dh.server.doPOST("modifynowplayingtheme",
 				     { "theme" : themeId, "key" : key, "value" : value },
-		  	    	 function(type, data, http) {	  
-						dh.nowplaying.reloadAllEmbeds(themeId);
+		  	    	 function(type, data, http) {
+		  	    	 	if (newPage)
+		  	    	 		document.location.href = newPage;
+		  	    	 	else
+							dh.nowplaying.reloadAllEmbeds(themeId);
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't change the theme");

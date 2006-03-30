@@ -5,7 +5,6 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
@@ -35,15 +34,19 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 	private int titleTextX;
 	private int titleTextY;
 	private String titleTextColor;
+	private int titleTextFontSize;
 	private int artistTextX;
 	private int artistTextY;
-	private String artistTextColor; 
+	private String artistTextColor;
+	private int artistTextFontSize;
 	private int albumTextX;
 	private int albumTextY;
 	private String albumTextColor;
+	private int albumTextFontSize;
 	private int statusTextX;
 	private int statusTextY;
 	private String statusTextColor;
+	private int statusTextFontSize;
 	private boolean draft;
 	
 	static public String toFilename(String mode, String shaSum) {
@@ -93,6 +96,19 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			this.artistTextColor = BLUE;
 			this.albumTextColor = BLUE;
 			this.statusTextColor = BLUE;
+			
+			// some arbitrary defaults just so we get a sane starting point
+			this.albumArtX = 102;
+			this.albumArtY = 36;
+			this.statusTextX = 0;
+			this.statusTextY = 102;
+			this.statusTextFontSize = 12;
+			this.artistTextX = 178;
+			this.artistTextY = 63;
+			this.artistTextFontSize = 14;
+			this.titleTextX = 176;
+			this.titleTextY = 41;
+			this.titleTextFontSize = 20;
 		}
 	}
 	
@@ -206,7 +222,7 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 	}
 
 	@Column(nullable=true)
-	@OneToOne
+	@ManyToOne
 	public NowPlayingTheme getBasedOn() {
 		return basedOn;
 	}
@@ -326,5 +342,41 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 
 	public void setStatusTextY(int statusTextY) {
 		this.statusTextY = statusTextY;
+	}
+
+	@Column(nullable=false)
+	public int getAlbumTextFontSize() {
+		return albumTextFontSize;
+	}
+
+	public void setAlbumTextFontSize(int albumTextFontSize) {
+		this.albumTextFontSize = albumTextFontSize;
+	}
+
+	@Column(nullable=false)
+	public int getArtistTextFontSize() {
+		return artistTextFontSize;
+	}
+
+	public void setArtistTextFontSize(int artistTextFontSize) {
+		this.artistTextFontSize = artistTextFontSize;
+	}
+
+	@Column(nullable=false)
+	public int getStatusTextFontSize() {
+		return statusTextFontSize;
+	}
+
+	public void setStatusTextFontSize(int statusTextFontSize) {
+		this.statusTextFontSize = statusTextFontSize;
+	}
+
+	@Column(nullable=false)
+	public int getTitleTextFontSize() {
+		return titleTextFontSize;
+	}
+
+	public void setTitleTextFontSize(int titleTextFontSize) {
+		this.titleTextFontSize = titleTextFontSize;
 	}
 }

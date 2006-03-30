@@ -16,34 +16,39 @@
 	
 		<dht:largeTitle>Now Playing</dht:largeTitle>
 		
-		<p>
 		&nbsp;
-		</p>
 		
 		<div>
 			<dh:nowPlaying userId="${nowplaying.signin.userId}"/>
 		</div>
 		
-		<dht:largeTitle>MySpace HTML</dht:largeTitle>
+		<div style="text-align: right;">
+			<a href="/nowplaying-themes">More Themes</a>
+		</div>
+		
+		<dht:largeTitle>HTML</dht:largeTitle>
 		
 		<p>
-		To put the above "now playing" on MySpace, cut-and-paste this HTML:
+		To put the above "now playing" on MySpace or your blog, cut-and-paste this HTML:
 		</p>
 		
 		<div>
 			<!--  don't add whitespace inside the textarea tag -->
-			<textarea readonly="readonly" rows="7" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true"/></textarea>
+			<textarea readonly="readonly" rows="7" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true" embedOnly="true"/></textarea>
 		</div>
 
-		<dht:largeTitle>Alternative HTML</dht:largeTitle>
-		
-		<p>
-		The below HTML may improve browser compatibility, but won't work on MySpace.
-		</p>
-		
 		<div>
-			<!--  don't add whitespace inside the textarea tag -->
-			<textarea readonly="readonly" rows="17" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true"/></textarea>
+			You can change your theme without changing the HTML, just
+			<a href="/nowplaying-themes">pick a different theme</a> at any 
+			time and it will immediately go live on any site where you're using the 
+			"now playing" embed.
+		</div>
+
+		&nbsp;
+
+		<div>
+			If you're an HTML geek and you want to see other ways to do the embed, 
+			<a href="/nowplaying-html">here are some technical details</a>.
 		</div>
 		
 	</dht:mainArea>

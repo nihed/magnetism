@@ -74,6 +74,13 @@ var parseTheme = function(themeNode:XMLNode) {
 	theme.titleHeight = 30;
 	theme.titleFontSize = 20;
 	theme.titleColor = 0x0000FF;
+	// offscreen by default
+	theme.albumX = 461;
+	theme.albumY = 141;
+	theme.albumWidth = 245;
+	theme.albumHeight = 30;
+	theme.albumFontSize = 20;
+	theme.albumColor = 0x0000FF;
 	
 	for (var i = 0; i < themeNode.childNodes.length; ++i) {
 		var node:XMLNode = themeNode.childNodes[i];
