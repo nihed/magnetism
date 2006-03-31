@@ -132,5 +132,13 @@ public class TrackView {
 	public String toString() {
 		return "{trackView artist=" + getArtist() + " album=" + getAlbum() + " name=" + getName() + "}";
 	}
-
+	
+	public boolean isNowPlaying() {
+		// TODO: make nowPlaing a field in the TrackHistory table that is updated
+		// based on when the music actually stopped in addition to using this logic 
+		long now = System.currentTimeMillis();
+		long songEnd = getLastListenTime() + (getDurationSeconds() * 1000);
+		boolean nowPlaying = songEnd + (30*1000) > now;
+		return nowPlaying;
+	}
 }

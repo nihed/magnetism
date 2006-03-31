@@ -335,6 +335,13 @@ public interface MessengerGlueRemote {
 	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername);
 	
 	/**
+	 * Get current music info for a given user.
+	 * @param username the username for the user 
+	 * @return current music info for a given user
+	 */
+	public Map<String, String> getCurrentMusicInfo(String username);
+	
+	/**
 	 * Return a blob of user prefs. If user doesn't exist it just returns
 	 * empty prefs.
 	 * 

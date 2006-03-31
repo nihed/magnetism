@@ -155,11 +155,11 @@ dh.chat.UserList = function(insertCallback, removeCallback, updateMusicCallback)
 		}
 	}
 	
-	this.userMusicChange = function(userId, arrangementName, artist) {
+	this.userMusicChange = function(userId, arrangementName, artist, musicPlaying) {
 		for (var i = 0; i < this._users.length; i++) {
 			if (this._users[i].userId == userId) {
 				var melomaniac = this._users[i]
-				this._updateMusicCallback(melomaniac, arrangementName, artist)
+				this._updateMusicCallback(melomaniac, arrangementName, artist, musicPlaying)
 			}
 		}	
 	 }

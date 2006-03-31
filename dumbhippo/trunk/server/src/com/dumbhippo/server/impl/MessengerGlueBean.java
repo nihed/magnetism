@@ -33,12 +33,14 @@ import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
@@ -58,6 +60,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private MySpaceTracker mySpaceTracker;
+	
+	@EJB
+	private MusicSystem musicSystem;
 		
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
@@ -316,6 +321,26 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 		
 		return new ChatRoomInfo(roomName, post.getTitle(), allowedUsers, history);
+	}
+	
+	public Map<String, String> getCurrentMusicInfo(String username) {
+		Map<String,String> musicInfo = new HashMap<String,String>();
+		
+		// would through an exception if the user does not exist
+		User user = getUserFromUsername(username);
+		try {
+			// because we are asking only for one recent track, we do not need to
+			// pass a viewpoint
+		    TrackView trackView = musicSystem.getCurrentTrackView(null, user);
+		    musicInfo.put("name", trackView.getName());
+		    musicInfo.put("artist", trackView.getArtist());
+		    musicInfo.put("musicPlaying", Boolean.toString(trackView.isNowPlaying()));
+		} catch (NotFoundException e) {
+			// user does not have a music history
+			return null;
+		}
+		
+		return musicInfo;
 	}
 
 	public Map<String,String> getPrefs(String username) {

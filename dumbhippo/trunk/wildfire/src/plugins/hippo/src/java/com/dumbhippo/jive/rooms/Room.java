@@ -36,14 +36,21 @@ public class Room {
 	private static class UserInfo {
 		private String username;
 		private String name;
+		private String arrangementName;
+		private String artist;
+		private boolean musicPlaying;
 		private int version;
 		private int participantCount;
 		private int presentCount;
+		
 		
 		public UserInfo(String username, int version, String name) {
 			this.username = username;
 			this.version = version;
 			this.name = name;
+			this.arrangementName = "";
+			this.artist = "";
+			this.musicPlaying = false;
 		}
 		
 		public String getUsername() {
@@ -72,6 +79,39 @@ public class Room {
 		
 		public void setPresentCount(int presentCount) {
 			this.presentCount = presentCount; 
+		}
+		
+		public String getArrangementName() {
+			return arrangementName;
+		}
+		
+		public void setArrangementName(String arrangementName) {
+			if (arrangementName == null) {
+				this.arrangementName = "";
+			} else {
+			    this.arrangementName = arrangementName;
+
+			}
+		}
+		
+		public String getArtist() {
+			return artist;
+		}
+		
+		public void setArtist(String artist) {
+			if (artist == null) {
+				this.artist = "";
+			} else {
+			    this.artist = artist;
+			}
+		}
+		
+		public boolean isMusicPlaying() {
+			return musicPlaying;
+		}
+		
+		public void setMusicPlaying(boolean musicPlaying) {
+			    this.musicPlaying = musicPlaying;
 		}
 		
 		public RoomUserStatus getStatus() {
@@ -175,6 +215,23 @@ public class Room {
 		return new Room(handler, info);
 	}
 	
+	public static Map<String, String> getCurrentMusicFromServer(String username) {
+		Log.debug("Querying server for current music for " + username);
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		
+		Map<String, String> musicInfo = glue.getCurrentMusicInfo(username);
+		
+		if (musicInfo == null) {
+			Log.debug("  user has no music info");
+			return null;
+		}
+
+		Log.debug("  got response from server with the music info");
+		
+		return musicInfo;
+		
+	}
+	
 	private void sendPresenceAvailable(JID to, UserInfo userInfo) {
 		Presence presence = new Presence((Presence.Type)null);
 		presence.setTo(to);
@@ -190,7 +247,9 @@ public class Room {
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("role", userInfo.getStatus() == RoomUserStatus.PARTICIPANT ? "participant" : "visitor");
-		
+		info.addAttribute("arrangementName", userInfo.getArrangementName());
+		info.addAttribute("artist", userInfo.getArtist()); 
+		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
 		XMPPServer.getInstance().getPacketRouter().route(presence);
 	}
 	
@@ -219,7 +278,7 @@ public class Room {
 			throw new RuntimeException("User " + username + " isn't in allowedUsers");
 		}
 		
-		// Look for our userInfo tag which will distinguish whethr the
+		// Look for our userInfo tag which will distinguish whether the
 		// user wants to join as a 'visitor' or a 'participant'
 		boolean participant = true;
 		Element xElement = packet.getChildElement("x", "http://jabber.org/protocol/muc");
@@ -251,6 +310,16 @@ public class Room {
 		}
 
 		if (participant && !resourceWasParticipant) {
+			// we only care about the current music selection when a resource becomes
+			// a participant, so get the current music in this case
+			Map<String, String> properties = getCurrentMusicFromServer(username);
+            if (properties != null) {
+			    userInfo.setArrangementName(properties.get("name"));
+			    userInfo.setArtist(properties.get("artist"));
+			    if (properties.get("musicPlaying") != null) {
+			        userInfo.setMusicPlaying(properties.get("musicPlaying").equals("true"));
+			    }
+            }
 			userInfo.setParticipantCount(userInfo.getParticipantCount() + 1);
 			if (userInfo.getParticipantCount() == 1) {
 				participantResources.put(jid, userInfo);
@@ -395,9 +464,25 @@ public class Room {
 
 	/*
 	 * @param iq an Element containing all the information about a new track
+	 * @param propeties a map containing all the information about a new track
 	 * @param username username of a person whose music has changed
 	 */
-	public void processMusicChange(Element iq, String username) {
+	public void processMusicChange(Element iq, Map<String,String> properties, String username) {
+		// update UserInfo for username
+		UserInfo userInfo = presentUsers.get(username);
+		if (userInfo == null)
+			throw new RuntimeException("User " + username + " isn't in presentUsers");
+        // if name and artist are not set in the element, it means that we got a message
+        // about the music having stopped, preserve the information about the last played 
+        // arrangement and set the nowPlaying flag to false  
+		if ((properties.get("name") == null) && (properties.get("artist") == null)) {
+			userInfo.setMusicPlaying(false);
+		} else {
+		    userInfo.setArrangementName(properties.get("name"));
+		    userInfo.setArtist(properties.get("artist"));
+			userInfo.setMusicPlaying(true);		    
+		}
+		
 		IQ outgoing = makeMusicChangeMessage(iq, username);
 		for (JID member : presentResources.keySet()) {
 			sendPacket(outgoing, member);
@@ -436,10 +521,21 @@ public class Room {
 		return allowedUsers.containsKey(username);
 	}
 
+	/**
+	 * Returns the count of the present users.
+	 * 
+	 * @return the count of the present users
+	 */
 	public int getPresenceCount() {
 		return presentUsers.size(); 
 	}
 	
+	/**
+	 * Check if the user is present in this room.
+	 * 
+	 * @param username
+	 * @return true if the user is present in this room
+	 */
 	public boolean userPresent(String username) {
 	    return presentUsers.containsKey(username);	
 	}

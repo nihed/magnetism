@@ -14,7 +14,7 @@ dh.chatwindow._messageList = new dh.chat.MessageList(
 dh.chatwindow._userList = new dh.chat.UserList(
 	function(user, before) { dh.chatwindow._addUser(user, before) },
 	function(user) { dh.chatwindow._removeUser(user) },
-	function(user, arrangementName, artist) { dh.chatwindow._updateUserMusic(user, arrangementName, artist) })
+	function(user, arrangementName, artist, musicPlaying) { dh.chatwindow._updateUserMusic(user, arrangementName, artist, musicPlaying) })
     
 dh.chatwindow._createHeadShot = function(userId, version) {
     var url = "/files/headshots/" + dh.chatwindow._photoWidth + "/" + userId + "?v=" + version
@@ -47,11 +47,8 @@ dh.chatwindow.onReconnect = function() {
 }
 
 // Update music for a given user
-dh.chatwindow.onUserMusicChange = function(userId, arrangementName, artist) {
-    // var messageInput = document.getElementById("dhChatMessageInput")
-    // messageInput.appendChild(document.createTextNode("hei!! " + arrangementName))
-    // messageInput.appendChild(document.createTextNode("hei!! " + userId))
-	this._userList.userMusicChange(userId, arrangementName, artist)
+dh.chatwindow.onUserMusicChange = function(userId, arrangementName, artist, musicPlaying) {
+	this._userList.userMusicChange(userId, arrangementName, artist, musicPlaying)
 }
 
 
@@ -240,10 +237,20 @@ dh.chatwindow._removeUser = function(user) {
     peopleDiv.removeChild(user.div)
 }
 
-dh.chatwindow._updateUserMusic = function(user, arrangementName, artist) {
+dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPlaying) {
     newUserDiv = user.div
     var oldArrangementNameDiv
     var oldArtistDiv
+    // if musicPlaying flag is false, and arrangementName and artist are not specified, 
+    // it means that the old music selection was stopped
+    var useOldMusicInfo = ((arrangementName == "") && (artist == "") && !musicPlaying)
+    if (!musicPlaying) {
+        newUserDiv.style.backgroundImage = "url(/images/personAreaMusicStopped.jpg)"    
+    } else {
+        newUserDiv.style.backgroundImage = "url(/images/personArea.jpg)"
+    }
+    
+    // find the old arrangementNameDiv and old artistDiv
     for(var i = 0; i < newUserDiv.children.length; i++) {
         var child = newUserDiv.children[i]
         var j = 0
@@ -264,8 +271,26 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist) {
         }
     }
 
+    if (useOldMusicInfo) {
+        if (oldArrangementNameDiv) {    
+            if (oldArrangementNameDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
+                oldArrangementNameDiv.className += " dh-chat-person-music-stopped"
+            }
+        }
+        if (oldArtistDiv) {
+            if (oldArtistDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
+                oldArtistDiv.className += " dh-chat-person-music-stopped"
+            }
+        }        
+        return;
+    } 
+
     var arrangementNameDiv = document.createElement("div")
     arrangementNameDiv.className = "dh-chat-person-arrangement-name"
+    if (!musicPlaying) {
+        arrangementNameDiv.className += " dh-chat-person-music-stopped"
+    }
+    
     if (oldArrangementNameDiv) {
         newUserDiv.replaceChild(arrangementNameDiv, oldArrangementNameDiv)
     } else {
@@ -279,17 +304,21 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist) {
   
     var artistDiv = document.createElement("div")
     artistDiv.className = "dh-chat-person-artist"
+    if (!musicPlaying) {
+        artistDiv.className += " dh-chat-person-music-stopped"
+    }
+    
     if (oldArtistDiv) {
         newUserDiv.replaceChild(artistDiv, oldArtistDiv)
     } else {
         newUserDiv.appendChild(artistDiv)
     }
-  
+
     var artistSpan = document.createElement("span")
     artistSpan.appendChild(document.createTextNode(artist))
     artistSpan.className = "dh-chat-person-artist-inner"
     artistDiv.appendChild(artistSpan)        
-  
+    
     var peopleDiv = document.getElementById("dhChatPeopleDiv")
     peopleDiv.replaceChild(newUserDiv, user.div) 
 }
@@ -333,8 +362,8 @@ dh.chatwindow.resizeElements = function() {
     messagesDiv.style.height = (bottomHeight - (messageInput.offsetHeight + 10)) + "px"
     
     this._messageList.resizeMessages()  
-    // we want to have the old text area width to be available for resizing, so set the
-    // new one only aftre resizing is done
+    // we want to have the old text area width available for resizing, so set the
+    // new one only after resizing is done
     dh.chatwindow.setTextAreaWidth(dh.chatwindow.calculateTextAreaWidth(messagesDiv.offsetWidth))
 
 	messageInput.style.top = (bottomY + messagesDiv.offsetHeight) + "px"

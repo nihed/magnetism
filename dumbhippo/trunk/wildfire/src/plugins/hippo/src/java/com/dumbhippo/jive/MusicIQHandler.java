@@ -122,7 +122,7 @@ public class MusicIQHandler extends AbstractIQHandler {
     			// The new element is detached from its parent, 
     			// and getParent() on the clone will return null, so we can have
     			// it have a new parent!
-            	room.processMusicChange(iq.createCopy(), username);
+            	room.processMusicChange(iq.createCopy(), properties, username);
             }
 		}
 		return reply;

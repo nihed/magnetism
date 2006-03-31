@@ -40,8 +40,8 @@
 	<script for="dhChatControl" language="javascript" event="OnReconnect()">
 		dh.chatwindow.onReconnect()
 	</script>
-	<script for="dhChatControl" type="text/javascript" event="OnUserMusicChange(userId, arrangementName, artist)">
-		dh.chatwindow.onUserMusicChange(userId, arrangementName, artist)
+	<script for="dhChatControl" type="text/javascript" event="OnUserMusicChange(userId, arrangementName, artist, musicPlaying)">
+		dh.chatwindow.onUserMusicChange(userId, arrangementName, artist, musicPlaying)
 	</script>
 	<script type="text/javascript">
 		var chatControl = document.getElementById("dhChatControl")
