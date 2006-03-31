@@ -44,6 +44,7 @@ void
 HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare)
 {
     showShare(urlToShare, titleOfShare, L"url");
+    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 550, 400);
 }
 
 void
