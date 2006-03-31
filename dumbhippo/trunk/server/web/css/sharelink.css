@@ -132,8 +132,7 @@ table, tr, td {
   text-align: center;
   background: #b9dcff;
   margin: 0px 2px;
-  padding-left: 2px;
-  padding-right: 2px;  
+  padding: 0px 2px;
 }
 
 #dhShareAddButton {
@@ -142,7 +141,7 @@ table, tr, td {
 
 #dhShareRecipientsBox {
   background: #2062a4;
-  min-height: 90px;
+  min-height: 120px;
 }
 
 #dhShareRecipientsBoxTop {
@@ -156,6 +155,13 @@ table, tr, td {
 #dhRecipientList {
   margin: 5px;
   overflow: auto;
+  width: 100%;
+}
+
+#dhRecipientListTable {
+}
+
+#dhRecipientListTableRow {
 }
 
 .dhShareRecipientPerson {
@@ -177,6 +183,7 @@ table, tr, td {
   color: White;
   font-size: smaller;
   width: 55px;
+  max-width: 55px;
   text-overflow: ellipsis;
   height: 1.5em;
 }

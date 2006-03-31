@@ -58,11 +58,11 @@
         <td style="width: 2px">&nbsp;</td>
 
         <td id="dhShareRight">
-        <table id="dhShareRightOuterContainer" cellspacing="0" cellpadding="0">
-            <tr>
-            <td valign="top"><img src="/images/${buildStamp}/blue_tl.gif" class="dhShareTopCornerImg"/></td>
+        <table id="dhShareRightOuterContainer" cellspacing="0" cellpadding="0" width="100%">
+            <tr height="5px">
+            <td align="left" valign="top"><img src="/images/${buildStamp}/blue_tl.gif" class="dhShareTopCornerImg"/></td>
             <td>&nbsp;</td>
-            <td valign="top"><img src="/images/${buildStamp}/blue_tr.gif" class="dhShareTopCornerImg"/></td>
+            <td align="right" valign="top"><img src="/images/${buildStamp}/blue_tr.gif" class="dhShareTopCornerImg"/></td>
             </tr>
             <tr>
             <td></td><td><div id="dhShareDescriptionLabel">Description:</div>
@@ -70,17 +70,17 @@
             </tr>
             <tr>
             <td></td><td id="dhShareDescriptionArea">
-            <table id="dhShareDescriptionContainer" cellspacing="0" cellpadding="0">
-                <tr>
+            <table id="dhShareDescriptionContainer" cellspacing="0" cellpadding="0" width="100%">
+                <tr height="5px">
                 <td valign="top"><img src="/images/${buildStamp}/whiteinner_tl.gif" class="dhShareTopCornerImg"/></td>
                 <td>&nbsp;</td>
                 <td valign="top"><img src="/images/${buildStamp}/whiteinner_tr.gif" class="dhShareTopCornerImg"/></td>
                 </tr>
-                <tr>
-                <td style="width: 5px;">&nbsp;</td><td valign="top" style="height=100%;width=100%;"> 
+                <tr height="100%">
+                <td style="width: 5px;">&nbsp;</td><td valign="top" width="100%">  
                 <textarea id="dhShareDescriptionTextArea" name="dhShareDescriptionTextArea"></textarea>
                 </td><td></td>
-                <tr>
+                <tr height="5px">
                 <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_bl.gif" class="dhShareBottomCornerImg"/></td>
                 <td><div>&nbsp;</div></td>
                 <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_br.gif" class="dhShareBottomCornerImg"/></td>
@@ -90,9 +90,9 @@
             <td></td>
             </tr>
             <tr>
-            <td valign="bottom"><img src="/images/${buildStamp}/blue_bl.gif" class="dhShareBottomCornerImg"/></td>
+            <td align="left" valign="bottom"><img src="/images/${buildStamp}/blue_bl.gif" class="dhShareBottomCornerImg"/></td>
             <td valign="middle" align="left"><div id="dhShareDescriptionBottomFill"><dht:createGroupDialog/></div></td>
-            <td valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images/${buildStamp}/but_share.gif" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/></div></td>
+            <td align="right" valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images/${buildStamp}/but_share.gif" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/></div></td>
             </tr>
         </table>    
         <div></div>
