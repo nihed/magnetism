@@ -898,7 +898,10 @@ bool
 HippoIM::getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name,
-                         bool          *participant)
+                         bool          *participant,
+                         BSTR          *arrangementName,
+                         BSTR          *artist,
+                         bool          *musicPlaying)
 {
     LmMessageNode *infoNode = findChildNode(parent, "http://dumbhippo.com/protocol/rooms", "userInfo");
     if (!infoNode) {
@@ -909,6 +912,9 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     const char *versionU = lm_message_node_get_attribute(infoNode, "version");
     const char *nameU = lm_message_node_get_attribute(infoNode, "name");
     const char *roleU = lm_message_node_get_attribute(infoNode, "role");
+    const char *arrangementNameU = lm_message_node_get_attribute(infoNode, "arrangementName");
+    const char *artistU = lm_message_node_get_attribute(infoNode, "artist");
+    const char *musicPlayingU = lm_message_node_get_attribute(infoNode, "musicPlaying");
 
     if (!versionU || !nameU) {
         hippoDebugLogW(L"userInfo node without name and version");
@@ -923,6 +929,18 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     if (!tmpName)
         return false;
     tmpName.CopyTo(name);
+
+    HippoBSTR tmpArrangementName;
+    tmpArrangementName.setUTF8(arrangementNameU);
+    if (tmpArrangementName)
+        tmpArrangementName.CopyTo(arrangementName);
+
+    HippoBSTR tmpArtist;
+    tmpArtist.setUTF8(artistU);
+    if (tmpArtist)
+        tmpArtist.CopyTo(artist);
+
+    *musicPlaying = strcmp(musicPlayingU, "true") == 0;
 
     return true;
 }
@@ -1776,11 +1794,17 @@ HippoIM::onPresence (LmMessageHandler *handler,
         int version;
         HippoBSTR name;
         bool participant;
-        if (!im->getChatUserInfo(xNode, &version, &name, &participant))
+        bool musicPlaying;
+        HippoBSTR artist = NULL;
+        HippoBSTR arrangementName = NULL;
+        if (!im->getChatUserInfo(xNode, &version, &name, &participant, &arrangementName, &artist, &musicPlaying))
             return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
         chatRoom->addUser(userId, version, name, participant);
 
+        if (artist && arrangementName) {
+            chatRoom->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
+        }  
     } else if (subType == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
         chatRoom->removeUser(userId);
     }
@@ -1837,8 +1861,12 @@ HippoIM::onIQ (LmMessageHandler *handler,
         }
     }
 
-    if (artist && arrangementName) {
-        chatRoom->updateMusicForUser(userId, arrangementName, artist);
+    if (artist || arrangementName) {
+        chatRoom->updateMusicForUser(userId, arrangementName, artist, true);
+    } else {
+        // an IQ message with music node, but no artist or arrangementName 
+        // means that the music has stopped
+        chatRoom->musicStoppedForUser(userId);
     }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;

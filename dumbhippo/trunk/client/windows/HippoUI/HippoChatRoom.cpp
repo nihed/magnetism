@@ -182,17 +182,23 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
 }
 
 void 
-HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist)
+HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying)
 {   
      // could have a HippoChatUserMusic class, but let's do without it for now
-     notifyUserMusicChange(userId, arrangementName, artist);
+     notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
+}
+
+void 
+HippoChatRoom::musicStoppedForUser(const BSTR userId)
+{ 
+     notifyUserMusicChange(userId, HippoBSTR(L""), HippoBSTR(L""), false);
 }
 
 void
-HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementName, const BSTR artist)
+HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying)
 {
     for (unsigned long i = 0; i < listeners_.length(); i++)
-        listeners_[i]->onUserMusicChange(this, userId, arrangementName, artist);
+        listeners_[i]->onUserMusicChange(this, userId, arrangementName, artist, musicPlaying);
 
     HippoPtr<IConnectionPoint> point;
     if (FAILED(connectionPointContainer_.FindConnectionPoint(__uuidof(IHippoChatRoomEvents), &point)))
@@ -208,20 +214,21 @@ HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementNa
         HippoQIPtr<IDispatch> dispatch(data.pUnk);
         if (dispatch) {
             DISPPARAMS dispParams;
-            VARIANTARG args[3];
+            VARIANTARG args[4];
 
             // order of these arguments gets reversed, so we need to supply
-            // the artist as the first argument, and the userId as the last one
-            args[0].vt = VT_BSTR;
-            args[0].bstrVal = artist;
+            // the musicPlaying flag as the first argument, and the userId as the last one
+            args[0].vt = VT_BOOL;
+            args[0].boolVal = musicPlaying ? TRUE : FALSE;
             args[1].vt = VT_BSTR;
-            args[1].bstrVal = arrangementName;
+            args[1].bstrVal = artist;
             args[2].vt = VT_BSTR;
-            args[2].bstrVal = userId;
-
+            args[2].bstrVal = arrangementName;
+            args[3].vt = VT_BSTR;
+            args[3].bstrVal = userId;
 
             dispParams.rgvarg = args;
-            dispParams.cArgs = 3;
+            dispParams.cArgs = 4;
             dispParams.cNamedArgs = 0;
             dispParams.rgdispidNamedArgs = NULL;
 

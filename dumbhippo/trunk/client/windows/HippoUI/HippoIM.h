@@ -107,7 +107,10 @@ private:
     bool getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name,
-                         bool          *participant) throw (std::bad_alloc);
+                         bool          *participant,
+                         BSTR          *arrangementName,
+                         BSTR          *artist,
+                         bool          *musicPlaying) throw (std::bad_alloc);
     bool getChatMessageInfo(LmMessageNode *parent,
                             int           *version,
                             BSTR          *name,
