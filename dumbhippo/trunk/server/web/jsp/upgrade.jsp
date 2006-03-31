@@ -11,8 +11,11 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.33:</i>
-		<p>First release to the world!</p>
+		<i>Version 1.1.37:</i>
+		<ul>
+			<li>New chat window</li>
+			<li>New share link dialog</li>
+		</ul>
 		<input type="button" value="Start using the new stuff!" onclick="window.external.application.DoUpgrade(); window.close();"/> 
 		<input type="button" value="No, not right now." onclick="window.close();"/>
 	</dht:smallBoxTopArea>
