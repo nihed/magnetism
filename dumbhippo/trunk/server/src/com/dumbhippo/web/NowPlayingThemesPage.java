@@ -21,7 +21,7 @@ public class NowPlayingThemesPage extends AbstractSigninPage {
 
 	private void checkBundle() {
 		if (!gotBundle) {
-			NowPlayingThemesBundle bundle = musicSystem.getNowPlayingThemesBundle(signin.getViewpoint(), signin.getUser());
+			NowPlayingThemesBundle bundle = musicSystem.getNowPlayingThemesBundle(getSignin().getViewpoint(), getUserSignin().getUser());
 			
 			currentTheme = bundle.getCurrentTheme();
 			myThemes = new ListBean<NowPlayingTheme>(bundle.getMyThemes());

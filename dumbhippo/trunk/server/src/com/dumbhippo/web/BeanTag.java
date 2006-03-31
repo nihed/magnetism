@@ -66,7 +66,7 @@ public class BeanTag extends SimpleTagSupport {
 		SigninBean signin = SigninBean.getForRequest((HttpServletRequest)context.getRequest());
 		
 		if (mustBeSignedIn && !signin.isValid())
-			throw new RuntimeException("Sign-in only page accessed when not signed in");
+			throw new RuntimeException("Sign-in only page " + ((HttpServletRequest)context.getRequest()).getRequestURI() + " accessed when not signed in");
 		
 		return signin;
 	}
@@ -114,7 +114,10 @@ public class BeanTag extends SimpleTagSupport {
 		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {
 			for (Field f : c.getDeclaredFields()) {
 				if (f.isAnnotationPresent(Signin.class)) {
-					if (f.getType().isAssignableFrom(UserSigninBean.class)) {
+					// if the field is UserSigninBean or subclass, then
+					// we require valid signin; if the field is SigninBean or 
+					// superclass, then we allow AnonymousSigninBean also
+					if (UserSigninBean.class.isAssignableFrom(f.getType())) {
 						setField(o, f, getSigninBean(true));
 					} else if (f.getType().isAssignableFrom(SigninBean.class)) {
 						setField(o, f, getSigninBean(false));

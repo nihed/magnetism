@@ -48,7 +48,7 @@
 		}
 	</script>
 	<div id="dhSelfInviteForm${N}">
-		Your email address:
+		<b>Your email address:</b>
 		<input type="text" id="dhSelfInviteAddress${N}"/>
 		<input type="button" value="Invite Myself" onclick="dhSelfInvite${N}()"/>
 		<div>

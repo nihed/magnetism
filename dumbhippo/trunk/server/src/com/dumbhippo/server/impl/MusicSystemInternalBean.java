@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.AmazonAlbumResult;
@@ -1520,6 +1521,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		bundle.setRandomThemes(randomThemesFiltered);
 		
 		return bundle;
+	}
+	
+	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
+		// FIXME pick certain good ones or something
+		// FIXME EJBQL syntax is wrong, but don't have docs handy, will fix with the others
+		Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.draft=0");
+		q.setMaxResults(maxResults); 
+		return TypeUtils.castList(NowPlayingTheme.class, q.getResultList());
 	}
 	
 	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {

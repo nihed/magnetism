@@ -18,6 +18,8 @@ public interface MusicSystem {
 	
 	public NowPlayingThemesBundle getNowPlayingThemesBundle(Viewpoint viewpoint, User user);
 	
+	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults);
+	
 	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn);
 	
 	public NowPlayingTheme lookupNowPlayingTheme(String id) throws ParseException, NotFoundException;

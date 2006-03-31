@@ -62,30 +62,74 @@
 			</c:when>
 			<c:when test="${!viewperson.signin.valid}">
 				<%-- anonymous viewer --%>
+				<c:choose>
+					<c:when test="${viewperson.selfInvitations > 0}">
+						<dht:largeTitle>Create an Account</dht:largeTitle>
+						<div>
+							With a DumbHippo account, we'll put your current song 
+							on the net so you can display it on your MySpace or other web page.
+							You can also browse the music your friends on DumbHippo have been listening
+							to.
+						</div>
+						<div>
+							To create an account, click on the link we send you in email. Then you can 
+							download the DumbHippo software which tracks what you're listening to 
+							in iTunes or Yahoo! Music Engine. You can disable your account 
+							easily at any time, and we promise we don't send out spam.
+							&nbsp;
+							<dht:selfInvite promotion="${viewperson.promotion}" invitesAvailable="${viewperson.selfInvitations}"/>
+						</div>
+						<div>
+							Check out 
+							<a href="http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=59629551&blogID=93563677">our MySpace page</a>
+							and <a href="/privacy">our privacy policy</a>. Please send us questions and feedback!
+						</div>
+						<div>
+						P.S. if you create an account, you can try out some of 
+						our other DumbHippo features as well - for example, a new 
+						way to share cool web sites with your friends.
+					</c:when>
+					<c:otherwise>
+						<dht:largeTitle>CHECK BACK SOON</dht:largeTitle>
+						<div>
+							Sometimes we have invites to DumbHippo available
+							on this page. Right now we're all out. If you leave your 
+							email address, we'll let you know when we have something.
+							<dht:wantsIn/>
+						</div>
+						<div>
+							With a DumbHippo account, we'll put your current song 
+							on the net so you can display it on your MySpace or other web page.
+							You can also browse the music your friends on DumbHippo have been listening
+							to.
+						</div>
+						<div>
+							Also check out 
+							<a href="http://blog.myspace.com/index.cfm?fuseaction=blog.view&friendID=59629551&blogID=93563677">our MySpace page</a>.
+						</div>		
+					</c:otherwise>
+				</c:choose>
+				<c:if test="${viewperson.exampleThemes.size > 0}">
+					&nbsp;
+					<dht:smallTitle>Some Example "Now Playing" Embeds</dht:smallTitle>
+					<div>
+					You can put a display of your current song on your MySpace page, blog, or web site.
+					Choose from these themes, or create your own, once you have a DumbHippo account.
+					</div>
+					<div>
+						<c:forEach items="${viewperson.exampleThemes.list}" var="theme" varStatus="status">
+							&nbsp;
+							<dht:nowPlayingTheme theme="${theme}" signin="${viewperson.signin}" userId="${personId}"/>
+						</c:forEach>
+					</div>
+				</c:if>
 				<c:if test="${!empty viewperson.currentTrack}">
 					<dht:largeTitle><c:out value="${personName}"/> is listening to:</dht:largeTitle>
 					<div>
 						<dht:track track="${viewperson.currentTrack}" linkifySong="false"/>
 					</div>
 				</c:if>
-				<c:choose>
-					<c:when test="${viewperson.selfInvitations > 0}">
-						<dht:largeTitle>LIMITED TIME OFFER</dht:largeTitle>
-						<div>
-							AS SEEN ON TV: Create an account to see more of this person's music and publish your own.
-							<dht:selfInvite promotion="${viewperson.promotion}" invitesAvailable="${viewperson.selfInvitations}"/>
-						</div>
-					</c:when>
-					<c:otherwise>
-						<dht:largeTitle>CHECK BACK SOON</dht:largeTitle>
-						<div>
-							Sometimes we have invites to DumbHippo available 
-							on this page. Right now we're all out. If you leave your 
-							email address, we'll let you know when we have something.
-							<dht:wantsIn/>
-						</div>
-					</c:otherwise>
-				</c:choose>
+				
 				<dht:largeTitle>Popular Songs on DumbHippo</dht:largeTitle>
 	
 				<div>

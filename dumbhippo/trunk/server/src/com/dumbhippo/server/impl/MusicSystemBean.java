@@ -38,6 +38,11 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getNowPlayingThemesBundle(viewpoint, user);
 	}
 	
+	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
+		return internal.getExampleNowPlayingThemes(viewpoint, maxResults);
+	}
+
+	
 	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {
 		return internal.createNewNowPlayingTheme(viewpoint, basedOn);
 	}

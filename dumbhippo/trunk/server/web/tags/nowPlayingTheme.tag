@@ -6,6 +6,12 @@
 <%@ attribute name="theme" required="true" type="com.dumbhippo.persistence.NowPlayingTheme"%>
 <%@ attribute name="signin" required="true" type="com.dumbhippo.web.SigninBean"%>
 <%@ attribute name="alreadyCurrent" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="userId" required="false" type="java.lang.String" %>
+
+<%-- default to our own userId if none given --%>
+<c:if test="${empty userId}">
+	<c:set var="userId" value="${signin.userId}" scope="page"/>
+</c:if>
 
 <div>
 	<c:if test="${theme.draft}">
@@ -18,13 +24,15 @@
 		by <c:out value="${theme.basedOn.creator.nickname}"/></a>
 	</c:if>
 	<br/>
-	<dh:nowPlaying userId="${signin.userId}" themeId="${theme.id}" hasLabel="false"/>
+	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
 	<br/>
-	<c:if test="${theme.draft && (theme.creator eq signin.user)}">
-		<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>
-	</c:if>
-	<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
-	<c:if test="${!theme.draft && !alreadyCurrent}">
-		<a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
+	<c:if test="${signin.valid}">
+		<c:if test="${theme.draft && (theme.creator eq signin.user)}">
+			<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>
+		</c:if>
+		<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
+		<c:if test="${!theme.draft && !alreadyCurrent}">
+			<a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
+		</c:if>
 	</c:if>
 </div>

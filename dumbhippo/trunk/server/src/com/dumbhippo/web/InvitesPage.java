@@ -28,7 +28,7 @@ public class InvitesPage extends AbstractInvitePage {
 		this.invitationToDelete = invitationToDelete;
         if (invitationToDelete != null) { //&& (invitationToDeleteView == null)
         	invitationToDeleteView = 
-		    	invitationSystem.deleteInvitation(signin.getViewpoint(), 
+		    	invitationSystem.deleteInvitation(getUserSignin().getViewpoint(), 
 		    			                          invitationToDelete);        	
 	    } else {
 	    	invitationToDeleteView = null;
@@ -46,7 +46,7 @@ public class InvitesPage extends AbstractInvitePage {
 
 	public void setInvitationToRestore(String invitationToRestore) {
 		this.invitationToRestore = invitationToRestore;
-		invitationSystem.restoreInvitation(signin.getViewpoint(), 
+		invitationSystem.restoreInvitation(getUserSignin().getViewpoint(), 
 				                           invitationToRestore);
 	}
 	

@@ -30,11 +30,11 @@ public class ContactsPage extends AbstractPersonPage {
 	
 	public ListBean<PersonView> getContacts() {
 		if (getViewedPersonId() == null) {
-			setViewedPerson(signin.getUser());
+			setViewedPerson(getUserSignin().getUser());
 		}
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(signin.getViewpoint(), getViewedPerson(), 
+				identitySpider.getContacts(getSignin().getViewpoint(), getViewedPerson(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);
@@ -113,8 +113,8 @@ public class ContactsPage extends AbstractPersonPage {
 	
 	public boolean isSelf() {
 		if (getViewedPersonId() == null) {
-			setViewedPerson(signin.getUser());
-		}    
+			setViewedPerson(getUserSignin().getUser());
+		}
 		return super.isSelf();
 	}
 }

@@ -31,7 +31,7 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 			//logger.debug("Getting outstanding invitations by {}", signin.getUser().getId());
 			outstandingInvitations = 
 				new ListBean<InvitationView>(
-				    invitationSystem.findOutstandingInvitations(signin.getViewpoint(), 
+				    invitationSystem.findOutstandingInvitations(getUserSignin().getViewpoint(), 
 				    		                                    start, 
 				    		                                    maxInvitationsShown+1));
 		}
@@ -41,7 +41,7 @@ public abstract class AbstractInvitePage extends AbstractSigninPage {
 	public int getTotalInvitations() {
 		if (totalInvitations < 0) {
 			totalInvitations = 
-				invitationSystem.countOutstandingInvitations(signin.getViewpoint());
+				invitationSystem.countOutstandingInvitations(getUserSignin().getViewpoint());
 		}
 		return totalInvitations;
 	}

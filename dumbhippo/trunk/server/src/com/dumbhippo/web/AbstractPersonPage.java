@@ -55,10 +55,6 @@ public abstract class AbstractPersonPage extends AbstractSigninPage {
 		return musicSystem;
 	}
  	
-	public SigninBean getSignin() {
-		return signin;
-	}
-
 	public String getViewedPersonId() {
 		return viewedPersonId;
 	}
@@ -107,21 +103,21 @@ public abstract class AbstractPersonPage extends AbstractSigninPage {
 	
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), viewedPerson, PersonViewExtra.ALL_RESOURCES);
+			person = identitySpider.getPersonView(getSignin().getViewpoint(), viewedPerson, PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}
 	
 	public boolean isContact() {
-		if (signin.isValid())
-			return identitySpider.isContact(signin.getViewpoint(), signin.getUser(), viewedPerson);
+		if (getSignin().isValid())
+			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), viewedPerson);
 		else
 			return false;
 	}
 	
 	public boolean isSelf() {
-		if (signin.isValid() && viewedPerson != null) {
-			return signin.getUser().equals(viewedPerson);
+		if (getSignin().isValid() && viewedPerson != null) {
+			return getUserSignin().getUser().equals(viewedPerson);
 		} else {
 			return false;
 		}
@@ -134,7 +130,7 @@ public abstract class AbstractPersonPage extends AbstractSigninPage {
 	// We don't show group's you haven't accepted the invitation for on your public page
 	public ListBean<Group> getGroups() {
 		if (groups == null) {
-			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(signin.getViewpoint(), viewedPerson, MembershipStatus.ACTIVE)));
+			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(getSignin().getViewpoint(), viewedPerson, MembershipStatus.ACTIVE)));
 		}
 		return groups;
 	}
@@ -142,7 +138,7 @@ public abstract class AbstractPersonPage extends AbstractSigninPage {
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(signin.getViewpoint(), viewedPerson, 
+				identitySpider.getContacts(getSignin().getViewpoint(), viewedPerson, 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);

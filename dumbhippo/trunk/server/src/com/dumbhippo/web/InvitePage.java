@@ -45,7 +45,7 @@ public class InvitePage extends AbstractInvitePage {
 		} else {
 		    Resource emailRes = identitySpider.getEmail(email);
 	        previousInvitation = 
-	        	invitationSystem.lookupInvitationViewFor(signin.getViewpoint(), 
+	        	invitationSystem.lookupInvitationViewFor(getUserSignin().getViewpoint(), 
 	        			                                 emailRes);
 	    }
 	    

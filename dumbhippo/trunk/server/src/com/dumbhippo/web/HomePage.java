@@ -40,23 +40,23 @@ public class HomePage extends AbstractSigninPage {
 
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
-			logger.debug("Getting received posts for {}", signin.getUser());
+			logger.debug("Getting received posts for {}", getUserSignin().getUser());
 			// + 1 as a marker for whether there are more
-			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(signin.getViewpoint(), signin.getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
 		}
 		return receivedPosts;
 	}
 	
 	public ListBean<GroupView> getGroups() {
 		if (groups == null) {
-			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(signin.getViewpoint(), signin.getUser())));
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getUserSignin().getViewpoint(), getUserSignin().getUser())));
 		}
 		return groups;
 	}
 	
 	public ListBean<PostView> getContactPosts() {
 		if (contactPosts == null) {
-			contactPosts = new ListBean<PostView>(postBoard.getContactPosts(signin.getViewpoint(), signin.getUser(), false, 0, 0));
+			contactPosts = new ListBean<PostView>(postBoard.getContactPosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), false, 0, 0));
 		}
 		return contactPosts;
 	}
@@ -68,7 +68,7 @@ public class HomePage extends AbstractSigninPage {
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(signin.getViewpoint(), signin.getUser(), 
+				identitySpider.getContacts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);
