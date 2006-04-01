@@ -184,14 +184,25 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
 void 
 HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying)
 {   
-     // could have a HippoChatUserMusic class, but let's do without it for now
-     notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
+     HippoChatUser *user;
+     bool userExists = getUser(userId, &user);
+     if (userExists) {
+         user->setMusicPlaying(musicPlaying);
+         if ((wcscmp(arrangementName, (L"")) != 0) || (wcscmp(artist, (L"")) != 0) || musicPlaying) {
+             user->setArrangementName(arrangementName);
+             user->setArtist(artist);
+         } 
+         notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
+     } else {
+         hippoDebug(L"Not updating music for unknown user: %s", userId);
+     }
+
 }
 
 void 
 HippoChatRoom::musicStoppedForUser(const BSTR userId)
 { 
-     notifyUserMusicChange(userId, HippoBSTR(L""), HippoBSTR(L""), false);
+     updateMusicForUser(userId, HippoBSTR(L""), HippoBSTR(L""), false);
 }
 
 void
@@ -252,6 +263,18 @@ HippoChatRoom::removeUser(BSTR userId)
             return;
         }
     }
+}
+
+bool
+HippoChatRoom::getUser(BSTR userId, HippoChatUser **user)
+{
+    for (unsigned long i = 0; i < users_.length(); i++) {
+        if (wcscmp(users_[i].getUserId(), userId) == 0) {
+            *user = &users_[i];
+            return true;
+        }
+    }
+    return false;
 }
 
 void
@@ -322,7 +345,7 @@ HippoChatRoom::notifyMessage(const HippoChatMessage &message)
     while (e->Next(1, &data, &fetched) == S_OK) {
         HippoQIPtr<IDispatch> dispatch(data.pUnk);
         if (dispatch) {
-            DISPPARAMS dispParams;
+            DISPPARAMS dispParams; 
             VARIANTARG args[6];
 
             args[0].vt = VT_INT;
@@ -555,8 +578,10 @@ HippoChatRoom::doRescanIdle()
     // are notifying them. Additions will mostly be safe.
     // (Perhaps we should make a copy)
 
-    for (unsigned long i = 0; i < users_.length(); i++)
+    for (unsigned long i = 0; i < users_.length(); i++) {
         notifyUserJoin(users_[i]);
+        notifyUserMusicChange(users_[i].getUserId(), users_[i].getArrangementName(), users_[i].getArtist(), users_[i].isMusicPlaying());
+    }
 
     for (unsigned long i = 0; i < messages_.length(); i++)
         notifyMessage(messages_[i]);

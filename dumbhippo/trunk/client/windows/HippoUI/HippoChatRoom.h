@@ -17,14 +17,24 @@ public:
 
     BSTR getUserId() const { return userId_.m_str; }
     const int getVersion() const { return version_; }
-    BSTR getName() const { return name_.m_str; };
-    bool isParticipant() const { return participant_; };
+    BSTR getName() const { return name_.m_str; }
+    bool isParticipant() const { return participant_; }
+    BSTR getArrangementName() const { return arrangementName_.m_str; }
+    BSTR getArtist() const { return artist_.m_str; }
+    bool isMusicPlaying() const { return musicPlaying_; }
+
+    void setArrangementName(const HippoBSTR &arrangementName) { arrangementName_ = arrangementName; } 
+    void setArtist(const HippoBSTR &artist) { artist_ = artist; }
+    void setMusicPlaying(const bool musicPlaying) { musicPlaying_ = musicPlaying; } 
 
 private:
     HippoBSTR userId_;
     int version_;
     HippoBSTR name_;
     bool participant_;
+    HippoBSTR arrangementName_;
+    HippoBSTR artist_;
+    bool musicPlaying_;
 };
 
 class HippoChatMessage
@@ -97,6 +107,8 @@ public:
     void clear(); // Called on reconnect, since users and messages will be resent
 
 private:
+    bool getUser(BSTR userId, HippoChatUser **user);
+
     void setState(State state);
 
     void notifyUserJoin(const HippoChatUser &user);
