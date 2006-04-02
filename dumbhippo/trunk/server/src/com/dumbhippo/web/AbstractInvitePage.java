@@ -10,7 +10,7 @@ import com.dumbhippo.server.InvitationView;
  * 
  * @author marinaz
  */
-public abstract class AbstractInvitePage extends AbstractSigninPage {
+public abstract class AbstractInvitePage extends AbstractSigninRequiredPage {
 	static protected final Logger logger = GlobalSetup.getLogger(InvitePage.class);
 	
 	// information about existing outstanding invitations

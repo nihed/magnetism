@@ -17,7 +17,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
 
-public abstract class AbstractPersonPage extends AbstractSigninPage {
+public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
 	static private final int MAX_CONTACTS_SHOWN = 9;

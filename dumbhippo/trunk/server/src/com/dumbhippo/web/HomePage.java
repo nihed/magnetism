@@ -18,7 +18,7 @@ import com.dumbhippo.server.PostingBoard;
  * Displays information for the logged in user, such as links recently
  * shared with him.
  */
-public class HomePage extends AbstractSigninPage {
+public class HomePage extends AbstractSigninRequiredPage {
 	static private final Logger logger = GlobalSetup.getLogger(HomePage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 4;
 	static private final int MAX_CONTACTS_SHOWN = 9;

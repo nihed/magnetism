@@ -4,7 +4,7 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 
-public class NowPlayingThemesPage extends AbstractSigninPage {
+public class NowPlayingThemesPage extends AbstractSigninRequiredPage {
 
 	private MusicSystem musicSystem;
 	

@@ -7,25 +7,21 @@ import com.dumbhippo.server.PersonViewExtra;
 
 
 /**
- * This class contains some information required by pages for which
- * the user has to be signed in, such as home page and invite pages.
+ * This base class contains methods for getting information about the person
+ * who is signed in. It has two subclasses that are normally used rather than
+ * this one directly; AbstractSigninRequiredPage requires someone to be logged in, 
+ * and AbstractSigninOptionalPage allows anonymous viewers of the page. However,
+ * most methods on this class can't be called if the viewer is anonymous, so 
+ * when using AbstractSigninOptionalPage you have to check getSignin().isValid(). 
  * 
  * @author marinaz
  */
 public abstract class AbstractSigninPage {
 
-	// FIXME some subclasses require signin so this would be 
-	// UserSigninBean, but for now we have to accomodate 
-	// ViewPersonPage, PersonMusicPage, etc. that don't require it
-	// the real fix is probably changing the inheritance hierarchy
-	// of the page beans
-	@Signin
-	private SigninBean signin;
-
 	protected IdentitySpider identitySpider;
 	protected InvitationSystem invitationSystem;
 	protected int invitations;
-	protected PersonView person;
+	protected PersonView signinPerson;
 	protected ListBean<PersonView> contacts;	
 	
 	protected AbstractSigninPage() {
@@ -34,26 +30,26 @@ public abstract class AbstractSigninPage {
 		invitations = -1;
 	}
 	
-	public SigninBean getSignin() {
-		return signin;
-	}
+	abstract public SigninBean getSignin();
 	
 	/**
 	 * Return user signin bean; throws an exception if our signin is 
-	 * not a user signin
-	 * @return
+	 * not a user signin. Any method that calls this must only be called
+	 * if getSignin().isValid()
+	 * @return the user signin bean, or throws an exception
 	 */
 	public UserSigninBean getUserSignin() {
+		SigninBean signin = getSignin();
 		if (!(signin instanceof UserSigninBean))
-			throw new RuntimeException("This page requires signin");
+			throw new IllegalStateException("this operation requires checking signin.valid first to be sure a user is signed in");
 		return (UserSigninBean) signin;
 	}
 
 	public PersonView getPerson() {
-		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
+		if (signinPerson == null)
+			signinPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
 		
-		return person;
+		return signinPerson;
 	}
 	
 	public int getInvitations() {
@@ -65,9 +61,8 @@ public abstract class AbstractSigninPage {
 	
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(signin.getViewpoint(), getUserSignin().getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
+			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(getSignin().getViewpoint(), getUserSignin().getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
 		}
 		return contacts;
 	}
-	
 }

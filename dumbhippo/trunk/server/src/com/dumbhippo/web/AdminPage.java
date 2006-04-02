@@ -15,7 +15,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.PersonView;
 
-public class AdminPage extends AbstractSigninPage {
+public class AdminPage extends AbstractSigninRequiredPage {
 
 	protected static final Logger logger = GlobalSetup.getLogger(AdminPage.class);
 

@@ -5,7 +5,7 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 
-public class NowPlayingThemeCreatorPage extends AbstractSigninPage {
+public class NowPlayingThemeCreatorPage extends AbstractSigninRequiredPage {
 
 	private MusicSystem musicSystem;
 	private NowPlayingTheme theme;
