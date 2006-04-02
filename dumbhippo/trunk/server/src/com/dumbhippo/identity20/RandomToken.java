@@ -39,6 +39,7 @@ public final class RandomToken {
 		return data;
 	}
 	
+	@Override
 	public String toString() {
 		String ret = StringUtils.hexEncode(data);
 		if (ret.length() != STRING_LENGTH)
@@ -46,6 +47,7 @@ public final class RandomToken {
 		return ret;
 	}
 	
+	@Override
 	public int hashCode() {
 		int result = 17;
 		for (int i = 0; i < data.length; ++i) {
@@ -55,6 +57,7 @@ public final class RandomToken {
 		return result;
 	}
 
+	@Override
 	public boolean equals(Object other) {
 		if (this == other)
 			return true;

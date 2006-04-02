@@ -62,6 +62,7 @@ public class Client extends DBUnique implements Serializable {
 		this(client.account, client.authKey, client.name, client.lastUsed);
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{Client name = " + name + " authKey " + "???" + " lastUsed " + lastUsed + "}");

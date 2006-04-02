@@ -145,6 +145,7 @@ public class BeanTag extends SimpleTagSupport {
 		return o;
 	}
 	
+	@Override
 	public void doTag() throws IOException, JspException {
 		Object o = findObject();
 		if (o == null) {

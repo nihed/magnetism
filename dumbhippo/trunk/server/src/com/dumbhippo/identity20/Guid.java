@@ -179,10 +179,12 @@ final public class Guid implements Serializable {
 		initFromString(string);
 	}
 
+	@Override
 	public String toString() {
 		return str;
 	}
 
+	@Override
 	public int hashCode() {
 		// We could just hash the first 6 characters, but
 		// what we save in computation, we probably lose
@@ -190,6 +192,7 @@ final public class Guid implements Serializable {
 		return str.hashCode();
 	}
 
+	@Override
 	public boolean equals(Object other) {
 		if (!(other instanceof Guid))
 			return false;

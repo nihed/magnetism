@@ -90,6 +90,7 @@ final public class FullName implements Serializable {
 		return concatNames(0, names.size(), false);
 	}
 	
+	@Override
 	public String toString() {
 		return getFullName();
 	}

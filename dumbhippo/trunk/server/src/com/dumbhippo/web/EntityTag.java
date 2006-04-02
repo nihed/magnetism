@@ -184,6 +184,7 @@ public class EntityTag extends SimpleTagSupport {
 		return xml.toString();
 	}
 	
+	@Override
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		String buildStamp;

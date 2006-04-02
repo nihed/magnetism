@@ -125,6 +125,7 @@ public class NowPlayingTag extends SimpleTagSupport {
 		return String.format(format, hasLabel ? LABEL : "", bgColor, getSrc(userId, themeId, forceMode), getNowPlayingEmbedHtml(userId, themeId, forceMode, bgColor, false));
 	}
 	
+	@Override
 	public void doTag() throws IOException {
 		if (userId == null)
 			throw new RuntimeException("no user provided to NowPlayingTag");

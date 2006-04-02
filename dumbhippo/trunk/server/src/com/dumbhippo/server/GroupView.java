@@ -81,6 +81,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 		return Configuration.GROUPSHOTS_RELATIVE_PATH;
 	}
 	
+	@Override
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		builder.appendTextNode("group", "", "id", group.getId(), "name", group.getName(),
@@ -88,6 +89,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 		return builder.toString();		
 	}
 	
+	@Override
 	public String toIdentifyingXml() {
 		XmlBuilder builder = new XmlBuilder();
 		builder.appendTextNode("group", "", "id", group.getId());		

@@ -14,11 +14,13 @@ import com.dumbhippo.live.LiveState;
 public class HippoService extends ServiceMBeanSupport implements HippoServiceMBean {
 	private static final Logger logger = GlobalSetup.getLogger(HippoService.class);
 	
+	@Override
 	protected void startService() {
 		logger.info("Starting HippoService MBean");
     }
 	
-    protected void stopService() {
+    @Override
+	protected void stopService() {
 		logger.info("Stopping HippoService MBean");
 		LiveState.getInstance().shutdown();
    }

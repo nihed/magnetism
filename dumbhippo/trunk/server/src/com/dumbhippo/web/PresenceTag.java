@@ -43,6 +43,7 @@ public class PresenceTag extends SimpleTagSupport {
 		return returnString;
 	}
 	
+	@Override
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		writer.print(presenceHTML(entity, null));

@@ -31,6 +31,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 
+	@Override
 	public String getRelativePath() {
 		return Configuration.GROUPSHOTS_RELATIVE_PATH;
 	}

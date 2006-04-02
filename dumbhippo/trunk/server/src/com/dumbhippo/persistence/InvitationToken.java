@@ -145,6 +145,7 @@ public class InvitationToken extends Token {
 		return null;
 	}
 		
+	@Override
 	public String toString() {
 		return "{InvitationToken invitee " + invitee + " token " + super.toString() + "}";
 	}

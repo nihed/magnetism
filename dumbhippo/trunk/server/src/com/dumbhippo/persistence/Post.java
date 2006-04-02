@@ -325,6 +325,7 @@ public class Post extends GuidPersistable {
 		return cachedUrl;
 	}
 	
+	@Override
 	public String toString() {
 		return "{Post id=" + getId() + "}";
 	}

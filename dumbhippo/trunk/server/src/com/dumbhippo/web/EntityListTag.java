@@ -27,6 +27,7 @@ public class EntityListTag extends SimpleTagSupport {
 		twoLineBody = false;
 	}
 
+	@Override
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		

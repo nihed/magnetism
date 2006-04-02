@@ -65,7 +65,8 @@ class Bot implements Runnable {
 	    	timer.schedule(this, TIME_DELAY, TIME_DELAY);
 	    	
 	    	aim.addRawListener(new RawListenerAdapter() {
-	    		public void handleMessage(ScreenName buddy, String htmlMessage)
+	    		@Override
+				public void handleMessage(ScreenName buddy, String htmlMessage)
 				throws FilterException {
 	    			if (buddy.equals(aim.getName()) && htmlMessage.equals(PING)) {
 	    				logger.debug("filtering out " + PING);

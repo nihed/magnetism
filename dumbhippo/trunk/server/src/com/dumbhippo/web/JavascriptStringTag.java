@@ -63,6 +63,7 @@ public class JavascriptStringTag extends SimpleTagSupport {
 		return sb.toString();
 	}
 	
+	@Override
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		

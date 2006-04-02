@@ -13,6 +13,7 @@ public class AbstractSigninOptionalPage extends AbstractSigninPage {
 	@Signin
 	private SigninBean signin;
 	
+	@Override
 	public SigninBean getSignin() {
 		return signin;
 	}

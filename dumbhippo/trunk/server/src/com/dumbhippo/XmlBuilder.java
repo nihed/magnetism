@@ -192,6 +192,7 @@ public class XmlBuilder {
 		builder.append(c);
 	}
 	
+	@Override
 	public String toString() {
 		for (int i = 0; i < elementStack.size(); i++) {
 			closeElement();

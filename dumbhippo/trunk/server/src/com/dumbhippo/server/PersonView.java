@@ -602,6 +602,7 @@ public class PersonView extends EntityView {
 	 * 
 	 * @return an XML fragment
 	 */	
+	@Override
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		if (user != null) {
@@ -621,6 +622,7 @@ public class PersonView extends EntityView {
 	 * 
 	 * @return an XML fragment
 	 */
+	@Override
 	public String toIdentifyingXml() {
 		XmlBuilder builder = new XmlBuilder();		
 		if (user != null) {
@@ -638,6 +640,7 @@ public class PersonView extends EntityView {
 	 * 
 	 * @return an identifying Guid
 	 */
+	@Override
 	public Guid getIdentifyingGuid() {
 		if (user != null) {
 			return user.getGuid();

@@ -11,6 +11,7 @@ public class AbstractSigninRequiredPage extends AbstractSigninPage {
 	@Signin
 	private UserSigninBean signin;
 
+	@Override
 	public UserSigninBean getSignin() {
 		return signin;
 	}

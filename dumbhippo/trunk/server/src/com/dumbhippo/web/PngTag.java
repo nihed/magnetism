@@ -97,6 +97,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		pngHtml(context, xml, src, buildStamp, klass, style, Arrays.asList(extraAttributes));
 	}
 	
+	@Override
 	public void doTag() throws IOException {
 		JspWriter writer = getJspContext().getOut();
 		String buildStamp;

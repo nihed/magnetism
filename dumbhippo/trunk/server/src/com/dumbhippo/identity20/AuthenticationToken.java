@@ -49,6 +49,7 @@ public class AuthenticationToken implements Serializable {
 				&& endTime.compareTo(d) > 0);
 	}
 	
+	@Override
 	public String toString() {
 		return startTime.getTime() + "/" + endTime.getTime();
 	}

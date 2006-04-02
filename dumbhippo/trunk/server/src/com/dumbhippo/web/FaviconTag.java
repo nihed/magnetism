@@ -10,6 +10,7 @@ import javax.servlet.jsp.tagext.SimpleTagSupport;
 public class FaviconTag extends SimpleTagSupport {
 	String link;
 	
+	@Override
 	public void doTag() throws IOException {
 		// FIXME this really isn't right; we should just upload the favicon when the 
 		// link gets shared in all probability

@@ -27,10 +27,12 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	}	
 	
+	@Override
 	public String getRelativePath() { 
 		return Configuration.HEADSHOTS_RELATIVE_PATH;
 	}
 	
+	@Override
 	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,
 			Map<String, String> formParameters, FileItem photo) throws HttpException, IOException, ServletException,
 			HumanVisibleException {

@@ -519,6 +519,7 @@ public class LiveState {
 	// Thread that ages the different types of objects we keep around, and
 	// also takes care of removing stale entries from WeakGuidMap objects.
 	private class Cleaner extends Thread {
+		@Override
 		public void run() {
 			long nextTime = System.currentTimeMillis() + CLEANER_INTERVAL;
 			
@@ -540,6 +541,7 @@ public class LiveState {
 	
 	// Peroidcally decays the hotness of every active user
 	private class LiveUserPeriodicUpdater extends Thread {
+		@Override
 		public void run() {
 			long nextTime = System.currentTimeMillis() + LIVE_USER_UPDATE_INTERVAL;
 			
