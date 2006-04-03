@@ -11,7 +11,7 @@
 	<c:redirect url="/music?who=${viewperson.signin.userId}"></c:redirect>
 </c:if>
 
-<jsp:setProperty name="viewperson" property="viewedPersonId" param="who"/>
+<jsp:setProperty name="viewperson" property="viewedUserId" param="who"/>
 
 <%-- this treats an invalid guid and missing who= the same, thus the other check above 
 	since we want to special-case missing who= --%>
@@ -19,8 +19,8 @@
 	<dht:errorPage>There's nobody here!</dht:errorPage>
 </c:if>
 
-<c:set var="personName" value="${viewperson.person.name}" scope="page"/>
-<c:set var="personId" value="${viewperson.person.viewPersonPageId}" scope="page"/>
+<c:set var="personName" value="${viewperson.viewedPerson.name}" scope="page"/>
+<c:set var="personId" value="${viewperson.viewedPerson.viewPersonPageId}" scope="page"/>
 
 <head>
 	<title><c:out value="${personName}'s Music"/></title>
@@ -165,7 +165,7 @@
 	<dht:sidebarArea>
 		<dht:sidebarAreaHeader>
 			<c:if test="${!viewperson.disabled}">
-				<dht:headshot person="${viewperson.person}" size="192"/>
+				<dht:headshot person="${viewperson.viewedPerson}" size="192"/>
 				<dht:sidebarAreaHeaderName value="${personName}" canModify="false"/>
 			</c:if>
 		</dht:sidebarAreaHeader>

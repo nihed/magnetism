@@ -90,9 +90,9 @@ public class PersonMusicPage extends AbstractPersonPage {
 	}
 	
 	@Override
-	public void setViewedPerson(User person) {
-		super.setViewedPerson(person);
-		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(person);
+	public void setViewedUser(User user) {
+		super.setViewedUser(user);
+		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(user);
 	}
 	
 	public int getSelfInvitations() {

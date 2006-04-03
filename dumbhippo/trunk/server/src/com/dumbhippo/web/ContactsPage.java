@@ -28,13 +28,17 @@ public class ContactsPage extends AbstractPersonPage {
 		hasMoreContacts = false;
 	}
 	
+	/**
+	 * Get a set of contacts of the viewed user that we want to display on the friends page,
+	 * using start and stop fields as guidance.
+	 * 
+	 * @return a list of PersonViews of a subset of contacts
+	 */
+	@Override
 	public ListBean<PersonView> getContacts() {
-		if (getViewedPersonId() == null) {
-			setViewedPerson(getUserSignin().getUser());
-		}
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(getSignin().getViewpoint(), getViewedPerson(), 
+				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);
@@ -109,12 +113,5 @@ public class ContactsPage extends AbstractPersonPage {
 		}
 		
 		return hasMoreContacts;
-	}
-	
-	public boolean isSelf() {
-		if (getViewedPersonId() == null) {
-			setViewedPerson(getUserSignin().getUser());
-		}
-		return super.isSelf();
 	}
 }

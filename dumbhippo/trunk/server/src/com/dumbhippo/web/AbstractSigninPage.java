@@ -45,24 +45,22 @@ public abstract class AbstractSigninPage {
 		return (UserSigninBean) signin;
 	}
 
+	/**
+	 * Return a PersonView of the signed in user.
+	 * 
+	 * @return a PersonView of the signed in user
+	 */
 	public PersonView getPerson() {
-		if (signinPerson == null)
+		if (signinPerson == null && getSignin().isValid())
 			signinPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return signinPerson;
 	}
 	
 	public int getInvitations() {
-		if (invitations < 0) {
+		if ((invitations < 0)  && getSignin().isValid()) {
 			invitations = invitationSystem.getInvitations(getUserSignin().getUser()); 
 		}
 		return invitations;
-	}
-	
-	public ListBean<PersonView> getContacts() {
-		if (contacts == null) {
-			contacts = new ListBean<PersonView>(PersonView.sortedList(identitySpider.getContacts(getSignin().getViewpoint(), getUserSignin().getUser(), false, PersonViewExtra.INVITED_STATUS, PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_AIM)));
-		}
-		return contacts;
 	}
 }

@@ -4,9 +4,16 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="contacts" class="com.dumbhippo.web.ContactsPage" scope="request"/>
+
+<%-- If there's no who= param, we want to redirect to the signed-in user's who=, 
+     but if who=invalid, we want an error message --%>
+<c:if test="${empty param.who && contacts.signin.valid}">
+	<c:redirect url="/friends?who=${contacts.signin.userId}"></c:redirect>
+</c:if>
+
 <jsp:setProperty name="contacts" property="start" param="start"/>
 <jsp:setProperty name="contacts" property="stop" param="stop"/>
-<jsp:setProperty name="contacts" property="viewedPersonId" param="who"/>
+<jsp:setProperty name="contacts" property="viewedUserId" param="who"/>
 
 <head>
 	<title>View Friends</title>
@@ -22,7 +29,7 @@
                 <dht:largeTitle>Your Friends</dht:largeTitle>
 			</c:when>
 			<c:otherwise>
-			    <dht:largeTitle><c:out value="${contacts.person.name}"/>'s Friends</dht:largeTitle>        
+			    <dht:largeTitle><c:out value="${contacts.viewedPerson.name}"/>'s Friends</dht:largeTitle>        
 			</c:otherwise>   
         </c:choose>     
 		
@@ -31,8 +38,8 @@
                 <div class="dh-people-grid">
 				    <dh:entityList value="${contacts.contacts.list}" showInviteLinks="${contacts.self and (contacts.invitations > 0)}" photos="true" bodyLengthLimit="8" longBodyLengthLimit="30" twoLineBody="true"/>
 		        </div>
-		        <c:if test="${!empty contacts.viewedPersonId}">
-		            <c:set var="whoParam" value="&who=${contacts.viewedPersonId}" scope="page"/>
+		        <c:if test="${!empty contacts.viewedUserId}">
+		            <c:set var="whoParam" value="&who=${contacts.viewedUserId}" scope="page"/>
 		        </c:if>    
 				<c:if test="${contacts.start > 1}">
 				    <c:choose>
@@ -75,8 +82,8 @@
 	
 		<dht:sidebarAreaHeader>
 		    <!-- might have these values come from the invites page -->
-            <dht:headshot person="${contacts.person}" size="192" />
-            <dht:sidebarAreaHeaderName value="${contacts.person.name}" canModify="false"/>
+            <dht:headshot person="${contacts.viewedPerson}" size="192" />
+            <dht:sidebarAreaHeaderName value="${contacts.viewedPerson.name}" canModify="false"/>
 		</dht:sidebarAreaHeader>
 
 		<dht:sidebarPanes>
@@ -107,7 +114,7 @@
 		        <c:otherwise>
 		            <dht:sidebarPane title="Check Them Out">
                         <p class="dh-right-box-text">
-		                    All about <a href="/person?who=${contacts.viewedPersonId}"><c:out value="${contacts.person.name}"/></a>. 
+		                    All about <a href="/person?who=${contacts.viewedUserId}"><c:out value="${contacts.viewedPerson.name}"/></a>. 
 			            </p>
 		            </dht:sidebarPane>
 		            <dht:sidebarPane title="Friend Tips" last="true">

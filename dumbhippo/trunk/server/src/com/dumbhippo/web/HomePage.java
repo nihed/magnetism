@@ -65,6 +65,11 @@ public class HomePage extends AbstractSigninRequiredPage {
 		return MAX_RECEIVED_POSTS_SHOWN;
 	}
 	
+	/**
+	 * Get a set of contacts of the signed in user that we want to display on user's homepage.
+	 * 
+	 * @return a list of PersonViews of a subset of contacts
+	 */
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 

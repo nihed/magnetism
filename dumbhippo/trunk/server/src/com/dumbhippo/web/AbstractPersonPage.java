@@ -22,13 +22,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	static private final int MAX_CONTACTS_SHOWN = 9;
 	
-	private User viewedPerson;
-	private String viewedPersonId;
+	private User viewedUser;
+	private String viewedUserId;
 	private boolean disabled;
 	
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
-	private PersonView person;
+	private PersonView viewedPerson;
 	
 	private ListBean<Group> groups;
 	
@@ -55,90 +55,91 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return musicSystem;
 	}
  	
-	public String getViewedPersonId() {
-		return viewedPersonId;
-	}
-
-	public User getViewedPerson() {
-		return viewedPerson;
+	public String getViewedUserId() {
+		return viewedUserId;
 	}
 	
 	public User getViewedUser() {
-		return viewedPerson;
+		return viewedUser;
 	}
 	
 	public boolean isDisabled() {
 		return disabled;
 	}
 	
-	protected void setViewedPerson(User person) {
-		this.viewedPerson = person;
-		this.viewedPersonId = person.getId();
+	protected void setViewedUser(User user) {
+		this.viewedUser = user;
+		this.viewedUserId = user.getId();
 		
-		if (identitySpider.getAccountDisabled(person)) {
+		if (identitySpider.getAccountDisabled(user)) {
 				this.disabled = true;
 		}
 		
-		logger.debug("viewing person: {} disabled = {}", this.viewedPerson, disabled);
+		logger.debug("viewing person: {} disabled = {}", this.viewedUser, disabled);
 	}
 	
 	public String getName() {
-		return viewedPerson.getNickname();
+		return getViewedUser().getNickname();
 	}
 
-	public void setViewedPersonId(String personId) {
-		if (personId == null) {
+	public void setViewedUserId(String userId) {
+		if (userId == null) {
 			logger.debug("no viewed person");
 			return;
 		} else {
 			try {
-				setViewedPerson(identitySpider.lookupGuidString(User.class, personId));
+				setViewedUser(identitySpider.lookupGuidString(User.class, userId));
 			} catch (ParseException e) {
-				logger.debug("bad personId as person parameter {}", personId);
+				logger.debug("bad userId as person parameter {}", userId);
 			} catch (NotFoundException e) {
-				logger.debug("bad personId as person parameter {}", personId);
+				logger.debug("bad userId as person parameter {}", userId);
 			}
 		}
 	}
 	
-	public PersonView getPerson() {
-		if (person == null)
-			person = identitySpider.getPersonView(getSignin().getViewpoint(), viewedPerson, PersonViewExtra.ALL_RESOURCES);
+	public PersonView getViewedPerson() {
+		if (viewedPerson == null)
+			viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
 		
-		return person;
+		return viewedPerson;
 	}
 	
 	public boolean isContact() {
 		if (getSignin().isValid())
-			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), viewedPerson);
+			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), getViewedUser());
 		else
 			return false;
 	}
 	
 	public boolean isSelf() {
-		if (getSignin().isValid() && viewedPerson != null) {
-			return getUserSignin().getUser().equals(viewedPerson);
+		if (getSignin().isValid() && getViewedUser() != null) {
+			return getUserSignin().getUser().equals(getViewedUser());
 		} else {
 			return false;
 		}
 	}
 	
 	public boolean isValid() {
-		return viewedPerson != null;
+		return getViewedUser() != null;
 	}
 	
 	// We don't show group's you haven't accepted the invitation for on your public page
 	public ListBean<Group> getGroups() {
 		if (groups == null) {
-			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(getSignin().getViewpoint(), viewedPerson, MembershipStatus.ACTIVE)));
+			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)));
 		}
 		return groups;
 	}
 	
+	/**
+	 * Get a set of contacts of the viewed user that we want to display on the person page.
+	 * 
+	 * @return a list of PersonViews of a subset of contacts
+	 */
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(getSignin().getViewpoint(), viewedPerson, 
+				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);
