@@ -22,13 +22,19 @@ HippoRemoteWindow::~HippoRemoteWindow(void)
 }
 
 void
-HippoRemoteWindow::navigate(WCHAR *url)
+HippoRemoteWindow::preNavigate(WCHAR *url)
 {
     ieWindow_ = new HippoIEWindow(url, ieCb_);
     ieWindow_->setTitle(title_);
     ieWindow_->setUI(ui_);
     ieWindow_->setApplication(ui_);
     ieWindow_->create();
+}
+
+void
+HippoRemoteWindow::navigate(WCHAR *url)
+{
+    preNavigate(url);
     ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 600, 600);
     ieWindow_->show();
 }
@@ -44,7 +50,6 @@ void
 HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare)
 {
     showShare(urlToShare, titleOfShare, L"url");
-    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 550, 400);
 }
 
 void
@@ -69,8 +74,9 @@ HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare, WCHAR *shar
     ui_->getRemoteURL(HippoBSTR(L"sharelink"), &shareURL);
             
     shareURL.Append(queryString);
-
-    navigate(shareURL);
+    preNavigate(shareURL.m_str);
+    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 550, 400);
+    ieWindow_->show();
 }
 
 void

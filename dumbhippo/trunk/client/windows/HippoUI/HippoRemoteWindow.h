@@ -28,4 +28,6 @@ private:
     HippoBSTR title_;
     HippoIEWindowCallback *ieCb_;
     HippoIEWindow *ieWindow_;
+
+    void preNavigate(WCHAR *url);
 };
