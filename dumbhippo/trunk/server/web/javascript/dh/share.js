@@ -88,7 +88,8 @@ dh.share.findIdNode = function(id) {
 		var child = list.childNodes.item(i);
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
-		for (subchild in child.childNodes) {
+		for (var j = 0; j < child.childNodes.length; j++) {			
+			var subchild = child.childNodes.item(j)			
 			var childId = subchild.getAttribute("dhId");
 			if (childId && id == childId) {
 				return subchild;
@@ -105,7 +106,8 @@ dh.share.forEachPossibleGroupMember = function(func) {
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
 			
-		for (subchild in child.childNodes) {			
+		for (var j = 0; j < child.childNodes.length; j++) {			
+			var subchild = child.childNodes.item(j)
 			var id = subchild.getAttribute("dhId");
 			var obj = dh.share.allKnownIds[id];
 	
