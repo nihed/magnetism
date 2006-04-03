@@ -9,9 +9,6 @@
 </head>
 <dht:bodyWithAds>
 	<dht:mainArea>
-		<dht:header>
-			Link Sent
-		</dht:header>
 		<dht:toolbar/>
 
 		<h3>
