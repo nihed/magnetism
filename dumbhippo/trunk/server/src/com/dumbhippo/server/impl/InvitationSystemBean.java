@@ -604,8 +604,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			acct.setDisabled(true);
 		
 		// we want people coming from the "music invite" strategy to get invites for friends
-		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
 			acct.setInvitations(5);
+			// you are already implicitly wanting this if you came via the music thing;
+			// people can always turn it off
+			acct.setMusicSharingEnabled(true);
+		}
 		
 		Client client = null;
 		if (firstClientName != null) {
