@@ -264,20 +264,17 @@ public class PostingBoardBean implements PostingBoard {
 		
 		return doLinkPost(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo);			
 	}
-	
-	public void doShareLinkTutorialPost(User recipient) {
-		logger.debug("Sending share link tutorial post to {}", recipient);
-		User poster = identitySpider.getCharacter(Character.MUSIC_GEEK);
+
+	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) {
+		logger.debug("Sending tutorial post to {}", recipient);
+		User poster = identitySpider.getCharacter(sender);
 		URL url;
-		String urlText = configuration.getProperty(HippoProperty.BASEURL) + "/account";
 		try {
 			url = new URL(urlText);
 		} catch (MalformedURLException e) {
 			logger.error("Malformed tutorial url: {}", urlText);
 			throw new RuntimeException(e);
 		}
-		String title = "What is this DumbHippo thing?";
-		String text = "Set up your account and learn to use DumbHippo by visiting this link"; 
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
@@ -287,6 +284,20 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException(e);
 		}
 		logger.debug("Tutorial post done: {}", post);
+	}
+	
+	public void doShareLinkTutorialPost(User recipient) {
+		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
+				configuration.getProperty(HippoProperty.BASEURL) + "/account",
+				"What is this DumbHippo thing?",
+				"Set up your account and learn to use DumbHippo by visiting this link");
+	}
+
+	public void doNowPlayingTutorialPost(User recipient) {
+		doTutorialPost(recipient, Character.MUSIC_GEEK, 
+				configuration.getProperty(HippoProperty.BASEURL) + "/nowplaying",
+				"Put your music online",
+				"Visit this link to learn how to put your music on your blog or MySpace page");
 	}
 	
 	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 

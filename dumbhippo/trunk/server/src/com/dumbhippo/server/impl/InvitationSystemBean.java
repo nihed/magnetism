@@ -603,6 +603,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (disable)
 			acct.setDisabled(true);
 		
+		// we want people coming from the "music invite" strategy to get invites for friends
+		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+			acct.setInvitations(5);
+		
 		Client client = null;
 		if (firstClientName != null) {
 			client = accounts.authorizeNewClient(acct, firstClientName);

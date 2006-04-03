@@ -22,6 +22,7 @@ import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -31,6 +32,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MusicSystem;
@@ -40,6 +42,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -63,7 +66,10 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private MusicSystem musicSystem;
-		
+	
+	@EJB
+	private InvitationSystem invitationSystem;
+	
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
 		try {
@@ -171,7 +177,15 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			if (!account.getWasSentShareLinkTutorial()) {
 				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 	
-				postingBoard.doShareLinkTutorialPost(account.getOwner());
+				InvitationToken invite = invitationSystem.getCreatingInvitation(account);
+				
+				// see what feature the user was sold on originally, and share the right thing 
+				// with them accordingly
+				
+				if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+					postingBoard.doNowPlayingTutorialPost(account.getOwner());
+				else
+					postingBoard.doShareLinkTutorialPost(account.getOwner());
 	
 				account.setWasSentShareLinkTutorial(true);
 			}
