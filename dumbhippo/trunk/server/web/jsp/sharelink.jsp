@@ -24,7 +24,7 @@
         <tr>
         <td id="dhShareLeft" width="46%">
         <table id="dhShareLeftContainer" cellspacing="0" cellpadding="0">
-        <tr><td valign="top">
+        <tr><td valign="top" width="100%">
         <img src="/images/${buildStamp}/dumbhippo_logo.gif"/><br/>
 		<div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
      	<div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
@@ -32,10 +32,10 @@
 		</div>
 		<div id="dhTitleError" class="dhValidityError"></div>		
         </td>
-        <tr valign="bottom">
+        <tr valign="bottom" height="80%">
         <td>
         <div id="dhShareSendTo">Send to:</div>
-        <table id="dhShareRecipientsContainer" cellspacing="0" cellpadding="0">
+        <table id="dhShareRecipientsContainer" cellspacing="0" cellpadding="0" height="22px">
             <tr width="100%">
             <td valign="center"><input autocomplete="off" accesskey="w"
 						type="text" id="dhShareRecipientComboBox" class="dhText" tabindex="1"/></td>
@@ -45,13 +45,23 @@
             </tr>
             <tr height="2px"><td></td></tr>
         </table>
-        <div id="dhShareRecipientsBox">
-		<div id="dhShareRecipientsError" class="dhValidityError"></div>        
-        <div id="dhShareRecipientsBoxTop"><img src="/images/${buildStamp}/darkblue_tl.gif" class="dhShareTopCornerImg"/></div>
-		<dht:recipientList/>
-        <div id="dhShareRecipientsBoxBottom"><img src="/images/${buildStamp}/darkblue_bl.gif" class="dhShareBottomCornerImg"/></div>
-        </div>
-        </td></tr>
+		<div id="dhShareRecipientsError" class="dhValidityError"></div>          
+        <table id="dhShareRecipientsBox" cellspacing="0" cellpadding="0" width="100%" height="120px">
+			<tr height="5px">		
+    	    <td valign="top" align="left"><img src="/images/${buildStamp}/darkblue_tl.gif" class="dhShareTopCornerImg"/></td>
+    	    <td>&nbsp;</td>
+    	    <td valign="top" align="right"><img src="/images/${buildStamp}/darkblue_tr.gif" class="dhShareTopCornerImg"/></td>
+    		</tr><tr>
+    		<td width="5px">&nbsp;</td>
+			<td valign="top"><dht:recipientList/></td>
+			<td width="5px">&nbsp;</td>
+			<tr height="5px">
+			<td valign="bottom" align="left"><img src="/images/${buildStamp}/darkblue_bl.gif" class="dhShareBottomCornerImg"/></td>
+			<td>&nbsp;</td>
+			<td valign="bottom" align="right"><img src="/images/${buildStamp}/darkblue_br.gif" class="dhShareBottomCornerImg"/></td>
+			</tr>
+        </table> <!-- end dhShareRecipientsBox -->
+        </td></tr>        
         </table> <!-- end dhShareLeftContainer -->
         </td> <!-- ends dhShareLeft -->
 
@@ -72,18 +82,18 @@
             <td></td><td id="dhShareDescriptionArea">
             <table id="dhShareDescriptionContainer" cellspacing="0" cellpadding="0" width="100%">
                 <tr height="5px">
-                <td valign="top"><img src="/images/${buildStamp}/whiteinner_tl.gif" class="dhShareTopCornerImg"/></td>
+                <td align="left" valign="top"><img src="/images/${buildStamp}/whiteinner_tl.gif" class="dhShareTopCornerImg"/></td>
                 <td>&nbsp;</td>
-                <td valign="top"><img src="/images/${buildStamp}/whiteinner_tr.gif" class="dhShareTopCornerImg"/></td>
+                <td align="right" valign="top"><img src="/images/${buildStamp}/whiteinner_tr.gif" class="dhShareTopCornerImg"/></td>
                 </tr>
                 <tr height="100%">
-                <td style="width: 5px;">&nbsp;</td><td valign="top" width="100%">  
-                <textarea id="dhShareDescriptionTextArea" name="dhShareDescriptionTextArea"></textarea>
-                </td><td></td>
+                <td style="width: 5px;">&nbsp;</td>
+                <td align="center" valign="top" width="100%"><textarea id="dhShareDescriptionTextArea" name="dhShareDescriptionTextArea"></textarea></td>
+                <td></td>
                 <tr height="5px">
-                <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_bl.gif" class="dhShareBottomCornerImg"/></td>
+                <td align="left" valign="bottom"><img src="/images/${buildStamp}/whiteinner_bl.gif" class="dhShareBottomCornerImg"/></td>
                 <td><div>&nbsp;</div></td>
-                <td valign="bottom"><img src="/images/${buildStamp}/whiteinner_br.gif" class="dhShareBottomCornerImg"/></td>
+                <td align="right" valign="bottom"><img src="/images/${buildStamp}/whiteinner_br.gif" class="dhShareBottomCornerImg"/></td>
                 </tr>
             </table>
             </td>

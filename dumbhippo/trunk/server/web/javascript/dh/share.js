@@ -274,28 +274,34 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		
 		var removeImg = document.createElement("img")
 		removeImg.setAttribute("src", "/images/xblue.gif")
-		removeImg.setAttribute("width", "13")
-		removeImg.setAttribute("height", "13")
+		removeImg.setAttribute("width", "13px")
+		removeImg.setAttribute("height", "13px")
 		dojo.event.connect(removeImg, "onclick", dj_global, "dhRemoveRecipientClicked");		
 		div.appendChild(removeImg)
 		
-		var tr2  = document.createElement("tr");
+		var tr2 = document.createElement("tr");
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
+		td.setAttribute("align", "left")
+		td.setAttribute("width", "55px")
 		
 		var div = document.createElement("div")
 		td.appendChild(div)
 		dojo.html.addClass(div, "dhShareRecipientPersonName");
-		td.setAttribute("colSpan","2");	
+		td.setAttribute("height", "50%")
+		td.setAttribute("valign", "bottom")
 		tr2.appendChild(td);
 		div.appendChild(document.createTextNode(obj.displayName));
+		td.appendChild(document.createTextNode("\u00A0"))
 
 		var tr3  = document.createElement("tr");
 		tbody.appendChild(tr3);
 		var td = document.createElement("td");
+		td.setAttribute("align", "left")
+		td.setAttribute("valign", "top")
+		td.setAttribute("height", "50%")		
 		dojo.html.addClass(td, "dhRecipientNote");
 		td.setAttribute("width", "55px");		
-		td.setAttribute("colSpan","2");
 		tr3.appendChild(td);
 		if (obj.isGroup()) {
 			td.appendChild(document.createTextNode(obj.sampleMembers));

@@ -90,7 +90,7 @@ table, tr, td {
   height: 100%;
 }
 
-#dhShareTitle {
+#dhUrlTitleToShare {
   font-family: "Arial";
   font-weight: bold;
 }
@@ -103,6 +103,8 @@ table, tr, td {
 
 #dhShareRecipientsContainer {
   height: 24px;
+  padding: 0px;
+  border: 0px;
   vertical-align: bottom;
 }
 
@@ -144,14 +146,6 @@ table, tr, td {
   min-height: 120px;
 }
 
-#dhShareRecipientsBoxTop {
-  background: url("/images/darkblue_tr.gif") no-repeat top right;
-}
-
-#dhShareRecipientsBoxBottom {
-  background: url("/images/darkblue_br.gif") no-repeat bottom right;
-}
-
 #dhRecipientList {
   margin: 5px;
   overflow: auto;
@@ -184,8 +178,9 @@ table, tr, td {
   font-size: smaller;
   width: 55px;
   max-width: 55px;
+  overflow: hidden;
   text-overflow: ellipsis;
-  height: 1.5em;
+  height: 1.4em;
 }
 
 #dhShareRight {
@@ -309,11 +304,13 @@ a.dhRemoveRecipient:link {
 }
 td.dhRecipientName {
 	font-size:					9pt;
+	white-space: 				no-wrap;
 }
 
 .dhRecipientNote {
 	font-size:					7pt;
 	font-style:					italic;
+	white-space:				no-wrap;
 }
 
 #dhInvitationsRemainingMessage {
