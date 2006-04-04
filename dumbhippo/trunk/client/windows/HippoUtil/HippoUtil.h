@@ -274,14 +274,22 @@ public:
             return ::SysStringLen(m_str);
     }
 
-    void setUTF8(const char *utf8) throw (std::bad_alloc) {
+    void setUTF8(const char *utf8) throw (std::bad_alloc, HResultException) {
         setUTF8(utf8, -1);
     }
 
     void setUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
         if (utf8 == 0) {
-            throw HResultException(E_INVALIDARG, "null UTF-8 string");
+            if (len > 0)
+                throw HResultException(E_INVALIDARG, "null UTF-8 string with >0 length");
+            else if (len < 0) {
+                assign(0);
+            } else {
+                assign(L"");
+            }
+            return;
         }
+
         if (len < 0)
             len = static_cast<int>(strlen(utf8));
 
@@ -308,7 +316,7 @@ public:
         delete [] buf;
     }
 
-    bool endsWidth(const HippoBSTR &suffix) {
+    bool endsWith(const HippoBSTR &suffix) {
         if (Length() < suffix.Length())
             return false;
         return wcscmp(m_str + Length() - suffix.Length(), suffix.m_str) == 0;

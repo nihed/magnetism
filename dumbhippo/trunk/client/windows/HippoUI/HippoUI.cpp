@@ -1734,7 +1734,7 @@ closeWelcome()
 
             HippoBSTR hostName = parser.getHostName();
             if (!(hostName &&
-                  (wcscmp(hostName.m_str, L"dumbhippo.com") == 0 || hostName.endsWidth(L".dumbhippo.com"))))
+                  (wcscmp(hostName.m_str, L"dumbhippo.com") == 0 || hostName.endsWith(L".dumbhippo.com"))))
                 continue;
 
             browser->Quit();

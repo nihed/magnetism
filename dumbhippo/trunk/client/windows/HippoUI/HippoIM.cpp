@@ -940,7 +940,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     if (tmpArtist)
         tmpArtist.CopyTo(artist);
 
-    *musicPlaying = strcmp(musicPlayingU, "true") == 0;
+    *musicPlaying = musicPlayingU ? strcmp(musicPlayingU, "true") == 0 : false;
 
     return true;
 }
