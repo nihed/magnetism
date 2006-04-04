@@ -525,22 +525,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		claimedOwner.getAccountClaims().add(ac);
 	}
 
-	private static final String FIND_CONTACT_BY_USER_QUERY =
-		"SELECT cc.contact FROM Account contactAccount, ContactClaim cc " +
-		"WHERE contactAccount.owner = :contactUser " +
-		  "AND cc.account = :account AND cc.resource = contactAccount";
-		
 	private Contact findContactByUser(User owner, User contactUser) {
-		try {
-			return (Contact)em.createQuery(FIND_CONTACT_BY_USER_QUERY)
-				.setParameter("account", owner.getAccount())
-				.setParameter("contactUser", contactUser)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
+		for (Contact contact : owner.getAccount().getContacts()) {
+			for (ContactClaim cc : contact.getResources()) {
+				AccountClaim ac = cc.getResource().getAccountClaim();
+				if (ac != null && ac.getOwner().equals(contactUser))
+					return contact;
+			}
 		}
+		
+		return null;
 	}
-	
+
 	private Contact findContactByResource(User owner, Resource resource) {
 		Account account = owner.getAccount();
 		Set<Contact> contacts = account.getContacts();
@@ -635,15 +631,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		logger.debug("removing contact {} from account {}", contactPerson, user.getAccount());
 
 		Contact contact;
-		if (contactPerson instanceof Contact)
+		if (contactPerson instanceof Contact) {
 			contact = (Contact)contactPerson;
-		else {
+		} else {
 			contact = findContactByUser(user, (User)contactPerson);
-			if (contact == null) // Nothing to do
+			if (contact == null) {
+				logger.debug("User {} not found as a contact", contactPerson);
 				return;
+			}
 		}
-
-		em.remove(contact);		
+		
+		user.getAccount().removeContact(contact);
+		em.remove(contact);
+		logger.debug("contact deleted");
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
@@ -695,11 +695,17 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
+	/**
+	 * 
+	 * @param user the user we're looking at the contacts of
+	 * @param contactUser is this person a contact of user?
+	 * @return true if contactUser is a contact of user
+	 */
 	private boolean isContactNoViewpoint(User user, User contactUser) {
-		for (Contact contact : contactUser.getAccount().getContacts()) {
+		for (Contact contact : user.getAccount().getContacts()) {
 			for (ContactClaim cc : contact.getResources()) {
 				AccountClaim ac = cc.getResource().getAccountClaim();
-				if (ac != null && ac.getOwner().equals(user))
+				if (ac != null && ac.getOwner().equals(contactUser))
 					return true;
 			}
 		}

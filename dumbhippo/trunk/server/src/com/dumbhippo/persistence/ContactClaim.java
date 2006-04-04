@@ -27,7 +27,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 	   uniqueConstraints = 
 	      {@UniqueConstraint(columnNames={"account_id", "resource_id"})}
       )
-@Cache(usage=CacheConcurrencyStrategy.READ_ONLY)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ContactClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Contact contact;
