@@ -196,6 +196,7 @@ HippoIE::create(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *applica
 
 HippoIEImpl::HippoIEImpl(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch *application)
 {
+    refCount_ = 1;
     window_ = window;
     docSrc_ = src;
     callback_ = cb;
