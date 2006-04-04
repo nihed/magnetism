@@ -111,7 +111,7 @@ dh.sharegroup.init = function() {
 	dh.sharegroup.inviteCountMessage = document.getElementById('dhInvitationsRemainingMessage');
 			
 	// most of the dojo is set up now, so show the widgets
-	dh.util.showId("dhShareForm");
+	dh.util.showId("dhShareContainer");
 	
 	dh.share.init();
 

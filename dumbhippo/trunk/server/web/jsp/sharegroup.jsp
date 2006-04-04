@@ -24,65 +24,33 @@
 </head>
 
 <body scroll="no">
-	<dht:header>
-		Sharing ${viewgroup.name}
-	</dht:header>
-
-
-	<div id="dhMain">
-		<!--  invisible at first to avoid flicker while we set up dojo widgets -->
-		<div id="dhShareForm" class="dhInvisible">
-			<div class="dhVerticalPadding"></div>
-
-			<dht:largeTitle>Invite friends to <c:out value="${viewgroup.name}"/></dht:largeTitle>			
-			
-			<div class="dhVerticalPadding"></div>
-			<div class="dhLabel">Share <u>W</u>ith:</div>
-
-			<table>
-			<tbody>
-			<tr>
-			<td>
-				<input autocomplete="off" accesskey="w"
-						type="text" id="dhRecipientComboBox" class="dhText" tabindex="1"/>
-				<!-- dh:png id="dhRecipientComboBoxButton" src="/images/${buildStamp}/triangle.png" style="width: 27; height: 21;"/> -->
-				<img id="dhRecipientComboBoxButton" src="/images/${buildStamp}/arrow.gif" />
-				<div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div>
+<dht:shareOuterContainer>
+    <table id="dhShareContainer" class="dhInvisible" cellspacing="0" cellpadding="0" width="100%">
+        <tr>
+        <td id="dhShareLeft" width="46%">
+        <table id="dhShareLeftContainer" cellspacing="0" cellpadding="0">
+			<tr><td valign="top" width="100%">
+        	<img src="/images/${buildStamp}/dumbhippo_logo.gif"/><br/>
+			<dht:largeTitle>Invite friends to <c:out value="${viewgroup.name}"/></dht:largeTitle>
 			</td>
-			<td>
-				<input type="button" value="Add" accesskey="a" class="dhButton" 
-						onclick="dh.share.autoSuggest.activate();"/>
-			</td>
-			</tr>
-			</tbody>
-			</table>
-			
-			<div id="dhRecipientsError" class="dhValidityError"></div>
-	
-			<div class="dhVerticalPadding"></div>
+    	    <tr valign="bottom" height="80%">
+        	<td>
+	        <div id="dhShareSendTo">Share <u>W</u>ith:</div>
+    	    <div><span id="dhInvitationsRemainingMessage" style="display: none;"></span></div> 	        
+ 			<dht:shareRecipientEntry/>
+	        </td></tr>        
+        </table> <!-- end dhShareLeftContainer -->
+        </td> <!-- ends dhShareLeft -->
 
-			<div id="dhRecipientListAreaContainer">
-				<div id="dhRecipientListArea" class="dhBackgroundBox">	
-					<div id="dhRecipientList"> </div>
-					
-					<span id="dhInvitationsRemainingMessage" style="display: none;"></span>
-				</div>
-			</div>
+        <td style="width: 2px">&nbsp;</td>
 
-			<div class="dhVerticalPadding"></div>
-	
-			<dht:shareDescription/>
-	
-			<div class="dhVerticalPadding"></div>
-	
-			<input type="button" value="Share" accesskey="s"
-					class="dhButton share" onclick="dh.sharegroup.submitButtonClicked();" tabindex="3"/>
-	
-			<div class="dhVerticalPadding"></div>
-	
-			<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
-		</div><!-- end dhShareForm -->
-
-	</div><!--  end dhMain -->
+        <td id="dhShareRight" width="53%">
+		<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
+   		<dht:shareDescriptionShare/>
+        </td> <!-- ends dhShareRight -->
+        </tr>
+    </table> <!-- ends dhShareContainer -->
+</dht:shareOuterContainer>    
 </body>
-</html>
+</html>			
+

@@ -314,7 +314,8 @@ td.dhRecipientName {
 }
 
 #dhInvitationsRemainingMessage {
-	float:						right;
+	font-size:					x-small;
+	font-style:					italic;
 }
 
 /* ------------ IMPORT FROM SITEWIDE -------------- */
