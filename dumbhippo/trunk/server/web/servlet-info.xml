@@ -187,15 +187,15 @@
       </init-param>
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>who-are-you,signinsent,error,comingsoon,mail,configjs,flash,privacy,unknownlink,music</param-value>
+          <param-value>who-are-you,signinsent,error,comingsoon,mail,configjs,flash,privacy,unknownlink,music,upgrade</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>person,group,main,search,musicgroup,song,album,artist,suggest</param-value>
+          <param-value>person,group,main,search,musicgroup,song,album,artist,suggest,friends</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>home,welcome,we-miss-you,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,framer,visit,invites,nowplaying,chatwindow,admin</param-value>
+          <param-value>home,welcome,we-miss-you,invite,invitesent,sharelink,sharephotoset,sharephotoset-first,sharegroup,bookmark,account,framer,visit,invites,nowplaying,nowplaying-html,nowplaying-theme,nowplaying-themes,nowplaying-theme-creator,chatwindow,admin</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   
