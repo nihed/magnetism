@@ -147,6 +147,15 @@ public:
     }
 
 private:
+    class HippoUIUpgradeWindowCallback : public HippoIEWindowCallback
+    {
+    public:
+        HippoUIUpgradeWindowCallback(HippoUI *ui) { ui_ = ui; }
+        virtual void onDocumentComplete();
+    private:
+        HippoUI *ui_;
+    };
+
     bool registerActive();
     bool registerClass();
     bool createWindow();
@@ -246,6 +255,8 @@ private:
 
     HippoPtr<ITypeInfo> uiTypeInfo_;  // Type information blob for IHippoUI, used for IDispatch
     ULONG registerHandle_;            // Handle from RegisterActiveObject
+
+    HippoUIUpgradeWindowCallback *upgradeWindowCallback_;
 
     HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;

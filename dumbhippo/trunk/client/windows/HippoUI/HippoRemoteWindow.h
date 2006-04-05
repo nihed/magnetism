@@ -15,6 +15,7 @@ class HippoRemoteWindow
 public:
     HippoRemoteWindow(HippoUI *ui, WCHAR *title, HippoIEWindowCallback *ieCb);
     void navigate(WCHAR *url);
+    void show();
     void showShare(WCHAR *urlToShare, WCHAR *titleOfShare);
     void showShare(WCHAR *urlToShare, WCHAR *titleOfShare, WCHAR *shareType);
     void showSignin();

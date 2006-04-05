@@ -93,6 +93,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
     recentPostList_ = NULL;
     currentShare_ = NULL;
+    upgradeWindowCallback_ = NULL;
     upgradeWindow_ = NULL;
     signinWindow_ = NULL;
 }
@@ -538,6 +539,7 @@ HippoUI::create(HINSTANCE instance)
     registerStartup();
 
     if (this->initialShowDebugShare_) {
+        onUpgradeReady();
         HippoPost linkshare;
 
         HippoEntity person1;
@@ -1121,16 +1123,24 @@ HippoUI::getMySpaceContacts()
     im_.getMySpaceContacts();
 }
 
+void
+HippoUI::HippoUIUpgradeWindowCallback::onDocumentComplete()
+{
+    ui_->upgradeWindow_->show();
+    ui_->upgradeWindow_->setForegroundWindow();
+}
+
 void 
 HippoUI::onUpgradeReady()
 {
     if (upgradeWindow_)
         delete upgradeWindow_;
-    upgradeWindow_ = new HippoRemoteWindow(this, L"New version of DumbHippo!", NULL);
+    if (!upgradeWindowCallback_) 
+        upgradeWindowCallback_ = new HippoUIUpgradeWindowCallback(this);
+    upgradeWindow_ = new HippoRemoteWindow(this, L"New version of DumbHippo!", upgradeWindowCallback_);
     HippoBSTR url;
     getRemoteURL(HippoBSTR(L"upgrade"), &url);
     upgradeWindow_->navigate(url);
-    upgradeWindow_->setForegroundWindow();
 }
 
 void

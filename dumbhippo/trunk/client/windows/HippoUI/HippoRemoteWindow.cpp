@@ -36,6 +36,11 @@ HippoRemoteWindow::navigate(WCHAR *url)
 {
     preNavigate(url);
     ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 600, 600);
+}
+
+void
+HippoRemoteWindow::show()
+{
     ieWindow_->show();
 }
 
@@ -85,6 +90,7 @@ HippoRemoteWindow::showSignin()
     HippoBSTR signinUrl;
     ui_->getRemoteURL(L"who-are-you?next=close", &signinUrl);
     navigate(signinUrl);
+    show();
 }
 
 HippoIE *
