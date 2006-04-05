@@ -68,4 +68,10 @@ dh.myspace.NameInput = function () {
 
 dh.myspace.instance = null;
 
-dojo.event.connect(dojo, "loaded", function () { dh.myspace.instance = new dh.myspace.NameInput() });
+var dhMySpaceInit = function() {
+	if (!document.getElementById("dhMySpaceName"))
+		return; // account is probably disabled so no myspace name box
+	dh.myspace.instance = new dh.myspace.NameInput();
+}
+
+dojo.event.connect(dojo, "loaded", dhMySpaceInit);

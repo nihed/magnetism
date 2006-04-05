@@ -56,7 +56,10 @@
 			];
 		
 			var node = document.getElementById('dhAccountSlideshow');
-			var slideshow = new dh.slideshow.Slideshow(node, 420, 300, slides);
+			// node is null if account is disabled
+			if (node) {
+				var slideshow = new dh.slideshow.Slideshow(node, 420, 300, slides);
+			}
 		}
 		
 		dojo.event.connect(dojo, "loaded", dj_global, "accountSlideshowInit");	
@@ -65,19 +68,19 @@
 <dht:bodyWithAds>
 	<dht:mainArea>
 		<dht:toolbar account="false" publicPageId="${account.signin.userId}"/>
-		<dht:infobar/>		
+		<dht:infobar hideEnableAccount="true"/>		
 
-		<dht:largeTitle>Comics!</dht:largeTitle>
+		<c:if test="${!account.signin.disabled}">
+			<dht:largeTitle>Comics!</dht:largeTitle>
+		</c:if>
 
 		<div style="overflow:hidden;">
-
-			<div class="dh-account-movie-area">
-				<div id="dhAccountSlideshow"></div>
-			</div>
-			<div style="clear:left;text-align:center;"><a style="font-size:xx-small;font-style:italic;color:black;text-decoration:none;" target="_blank" href="http://www.toothpastefordinner.com/">temporary comics based on the awesome toothpastefordinner characters</a></div>
-
 		<c:choose>
 			<c:when test="${!account.signin.disabled}">
+				<div class="dh-account-movie-area">
+					<div id="dhAccountSlideshow"></div>
+				</div>
+				<div style="clear:left;text-align:center;"><a style="font-size:xx-small;font-style:italic;color:black;text-decoration:none;" target="_blank" href="http://www.toothpastefordinner.com/">temporary comics based on the awesome toothpastefordinner characters</a></div>
 				
 				<div class="dhBackgroundBox">
 					<b>Help your friends find you</b>
