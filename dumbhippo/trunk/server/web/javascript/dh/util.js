@@ -309,6 +309,7 @@ dh.util.clearNode = function (node) {
 	while (node.firstChild) { node.removeChild(node.firstChild) }
 }
 
+// keep this in sync with the javascript on /bookmark
 dh.util.openShareWindow = function(url) {
 	window.open(url,
 	'_NEW',
@@ -321,7 +322,7 @@ dh.util.openShareGroupWindow = function(groupId) {
 }
 
 dh.util.openShareLinkWindow = function(link, title) {
-	var url = dhServerUri + 'sharelink?url=' + encodeURIComponent(link) + '&title=' + encodeURIComponent(title);
+	var url = dhServerUri + 'sharelink?url=' + encodeURIComponent(link) + '&title=' + encodeURIComponent(title) + '&v=1&next=close';
 	dh.util.openShareWindow(url);
 }
 
