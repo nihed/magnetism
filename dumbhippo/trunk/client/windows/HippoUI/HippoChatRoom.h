@@ -102,8 +102,8 @@ public:
     void addUser(BSTR userId, int userVersion, BSTR userName, bool participant);
     void removeUser(BSTR userId);
     void addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial);
-    void updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying);
-    void musicStoppedForUser(const BSTR userId);
+    void updateMusicForUser(BSTR userId, BSTR arrangementName, BSTR artist, bool musicPlaying);
+    void musicStoppedForUser(BSTR userId);
     void clear(); // Called on reconnect, since users and messages will be resent
 
 private:
@@ -115,7 +115,7 @@ private:
     void notifyUserLeave(const HippoChatUser &user);
     void notifyMessage(const HippoChatMessage &message);
     void notifyReconnect();
-    void notifyUserMusicChange(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying);
+    void notifyUserMusicChange(BSTR userId, BSTR arrangementName, BSTR artist, bool musicPlaying);
 
     void doRescanIdle();
     static int rescanIdleCallback(void *data);
@@ -147,7 +147,7 @@ public:
     virtual void onUserLeave(HippoChatRoom *chatRoom, const HippoChatUser &user) = 0;
     virtual void onMessage(HippoChatRoom *chatRoom, const HippoChatMessage &message) = 0;
     virtual void onReconnect(HippoChatRoom *chatRoom) = 0;
-    virtual void onUserMusicChange(HippoChatRoom *chatRoom, const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying) = 0;
+    virtual void onUserMusicChange(HippoChatRoom *chatRoom, BSTR userId, BSTR arrangementName, BSTR artist, bool musicPlaying) = 0;
     
     virtual ~HippoChatRoomListener() {}
 };

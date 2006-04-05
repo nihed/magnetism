@@ -182,7 +182,7 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
 }
 
 void 
-HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying)
+HippoChatRoom::updateMusicForUser(BSTR userId, BSTR arrangementName, BSTR artist, bool musicPlaying)
 {   
      HippoChatUser *user;
      bool userExists = getUser(userId, &user);
@@ -192,7 +192,9 @@ HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName,
              user->setArrangementName(arrangementName);
              user->setArtist(artist);
          } 
-         notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
+         if (user->isParticipant()) {
+             notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
+         }
      } else {
          hippoDebug(L"Not updating music for unknown user: %s", userId);
      }
@@ -200,13 +202,13 @@ HippoChatRoom::updateMusicForUser(const BSTR userId, const BSTR arrangementName,
 }
 
 void 
-HippoChatRoom::musicStoppedForUser(const BSTR userId)
+HippoChatRoom::musicStoppedForUser(BSTR userId)
 { 
      updateMusicForUser(userId, HippoBSTR(L""), HippoBSTR(L""), false);
 }
 
 void
-HippoChatRoom::notifyUserMusicChange(const BSTR userId, const BSTR arrangementName, const BSTR artist, bool musicPlaying)
+HippoChatRoom::notifyUserMusicChange(BSTR userId, BSTR arrangementName, BSTR artist, bool musicPlaying)
 {
     for (unsigned long i = 0; i < listeners_.length(); i++)
         listeners_[i]->onUserMusicChange(this, userId, arrangementName, artist, musicPlaying);
