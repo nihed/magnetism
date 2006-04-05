@@ -1254,7 +1254,7 @@ HippoUI::registerStartup()
         WCHAR commandLine[MAX_PATH];
         GetModuleFileName(instance_, commandLine, sizeof(commandLine) / sizeof(commandLine[0]));
         HippoRegistrar registrar(NULL);
-
+        registrar.registerStartupProgram(L"DumbHippo", commandLine);
     }
 }
 
