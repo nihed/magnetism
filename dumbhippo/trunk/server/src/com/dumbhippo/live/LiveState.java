@@ -539,7 +539,7 @@ public class LiveState {
 		}
 	}
 	
-	// Peroidcally decays the hotness of every active user
+	// Periodically decays the hotness of every active user
 	private class LiveUserPeriodicUpdater extends Thread {
 		@Override
 		public void run() {
@@ -557,13 +557,15 @@ public class LiveState {
 					
 					for (LiveUser user : users) {
 						userUpdater.periodicUpdate(user);
-					}
-					
+					}		
+				} catch (InterruptedException e) {
+					break; // exit the loop
+				} catch (Throwable t) {
+					logger.warn("Unexpected exception in LiveUserPeriodicUpdater", t);
+				} finally {
+					// this is in finally so a recurring exception doesn't busy loop so badly
 					long currentTime = System.currentTimeMillis();
 					nextTime = Math.max(currentTime, nextTime + LIVE_USER_UPDATE_INTERVAL);
-					
-				} catch (InterruptedException e) {
-					break;
 				}
 			}
 		}
