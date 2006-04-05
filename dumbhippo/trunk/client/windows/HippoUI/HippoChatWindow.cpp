@@ -53,8 +53,13 @@ HippoChatWindow::onClose(bool fromScript)
 STDMETHODIMP
 HippoChatWindow::DemandAttention()
 {
-    if (window_)
-        SetForegroundWindow(window_);
+    FLASHWINFO flashInfo;
+    flashInfo.cbSize = sizeof(flashInfo);
+    flashInfo.hwnd = window_;
+    flashInfo.dwTimeout = 0;
+    flashInfo.dwFlags = FLASHW_TIMERNOFG | FLASHW_TRAY;
+    flashInfo.uCount = 5;
+    FlashWindowEx(&flashInfo);
     return S_OK;
 }
 
