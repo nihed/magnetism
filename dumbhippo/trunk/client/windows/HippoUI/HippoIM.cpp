@@ -78,6 +78,8 @@ HippoIM::~HippoIM()
     stopSignInTimeout();
     stopRetryTimeout();
 
+    disconnect();
+
     g_queue_foreach(pending_messages_, delete_outgoing_message, 0);
     g_queue_free(pending_messages_);
 }

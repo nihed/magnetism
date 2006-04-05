@@ -371,7 +371,8 @@ HippoIEImpl::embedBrowser()
     // Append the transformed XML to the document
     hresult = doc->write(sfArray);
     hresult = doc->close();
-
+    
+    SafeArrayDestroy(sfArray);
     iceCream->Release();
 }
 

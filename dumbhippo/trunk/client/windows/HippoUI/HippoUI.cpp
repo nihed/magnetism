@@ -2051,6 +2051,8 @@ WinMain(HINSTANCE hInstance,
         g_printerr("%s\n", error->message);
         return 1;
     }
+    g_option_context_free(context);
+    g_strfreev(argv);
 
     if (debug)
         instanceType = HIPPO_INSTANCE_DEBUG;
@@ -2107,6 +2109,8 @@ WinMain(HINSTANCE hInstance,
 
     result = ((Win32Source *)source)->result;
     g_source_unref(source);
+
+    g_main_loop_unref(loop);
 
     ui->destroy();
     ui->Release();
