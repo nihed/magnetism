@@ -8,7 +8,6 @@ dh.framer._selfId = null
 dh.framer._messageList = new dh.chat.MessageList(
 	function(message, before) { dh.framer._addMessage(message, before) },
 	function(message) { dh.framer._removeMessage(message) },
-	null,
 	3)
 dh.framer._participantList = new dh.chat.UserList(
 	function(user, before) { dh.framer._addUser(user, before, true) },

@@ -331,13 +331,23 @@ dh.util.openFrameSet = function(window, event, obj, postID) {
 	return false;
 }
 
-dh.util.getTextWidth = function(text) {
-    // Only elements that are rendered have the offsetWidth property set. 
-    // So we add the text to the page, measure it, and then remove it.
-    var textSpan = document.createElement("span")
-    textSpan.innerHTML = text;
-    document.body.appendChild(textSpan)
-    var width = textSpan.offsetWidth
-    document.body.removeChild(textSpan)
-    return width;       
+dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {
+     // Only elements that are rendered have the offsetWidth property set. 
+     // So we add the text to the page, measure it, and then remove it.
+     var textSpan = document.createElement("span")
+     textSpan.innerHTML = text;
+     if (fontFamily)
+         textSpan.style.fontFamily = fontFamily;
+     if (fontSize)
+         textSpan.style.fontSize = fontSize;
+     if (fontStyle)
+         textSpan.style.fontStyle = fontStyle;
+     if (fontVariant)
+         textSpan.style.fontSize = fontVariant;
+     if (fontWeight)
+         textSpan.style.fontWeight = fontWeight;                     
+     document.body.appendChild(textSpan)
+     var width = textSpan.offsetWidth
+     document.body.removeChild(textSpan)
+     return width;       
 }

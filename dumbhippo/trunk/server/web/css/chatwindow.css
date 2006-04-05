@@ -142,6 +142,74 @@ body
     background-color: transparent;
 }
 
+.dh-chat-person-name
+{
+	position:         absolute;
+	top:              8px;
+	left:             63px;
+    background-color: transparent;
+    color:            white;
+    
+}
+
+.dh-chat-person-name-inner
+{
+	position:         relative;
+	background-color: transparent;
+	font-weight:      bold;
+	width:            97%; 
+    white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
+}
+
+.dh-chat-person-arrangement-name
+{
+	position:         absolute;
+	top:              25px;
+	left:             80px;
+    background-color: transparent;
+    color:            #174675;
+    
+}
+
+.dh-chat-person-arrangement-name-inner
+{
+	position:         relative;
+	background-color: transparent;
+	font-size:        x-small;
+	width:            95%; 
+    white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
+}
+
+.dh-chat-person-artist 
+{
+	position:         absolute;
+	top:              38px;
+	left:             80px;
+    background-color: transparent;
+    color:            #174675;
+    
+}
+
+.dh-chat-person-artist-inner
+{
+	position:         relative;
+	background-color: transparent;
+	font-size:        x-small;
+	width:            95%; 
+	white-space:      nowrap; 
+    overflow:         hidden;   
+    text-overflow:    ellipsis;   
+}
+
+.dh-chat-person-music-stopped
+{
+    color: #eedd88;
+}
+
 .dh-chat-message-user-first {
     margin-top: 8px;
 }
@@ -189,6 +257,7 @@ body
     border-top: 1px solid #94840F
 }
 
+// do not set any font properties here, set them in chatwindow.js
+// so that we don't forget to use them when the text width is measured
 .dh-chat-message-text-inner {
-	font-family: Verdana, sans;
 }

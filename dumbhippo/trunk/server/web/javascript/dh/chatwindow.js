@@ -5,27 +5,31 @@ dojo.require("dh.util")
 dojo.require("dojo.event")
 
 dh.chatwindow._selfId = null
+// _textAreaWidth contains the width of the area available for chat messages,
+// it is current between resizings, but should be updated only after resizing
+// of text messages is complete, because during the process we need to know
+// the previous text area width
 dh.chatwindow._textAreaWidth = null
-dh.chatwindow._photoWidth = 48
+dh.chatwindow.PHOTO_WIDTH = 48
+dh.chatwindow.FLOAT_ADJUSTMENT = 3
+dh.chatwindow.MESSAGES_FONT_FAMILY = "Verdana, sans"  
 dh.chatwindow._messageList = new dh.chat.MessageList(
 	function(message, before) { dh.chatwindow._addMessage(message, before) },
-	function(message) { dh.chatwindow._removeMessage(message) },
-	function(message, before) { dh.chatwindow._resizeMessage(message, before) })
+	function(message) { dh.chatwindow._removeMessage(message) })
 dh.chatwindow._userList = new dh.chat.UserList(
 	function(user, before) { dh.chatwindow._addUser(user, before) },
-	function(user) { dh.chatwindow._removeUser(user) },
-	function(user, arrangementName, artist, musicPlaying) { dh.chatwindow._updateUserMusic(user, arrangementName, artist, musicPlaying) })
+	function(user) { dh.chatwindow._removeUser(user) })
     
 dh.chatwindow._createHeadShot = function(userId, version) {
-    var url = "/files/headshots/" + dh.chatwindow._photoWidth + "/" + userId + "?v=" + version
-    return dh.util.createPngElement(url, dh.chatwindow._photoWidth, dh.chatwindow._photoWidth)
+    var url = "/files/headshots/" + dh.chatwindow.PHOTO_WIDTH + "/" + userId + "?v=" + version
+    return dh.util.createPngElement(url, dh.chatwindow.PHOTO_WIDTH, dh.chatwindow.PHOTO_WIDTH)
 }
 
 // Add a user to the list of current users
 dh.chatwindow.onUserJoin = function(userId, version, name, participant) {
 	if (!participant)
 		return;
-		
+	
 	var user = new dh.chat.User(userId, version, name)
 	this._userList.userJoin(user)
 }
@@ -48,9 +52,12 @@ dh.chatwindow.onReconnect = function() {
 
 // Update music for a given user
 dh.chatwindow.onUserMusicChange = function(userId, arrangementName, artist, musicPlaying) {
-	this._userList.userMusicChange(userId, arrangementName, artist, musicPlaying)
+    var user = this._userList.getUser(userId)
+	// a user might not be in the _userList if he wasn't yet reported as a participant
+    if (user) {  
+	    dh.chatwindow._updateUserMusic(user, arrangementName, artist, musicPlaying)
+	} 
 }
-
 
 // Check if we are scrolled to the bottom (with 8 pixels of fuzz)
 dh.chatwindow._isAtBottom = function(element) {
@@ -62,7 +69,7 @@ dh.chatwindow._scrollToBottom = function(element) {
 	element.scrollTop = element.scrollHeight - element.clientHeight
 }
 
-dh.chatwindow._addMessage = function(message, before) {
+dh.chatwindow._addMessage = function(message, before, resizingFlag) {
 	message.div = document.createElement("div")
 	message.div.className = "dh-chat-message"
     if (message.userId == this._selfId)
@@ -77,7 +84,6 @@ dh.chatwindow._addMessage = function(message, before) {
     var image = this._createHeadShot(message.userId, message.version)
     image.className = "dh-chat-message-image"
     image.title = message.name
-	image.style.width = this._photoWidth + "px";
     message.div.appendChild(image)
 
     var messagesDiv = document.getElementById("dhChatMessagesDiv")      
@@ -89,11 +95,12 @@ dh.chatwindow._addMessage = function(message, before) {
     var textSidePadding = 10		
     var textPadding = 2
     
-    var textWidth = dh.util.getTextWidth(message.text) + textSidePadding*2
+    var textWidth = dh.util.getTextWidth(message.text, this.MESSAGES_FONT_FAMILY) + textSidePadding*2
  
-    // 30 is for the scroll bar and such
-    // here we are interested in the new textAreaWidth
-    var textAreaWidth = messagesDiv.offsetWidth - this._photoWidth*2 - 30
+    // because this function can be called as part of the resizing process, we do
+    // not use the _textAreaWidth, but rather we use the textAreaWidth calculated
+    // based on the space currently available to the messagesDiv
+    var textAreaWidth = this._calculateTextAreaWidth(messagesDiv.offsetWidth)
     if (textWidth > textAreaWidth) {
        textWidth = textAreaWidth
 	}	
@@ -110,77 +117,117 @@ dh.chatwindow._addMessage = function(message, before) {
 		
     if (message.userId == this._selfId) {   
         if (!message.userFirst) {
-            message.div.style.marginLeft = this._photoWidth + "px"
-            // 3px are added in some unknown way to the texDivs that
-            // inline next to the photo, this is how we can distinguish
-            // if the texDiv inlined past the photo, and make sure
-            // all messages are aligned 
-            if (textDiv.offsetLeft == this._photoWidth) {
-               message.div.style.marginLeft = this._photoWidth + 3 + "px"               
+            // inline content that is next to the photo is offset to the right
+            // by 3 pixels in some mysterious way. (This offset occurs even if
+            // the margin is much bigger than the width of the photo!) To make
+            // everything line up, we first set the margin to an initial value
+            // that doesn't account for this 3 pixel offset. If we actually
+            // end up with the inline content positioned where we asked for,
+            // then we must be past the end of the photo, so we set the margin
+            // again to a value that explicitly includes the 3 pixel offset.
+            // We use this.FLOAT_ADJUSTMENT to store the value of this 3 pixel
+            // adjustment we need to make. 
+            message.div.style.marginLeft = this.PHOTO_WIDTH + "px"
+            if (textDiv.offsetLeft == this.PHOTO_WIDTH) {
+               message.div.style.marginLeft = this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT  + "px"               
             }
         }
     }
     else {
-        message.div.style.marginLeft = (textAreaWidth - textWidth) + this._photoWidth + 3 + "px"      	
+        message.div.style.marginLeft = (textAreaWidth - textWidth) + this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT + "px"      	
     }
 	
 	// if this is not a first message in a given batch of messages, make sure that they all are
 	// the same width, which should be the width of the longest message in this batch
 	if (!message.userFirst) {
-	    var doneWithPrevSiblings = 0
+	    var doneWithPrevSiblings = false
 	    var prevSibling = message.div.previousSibling
-	    while ((doneWithPrevSiblings == 0) && (prevSibling)) {	     	    
-	        // find a previous sibling, compare sizes
-            // get to the class attribute
-            var i = 0
-            var classAttributeFound = 0
-            while ((classAttributeFound == 0) && (i < prevSibling.attributes.length)) {
-                if (prevSibling.attributes.item(i).specified) {
-			        if (prevSibling.attributes.item(i).nodeName.toLowerCase() == "class") {
-			            classAttributeFound = 1
-			            if (prevSibling.lastChild.offsetWidth < textWidth) {  
-			                // the width of a new message is going to be longer than the width
-			                // of previous messages in this batch   
-			                // in this case we need to go through all the previous siblings 
-			                // and update them, which is why we are not going to set 
-			                // doneWithPrevSiblings to true here	            
-			                prevSibling.lastChild.style.width = textDiv.style.width
-			                if (message.userId != this._selfId) {
-			                    prevSibling.style.marginLeft = message.div.style.marginLeft
-			                }	
-			            } else {
-			                // the width of a new message is shorter or the same as the width
-			                // of previous messages, so we should make sure it is the same 
-			                textDiv.style.width = prevSibling.lastChild.style.width		            			            
-			                if (message.userId != this._selfId) {
-			                    message.div.style.marginLeft = prevSibling.style.marginLeft
-			                }
-			                doneWithPrevSiblings = 1 
-			            }	    			                
-                        var classStr = prevSibling.attributes.item(i).nodeValue
-			            if (classStr.indexOf("dh-chat-message-user-first") >= 0) {
-			                doneWithPrevSiblings = 1    
-			            }
-                    }
-                }    
-                i++
-            }
-            if (!classAttributeFound) {
-                // we should not have a sibling without a class attribute here
-                var error = "found a sibling of a message div missing a class attribute"
-				dojo.debug(error)
-				alert(error)
-			    doneWithPrevSiblings = 1                             
-            }
+	    // compare sizes with previus siblings 
+	    while (!doneWithPrevSiblings && prevSibling) {	     	    
+            if (prevSibling.lastChild.offsetWidth < textWidth) {  
+			    // the width of a new message is going to be longer than the width
+                // of previous messages in this batch   
+                // in this case we need to go through all the previous siblings 
+                // and update them, which is why we are not going to set 
+                // doneWithPrevSiblings to true here	            
+                prevSibling.lastChild.style.width = textDiv.style.width
+                if (message.userId != this._selfId) {
+                    prevSibling.style.marginLeft = message.div.style.marginLeft
+                }	
+            } else {
+                // the width of a new message is shorter or the same as the width
+                // of previous messages, so we should make sure it is the same 
+                textDiv.style.width = prevSibling.lastChild.style.width		            			            
+                if (message.userId != this._selfId) {
+                    message.div.style.marginLeft = prevSibling.style.marginLeft
+                }
+                doneWithPrevSiblings = true 
+			}	    			                
+			if (prevSibling.className.indexOf("dh-chat-message-user-first") >= 0) {
+			    doneWithPrevSiblings = true    
+			}
             prevSibling = prevSibling.previousSibling  
         }    
-	}	 
+	}
+		 
+		
+	// if before is specified and the messages are from the same user, we have subsequent 
+	// siblings we need to take care of 
+	//
+	// we are going to ignore whether or not before is the first message from that particular 
+	// user (has type "dh-chat-message-user-first"), because if it claims to be the first one, 
+	// this is the next thing that gets changed in addMessage function for the MessageList in 
+	// chat.js
+	// on the other hand, if we encounter another subsequent message that has the type 
+	// "dh-chat-message-user-first", that's when we know we need to stop readjusting sizes
+	//
+	// if we are resizing, we always do that from first message to last, so evaluating the
+	// size of subsequent messages is not necessary. In particular, we do not want to make 
+	// a message as long as its subsequent messages in cases when it actually needs to be 
+	// shorter due to resizing 
+	if (!resizingFlag && before && (before.userId == message.userId)) {
+		var doneWithNextSiblings = false
+	    var nextSibling = message.div.nextSibling
+	    // compare sizes with next siblings 
+	    while (!doneWithNextSiblings && nextSibling) {	     	    
+            if (nextSibling.lastChild.offsetWidth < textWidth) {  
+			    // the width of a new message is going to be longer than the width
+                // of next messages in this batch   
+                // in this case we need to go through all the next siblings 
+                // and update them, which is why we are not going to set 
+                // doneWithNextSiblings to true here	            
+                nextSibling.lastChild.style.width = textDiv.style.width
+                if (message.userId != this._selfId) {
+                    nextSibling.style.marginLeft = message.div.style.marginLeft
+                }	
+            } else {
+                // the width of a new message is shorter or the same as the width
+                // of next messages, so we should make sure it is the same 
+                textDiv.style.width = nextSibling.lastChild.style.width		            			            
+                if (message.userId != this._selfId) {
+                    message.div.style.marginLeft = nextSibling.style.marginLeft
+                }
+                doneWithNextSiblings = true 
+			}
+				    
+			// when we were evaluating previous siblings, we wanted to readjust the
+			// size of the one that is of type "dh-chat-message-user-first", but
+			// when we are evaluating subsequent siblings, we want to stop before
+			// the next one of type "dh-chat-message-user-first"
+								                
+			nextSibling = nextSibling.nextSibling
+						                
+			if (nextSibling.className.indexOf("dh-chat-message-user-first") >= 0) {
+			    doneWithNextSiblings = true    
+			}
+        }  
+	} 
 		
     var textSpan = document.createElement("span")		
     var textNode = document.createTextNode(message.text)
     textSpan.appendChild(textNode)
     textSpan.className = "dh-chat-message-text-inner"
-        
+    textSpan.style.fontFamily = this.MESSAGES_FONT_FAMILY  
     textDiv.appendChild(textSpan)
 		
     if (!before && wasAtBottom)
@@ -198,16 +245,20 @@ dh.chatwindow._resizeMessage = function(message, before) {
     var messagesDiv = document.getElementById("dhChatMessagesDiv")   
     var messageInput = document.getElementById("dhChatMessageInput")
     var oldTextAreaWidth = this._textAreaWidth
-    var newTextAreaWidth = dh.chatwindow.calculateTextAreaWidth(messagesDiv.offsetWidth)
+    var newTextAreaWidth = this._calculateTextAreaWidth(messagesDiv.offsetWidth)
     // last child of a message div is the textDiv
-    var currentTextWidth = message.div.lastChild.offsetWidth
-    if ((currentTextWidth >= oldTextAreaWidth) || (currentTextWidth > newTextAreaWidth)) {
+    var oldTextWidth = message.div.lastChild.offsetWidth
+    // if the message was wrapped before (oldTextWidth is not less than oldTextAreaWidth) 
+    // or it wasn't wrapped before but exceeds the new width (oldTextWidth is greater than 
+    // newTextAreaWidth), then changing the width of the window should change the width of
+    // the message, so we need to recalculate its size
+    if ((oldTextWidth >= oldTextAreaWidth) || (oldTextWidth > newTextAreaWidth)) {
         dh.chatwindow._removeMessage(message)
-        dh.chatwindow._addMessage(message, before)
+        dh.chatwindow._addMessage(message, before, true)
     } else if (message.userId != this._selfId) {   
         // we are happy with the curent text width, but in the case of messages from other people 
         // that "float" right, we need to readjust the left margin based on the new textAreaWidth 
-        message.div.style.marginLeft = (newTextAreaWidth - currentTextWidth) + this._photoWidth + 3 + "px"      	
+        message.div.style.marginLeft = (newTextAreaWidth - oldTextWidth) + this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT + "px"      	
     }   
 }
 
@@ -217,10 +268,12 @@ dh.chatwindow._addUser = function(user, before) {
 
     var image = this._createHeadShot(user.userId, user.version)        
     image.className = "dh-chat-person-image"
+    image.title = user.name
     user.div.appendChild(image)
 
     var nameDiv = document.createElement("div")
     nameDiv.className = "dh-chat-person-name"
+    nameDiv.title = user.name
     user.div.appendChild(nameDiv)
 
     var nameSpan = document.createElement("span")
@@ -238,89 +291,71 @@ dh.chatwindow._removeUser = function(user) {
 }
 
 dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPlaying) {
-    newUserDiv = user.div
-    var oldArrangementNameDiv
-    var oldArtistDiv
+    var userDiv = user.div
+    var arrangementNameDiv = user.arrangementNameDiv
+    var artistDiv = user.artistDiv
     // if musicPlaying flag is false, and arrangementName and artist are not specified, 
     // it means that the old music selection was stopped
     var useOldMusicInfo = ((arrangementName == "") && (artist == "") && !musicPlaying)
     if (!musicPlaying) {
-        newUserDiv.style.backgroundImage = "url(/images/personAreaMusicStopped.jpg)"    
+        userDiv.style.backgroundImage = "url(/images/personAreaMusicStopped.jpg)"    
     } else {
-        newUserDiv.style.backgroundImage = "url(/images/personArea.jpg)"
+        userDiv.style.backgroundImage = "url(/images/personArea.jpg)"
     }
-    
-    // find the old arrangementNameDiv and old artistDiv
-    for(var i = 0; i < newUserDiv.children.length; i++) {
-        var child = newUserDiv.children[i]
-        var j = 0
-        var classAttributeFound = 0
-        while ((classAttributeFound == 0) && (j < child.attributes.length)) {
-            if (child.attributes.item(j).specified) {
-                if (child.attributes.item(j).nodeName.toLowerCase() == "class") {			                      
-                    var classStr = child.attributes.item(j).nodeValue
-			        if (classStr.indexOf("dh-chat-person-arrangement-name") >= 0) {
-			            oldArrangementNameDiv = child    
-			        }
-			        if (classStr.indexOf("dh-chat-person-artist") >= 0) {
-			            oldArtistDiv = child    
-			        }			            
-                }
-            }    
-            j++
-        }
-    }
-
+   
     if (useOldMusicInfo) {
-        if (oldArrangementNameDiv) {    
-            if (oldArrangementNameDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
-                oldArrangementNameDiv.className += " dh-chat-person-music-stopped"
+        if (arrangementNameDiv) {    
+            if (arrangementNameDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
+                arrangementNameDiv.className += " dh-chat-person-music-stopped"
             }
         }
-        if (oldArtistDiv) {
-            if (oldArtistDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
-                oldArtistDiv.className += " dh-chat-person-music-stopped"
+        if (artistDiv) {
+            if (artistDiv.className.indexOf("dh-chat-person-music-stopped") < 0) {
+                artistDiv.className += " dh-chat-person-music-stopped"
             }
         }        
         return;
     } 
 
-    var arrangementNameDiv = document.createElement("div")
+    if (!arrangementNameDiv) {
+        arrangementNameDiv = document.createElement("div")
+        var arrangementNameSpan = document.createElement("span")
+        arrangementNameSpan.className = "dh-chat-person-arrangement-name-inner"
+        arrangementNameSpan.appendChild(document.createTextNode(arrangementName))
+        arrangementNameDiv.appendChild(arrangementNameSpan)    
+        userDiv.appendChild(arrangementNameDiv)
+        user.arrangementNameDiv = arrangementNameDiv        
+    } else {
+        arrangementNameDiv.firstChild.replaceChild(document.createTextNode(arrangementName), arrangementNameDiv.firstChild.firstChild)
+    }
+    
+    // it is easier to reset the class for the arrangementNameDiv completely, 
+    // than to change the old one
     arrangementNameDiv.className = "dh-chat-person-arrangement-name"
     if (!musicPlaying) {
         arrangementNameDiv.className += " dh-chat-person-music-stopped"
+    }    
+    arrangementNameDiv.title = arrangementName
+         
+    if (!artistDiv) {
+        artistDiv = document.createElement("div")
+        var artistSpan = document.createElement("span")
+        artistSpan.className = "dh-chat-person-artist-inner"
+        artistSpan.appendChild(document.createTextNode(artist))
+        artistDiv.appendChild(artistSpan)    
+        userDiv.appendChild(artistDiv)
+        user.artistDiv = artistDiv        
+    } else {
+        artistDiv.firstChild.replaceChild(document.createTextNode(artist), artistDiv.firstChild.firstChild)
     }
     
-    if (oldArrangementNameDiv) {
-        newUserDiv.replaceChild(arrangementNameDiv, oldArrangementNameDiv)
-    } else {
-        newUserDiv.appendChild(arrangementNameDiv)
-    }
-  
-    var arrangementNameSpan = document.createElement("span")
-    arrangementNameSpan.appendChild(document.createTextNode(arrangementName))
-    arrangementNameSpan.className = "dh-chat-person-arrangement-name-inner"
-    arrangementNameDiv.appendChild(arrangementNameSpan)    
-  
-    var artistDiv = document.createElement("div")
+    // same as above, it is easier to reset the class for the artistDiv completely, 
+    // than to change the old one
     artistDiv.className = "dh-chat-person-artist"
     if (!musicPlaying) {
         artistDiv.className += " dh-chat-person-music-stopped"
     }
-    
-    if (oldArtistDiv) {
-        newUserDiv.replaceChild(artistDiv, oldArtistDiv)
-    } else {
-        newUserDiv.appendChild(artistDiv)
-    }
-
-    var artistSpan = document.createElement("span")
-    artistSpan.appendChild(document.createTextNode(artist))
-    artistSpan.className = "dh-chat-person-artist-inner"
-    artistDiv.appendChild(artistSpan)        
-    
-    var peopleDiv = document.getElementById("dhChatPeopleDiv")
-    peopleDiv.replaceChild(newUserDiv, user.div) 
+    artistDiv.title = artist
 }
 
 // Adjust element sizes for the current window size; we need to do this
@@ -347,7 +382,7 @@ dh.chatwindow.resizeElements = function() {
 	var bottomHeight = height - (postInfoDiv.offsetHeight + 30)
 	var bottomY = postInfoDiv.offsetHeight + 20
     
-    var peopleHeight = 3*(bottomHeight/4)
+    var peopleHeight = 3 * (bottomHeight / 4)
     peopleContainer.style.top = bottomY + "px"
     peopleContainer.style.height = peopleHeight + "px"
     peopleDiv.style.top = 17 + "px";
@@ -361,10 +396,11 @@ dh.chatwindow.resizeElements = function() {
     messagesDiv.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
     messagesDiv.style.height = (bottomHeight - (messageInput.offsetHeight + 10)) + "px"
     
-    this._messageList.resizeMessages()  
+    //_resizeMessage is the callback function that we want to be called for each message
+    this._messageList.foreachMessage(function(message, before) { dh.chatwindow._resizeMessage(message, before) })
     // we want to have the old text area width available for resizing, so set the
     // new one only after resizing is done
-    dh.chatwindow.setTextAreaWidth(dh.chatwindow.calculateTextAreaWidth(messagesDiv.offsetWidth))
+    this._setTextAreaWidth(this._calculateTextAreaWidth(messagesDiv.offsetWidth))
 
 	messageInput.style.top = (bottomY + messagesDiv.offsetHeight) + "px"
     messageInput.style.left = (10 + peopleContainer.offsetWidth) + "px"
@@ -401,12 +437,13 @@ dh.chatwindow.setSelfId = function(id) {
 	this._selfId = id
 }
 
-dh.chatwindow.setTextAreaWidth = function(textAreaWidth) {
+dh.chatwindow._setTextAreaWidth = function(textAreaWidth) {
     this._textAreaWidth = textAreaWidth
 }
 
-dh.chatwindow.calculateTextAreaWidth = function(messageDivWidth) {
-    return messageDivWidth - this._photoWidth*2 - 30
+dh.chatwindow._calculateTextAreaWidth = function(messageDivWidth) {
+    // 30 is for the scroll bar and such
+    return messageDivWidth - this.PHOTO_WIDTH*2 - 30
 }
 
 dh.chatwindow.init = function() {

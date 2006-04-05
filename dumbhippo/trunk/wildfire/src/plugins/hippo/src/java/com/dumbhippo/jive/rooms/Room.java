@@ -511,32 +511,32 @@ public class Room {
 	
 	/**
 	 * Check if user can join a particular room and send messages
-	 *    to it. This is the same as being able to view the 
-	 *    post that the room is about. 
+	 * to it. This is the same as being able to view the 
+	 * post that the room is about. 
 	 * 
 	 * @param username
 	 * @return true if the user can join this room
 	 */
-	public boolean userCanJoin(String username) {
+	public boolean checkUserCanJoin(String username) {
 		return allowedUsers.containsKey(username);
 	}
 
 	/**
-	 * Returns the count of the present users.
+	 * Returns the count of present users.
 	 * 
-	 * @return the count of the present users
+	 * @return the count of present users
 	 */
 	public int getPresenceCount() {
 		return presentUsers.size(); 
 	}
 	
 	/**
-	 * Check if the user is present in this room.
+	 * Check if user is present in this room.
 	 * 
 	 * @param username
-	 * @return true if the user is present in this room
+	 * @return true if user is present in this room
 	 */
-	public boolean userPresent(String username) {
+	public boolean checkUserPresent(String username) {
 	    return presentUsers.containsKey(username);	
 	}
 }

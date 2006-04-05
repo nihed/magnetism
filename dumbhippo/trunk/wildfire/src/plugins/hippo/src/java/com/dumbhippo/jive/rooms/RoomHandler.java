@@ -80,7 +80,7 @@ public class RoomHandler implements Component {
 	private Room getRoom(String roomName, String userId) {
 		Room room = rooms.get(roomName);
 		if (room != null) {
-			if (room.userCanJoin(userId)) {
+			if (room.checkUserCanJoin(userId)) {
 				Log.debug("  sending packet to existing room " + roomName);
 				return room;
 			} else {
@@ -107,7 +107,7 @@ public class RoomHandler implements Component {
 	public List<Room> getRoomsForUser(String userId) {
 		List<Room> roomsForUser = new ArrayList<Room>();
 		for (Room room : rooms.values()) {
-			if (room.userPresent(userId)) {
+			if (room.checkUserPresent(userId)) {
 				roomsForUser.add(room);
 			}			
 		}
