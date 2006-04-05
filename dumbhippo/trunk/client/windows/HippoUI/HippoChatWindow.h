@@ -37,8 +37,6 @@ protected:
     void onClose(bool fromScript);
 
 private:
-    static BOOL idleDemandAttention(void * data);
-
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
     HippoBSTR postId_;
