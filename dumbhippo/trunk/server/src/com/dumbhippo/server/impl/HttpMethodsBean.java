@@ -436,9 +436,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		NowPlayingTheme themeObject;
-		if (theme == null)
-			themeObject = whoUser.getAccount().getNowPlayingTheme();
-		else {
+		if (theme == null) {
+			try {
+				// this falls back to "any random theme" if user doesn't have one
+				themeObject = musicSystem.getCurrentNowPlayingTheme(whoUser);
+			} catch (NotFoundException e) {
+				// happens only if no themes are in the system
+				themeObject = null;
+			}
+		} else {
 			try {
 				themeObject = musicSystem.lookupNowPlayingTheme(theme);
 			} catch (ParseException e) {
@@ -449,7 +455,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		if (themeObject == null) {
-			// FIXME we need some kind of default
+			// create a non-persistent theme object just for this call; will have 
+			// sane default values
+			logger.debug("No now playing themes in system or invalid theme id, using a placeholder/temporary theme object");
+			themeObject = new NowPlayingTheme(null, whoUser);
 		}
 		
 		TrackView tv;
