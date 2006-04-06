@@ -47,6 +47,8 @@ var parseTextAttributes = function(node:XMLNode, theme:Object) {
 		theme[what + "Y"] = parseInt(node.attributes.y);
 	if (node.attributes.color)
 		theme[what + "Color"] = parseColor(node.attributes.color);
+	if (node.attributes.fontSize)
+		theme[what + "FontSize"] = parseInt(node.attributes.fontSize);
 }
 
 var parseTheme = function(themeNode:XMLNode) {
