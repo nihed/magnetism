@@ -46,7 +46,7 @@
 
         <td id="dhShareRight" width="53%">
 		<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
-   		<dht:shareDescriptionShare/>
+   		<dht:shareDescriptionShare onsubmit="dh.sharegroup.submitButtonClicked();"/>		
         </td> <!-- ends dhShareRight -->
         </tr>
     </table> <!-- ends dhShareContainer -->

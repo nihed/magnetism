@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
+<%@ attribute name="onsubmit" required="true" type="java.lang.String"%>
 <%-- The description entry area and share button --%>
 <table id="dhShareRightOuterContainer" cellspacing="0" cellpadding="0" width="100%">
 	<tr height="5px">
@@ -37,6 +38,6 @@
     <tr>
     <td align="left" valign="bottom"><img src="/images/${buildStamp}/blue_bl.gif" class="dhShareBottomCornerImg"/></td>
     <td valign="middle" align="left"><div id="dhShareDescriptionBottomFill"><dht:createGroupDialog/></div></td>
-    <td align="right" valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images/${buildStamp}/but_share.gif" onclick="dh.sharelink.submitButtonClicked();" tabindex="3"/></div></td>
+    <td align="right" valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images/${buildStamp}/but_share.gif" onclick="${onsubmit}" tabindex="3"/></div></td>
     </tr>
 </table> 

@@ -16,27 +16,25 @@
         <tr>
         <td id="dhShareLeft" width="46%">
         <table id="dhShareLeftContainer" cellspacing="0" cellpadding="0">
-        <tr><td valign="top" width="100%">
-        <img src="/images/${buildStamp}/dumbhippo_logo.gif"/><br/>
-		<div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
-     	<div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
-			Link: <input id="dhUrlToShare" type="text" class="dhText"/>
-		</div>
-		<div id="dhTitleError" class="dhValidityError"></div>		
-        </td>
-        <tr valign="bottom" height="80%">
-        <td>
-        <div id="dhShareSendTo">Send to:</div>
- 		<dht:shareRecipientEntry/>
-        </td></tr>        
+    	    <tr><td><img src="/images/${buildStamp}/dumbhippo_logo.gif"/></td></tr>
+        	<tr><td width="100%" style="overflow: hidden"><div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
+        			<div id="dhTitleError" class="dhValidityError"></div></td></tr>
+		    <tr><td><div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
+				Link: <input id="dhUrlToShare" type="text" class="dhText"/></div></td></tr>
+        	</td>
+	        <tr valign="bottom" height="80%">
+    	    <td>
+	        <div id="dhShareSendTo">Send to:</div>
+ 			<dht:shareRecipientEntry/>
+        	</td></tr>        
         </table> <!-- end dhShareLeftContainer -->
         </td> <!-- ends dhShareLeft -->
 
-        <td style="width: 2px">&nbsp;</td>
+        <td width="2px">&nbsp;</td>
 
         <td id="dhShareRight" width="53%">
 		<div id="dojoDebug"></div> <!-- where to put dojo debug spew -->
-   		<dht:shareDescriptionShare/>
+   		<dht:shareDescriptionShare onsubmit="dh.sharelink.submitButtonClicked();"/>
         </td> <!-- ends dhShareRight -->
         </tr>
     </table> <!-- ends dhShareContainer -->
