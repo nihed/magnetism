@@ -122,7 +122,7 @@ out:
         freeArgs(vap);
         va_end(vap);
 
-        hippoDebug(L"Failed to load type info from %ls (%x)", libraryName, hr);
+        hippoDebugDialog(L"Failed to load type info from %ls (%x)", libraryName, hr);
     }
 
     return hr;
@@ -159,14 +159,14 @@ out:
         freeArgs(vap);
         va_end(vap);
 
-        hippoDebug(L"Failed to load type info (%x)", hr);
+        hippoDebugLogW(L"Failed to load type info (%x)", hr);
     }
 
     return hr;
 }
 
 void
-hippoDebug(WCHAR *format, ...)
+hippoDebugDialog(WCHAR *format, ...)
 {
     WCHAR buf[1024];
     va_list vap;

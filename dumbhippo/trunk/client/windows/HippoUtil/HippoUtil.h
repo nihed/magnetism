@@ -390,7 +390,7 @@ hippoHresultToString(HRESULT hr, HippoBSTR &str)
 }
 
 DLLEXPORT void
-hippoDebug(WCHAR *format, ...);
+hippoDebugDialog(WCHAR *format, ...);
 
 DLLEXPORT void 
 hippoDebugLastErr(WCHAR *fmt, ...);

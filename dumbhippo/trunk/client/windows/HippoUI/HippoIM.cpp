@@ -531,7 +531,7 @@ HippoIM::connect()
     HippoUStr messageServerU(messageServer);
     
     if (lmConnection_) {
-        hippoDebug(L"connect() called when there is an existing connection");
+        hippoDebugDialog(L"connect() called when there is an existing connection");
         return;
     }
 

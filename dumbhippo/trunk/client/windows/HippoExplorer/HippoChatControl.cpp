@@ -77,7 +77,7 @@ HippoChatControl::QueryInterface(const IID &ifaceID,
     else if (IsEqualIID(ifaceID, IID_IConnectionPointContainer)) 
         *result = static_cast<IConnectionPointContainer *>(&connectionPointContainer_);
     else {
-        // hippoDebug(L"QI for %x", ifaceID.Data1);
+        // hippoDebugDialog(L"QI for %x", ifaceID.Data1);
 
         *result = NULL;
         return E_NOINTERFACE;
@@ -243,7 +243,7 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
         return hr;
 
     if (userIdVariant.vt != VT_BSTR || userIdVariant.bstrVal == NULL || !hippoVerifyGuid(userIdVariant.bstrVal)) {
-        hippoDebug(L"Error setting UserID property");
+        hippoDebugDialog(L"Error setting UserID property");
         return E_FAIL;
     }
 
@@ -254,7 +254,7 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
         return hr;
 
     if (postIdVariant.vt != VT_BSTR || postIdVariant.bstrVal == NULL || !hippoVerifyGuid(postIdVariant.bstrVal)) {
-        hippoDebug(L"Error setting PostID property");
+        hippoDebugDialog(L"Error setting PostID property");
         return E_FAIL;
     }
 
@@ -392,7 +392,7 @@ HippoChatControl::Invoke (DISPID        member,
                              dispParams, result, excepInfo, argErr);
 
 #if 0
-    hippoDebug(L"Invoke: %#x - result %#x\n", member, hr);
+    hippoDebugDialog(L"Invoke: %#x - result %#x\n", member, hr);
 #endif
     
     return hr;
@@ -521,12 +521,12 @@ HippoChatControl::connectToUI()
         return;
 
     if (FAILED(launcher.getUI(&ui_, userId_))) {
-        hippoDebug(L"Couldn't find UI");
+        hippoDebugDialog(L"Couldn't find UI");
         return;
     }
 
     if (FAILED(ui_->GetChatRoom(postId_, &chatRoom_))) {
-        hippoDebug(L"Couldn't get chat room");
+        hippoDebugDialog(L"Couldn't get chat room");
         return;
     }
 

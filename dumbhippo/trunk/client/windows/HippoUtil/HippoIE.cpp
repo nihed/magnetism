@@ -1143,7 +1143,7 @@ HippoIEImpl::Exec (const GUID *commandGroup,
     //
     if (commandGroup == NULL) {
         if (commandId == OLECMDID_CLOSE) {
-            hippoDebug(L"Close the window, it's cold in here");
+            hippoDebugDialog(L"Close the window, it's cold in here");
             return S_OK;
         } else {
             return OLECMDERR_E_NOTSUPPORTED;
