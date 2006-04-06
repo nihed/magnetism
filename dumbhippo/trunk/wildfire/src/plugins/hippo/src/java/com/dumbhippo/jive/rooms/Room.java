@@ -174,6 +174,7 @@ public class Room {
 		presentResources = new HashMap<JID, UserInfo>();
 		presentUsers = new HashMap<String, UserInfo>();
 		messages = new ArrayList<MessageInfo>();
+		nextSerial = 0;
 		
 		this.roomName = info.getPostId();
 		for (ChatRoomUser user : info.getAllowedUsers()) {

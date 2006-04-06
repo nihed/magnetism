@@ -309,7 +309,6 @@ public class PostingBoardBean implements PostingBoard {
 					post.setPostInfo(postInfo);
 					em.persist(post);
 					logger.debug("saved new Post {}", post);
-					
 					return post;
 				}
 			});
@@ -810,6 +809,8 @@ public class PostingBoardBean implements PostingBoard {
 	}	
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
+		// we use serial = -1 in other places in the system to designate a message that contains
+		// the post description, but we never add this type of message to the database
 		if (serial < 0) 
 			throw new IllegalArgumentException("Negative serial");
 		

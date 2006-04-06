@@ -1,5 +1,8 @@
 dojo.provide("dh.chat")
 
+dh.chat.MESSAGE_FONT_STYLE = "normal" 
+dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE = "italic"  
+
 dh.chat.Message = function(userId, version, name, text, timestamp, serial) {
 	this.userId = userId 
 	this.version = version
@@ -172,4 +175,13 @@ dh.chat.UserList = function(insertCallback, removeCallback) {
 	this.numUsers = function() {
 		return this._users.length
 	}
+}
+
+dh.chat.getMessageFontStyle = function(message) {
+    var messageFontStyle = this.MESSAGE_FONT_STYLE   
+    // if message serial is -1, it is a post description that is displayed as the first message
+    if (message.serial == -1) {
+        messageFontStyle = this.DESCRIPTION_MESSAGE_FONT_STYLE
+    }
+    return messageFontStyle  
 }

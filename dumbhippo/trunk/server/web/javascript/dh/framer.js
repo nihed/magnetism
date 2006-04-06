@@ -59,10 +59,13 @@ dh.framer._addMessage = function(message, before) {
 	message.nameDiv = document.createElement("div")
     message.nameDiv.className = "dh-chat-name"
   	message.nameDiv.appendChild(document.createTextNode(message.name))
-  	
+  	 
+    var messageFontStyle = dh.chat.getMessageFontStyle(message)
+    
   	message.div = document.createElement("div")
   	message.div.className = "dh-chat-message"
   	message.div.appendChild(document.createTextNode(message.text))
+	message.div.style.fontStyle = messageFontStyle
 	
 	var namesArea = document.getElementById('dhPostChatNames')
 	namesArea.insertBefore(message.nameDiv, before ? before.nameDiv : null)

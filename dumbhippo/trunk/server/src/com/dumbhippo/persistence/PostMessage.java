@@ -26,6 +26,8 @@ public class PostMessage extends DBUnique {
 	private long timestamp;
 	
 	public PostMessage() {
+		// we use serial = -1 in other places in the system to designate a message that contains
+		// the post description, but we never add this type of message to the database
 		this(null, null, null, null, -1);
 	}
 

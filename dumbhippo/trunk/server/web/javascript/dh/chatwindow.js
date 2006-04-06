@@ -92,10 +92,12 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
 		
     var textDiv = document.createElement("div")
     textDiv.className = "dh-chat-message-text"
-    var textSidePadding = 10		
+
+    var messageFontStyle = dh.chat.getMessageFontStyle(message)
+    var textSidePadding = 10	
     var textPadding = 2
     
-    var textWidth = dh.util.getTextWidth(message.text, this.MESSAGES_FONT_FAMILY) + textSidePadding*2
+    var textWidth = dh.util.getTextWidth(message.text, this.MESSAGES_FONT_FAMILY, null, messageFontStyle) + textSidePadding*2
  
     // because this function can be called as part of the resizing process, we do
     // not use the _textAreaWidth, but rather we use the textAreaWidth calculated
@@ -112,8 +114,25 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     textDiv.style.paddingLeft = textSidePadding + "px"    
     textDiv.style.paddingTop = textPadding + "px"
     textDiv.style.paddingBottom = textPadding + "px"   
-        
-    message.div.appendChild(textDiv)    
+         
+    message.div.appendChild(textDiv)         
+    var textSpan = document.createElement("span")		
+    var textNode = document.createTextNode(message.text)
+    textSpan.appendChild(textNode)
+    textSpan.className = "dh-chat-message-text-inner"
+    textSpan.style.fontFamily = this.MESSAGES_FONT_FAMILY  
+    textSpan.style.fontStyle = messageFontStyle
+    textDiv.appendChild(textSpan)
+    
+    // readjust the right padding, if necessary
+    // for some reason, no matter how long the message that is displayed in italics is,
+    // if it takes up less than one line, there are 4 pixels added on to it on the right
+    // we subtract these extra pixels (texDiv.offsetWidth - textWidth) from the padding
+    // on the right to get the message nicely centered
+    // just to be extra cautious, we do not do this if textDiv.offsetWidth - textWidth
+    // is greater than textSidePadding
+    if ((messageFontStyle == dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE) && (textDiv.offsetWidth - textWidth <= textSidePadding))
+        textDiv.style.paddingRight = (textSidePadding - (textDiv.offsetWidth - textWidth)) + "px"       
 		
     if (message.userId == this._selfId) {   
         if (!message.userFirst) {
@@ -150,14 +169,14 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
                 // in this case we need to go through all the previous siblings 
                 // and update them, which is why we are not going to set 
                 // doneWithPrevSiblings to true here	            
-                prevSibling.lastChild.style.width = textDiv.style.width
+                prevSibling.lastChild.style.width = textDiv.offsetWidth
                 if (message.userId != this._selfId) {
                     prevSibling.style.marginLeft = message.div.style.marginLeft
                 }	
             } else {
                 // the width of a new message is shorter or the same as the width
                 // of previous messages, so we should make sure it is the same 
-                textDiv.style.width = prevSibling.lastChild.style.width		            			            
+                textDiv.style.width = prevSibling.lastChild.offsetWidth		
                 if (message.userId != this._selfId) {
                     message.div.style.marginLeft = prevSibling.style.marginLeft
                 }
@@ -196,14 +215,14 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
                 // in this case we need to go through all the next siblings 
                 // and update them, which is why we are not going to set 
                 // doneWithNextSiblings to true here	            
-                nextSibling.lastChild.style.width = textDiv.style.width
+                nextSibling.lastChild.style.width = textDiv.offsetWidth
                 if (message.userId != this._selfId) {
                     nextSibling.style.marginLeft = message.div.style.marginLeft
                 }	
             } else {
                 // the width of a new message is shorter or the same as the width
                 // of next messages, so we should make sure it is the same 
-                textDiv.style.width = nextSibling.lastChild.style.width		            			            
+                textDiv.style.width = nextSibling.lastChild.offsetWidth		            			            
                 if (message.userId != this._selfId) {
                     message.div.style.marginLeft = nextSibling.style.marginLeft
                 }
@@ -222,14 +241,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
 			}
         }  
 	} 
-		
-    var textSpan = document.createElement("span")		
-    var textNode = document.createTextNode(message.text)
-    textSpan.appendChild(textNode)
-    textSpan.className = "dh-chat-message-text-inner"
-    textSpan.style.fontFamily = this.MESSAGES_FONT_FAMILY  
-    textDiv.appendChild(textSpan)
-		
+    
     if (!before && wasAtBottom)
 		this._scrollToBottom(messagesDiv)
 				

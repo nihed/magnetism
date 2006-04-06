@@ -327,9 +327,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		List<PostMessage> messages = postingBoard.getPostMessages(post);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
+		ChatRoomMessage message;
+	
+		// if post description is not empty, add it to the history of chat room messages, designate this type
+		// of message that contains post description with serial = -1
+		if (post.getText().trim().length() != 0) {
+            message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
+            history.add(message);
+		}
+		
 		for (PostMessage postMessage : messages) {
 			String username = postMessage.getFromUser().getGuid().toJabberId(null);
-			ChatRoomMessage message;
 			message = new ChatRoomMessage(username, postMessage.getMessageText(), postMessage.getTimestamp(), postMessage.getMessageSerial()); 
 			history.add(message);
 		}
