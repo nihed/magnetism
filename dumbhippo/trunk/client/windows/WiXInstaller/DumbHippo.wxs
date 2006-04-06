@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="83DD8C5F-884B-4612-A46D-596741E9f5FE" 
+    <Product Id="4DFC4C1d-B748-446E-8003-871BAE0263F2" 
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="DumbHippo" 
             Language="1033"
-            Version="1.1.38"
+            Version="1.1.39"
             Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="DumbHippo client software" 
@@ -21,8 +21,8 @@
         <Property Id="ARPPRODUCTICON" Value="dumbHippoIcon"/>
         
         <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
-            <UpgradeVersion Minimum="0" Maximum="1.1.38" Property="DHPREVIOUSVERSIONS"/>
-            <UpgradeVersion Minimum="1.1.38" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+            <UpgradeVersion Minimum="0" Maximum="1.1.39" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.39" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
         </Upgrade>
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->

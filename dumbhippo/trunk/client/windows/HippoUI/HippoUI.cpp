@@ -539,7 +539,6 @@ HippoUI::create(HINSTANCE instance)
     registerStartup();
 
     if (this->initialShowDebugShare_) {
-        onUpgradeReady();
         HippoPost linkshare;
 
         HippoEntity person1;
