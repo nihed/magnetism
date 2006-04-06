@@ -241,14 +241,14 @@ HippoUpgrader::openDownloadFile(BSTR  basename,
         (!CreateDirectory(path, NULL) &&
          GetLastError() != ERROR_ALREADY_EXISTS))
     {
-        hippoDebug(L"Error creating local data directory: %ls", path);
+        hippoDebugDialog(L"Error creating local data directory: %ls", path);
         return false;
     }
     if (StringCchCat(path, MAX_PATH, L"\\Upgrade") != S_OK ||
         (!CreateDirectory(path, NULL) &&
          GetLastError() != ERROR_ALREADY_EXISTS))
     {
-        hippoDebug(L"Error creating download directory: %ls", path);
+        hippoDebugDialog(L"Error creating download directory: %ls", path);
         return false;
     }
     if (StringCchCat(path, MAX_PATH, L"\\") != S_OK ||

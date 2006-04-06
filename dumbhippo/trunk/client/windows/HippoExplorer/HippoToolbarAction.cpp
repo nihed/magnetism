@@ -130,7 +130,7 @@ HippoToolbarAction::Exec (const GUID *commandGroup,
     // and don't define the command group. Treat everything the same
 
     if (!browser_) {
-        hippoDebug(L"No browser is known");
+        hippoDebugDialog(L"No browser is known");
         return E_FAIL;
     }
 
@@ -141,7 +141,7 @@ HippoToolbarAction::Exec (const GUID *commandGroup,
           SUCCEEDED(browser_->get_LocationName(&title)) &&
           url && ((WCHAR *)url)[0] && title && ((WCHAR *)title)[0])) 
     {
-        hippoDebug(L"There isn't a current web page to share");
+        hippoDebugDialog(L"There isn't a current web page to share");
         return E_FAIL;
     }
 
@@ -192,7 +192,7 @@ HippoToolbarAction::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reas
     shareTitle_ = NULL;
     updateCommandEnabled();
 
-    hippoDebug(L"%s", reason);
+    hippoDebugDialog(L"%s", reason);
 }
 
 /////////////////////////////////////////////////////////////////////

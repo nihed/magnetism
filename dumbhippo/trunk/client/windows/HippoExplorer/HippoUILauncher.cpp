@@ -150,13 +150,13 @@ HippoUILauncher::launchUI()
 {
     if (!window_) {
        if (!createWindow()) {
-            hippoDebug(L"Can't create window to receive timer messages");
+            hippoDebugDialog(L"Can't create window to receive timer messages");
             return E_FAIL;
         }
     }
 
     if (!spawnUI()) {
-        hippoDebug(L"Couldn't start DumbHippo client");
+        hippoDebugDialog(L"Couldn't start DumbHippo client");
         return E_FAIL;
     }
 

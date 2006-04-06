@@ -176,7 +176,7 @@ HippoChatRoom::notifyUserJoin(const HippoChatUser &user)
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"OnUserJoin invoke failed %x", hr);
+                hippoDebugDialog(L"OnUserJoin invoke failed %x", hr);
         }
     }
 }
@@ -196,7 +196,7 @@ HippoChatRoom::updateMusicForUser(BSTR userId, BSTR arrangementName, BSTR artist
              notifyUserMusicChange(userId, arrangementName, artist, musicPlaying);
          }
      } else {
-         hippoDebug(L"Not updating music for unknown user: %s", userId);
+         hippoDebugDialog(L"Not updating music for unknown user: %s", userId);
      }
 
 }
@@ -249,7 +249,7 @@ HippoChatRoom::notifyUserMusicChange(BSTR userId, BSTR arrangementName, BSTR art
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"OnUserMusicChange invoke failed %x", hr);
+                hippoDebugDialog(L"OnUserMusicChange invoke failed %x", hr);
         }
     }
 }
@@ -313,7 +313,7 @@ HippoChatRoom::notifyUserLeave(const HippoChatUser &user)
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"Invoke failed %x", hr);
+                hippoDebugDialog(L"Invoke failed %x", hr);
         }
     }
 }
@@ -372,7 +372,7 @@ HippoChatRoom::notifyMessage(const HippoChatMessage &message)
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"OnMessage invoke failed %x", hr);
+                hippoDebugDialog(L"OnMessage invoke failed %x", hr);
         }
     }
 }
@@ -417,7 +417,7 @@ HippoChatRoom::notifyReconnect()
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"Invoke failed %x", hr);
+                hippoDebugDialog(L"Invoke failed %x", hr);
         }
     }
 }

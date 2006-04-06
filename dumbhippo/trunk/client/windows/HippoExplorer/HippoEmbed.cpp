@@ -49,7 +49,7 @@ ShowChatLaunchListener::onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui)
 void 
 ShowChatLaunchListener::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason)
 {
-    hippoDebug(L"%s", reason);
+    hippoDebugDialog(L"%s", reason);
     delete launcher;
     delete this;
 }
@@ -419,7 +419,7 @@ HippoEmbed::onDocumentComplete(IDispatch *dispatch,
                                           DISPATCH_METHOD, &dispParams, 
                                           NULL /* result */, NULL /* exception */, NULL /* argError */);
             if (!SUCCEEDED(hr))
-                hippoDebug(L"Invoke failed %x", hr);
+                hippoDebugDialog(L"Invoke failed %x", hr);
         }
     }
 }
