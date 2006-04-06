@@ -237,6 +237,11 @@ body
     display: none;    
 }
 
+.dh-chat-message-text {
+    text-wrap: normal;
+    word-wrap: break-word;
+}
+
 .dh-chat-message-my .dh-chat-message-text {
     text-align:       left;
     display:          inline;
