@@ -88,6 +88,7 @@
 						P.S. if you create an account, you can try out some of 
 						our other DumbHippo features as well - for example, a new 
 						way to share cool web sites with your friends.
+						</div>
 					</c:when>
 					<c:otherwise>
 						<dht:largeTitle>CHECK BACK SOON</dht:largeTitle>
