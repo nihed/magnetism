@@ -115,7 +115,6 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			this.titleTextFontSize = 20;
 			this.albumTextX = 450; 
 			this.albumTextY = 300;
-			this.albumTextColor = BLUE;
 			this.albumTextFontSize = 14;
 		}
 	}

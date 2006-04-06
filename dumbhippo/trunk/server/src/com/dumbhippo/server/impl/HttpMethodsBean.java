@@ -494,15 +494,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("activeImageUrl", themeObject.getActiveImageRelativeUrl());
 			xml.appendTextNode("inactiveImageUrl", themeObject.getInactiveImageRelativeUrl());
 			xml.appendTextNode("text", null, "what", "album", "color", themeObject.getAlbumTextColor(),
+					"fontSize", Integer.toString(themeObject.getAlbumTextFontSize()),
 					"x", Integer.toString(themeObject.getAlbumTextX()),
 					"y", Integer.toString(themeObject.getAlbumTextY()));
 			xml.appendTextNode("text", null, "what", "artist", "color", themeObject.getArtistTextColor(),
+					"fontSize", Integer.toString(themeObject.getArtistTextFontSize()),
 					"x", Integer.toString(themeObject.getArtistTextX()),
 					"y", Integer.toString(themeObject.getArtistTextY()));
 			xml.appendTextNode("text", null, "what", "title", "color", themeObject.getTitleTextColor(),
+					"fontSize", Integer.toString(themeObject.getTitleTextFontSize()),
 					"x", Integer.toString(themeObject.getTitleTextX()),
 					"y", Integer.toString(themeObject.getTitleTextY()));
 			xml.appendTextNode("text", null, "what", "status", "color", themeObject.getStatusTextColor(),
+					"fontSize", Integer.toString(themeObject.getStatusTextFontSize()),
 					"x", Integer.toString(themeObject.getStatusTextX()),
 					"y", Integer.toString(themeObject.getStatusTextY()));
 			xml.appendTextNode("albumArt", null, "x", Integer.toString(themeObject.getAlbumArtX()),
