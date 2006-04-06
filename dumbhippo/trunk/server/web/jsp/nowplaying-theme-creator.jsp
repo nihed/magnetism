@@ -25,7 +25,7 @@
 			This theme is already published so other people might be using it! If you're going to change 
 			it a lot, consider 
 			<a href="javascript:dh.nowplaying.createNewTheme('${nowplaying.theme.id}');">creating a new theme based on it</a> rather
-			than changing this one. To edit this one, first <a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'true', '/nowplaying-theme?theme=${nowplaying.themeId}');">unpublish it</a>.
+			than changing this one. To edit this one, first <a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'true', '/nowplaying-theme-creator?theme=${nowplaying.themeId}');">unpublish it</a>.
 		</c:if>
 		<dht:smallTitle>Preview: While Music Is Playing</dht:smallTitle>		
 		<div>
@@ -43,7 +43,7 @@
 		<div>
 			<c:choose>
 				<c:when test="${!nowplaying.theme.draft}">
-					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'true', '/nowplaying-theme?theme=${nowplaying.themeId}');">Unpublish</a>
+					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'true', '/nowplaying-theme-creator?theme=${nowplaying.themeId}');">Unpublish</a>
 				</c:when>
 				<c:otherwise>
 					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'false', '/nowplaying-theme?theme=${nowplaying.themeId}');">Publish</a>

@@ -110,6 +110,8 @@ var parseSong = function(songNode:XMLNode) {
 			song.title = getNodeContent(node);
 		else if (node.nodeName == "artist")
 			song.artist = getNodeContent(node);
+		else if (node.nodeName == "album")
+			song.album = getNodeContent(node);
 		else if (node.nodeName == "stillPlaying") {
 			if (forceMode) {
 				trace("forcing mode to " + forceMode);
@@ -444,6 +446,7 @@ var setSong = function(clip:MovieClip, song:Object) {
 		crossFade(toRemove, songClip, true);
 	});
 	
+	songClip.album.text = song.album;
 	songClip.title.text = song.title;
 	songClip.artist.text = "by " + song.artist;
 	if (song.stillPlaying) {
