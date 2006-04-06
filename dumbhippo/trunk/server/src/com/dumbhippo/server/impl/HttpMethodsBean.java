@@ -482,9 +482,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("album", tv.getAlbum());
 			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
 		} else {
-			xml.appendTextNode("title", "No song");
-			xml.appendTextNode("artist", "");
-			xml.appendTextNode("album", "");
+			xml.appendTextNode("title", "Song Title");
+			xml.appendTextNode("artist", "Artist");
+			xml.appendTextNode("album", "Album");
 			xml.appendTextNode("stillPlaying", "false");
 		}
 		xml.closeElement();
