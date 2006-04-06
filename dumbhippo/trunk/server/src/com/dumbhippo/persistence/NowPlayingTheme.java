@@ -81,15 +81,19 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			titleTextX = basedOn.titleTextX;
 			titleTextY = basedOn.titleTextY;
 			titleTextColor = basedOn.titleTextColor;
+			titleTextFontSize = basedOn.titleTextFontSize;
 			artistTextX = basedOn.artistTextX;
 			artistTextY = basedOn.artistTextY;
 			artistTextColor = basedOn.artistTextColor;
+			artistTextFontSize = basedOn.albumTextFontSize;
 			albumTextX = basedOn.albumTextX;
 			albumTextY = basedOn.albumTextY;
 			albumTextColor = basedOn.albumTextColor;
+			albumTextFontSize = basedOn.albumTextFontSize;
 			statusTextX = basedOn.statusTextX;
 			statusTextY = basedOn.statusTextY;
 			statusTextColor = basedOn.statusTextColor;
+			statusTextFontSize = basedOn.statusTextFontSize;
 			
 		} else {
 			this.titleTextColor = BLUE;
@@ -109,6 +113,10 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			this.titleTextX = 176;
 			this.titleTextY = 41;
 			this.titleTextFontSize = 20;
+			this.albumTextX = 450; 
+			this.albumTextY = 300;
+			this.albumTextColor = BLUE;
+			this.albumTextFontSize = 14;
 		}
 	}
 	

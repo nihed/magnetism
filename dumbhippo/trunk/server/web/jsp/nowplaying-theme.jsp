@@ -35,16 +35,12 @@
 		</div>
 		
 		<div>
-			<c:choose>
-				<c:when test="${nowplaying.theme.draft}">
-					<c:if test="${nowplaying.theme.creator eq signin.user}">
-						<a href="/nowplaying-theme-creator?theme=${nowplaying.theme.id}">Edit</a>
-					</c:if>
-				</c:when>
-				<c:otherwise>
-					<a href="javascript:dh.nowplaying.setTheme('${nowplaying.theme.id}');">Set As Current Theme</a>
-				</c:otherwise>
-			</c:choose>
+			<c:if test="${nowplaying.theme.creator eq signin.user}">
+				<a href="/nowplaying-theme-creator?theme=${nowplaying.theme.id}">Edit</a>
+			</c:if>
+			<c:if test="${!nowplaying.theme.draft}">
+				<a href="javascript:dh.nowplaying.setTheme('${nowplaying.theme.id}');">Set As Current Theme</a>
+			</c:if>
 		</div>
 		
 		<c:if test="${!empty nowplaying.theme.basedOn}">

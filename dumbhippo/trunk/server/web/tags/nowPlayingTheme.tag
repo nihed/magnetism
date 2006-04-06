@@ -27,7 +27,7 @@
 	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
 	<br/>
 	<c:if test="${signin.valid}">
-		<c:if test="${theme.draft && (theme.creator eq signin.user)}">
+		<c:if test="${theme.creator eq signin.user}">
 			<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>
 		</c:if>
 		<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
