@@ -467,7 +467,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// should really be from an "anonymous" viewpoint
 			tv = musicSystem.getCurrentTrackView(null, whoUser);
 		} catch (NotFoundException e) {
-			throw new RuntimeException("no current track for this person", e);
+			tv = null;
 		}
 		
 		XmlBuilder xml = new XmlBuilder();
@@ -475,11 +475,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.openElement("nowPlaying");
 		
 		xml.openElement("song");
-		xml.appendTextNode("image", tv.getSmallImageUrl());
-		xml.appendTextNode("title", tv.getName());
-		xml.appendTextNode("artist", tv.getArtist());
-		xml.appendTextNode("album", tv.getAlbum());
-		xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
+		if (tv != null) {
+			xml.appendTextNode("image", tv.getSmallImageUrl());
+			xml.appendTextNode("title", tv.getName());
+			xml.appendTextNode("artist", tv.getArtist());
+			xml.appendTextNode("album", tv.getAlbum());
+			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
+		} else {
+			xml.appendTextNode("title", "No song");
+			xml.appendTextNode("artist", "");
+			xml.appendTextNode("album", "");
+			xml.appendTextNode("stillPlaying", "false");
+		}
 		xml.closeElement();
 		
 		if (themeObject != null) {
