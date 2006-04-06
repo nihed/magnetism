@@ -11,7 +11,7 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.38:</i>
+		<i>Version 1.1.39:</i>
 		<ul>
 			<li>Several screens look much nicer</li>
 			<li>Chat windows show everyone's currently-playing song</li>
