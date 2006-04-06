@@ -47,7 +47,7 @@ public:
     /**
      * Make the window visible onscreen.
      */
-    void show();
+    void show(BOOL activate = true);
 
     /**
      * Hide the window 

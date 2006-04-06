@@ -493,6 +493,87 @@ idleAddTestViewers(gpointer data)
     return FALSE;
 }
 
+gboolean
+HippoUI::idleShowDebugShare(gpointer data)
+{
+    HippoUI *ui = (HippoUI*)data;
+    HippoPost linkshare;
+
+    HippoEntity person1;
+    person1.type = HippoEntity::EntityType::PERSON;
+    person1.smallPhotoUrl = L"/files/headshots/48/PfqZScwvsH0R9f";
+    person1.name = L"Colin";
+    person1.id = L"15a1fbae7f2807";
+    ui->dataCache_.addEntity(person1);
+
+    HippoEntity person2;
+    person2.type = HippoEntity::EntityType::PERSON;
+    person2.smallPhotoUrl = person1.smallPhotoUrl;
+    person2.name = L"Owen Taylor";
+    person2.id = L"25a1fbae7f2807";
+    ui->dataCache_.addEntity(person2);
+
+    HippoEntity person3;
+    person3.type = HippoEntity::EntityType::PERSON;
+    person3.smallPhotoUrl = person1.smallPhotoUrl;
+    person3.name = L"Colin Walters";
+    person3.id = L"35a1fbae7f2807";
+    ui->dataCache_.addEntity(person3);
+
+    HippoEntity person4;
+    person4.type = HippoEntity::EntityType::PERSON;
+    person4.smallPhotoUrl = person1.smallPhotoUrl;
+    person4.id = L"a35baeea7f2807";
+    person4.name = L"Bryan Clark";
+    ui->dataCache_.addEntity(person4);
+
+    linkshare.url.setUTF8("http://www.gnome.org");
+    linkshare.postId.setUTF8("42");
+    linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
+    linkshare.senderId.setUTF8("15a1fbae7f2807");
+    linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
+        "we can see wrapping and all sorts of fun things like that which will "
+        "cause differences from what we would have if we had a short title without "
+        "the kind of excessive length that you see here.");
+    linkshare.recipients.push_back(person1.id);
+    linkshare.recipients.push_back(person2.id);
+    linkshare.info.setUTF8("");
+    linkshare.timeout = 0;
+    ui->onLinkMessage(linkshare, true);
+
+    g_timeout_add(2000, idleAddTestViewers, ui);
+
+    linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
+    linkshare.postId.setUTF8("2");
+    linkshare.title.setUTF8("funny photo");
+    linkshare.description.setUTF8("Wow, this photo is funny");
+    linkshare.info.setUTF8(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<postInfo>"
+        "    <flickr>"
+        "        <photos>"
+        "             <photo>"
+        "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
+        "                  <photoId>73029609</photoId>"
+        "             </photo>"
+        "        </photos>"
+        "    </flickr>"
+        "</postInfo>");
+    ui->onLinkMessage(linkshare, true);
+
+    HippoMySpaceBlogComment blogComment;
+
+    // Bryan commenting on Colin's blog
+    blogComment.commentId = -1;
+    blogComment.posterId = 29366619;
+    blogComment.posterImgUrl.setUTF8("http://myspace-714.vo.llnwd.net/00227/41/75/227675714_s.jpg");
+    blogComment.posterName.setUTF8("Bryan");
+    blogComment.content.setUTF8("Blah, blah, blah... Blah!");
+
+    ui->bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
+    return FALSE;
+}
+
 bool
 HippoUI::create(HINSTANCE instance)
 {
@@ -539,80 +620,7 @@ HippoUI::create(HINSTANCE instance)
     registerStartup();
 
     if (this->initialShowDebugShare_) {
-        HippoPost linkshare;
-
-        HippoEntity person1;
-        person1.type = HippoEntity::EntityType::PERSON;
-        person1.smallPhotoUrl = L"/files/headshots/48/PfqZScwvsH0R9f";
-        person1.name = L"Colin";
-        person1.id = L"15a1fbae7f2807";
-        dataCache_.addEntity(person1);
-
-        HippoEntity person2;
-        person2.type = HippoEntity::EntityType::PERSON;
-        person2.smallPhotoUrl = person1.smallPhotoUrl;
-        person2.name = L"Owen Taylor";
-        person2.id = L"25a1fbae7f2807";
-        dataCache_.addEntity(person2);
-
-        HippoEntity person3;
-        person3.type = HippoEntity::EntityType::PERSON;
-        person3.smallPhotoUrl = person1.smallPhotoUrl;
-        person3.name = L"Colin Walters";
-        person3.id = L"35a1fbae7f2807";
-        dataCache_.addEntity(person3);
-
-        HippoEntity person4;
-        person4.type = HippoEntity::EntityType::PERSON;
-        person4.smallPhotoUrl = person1.smallPhotoUrl;
-        person4.id = L"a35baeea7f2807";
-        person4.name = L"Bryan Clark";
-        dataCache_.addEntity(person4);
-
-        linkshare.url.setUTF8("http://www.gnome.org");
-        linkshare.postId.setUTF8("42");
-        linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
-        linkshare.senderId.setUTF8("15a1fbae7f2807");
-        linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
-                                      "we can see wrapping and all sorts of fun things like that which will "
-                                      "cause differences from what we would have if we had a short title without "
-                                      "the kind of excessive length that you see here.");
-        linkshare.recipients.push_back(person1.id);
-        linkshare.recipients.push_back(person2.id);
-        linkshare.info.setUTF8("");
-        linkshare.timeout = 0;
-        onLinkMessage(linkshare, true);
-
-        g_timeout_add(2000, idleAddTestViewers, this);
-
-        linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
-        linkshare.postId.setUTF8("2");
-        linkshare.title.setUTF8("funny photo");
-        linkshare.description.setUTF8("Wow, this photo is funny");
-        linkshare.info.setUTF8(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            "<postInfo>"
-            "    <flickr>"
-            "        <photos>"
-            "             <photo>"
-            "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
-            "                  <photoId>73029609</photoId>"
-            "             </photo>"
-            "        </photos>"
-            "    </flickr>"
-            "</postInfo>");
-        onLinkMessage(linkshare, true);
-
-        HippoMySpaceBlogComment blogComment;
-
-        // Bryan commenting on Colin's blog
-        blogComment.commentId = -1;
-        blogComment.posterId = 29366619;
-        blogComment.posterImgUrl.setUTF8("http://myspace-714.vo.llnwd.net/00227/41/75/227675714_s.jpg");
-        blogComment.posterName.setUTF8("Bryan");
-        blogComment.content.setUTF8("Blah, blah, blah... Blah!");
-
-        bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
+        g_timeout_add(10000, idleShowDebugShare, this);
     }
 
     return true;

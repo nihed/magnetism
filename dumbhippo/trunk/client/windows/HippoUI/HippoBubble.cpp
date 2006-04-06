@@ -48,10 +48,11 @@ HippoBubble::HippoBubble(void)
     // internally uses SetLayeredWindowAttributes, which is exclusive with UpdateLayeredWindow
     // So to animate a shaped window, we'd have to fade the bits in and out ourselves.
     //
+    setAnimate(false);
     setUseParent(true);
     setUpdateOnShow(true);
     setWindowStyle(WS_POPUP);
-    setExtendedStyle(WS_EX_TOPMOST | WS_EX_LAYERED);
+    setExtendedStyle(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_NOACTIVATE);
     setClassName(L"HippoBubbleClass");
     setTitle(L"Hippo Notification");
     setApplication(this);
@@ -299,7 +300,7 @@ HippoBubble::setScreenSaverRunning(bool screenSaverRunning)
 void
 HippoBubble::doShow(void) 
 {   
-    show();
+    show(FALSE);
 
     SetTimer(window_, CHECK_MOUSE, 250 /* 0.25 second */, NULL);
     checkMouse();

@@ -210,6 +210,7 @@ private:
                                             WPARAM wParam,
                                             LPARAM lParam);
 
+    static gboolean idleShowDebugShare(gpointer data);
 
 private:
     // If true, this is a debug instance, acts as a separate global

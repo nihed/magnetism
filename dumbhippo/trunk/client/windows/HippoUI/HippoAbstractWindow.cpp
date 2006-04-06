@@ -261,15 +261,12 @@ HippoAbstractWindow::registerClass()
 }
 
 void
-HippoAbstractWindow::show(void) 
+HippoAbstractWindow::show(BOOL activate) 
 {   
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND);
     else
-        ShowWindow(window_, SW_SHOW);
-
-    // Probably not really necessary
-    BringWindowToTop(window_);
+        ShowWindow(window_, (activate ? SW_SHOW : SW_SHOWNOACTIVATE));
 
     if (updateOnShow_) 
         RedrawWindow(window_, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
