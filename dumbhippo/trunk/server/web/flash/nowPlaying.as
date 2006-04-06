@@ -76,12 +76,12 @@ var parseTheme = function(themeNode:XMLNode) {
 	theme.titleHeight = 30;
 	theme.titleFontSize = 20;
 	theme.titleColor = 0x0000FF;
-	// offscreen by default
+	// offscreen and invisible by default
 	theme.albumX = 461;
 	theme.albumY = 141;
 	theme.albumWidth = 245;
 	theme.albumHeight = 30;
-	theme.albumFontSize = 20;
+	theme.albumFontSize = 0;
 	theme.albumColor = 0x0000FF;
 	
 	for (var i = 0; i < themeNode.childNodes.length; ++i) {
@@ -317,6 +317,8 @@ var createNewSongMovie = function(parent:MovieClip) {
 	songClip.createTextField("status", 1, 0, 0, 0, 0);
 	songClip.createTextField("artist", 2, 0, 0, 0, 0);
 	songClip.createTextField("title", 3, 0, 0, 0, 0);	
+	songClip.createTextField("album", 4, 0, 0, 0, 0);
+	
 	return songClip;
 }
 
@@ -362,11 +364,18 @@ var themeClipUpdateStillPlaying = function(themeClip:MovieClip, stillPlaying:Boo
 }
 
 var applyTextTheme = function(songClip:MovieClip, theme:Object, what:String) {
+	var fontSize = theme[what + "FontSize"];
+	
+	if (fontSize == 0)
+		songClip[what].visible = false;
+	else
+		songClip[what].visible = true;
+	
 	songClip[what]._x = theme[what + "X"];
 	songClip[what]._y = theme[what + "Y"];
 	songClip[what]._width = theme[what + "Width"];
 	songClip[what]._height = theme[what + "Height"];
-	formatText(songClip[what], theme[what + "FontSize"], theme[what + "Color"]);
+	formatText(songClip[what], fontSize, theme[what + "Color"]);
 }
 
 var applyThemeToSong = function(songClip:MovieClip, theme:Object) {
@@ -379,6 +388,7 @@ var applyThemeToSong = function(songClip:MovieClip, theme:Object) {
 	applyTextTheme(songClip, theme, "status");
 	applyTextTheme(songClip, theme, "artist");
 	applyTextTheme(songClip, theme, "title");
+	applyTextTheme(songClip, theme, "album");
 }
 
 var setSong = function(clip:MovieClip, song:Object) {
