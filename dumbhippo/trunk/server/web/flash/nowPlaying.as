@@ -265,6 +265,13 @@ var recordOneImageLoadCompleted = function(tracker:Object) {
 // caution, this can synchronously call the "on all loaded completed" callback
 var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallbackUrl:String) {
 	trace("loading " + fullUrl);
+	
+	// happens if no image url was provided at all by the xml
+	if (!fullUrl) {
+		loadImage(tracker, target, fallbackUrl, null);
+		return;
+	}
+	
 	var loader:MovieClipLoader = new MovieClipLoader();
 	var listener:Object = new Object();
 	listener.onLoadError = function(targetClip:MovieClip, errorCode:String) {
