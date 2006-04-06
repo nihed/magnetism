@@ -101,7 +101,7 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 			this.albumTextColor = BLUE;
 			this.statusTextColor = BLUE;
 			
-			// some arbitrary defaults just so we get a sane starting point
+			// some arbitrary defaults so we get a sane starting point
 			this.albumArtX = 102;
 			this.albumArtY = 36;
 			this.statusTextX = 0;
