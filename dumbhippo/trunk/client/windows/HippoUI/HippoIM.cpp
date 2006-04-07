@@ -58,7 +58,8 @@ HippoIM::HippoIM()
     lmConnection_ = NULL;
     ui_ = NULL;
     // queue of OutgoingMessage
-    pending_messages_ = g_queue_new();
+    pendingOutgoingMessages_ = g_queue_new();
+    pendingRoomMessages_ = g_queue_new();
     musicSharingEnabled_ = false;
     musicSharingPrimed_ = false;
 }
@@ -80,8 +81,11 @@ HippoIM::~HippoIM()
 
     disconnect();
 
-    g_queue_foreach(pending_messages_, delete_outgoing_message, 0);
-    g_queue_free(pending_messages_);
+    g_queue_foreach(pendingOutgoingMessages_, delete_outgoing_message, 0);
+    g_queue_free(pendingOutgoingMessages_);
+
+    g_queue_foreach(pendingRoomMessages_, (GFunc)lm_message_unref, 0);
+    g_queue_free(pendingRoomMessages_);
 }
 
 void
@@ -134,26 +138,26 @@ HippoIM::getUsername(BSTR *ret)
     username_.CopyTo(ret);
 }
 
-HRESULT
-HippoIM::findChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
+HippoChatRoom *
+HippoIM::findChatRoom(BSTR postId)
 {
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
         if (wcscmp(chatRooms_[i]->getPostId(), postId) == 0) {
-            *chatRoom = chatRooms_[i];
-            chatRooms_[i]->AddRef();
-
-            return S_OK;
+            return chatRooms_[i];
         }
     }
-    return E_FAIL;
+    return NULL;
 }
 
 HRESULT
 HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
 {
-    HRESULT ret = findChatRoom(postId, chatRoom);
-    if (SUCCEEDED(ret))
-        return ret;
+    HippoChatRoom *room = findChatRoom(postId);
+    if (room) {
+        *chatRoom = room;
+        room->AddRef();
+        return S_OK;
+    }
     HippoChatRoom *newRoom = new HippoChatRoom(this, postId);
     if (newRoom) {
         chatRooms_.append(newRoom);
@@ -553,12 +557,6 @@ HippoIM::connect()
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
-    handler = lm_message_handler_new(onIQ, (gpointer)this, NULL);
-    lm_connection_register_message_handler(lmConnection_, handler, 
-                                           LM_MESSAGE_TYPE_IQ, 
-                                           LM_HANDLER_PRIORITY_NORMAL);
-    lm_message_handler_unref(handler);
-
     lm_connection_set_disconnect_function(lmConnection_, onDisconnect, (gpointer)this, NULL);
 
     stateChange(CONNECTING);
@@ -638,7 +636,7 @@ HippoIM::sendMessage(LmMessage *message)
 void
 HippoIM::sendMessage(LmMessage *message, LmMessageHandler *handler)
 {
-    g_queue_push_tail(pending_messages_, new OutgoingMessage(message, handler));
+    g_queue_push_tail(pendingOutgoingMessages_, new OutgoingMessage(message, handler));
 
     flushPending();
 }
@@ -646,11 +644,11 @@ HippoIM::sendMessage(LmMessage *message, LmMessageHandler *handler)
 void
 HippoIM::flushPending()
 {
-    if (pending_messages_->length > 1 && state_ == AUTHENTICATED)
-        hippoDebugLogW(L"%d messages backlog to clear", pending_messages_->length);
+    if (pendingOutgoingMessages_->length > 1 && state_ == AUTHENTICATED)
+        hippoDebugLogW(L"%d messages backlog to clear", pendingOutgoingMessages_->length);
 
-    while (state_ == AUTHENTICATED && pending_messages_->length > 0) {
-        OutgoingMessage *om = static_cast<OutgoingMessage*>(g_queue_pop_head(pending_messages_));
+    while (state_ == AUTHENTICATED && pendingOutgoingMessages_->length > 0) {
+        OutgoingMessage *om = static_cast<OutgoingMessage*>(g_queue_pop_head(pendingOutgoingMessages_));
         LmMessage *message = om->getMessage();
         LmMessageHandler *handler = om->getMessageHandler();
         GError *error = 0;
@@ -665,8 +663,8 @@ HippoIM::flushPending()
         delete om;
     }
 
-    if (pending_messages_->length > 0)
-        hippoDebugLogW(L"%d messages could not be sent now, since we aren't connected; deferring", pending_messages_->length);
+    if (pendingOutgoingMessages_->length > 0)
+        hippoDebugLogW(L"%d messages could not be sent now, since we aren't connected; deferring", pendingOutgoingMessages_->length);
 }
 
 void
@@ -731,7 +729,7 @@ HippoIM::getHotness()
 }
 
 void
-HippoIM::getRecentPosts()
+HippoIM::getPosts(const HippoBSTR &postId)
 {
     LmMessage *message;
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
@@ -740,7 +738,11 @@ HippoIM::getRecentPosts()
     
     LmMessageNode *child = lm_message_node_add_child (node, "recentPosts", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/post");
-    LmMessageHandler *handler = lm_message_handler_new(onGetRecentPostsReply, this, NULL);
+
+    if (postId.m_str)
+        lm_message_node_set_attribute(child, "id", HippoUStr(postId).c_str());
+
+    LmMessageHandler *handler = lm_message_handler_new(onGetPostsReply, this, NULL);
 
     sendMessage(message, handler);
 
@@ -869,10 +871,27 @@ HippoIM::sendChatRoomLeave(HippoChatRoom *chatRoom)
     sendChatRoomPresence(chatRoom, LM_MESSAGE_SUB_TYPE_UNAVAILABLE);
 }
 
-bool
-HippoIM::checkRoomMessage (LmMessage      *message,
-                           HippoChatRoom **chatRoom,
-                           BSTR           *userId)
+void
+HippoIM::getChatRoomDetails(HippoChatRoom *chatRoom)
+{
+    chatRoom->setFilling(true);
+
+    char *postId = idToJabber(chatRoom->getPostId());
+    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    LmMessage *message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_GET);
+
+    LmMessageNode *child = lm_message_node_add_child (message->node, "details", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
+
+    LmMessageHandler *handler = lm_message_handler_new(onGetChatRoomDetailsReply, this, NULL);
+
+    sendMessage(message, handler);
+
+    ui_->debugLogU("Sent request for chat room details");
+}
+
+HippoIM::ProcessMessageResult
+HippoIM::processRoomMessage (LmMessage *message, bool wasPending)
 {
     const char *from = lm_message_node_get_attribute(message->node, "from");
 
@@ -880,20 +899,61 @@ HippoIM::checkRoomMessage (LmMessage      *message,
     HippoBSTR tmpUserId;
 
     if (!from || !parseRoomJid(from, &tmpPostId, &tmpUserId))
-        return false;
+        return PROCESS_MESSAGE_IGNORE;
 
-    *chatRoom = NULL;
-    for (unsigned long i = 0; i < chatRooms_.length(); i++) {
-        if (wcscmp(chatRooms_[i]->getPostId(), tmpPostId) == 0) {
-            tmpUserId.CopyTo(userId);
+    HippoChatRoom *chatRoom = findChatRoom(tmpPostId.m_str);
+    if (!chatRoom) {
+        // This is a spontaneous message from a chatroom, which we'll bubble up
+        // for the user. In order to do that, we need both the rest of the information
+        // about the chatroom (the present users, and so forth), and also the information
+        // about the post like the title, description, and so on. We could get
+        // these two things in parallel, but to simplify, we first get the 
+        // post, to have a place to hang the chatroom off of, then we get the
+        // chat room information.
+        HippoDataCache &cache = ui_->getDataCache();
+        HippoPtr<HippoPost> post = cache.getPost(tmpPostId);
+        if (!post) {
+            // If multiple messages from a chatroom that we aren't part of come in,
+            // we might retrieve the chat room information multiple times; but 
+            // that's harmless, so we don't bother keeping track of what posts
+            // we are in the process of retrieving.
+            getPosts(tmpPostId);
 
-            *chatRoom = chatRooms_[i];
-            return true;
+            return PROCESS_MESSAGE_PEND;
         }
+
+        return PROCESS_MESSAGE_PEND;
     }
 
-    hippoDebugLogW(L"Ignoring message from unknown room: %ls", tmpPostId.m_str);
-    return false;
+    // If we got a message and request the room contents in response to that,
+    // wait until we finish until we process that message
+    if (wasPending && chatRoom->getFilling())
+        return PROCESS_MESSAGE_PEND;
+
+    if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE)
+        handleRoomChatMessage(message, chatRoom, tmpUserId, wasPending);
+    else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE)
+        handleRoomPresence(message, chatRoom, tmpUserId, wasPending);
+
+    return PROCESS_MESSAGE_CONSUME;
+}
+
+
+void 
+HippoIM::processPendingRoomMessages()
+{
+    GList *l = pendingRoomMessages_->head;
+    while (l) {
+        GList *next = l->next;
+
+        LmMessage *message = (LmMessage *)l->data;
+        if (processRoomMessage(message, true) != PROCESS_MESSAGE_PEND) {
+            g_queue_delete_link(pendingRoomMessages_, l);
+            lm_message_unref(message);
+        }
+        
+        l = next;
+    }
 }
 
 bool
@@ -901,6 +961,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name,
                          bool          *participant,
+                         bool          *newlyJoined,
                          BSTR          *arrangementName,
                          BSTR          *artist,
                          bool          *musicPlaying)
@@ -914,6 +975,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
     const char *versionU = lm_message_node_get_attribute(infoNode, "version");
     const char *nameU = lm_message_node_get_attribute(infoNode, "name");
     const char *roleU = lm_message_node_get_attribute(infoNode, "role");
+    const char *oldRoleU = lm_message_node_get_attribute(infoNode, "oldRole");
     const char *arrangementNameU = lm_message_node_get_attribute(infoNode, "arrangementName");
     const char *artistU = lm_message_node_get_attribute(infoNode, "artist");
     const char *musicPlayingU = lm_message_node_get_attribute(infoNode, "musicPlaying");
@@ -925,6 +987,7 @@ HippoIM::getChatUserInfo(LmMessageNode *parent,
 
     *version = atoi(versionU);
     *participant = !roleU || strcmp(roleU, "participant") == 0;
+    *newlyJoined = oldRoleU && strcmp(oldRoleU, "nonmember") == 0;
 
     HippoBSTR tmpName;
     tmpName.setUTF8(nameU);
@@ -983,10 +1046,11 @@ HippoIM::getChatMessageInfo(LmMessageNode *parent,
     return true;
 }
 
-LmHandlerResult 
-HippoIM::handleRoomMessage(LmMessage     *message,
-                           HippoChatRoom *chatRoom,
-                           BSTR           userId)
+void
+HippoIM::handleRoomChatMessage(LmMessage     *message,
+                               HippoChatRoom *chatRoom,
+                               BSTR           userId,
+                               bool           wasPending)
 {
     HippoBSTR text;
 
@@ -997,7 +1061,7 @@ HippoIM::handleRoomMessage(LmMessage     *message,
 
     if (!textU) {
         hippoDebugLogW(L"Chat room message without body");
-        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+        return;
     }
     text.setUTF8(textU);
 
@@ -1006,11 +1070,22 @@ HippoIM::handleRoomMessage(LmMessage     *message,
     int serial;
     HippoBSTR name;
     if (!getChatMessageInfo(message->node, &version, &name, &timestamp, &serial))
-        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+        return;
+
+    // We can usually skip this in the case where the message was pending - but
+    // it's tricky to get it exactly right. See comments in handleRoomPresence().
+    // Unlike presence, it's harmless to add the message again since we catch
+    // duplicate serials and ignore them.
 
     chatRoom->addMessage(userId, version, name, text, timestamp, serial);
 
-    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getPostId());
+    if (post && !chatRoom->getFilling()) {
+        if (chatRoom->getState() == HippoChatRoom::NONMEMBER)
+            ui_->onChatRoomMessage(post);
+        else
+            ui_->updatePost(post);
+    }
 }
 
 bool 
@@ -1239,7 +1314,7 @@ HippoIM::onClientInfoReply(LmMessageHandler *handler,
     // Next get the MySpace info and current hotness
     im->getMySpaceName();
     im->getHotness();
-    im->getRecentPosts();
+    im->getPosts(NULL); // Get some recent posts
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1385,10 +1460,10 @@ HippoIM::onGetHotnessReply(LmMessageHandler *handler,
 }
 
 LmHandlerResult
-HippoIM::onGetRecentPostsReply(LmMessageHandler *handler,
-                               LmConnection     *connection,
-                               LmMessage        *message,
-                               gpointer          userData)
+HippoIM::onGetPostsReply(LmMessageHandler *handler,
+                         LmConnection     *connection,
+                         LmMessage        *message,
+                         gpointer          userData)
 {
     HippoIM *im = (HippoIM *)userData;
 
@@ -1401,8 +1476,48 @@ HippoIM::onGetRecentPostsReply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    HippoPost post;
-    im->parsePostStream(child, "onGetRecentPostsReply", &post);
+    im->parsePostStream(child, "onGetPostsReply");
+
+    // Some chat room messages where we waiting for results may now be ready to process
+    im->processPendingRoomMessages();
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+LmHandlerResult
+HippoIM::onGetChatRoomDetailsReply(LmMessageHandler *handler,
+                                   LmConnection     *connection,
+                                   LmMessage        *message,
+                                   gpointer          userData)
+{
+    HippoIM *im = (HippoIM *)userData;
+
+    const char *from = lm_message_node_get_attribute(message->node, "from");
+
+    HippoBSTR tmpPostId;
+    HippoBSTR tmpUserId;
+
+    if (!from || !parseRoomJid(from, &tmpPostId, &tmpUserId)) {
+        hippoDebugLogW(L"getChatRoomDetails reply doesn't come from a chat room!");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    HippoChatRoom *chatRoom = im->findChatRoom(tmpPostId.m_str);
+    if (!chatRoom) {
+        hippoDebugLogW(L"getChatRoomDetails reply for an unknown chatroom");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    chatRoom->setFilling(FALSE);
+
+    // If we are currently displaying the post anywhere (menu, recent links, etc)
+    // update it now that we have the complete chatroom information
+    HippoPost *post = im->ui_->getDataCache().getPost(tmpPostId.m_str);
+    if (post)
+        im->ui_->updatePost(post);
+
+    // And process and pending notifications of new users / messages
+    im->processPendingRoomMessages();
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1438,23 +1553,20 @@ HippoIM::handleActivePostsMessage(LmMessage *message)
         ui_->debugLogU("handling activePostsChanged message");
         ui_->clearActivePosts();
         for (subchild = child->children; subchild; subchild = subchild->next) {
-            HippoPost post;
-            HippoEntity entity;
-
             if (isEntity(subchild)) {
-                if (!parseEntity(subchild, &entity)) {
+                if (!parseEntity(subchild)) {
                     ui_->logErrorU("failed to parse entity in activePostsChanged");
-                } else {
-                    ui_->addEntity(entity);
                 }
             } else if (isPost(subchild)) {
-                if (!parsePost(subchild, &post)) {
+                if (!parsePost(subchild)) {
                     ui_->logErrorU("failed to parse post in activePostsChanged");
                 }
                 // The ordering is important here - we expect the post node to come first,
                 // when the live post data is seen we add it
                 continue;
             } else if (isLivePost(subchild)) {
+                HippoPtr<HippoPost> post;
+
                 if (!parseLivePost(subchild, &post)) {
                     ui_->logErrorU("failed to parse live post in activePostsChanged");
                 } else {
@@ -1491,7 +1603,7 @@ HippoIM::isLivePost(LmMessageNode *node)
 }
 
 bool
-HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
+HippoIM::parseLivePost(LmMessageNode *child, HippoPost **postReturn)
 {
     LmMessageNode *node;
     const char *attr;
@@ -1503,37 +1615,51 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost *post)
     postId.setUTF8(attr);
     HippoDataCache &cache = ui_->getDataCache();
 
-    if (!cache.getPost(postId, post))
+    HippoPtr<HippoPost> post = cache.getPost(postId);
+    if (!post)
         return false;
 
     node = lm_message_node_get_child (child, "recentViewers");
     if (!node)
         return false;
+
+    HippoPtr<HippoEntityCollection> viewers;
+    cache.createEntityCollection(&viewers);
+
     LmMessageNode *subchild;
-    post->viewers.clear();
     for (subchild = node->children; subchild; subchild = subchild->next) {
         HippoBSTR id;
         if (!parseEntityIdentifier(subchild, id))
             return false;
-        post->viewers.push_back(id);
+        HippoPtr<HippoEntity> entity = cache.getEntity(id);
+        if (entity)
+            viewers->addMember(entity);
     }
 
     node = lm_message_node_get_child (child, "chattingUserCount");
     if (!(node && node->value))
         return false;
-    post->chattingUserCount = strtol(node->value, NULL, 10);
+    long chattingUserCount = strtol(node->value, NULL, 10);
 
     node = lm_message_node_get_child (child, "viewingUserCount");
     if (!(node && node->value))
         return false;
-    post->viewingUserCount = strtol(node->value, NULL, 10);
+    long viewingUserCount = strtol(node->value, NULL, 10);
 
     node = lm_message_node_get_child (child, "totalViewers");
     if (!(node && node->value))
         return false;
-    post->totalViewers = strtol(node->value, NULL, 10);
+    long totalViewers = strtol(node->value, NULL, 10);
 
-    cache.addPost(*post);
+    post->setViewers(viewers);
+    post->setChattingUserCount(chattingUserCount);
+    post->setViewingUserCount(viewingUserCount);
+    post->setTotalViewers(totalViewers);
+
+    if (postReturn) {
+        post->AddRef();
+        *postReturn = post;
+    }
 
     return true;
 }
@@ -1551,11 +1677,17 @@ HippoIM::handleLivePostChangedMessage(LmMessage *message)
 
     ui_->debugLogU("handling livePostChanged message");
 
-    HippoPost post;
-    if (!parsePostStream(child, "livePostChanged", &post))
+    HippoPtr<HippoPost> post;
+    if (!parsePostData(child, "livePostChanged", &post)) {
         ui_->logErrorU("failed to parse post stream from livePostChanged");
+        return false;
+    }
 
-    ui_->onLinkMessage(post, false);
+    // We don't display any information from the link message currently -- the bubbling
+    // up when viewers are added comes from the separate "chat room" path, so just
+    // suppress things here. There's some work later to rip out this path, assuming that
+    // we actually don't ever need to update the bubble display from livePostChanged
+    // ui_->onLinkMessage(post, false);
 
     return true;
 }
@@ -1570,39 +1702,51 @@ HippoIM::isEntity(LmMessageNode *node)
 }
 
 bool
-HippoIM::parseEntity(LmMessageNode *node, HippoEntity *person)
+HippoIM::parseEntity(LmMessageNode *node)
 {
+    HippoDataCache &cache = ui_->getDataCache();
+
+    HippoEntity::EntityType type;
     if (strcmp(node->name, "resource") == 0)
-        person->type = HippoEntity::EntityType::RESOURCE;
+        type = HippoEntity::RESOURCE;
     else if (strcmp(node->name, "group") == 0)
-        person->type = HippoEntity::EntityType::GROUP;
+        type = HippoEntity::GROUP;
     else if (strcmp(node->name, "user") == 0)
-        person->type = HippoEntity::EntityType::PERSON;
+        type = HippoEntity::PERSON;
     else
         return false;
 
     const char *attr = lm_message_node_get_attribute(node, "id");
     if (!attr)
         return false;
-    person->id.setUTF8(attr);
+    HippoBSTR id;
+    id.setUTF8(attr);
 
-    if (person->type == HippoEntity::EntityType::RESOURCE)
-        person->name = NULL;
-    else {
+    HippoBSTR name;
+    if (type != HippoEntity::RESOURCE) {
         attr = lm_message_node_get_attribute(node, "name");
         if (!attr)
             return false;
-        person->name.setUTF8(attr);
+        name.setUTF8(attr);
     }
 
-    if (person->type == HippoEntity::EntityType::RESOURCE)
-        person->smallPhotoUrl = NULL;
-    else {
+    HippoBSTR smallPhotoUrl;
+    if (type != HippoEntity::EntityType::RESOURCE) {
         attr = lm_message_node_get_attribute(node, "smallPhotoUrl");
         if (!attr)
             return false;
-        person->smallPhotoUrl.setUTF8(attr);
+        smallPhotoUrl.setUTF8(attr);
     }
+
+    HippoPtr<HippoEntity> entity = cache.getEntity(id);
+    if (!entity) {
+        cache.createEntity(id, type, &entity);
+        cache.addEntity(entity);
+    }
+
+    entity->setName(name);
+    entity->setSmallPhotoUrl(smallPhotoUrl);
+   
     return true;
 }
 
@@ -1623,89 +1767,172 @@ HippoIM::isPost(LmMessageNode *node)
 }
 
 bool
-HippoIM::parsePost(LmMessageNode *postNode, HippoPost *post)
+HippoIM::parsePost(LmMessageNode *postNode, HippoPost **postReturn)
 {
     LmMessageNode *node;
     const char *attr;
 
+    HippoDataCache &cache = ui_->getDataCache();
+
     attr = lm_message_node_get_attribute (postNode, "id");
     if (!attr)
         return false;
-    post->postId.setUTF8(attr);
+    HippoBSTR postId;
+    postId.setUTF8(attr);
 
     node = lm_message_node_get_child (postNode, "poster");
     if (!(node && node->value))
         return false;
-    post->senderId.setUTF8(node->value);
+    HippoBSTR senderId;
+    senderId.setUTF8(node->value);
+    HippoPtr<HippoEntity> sender = cache.getEntity(senderId);
 
     node = lm_message_node_get_child (postNode, "href");
     if (!(node && node->value))
         return false;
-    post->url.setUTF8(node->value);
+    HippoBSTR url;
+    url.setUTF8(node->value);
 
     node = lm_message_node_get_child (postNode, "title");
     if (!(node && node->value))
         return false;
-    post->title.setUTF8(node->value);
+    HippoBSTR title;
+    title.setUTF8(node->value);
 
     node = lm_message_node_get_child (postNode, "text");
+    HippoBSTR description;
     if (!(node && node->value))
-        post->description.setUTF8("");
+        description.setUTF8("");
     else
-        post->description.setUTF8(node->value);
+        description.setUTF8(node->value);
 
+    HippoBSTR info;
     node = lm_message_node_get_child (postNode, "postInfo");
-    if (!(node && node->value))
-        post->info = NULL;
-    else
-        post->info.setUTF8(node->value);
+    if (node && node->value)
+        info.setUTF8(node->value);
 
     node = lm_message_node_get_child (postNode, "postDate");
     if (!(node && node->value))
         return false;
-    post->postDate = strtol(node->value, NULL, 10);
+    int postDate = strtol(node->value, NULL, 10);
 
     node = lm_message_node_get_child (postNode, "recipients");
     if (!node)
         return false;
-    post->recipients.clear();
+
+    HippoPtr<HippoEntityCollection> recipients;
+    cache.createEntityCollection(&recipients);
+
     LmMessageNode *subchild;
     for (subchild = node->children; subchild; subchild = subchild->next) {
         HippoBSTR id;
         if (!parseEntityIdentifier(subchild, id))
             return false;
-        post->recipients.push_back(id);
+        HippoPtr<HippoEntity> entity = cache.getEntity(id);
+        if (entity)
+            recipients->addMember(entity);
     }
 
-    ui_->getDataCache().addPost(*post);
+    HippoPtr<HippoPost> post = cache.getPost(postId);
+    if (!post) {
+        cache.createPost(postId, &post);
+        cache.addPost(post);
+
+        // Start filling in chatroom information for this post asynchronously
+        HippoChatRoom *chatRoom = new HippoChatRoom(this, postId.m_str);
+        chatRooms_.append(chatRoom);
+        post->setChatRoom(chatRoom);
+        chatRoom->Release();
+
+        getChatRoomDetails(chatRoom);
+    }
+
+    post->setSender(sender);
+    post->setUrl(url);
+    post->setTitle(title);
+    post->setDescription(description);
+    post->setInfo(info);
+    post->setPostDate(postDate);
+    post->setRecipients(recipients);
+
+    if (postReturn) {
+        post->AddRef();
+        *postReturn = post;
+    }
 
     return true;
 }
 
 bool
-HippoIM::parsePostStream(LmMessageNode *node, const char *funcName, HippoPost *post)
+HippoIM::parsePostStream(LmMessageNode *node, const char *funcName)
 {
     LmMessageNode *subchild;
     for (subchild = node->children; subchild; subchild = subchild->next) {
-        HippoEntity entity;
         if (isEntity(subchild)) {
-            if (!parseEntity(subchild, &entity)) {
+            if (!parseEntity(subchild)) {
                 ui_->logErrorU("failed to parse entity in %s", funcName);
                 return false;
-            } else {
-                ui_->addEntity(entity);
             }
         } else if (isPost(subchild)) {
-            if (!parsePost(subchild, post)) {
+            if (!parsePost(subchild)) {
                 ui_->logErrorU("failed to parse post in %s", funcName);
                 return false;
             }
         } else if (isLivePost(subchild)) {
-            if (!parseLivePost(subchild, post)) {
+            if (!parseLivePost(subchild)) {
                 ui_->logErrorU("failed to parse live post in %s", funcName);
                 return false;
             }
         }
+    }
+    return true;
+}
+
+bool
+HippoIM::parsePostData(LmMessageNode *node, const char *funcName, HippoPost **postReturn)
+{
+    bool seenPost = false;
+    bool seenLivePost = false;
+    HippoPtr<HippoPost> post;
+
+    LmMessageNode *subchild;
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        if (isEntity(subchild)) {
+            if (!parseEntity(subchild)) {
+                ui_->logErrorU("failed to parse entity in %s", funcName);
+                return false;
+            }
+        } else if (isPost(subchild)) {
+            if (seenPost) {
+                ui_->logErrorU("More than one <post/> child in %s", funcName);
+                return false;
+            }
+
+            if (!parsePost(subchild, &post)) {
+                ui_->logErrorU("failed to parse post in %s", funcName);
+                return false;
+            }
+            seenPost = true;
+        } else if (isLivePost(subchild)) {
+            if (!seenPost) {
+                ui_->logErrorU("<livepost/> before <post/> in %s", funcName);
+                return false;
+            }
+            if (seenLivePost) {
+                ui_->logErrorU("More than one <livepost/> child in %s", funcName);
+                return false;
+            }
+
+            if (!parseLivePost(subchild)) {
+                ui_->logErrorU("failed to parse live post in %s", funcName);
+                return false;
+            }
+            seenLivePost = true;
+        }
+    }
+    if (postReturn) {
+        post->AddRef();
+        *postReturn = post;
     }
     return true;
 }
@@ -1718,10 +1945,16 @@ HippoIM::onMessage (LmMessageHandler *handler,
 {
     HippoIM *im = (HippoIM *)userData;
 
-    HippoChatRoom *chatRoom;
-    HippoBSTR userId;
-    if (im->checkRoomMessage(message, &chatRoom, &userId))
-        return im->handleRoomMessage(message, chatRoom, userId);
+    switch (im->processRoomMessage(message, false)) {
+        case PROCESS_MESSAGE_IGNORE:
+            break;
+        case PROCESS_MESSAGE_CONSUME:
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        case PROCESS_MESSAGE_PEND:
+            lm_message_ref(message);
+            g_queue_push_tail(im->pendingRoomMessages_, message);
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+     }
 
     char *mySpaceName = NULL;
     if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
@@ -1756,8 +1989,8 @@ HippoIM::onMessage (LmMessageHandler *handler,
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "newPost");
         if (child) {
-            HippoPost post;
-            if (im->parsePostStream(child, "newPost", &post)) {
+            HippoPtr<HippoPost> post;
+            if (im->parsePostData(child, "newPost", &post)) {
                 im->ui_->onLinkMessage(post, true);
             } else {
                 im->ui_->logErrorU("failed to parse post stream in newPost");
@@ -1768,6 +2001,77 @@ HippoIM::onMessage (LmMessageHandler *handler,
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+void
+HippoIM::handleRoomPresence (LmMessage        *message,
+                             HippoChatRoom    *chatRoom,
+                             BSTR              userId,
+                             bool              wasPending)
+{
+    LmMessageSubType subType = lm_message_get_sub_type(message);
+
+    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getPostId());
+
+    // FIXME: If we get pend a chat room presence while getting the details of the 
+    // chatroom, then we'll have a more recent view of the chatroom's viewer set than that
+    // the message, so we don't want to update the chatroom, we just want to 
+    // notify the user. We should skip even notifying the user in the case where someone
+    // started viewing and then left before we got around to notifying
+    //
+    // The tricky bit here is if we had the chatroom around (the user had joined
+    // it by navigating to the post through /home, say), but not the post, then
+    // we still need to update the chatroom despite wasPending. So, we really
+    // need to keep more information around about the history of the message
+
+    post->resetCurrentViewers();
+
+    if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
+        LmMessageNode *xNode = findChildNode(message->node, "http://jabber.org/protocol/muc#user", "x");
+        if (!xNode) {
+            hippoDebugLogW(L"Presence without x child");
+            return;
+        }
+
+        int version;
+        HippoBSTR name;
+        bool participant;
+        bool newlyJoined;
+        bool musicPlaying;
+        HippoBSTR artist = NULL;
+        HippoBSTR arrangementName = NULL;
+        if (!getChatUserInfo(xNode, &version, &name, &participant, &newlyJoined, &arrangementName, &artist, &musicPlaying))
+            return;
+
+        chatRoom->addUser(userId, version, name, participant);
+
+        if (artist && arrangementName) {
+            chatRoom->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
+        }  
+
+        // The obvious algorithm to tell whether we should notify the user about this member: 
+        // was the user in chatRoom's list of users before doesn't work because of the case:
+        //
+        //   - Receive a message saying the user is newly joined, pend it
+        //   - Get the information about all the users (including the newly joined one)
+        //   - Process the pending message
+        //
+        // So instead, we go off the oldRole attribute in the <presence/> message which is 
+        // there for exactly this purpose... to distinguish "interesting" presence transitions
+        // like NONMEMBER => VISITOR from uninteresting ones like PARTICIPANT => VISITOR
+
+        if (post && !chatRoom->getFilling()) {
+            if (chatRoom->getState() == HippoChatRoom::NONMEMBER && newlyJoined)
+                ui_->onViewerJoin(post);
+            else
+                ui_->updatePost(post);
+        }
+
+    } else if (subType == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
+        chatRoom->removeUser(userId);
+        if (post && !chatRoom->getFilling())
+            ui_->updatePost(post);
+    }
+}
+
 LmHandlerResult 
 HippoIM::onPresence (LmMessageHandler *handler,
                      LmConnection     *connection,
@@ -1776,99 +2080,9 @@ HippoIM::onPresence (LmMessageHandler *handler,
 {
     HippoIM *im = (HippoIM *)userData;
 
-    const char *from = lm_message_node_get_attribute(message->node, "from");
-
-    HippoChatRoom *chatRoom;
-    HippoBSTR userId;
-
-    if (!im->checkRoomMessage(message, &chatRoom, &userId))
-        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-
-    LmMessageSubType subType = lm_message_get_sub_type(message);
-
-    if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
-        LmMessageNode *xNode = findChildNode(message->node, "http://jabber.org/protocol/muc#user", "x");
-        if (!xNode) {
-            hippoDebugLogW(L"Presence without x child");
-            return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-        }
-        
-        int version;
-        HippoBSTR name;
-        bool participant;
-        bool musicPlaying;
-        HippoBSTR artist = NULL;
-        HippoBSTR arrangementName = NULL;
-        if (!im->getChatUserInfo(xNode, &version, &name, &participant, &arrangementName, &artist, &musicPlaying))
-            return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-
-        chatRoom->addUser(userId, version, name, participant);
-
-        if (artist && arrangementName) {
-            chatRoom->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
-        }  
-    } else if (subType == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
-        chatRoom->removeUser(userId);
-    }
-    
-    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-}
-
-LmHandlerResult 
-HippoIM::onIQ (LmMessageHandler *handler,
-               LmConnection     *connection,
-               LmMessage        *message,
-               gpointer          userData)
-{
-    HippoIM *im = (HippoIM *)userData;
-
-    const char *from = lm_message_node_get_attribute(message->node, "from");
-
-    HippoChatRoom *chatRoom;
-    HippoBSTR userId;
-
-    // we only process IQ messages that apply to chat rooms for now
-    if (!im->checkRoomMessage(message, &chatRoom, &userId))
-        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-
-    LmMessageNode *musicInfoNode = lm_message_node_get_child(message->node, "music");
-    if (!musicInfoNode) {
-        im->ui_->logErrorU("Can't find musicInfo node");
-        return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
-    }
-
-    HippoBSTR artist = NULL;
-    HippoBSTR arrangementName = NULL;
-    for (LmMessageNode *propNode = musicInfoNode->children; propNode; propNode = propNode->next) {   
-        if (strcmp (propNode->name, "prop") != 0) {
-            im->ui_->logErrorU("encountered a child node of musicInfo node that is not named \"prop\"");
-            continue;
-        }
-        const char *key = lm_message_node_get_attribute(propNode, "key");
-         
-        if (key == 0) {
-            im->ui_->logErrorU("ignoring node '%s' with no 'key' attribute",
-                               propNode->name);
-            continue;
-        } else {
-            if (strcmp (key, "artist") == 0) {
-                artist.setUTF8(propNode->value);
-            }
-            if (strcmp (key, "name") == 0) {
-                arrangementName.setUTF8(propNode->value);
-            }
-        }
-        if (artist && arrangementName) {
-            break;
-        }
-    }
-
-    if (artist || arrangementName) {
-        chatRoom->updateMusicForUser(userId, arrangementName, artist, true);
-    } else {
-        // an IQ message with music node, but no artist or arrangementName 
-        // means that the music has stopped
-        chatRoom->musicStoppedForUser(userId);
+    if (im->processRoomMessage(message, false) == PROCESS_MESSAGE_PEND) {
+        lm_message_ref(message);
+        g_queue_push_tail(im->pendingRoomMessages_, message);
     }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;

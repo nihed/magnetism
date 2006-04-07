@@ -12,6 +12,7 @@ public:
     void add(const HippoBSTR &value); // Common, so gets the simple name
     void addBool(bool value);
     void addLong(long value);
+    void addDispatch(IDispatch *dispatch);
     void addStringVector(const std::vector<HippoBSTR> &value);
     HRESULT run();
     HRESULT getResult(variant_t *result);
@@ -77,6 +78,14 @@ HippoInvocation::addLong(long value)
 }
 
 HippoInvocation &
+HippoInvocation::addDispatch(IDispatch *value)
+{
+    impl_->addDispatch(value);
+    
+    return *this;
+}
+
+HippoInvocation &
 HippoInvocation::addStringVector(const std::vector<HippoBSTR> &value)
 {
     impl_->addStringVector(value);
@@ -136,6 +145,12 @@ HippoInvocationImpl::addBool(bool value)
 
 void
 HippoInvocationImpl::addLong(long value)
+{
+    params_.push_back(variant_t(value));
+}
+
+void
+HippoInvocationImpl::addDispatch(IDispatch *value)
 {
     params_.push_back(variant_t(value));
 }

@@ -63,7 +63,7 @@ public:
 
     void getUsername(BSTR *ret) throw (std::bad_alloc);
 
-    HRESULT findChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
+    HippoChatRoom *findChatRoom(BSTR postId);
     HRESULT getChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
 
     // Called by HippoChatRoom
@@ -76,6 +76,12 @@ public:
     void providePrimingTracks(HippoPlaylist *playlist);
 
 private:
+    enum ProcessMessageResult {
+        PROCESS_MESSAGE_IGNORE,
+        PROCESS_MESSAGE_PEND,
+        PROCESS_MESSAGE_CONSUME
+    };
+
     void getAuthURL(BSTR *result) throw (std::bad_alloc);
 
     void stateChange(State state);
@@ -87,7 +93,10 @@ private:
     void getClientInfo();
     void getMySpaceName();
     void getHotness();
-    void getRecentPosts();
+
+    // If postId is NULL, get information about some recent posts, otherwise get 
+    // information about the post identified by postId
+    void getPosts(const HippoBSTR &postId = 0);
 
     void startSignInTimeout();
     void stopSignInTimeout();
@@ -100,14 +109,25 @@ private:
     void sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType, bool participant = true);
     void sendChatRoomEnter(HippoChatRoom *chatRoom, bool participant);
     void sendChatRoomLeave(HippoChatRoom *chatRoom);
+    void getChatRoomDetails(HippoChatRoom *chatRoom);
 
-    bool checkRoomMessage(LmMessage      *message,
-                          HippoChatRoom **chatRoom,
-                          BSTR           *userId) throw (std::bad_alloc);
+    ProcessMessageResult processRoomMessage(LmMessage *message, bool wasPending);
+    void processPendingRoomMessages();
+
+    void handleRoomChatMessage(LmMessage     *message,
+                               HippoChatRoom *chatRoom,
+                               BSTR           userId,
+                               bool           wasPending);
+    void handleRoomPresence(LmMessage     *message,
+                            HippoChatRoom *chatRoom,
+                            BSTR           userId,
+                            bool            wasPending);
+
     bool getChatUserInfo(LmMessageNode *parent,
                          int           *version,
                          BSTR          *name,
                          bool          *participant,
+                         bool          *newlyJoined,
                          BSTR          *arrangementName,
                          BSTR          *artist,
                          bool          *musicPlaying) throw (std::bad_alloc);
@@ -116,9 +136,6 @@ private:
                             BSTR          *name,
                             INT64         *timestamp,
                             int           *serial) throw (std::bad_alloc);
-    LmHandlerResult handleRoomMessage(LmMessage     *message,
-                                      HippoChatRoom *chatRoom,
-                                      BSTR           userId);
 
     bool checkMySpaceNameChangedMessage(LmMessage      *message,
                                         char           **name);
@@ -160,12 +177,17 @@ private:
     static bool messageIsIqWithNamespace(HippoIM *im, LmMessage *message, const char *expectedNamespace, const char *documentElementName);
     bool parseEntityIdentifier(LmMessageNode *node, HippoBSTR &id);
     bool isEntity(LmMessageNode *node);
-    bool parseEntity(LmMessageNode *node, HippoEntity *person);
+    bool parseEntity(LmMessageNode *node);
     bool isLivePost(LmMessageNode *node);
-    bool parseLivePost(LmMessageNode *postNode, HippoPost *post);
+    bool parseLivePost(LmMessageNode *postNode, HippoPost **post = 0);
     bool isPost(LmMessageNode *node);
-    bool parsePost(LmMessageNode *postNode, HippoPost *post);
-    bool parsePostStream(LmMessageNode *node, const char *funcName, HippoPost *post);
+    bool parsePost(LmMessageNode *postNode, HippoPost **post = 0);
+
+    // Parse one post, along with entities, and an optional livepost
+    bool parsePostData(LmMessageNode *node, const char *funcName, HippoPost **post = 0);
+
+    // Parse a stream of entities, posts, and liveposts
+    bool parsePostStream(LmMessageNode *node, const char *funcName);
 
     static LmHandlerResult onClientInfoReply(LmMessageHandler *handler,
                                              LmConnection     *connection,
@@ -187,10 +209,14 @@ private:
                                              LmConnection     *connection,
                                              LmMessage        *message,
                                              gpointer          userData);
-    static LmHandlerResult onGetRecentPostsReply(LmMessageHandler *handler,
-                                                 LmConnection     *connection,
-                                                 LmMessage        *message,
-                                                 gpointer          userData);
+    static LmHandlerResult onGetPostsReply(LmMessageHandler *handler,
+                                           LmConnection     *connection,
+                                           LmMessage        *message,
+                                           gpointer          userData);
+    static LmHandlerResult onGetChatRoomDetailsReply(LmMessageHandler *handler,
+                                                     LmConnection     *connection,
+                                                     LmMessage        *message,
+                                                     gpointer          userData);
 
     static LmHandlerResult onMessage(LmMessageHandler *handler,
                                      LmConnection     *connection,
@@ -201,11 +227,6 @@ private:
                                       LmConnection     *connection,
                                       LmMessage        *message,
                                       gpointer          userData);
-
-    static LmHandlerResult onIQ(LmMessageHandler *handler,
-                                LmConnection     *connection,
-                                LmMessage        *message,
-                                gpointer          userData);
 
     static LmHandlerResult onPrefsReply(LmMessageHandler *handler,
                                         LmConnection     *connection,
@@ -245,7 +266,8 @@ private:
 
     HippoArray<HippoChatRoom *> chatRooms_;
 
-    GQueue *pending_messages_;
+    GQueue *pendingOutgoingMessages_;
+    GQueue *pendingRoomMessages_;
 
     bool musicSharingEnabled_;
     bool musicSharingPrimed_;

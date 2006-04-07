@@ -89,10 +89,7 @@ public:
     void getSeenMySpaceComments();
     void getMySpaceContacts();
     void onUpgradeReady();
-    void addEntity(HippoEntity &entity);
-    void onLinkMessage(HippoPost &link, bool isNew);
-
-    void getEntity(BSTR id, HippoEntity *entity);
+    void onLinkMessage(HippoPost *link, bool isNew);
 
     void setHaveMissedBubbles(bool haveMissed);
 
@@ -121,13 +118,15 @@ public:
     void onCreatingMySpaceContactPost(HippoMySpaceContact *contact);
     void onReceivingMySpaceContactPost();
 
+    void onViewerJoin(HippoPost *post);
+    void onChatRoomMessage(HippoPost *post);
+    void updatePost(HippoPost *post);
+
     void clearActivePosts();
 
     HippoDataCache &getDataCache();
 
-    void addActivePost(const HippoPost &post);
-
-    void updatePost(const HippoPost &post);
+    void addActivePost(HippoPost *post);
 
     typedef enum {
         UNKNOWN,

@@ -34,7 +34,12 @@ public:
      * Add an active post to the list at the top of the menu; if a post
      * with the same ID is already in the list, it will be removed first.
      */
-    void addActivePost(const HippoPost &post);
+    void addActivePost(HippoPost *post);
+
+    /**
+     * If the post is already in the list, update its display
+     */
+    void updatePost(HippoPost *post);
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -70,7 +75,7 @@ protected:
 private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
-    std::vector<HippoPost> activePosts_;
+    std::vector<HippoPtr<HippoPost> > activePosts_;
 
     int desiredWidth_;
     int desiredHeight_;
@@ -79,5 +84,5 @@ private:
 
     void moveResizeWindow(void);
     void invokeRemoveActivePost(int i);
-    void invokeInsertActivePost(int i, const HippoPost &post);
+    void invokeInsertActivePost(int i, HippoPost *post);
 };

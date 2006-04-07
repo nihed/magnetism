@@ -2,6 +2,7 @@ body
 {
     border: none;
     background-color: White;    
+    font-family: Sans-Serif;
 }
 
 .dh-close-button 
@@ -178,24 +179,73 @@ span.dh-notification-group-recipient
 .dh-notification-swarm-nav
 {
     position: absolute;
-    left: 220px;
+    left: 64px;
     top: 121px;
-    right: 3px;
-    width: 100%;    
-    text-overflow: ellipsis;
+    width: 380px;
+    text-align: center;
+    font-size: x-small;
+    color: Blue;
+    white-space: nowrap;
+}
+
+.dh-notification-swarm-nav-link:visited 
+{
     color: Blue;
 }
 
 .dh-notification-swarm
 {
     position: absolute;
-    left: 156px;
+    left: 64px;
     top: 143px;
-    right: 3px;
+    width: 380px;
+    height: 34px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.dh-notification-whos-there
+{
+    color: #555555;
     text-align: center;
-    overflow: hidden;    
+    width: 100%;
+}
+
+.dh-notification-chat-message
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: White;
+    background-color: #944e0f; /* ugly brown */
+    width: 100%;
+}
+
+.dh-notification-chat-sender
+{
+    position: absolute;
+    color: #944e0f;
+    left: 0px;
+    bottom: 0px;
+    font-size: x-small;
+}
+
+.dh-notification-chat-count
+{
+    position: absolute;
+    color: #944e0f;
+    right: 0px;
+    bottom: 0px;
+    font-size: x-small;
+}
+
+.dh-notification-chat-sender-photo
+{
+    position: relative;
+    float: left;
+    top: -8px;
+    width: 30px;
+    height: 30px;
 }
 
 span.dh-notification-viewer

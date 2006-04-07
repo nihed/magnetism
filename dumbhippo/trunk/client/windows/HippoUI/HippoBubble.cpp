@@ -20,7 +20,6 @@ static const UINT_PTR CHECK_MOUSE = 1;
 
 HippoBubble::HippoBubble(void)
 {
-    refCount_ = 1;
     idle_ = FALSE;
     screenSaverRunning_ = FALSE;
     haveMouse_ = FALSE;
@@ -56,8 +55,6 @@ HippoBubble::HippoBubble(void)
     setClassName(L"HippoBubbleClass");
     setTitle(L"Hippo Notification");
     setApplication(this);
-
-    hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoBubble, &ifaceTypeInfo_, NULL);
 }
 
 HippoBubble::~HippoBubble(void)
@@ -70,6 +67,16 @@ HippoBubble::~HippoBubble(void)
 
         DeleteDC(layerDC_);
     }
+}
+
+ITypeInfo *
+HippoBubble::getTypeInfo()
+{
+    static HippoPtr<ITypeInfo> typeInfo;
+    if (!typeInfo)
+        hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoBubble, &typeInfo, NULL);
+
+    return typeInfo;
 }
 
 void
@@ -151,71 +158,18 @@ HippoBubble::processMessage(UINT   message,
     return HippoAbstractWindow::processMessage(message, wParam, lParam);
 }
 
-
-void
-HippoBubble::addEntity(const HippoBSTR &id)
-{
-    HippoEntity entity;
-    ui_->getEntity(id.m_str, &entity);
-    addEntity(entity);
-}
-
-void
-HippoBubble::addEntity(const HippoEntity &entity)
-{
-    const WCHAR *method;
-    switch (entity.type) {
-        case HippoEntity::EntityType::GROUP:
-            method = L"dhAddGroup";
-            break;
-        case HippoEntity::EntityType::RESOURCE:
-            method = L"dhAddResource";
-            break;
-        case HippoEntity::EntityType::PERSON:
-            method = L"dhAddPerson";
-            break;
-        default:
-            return;
-    }
-
-    HippoInvocation invocation = ie_->createInvocation(method)
-        .add(entity.id)
-        .add(entity.name);
-    if (entity.type != HippoEntity::EntityType::RESOURCE)
-        invocation.add(entity.smallPhotoUrl);
-    invocation.run();
-}
-
 void 
-HippoBubble::setLinkNotification(bool isRedisplay, HippoPost &share)
+HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
 {
     if (!create())
         return;
-
-    addEntity(share.senderId.m_str);
-    for (unsigned long i = 0; i < share.recipients.size(); i++) {
-        addEntity(share.recipients[i]);
-    }
-
-    for (unsigned long i = 0; i < share.viewers.size(); i++) {
-        addEntity(share.viewers[i]);
-    }
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
     // Note if you change the arguments to this function, you must change notification.js
     ie_->createInvocation(L"dhAddLinkShare")
         .addBool(isRedisplay)
-        .add(share.senderId)
-        .add(share.postId)
-        .add(share.title)
-        .add(share.url)
-        .add(share.description)
-        .addStringVector(share.recipients)
-        .addStringVector(share.viewers)
-        .add(share.info)
-        .addLong(share.timeout)
-        .addBool(share.haveViewed)
+        .addDispatch(share)
         .getResult(&result);
 
     if (result.vt != VT_BOOL) {
@@ -228,8 +182,8 @@ HippoBubble::setLinkNotification(bool isRedisplay, HippoPost &share)
         ui_->debugLogU("dhAddLinkShare returned false");
         return;
     }
-    if (ui_->isShareActive(share.postId)) {
-        ui_->debugLogW(L"chat is active for postId %s, not showing", share.postId);
+    if (ui_->isShareActive(share->getId().m_str)) {
+        ui_->debugLogW(L"chat is active for postId %s, not showing", share->getId().m_str);
         return;
     }
     setShown();
@@ -311,6 +265,47 @@ HippoBubble::showMissedBubbles()
 {
     ie_->createInvocation(L"dhDisplayMissed").run();
     setShown();
+}
+
+void 
+HippoBubble::onViewerJoin(HippoPost *post)
+{
+    if (!ie_) {
+        if (!create())
+            return;
+    }
+
+    ie_->createInvocation(L"dhViewerJoined")
+        .addDispatch(post)
+        .run();
+
+    setShown();
+}
+
+void 
+HippoBubble::onChatRoomMessage(HippoPost *post)
+{
+    if (!ie_) {
+        if (!create())
+            return;
+    }
+
+    ie_->createInvocation(L"dhChatRoomMessage")
+        .addDispatch(post)
+        .run();
+
+    setShown();
+}
+
+void 
+HippoBubble::updatePost(HippoPost *post)
+{
+    if (!ie_)
+        return;
+
+    ie_->createInvocation(L"dhUpdatePost")
+        .addDispatch(post)
+        .run();
 }
 
 void
@@ -584,94 +579,4 @@ HippoBubble::UpdateDisplay()
     DeleteObject(bitmap);
 
     return S_OK;
-}
-
-/////////////////////// IUnknown implementation ///////////////////////
-
-STDMETHODIMP 
-HippoBubble::QueryInterface(const IID &ifaceID, 
-                            void   **result)
-{
-    if (IsEqualIID(ifaceID, IID_IUnknown))
-        *result = static_cast<IUnknown *>(static_cast<IHippoBubble*>(this));
-    else if (IsEqualIID(ifaceID, IID_IDispatch)) 
-        *result = static_cast<IDispatch *>(this);
-    else if (IsEqualIID(ifaceID, IID_IHippoBubble)) 
-        *result = static_cast<IHippoBubble *>(this);
-    else {
-        *result = NULL;
-        return E_NOINTERFACE;
-    }
-
-    this->AddRef();
-    return S_OK;    
-}                                             
-
-HIPPO_DEFINE_REFCOUNTING(HippoBubble)
-
-
-//////////////////////// IDispatch implementation ///////////////////
-
-// We just delegate IDispatch to the standard Typelib-based version.
-
-STDMETHODIMP
-HippoBubble::GetTypeInfoCount(UINT *pctinfo)
-{
-    if (pctinfo == NULL)
-        return E_INVALIDARG;
-
-    *pctinfo = 1;
-
-    return S_OK;
-}
-
-STDMETHODIMP 
-HippoBubble::GetTypeInfo(UINT        iTInfo,
-                         LCID        lcid,
-                         ITypeInfo **ppTInfo)
-{
-    if (ppTInfo == NULL)
-        return E_INVALIDARG;
-    if (!ifaceTypeInfo_)
-        return E_OUTOFMEMORY;
-    if (iTInfo != 0)
-        return DISP_E_BADINDEX;
-
-    ifaceTypeInfo_->AddRef();
-    *ppTInfo = ifaceTypeInfo_;
-
-    return S_OK;
-}
-        
-STDMETHODIMP 
-HippoBubble::GetIDsOfNames (REFIID    riid,
-                            LPOLESTR *rgszNames,
-                            UINT      cNames,
-                            LCID      lcid,
-                            DISPID   *rgDispId)
-{
-    HRESULT ret;
-    if (!ifaceTypeInfo_) 
-        return E_OUTOFMEMORY;
-    
-    ret = DispGetIDsOfNames(ifaceTypeInfo_, rgszNames, cNames, rgDispId);
-    return ret;
-}
-        
-STDMETHODIMP
-HippoBubble::Invoke (DISPID        member,
-                     const IID    &iid,
-                     LCID          lcid,              
-                     WORD          flags,
-                     DISPPARAMS   *dispParams,
-                     VARIANT      *result,
-                     EXCEPINFO    *excepInfo,  
-                     unsigned int *argErr)
-{
-    if (!ifaceTypeInfo_) 
-        return E_OUTOFMEMORY;
-    HippoQIPtr<IHippoBubble> hippoBubble(static_cast<IHippoBubble *>(this));
-    HRESULT hr = DispInvoke(hippoBubble, ifaceTypeInfo_, member, flags, 
-                            dispParams, result, excepInfo, argErr);
-    return hr;
 }

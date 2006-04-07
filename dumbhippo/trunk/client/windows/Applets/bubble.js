@@ -5,38 +5,6 @@
 dh.bubble = {} 
 
 //////////////////////////////////////////////////////////////////////////////
-// Keep track about information about entities such as Persons, Groups, etc.
-//////////////////////////////////////////////////////////////////////////////
-
-dh.bubble.Person = function(id, name, smallPhotoUrl) {
-    this.id = id
-    this.name = name
-    this.smallPhotoUrl = smallPhotoUrl
-}
-
-dh.bubble.Resource = function(id, name) {
-    this.id = id
-    this.name = name
-}
-
-dh.bubble.Group = function(id, name, smallPhotoUrl) {
-    this.id = id
-    this.name = name
-    this.smallPhotoUrl = smallPhotoUrl
-}
-
-// Global hash of id -> entity  (a Person, Resource, or Group)
-dh.bubble._entities = {};
-
-dh.bubble.findEntity = function(id) {
-    return dh.bubble._entities[id]
-}
-
-dh.bubble.addEntity = function(entity) {
-    dh.bubble._entities[entity.id] = entity;
-}
-
-//////////////////////////////////////////////////////////////////////////////
 // Generic display code for a single notification bubble
 //////////////////////////////////////////////////////////////////////////////
     
@@ -57,9 +25,11 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     // Whether to include the quit button and previous/next arrows
     this._isStandaloneBubble = isStandaloneBubble
 
-    
     // The notification currently being displayed
     this._data = null
+    
+    // The "page" of the swarm area
+    this._page = null
     
     ///////////// Callbacks /////////////
     
@@ -84,6 +54,9 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     
     // Called when the size of the bubble changes
     this.onSizeChange = function() {}
+    
+    // Called when the display of the bubble should be updated (without a size change)
+    this.onUpdateDisplay = function() {}
     
     // Build the DOM tree for the bubble
     // @return the DOM node of the top node for the bubble
@@ -151,8 +124,6 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         this._metaSpan = append(metaOuterDiv, "span", "dh-notification-meta")
         
         this._swarmNavDiv = appendDiv(this._topDiv, "dh-notification-swarm-nav")
-        // Until we implement more of the mockup
-        this._swarmNavDiv.appendChild(document.createTextNode("seen by:"))
         this._swarmDiv = appendDiv(this._topDiv, "dh-notification-swarm")
         
         if (this._isStandaloneBubble) {
@@ -208,6 +179,15 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         })
     }
     
+    // Set which "page" we are currently showing in the bottom tab; the
+    // @param page the name of the page ("whosThere", "someoneSaid", etc.)
+    this.setPage = function(page) {
+        this._page = page
+        if (this._swarmPages && this._swarmPages.length > 0)
+            this._updateSwarmPage()
+        this.onUpdateDisplay()
+    }
+    
     // Helper function for data object display routines; create a link to a DumbHippo post
     this.createSharedLinkLink = function(linkTitle, postId, url) {
         var a = document.createElement("a")
@@ -230,7 +210,7 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     // @param cssCssClass CSS class to use for display of the current user
     this.renderRecipients = function (node, arr, normalCssClass, selfCssClass) {
         for (var i = 0; i < arr.length; i++) {
-            var recipientNode = this._renderRecipient(arr[i], normalCssClass, selfCssClass)
+            var recipientNode = this.renderRecipient(arr[i], normalCssClass, selfCssClass)
             node.appendChild(recipientNode)
             if (i < arr.length - 1) {
                 node.appendChild(document.createTextNode(", "))
@@ -263,27 +243,33 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     }
 
     // Render a single recipient
-    this._renderRecipient = function (recipient, normalCssClass, selfCssClass) {  
-        var name = recipient.name
-        dh.util.debug("rendering recipient with id=" + recipient + ", name=" + name)
-        var cssClass = normalCssClass;
-        if (recipient.id == dh.selfId) {
+    this.renderRecipient = function (recipient, normalCssClass, selfCssClass) {  
+        dh.util.debug("rendering recipient with id=" + recipient.Id + ", name=" + recipient.Name)
+        var cssClass = normalCssClass
+        var name = recipient.Name
+        if (recipient.Id == dh.selfId) {
             name = "you"
             cssClass = selfCssClass
         }
         var node = document.createElement("span")
         node.setAttribute("className", cssClass)
-        node.appendChild(document.createTextNode(name))       
+        node.appendChild(document.createTextNode(name))
         return node
     }
      
+    this.createPngElement = function(src) {
+        var img = document.createElement("div")
+        img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale')"
+        
+        return img
+    }
+
     // Update the image for the photo on the left of the bubble
     this._setPhotoImage = function (src, url) {
         var a = document.createElement("a")
         a.setAttribute("href", url)
         a.setAttribute("className", "dh-notification-photo")
-        var img = document.createElement("div")
-        img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale')"
+        img = this.createPngElement(src)
         img.setAttribute("className", "dh-notification-photo")
         a.appendChild(img)
         dh.util.dom.replaceContents(this._photoDiv, a)
@@ -313,9 +299,15 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         this._data.appendMetaContent(this, this._metaSpan)
 
         dh.util.dom.clearNode(this._swarmDiv)
-        this._data.appendViewersContent(this, this._swarmDiv)
-        this._setSwarmDisplay(this._swarmDiv.firstChild != null)
+        this._swarmPages = this._data.appendSwarmContent(this, this._swarmDiv)
         
+        if (this._swarmPages.length > 0) {
+            this._updateSwarmPage()
+            this._setSwarmDisplay(true)
+        } else {
+            this._setSwarmDisplay(false)
+        }
+
         dh.util.dom.clearNode(this._leftImgSpan)
         dh.util.dom.clearNode(this._rightImgSpan)
         var leftImg;
@@ -331,6 +323,7 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         this._rightImgSpan.appendChild(rightImg)
         
         this._fixupLayout()
+        this.onUpdateDisplay()
     }
     
     // Adjust various sizes that we can't make the CSS handle
@@ -356,6 +349,51 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
             this.onSizeChange()
         }
     }   
+    
+    // Update the currently showing page and the navigation links for the swarm area
+    this._updateSwarmPage = function() {
+        dh.util.dom.clearNode(this._swarmNavDiv)
+        var activePage = null
+        for (i = 0; i < this._swarmPages.length; i++) {
+            var page = this._swarmPages[i]
+            if (page.name == this._page) {
+                activePage = page
+            }
+        }
+        
+        if (activePage == null) {
+            activePage = this._swarmPages[0]
+        }
+        
+        for (i = 0; i < this._swarmPages.length; i++) {
+            var page = this._swarmPages[i]
+            page.div.style.display = (page == activePage) ? "block" : "none"
+            var link = this._createSwarmNavLink(page, page == activePage)
+            link.style.width = (100 / this._swarmPages.length) + "%"
+            this._swarmNavDiv.appendChild(link)
+        }            
+    }
+    
+    // Create a link that goes in the navigation area
+    this._createSwarmNavLink = function(page, isActive) {
+        var link
+        
+        if (isActive)
+            link = document.createElement("span")
+        else {
+            link = document.createElement("a")
+                    
+            link.href = "javascript:void(0)"
+            var bubble = this
+            var pageName = page.name
+            link.onclick = function() { bubble.setPage(pageName) }
+        }
+                    
+        link.className = "dh-notification-swarm-nav-link"
+        link.appendChild(document.createTextNode(page.title))
+        
+        return link
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -365,51 +403,36 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
 // Extension point for specific post types
 dh.bubble.postExtensions = {}
     
-dh.bubble.PostData = function(senderId, postId, linkTitle, 
-                              linkURL, linkDescription, recipients, 
-                              viewers, postInfo, viewerHasViewed) {
-    this.senderId = senderId
-    this.postId = postId
-    this.linkTitle = linkTitle
-    this.linkURL = linkURL
-    this.linkDescription = linkDescription
-    this.recipients = recipients
-    this.viewers = viewers
+dh.bubble.PostData = function(post) {
+    this.post = post
+    var postInfo = post.Info
     if (postInfo != null && !postInfo.match(/^\s*$/)) {
         this.info = dh.parseXML(postInfo)
     } else {
         this.info = null
     }
-    this.viewerHasViewed = viewerHasViewed
 
     this.getPhotoLink = function() {
-        return dh.serverUrl + "person?who=" + this.senderId
+        return dh.serverUrl + "person?who=" + this.post.Sender.Id
     }
     
     this.getPhotoSrc = function() {
-        dh.util.debug("looking up entity" + this.senderId)
-        var ent = dh.bubble.findEntity(this.senderId)
-        dh.util.debug("got entity " + ent)
-        if (!ent)
-            return ""
-        var result = dh.serverUrl + ent.smallPhotoUrl       
-        return result
+        return dh.serverUrl + this.post.Sender.SmallPhotoUrl
     }
     
     this.getPhotoTitle = function() {
-        var ent = dh.bubble.findEntity(this.senderId)    
-        return ent.name
+        return this.post.Sender.Name
     }
     
     this.appendTitleContent = function(bubble, parent) {
-        var a = bubble.createSharedLinkLink(this.linkTitle, this.postId, this.linkURL)    
-        if (this.viewerHasViewed)
+        var a = bubble.createSharedLinkLink(this.post.Title, this.post.Id, this.post.Url)
+        if (this.post.HaveViewed)
             dh.util.prependCssClass(a, "dh-notification-title-seen") 
         parent.appendChild(a)
     }
         
     this.appendBodyContent = function(bubble, parent) {
-        parent.appendChild(document.createTextNode(this.linkDescription))
+        parent.appendChild(document.createTextNode(this.post.Description))
         
         for (extension in dh.bubble.postExtensions) {
             var ext = dh.bubble.postExtensions[extension]
@@ -424,14 +447,14 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
         var personRecipients = []
         var groupRecipients = []        
         var i;
-        for (i = 0; i < this.recipients.length; i++) {
-            var recipId = this.recipients[i]
-            var ent = dh.bubble.findEntity(recipId)
-            if ((ent instanceof dh.bubble.Person) || (ent instanceof dh.bubble.Resource)) {
-                personRecipients.push(ent)
-            } else if (ent instanceof dh.bubble.Group) {
-                groupRecipients.push(ent)
-            }
+        var recipients = this.post.Recipients
+        for (i = 0; i < recipients.length; i++) {
+            var recipient = recipients.item(i)
+            var type = recipient.type
+            if (type == 2) // GROUP
+                groupRecipients.push(recipient)
+            else
+                personRecipients.push(recipient)
         }
         // FIXME this is all hostile to i18n
         bubble.renderRecipients(parent, groupRecipients, "dh-notification-group-recipient")
@@ -441,15 +464,57 @@ dh.bubble.PostData = function(senderId, postId, linkTitle,
         bubble.renderRecipients(parent, personRecipients, "dh-notification-recipient", "dh-notification-self-recipient")
     }
             
-    this.appendViewersContent = function(bubble, parent) {
-        var viewers = []
-        for (var i = 0; i < this.viewers.length; i++) {
-            var ent = dh.bubble.findEntity(this.viewers[i])
-            viewers.push(ent)          
+    this.appendSwarmContent = function(bubble, parent) {
+        var pages = []
+    
+        if (this.post.CurrentViewers.length > 0) {
+            var whosThereDiv = document.createElement("div")
+            whosThereDiv.className  = "dh-notification-whos-there"
+            parent.appendChild(whosThereDiv)
+        
+            var viewersArray = []
+            var viewers = this.post.CurrentViewers
+            for (var i = 0; i < viewers.length; i++) {
+                viewersArray.push(viewers.item(i))
+            }
+            bubble.renderRecipients(whosThereDiv, viewersArray, "dh-notification-viewer", "dh-notification-self-viewer")
+            
+            pages.push({ name: "whosThere", title: "who's there", div: whosThereDiv })
         }
-        if (viewers.length > 0) {
-            bubble.renderRecipients(parent, viewers, "dh-notification-viewer", "dh-notification-self-viewer")
+        
+        if (this.post.LastChatSender != null) {
+            var someoneSaidDiv = document.createElement("div")
+            someoneSaidDiv.className  = "dh-notification-someone-said"
+            parent.appendChild(someoneSaidDiv)
+            
+            var senderPhoto = bubble.createPngElement(dh.serverUrl + this.post.LastChatSender.SmallPhotoUrl)
+            senderPhoto.className = "dh-notification-chat-sender-photo"
+            someoneSaidDiv.appendChild(senderPhoto)
+            
+            var messageSpan = document.createElement("span")
+            messageSpan.className = "dh-notification-chat-message"
+            messageSpan.appendChild(document.createTextNode(this.post.LastChatMessage))
+            someoneSaidDiv.appendChild(messageSpan)            
+            
+            var sender = this.post.LastChatSender
+            var senderDiv = document.createElement("div")
+            senderDiv.className = "dh-notification-chat-sender"
+            senderDiv.appendChild(bubble.renderRecipient(sender, "dh-notification-sender"))
+            senderDiv.appendChild(document.createTextNode(" just said"))
+            someoneSaidDiv.appendChild(senderDiv)
+            
+            var chattingUserCount = this.post.ChattingUserCount
+            if (chattingUserCount > 0) {
+                var chatCountDiv = document.createElement("div")
+                chatCountDiv.className = "dh-notification-chat-count"
+                chatCountDiv.appendChild(document.createTextNode("chat: " + chattingUserCount + " people"))
+                someoneSaidDiv.appendChild(chatCountDiv)
+            }
+            
+            pages.push({ name: "someoneSaid", title: "someone said", div: someoneSaidDiv })
         }
+        
+        return pages
     }
     
     this.getViewersPhotoSrc = function() {
@@ -505,7 +570,8 @@ dh.bubble.MySpaceData = function(myId, blogId, commentId, posterId, posterName, 
     this.appendMetaContent = function(bubble, parent) {
     }
     
-    this.appendViewersContent = function(bubble, parent) {
+    this.appendSwarmContent = function(bubble, parent) {
+        return []
     }
     
     this.getViewersPhotoSrc = function() {

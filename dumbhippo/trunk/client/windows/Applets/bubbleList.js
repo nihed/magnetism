@@ -63,7 +63,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
         // If we already are displaying this post, update it and move it to the top
         for (var i = 0; i < this.notifications.length; i++) {
             if (this.notifications[i].data instanceof dh.bubble.PostData &&
-                this.notifications[i].data.postId == share.postId) {
+                this.notifications[i].data.post.Id == share.post.Id) {
                 var old = this.notifications[i]
                 this.notifications.splice(i, 1)
                 this.notifications.unshift(old)
@@ -78,6 +78,17 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
 
         // Otherwise, insert at the top
         this._addNotification(share)
+    }
+    
+    this.updatePost = function (id) {
+        for (var i = 0; i < this.notifications.length; i++) {
+            if (this.notifications[i].data instanceof dh.bubble.PostData &&
+                this.notifications[i].data.post.Id == id) {
+                var old = this.notifications[i]
+                old.bubble.setData(old.data)
+                return
+            }
+        }
     }
     
     this.addMySpaceComment = function (comment) {
@@ -139,50 +150,17 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     }
 }
 
-dhAdaptLinkRecipients = function (recipients) {
-    var result = []
-    var tmp = dh.core.adaptExternalArray(recipients)
-    for (var i = 0; i < tmp.length; i += 2) {
-        result.push({ id: tmp[i], name: tmp[i + 1] })
-    }
-    return result;
-}
-
 // Global namespace since it's painful to do anything else from C++
-
-dhAddPerson = function (id, name, smallPhotoUrl) 
-{
-    dh.util.debug("adding person " + id + " " + name + " " + smallPhotoUrl)
-    var person = new dh.bubble.Person(id, name, smallPhotoUrl)
-    dh.bubble.addEntity(person)
-}
-
-dhAddResource = function (id, name) 
-{
-    dh.util.debug("adding resource " + id + " " + name)
-    var res = new dh.bubble.Resource(id, name)
-    dh.bubble.addEntity(res)
-}
-
-dhAddGroup = function (id, name, smallPhotoUrl) 
-{
-    dh.util.debug("adding group " + id + " " + name + " " + smallPhotoUrl)
-    var grp = new dh.bubble.Group(id, name, smallPhotoUrl)
-    dh.bubble.addEntity(grp)
-}
 
 // Note if you change the parameters to these function, you must change HippoBubbleList.cpp
 
-dhAddLinkShare = function (senderId, postId, linkTitle,
-                           linkURL, linkDescription, recipients,
-                           viewers, postInfo, timeout, viewerHasViewed) {
-    viewers = dh.core.adaptExternalArray(viewers)
-    recipients = dh.core.adaptExternalArray(recipients)
-    
-    var data = new dh.bubble.PostData(senderId, postId, linkTitle, 
-                                      linkURL, linkDescription, recipients, 
-                                      viewers, postInfo, viewerHasViewed)
+dhAddLinkShare = function (post) { 
+    var data = new dh.bubble.PostData(post)
     dh.display.addLinkShare(data)
+}
+
+dhUpdatePost = function (post) {
+    dh.display.updatePost(post.Id)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
@@ -193,3 +171,4 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
 dhBubbleListClear = function () {
     dh.display.clear()
 }
+

@@ -107,69 +107,17 @@ HippoBubbleList::onClose(bool fromScript)
     hide();
 }
 
-void
-HippoBubbleList::addEntity(const HippoBSTR &id)
-{
-    HippoEntity entity;
-    ui_->getEntity(id.m_str, &entity);
-    addEntity(entity);
-}
-
-void
-HippoBubbleList::addEntity(const HippoEntity &entity)
-{
-    const WCHAR *method;
-    switch (entity.type) {
-        case HippoEntity::EntityType::GROUP:
-            method = L"dhAddGroup";
-            break;
-        case HippoEntity::EntityType::RESOURCE:
-            method = L"dhAddResource";
-            break;
-        case HippoEntity::EntityType::PERSON:
-            method = L"dhAddPerson";
-            break;
-        default:
-            return;
-    }
-
-    HippoInvocation invocation = ie_->createInvocation(method)
-        .add(entity.id)
-        .add(entity.name);
-    if (entity.type != HippoEntity::EntityType::RESOURCE)
-        invocation.add(entity.smallPhotoUrl);
-    invocation.run();
-}
-
 void 
-HippoBubbleList::addLinkShare(const HippoPost &share)
+HippoBubbleList::addLinkShare(HippoPost *share)
 {
     if (!create())
         return;
-
-    addEntity(share.senderId.m_str);
-    for (unsigned long i = 0; i < share.recipients.size(); i++) {
-        addEntity(share.recipients[i]);
-    }
-
-    for (unsigned long i = 0; i < share.viewers.size(); i++) {
-        addEntity(share.viewers[i]);
-    }
 
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
     // Note if you change the arguments to this function, you must change bubbleList.js
     ie_->createInvocation(L"dhAddLinkShare")
-        .add(share.senderId)
-        .add(share.postId)
-        .add(share.title)
-        .add(share.url)
-        .add(share.description)
-        .addStringVector(share.recipients)
-        .addStringVector(share.viewers)
-        .add(share.info)
-        .addLong(share.timeout)
-        .addBool(share.haveViewed)
+        .addDispatch(share)
         .getResult(&result);
 }
 
@@ -190,6 +138,17 @@ HippoBubbleList::addMySpaceCommentNotification(long myId, long blogId, const Hip
         .add(comment.posterName)
         .add(comment.posterImgUrl)
         .add(comment.content)
+        .run();
+}
+
+void 
+HippoBubbleList::updatePost(HippoPost *post)
+{
+    if (!ie_)
+        return;
+
+    ie_->createInvocation(L"dhUpdatePost")
+        .addDispatch(post)
         .run();
 }
 

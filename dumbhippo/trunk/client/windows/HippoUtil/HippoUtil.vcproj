@@ -194,6 +194,9 @@
 				RelativePath=".\HippoConnectionPointContainer.h">
 			</File>
 			<File
+				RelativePath=".\HippoDispatchableObject.h">
+			</File>
+			<File
 				RelativePath=".\HippoExternal.h">
 			</File>
 			<File

@@ -280,9 +280,9 @@ HippoUI::ShowRecent()
         recentPostList_->clear();
     }
 
-    std::vector<HippoPost> recent;
+    std::vector<HippoPost *> recent;
     dataCache_.getRecentPosts(recent);
-    std::vector<HippoPost>::const_iterator it = recent.begin();
+    std::vector<HippoPost *>::const_iterator it = recent.begin();
     while (it != recent.end()) {
         recentPostList_->addLinkShare(*it);
         it++;
@@ -480,14 +480,26 @@ idleAddTestViewers(gpointer data)
 {
     HippoUI *ui = (HippoUI*)data;
     HippoDataCache &cache = ui->getDataCache();
-    HippoPost linkshare;
 
-    if (!cache.getPost(HippoBSTR(L"42"), &linkshare))
+
+    HippoPost *linkshare = cache.getPost(HippoBSTR(L"42"));
+    if (!linkshare)
         return FALSE;
 
-    linkshare.viewers.push_back(linkshare.recipients[0]);
-    linkshare.viewers.push_back(linkshare.recipients[1]);
-    linkshare.timeout = 0;
+    HippoPtr<HippoEntityCollection> viewers;
+    cache.createEntityCollection(&viewers);
+    HippoPtr<IHippoEntityCollection> recipients;
+    linkshare->get_Recipients(&recipients);
+    for (int i = 0; i < 2; i++) {
+        HippoPtr<IHippoEntity> recipient;
+        recipients->item(i, &recipient);
+        HippoBSTR id;
+        recipient->get_Id(&id);
+        viewers->addMember(cache.getEntity(id));
+    }
+    linkshare->setViewers(viewers);
+
+    linkshare->setTimeout(0);
 
     ui->onLinkMessage(linkshare, false);
     return FALSE;
@@ -496,70 +508,83 @@ idleAddTestViewers(gpointer data)
 gboolean
 HippoUI::idleShowDebugShare(gpointer data)
 {
+    static const WCHAR photoUrl[] = L"/files/headshots/48/PfqZScwvsH0R9f";
+
     HippoUI *ui = (HippoUI*)data;
-    HippoPost linkshare;
+    HippoDataCache &cache = ui->getDataCache();
 
-    HippoEntity person1;
-    person1.type = HippoEntity::EntityType::PERSON;
-    person1.smallPhotoUrl = L"/files/headshots/48/PfqZScwvsH0R9f";
-    person1.name = L"Colin";
-    person1.id = L"15a1fbae7f2807";
-    ui->dataCache_.addEntity(person1);
+    HippoPtr<HippoEntity> person1;
+    cache.createEntity(L"15a1fbae7f2807", HippoEntity::PERSON, &person1);
+    person1->setSmallPhotoUrl(photoUrl);
+    person1->setName(L"Colin");
+    cache.addEntity(person1);
 
-    HippoEntity person2;
-    person2.type = HippoEntity::EntityType::PERSON;
-    person2.smallPhotoUrl = person1.smallPhotoUrl;
-    person2.name = L"Owen Taylor";
-    person2.id = L"25a1fbae7f2807";
-    ui->dataCache_.addEntity(person2);
+    HippoPtr<HippoEntity> person2;
+    cache.createEntity(L"25a1fbae7f2807", HippoEntity::PERSON, &person2);
+    person2->setSmallPhotoUrl(photoUrl);
+    person2->setName(L"Owen Taylor");
+    cache.addEntity(person2);
 
-    HippoEntity person3;
-    person3.type = HippoEntity::EntityType::PERSON;
-    person3.smallPhotoUrl = person1.smallPhotoUrl;
-    person3.name = L"Colin Walters";
-    person3.id = L"35a1fbae7f2807";
-    ui->dataCache_.addEntity(person3);
+    HippoPtr<HippoEntity> person3;
+    cache.createEntity(L"35a1fbae7f2807", HippoEntity::PERSON, &person3);
+    person3->setSmallPhotoUrl(photoUrl);
+    person3->setName(L"Colin Walters");
+    cache.addEntity(person3);
 
-    HippoEntity person4;
-    person4.type = HippoEntity::EntityType::PERSON;
-    person4.smallPhotoUrl = person1.smallPhotoUrl;
-    person4.id = L"a35baeea7f2807";
-    person4.name = L"Bryan Clark";
-    ui->dataCache_.addEntity(person4);
+    HippoPtr<HippoEntity> person4;
+    cache.createEntity(L"a35baeea7f2807", HippoEntity::PERSON, &person4);
+    person2->setSmallPhotoUrl(photoUrl);
+    person4->setName(L"Bryan Clark");
+    cache.addEntity(person4);
 
-    linkshare.url.setUTF8("http://www.gnome.org");
-    linkshare.postId.setUTF8("42");
-    linkshare.title.setUTF8("Here is the title make this long enough so that it will wrap and cause problems");
-    linkshare.senderId.setUTF8("15a1fbae7f2807");
-    linkshare.description.setUTF8("The body of the message. Again we want a lot of text here so that "
-        "we can see wrapping and all sorts of fun things like that which will "
-        "cause differences from what we would have if we had a short title without "
-        "the kind of excessive length that you see here.");
-    linkshare.recipients.push_back(person1.id);
-    linkshare.recipients.push_back(person2.id);
-    linkshare.info.setUTF8("");
-    linkshare.timeout = 0;
-    ui->onLinkMessage(linkshare, true);
+    HippoPtr<HippoEntityCollection> recipients;
+    cache.createEntityCollection(&recipients);
+    recipients->addMember(person1);
+    recipients->addMember(person2);
+
+    HippoPtr<HippoPost> linkshare1;
+    cache.createPost(L"42", &linkshare1);
+
+    linkshare1->setUrl(L"http://www.gnome.org");
+    linkshare1->setTitle(L"Here is the title make this long enough so that it will wrap and cause problems");
+    linkshare1->setSender(person1);
+    linkshare1->setDescription(L"The body of the message. Again we want a lot of text here so that "
+                                L"we can see wrapping and all sorts of fun things like that which will "
+                                L"cause differences from what we would have if we had a short title without "
+                                L"the kind of excessive length that you see here.");
+
+    linkshare1->setRecipients(recipients);
+
+    linkshare1->setTimeout(0);
+    ui->onLinkMessage(linkshare1, true);
 
     g_timeout_add(2000, idleAddTestViewers, ui);
 
-    linkshare.url.setUTF8("http://flickr.com/photos/tweedie/63302017/");
-    linkshare.postId.setUTF8("2");
-    linkshare.title.setUTF8("funny photo");
-    linkshare.description.setUTF8("Wow, this photo is funny");
-    linkshare.info.setUTF8(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<postInfo>"
-        "    <flickr>"
-        "        <photos>"
-        "             <photo>"
-        "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
-        "                  <photoId>73029609</photoId>"
-        "             </photo>"
-        "        </photos>"
-        "    </flickr>"
-        "</postInfo>");
-    ui->onLinkMessage(linkshare, true);
+    HippoPtr<HippoPost> linkshare2;
+    cache.createPost(L"2", &linkshare2);
+
+    linkshare2->setUrl(L"http://flickr.com/photos/tweedie/63302017/");
+    linkshare2->setTitle(L"funny photo");
+    linkshare2->setSender(person1);
+    linkshare2->setDescription(L"Wow, this photo is funny");
+
+    linkshare2->setRecipients(recipients);
+
+    linkshare2->setTimeout(0);
+
+    linkshare2->setInfo(
+        L"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        L"<postInfo>"
+        L"    <flickr>"
+        L"        <photos>"
+        L"             <photo>"
+        L"                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
+        L"                  <photoId>73029609</photoId>"
+        L"             </photo>"
+        L"        </photos>"
+        L"    </flickr>"
+        L"</postInfo>");
+    ui->onLinkMessage(linkshare2, true);
 
     HippoMySpaceBlogComment blogComment;
 
@@ -571,6 +596,7 @@ HippoUI::idleShowDebugShare(gpointer data)
     blogComment.content.setUTF8("Blah, blah, blah... Blah!");
 
     ui->bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
+
     return FALSE;
 }
 
@@ -1067,9 +1093,8 @@ HippoUI::onAuthFailure()
 bool 
 HippoUI::isShareActive(BSTR postId)
 {
-    HippoPtr<IHippoChatRoom> chatRoom;
-    HRESULT ret = im_.findChatRoom(postId, &chatRoom);
-    if (SUCCEEDED(ret) && chatRoom != NULL)
+    HippoChatRoom *chatRoom = im_.findChatRoom(postId);
+    if (chatRoom != NULL && chatRoom->getState() != HippoChatRoom::NONMEMBER)
         return TRUE;
     for (UINT i = 0; i < browsers_.length(); i++) {
         if (isFramedPost(browsers_[i].url, postId)) {
@@ -1150,30 +1175,14 @@ HippoUI::onUpgradeReady()
     upgradeWindow_->navigate(url);
 }
 
-void
-HippoUI::addEntity(HippoEntity &entity)
-{
-    dataCache_.addEntity(entity);
-}
-
 void 
-HippoUI::onLinkMessage(HippoPost &post, bool isNew)
+HippoUI::onLinkMessage(HippoPost *post, bool isNew)
 {
-    if (!isNew) {
-        post.haveViewed = true;
-        dataCache_.addPost(post);
-    }
+    if (!isNew)
+        post->setHaveViewed(TRUE);
     bubble_.setLinkNotification(false, post);
-    if (isNew) {
-        post.haveViewed = true;
-        dataCache_.addPost(post);
-    }
-}
-
-void 
-HippoUI::getEntity(BSTR id, HippoEntity *entity)
-{
-    dataCache_.getEntity(id, entity);
+    if (isNew)
+        post->setHaveViewed(TRUE);
 }
 
 void 
@@ -1188,7 +1197,7 @@ HippoUI::setHaveMissedBubbles(bool haveMissed)
 int
 HippoUI::getRecentMessageCount()
 {
-    std::vector<HippoPost> recent;
+    std::vector<HippoPost *> recent;
     dataCache_.getRecentPosts(recent);
     return (int) recent.size();
 }
@@ -1819,6 +1828,33 @@ HippoUI::onReceivingMySpaceContactPost()
     mySpace_->onReceivingMySpaceContactPost();
 }
 
+void 
+HippoUI::onViewerJoin(HippoPost *post)
+{
+    bubble_.onViewerJoin(post);
+    menu_.updatePost(post);
+    if (recentPostList_)
+        recentPostList_->updatePost(post);
+}
+
+void 
+HippoUI::onChatRoomMessage(HippoPost *post)
+{
+    bubble_.onChatRoomMessage(post);
+    menu_.updatePost(post);
+    if (recentPostList_)
+        recentPostList_->updatePost(post);
+}
+
+void 
+HippoUI::updatePost(HippoPost *post)
+{
+    bubble_.updatePost(post);
+    menu_.updatePost(post);
+    if (recentPostList_)
+        recentPostList_->updatePost(post);
+}
+
 void
 HippoUI::clearActivePosts()
 {
@@ -1826,7 +1862,7 @@ HippoUI::clearActivePosts()
 }
 
 void 
-HippoUI::addActivePost(const HippoPost &post)
+HippoUI::addActivePost(HippoPost *post)
 {
     menu_.addActivePost(post);
 }

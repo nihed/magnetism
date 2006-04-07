@@ -10,7 +10,7 @@
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
-struct HippoPost;
+class HippoPost;
 
 class HippoBubbleList :
     public IHippoBubbleList,
@@ -21,7 +21,8 @@ public:
     HippoBubbleList();
     ~HippoBubbleList();
 
-    void addLinkShare(const HippoPost &share);
+    void addLinkShare(HippoPost *share);
+    void updatePost(HippoPost *post);
     void addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceBlogComment &comment);
     void clear();
 
@@ -51,9 +52,6 @@ protected:
     virtual void onClose(bool fromScript);
 
 private:
-    void addEntity(const HippoBSTR &id);
-    void addEntity(const HippoEntity &entity);
-
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
     int desiredWidth_;

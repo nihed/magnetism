@@ -59,14 +59,16 @@ HippoMenu::clearActivePosts()
 }
     
 void 
-HippoMenu::addActivePost(const HippoPost &post)
+HippoMenu::addActivePost(HippoPost *post)
 {
+    HippoBSTR postId = post->getId();
+
     int i = 0;
-    for (std::vector<HippoPost>::iterator iter = activePosts_.begin();
+    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {
-        if (iter->postId == post.postId) {
+        if ((*iter)->getId() == postId) {
             activePosts_.erase(iter);
             invokeRemoveActivePost(i);
             break;
@@ -85,19 +87,34 @@ HippoMenu::invokeRemoveActivePost(int i)
 }
 
 void 
-HippoMenu::invokeInsertActivePost(int i, const HippoPost &post)
+HippoMenu::invokeInsertActivePost(int i, HippoPost *post)
 {
-    HippoEntity entity;
-    ui_->getEntity(post.senderId.m_str, &entity);
     if (ie_)
         ie_->createInvocation(L"dhMenuInsertActivePost")
             .addLong(i)
-            .add(post.postId)
-            .add(post.title)
-            .add(entity.name)
-            .addLong(post.chattingUserCount)
-            .addLong(post.totalViewers)
+            .addDispatch(post)
             .run();
+}
+
+void 
+HippoMenu::updatePost(HippoPost *post)
+{
+    if (!ie_)
+        return;
+
+    int i = 0;
+    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
+         iter != activePosts_.end();
+         iter++, i++) 
+    {
+        if ((*iter)->getId() == post->getId()) {
+            ie_->createInvocation(L"dhMenuUpdatePost")
+                .addLong(i)
+                .addDispatch(post)
+                .run();
+            break;
+        }
+    }
 }
 
 void
@@ -154,7 +171,7 @@ HippoMenu::initializeBrowser()
     ie_->createInvocation(L"dhInit").add(appletURL).run();
 
     int i = 0;
-    for (std::vector<HippoPost>::iterator iter = activePosts_.begin();
+    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {

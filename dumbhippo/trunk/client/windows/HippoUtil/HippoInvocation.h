@@ -51,6 +51,12 @@ public:
     HippoInvocation &addLong(long value);
 
     /**
+     * Add a IDispatch parameter to the list of parameters to provide to the function
+     * @param value parameter value
+     **/
+    HippoInvocation &addDispatch(IDispatch *dispatch);
+
+    /**
      * Add a vector of HippoBSTR the list of parameters to provide to the function
      * This will be converted to a SAFEARRAY of VARIANT where each variant holds
      * a string. (It might be possible to use a SAFEARRAY of BSTR instead, but 

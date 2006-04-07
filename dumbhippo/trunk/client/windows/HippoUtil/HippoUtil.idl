@@ -82,7 +82,7 @@ library HippoUtil {
         [id(HIPPO_DISPID_ONRECONNECT)] HRESULT OnReconnect();
         [helpstring("User's music changed")]
         [id(HIPPO_DISPID_ONUSERMUSICCHANGE)] HRESULT OnUserMusicChange([in] BSTR userId, [in] BSTR arrangementName, [in] BSTR artist);
-	}
+        }
     [
         uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
         helpstring("DumbHippo Javascript external object"),
@@ -98,4 +98,81 @@ library HippoUtil {
         [id(136), helpstring("Create an xmlhttp object")]
         HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
+    [
+        uuid(58749FB7-80D9-4BCD-9390-07E0BC98863E),
+        helpstring("DumbHippo Entity"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEntity : IUnknown
+    {
+        [id(200), propget, helpstring("Type of entity (0=resource, 1=person, 2=group)")]
+        HRESULT Type([out, retval] int *type);
+        [id(201), propget, helpstring("GUID of the entity")]
+        HRESULT Id([out, retval] BSTR *id);
+        [id(202), propget, helpstring("Human readable name for the entity")]
+        HRESULT Name([out, retval] BSTR *name);
+        [id(203), propget, helpstring("URL to a small image representing the entity")]
+        HRESULT SmallPhotoUrl([out, retval] BSTR *smallPhotoUrl);
+    }
+    [
+        uuid(89503F0C-B401-4AAB-9F99-9B4D2EFA7AD6),
+        helpstring("DumbHippo Entity Collection"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEntityCollection : IUnknown
+    {
+        [id(210), propget, helpstring("Number of elements in the collection")]
+        HRESULT length([out, retval] int *length);
+        [id(211), helpstring("Retrieve a given element")]
+        HRESULT item([in] int index, [out, retval] IHippoEntity **entity);
+    }
+    [
+        uuid(1E81E9E2-8A0E-4A00-8A25-C3948CDAF06B),
+        helpstring("DumbHippo Post"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoPost : IUnknown
+    {
+        [id(220), propget, helpstring("GUID of the post")]
+        HRESULT Id([out, retval] BSTR *id);
+        [id(221), propget, helpstring("Sender of the post")]
+        HRESULT Sender([out, retval] IHippoEntity **sender);
+        [id(222), propget, helpstring("URL of the post")]
+        HRESULT Url([out, retval] BSTR *url);
+        [id(223), propget, helpstring("Title of the post")]
+        HRESULT Title([out, retval] BSTR *title);
+        [id(224), propget, helpstring("Post description text")]
+        HRESULT Description([out, retval] BSTR *description);
+        [id(225), propget, helpstring("Recipients of the post")]
+        HRESULT Recipients([out, retval] IHippoEntityCollection **recipients);
+        [id(226), propget, helpstring("Viewers of the post")]
+        HRESULT Viewers([out, retval] IHippoEntityCollection **viewers);
+        [id(227), propget, helpstring("Extra XML blob of information about the post")]
+        HRESULT Info([out, retval] BSTR *info);
+        [id(228), propget, helpstring("Date that the post was posted, as a Unix time (seconds since January 1, 1971)")]
+        HRESULT PostDate([out, retval] int *postDate);
+        [id(229), propget, helpstring("Number of seconds the post should be displayed")]
+        HRESULT Timeout([out, retval] int *timeout);
+        [id(230), propget, helpstring("Number of people currently viewing the post")]
+        HRESULT ViewingUserCount([out, retval] int *viewingUserCount);
+        [id(231), propget, helpstring("Number of people currently chatting about the post")]
+        HRESULT ChattingUserCount([out, retval] int *chattingUserCount);
+        [id(232), propget, helpstring("Total number of people who have ever viewed the post")]
+        HRESULT TotalViewers([out, retval] int *totalViewers);
+        [id(233), propget, helpstring("Whether the user has previously viewed the post")]
+        HRESULT HaveViewed([out, retval] BOOL *haveViewed);
+
+        // It's probably better to add a ChatRoom property and put these methods on the
+        // chatroom, but we'll delay doing that until we make HippoChatRoom use HippoEntity
+        // more thoroughly
+        [id(234), propget, helpstring("Last message sent to the chatroom")]
+        HRESULT LastChatMessage([out, retval] BSTR *message);
+        [id(235), propget, helpstring("Sender of the last chat message")]
+        HRESULT LastChatSender([out, retval] IHippoEntity **sender);
+        [id(236), propget, helpstring("People currently viewing the message")]
+        HRESULT CurrentViewers([out, retval] IHippoEntityCollection **currentViewers);
+   }
 }

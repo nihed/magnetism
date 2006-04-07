@@ -1,4 +1,4 @@
-// Pop up menu implementation
+// Pop up menu implementation 
 // Copyright Red Hat, Inc. 2006
 
 dh.menu = {}
@@ -79,10 +79,10 @@ dh.menu.Menu = function() {
         
         // Active posts; again we assume they are all the same
         if (this.posts.length > 0) {
-            var post = this.posts[0] 
-            var postHeight = post.titleDiv.clientHeight + post.metaDiv.clientHeight
-            if (post.image.clientHeight > postHeight)
-                postHeight = post.image.clientHeight
+            var postInfo = this.posts[0] 
+            var postHeight = postInfo.titleDiv.clientHeight + postInfo.metaDiv.clientHeight
+            if (postInfo.image.clientHeight > postHeight)
+                postHeight = postInfo.image.clientHeight
                 
             height += this.posts.length * (postHeight + dh.menu.MARGIN)
         }
@@ -90,14 +90,14 @@ dh.menu.Menu = function() {
         window.external.application.Resize(dh.menu.WIDTH, height)
     }
     
-    this.insertActivePost = function(position, id, title, senderName, chattingUserCount, viewingUserCount) {
+    this.insertActivePost = function(position, post) {
         var activePostsDiv = document.getElementById("dhActivePosts")
         
         var postDiv = document.createElement("div")
         postDiv.className = "dh-active-post"
         
         postDiv.onclick = dh.util.dom.stdEventHandler(function (e) {
-            dh.display._openSiteLink("visit?post=" + id)
+            dh.display._openSiteLink("visit?post=" + post.Id)
             return false
         })
         postDiv.onmouseenter = dh.util.dom.stdEventHandler(function (e) {
@@ -109,33 +109,36 @@ dh.menu.Menu = function() {
             return true
         })
         
-        var post = {}
+        var postInfo = {}
         
-        post.image = dh.util.createPngElement(dh.appletUrl + "groupChat.png", 24, 24)
-        post.image.className = "dh-active-post-icon"
-        postDiv.appendChild(post.image)
+        postInfo.image = dh.util.createPngElement(dh.appletUrl + "groupChat.png", 24, 24)
+        postInfo.image.className = "dh-active-post-icon"
+        postDiv.appendChild(postInfo.image)
+        
+        var chattingUserCount = post.ChattingUserCount
+        var viewingUserCount = post.ViewingUserCount
         
         if (chattingUserCount == 0)
-            post.image.style.visibility = "hidden"
+            postInfo.image.style.visibility = "hidden"
             
-        post.titleDiv = document.createElement("div")
-        post.titleDiv.className = "dh-active-post-title"
-        post.titleDiv.appendChild(document.createTextNode(title))
-        postDiv.appendChild(post.titleDiv)
+        postInfo.titleDiv = document.createElement("div")
+        postInfo.titleDiv.className = "dh-active-post-title"
+        postInfo.titleDiv.appendChild(document.createTextNode(post.Title))
+        postDiv.appendChild(postInfo.titleDiv)
         
-        post.metaDiv = document.createElement("div")
-        post.metaDiv.className = "dh-active-post-meta"
+        postInfo.metaDiv = document.createElement("div")
+        postInfo.metaDiv.className = "dh-active-post-meta"
         if (chattingUserCount > 1)
-            post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") people chatting right now"))
+            postInfo.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") people chatting right now"))
         else if (chattingUserCount > 0)
-            post.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") person chatting right now"))
+            postInfo.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") person chatting right now"))
         else if (viewingUserCount > 1)
-            post.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") people looking at this now"))
+            postInfo.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") people looking at this now"))
         else if (viewingUserCount > 0)
-            post.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") person looking at this now"))
+            postInfo.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") person looking at this now"))
         else
-            post.metaDiv.appendChild(document.createTextNode("Sent by " + senderName))
-        postDiv.appendChild(post.metaDiv)
+            postInfo.metaDiv.appendChild(document.createTextNode("Sent by " + post.Sender.Name))
+        postDiv.appendChild(postInfo.metaDiv)
 
         var before
         if (position < activePostsDiv.childNodes.length)
@@ -148,11 +151,11 @@ dh.menu.Menu = function() {
         // Fix up widths to deal with limitations of CSS in doing 2-D layout without tables
         // the '4' is a mysterious fudge factor, probably having to do with some extra padding
         // around the floated image
-        var textWidth = dh.menu.WIDTH - post.image.offsetWidth - 2 * (dh.menu.MARGIN + dh.menu.BORDER) - 4
-        post.titleDiv.style.width = textWidth + "px"
-        post.metaDiv.style.width = textWidth + "px"
+        var textWidth = dh.menu.WIDTH - postInfo.image.offsetWidth - 2 * (dh.menu.MARGIN + dh.menu.BORDER) - 4
+        postInfo.titleDiv.style.width = textWidth + "px"
+        postInfo.metaDiv.style.width = textWidth + "px"
         
-        this.posts.splice(position, 0, post)
+        this.posts.splice(position, 0, postInfo)
         
         this.resize()
     }
@@ -167,6 +170,8 @@ dh.menu.Menu = function() {
     }
 }
 
+// *** The parameters below must be kept in sync with HippoMenu.cpp ***
+
 // Global function called immediately after document.write
 var dhInit = function(appletUrl) {
     // Set some global parameters
@@ -175,14 +180,17 @@ var dhInit = function(appletUrl) {
     dh.display.resize()
 }
 
-// The parameters must be kept in sync with HippoMenu.cpp
-function dhMenuInsertActivePost(position, id, title, senderName, chattingUserCount, viewingUserCount) {
-    dh.display.insertActivePost(position, id, title, senderName, chattingUserCount, viewingUserCount)
+function dhMenuInsertActivePost(position, post) {
+    dh.display.insertActivePost(position, post)
 }
 
-// The parameters must be kept in sync with HippoMenu.cpp
 function dhMenuRemoveActivePost(position) {
     dh.display.removeActivePost(position)
+}
+
+function dhMenuUpdatePost(position, post) {
+    dh.display.removeActivePost(position)
+    dh.display.insertActivePost(position, post)
 }
 
 function dhMenuSetRecentCount(count) {

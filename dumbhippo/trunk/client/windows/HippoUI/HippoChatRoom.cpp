@@ -50,7 +50,9 @@ HippoChatRoom::HippoChatRoom(HippoIM *im, BSTR postId)
     rescanIdle_ = 0;
     participantCount_ = 0;
     memberCount_ = 0;
+    lastMessageIndex_ = -1;
     state_ = NONMEMBER;
+    filling_ = false;
 
     connectionPointContainer_.setWrapper(static_cast<IHippoChatRoom *>(this));
 
@@ -92,6 +94,18 @@ HippoChatRoom::setState(State state)
     im_->onChatRoomStateChange(this, oldState);
 }
 
+bool
+HippoChatRoom::getFilling()
+{
+    return filling_;
+}
+
+void
+HippoChatRoom::setFilling(bool filling)
+{
+    filling_ = filling;
+}
+
 void 
 HippoChatRoom::setTitle(BSTR title)
 {
@@ -102,6 +116,53 @@ BSTR
 HippoChatRoom::getTitle()
 {
     return title_;
+}
+
+const HippoChatMessage *
+HippoChatRoom::getLastMessage()
+{
+    if (lastMessageIndex_ < 0)
+        return NULL;
+
+    return &messages_[lastMessageIndex_];
+}
+
+std::vector<const HippoChatUser *> 
+HippoChatRoom::getUsers()
+{
+    std::vector<const HippoChatUser *> result;
+
+    for (unsigned long i = 0; i < users_.length(); i++) {
+        result.push_back(&users_[i]);
+    }
+    
+    return result;
+}
+
+int 
+HippoChatRoom::getViewingUserCount()
+{
+    int count = 0;
+
+    for (unsigned long i = 0; i < users_.length(); i++) {
+        if (!users_[i].isParticipant())
+            count++;
+    }
+
+    return count;
+}
+
+int
+HippoChatRoom::getChattingUserCount()
+{
+    int count = 0;
+
+    for (unsigned long i = 0; i < users_.length(); i++) {
+        if (users_[i].isParticipant())
+            count++;
+    }
+
+    return count;
 }
 
 void 
@@ -123,12 +184,23 @@ HippoChatRoom::removeListener(HippoChatRoomListener *listener)
     assert(false);
 }
 
-void 
+void
 HippoChatRoom::addUser(BSTR userId, int userVersion, BSTR userName, bool participant)
 {
-    // Treat adding an existing user as removing then adding; this allows
-    // for version/name changes.
-    removeUser(userId);
+    HippoChatUser *oldUser;
+
+    if (getUser(userId, &oldUser)) {
+        // Short-circuit the case where nothing has changed; this means that other
+        // properties (like music) are being changed
+        if (oldUser->getVersion() == userVersion &&
+            wcscmp(oldUser->getName(), userName) == 0 &&
+            participant == oldUser->isParticipant())
+            return;
+
+        // Otherwise treat adding an existing user as removing then adding; this allows
+        // for version/name changes.
+        removeUser(userId);
+    }
 
     HippoChatUser user(userId, userVersion, userName, participant);
     users_.append(user);
@@ -254,7 +326,7 @@ HippoChatRoom::notifyUserMusicChange(BSTR userId, BSTR arrangementName, BSTR art
     }
 }
 
-void 
+void
 HippoChatRoom::removeUser(BSTR userId)
 {
     for (unsigned long i = 0; i < users_.length(); i++) {
@@ -321,10 +393,22 @@ HippoChatRoom::notifyUserLeave(const HippoChatUser &user)
 void 
 HippoChatRoom::addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial)
 {
+    bool isLast = true;
+
+    for (unsigned long i = 0; i < messages_.length(); i++) {
+        if (messages_[i].getSerial() == serial)
+            return;
+
+        if (messages_[i].getSerial() > serial)
+            isLast = false;
+    }
+
     HippoChatUser user(userId, userVersion, userName, true);
     HippoChatMessage message(user, text, timestamp, serial);
 
     messages_.append(message);
+    lastMessageIndex_ = messages_.length() - 1;
+
     notifyMessage(message);
 }
 
@@ -385,6 +469,8 @@ HippoChatRoom::clear()
 
     for (unsigned long i = messages_.length(); i > 0; --i)
         messages_.remove(i);
+
+    lastMessageIndex_ = -1;
 }
 
 void

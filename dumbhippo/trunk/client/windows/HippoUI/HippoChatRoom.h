@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <HippoConnectionPointContainer.h>
+#include <vector>
 
 class HippoChatUser
 {
@@ -80,6 +81,9 @@ public:
     void addListener(HippoChatRoomListener *listener);
     void removeListener(HippoChatRoomListener *listener);
 
+    const HippoChatMessage *getLastMessage();
+    std::vector<const HippoChatUser *> getUsers();
+
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
     STDMETHODIMP_(DWORD) AddRef();
@@ -99,6 +103,13 @@ public:
     STDMETHODIMP Rescan();
 
     // Called by HippoIM
+
+    bool getFilling(); // Set while we are using a <details/> IQ to fill a chatroom we aren't part of
+    void setFilling(bool filling); 
+
+    int getViewingUserCount(); // Number of users looking at the page (excluding those also chatting)
+    int getChattingUserCount(); // Number of users just looking at the page
+
     void addUser(BSTR userId, int userVersion, BSTR userName, bool participant);
     void removeUser(BSTR userId);
     void addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial);
@@ -130,6 +141,8 @@ private:
     int memberCount_;
     int participantCount_;
     State state_;
+    bool filling_;
+    int lastMessageIndex_; // Could just keep messages sorted by index
 
     HippoConnectionPointContainer connectionPointContainer_;
     HippoArray<HippoChatRoomListener*> listeners_;

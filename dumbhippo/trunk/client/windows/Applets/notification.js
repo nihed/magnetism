@@ -75,6 +75,10 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     this._bubble.onSizeChange()
     
+    this._bubble.onUpdateDisplay = function() {
+        display._idleUpdateDisplay()
+    }
+    
     this._pushNotification = function (nType, data, timeout) {
         this.notifications.push({notificationType: nType,
                                  state: "pending",
@@ -88,7 +92,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this._shouldDisplayShare = function (share) {
-        if (share.viewers.length > 0 && share.viewers[0] == dh.selfId) {
+        if (share.post.Viewers.length > 0 && share.post.Viewers.item(0).Id == dh.selfId) {
             dh.util.debug("Not displaying notification of self-view")
             return false;
         }
@@ -99,7 +103,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         for (var i = 0; i < this.notifications.length; i++) {
             var notification = this.notifications[i] 
             if (notification.notificationType == 'linkShare' &&
-                notification.data.postId == postId) {
+                notification.data.post.Id == postId) {
                 return {notification: notification, position: i}
             }
         }
@@ -109,29 +113,44 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         return null
     }
 
-    // Returns true iff we should show the window if it's hidden
-    this.addLinkShare = function (share, timeout, isRedisplay) {
-        var prevShareData = this._findLinkShare(share.postId)
+    // Returns true iff we should show the window if it's hidden. 
+    // page = 0 ... "who's there". page = 1 ... "someone just said".
+    // startPage = null ... don't care
+    this.addLinkShare = function (share, isRedisplay, page) {
+        var prevShareData = this._findLinkShare(share.post.Id)
         var shouldDisplayShare = isRedisplay || this._shouldDisplayShare(share)
         if (prevShareData) {
             // Update the viewer data
-            prevShareData.notification.data.viewers = share.viewers
+            prevShareData.notification.data = share
         }
         if (!shouldDisplayShare)
             return false
         if (!prevShareData || prevShareData.position < 0) {   
             // We don't have it at all, or it was saved and needs to be redisplayed
-            this._pushNotification('linkShare', share, timeout)
+            this._pushNotification('linkShare', share, share.post.Timeout)
+            if (page != null)
+                this._bubble.setPage(page)
             return true
         } else if (prevShareData && prevShareData.position == this.position) {
             // We're currently displaying this share, set it again in the bubble to force rerendering
             dh.util.debug("resetting current bubble data")
             this._bubble.setData(share)
+            if (page != null)
+                this._bubble.setPage(page)
             return shouldDisplayShare
         } else {
             dh.util.debug("not rerendering bubble");
         }
         return false
+    }
+    
+    // Refresh the display of the share, if showing, otherwise do nothing
+    this.updateIfActive = function(id) {
+        var prevShareData = this._findLinkShare(id)
+        if (prevShareData && prevShareData.position == this.position) {
+            // set data again in the bubble to force rerendering
+            this._bubble.setData(prevShareData.notification.data)
+        }
     }
     
     this.addMySpaceComment = function (comment) {
@@ -301,41 +320,14 @@ dhAdaptLinkRecipients = function (recipients) {
 
 // Global namespace since it's painful to do anything else from C++
 
-dhAddPerson = function (id, name, smallPhotoUrl) 
-{
-    dh.util.debug("adding person " + id + " " + name + " " + smallPhotoUrl)
-    var person = new dh.bubble.Person(id, name, smallPhotoUrl)
-    dh.bubble.addEntity(person)
-}
+// Note if you change the parameters to these functions, you must change HippoBubble.cpp
 
-dhAddResource = function (id, name) 
-{
-    dh.util.debug("adding resource " + id + " " + name)
-    var res = new dh.bubble.Resource(id, name)
-    dh.bubble.addEntity(res)
-}
-
-dhAddGroup = function (id, name, smallPhotoUrl) 
-{
-    dh.util.debug("adding group " + id + " " + name + " " + smallPhotoUrl)
-    var grp = new dh.bubble.Group(id, name, smallPhotoUrl)
-    dh.bubble.addEntity(grp)
-}
-
-// Note if you change the parameters to this function, you must change
-// HippoBubble.cpp
-dhAddLinkShare = function (isRedisplay, senderId, postId, linkTitle, 
-                           linkURL, linkDescription, recipients, 
-                           viewers, postInfo, timeout, viewerHasViewed) {
+dhAddLinkShare = function (isRedisplay, post) {
     dh.display.setVisible(true)
-    viewers = dh.core.adaptExternalArray(viewers)
-    recipients = dh.core.adaptExternalArray(recipients)
     
-    dh.util.debug("adding link share id=" + postId + " " + viewers.length + " viewers")
-    var data = new dh.bubble.PostData(senderId, postId, linkTitle, 
-                                      linkURL, linkDescription, recipients, 
-                                      viewers, postInfo, viewerHasViewed)
-    return dh.display.addLinkShare(data, timeout, isRedisplay)                   
+    dh.util.debug("adding link share id=" + post.Id)
+    var data = new dh.bubble.PostData(post)
+    return dh.display.addLinkShare(data, isRedisplay)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
@@ -345,6 +337,24 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
 
 dhDisplayMissed = function () {
     dh.display.displayMissed()
+}
+
+dhViewerJoined = function(post, shouldNotify) {
+    dh.display.setVisible(true)
+    
+    var data = new dh.bubble.PostData(post)
+    return dh.display.addLinkShare(data, true, "whosThere")
+}
+
+dhChatRoomMessage = function(post, shouldNotify) {
+    dh.display.setVisible(true)
+        
+    var data = new dh.bubble.PostData(post)
+    return dh.display.addLinkShare(data, true, "someoneSaid")
+}
+
+dhUpdatePost = function(post) {
+    dh.display.updateIfActive(post.Id)
 }
 
 dhSetIdle = function(idle) {

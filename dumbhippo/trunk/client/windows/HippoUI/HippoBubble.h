@@ -9,37 +9,31 @@
 #include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
+#include "HippoDispatchableObject.h"
 
-struct HippoPost;
+class HippoPost;
 
 class HippoBubble :
-    public IHippoBubble,
-    public IDispatch,
+    public HippoDispatchableObject<IHippoBubble, HippoBubble>,
     public HippoAbstractWindow
 {
 public:
     HippoBubble();
     ~HippoBubble();
 
-    void setLinkNotification(bool isRedisplay, HippoPost &share);
+    static ITypeInfo *getTypeInfo();
+
+    void setLinkNotification(bool isRedisplay, HippoPost *share);
     void addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);
     void showMissedBubbles();
 
+    void onViewerJoin(HippoPost *post);
+    void onChatRoomMessage(HippoPost *post);
+    void updatePost(HippoPost *post);
+
     void setShareHasChatActive(const WCHAR *postId, bool isActive);
-
-    // IUnknown methods
-    STDMETHODIMP QueryInterface(REFIID, LPVOID*);
-    STDMETHODIMP_(DWORD) AddRef();
-    STDMETHODIMP_(DWORD) Release();
-
-    // IDispatch methods
-    STDMETHODIMP GetIDsOfNames (const IID &, OLECHAR **, unsigned int, LCID, DISPID *);
-    STDMETHODIMP GetTypeInfo (unsigned int, LCID, ITypeInfo **);           
-    STDMETHODIMP GetTypeInfoCount (unsigned int *);
-    STDMETHODIMP Invoke (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
-                         VARIANT *, EXCEPINFO *, unsigned int *);
 
     // IHippoBubble
     STDMETHODIMP DebugLog(BSTR str);
@@ -80,9 +74,6 @@ private:
     HDC layerDC_;
     HBITMAP oldBitmap_;
 
-    void addEntity(const HippoBSTR &id);
-    void addEntity(const HippoEntity &entity);
-
     void setShown();
     void moveResizeWindow(void);
     void checkMouse();
@@ -90,8 +81,4 @@ private:
     void doSetIdle();
     void doShow();
     void doClose();
-
-    HippoPtr<ITypeInfo> ifaceTypeInfo_;
-
-    DWORD refCount_;
 };
