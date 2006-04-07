@@ -17,7 +17,7 @@
         <td id="dhShareLeft" width="46%">
         <table id="dhShareLeftContainer" cellspacing="0" cellpadding="0">
     	    <tr><td><img src="/images/${buildStamp}/dumbhippo_logo.gif"/></td></tr>
-        	<tr><td width="100%" style="overflow: hidden"><div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
+        	<tr><td width="100%"><div dojoType="InlineEditBox" id="dhUrlTitleToShare">(untitled)</div>
         			<div id="dhTitleError" class="dhValidityError"></div></td></tr>
 		    <tr><td><div id="dhUrlToShareDiv" class="dhLabel dhInvisible">
 				Link: <input id="dhUrlToShare" type="text" class="dhText"/></div></td></tr>

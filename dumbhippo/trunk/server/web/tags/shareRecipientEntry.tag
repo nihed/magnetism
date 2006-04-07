@@ -5,13 +5,13 @@
 <%-- This tag is used by sharelink.jsp and sharephotoset.jsp.  It
      is the HTML container for a recipient list; requires the
      JavaScript dh.sharelink to be loaded too --%>
-       <table id="dhShareRecipientsContainer" cellspacing="0" cellpadding="0" height="22px">
-            <tr width="100%">
-            <td valign="center"><input autocomplete="off" accesskey="w"
+       <table id="dhShareRecipientsContainer" cellspacing="0" cellpadding="0">
+            <tr>
+            <td align="left" valign="center"><input autocomplete="off" accesskey="w"
 						type="text" id="dhShareRecipientComboBox" class="dhText" tabindex="1"/></td>
-            <td id="dhShareDownArrow"><img id="dhShareRecipientComboBoxButton" src="/images/${buildStamp}/downarrow.gif"/></td>       
-            <td><img onclick="dh.share.autoSuggest.activate();" accesskey="a" id="dhShareAddButton" src="/images/${buildStamp}/but_add.gif"/></td>
-            <td><div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div></td>
+            <td align="left" id="dhShareDownArrow"><img id="dhShareRecipientComboBoxButton" src="/images/${buildStamp}/downarrow.gif"/></td>     
+            <td align="right"><img onclick="dh.share.autoSuggest.activate();" accesskey="a" id="dhShareAddButton" src="/images/${buildStamp}/but_add.gif"/></td>
+            <td align="left"><div id="dhAutoSuggest" class="dhInvisible"><ul></ul></div></td>
             </tr>
             <tr height="2px"><td></td></tr>
         </table>

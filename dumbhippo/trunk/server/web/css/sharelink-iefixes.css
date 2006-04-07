@@ -37,6 +37,7 @@
   margin-right: -1px;
 }
 
-#dhShareDownArrow {
-  height: 22px;
+#dhUrlTitleToShare {
+  width: expression(Math.max(parseInt(this.offsetWidth), Math.floor(0.7*document.body.clientWidth)) + "px");
+  height: expression(Math.max(parseInt(this.offsetHeight), 75) + "px")
 }
