@@ -666,16 +666,21 @@ public class MessageSenderBean implements MessageSender {
 	}
 
 	public void sendLivePostChanged(LivePost lpost) {
-		PostView post;
+		Post post;
 		try {
-			post = postingBoard.loadPost(SystemViewpoint.getInstance(), lpost.getGuid());
+			post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), lpost.getGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		for (Resource recipientResource : post.getPost().getExpandedRecipients()) {
+		for (Resource recipientResource : post.getExpandedRecipients()) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
-				xmppSender.sendLivePostChanged(recipient, lpost, post);
+				try {
+					PostView postView = postingBoard.loadPost(new UserViewpoint(recipient), post.getGuid());
+					xmppSender.sendLivePostChanged(recipient, lpost, postView);
+				} catch (NotFoundException e) {
+				// User doesn't have permission to view a post where they were in expandedRecipients(?)
+				}
 			}
 		}
 	}

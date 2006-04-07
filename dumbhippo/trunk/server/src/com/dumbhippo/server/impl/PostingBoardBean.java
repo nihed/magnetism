@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -359,6 +360,9 @@ public class PostingBoardBean implements PostingBoard {
         "g MEMBER OF post.groupRecipients AND " + 
 		"g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
 	
+	static final String VISIBLE_GROUP_SYSTEM =
+        "g MEMBER OF post.groupRecipients";
+	
 	static final String AUTH_GROUP_ANONYMOUS =
         "g MEMBER OF post.groupRecipients AND " + 
 		"g.access >= " + GroupAccess.PUBLIC.ordinal();
@@ -401,7 +405,7 @@ public class PostingBoardBean implements PostingBoard {
 		Query q;
 
 		if (viewpoint instanceof SystemViewpoint) {
-			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS);
+			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_SYSTEM);
 		} else if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint)viewpoint).getViewer();
 
@@ -457,10 +461,17 @@ public class PostingBoardBean implements PostingBoard {
 		
 		addGroupRecipients(viewpoint, post, recipients);
 		
-		if (viewpoint instanceof UserViewpoint) {
-			// Person recipients are visible only if the viewer is also a person recipient
-			for (Resource recipient : getVisiblePersonRecipients((UserViewpoint)viewpoint, post))
-				recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+		Collection<Resource> recipientResources;
+		if (viewpoint instanceof SystemViewpoint) {
+			recipientResources = post.getPersonRecipients();
+		} else if (viewpoint instanceof UserViewpoint) {
+			recipientResources = getVisiblePersonRecipients((UserViewpoint)viewpoint, post);
+		} else {
+			recipientResources = Collections.emptyList();
+		}
+		
+		for (Resource recipient : recipientResources) {
+			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
 		}
 	
 		if (!em.contains(post))
