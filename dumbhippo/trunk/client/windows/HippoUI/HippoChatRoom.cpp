@@ -124,6 +124,9 @@ HippoChatRoom::getLastMessage()
     if (lastMessageIndex_ < 0)
         return NULL;
 
+    if (messages_[lastMessageIndex_].getSerial() == -1) // the description
+        return NULL;
+
     return &messages_[lastMessageIndex_];
 }
 
