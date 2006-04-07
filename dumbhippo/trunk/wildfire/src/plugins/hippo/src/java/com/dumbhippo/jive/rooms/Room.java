@@ -12,12 +12,15 @@ import javax.jms.ObjectMessage;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError.Condition;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -201,6 +204,47 @@ public class Room {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
+	/**
+	 * Send a packet to a particular resource
+	 * 
+	 * @param packet packet to send
+	 * @param to recipient resource
+	 */
+	private void sendPacketToResource(Packet packet, JID to) {
+		packet.setTo(to);
+		XMPPServer.getInstance().getPacketRouter().route(packet);		
+	}
+
+	/**
+	 * Send a packet to everybody who either received the post initially
+	 * or is in the chatroom. (The latter is currently a subset of the 
+	 * former, but that will change in the future.) The packet is sent
+	 * only to resources that are currently logged in to the server; it
+	 * will not be queued for offline delivery.
+	 * 
+	 * @param packet the packet to send
+	 */ 
+	private void sendPacketToAll(Packet packet) {
+		for (String userName : allowedUsers.keySet()) {
+			try {
+				SessionManager.getInstance().userBroadcast(userName, packet);
+			} catch (UnauthorizedException e) {
+				// Ignore
+			}
+		}		
+	}
+	
+	/**
+	 * Send a packet to everybody currently in the chatroom. 
+	 * 
+	 * @param packet the packet to send
+	 */
+	private void sendPacketToPresent(Packet packet) {
+		for (JID member : presentResources.keySet()) {
+			sendPacketToResource(packet, member);
+		}
+	}
+	
 	public static Room loadFromServer(RoomHandler handler, String roomName, String username) {
 		Log.debug("Querying server for information on post " + roomName);
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
@@ -233,9 +277,21 @@ public class Room {
 		
 	}
 	
-	private void sendPresenceAvailable(JID to, UserInfo userInfo) {
+	private String roleString(RoomUserStatus status) {
+		switch (status) {
+		case NONMEMBER:
+			return "nonmember";
+		case VISITOR:
+			return "visitor";
+		case PARTICIPANT:
+			return "participant";
+		}
+		
+		return null; // Not reached
+	}
+	
+	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {
 		Presence presence = new Presence((Presence.Type)null);
-		presence.setTo(to);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
 		Log.debug("Sending presence available from " + presence.getFrom() + " to " + presence.getTo());
@@ -247,21 +303,38 @@ public class Room {
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
-		info.addAttribute("role", userInfo.getStatus() == RoomUserStatus.PARTICIPANT ? "participant" : "visitor");
+		info.addAttribute("role", roleString(userInfo.getStatus()));
+		if (oldStatus != null) {
+			info.addAttribute("oldRole", roleString(oldStatus));
+		}
 		info.addAttribute("arrangementName", userInfo.getArrangementName());
 		info.addAttribute("artist", userInfo.getArtist()); 
 		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
-		XMPPServer.getInstance().getPacketRouter().route(presence);
+		
+		return presence;
 	}
 	
-	private void sendPresenceUnavailable(JID to, UserInfo userInfo) {
+	private Presence makePresenceUnavailable(UserInfo userInfo) {
 		Presence presence = new Presence(Presence.Type.unavailable);
-		presence.setTo(to);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
-		Log.debug("Sending presence unavailable from " + presence.getFrom() + " to " + presence.getTo());
+		return presence;
+	}
+	
+	private void sendRoomDetails(boolean excludeSelf, JID to) {
+		// Send the list of current members
+		for (UserInfo memberInfo : presentUsers.values()) {
+			if (!(excludeSelf && memberInfo.getUsername().equals(to.getNode()))) {
+				Presence presence = makePresenceAvailable(memberInfo, null);
+				sendPacketToResource(presence, to);
+			}
+		}
 		
-		XMPPServer.getInstance().getPacketRouter().route(presence);
+		// And a complete history of past messages
+		for (MessageInfo messageInfo : messages) {
+			Message message = makeMessage(messageInfo);
+			sendPacketToResource(message, to);
+		}
 	}
 	
 	private void processPresenceAvailable(Presence packet) {
@@ -338,25 +411,21 @@ public class Room {
 			if (resourceWasPresent)
 				handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
 			handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
-			for (JID member : presentResources.keySet()) {
-				sendPresenceAvailable(member, userInfo);
-			}
+			RoomUserStatus oldStatus;
+			if (resourceWasParticipant)
+				oldStatus = RoomUserStatus.PARTICIPANT;
+			else if (resourceWasPresent)
+				oldStatus = RoomUserStatus.VISITOR;
+			else
+				oldStatus = RoomUserStatus.NONMEMBER;
+			
+			Presence presence = makePresenceAvailable(userInfo, oldStatus);
+			sendPacketToAll(presence);
 		}
 		
-		if (!resourceWasPresent) {
-			// Send the newly joined resource the list of current members
-			for (UserInfo memberInfo : presentUsers.values()) {
-				 // Skip this user if we already notified them
-				if (needNotify && !memberInfo.getUsername().equals(username))
-					sendPresenceAvailable(jid, memberInfo);
-			}
-			
-			// And a complete history of past messages
-			for (MessageInfo messageInfo : messages) {
-				Message outgoing = makeMessage(messageInfo);
-				sendPacket(outgoing, jid);
-			}
-		}	
+		// Send the list of current membmers and a complete history of past messages
+		if (!resourceWasPresent)
+			sendRoomDetails(needNotify, jid);
 	}
 	
 	private void processPresenceUnavailable(Presence packet) {
@@ -389,12 +458,13 @@ public class Room {
 			handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
 			if (userInfo.getStatus() != RoomUserStatus.NONMEMBER)
 				handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
-			for (JID member : presentResources.keySet()) {
-				if (userInfo.getStatus() == RoomUserStatus.NONMEMBER)
-					sendPresenceUnavailable(member, userInfo);
-				else
-					sendPresenceAvailable(member, userInfo);
-			}
+			
+			Presence presence;
+			if (userInfo.getStatus() == RoomUserStatus.NONMEMBER)
+				presence = makePresenceUnavailable(userInfo);
+			else
+				presence = makePresenceAvailable(userInfo, RoomUserStatus.PARTICIPANT);
+			sendPacketToAll(presence);
 		}
 	}
 	
@@ -413,21 +483,6 @@ public class Room {
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 		
 		return outgoing;
-	}
-	
-	private IQ makeMusicChangeMessage(Element iq, String username) {
-		IQ outgoing = new IQ();
-		Log.debug("Creating IQ packet from " + roomName + " " + getServiceDomain() + " " + username);
-		outgoing.setFrom(new JID(roomName, getServiceDomain(), username));
-		outgoing.setChildElement(iq);
-		return outgoing;
-	}
-	
-	private void sendPacket(Packet outgoing, JID to) {
-		Log.debug("  forwarding packet to: " + to);
-
-		outgoing.setTo(to);
-		XMPPServer.getInstance().getPacketRouter().route(outgoing);		
 	}
 	
 	private void processMessagePacket(Message packet) {
@@ -453,17 +508,45 @@ public class Room {
 		messages.add(messageInfo);
 		
 		Message outgoing = makeMessage(messageInfo);
-		for (JID member : presentResources.keySet()) {
-			sendPacket(outgoing, member);
-		}
+		sendPacketToAll(outgoing);
 		
 		// Send over to the server via JMS
 		XmppEventChatMessage event = new XmppEventChatMessage(roomName, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
         ObjectMessage message = queue.createObjectMessage(event);
         queue.send(message);
 	}
+	
+	private void processIQPacket(IQ packet) {
+		JID fromJid = packet.getFrom();
+		
+		IQ reply = IQ.createResultIQ(packet);
+	
+		Element child = packet.getChildElement();
+		
+		if (child == null) {
+			reply.setError(Condition.bad_request);
+		} else if (packet.getType() == IQ.Type.get &&
+			child.getNamespaceURI().equals("http://dumbhippo.com/protocol/rooms") &&
+		    child.getName().equals("details")) {
+			
+			// This is somewhat of an abuse of the IQ system; the "details"
+			// IQ is a request for the full membership list and history of
+			// the room. Instead of packing that information as a child
+			// elements of the result IQ, which would require extending
+			// the XML schema and adding more parsing code on the client
+			// side, we simply send all that information as <presence/> and
+			// <message/> elements, *then* we send the result of the IQ
+			// to indicate that we are finished.
+			sendRoomDetails(false, fromJid);
+			
+		} else {
+			reply.setError(Condition.feature_not_implemented);
+		}
+		
+		XMPPServer.getInstance().getPacketRouter().route(reply);
+	}
 
-	/*
+	/**
 	 * @param iq an Element containing all the information about a new track
 	 * @param propeties a map containing all the information about a new track
 	 * @param username username of a person whose music has changed
@@ -484,10 +567,11 @@ public class Room {
 			userInfo.setMusicPlaying(true);		    
 		}
 		
-		IQ outgoing = makeMusicChangeMessage(iq, username);
-		for (JID member : presentResources.keySet()) {
-			sendPacket(outgoing, member);
-		}
+		// To communicate the change in music, we send a new Presence message
+		// We send it only to users currently in the chatroom, not to everybody,
+		// to cut down on traffic.
+		Presence presence = makePresenceAvailable(userInfo, null);
+		sendPacketToPresent(presence);
 	}
 	
 	/**
@@ -506,6 +590,8 @@ public class Room {
 				processPresenceUnavailable(presence);
 		} else if (packet instanceof Message) {
 			processMessagePacket((Message)packet);
+		} else if (packet instanceof IQ) {
+			processIQPacket((IQ)packet);
 		} else
 			throw new NotImplementedException();
 	}

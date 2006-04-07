@@ -352,5 +352,20 @@ public interface MessengerGlueRemote {
 	
 	public Hotness getUserHotness(String username);
 	
-	public String getRecentPostsXML(String username);
+	/**
+	 * Retrieves information about post or posts in XML form suitable for passing
+	 * back to the client over XMPP. A particular post can be specified by
+	 * ID, or if none is specified, some number of recent posts will be
+	 * returned. (Currently 4). The reason that these two not entirely related
+	 * operations are combined together is a vague feeling that we should
+	 * have one "getPosts()" operation that takes a flexible way of specifying
+	 * what posts to get, rather than a big pile of slightly different variants.
+	 * 
+	 * @param username the user to get posts for
+	 * @param id an optional id of a particular post to retrieve, or null
+	 * @return XML form of the recent posts or of the particular post.
+	 *     if id is specified and is not the id of a post visible to the
+	 *     user, returns null.
+	 */
+	public String getRecentPostsXML(String username, String id);
 }

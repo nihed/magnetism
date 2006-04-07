@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -393,11 +394,32 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
-	public String getRecentPostsXML(String username) {
+	public String getRecentPostsXML(String username, String id) {
 		User user = getUserFromUsername(username);
 		UserViewpoint viewpoint = new UserViewpoint(user);
-		List<PostView> views = postingBoard.getReceivedPosts(viewpoint, user, 0, 4);		
 		LiveState liveState = LiveState.getInstance();
+		List<PostView> views;
+		
+		if (id != null) {
+			PostView view;
+			Guid guid;
+			
+			try {
+				guid = new Guid(id);
+			} catch (ParseException e) {
+				return null;
+			}
+			
+			try {
+				view = postingBoard.loadPost(viewpoint, guid);
+			} catch (NotFoundException e) {
+				return null;
+			}	
+			
+			views = Collections.singletonList(view);
+		} else {
+			views = postingBoard.getReceivedPosts(viewpoint, user, 0, 4);
+		}
 
 		XmlBuilder builder = new XmlBuilder();
 		builder.openElement(RECENT_POSTS_ELEMENT_NAME, "xmlns", RECENT_POSTS_NAMESPACE);
