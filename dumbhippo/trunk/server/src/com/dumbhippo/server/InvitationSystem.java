@@ -195,4 +195,22 @@ public interface InvitationSystem {
 	 *         their invitation
 	 */
 	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee);
+	
+	/**
+	 * Get the number of invitations held by "system" users, these are 
+	 * normally "public" or "up for grabs"
+	 *  
+	 * @param viewpoint the logged-in user, must be an admin
+	 * @return unclaimed invite count
+	 */
+	public int getSystemInvitationCount(UserViewpoint viewpoint);
+	
+	/**
+	 * Get the number of unused invitations held by any user, includes
+	 * the count from getSystemInvitationCount().
+	 *  
+	 * @param viewpoint the logged-in user, must be an admin
+	 * @return unclaimed invite count
+	 */
+	public int getTotalInvitationCount(UserViewpoint viewpoint);
 }

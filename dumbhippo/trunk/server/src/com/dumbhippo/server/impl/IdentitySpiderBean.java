@@ -907,4 +907,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return ret;
 	}
+	
+	public long getNumberOfActiveAccounts(UserViewpoint viewpoint) {
+		if (!isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("can't do this if you aren't an admin");
+		return accountSystem.getNumberOfActiveAccounts();
+	}
 }

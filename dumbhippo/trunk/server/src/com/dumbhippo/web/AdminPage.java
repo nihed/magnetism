@@ -13,6 +13,8 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 
 public class AdminPage extends AbstractSigninRequiredPage {
@@ -22,15 +24,33 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	private Configuration config;
 	
 	private LiveState liveState;
+	
+	private InvitationSystem invitationSystem;
 
+	private IdentitySpider identitySpider;
+	
+	private Set<PersonView> availableLiveUsers;
+	private Set<PersonView> cachedLiveUsers;
+	private Set<LivePost> livePosts;
+	
+	private int systemInvitations;
+	private int totalInvitations;
+	private long numberOfAccounts;
+	
 	public AdminPage() throws HumanVisibleException {
 		super();
 		liveState = LiveState.getInstance();		
 		config = WebEJBUtil.defaultLookup(Configuration.class);
+		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
 		logger.debug("admin console enabled: {}", isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
+		
+		systemInvitations = -1;
+		totalInvitations = -1;
+		numberOfAccounts = -1;
 	}
 	
 	public boolean isValid() throws HumanVisibleException {
@@ -49,14 +69,54 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	}
 
 	public Set<PersonView> getCachedLiveUsers() {
-		return liveUserSetToPersonView(liveState.getLiveUserCacheSnapshot());
+		if (cachedLiveUsers == null)
+			cachedLiveUsers = liveUserSetToPersonView(liveState.getLiveUserCacheSnapshot());
+		return cachedLiveUsers;
+	}
+	
+	public int getCachedLiveUsersCount() {
+		return getCachedLiveUsers().size();
 	}
 	
 	public Set<PersonView> getAvailableLiveUsers() {
-		return liveUserSetToPersonView(liveState.getLiveUserAvailableSnapshot());
+		if (availableLiveUsers == null)
+			availableLiveUsers = liveUserSetToPersonView(liveState.getLiveUserAvailableSnapshot());
+		return availableLiveUsers;
 	}	
+
+	public int getAvailableLiveUsersCount() {
+		return getAvailableLiveUsers().size();
+	}
 	
 	public Set<LivePost> getLivePosts() {
-		return liveState.getLivePostSnapshot();
+		if (livePosts == null)
+			livePosts = liveState.getLivePostSnapshot();
+		return livePosts;
+	}
+	
+	public int getLivePostsCount() {
+		return getLivePosts().size();
+	}
+	
+	public int getSystemInvitations() {
+		if (systemInvitations < 0)
+			systemInvitations = invitationSystem.getSystemInvitationCount(getUserSignin().getViewpoint());
+		return systemInvitations;
+	}
+	
+	public int getUserInvitations() {
+		return getTotalInvitations() - getSystemInvitations();
+	}
+	
+	public int getTotalInvitations() {
+		if (totalInvitations < 0)
+			totalInvitations = invitationSystem.getTotalInvitationCount(getUserSignin().getViewpoint());
+		return totalInvitations;
+	}
+	
+	public long getNumberOfAccounts() {
+		if (numberOfAccounts < 0)
+			numberOfAccounts = identitySpider.getNumberOfActiveAccounts(getUserSignin().getViewpoint());
+		return numberOfAccounts;
 	}
 }

@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.InviterData;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.HippoProperty;
@@ -698,5 +699,23 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			return true;
 		else 
 			return false;
+	}
+	
+	public int getSystemInvitationCount(UserViewpoint viewpoint) {
+		if (!spider.isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("can't do this if you aren't an admin");
+		int count = 0;
+		for (Character c : Character.values()) {
+			User u = spider.getCharacter(c);
+			count += u.getAccount().getInvitations();
+		}
+		return count;
+	}
+
+	public int getTotalInvitationCount(UserViewpoint viewpoint) {
+		if (!spider.isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("can't do this if you aren't an admin");
+		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
+		return (Integer) q.getSingleResult();
 	}
 }

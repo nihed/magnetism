@@ -348,4 +348,10 @@ public interface IdentitySpider {
 	 */
 	public int incrementUserVersion(String userId);
 
+	/** 
+	 * Admin users can get the total number of accounts on the system.
+	 * 
+	 * @return the number of accounts
+	 */
+	public long getNumberOfActiveAccounts(UserViewpoint viewpoint);
 }
