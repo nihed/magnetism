@@ -497,7 +497,7 @@ retry:
         WCHAR *nextKey = NULL;
         for (; p < nextCookie; p = nextKey + 1) {
             nextKey = wcschr(p, '&');
-            if (!nextKey)
+            if (!nextKey || nextKey > nextCookie)
                 nextKey = nextCookie;
 
             if (startsWith(p, L"host="))

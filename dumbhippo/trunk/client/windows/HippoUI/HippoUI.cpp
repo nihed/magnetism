@@ -806,10 +806,10 @@ HippoUI::showSignInWindow()
 {
     if (!signinWindow_) {
         signinWindow_ = new HippoRemoteWindow(this, L"Sign in to DumbHippo", NULL);
-        signinWindow_->showSignin();
     } else {
         signinWindow_->setForegroundWindow();
     }
+    signinWindow_->showSignin();
 }
 
 void
