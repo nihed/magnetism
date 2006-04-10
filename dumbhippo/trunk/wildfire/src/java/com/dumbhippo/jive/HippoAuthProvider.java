@@ -64,7 +64,7 @@ public class HippoAuthProvider implements
             }
 		} else {
 			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);			
-			if (glue.authenticateJabberUser(username, token, digest))
+			if (!glue.authenticateJabberUser(username, token, digest))
 				throw new UnauthorizedException("Not authorized");
 		}
 		Log.debug("auth succeeded for user " + username);
