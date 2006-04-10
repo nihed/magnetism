@@ -1,5 +1,6 @@
 package com.dumbhippo.jive;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -147,6 +148,14 @@ public class PresenceMonitor implements SessionManagerListener {
 						Thread.sleep(RETRY_SLEEP);
 					} catch (EJBException e) {
 						Log.debug("Got exception communicating with the application server, restarting presence tracking", e);
+						serverIdentifier = null;
+						glue = null;
+						Thread.sleep(RETRY_SLEEP);
+					} catch (UndeclaredThrowableException e) {
+						// We can get this as JBoss is restarting; if you find you are adding more
+						// similar exceptions this code should probably be switched to just 
+						// catch Throwable. It's a bad thing if this thread dies.
+						Log.debug("Server threw an undeclared exception - probably an app server bug; restarting presence tracking", e);
 						serverIdentifier = null;
 						glue = null;
 						Thread.sleep(RETRY_SLEEP);
