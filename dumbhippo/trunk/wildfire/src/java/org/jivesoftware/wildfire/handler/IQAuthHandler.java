@@ -162,6 +162,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         }
         catch (Exception e) {
             Log.error("Error handling authentication IQ packet", e);
+            sessionManager.getSession(packet.getFrom()).getConnection().close();
         }
         return null;
     }
@@ -212,6 +213,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             }
             catch (Exception e) {
                 Log.error("Error during login", e);
+                session.getConnection().close();
             }
         }
         // If the connection was not refused due to conflict, log the user in

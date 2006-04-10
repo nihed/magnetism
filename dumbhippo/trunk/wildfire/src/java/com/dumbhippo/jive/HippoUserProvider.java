@@ -31,10 +31,8 @@ public class HippoUserProvider implements UserProvider {
 		
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 	
-		if (ENABLE_ADMIN_USER) {
-			if (username.equals(getAdminUsername())) {
-				return new User(getAdminUsername(), "Administrator", null, null, null);
-			}
+		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername())) {
+			return new User(getAdminUsername(), "Administrator", null, null, null);
 		}
 		
 		JabberUser remote = null;
@@ -119,10 +117,9 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("setName() username = " + username + " name = " + name);
 		
-		if (ENABLE_ADMIN_USER) {
-			if (username.equals(getAdminUsername()))
-				return;
-		}
+		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
+			return;
+		
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 
 		try {
@@ -137,10 +134,9 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("setEmail() username = " + username + " email = " + email);
 		
-		if (ENABLE_ADMIN_USER) {
-			if (username.equals(getAdminUsername()))
-				return;
-		}
+		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
+			return;
+
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
 
 		try {

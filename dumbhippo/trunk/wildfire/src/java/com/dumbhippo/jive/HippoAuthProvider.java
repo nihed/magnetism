@@ -56,16 +56,12 @@ public class HippoAuthProvider implements
 		
 		Log.debug("authenticate() username = " + username + " token = " + token + " digest = " + digest);
 		
-		if (HippoUserProvider.ENABLE_ADMIN_USER) {
-			if (username.equals(HippoUserProvider.getAdminUsername())) {
-				// FIXME this is not a secure password; the idea is that 
-				// in a production build the admin user is disabled...
-	            String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
-				Log.debug("trying to auth admin, expected " + anticipatedDigest);	            
-	            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-	                throw new UnauthorizedException("Bad admin password");
-	            }
-			}
+		if (HippoUserProvider.ENABLE_ADMIN_USER && username.equals(HippoUserProvider.getAdminUsername())) {
+            String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
+			Log.debug("trying to auth admin, expected " + anticipatedDigest);	            
+            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
+                throw new UnauthorizedException("Bad admin password");
+            }
 		} else {
 			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);			
 			if (glue.authenticateJabberUser(username, token, digest))
