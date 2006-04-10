@@ -266,7 +266,7 @@ HippoAbstractWindow::show(BOOL activate)
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND);
     else
-        ShowWindow(window_, (activate ? SW_SHOW : SW_SHOWNOACTIVATE));
+        ShowWindow(window_, (activate ? SW_RESTORE : SW_SHOWNOACTIVATE));
 
     if (updateOnShow_) 
         RedrawWindow(window_, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
