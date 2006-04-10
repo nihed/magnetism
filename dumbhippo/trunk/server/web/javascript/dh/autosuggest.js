@@ -338,9 +338,13 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			this.div.style.display = 'block';
 			this.highlighted = 0;
 			
+			var me = this
 			this.oldBodyOnMouseDown = document.body.onmousedown;
 			document.body.onmousedown = function(ev) {
-				me.hideDiv();
+				var target = me.getEventSource(ev)
+				if (target != me.div) { 
+					me.hideDiv();
+				}
 				return true;
 			}
 			this.showing = true;

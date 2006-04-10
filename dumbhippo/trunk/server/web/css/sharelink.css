@@ -364,6 +364,7 @@ td.dhRecipientName {
 .dh-help-bubble a:hover {
 	text-decoration:	underline;
 }
+
 /* Autosuggest stuff */
 .dh-suggestion-list {
 	z-index:			2; /* on top */
@@ -373,7 +374,10 @@ td.dhRecipientName {
 	padding: 			2px;
 	border:             1px solid WindowText;
 	max-width:			20em;
+	height:				125px;
+	overflow:			scroll;
 }
+
 .dh-suggestion-list ul
 {
 	padding: 			0;
