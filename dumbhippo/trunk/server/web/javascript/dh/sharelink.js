@@ -331,6 +331,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
 	var params = dh.util.getParamsFromLocation();
 	if (dojo.lang.has(params, "title")) {
+		dojo.debug("title=" + params["title"])
 		dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 	}
 

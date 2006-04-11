@@ -442,7 +442,17 @@ dh.chatwindow.onMessageKeyPress = function(e) {
     if (e.keyCode == 13) {
         this.sendClicked()
         e.preventDefault()
+    } else if (e.keyCode == 27) {
+    	window.close();
     }
+}
+
+dh.chatwindow.onBodyKeyPress = function (e) {
+	if (e.keyCode == 27) {
+		window.close();
+		return false;
+	}
+	return true;
 }
 
 dh.chatwindow.setSelfId = function(id) {
@@ -463,6 +473,8 @@ dh.chatwindow.init = function() {
 
     var messageInput = document.getElementById("dhChatMessageInput")
     dojo.event.connect(messageInput, "onkeypress", this, "onMessageKeyPress")
+    
+    dojo.event.connect(document.body, "onkeypress", this, "onBodyKeyPress")
 
     dh.chatwindow.resizeElements()
     window.onresize = function() { dh.chatwindow.resizeElements() }
