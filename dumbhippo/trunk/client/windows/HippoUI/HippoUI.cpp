@@ -283,6 +283,7 @@ HippoUI::ShowRecent()
         recentPostList_->setUI(this);
         recentPostList_->create();
     } else {
+        recentPostList_->hide();
         recentPostList_->clear();
     }
 
