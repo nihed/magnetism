@@ -89,7 +89,7 @@ public:
     void getSeenMySpaceComments();
     void getMySpaceContacts();
     void onUpgradeReady();
-    void onLinkMessage(HippoPost *link, bool isNew);
+    void onLinkMessage(HippoPost *link);
 
     void setHaveMissedBubbles(bool haveMissed);
 

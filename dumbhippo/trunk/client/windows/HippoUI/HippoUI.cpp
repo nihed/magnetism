@@ -501,7 +501,7 @@ idleAddTestViewers(gpointer data)
 
     linkshare->setTimeout(0);
 
-    ui->onLinkMessage(linkshare, false);
+    ui->onLinkMessage(linkshare);
     return FALSE;
 }
 
@@ -556,7 +556,7 @@ HippoUI::idleShowDebugShare(gpointer data)
     linkshare1->setRecipients(recipients);
 
     linkshare1->setTimeout(0);
-    ui->onLinkMessage(linkshare1, true);
+    ui->onLinkMessage(linkshare1);
 
     g_timeout_add(2000, idleAddTestViewers, ui);
 
@@ -584,7 +584,7 @@ HippoUI::idleShowDebugShare(gpointer data)
         L"        </photos>"
         L"    </flickr>"
         L"</postInfo>");
-    ui->onLinkMessage(linkshare2, true);
+    ui->onLinkMessage(linkshare2);
 
     HippoMySpaceBlogComment blogComment;
 
@@ -1176,13 +1176,9 @@ HippoUI::onUpgradeReady()
 }
 
 void 
-HippoUI::onLinkMessage(HippoPost *post, bool isNew)
+HippoUI::onLinkMessage(HippoPost *post)
 {
-    if (!isNew)
-        post->setHaveViewed(TRUE);
     bubble_.setLinkNotification(false, post);
-    if (isNew)
-        post->setHaveViewed(TRUE);
 }
 
 void 

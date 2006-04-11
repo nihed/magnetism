@@ -1626,11 +1626,19 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost **postReturn)
     HippoPtr<HippoEntityCollection> viewers;
     cache.createEntityCollection(&viewers);
 
+    bool seenSelf = false;
+    HippoBSTR selfID;
+    ui_->GetLoginId(&selfID);
+
     LmMessageNode *subchild;
     for (subchild = node->children; subchild; subchild = subchild->next) {
         HippoBSTR id;
         if (!parseEntityIdentifier(subchild, id))
             return false;
+    
+        if (id == selfID)
+            seenSelf = true;
+
         HippoPtr<HippoEntity> entity = cache.getEntity(id);
         if (entity)
             viewers->addMember(entity);
@@ -1655,6 +1663,9 @@ HippoIM::parseLivePost(LmMessageNode *child, HippoPost **postReturn)
     post->setChattingUserCount(chattingUserCount);
     post->setViewingUserCount(viewingUserCount);
     post->setTotalViewers(totalViewers);
+
+    if (seenSelf)
+        post->setHaveViewed(true);
 
     if (postReturn) {
         post->AddRef();
@@ -1991,7 +2002,7 @@ HippoIM::onMessage (LmMessageHandler *handler,
         if (child) {
             HippoPtr<HippoPost> post;
             if (im->parsePostData(child, "newPost", &post)) {
-                im->ui_->onLinkMessage(post, true);
+                im->ui_->onLinkMessage(post);
             } else {
                 im->ui_->logErrorU("failed to parse post stream in newPost");
             }
@@ -2042,6 +2053,11 @@ HippoIM::handleRoomPresence (LmMessage        *message,
             return;
 
         chatRoom->addUser(userId, version, name, participant);
+
+        HippoBSTR selfID;
+        ui_->GetLoginId(&selfID);
+        if (wcscmp(selfID.m_str, userId) == 0)
+            post->setHaveViewed(true);
 
         if (artist && arrangementName) {
             chatRoom->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
