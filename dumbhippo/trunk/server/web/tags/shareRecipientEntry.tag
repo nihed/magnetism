@@ -17,27 +17,23 @@
         </table>
 		<div id="dhShareRecipientsError" class="dhValidityError"></div>          
         <table id="dhShareRecipientsBox" cellspacing="0" cellpadding="0" width="100%" height="120px">
-			<tr height="5px">		
+			<tr>		
     	    <td valign="top" align="left"><img src="/images/${buildStamp}/darkblue_tl.gif" class="dhShareTopCornerImg"/></td>
-    	    <td>&nbsp;</td>
+    	    <td height="5px">&nbsp;</td>
     	    <td valign="top" align="right"><img src="/images/${buildStamp}/darkblue_tr.gif" class="dhShareTopCornerImg"/></td>
     		</tr><tr>
     		<td width="5px">&nbsp;</td>
-			<td valign="top">
-<div id="dhRecipientListAreaContainer">  
-	<div id="dhRecipientListArea">		
-		<div id="dhRecipientList">
-			<table id="dhRecipientListTable" cellspacing="5px" cellpadding="0">
+			<td height="100%" valign="top">	
+ 			<div id="dhRecipientList">
+			<table id="dhRecipientListTable" cellspacing="0" cellpadding="0">
 				<tbody><tr valign="top" id="dhRecipientListTableRow"></tr></tbody>
 			</table>
-		</div>
-	</div>
-</div>			
+			</div>		
 			</td>
 			<td width="5px">&nbsp;</td>
-			<tr height="5px">
+			<tr>
 			<td valign="bottom" align="left"><img src="/images/${buildStamp}/darkblue_bl.gif" class="dhShareBottomCornerImg"/></td>
-			<td>&nbsp;</td>
+			<td height="5px">&nbsp;</td>
 			<td valign="bottom" align="right"><img src="/images/${buildStamp}/darkblue_br.gif" class="dhShareBottomCornerImg"/></td>
 			</tr>
         </table> <!-- end dhShareRecipientsBox -->     

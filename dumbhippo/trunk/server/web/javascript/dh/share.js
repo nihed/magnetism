@@ -238,6 +238,8 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		var idNode = document.createElement("table");
 		idNode.setAttribute("dhId", obj.id);
 		idNode.setAttribute("width", "55px")
+		idNode.setAttribute("cellspacing", "0")
+		idNode.setAttribute("cellpadding", "0")		
 		dojo.html.addClass(idNode, "dhShareRecipientPerson");
 		if (dh.share.recipientCreatedCallback)
 			dh.share.recipientCreatedCallback(obj, idNode);
@@ -290,20 +292,16 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		var div = document.createElement("div")
 		td.appendChild(div)
 		dojo.html.addClass(div, "dhShareRecipientPersonName");
-		td.setAttribute("height", "50%")
 		td.setAttribute("valign", "bottom")
-		tr2.appendChild(td);
 		div.appendChild(document.createTextNode(obj.displayName));
-		td.appendChild(document.createTextNode("\u00A0"))
+		tr2.appendChild(td);		
 
 		var tr3  = document.createElement("tr");
 		tbody.appendChild(tr3);
 		var td = document.createElement("td");
 		td.setAttribute("align", "left")
-		td.setAttribute("valign", "top")
-		td.setAttribute("height", "50%")		
-		dojo.html.addClass(td, "dhRecipientNote");
-		td.setAttribute("width", "55px");		
+		td.setAttribute("valign", "top")	
+		dojo.html.addClass(td, "dhRecipientNote");	
 		tr3.appendChild(td);
 		if (obj.isGroup()) {
 			td.appendChild(document.createTextNode(obj.sampleMembers));

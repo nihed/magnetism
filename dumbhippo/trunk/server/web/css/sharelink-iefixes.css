@@ -6,18 +6,6 @@
 	width:						0;
 	display:					none;
 }
-#dhRecipientList {
-	margin:						0;
-	padding:					0.5em;
-	float:						left;
-}
-#dhRecipientListAreaContainer {
-	position:						relative;
-	height:							7em;
-}
-#dhRecipientListArea {
-	height:						7em;
-}
 #dhCreateGroupPopup input[type="button"] {
 	width:						auto;
 }
@@ -38,6 +26,6 @@
 }
 
 #dhUrlTitleToShare {
-  width: expression(Math.max(parseInt(this.offsetWidth), Math.floor(0.7*document.body.clientWidth)) + "px");
+  width: expression(Math.max(parseInt(this.offsetWidth), Math.floor(0.5*document.body.clientWidth)) + "px");
   height: expression(Math.max(parseInt(this.offsetHeight), 75) + "px")
 }

@@ -72,7 +72,6 @@ table, tr, td {
 #dhShareMain {
   height: 100%;
   width: 100%;
-  /* border: 1px solid red; */
 }
 
 #dhShareContainer {
@@ -81,7 +80,6 @@ table, tr, td {
 }
 
 #dhShareLeft {
-  /* border: 1px solid green; */
   vertical-align: top;
 }
 
@@ -153,24 +151,29 @@ table, tr, td {
 }
 
 #dhShareRecipientsBox {
+  margin: 0px;
+  padding: 0px;
   background: #2062a4;
   min-height: 120px;
 }
 
 #dhRecipientList {
-  margin: 5px;
+  margin: 0px;
+  padding: 0px;
   overflow: auto;
   width: 100%;
 }
 
 #dhRecipientListTable {
+  margin: 0px;
+  padding: 0px;
 }
 
 #dhRecipientListTableRow {
 }
 
 .dhShareRecipientPerson {
-  margin: 5px;
+  margin: 0px 5px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -191,11 +194,10 @@ table, tr, td {
   max-width: 55px;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 1.4em;
+  height: 1.3em;
 }
 
 #dhShareRight {
-  /* border: 1px solid blue; */
   vertical-align: top;
   height: 100%;
   min-width: 190px;
