@@ -11,13 +11,10 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.39:</i>
+		<i>Version 1.1.41:</i>
 		<ul>
-			<li>Several screens look much nicer</li>
-			<li>Chat windows show everyone's currently-playing song</li>
-			<li>Improved "Recent Links" feature in the tray icon menu</li>
-			<li>Customizable themes for the "Now Playing" MySpace/blog embeddable flash</li>
-			<li>Many speed improvements</li>
+			<li>Chat messages appear in the notification bubble</li>
+			<li>Client keeps track of what's going on currently better</li>			
 			<li>Many bug fixes</li>
 		</ul>
 		<input type="button" value="Start using the new stuff!" onclick="window.external.application.DoUpgrade(); window.close();"/> 
