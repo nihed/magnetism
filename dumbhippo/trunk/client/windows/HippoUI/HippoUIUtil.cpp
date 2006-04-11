@@ -36,37 +36,40 @@ static const unsigned char acceptable[96] = {
     0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x20,0x20,0x20,0x3F,0x20
 };
 
-static const WCHAR hex[] = L"0123456789ABCDEF";
+static const char hex[] = "0123456789ABCDEF";
 
 /* Note: this doesn't take into account the different forms of escaping that
  * are needed for different parts of an URL; see RFC-2396 */
-static WCHAR *
+static BSTR
 escapeUriString (const WCHAR        *string, 
                  UnsafeCharacterSet  mask)
 {
 #define ACCEPTABLE(a) ((a)>=32 && (a)<128 && (acceptable[(a)-32] & use_mask))
 
-    const WCHAR *p;
-    WCHAR *q;
-    WCHAR *result;
+    const char *p;
+    char *q;
+    char *result;
     int c;
     int unacceptable;
     UnsafeCharacterSet use_mask;
 
+    // Get UTF-8 version, we want to encode the parameters in that character set
+    HippoUStr strUtf(string);
+
     unacceptable = 0;
     use_mask = mask;
-    for (p = string; *p != '\0'; p++) {
+    for (p = strUtf.c_str(); *p != '\0'; p++) {
         c = (unsigned char) *p;
         if (!ACCEPTABLE(c)) 
             unacceptable++;
     }
 
-    result = (WCHAR *)malloc (sizeof(WCHAR) * (p - string + unacceptable * 2 + 1));
+    result = (char *)malloc (sizeof(char) * (p - strUtf.c_str() + unacceptable * 2 + 1));
     if (!result)
         return NULL;
 
     use_mask = mask;
-    for (q = result, p = string; *p != '\0'; p++) {
+    for (q = result, p = strUtf.c_str(); *p != '\0'; p++) {
         c = (unsigned char) *p;
 
         if (!ACCEPTABLE(c))
@@ -81,7 +84,9 @@ escapeUriString (const WCHAR        *string,
 
     *q = '\0';
 
-    return result;
+    HippoBSTR resultWide;
+    resultWide.setUTF8(result);
+    return ::SysAllocString(resultWide.m_str);
 }
 
 void 
@@ -95,7 +100,7 @@ HippoUIUtil::encodeQueryString(HippoBSTR                   &url,
     assert(paramNames.length() == paramValues.length());
 
     for (unsigned int i = 0; i < paramNames.length(); i++) {
-        WCHAR *encoded = escapeUriString(paramValues[i].m_str, UNSAFE_ALL);
+        BSTR encoded = escapeUriString(paramValues[i].m_str, UNSAFE_ALL);
         if (!encoded)
             continue;
 
@@ -105,7 +110,7 @@ HippoUIUtil::encodeQueryString(HippoBSTR                   &url,
         url.Append(L"=");
         url.Append(encoded);
 
-        free(encoded);
+        ::SysFreeString(encoded);
     }
 }
 
