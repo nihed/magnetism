@@ -43,8 +43,21 @@
 		dh.framer.onReconnect()
 	</script>
 	<script type="text/javascript">
+		// This is called by the Explorer browser bar code when the browser bar
+		// is closed. The web page is kept around in that case, so we need to leave
+		// the chatroom. We do this by deleting the chat control to reduce the chance
+		// of resource leaks, and also avoid race conditions if we are closed
+		// before we finish loading. (For unknown reasons, putting this in framer.js 
+		// doesn't work.)
+		var dhClosed = false
+		function dhBarClosed() {
+			var chatControl = document.getElementById("dhChatControl")
+			chatControl.Leave(false)
+			dhClosed = true
+		}
+		
 		var chatControl = document.getElementById("dhChatControl");
-        if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
+        if (!dhClosed && chatControl && chatControl.readyState && chatControl.readyState == 4) {
 			chatControl.Join(false);
 		}
 	</script>
