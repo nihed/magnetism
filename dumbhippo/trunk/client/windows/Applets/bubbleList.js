@@ -113,6 +113,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     this._updateSize = function() {
         var width = 0
         var height = dh.bubblelist.BUBBLE_MARGIN + 2 * dh.bubblelist.BORDER
+        var someChanged = false
         for (var i = 0; i < this.notifications.length; i++) {
             var bubble = this.notifications[i].bubble
             // The + 1 here is to make the default size even, so the borders match;
@@ -121,11 +122,24 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
             var bubbleWidth = bubble.getWidth() + 2 * (dh.bubblelist.BUBBLE_MARGIN + dh.bubblelist.BORDER) + 1
             var bubbleHeight = bubble.getHeight()
             
+            // In some cases, IE doesn't reflow the list correctly on height changes
+            // artificially forcing a size change on all the bubbles after the one
+            // that actually changed by setting their height to 0 then back to
+            // the correct height works around this
+            var lastHeight = this.notifications[i].lastHeight
+            var heightChanged = lastHeight != null && lastHeight != bubbleHeight
+            if (someChanged)
+                this.notifications[i].div.style.height = "0px"
+            this.notifications[i].lastHeight = bubbleHeight
+            
             this.notifications[i].div.style.height = bubbleHeight + "px"
             
             if (bubbleWidth > width)
                 width = bubbleWidth
             height += bubbleHeight + dh.bubblelist.BUBBLE_MARGIN
+            
+            if (heightChanged)
+                someChanged = true
         }
         if (height > dh.maxVerticalSize) {
             // Make the horizontal scrollbar not turn on and allow the user to
