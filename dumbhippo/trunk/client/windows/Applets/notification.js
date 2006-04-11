@@ -16,6 +16,11 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
     dh.display = new dh.notification.Display(serverUrl, appletUrl, selfId); 
 }
 
+// Constants for the "why" of showing shares
+dh.notification.NEW = 1
+dh.notification.VIEWER = 2
+dh.notification.MESSAGE = 4
+
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
     this._idle = false
@@ -80,11 +85,12 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     // returns true if the bubble result is that the bubble is displayed
-    this._pushNotification = function (nType, data, timeout) {
+    this._pushNotification = function (nType, data, timeout, why) {
         this.notifications.push({notificationType: nType,
                                  state: "pending",
                                  data: data,
-                                 timeout: timeout})
+                                 timeout: timeout,
+                                 why: why})
         dh.util.debug("position " + this.position + " notifications: " + this.notifications)                                 
         var result = false
         if (this.position < 0) {
@@ -92,6 +98,22 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             result = true
         }
         this._updateNavigation()
+    }
+    
+    this._removeNotification = function(position) {
+        this.notifications.splice(position, 1)
+        if (this.notifications.length == 0) {
+            this.close()
+            return
+        }
+        if (this.position == position) {
+            if (this.position < this.notifications.length)
+                this.setPosition(this.position)
+            else
+                this.setPosition(this.position - 1)
+        }
+        this._updateNavigation()
+        this._idleUpdateDisplay()
     }
     
     this._shouldDisplayShare = function (share) {
@@ -115,32 +137,38 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
         return null
     }
+    
+    // Show the page of the swarm bubble relevant to a particular reason
+    this._showRelevantPage = function(why) {
+        if ((why & dh.notification.MESSAGE) != 0)
+            this._bubble.setPage("someoneSaid")
+        else if ((why & dh.notification.VIEWER) != 0)
+            this._bubble.setPage("whosThere")
+    }
 
     // Returns true iff we should show the window if it's hidden. 
-    // page = 0 ... "who's there". page = 1 ... "someone just said".
-    // startPage = null ... don't care
-    this.addLinkShare = function (share, isRedisplay, page) {
+    this.addLinkShare = function (share, isRedisplay, why) {
         var prevShareData = this._findLinkShare(share.post.Id)
         var shouldDisplayShare = isRedisplay || this._shouldDisplayShare(share)
         if (prevShareData) {
             // Update the viewer data
             prevShareData.notification.data = share
+            prevShareData.notification.why |= why
         }
         if (!shouldDisplayShare)
             return false
         if (!prevShareData || prevShareData.position < 0) {   
             // We don't have it at all, or it was saved and needs to be redisplayed
-            var displayed = this._pushNotification('linkShare', share, share.post.Timeout)
-            if (displayed && page != null)
-                this._bubble.setPage(page)
+            var displayed = this._pushNotification('linkShare', share, share.post.Timeout, why)
+            if (displayed)
+                this._showRelevantPage(why)
             this._idleUpdateDisplay() // Handle changes to the navigation arrows
             return true
         } else if (prevShareData && prevShareData.position == this.position) {
             // We're currently displaying this share, set it again in the bubble to force rerendering
             dh.util.debug("resetting current bubble data")
             this._bubble.setData(share)
-            if (page != null)
-                this._bubble.setPage(page)
+            this._showRelevantPage(why)
             return shouldDisplayShare
         } else {
             dh.util.debug("not rerendering bubble");
@@ -149,9 +177,23 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     // Refresh the display of the share, if showing, otherwise do nothing
-    this.updateIfActive = function(id) {
+    this.updatePost = function(id) {
         var prevShareData = this._findLinkShare(id)
-        if (prevShareData && prevShareData.position == this.position) {
+        if (!prevShareData)
+            return
+            
+        // Check to see if the last viewer has left the post; if so and
+        // we were only showing this page because there were viewers
+        // remove the page and possibly close the bubble
+        if (prevShareData.notification.data.post.currentViewers.length == 0) {
+            prevShareData.notification.why &= ~dh.notification.VIEWER
+            if (prevShareData.notification.why == 0) {
+                this._removeNotification(prevShareData.position)
+                return
+            }
+        }
+        
+        if (prevShareData.position == this.position) {
             // set data again in the bubble to force rerendering
             this._bubble.setData(prevShareData.notification.data)
         }
@@ -219,9 +261,10 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         var notification = this.notifications[pos]  
         this.position = pos
         this._bubble.setData(notification.data)
+        this._showRelevantPage(notification.why)
         this._updateNavigation()
         this._resetPageTimeout()
-        this._idleUpdateDisplay()        
+        this._idleUpdateDisplay()
     }
 
     this._updateNavigation = function() {
@@ -331,7 +374,7 @@ dhAddLinkShare = function (isRedisplay, post) {
     
     dh.util.debug("adding link share id=" + post.Id)
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, isRedisplay)
+    return dh.display.addLinkShare(data, isRedisplay, dh.notification.NEW)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
@@ -347,18 +390,18 @@ dhViewerJoined = function(post, shouldNotify) {
     dh.display.setVisible(true)
     
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, true, "whosThere")
+    return dh.display.addLinkShare(data, true, dh.notification.VIEWER)
 }
 
 dhChatRoomMessage = function(post, shouldNotify) {
     dh.display.setVisible(true)
         
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, true, "someoneSaid")
+    return dh.display.addLinkShare(data, true, dh.notification.MESSAGE)
 }
 
 dhUpdatePost = function(post) {
-    dh.display.updateIfActive(post.Id)
+    dh.display.updatePost(post.Id)
 }
 
 dhSetIdle = function(idle) {
