@@ -272,6 +272,12 @@ HippoUI::ShowMissed()
 STDMETHODIMP
 HippoUI::ShowRecent()
 {
+    std::vector<HippoPost *> recent;
+    dataCache_.getRecentPosts(recent);
+
+    if (recent.size() == 0) // No recent links, just ignore
+        return S_OK;
+
     if (!recentPostList_) {
         recentPostList_ = new HippoBubbleList();
         recentPostList_->setUI(this);
@@ -280,8 +286,6 @@ HippoUI::ShowRecent()
         recentPostList_->clear();
     }
 
-    std::vector<HippoPost *> recent;
-    dataCache_.getRecentPosts(recent);
     std::vector<HippoPost *>::const_iterator it = recent.begin();
     while (it != recent.end()) {
         recentPostList_->addLinkShare(*it);
