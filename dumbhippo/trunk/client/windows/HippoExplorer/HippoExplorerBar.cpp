@@ -7,6 +7,7 @@
 #include <HippoURLParser.h>
 #include "HippoExplorerBar.h"
 #include "HippoExplorerUtil.h"
+#include <HippoInvocation.h>
 #include "Guid.h"
 #include "Globals.h"
 #include "Resource.h"
@@ -237,7 +238,7 @@ HippoExplorerBar::GetBandInfo(DWORD          bandID,
 
     if (deskBandInfo->dwMask & DBIM_ACTUAL) {
         deskBandInfo->ptActual.x = 0;              // Not clear what to use here
-        deskBandInfo->ptActual.y = DEFAULT_HEIGHT;
+         deskBandInfo->ptActual.y = DEFAULT_HEIGHT;
     }
 
     if (deskBandInfo->dwMask & DBIM_TITLE) {
@@ -557,6 +558,20 @@ HippoExplorerBar::processMessage(UINT   message,
                                  LPARAM lParam)
 {
     switch (message) {
+        case WM_SHOWWINDOW:
+            if (!(BOOL)wParam && ie_) {
+                // Notify the contents of the explorer bar that we've
+                // been closed so that we leave the chatroom; the
+                // page contents are kept around when the bar is closed,
+                // so the normal handling when the controls are removed
+                // doesn't work. We might want to do something on Show
+                // if we wanted to handle the case when the user reopens the
+                // bar manual from the menu, but probably we'd want to show
+                // some content such as recent links in that case instead
+                // of just rejoining the chatroom.
+                HRESULT hr = ie_->createInvocation(L"dhBarClosed").run();
+            }
+            return false;
         case WM_SETFOCUS:
             setHasFocus(true);
             return true;
