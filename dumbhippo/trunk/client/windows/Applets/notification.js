@@ -79,14 +79,17 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         display._idleUpdateDisplay()
     }
     
+    // returns true if the bubble result is that the bubble is displayed
     this._pushNotification = function (nType, data, timeout) {
         this.notifications.push({notificationType: nType,
                                  state: "pending",
                                  data: data,
                                  timeout: timeout})
         dh.util.debug("position " + this.position + " notifications: " + this.notifications)                                 
+        var result = false
         if (this.position < 0) {
             this.setPosition(0)
+            result = true
         }
         this._updateNavigation()
     }
@@ -127,9 +130,10 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             return false
         if (!prevShareData || prevShareData.position < 0) {   
             // We don't have it at all, or it was saved and needs to be redisplayed
-            this._pushNotification('linkShare', share, share.post.Timeout)
-            if (page != null)
+            var displayed = this._pushNotification('linkShare', share, share.post.Timeout)
+            if (displayed && page != null)
                 this._bubble.setPage(page)
+            this._idleUpdateDisplay() // Handle changes to the navigation arrows
             return true
         } else if (prevShareData && prevShareData.position == this.position) {
             // We're currently displaying this share, set it again in the bubble to force rerendering
