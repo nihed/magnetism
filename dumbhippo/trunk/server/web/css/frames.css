@@ -218,6 +218,14 @@ body {
 	text-overflow:	ellipsis; /* doesn't work, please fix if you dare */
 }
 
+.dh-chat-message a:link {
+	color: #fff500;
+}
+
+.dh-chat-message a:visited {
+	color: #fff500;
+}
+
 #dhPostViewingList {
 	position:	absolute;
 	top:		6px;

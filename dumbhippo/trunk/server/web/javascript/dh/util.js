@@ -351,3 +351,82 @@ dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVaria
      document.body.removeChild(textSpan)
      return width;       
 }
+
+// parses text into elements containing links and plain text, appends
+// them as children to the textElement
+dh.util.insertTextWithLinks = function(textElement, text) {
+    var done = false
+    var i = 0
+
+    var urlArray = this.getNextUrl(text, i)
+    if (urlArray == null) {    
+        var textNode = document.createTextNode(text)
+        textElement.appendChild(textNode)           
+        return
+    }
+    
+    var url = urlArray[0]
+    var validUrl = urlArray[1]     
+    var urlStart = text.indexOf(url, i)
+    var textNode = document.createTextNode(text.substring(0, urlStart))
+    textElement.appendChild(textNode)          
+
+    while (urlArray != null) {
+        var urlEnd = urlStart + url.length    
+        var linkElement = document.createElement("a")
+        linkElement.href = validUrl 
+        linkElement.target = "_blank"
+        var linkTextNode = document.createTextNode(url)
+        linkElement.appendChild(linkTextNode)
+        textElement.appendChild(linkElement)        
+        
+        i = urlEnd 
+        urlArray = this.getNextUrl(text, i)      
+        var moreText = text.substring(urlEnd, text.length)  
+        if (urlArray != null) {
+            url = urlArray[0]
+            validUrl = urlArray[1]               
+            urlStart = text.indexOf(url, i) 
+            moreText = text.substring(urlEnd, urlStart)
+        }
+        var textNode = document.createTextNode(moreText)
+        textElement.appendChild(textNode)         
+    }    
+}
+
+// finds the next possible url in the text, starting at position i
+// if one is found, returns an array of two strings, one containing the
+// url as it appears in the text, and another one containing a valid
+// url that can be linked to; otherwise, returns null
+dh.util.getNextUrl = function(text, i) {     
+    // we mainly identify a url by it containing a dot and two or three letters after it, which
+    // can then be followed by a slash and more letters and acceptable characters 
+    // this should superset almost all possibly ways to type in a url
+    // we also use http://, https://, www, and web to identify urls like www.amazon, which
+    // are also accepted by the browers
+    var reg = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)/i
+
+    var regArray = reg.exec(text.substring(i, text.length))
+    var urlStart = -1
+    if (regArray)
+        urlStart = i + regArray.index
+
+    if (urlStart >= 0) {          
+        var urlEndReg = /(["'<>[\]\s$])/    
+        var urlEndRegArray = urlEndReg.exec(text.substring(urlStart, text.length))      
+        var urlEnd = text.length
+        // normally, urlEndRegArray should not be null because at the very least we should get the end of string      
+        if (urlEndRegArray)
+            urlEnd = urlStart + urlEndRegArray.index          
+     
+        var url = text.substring(urlStart, urlEnd)      
+        var validUrl = url
+      
+        if (url.indexOf("http") != 0)
+            validUrl = "http://" + url    
+      
+        var urlArray = new Array(url, validUrl)    
+        return urlArray    
+    }
+    return null
+}

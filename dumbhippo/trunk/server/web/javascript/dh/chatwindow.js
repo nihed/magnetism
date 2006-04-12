@@ -117,8 +117,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
          
     message.div.appendChild(textDiv)         
     var textSpan = document.createElement("span")		
-    var textNode = document.createTextNode(message.text)
-    textSpan.appendChild(textNode)
+    dh.util.insertTextWithLinks(textSpan, message.text)       
     textSpan.className = "dh-chat-message-text-inner"
     textSpan.style.fontFamily = this.MESSAGES_FONT_FAMILY  
     textSpan.style.fontStyle = messageFontStyle
