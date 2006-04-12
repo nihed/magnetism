@@ -426,17 +426,10 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 			if (underButton > y)
 				y = underButton;
 		}
-		
-		if (this.menuMode) {
-			// shift it over under the button
-					
-			// hack assumes we're about to show the div...
-			// need to display before offsetWidth is usable
-			// doesn't flicker since browsers have async repaint
-			this.div.style.display = 'block';
-			x = buttonPos.x + this.button.offsetWidth - this.div.offsetWidth;
-		}
 
+		// The width of the dropdown spans the entry and the button
+		this.div.style.width = (buttonPos.x + this.button.offsetWidth - entryPos.x) + "px";
+		
 		if (x < 0) // stay onscreen...
 			x = 0;
 		
