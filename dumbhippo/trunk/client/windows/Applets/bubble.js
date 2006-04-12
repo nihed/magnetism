@@ -507,7 +507,12 @@ dh.bubble.PostData = function(post) {
             if (chattingUserCount > 0) {
                 var chatCountDiv = document.createElement("div")
                 chatCountDiv.className = "dh-notification-chat-count"
-                chatCountDiv.appendChild(document.createTextNode("chat: " + chattingUserCount + " people"))
+                var chatString
+                if (chattingUserCount == 1)
+                    chatString = "chat: 1 person"
+                else
+                    chatString = "chat: " + chattingUserCount + " people"
+                chatCountDiv.appendChild(document.createTextNode(chatString))
                 someoneSaidDiv.appendChild(chatCountDiv)
             }
             
