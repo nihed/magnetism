@@ -382,6 +382,13 @@ public class LiveState {
 		} catch (InterruptedException e) {
 			// Shouldn't happen, just ignore
 		}
+		
+		liveUserUpdater.interrupt();
+		
+		try {
+			liveUserUpdater.join();
+			logger.info("Successfully stopped LiveState user updater thread");
+		} catch (InterruptedException e) {}
 	}
 	
 	/**************************************************************************/
