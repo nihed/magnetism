@@ -643,7 +643,8 @@ HippoUI::create(HINSTANCE instance)
 
     im_.setUI(this);
     if (preferences_.getSignIn()) {
-        im_.signIn();
+        if (im_.signIn())
+            showSignInWindow();
     }
 
     checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);

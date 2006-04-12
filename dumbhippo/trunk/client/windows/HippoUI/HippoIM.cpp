@@ -108,10 +108,9 @@ HippoIM::signIn()
             connect();
         return FALSE;
     } else {
-        if (state_ != SIGN_IN_WAIT && state_ != AUTH_WAIT) {
+        if (state_ != SIGN_IN_WAIT && state_ != AUTH_WAIT)
             stateChange(SIGN_IN_WAIT);
-            startSignInTimeout();
-        }
+        startSignInTimeout();
         return TRUE;
     }
 }
