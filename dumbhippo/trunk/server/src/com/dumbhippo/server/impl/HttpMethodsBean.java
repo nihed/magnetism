@@ -29,6 +29,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
@@ -250,10 +251,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return ret;
 	}
 
-	public void doShareLink(UserViewpoint viewpoint, String title, String url,
+	public void doShareLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String title, String url,
 			String recipientIds, String description, boolean secret,
 			String postInfoXml) throws ParseException, NotFoundException,
-			SAXException, MalformedURLException {
+			SAXException, MalformedURLException, IOException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
 		// FIXME if sending to a public group with secret=true, we want to
@@ -274,8 +275,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		URL urlObject = postingBoard.parsePostURL(url);
 
-		postingBoard.doLinkPost(viewpoint.getViewer(), visibility, title, description,
-				urlObject, recipients, false, info);
+		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), visibility, title, description,
+							urlObject, recipients, false, info);
+		XmlBuilder xml = new XmlBuilder();
+		xml.openElement("post", "id", post.getId());
+		xml.closeElement();
+		out.write(xml.getBytes());
 	}
 
 	public void doShareGroup(UserViewpoint viewpoint, String groupId, String recipientIds,

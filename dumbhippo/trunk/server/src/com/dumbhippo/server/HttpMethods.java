@@ -47,11 +47,11 @@ public interface HttpMethods {
 	public void doAddMembers(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String memberIds)
 			throws IOException, ParseException, NotFoundException;
 
-	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
 	@HttpOptions( optionalParams = { "postInfoXml" } )
-	public void doShareLink(UserViewpoint viewpoint, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
-			NotFoundException, SAXException, MalformedURLException;
+	public void doShareLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
+			NotFoundException, SAXException, MalformedURLException, IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })

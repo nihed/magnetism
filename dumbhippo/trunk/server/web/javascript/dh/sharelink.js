@@ -284,10 +284,17 @@ dh.sharelink.doSubmit = function() {
 		args["postInfoXml"] = postInfoXml;
 	
 	// double-check that we're logged in
-	dh.server.doPOST("sharelink",
+	dh.server.getXmlPOST("sharelink",
 						args,
 						function(type, data, http) {
-							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
+							dojo.debug("sharelink got back data " + data)
+							try {
+								var post = data.documentElement
+								var id = post.getAttribute("id")
+						    	window.external.application.ShareLinkComplete(id, url)					
+							} catch (e) { 
+								dojo.debug("error signaling sharelink complete: " + e)
+							}
 							dh.util.goToNextPage("home", "You've been shared!");
 						},
 						function(type, error, http) {
@@ -301,7 +308,7 @@ dh.sharelink.submitButtonClicked = function() {
 	
 	dh.share.checkAndSubmit(dh.sharelink.doSubmit)
 }
-
+	
 // Invoked from native client
 dhShareLinkSetPostInfo = function (xmlText) {
 	try {
