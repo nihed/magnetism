@@ -60,8 +60,10 @@ a.dh-share-link {
 	background-color:		inherit;
 	position:				relative;
 	display:				block;
-	height:					1.4em;
+	width:					365px;
 	overflow:				hidden;
+	white-space:			nowrap;
+	text-overflow:			ellipsis;
 }
 a.dh-share-link:link {
 	color:					white;
