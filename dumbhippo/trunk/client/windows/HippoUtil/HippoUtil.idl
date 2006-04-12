@@ -45,6 +45,8 @@ library HippoUtil {
         HRESULT GetChatRoom([in] BSTR postId, [out, retval] IHippoChatRoom **chatRoom);
         [id(110), helpstring("Start upgrade process")]
         HRESULT DoUpgrade();
+        [id(111), helpstring("Signal a share as complete")]
+        HRESULT ShareLinkComplete([in] BSTR postId, [in] BSTR url);
         // up to 120
     }
     [

@@ -807,6 +807,23 @@ HippoUI::DoUpgrade()
     return S_OK;
 }
 
+STDMETHODIMP
+HippoUI::ShareLinkComplete(BSTR postId, BSTR url)
+{
+    for (ULONG i = 0; i < browsers_.length(); i++) {
+        if (!wcscmp(url, browsers_[i].url)) {
+            HippoBSTR visitUrl;
+            getRemoteURL(HippoBSTR(L"visit?post="), &visitUrl);
+            visitUrl.Append(postId);
+            VARIANT missing;
+            missing.vt = VT_EMPTY;
+            browsers_[i].browser->Navigate(visitUrl, &missing, &missing, &missing, &missing);
+            break;
+        }
+    }
+    return S_OK;
+}
+
 void
 HippoUI::showSignInWindow()
 {
