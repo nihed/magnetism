@@ -8,6 +8,22 @@
 <head>
 	<title>Sign In</title>
 	<dht:stylesheets href="small-box.css" />
+	<script type="text/javascript">
+		function dhEnterHandler(f) {
+			return function(ev) {
+				if (ev.keyCode == 13) {
+					f()
+					return false
+				} else {
+					return true
+				}
+			}
+		}
+		var dhEmailKeyPress = dhEnterHandler(function() {})
+		var dhPasswordKeyPress = dhEnterHandler(function() {
+			document.getElementById("dhPasswordButton").click()
+		})
+	</script>
 </head>
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
@@ -19,7 +35,7 @@
 				<tbody>
 					<tr>
 						<td>Email or AIM:</td>
-						<td style="text-align: right;"><input type="text" class="dhText" name="address"/></td>
+						<td style="text-align: right;"><input type="text" class="dhText" name="address"  onkeypress="return dhEmailKeyPress(event)"/></td>
 					</tr>
 					<tr>
 						<td colspan="2" style="text-align: center; padding-top:	7px; padding-bottom: 7px;">
@@ -28,7 +44,7 @@
 					</tr>
 					<tr>
 						<td colspan="2" style="text-align: center;">
-								<input type="submit" value="Send me a sign-in link" name="sendlink"/>
+								<input id="dhSendLinkButton" type="submit" value="Send me a sign-in link" name="sendlink"/>
 						</td>
 					</tr>
 					<tr>
@@ -38,11 +54,11 @@
 					</tr>
 					<tr>
 						<td>I might have a password:</td>
-						<td style="text-align: right;"><input type="password" class="dhText" name="password"/></td>
+						<td style="text-align: right;"><input type="password" class="dhText" name="password" onkeypress="return dhPasswordKeyPress(event)"/></td>
 					</tr>
 					<tr>
 						<td colspan="2" style="text-align: center;">								
-							<input type="submit" value="Sign in with password" name="checkpassword"/>
+							<input id="dhPasswordButton" type="submit" value="Sign in with password" name="checkpassword"/>
 						</td>
 					</tr>
 				</tbody>
