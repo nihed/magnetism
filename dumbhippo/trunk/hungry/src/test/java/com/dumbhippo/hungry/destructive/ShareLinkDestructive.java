@@ -60,7 +60,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 
 		System.out.println(getUserId() + " sharing \"" + title + "\" with " + recipientIds.length + " recipients " + commaRecipients);
 		
-		ws.doPOST("/sharelink",
+		ws.getXmlPOST("/sharelink",
 				"url", url,
 				"title", title, 
 				"description", description,
