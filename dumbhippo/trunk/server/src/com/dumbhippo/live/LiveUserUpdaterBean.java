@@ -126,6 +126,13 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
 		logger.debug("computing hotness for user {} old: {} new: " + newUser.getHotness().name(),
 				user.getGuid(), user.getHotness().name());
+		
+		// Note that this doesn't notify the user if individual posts in the
+		// list of active posts change their details, only if the *set* of active 
+		// posts changes. Right now, we don't use the details from LivePost for
+		// anything important in the client so this doesn't matter, but if we
+		// start paying more attention to LivePost on the client this needs
+		// to be fixed.
 		if (!newUser.equals(user)) {
 			state.updateLiveUser(newUser);
 			// Remember to update sendAllNotifications if you add a new one here
