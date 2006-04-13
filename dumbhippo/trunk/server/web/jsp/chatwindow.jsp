@@ -7,17 +7,8 @@
 <dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="postId"/>
 
-<c:set var="title" value="${framer.post.title}" scope="page"/>
-<c:set var="url" value="${framer.post.url}" scope="page"/>
-<c:set var="description" value="${framer.post.post.text}" scope="page"/>
-
-<c:url var="forwardUrl" value="/sharelink">
-	<c:param name="url" value="${url}"/>
-	<c:param name="title" value="${title}"/>
-</c:url>
-
 <head>
-	<title><c:out value="${title}"/></title>
+	<title><c:out value="${framer.post.title}"/></title>
 	<dht:stylesheets href="chatwindow.css" iehref="chatwindow-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">
