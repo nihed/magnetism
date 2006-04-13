@@ -117,8 +117,9 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     
     this._shouldDisplayShare = function (share) {
-        if (share.post.Viewers.length > 0 && share.post.Viewers.item(0).Id == dh.selfId) {
-            dh.util.debug("Not displaying notification of self-view")
+        if ((share.post.CurrentViewers.length > 0 && share.post.CurrentViewers.item(0).Id == dh.selfId)
+            || (share.post.Sender.id == dh.selfId && share.post.CurrentViewers.length == 0)) {
+            dh.util.debug("Not displaying notification of self-view or initial post")
             return false;
         }
         return true
