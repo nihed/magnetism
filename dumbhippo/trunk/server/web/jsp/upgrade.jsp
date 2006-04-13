@@ -11,9 +11,10 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.41:</i>
+		<i>Version 1.1.42:</i>
 		<ul>
 			<li>Chat messages appear in the notification bubble</li>
+			<li>Links in chat messages are clickable</li>
 			<li>Client keeps track of what's going on currently better</li>			
 			<li>Many bug fixes</li>
 		</ul>
