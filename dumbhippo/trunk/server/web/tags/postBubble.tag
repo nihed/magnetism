@@ -17,7 +17,15 @@
 	</div>
 	<div class="dh-share-text">
 		<a href="${post.url}" onClick="return dh.util.openFrameSet(window,event,this,'${post.post.id}');" title="${post.url}" class="dh-share-link"><c:out value="${post.titleAsHtml}" escapeXml="false"/></a>
-		<div class="dh-share-description"><c:out value="${post.textAsHtml}" escapeXml="false"/></div>
+		<div class="dh-share-description">
+			<c:out value="${post.textAsHtml}" escapeXml="false"/>
+			<c:if test="${!empty post.livePost}">
+				<c:set var="totalAtPost" value="${post.livePost.chattingUserCount + post.livePost.viewingUserCount}" scope="page"/>
+				<c:if test="${totalAtPost > 1}">
+					&nbsp; <span style="font-size: smaller; font-weight: bold;">${totalAtPost} people checking this out</span>
+				</c:if>
+			</c:if>
+		</div>
 	</div>
 	<div class="dh-share-to"><dh:favicon link="${post.url}"/>  
 		<dh:skipList value="${post.recipients}" skipId="${hideRecipientId}">
@@ -28,11 +36,3 @@
 	</div>
 	</div>
 </c:if>	
-
-<% /*
-<dh:presence value="${post.poster}"/>
-
-	    <c:if test="${post.chatRoomActive}">
-          <div class="cool-link-date"><dh:presence value="${post}"/><a onClick='dh.actions.requestJoinRoom("${post.post.id}")' href="aim:GoChat?RoomName=${post.chatRoomName}&Exchange=5">${post.chatRoomMembers}</a>
-        </c:if>
-*/ %>

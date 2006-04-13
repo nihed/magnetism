@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.live.LivePost;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -47,6 +49,7 @@ public class PostView {
 	private PostFormatter formatter;
 	private Resource mailRecipient;
 	private Viewpoint viewpoint;
+	private LivePost livePost;
 	
 	public enum Context {
 		MAIL_NOTIFICATION,
@@ -226,5 +229,13 @@ public class PostView {
 		}
 		builder.closeElement();
 		return builder.toString();
+	}
+	
+	public LivePost getLivePost() {
+		if (livePost == null) {
+			LiveState liveState = LiveState.getInstance();
+			livePost = liveState.peekLivePost(post.getGuid());
+		}
+		return livePost;
 	}
 }
