@@ -313,7 +313,7 @@ dh.util.clearNode = function (node) {
 dh.util.openShareWindow = function(url) {
 	window.open(url,
 	'_NEW',
-	'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=450,width=550,top='+((screen.availHeight-450)/2)+',left='+((screen.availWidth-550)/2));
+	'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));
 }
 
 dh.util.openShareGroupWindow = function(groupId) {
