@@ -5,7 +5,7 @@
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.live.LivePost"%>
 <c:out value="${post.guid}"/>  score: <c:out value="${post.score}"/> 
-recent msgs: <c:out value="${post.recentMessageCount}"/> 
-chatting users: <c:out value="${post.chattingUserCount}"/>
-viewing users: <c:out value="${post.viewingUserCount}"/>
+<c:out value="${post.recentMessageCount}"/> recent msgs,
+<c:out value="${post.chattingUserCount}"/> people chatting,
+<c:out value="${post.viewingUserCount}"/> people viewing
 <br/>
