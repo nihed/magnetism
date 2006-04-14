@@ -84,7 +84,9 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     var image = this._createHeadShot(message.userId, message.version)
     image.className = "dh-chat-message-image"
     image.title = message.name
-    message.div.appendChild(image)
+    var userUrl = "/person?who=" + message.userId
+    var linkElement = dh.util.createLinkElementWithChild(userUrl, image)       
+    message.div.appendChild(linkElement)
 
     var messagesDiv = document.getElementById("dhChatMessagesDiv")      
 	var wasAtBottom = this._isAtBottom(messagesDiv)
@@ -277,10 +279,13 @@ dh.chatwindow._addUser = function(user, before) {
     user.div = document.createElement("div")
     user.div.className = "dh-chat-person"
 
+    var userUrl = "/person?who=" + user.userId
+    
     var image = this._createHeadShot(user.userId, user.version)        
     image.className = "dh-chat-person-image"
     image.title = user.name
-    user.div.appendChild(image)
+    var linkElement = dh.util.createLinkElementWithChild(userUrl, image)
+    user.div.appendChild(linkElement)
 
     var nameDiv = document.createElement("div")
     nameDiv.className = "dh-chat-person-name"
@@ -288,8 +293,8 @@ dh.chatwindow._addUser = function(user, before) {
     user.div.appendChild(nameDiv)
 
     var nameSpan = document.createElement("span")
-    nameSpan.appendChild(document.createTextNode(user.name))
     nameSpan.className = "dh-chat-person-name-inner"
+    dh.util.addLinkElement(nameSpan, userUrl, user.name)
     nameDiv.appendChild(nameSpan)
 
     var peopleDiv = document.getElementById("dhChatPeopleDiv")
@@ -328,16 +333,19 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
         return;
     } 
 
+    var arrangementLinkUrl = "/song?track=" + arrangementName + "&artist=" + artist 
+             
     if (!arrangementNameDiv) {
         arrangementNameDiv = document.createElement("div")
         var arrangementNameSpan = document.createElement("span")
         arrangementNameSpan.className = "dh-chat-person-arrangement-name-inner"
-        arrangementNameSpan.appendChild(document.createTextNode(arrangementName))
+        dh.util.addLinkElement(arrangementNameSpan, arrangementLinkUrl, arrangementName)
         arrangementNameDiv.appendChild(arrangementNameSpan)    
         userDiv.appendChild(arrangementNameDiv)
         user.arrangementNameDiv = arrangementNameDiv        
     } else {
-        arrangementNameDiv.firstChild.replaceChild(document.createTextNode(arrangementName), arrangementNameDiv.firstChild.firstChild)
+        var arrangementLink = dh.util.createLinkElement(arrangementLinkUrl, arrangementName)        
+        arrangementNameDiv.firstChild.replaceChild(arrangementLink, arrangementNameDiv.firstChild.firstChild)
     }
     
     // it is easier to reset the class for the arrangementNameDiv completely, 
@@ -351,13 +359,14 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
     if (!artistDiv) {
         artistDiv = document.createElement("div")
         var artistSpan = document.createElement("span")
-        artistSpan.className = "dh-chat-person-artist-inner"
-        artistSpan.appendChild(document.createTextNode(artist))
-        artistDiv.appendChild(artistSpan)    
+        artistSpan.className = "dh-chat-person-artist-inner"        
+        dh.util.addLinkElement(artistSpan, arrangementLinkUrl, artist)
+        artistDiv.appendChild(artistSpan)           
         userDiv.appendChild(artistDiv)
         user.artistDiv = artistDiv        
     } else {
-        artistDiv.firstChild.replaceChild(document.createTextNode(artist), artistDiv.firstChild.firstChild)
+        var artistLink = dh.util.createLinkElement(arrangementLinkUrl, artist)    
+        artistDiv.firstChild.replaceChild(artistLink, artistDiv.firstChild.firstChild)
     }
     
     // same as above, it is easier to reset the class for the artistDiv completely, 

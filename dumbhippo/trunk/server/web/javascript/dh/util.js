@@ -13,7 +13,7 @@ dh.util.getParamsFromLocation = function() {
    		    var val = params[i].substring(eqpos+1);
    		    // Java encodes spaces as +'s, we need to change that
    		    // into something that decodeURIComponent can understand
-   		    val = val.replace(/\+/, "%20");
+   		    val = val.replace(/\+/g, "%20");
    			map[key] = decodeURIComponent(val);
    			dojo.debug("mapping query key " + key + " to " + map[key]);
    		}
@@ -358,7 +358,7 @@ dh.util.insertTextWithLinks = function(textElement, text) {
     var done = false
     var i = 0
 
-    var urlArray = this.getNextUrl(text, i)
+    var urlArray = dh.util.getNextUrl(text, i)
     if (urlArray == null) {    
         var textNode = document.createTextNode(text)
         textElement.appendChild(textNode)           
@@ -372,21 +372,14 @@ dh.util.insertTextWithLinks = function(textElement, text) {
     textElement.appendChild(textNode)          
 
     while (urlArray != null) {
-        var urlEnd = urlStart + url.length    
-        var linkElement = document.createElement("a")
-        linkElement.href = validUrl 
-        linkElement.target = "_blank"
-        var linkTextNode = document.createTextNode(url)
-        linkElement.appendChild(linkTextNode)
-        textElement.appendChild(linkElement)        
-        
-        i = urlEnd 
-        urlArray = this.getNextUrl(text, i)      
+        dh.util.addLinkElement(textElement, validUrl, url)  
+        var urlEnd = urlStart + url.length          
+        urlArray = dh.util.getNextUrl(text, urlEnd)      
         var moreText = text.substring(urlEnd, text.length)  
         if (urlArray != null) {
             url = urlArray[0]
             validUrl = urlArray[1]               
-            urlStart = text.indexOf(url, i) 
+            urlStart = text.indexOf(url, urlEnd) 
             moreText = text.substring(urlEnd, urlStart)
         }
         var textNode = document.createTextNode(moreText)
@@ -402,9 +395,9 @@ dh.util.getNextUrl = function(text, i) {
     // we mainly identify a url by it containing a dot and two or three letters after it, which
     // can then be followed by a slash and more letters and acceptable characters 
     // this should superset almost all possibly ways to type in a url
-    // we also use http://, https://, www, and web to identify urls like www.amazon, which
+    // we also use http://, https://, www, web, ftp, and ftp:// to identify urls like www.amazon, which
     // are also accepted by the browers
-    var reg = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)/i
+    var reg = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)|(ftp\.)|(ftp:\/\/)/i
 
     var regArray = reg.exec(text.substring(i, text.length))
     var urlStart = -1
@@ -421,12 +414,63 @@ dh.util.getNextUrl = function(text, i) {
      
         var url = text.substring(urlStart, urlEnd)      
         var validUrl = url
-      
-        if (url.indexOf("http") != 0)
+        
+        if ((url.indexOf("http") != 0) && (url.indexOf("ftp") != 0)) {
             validUrl = "http://" + url    
+        } else if (url.indexOf("ftp.") == 0) {
+            validUrl = "ftp://" + url            
+        }
       
         var urlArray = new Array(url, validUrl)    
         return urlArray    
     }
     return null
+}
+
+// creates a link element with the given url and text, 
+// appends it as a child to the parentElement
+// the link will be excluded from a tabbing order,
+// would not have a focus border show up around it when 
+// selected and open in a new browser window
+dh.util.addLinkElement = function(parentElement, url, text) {
+    var linkElement = dh.util.createLinkElement(url, text)
+    parentElement.appendChild(linkElement)
+}
+
+// creates a link element with the given url and text
+// the link will be excluded from a tabbing order,
+// would not have a focus border show up around it when 
+// selected and open in a new browser window
+dh.util.createLinkElement = function(url, text) {
+    var linkElement = document.createElement("a")
+    linkElement.href = dh.util.getPreparedUrl(url)
+    linkElement.target = "_blank"
+    linkElement.hideFocus = "true"
+    linkElement.tabIndex = -1
+    var linkTextNode = document.createTextNode(text)
+    linkElement.appendChild(linkTextNode)
+    return linkElement
+}
+
+// creates a link element with the given url and appends the
+// child to it; the child can be an image that needs to be clickable
+// the link will be excluded from a tabbing order,
+// would not have a focus border show up around it when 
+// selected and open in a new browser window
+dh.util.createLinkElementWithChild = function(url, linkChild) {
+    var linkElement = document.createElement("a")
+    linkElement.href = dh.util.getPreparedUrl(url)
+    linkElement.target = "_blank"    
+    linkElement.hideFocus = "true"
+    linkElement.tabIndex = -1
+    linkElement.appendChild(linkChild)
+    return linkElement
+}
+
+// right now just replaces spaces with "+" to
+// make the url look nicer in the browser window,
+// spaces show up as "%20" otherwise 
+dh.util.getPreparedUrl = function(url) {
+    var preparedUrl = url.replace(/\s/g, "+")
+    return preparedUrl
 }

@@ -140,6 +140,7 @@ body
     top:              6px;
     left:             7px;
     background-color: transparent;
+    cursor:           pointer;
 }
 
 .dh-chat-person-name
@@ -163,6 +164,12 @@ body
     text-overflow:    ellipsis;   
 }
 
+.dh-chat-person-name-inner a
+{
+    color: white;
+	text-decoration: none;  
+}
+
 .dh-chat-person-arrangement-name
 {
 	position:         absolute;
@@ -182,6 +189,12 @@ body
     white-space:      nowrap; 
     overflow:         hidden;   
     text-overflow:    ellipsis;   
+}
+
+.dh-chat-person-arrangement-name-inner a
+{
+    color: #174675;
+	text-decoration: none;   
 }
 
 .dh-chat-person-artist 
@@ -205,9 +218,20 @@ body
     text-overflow:    ellipsis;   
 }
 
+.dh-chat-person-artist-inner a
+{
+    color: #174675;
+	text-decoration: none;   
+}
+
 .dh-chat-person-music-stopped
 {
-    color: #eedd88;
+    color: #eedd88;  
+}
+
+.dh-chat-person-music-stopped a
+{
+    color: #eedd88; 
 }
 
 .dh-chat-message-user-first {
@@ -220,7 +244,8 @@ body
     display: inline;
     clear:   both;
     padding: 0px;
-    margin:  0px;    
+    margin:  0px;   
+    cursor:  pointer; 
 }
 
 .dh-chat-message-other .dh-chat-message-image 
@@ -230,6 +255,7 @@ body
     clear:   both;
     padding: 0px;
     margin:  0px;
+    cursor:  pointer; 
 }
 
 .dh-chat-message-user-repeat .dh-chat-message-image 

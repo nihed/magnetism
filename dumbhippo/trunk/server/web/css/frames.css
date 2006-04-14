@@ -218,11 +218,7 @@ body {
 	text-overflow:	ellipsis; /* doesn't work, please fix if you dare */
 }
 
-.dh-chat-message a:link {
-	color: #fff500;
-}
-
-.dh-chat-message a:visited {
+.dh-chat-message a {
 	color: #fff500;
 }
 
