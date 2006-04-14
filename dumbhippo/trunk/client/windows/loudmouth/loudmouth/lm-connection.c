@@ -568,7 +568,7 @@ connection_do_connect (LmConnectData *connect_data)
 		in_progress = errno == EINPROGRESS;
 #endif
 		if (!in_progress) {		
-#ifdef __WIN32
+#ifdef __WIN32__
 			closesocket (fd);
 #else
 			close (fd);
