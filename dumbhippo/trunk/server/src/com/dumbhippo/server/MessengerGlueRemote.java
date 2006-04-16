@@ -1,8 +1,6 @@
 package com.dumbhippo.server;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -46,115 +44,6 @@ public interface MessengerGlueRemote {
 
 		public String getUsername() {
 			return username;
-		}
-	}
-	
-	public class ChatRoomUser implements Serializable {
-		private static final long serialVersionUID = 0L;
-		
-		private String username;
-		private int version;
-		private String name;
-		
-		public ChatRoomUser(String username, int version, String name) {
-			this.username = username;
-			this.version = version;
-			this.name = name;
-		}
-		
-		public String getUsername() {
-			return username;
-		}
-		
-		public int getVersion() {
-			return version;
-		}
-		
-		public String getName() {
-			return name;
-		}
-	}
-
-	public class ChatRoomMessage implements Serializable {
-		private static final long serialVersionUID = 0L;
-		
-		private String fromUsername;
-		private int serial;
-		private Date timestamp;
-		private String text;
-		
-		public ChatRoomMessage(String fromUsername, String text, Date timestamp, int serial) {
-			this.fromUsername = fromUsername;
-			this.timestamp = timestamp;
-			this.text = text;
-			this.serial = serial;
-		}
-		
-		public String getFromUsername() {
-			return fromUsername;
-		}
-
-		public int getSerial() {
-			return serial;
-		}
-
-		public String getText() {
-			return text;
-		}
-
-		public Date getTimestamp() {
-			return timestamp;
-		}
-	}
-
-	/**
-	 * What is this chat room about? 
-	 * Tells you what the chatId means...
-	 * 
-	 * @author Havoc Pennington
-	 *
-	 */
-	public enum ChatRoomKind {
-		POST,
-		GROUP;
-	}
-	
-	public class ChatRoomInfo implements Serializable {
-		private static final long serialVersionUID = 0L;
-		
-		private ChatRoomKind kind; 
-		private String roomName;
-		private String title;
-		private List<ChatRoomUser> allowedUsers;
-		private List<ChatRoomMessage> history;
-		
-		public ChatRoomInfo(ChatRoomKind kind, String roomName, String postTitle, List<ChatRoomUser> allowedUsers, List<ChatRoomMessage> history) {
-			this.kind = kind;
-			this.roomName = roomName;
-			this.title = postTitle;
-			this.allowedUsers = allowedUsers; // Don't copy for efficiency, assume the caller won't
-			                                  // subsequently modify
-			this.history = history;
-		}
-		
-		public ChatRoomKind getKind() {
-			return kind;
-		}
-		
-		public String getChatId() {
-			return roomName;
-		}
-		
-		public String getTitle() {
-			return title;
-		}
-		
-		public List<ChatRoomUser> getAllowedUsers() {
-			return Collections.unmodifiableList(allowedUsers);
-		}
-
-		public List<ChatRoomMessage> getHistory() {
-			return Collections.unmodifiableList(history);
 		}
 	}
 	

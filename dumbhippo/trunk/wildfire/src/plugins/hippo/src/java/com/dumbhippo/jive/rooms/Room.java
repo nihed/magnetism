@@ -25,11 +25,11 @@ import org.xmpp.packet.PacketError.Condition;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.server.ChatRoomInfo;
+import com.dumbhippo.server.ChatRoomKind;
+import com.dumbhippo.server.ChatRoomMessage;
+import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.MessengerGlueRemote;
-import com.dumbhippo.server.MessengerGlueRemote.ChatRoomInfo;
-import com.dumbhippo.server.MessengerGlueRemote.ChatRoomKind;
-import com.dumbhippo.server.MessengerGlueRemote.ChatRoomMessage;
-import com.dumbhippo.server.MessengerGlueRemote.ChatRoomUser;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
