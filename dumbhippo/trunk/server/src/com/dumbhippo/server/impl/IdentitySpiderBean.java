@@ -28,13 +28,16 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
@@ -43,11 +46,11 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -75,22 +78,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private MySpaceTracker mySpaceTracker;
 	
-	private static class GuidNotFoundException extends NotFoundException {
-		private static final long serialVersionUID = 0L;
-		private String guid;
-		public GuidNotFoundException(Guid guid) {
-			super("Guid " + guid + " was not in the database");
-			this.guid = guid.toString();
-		}
-		public GuidNotFoundException(String guidString) {
-			super("Guid " + guidString + " was not in the database");
-			this.guid = guidString;
-		}
-		public String getGuid() {
-			return guid;
-		}
-	}
-	
 	public User lookupUserByEmail(String email) {
 		EmailResource res = getEmail(email);
 		return lookupUserByResource(res);
@@ -105,18 +92,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}	
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException {
-		Guid.validate(id); // so we throw Parse instead of GuidNotFound if invalid
-		T obj = em.find(klass, id);
-		if (obj == null)
-			throw new GuidNotFoundException(id);
-		return obj;
+		if (klass.equals(Post.class) || klass.equals(Group.class))
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+		return EJBUtil.lookupGuidString(em, klass, id);
 	}
 
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException {
-		T obj = em.find(klass, id.toString());
-		if (obj == null)
-			throw new GuidNotFoundException(id);
-		return obj;
+		if (klass.equals(Post.class) || klass.equals(Group.class))
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+		return EJBUtil.lookupGuid(em, klass, id);
 	}
 
 	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, NotFoundException {

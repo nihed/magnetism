@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,10 +18,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -450,6 +454,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
+	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		return lookupGroupById(viewpoint, guid.toString());
+	}
+	
 	static final String CONTACT_IS_MEMBER =
 		" EXISTS(SELECT cc FROM ContactClaim cc WHERE cc.contact = contact AND cc.resource = gm.member) ";
 	
@@ -477,5 +485,26 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			result.add(identitySpider.getPersonView(viewpoint, (Person)o, extras));
 		
 		return result;
+	}	
+	
+	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group";
+	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.timestamp";
+	
+	public List<GroupMessage> getGroupMessages(Group group) {
+		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER)
+		.setParameter("group", group)
+		.getResultList();
+		
+		return TypeUtils.castList(GroupMessage.class, messages);
+	}
+	
+	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial) {
+		// we use serial = -1 in other places in the system to designate a message that contains
+		// the group description, but we never add this type of message to the database
+		if (serial < 0) 
+			throw new IllegalArgumentException("Negative serial");
+		
+		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp, serial);
+		em.persist(groupMessage);
 	}
 }

@@ -2,11 +2,17 @@ dojo.provide("dh.actions");
 
 dojo.require("dh.server");
 
-dh.actions.requestJoinRoom = function(userId, postId) {
+dh.actions.requestJoinRoom = function(userId, chatId) {
     // Check readyState is to see if the object was actually loaded.
     var embed = document.getElementById("dhEmbedObject");
-    if (embed && embed.readyState && embed.readyState >= 3)
-		embed.showChatWindow(userId, postId);
+    if (embed && embed.readyState && embed.readyState >= 3) {
+		embed.showChatWindow(userId, chatId);
+	} else {
+		// should only show up when we suck and don't remove the "join chat" option
+		// in advance, but here as a fallback
+		alert("Chat requires the DumbHippo software to be installed on Windows Internet Explorer; " + 
+		"we're working on a web-only version, stay tuned");
+	}
 }
 
 dh.actions.addContact = function(contactId) {

@@ -24,7 +24,7 @@ public class FramerPage {
     private String postId;
 
     @Signin
-		private SigninBean signin;
+	private SigninBean signin;
 	
     private PostingBoard postBoard;
     private PostView post;
@@ -57,6 +57,7 @@ public class FramerPage {
 			return;
 		} else {
 			// FIXME - don't backtrace if the user isn't authorized to view the post
+			// (most pages handle this with dht:errorPage, find an example and copy that)
 			setPost(postBoard.loadPost(signin.getViewpoint(), new Guid(postId)));
 		}
     }

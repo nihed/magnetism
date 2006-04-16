@@ -68,6 +68,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			}
 		}
 		
+		@Override
 		public void run() {
 			// This thread is responsible for keeping the application server 
 			// notified of the current set of present users. Three things are 

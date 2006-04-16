@@ -1,12 +1,16 @@
 package com.dumbhippo.server;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -70,6 +74,8 @@ public interface GroupSystem {
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
+	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;
+	
 	/**
 	 * Finds the set of contacts of an account owner that aren't already
 	 * members of a group (and thus can be added to the group)
@@ -81,4 +87,23 @@ public interface GroupSystem {
 	 * @return the contacts of owner that aren't already members of the group
 	 */
 	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
+	
+	/**
+	 * Get all messages that were posted in the chatroom about this group.
+	 * 
+	 * @param group the group the look up the messages for
+	 * @return the list of mesages, sorted by date (newest last)
+	 */
+	public List<GroupMessage> getGroupMessages(Group group);
+	
+	/**
+	 * Add a new message that was sent to the chatroom about this group
+	 * 
+	 * @param group the group the message is about.
+	 * @param fromUser the user who sent the message
+	 * @param text the text of the message
+	 * @param timestamp the time when the message was posted
+	 * @param serial counter (starts at zero) of messages for the group
+	 */
+	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial);
 }

@@ -97,6 +97,7 @@ public class ClientMethodIQHandler extends IQHandler {
 		return info;
 	}
 
+	@Override
 	public void start() {
 	}
 }

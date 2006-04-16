@@ -17,14 +17,15 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
@@ -47,6 +48,9 @@ public class XmppQueueConsumerBean implements MessageListener {
 	@EJB
 	private PostingBoard postingBoard;
 
+	@EJB
+	private GroupSystem groupSystem;
+	
 	@EJB
 	IdentitySpider identitySpider;
 	
@@ -114,19 +118,42 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 	}
 	
-	private Post getPostFromRoomName(User user, String roomName) {
-		Viewpoint viewpoint = new UserViewpoint(user);
-		try {
-			return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
-		} catch (NotFoundException e) {
-			throw new RuntimeException("trusted room name did not exist" + roomName, e);
-		}
+	private Post getPostFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
+		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
 	}
 	
+	private Group getGroupFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
+		return groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
+	}
 	
 	public void processChatMessageEvent(XmppEventChatMessage event) {
 		User fromUser = getUserFromUsername(event.getFromUsername());
-		Post post = getPostFromRoomName(fromUser, event.getRoomName());		
-		postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
+		UserViewpoint viewpoint = new UserViewpoint(fromUser);
+		Post post;
+		try {
+			post = getPostFromRoomName(viewpoint, event.getRoomName());
+		} catch (NotFoundException e) {
+			logger.debug("Room {} is not a post chat", event.getRoomName());
+			post = null;
+		}
+		Group group;
+		try {
+			group = getGroupFromRoomName(viewpoint, event.getRoomName());
+		} catch (NotFoundException e) {
+			logger.debug("Room {} is not a group chat", event.getRoomName());
+			group = null;
+		}
+		
+		if (post != null && group != null) {
+			logger.error("group/post GUID collision, fix in db or change code to handle it");
+			group = null; // go with the post
+		}
+		
+		if (post != null)
+			postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
+		else if (group != null)
+			groupSystem.addGroupMessage(group, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
+		else
+			logger.debug("unknown chat room {}", event.getRoomName());
 	}
 }

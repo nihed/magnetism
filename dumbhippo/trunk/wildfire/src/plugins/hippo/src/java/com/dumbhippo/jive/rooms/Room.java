@@ -27,6 +27,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.ChatRoomInfo;
+import com.dumbhippo.server.MessengerGlueRemote.ChatRoomKind;
 import com.dumbhippo.server.MessengerGlueRemote.ChatRoomMessage;
 import com.dumbhippo.server.MessengerGlueRemote.ChatRoomUser;
 import com.dumbhippo.server.util.EJBUtil;
@@ -167,6 +168,8 @@ public class Room {
 	private String roomName;
 	
 	private JmsProducer queue;
+	
+	private ChatRoomKind kind;
 
 	private Room(RoomHandler handler, ChatRoomInfo info) {
 		this.handler = handler; 
@@ -179,7 +182,8 @@ public class Room {
 		messages = new ArrayList<MessageInfo>();
 		nextSerial = 0;
 		
-		this.roomName = info.getPostId();
+		this.roomName = info.getChatId();
+		this.kind = info.getKind();
 		for (ChatRoomUser user : info.getAllowedUsers()) {
 			Log.debug("Allowed user: " + user.getUsername());
 			allowedUsers.put(user.getUsername(), 
@@ -222,6 +226,8 @@ public class Room {
 	 * only to resources that are currently logged in to the server; it
 	 * will not be queued for offline delivery.
 	 * 
+	 * For group chat, right now this would send to everyone in the group.
+	 * 
 	 * @param packet the packet to send
 	 */ 
 	private void sendPacketToAll(Packet packet) {
@@ -246,7 +252,7 @@ public class Room {
 	}
 	
 	public static Room loadFromServer(RoomHandler handler, String roomName, String username) {
-		Log.debug("Querying server for information on post " + roomName);
+		Log.debug("Querying server for information on chat room " + roomName);
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 		
 		ChatRoomInfo info = glue.getChatRoomInfo(roomName, username);
@@ -255,7 +261,7 @@ public class Room {
 			return null;
 		}
 
-		Log.debug("  got response from server, title is " + info.getPostTitle());
+		Log.debug("  got response from server, title is " + info.getTitle());
 		
 		return new Room(handler, info);
 	}
@@ -290,6 +296,12 @@ public class Room {
 		return null; // Not reached
 	}
 	
+	private void addRoomInfo(Packet outgoing) {
+		Element messageElement = outgoing.getElement();
+		Element roomInfo = messageElement.addElement("roomInfo", "http://dumbhippo.com/protocol/rooms");
+		roomInfo.addAttribute("kind", kind.name().toLowerCase());
+	}
+	
 	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {
 		Presence presence = new Presence((Presence.Type)null);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
@@ -310,6 +322,8 @@ public class Room {
 		info.addAttribute("arrangementName", userInfo.getArrangementName());
 		info.addAttribute("artist", userInfo.getArtist()); 
 		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
+	
+		addRoomInfo(presence);
 		
 		return presence;
 	}
@@ -317,6 +331,8 @@ public class Room {
 	private Presence makePresenceUnavailable(UserInfo userInfo) {
 		Presence presence = new Presence(Presence.Type.unavailable);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
+		
+		addRoomInfo(presence);
 		
 		return presence;
 	}
@@ -481,6 +497,8 @@ public class Room {
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
+
+		addRoomInfo(outgoing);
 		
 		return outgoing;
 	}
@@ -599,7 +617,8 @@ public class Room {
 	/**
 	 * Check if user can join a particular room and send messages
 	 * to it. This is the same as being able to view the 
-	 * post that the room is about. 
+	 * post that the room is about or being in the group chatted about
+	 * or whatever is appropriate. 
 	 * 
 	 * @param username
 	 * @return true if the user can join this room

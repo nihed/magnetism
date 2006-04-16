@@ -114,4 +114,3 @@ public class RoomHandler implements Component {
 		return roomsForUser;
 	}
 }	
-	

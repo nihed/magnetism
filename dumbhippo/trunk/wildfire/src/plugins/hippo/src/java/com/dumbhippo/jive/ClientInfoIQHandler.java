@@ -50,6 +50,7 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
 		return info;
 	}
 
+	@Override
 	public void start() {
 	}
 }

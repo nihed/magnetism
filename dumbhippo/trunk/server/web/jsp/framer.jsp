@@ -25,11 +25,8 @@
     		dh.util.openShareLinkWindow(dh.framer.forwardUrl, dh.framer.forwardTitle);
     	}
 	</script>
-	<object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="dhEmbedObject"></object>
-	<object classid="clsid:2D40665F-8139-4cb5-BA39-A6E25A147F5D" id="dhChatControl">
-		<param name="UserID" value="${framer.signin.userId}"/>
-		<param name="PostID" value="${framer.post.post.id}"/>
-	</object>
+	<dht:embedObject/>
+	<dht:chatControl userId="${framer.signin.userId}" chatId="${framer.post.post.id}"/>
 	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
 		dh.framer.onUserJoin(userId, version, name, participant)
 	</script>

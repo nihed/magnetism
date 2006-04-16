@@ -31,7 +31,7 @@ public abstract class LiveObject implements Ageable, Cloneable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return guid.hashCode();
-	}	
+	}
 }

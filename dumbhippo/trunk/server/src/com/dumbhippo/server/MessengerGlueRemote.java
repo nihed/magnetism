@@ -107,28 +107,46 @@ public interface MessengerGlueRemote {
 		}
 	}
 
+	/**
+	 * What is this chat room about? 
+	 * Tells you what the chatId means...
+	 * 
+	 * @author Havoc Pennington
+	 *
+	 */
+	public enum ChatRoomKind {
+		POST,
+		GROUP;
+	}
+	
 	public class ChatRoomInfo implements Serializable {
 		private static final long serialVersionUID = 0L;
 		
+		private ChatRoomKind kind; 
 		private String roomName;
-		private String postTitle;
+		private String title;
 		private List<ChatRoomUser> allowedUsers;
 		private List<ChatRoomMessage> history;
 		
-		public ChatRoomInfo(String roomName, String postTitle, List<ChatRoomUser> allowedUsers, List<ChatRoomMessage> history) {
+		public ChatRoomInfo(ChatRoomKind kind, String roomName, String postTitle, List<ChatRoomUser> allowedUsers, List<ChatRoomMessage> history) {
+			this.kind = kind;
 			this.roomName = roomName;
-			this.postTitle = postTitle;
+			this.title = postTitle;
 			this.allowedUsers = allowedUsers; // Don't copy for efficiency, assume the caller won't
 			                                  // subsequently modify
 			this.history = history;
 		}
 		
-		public String getPostId() {
+		public ChatRoomKind getKind() {
+			return kind;
+		}
+		
+		public String getChatId() {
 			return roomName;
 		}
 		
-		public String getPostTitle() {
-			return postTitle;
+		public String getTitle() {
+			return title;
 		}
 		
 		public List<ChatRoomUser> getAllowedUsers() {

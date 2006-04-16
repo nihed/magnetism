@@ -23,6 +23,9 @@ import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.EmbeddedMessage;
+import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.Person;
@@ -32,6 +35,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
@@ -44,9 +48,9 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -70,6 +74,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private InvitationSystem invitationSystem;
+	
+	@EJB
+	private GroupSystem groupSystem;
 	
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
@@ -291,59 +298,113 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 	}
 	
-	private Post getPostFromRoomName(User user, String roomName) throws NotFoundException {
-		Viewpoint viewpoint = new UserViewpoint(user);
-		
+	private Post getPostFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
 		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
 	}
 	
-	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername) {
-		User initialUser = getUserFromUsername(initialUsername);				
-		Post post;
-		try {
-			post = getPostFromRoomName(initialUser, roomName);
-		} catch (NotFoundException e) {
-			// FIXME in principle this should happen if the initialUser can't see the post, 
-			// but right now there's no access controls in loadRawPost so it only happens
-			// if something is broken
-			return null;
+	private Group getGroupFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
+		return groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
+	}
+	
+	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
+		String username = message.getFromUser().getGuid().toJabberId(null);
+		return new ChatRoomMessage(username, message.getMessageText(),
+				message.getTimestamp(), message.getMessageSerial()); 		
+	}
+	
+	private ChatRoomUser newChatRoomUser(User user) {
+		return new ChatRoomUser(user.getGuid().toJabberId(null),
+				user.getVersion(), user.getNickname());
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
+		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
+		
+		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
+		for (User user : members) {
+			allowedUsers.add(newChatRoomUser(user));
 		}
-		 
+		
+		List<GroupMessage> messages = groupSystem.getGroupMessages(group);
+
+		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
+		
+		for (GroupMessage m : messages) {
+			history.add(newChatRoomMessage(m));
+		}
+		
+		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), allowedUsers, history);
+	}
+
+	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
 		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
 		
 		User poster = post.getPoster();
-		allowedUsers.add(new ChatRoomUser(poster.getGuid().toJabberId(null), poster.getVersion(), poster.getNickname()));
+		allowedUsers.add(newChatRoomUser(poster));
 		
 		// FIXME: This isn't really right; it doesn't handle public posts and
-		// posts
-		// where people join a group that it was sent to after the post was
+		// posts where people join a group that it was sent to after the post was
 		// sent. Public posts will need to be handled with a separate flag
 		// in ChatRoomInfo.
 		for (Resource recipient : post.getExpandedRecipients()) {
 			User user = identitySpider.getUser(recipient);
 			if (user != null && !user.equals(poster))
-				allowedUsers.add(new ChatRoomUser(user.getGuid().toJabberId(null), user.getVersion(), user.getNickname()));
+				allowedUsers.add(newChatRoomUser(user));
 		}
 		
 		List<PostMessage> messages = postingBoard.getPostMessages(post);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-		ChatRoomMessage message;
 	
 		// if post description is not empty, add it to the history of chat room messages, designate this type
 		// of message that contains post description with serial = -1
 		if (post.getText().trim().length() != 0) {
-            message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
+            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
             history.add(message);
 		}
 		
 		for (PostMessage postMessage : messages) {
-			String username = postMessage.getFromUser().getGuid().toJabberId(null);
-			message = new ChatRoomMessage(username, postMessage.getMessageText(), postMessage.getTimestamp(), postMessage.getMessageSerial()); 
-			history.add(message);
+			history.add(newChatRoomMessage(postMessage));
 		}
 		
-		return new ChatRoomInfo(roomName, post.getTitle(), allowedUsers, history);
+		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), allowedUsers, history);
+	}
+	
+	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername) {
+		User initialUser = getUserFromUsername(initialUsername);
+		UserViewpoint viewpoint = new UserViewpoint(initialUser);
+		Post post = null;
+		Group group = null;
+		try {
+			post = getPostFromRoomName(viewpoint, roomName);
+		} catch (NotFoundException e) {
+			// FIXME in principle this should happen if the initialUser can't see the post, 
+			// but right now there's no access controls in loadRawPost so it only happens
+			// if something is broken
+			post = null;
+		}
+		try {
+			group = getGroupFromRoomName(viewpoint, roomName);
+		} catch (NotFoundException e) {
+			group = null;
+		}
+		
+		if (post != null && group != null) {
+			// this should theoretically be very, very unlikely so we won't bother to fix it unless 
+			// it happens on production, and even then we could just munge the database instead of 
+			// bothering...
+			logger.error("GUID collision... we'll have to put a group vs. post marker in the room ID string");
+			group = null; // just take a guess and use the post
+		}
+		
+		if (post != null)
+			return getChatRoomInfo(roomName, post);
+		else if (group != null)
+			return getChatRoomInfo(roomName, group);
+		else {
+			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomName);
+			return null;
+		}
 	}
 	
 	public Map<String, String> getCurrentMusicInfo(String username) {

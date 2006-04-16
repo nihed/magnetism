@@ -15,6 +15,7 @@
 	<title><c:out value="${viewgroup.name}"/></title>
 	<dht:stylesheets href="group.css" iehref="group-iefixes.css" />
 	<dht:scriptIncludes/>
+	<dht:embedObject/>
     <script type="text/javascript">
         dojo.require("dh.util");
     </script>
@@ -34,6 +35,13 @@
 					 &#151; <a class="dh-toolbar-item" href='javascript:dh.actions.joinGroup("${viewgroup.viewedGroupId}")'>Join This Group</a>
 				</c:when>
 			</c:choose>
+			   <%-- The browser.gecko check is here because the dynamic hiding of
+		        the control when the chat object fails to load doesn't work
+		        correctly in firefox 1.0 --%>
+			   	<c:if test="${viewgroup.signin.userId != null && !browser.gecko}">
+					&#151; <a class="dh-toolbar-item"
+					href="javascript:dh.actions.requestJoinRoom('${viewgroup.signin.userId}','${viewgroup.viewedGroupId}')">Join Chat</a>
+				</c:if>
 		</dht:toolbar>
 		<c:if test="${!viewgroup.fromInvite}"> <!-- we don't want to duplicate the download link -->
 			<dht:infobar/>		

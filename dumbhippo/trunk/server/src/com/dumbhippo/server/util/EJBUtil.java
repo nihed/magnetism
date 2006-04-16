@@ -4,11 +4,16 @@ import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.persistence.EntityManager;
 
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.server.NotFoundException;
 
 public class EJBUtil {
 	
@@ -123,5 +128,37 @@ public class EJBUtil {
 		String ret = clause.toString();
 		
 		return ret;
+	}
+	
+	/**
+	 * Look up a GuidPersistable in the database, checking its type.  
+	 * @param em
+	 * @param klass
+	 * @param id
+	 * @return
+	 * @throws NotFoundException if the GuidPersistable doesn't exist or has another type
+	 */
+	public static <T extends GuidPersistable> T lookupGuid(EntityManager em, Class<T> klass, Guid id) throws NotFoundException {
+		// we pass GuidPersistable.class to em.find() since it fails kind of 
+		// opaquely if the type is wrong, and we would rather fail in the 
+		// same way we would if we eventually move everything to EmbeddedGuidPersistable,
+		// i.e. just get a "not found" 
+		// this matters right now if e.g. we want to try loading a chat as a Post and 
+		// a Group chat both and see which one works.
+
+		GuidPersistable obj = em.find(GuidPersistable.class, id.toString());
+		if (obj == null)
+			throw new GuidNotFoundException(id);
+		try {
+			return klass.cast(obj);
+		} catch (ClassCastException e) {
+			throw new GuidNotFoundException(id);
+		}
+	}
+	
+	public static <T extends GuidPersistable> T lookupGuidString(EntityManager em, Class<T> klass, String id) throws ParseException, NotFoundException {
+		Guid guid = new Guid(id); //throw Parse here instead of GuidNotFound if invalid
+		
+		return lookupGuid(em, klass, guid);
 	}
 }

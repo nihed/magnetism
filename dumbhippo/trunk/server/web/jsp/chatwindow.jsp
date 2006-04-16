@@ -4,21 +4,28 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
-<jsp:setProperty name="framer" property="postId" param="postId"/>
+<dh:bean id="chatwindow" class="com.dumbhippo.web.ChatWindowPage" scope="request"/>
+<%-- only one of these params is expected at a time... chatId just means 
+	"figure out whether it's post or group" which is less efficient but 
+	some calling contexts might not know the type of chat --%>
+<jsp:setProperty name="chatwindow" property="postId" param="postId"/>
+<jsp:setProperty name="chatwindow" property="groupId" param="groupId"/>
+<jsp:setProperty name="chatwindow" property="chatId" param="chatId"/>
+
+<c:if test="${! chatwindow.aboutSomething}">
+	<%-- no post or group, or invalid/not-allowed post or group --%>
+	<dht:errorPage>Can't find this chat</dht:errorPage>
+</c:if>
 
 <head>
-	<title><c:out value="${framer.post.title}"/></title>
+	<title><c:out value="${chatwindow.title}"/></title>
 	<dht:stylesheets href="chatwindow.css" iehref="chatwindow-iefixes.css" />
 	<dht:scriptIncludes/>
     <script type="text/javascript">
     	dojo.require("dh.chatwindow");
-    	dh.chatwindow.setSelfId("${framer.signin.userId}")
+    	dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
 	</script>
-	<object classid="clsid:2D40665F-8139-4cb5-BA39-A6E25A147F5D" id="dhChatControl">
-		<param name="UserID" value="${framer.signin.userId}"/>
-		<param name="PostID" value="${framer.post.post.id}"/>
-	</object>
+	<dht:chatControl userId="${chatwindow.signin.userId}" chatId="${chatwindow.chatId}"/>
 	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
 		dh.chatwindow.onUserJoin(userId, version, name, participant)
 	</script>
@@ -46,7 +53,10 @@
 </head>
 <body scroll="no" onload="dh.chatwindow.rescan()">
     <div id="dhChatPostInfoDiv">
-    	${framer.post.titleAsHtml} (from <dh:entity value="${framer.post.poster}" photo="false"/>)
+    	${chatwindow.titleAsHtml}
+    	<c:if test="${chatwindow.aboutPost}">
+    	(from <dh:entity value="${chatwindow.post.poster}" photo="false"/>)
+    	</c:if>
 	</div>
 	<div id="dhChatPeopleContainer">
         <div id="dhChatPeopleDiv"></div>

@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
@@ -47,6 +48,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.GroupSystem;
@@ -456,6 +458,9 @@ public class PostingBoardBean implements PostingBoard {
 		return results;
 	}
 	
+	// This doesn't check access to the Post, since that was supposed to be done
+	// when loading the post... conceivably we should redo the API to eliminate 
+	// that danger
 	public PostView getPostView(Viewpoint viewpoint, Post post) {
 		List<Object> recipients = new ArrayList<Object>();
 		
@@ -574,6 +579,19 @@ public class PostingBoardBean implements PostingBoard {
 			return false;
 		}
 	}
+
+	public boolean canViewPost(Viewpoint viewpoint, Post post) {
+		if (viewpoint instanceof SystemViewpoint) {
+			return true;
+		} else if (viewpoint instanceof AnonymousViewpoint) {
+			return post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC;
+		} else if (viewpoint instanceof UserViewpoint) {
+			return canViewPost((UserViewpoint) viewpoint, post);
+		} else {
+			logger.error("Unknown viewpoint type in canViewPost()");
+			return false;
+		}
+	}
 	
 	static final String GET_POSTS_FOR_QUERY =
 		"SELECT post FROM Post post WHERE post.poster = :poster";
@@ -685,17 +703,17 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, null, start, max);
 	}
 	
-	// FIXME we aren't checking whether viewpoint can see the post...
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
-		Post post = em.find(Post.class, guid.toString());
-		if (post == null)
-			throw new NotFoundException("Post not found in database: " + guid.toString());
-		return post;
+		Post post = EJBUtil.lookupGuid(em, Post.class, guid);
+		if (canViewPost(viewpoint, post))
+			return post;
+		else
+			return null;
 	}
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		// loadRawPost is supposed to do the permissions check
 		Post p =  loadRawPost(viewpoint, guid);
-		// FIXME access control check here, when used from post framer?
 		return getPostView(viewpoint, p);
 	}
 
@@ -810,13 +828,12 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public List<PostMessage> getRecentPostMessages(Post post, int seconds) {
-		@SuppressWarnings("unchecked")
-		List<PostMessage> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_RECENT +
+		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_RECENT +
 													POST_MESSAGE_ORDER)
 		.setParameter("post", post)
 		.setParameter("recentTime", seconds)
 		.getResultList();		
-		return messages;
+		return TypeUtils.castList(PostMessage.class, messages);
 	}	
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
