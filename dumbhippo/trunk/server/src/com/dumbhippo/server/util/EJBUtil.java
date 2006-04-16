@@ -152,7 +152,7 @@ public class EJBUtil {
 		try {
 			return klass.cast(obj);
 		} catch (ClassCastException e) {
-			throw new GuidNotFoundException(id);
+			throw new GuidNotFoundException(id, e);
 		}
 	}
 	

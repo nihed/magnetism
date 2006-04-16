@@ -529,7 +529,7 @@ public class Room {
 		sendPacketToAll(outgoing);
 		
 		// Send over to the server via JMS
-		XmppEventChatMessage event = new XmppEventChatMessage(roomName, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
+		XmppEventChatMessage event = new XmppEventChatMessage(roomName, kind, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
         ObjectMessage message = queue.createObjectMessage(event);
         queue.send(message);
 	}
