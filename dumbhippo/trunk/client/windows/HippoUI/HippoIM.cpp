@@ -138,10 +138,10 @@ HippoIM::getUsername(BSTR *ret)
 }
 
 HippoChatRoom *
-HippoIM::findChatRoom(BSTR postId)
+HippoIM::findChatRoom(BSTR chatId)
 {
     for (unsigned long i = 0; i < chatRooms_.length(); i++) {
-        if (wcscmp(chatRooms_[i]->getPostId(), postId) == 0) {
+        if (wcscmp(chatRooms_[i]->getChatId(), chatId) == 0) {
             return chatRooms_[i];
         }
     }
@@ -149,15 +149,15 @@ HippoIM::findChatRoom(BSTR postId)
 }
 
 HRESULT
-HippoIM::getChatRoom(BSTR postId, IHippoChatRoom **chatRoom)
+HippoIM::getChatRoom(BSTR chatId, IHippoChatRoom **chatRoom)
 {
-    HippoChatRoom *room = findChatRoom(postId);
+    HippoChatRoom *room = findChatRoom(chatId);
     if (room) {
         *chatRoom = room;
         room->AddRef();
         return S_OK;
     }
-    HippoChatRoom *newRoom = new HippoChatRoom(this, postId);
+    HippoChatRoom *newRoom = new HippoChatRoom(this, chatId);
     if (newRoom) {
         chatRooms_.append(newRoom);
         *chatRoom = newRoom;
@@ -201,8 +201,8 @@ void
 HippoIM::sendChatRoomMessage(HippoChatRoom *chatRoom,
                              BSTR           text)
 {
-    char *postId = idToJabber(chatRoom->getPostId());
-    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    char *chatId = idToJabber(chatRoom->getChatId());
+    char *to = g_strconcat(chatId, "@rooms.dumbhippo.com", NULL);
     LmMessage *message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
 
     HippoUStr textU(text);
@@ -211,7 +211,7 @@ HippoIM::sendChatRoomMessage(HippoChatRoom *chatRoom,
     sendMessage(message);
     lm_message_unref(message);
 
-    g_free(postId);
+    g_free(chatId);
     g_free(to);
 }
 
@@ -837,8 +837,8 @@ HippoIM::clearConnection()
 void 
 HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType, bool participant)
 {
-    char *postId = idToJabber(chatRoom->getPostId());
-    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    char *chatId = idToJabber(chatRoom->getChatId());
+    char *to = g_strconcat(chatId, "@rooms.dumbhippo.com", NULL);
     LmMessage *message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_PRESENCE, subType);
 
     if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
@@ -854,7 +854,7 @@ HippoIM::sendChatRoomPresence(HippoChatRoom *chatRoom, LmMessageSubType subType,
 
     lm_message_unref(message);
 
-    g_free(postId);
+    g_free(chatId);
     g_free(to);
 }
 
@@ -875,8 +875,8 @@ HippoIM::getChatRoomDetails(HippoChatRoom *chatRoom)
 {
     chatRoom->setFilling(true);
 
-    char *postId = idToJabber(chatRoom->getPostId());
-    char *to = g_strconcat(postId, "@rooms.dumbhippo.com", NULL);
+    char *chatId = idToJabber(chatRoom->getChatId());
+    char *to = g_strconcat(chatId, "@rooms.dumbhippo.com", NULL);
     LmMessage *message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_GET);
 
     LmMessageNode *child = lm_message_node_add_child (message->node, "details", NULL);
@@ -892,37 +892,64 @@ HippoIM::getChatRoomDetails(HippoChatRoom *chatRoom)
 HippoIM::ProcessMessageResult
 HippoIM::processRoomMessage (LmMessage *message, bool wasPending)
 {
+    // this could be a chat message or a presence notification
+
     const char *from = lm_message_node_get_attribute(message->node, "from");
 
-    HippoBSTR tmpPostId;
+    LmMessageNode *infoNode = findChildNode(message->node, "http://dumbhippo.com/protocol/rooms", "roomInfo");
+    if (!infoNode) {
+        hippoDebugLogW(L"Can't find roomInfo node");
+        return PROCESS_MESSAGE_IGNORE;
+    }
+
+    const char *kindU = lm_message_node_get_attribute(infoNode, "kind");
+    bool isAboutPost = false;
+    bool isAboutGroup = false;
+    if (kindU == NULL) {
+        // assume it's an old server which lacked "kind" but was always about posts
+        isAboutPost = true;
+    } else if (strcmp(kindU, "post") == 0) {
+        isAboutPost = true;
+    } else if (strcmp(kindU, "group") == 0) {
+        isAboutGroup = true;
+    } else {
+        hippoDebugLogU("Unknown chat kind %s", kindU);
+        return PROCESS_MESSAGE_IGNORE;
+    }
+
+    HippoBSTR tmpChatId;
     HippoBSTR tmpUserId;
 
-    if (!from || !parseRoomJid(from, &tmpPostId, &tmpUserId))
+    if (!from || !parseRoomJid(from, &tmpChatId, &tmpUserId))
         return PROCESS_MESSAGE_IGNORE;
 
-    HippoChatRoom *chatRoom = findChatRoom(tmpPostId.m_str);
+    HippoChatRoom *chatRoom = findChatRoom(tmpChatId.m_str);
     if (!chatRoom) {
         // This is a spontaneous message from a chatroom, which we'll bubble up
-        // for the user. In order to do that, we need both the rest of the information
+        // for the user, right now only if the chat is about a post.
+        // In order to do that, we need both the rest of the information
         // about the chatroom (the present users, and so forth), and also the information
         // about the post like the title, description, and so on. We could get
         // these two things in parallel, but to simplify, we first get the 
         // post, to have a place to hang the chatroom off of, then we get the
         // chat room information.
-        HippoDataCache &cache = ui_->getDataCache();
-        HippoPtr<HippoPost> post = cache.getPost(tmpPostId);
-        if (!post) {
-            // If multiple messages from a chatroom that we aren't part of come in,
-            // we might retrieve the chat room information multiple times; but 
-            // that's harmless, so we don't bother keeping track of what posts
-            // we are in the process of retrieving.
-            getPosts(tmpPostId);
-
+        if (isAboutPost) {
+            HippoDataCache &cache = ui_->getDataCache();
+            HippoPtr<HippoPost> post = cache.getPost(tmpChatId);
+            if (!post) {
+                // If multiple messages from a chatroom that we aren't part of come in,
+                // we might retrieve the chat room information multiple times; but 
+                // that's harmless, so we don't bother keeping track of what posts
+                // we are in the process of retrieving.
+                getPosts(tmpChatId);
+            }
             return PROCESS_MESSAGE_PEND;
+        } else {
+            // spontaneous messages that aren't about posts we just want to ignore 
+            return PROCESS_MESSAGE_CONSUME;
         }
-
-        return PROCESS_MESSAGE_PEND;
     }
+    // assert(chatRoom != NULL) 
 
     // If we got a message and request the room contents in response to that,
     // wait until we finish until we process that message
@@ -1078,7 +1105,9 @@ HippoIM::handleRoomChatMessage(LmMessage     *message,
 
     chatRoom->addMessage(userId, version, name, text, timestamp, serial);
 
-    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getPostId());
+    // remember that the chat may not be about a post, but if it is about 
+    // a post we know about, then update the post.
+    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getChatId());
     if (post && !chatRoom->getFilling()) {
         if (chatRoom->getState() == HippoChatRoom::NONMEMBER)
             ui_->onChatRoomMessage(post);
@@ -2019,7 +2048,9 @@ HippoIM::handleRoomPresence (LmMessage        *message,
 {
     LmMessageSubType subType = lm_message_get_sub_type(message);
 
-    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getPostId());
+    // remember that the chat may not be about a post in which case this
+    // will be null (can also be null if we just have never heard of this post?)
+    HippoPost *post = ui_->getDataCache().getPost(chatRoom->getChatId());
 
     // FIXME: If we get pend a chat room presence while getting the details of the 
     // chatroom, then we'll have a more recent view of the chatroom's viewer set than that
@@ -2032,7 +2063,8 @@ HippoIM::handleRoomPresence (LmMessage        *message,
     // we still need to update the chatroom despite wasPending. So, we really
     // need to keep more information around about the history of the message
 
-    post->resetCurrentViewers();
+    if (post)
+        post->resetCurrentViewers();
 
     if (subType == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
         LmMessageNode *xNode = findChildNode(message->node, "http://jabber.org/protocol/muc#user", "x");
@@ -2053,10 +2085,12 @@ HippoIM::handleRoomPresence (LmMessage        *message,
 
         chatRoom->addUser(userId, version, name, participant);
 
-        HippoBSTR selfID;
-        ui_->GetLoginId(&selfID);
-        if (wcscmp(selfID.m_str, userId) == 0)
-            post->setHaveViewed(true);
+        if (post) {
+            HippoBSTR selfID;
+            ui_->GetLoginId(&selfID);
+            if (wcscmp(selfID.m_str, userId) == 0)
+                post->setHaveViewed(true);
+        }
 
         if (artist && arrangementName) {
             chatRoom->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
@@ -2164,10 +2198,10 @@ HippoIM::idFromJabber(const char *jabber,
 
 bool
 HippoIM::parseRoomJid(const char *jid,
-                      BSTR       *postId,
+                      BSTR       *chatId,
                       BSTR       *userId)
 {
-    *postId = NULL;
+    *chatId = NULL;
     *userId = NULL;
 
     char *at = strchr((char *)jid, '@');
@@ -2180,11 +2214,11 @@ HippoIM::parseRoomJid(const char *jid,
     if (strncmp(at + 1, "rooms.dumbhippo.com", slash - (at + 1)) != 0)
         return false;
 
-    BSTR tmpPostId = NULL;
+    BSTR tmpChatId = NULL;
     BSTR tmpUserId = NULL;
 
     char *room = g_strndup(jid, static_cast<gsize>(at - jid));
-    bool result = idFromJabber(room, &tmpPostId);
+    bool result = idFromJabber(room, &tmpChatId);
     g_free(room);
 
     if (!result)
@@ -2195,16 +2229,16 @@ HippoIM::parseRoomJid(const char *jid,
             goto error;
     }
 
-    *postId = tmpPostId;
+    *chatId = tmpChatId;
     *userId = tmpUserId;
     
     return true;
 
 error:
-    if (tmpPostId)
-        SysFreeString(tmpPostId);
+    if (tmpChatId)
+        SysFreeString(tmpChatId);
     if (tmpUserId)
-        SysFreeString(tmpPostId);
+        SysFreeString(tmpUserId);
 
     return false;
 }

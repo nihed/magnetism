@@ -1,4 +1,4 @@
-/* HippoChatRoom.cpp: Object representing a chat room about a post
+/* HippoChatRoom.cpp: Object representing a chat room about a post, group, or whatever
  *
  * Copyright Red Hat, Inc. 2005
  **/
@@ -41,12 +41,12 @@ HippoChatMessage::HippoChatMessage(const HippoChatUser &user, BSTR text, INT64 t
     serial_ = serial;
 }
 
-HippoChatRoom::HippoChatRoom(HippoIM *im, BSTR postId)
+HippoChatRoom::HippoChatRoom(HippoIM *im, BSTR chatId)
 {
     refCount_ = 1;
 
     im_ = im;
-    postId_ = postId;
+    chatId_ = chatId;
     rescanIdle_ = 0;
     participantCount_ = 0;
     memberCount_ = 0;
@@ -71,9 +71,9 @@ HippoChatRoom::~HippoChatRoom()
 }
 
 BSTR
-HippoChatRoom::getPostId()
+HippoChatRoom::getChatId()
 {
-    return postId_;
+    return chatId_;
 }
 
 HippoChatRoom::State
@@ -178,10 +178,10 @@ void
 HippoChatRoom::removeListener(HippoChatRoomListener *listener)
 {
     for (unsigned long i = listeners_.length(); i > 0; --i) {
-        if (listeners_[i - 1] == listener) {
-        listeners_.remove(i - 1);
-        return;
-    }
+        if (listeners_[i - 1] == listener) {   
+            listeners_.remove(i - 1);
+            return;
+        }
     }
 
     assert(false);
@@ -396,6 +396,8 @@ HippoChatRoom::notifyUserLeave(const HippoChatUser &user)
 void 
 HippoChatRoom::addMessage(BSTR userId, int userVersion, BSTR userName, BSTR text, INT64 timestamp, int serial)
 {
+    hippoDebugLogW(L"add message from %s/%s serial %d: %s", userId, userName, serial, text);
+
     bool isLast = true;
 
     for (unsigned long i = 0; i < messages_.length(); i++) {
@@ -609,7 +611,7 @@ HippoChatRoom::Invoke (DISPID        member,
 STDMETHODIMP 
 HippoChatRoom::Join(BOOL participant)
 {
-    hippoDebugLogW(L"HippoChatRoom: Join %ls (%d) %d/%d", postId_.m_str, participant, memberCount_, participantCount_);
+    hippoDebugLogW(L"HippoChatRoom: Join %ls (isParticipant %d) %d members / %d participants", chatId_.m_str, participant, memberCount_, participantCount_);
 
     // We multiplex all calls to Join() either as participant or guest
     // into a single membership in the system copy of the chatroom, as
@@ -633,7 +635,7 @@ HippoChatRoom::Join(BOOL participant)
 STDMETHODIMP 
 HippoChatRoom::Leave(BOOL participant)
 {
-    hippoDebugLogW(L"HippoChatRoom: Leave %ls (%d) %d/%d", postId_.m_str, participant, memberCount_, participantCount_);
+    hippoDebugLogW(L"HippoChatRoom: Leave %ls (isParticipant %d) %d members /%d participants", chatId_.m_str, participant, memberCount_, participantCount_);
 
     if (memberCount_ == 0 || (participant && participantCount_ == 0))
         return E_INVALIDARG;

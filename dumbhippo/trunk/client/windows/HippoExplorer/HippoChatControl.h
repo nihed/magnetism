@@ -79,7 +79,7 @@ private:
     void connectToUI();
     void clearUI();
 
-    HippoBSTR postId_;
+    HippoBSTR chatId_;
     HippoBSTR userId_;
 
     HippoPtr<IHippoUI> ui_;

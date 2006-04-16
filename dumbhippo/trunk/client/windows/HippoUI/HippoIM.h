@@ -63,8 +63,8 @@ public:
 
     void getUsername(BSTR *ret) throw (std::bad_alloc);
 
-    HippoChatRoom *findChatRoom(BSTR postId);
-    HRESULT getChatRoom(BSTR postId, IHippoChatRoom **chatRoom);
+    HippoChatRoom *findChatRoom(BSTR chatId);
+    HRESULT getChatRoom(BSTR chatId, IHippoChatRoom **chatRoom);
 
     // Called by HippoChatRoom
     void onChatRoomStateChange(HippoChatRoom *chatRoom, HippoChatRoom::State oldState);
@@ -237,7 +237,7 @@ private:
     static bool idFromJabber(const char *jabber, 
                              BSTR       *guid);
     static bool parseRoomJid(const char *jid, 
-                             BSTR       *postId, 
+                             BSTR       *chatId, 
                              BSTR       *userId);
     static LmMessageNode *findChildNode(LmMessageNode *node, 
                                         const char    *elementNamespace, 

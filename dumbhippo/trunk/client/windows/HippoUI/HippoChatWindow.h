@@ -15,8 +15,8 @@ public:
     HippoChatWindow();
     ~HippoChatWindow();
 
-    void setPostId(BSTR postId);
-    BSTR getPostId();
+    void setChatId(BSTR chatId);
+    BSTR getChatId();
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);
@@ -39,5 +39,5 @@ protected:
 private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
     DWORD refCount_;
-    HippoBSTR postId_;
+    HippoBSTR chatId_;
 };

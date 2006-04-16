@@ -228,6 +228,12 @@ HippoChatControl::InitNew()
     return S_OK;
 }
 
+static bool
+isHippoGuid(variant_t & value)
+{
+    return (value.vt == VT_BSTR && value.bstrVal != NULL && hippoVerifyGuid(value.bstrVal));
+}
+
 STDMETHODIMP 
 HippoChatControl::Load(IPropertyBag *propertyBag,
                        IErrorLog    *errorLog)
@@ -242,24 +248,38 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
     if (FAILED(hr))
         return hr;
 
-    if (userIdVariant.vt != VT_BSTR || userIdVariant.bstrVal == NULL || !hippoVerifyGuid(userIdVariant.bstrVal)) {
+    if (!isHippoGuid(userIdVariant)) {
         hippoDebugDialog(L"Error setting UserID property");
         return E_FAIL;
     }
 
+    variant_t chatIdVariant;
+    chatIdVariant.vt = VT_BSTR;
+    hr = propertyBag->Read(L"ChatID", &chatIdVariant, errorLog);
+    if (FAILED(hr))
+        return hr;
+
+    // we accept "PostID" as a synonym for ChatID for back compat
+    // with old html, can kill this after a while.
     variant_t postIdVariant;
     postIdVariant.vt = VT_BSTR;
     hr = propertyBag->Read(L"PostID", &postIdVariant, errorLog);
     if (FAILED(hr))
         return hr;
 
-    if (postIdVariant.vt != VT_BSTR || postIdVariant.bstrVal == NULL || !hippoVerifyGuid(postIdVariant.bstrVal)) {
-        hippoDebugDialog(L"Error setting PostID property");
-        return E_FAIL;
+    // fall back to PostID if no ChatID
+    if (isHippoGuid(chatIdVariant)) {
+        chatId_ = chatIdVariant.bstrVal;
+    } else {
+        if (isHippoGuid(postIdVariant)) {
+            chatId_ = postIdVariant.bstrVal;
+        } else {
+            hippoDebugDialog(L"Error setting ChatID property");
+            return E_FAIL;
+        }
     }
 
     userId_ = userIdVariant.bstrVal;
-    postId_ = postIdVariant.bstrVal;
 
     connectToUI();
 
@@ -280,8 +300,8 @@ HippoChatControl::Save(IPropertyBag *propertyBag,
     if (FAILED(hr))
         return hr;
 
-    variant_t postIdVariant(postId_.m_str);
-    hr = propertyBag->Write(L"PostID", &postIdVariant);
+    variant_t chatIdVariant(chatId_.m_str);
+    hr = propertyBag->Write(L"ChatID", &chatIdVariant);
     if (FAILED(hr))
         return hr;
 
@@ -510,7 +530,7 @@ HippoChatControl::connectToUI()
     if (chatRoom_)
         return;
 
-    if (!postId_ || !userId_ || !site_)
+    if (!chatId_ || !userId_ || !site_)
         return;
 
     // Double check the URL for the page at this point; the control was initialized 
@@ -525,7 +545,7 @@ HippoChatControl::connectToUI()
         return;
     }
 
-    if (FAILED(ui_->GetChatRoom(postId_, &chatRoom_))) {
+    if (FAILED(ui_->GetChatRoom(chatId_, &chatRoom_))) {
         hippoDebugDialog(L"Couldn't get chat room");
         return;
     }

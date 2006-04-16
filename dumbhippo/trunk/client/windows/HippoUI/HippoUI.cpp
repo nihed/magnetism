@@ -763,11 +763,11 @@ HippoUI::BeginFlickrShare(BSTR filePath)
 }
 
 HRESULT
-HippoUI::ShowChatWindow(BSTR postId)
+HippoUI::ShowChatWindow(BSTR chatId)
 {
     // If a chat window already exists for the post, just raise it
     for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (wcscmp(chatWindows_[i]->getPostId(), postId) == 0) {
+        if (wcscmp(chatWindows_[i]->getChatId(), chatId) == 0) {
             chatWindows_[i]->setForegroundWindow();
             return S_OK;
         }
@@ -775,7 +775,7 @@ HippoUI::ShowChatWindow(BSTR postId)
 
     HippoChatWindow *window = new HippoChatWindow();
     window->setUI(this);
-    window->setPostId(postId);
+    window->setChatId(chatId);
 
     chatWindows_.append(window);
 

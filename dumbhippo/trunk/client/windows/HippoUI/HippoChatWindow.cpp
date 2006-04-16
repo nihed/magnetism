@@ -25,21 +25,21 @@ HippoChatWindow::~HippoChatWindow(void)
 }
 
 void 
-HippoChatWindow::setPostId(BSTR postId)
+HippoChatWindow::setChatId(BSTR chatId)
 {
-    postId_ = postId;
+    chatId_ = chatId;
 
     HippoBSTR srcURL;
-    ui_->getRemoteURL(L"chatwindow?postId=", &srcURL);
-    srcURL.Append(postId_);
+    ui_->getRemoteURL(L"chatwindow?chatId=", &srcURL);
+    srcURL.Append(chatId_);
 
     setURL(srcURL);
 }
 
 BSTR
-HippoChatWindow::getPostId()
+HippoChatWindow::getChatId()
 {
-    return postId_.m_str;
+    return chatId_.m_str;
 }
 
 void

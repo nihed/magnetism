@@ -1,4 +1,4 @@
-/* HippoChatRoom.h: Object representing a chat room about a post
+/* HippoChatRoom.h: Object representing a chat room, which can be about a post, group, or something else
  *
  * Copyright Red Hat, Inc. 2005
  **/
@@ -68,10 +68,10 @@ public:
         PARTICIPANT
     };
 
-    HippoChatRoom(HippoIM *im, BSTR postId);
+    HippoChatRoom(HippoIM *im, BSTR chatId);
     ~HippoChatRoom();
 
-    BSTR getPostId();
+    BSTR getChatId();
 
     State getState();
 
@@ -135,7 +135,7 @@ private:
     HippoPtr<ITypeInfo> ifaceTypeInfo_;
 
     HippoIM *im_;
-    HippoBSTR postId_;
+    HippoBSTR chatId_;
     HippoBSTR title_;
 
     int memberCount_;
