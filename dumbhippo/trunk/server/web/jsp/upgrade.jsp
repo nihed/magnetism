@@ -11,12 +11,9 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.42:</i>
+		<i>Version 1.1.43:</i>
 		<ul>
-			<li>Chat messages appear in the notification bubble</li>
-			<li>Links in chat messages are clickable</li>
-			<li>Client keeps track of what's going on currently better</li>			
-			<li>Many bug fixes</li>
+			<li>There is now a chat room for each group, in addition to the per-post chatrooms</li>
 		</ul>
 		<input type="button" value="Start using the new stuff!" onclick="window.external.application.DoUpgrade(); window.close();"/> 
 		<input type="button" value="No, not right now." onclick="window.close();"/>
