@@ -14,8 +14,13 @@ dojo.require("dh.autosuggest");
 
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;
+
+dh.share.theWorld = new dh.model.TheWorld();
+
 // hash of all persons/groups we should autocomplete on, keyed by guid
-dh.share.allKnownIds = {};
+dh.share.allKnownIds = { };
+dh.share.allKnownIds[dh.share.theWorld.id] = dh.share.theWorld;
+
 // currently selected recipients, may be group or person objects
 dh.share.selectedRecipients = [];
 
@@ -237,7 +242,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		
 		var idNode = document.createElement("table");
 		idNode.setAttribute("dhId", obj.id);
-		idNode.setAttribute("width", "55px")
+		idNode.setAttribute("width", "100%")
 		idNode.setAttribute("cellspacing", "0")
 		idNode.setAttribute("cellpadding", "0")		
 		dojo.html.addClass(idNode, "dhShareRecipientPerson");
@@ -260,6 +265,8 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 			} else {
 				imgSrc = dhHeadshotsRoot + "default";
 			}
+		} else if (obj.isTheWorld()) {
+			imgSrc = dhImageRoot + "worldShare.png";			
 		} else {
 			imgSrc = dhGroupshotsRoot + obj.id;
 		}
@@ -269,12 +276,6 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		div.style.background = "url(" + imgSrc + ")";		
 		td.appendChild(div)
 		dojo.html.addClass(div, "dhShareRecipientPersonPhoto");				
-		
-		/*
-		var img = dh.util.createPngElement(imgSrc, 48, 48);
-		dojo.html.addClass(img, "dhShareRecipientPersonPhoto");		
-		td.appendChild(img);
-		*/
 		
 		var removeImg = document.createElement("img")
 		removeImg.setAttribute("src", "/images/xblue.gif")
@@ -287,11 +288,11 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		tbody.appendChild(tr2);
 		var td = document.createElement("td");
 		td.setAttribute("align", "left")
-		td.setAttribute("width", "55px")
 		
 		var div = document.createElement("div")
 		td.appendChild(div)
 		dojo.html.addClass(div, "dhShareRecipientPersonName");
+		td.setAttribute("align", "right")
 		td.setAttribute("valign", "bottom")
 		div.appendChild(document.createTextNode(obj.displayName));
 		tr2.appendChild(td);		
@@ -299,12 +300,14 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		var tr3  = document.createElement("tr");
 		tbody.appendChild(tr3);
 		var td = document.createElement("td");
-		td.setAttribute("align", "left")
+		td.setAttribute("align", "right")
 		td.setAttribute("valign", "top")	
 		dojo.html.addClass(td, "dhRecipientNote");	
 		tr3.appendChild(td);
 		if (obj.isGroup()) {
 			td.appendChild(document.createTextNode(obj.sampleMembers));
+		} else if (obj.isTheWorld()) {
+			td.appendChild(document.createTextNode("public share"))	
 		} else {
 			if (!obj.hasAccount)
 				td.appendChild(document.createTextNode("via email"));
@@ -533,6 +536,21 @@ dh.share.findExactMatch = function(str) {
 	return null
 }
 
+dh.share.isToTheWorld = function() {
+	return dh.share.findGuid(dh.share.selectedRecipients, dh.share.theWorld.id) != null;
+}
+
+dh.share.getRecipients = function() {
+	var recipients = []
+	for (var i = 0; i < dh.share.selectedRecipients.length; i++) {
+		var recip = dh.share.selectedRecipients[i]
+		if (!recip.isTheWorld()) {
+			recipients.push(recip)
+		}
+	}
+	return recipients;
+}
+
 // Called when the user clicks on the Submit button; enters any
 // outstanding text from the recipients field then calls 
 // doSubmit. doSubmit may be called asynchronously or 
@@ -584,4 +602,6 @@ dh.share.init = function() {
 
 	// rich text areas can't exist when display:none, so we have to create it after showing
 	dh.share.descriptionRichText = document.getElementById("dhShareDescriptionTextArea");
+	
+	dh.share.doAddRecipient(dh.share.theWorld.id, true)
 }

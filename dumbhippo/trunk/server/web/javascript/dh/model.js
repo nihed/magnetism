@@ -13,6 +13,10 @@ dh.model.GuidPersistable = function(id, displayName) {
 	this.isGroup = function() {
 		return this.kind == "group";
 	}
+	
+	this.isTheWorld = function() {
+		return this.kind == "world";
+	}
 }
 dojo.inherits(dh.model.GuidPersistable, Object);
 
@@ -38,6 +42,14 @@ dh.model.Group = function(id, displayName, sampleMembers) {
 	this.kind = "group";
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
+
+dh.model.TheWorld = function() {
+	this.id = "gaia"; /* Sufficiently odd that if this synthetic entity causes
+	                     problems we should be able to see why immediately */
+	this.displayName = "The World";
+	this.kind = "world";
+}
+dojo.inherits(dh.model.TheWorld, dh.model.GuidPersistable);
 
 dh.model.splitCommaString = function(str) {
 	return str.split(",");

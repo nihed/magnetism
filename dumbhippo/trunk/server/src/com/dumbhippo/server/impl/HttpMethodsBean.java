@@ -252,7 +252,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doShareLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String title, String url,
-			String recipientIds, String description, boolean secret,
+			String recipientIds, String description, boolean isPublic,
 			String postInfoXml) throws ParseException, NotFoundException,
 			SAXException, MalformedURLException, IOException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
@@ -260,7 +260,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// FIXME if sending to a public group with secret=true, we want to
 		// expand the group instead of
 		// sending to the group ...
-		PostVisibility visibility = secret ? PostVisibility.RECIPIENTS_ONLY
+		PostVisibility visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC 
 				: PostVisibility.ANONYMOUSLY_PUBLIC;
 
 		PostInfo info;

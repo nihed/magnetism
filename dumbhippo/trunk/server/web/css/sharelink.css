@@ -184,8 +184,7 @@ table, tr, td {
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 55px;
-  max-width: 55px;
+  width: 70px;
 }
 
 .dhShareRecipientPersonPhoto {
@@ -197,8 +196,8 @@ table, tr, td {
 .dhShareRecipientPersonName {
   color: White;
   font-size: smaller;
-  width: 55px;
-  max-width: 55px;
+  width: 70px;
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   height: 1.3em;

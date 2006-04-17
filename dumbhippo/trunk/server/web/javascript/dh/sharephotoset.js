@@ -248,8 +248,6 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 			if (!urlText) { throw new Error("Couldn't find text value for url"); }
 			url = urlText.nodeValue
 		}
-	
-		var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
 
 		var postInfoDoc = dh.sharelink.postInfo
 		var flickrElt = postInfoDoc.createElement("flickr")
@@ -282,6 +280,9 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 		dojo.debug("desc = " + descriptionHtml);
 		dojo.debug("rcpts = " + commaRecipients);
 		dojo.debug("postInfo = " + postInfoXml);
+		
+		var commaRecipients = dh.util.join(dh.share.getRecipients(), ",", "id");
+		var isPublic = dh.share.isToTheWorld();		
 	
 		dh.server.doPOST("sharelink",
 						{ 
@@ -289,7 +290,7 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 							"title" : this.photoTitle, 
 						  	"description" : this.descriptionHtml,
 						  	"recipients" : commaRecipients,
-						  	"secret" : "false",
+						  	"isPublic" : isPublic,
 							"postInfoXml" : postInfoXml
 						},
 						function(type, data, http) {

@@ -62,6 +62,5 @@ public class PostViewedProcessor implements LiveEventProcessor {
 		if (countIsInteresting(livePost.getTotalViewerCount()) || countIsInteresting(livePost.getRecentMessageCount())) {
 			messageSender.sendLivePostChanged(livePost);
 		}		
-		messageSender.sendLivePostChanged(livePost);
 	}
 }

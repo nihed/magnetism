@@ -216,6 +216,8 @@ dh.sharelink.updateActionLinks = function() {
 		if (dh.share.selectedRecipients[i].isPerson()) {
 			personCount += 1;
 			person = dh.share.selectedRecipients[i];
+		} else if (dh.share.selectedRecipients[i].isTheWorld()) {
+			// Do nothing
 		} else {
 			groupCount += 1;
 			group = dh.share.selectedRecipients[i];
@@ -257,10 +259,8 @@ dh.sharelink.doSubmit = function() {
 
 	var descriptionHtml = dh.share.descriptionRichText.value;
 	
-	var commaRecipients = dh.util.join(dh.share.selectedRecipients, ",", "id");
-	
-//	var secret = dh.sharelink.secretCheckbox.checked ? "true" : "false";
-	var secret = "false";
+	var commaRecipients = dh.util.join(dh.share.getRecipients(), ",", "id");
+	var isPublic = dh.share.isToTheWorld();
 	
 	var postInfoXml = null;
 	if (dh.sharelink.postInfo)
@@ -270,14 +270,14 @@ dh.sharelink.doSubmit = function() {
 	dojo.debug("title = " + title);
 	dojo.debug("desc = " + descriptionHtml);
 	dojo.debug("rcpts = " + commaRecipients);
-	dojo.debug("secret = " + secret);
+	dojo.debug("public = " + isPublic);
 	dojo.debug("postInfo = " + postInfoXml);
 	
 	var args = 	{ 	"url" : url,
 					"title" : title, 
 					"description" : descriptionHtml,
 					"recipients" : commaRecipients,
-					"secret" : secret 
+					"isPublic" : isPublic
 				};
 	
 	if (postInfoXml)
@@ -347,11 +347,11 @@ dh.sharelink.init = function() {
 
 	// most of the dojo is set up now, so show the widgets
 	dh.util.showId("dhShareContainer");
+
+	dh.share.init();
 	
 	dh.share.recipientCreatedCallback = dh.sharelink.initRecipient;
-	dh.share.recipientsChangedCallback = dh.sharelink.updateActionLinks;
-	
-	dh.share.init();
+	dh.share.recipientsChangedCallback = dh.sharelink.updateActionLinks;	
 	
 	dh.sharelink.createGroupPopup = document.getElementById("dhCreateGroupPopup");					 
 	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");

@@ -48,9 +48,9 @@ public interface HttpMethods {
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "title", "url", "recipients", "description", "secret", "postInfoXml" })
+	@HttpParams( { "title", "url", "recipients", "description", "isPublic", "postInfoXml" })
 	@HttpOptions( optionalParams = { "postInfoXml" } )
-	public void doShareLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String title, String url, String recipientIds, String description, boolean secret, String postInfoXml) throws ParseException,
+	public void doShareLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String title, String url, String recipientIds, String description, boolean isPublic, String postInfoXml) throws ParseException,
 			NotFoundException, SAXException, MalformedURLException, IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
