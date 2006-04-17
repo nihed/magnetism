@@ -253,19 +253,17 @@ HippoChatControl::Load(IPropertyBag *propertyBag,
         return E_FAIL;
     }
 
-    variant_t chatIdVariant;
-    chatIdVariant.vt = VT_BSTR;
-    hr = propertyBag->Read(L"ChatID", &chatIdVariant, errorLog);
-    if (FAILED(hr))
-        return hr;
+    // If Read fails get E_INVALIDARG. But we simplify by
+    // assumming that any failure will leave the output
+    // variant null.
+
+    variant_t chatIdVariant((BSTR)NULL);
+    propertyBag->Read(L"ChatID", &chatIdVariant, errorLog);
 
     // we accept "PostID" as a synonym for ChatID for back compat
     // with old html, can kill this after a while.
-    variant_t postIdVariant;
-    postIdVariant.vt = VT_BSTR;
-    hr = propertyBag->Read(L"PostID", &postIdVariant, errorLog);
-    if (FAILED(hr))
-        return hr;
+    variant_t postIdVariant((BSTR)NULL);
+    propertyBag->Read(L"PostID", &postIdVariant, errorLog);
 
     // fall back to PostID if no ChatID
     if (isHippoGuid(chatIdVariant)) {
