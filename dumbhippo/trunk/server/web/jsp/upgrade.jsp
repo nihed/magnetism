@@ -11,7 +11,7 @@
 <dht:bodySmallBox>
 	<dht:smallBoxTopArea>
 		<h3>A new version of DumbHippo is ready to install!</h3>
-		<i>Version 1.1.43:</i>
+		<i>Version 1.1.44:</i>
 		<ul>
 			<li>There is now a chat room for each group, in addition to the per-post chatrooms</li>
 		</ul>
