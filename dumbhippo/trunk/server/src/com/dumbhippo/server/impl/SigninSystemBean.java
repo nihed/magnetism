@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Formatter;
+
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.jms.ObjectMessage;
@@ -28,7 +30,10 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.Mailer;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
 public class SigninSystemBean implements SigninSystem {
@@ -91,6 +96,95 @@ public class SigninSystemBean implements SigninSystem {
 			ObjectMessage jmsMessage = producer.createObjectMessage(message);
 			producer.send(jmsMessage);
 		}
+	}
+
+	final static String REPAIR_TEXT = 
+		"There are some bumps along the road for most development projects.\n" + 
+		"We just hit a good sized pothole. Due to some recent bugs on our.\n" + 
+		"part, some of our users may have gotten logged out of the system\n" +
+		"and may not be running our software any more. We're not positive\n" +
+		"what users were affected, but are sending you this mail since you\n" +
+		"haven't signed on to the system since last Thursday when we had\n" +
+		"the problems.\n" +
+		"\n" +
+		"The following link will:\n" +
+		" - sign you back into the system\n" +
+		" - let you download the latest version of the our software with\n" +
+		"   important bug fixes\n" +
+		"\n" +
+		"%s\n" +
+		"\n" +
+		"Caution: this is a one-time link and needs to be opened in Internet\n" +
+		"  Explorer on Windows to work. If you normally use a different web\n" +
+		"  browser, cut-and-paste the link into Internet Explorer. If you need\n" +
+		"  help, please mail feedback@dumbhippo.com or reply to this mail\n" +
+		"\n" +
+		"We apologize for the inconvenience, and hope you'll keep trying out\n" +
+		"our stuff.\n" +
+		"\n" +
+		"Owen Taylor\n" +
+		"DumbHippo Team Member\n" +
+		"";
+	
+	final static String REPAIR_HTML =
+		"<p>" +
+		"There are some bumps along the road for most development projects.\n" + 
+		"We just hit a good sized pothole. Due to some recent bugs on our.\n" + 
+		"part, some of our users may have gotten logged out of the system\n" +
+		"and may not be running our software any more. We're not positive\n" +
+		"what users were affected, but are sending you this mail since you\n" +
+		"haven't signed on to the system since last Thursday when we had\n" +
+		"the problems.\n" +
+		"</p><p>\n" +
+		"The following link will:\n" +
+		"</p><p>\n" +
+		"<ul>" +
+		"<li>sign you back into the system</li>\n" +
+		"<li>let you download the latest version of the our software with important bug fixes</li>\n" +
+		"</ul>\n" +
+		"</p><p>\n" +
+		"<a href='%s'>Click here to sign in</a>\n" +
+		"</p></>\n" +
+		"Caution: this is a one-time link and needs to be opened in Internet\n" +
+		"   Explorer on Windows to work. If you normally use a different web\n" +
+		"   browser, cut-and-paste the link into Internet Explorer. If you need\n" +
+		"  help, please mail feedback@dumbhippo.com or reply to this mail\n" +
+		"</p><p>\n" +
+		"We apologize for the inconvenience, and hope you'll keep trying out\n" +
+		"our stuff.\n" +
+		"</p><p>\n" +
+		"Owen Taylor<br/>\n" +
+		"DumbHippo Team Member\n" +
+		"</p>\n";
+		
+
+	public void sendRepairLink(User user) throws HumanVisibleException {
+		PersonView personView = identitySpider.getPersonView(new UserViewpoint(user), user, PersonViewExtra.PRIMARY_EMAIL);
+		Resource resource = personView.getPrimaryResource();
+		if (resource == null || !(resource instanceof EmailResource))
+			return;
+		
+		EmailResource emailResource = (EmailResource)resource;
+		
+		String baseLink = getLoginLink(emailResource);
+		String link = baseLink + "&next=repair";
+		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, emailResource.getEmail());
+		
+		StringBuilder bodyText = new StringBuilder();
+		XmlBuilder bodyHtml = new XmlBuilder();
+		
+		Formatter textFormatter = new Formatter(bodyText);
+		textFormatter.format(REPAIR_TEXT, link);
+		
+		bodyHtml.appendHtmlHead("");
+		
+		Formatter htmlFormatter = new Formatter(bodyHtml);
+		htmlFormatter.format(REPAIR_HTML, link);
+		
+		bodyHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(message, "We messed up with DumbHippo", bodyText.toString(), bodyHtml.toString());
+		mailer.sendMessage(message);
 	}
 
 	public Pair<Client, User> authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException {

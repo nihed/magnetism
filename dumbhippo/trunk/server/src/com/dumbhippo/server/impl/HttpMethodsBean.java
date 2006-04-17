@@ -633,4 +633,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(xml.getBytes());
 		out.flush();
 	}
+	
+	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
+	{
+		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
+			throw new RuntimeException("Only administrators can send repair links");
+		}
+		
+		User user;
+		try {
+			user = identitySpider.lookupGuidString(User.class, userId);
+		} catch (ParseException e) {
+			throw new RuntimeException("bad guid", e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such person", e);
+		}
+		
+		try {
+			signinSystem.sendRepairLink(user);
+		} catch (HumanVisibleException e) {
+			throw new RuntimeException("Error sending repair link", e);
+		}
+	}
 }

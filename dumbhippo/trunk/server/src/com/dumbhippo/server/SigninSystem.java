@@ -11,6 +11,8 @@ public interface SigninSystem {
 
 	public void sendSigninLink(String address) throws HumanVisibleException;
 	
+	public void sendRepairLink(User user) throws HumanVisibleException; 
+	
 	public Pair<Client,User> authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException;
 	
 	public void setPassword(User user, String password) throws HumanVisibleException;

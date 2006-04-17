@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
@@ -896,5 +897,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (!isAdministrator(viewpoint.getViewer()))
 			throw new RuntimeException("can't do this if you aren't an admin");
 		return accountSystem.getNumberOfActiveAccounts();
+	}
+	
+	public Set<PersonView> getAllUsers(UserViewpoint viewpoint) {
+		if (!isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("getAllUsers is admin-only");
+		
+		@SuppressWarnings("unchecked")
+		List<User> users = em.createQuery("SELECT u FROM User u").getResultList();
+		Set<PersonView> result = new HashSet<PersonView>();
+		for (User user : users) {
+			result.add(getPersonView(SystemViewpoint.getInstance(), user, PersonViewExtra.ALL_RESOURCES));
+		}
+		
+		return result;
 	}
 }

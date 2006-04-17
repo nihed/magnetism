@@ -354,4 +354,12 @@ public interface IdentitySpider {
 	 * @return the number of accounts
 	 */
 	public long getNumberOfActiveAccounts(UserViewpoint viewpoint);
+	
+	/**
+	 * Get all users on the system (admin users only)
+	 * 
+	 * @return an unsorted set of all users on the system, as PersonView
+	 *   objects from the omniscient System viewpoint.
+	 */  
+	 public Set<PersonView> getAllUsers(UserViewpoint viewpoint);
 }

@@ -18,7 +18,7 @@ import java.util.List;
  * @author hp
  *
  */
-public class XmlBuilder {
+public class XmlBuilder implements Appendable {
 
 	private StringBuilder builder;
 	private List<String> elementStack;
@@ -187,9 +187,25 @@ public class XmlBuilder {
 		builder.append(s);
 	}
 	
-	public void append(char c) {
+	public Appendable append(char c) {
 		preAppend();
 		builder.append(c);
+		
+		return this;
+	}
+	
+	public Appendable append(CharSequence cs) {
+		preAppend();
+		builder.append(cs);
+		
+		return this;
+	}
+	
+	public Appendable append(CharSequence cs, int start, int end) {
+		preAppend();
+		builder.append(cs, start, end);
+		
+		return this;
 	}
 	
 	@Override

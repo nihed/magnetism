@@ -13,7 +13,7 @@
 	<title>Admin Console</title>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
-        dojo.require("dh.util");
+        dojo.require("dh.admin");
 	</script>
 </head>
 <dht:body>
@@ -47,6 +47,37 @@
   <c:forEach items="${admin.livePosts}" var="post">
   	<dht:livePostDebug post="${post}"/>
   </c:forEach>
+</p>
+<h2>All users: </h2>
+<table>
+    <tr>
+      	<th></th>
+    	<th>email</th>
+    	<th>status</th>
+     	<th>id</th>
+	</tr>
+	<c:forEach items="${admin.allUsers}" var="user">
+  		<tr>
+			<th align="left"><c:out value="${user.name}"/></th>
+		    <td><c:out value="${user.email.email}"/></td>
+			<td>
+  				<c:choose>
+  					<c:when test="${user.account.disabled}">
+  						disabled
+	  				</c:when>
+	  				<c:when test="${!user.account.wasSentShareLinkTutorial}">
+  						web-only
+  					</c:when>
+	  				<c:otherwise>
+  						active
+	  				</c:otherwise>
+		  		</c:choose>
+			</td>
+			<td><c:out value="${user.user.id}"/></td>  		
+			<td><a href="javascript:dh.admin.sendRepairEmail('${user.user.id}')">Send repair email</a></td>
+		</tr>
+  	</c:forEach>
+</table>
 </p>
 </dht:body>
 </html>

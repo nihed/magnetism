@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 import org.slf4j.Logger;
 
@@ -32,6 +33,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	private Set<PersonView> availableLiveUsers;
 	private Set<PersonView> cachedLiveUsers;
 	private Set<LivePost> livePosts;
+ 	private List<PersonView> users;
 	
 	private int systemInvitations;
 	private int totalInvitations;
@@ -119,4 +121,12 @@ public class AdminPage extends AbstractSigninRequiredPage {
 			numberOfAccounts = identitySpider.getNumberOfActiveAccounts(getUserSignin().getViewpoint());
 		return numberOfAccounts;
 	}
+ 	
+ 	public List<PersonView> getAllUsers() {
+ 		if (users == null) {
+ 			Set<PersonView> userSet = identitySpider.getAllUsers(getUserSignin().getViewpoint()); 
+ 			users = PersonView.sortedList(userSet);
+ 		}
+ 		return users;
+ 	}
 }

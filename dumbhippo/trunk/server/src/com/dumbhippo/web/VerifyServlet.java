@@ -130,7 +130,12 @@ public class VerifyServlet extends AbstractServlet {
 		Pair<Client, Person> result;
 		result = verifier.signIn(token, SigninBean.computeClientIdentifier(request));
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
-		return redirectToNextPage(request, response, "/home", null);
+		
+		String next = request.getParameter("next");
+		if (next == null)
+			next = "/home";
+				
+		return redirectToNextPage(request, response, next, null);
 	}
 	
 	private String doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
