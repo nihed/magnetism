@@ -10,33 +10,20 @@
 #include <stdarg.h>
 #include <ExDispid.h>
 
-// Window class for our notification window
-static const TCHAR *CLASS_NAME = TEXT("HippoTrackerClass");
-
 HippoTracker::HippoTracker(void)
 {
     refCount_ = 1;
     dllRefCount++;
+    updater_ = NULL;
 
     hippoLoadRegTypeInfo(LIBID_SHDocVw, 1, 1,
                          &DIID_DWebBrowserEvents2, &eventsTypeInfo_, 
                          NULL);
-
-    registered_ = false;
-    dogfoodRegistered_ = false;
-    debugRegistered_ = false;
-
-    uiStartedMessage_ = RegisterWindowMessage(TEXT("HippoUIStarted"));
-
-    createWindow();
-    onUIStarted();
 }
 
 HippoTracker::~HippoTracker(void)
 {
-    DestroyWindow(window_);
-
-    clearUI();
+    clearUpdater();
 
     // In case setSite(NULL) wasn't called
     clearSite();
@@ -81,9 +68,10 @@ HippoTracker::SetSite(IUnknown *site)
         if (FAILED(site->QueryInterface<IWebBrowser2>(&site_)))
             return E_FAIL;
         
-        /* We'd like to call registerBrowser() here, but it turns out IE gets
-         * extremely unhappy if we make a possibly reentrant call out at this
-         * point, so we wait until we get DocumentComplete()
+        /* We could call createUpdater() here, but IE is a little touchy
+         * during initialization, so we wait until we find out the title/url
+         * for the first time. I think it would be safe to start registration
+         * now we do it in a separate thread, but we'll avoid taking the chance
          */
         HippoQIPtr<IConnectionPointContainer> container(site);
         if (container)
@@ -185,8 +173,8 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
                  dispParams->rgvarg[1].vt == VT_DISPATCH &&
                  dispParams->rgvarg[0].vt == (VT_BYREF | VT_VARIANT))
              {
-                 registerBrowser();
-                 updateBrowser();
+                 createUpdater();
+                 update();
 
                  return S_OK;
              } else {
@@ -197,8 +185,8 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
              if (dispParams->cArgs == 1 &&
                  dispParams->rgvarg[0].vt == VT_BSTR)
              {
-                 registerBrowser();
-                 updateBrowser();
+                 createUpdater();
+                 update();
 
                  return S_OK;
              } else {
@@ -213,94 +201,24 @@ HippoTracker::GetTypeInfo (unsigned int infoIndex,
 /////////////////////////////////////////////////////////////////////
 
 void
-HippoTracker::registerBrowser()
-{
-    if (!registered_ && ui_ && site_) {
-        registered_ = true;
-        HRESULT hr = ui_->RegisterBrowser(site_, &registerCookie_); // may reenter
-        if (FAILED (hr))
-            registered_ = false;
-        else {
-            lastUrl_ = NULL;
-            lastName_ = NULL;
-        }
-    }
-
-
-    if (!dogfoodRegistered_ && dogfoodUi_ && site_) {
-        dogfoodRegistered_ = true;
-        HRESULT hr = dogfoodUi_->RegisterBrowser(site_, &dogfoodRegisterCookie_); // may reenter
-        if (FAILED (hr))
-            dogfoodRegistered_ = false;
-        else {
-            lastUrl_ = NULL;
-            lastName_ = NULL;
-        }
-    }
-
-    if (!debugRegistered_ && debugUi_ && site_) {
-        debugRegistered_ = true;
-        HRESULT hr = debugUi_->RegisterBrowser(site_, &debugRegisterCookie_); // may reenter
-        if (FAILED (hr))
-            debugRegistered_ = false;
-        else {
-            lastUrl_ = NULL;
-            lastName_ = NULL;
-        }
-    }
-}
-
-void
-HippoTracker::unregisterBrowser()
-{
-    if (registered_) {
-        registered_ = false;
-        ui_->UnregisterBrowser(registerCookie_); // May recurse
-    }
-
-    if (dogfoodRegistered_) {
-        dogfoodRegistered_ = false;
-        dogfoodUi_->UnregisterBrowser(dogfoodRegisterCookie_); // May recurse
-    }
-
-    if (debugRegistered_) {
-        debugRegistered_ = false;
-        debugUi_->UnregisterBrowser(debugRegisterCookie_); // May recurse
-    }
-}
-
-void
-HippoTracker::updateBrowser()
+HippoTracker::update()
 {
     HippoBSTR url;
     HippoBSTR name;
 
-    if (site_ &&
+    if (updater_ && site_ &&
         SUCCEEDED(site_->get_LocationURL(&url)) &&
         SUCCEEDED(site_->get_LocationName(&name)) &&
         url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
     {
-        if (lastUrl_ && lastName_ &&
-            wcscmp(lastUrl_, url) == 0 &&
-            wcscmp(lastName_, name) == 0)
-            return;
-
-        lastUrl_ = url;
-        lastName_ = name;
-
-        if (registered_)
-            ui_->UpdateBrowser(registerCookie_, url, name);
-        if (dogfoodRegistered_)
-            dogfoodUi_->UpdateBrowser(dogfoodRegisterCookie_, url, name);
-        if (debugRegistered_)
-            debugUi_->UpdateBrowser(debugRegisterCookie_, url, name);
+        updater_->setInfo(name, url);
     }
 }
 
 void
 HippoTracker::clearSite()
 {
-    unregisterBrowser();
+    clearUpdater();
 
     if (site_)
         site_ = NULL;
@@ -316,97 +234,18 @@ HippoTracker::clearSite()
 }
 
 void
-HippoTracker::clearUI()
+HippoTracker::createUpdater()
 {
-    unregisterBrowser();
- 
-    if (ui_)
-        ui_ = NULL;
-    if (dogfoodUi_)
-        dogfoodUi_ = NULL;
-    if (debugUi_)
-        debugUi_ = NULL;
-
-}
-
-bool 
-HippoTracker::registerWindowClass()
-{
-    WNDCLASS windowClass;
-
-    if (GetClassInfo(dllInstance, CLASS_NAME, &windowClass))
-        return true;  // Already registered
-
-    windowClass.style = 0;
-    windowClass.lpfnWndProc = windowProc;
-    windowClass.cbClsExtra = 0;
-    windowClass.cbWndExtra = 0;
-    windowClass.hInstance = dllInstance;
-    windowClass.hIcon = NULL;
-    windowClass.hCursor = NULL;
-    windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    windowClass.lpszMenuName = NULL;
-    windowClass.lpszClassName = CLASS_NAME;    
-
-    return RegisterClass(&windowClass) != 0;
-}
-
-bool
-HippoTracker::createWindow()
-{
-    if (!registerWindowClass())
-        return false;
-
-    window_ = CreateWindow(CLASS_NAME, 
-                           NULL, // No title
-                           0,    // Window style doesn't matter
-                           0, 0, 10, 10,
-                           NULL, // No parent
-                           NULL, // No menu
-                           dllInstance,
-                           NULL); // lpParam
-    if (!window_)
-        return false;
-
-    hippoSetWindowData<HippoTracker>(window_, this);
-
-    return true;
+    if (!updater_ && site_) {
+        updater_ = new HippoTrackerUpdater(site_);
+    }
 }
 
 void
-HippoTracker::onUIStarted(void)
+HippoTracker::clearUpdater()
 {
-    clearUI();
-
-    HippoPtr<IUnknown> unknown;
-    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI, NULL, &unknown)))
-        unknown->QueryInterface<IHippoUI>(&ui_);
-
-    unknown = NULL;
-    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Dogfood, NULL, &unknown)))
-        unknown->QueryInterface<IHippoUI>(&dogfoodUi_);
-
-    unknown = NULL;
-    if (SUCCEEDED (GetActiveObject(CLSID_HippoUI_Debug, NULL, &unknown)))
-        unknown->QueryInterface<IHippoUI>(&debugUi_);
-
-    registerBrowser();
-    updateBrowser();
-}
-
-LRESULT CALLBACK 
-HippoTracker::windowProc(HWND   window,
-                         UINT   message,
-                         WPARAM wParam,
-                         LPARAM lParam)
-{
-    HippoTracker *tracker = hippoGetWindowData<HippoTracker>(window);
-    if (tracker) {
-        if (message == tracker->uiStartedMessage_) {
-            tracker->onUIStarted();
-            return 0;
-        }
+    if (updater_) {
+        delete updater_;
+        updater_ = NULL;
     }
-
-    return DefWindowProc(window, message, wParam, lParam);
 }

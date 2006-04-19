@@ -153,6 +153,9 @@
 				RelativePath=".\HippoTracker.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoTrackerUpdater.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoUILauncher.cpp">
 			</File>
 			<File
@@ -208,6 +211,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoTracker.h">
+			</File>
+			<File
+				RelativePath=".\HippoTrackerUpdater.h">
 			</File>
 			<File
 				RelativePath=".\HippoUILauncher.h">

@@ -6,6 +6,7 @@
 
 #include <shlobj.h>
 #include <HippoUtil.h>
+#include "HippoTrackerUpdater.h"
 
 class HippoTracker :
     public IObjectWithSite,
@@ -35,41 +36,17 @@ protected:
     DWORD refCount_;
 
 private:
+    void update();
+    void createUpdater();
     void clearSite();
-    void clearUI();
-    bool createWindow();
-    bool registerWindowClass();
-
-    void registerBrowser();
-    void unregisterBrowser();
-    void updateBrowser();
-
-    void onUIStarted();
-
-    static LRESULT CALLBACK windowProc(HWND   window,
-                                       UINT   message,
-                                       WPARAM wParam,
-                                       LPARAM lParam);
+    void clearUpdater();
 
     HippoPtr<IWebBrowser2> site_;
     HippoPtr<IConnectionPoint> connectionPoint_; // connection point for DWebBrowserEvents2
     DWORD connectionCookie_; // cookie for DWebBrowserEvents2 connection
     HippoPtr<ITypeInfo> eventsTypeInfo_;
 
-    HippoPtr<IHippoUI> ui_;
-    DWORD registerCookie_;
-    bool registered_;
-
-    HippoPtr<IHippoUI> dogfoodUi_;
-    DWORD dogfoodRegisterCookie_;
-    bool dogfoodRegistered_;
-
-    HippoPtr<IHippoUI> debugUi_;
-    DWORD debugRegisterCookie_;
-    bool debugRegistered_;
-
-    HWND window_;
-    UINT uiStartedMessage_;
+    HippoTrackerUpdater *updater_;
 
     HippoBSTR lastUrl_;
     HippoBSTR lastName_;
