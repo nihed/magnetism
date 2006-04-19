@@ -14,6 +14,7 @@ public class UserSigninBean extends SigninBean {
 
 	private Boolean disabled; // lazily initialized
 	private Boolean musicSharingEnabled; // lazily initialized
+	private Boolean defaultSharePublic; // lazily initialized
 
 	private Guid userGuid;
 	private User user; // lazily initialized
@@ -84,4 +85,12 @@ public class UserSigninBean extends SigninBean {
 		}
 		return musicSharingEnabled;
 	}
+	
+	public boolean isDefaultSharePublic() {
+		if (defaultSharePublic == null) {
+			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+			defaultSharePublic = Boolean.valueOf(identitySpider.getDefaultSharePublic(getUser()));
+		}
+		return defaultSharePublic;
+	}	
 }

@@ -92,6 +92,17 @@ dh.actions.setMusicSharingEnabled = function(enabled) {
 		  	    	 });
 }
 
+dh.actions.setDefaultSharePublic = function(defaultPublic) {
+   	dh.server.doPOST("setdefaultsharepublic",
+   					{ "defaultPublic" : defaultPublic ? "true" : "false" },
+		  	    	 function(type, data, http) {
+			  	    	 document.location.reload();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't toggle default public share");
+		  	    	 });
+}
+
 // This handler function gets stuffed as the a member function of
 // a dojo.widget.HtmlInlineEditBox
 dh.actions.renamePersonHandler = function(value, oldValue) {

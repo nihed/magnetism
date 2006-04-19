@@ -68,6 +68,8 @@ public class Account extends Resource {
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
 	
+	private Boolean defaultSharePublic;
+	
 	private NowPlayingTheme nowPlayingTheme;
 	
 	/*
@@ -383,7 +385,16 @@ public class Account extends Resource {
 	public void setMusicSharingPrimed(boolean musicSharingPrimed) {
 		this.musicSharingPrimed = musicSharingPrimed;
 	}
+	
+	@Column(nullable=true)
+	public Boolean isDefaultSharePublic() {
+		return defaultSharePublic;
+	}
 
+	public void setDefaultSharePublic(Boolean defaultPublic) {
+		this.defaultSharePublic = defaultPublic;
+	}
+	
 	/**
 	 * Get the name of the theme for the flash embed
 	 * @return name of theme or null for default

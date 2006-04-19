@@ -602,6 +602,8 @@ dh.share.init = function() {
 
 	// rich text areas can't exist when display:none, so we have to create it after showing
 	dh.share.descriptionRichText = document.getElementById("dhShareDescriptionTextArea");
-	
-	dh.share.doAddRecipient(dh.share.theWorld.id, true)
+
+	if (dhDefaultSharePublic) {	
+		dh.share.doAddRecipient(dh.share.theWorld.id, true)
+	}
 }

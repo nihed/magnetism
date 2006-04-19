@@ -61,6 +61,8 @@ import com.dumbhippo.server.util.EJBUtil;
 public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
 	static private final Logger logger = GlobalSetup.getLogger(IdentitySpider.class);
 	
+	private static final boolean DEFAULT_DEFAULT_SHARE_PUBLIC = true;	
+	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
@@ -820,6 +822,21 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			account.setMusicSharingPrimed(primed);
 			messageSender.sendPrefChanged(user, "musicSharingPrimed", Boolean.toString(primed));
 		}
+	}
+	
+	public boolean getDefaultSharePublic(User user) {
+		Account account = getMaybeDetachedAccount(user);
+		Boolean defaultSharePublic = account.isDefaultSharePublic();
+		if (defaultSharePublic == null)
+			return DEFAULT_DEFAULT_SHARE_PUBLIC;		
+		return defaultSharePublic;
+	}
+	
+	public void setDefaultSharePublic(User user, boolean defaultPublic) {
+		Account account = getAttachedAccount(user);
+		if (account.isDefaultSharePublic() != defaultPublic) {
+			account.setDefaultSharePublic(defaultPublic);
+		}		
 	}
 	
 	public int incrementUserVersion(final String userId) {

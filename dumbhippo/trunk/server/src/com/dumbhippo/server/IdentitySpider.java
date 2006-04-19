@@ -305,6 +305,10 @@ public interface IdentitySpider {
 	
 	public void setMusicSharingPrimed(User user, boolean primed);
 	
+	public boolean getDefaultSharePublic(User user);
+	
+	public void setDefaultSharePublic(User user, boolean defaultPublic);	
+	
 	/**
 	 * Associate a MySpace identity with an account holder.
 	 * Currently creates a "verified" claim. 
