@@ -12,6 +12,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.SystemViewpoint;
 
 // Handles processing incoming PostViewedEvent
 
@@ -47,7 +48,7 @@ public class PostViewedProcessor implements LiveEventProcessor {
 
 		Post post;
 		try {
-			post = postingBoard.loadRawPost(null, event.getPostId());
+			post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), event.getPostId());
 		} catch (NotFoundException e) {
 			throw new RuntimeException("PostViewedEvent for non-existant post");
 		}

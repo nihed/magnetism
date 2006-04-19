@@ -583,13 +583,10 @@ public class PostingBoardBean implements PostingBoard {
 	public boolean canViewPost(Viewpoint viewpoint, Post post) {
 		if (viewpoint instanceof SystemViewpoint) {
 			return true;
-		} else if (viewpoint instanceof AnonymousViewpoint) {
-			return post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC;
 		} else if (viewpoint instanceof UserViewpoint) {
 			return canViewPost((UserViewpoint) viewpoint, post);
 		} else {
-			logger.error("Unknown viewpoint type in canViewPost()");
-			return false;
+			return post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC;
 		}
 	}
 	
