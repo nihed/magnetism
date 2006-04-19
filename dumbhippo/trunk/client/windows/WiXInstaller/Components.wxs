@@ -8,7 +8,6 @@
 	    <Directory Id="ProgramFilesFolder">
 		<Directory Id="INSTALLLOCATION" Name="DHippo" LongName="DumbHippo">
 		    <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
-		        <File Id="asprintfDll" Name="asprintf.dll"                                 src="asprintf.dll"          DiskId="1" Vital="yes"/>
 		        <File Id="charsetDll"  Name="charset.dll"                                  src="charset.dll"           DiskId="1" Vital="yes"/>
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="intlDll"     Name="intl.dll"                                     src="intl.dll"              DiskId="1" Vital="yes"/>

@@ -367,10 +367,11 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	connection->io_watch_in = 
 		connection_add_watch (connection,
 				      connection->io_channel,
-				      G_IO_IN,
+				      G_IO_IN | G_IO_HUP | G_IO_ERR,
 				      (GIOFunc) connection_in_event,
 				      connection);
 	
+#if 0
 	connection->io_watch_err = 
 		connection_add_watch (connection,
 				      connection->io_channel, 
@@ -383,6 +384,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 				      G_IO_HUP,
 				      (GIOFunc) connection_hup_event,
 				      connection);
+#endif
 	
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
