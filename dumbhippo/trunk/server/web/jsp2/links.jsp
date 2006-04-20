@@ -8,11 +8,8 @@
 	<link rel="stylesheet" type="text/css" href="/css2/links.css"/>
 </head>
 <dht:twoColumnPage>
-	<div id="dhSidebarColumn">
-		<div class="dh-sidebar-box dh-profile-box">
-			<div class="dh-title">
-			MY PROFILE
-			</div>
+	<dht:sidebarColumn>
+		<dht:sidebarBox boxClass="dh-profile-box" title="MY PROFILE">
 			<div class="dh-item">
 				<table cellpadding="0" cellspacing="0">
 					<tbody>
@@ -35,11 +32,8 @@
 					I am so special. This is my biography. Please read more about me!
 				</div>
 			</div>
-		</div>
-		<div class="dh-sidebar-box dh-controls-box">
-			<div class="dh-title">
-			LINK SWARM CONTROLS
-			</div>
+		</dht:sidebarBox>
+		<dht:sidebarBox boxClass="dh-controls-box" title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
 				<input type="checkbox"/> Receive publicly shared links
 			</div>
@@ -53,12 +47,8 @@
 			<div>
 				<input type="checkbox"/> Spams McSpam
 			</div>
-			<div class="dh-more"><a href="">MORE</a></div>
-		</div>				
-		<div class="dh-sidebar-box dh-groups-box">
-			<div class="dh-title">
-			MY GROUPS
-			</div>
+		</dht:sidebarBox>				
+		<dht:sidebarBox boxClass="dh-groups-box" title="MY GROUPS" more="/groups">
 			<div class="dh-item">
 				<table cellpadding="0" cellspacing="0">
 					<tbody>
@@ -97,9 +87,8 @@
 					</tbody>
 				</table>
 			</div>
-			<div class="dh-more"><a href="">MORE</a></div>
-		</div>
-	</div>
+		</dht:sidebarBox>
+	</dht:sidebarColumn>
 	<div id="dhContentColumn">
 		<div class="dh-zone-box dh-color-web">
 			<div class="dh-zone-box-header"><img src="/images2/header_link500.gif"/><div class="dh-zone-box-header-links">Jump to: <a href="">Music Radar</a> | <a href="">TV Party</a></div></div>
