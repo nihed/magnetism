@@ -270,4 +270,10 @@
         </attribute>
         
     </tag>
+    <tag>
+        <name>aRedHatSomething</name>
+        <tagclass>com.dumbhippo.web.RedHatSomethingTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Outputs "A Red Hat Something"</info>        
+    </tag>    
 </taglib>

@@ -1,0 +1,102 @@
+@CHARSET "UTF-8";
+
+
+#dhMainLogo {
+	float:			left;	
+}
+
+#dhMainLargeIntro {
+	float:			left;
+	height:			128px;
+	margin-left:	10px;
+}
+
+#dhMainMiddleBox {
+	clear:			both;
+	/* if you use margin-top firefox but not IE will ignore it, so use padding */
+	padding-top:	10px;
+	padding-bottom:	20px;
+}
+
+.dh-zone-box  {
+	width:			230px;
+	float:			left;
+}
+
+.dh-zone-box-spacer {
+	float:			left;
+	width:			10px;
+	/* height needed or firefox ignores the spacer */
+	height:			20px;
+}
+
+.dh-color-web .dh-extra-info {
+	margin-top:		10px;
+}
+
+.dh-extra-info table {
+	width:			208px;
+}
+
+.dh-zone-box .dh-item {
+	position:	relative;
+}
+
+.dh-zone-box .dh-item .dh-album-art {
+	position:		absolute;
+}
+
+.dh-zone-box .dh-item .dh-song-item-details {
+	/* must be padding not margin or an IE bug will assign the margin
+	   to the album art also */
+	padding-left:	85px;
+}
+
+#dhMainColumnBottoms {
+	clear:			both;
+	position:		relative;
+	height:			1px;
+}
+
+.dh-column-side {
+	position:		absolute;
+	width:			1px;
+	/* 	This is the minimum height of a
+		zone box before the line extends too high 
+		and looks broken */
+	height:			260px;
+	bottom:			0px;
+}
+
+.dh-column-bottom {
+	position:		absolute;
+	top:			0px;
+}
+
+#dhMainColumnOneLeftSide {
+	left:			0px;	
+}
+
+#dhMainColumnOneRightSide {
+	left:			229px;	
+}
+
+#dhMainColumnOneBottom {
+	left:			0px;
+}
+
+#dhMainColumnTwoLeftSide, #dhMainColumnTwoBottom {
+	left:			240px;	
+}
+
+#dhMainColumnTwoRightSide {
+	left:			469px;	
+}
+
+#dhMainColumnThreeLeftSide, #dhMainColumnThreeBottom {
+	left:			480px;	
+}
+
+#dhMainColumnThreeRightSide {
+	left:			709px;
+}

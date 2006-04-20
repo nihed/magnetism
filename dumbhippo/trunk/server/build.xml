@@ -169,20 +169,21 @@
 			
 			<!-- our static pages, css, etc. -->
 			<fileset dir="${web}" includes="html/*.html" />
-			<fileset dir="${web}" includes="images/*.gif" />
-			<fileset dir="${web}" includes="images/*.png" />
-			<fileset dir="${web}" includes="images/*.jpg" />
-			<fileset dir="${web}" includes="images/*.ico" />
+			<fileset dir="${web}" includes="images*/*.gif" />
+			<fileset dir="${web}" includes="images*/*.png" />
+			<fileset dir="${web}" includes="images*/*.jpg" />
+			<fileset dir="${web}" includes="images*/*.ico" />
 			<fileset dir="${web}" includes="images/myspace/*.jpg" />
 			<fileset dir="${web}" includes="images/tpfd-slides/*.jpg" />
-			<fileset dir="${web}" includes="jsp/*.jsp" />
-			<fileset dir="${web}" includes="jsp/*.tld" />
-			<fileset dir="${web}" includes="css/*.css" />
+			<fileset dir="${web}" includes="jsp*/*.jsp" />
+			<fileset dir="${web}" includes="jsp*/*.tld" />
+			<fileset dir="${web}" includes="css*/*.css" />
 			<fileset dir="${web}" includes="flash/*.swf" />
 			
 			<!-- tag files -->
             <webinf dir="${web}" includes="tags/*.tag" />
-
+           	<webinf dir="${web}" includes="tags/2/*.tag" />
+			
 			<fileset dir="${build}">
 				<include name="**/web/**/*.class" />
 			</fileset>

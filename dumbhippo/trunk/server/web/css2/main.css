@@ -1,0 +1,29 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("main-positions.css");
+
+#dhMainLargeIntro {
+	font-size:	20px;
+}
+
+#dhMainMiddleBox {
+	font-size:	14px;	
+}
+
+.dh-zone-box .dh-title {
+	font-size:		14px;
+	font-weight:	bold;
+}
+
+.dh-zone-box .dh-blurb {
+	font-size:		11px;
+}
+
+.dh-zone-box .dh-attribution, .dh-zone-box .dh-counts, .dh-zone-box .dh-extra-info, .dh-zone-box .dh-play-at {
+	font-size:		11px;
+	color:			#666666;
+}
+
+.dh-zone-box .dh-attribution .dh-name-link {
+	font-weight:	bold;
+}

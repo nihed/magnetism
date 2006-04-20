@@ -39,6 +39,7 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> requiresSigninStealth;
 	private Set<String> noSignin;
 	private Set<String> jspPages;
+	private Set<String> jsp2Pages;	
 	private Set<String> htmlPages;
 	private String buildStamp;
 	
@@ -192,6 +193,8 @@ public class RewriteServlet extends HttpServlet {
 		} else if (path.startsWith("/javascript/") || 
 			path.startsWith("/css/") ||
 			path.startsWith("/images/") ||
+			path.startsWith("/css2/") ||
+			path.startsWith("/images2/") ||
 			path.startsWith("/flash/")) {
 			
 			newPath = checkBuildStamp(path);
@@ -257,6 +260,10 @@ public class RewriteServlet extends HttpServlet {
 			newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
+		} else if (jsp2Pages.contains(afterSlash)) {
+			newPath = "/jsp2" + path + ".jsp";
+			
+			handleJsp(request, response, newPath);
 		} else {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
@@ -294,6 +301,18 @@ public class RewriteServlet extends HttpServlet {
 					jspPages.add(path.substring(5, path.length() - 4));
 			}
 		}
+		logger.debug("jsp pages are {}", jspPages);
+		
+		jsp2Pages = new HashSet<String>();
+		Set jsp2Paths = context.getResourcePaths("/jsp2/");
+		if (jsp2Paths != null) {
+			for (Object o : jsp2Paths) {
+				String path = (String)o;
+				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
+					jsp2Pages.add(path.substring(6, path.length() - 4));
+			}
+		}
+		logger.debug("jsp2 pages are {}", jsp2Pages);
 		
 		htmlPages = new HashSet<String>();
 		Set htmlPaths = context.getResourcePaths("/html/");
@@ -320,6 +339,17 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}
 
+		for (String p : jsp2Pages) {
+			if (!withSigninRequirements.contains(p)) {
+				if (p.startsWith("psa-"))
+					noSignin.add(p);
+				else {
+					logger.warn(".jsp {} does not have its signin requirements specified", p);
+					requiresSigninStealth.add(p);
+				}
+			}
+		}
+		
 		for (String p : htmlPages) {
 			if (!withSigninRequirements.contains(p)) {
 				if (p.startsWith("psa-"))
@@ -332,7 +362,7 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		for (String p : withSigninRequirements) {
-			if (!jspPages.contains(p) && !htmlPages.contains(p)) {
+			if (!jspPages.contains(p) && !htmlPages.contains(p) && !jsp2Pages.contains(p)) {
 				logger.warn("Page '{}' in servlet config is not a .jsp or .html we know about", p);
 			}
 		}

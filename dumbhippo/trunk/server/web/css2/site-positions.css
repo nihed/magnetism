@@ -1,0 +1,178 @@
+@CHARSET "UTF-8";
+
+
+body {
+	/* centers the page in IE */
+	text-align:		center;
+}
+
+#dhPage {
+	position:		relative;	
+	width:			710px;
+	margin-top:		30px;
+	
+	/* override centering for children */
+	text-align:		left;
+	
+	/* centers the page in Firefox */
+	margin-left:	auto;
+	margin-right:	auto;
+}
+
+#dhPageHeader {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+	width:			710px;	
+	margin-bottom:	10px;
+}
+
+#dhHeaderLogo {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+}
+
+#dhSearchBox {
+	position:		absolute;
+	right:			0px;
+	bottom:			0px;
+}
+
+#dhContentColumn .dh-zone-box .dh-extra-info table {
+	width:			478px;	
+}
+
+#dhSidebarColumn {
+	float:				left;
+	width:				200px;
+	margin-right:		10px;
+}
+
+#dhContentColumn {
+	float:				left;	
+	width:				500px;
+}
+
+.dh-sidebar-box {
+	padding:			10px;
+	margin-bottom:		10px;
+}
+
+.dh-sidebar-box .dh-item {
+	margin-top:			10px;	
+}
+
+.dh-sidebar-box .dh-item .dh-image {
+	width:				60px;
+	height:				60px;
+	background-color:	white; /* debug */
+}
+
+.dh-sidebar-box .dh-item .dh-next-to-image {
+	width:				110px;
+	margin-left:		10px;
+}
+
+.dh-sidebar-box .dh-item .dh-next-to-image .dh-name {
+	/* on the page this is 10px, not sure where the extra px come from */
+	margin-bottom:		3px;
+}
+
+.dh-sidebar-box .dh-item .dh-bio {
+	margin-top:			10px;
+}
+
+.dh-sidebar-box .dh-item .dh-next-to-image .dh-action-link {
+	margin-top:			2px;
+}
+
+.dh-sidebar-box .dh-more {
+	margin-top:			10px;
+}
+
+#dhPageFooter {
+	clear:			both;
+	margin-top:		25px;
+	text-align:		right;
+}
+
+
+.dh-zone-box {
+	position:		relative;
+}
+
+.dh-zone-box .dh-separator, .dh-sidebar-box .dh-separator {
+	margin-top:		10px;
+	margin-bottom:	10px;
+}
+
+#dhContentColumn .dh-zone-box .dh-title {
+	margin-bottom:	3px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item {
+	margin-bottom:		15px;
+}
+
+.dh-zone-box-content {
+	position:		relative;
+	padding-top:	10px;
+	padding-bottom:	10px;
+	padding-left:	10px;
+	padding-right:	10px;
+}
+
+.dh-zone-box-border {
+	padding-left:	1px;
+	padding-right:	1px;
+}
+
+#dhContentColumn .dh-zone-box {
+	margin-bottom:		10px;
+}
+
+.dh-nowplaying {
+	width:				440px;
+	height:				120px;
+}
+
+#dhContentColumn .dh-zone-box .dh-song {
+	margin-bottom:		2px;
+}
+
+.dh-zone-box-header {
+	position:			relative;
+	width:				500px;
+	height:				32px;
+}
+
+.dh-zone-box-header-links {
+	position:			absolute;
+	bottom:				7px;
+	right:				10px;
+}
+
+#dhContentColumn .dh-subcolumns {
+	position:			relative;
+	width:				478px;
+	margin-top:			20px;
+}
+
+#dhContentColumn .dh-subcolumn {
+	width:				232px;
+}
+
+#dhContentColumn .dh-subcolumn-one {
+	float:				left;
+	margin-right:		10px;	
+}
+
+#dhContentColumn .dh-subcolumn-two {
+	float:				left;
+	position:			relative;
+}
+
+.dh-grow-div-around-floats {
+	clear:	both;
+}
