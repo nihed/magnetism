@@ -103,6 +103,13 @@
 				</div>
 		
 				<br/>
+				
+				<div class="dhBackgroundBox">
+					<b>Sharing</b><br/>
+					<dht:publicShareToggle defaultPublic="${account.signin.notifyPublicShares}"/>
+				</div>			
+		
+				<br/>
 		
 				<div class="dhBackgroundBox">
 					<b>Security and privacy</b>
