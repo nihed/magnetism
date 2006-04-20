@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class LiveState {
@@ -438,6 +439,8 @@ public class LiveState {
 			userCache.addStrongReference(liveUser);
 		}
 		userCache.update(liveUser);
+		AccountSystem accounts = EJBUtil.defaultLookup(AccountSystem.class);
+		accounts.touchLoginDate(userId);
 	}
 
 	// Internal function to update the availability count for the user;

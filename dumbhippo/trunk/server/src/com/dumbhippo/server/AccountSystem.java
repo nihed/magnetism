@@ -1,9 +1,11 @@
 package com.dumbhippo.server;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
@@ -68,6 +70,12 @@ public interface AccountSystem {
 	public Set<Account> getActiveAccounts();
 	
 	/**
+	 * Gets a list of accounts which have logged in in the last week.
+	 * @return list of accounts
+	 */
+	public List<Account> getRecentlyActiveAccounts();
+	
+	/**
 	 * Looks up an account by the User it's associated with.
 	 * Throws a fatal runtime exception if no Account (should not happen)
 	 * 
@@ -85,5 +93,12 @@ public interface AccountSystem {
 	 * @param personId person's ID
 	 * @return account for this person Id, or null
 	 */
-	public Account lookupAccountByPersonId(String personId);		
+	public Account lookupAccountByPersonId(String personId);
+
+	/**
+	 * Update the last login time for the account associated with the user.
+	 * 
+	 * @param userId the guid of a user
+	 */
+	public void touchLoginDate(Guid userId);		
 }

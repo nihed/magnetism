@@ -22,9 +22,6 @@
 	<dht:mainArea>
 		<dht:toolbar publicPageId="${home.signin.userId}" home="false"/>
 		<dht:infobar/>
-		<p>
-		<dht:smallTitle>Post Publicity</dht:smallTitle>
-		<p><dht:publicShareToggle defaultPublic="${home.signin.defaultSharePublic}"/></p>
 		<dht:largeTitle>Stuff Shared With You</dht:largeTitle>
 
 		<div id="dhSharesArea">

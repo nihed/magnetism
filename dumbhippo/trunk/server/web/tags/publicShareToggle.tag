@@ -4,13 +4,13 @@
 <%@ attribute name="defaultPublic" required="true" type="java.lang.Boolean"%>
 
 <dh:png src="/images/${buildStamp}/worldShare.png" style="width: 48; height: 48; float: left;"/>
-Send posts to <b>The World</b> by default:<br/>
+Bubble up posts sent to <b>The World</b>:<br/>
 <form>
 <input name="defaultPublicShare" type="radio" id="defaultPublicOn" 
        <c:if test="${defaultPublic}">checked="true"</c:if>
-       onclick="dh.actions.setDefaultSharePublic(true);"> <label for="defaultPublicOn">Share posts with the world</label><br/>
+       onclick="dh.actions.setNotifyPublicShares(true);"> <label for="defaultPublicOn">Show me public shares</label><br/>
 <input name="defaultPublicShare" type="radio" id="defaultPublicOff" 
        <c:if test="${!defaultPublic}">checked="true"</c:if>
-       onclick="dh.actions.setDefaultSharePublic(false);"> <label for="defaultPublicOff">Keep posts private</label><br/>
+       onclick="dh.actions.setNotifyPublicShares(false);"> <label for="defaultPublicOff">Don't bubble public shares</label><br/>
 </form>
 

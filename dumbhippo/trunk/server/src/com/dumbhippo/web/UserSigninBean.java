@@ -86,10 +86,10 @@ public class UserSigninBean extends SigninBean {
 		return musicSharingEnabled;
 	}
 	
-	public boolean isDefaultSharePublic() {
+	public boolean isNotifyPublicShares() {
 		if (defaultSharePublic == null) {
 			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			defaultSharePublic = Boolean.valueOf(identitySpider.getDefaultSharePublic(getUser()));
+			defaultSharePublic = Boolean.valueOf(identitySpider.getNotifyPublicShares(getUser()));
 		}
 		return defaultSharePublic;
 	}	

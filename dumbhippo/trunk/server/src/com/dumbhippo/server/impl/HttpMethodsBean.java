@@ -257,11 +257,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			SAXException, MalformedURLException, IOException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		// FIXME if sending to a public group with secret=true, we want to
-		// expand the group instead of
-		// sending to the group ...
-		PostVisibility visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC 
-				: PostVisibility.ANONYMOUSLY_PUBLIC;
+		PostVisibility visibility = isPublic ? PostVisibility.ANONYMOUSLY_PUBLIC 
+				: PostVisibility.RECIPIENTS_ONLY;
 
 		PostInfo info;
 		if (postInfoXml != null)
@@ -426,9 +423,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicSharingEnabled(viewpoint.getViewer(), enabled);
 	}
 	
-	public void doSetDefaultSharePublic(UserViewpoint viewpoint, boolean defaultPublic)
+	public void doSetNotifyPublicShares(UserViewpoint viewpoint, boolean notify)
 		throws IOException {
-		identitySpider.setDefaultSharePublic(viewpoint.getViewer(), defaultPublic);
+		identitySpider.setNotifyPublicShares(viewpoint.getViewer(), notify);
 	}	
 
 	public void getNowPlaying(OutputStream out, HttpResponseData contentType,

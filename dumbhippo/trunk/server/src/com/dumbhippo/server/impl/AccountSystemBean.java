@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,8 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
@@ -85,7 +88,7 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public Set<Account> getActiveAccounts() {
-		Query q = em.createQuery("FROM Account");
+		Query q = em.createQuery("FROM Account WHERE a.lastLoginTime ");
 		
 		Set<Account> accounts = new HashSet<Account>();
 		List list = q.getResultList();
@@ -95,5 +98,16 @@ public class AccountSystemBean implements AccountSystem {
 		}
 		
 		return accounts;
+	}
+
+	public List<Account> getRecentlyActiveAccounts() {		
+		Query q = em.createQuery("FROM Account where (lastLoginDate - current_timestamp()) < :weekSecs")
+			.setParameter("weekSecs",  7 * 24 * 60 * 60);
+		return TypeUtils.castList(Account.class, q.getResultList());		
+	}
+
+	public void touchLoginDate(Guid userId) {
+		Account acct = lookupAccountByPersonId(userId.toString());
+		acct.setLastLoginDate(new Date());
 	}
 }

@@ -8,11 +8,7 @@
 <head>
 	<title>Sharing a Link</title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-		var dhDefaultSharePublic = <c:choose><c:when test="${sharelink.signin.defaultSharePublic}">true</c:when>
-		                                 <c:otherwise>false</c:otherwise></c:choose>
-	</script>		
+	<dht:scriptIncludes/>	
 	<script type="text/javascript" src="javascript/dh/share.js"></script>
 	<script type="text/javascript" src="javascript/dh/sharelink.js"></script>
 

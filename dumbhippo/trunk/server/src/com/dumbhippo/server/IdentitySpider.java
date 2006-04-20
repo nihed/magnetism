@@ -305,9 +305,9 @@ public interface IdentitySpider {
 	
 	public void setMusicSharingPrimed(User user, boolean primed);
 	
-	public boolean getDefaultSharePublic(User user);
+	public boolean getNotifyPublicShares(User user);
 	
-	public void setDefaultSharePublic(User user, boolean defaultPublic);	
+	public void setNotifyPublicShares(User user, boolean notify);	
 	
 	/**
 	 * Associate a MySpace identity with an account holder.

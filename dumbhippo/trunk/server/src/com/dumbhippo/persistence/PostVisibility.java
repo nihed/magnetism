@@ -10,7 +10,7 @@ package com.dumbhippo.persistence;
  *
  */
 public enum PostVisibility {
+	ANONYMOUSLY_PUBLIC,	
 	RECIPIENTS_ONLY,
-	ANONYMOUSLY_PUBLIC,
 	ATTRIBUTED_PUBLIC;
 }

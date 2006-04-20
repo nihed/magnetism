@@ -1,5 +1,6 @@
 package com.dumbhippo;
 import java.util.List;
+import java.util.Set;
 
 public class TypeUtils {
 
@@ -18,5 +19,10 @@ public class TypeUtils {
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> castList(Class<T> klass, List list) {
 		return list;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> Set<T> castSet(Class<T> klass, Set set) {
+		return set;
 	}
 }

@@ -52,6 +52,7 @@ public class Account extends Resource {
 	private Set<Contact> contacts;
 	
 	private long creationDate;
+	private long lastLoginDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -68,7 +69,7 @@ public class Account extends Resource {
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
 	
-	private Boolean defaultSharePublic;
+	private Boolean notifyPublicShares;
 	
 	private NowPlayingTheme nowPlayingTheme;
 	
@@ -90,6 +91,7 @@ public class Account extends Resource {
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		creationDate = -1;
+		lastLoginDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
@@ -266,6 +268,21 @@ public class Account extends Resource {
 	protected void setCreationDate(Date creationDate) {
 		this.creationDate = creationDate.getTime();
 	}
+	
+	@Column(nullable=true)
+	public Date getLastLoginDate() {
+		if (lastLoginDate < 0) {
+			return null;
+		}
+		return new Date(lastLoginDate);
+	}
+
+	public void setLastLoginDate(Date date) {
+		if (date != null)
+			this.lastLoginDate = date.getTime();
+		else
+			this.lastLoginDate = -1;
+	}	
 
 	@Column(nullable = false)
 	public int getInvitations() {
@@ -387,12 +404,12 @@ public class Account extends Resource {
 	}
 	
 	@Column(nullable=true)
-	public Boolean isDefaultSharePublic() {
-		return defaultSharePublic;
+	public Boolean isNotifyPublicShares() {
+		return notifyPublicShares;
 	}
 
-	public void setDefaultSharePublic(Boolean defaultPublic) {
-		this.defaultSharePublic = defaultPublic;
+	public void setNotifyPublicShares(Boolean notify) {
+		this.notifyPublicShares = notify;
 	}
 	
 	/**

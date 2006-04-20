@@ -112,7 +112,17 @@ public class PostingBoardBean implements PostingBoard {
 	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients, boolean isTutorialPost) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
-		for (Resource r : expandedRecipients) {
+		Collection<Resource> actualRecipients;
+		
+		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY) {
+			actualRecipients = expandedRecipients;
+		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
+				   post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC) {
+			actualRecipients = TypeUtils.castList(Resource.class, accountSystem.getRecentlyActiveAccounts());
+		} else {
+			throw new RuntimeException("invalid visibility on post " + post.getId());
+		}	
+		for (Resource r : actualRecipients) {
 			messageSender.sendPostNotification(r, post, isTutorialPost);
 		}
 	}

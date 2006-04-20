@@ -824,18 +824,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	public boolean getDefaultSharePublic(User user) {
+	public boolean getNotifyPublicShares(User user) {
 		Account account = getMaybeDetachedAccount(user);
-		Boolean defaultSharePublic = account.isDefaultSharePublic();
+		Boolean defaultSharePublic = account.isNotifyPublicShares();
 		if (defaultSharePublic == null)
 			return DEFAULT_DEFAULT_SHARE_PUBLIC;		
 		return defaultSharePublic;
 	}
 	
-	public void setDefaultSharePublic(User user, boolean defaultPublic) {
+	public void setNotifyPublicShares(User user, boolean defaultPublic) {
 		Account account = getAttachedAccount(user);
-		if (account.isDefaultSharePublic() != defaultPublic) {
-			account.setDefaultSharePublic(defaultPublic);
+		if (account.isNotifyPublicShares() != defaultPublic) {
+			account.setNotifyPublicShares(defaultPublic);
 		}		
 	}
 	
