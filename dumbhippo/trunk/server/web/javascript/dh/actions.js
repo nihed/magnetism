@@ -92,9 +92,9 @@ dh.actions.setMusicSharingEnabled = function(enabled) {
 		  	    	 });
 }
 
-dh.actions.setDefaultSharePublic = function(defaultPublic) {
-   	dh.server.doPOST("setdefaultsharepublic",
-   					{ "defaultPublic" : defaultPublic ? "true" : "false" },
+dh.actions.setNotifyPublicShares = function(notify) {
+   	dh.server.doPOST("setnotifypublicshares",
+   					{ "notify" : notify ? "true" : "false" },
 		  	    	 function(type, data, http) {
 			  	    	 document.location.reload();
 		  	    	 },

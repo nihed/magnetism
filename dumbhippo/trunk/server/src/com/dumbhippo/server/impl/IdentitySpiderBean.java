@@ -834,7 +834,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void setNotifyPublicShares(User user, boolean defaultPublic) {
 		Account account = getAttachedAccount(user);
-		if (account.isNotifyPublicShares() != defaultPublic) {
+		if (account.isNotifyPublicShares() == null ||
+			account.isNotifyPublicShares() != defaultPublic) {
 			account.setNotifyPublicShares(defaultPublic);
 		}		
 	}
