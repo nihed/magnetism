@@ -8,90 +8,16 @@
 	<link rel="stylesheet" type="text/css" href="/css2/music.css"/>
 </head>
 <dht:twoColumnPage>
-	<div id="dhSidebarColumn">
-		<div class="dh-sidebar-box dh-profile-box">
-			<div class="dh-title">
-			MY PROFILE
-			</div>
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name">Monkey Mouth</div>
-									<div class="dh-action-link"><a href="/account">Edit account</a></div>
-									<div class="dh-action-link"><a href="">Sign out</a></div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="dh-bio">
-					I am so special. This is my biography. Please read more about me!
-				</div>
-			</div>
-		</div>
-		<div class="dh-sidebar-box dh-controls-box">
-			<div class="dh-title">
-			MUSIC RADAR CONTROLS
-			</div>
+	<dht:sidebar>
+		<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 			<div>
 				Music embed: <input type="radio"/> On <input type="radio"/> Off
 			</div>
-			<div style="margin-top: 3px;"><a href="">Edit theme</a></div>
-			<div class="dh-separator"><div></div></div>
-			<div><a href="">Edit my music bio</a></div>
-		</div>				
-		<div class="dh-sidebar-box dh-groups-box">
-			<div class="dh-title">
-			MY GROUPS
-			</div>
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name"><a href="">Sky Devils</a></div>
-									<div class="dh-info">7 members</div>
-									<div class="dh-info">12 posts</div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name"><a href="">Happy Onions</a></div>
-									<div class="dh-info">17 members</div>
-									<div class="dh-info">2 posts</div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="dh-more"><a href="">MORE</a></div>
-		</div>
-	</div>
+			<div style="margin-top: 3px;"><a href="/nowplaying-themes">Edit theme</a></div>
+			<dht:sidebarBoxSeparator/>
+			<div><a href="/music-bio">Edit my music bio</a></div>
+		</dht:sidebarBoxControls>
+	</dht:sidebar>
 	<div id="dhContentColumn">
 		<div class="dh-zone-box dh-color-music">
 			<div class="dh-zone-box-header"><img src="/images2/header_music500.gif"/><div class="dh-zone-box-header-links">Jump to: <a href="">Link Swarm</a> | <a href="">TV Party</a></div></div>

@@ -3,13 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="title" required="true" type="java.lang.String" %>
-<%@ attribute name="boxClass" required="false" type="java.lang.String" %>
 <%@ attribute name="more" required="false" type="java.lang.String" %>
 
-<div class="dh-sidebar-box ${boxClass}">
-	<dht:sidebarBoxTitle><c:out value="${title}"/></dht:sidebarBoxTitle>
+<dht:sidebarBox title="${title}" more="${more}" boxClass="dh-controls-box">
 	<jsp:doBody/>
-	<c:if test="${!empty more}">
-		<div class="dh-more"><a href="${more}">MORE</a></div>
-	</c:if>
-</div>
+</dht:sidebarBox>

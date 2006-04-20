@@ -138,6 +138,10 @@ a {
 	text-decoration:	underline;
 }
 
+.dh-zone-box-header-links a:link, .dh-zone-box-header-links a:visited {
+	color:				white;
+}
+
 .dh-zone-box-header-links {
 	font-size:			14px;
 	font-weight:		bold;

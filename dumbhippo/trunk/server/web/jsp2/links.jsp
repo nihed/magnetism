@@ -8,87 +8,21 @@
 	<link rel="stylesheet" type="text/css" href="/css2/links.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebarColumn>
-		<dht:sidebarBox boxClass="dh-profile-box" title="MY PROFILE">
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name">Monkey Mouth</div>
-									<div class="dh-action-link"><a href="/account">Edit account</a></div>
-									<div class="dh-action-link"><a href="">Sign out</a></div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="dh-bio">
-					I am so special. This is my biography. Please read more about me!
-				</div>
-			</div>
-		</dht:sidebarBox>
-		<dht:sidebarBox boxClass="dh-controls-box" title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
+	<dht:sidebar>
+		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
 				<input type="checkbox"/> Receive publicly shared links
 			</div>
-			<div class="dh-separator"><div></div></div>
-			<div class="dh-title">
-			FREAK LIST
-			</div>
+			<dht:sidebarBoxSeparator/>
+			<dht:sidebarBoxTitle>FREAK LIST</dht:sidebarBoxTitle>
 			<div>
 				<input type="checkbox"/> Spammer McSpammy
 			</div>
 			<div>
 				<input type="checkbox"/> Spams McSpam
 			</div>
-		</dht:sidebarBox>				
-		<dht:sidebarBox boxClass="dh-groups-box" title="MY GROUPS" more="/groups">
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name"><a href="">Sky Devils</a></div>
-									<div class="dh-info">7 members</div>
-									<div class="dh-info">12 posts</div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="dh-item">
-				<table cellpadding="0" cellspacing="0">
-					<tbody>
-						<tr valign="top">
-							<td>
-								<div class="dh-image">
-								</div>
-							</td>
-							<td>
-								<div class="dh-next-to-image">
-									<div class="dh-name"><a href="">Happy Onions</a></div>
-									<div class="dh-info">17 members</div>
-									<div class="dh-info">2 posts</div>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</dht:sidebarBox>
-	</dht:sidebarColumn>
+		</dht:sidebarBoxControls>		
+	</dht:sidebar>
 	<div id="dhContentColumn">
 		<div class="dh-zone-box dh-color-web">
 			<div class="dh-zone-box-header"><img src="/images2/header_link500.gif"/><div class="dh-zone-box-header-links">Jump to: <a href="">Music Radar</a> | <a href="">TV Party</a></div></div>
