@@ -82,6 +82,7 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.GuidNotFoundException;
 
 @Stateless
 public class PostingBoardBean implements PostingBoard {
@@ -345,7 +346,13 @@ public class PostingBoardBean implements PostingBoard {
 					return post;
 				}
 			});
-			return em.find(Post.class, detached.getId());
+			Post post = em.find(Post.class, detached.getId());
+			
+			// Add the new post to the Hibernate index; it would likely be better to 
+			// do this asynchronously
+			indexPost(post);
+			
+			return post;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -735,7 +742,7 @@ public class PostingBoardBean implements PostingBoard {
 		if (canViewPost(viewpoint, post))
 			return post;
 		else
-			return null;
+			throw new GuidNotFoundException(guid);
 	}
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
@@ -901,44 +908,52 @@ public class PostingBoardBean implements PostingBoard {
 		result.add(identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.PRIMARY_RESOURCE));
 		return result;
 	}
-	
-	public void reindexAllPosts() {
-		DocumentBuilder<Post> builder = new DocumentBuilder<Post>(Post.class);
+
+	private void indexPosts(List<Post> posts, boolean create) {
 		try {
-			// FIXME: StopAnalyzer is pretty bad, but as long as we are using
-			// the standard listeners included in our current version of
-			// hibernate-annotations.jar, we don't have any choice, since
-			// the ability to customize the analyzer was only added in more
-			// recent versions. Using custom listeners or upgrading will
-			// allow us to fix.
-			
+			// FIXME: StopAnalyzer is quite crude; it doesn't do any stemming, for example
+						
+			// FIXME: Any changes to posts that run while this is going on
+			// will end up throwing an IOException because the will time
+			// out after a second of trying to getting the IndexWriter
+			// lock. The right setup is likely a thread that runs and
+			// does all indexing asynchronously, and can properly schedule
+			// a reindex without creating multiple IndexWriter() objects.
+
 			// FIXME: passing create=true to new IndexWriter creates a
 			// new index replacing anything existing. We need to check
 			// to make sure tha this doesn't break searches that go
 			// on concurrently. Searching on the old index or on the new
 			// index would be fine, but crashes isn't.
-			
-			// FIXME: Any changes to posts that run while this is going on
-			// will end up throwing an IOException because the will time
-			// out after a second of trying to getting the IndexWriter
-			// lock. Using a global IndexWriter shared between the listeners
-			// and here would fix (and require custom listeners). 
-			
+			//
 			// Note that this method of recreating the index is not safe if posts 
 			// could be deleted from the database, since the incremental update 
 			// would delete them, then we'd add them back. However, we never
-			// currently delete posts.
-			IndexWriter writer = new IndexWriter(builder.getFile(), new StopAnalyzer(), true);
+			// currently delete posts. A single thread would also fix this
+			// by serializing access. Eventually we might want to do the
+			// indexing on a separate *machine* for the entire cluster, with
+			// the index exported by NFS or similar. (NFS locks, scary!)
 			
-			List<?> posts = em.createQuery("SELECT p FROM Post p").getResultList();
-			for (Object o : posts) {
-				Post post = (Post)o;
-				
+			DocumentBuilder<Post> builder = new DocumentBuilder<Post>(Post.class);
+			IndexWriter writer = new IndexWriter(builder.getFile(), new StopAnalyzer(), create);
+			
+			for (Post post : posts) {
 				Document document = builder.getDocument(post, post.getId());
 				writer.addDocument(document);
 			}
+			writer.close();
 		} catch (IOException e) {
 		}
+		
+	}
+	
+	private void indexPost(Post post) {
+		indexPosts(Collections.singletonList(post), false);
+	}
+	
+	public void reindexAllPosts() {
+		List<?> l = em.createQuery("SELECT p FROM Post p").getResultList();
+		indexPosts(TypeUtils.castList(Post.class, l), true);
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {

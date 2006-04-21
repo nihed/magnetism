@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<%!-- This is a temporary home for a replacement version of search.jsp that uses lucene --%>
+<%-- This is a temporary home for a replacement version of search.jsp that uses lucene --%>
 
 <dh:bean id="find" class="com.dumbhippo.web.FindPage" scope="request"/>
 <jsp:setProperty name="find" property="searchText" param="q"/>
