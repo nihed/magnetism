@@ -22,13 +22,13 @@
 		<dht:zoneBoxMusic>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			
-			<div class="dh-nowplaying"><div></div></div>
+			<dh:nowPlaying userId="c4a3fc1f528070" hasLabel="false"/>
 
-			<div class="dh-subcolumns">
+			<dht:zoneBoxSubcolumns>
 
-				<div class="dh-subcolumn dh-subcolumn-one">
+				<dht:zoneBoxSubcolumn which="one">
 
-					<div class="dh-title dh-color-music-foreground">SHARED WITH ME</div>
+					<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 
 					<div class="dh-item">
 						<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
@@ -43,12 +43,12 @@
 						</div>
 					</div>
 					
-					<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
+					<dht:moreExpander open="false"/>
 
-				</div>
-				<div class="dh-subcolumn dh-subcolumn-two">
+				</dht:zoneBoxSubcolumn>
+				<dht:zoneBoxSubcolumn which="two">
 					
-					<div class="dh-title dh-color-music-foreground">SHARED BY ME</div>
+					<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
 					<div class="dh-item">
 						<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
 						<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
@@ -67,12 +67,11 @@
 						</div>
 					</div>									
 					
-					<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
+					<dht:moreExpander open="false"/>
 
-				</div>
+				</dht:zoneBoxSubcolumn>
 			
-				<div class="dh-grow-div-around-floats"><div></div></div>
-			</div>
+			</dht:zoneBoxSubcolumns>
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>

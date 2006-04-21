@@ -66,7 +66,7 @@
 					</table>
 				</div>
 			</div>
-			<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
+			<dht:moreExpander open="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 
@@ -111,8 +111,7 @@
 				</div>
 			</div>
 			
-			<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
-
+			<dht:moreExpander open="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
 			<div class="dh-item">
@@ -156,7 +155,7 @@
 				</div>
 			</div>
 			
-			<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
+			<dht:moreExpander open="false"/>
 		</dht:zoneBoxWeb>
 	</dht:contentColumn>
 </dht:twoColumnPage>

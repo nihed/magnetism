@@ -6,7 +6,11 @@ body {
 }
 
 a {
-	text-decoration: 	none;	
+	text-decoration: 	none;
+}
+
+img {
+	border-style:		none;	
 }
 
 .dh-color-web {
@@ -117,10 +121,6 @@ a {
 #dhContentColumn .dh-zone-box .dh-title {
 	font-size:			16px;
 	font-weight:		bold;
-}
-
-.dh-nowplaying {
-	border:				1px solid black; /* debug */
 }
 
 #dhContentColumn .dh-zone-box .dh-song {

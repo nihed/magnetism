@@ -23,7 +23,7 @@
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
-			<div class="dh-nowplaying"><div></div></div>
+			<dh:nowPlaying userId="c4a3fc1f528070" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
 			<div class="dh-song"><a href="">Ice Ice Baby</a>

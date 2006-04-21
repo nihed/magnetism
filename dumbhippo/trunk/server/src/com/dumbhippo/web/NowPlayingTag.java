@@ -136,8 +136,13 @@ public class NowPlayingTag extends SimpleTagSupport {
 			output = getNowPlayingEmbedHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
 		else
 			output = getNowPlayingObjectHtml(userId, themeId, forceMode, DEFAULT_BACKGROUND, hasLabel);
+		
+		// put a <div> around it if we're rendering the HTML ourselves, if we're printing out the html 
+		// for others then don't
 		if (escapeXml)
 			output = XmlBuilder.escape(output);
+		else 
+			output = "<div class=\"dh-nowplaying\">" + output + "</div>";
 		writer.print(output);
 	}
 }
