@@ -24,7 +24,7 @@
 		</dht:sidebarBoxControls>		
 	</dht:sidebar>
 	<dht:contentColumn>
-		<dht:zoneBox zone="web" topImage="/images2/header_link500.gif" bottomImage="/images2/bottom_link500.gif">
+		<dht:zoneBoxWeb>
 			<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 			<div class="dh-item">
 				<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
@@ -157,7 +157,7 @@
 			</div>
 			
 			<div class="dh-more"><a href="">MORE</a> <img src="/images2/arrow_right.gif"/></div>
-		</dht:zoneBox>
+		</dht:zoneBoxWeb>
 	</dht:contentColumn>
 </dht:twoColumnPage>
 </html>

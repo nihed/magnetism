@@ -19,7 +19,7 @@
 		</dht:sidebarBoxControls>
 	</dht:sidebar>
 	<dht:contentColumn>
-		<dht:zoneBox zone="music" topImage="/images2/header_music500.gif" bottomImage="/images2/bottom_music500.gif">
+		<dht:zoneBoxMusic>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			
 			<div class="dh-nowplaying"><div></div></div>
@@ -73,7 +73,7 @@
 			
 				<div class="dh-grow-div-around-floats"><div></div></div>
 			</div>
-		</dht:zoneBox>
+		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>
 </html>
