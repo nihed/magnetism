@@ -2,7 +2,16 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dht:sidebarBox boxClass="dh-profile-box" title="MY PROFILE">
+<c:choose>
+	<c:when test="${sidebar.self}">
+		<c:set var="title" value="MY PROFILE" scope="page"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="title" value="PROFILE" scope="page"/>
+	</c:otherwise>
+</c:choose>
+
+<dht:sidebarBox boxClass="dh-profile-box" title="${title}">
 	<div class="dh-item">
 		<table cellpadding="0" cellspacing="0">
 			<tbody>
@@ -13,9 +22,9 @@
 					</td>
 					<td>
 						<div class="dh-next-to-image">
-							<div class="dh-name">Monkey Mouth</div>
+							<div class="dh-name"><c:out value="${sidebar.viewedPerson.name}"/></div>
 							<div class="dh-action-link"><a href="/account">Edit account</a></div>
-							<div class="dh-action-link"><a href="">Sign out</a></div>
+							<div class="dh-action-link"><a href="FIXME">Sign out</a></div>
 						</div>
 					</td>
 				</tr>

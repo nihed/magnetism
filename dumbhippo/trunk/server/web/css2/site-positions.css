@@ -1,6 +1,5 @@
 @CHARSET "UTF-8";
 
-
 body {
 	/* centers the page in IE */
 	text-align:		center;
@@ -8,7 +7,6 @@ body {
 
 #dhPage {
 	position:		relative;	
-	width:			710px;
 	margin-top:		30px;
 	
 	/* override centering for children */
@@ -19,12 +17,27 @@ body {
 	margin-right:	auto;
 }
 
+.dh-body-with-sidebar #dhPage {
+	width:			710px;
+}
+
+.dh-body-without-sidebar #dhPage {
+	width:			500px;
+}
+
 #dhPageHeader {
 	position:		relative;
 	left:			0px;
 	top:			0px;
-	width:			710px;	
 	margin-bottom:	10px;
+}
+
+.dh-body-with-sidebar #dhPageHeader {
+	width:			710px;
+}
+
+.dh-body-without-sidebar #dhPageHeader {
+	width:			500px;	
 }
 
 #dhHeaderLogo {
@@ -57,6 +70,7 @@ body {
 .dh-sidebar-box {
 	padding:			10px;
 	margin-bottom:		10px;
+	overflow:			hidden;
 }
 
 .dh-sidebar-box .dh-item {
@@ -72,6 +86,7 @@ body {
 .dh-sidebar-box .dh-item .dh-next-to-image {
 	width:				110px;
 	margin-left:		10px;
+	overflow:			hidden;
 }
 
 .dh-sidebar-box .dh-item .dh-next-to-image .dh-name {

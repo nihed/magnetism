@@ -3,12 +3,19 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
+<c:if test="${!signin.valid}">
+	<%-- this is a bad error message but should never happen since we require signin to get here --%>
+	<dht:errorPage>Not signed in</dht:errorPage>
+</c:if>
+
+<dh:bean id="home" class="com.dumbhippo.web.HomePage" scope="request"/>
+
 <head>
 	<title>Mugshot Home</title>
 	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar/>
+	<dht:sidebar who="${signin.user.id}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>

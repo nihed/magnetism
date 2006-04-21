@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/music.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar>
+	<dht:sidebar who="${signin.user.id}">
 		<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 			<div>
 				Music embed: <input type="radio"/> On <input type="radio"/> Off

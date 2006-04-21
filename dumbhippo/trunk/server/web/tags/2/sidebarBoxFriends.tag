@@ -2,43 +2,28 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dht:sidebarBox boxClass="dh-friends-box" title="MY FRIENDS" more="/friends">
-	<div class="dh-item">
-		<table cellpadding="0" cellspacing="0">
-			<tbody>
-				<tr valign="top">
-					<td>
-						<div class="dh-image">
-						</div>
-					</td>
-					<td>
-						<div class="dh-next-to-image">
-							<div class="dh-name"><a href="">Jonny</a></div>
-							<div class="dh-info">7 groups</div>
-							<div class="dh-info">11 posts</div>
-						</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-	<div class="dh-item">
-		<table cellpadding="0" cellspacing="0">
-			<tbody>
-				<tr valign="top">
-					<td>
-						<div class="dh-image">
-						</div>
-					</td>
-					<td>
-						<div class="dh-next-to-image">
-							<div class="dh-name"><a href="">Crazy Dan</a></div>
-							<div class="dh-info">17 groups</div>
-							<div class="dh-info">4 posts</div>
-						</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-</dht:sidebarBox>
+<%-- If there are no friends for someone !self, just omit this box --%>
+<c:if test="${sidebar.contacts.size > 0 || sidebar.self}">
+
+	<c:choose>
+		<c:when test="${sidebar.self}">
+			<c:set var="title" value="MY FRIENDS" scope="page"/>
+		</c:when>
+		<c:otherwise>
+			<c:set var="title" value="FRIENDS" scope="page"/>
+		</c:otherwise>
+	</c:choose>
+	
+	<dht:sidebarBox boxClass="dh-friends-box" title="${title}" more="/friends">
+		<c:choose>
+			<c:when test="${sidebar.contacts.size > 0}">
+				<c:forEach items="${sidebar.contacts.list}" var="person">
+					<dht:sidebarBoxPersonItem who="${person}"/>
+				</c:forEach>
+			</c:when>
+			<c:otherwise>
+				No friends <%-- FIXME link to a place to add friends --%>
+			</c:otherwise>
+		</c:choose>
+	</dht:sidebarBox>
+</c:if>

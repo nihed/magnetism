@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/links.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar>
+	<dht:sidebar who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
 				<input type="checkbox"/> Receive publicly shared links
