@@ -138,4 +138,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId" })
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( {} )
+	public void doReindexAll(UserViewpoint viewpoint);
 }

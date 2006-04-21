@@ -657,4 +657,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Error sending repair link", e);
 		}
 	}
+	
+	public void doReindexAll(UserViewpoint viewpoint) 
+	{
+		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
+			throw new RuntimeException("Only administrators can recreate the search indices");
+		}
+		
+		postingBoard.reindexAllPosts();
+	}
 }

@@ -105,4 +105,37 @@ public interface PostingBoard {
 	 * @param serial counter (starts at zero) of messages for the post
 	 */
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial);
+	
+	/**
+	 * Recreate the Lucene index for Post; this will be quite expensive
+	 * on any real data set.
+	 */
+	public void reindexAllPosts();
+	
+	/**
+	 * Search the database of posts using Lucene.
+	 * 
+	 * @param viewpoint the viewpoint being searched from
+	 * @param queryString the search string to use, in Lucene syntax. The search
+	 *   will be done across both the title and description fields
+	 * @return a PostSearchResult object representing the search; you should
+	 *    check the getError() method of this object to determine if an error
+	 *    occurred (such as an error parsing the query string) 
+	 */
+	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString);
+	
+	/**
+	 * Get a range of posts from the result object returned from searchPosts(). 
+	 * This is slightly more efficient than calling PostSearchResult getPosts(),
+	 * because we avoid some EJB overhead.
+	 * 
+	 * @param viewpoint the viewpoint for the returned PostView objects; must be the same 
+	 *        as the viewpoint passed in when calling searchPosts()
+	 * @param
+	 * @param start the index of the first post to retrieve (starting at zero)
+	 * @param count the maximum number of items desired 
+	 * @return a list of PostView objects; may have less than count items when no more
+	 *        are available. 
+	 */
+	public List<PostView> getPostSearchPosts(Viewpoint viewpoint, PostSearchResult searchResult, int start, int count);
 }

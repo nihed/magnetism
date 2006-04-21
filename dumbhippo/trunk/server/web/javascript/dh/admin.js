@@ -12,3 +12,14 @@ dh.admin.sendRepairEmail = function(userId) {
 		  	    	     alert("Couldn't send repair email");
 		  	    	 });
 }
+
+dh.admin.reindexAll = function() {
+   	dh.server.doPOST("reindexall",
+				     {},
+		  	    	 function(type, data, http) {
+		  	    	     alert("Succesfully reindexed everything");
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Failure reindexing");
+		  	    	 });
+}

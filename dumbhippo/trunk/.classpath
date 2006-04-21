@@ -83,6 +83,7 @@
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="lib" path="server/lib/slf4j-log4j12.jar"/>
+	<classpathentry kind="lib" path="server/lib/lucene-core-1.9.1.jar"/>
 	<classpathentry kind="lib" path="taste/taste.jar"/>
 	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>

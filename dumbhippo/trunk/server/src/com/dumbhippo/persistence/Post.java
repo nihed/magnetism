@@ -15,6 +15,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.hibernate.lucene.Indexed;
+import org.hibernate.lucene.Unstored;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -22,6 +24,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
+@Indexed(index="index/post")
 public class Post extends GuidPersistable {
 	
 	static private final Logger logger = GlobalSetup.getLogger(Post.class);
@@ -154,12 +157,14 @@ public class Post extends GuidPersistable {
 	// properly convert the clob to a string, so we can't 
 	// use this anyway. 255 char limit it is.
 	//@Lob(type=LobType.CLOB, fetch=FetchType.EAGER)
+	@Unstored
 	public String getText() {
 		return text;
 	}
 	public void setText(String text) {
 		this.text = text;
 	}
+	@Unstored
 	public String getExplicitTitle() {
 		return explicitTitle;
 	}

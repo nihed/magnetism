@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -21,6 +22,17 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.lucene.analysis.StopAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryParser.MultiFieldQueryParser;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
+import org.apache.lucene.search.Hits;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Searcher;
+import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -61,6 +73,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostInfoSystem;
+import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
@@ -888,5 +901,74 @@ public class PostingBoardBean implements PostingBoard {
 		result.add(identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.PRIMARY_RESOURCE));
 		return result;
 	}
+	
+	public void reindexAllPosts() {
+		DocumentBuilder<Post> builder = new DocumentBuilder<Post>(Post.class);
+		try {
+			// FIXME: StopAnalyzer is pretty bad, but as long as we are using
+			// the standard listeners included in our current version of
+			// hibernate-annotations.jar, we don't have any choice, since
+			// the ability to customize the analyzer was only added in more
+			// recent versions. Using custom listeners or upgrading will
+			// allow us to fix.
+			
+			// FIXME: passing create=true to new IndexWriter creates a
+			// new index replacing anything existing. We need to check
+			// to make sure tha this doesn't break searches that go
+			// on concurrently. Searching on the old index or on the new
+			// index would be fine, but crashes isn't.
+			
+			// FIXME: Any changes to posts that run while this is going on
+			// will end up throwing an IOException because the will time
+			// out after a second of trying to getting the IndexWriter
+			// lock. Using a global IndexWriter shared between the listeners
+			// and here would fix (and require custom listeners). 
+			
+			// Note that this method of recreating the index is not safe if posts 
+			// could be deleted from the database, since the incremental update 
+			// would delete them, then we'd add them back. However, we never
+			// currently delete posts.
+			IndexWriter writer = new IndexWriter(builder.getFile(), new StopAnalyzer(), true);
+			
+			List<?> posts = em.createQuery("SELECT p FROM Post p").getResultList();
+			for (Object o : posts) {
+				Post post = (Post)o;
+				
+				Document document = builder.getDocument(post, post.getId());
+				writer.addDocument(document);
+			}
+		} catch (IOException e) {
+		}
+	}
+	
+	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
+		final String[] fields = { "ExplicitTitle", "Text" };
+		// See comment on StopAnalyzer above
+		QueryParser queryParser = new MultiFieldQueryParser(fields, new StopAnalyzer());
+		queryParser.setDefaultOperator(Operator.AND);
+		org.apache.lucene.search.Query query;
+		try {
+			query = queryParser.parse(queryString);
+			
+			// FIXME: We should reuse one IndexReader, which is thread safe, rather
+			// than repeatedly creating new ones.
+			IndexReader reader = IndexReader.open(new DocumentBuilder<Post>(Post.class).getFile());
+			Searcher searcher = new IndexSearcher(reader);
+			Hits hits = searcher.search(query);
+			
+			return new PostSearchResult(hits);
+			
+		} catch (org.apache.lucene.queryParser.ParseException e) {
+			return new PostSearchResult("Can't parse query '" + queryString + "'");
+		} catch (IOException e) {
+			return new PostSearchResult("System error while searching, please try again");
+		}
+	}
+	
+	public List<PostView> getPostSearchPosts(Viewpoint viewpoint, PostSearchResult searchResult, int start, int count) {
+		// The efficiency gain of having this wrapper is that we pass the real 
+		// object to the method rather than the proxy; getPosts() can make many, 
+		// many calls back against the PostingBoard.
+		return searchResult.getPosts(this, viewpoint, start, count);
+	}
 }
-

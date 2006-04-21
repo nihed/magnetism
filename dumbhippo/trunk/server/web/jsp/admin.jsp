@@ -18,6 +18,11 @@
 </head>
 <dht:body>
 
+<h2>Actions</h2>
+<p>
+<a href="javascript:dh.admin.reindexAll()">Recreate Lucene Indices</a>
+</p>
+
 <h2>Site Stats</h2>
 <p>
 <b><c:out value="${admin.numberOfAccounts}"/> active accounts</b>

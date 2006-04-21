@@ -13,6 +13,7 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.lucene.Keyword;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -63,6 +64,7 @@ public abstract class GuidPersistable implements Serializable {
 	 * @return the hex string form of the GUID
 	 */
 	@Id(generate = GeneratorType.NONE)
+	@Keyword(id=true) // No effect except for subclasses that are @Indexed
 	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {
 		String s = getGuid().toString();
