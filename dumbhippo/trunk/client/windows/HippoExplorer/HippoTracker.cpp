@@ -211,7 +211,7 @@ HippoTracker::update()
         SUCCEEDED(site_->get_LocationName(&name)) &&
         url && ((WCHAR *)url)[0] && name && ((WCHAR *)name)[0]) 
     {
-        updater_->setInfo(name, url);
+        updater_->setInfo(url, name);
     }
 }
 
