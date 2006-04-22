@@ -37,6 +37,7 @@
 		}
 	</script>
 </head>
+<%-- can use dht:body once we don't need onload here --%>
 <body onload="init();">
 	<div id="dhPage">
 		<div id="dhMainTopBox">
@@ -62,57 +63,18 @@
 		</div>
 		<div id="dhMainContent">
 			<div class="dh-zone-box">
-				<div><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome1.gif"/></div>
+				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome1.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-web">
 					<div class="dh-zone-box-content dh-color-normal">
-						<div class="dh-item">
-							<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-							<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-							yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-							</div>
-							<div class="dh-extra-info">
-								<table cellpadding="0" cellspacing="0">
-									<tbody>
-										<tr>
-											<td align="left">
-												<div class="dh-attribution">sent by <a href="" class="dh-name-link">Hanzel</a></div>
-											</td>
-											<td align="right">
-												<div class="dh-counts">2 views | 23 quips</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
-						<!-- the div inside here seems to keep IE from ignoring height 1px on the separator -->
-						<div class="dh-separator"><div></div></div>
-						<div class="dh-item">
-							<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-							<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-							focus on the sudden kitten shortage currently gripping the country.
-							</div>
-							<div class="dh-extra-info">
-								<table cellpadding="0" cellspacing="0">
-									<tbody>
-										<tr>
-											<td align="left">
-												<div class="dh-attribution">sent by <a href="" class="dh-name-link">Gretzel</a></div>
-											</td>
-											<td align="right">
-												<div class="dh-counts">42 views | 3 quips</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
+						<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
+						<%-- FIXME, hot links, not received links --%>
+						<dht:postList posts="${links.receivedPosts.list}" format="full" separators="true" disableFaves="true"/>
 					</div>
 				</div>
 			</div>
 			<div class="dh-zone-box-spacer"> </div>
 			<div class="dh-zone-box">
-				<div><img id="dhHeaderMusic" src="/images2/header_musichome1.gif"/></div>
+				<div><a href="/music"><img id="dhHeaderMusic" src="/images2/header_musichome1.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-music">
 					<div class="dh-zone-box-content dh-color-normal">
 						<div class="dh-item">
@@ -124,8 +86,7 @@
 								<div class="dh-play-at">Play at <a href="">iTunes</a> | <a href="">Yahoo!</a></div>
 							</div>
 						</div>
-						<!-- the div inside here seems to keep IE from ignoring height 1px on the separator -->
-						<div class="dh-separator"><div></div></div>
+						<dht:zoneBoxSeparator/>
 						<div class="dh-item">
 							<div class="dh-album-art"><div></div></div>
 							<div class="dh-song-item-details">
@@ -140,20 +101,20 @@
 			</div>
 			<div class="dh-zone-box-spacer"> </div>
 			<div class="dh-zone-box">
-				<div><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome1.gif"/></div>
+				<div><a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome1.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-tv">
 					<div class="dh-zone-box-content dh-color-normal">
 						<div class="dh-item">
 							Coming Soon
-						</div>					
-						<!-- the div inside here seems to keep IE from ignoring height 1px on the separator -->
-						<div class="dh-separator"><div></div></div>
+						</div>
+						<dht:zoneBoxSeparator/>
 						<div class="dh-item">
-							Coming Soon
+							We're working on this. Let us know what you think of 
+							<a href="/tv">our mockups so far</a>.
 						</div>
 					</div>
 				</div>
-			</div>			
+			</div>
 		</div>
 		<div id="dhMainColumnBottoms">
 			<div id="dhMainColumnOneLeftSide" class="dh-column-side dh-color-web"><div></div></div>

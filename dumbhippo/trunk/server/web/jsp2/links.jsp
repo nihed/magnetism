@@ -25,135 +25,27 @@
 	</dht:sidebar>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
+			<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
 			<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-				<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-				yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Hanzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">2 views | 23 quips | <a href="">remove</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-				<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-				focus on the sudden kitten shortage currently gripping the country.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Gretzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">42 views | 3 quips  | <a href="">remove</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
+			FIXME
 			<dht:moreExpander open="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-				<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-				yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Hanzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">2 views | 23 quips | <a href="">add to faves</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-				<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-				focus on the sudden kitten shortage currently gripping the country.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Gretzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">42 views | 3 quips  | <a href="">add to faves</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
+			<c:choose>
+				<c:when test="${links.receivedPosts.size > 0}">
+					<dht:postList posts="${links.receivedPosts.list}" format="full"/>
+				</c:when>
+				<c:otherwise>
+					Nothing shared with you yet!
+				</c:otherwise>
+			</c:choose>
 			
 			<dht:moreExpander open="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-				<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-				yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Hanzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">2 views | 23 quips | <a href="">add to faves</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<div class="dh-item">
-				<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-				<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-				focus on the sudden kitten shortage currently gripping the country.
-				</div>
-				<div class="dh-extra-info">
-					<table cellpadding="0" cellspacing="0">
-						<tbody>
-							<tr>
-								<td align="left">
-									<div class="dh-attribution">sent by <a href="" class="dh-name-link">Gretzel</a></div>
-								</td>
-								<td align="right">
-									<div class="dh-counts">42 views | 3 quips  | <a href="">add to faves</a></div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
+
+			FIXME
 			
 			<dht:moreExpander open="false"/>
 		</dht:zoneBoxWeb>

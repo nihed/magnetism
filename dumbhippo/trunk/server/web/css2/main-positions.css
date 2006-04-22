@@ -1,5 +1,12 @@
 @CHARSET "UTF-8";
 
+#dhPage {
+	width:			710px;
+}
+
+#dhPageHeader {
+	width:			710px;	
+}
 
 #dhMainLogo {
 	float:			left;	

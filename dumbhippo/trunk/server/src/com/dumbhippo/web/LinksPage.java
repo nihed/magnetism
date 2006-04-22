@@ -8,7 +8,7 @@ import com.dumbhippo.server.PostingBoard;
 
 public class LinksPage extends AbstractSigninOptionalPage {
 	
-	static private final int MAX_RECEIVED_POSTS_SHOWN = 4;
+	static private final int MAX_RECEIVED_POSTS_SHOWN = 3;
 	
 	static private final Logger logger = GlobalSetup.getLogger(LinksPage.class);
 	
@@ -23,8 +23,7 @@ public class LinksPage extends AbstractSigninOptionalPage {
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
 			logger.debug("Getting received posts for {}", getUserSignin().getUser());
-			// + 1 as a marker for whether there are more
-			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 0, MAX_RECEIVED_POSTS_SHOWN + 1));
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 0, MAX_RECEIVED_POSTS_SHOWN));
 		}
 		return receivedPosts;
 	}

@@ -23,7 +23,7 @@
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">
-					<dht:postList posts="${links.receivedPosts.list}"/>
+					<dht:postList posts="${links.receivedPosts.list}" format="simple"/>
 				</c:when>
 				<c:otherwise>
 					Nothing shared with you yet!
