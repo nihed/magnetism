@@ -5,7 +5,7 @@
 <%@ attribute name="posts" required="true" type="java.util.List" %>
 <%@ attribute name="format" required="true" type="java.lang.String" %>
 <%@ attribute name="separators" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableFaves" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="favesMode" required="false" type="java.lang.String" %>
 
 <c:forEach items="${posts}" var="post" varStatus="status">
 	<c:choose>
@@ -13,7 +13,7 @@
 			<dht:simplePostLink post="${post}"/>
 		</c:when>
 		<c:when test="${format == 'full'}">
-			<dht:post post="${post}" disableFaves="${disableFaves}"/>
+			<dht:post post="${post}" favesMode="${favesMode}"/>
 		</c:when>
 		<c:otherwise>
 			<dht:errorPage>Unknown post list format</dht:errorPage>

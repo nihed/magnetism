@@ -142,4 +142,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( {} )
 	public void doReindexAll(UserViewpoint viewpoint);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "postId", "favorite" })
+	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite);
 }

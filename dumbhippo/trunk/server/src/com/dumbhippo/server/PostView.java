@@ -18,6 +18,7 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.formatters.AmazonFormatter;
@@ -50,6 +51,7 @@ public class PostView {
 	private Resource mailRecipient;
 	private Viewpoint viewpoint;
 	private LivePost livePost;
+	private boolean favorite;
 	
 	public enum Context {
 		MAIL_NOTIFICATION,
@@ -84,6 +86,11 @@ public class PostView {
 		viewerHasViewed = ppd != null;
 		recipients = recipientList;
 		this.viewpoint = viewpoint;
+	
+		if (viewpoint instanceof UserViewpoint) {
+			User viewer = ((UserViewpoint) viewpoint).getViewer();
+			this.favorite = viewer.getAccount().getFavoritePosts().contains(post);
+		}
 		
 		initFormatter(ejbContext);
 	}
@@ -184,6 +191,10 @@ public class PostView {
 	
 	public boolean isChatRoomActive() {
 		return true;
+	}
+
+	public boolean isFavorite() {
+		return favorite;
 	}
 	
 	public String getChatRoomMembers() {

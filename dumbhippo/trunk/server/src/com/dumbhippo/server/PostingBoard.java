@@ -31,6 +31,8 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
 
+	public List<PostView> getFavoritePosts(UserViewpoint viewpoint, User user, int start, int max);	
+	
 	public boolean canViewPost(UserViewpoint viewpoint, Post post);
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
@@ -138,4 +140,12 @@ public interface PostingBoard {
 	 *        are available. 
 	 */
 	public List<PostView> getPostSearchPosts(Viewpoint viewpoint, PostSearchResult searchResult, int start, int count);
+	
+	/**
+	 * Sets whether the given post is a favorite of the given viewpoint user.
+	 * @param viewpoint
+	 * @param post
+	 * @param favorite
+	 */
+	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite);
 }

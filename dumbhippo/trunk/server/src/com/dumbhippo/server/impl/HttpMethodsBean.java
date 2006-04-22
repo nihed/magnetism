@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
@@ -665,5 +666,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		postingBoard.reindexAllPosts();
+	}
+	
+	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {
+		Guid postGuid;
+		try {
+			postGuid = new Guid(postId);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+		Post post;
+		try {
+			post = postingBoard.loadRawPost(viewpoint, postGuid);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		postingBoard.setFavoritePost(viewpoint, post, favorite);
 	}
 }

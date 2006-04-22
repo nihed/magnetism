@@ -17,9 +17,11 @@
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
-			<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-			FIXME
-			<dht:zoneBoxSeparator/>
+			<c:if test="${links.favoritePosts.size > 0}">
+				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
+					<dht:postList posts="${links.favoritePosts.list}" format="simple"/>
+				<dht:zoneBoxSeparator/>
+			</c:if>
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">

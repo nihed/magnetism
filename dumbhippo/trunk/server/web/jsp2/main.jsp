@@ -68,7 +68,7 @@
 					<div class="dh-zone-box-content dh-color-normal">
 						<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
 						<%-- FIXME, hot links, not received links --%>
-						<dht:postList posts="${links.receivedPosts.list}" format="full" separators="true" disableFaves="true"/>
+						<dht:postList posts="${links.receivedPosts.list}" format="full" separators="true" favesMode='none'/>
 					</div>
 				</div>
 			</div>

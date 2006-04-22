@@ -6,6 +6,7 @@
 <head>
 	<title>Mugshot Link Swarm</title>
 	<link rel="stylesheet" type="text/css" href="/css2/links.css"/>
+	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>
 	<dht:sidebar who="${signin.user.id}">
@@ -26,15 +27,17 @@
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
 			<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
-			<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-			FIXME
-			<dht:moreExpander open="false"/>
-			<dht:zoneBoxSeparator/>
+			<c:if test="${links.favoritePosts.size > 0}">
+				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
+				<dht:postList posts="${links.favoritePosts.list}" format="full"/>
+				<dht:moreExpander open="false"/>
+				<dht:zoneBoxSeparator/>
+			</c:if>
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">
-					<dht:postList posts="${links.receivedPosts.list}" format="full"/>
+					<dht:postList posts="${links.receivedPosts.list}" format="full" favesMode="add-only"/>
 				</c:when>
 				<c:otherwise>
 					Nothing shared with you yet!

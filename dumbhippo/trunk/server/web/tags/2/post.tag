@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView" %>
-<%@ attribute name="disableFaves" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="favesMode" required="false" type="java.lang.String" %>
 
 <div class="dh-item">
 	<div class="dh-title">
@@ -30,14 +30,16 @@
 						<%-- FIXME --%>
 						<div class="dh-counts">NN views | NN quips							
 							<c:choose>
-								<c:when test="${disableFaves}">
+								<c:when test="${favesMode == 'none'}">
+									
 								</c:when>
-								<%-- FIXME post.fave --%>
-								<c:when test="false">
-									<a href="">| remove</a>
+								<c:when test="${post.favorite}">
+									<c:if test="${favesMode != 'add-only'}">
+									 | <a href="javascript:dh.actions.setPostFavorite('${post.post.id}', false);">remove</a>
+									</c:if>
 								</c:when>
 								<c:otherwise>
-									<a href="">| add to faves</a>
+									| <a href="javascript:dh.actions.setPostFavorite('${post.post.id}', true);">add to faves</a>
 								</c:otherwise>
 							</c:choose>
 						</div>

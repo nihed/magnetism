@@ -73,6 +73,8 @@ public class Account extends Resource {
 	
 	private NowPlayingTheme nowPlayingTheme;
 	
+	private Set<Post> favoritePosts;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -90,6 +92,7 @@ public class Account extends Resource {
 	public Account(User owner) {	
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
+		favoritePosts = new HashSet<Post>();
 		creationDate = -1;
 		lastLoginDate = -1;
 		wasSentShareLinkTutorial = false;
@@ -436,5 +439,34 @@ public class Account extends Resource {
 	@Transient
 	public String getDerivedNickname() {
 		return getHumanReadableString();
+	}
+	
+	@OneToMany
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<Post> getFavoritePosts() {
+		if (favoritePosts == null)
+			throw new RuntimeException("no favorite posts?");
+		return favoritePosts;
+	}
+
+	/**
+	 * This is protected because only Hibernate probably 
+	 * needs to call it. Use addFavoritePost/removeFavoritePost 
+	 * instead...
+	 * 
+	 * @param favoritePosts the faves
+	 */
+	protected void setFavoritePosts(Set<Post> favoritePosts) {
+		if (favoritePosts == null)
+			throw new IllegalArgumentException("null fave posts");
+		this.favoritePosts = favoritePosts;
+	}
+	
+	public void addFavoritePost(Post post) {
+		favoritePosts.add(post);
+	}
+	
+	public void removeFavoritePost(Post post) {
+		favoritePosts.remove(post);
 	}
 }

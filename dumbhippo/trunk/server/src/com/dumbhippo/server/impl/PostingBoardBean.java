@@ -8,6 +8,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -552,9 +553,8 @@ public class PostingBoardBean implements PostingBoard {
 			q.setMaxResults(max);
 		
 		q.setFirstResult(start);
-
-		@SuppressWarnings("unchecked")		
-		List<Post> posts = q.getResultList();	
+		
+		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());	
 
 		// parallelize all the post updaters
 		for (Post p : posts) {
@@ -595,6 +595,15 @@ public class PostingBoardBean implements PostingBoard {
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
 		User viewer = viewpoint.getViewer();
 		
+		/* This is an optimization for a common case */
+		if (post.getPoster().equals(viewer))
+			return true;
+		
+		/* FIXME we should probably do this by looking at the Post 
+		 * in memory, not with a query
+		 */
+		
+		/* Do the query if no optimizations apply */
 		Query q;
 		StringBuilder queryText = new StringBuilder(GET_SPECIFIC_POST_QUERY + " AND ");
 		queryText.append(CAN_VIEW);
@@ -735,6 +744,47 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("viewer", user);		
 		
 		return getPostViews(viewpoint, q, null, start, max);
+	}
+	
+	public List<PostView> getFavoritePosts(UserViewpoint viewpoint, User user, int start, int maxResults) {
+		
+		// can only see faves list of friends
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return Collections.emptyList();
+		
+		Account account = accountSystem.lookupAccountByUser(user);
+		Set<Post> faves = account.getFavoritePosts();
+		List<Post> dateSorted = new ArrayList<Post>();
+		
+		for (Post p : faves) {
+			if (canViewPost(viewpoint, p))
+				dateSorted.add(p);
+		}
+		
+		Collections.sort(dateSorted, new Comparator<Post>() {
+
+			public int compare(Post a, Post b) {
+				long aDate = a.getPostDate().getTime();
+				long bDate = b.getPostDate().getTime();
+				if (aDate < bDate)
+					return -1;
+				else if (aDate > bDate)
+					return 1;
+				else
+					return 0;
+			}
+			
+		});
+		
+		List<PostView> views = new ArrayList<PostView>();
+		int i = Math.min(dateSorted.size(), start);
+		int count = Math.min(dateSorted.size() - start, maxResults);
+		while (count > 0) {
+			views.add(getPostView(viewpoint, dateSorted.get(i)));
+			--count;
+			++i;
+		}
+		return views;
 	}
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
@@ -985,5 +1035,13 @@ public class PostingBoardBean implements PostingBoard {
 		// object to the method rather than the proxy; getPosts() can make many, 
 		// many calls back against the PostingBoard.
 		return searchResult.getPosts(this, viewpoint, start, count);
+	}
+	
+	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite) {
+		Account account = viewpoint.getViewer().getAccount();
+		if (favorite)
+			account.addFavoritePost(post);
+		else
+			account.removeFavoritePost(post);
 	}
 }
