@@ -8,35 +8,39 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
+<dh:bean id="person" class="com.dumbhippo.web.PersonPage" scope="page"/>
+<jsp:setProperty name="person" property="viewedUserId" param="who"/>
+
 <head>
-	<title>Mugshot Home</title>
-	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
+	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
+	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar who="${signin.user.id}"/>
+	<dht:sidebar who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
-			<dht:requireLinksBean who="${signin.user.id}"/>
+			<dht:requireLinksBean who="${person.viewedUserId}"/>
 			<c:if test="${links.favoritePosts.size > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 					<dht:postList posts="${links.favoritePosts.list}" format="simple"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
+			<%-- FIXME uppercase the name --%>
+			<dht:zoneBoxTitle>SHARED WITH <c:out value="${person.viewedPerson.name}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">
 					<dht:postList posts="${links.receivedPosts.list}" format="simple"/>
 				</c:when>
 				<c:otherwise>
-					Nothing shared with you yet!
+					Nothing shared with them yet!
 				</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
-			<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
-			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
 			<div class="dh-song"><a href="">Ice Ice Baby</a>
 				<span class="dh-song-details">by <a href="">Vanilla Ice</a> | Play at <a href="">iTunes</a> | <a href="">Yahoo!</a></span>
 			</div>

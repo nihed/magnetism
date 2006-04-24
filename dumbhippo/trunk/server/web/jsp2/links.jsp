@@ -26,7 +26,7 @@
 	</dht:sidebar>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
-			<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
+			<dht:requireLinksBean who="${signin.user.id}"/>
 			<c:if test="${links.favoritePosts.size > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 				<dht:postList posts="${links.favoritePosts.list}" format="full"/>

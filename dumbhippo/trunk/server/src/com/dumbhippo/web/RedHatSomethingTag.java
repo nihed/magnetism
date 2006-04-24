@@ -20,7 +20,8 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 		"Science Project",
 		"Forbidden Fruit",
 		"Flying Car",
-		"Spaceship"
+		"Spaceship",
+		"Medicine Cabinet"
 	};
 	
 	private String pickSomething() {

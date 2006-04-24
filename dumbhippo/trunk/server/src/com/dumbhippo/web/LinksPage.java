@@ -6,7 +6,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
-public class LinksPage extends AbstractSigninOptionalPage {
+public class LinksPage extends AbstractPersonPage {
 	
 	static private final int MAX_RESULTS = 3;
 	
@@ -25,7 +25,7 @@ public class LinksPage extends AbstractSigninOptionalPage {
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
 			logger.debug("Getting received posts for {}", getUserSignin().getUser());
-			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 0, MAX_RESULTS));
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return receivedPosts;
 	}
@@ -33,9 +33,8 @@ public class LinksPage extends AbstractSigninOptionalPage {
 	public ListBean<PostView> getFavoritePosts() {
 		if (favoritePosts == null) {
 			logger.debug("Getting favorite posts for {}", getUserSignin().getUser());
-			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getUserSignin().getViewpoint(), getUserSignin().getUser(), 0, MAX_RESULTS));
+			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return favoritePosts;
 	}
-
 }

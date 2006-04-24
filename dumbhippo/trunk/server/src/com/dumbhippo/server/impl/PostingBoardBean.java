@@ -748,9 +748,12 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public List<PostView> getFavoritePosts(UserViewpoint viewpoint, User user, int start, int maxResults) {
 		
-		// can only see faves list of friends
+		/*
+		 // if only friends could see the faves list...
+		 // right now though, anyone can see it, if they can see the posts 
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptyList();
+		*/
 		
 		Account account = accountSystem.lookupAccountByUser(user);
 		Set<Post> faves = account.getFavoritePosts();
