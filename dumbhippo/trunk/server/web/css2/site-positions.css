@@ -52,6 +52,12 @@ body {
 	bottom:			0px;
 }
 
+#dhHeaderLinks {
+	position:		absolute;
+	right:			0px;
+	top:			0px;
+}
+
 #dhContentColumn .dh-zone-box .dh-extra-info table {
 	width:			478px;	
 }

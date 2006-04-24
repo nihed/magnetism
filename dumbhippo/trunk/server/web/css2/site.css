@@ -80,6 +80,11 @@ img {
 	font-size:			14px;
 }
 
+#dhHeaderLinks {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
 .dh-sidebar-box {
 	background-color:	#EBEBEB;
 	font-size:			12px;
