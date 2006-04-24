@@ -3,6 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="open" required="true" type="java.lang.Boolean" %>
+<%-- FIXME make this required when we're using it --%>
+<%@ attribute name="more" required="false" type="java.lang.String" %>
 
 <c:choose>
 	<c:when test="${open}">
@@ -13,4 +15,4 @@
 	</c:otherwise>
 </c:choose>
 
-<div class="dh-more"><a href="">MORE</a> <img src="${image}"/></div>
+<div class="dh-more"><a href="${more}">MORE</a> <a href="${more}"><img src="${image}"/></a></div>

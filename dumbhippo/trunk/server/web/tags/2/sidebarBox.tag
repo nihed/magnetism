@@ -10,6 +10,6 @@
 	<dht:sidebarBoxTitle><c:out value="${title}"/></dht:sidebarBoxTitle>
 	<jsp:doBody/>
 	<c:if test="${!empty more}">
-		<div class="dh-more"><a href="${more}">MORE</a></div>
+		<dht:moreLink more="${more}"/>
 	</c:if>
 </div>

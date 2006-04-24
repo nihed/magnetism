@@ -28,7 +28,12 @@ img {
 	color:				white;
 }
 
-.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited {
+.dh-color-group {
+	background-color:	#666666;
+	color:				white;
+}
+
+.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited {
 	color:				white;
 }
 
