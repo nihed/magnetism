@@ -901,6 +901,33 @@ public class PostingBoardBean implements PostingBoard {
 		return getGroupPosts(viewpoint, recipient, null, start, max);
 	}
 	
+	static final String GET_HOT_POSTS_QUERY = 
+		"SELECT post FROM Post post WHERE ";
+
+	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max) {
+		User viewer = null;
+		Query q;
+
+		StringBuilder queryText = new StringBuilder(GET_HOT_POSTS_QUERY);
+
+		if (viewpoint instanceof SystemViewpoint) {
+		    // No access control clause
+		} else if (viewpoint instanceof UserViewpoint) {
+			viewer = ((UserViewpoint)viewpoint).getViewer();
+			queryText.append(CAN_VIEW);
+		} else {
+			queryText.append(CAN_VIEW_ANONYMOUS);
+		}
+		
+		queryText.append(ORDER_RECENT);
+		
+		q = em.createQuery(queryText.toString());
+		
+		if (viewer != null)
+			q.setParameter("viewer", viewer);
+		return getPostViews(viewpoint, q, null, start, max);
+	}
+	
 	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
 	private static final String POST_MESSAGE_RECENT = " and (pm.timestamp - current_timestamp()) < :recentTime";
 	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.timestamp";

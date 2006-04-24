@@ -41,6 +41,8 @@ public interface PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
+	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max);
+	
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 

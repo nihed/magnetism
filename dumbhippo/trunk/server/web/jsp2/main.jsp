@@ -66,9 +66,8 @@
 				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome1.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-web">
 					<div class="dh-zone-box-content dh-color-normal">
-						<dh:bean id="links" class="com.dumbhippo.web.LinksPage" scope="page"/>
-						<%-- FIXME, hot links, not received links --%>
-						<dht:postList posts="${links.receivedPosts.list}" format="full" separators="true" favesMode='none'/>
+						<dht:requireLinksAnonymousBean/>
+						<dht:postList posts="${linksAnon.hotPosts.list}" format="full" separators="true" favesMode='none'/>
 					</div>
 				</div>
 			</div>
