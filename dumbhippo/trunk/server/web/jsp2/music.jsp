@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/music.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar who="${signin.user.id}">
+	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 			<div>
 				Music embed: <input type="radio"/> On <input type="radio"/> Off
@@ -17,7 +17,7 @@
 			<dht:sidebarBoxSeparator/>
 			<div><a href="/music-bio">Edit my music bio</a></div>
 		</dht:sidebarBoxControls>
-	</dht:sidebar>
+	</dht:sidebarPerson>
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>

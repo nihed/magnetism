@@ -9,7 +9,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar who="${signin.user.id}">
+	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
 				<input type="checkbox"/> Receive publicly shared links
@@ -23,7 +23,7 @@
 				<input type="checkbox"/> Spams McSpam
 			</div>
 		</dht:sidebarBoxControls>		
-	</dht:sidebar>
+	</dht:sidebarPerson>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
 			<c:choose>

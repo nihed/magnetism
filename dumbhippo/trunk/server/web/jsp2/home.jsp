@@ -13,7 +13,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar who="${signin.user.id}"/>
+	<dht:sidebarPerson who="${signin.user.id}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dht:requireLinksBean who="${signin.user.id}"/>

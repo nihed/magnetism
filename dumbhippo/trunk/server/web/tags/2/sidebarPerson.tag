@@ -5,7 +5,7 @@
 <%@ attribute name="who" required="true" type="java.lang.String" %>
 
 <c:if test="${showSidebar}"> <%-- set in twoColumnPage tag --%>
-	<dh:bean id="sidebar" class="com.dumbhippo.web.SidebarPage" scope="request"/>
+	<dh:bean id="sidebar" class="com.dumbhippo.web.SidebarPersonPage" scope="request"/>
 	<jsp:setProperty name="sidebar" property="viewedUserId" value="${who}"/>
 	
 	<dht:sidebarColumn>

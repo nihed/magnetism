@@ -4,11 +4,6 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<c:if test="${!signin.valid}">
-	<%-- this is a bad error message but should never happen since we require signin to get here --%>
-	<dht:errorPage>Not signed in</dht:errorPage>
-</c:if>
-
 <dh:bean id="person" class="com.dumbhippo.web.PersonPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" param="who"/>
 
@@ -17,7 +12,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebar who="${person.viewedUserId}"/>
+	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksBean who="${person.viewedUserId}"/>
