@@ -38,26 +38,26 @@
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">
 					<dht:postList posts="${links.receivedPosts.list}" format="full" favesMode="add-only"/>
+					<dht:moreExpander open="false"/>
 				</c:when>
 				<c:otherwise>
 					Nothing shared with you yet!
 				</c:otherwise>
 			</c:choose>
 			
-			<dht:moreExpander open="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
 
 			<c:choose>
 				<c:when test="${links.sentPosts.size > 0}">
 					<dht:postList posts="${links.sentPosts.list}" format="full" favesMode="add-only"/>
+					<dht:moreExpander open="false"/>
 				</c:when>
 				<c:otherwise>
 					You've never shared anything!
 				</c:otherwise>
 			</c:choose>
 			
-			<dht:moreExpander open="false"/>
 		</dht:zoneBoxWeb>
 	</dht:contentColumn>
 </dht:twoColumnPage>

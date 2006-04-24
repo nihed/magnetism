@@ -7,6 +7,7 @@
 <%@ attribute name="topImage" required="true" type="java.lang.String" %>
 <%@ attribute name="bottomImage" required="true" type="java.lang.String" %>
 <%@ attribute name="more" required="false" type="java.lang.String" %>
+<%@ attribute name="disableJumpTo" required="false" type="java.lang.Boolean" %>
 
 <%-- provide the zone name to child nodes; this "set a global variable" approach
 	sort of sucks, but I can't figure out how to "set a variable for our child tags only" --%>
@@ -20,6 +21,9 @@
 			<c:choose>
 				<c:when test="${!empty more}">
 					<dht:zoneBoxMoreHeader link="${more}"/>
+				</c:when>
+				<c:when test="${disableJumpTo}">
+					<%-- nothing --%>
 				</c:when>
 				<c:otherwise>
 					<dht:zoneBoxJumpToHeader skip="${zone}"/>
