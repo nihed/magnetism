@@ -17,6 +17,7 @@ public class LinksPage extends AbstractPersonPage {
 	private ListBean<PostView> favoritePosts;
 	
 	private ListBean<PostView> receivedPosts;
+	private ListBean<PostView> sentPosts;
 	
 	public LinksPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -24,17 +25,25 @@ public class LinksPage extends AbstractPersonPage {
 
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
-			logger.debug("Getting received posts for {}", getUserSignin().getUser());
+			logger.debug("Getting received posts for {}", getViewedUser());
 			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return receivedPosts;
 	}
-		
+	
 	public ListBean<PostView> getFavoritePosts() {
 		if (favoritePosts == null) {
-			logger.debug("Getting favorite posts for {}", getUserSignin().getUser());
+			logger.debug("Getting favorite posts for {}", getViewedUser());
 			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return favoritePosts;
+	}
+	
+	public ListBean<PostView> getSentPosts() {
+		if (sentPosts == null) {
+			logger.debug("Getting sent posts for {}", getViewedUser());
+			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
+		}
+		return sentPosts;
 	}
 }

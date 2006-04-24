@@ -1,5 +1,6 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
@@ -25,8 +26,7 @@
 					<dht:postList posts="${links.favoritePosts.list}" format="simple"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<%-- FIXME uppercase the name --%>
-			<dht:zoneBoxTitle>SHARED WITH <c:out value="${person.viewedPerson.name}"/></dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>SHARED WITH <c:out value="${fn:toUpperCase(person.viewedPerson.name)}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.receivedPosts.size > 0}">
 					<dht:postList posts="${links.receivedPosts.list}" format="simple"/>

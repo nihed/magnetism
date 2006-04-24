@@ -48,7 +48,14 @@
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
 
-			FIXME
+			<c:choose>
+				<c:when test="${links.sentPosts.size > 0}">
+					<dht:postList posts="${links.sentPosts.list}" format="full" favesMode="add-only"/>
+				</c:when>
+				<c:otherwise>
+					You've never shared anything!
+				</c:otherwise>
+			</c:choose>
 			
 			<dht:moreExpander open="false"/>
 		</dht:zoneBoxWeb>
