@@ -30,7 +30,7 @@
 						<%-- FIXME --%>
 						<div class="dh-counts">NN views | NN quips							
 							<c:choose>
-								<c:when test="${favesMode == 'none'}">
+								<c:when test="${favesMode == 'none' || !signin.valid}">
 									
 								</c:when>
 								<c:when test="${post.favorite}">
