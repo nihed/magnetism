@@ -11,7 +11,7 @@
 	</c:otherwise>
 </c:choose>
 
-<dht:sidebarBox boxClass="dh-profile-box dh-profile-group-box" title="${title}">
+<dht:sidebarBox boxClass="dh-profile-box dh-profile-group-box" title="${title}" lockIcon="${!group.public}">
 	<div class="dh-item">
 		<table cellpadding="0" cellspacing="0">
 			<tbody>
