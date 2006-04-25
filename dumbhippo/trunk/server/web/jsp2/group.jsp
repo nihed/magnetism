@@ -30,7 +30,7 @@
 			<dht:zoneBoxTitle>LINKS RECENTLY SHARED WITH <c:out value="${group.name}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${group.posts.size > 0}">
-					<dht:postList posts="${group.posts.list}" format="full" favesMode="add-only"/>
+					<dht:postList posts="${group.posts.list}" format="full-with-photos" favesMode="add-only"/>
 					<dht:moreExpander open="false"/>
 				</c:when>
 				<c:otherwise>

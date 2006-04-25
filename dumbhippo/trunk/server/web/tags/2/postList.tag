@@ -15,6 +15,9 @@
 		<c:when test="${format == 'full'}">
 			<dht:post post="${post}" favesMode="${favesMode}"/>
 		</c:when>
+		<c:when test="${format == 'full-with-photos'}">
+			<dht:post post="${post}" favesMode="${favesMode}" showPhoto="true"/>
+		</c:when>
 		<c:otherwise>
 			<dht:errorPage>Unknown post list format</dht:errorPage>
 		</c:otherwise>

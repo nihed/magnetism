@@ -5,6 +5,12 @@ body {
 	text-align:		center;
 }
 
+/* post descriptions have <p> tags, avoid extra space from them */
+.dh-blurb p {
+	margin-top:		1px;
+	margin-bottom:	1px;
+}
+
 #dhPage {
 	position:		relative;	
 	margin-top:		30px;
@@ -58,8 +64,29 @@ body {
 	top:			0px;
 }
 
-#dhContentColumn .dh-zone-box .dh-extra-info table {
-	width:			478px;	
+#dhContentColumn .dh-zone-box .dh-item-with-photo {
+	width:			478px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item            .dh-next-to-image .dh-extra-info table {
+	width:			478px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-photo .dh-next-to-image .dh-extra-info table {
+	width:			408px;	
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-photo .dh-next-to-image {
+	float:			right;
+	width:			408px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-photo .dh-image {
+	float:				left;
+	width:				60px;
+	height:				60px;
+	margin-right:		10px;
+	background-color:	#666666; /* debug */
 }
 
 #dhSidebarColumn {
