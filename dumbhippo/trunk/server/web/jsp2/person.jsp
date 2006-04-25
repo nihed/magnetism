@@ -15,7 +15,7 @@
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
-			<dht:requireLinksBean who="${person.viewedUserId}"/>
+			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
 			<c:if test="${links.favoritePosts.size > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 				<dht:postList posts="${links.favoritePosts.list}" format="simple"/>

@@ -16,7 +16,7 @@
 	<dht:sidebarPerson who="${signin.user.id}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
-			<dht:requireLinksBean who="${signin.user.id}"/>
+			<dht:requireLinksPersonBean who="${signin.user.id}"/>
 			<c:if test="${links.favoritePosts.size > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 					<dht:postList posts="${links.favoritePosts.list}" format="simple"/>

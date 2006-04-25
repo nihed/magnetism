@@ -28,7 +28,7 @@
 		<dht:zoneBoxWeb>
 			<c:choose>
 				<c:when test="${signin.valid}">
-					<dht:requireLinksBean who="${signin.user.id}"/>
+					<dht:requireLinksPersonBean who="${signin.user.id}"/>
 					<c:if test="${links.favoritePosts.size > 0}">
 						<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 						<dht:postList posts="${links.favoritePosts.list}" format="full"/>
@@ -68,11 +68,11 @@
 					<div><a href="">GET IT NOW</a></div>
 					<div>FIXME screenshot goes here</div>
 					<dht:zoneBoxSeparator/>
-					<dht:requireLinksAnonymousBean/>
+					<dht:requireLinksGlobalBean/>
 					<dht:zoneBoxTitle>RECENTLY SHARED</dht:zoneBoxTitle>
 					<c:choose>
-						<c:when test="${linksAnon.hotPosts.size > 0}">
-							<dht:postList posts="${linksAnon.hotPosts.list}" format="full" favesMode="add-only"/>
+						<c:when test="${linksGlobal.hotPosts.size > 0}">
+							<dht:postList posts="${linksGlobal.hotPosts.list}" format="full" favesMode="add-only"/>
 							<dht:moreExpander open="false"/>
 						</c:when>
 						<c:otherwise>

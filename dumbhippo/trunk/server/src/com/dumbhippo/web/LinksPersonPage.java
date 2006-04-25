@@ -6,11 +6,11 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
-public class LinksPage extends AbstractPersonPage {
+public class LinksPersonPage extends AbstractPersonPage {
 	
 	static private final int MAX_RESULTS = 3;
 	
-	static private final Logger logger = GlobalSetup.getLogger(LinksPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(LinksPersonPage.class);
 	
 	private PostingBoard postBoard;
 	
@@ -19,7 +19,7 @@ public class LinksPage extends AbstractPersonPage {
 	private ListBean<PostView> receivedPosts;
 	private ListBean<PostView> sentPosts;
 	
-	public LinksPage() {
+	public LinksPersonPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 

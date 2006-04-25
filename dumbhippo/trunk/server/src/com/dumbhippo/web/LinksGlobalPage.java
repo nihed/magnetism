@@ -6,18 +6,18 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 
-public class LinksAnonymousPage extends AbstractSigninOptionalPage {
+public class LinksGlobalPage extends AbstractSigninOptionalPage {
 	
 	static private final int MAX_RESULTS = 3;
 	
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(LinksAnonymousPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(LinksGlobalPage.class);
 	
 	private PostingBoard postBoard;
 	
 	private ListBean<PostView> hotPosts;
 	
-	public LinksAnonymousPage() {
+	public LinksGlobalPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
 

@@ -3,5 +3,5 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <c:if test="${empty linksAnon}">
-	<dh:bean id="linksAnon" class="com.dumbhippo.web.LinksAnonymousPage" scope="request"/>
+	<dh:bean id="linksAnon" class="com.dumbhippo.web.LinksGlobalPage" scope="request"/>
 </c:if>
