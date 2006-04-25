@@ -31,7 +31,7 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
 
-	public List<PostView> getFavoritePosts(UserViewpoint viewpoint, User user, int start, int max);	
+	public List<PostView> getFavoritePosts(Viewpoint viewpoint, User user, int start, int max);	
 	
 	public boolean canViewPost(UserViewpoint viewpoint, Post post);
 	

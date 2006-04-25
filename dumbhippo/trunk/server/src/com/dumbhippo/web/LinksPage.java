@@ -34,7 +34,7 @@ public class LinksPage extends AbstractPersonPage {
 	public ListBean<PostView> getFavoritePosts() {
 		if (favoritePosts == null) {
 			logger.debug("Getting favorite posts for {}", getViewedUser());
-			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
+			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return favoritePosts;
 	}
@@ -42,7 +42,7 @@ public class LinksPage extends AbstractPersonPage {
 	public ListBean<PostView> getSentPosts() {
 		if (sentPosts == null) {
 			logger.debug("Getting sent posts for {}", getViewedUser());
-			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getUserSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
+			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getSignin().getViewpoint(), getViewedUser(), 0, MAX_RESULTS));
 		}
 		return sentPosts;
 	}

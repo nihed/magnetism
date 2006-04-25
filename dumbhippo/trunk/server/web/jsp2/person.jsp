@@ -29,7 +29,7 @@
 					<dht:moreExpander open="false"/>
 				</c:when>
 				<c:otherwise>
-					Nothing shared by them yet!
+					Nothing shared by <c:out value="${person.viewedPerson.name}"/> yet!
 				</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxWeb>

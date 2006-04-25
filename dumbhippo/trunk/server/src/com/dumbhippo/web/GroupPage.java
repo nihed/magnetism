@@ -44,6 +44,8 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private TrackView latestTrack;
 	private ListBean<PersonView> activeMembers;
 	private ListBean<PersonView> invitedMembers;
+
+	private ListBean<PostView> posts;
 	
 	public GroupPage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -191,14 +193,14 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		
 		this.fromInvite = fromInvite;
 	}
-
-
 	
-	public List<PostView> getPosts() {
+	public ListBean<PostView> getPosts() {
 		assert getViewedGroup() != null;
 		
-		// we ask for 1 extra post to see if we need a "more posts" link
-		return postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup(), 0, MAX_POSTS_SHOWN + 1);
+		if (posts == null) {
+			posts = new ListBean<PostView>(postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup(), 0, MAX_POSTS_SHOWN));
+		}
+		return posts;
 	}
 
 	public TrackView getLatestTrack() {

@@ -746,7 +746,7 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, null, start, max);
 	}
 	
-	public List<PostView> getFavoritePosts(UserViewpoint viewpoint, User user, int start, int maxResults) {
+	public List<PostView> getFavoritePosts(Viewpoint viewpoint, User user, int start, int maxResults) {
 		
 		/*
 		 // if only friends could see the faves list...
