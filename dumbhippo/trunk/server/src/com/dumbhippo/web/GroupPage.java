@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -64,6 +65,10 @@ public class GroupPage extends AbstractSigninOptionalPage {
 
 	public String getName() {
 		return viewedGroup.getName();
+	}
+	
+	public String getNameAsHtml() {
+		return XmlBuilder.escape(getName());
 	}
 
 	public void setViewedGroupId(String groupId) {

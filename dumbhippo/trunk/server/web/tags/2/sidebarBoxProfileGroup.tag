@@ -27,20 +27,20 @@
 							<div class="dh-action-link"><a href="FIXME" title="Edit the group information">Edit profile</a></div>
 							<c:choose>
 								<c:when test="${group.canLeave}">
-									 <div class="dh-action-link"><a href='javascript:dh.actions.leaveGroup("${group.viewedGroupId}")' title="I can't take it anymore! Let yourself out of this group.">Leave Group</a></div>
+									 <dht:actionLink href='javascript:dh.actions.leaveGroup("${group.viewedGroupId}")' title="I can't take it anymore! Let yourself out of this group.">Leave Group</dht:actionLink>
 								</c:when>
 								<c:when test="${group.canJoin}">
-									 <div class="dh-action-link"><a href='javascript:dh.actions.joinGroup("${group.viewedGroupId}")' title="Become a group member">Join Group</a></div>
+									 <dht:actionLink href='javascript:dh.actions.joinGroup("${group.viewedGroupId}")' title="Become a group member">Join Group</dht:actionLink>
 								</c:when>
 							</c:choose>
 						   <%-- The browser.gecko check is here because the dynamic hiding of
 						        the control when the chat object fails to load doesn't work
 						        correctly in firefox 1.0 --%>
 						   	<c:if test="${signin.valid && !browser.gecko}">
-								<div class="dh-action-link"><a
-								href="javascript:dh.actions.requestJoinRoom('${signin.userId}','${group.viewedGroupId}')" title="Chat with other group members">Join Chat</a></div>
+								<dht:actionLink
+								href="javascript:dh.actions.requestJoinRoom('${signin.userId}','${group.viewedGroupId}')" title="Chat with other group members">Join Chat</dht:actionLink>
 							</c:if>
-							<div class="dh-action-link"><a href="javascript:dh.actions.signOut();" title="Keep others from using your account on this computer">Log out</a></div>
+							<dht:actionLink href="javascript:dh.actions.signOut();" title="Keep others from using your account on this computer">Log out</dht:actionLink>
 						</div>
 					</td>
 				</tr>
