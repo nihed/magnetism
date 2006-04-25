@@ -40,8 +40,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private User adder;
 	private PersonView inviter;
 	private GroupMember groupMember;
-	private boolean haveLatestTrack;
-	private TrackView latestTrack;
+	private ListBean<TrackView> latestTracks;
 	private ListBean<PersonView> activeMembers;
 	private ListBean<PersonView> invitedMembers;
 
@@ -203,19 +202,17 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return posts;
 	}
 
-	public TrackView getLatestTrack() {
-		if (!haveLatestTrack) {
-			haveLatestTrack = true;
+	public ListBean<TrackView> getLatestTracks() {
+		if (latestTracks == null) {
 			try {
-				List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 1);
-				if (tracks.size() > 0)
-					latestTrack = tracks.get(0);
+				List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 3);
+				latestTracks = new ListBean<TrackView>(tracks);
 			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest track: {}", e.getMessage());
+				logger.debug("Failed to load latest tracks: {}", e.getMessage());
 			}
 		}
 
-		return latestTrack;
+		return latestTracks;
 	}	
 	
 	

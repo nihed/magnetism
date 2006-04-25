@@ -25,8 +25,13 @@
 	<dht:sidebarGroup/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroup>
-			<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
-			<dht:zoneBoxSeparator/>
+			<c:if test="${group.latestTracks.size > 0}">
+				<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+				<c:forEach var="track" items="${group.latestTracks.list}">
+					<div><c:out value="${track.name}"/> by <c:out value="${track.artist}"/> played by FIXME</div>
+				</c:forEach>
+				<dht:zoneBoxSeparator/>
+			</c:if>
 			<dht:zoneBoxTitle>LINKS RECENTLY SHARED WITH <c:out value="${group.name}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${group.posts.size > 0}">
