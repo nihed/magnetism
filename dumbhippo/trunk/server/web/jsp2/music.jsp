@@ -6,6 +6,7 @@
 <head>
 	<title>Mugshot Music Radar</title>
 	<link rel="stylesheet" type="text/css" href="/css2/music.css"/>
+	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${signin.user.id}">

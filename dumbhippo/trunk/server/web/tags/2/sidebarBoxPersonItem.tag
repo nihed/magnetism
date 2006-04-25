@@ -14,6 +14,7 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
+						<dht:headshot person="${who}"/>
 					</div>
 				</td>
 				<td>

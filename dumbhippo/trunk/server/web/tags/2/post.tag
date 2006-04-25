@@ -13,6 +13,7 @@
 <div class="dh-item ${itemPhotoClass}">
 	<c:if test="${showPhoto}">
 		<div class="dh-image">
+			<dht:headshot person="${post.poster}"/>
 		</div>
 	</c:if>
 	<div class="dh-next-to-image">

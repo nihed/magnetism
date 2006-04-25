@@ -18,6 +18,7 @@
 				<tr valign="top">
 					<td>
 						<div class="dh-image">
+							<dht:headshot person="${sidebar.viewedPerson}"/>
 						</div>
 					</td>
 					<td>

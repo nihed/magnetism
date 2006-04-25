@@ -18,6 +18,7 @@
 				<tr valign="top">
 					<td>
 						<div class="dh-image">
+							<dht:groupshot group="${group.viewedGroup}"/>
 						</div>
 					</td>
 					<td>

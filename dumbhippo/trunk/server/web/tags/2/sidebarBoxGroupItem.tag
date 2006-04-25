@@ -10,6 +10,7 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
+						<dht:groupshot group="${group}"/>
 					</div>
 				</td>
 				<td>
