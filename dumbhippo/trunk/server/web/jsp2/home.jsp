@@ -11,6 +11,7 @@
 <head>
 	<title>Mugshot Home</title>
 	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
+	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${signin.user.id}"/>

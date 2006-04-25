@@ -24,8 +24,8 @@
 					<td>
 						<div class="dh-next-to-image">
 							<div class="dh-name"><c:out value="${sidebar.viewedPerson.name}"/></div>
-							<div class="dh-action-link"><a href="/account">Edit account</a></div>
-							<div class="dh-action-link"><a href="FIXME">Sign out</a></div>
+							<dht:actionLink href="/account" title="Set preferences, add addresses, and update your profile">Edit account</dht:actionLink>
+							<dht:actionLinkLogout/>
 						</div>
 					</td>
 				</tr>
