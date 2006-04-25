@@ -15,8 +15,10 @@
 	</c:choose>
 	<dht:moreLink more="/group-members"/>
 	<dht:sidebarBoxSeparator/>
-	<div><a href="FIXME">Create a group</a></div>
-	<div><a href="FIXME">Invite new members</a></div>
+	<c:if test="${group.canShare}">
+		 <div><a title="Share <c:out value="${group.name}"/> with friends" href="javascript:dh.util.openShareGroupWindow('${group.viewedGroupId}');">Invite new members</a></div>
+	</c:if>	
+	<div><a href="FIXME" title="Create a new group of your very own">Create a group</a></div>
 </dht:sidebarBox>
 
 <c:if test="${group.invitedMembers.size > 0}">
