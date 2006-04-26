@@ -23,9 +23,13 @@ public interface PostingBoard {
 
 	public URL parsePostURL(String url);
 	
+	public int getPostsForCount(Viewpoint viewpoint, Person forPerson);	
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);	
+	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient);
+	
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
@@ -35,8 +39,12 @@ public interface PostingBoard {
 	
 	public boolean canViewPost(UserViewpoint viewpoint, Post post);
 	
+	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search);
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
 
+	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search);
+	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max);
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);

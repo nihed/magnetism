@@ -7,6 +7,9 @@
 	<title>Mugshot Link Swarm</title>
 	<link rel="stylesheet" type="text/css" href="/css2/links.css"/>
 	<dht:scriptIncludes/>
+    <script type="text/javascript">
+        dojo.require("dh.links");
+    </script>	
 </head>
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${signin.user.id}">
@@ -35,12 +38,12 @@
 						<dht:moreExpander open="false"/>
 						<dht:zoneBoxSeparator/>
 					</c:if>
-					<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
-		
+					
+					<dht:zoneBoxTitle a="dhReceivedPosts">SHARED WITH ME</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.receivedPosts.size > 0}">
 							<dht:postList posts="${links.receivedPosts.list}" format="full" favesMode="add-only"/>
-							<dht:moreExpander open="false"/>
+							<dht:expandablePager index="${links.receivedPostsIndex}" total="${links.receivedPostsTotal}" pagerQuery="receivedIdx" pagerAnchor="dhReceivedPosts"/>
 						</c:when>
 						<c:otherwise>
 							Nothing shared with you yet!
@@ -48,12 +51,11 @@
 					</c:choose>
 					
 					<dht:zoneBoxSeparator/>
-					<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
-		
+					<dht:zoneBoxTitle a="dhSentPosts">SHARED BY ME</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.sentPosts.size > 0}">
 							<dht:postList posts="${links.sentPosts.list}" format="full" favesMode="add-only"/>
-							<dht:moreExpander open="false"/>
+							<dht:expandablePager index="${links.sentPostsIndex}" total="${links.sentPostsTotal}" pagerQuery="sentIdx" pagerAnchor="dhSentPosts"/>
 						</c:when>
 						<c:otherwise>
 							You've never shared anything!

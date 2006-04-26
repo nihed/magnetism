@@ -103,6 +103,17 @@ dh.actions.setNotifyPublicShares = function(notify) {
 		  	    	 });
 }
 
+dh.actions.setPersonQuip = function(entity, isLove, text) {
+   	dh.server.doPOST("setquip",
+   					{ entityType: "person", entity : entity, isLove: isLove, text: text },
+		  	    	 function(type, data, http) {
+			  	    	 document.location.reload();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't set quip");
+		  	    	 });
+}
+
 // This handler function gets stuffed as the a member function of
 // a dojo.widget.HtmlInlineEditBox
 dh.actions.renamePersonHandler = function(value, oldValue) {

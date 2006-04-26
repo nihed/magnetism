@@ -636,14 +636,16 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	static final String GET_POSTS_FOR_QUERY =
-		"SELECT post FROM Post post WHERE post.poster = :poster";
-	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max) {
+	private Query buildGetPostsForQuery(Viewpoint viewpoint, Person poster, String search, boolean isCount) {
 		User viewer = null;
 		Query q;
 		
-		StringBuilder queryText = new StringBuilder(GET_POSTS_FOR_QUERY + " AND ");
+		StringBuilder queryText = new StringBuilder("SELECT ");
+		if (isCount)
+			queryText.append("count(post)");
+		else
+			queryText.append("post");
+		queryText.append(" FROM Post post WHERE post.poster = :poster AND ");
 		if (viewpoint instanceof SystemViewpoint) {
 			// No access-control clause
 		} else if (viewpoint instanceof UserViewpoint) {
@@ -655,7 +657,8 @@ public class PostingBoardBean implements PostingBoard {
 		
 		appendPostLikeClause(queryText, search);
 		
-		queryText.append(ORDER_RECENT);
+		if (!isCount)
+			queryText.append(ORDER_RECENT);
 		
 		//logger.debug("Full getPostsFor search query is: '{}'", queryText);
 		
@@ -663,11 +666,22 @@ public class PostingBoardBean implements PostingBoard {
 		q.setParameter("poster", poster);
 		if (viewer != null)
 			q.setParameter("viewer", viewer);
-		
-		return getPostViews(viewpoint, q, search, start, max);
+		return q;
 	}
 	
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
+	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search) {
+		Query q = buildGetPostsForQuery(viewpoint, forPerson, search, true);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();	
+	}
+
+	
+	public List<PostView> getPostsFor(Viewpoint viewpoint, Person forPerson, String search, int start, int max) {
+		Query q = buildGetPostsForQuery(viewpoint, forPerson, search, false);
+		return getPostViews(viewpoint, q, search, start, max);
+	}
+
+	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient, String search, boolean isCount) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -677,19 +691,34 @@ public class PostingBoardBean implements PostingBoard {
 		
 		Query q;
 		
-		StringBuilder queryText = new StringBuilder("SELECT post FROM Post post " +
-		           "WHERE " + VIEWER_RECEIVED);
+		StringBuilder queryText = new StringBuilder("SELECT ");
+		if (isCount)
+			queryText.append("count(post)");
+		else
+			queryText.append("post");
+		queryText.append(" FROM Post post WHERE " + VIEWER_RECEIVED);
 		
 		appendPostLikeClause(queryText, search);
 
-		queryText.append(ORDER_RECENT);
+		if (!isCount)
+			queryText.append(ORDER_RECENT);
 		
 		//logger.debug("Full getReceivedPosts search query is: '{}'", queryText);
 		
 		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("viewer", recipient);
-
+		return q;
+	}
+	
+	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();
+	}
+	
+	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
@@ -889,10 +918,18 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 
+	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
+		return getPostsForCount(viewpoint, forPerson, null);
+	}	
+	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {
 		return getPostsFor(viewpoint, poster, null, start, max);
 	}
 
+	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient) {
+		return getReceivedPostsCount(viewpoint, recipient, null);
+	}
+	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max) {
 		return getReceivedPosts(viewpoint, recipient, null, start, max);
 	}

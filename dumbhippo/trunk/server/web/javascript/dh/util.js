@@ -21,6 +21,20 @@ dh.util.getParamsFromLocation = function() {
     return map;
 }
 
+dh.util.encodeQueryString = function(params) {
+	var result = ""
+	for (key in params) {
+		if (result == "")
+			result = "?"
+		else
+			result += "&"
+		result += key
+		result += "="
+		result += encodeURIComponent(params[key])
+	}
+	return result
+}
+
 dh.util.showId = function(nodeId) {
 	var node = document.getElementById(nodeId);
 	if (!node)
