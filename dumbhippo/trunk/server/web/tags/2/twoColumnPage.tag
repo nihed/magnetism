@@ -3,8 +3,20 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="alwaysShowSidebar" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="neverShowSidebar" required="false" type="java.lang.Boolean" %>
 
-<c:set var="showSidebar" value="${signin.valid || alwaysShowSidebar}" scope="request"/>
+<c:choose>
+	<c:when test="${alwaysShowSidebar}">
+		<c:set var="showSidebar" value="true" scope="request"/>
+	</c:when>
+	<c:when test="${neverShowSidebar}">
+		<c:set var="showSidebar" value="false" scope="request"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="showSidebar" value="${signin.valid}" scope="request"/>
+	</c:otherwise>
+</c:choose>
+
 <dht:body>
 	<dht:header/>
 		<div id="dhPageContent">
