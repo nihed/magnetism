@@ -223,5 +223,30 @@ body {
 }
 
 .dh-grow-div-around-floats {
-	clear:	both;
+	clear:			both;
+}
+
+#dhContentColumn .dh-form-table {
+	width:			478px;
+	margin-top:		10px;
+	margin-bottom:	10px;
+}
+
+#dhContentColumn .dh-form-table .dh-label-cell {
+	width:			110px;
+	padding-right:	10px;
+	padding-bottom:	10px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell {
+	width:			368px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div {
+	position:		relative;
+	width:			368px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {
+	width:			250px;	
 }

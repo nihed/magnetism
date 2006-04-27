@@ -137,6 +137,11 @@ img {
 	font-weight:		bold;
 }
 
+#dhContentColumn .dh-zone-box .dh-subtitle {
+	font-weight:		bold;
+	color:				#666666;
+}
+
 #dhContentColumn .dh-zone-box .dh-song {
 	font-size:			14px;
 	font-weight:		bold;
@@ -173,4 +178,14 @@ img {
 #dhContentColumn .dh-zone-box .dh-extra-info td {
 	font-size:			11px;
 	color:				#666666;
+}
+
+#dhContentColumn .dh-form-table {
+	font-size:			12px;
+}
+
+.dh-text-input {
+	border:				1px solid #CCCCCC;
+	background-color:	#FFFFFF;
+	color:				#000000;
 }
