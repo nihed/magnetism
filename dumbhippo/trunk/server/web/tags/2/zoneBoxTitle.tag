@@ -4,5 +4,5 @@
 
 <%@ attribute name="a" required="false" type="java.lang.String" %>
 
-<c:if test="${a != null}"><a name="${a}"/></c:if>
+<c:if test="${a != null}"><a name="${a}"></a></c:if>
 <div class="dh-title dh-color-${zoneName}-foreground"><jsp:doBody/></div>

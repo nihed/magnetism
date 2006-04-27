@@ -7,13 +7,13 @@
 <%@ attribute name="pagerQuery" required="true" type="java.lang.String" %>
 <%@ attribute name="pagerAnchor" required="true" type="java.lang.String" %>
 
+<div class="dh-more">
 <script type="text/javascript">
 	var dhPagerClosure<c:out value="${pagerQuery}"/> = function(i) {
 		dh.links.doPagerIndex("<c:out value="${pagerQuery}"/>", i, "<c:out value="${pagerAnchor}"/>");
 		return false;
 	}
 </script>
-<div class="dh-more">
 <c:choose>
 	<c:when test="${index == 0}">
 		<a href="${more}" onclick="return dhPagerClosure<c:out value="${pagerQuery}"/>(1);">MORE</a> (<c:out value="${total}"/>)

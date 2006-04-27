@@ -157,6 +157,7 @@ body {
 
 #dhContentColumn .dh-zone-box .dh-title {
 	margin-bottom:	3px;
+	word-wrap: break-word;
 }
 
 #dhContentColumn .dh-zone-box .dh-item {
