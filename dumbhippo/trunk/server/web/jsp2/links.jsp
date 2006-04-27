@@ -12,10 +12,18 @@
     </script>	
 </head>
 <dht:twoColumnPage>
+	<c:choose>
+	<c:when test="${signin.valid}">
+	<dht:requireLinksPersonBean who="${signin.user.id}"/>
 	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
-				<input type="checkbox"/> Receive publicly shared links
+				<input id="notifyPublicShares" type="checkbox" 
+					   <c:choose>
+					   <c:when test="${links.notifyPublicShares}">checked="true" onclick="dh.actions.setNotifyPublicShares(false);"</c:when>
+					   <c:otherwise>onclick="dh.actions.setNotifyPublicShares(true);"</c:otherwise>
+					   </c:choose>
+				/> <label for="notifyPublicShares">Receive publicly shared links</label>
 			</div>
 			<dht:sidebarBoxSeparator/>
 			<dht:sidebarBoxTitle>FREAK LIST</dht:sidebarBoxTitle>
@@ -27,6 +35,11 @@
 			</div>
 		</dht:sidebarBoxControls>		
 	</dht:sidebarPerson>
+	</c:when>
+	<c:otherwise>
+		FIXME
+	</c:otherwise>
+	</c:choose>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
 			<c:choose>

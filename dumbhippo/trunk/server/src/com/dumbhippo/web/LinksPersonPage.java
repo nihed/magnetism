@@ -24,6 +24,8 @@ public class LinksPersonPage extends AbstractPersonPage {
 	private int sentPostsIndex = 0;
 	private ListBean<PostView> sentPosts;
 	
+	private Boolean notifyPublicShares;
+	
 	public LinksPersonPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
@@ -83,4 +85,10 @@ public class LinksPersonPage extends AbstractPersonPage {
 	public void setSentPostsIndex(int idx) {
 		this.sentPostsIndex = idx;
 	}	
+	
+	public boolean getNotifyPublicShares() {
+		if (notifyPublicShares == null)
+			notifyPublicShares = identitySpider.getNotifyPublicShares(getViewedUser());
+		return notifyPublicShares;
+	}
 }
