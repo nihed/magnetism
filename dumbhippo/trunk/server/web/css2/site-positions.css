@@ -232,10 +232,13 @@ body {
 	margin-bottom:	10px;
 }
 
+#dhContentColumn .dh-form-table tr {
+	margin-bottom:	10px;
+}
+
 #dhContentColumn .dh-form-table .dh-label-cell {
 	width:			110px;
 	padding-right:	10px;
-	padding-bottom:	10px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell {
@@ -249,4 +252,16 @@ body {
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {
 	width:			250px;	
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-password-input {
+	width:			180px;	
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-username-input {
+	width:			180px;	
+}
+
+div.dh-save-status {
+	padding:		4px;
 }

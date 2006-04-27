@@ -18,10 +18,12 @@
 		<dht:zoneBoxAccount>
 			<dht:zoneBoxTitle>PUBLIC INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>This information will be visible on your profile page.</dht:zoneBoxSubtitle>
-			<dht:formTable hasSaveCancelButtons="true">
+			<dht:formTable>
+				<dht:formTableRowStatus>Your user name has been saved.</dht:formTableRowStatus>
 				<dht:formTableRow label="User name">
-					<dht:textInput/>
+					<dht:textInput extraClass="dh-username-input"/>
 				</dht:formTableRow>
+				<dht:formTableRowStatus>Your bio has been saved.</dht:formTableRowStatus>
 				<dht:formTableRow label="About me">
 					<div>
 						<input type="button" value="Generate a random bio!"/>
@@ -29,6 +31,9 @@
 					<div>
 						<dht:textInput multiline="true"/>
 					</div>
+				</dht:formTableRow>
+				<dht:formTableRow label="MySpace name">
+					<dht:textInput/>
 				</dht:formTableRow>				
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
@@ -36,14 +41,35 @@
 			<dht:zoneBoxSubtitle>This information will only be seen by friends.</dht:zoneBoxSubtitle>
 			<dht:formTable>
 				<dht:formTableRow label="Email addresses">
-					<div>foo@bar.com</div>
-					<div><a href="">Add an additional email address</a></div>
+					<table>
+						<tbody>
+							<tr><td>foo@bar.com</td><td><a href="FIXME">remove</a></td><td></td></tr>
+							<tr><td>foo@bar.com</td><td><a href="FIXME">remove</a></td><td></td></tr>
+							<tr><td><dht:textInput/></td><td><input type="button" value="Verify"/></td><td></td></tr>
+						</tbody>
+					</table>
 				</dht:formTableRow>
+				<dht:formTableRowStatus>Verification mail sent to foo@bar.com.</dht:formTableRowStatus>
+				<dht:formTableRow label="AIM screen names">
+					<table>
+						<tbody>
+							<tr><td>foobar2000</td><td></td><td></td></tr>
+							<tr><td><dht:textInput/></td><td><input type="button" value="Verify"/></td><td></td></tr>
+						</tbody>
+					</table>
+				</dht:formTableRow>
+				<dht:formTableRowStatus>Verification IM sent to foobar123.</dht:formTableRowStatus>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SECURITY INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>Nobody sees this stuff but you.</dht:zoneBoxSubtitle>
 				<dht:formTable>
+					<dht:formTableRow label="Set a password">
+						<dht:textInput extraClass="dh-password-input"/>
+					</dht:formTableRow>
+					<dht:formTableRow label="Re-type password">
+						<dht:textInput extraClass="dh-password-input"/><span style="width: 10px;"></span><input type="button" value="Set password"/>
+					</dht:formTableRow>				
 					<dht:formTableRow label="Disable account">
 						<div>
 							<input type="button" value="Disable account"/>
