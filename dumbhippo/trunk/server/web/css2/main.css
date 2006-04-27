@@ -27,3 +27,19 @@
 .dh-zone-box .dh-attribution .dh-name-link {
 	font-weight:	bold;
 }
+
+.dh-bottom-image {
+	background: 	#EFEFEF;
+}
+
+#dhMainContent {
+	background-color: 	#FFFFFF;
+}
+
+#dhMainContent .dh-zone-box-spacer {
+	background-color: 	#EFEFEF;
+}
+
+.dh-column-gap {
+	background-color: 	#EFEFEF;
+}

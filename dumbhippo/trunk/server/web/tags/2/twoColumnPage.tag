@@ -17,7 +17,7 @@
 	</c:otherwise>
 </c:choose>
 
-<dht:body>
+<dht:body extraClass="dh-gray-background-page">
 	<dht:header/>
 		<div id="dhPageContent">
 			<jsp:doBody/>

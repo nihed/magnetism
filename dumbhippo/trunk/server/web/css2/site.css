@@ -13,6 +13,10 @@ img {
 	border-style:		none;	
 }
 
+body.dh-gray-background-page {
+	background-color:	#efefef;
+}
+
 .dh-color-web {
 	background-color: 	#F16D1C;
 	color:				white;
@@ -63,7 +67,7 @@ img {
 }
 
 .dh-separator {
-	background-color:	#CCCCCC;
+	background-color:	#999999;
 	height:				1px;
 }
 
@@ -95,7 +99,7 @@ img {
 }
 
 .dh-sidebar-box {
-	background-color:	#EBEBEB;
+	background-color:	#CFCFCF;
 	font-size:			12px;
 }
 
@@ -125,6 +129,10 @@ img {
 .dh-sidebar-box .dh-more, .dh-zone-box .dh-more {
 	font-size:			12px;
 	font-weight:		bold;
+}
+
+.dh-zone-box .dh-bottom-image, .dh-zone-box .dh-header-image {
+	background: 		#EFEFEF;
 }
 
 #dhContentColumn .dh-zone-box .dh-shared-link {

@@ -38,7 +38,7 @@
 	</script>
 </head>
 <%-- can use dht:body once we don't need onload here --%>
-<body onload="init();">
+<body onload="init();" class="dh-gray-background-page">
 	<div id="dhPage">
 		<div id="dhMainTopBox">
 			<div id="dhMainLogo"><img src="/images2/logotag.gif"/></div>
@@ -73,7 +73,7 @@
 			</div>
 			<div class="dh-zone-box-spacer"> </div>
 			<div class="dh-zone-box">
-				<div><a href="/music"><img id="dhHeaderMusic" src="/images2/header_musichome1.gif"/></a></div>
+				<div><a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome1.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-music">
 					<div class="dh-zone-box-content dh-color-normal">
 						<div class="dh-item">
@@ -114,17 +114,20 @@
 					</div>
 				</div>
 			</div>
+			<div class="dh-grow-div-around-floats"><div></div></div>
 		</div>
 		<div id="dhMainColumnBottoms">
 			<div id="dhMainColumnOneLeftSide" class="dh-column-side dh-color-web"><div></div></div>
 			<div id="dhMainColumnOneRightSide" class="dh-column-side dh-color-web"><div></div></div>
+			<div id="dhMainColumnOneTwoGap" class="dh-column-gap"><div></div></div>
 			<div id="dhMainColumnTwoLeftSide" class="dh-column-side dh-color-music"><div></div></div>
 			<div id="dhMainColumnTwoRightSide" class="dh-column-side dh-color-music"><div></div></div>			
+			<div id="dhMainColumnTwoThreeGap" class="dh-column-gap"><div></div></div>
 			<div id="dhMainColumnThreeLeftSide" class="dh-column-side dh-color-tv"><div></div></div>
 			<div id="dhMainColumnThreeRightSide" class="dh-column-side dh-color-tv"><div></div></div>
-			<div id="dhMainColumnOneBottom" class="dh-column-bottom"><img src="/images2/bottom_link230.gif"/></div>
-			<div id="dhMainColumnTwoBottom" class="dh-column-bottom"><img src="/images2/bottom_music230.gif"/></div>
-			<div id="dhMainColumnThreeBottom" class="dh-column-bottom"><img src="/images2/bottom_tvparty230.gif"/></div>
+			<div id="dhMainColumnOneBottom" class="dh-column-bottom"><img src="/images2/bottom_link230.gif" class="dh-bottom-image"/></div>
+			<div id="dhMainColumnTwoBottom" class="dh-column-bottom"><img src="/images2/bottom_music230.gif" class="dh-bottom-image"/></div>
+			<div id="dhMainColumnThreeBottom" class="dh-column-bottom"><img src="/images2/bottom_tvparty230.gif" class="dh-bottom-image"/></div>
 		</div>
 		<dht:footer/>
 	</div>

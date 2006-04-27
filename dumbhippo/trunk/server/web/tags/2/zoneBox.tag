@@ -16,7 +16,7 @@
 <div class="dh-zone-box dh-color-${zone}">
 	<%-- Having whitespace in here seems to confuse IE, so it's a huge line; probably there's some better way --%>
 	<div class="dh-zone-box-header">
-		<img src="${topImage}"/>
+		<img src="${topImage}" class="dh-header-image"/>
 		<div class="dh-zone-box-header-links">
 			<c:choose>
 				<c:when test="${!empty more}">
@@ -36,5 +36,5 @@
 			<jsp:doBody/>
 		</div>
 	</div>
-	<div><img src="${bottomImage}"/></div>					
+	<div><img src="${bottomImage}" class="dh-bottom-image"/></div>					
 </div>

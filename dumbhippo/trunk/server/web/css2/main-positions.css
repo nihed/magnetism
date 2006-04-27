@@ -33,8 +33,11 @@
 .dh-zone-box-spacer {
 	float:			left;
 	width:			10px;
-	/* height needed or firefox ignores the spacer */
-	height:			20px;
+	/* some height needed or firefox ignores the spacer; 
+	 * also, needs to overlap the .dh-column-gap things 
+	 * coming up from the bottom
+	 */
+	height:			180px;
 }
 
 .dh-color-web .dh-extra-info {
@@ -80,6 +83,13 @@
 	top:			0px;
 }
 
+.dh-column-gap {
+	position:		absolute;
+	width:			10px;
+	height:			260px;
+	bottom:			-1px;
+}
+
 #dhMainColumnOneLeftSide {
 	left:			0px;	
 }
@@ -92,12 +102,20 @@
 	left:			0px;
 }
 
+#dhMainColumnOneTwoGap {
+	left:			230px;	
+}
+
 #dhMainColumnTwoLeftSide, #dhMainColumnTwoBottom {
 	left:			240px;	
 }
 
 #dhMainColumnTwoRightSide {
 	left:			469px;	
+}
+
+#dhMainColumnTwoThreeGap {
+	left:			470px;	
 }
 
 #dhMainColumnThreeLeftSide, #dhMainColumnThreeBottom {
