@@ -13,7 +13,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
 	<dht:scriptIncludes/>
 </head>
-<dht:twoColumnPage>
+<dht:twoColumnPage disableHomeLink="true">
 	<dht:sidebarPerson who="${signin.user.id}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">

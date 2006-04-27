@@ -63,7 +63,7 @@
 		</div>
 		<div id="dhMainContent">
 			<div class="dh-zone-box">
-				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome1.gif"/></a></div>
+				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-web">
 					<div class="dh-zone-box-content dh-color-normal">
 						<dht:requireLinksGlobalBean/>
@@ -73,7 +73,7 @@
 			</div>
 			<div class="dh-zone-box-spacer"> </div>
 			<div class="dh-zone-box">
-				<div><a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome1.gif"/></a></div>
+				<div><a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-music">
 					<div class="dh-zone-box-content dh-color-normal">
 						<div class="dh-item">
@@ -100,7 +100,7 @@
 			</div>
 			<div class="dh-zone-box-spacer"> </div>
 			<div class="dh-zone-box">
-				<div><a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome1.gif"/></a></div>
+				<div><a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-tv">
 					<div class="dh-zone-box-content dh-color-normal">
 						<div class="dh-item">

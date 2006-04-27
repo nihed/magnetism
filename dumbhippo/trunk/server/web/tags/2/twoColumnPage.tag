@@ -4,6 +4,7 @@
 
 <%@ attribute name="alwaysShowSidebar" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="neverShowSidebar" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
 	<c:when test="${alwaysShowSidebar}">
@@ -18,7 +19,7 @@
 </c:choose>
 
 <dht:body extraClass="dh-gray-background-page">
-	<dht:header/>
+	<dht:header disableHomeLink="${disableHomeLink}"/>
 		<div id="dhPageContent">
 			<jsp:doBody/>
 		</div>
