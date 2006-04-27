@@ -276,4 +276,30 @@
         <bodycontent>empty</bodycontent>
         <info>Outputs "A Red Hat Something"</info>        
     </tag>    
+    <tag>
+        <name>pagerLinkList</name>
+        <tagclass>com.dumbhippo.web.PagerLinkListTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Display list of pager links</info>        
+	    <attribute>
+           <name>index</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>total</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>onClick</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>resultsPerPage</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>                          
+    </tag>    
 </taglib>
