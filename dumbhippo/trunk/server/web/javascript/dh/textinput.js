@@ -87,7 +87,7 @@ dh.textinput.cancelEvent = function(ev)
 	}
 };
 
-dh.textinput.Entry = function(entryNode, valueIsDefault)
+dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 {
 	//The 'me' variable allow you to access this object
 	//from event handlers
@@ -95,28 +95,28 @@ dh.textinput.Entry = function(entryNode, valueIsDefault)
 
 	//A reference to the input element we're binding to
 	this.elem = entryNode;
+	if (currentValue)
+		this.elem.value = currentValue;
+	else
+		this.elem.value = ""; // overwrite anything the browser saved over a reload
 	
-	this.lastValue = null;
+	this.lastValue = this.elem.value;
 	
-	this.defaultText = null;
+	this.defaultText = defaultText;
 	this.showingDefaultText = false;
 	
 	// if empty is invalid, we always show default text if value is empty
 	this.emptyIsValid = false;
-	
-	// if it's a password, we only become a password when not in demo/default mode
-	this.isPassword = true;	
-		
+			
 	this._showDefaultText = function() {
-		if (!this.showingDefaultText) {
+		if (!this.showingDefaultText && this.defaultText) {
 			dojo.html.addClass(this.elem, "dh-entry-showing-default");
 			this.elem.value = this.defaultText;
 			this.showingDefaultText = true;			
 		}
 	}
 	
-	if (valueIsDefault) {
-		this.defaultText = this.elem.value;
+	if (this.defaultText && this.elem.value.length == 0) {
 		this._showDefaultText();
 	}
 	
@@ -130,11 +130,12 @@ dh.textinput.Entry = function(entryNode, valueIsDefault)
 
 	this._emitValueChanged = function() {
 		var v = this.getValue();
+		dojo.debug("v = '" + v + "'");
+		if (!this.emptyIsValid && (!v || v.length == 0)) {
+			this._showDefaultText();
+		}
 		if (v != this.lastValue) {
 			this.lastValue = v;
-			if (!this.emptyIsValid && (!v || v == "")) {
-				this._showDefaultText();
-			}
 			this.onValueChanged(v);
 		}
 	}
@@ -172,6 +173,10 @@ dh.textinput.Entry = function(entryNode, valueIsDefault)
 	
 	this.elem.onfocusin = function(ev) {
 		me._hideDefaultText();
+	}
+	
+	this.elem.onfocusout = function(ev) {
+		me._emitValueChanged();
 	}
 	
 	this.elem.onkeydown = function(ev) {
