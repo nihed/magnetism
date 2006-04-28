@@ -228,17 +228,16 @@ body {
 
 .dh-song-with-art {
 	position: 			relative;
-	height: 			72px;
 }
 
 .dh-song-image {
-	position:			absolute;
+	float:				left;
 }
 
 .dh-song-with-art .dh-song-info {
-	position:			relative;
-	left:				80px;
-	width:				152px; // 232 - 80
+	float:				left;
+	margin-left:		8px;
+	width:				147px;
 }
 
 .dh-one-line-song div {

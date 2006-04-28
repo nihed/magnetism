@@ -76,25 +76,13 @@
 				<div><a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome.gif"/></a></div>
 				<div class="dh-zone-box-border dh-color-music">
 					<div class="dh-zone-box-content dh-color-normal">
-						<div class="dh-item">
-							<div class="dh-album-art"><div></div></div>
-							<div class="dh-song-item-details">
-								<div class="dh-attribution"><a href="" class="dh-name-link">Samiam</a> is playing</div>
-								<div class="dh-title"><a href="">Prep Gwarlek 38 Remix</a></div>
-								<div class="dh-extra-info">by <a href="" class="dh-name-link">Alarm Will Sound</a></div>
-								<div class="dh-play-at">Play at <a href="">iTunes</a> | <a href="">Yahoo!</a></div>
-							</div>
-						</div>
-						<dht:zoneBoxSeparator/>
-						<div class="dh-item">
-							<div class="dh-album-art"><div></div></div>
-							<div class="dh-song-item-details">
-								<div class="dh-attribution"><a href="" class="dh-name-link">Jon The Master</a> is playing</div>
-								<div class="dh-title"><a href="">Thank You Falletinme Be Mice Elf Agin</a></div>
-								<div class="dh-extra-info">by <a href="" class="dh-name-link">Sly and the Family Stone</a></div>
-								<div class="dh-play-at">Play at <a href="">iTunes</a> | <a href="">Rhapsody</a> | <a href="">Yahoo!</a></div>
-							</div>
-						</div>
+						<dht:requireMusicGlobalBean/>
+						<c:forEach items="${musicGlobal.recentTracks.list}" var="track" varStatus="status">
+							<dht:track track="${track}" albumArt="true"/>
+							<c:if test="${!status.last}">
+								<dht:zoneBoxSeparator/>
+							</c:if>
+						</c:forEach>
 					</div>
 				</div>
 			</div>

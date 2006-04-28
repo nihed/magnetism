@@ -52,10 +52,14 @@
 	position:	relative;
 }
 
-.dh-zone-box .dh-item .dh-album-art {
-	position:		absolute;
+.dh-song-with-art {
+	width:				100%;
 }
 
+.dh-song-with-art .dh-song-info {
+	width:				124px;
+}
+.
 .dh-zone-box .dh-item .dh-song-item-details {
 	/* must be padding not margin or an IE bug will assign the margin
 	   to the album art also */

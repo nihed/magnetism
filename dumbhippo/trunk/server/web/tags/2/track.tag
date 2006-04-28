@@ -115,4 +115,7 @@
 			</c:if>
 		</c:if>		
 	</div>
+	<c:if test="${albumArt}">
+		<div class="dh-grow-div-around-floats"></div>
+	</c:if>
 </div>
