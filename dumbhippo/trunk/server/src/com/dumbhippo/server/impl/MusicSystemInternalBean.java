@@ -997,12 +997,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getViewsFromTrackHistories(history);
 	}
 	
-	private List<TrackView> getTrackViewsFromNamedQuery(String queryName, int maxResults) {
-		Query q = em.createNamedQuery(queryName);
+	private List<TrackView> getTrackViewsFromQuery(Query query, int maxResults) {
 		if (maxResults > 0)
-			q.setMaxResults(maxResults);
+			query.setMaxResults(maxResults);
 		
-		List<?> objects = q.getResultList();
+		List<?> objects = query.getResultList();
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
 		for (Object o : objects) {
 			futureViews.add(getTrackViewAsync((Track)o, -1));
@@ -1012,11 +1011,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
-		return getTrackViewsFromNamedQuery("trackHistoryMostPopularTracks", maxResults);
+		return getTrackViewsFromQuery(em.createNamedQuery("trackHistoryMostPopularTracks"), maxResults);
 	}
 	
 	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {
-		return getTrackViewsFromNamedQuery("trackHistoryOnePlayTracks", maxResults);
+		return getTrackViewsFromQuery(em.createNamedQuery("trackHistoryOnePlayTracks"), maxResults);
+	}
+	
+	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults) {
+		Query query = em.createNamedQuery("trackHistoryMostPopularTracksSince");
+		query.setParameter("since", since);
+		
+		return getTrackViewsFromQuery(query, maxResults);
 	}
 
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {

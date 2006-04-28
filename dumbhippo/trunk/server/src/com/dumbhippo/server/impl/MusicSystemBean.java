@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.EJB;
@@ -93,6 +94,10 @@ public class MusicSystemBean implements MusicSystem {
 		
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
 		return internal.getFrequentTrackViews(viewpoint, maxResults);
+	}
+	
+	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults) {
+		return internal.getFrequentTrackViewsSince(viewpoint, since, maxResults);
 	}
 
 	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {

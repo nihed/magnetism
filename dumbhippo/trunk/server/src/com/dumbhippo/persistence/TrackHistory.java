@@ -72,6 +72,32 @@ import javax.persistence.UniqueConstraint;
 			"ORDER by timesPlayed DESC, lastUpdated DESC",
 		resultSetMapping="trackHistoryAggregateMapping"
 	),
+	@NamedNativeQuery(name="trackHistoryMostPopularTracksSince",
+			queryString=
+				"SELECT  " +
+				"  track.album as album, " +
+				"  track.artist as artist, " +
+				"  track.digest as digest, " +
+				"  track.discIdentifier as discIdentifier, " +
+				"  track.duration as duration, " +
+				"  track.fileSize as fileSize, " +
+				"  track.format as format, " +
+				"  track.id as id, " +
+				"  track.name as name, " +
+				"  track.trackNumber as trackNumber, " + 
+				"  track.type as type, " +
+				"  track.url as url, " + 
+				"  MAX(th.lastUpdated) as lastUpdated, " +
+				// Can't use SUM since we just have a "last played" time, other
+				// plays might be before "since"
+				"  COUNT(th.timesPlayed) as timesPlayed " + 
+				"FROM TrackHistory th LEFT JOIN Track track on th.track_id = track.id " +
+				"WHERE th.lastUpdated > :since " +
+				"GROUP by th.track_id " +
+				// probably a waste to tie-break by lastUpdated here, but fairly cheap
+				"ORDER by timesPlayed DESC, lastUpdated DESC",
+			resultSetMapping="trackHistoryAggregateMapping"
+		),
 	@NamedNativeQuery(name="trackHistoryOnePlayTracks",
 			queryString=
 				"SELECT  " +
@@ -90,7 +116,6 @@ import javax.persistence.UniqueConstraint;
 				"  MAX(th.lastUpdated) as lastUpdated, " +
 				"  SUM(th.timesPlayed) as timesPlayed " +
 				"FROM TrackHistory th LEFT JOIN Track track on th.track_id = track.id " +
-				"WHERE th.timesPlayed = 1 " + // Prefilter, if 1 track has > 1, total is > 1 
 				"GROUP by th.track_id " +
 				"HAVING timesPlayed = 1 " +
 				"ORDER by lastUpdated DESC",

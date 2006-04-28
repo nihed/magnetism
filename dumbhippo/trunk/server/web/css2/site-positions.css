@@ -236,7 +236,9 @@ body {
 }
 
 .dh-song-with-art .dh-song-info {
-	margin-left:		80px;
+	position:			relative;
+	left:				80px;
+	width:				152px; // 232 - 80
 }
 
 #dhContentColumn .dh-form-table {

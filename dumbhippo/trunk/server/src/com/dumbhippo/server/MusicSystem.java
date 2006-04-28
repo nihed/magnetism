@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -39,7 +40,6 @@ public interface MusicSystem {
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults);
 
-	
 	/**
 	 * Returns the globally most played tracks in the system.
 	 * 
@@ -48,6 +48,19 @@ public interface MusicSystem {
 	 * @return a list of TrackViews for the most popular tracks
 	 */
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults);
+	
+	/**
+	 * Returns the globally most played tracks in the system since a specified
+	 * date/time. (Since we only store one date per track per user, unlike
+	 * getFrequentTrackViews, "most played" is computed not as number of total
+	 * plays, but rather as number of distinct users playing the track)
+	 * 
+	 * @param viewpoint Viewpoint retrieving the information
+	 * @param since only consider tracks played after this date.
+	 * @param maxResults maximum number of results to return, if positive 
+	 * @return a list of TrackViews for the most popular tracks
+	 */
+	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults);
 	
 	/**
 	 * Returns the most recent tracks in the system that have only been
