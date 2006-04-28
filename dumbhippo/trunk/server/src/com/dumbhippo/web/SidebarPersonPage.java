@@ -10,4 +10,5 @@ public final class SidebarPersonPage extends AbstractPersonPage {
 
 	public SidebarPersonPage() {
 	}
+	
 }

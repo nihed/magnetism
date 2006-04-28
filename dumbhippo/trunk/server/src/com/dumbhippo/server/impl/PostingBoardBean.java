@@ -41,8 +41,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.GroupPostAddedEvent;
 import com.dumbhippo.live.LiveGroup;
-import com.dumbhippo.live.LiveGroupUpdater;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
@@ -121,9 +121,6 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private RecommenderSystem recommenderSystem;
-	
-	@EJB
-	private LiveGroupUpdater liveGroupUpdater;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -270,7 +267,7 @@ public class PostingBoardBean implements PostingBoard {
 		for (Group g : groupRecipients) {
 			LiveGroup liveGroup = liveState.peekLiveGroup(g.getGuid());
 			if (liveGroup != null) {
-				liveGroupUpdater.groupPostReceived(liveGroup, post);
+		        liveState.queueUpdate(new GroupPostAddedEvent(g.getGuid()));					
 			}
 		}
 		
@@ -658,13 +655,15 @@ public class PostingBoardBean implements PostingBoard {
 			queryText.append("count(post)");
 		else
 			queryText.append("post");
-		queryText.append(" FROM Post post WHERE post.poster = :poster AND ");
+		queryText.append(" FROM Post post WHERE post.poster = :poster ");
 		if (viewpoint instanceof SystemViewpoint) {
 			// No access-control clause
 		} else if (viewpoint instanceof UserViewpoint) {
 			viewer = ((UserViewpoint)viewpoint).getViewer();
+			queryText.append(" AND ");
 			queryText.append(CAN_VIEW);
 		} else {
+			queryText.append(" AND ");			
 			queryText.append(CAN_VIEW_ANONYMOUS);
 		}
 		
@@ -744,14 +743,16 @@ public class PostingBoardBean implements PostingBoard {
 			queryText.append("count(post)");
 		else
 			queryText.append("post");
-		queryText.append(" FROM Post post WHERE :recipient MEMBER OF post.groupRecipients");
+		queryText.append(" FROM Post post WHERE :recipient MEMBER OF post.groupRecipients ");
 
 		if (viewpoint instanceof SystemViewpoint) {
 		    // No access control clause
 		} else if (viewpoint instanceof UserViewpoint) {
 			viewer = ((UserViewpoint)viewpoint).getViewer();
+			queryText.append(" AND ");
 			queryText.append(CAN_VIEW);
 		} else {
+			queryText.append(" AND ");			
 			queryText.append(CAN_VIEW_ANONYMOUS);
 		}
 		

@@ -30,7 +30,7 @@ public interface PostingBoard {
 	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient);
 	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);
-
+	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
@@ -47,6 +47,8 @@ public interface PostingBoard {
 	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max);
 
+	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient, String search);
+	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
 	/**

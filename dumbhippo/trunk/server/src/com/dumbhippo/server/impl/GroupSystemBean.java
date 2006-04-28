@@ -20,8 +20,7 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.LiveGroup;
-import com.dumbhippo.live.LiveGroupUpdater;
+import com.dumbhippo.live.GroupMembershipChangeEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
@@ -55,9 +54,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
-	
-	@EJB
-	private LiveGroupUpdater liveGroupUpdater;
 	
 	@EJB
 	private TransactionRunner runner;
@@ -198,11 +194,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 			
-			LiveState liveState = LiveState.getInstance();
-			LiveGroup liveGroup = liveState.peekLiveGroup(group.getGuid());
-			if (liveGroup != null) {
-				liveGroupUpdater.groupMemberCountChanged(liveGroup);
-			}			
+	        LiveState.getInstance().queueUpdate(new GroupMembershipChangeEvent(group.getGuid(), true));		
 		}
 	}
 	
@@ -214,11 +206,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			GroupMember groupMember = getGroupMember(group, person);
 			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
-				LiveState liveState = LiveState.getInstance();
-				LiveGroup liveGroup = liveState.peekLiveGroup(group.getGuid());
-				if (liveGroup != null) {
-					liveGroupUpdater.groupMemberCountChanged(liveGroup);
-				}
+				
+		        LiveState.getInstance().queueUpdate(new GroupMembershipChangeEvent(group.getGuid(), false));						
 			}
 		} catch (NotFoundException e) {
 			// nothing to do
@@ -262,7 +251,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		else
 			queryString.append("gm.member");
 		
-		queryString.append("FROM GroupMember gm, Group g " +
+		queryString.append(" FROM GroupMember gm, Group g " +
 				"WHERE gm.group = :group AND g = :group");
 		
 		String statusClause = getStatusClause(status);

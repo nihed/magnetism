@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -34,7 +35,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	
-	private Group viewedGroup;
+	private GroupView viewedGroup;
 	private String viewedGroupId;
 	private boolean fromInvite;
 	private boolean justAdded;
@@ -55,7 +56,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 	
-	public Group getViewedGroup() {
+	public GroupView getViewedGroup() {
 		return viewedGroup;
 	}
 
@@ -64,7 +65,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public String getName() {
-		return viewedGroup.getName();
+		return viewedGroup.getGroup().getName();
 	}
 	
 	public String getNameAsHtml() {
@@ -78,33 +79,37 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		// we only do one lookup in the database. Careful: need to propagate
 		// the handling of REMOVED members from lookupGroupById to getGroupMember
 		
+		Group group = null;
 		if (groupId != null) {
 			try {
-				viewedGroup = groupSystem.lookupGroupById(getSignin().getViewpoint(), groupId);
+				group = groupSystem.lookupGroupById(getSignin().getViewpoint(), groupId);
 			} catch (NotFoundException e) {
 				viewedGroupId = null;
 			}
 		}
 		
-		if (viewedGroup != null && getSignin().isValid()) {
+		if (group != null && getSignin().isValid()) {
 			UserViewpoint viewpoint = (UserViewpoint)getSignin().getViewpoint();
+		
 			
 			try {
-				groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), viewedGroup, viewpoint.getViewer());
+				groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
 			} catch (NotFoundException e) {
-				groupMember = new GroupMember(viewedGroup, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
+				groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
 			}
+			
+			viewedGroup = new GroupView(group, groupMember, null);			
 			
 			// If you view a group you were invited to, you get added; you can leave again and then 
 			// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
 			if (groupMember.getStatus() == MembershipStatus.INVITED) {
-				groupSystem.addMember(viewpoint.getViewer(), viewedGroup, viewpoint.getViewer());
+				groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
 				
 				// reload the groupMember to have the new state
 				try {
-					groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), viewedGroup, viewpoint.getViewer());
+					groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
 				} catch (NotFoundException e) {
-					groupMember = new GroupMember(viewedGroup, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
+					groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
 				}
 	
 				justAdded = true;
@@ -115,7 +120,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	private List<PersonView> getMembers(MembershipStatus status) {
-		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup, status));
+		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status));
 		return result;
 	}
  
@@ -145,7 +150,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 
 	public boolean getCanJoin() {
 		return !isMember() && 
-		       (viewedGroup.getAccess() == GroupAccess.PUBLIC ||
+		       (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
 	}
 
@@ -158,15 +163,15 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public boolean isForum() {
-		return viewedGroup.getAccess() == GroupAccess.PUBLIC;
+		return viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC;
 	}
 	
 	public boolean isPublic() {
-		return viewedGroup.getAccess() == GroupAccess.PUBLIC_INVITE;
+		return viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC_INVITE;
 	}
 	
 	public boolean isPrivate() {
-		return viewedGroup.getAccess() == GroupAccess.SECRET;		
+		return viewedGroup.getGroup().getAccess() == GroupAccess.SECRET;		
 	}
 
 	public boolean isInvitedNotAccepted() {
@@ -202,14 +207,14 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		assert getViewedGroup() != null;
 		
 		if (posts == null) {
-			posts = new ListBean<PostView>(postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup(), 0, MAX_POSTS_SHOWN));
+			posts = new ListBean<PostView>(postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), 0, MAX_POSTS_SHOWN));
 		}
 		return posts;
 	}
 
 	public ListBean<TrackView> getLatestTracks() {
 		if (latestTracks == null) {
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 3);
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), 3);
 			latestTracks = new ListBean<TrackView>(tracks);
 		}
 
