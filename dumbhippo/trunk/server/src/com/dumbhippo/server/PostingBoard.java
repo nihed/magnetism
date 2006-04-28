@@ -49,6 +49,18 @@ public interface PostingBoard {
 
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
+	/**
+	 * Count the number of posts sent to a group that are visible to a 
+	 * particular viewpoint. Passing in the system viewpoint here will
+	 * be faster, but the count may be greater than the number of
+	 * posts that a user can actually see.
+	 * 
+	 * @param viewpoint viewpoint retrieving the information
+	 * @param group a group
+	 * @return count of the number of posts sent to the group that are visible to the viewpoint.
+	 */
+	public int getGroupPostsCount(Viewpoint viewpoint, Group group);
+	
 	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max);
 	
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
