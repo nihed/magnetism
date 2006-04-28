@@ -241,6 +241,14 @@ body {
 	width:				152px; // 232 - 80
 }
 
+.dh-one-line-song div {
+	display:			inline;
+}
+
+.dh-one-line-song {
+	width:				100%;
+}
+
 #dhContentColumn .dh-form-table {
 	width:			478px;
 	margin-top:		10px;

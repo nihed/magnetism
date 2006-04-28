@@ -34,10 +34,17 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
+			<dht:requireMusicPersonBean who="${signin.user.id}"/>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
+					
+			<c:forEach items="${musicPerson.recentTracks.list}" var="track">
+				<dht:track track="${track}" oneLine="true" playItLink="false"/>
+			</c:forEach>
+	
+			<dht:moreExpander open="false"/>
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>

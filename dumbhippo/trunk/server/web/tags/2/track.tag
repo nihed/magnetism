@@ -1,11 +1,16 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="albumArt" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty albumArt}">
 	<c:set var="albumArt" value="false"/>
+</c:if>
+
+<c:if test="${empty oneLine}">
+	<c:set var="oneLine" value="false"/>
 </c:if>
 
 <c:if test="${empty linkifySong}">
@@ -28,7 +33,19 @@
 	<c:param name="album" value="${track.album}"/>
 </c:url>
 
-<div class='${albumArt ? "dh-song dh-song-with-art" : "dh-song"}'>
+<c:choose>
+	<c:when test="${albumArt}">
+		<c:set var="songClass" value="dh-song dh-song-with-art" scope="page"/>
+	</c:when>
+	<c:when test="${oneLine}">
+		<c:set var="songClass" value="dh-song dh-one-line-song" scope="page"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="songClass" value="dh-song" scope="page"/>
+	</c:otherwise>
+</c:choose>
+
+<div class='${songClass}'>
 	<c:if test="${albumArt}">
 		<div class="dh-song-image">
 			<a href="${albumlink}">
