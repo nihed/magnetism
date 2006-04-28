@@ -3,16 +3,18 @@ package com.dumbhippo.live;
 import com.dumbhippo.identity20.Guid;
 
 /**
- * Live state for a Group (currently unused)
+ * Live state for a Group
  * 
  * @author Havoc Pennington
  *
  */
 public class LiveGroup extends LiveObject {
 
+	private int totalReceivedPosts;
+	private int memberCount;
+
 	public LiveGroup(Guid guid) {
 		super(guid);
-		
 	}
 	
 	public void discard() {
@@ -35,5 +37,21 @@ public class LiveGroup extends LiveObject {
 			return false;
 		LiveGroup group = (LiveGroup) arg;
 		return super.equals(group);
+	}
+	
+	public int getMemberCount() {
+		return memberCount;
+	}
+
+	public void setMemberCount(int memberCount) {
+		this.memberCount = memberCount;
+	}
+
+	public int getTotalReceivedPosts() {
+		return totalReceivedPosts;
+	}
+
+	public void setTotalReceivedPosts(int totalReceivedPosts) {
+		this.totalReceivedPosts = totalReceivedPosts;
 	}	
 }

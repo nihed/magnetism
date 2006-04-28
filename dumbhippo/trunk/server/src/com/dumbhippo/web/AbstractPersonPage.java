@@ -6,16 +6,17 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Viewpoint;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
@@ -30,7 +31,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private MusicSystem musicSystem;
 	private PersonView viewedPerson;
 	
-	private ListBean<Group> groups;
+	private ListBean<GroupView> groups;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -124,12 +125,14 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	}
 	
 	// We don't show group's you haven't accepted the invitation for on your public page
-	public ListBean<Group> getGroups() {
-		if (groups == null) {
-			groups = new ListBean<Group>(Group.sortedList(groupSystem.findRawGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)));
+	public ListBean<GroupView> getGroups() {
+		Viewpoint viewpoint = getSignin().getViewpoint();
+		// For now we only display groups for users from non-anonymous viewpoints
+		if (groups == null && viewpoint instanceof UserViewpoint) {
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups((UserViewpoint) viewpoint, getViewedUser())));
 		}
 		return groups;
-	}
+	}	
 	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.

@@ -325,6 +325,37 @@ public class LiveState {
 	public synchronized Set<LivePost> getLivePostSnapshot() {
 		return postCache.getWeakCacheCopy();
 	}
+
+	/**
+	 * Locate or create a LiveGroup cache object for a particular group.
+	 * The cache age of the returned object will be reset to zero.
+	 * 
+	 * @param groupId the group ID for which we should get a cache object
+	 * @return the LiveGroup cache object.
+	 */
+	public synchronized LiveGroup getLiveGroup(Guid groupId) {
+		LiveGroup liveGroup = peekLiveGroup(groupId);
+		if (liveGroup == null) {
+
+			liveGroup = new LiveGroup(groupId);			
+			LiveGroupUpdater groupUpdater = EJBUtil.defaultLookup(LiveGroupUpdater.class);
+			groupUpdater.initialize(liveGroup);
+			
+			groupCache.poke(liveGroup);
+		}
+
+		groupCache.touch(liveGroup);
+		
+		return liveGroup;
+	}
+	
+	public LiveGroup peekLiveGroup(Guid guid) {
+		return groupCache.peek(guid);
+	}	
+	
+	public synchronized void updateLiveGroup(LiveGroup newGroup) {
+		groupCache.update(newGroup);
+	}	
 	
 	/**
 	 * Create a new LiveXmppServer object representing a newly connected
@@ -397,6 +428,8 @@ public class LiveState {
 	private LiveObjectCache<LiveUser> userCache;
 	
 	private LiveObjectCache<LivePost> postCache;
+	
+	private LiveObjectCache<LiveGroup> groupCache;
 
 	// Current LiveXmppServer objects. This is simpler than the post and
 	// user caches, since we don't want to keep around stray LiveXmppServer
@@ -415,6 +448,7 @@ public class LiveState {
 	private LiveState() {
 		userCache = new LiveObjectCache<LiveUser>();
 		postCache = new LiveObjectCache<LivePost>();
+		groupCache = new LiveObjectCache<LiveGroup>();
 		
 		xmppServers = new HashMap<String, LiveXmppServer>();
 		
@@ -493,7 +527,6 @@ public class LiveState {
 		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
 				postId, lpost.getViewingUserCount());  
 	}
-	
 
 	public synchronized void resendAllNotifications(Guid guid) {
 		LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
@@ -519,11 +552,13 @@ public class LiveState {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		age(userCache.getRecentCache(), MAX_USER_CACHE_AGE);
 		age(postCache.getRecentCache(), MAX_POST_CACHE_AGE);
+		age(groupCache.getRecentCache(), MAX_USER_CACHE_AGE);
 		age(xmppServers.values(), MAX_XMPP_SERVER_CACHE_AGE);
 		
 		// Clean up the WeakGuidMap objects
 		userCache.clean();
 		postCache.clean();
+		groupCache.clean();
 	}
 
 	// Thread that ages the different types of objects we keep around, and

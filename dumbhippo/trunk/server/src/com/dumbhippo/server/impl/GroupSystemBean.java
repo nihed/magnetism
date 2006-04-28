@@ -20,6 +20,9 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.LiveGroup;
+import com.dumbhippo.live.LiveGroupUpdater;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -52,6 +55,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private LiveGroupUpdater liveGroupUpdater;
 	
 	@EJB
 	private TransactionRunner runner;
@@ -191,6 +197,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);
+			
+			LiveState liveState = LiveState.getInstance();
+			LiveGroup liveGroup = liveState.peekLiveGroup(group.getGuid());
+			if (liveGroup != null) {
+				liveGroupUpdater.groupMemberCountChanged(liveGroup);
+			}			
 		}
 	}
 	
@@ -200,7 +212,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		try {
 			GroupMember groupMember = getGroupMember(group, person);
-			groupMember.setStatus(MembershipStatus.REMOVED);
+			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
+				groupMember.setStatus(MembershipStatus.REMOVED);
+				LiveState liveState = LiveState.getInstance();
+				LiveGroup liveGroup = liveState.peekLiveGroup(group.getGuid());
+				if (liveGroup != null) {
+					liveGroupUpdater.groupMemberCountChanged(liveGroup);
+				}
+			}
 		} catch (NotFoundException e) {
 			// nothing to do
 		}
@@ -233,34 +252,45 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return " AND gm.status >= " + MembershipStatus.INVITED.ordinal();
 		}
 	}
-
-	// The selection of Group is only needed for the CAN_SEE checks
-	static final String GET_RESOURCE_MEMBERS_QUERY = 
-		"SELECT gm.member FROM GroupMember gm, Group g " +
-		"WHERE gm.group = :group AND g = :group";
-		
-	private List<Resource> getResourceMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
-		String statusClause = getStatusClause(status);
-
+	
+	private Query buildGetResourceMembersQuery(Viewpoint viewpoint, Group group, MembershipStatus status, boolean isCount) {
+		StringBuilder queryString = new StringBuilder("SELECT ");
 		Query q;
+		
+		if (isCount)
+			queryString.append("count(gm.member)");
+		else
+			queryString.append("gm.member");
+		
+		queryString.append("FROM GroupMember gm, Group g " +
+				"WHERE gm.group = :group AND g = :group");
+		
+		String statusClause = getStatusClause(status);
 		if (viewpoint instanceof SystemViewpoint) {
-			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + statusClause);
+			q = em.createQuery(queryString + statusClause);
 		} else if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint)viewpoint).getViewer();
-			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + " AND " + CAN_SEE + statusClause)
+			q = em.createQuery(queryString + " AND " + CAN_SEE + statusClause)
 		    	.setParameter("viewer", viewer);
 		} else {
-			q = em.createQuery(GET_RESOURCE_MEMBERS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
+			q = em.createQuery(queryString + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		}
-
+		q.setParameter("group", group);
+		return q;
+	}
+		
+	private List<Resource> getResourceMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
+		Query q = buildGetResourceMembersQuery(viewpoint, group, status, false);
 		@SuppressWarnings("unchecked")
-		List<Resource> result = q
-			.setParameter("group", group)
-			.getResultList();
-			
+		List<Resource> result = q.getResultList();
 		return result;
 	}
 
+	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status) {
+		Query q = buildGetResourceMembersQuery(viewpoint, group, status, true);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();		
+	}
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
 		return getMembers(viewpoint, group, null, extras);

@@ -26,6 +26,8 @@ public interface GroupSystem {
 	
 	public void removeMember(User remover, Group group, Person person);
 	
+	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status);
+	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras);

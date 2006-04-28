@@ -41,6 +41,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveGroup;
+import com.dumbhippo.live.LiveGroupUpdater;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
@@ -119,6 +121,9 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private RecommenderSystem recommenderSystem;
+	
+	@EJB
+	private LiveGroupUpdater liveGroupUpdater;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -260,6 +265,14 @@ public class PostingBoardBean implements PostingBoard {
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
 		sendPostNotifications(post, expandedRecipients, isTutorialPost);
+		
+		LiveState liveState = LiveState.getInstance();
+		for (Group g : groupRecipients) {
+			LiveGroup liveGroup = liveState.peekLiveGroup(g.getGuid());
+			if (liveGroup != null) {
+				liveGroupUpdater.groupPostReceived(liveGroup, post);
+			}
+		}
 		
 		// tell the recommender engine, so ratings can be updated
 		recommenderSystem.addRatingForPostCreatedBy(post, poster);
@@ -722,14 +735,16 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
-	static final String GET_GROUP_POSTS_QUERY = 
-		"SELECT post FROM Post post WHERE :recipient MEMBER OF post.groupRecipients";
-	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max) {
+	private Query buildGetGroupPostsQuery(Viewpoint viewpoint, Group recipient, String search, boolean isCount) {
 		User viewer = null;
 		Query q;
 
-		StringBuilder queryText = new StringBuilder(GET_GROUP_POSTS_QUERY + " AND ");
+		StringBuilder queryText = new StringBuilder("SELECT ");
+		if (isCount)
+			queryText.append("count(post)");
+		else
+			queryText.append("post");
+		queryText.append(" FROM Post post WHERE :recipient MEMBER OF post.groupRecipients");
 
 		if (viewpoint instanceof SystemViewpoint) {
 		    // No access control clause
@@ -742,16 +757,28 @@ public class PostingBoardBean implements PostingBoard {
 		
 		appendPostLikeClause(queryText, search);
 		
-		queryText.append(ORDER_RECENT);
+		if (!isCount)
+			queryText.append(ORDER_RECENT);
 		
 		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("recipient", recipient);
 		if (viewer != null)
 			q.setParameter("viewer", viewer);
-		return getPostViews(viewpoint, q, search, start, max);
+		return q;
 	}
 	
+	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient, String search) {
+		Query q = buildGetGroupPostsQuery(viewpoint, recipient, search, true);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();		
+	}
+	
+	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max) {
+		Query q = buildGetGroupPostsQuery(viewpoint, recipient, search, false);
+		return getPostViews(viewpoint, q, search, start, max);
+	}
+
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max) {
 		if (!viewpoint.isOfUser(user))
 			return Collections.emptyList();
@@ -934,6 +961,10 @@ public class PostingBoardBean implements PostingBoard {
 		return getReceivedPosts(viewpoint, recipient, null, start, max);
 	}
 
+	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient) {
+		return getGroupPostsCount(viewpoint, recipient, null);
+	}
+	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
 		return getGroupPosts(viewpoint, recipient, null, start, max);
 	}

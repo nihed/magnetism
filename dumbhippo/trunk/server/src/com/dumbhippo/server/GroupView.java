@@ -9,6 +9,8 @@ import java.util.Set;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.LiveGroup;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
@@ -99,5 +101,9 @@ import com.dumbhippo.persistence.VersionedEntity;
 	@Override
 	public Guid getIdentifyingGuid() {
 		return group.getGuid(); 
-	}	
+	}
+	
+	public LiveGroup getLiveGroup() {
+		return LiveState.getInstance().getLiveGroup(getGroup().getGuid());
+	}
 }
