@@ -214,11 +214,15 @@ body.dh-gray-background-page {
 	color:				#000000;
 }
 
+.dh-text-input-showing-default {
+	color:				#aaaaaa;
+}
+
 div.dh-save-status {
 	background-color:	#ffffcc;
 	color:				#cc0033;
 	font-weight:		bold;
-	-moz-corner-radius:	5px;
+	-moz-border-radius:	5px;
 }
 
 /* the Undo link in the save status thing */

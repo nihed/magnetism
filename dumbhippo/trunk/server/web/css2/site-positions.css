@@ -255,8 +255,8 @@ body {
 	margin-bottom:	10px;
 }
 
-#dhContentColumn .dh-form-table tr {
-	margin-bottom:	10px;
+#dhContentColumn .dh-form-table .dh-spacer-row {
+	height:			10px;
 }
 
 #dhContentColumn .dh-form-table .dh-label-cell {
@@ -287,4 +287,5 @@ body {
 
 div.dh-save-status {
 	padding:		4px;
+	width:			468px;
 }

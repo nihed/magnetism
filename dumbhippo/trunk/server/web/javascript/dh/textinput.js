@@ -110,7 +110,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 			
 	this._showDefaultText = function() {
 		if (!this.showingDefaultText && this.defaultText) {
-			dojo.html.addClass(this.elem, "dh-entry-showing-default");
+			dojo.html.addClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = this.defaultText;
 			this.showingDefaultText = true;			
 		}
@@ -122,7 +122,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this._hideDefaultText = function() {
 		if (this.showingDefaultText) {
-			dojo.html.removeClass(this.elem, "dh-entry-showing-default");
+			dojo.html.removeClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = "";
 			this.showingDefaultText = false;
 		}
@@ -146,9 +146,11 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 			this.elem.value = value;
 	}
 	
-	this.setValue = function(value) {
+	this.setValue = function(value, noEmitChanged) {
 		this._hideDefaultText();
 		this.elem.value = value;
+		if (noEmitChanged)
+			this.lastValue = value;
 		this._emitValueChanged();
 	}
 	
@@ -163,8 +165,13 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		
 	}
 	
+	
+	this.activate = function() {
+		this._emitValueChanged();
+	}
+	
 	this.elem.onchange = function(ev) {
-		me._emitValueChanged();
+		me.activate();
 	}
 	
 	this.elem.onmousedown = function(ev) {
@@ -176,7 +183,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	}
 	
 	this.elem.onfocusout = function(ev) {
-		me._emitValueChanged();
+		me.activate();
 	}
 	
 	this.elem.onkeydown = function(ev) {
@@ -184,7 +191,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		me._hideDefaultText();
 		var key = dh.textinput.getKeyCode(ev);
 		if (key == ENTER) {
-			me._emitValueChanged();
+			me.activate();
 		}
 	}
 }

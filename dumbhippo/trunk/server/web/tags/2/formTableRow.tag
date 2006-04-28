@@ -8,3 +8,5 @@
 	<td class="dh-label-cell"><c:out value="${label}"/>:</td>
 	<td class="dh-control-cell"><div class="dh-control-cell-div"><jsp:doBody/></div></td></tr>
 </tr>
+<%-- there's no good multibrowser way to do this with CSS --%>
+<tr><td colspan="2" class="dh-spacer-row"></td></tr>

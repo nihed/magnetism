@@ -7,6 +7,11 @@
 
 <div>
 	<table class="dh-form-table" cellspacing="0" cellpadding="0">
+		<thead>
+			<tr>
+				<th></th><th></th>
+			</tr>
+		</thead>
 		<tbody>
 			<jsp:doBody/>
 		</tbody>
