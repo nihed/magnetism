@@ -38,12 +38,6 @@
 			<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
-			<div class="dh-song"><a href="">Ice Ice Baby</a>
-				<span class="dh-song-details">by <a href="">Vanilla Ice</a> | Play at <a href="">iTunes</a> | <a href="">Yahoo!</a></span>
-			</div>
-			<div class="dh-song"><a href="">Faraway</a>
-				<span class="dh-song-details">by <a href="">Sleater-Kinney</a> | Play at <a href="">iTunes</a> | <a href="">Rhapsody</a></span>
-			</div>							
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>

@@ -23,53 +23,74 @@
 		<dht:zoneBoxMusic>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			
-			<dh:nowPlaying userId="c4a3fc1f528070" hasLabel="false"/>
+			<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 
 			<dht:zoneBoxSubcolumns>
+				<dht:requireMusicPersonBean who="${signin.user.id}"/>
+				<dht:requireMusicGlobalBean/>
 
 				<dht:zoneBoxSubcolumn which="one">
 
-					<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
-
-					<div class="dh-item">
-						<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-						<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-						yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-						</div>
-					</div>
-					<div class="dh-item">
-						<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-						<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-						focus on the sudden kitten shortage currently gripping the country.
-						</div>
-					</div>
+					<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
 					
+					<c:forEach items="${musicPerson.recentTracks.list}" var="track">
+						<dht:track track="${track}" albumArt="true"/>
+					</c:forEach>
+
+					<dht:moreExpander open="false"/>
+
+					<dht:zoneBoxSeparator/>
+
+					<dht:zoneBoxTitle>MY MOST PLAYED SONGS</dht:zoneBoxTitle>
+
+					<c:forEach items="${musicPerson.mostPlayedTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+
+					<dht:moreExpander open="false"/>
+
+					<dht:zoneBoxSeparator/>
+
+					<dht:zoneBoxTitle>MOST PLAYED SONGS EVER</dht:zoneBoxTitle>
+
+					<c:forEach items="${musicGlobal.mostPlayedTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+
 					<dht:moreExpander open="false"/>
 
 				</dht:zoneBoxSubcolumn>
 				<dht:zoneBoxSubcolumn which="two">
 					
-					<dht:zoneBoxTitle>SHARED BY ME</dht:zoneBoxTitle>
-					<div class="dh-item">
-						<div class="dh-title"><a href="">Space Monkeys Land in Harvard Square, Buy Magazines</a></div>
-						<div class="dh-blurb">Little green monkies were seen falling from the sky in Harvard Square
-						yesterday afternoon. The ones that weren't trapped in trees converged at the newstands.
-						</div>
+					<dht:zoneBoxTitle>MY MUSIC BIO</dht:zoneBoxTitle>
+	
+					<div class="dh-bio">				
+						It all started when I was six years old, listening to the radio on 
+						cross-country trips in the family car. Mom and Dad would sing drinking songs 
+						to pass the hours, and before long I was singing along too. So now I enjoy 
+						"normal" music like everyone else (MC Hammer, Spaghetti Arms Johnson, 
+						Vanilla Ice) as well as class polkas and accordian standards. Suprisingly 
+						I've never been asked to DJ at friends' parties.
 					</div>
-					<div class="dh-item">
-						<div class="dh-title"><a href="">Government Invests in Kitten Farming</a></div>
-						<div class="dh-blurb">Senators from all fifty states convinced President Bush to drop everything and 
-						focus on the sudden kitten shortage currently gripping the country.
-						</div>
-					</div>
-					<div class="dh-item">
-						<div class="dh-title"><a href="">HTML div needs to be longer</a></div>
-						<div class="dh-blurb">Another item was needed in an HTML div to create unequal-length columns.
-						</div>
-					</div>									
+
+					<dht:moreExpander open="false"/>
 					
+					<dht:zoneBoxSeparator/>
+
+					<dht:zoneBoxTitle>FRIENDS' RECENT SONGS</dht:zoneBoxTitle>
+
 					<dht:moreExpander open="false"/>
 
+					<dht:zoneBoxSeparator/>
+
+					<dht:zoneBoxTitle>ONE PLAY WONDERS</dht:zoneBoxTitle>
+
+					<c:forEach items="${musicGlobal.onePlayTracks.list}" var="track">
+						<dht:track track="${track}"/>
+					</c:forEach>
+
+					<dht:moreExpander open="false"/>
+					
 				</dht:zoneBoxSubcolumn>
 			
 			</dht:zoneBoxSubcolumns>

@@ -226,6 +226,19 @@ body {
 	clear:			both;
 }
 
+.dh-song-with-art {
+	position: 			relative;
+	height: 			72px;
+}
+
+.dh-song-image {
+	position:			absolute;
+}
+
+.dh-song-with-art .dh-song-info {
+	margin-left:		80px;
+}
+
 #dhContentColumn .dh-form-table {
 	width:			478px;
 	margin-top:		10px;

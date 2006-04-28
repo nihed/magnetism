@@ -209,12 +209,8 @@ public class GroupPage extends AbstractSigninOptionalPage {
 
 	public ListBean<TrackView> getLatestTracks() {
 		if (latestTracks == null) {
-			try {
-				List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 3);
-				latestTracks = new ListBean<TrackView>(tracks);
-			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest tracks: {}", e.getMessage());
-			}
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 3);
+			latestTracks = new ListBean<TrackView>(tracks);
 		}
 
 		return latestTracks;

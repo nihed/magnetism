@@ -183,9 +183,25 @@ body.dh-gray-background-page {
 	font-size:			12px;
 }
 
+#dhContentColumn .dh-zone-box .dh-bio {
+	font-size:			12px;
+}
+	
 #dhContentColumn .dh-zone-box .dh-extra-info td {
 	font-size:			11px;
 	color:				#666666;
+}
+
+.dh-song-info {
+	font-size:			11px;
+	white-space:		nowrap;
+	overflow:			hidden;
+	color:				#666666;
+}
+
+.dh-song-name {
+	font-size:			14px;
+	font-weight:		bold;
 }
 
 #dhContentColumn .dh-form-table {

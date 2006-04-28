@@ -200,7 +200,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
 		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 1);
-		assert !list.isEmpty(); // supposed to throw NotFoundException if empty
+		if (list.isEmpty())
+			throw new NotFoundException("No current track");
 		return list.get(0);
 	}
 
@@ -209,16 +210,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		FREQUENT
 	}
 	
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) throws NotFoundException {
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
 		
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
-			//logger.debug("Not allowed to see track history");
-			throw new NotFoundException("Not allowed to see more than 1 item from track history");
+			// A non-friend can only see one result
+			maxResults = 1;
 		}
 
 		if (!identitySpider.getMusicSharingEnabled(user)) {
-			throw new NotFoundException("User has music sharing disabled, no tracks");
+			return Collections.emptyList();
 		}
 		
 		Query q;
@@ -250,15 +251,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.debug("Ignoring TrackHistory with null track");
 		}
 
-		if (results.isEmpty()) {
-			logger.debug("No track history results");
-			throw new NotFoundException("User has no track history");
-		} else {
-			return results;
-		}
+		return results;
 	}
 
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) throws NotFoundException {
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, group);
 
 		// This is not very efficient now is it...
@@ -266,12 +262,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
 		for (User m : members) {
-			try {
-				List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, maxResults);
-				results.addAll(memberHistory);
-			} catch (NotFoundException e) {
-				// ignore
-			}
+			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, maxResults);
+			results.addAll(memberHistory);
 		}
 		
 		Comparator<TrackHistory> comparator;
@@ -319,12 +311,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			results.subList(maxResults, results.size()).clear();
 		}
 		
-		if (results.isEmpty()) {
-			logger.debug("No track history results");
-			throw new NotFoundException("Group has no track history");
-		} else {
-			return results;
-		}
+		return results;
 	}
 	
 	static private class YahooSongTask implements Callable<List<YahooSongResult>> {
@@ -864,19 +851,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		futureView.run(); // so we can call get()
 		return futureView;
 	}
-	
-	private List<TrackView> getViewsFromTrackHistories(List<TrackHistory> tracks) {
+
+	private List<TrackView> getTrackViewResults(List<Future<TrackView>> futureViews) {
 		
-		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
-		
-		// spawn a bunch of yahoo updater threads in parallel
-		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
-		for (TrackHistory t : tracks) {
-			futureViews.add(getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
-		}
-	
 		// now harvest all the results
-		List<TrackView> views = new ArrayList<TrackView>(tracks.size());
+		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
 		for (Future<TrackView> fv : futureViews) {
 			TrackView v;
 			try {
@@ -893,6 +872,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		return views;
+	}
+	
+	private List<TrackView> getViewsFromTrackHistories(List<TrackHistory> tracks) {
+		
+		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
+		
+		// spawn a bunch of yahoo updater threads in parallel
+		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
+		for (TrackHistory t : tracks) {
+			futureViews.add(getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
+		}
+	
+		return getTrackViewResults(futureViews);
 	}
 
 	private List<AlbumView> getAlbumViewsFromTracks(List<Track> tracks) {
@@ -957,7 +949,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
 	// to get, but I guess we could try to be fancier
-	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
+	public List<TrackView> getPopularTrackViews(int maxResults) {
 		Query q;
 	
 		// FIXME this should try to get only one track per user or something, but 
@@ -975,41 +967,59 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.debug("Ignoring TrackHistory with null track");
 		}
 		
-		if (results.isEmpty()) {
-			throw new NotFoundException("No track history in database at all");
-		}
-		
 		return getViewsFromTrackHistories(results);
 	}
 	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
 		return getViewsFromTrackHistories(history);
 	}
 	
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getFrequentTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
 		
 		return getViewsFromTrackHistories(history);
 	}
 
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		//logger.debug("getLatestTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
 		
 		return getViewsFromTrackHistories(history);
 	}
 
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		//logger.debug("getFrequentTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
 		
 		return getViewsFromTrackHistories(history);
 	}
+	
+	private List<TrackView> getTrackViewsFromNamedQuery(String queryName, int maxResults) {
+		Query q = em.createNamedQuery(queryName);
+		if (maxResults > 0)
+			q.setMaxResults(maxResults);
+		
+		List<?> objects = q.getResultList();
+		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
+		for (Object o : objects) {
+			futureViews.add(getTrackViewAsync((Track)o, -1));
+		}
+		
+		return getTrackViewResults(futureViews);
+	}
 
-	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
+		return getTrackViewsFromNamedQuery("trackHistoryMostPopularTracks", maxResults);
+	}
+	
+	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {
+		return getTrackViewsFromNamedQuery("trackHistoryOnePlayTracks", maxResults);
+	}
+
+	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestAlbumViews() for user {}", user);
 		
 		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
@@ -1034,7 +1044,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getAlbumViewsFromTracks(tracks);		
 	}
 
-	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestArtistViews() for user {}", user);
 		
 		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
@@ -1057,6 +1067,25 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				break;
 		}
 		return getArtistViewsFromTracks(tracks);		
+	}
+	
+	public List<TrackView> getFriendsLatestTrackViews(UserViewpoint viewpoint, int maxResults) {
+		// We really want to do something along the lines of 
+		// GROUP BY h.track ORDER BY max(h.lastUpdated), but that won't work
+		// with MySQL 4, so we accept the possibility of duplicate tracks for 
+		// the moment.
+		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
+		String queryString = "SELECT h FROM TrackHistory h WHERE h.user IN " + 
+			getUserSetSQL(contacts) + 
+			" ORDER BY h.lastUpdated DESC";
+		
+		Query q = em.createQuery(queryString);
+		if (maxResults > 0)
+			q.setMaxResults(maxResults);
+
+		List<?> results = em.createQuery(queryString).getResultList();
+		
+		return getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results));
 	}
 	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
@@ -1122,9 +1151,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	private List<Track> getMatchingTracks(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
+	private List<Track> getMatchingTracks(Viewpoint viewpoint, String artist, String album, String name) {
 
-		Query q = buildSongQuery(viewpoint, artist, album, name, -1);
+		Query q;
+		try {
+			 q = buildSongQuery(viewpoint, artist, album, name, -1);
+		} catch (NotFoundException e) {
+			return Collections.emptyList();
+		}
 		
 		List<?> tracks = q.getResultList();
 		List<Track> ret = new ArrayList<Track>(tracks.size());
@@ -1162,6 +1196,22 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		ARTISTS
 	}
 	
+	private String getUserSetSQL(Set<User> users) {
+		StringBuilder sb = new StringBuilder("(");
+		
+		for (User u : users) {
+			sb.append("'");
+			sb.append(u.getId());
+			sb.append("',");
+		}
+		if (sb.charAt(sb.length()-1) == ',') {
+			sb.setLength(sb.length() - 1);
+		}
+		sb.append(")");
+		
+		return new String(sb);
+	}
+	
 	private List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name, RelatedType type) {
 
 		if (viewpoint == null)
@@ -1169,13 +1219,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		List<PersonMusicView> ret = new ArrayList<PersonMusicView>();
 		
-		List<Track> tracks;
-		try {
-			tracks = getMatchingTracks(viewpoint, artist, album, name);
-		} catch (NotFoundException e) {
+		List<Track> tracks = getMatchingTracks(viewpoint, artist, album, name);
+		if (tracks.size() == 0)
 			return ret;
-		}
-		
+
 		// FIXME Query.setParameter(List<Track>) doesn't seem to work, a hibernate bug?
 		// also, we could merge this with the query to get the matching tracks and be
 		// more efficient, but too lazy right now
@@ -1195,17 +1242,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 			// disabled for now since we want to return anonymous recommendations too
 			if (true && false) {
-				sb.append(" AND h.user.id IN (");
-				
-				for (User u : contacts) {
-					sb.append("'");
-					sb.append(u.getId());
-					sb.append("',");
-				}
-				if (sb.charAt(sb.length()-1) == ',') {
-					sb.setLength(sb.length() - 1);
-				}
-				sb.append(")");
+				sb.append(" AND h.user.id IN ");
+				sb.append(getUserSetSQL(contacts));
 			}
 		}
 		
@@ -1239,66 +1277,57 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
 
 						if (!isSelf) {
-							try {
-								switch (type) {
-								case TRACKS: {
-									List<TrackView> latest = getLatestTrackViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-									pmv.setTracks(latest);
-								}
-								break;
-								case ALBUMS: {
-									List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-									pmv.setAlbums(latest);
-								}
-								break;
-								case ARTISTS: {
-									List<ArtistView> latest = getLatestArtistViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-									pmv.setArtists(latest);
-								}
-								break;
-								}
-							} catch (NotFoundException e) {
-								// just leave the tracks list empty,
-								// but still display the friend
+							switch (type) {
+							case TRACKS: {
+								List<TrackView> latest = getLatestTrackViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+								pmv.setTracks(latest);
+							}
+							break;
+							case ALBUMS: {
+								List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+								pmv.setAlbums(latest);
+							}
+							break;
+							case ARTISTS: {
+								List<ArtistView> latest = getLatestArtistViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
+								pmv.setArtists(latest);
+							}
+							break;
 							}
 						}
 						++contactViews;
 					}
 				} else {
 					if (anonViews < MAX_RELATED_ANON_RESULTS) {
-						try {
-							switch (type) {
-							case TRACKS: {
-								// get latest tracks from system view
-								List<TrackView> latest = getLatestTrackViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-								if (latest.size() > 0) {
-									pmv = new PersonMusicView(); // don't load a PersonView
-									pmv.setTracks(latest);
-									++anonViews;
-								}
-							} 
-							break;
-							case ALBUMS: {								
-								List<AlbumView> latest = getLatestAlbumViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-								if (latest.size() > 0) {
-									pmv = new PersonMusicView(); // don't load a PersonView
-									pmv.setAlbums(latest);
-									++anonViews;
-								}
+						switch (type) {
+						case TRACKS: {
+							// get latest tracks from system view
+							List<TrackView> latest = getLatestTrackViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
+							if (latest.size() > 0) {
+								pmv = new PersonMusicView(); // don't load a PersonView
+								pmv.setTracks(latest);
+								++anonViews;
 							}
-							break;
-							case ARTISTS: {
-								List<ArtistView> latest = getLatestArtistViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-								if (latest.size() > 0) {
-									pmv = new PersonMusicView(); // don't load a PersonView
-									pmv.setArtists(latest);
-									++anonViews;
-								}				
+						} 
+						break;
+						case ALBUMS: {								
+							List<AlbumView> latest = getLatestAlbumViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
+							if (latest.size() > 0) {
+								pmv = new PersonMusicView(); // don't load a PersonView
+								pmv.setAlbums(latest);
+								++anonViews;
 							}
-							break;
-							}
-						} catch (NotFoundException e) {
-							// don't include this one
+						}
+						break;
+						case ARTISTS: {
+							List<ArtistView> latest = getLatestArtistViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
+							if (latest.size() > 0) {
+								pmv = new PersonMusicView(); // don't load a PersonView
+								pmv.setArtists(latest);
+								++anonViews;
+							}				
+						}
+						break;
 						}
 					}
 				}

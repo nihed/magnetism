@@ -247,10 +247,10 @@ public class RewriteServlet extends HttpServlet {
 			request.setAttribute("psa2", getNextPsa());
 		}
 		
-		if (jspPages.contains(afterSlash)) {
+		if (jsp2Pages.contains(afterSlash)) {
 			// We can't use RewrittenRequest for JSP's because it breaks the
 			// handling of <jsp:forward/> and is generally unreliable.
-			newPath = "/jsp" + path + ".jsp";
+			newPath = "/jsp2" + path + ".jsp";
 			
 			handleJsp(request, response, newPath);
 			
@@ -260,8 +260,8 @@ public class RewriteServlet extends HttpServlet {
 			newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
-		} else if (jsp2Pages.contains(afterSlash)) {
-			newPath = "/jsp2" + path + ".jsp";
+		} else if (jspPages.contains(afterSlash)) {
+			newPath = "/jsp" + path + ".jsp";
 			
 			handleJsp(request, response, newPath);
 		} else {

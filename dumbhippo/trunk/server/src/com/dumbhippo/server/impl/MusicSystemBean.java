@@ -71,24 +71,36 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentTrackView(viewpoint, user);
 	}
 
-	public List<TrackView> getPopularTrackViews(int maxResults) throws NotFoundException {
+	public List<TrackView> getPopularTrackViews(int maxResults) {
 		return internal.getPopularTrackViews(maxResults);
 	}
 	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestTrackViews(viewpoint, user, maxResults);
 	}
 
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getFrequentTrackViews(viewpoint, user, maxResults);
 	}
 
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		return internal.getLatestTrackViews(viewpoint, group, maxResults);
 	}
 
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) throws NotFoundException {
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		return internal.getFrequentTrackViews(viewpoint, group, maxResults);
+	}
+		
+	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
+		return internal.getFrequentTrackViews(viewpoint, maxResults);
+	}
+
+	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {
+		return internal.getOnePlayTrackViews(viewpoint, maxResults);
+	}
+
+	public List<TrackView> getFriendsLatestTrackViews(UserViewpoint viewpoint, int maxResults) {
+		return internal.getFriendsLatestTrackViews(viewpoint,maxResults);
 	}
 
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
@@ -108,7 +120,7 @@ public class MusicSystemBean implements MusicSystem {
 	}
 
 	
-	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
 	}
 
@@ -120,7 +132,7 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getRelatedPeopleWithArtists(viewpoint, artist, album, name);
 	}
 
-	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) throws NotFoundException {
+	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestArtistViews(viewpoint, user, maxResults);
 	}
 }

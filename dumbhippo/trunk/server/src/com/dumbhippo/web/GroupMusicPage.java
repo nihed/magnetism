@@ -1,10 +1,6 @@
 package com.dumbhippo.web;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.dumbhippo.server.MusicSystem;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TrackView;
 
 public class GroupMusicPage extends AbstractGroupPage {
@@ -20,13 +16,7 @@ public class GroupMusicPage extends AbstractGroupPage {
 	
 	public ListBean<TrackView> getFrequentTracks() {
 		if (frequentTracks == null) {
-			try {
-				frequentTracks = new ListBean<TrackView>(musicSystem.getFrequentTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
-			} catch (NotFoundException e) {
-				logger.debug("Failed to load frequent tracks, displaying empty list: {}", e.getMessage());
-				List<TrackView> list = Collections.emptyList();
-				frequentTracks = new ListBean<TrackView>(list);
-			}
+			frequentTracks = new ListBean<TrackView>(musicSystem.getFrequentTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 		}
 		
 		return frequentTracks;
@@ -34,13 +24,7 @@ public class GroupMusicPage extends AbstractGroupPage {
 
 	public ListBean<TrackView> getLatestTracks() {
 		if (latestTracks == null) {
-			try {
-				latestTracks = new ListBean<TrackView>(musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
-			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest tracks: {}", e.getMessage());
-				List<TrackView> list = Collections.emptyList();
-				latestTracks = new ListBean<TrackView>(list);
-			}
+			latestTracks = new ListBean<TrackView>(musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), LIST_SIZE));
 		}
 
 		return latestTracks;

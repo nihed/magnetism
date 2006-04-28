@@ -5,7 +5,6 @@ import java.util.List;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.MusicSystem;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TrackView;
@@ -35,13 +34,9 @@ public class ViewGroupPage extends AbstractGroupPage {
 	public TrackView getLatestTrack() {
 		if (!haveLatestTrack) {
 			haveLatestTrack = true;
-			try {
-				List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 1);
-				if (tracks.size() > 0)
-					latestTrack = tracks.get(0);
-			} catch (NotFoundException e) {
-				logger.debug("Failed to load latest track: {}", e.getMessage());
-			}
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup(), 1);
+			if (tracks.size() > 0)
+				latestTrack = tracks.get(0);
 		}
 
 		return latestTrack;
