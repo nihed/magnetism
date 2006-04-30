@@ -86,12 +86,14 @@ public class HttpMethodsServlet extends AbstractServlet {
 			String s = request.getParameter(pname);
 			
 			if (s == null) {
-				String[] optional = optionsAnnotation.optionalParams();
 				boolean isOptional = false;
-				for (String o : optional) {
-					if (o.equals(pname)) {
-						isOptional = true;
-						break;
+				if (optionsAnnotation != null) {
+					String[] optional = optionsAnnotation.optionalParams();
+					for (String o : optional) {
+						if (o.equals(pname)) {
+							isOptional = true;
+							break;
+						}
 					}
 				}
 

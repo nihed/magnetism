@@ -75,6 +75,9 @@ public class Account extends Resource {
 	
 	private Set<Post> favoritePosts;
 	
+	private String bio;
+	private String musicBio;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -468,5 +471,21 @@ public class Account extends Resource {
 	
 	public void removeFavoritePost(Post post) {
 		favoritePosts.remove(post);
+	}
+
+	public String getBio() {
+		return bio;
+	}
+
+	public void setBio(String bio) {
+		this.bio = bio;
+	}
+
+	public String getMusicBio() {
+		return musicBio;
+	}
+
+	public void setMusicBio(String musicBio) {
+		this.musicBio = musicBio;
 	}
 }

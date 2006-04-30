@@ -259,17 +259,17 @@ body {
 }
 
 #dhContentColumn .dh-form-table .dh-label-cell {
-	width:			110px;
+	width:			120px;
 	padding-right:	10px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell {
-	width:			368px;
+	width:			358px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div {
 	position:		relative;
-	width:			368px;
+	width:			358px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {

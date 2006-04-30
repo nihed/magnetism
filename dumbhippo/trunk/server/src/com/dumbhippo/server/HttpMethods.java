@@ -146,4 +146,22 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "postId", "favorite" })
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite);
+	
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( {  })
+	public void getRandomBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)
+		throws IOException;
+
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( {  })
+	public void getRandomMusicBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)
+		throws IOException;
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "bio" })
+	public void doSetBio(UserViewpoint viewpoint, String bio);
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "bio" })
+	public void doSetMusicBio(UserViewpoint viewpoint, String bio);
 }

@@ -308,10 +308,27 @@ public interface IdentitySpider {
 	public boolean getNotifyPublicShares(User user);
 	
 	public void setNotifyPublicShares(User user, boolean notify);	
+
+	/**
+	 * Set a user's bio 
+	 * 
+	 * @param viewpoint who is setting
+	 * @param user account user
+	 * @param bio the user's bio
+	 */
+	public void setBio(UserViewpoint viewpoint, User user, String bio);
+
+	/**
+	 * Set a user's music bio 
+	 * 
+	 * @param viewpoint who is setting
+	 * @param user account user
+	 * @param bio the user's music bio
+	 */
+	public void setMusicBio(UserViewpoint viewpoint, User user, String bio);
 	
 	/**
-	 * Associate a MySpace identity with an account holder.
-	 * Currently creates a "verified" claim. 
+	 * Associate a MySpace identity with an account holder. 
 	 * 
 	 * @param user account user
 	 * @param name permanent MySpace name

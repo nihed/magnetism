@@ -190,7 +190,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		// in theory never happens since we do this on focus in
 		me._hideDefaultText();
 		var key = dh.textinput.getKeyCode(ev);
-		if (key == ENTER) {
+		if (key == ENTER && me.elem.nodeName != 'TEXTAREA') {
 			me.activate();
 		}
 	}

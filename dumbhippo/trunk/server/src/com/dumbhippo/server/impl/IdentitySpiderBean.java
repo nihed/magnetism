@@ -866,6 +866,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
+	public void setBio(UserViewpoint viewpoint, User user, String bio) {
+		if (!viewpoint.isOfUser(user))
+			throw new RuntimeException("can only set one's own bio");
+		if (!em.contains(user))
+			throw new RuntimeException("user not attached");
+		Account acct = user.getAccount();
+		acct.setBio(bio);
+	}
+
+	public void setMusicBio(UserViewpoint viewpoint, User user, String bio) {
+		if (!viewpoint.isOfUser(user))
+			throw new RuntimeException("can only set one's own music bio");
+		if (!em.contains(user))
+			throw new RuntimeException("user not attached");
+		Account acct = user.getAccount();
+		acct.setMusicBio(bio);
+	}
+	
 	public void setMySpaceName(User user, String name) {
 		// Refresh
 		try {

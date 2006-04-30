@@ -11,6 +11,10 @@ public class JavascriptStringTag extends SimpleTagSupport {
 	
 	// public for unit testing
 	public static String toJavascriptString(String src) {
+		
+		if (src == null)
+			return "null";
+		
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append('\'');

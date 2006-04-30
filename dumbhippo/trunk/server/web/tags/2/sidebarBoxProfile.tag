@@ -31,8 +31,10 @@
 				</tr>
 			</tbody>
 		</table>
-		<div class="dh-bio">
-			I am so special. This is my biography. Please read more about me!
-		</div>
+		<c:if test="${!empty sidebar.viewedPerson.bioAsHtml}">
+			<div class="dh-bio">
+				<c:out value="${sidebar.viewedPerson.bioAsHtml}" escapeXml="false"/>
+			</div>
+		</c:if>
 	</div>
 </dht:sidebarBox>

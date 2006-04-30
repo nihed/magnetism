@@ -19,6 +19,7 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -429,6 +430,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setNotifyPublicShares(viewpoint.getViewer(), notify);
 	}	
 
+	public void doSetBio(UserViewpoint viewpoint, String bio) {
+		identitySpider.setBio(viewpoint, viewpoint.getViewer(), bio);
+	}
+
+	public void doSetMusicBio(UserViewpoint viewpoint, String bio) {
+		identitySpider.setMusicBio(viewpoint, viewpoint.getViewer(), bio);
+	}
+	
 	public void getNowPlaying(OutputStream out, HttpResponseData contentType,
 			String who, String theme) throws IOException {
 		if (contentType != HttpResponseData.XML)
@@ -682,5 +691,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		postingBoard.setFavoritePost(viewpoint, post, favorite);
+	}
+	
+	public void getRandomBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
+		if (contentType != HttpResponseData.TEXT)
+			throw new IllegalArgumentException("only support TEXT replies");
+
+		out.write(StringUtils.getBytes("I was born in the year 1903, in a shack."));
+		out.flush();
+	}
+
+	public void getRandomMusicBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
+		if (contentType != HttpResponseData.TEXT)
+			throw new IllegalArgumentException("only support TEXT replies");
+	
+		out.write(StringUtils.getBytes("Polka makes me perky!"));
+		out.flush();
 	}
 }

@@ -15,7 +15,8 @@
 	<script type="text/javascript">
 		dojo.require("dh.account");
 		dh.account.currentValues = {
-			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>
+			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
+			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>
 		};
 	</script>
 </head>
@@ -32,10 +33,10 @@
 				<dht:formTableRowStatus controlId='dhBioEntry'>Your bio has been saved.</dht:formTableRowStatus>
 				<dht:formTableRow label="About me">
 					<div>
-						<input type="button" value="Generate a random bio!"/>
+						<input type="button" value="Generate a random bio!" onclick="dh.account.generateRandomBio();"/>
 					</div>
 					<div>
-						<dht:textInput multiline="true"/>
+						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
 				<dht:formTableRow label="MySpace name">

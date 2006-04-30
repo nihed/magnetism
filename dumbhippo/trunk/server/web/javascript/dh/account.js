@@ -67,52 +67,108 @@ dh.account.showStatus = function(controlId, statusText, linkText, linkHref, link
 	}
 }
 
-dh.account.undo = function(entryObject, oldValue) {
-	dh.account.showStatus(entryObject.elem.id, "Undoing...", null, null, null);
-   	dh.server.doPOST("renameperson",
-			     		{ "name" : oldValue },
+dh.account.showStatusMessage = function(controlId, message) {
+	dh.account.showStatus(controlId, message, "Close",
+		dh.account.makeLinkClosure(function() {
+			dh.account.hideStatus(controlId);
+		}),
+		"I've read this already, go away");
+}
+
+dh.account.onValueChanged = function(entryObject, postMethod, argName, value,
+										pendingMessage, successMessage) {
+	var controlId = entryObject.elem.id;										
+	if (!value || value.length == 0) {
+		return;
+	}
+	var args = {};
+	args[argName] = value;
+	dh.account.showStatus(controlId, pendingMessage, null, null);
+   	dh.server.doPOST(postMethod,
+			     		args,
 		  	    		function(type, data, http) {
-		  	    			entryObject.setValue(oldValue, true); // true = doesn't emit the changed signal
-		  	    	 		dh.account.showStatus('dhUsernameEntry', "Undone!", "Close",
-		  	    	 		"javascript:dh.account.hideStatus('dhUsernameEntry');", "I've read this already, go away");
-	 					  	// this saves what we'll undo to after the NEXT change
-							dh.account.undoValues['dhUsernameEntry'] = oldValue;
+		  	    			var oldValue = dh.account.undoValues[controlId];
+		  	    	 		dh.account.showStatus(controlId, successMessage,
+		  	    	 			oldValue ? "Undo" : null,
+		  	    	 			oldValue ?
+				  	    	 		dh.account.makeLinkClosure(function() {
+				  	    	 			dh.account.undo(entryObject, oldValue, postMethod, argName);
+				  	    	 		}) : null,
+			  	    	 		oldValue ? "Change back to the previous setting" : null);
+		  	    	 		// this saves what we'll undo to after the NEXT change
+							dh.account.undoValues[controlId] = value;
 			  	    	},
 			  	    	function(type, error, http) {
-							dh.account.showStatus('dhUsernameEntry', "Failed to undo!", null, null, null);
+							dh.account.showStatusMessage(controlId, "Failed to save this setting.");
+			  	    	});
+}
+
+dh.account.undo = function(entryObject, oldValue, postMethod, argName) {
+	var controlId = entryObject.elem.id;
+	dh.account.showStatus(controlId, "Undoing...", null, null, null);
+	var args = {};
+	args[argName] = oldValue;
+   	dh.server.doPOST(postMethod,
+			     		args,
+		  	    		function(type, data, http) {
+		  	    			entryObject.setValue(oldValue, true); // true = doesn't emit the changed signal
+		  	    	 		dh.account.showStatusMessage(controlId, "Undone!");
+	 					  	// this saves what we'll undo to after the NEXT change
+							dh.account.undoValues[controlId] = oldValue;
+			  	    	},
+			  	    	function(type, error, http) {
+							dh.account.showStatus(controlId, "Failed to undo!", null, null, null);
 			  	    	});	
 }
 
-dh.account.usernameEntryNode = null;
-dh.account.usernameEntry = null;
 dh.account.undoValues = {};
 dh.account.currentValues = null; // gets filled in as part of the jsp
+
+dh.account.generatingRandomBio = false;
+dh.account.generateRandomBio = function() {
+	if (dh.account.generatingRandomBio) {
+		dh.account.showStatusMessage('dhBioEntry', "Working on it - be patient!");
+		return;
+	}
+
+	dh.account.showStatus('dhBioEntry', "Generating random bio...", null,
+			  	    	 null, null);
+	dh.account.generatingRandomBio = true;
+	dh.server.getTextGET("randombio", 
+						{ },
+						function(type, data, http) {
+							dh.account.showStatusMessage('dhBioEntry', "Tada! Random bio!");
+							dh.account.generatingRandomBio = false;
+							// focus and set the new text
+							dh.account.bioEntryNode.select();
+							// don't emit changed until user causes it
+							dh.account.bioEntry.setValue(data, true);
+						},
+						function(type, error, http) {
+							dh.account.showStatusMessage('dhBioEntry', "Failed to generate random bio - we suck, sorry! Try again soon.");
+		  	    	 		dh.account.generatingRandomBio = false;
+						});
+}
 
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.account.currentValues['dhUsernameEntry']);
+	
 	dh.account.undoValues['dhUsernameEntry'] = dh.account.usernameEntry.getValue();
 	dh.account.usernameEntry.onValueChanged = function(value) {
-		if (!value || value.length == 0) {
-			return;
-		}
-		dh.account.showStatus('dhUsernameEntry', "Saving user name...", null, null);
-	   	dh.server.doPOST("renameperson",
-				     		{ "name" : value },
-			  	    		function(type, data, http) {
-			  	    			var oldValue = dh.account.undoValues['dhUsernameEntry'];
-			  	    	 		dh.account.showStatus('dhUsernameEntry', "Your user name has been saved.", oldValue ? "Undo" : null,
-			  	    	 		oldValue ?
-			  	    	 		dh.account.makeLinkClosure(function() {
-			  	    	 			dh.account.undo(dh.account.usernameEntry, oldValue);
-			  	    	 		}) : null, oldValue ? "Change back to '" + oldValue + "'" : null);
-			  	    	 		// this saves what we'll undo to after the NEXT change
-								dh.account.undoValues['dhUsernameEntry'] = value;
-				  	    	},
-				  	    	function(type, error, http) {
-								dh.account.showStatus('dhUsernameEntry', "Failed to save your new user name.", "Close",
-								"javascript:dh.account.hideStatus('dhUsernameEntry');", "");
-				  	    	});
+		dh.account.onValueChanged(dh.account.usernameEntry, 'renameperson', 'name', value,
+		"Saving user name...",
+		"Your user name has been saved.");
+	}
+		
+	dh.account.bioEntryNode = document.getElementById('dhBioEntry');
+	dh.account.bioEntry = new dh.textinput.Entry(dh.account.bioEntryNode, "I grew up in Kansas. If you listen to Coldplay, I want to meet you.", dh.account.currentValues['dhBioEntry']);
+
+	dh.account.undoValues['dhBioEntry'] = dh.account.bioEntry.getValue();
+	dh.account.bioEntry.onValueChanged = function(value) {
+		dh.account.onValueChanged(dh.account.bioEntry, 'setbio', 'bio', value,
+		"Saving new bio...",
+		"Your bio has been saved.");
 	}
 }
 

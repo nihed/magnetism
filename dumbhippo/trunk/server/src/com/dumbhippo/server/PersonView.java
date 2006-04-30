@@ -44,6 +44,7 @@ public class PersonView extends EntityView {
 	private boolean invited; 
 	private String fallbackName;
 	private Guid fallbackIdentifyingGuid;
+	private String bioAsHtmlCached;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -676,5 +677,21 @@ public class PersonView extends EntityView {
 
 	public void setFallbackName(String fallbackName) {
 		this.fallbackName = fallbackName;
+	}
+	
+	public String getBioAsHtml() {
+		// the cache is because jsp's can be expected to test this for null
+		// then use it, and we don't want to do the htmlizing twice
+		if (bioAsHtmlCached == null) {
+			if (user == null)
+				return null;
+			String bio = user.getAccount().getBio();
+			if (bio == null)
+				return null;
+			XmlBuilder xml = new XmlBuilder();
+			xml.appendTextAsHtml(user.getAccount().getBio(), null);
+			bioAsHtmlCached = xml.toString(); 
+		}
+		return bioAsHtmlCached;
 	}
 }
