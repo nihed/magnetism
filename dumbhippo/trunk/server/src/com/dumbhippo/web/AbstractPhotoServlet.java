@@ -21,7 +21,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 
 public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
-	private static final int[] PHOTO_DIMENSIONS = { Configuration.SHOT_LARGE_SIZE, Configuration.SHOT_SMALL_SIZE };
+	private static final int[] PHOTO_DIMENSIONS = { Configuration.SHOT_LARGE_SIZE, Configuration.SHOT_MEDIUM_SIZE, Configuration.SHOT_SMALL_SIZE };
 	protected static final int LARGEST_PHOTO_DIMENSION = Configuration.SHOT_LARGE_SIZE;
 	
 	@SuppressWarnings("unused")

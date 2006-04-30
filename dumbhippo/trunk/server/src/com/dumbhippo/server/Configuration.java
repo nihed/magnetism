@@ -17,6 +17,7 @@ public interface Configuration {
 	static final public String HEADSHOTS_RELATIVE_PATH = "/headshots";
 	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
 	static final public int SHOT_SMALL_SIZE = 48;
+	static final public int SHOT_MEDIUM_SIZE = 60;
 	static final public int SHOT_LARGE_SIZE = 192;
 	static final public String NOW_PLAYING_THEMES_RELATIVE_PATH = "/nowplaying-themes";
 	static final public int NOW_PLAYING_THEME_WIDTH = 440;

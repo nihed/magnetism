@@ -10,7 +10,7 @@
 
 <head>
 	<title>Your Account</title>
-	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/account.css"/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.account");
@@ -39,6 +39,28 @@
 					<div>
 						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
+				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="Picture">
+					<div class="dh-image">
+						<dht:headshot user="${signin.user}" size="60"/>
+					</div>
+					<div class="dh-next-to-image">
+						<div>Upload new picture:</div>
+						<c:set var="location" value="/headshots" scope="page"/>
+						<c:url value="/upload${location}" var="posturl"/>
+						<div>
+							<form enctype="multipart/form-data" action="${posturl}" method="post">
+								<input id='dhPictureEntry' type="file" name="photo"/>
+								<input type="hidden" name="groupId" value=""/>
+								<input type="hidden" name="reloadTo" value="/account"/>
+							</form>
+						</div>
+						<div>
+							or <a href="FIXME">choose stock picture</a>
+						</div>
+					</div>
+					<div class="dh-grow-div-around-floats"><div></div></div>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhMyspaceEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="MySpace name">

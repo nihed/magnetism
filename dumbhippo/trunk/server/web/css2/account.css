@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("account-positions.css");
+
+#dhContentColumn .dh-form-table {
+	font-size:			12px;
+}
+
+div.dh-save-status {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-weight:		bold;
+	-moz-border-radius:	5px;
+}
+
+/* the Undo link in the save status thing */
+.dh-save-status a, .dh-save-status a:visited {
+	font-weight:		normal;
+	color:				#cc0033;
+	margin-left:		5px;
+	text-decoration:	underline;
+}

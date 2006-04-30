@@ -5,6 +5,11 @@ body {
 	text-align:		center;
 }
 
+/* browsers have default margins on forms it seems */
+form {
+	margin:			0px;	
+}
+
 /* post descriptions have <p> tags, avoid extra space from them */
 .dh-blurb p {
 	margin-top:		1px;
@@ -248,43 +253,3 @@ body {
 	width:				100%;
 }
 
-#dhContentColumn .dh-form-table {
-	width:			478px;
-	margin-top:		10px;
-	margin-bottom:	10px;
-}
-
-#dhContentColumn .dh-form-table .dh-spacer-row {
-	height:			10px;
-}
-
-#dhContentColumn .dh-form-table .dh-label-cell {
-	width:			120px;
-	padding-right:	10px;
-}
-
-#dhContentColumn .dh-form-table .dh-control-cell {
-	width:			358px;
-}
-
-#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div {
-	position:		relative;
-	width:			358px;
-}
-
-#dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {
-	width:			250px;	
-}
-
-#dhContentColumn .dh-form-table .dh-control-cell .dh-password-input {
-	width:			180px;	
-}
-
-#dhContentColumn .dh-form-table .dh-control-cell .dh-username-input {
-	width:			180px;	
-}
-
-div.dh-save-status {
-	padding:		4px;
-	width:			468px;
-}
