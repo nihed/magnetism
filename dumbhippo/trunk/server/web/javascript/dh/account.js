@@ -170,6 +170,16 @@ dhAccountInit = function() {
 		"Saving new bio...",
 		"Your bio has been saved.");
 	}
+	
+	dh.account.myspaceEntryNode = document.getElementById('dhMyspaceEntry');
+	dh.account.myspaceEntry = new dh.textinput.Entry(dh.account.myspaceEntryNode, null, dh.account.currentValues['dhMyspaceEntry']);
+
+	dh.account.undoValues['dhMyspaceEntry'] = dh.account.myspaceEntry.getValue();
+	dh.account.myspaceEntry.onValueChanged = function(value) {
+		dh.account.onValueChanged(dh.account.myspaceEntry, 'setmyspacename', 'name', value,
+		"Saving new MySpace name...",
+		"Your MySpace name has been saved.");
+	}
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

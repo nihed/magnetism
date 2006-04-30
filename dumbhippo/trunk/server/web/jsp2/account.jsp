@@ -16,7 +16,8 @@
 		dojo.require("dh.account");
 		dh.account.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
-			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>
+			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
+			'dhMyspaceEntry' : <dh:jsString value="${signin.user.account.mySpaceName}"/>
 		};
 	</script>
 </head>
@@ -30,7 +31,7 @@
 				<dht:formTableRow label="User name">
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhBioEntry'>Your bio has been saved.</dht:formTableRowStatus>
+				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="About me">
 					<div>
 						<input type="button" value="Generate a random bio!" onclick="dh.account.generateRandomBio();"/>
@@ -39,9 +40,10 @@
 						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhMyspaceEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="MySpace name">
-					<dht:textInput/>
-				</dht:formTableRow>				
+					<dht:textInput id="dhMyspaceEntry"/>
+				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>FRIENDS ONLY INFO</dht:zoneBoxTitle>
