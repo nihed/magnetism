@@ -92,6 +92,8 @@ form {
 	height:				60px;
 	margin-right:		10px;
 	background-color:	#666666; /* debug */
+	/* without this IE will grow the box a bit apparently */
+	overflow:			hidden;
 }
 
 #dhSidebarColumn {
@@ -119,6 +121,9 @@ form {
 	width:				60px;
 	height:				60px;
 	background-color:	white; /* debug */
+	
+	/* without this IE will grow the box a bit apparently */
+	overflow:			hidden;
 }
 
 .dh-sidebar-box .dh-item .dh-next-to-image {
