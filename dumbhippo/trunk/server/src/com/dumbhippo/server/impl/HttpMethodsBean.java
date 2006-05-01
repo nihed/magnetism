@@ -260,7 +260,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			SAXException, MalformedURLException, IOException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		PostVisibility visibility = isPublic ? PostVisibility.ANONYMOUSLY_PUBLIC 
+		PostVisibility visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC 
 				: PostVisibility.RECIPIENTS_ONLY;
 
 		PostInfo info;
@@ -668,7 +668,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Error sending repair link", e);
 		}
 	}
-	
+
 	public void doReindexAll(UserViewpoint viewpoint) 
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
