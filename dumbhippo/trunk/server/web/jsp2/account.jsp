@@ -104,17 +104,31 @@
 					</dht:formTableRow>
 					<dht:formTableRow label="Re-type password">
 						<dht:textInput  id="dhPasswordAgainEntry" type="password" extraClass="dh-password-input"/><span style="width: 10px;"></span><input id="dhSetPasswordButton" type="button" value="Set password"/>
-					</dht:formTableRow>				
-					<dht:formTableRow label="Disable account">
-						<div>
-							<input type="button" value="Disable account"/>
-						</div>
-						<div>
-							Disabling your account means you have no public profile page, and we will 
-							never send you email for any reason. You can enable your account again at 
-							any time.
-						</div>
 					</dht:formTableRow>
+					<c:choose>
+						<c:when test="${signin.user.account.disabled}">
+							<dht:formTableRow label="Enable account">
+								<div>
+									<input type="button" value="Enable account" onclick="javascript:dh.actions.setAccountDisabled(false);"/>
+								</div>
+								<div>
+									Enabling your account will let you use all the features of Mugshot.
+								</div>
+							</dht:formTableRow>						
+						</c:when>
+						<c:otherwise>
+							<dht:formTableRow label="Disable account">
+								<div>
+									<input type="button" value="Disable account" onclick="javascript:dh.actions.setAccountDisabled(true);"/>
+								</div>
+								<div>
+									Disabling your account means we don't show any information on your
+									public profile page, and we will never send you email for any reason.
+									You can enable your account again at any time.
+								</div>
+							</dht:formTableRow>
+						</c:otherwise>
+					</c:choose>
 				</dht:formTable>
 		</dht:zoneBoxAccount>
 	</dht:contentColumn>

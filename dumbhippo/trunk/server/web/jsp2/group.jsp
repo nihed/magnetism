@@ -16,7 +16,7 @@
 	<title><c:out value="${group.name}"/>'s Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
 	<dht:scriptIncludes/>
-	<%-- dht:embedObject --%>
+	<dht:embedObject/>
     <script type="text/javascript">
         dojo.require("dh.util");
     </script>
