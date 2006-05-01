@@ -36,11 +36,11 @@ public class PagerLinkListTag extends SimpleTagSupport {
 			pages = 1 + (total - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
 		
 		for (int i = 0; i < pages; i++) {
-			String visibleIdx = new Integer(i+1).toString();
+			String visiblePage = Integer.toString(i+1);
 			if (i == index) {
-				writer.append(visibleIdx);
+				writer.append(visiblePage);
 			} else {
-				writeLinkHtml(writer, "dh-pager-link", i, visibleIdx);
+				writeLinkHtml(writer, "dh-pager-link", i, visiblePage);
 			}
 			if (i < (pages - 1)) {
 				writer.append(" ");

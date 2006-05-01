@@ -56,7 +56,7 @@
 					<c:choose>
 						<c:when test="${links.receivedPosts.size > 0}">
 							<dht:postList posts="${links.receivedPosts.list}" format="full" favesMode="add-only"/>
-							<dht:expandablePager index="${links.receivedPostsIndex}" total="${links.receivedPostsTotal}" pagerQuery="receivedIdx" pagerAnchor="dhReceivedPosts"/>
+							<dht:expandablePager index="${links.receivedPostsPage}" total="${links.receivedPostsTotal}" pagerQuery="receivedPostsPage" pagerAnchor="dhReceivedPosts"/>
 						</c:when>
 						<c:otherwise>
 							Nothing shared with you yet!
@@ -68,7 +68,7 @@
 					<c:choose>
 						<c:when test="${links.sentPosts.size > 0}">
 							<dht:postList posts="${links.sentPosts.list}" format="full" favesMode="add-only"/>
-							<dht:expandablePager index="${links.sentPostsIndex}" total="${links.sentPostsTotal}" pagerQuery="sentIdx" pagerAnchor="dhSentPosts"/>
+							<dht:expandablePager index="${links.sentPostsPage}" total="${links.sentPostsTotal}" pagerQuery="sentPostsPage" pagerAnchor="dhSentPosts"/>
 						</c:when>
 						<c:otherwise>
 							You've never shared anything!

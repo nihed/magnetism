@@ -19,10 +19,10 @@ public class LinksPersonPage extends AbstractPersonPage {
 	private ListBean<PostView> favoritePosts;
 	
 	private int receivedPostsTotal = -1;
-	private int receivedPostsIndex = 0;
+	private int receivedPostsPage = 0;
 	private ListBean<PostView> receivedPosts;
 	private int sentPostsTotal = -1;	
-	private int sentPostsIndex = 0;
+	private int sentPostsPage = 0;
 	private ListBean<PostView> sentPosts;
 	
 	private Boolean notifyPublicShares;
@@ -56,8 +56,8 @@ public class LinksPersonPage extends AbstractPersonPage {
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
 			logger.debug("Getting received posts for {}", getViewedUser());
-			int start = getPagingStart(receivedPostsIndex);
-			int count = getPagingCount(receivedPostsIndex);
+			int start = getPagingStart(receivedPostsPage);
+			int count = getPagingCount(receivedPostsPage);
 			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), start, count));
 		}
 		return receivedPosts;
@@ -74,27 +74,27 @@ public class LinksPersonPage extends AbstractPersonPage {
 	public ListBean<PostView> getSentPosts() {
 		if (sentPosts == null) {
 			logger.debug("Getting sent posts for {}", getViewedUser());
-			int start = getPagingStart(sentPostsIndex);
-			int count = getPagingCount(sentPostsIndex);
+			int start = getPagingStart(sentPostsPage);
+			int count = getPagingCount(sentPostsPage);
 			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getSignin().getViewpoint(), getViewedUser(), start, count));
 		}
 		return sentPosts;
 	}
 
-	public int getReceivedPostsIndex() {
-		return receivedPostsIndex;
+	public int getReceivedPostsPage() {
+		return receivedPostsPage;
 	}
 
-	public void setReceivedPostsIndex(int receivedPostsIndex) {
-		this.receivedPostsIndex = receivedPostsIndex;
+	public void setReceivedPostsPage(int page) {
+		this.receivedPostsPage = page;
 	}
 	
-	public int getSentPostsIndex() {
-		return sentPostsIndex;
+	public int getSentPostsPage() {
+		return sentPostsPage;
 	}
 
-	public void setSentPostsIndex(int idx) {
-		this.sentPostsIndex = idx;
+	public void setSentPostsPage(int page) {
+		this.sentPostsPage = page;
 	}	
 	
 	public boolean getNotifyPublicShares() {
