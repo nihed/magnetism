@@ -77,6 +77,12 @@ public class BeanTag extends SimpleTagSupport {
 		return BrowserBean.getForRequest((HttpServletRequest)context.getRequest());
 	}
 	
+	private PagePositionsBean getPagePositionsBean() {
+		PageContext context = (PageContext)getJspContext();
+		
+		return PagePositionsBean.getForRequest((HttpServletRequest)context.getRequest());
+	}
+	
 	private void setField(Object o, Field f, Object value) {
 		/*
 		if (logger.isDebugEnabled())
@@ -125,6 +131,9 @@ public class BeanTag extends SimpleTagSupport {
 				} else if (f.isAnnotationPresent(Browser.class) &&
 					f.getType().isAssignableFrom(BrowserBean.class)) {
 					setField(o, f, getBrowserBean());
+				} else if (f.isAnnotationPresent(PagePositions.class) &&
+						f.getType().isAssignableFrom(PagePositionsBean.class)) {
+						setField(o, f, getPagePositionsBean());
 				} else if (f.isAnnotationPresent(FromJspContext.class)) {
 					FromJspContext a = f.getAnnotation(FromJspContext.class);
 					String key = a.value();

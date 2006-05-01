@@ -27,9 +27,21 @@ public interface PostingBoard {
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
 
+	public void pagePostsFor(Viewpoint viewpoint, Person poster, Pageable<PostView> pageable);
+
 	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient);
 	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);
+	
+	/**
+	 * Gets information about received posts for display in pageable fashion; currently
+	 * posts must be retrieved from the viewpoint of the receiving user.
+	 * 
+	 * @param viewpoint the viewpoint retrieving the information
+	 * @param recipient the user receiving the posts
+	 * @param pageable provides information about what posts to view and receives the result
+	 */
+	public void pageReceivedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable);
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
@@ -42,7 +54,7 @@ public interface PostingBoard {
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search);
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
-
+	
 	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search);
 	
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max);

@@ -1,6 +1,7 @@
 dojo.provide("dh.actions");
 
 dojo.require("dh.server");
+dojo.require("dh.util");
 
 dh.actions.requestJoinRoom = function(userId, chatId) {
     // Check readyState is to see if the object was actually loaded.
@@ -168,4 +169,48 @@ dh.actions.setPostFavorite = function(postId, favorite) {
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't change favoriteness of post");
 		  	    	 });
+}
+
+dh.actions.switchPage = function (name, anchor, newPage) {
+	var params = dh.util.getParamsFromLocation()
+	var positions = {}
+	var oldPosString = params["pos"]
+	if (oldPosString) {
+		var settings = oldPosString.split(/!/)
+		for (var i = 0; i < settings.length; i++) {
+			var colon = settings[i].indexOf("-")
+			if (colon > 0) {
+				var page = parseInt(settings[i].substring(colon + 1))
+				if (!isNaN(page)) {
+					positions[settings[i].substring(0, colon)] = page
+				}
+			}
+		}
+	}
+	
+	positions[name] = newPage
+	
+	var newPosString = ""
+	for (var key in positions) {
+		if (positions[key] > 0) {
+			if (newPosString != "") {
+				newPosString += "!"
+			}
+			newPosString += key + "-" + positions[key]
+		}
+	}
+	
+	if (newPosString != "")
+		params["pos"] = newPosString
+	else
+		delete params["pos"]
+	
+	var newQuery = dh.util.encodeQueryString(params)
+	var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname +
+	            newQuery + "#"
+	if (anchor != null)
+		newUrl += anchor
+	window.location.replace(newUrl)
+	
+	return false
 }

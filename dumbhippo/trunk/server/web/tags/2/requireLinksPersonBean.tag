@@ -7,6 +7,4 @@
 <c:if test="${empty links}">
 	<dh:bean id="links" class="com.dumbhippo.web.LinksPersonPage" scope="request"/>
 	<jsp:setProperty name="links" property="viewedUserId" value="${who}"/>
-	<jsp:setProperty name="links" property="receivedPostsPage" param="receivedPostsPage"/>
-	<jsp:setProperty name="links" property="sentPostsPage" param="sentPostsPage"/>	
 </c:if>

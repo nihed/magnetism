@@ -282,29 +282,14 @@
         <bodycontent>empty</bodycontent>
         <info>Display list of pager links</info>        
 	    <attribute>
-           <name>index</name>
+           <name>pageable</name>
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>
-           <name>total</name>
-           <required>true</required>
+           <name>anchor</name>
+           <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
-        <attribute>
-           <name>onClick</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>initialPerPage</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>                          
-        <attribute>
-           <name>subsequentPerPage</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>                          
     </tag>    
 </taglib>

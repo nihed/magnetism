@@ -6,21 +6,27 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+import com.dumbhippo.server.Pageable;
+
 public class PagerLinkListTag extends SimpleTagSupport {
-	private int initialPerPage;
-	private int subsequentPerPage;
-	private int index;
-	private int total;
-	private String onClick;
 	
-	private void writeLinkHtml(JspWriter writer, String cssClass, int idx, String content) throws IOException {
+	private Pageable<?> pageable;
+	private String anchor;
+	
+	private void writeLinkHtml(JspWriter writer, String cssClass, int page, String content) throws IOException {
 		writer.append("<a class=\"");
 		writer.append(cssClass);
-		writer.append("\" href=\"\" onclick=\"return ");
-		writer.append(onClick);
-		writer.append("(");
-		writer.append(""+idx);
-		writer.append(");\">");
+		writer.append("\" href=\"#\" onclick=\'return dh.actions.switchPage(\"");
+		writer.append(pageable.getName());
+		writer.append("\",");
+		if (anchor != null) {
+			writer.append("\"" + anchor + "\"");
+		} else {
+			writer.append("null");
+		}
+		writer.append(",");
+		writer.append("" + page);
+		writer.append(");\'>");
 		writer.append(content);
 		writer.append("</a>");		
 	}
@@ -29,15 +35,11 @@ public class PagerLinkListTag extends SimpleTagSupport {
 	public void doTag() throws IOException, JspException {
 		JspWriter writer = getJspContext().getOut();		
 		
-		int pages;
-		if (total < initialPerPage)
-			pages = 1;
-		else 
-			pages = 1 + (total - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
+		int pages = pageable.getPageCount();;
 		
 		for (int i = 0; i < pages; i++) {
-			String visiblePage = Integer.toString(i+1);
-			if (i == index) {
+			String visiblePage = Integer.toString(i + 1);
+			if (i == pageable.getPosition()) {
 				writer.append(visiblePage);
 			} else {
 				writeLinkHtml(writer, "dh-pager-link", i, visiblePage);
@@ -46,29 +48,17 @@ public class PagerLinkListTag extends SimpleTagSupport {
 				writer.append(" ");
 			}			
 		}
-		if (index < (pages-1)) {
+		if (pageable.getPosition() < (pages - 1)) {
 			writer.append(" ");
-			writeLinkHtml(writer, "dh-pager-link-next", index+1, "Next");
+			writeLinkHtml(writer, "dh-pager-link-next", pageable.getPosition() + 1, "Next");
 		}
 	}
 	
-	public void setOnClick(String onClick) {
-		this.onClick = onClick;
+	public void setPageable(Pageable pageable) {
+		this.pageable = pageable;
 	}
 	
-	public void setInitialPerPage(int perPage) {
-		initialPerPage = perPage;
-	}
-	
-	public void setSubsequentPerPage(int perPage) {
-		subsequentPerPage = perPage;
-	}
-	
-	public void setIndex(int idx) {
-		this.index = idx;
-	}
-
-	public void setTotal(int total) {
-		this.total = total;
+	public void setAnchor(String anchor) {
+		this.anchor = anchor;
 	}
 }

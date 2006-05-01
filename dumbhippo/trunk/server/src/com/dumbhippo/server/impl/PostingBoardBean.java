@@ -73,6 +73,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostInfoSystem;
@@ -692,6 +693,11 @@ public class PostingBoardBean implements PostingBoard {
 		Query q = buildGetPostsForQuery(viewpoint, forPerson, search, false);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
+	
+	public void pagePostsFor(Viewpoint viewpoint, Person poster, Pageable<PostView> pageable) {
+		pageable.setResults(getPostsFor(viewpoint, poster, pageable.getStart(), pageable.getCount()));
+		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
+	}
 
 	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient, String search, boolean isCount) {
 		// There's an efficiency win here by specializing to the case where
@@ -961,6 +967,12 @@ public class PostingBoardBean implements PostingBoard {
 	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max) {
 		return getReceivedPosts(viewpoint, recipient, null, start, max);
 	}
+	
+	public void pageReceivedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable) {
+		pageable.setResults(getReceivedPosts(viewpoint, recipient, null, pageable.getStart(), pageable.getCount()));
+		pageable.setTotalCount(getReceivedPostsCount(viewpoint, recipient));
+	}
+	
 
 	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient) {
 		return getGroupPostsCount(viewpoint, recipient, null);
