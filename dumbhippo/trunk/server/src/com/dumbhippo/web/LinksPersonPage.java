@@ -8,6 +8,7 @@ import com.dumbhippo.server.PostingBoard;
 
 public class LinksPersonPage extends AbstractPersonPage {
 	
+	// These have to match expandablePager.tag
 	static private final int INITIAL_RESULT_COUNT = 3;
 	static private final int PAGING_RESULT_COUNT = 6;
 	
@@ -42,13 +43,22 @@ public class LinksPersonPage extends AbstractPersonPage {
 			sentPostsTotal = postBoard.getPostsForCount(getUserSignin().getViewpoint(), getViewedUser());
 		}
 		return sentPostsTotal;
-	}	
+	}
 	
+	private int getPagingStart(int page) {
+		return page > 0 ? INITIAL_RESULT_COUNT + (page - 1) * PAGING_RESULT_COUNT : 0;
+	}
+	
+	private int getPagingCount(int page) {
+		return page > 0 ? PAGING_RESULT_COUNT : INITIAL_RESULT_COUNT;
+	}
+
 	public ListBean<PostView> getReceivedPosts() {
 		if (receivedPosts == null) {
 			logger.debug("Getting received posts for {}", getViewedUser());
-			int count = receivedPostsIndex > 0 ? PAGING_RESULT_COUNT : INITIAL_RESULT_COUNT;
-			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), receivedPostsIndex * count, count));
+			int start = getPagingStart(receivedPostsIndex);
+			int count = getPagingCount(receivedPostsIndex);
+			receivedPosts = new ListBean<PostView>(postBoard.getReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), start, count));
 		}
 		return receivedPosts;
 	}
@@ -64,8 +74,9 @@ public class LinksPersonPage extends AbstractPersonPage {
 	public ListBean<PostView> getSentPosts() {
 		if (sentPosts == null) {
 			logger.debug("Getting sent posts for {}", getViewedUser());
-			int count = sentPostsIndex > 0 ? PAGING_RESULT_COUNT : INITIAL_RESULT_COUNT;			
-			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getSignin().getViewpoint(), getViewedUser(), sentPostsIndex * count, count));
+			int start = getPagingStart(sentPostsIndex);
+			int count = getPagingCount(sentPostsIndex);
+			sentPosts = new ListBean<PostView>(postBoard.getPostsFor(getSignin().getViewpoint(), getViewedUser(), start, count));
 		}
 		return sentPosts;
 	}

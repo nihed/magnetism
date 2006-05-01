@@ -20,7 +20,7 @@
 		<a href="${more}" onclick="return dhPagerClosure<c:out value="${pagerQuery}"/>(1);"><img src="/images2/arrow_right.gif"/></a>
 	</c:when>
 	<c:otherwise>
-		<dh:pagerLinkList resultsPerPage="6" index="${index}" total="${total}" onClick="dhPagerClosure${pagerQuery}"/>
+		<dh:pagerLinkList initialPerPage="3" subsequentPerPage="6" index="${index}" total="${total}" onClick="dhPagerClosure${pagerQuery}"/>
 	</c:otherwise>
 </c:choose>
 </div>

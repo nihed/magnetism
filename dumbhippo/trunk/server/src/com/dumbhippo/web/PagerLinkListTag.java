@@ -7,7 +7,8 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 public class PagerLinkListTag extends SimpleTagSupport {
-	private int resultsPerPage;
+	private int initialPerPage;
+	private int subsequentPerPage;
 	private int index;
 	private int total;
 	private String onClick;
@@ -28,9 +29,11 @@ public class PagerLinkListTag extends SimpleTagSupport {
 	public void doTag() throws IOException, JspException {
 		JspWriter writer = getJspContext().getOut();		
 		
-		int pages = total / resultsPerPage;
-		if ((total % resultsPerPage) != 0)
-			pages++;
+		int pages;
+		if (total < initialPerPage)
+			pages = 1;
+		else 
+			pages = 1 + (total - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
 		
 		for (int i = 0; i < pages; i++) {
 			String visibleIdx = new Integer(i+1).toString();
@@ -53,8 +56,12 @@ public class PagerLinkListTag extends SimpleTagSupport {
 		this.onClick = onClick;
 	}
 	
-	public void setResultsPerPage(int perPage) {
-		resultsPerPage = perPage;
+	public void setInitialPerPage(int perPage) {
+		initialPerPage = perPage;
+	}
+	
+	public void setSubsequentPerPage(int perPage) {
+		subsequentPerPage = perPage;
 	}
 	
 	public void setIndex(int idx) {

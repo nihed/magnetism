@@ -297,7 +297,12 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>
-           <name>resultsPerPage</name>
+           <name>initialPerPage</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>                          
+        <attribute>
+           <name>subsequentPerPage</name>
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>                          
