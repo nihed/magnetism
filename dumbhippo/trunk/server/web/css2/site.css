@@ -101,6 +101,7 @@ body.dh-gray-background-page {
 .dh-sidebar-box {
 	background-color:	#CFCFCF;
 	font-size:			12px;
+	-moz-border-radius:	10px;
 }
 
 .dh-sidebar-box .dh-title {
