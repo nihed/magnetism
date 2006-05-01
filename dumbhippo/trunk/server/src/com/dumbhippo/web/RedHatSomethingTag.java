@@ -23,7 +23,8 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 		"Spaceship",
 		"Medicine Cabinet",
 		"Shoeshine",
-		"Improvisation"
+		"Improvisation",
+		"Stealthy Gill-Equipped Aqua Warrior"
 	};
 	
 	private String pickSomething() {
