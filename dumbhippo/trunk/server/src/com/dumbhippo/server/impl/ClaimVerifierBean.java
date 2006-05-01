@@ -4,6 +4,8 @@ import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.jms.ObjectMessage;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -13,12 +15,22 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.botcom.BotTask;
+import com.dumbhippo.botcom.BotTaskMessage;
+import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ClaimVerifier;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
@@ -38,16 +50,21 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	
 	@EJB
 	private TransactionRunner runner;
+
+	@EJB
+	private Configuration configuration;
 	
-	public String getAuthKey(final User user, final Resource resource) {
-		
+	@EJB
+	private Mailer mailer;
+	
+	private ResourceClaimToken getToken(final User user, final Resource resource) {	
 		if (user == null && resource == null)
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
 		
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<String>() {
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResourceClaimToken>() {
 				
-				public String call() {
+				public ResourceClaimToken call() {
 					Query q;
 					
 					q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
@@ -66,7 +83,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 						em.persist(token);
 					}
 					
-					return token.getAuthKey();
+					return token;
 				}
 				
 			});
@@ -75,8 +92,62 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			return null; // not reached
 		}
 	}
-
-	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException {
+	
+	public String getAuthKey(final User user, final Resource resource) {
+		return getToken(user, resource).getAuthKey();
+	}
+	
+	private String getClaimVerifierLink(User user, Resource resource) throws HumanVisibleException {
+		ResourceClaimToken token = getToken(user, resource);
+		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
+	}
+	
+	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException {
+		if (!viewpoint.isOfUser(user)) {
+			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
+		}
+		if (address.contains("@")) {
+			EmailResource resource = identitySpider.getEmail(address);
+			String link = getClaimVerifierLink(user, resource);
+			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.VERIFIER, resource.getEmail());
+			
+			StringBuilder bodyText = new StringBuilder();
+			XmlBuilder bodyHtml = new XmlBuilder();
+			
+			bodyText.append("\n");
+			bodyText.append("Click this link to add '" + resource.getEmail() + "' to your account: " + link + "\n");
+			bodyText.append("NOTE: Anyone with access to this email account will be able to log in to your DumbHippo account.\n");
+			bodyText.append("\n");
+			
+			bodyHtml.appendHtmlHead("");
+			bodyHtml.append("<body>\n");
+			bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
+			bodyHtml.append("<p>NOTE: <b>Anyone</b> with access to this email account will be able to log in to your DumbHippo account.</p>");
+			bodyHtml.append("</body>\n</html>\n");
+			
+			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your DumbHippo account",
+					bodyText.toString(), bodyHtml.toString());
+			mailer.sendMessage(message);
+		} else {
+			AimResource resource;
+			try {
+				resource = identitySpider.getAim(address);
+			} catch (ValidationException e) {
+				throw new HumanVisibleException(e.getMessage());
+			}
+			String link = getClaimVerifierLink(user, resource);
+			XmlBuilder bodyHtml = new XmlBuilder();
+			bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your DumbHippo account", "href", link);
+			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your DumbHippo account.");
+			
+			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
+			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
+			ObjectMessage jmsMessage = producer.createObjectMessage(message);
+			producer.send(jmsMessage);
+		}
+	}
+	
+	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException { 
 		if (user != null) {
 			if (!user.equals(token.getUser())) {
 				Viewpoint viewpoint = new UserViewpoint(user);

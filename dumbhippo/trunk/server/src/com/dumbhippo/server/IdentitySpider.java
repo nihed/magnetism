@@ -118,6 +118,14 @@ public interface IdentitySpider {
 	 */	
 	public void addVerifiedOwnershipClaim(User owner, Resource res);
 	
+	/** 
+	 * Remove the verification of this ownership claim.
+	 * 
+	 * @param owner the owner in the claim
+	 * @param res the resource they currently may own
+	 */
+	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res);
+	
 	/**
 	 * If the person has a Contact with a resource sharing a (system-verified)
 	 * owner with resource, adds resource to that contact and returns the

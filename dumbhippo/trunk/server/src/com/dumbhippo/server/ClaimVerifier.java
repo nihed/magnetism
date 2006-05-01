@@ -43,4 +43,14 @@ public interface ClaimVerifier {
 	 */
 	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException;
 		
+	/**
+	 * Send email or an IM with a link that, when clicked, will verify the association of the given user 
+	 * with the given address.
+	 * 
+	 * @param viewpoint viewpoint we're signed in as
+	 * @param user user to change
+	 * @param address the email or AIM address
+	 * @throws HumanVisibleException any error to display
+	 */
+	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException;
 }

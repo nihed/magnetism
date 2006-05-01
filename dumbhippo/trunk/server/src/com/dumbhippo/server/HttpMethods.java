@@ -92,6 +92,22 @@ public interface HttpMethods {
 	public void doSendLoginLinkAim(String address) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doRemoveClaimEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;	
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "disabled" })
 	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled) throws IOException, HumanVisibleException;
 

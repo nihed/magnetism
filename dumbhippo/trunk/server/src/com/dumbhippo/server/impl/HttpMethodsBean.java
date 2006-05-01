@@ -33,9 +33,11 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
@@ -80,6 +82,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private InvitationSystem invitationSystem;
+	
+	@EJB
+	private ClaimVerifier claimVerifier;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType,
 			XmlBuilder xml) {
@@ -403,6 +408,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		signinSystem.sendSigninLink(address);
 	}
 
+	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
+	}
+	
+	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
+	}
+
+	public void doRemoveClaimEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+		Resource resource = identitySpider.getEmail(address);
+		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
+	}
+
+	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+		Resource resource = identitySpider.lookupAim(address);
+		if (resource == null)
+			throw new HumanVisibleException("That AIM screen name isn't associated with any account");
+		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
+	}
+	
 	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled)
 			throws IOException, HumanVisibleException {
 		identitySpider.setAccountDisabled(viewpoint.getViewer(), disabled);

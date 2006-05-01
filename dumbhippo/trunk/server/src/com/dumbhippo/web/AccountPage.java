@@ -43,6 +43,10 @@ public class AccountPage {
 		
 		return person;
 	}
+
+	public boolean getCanRemoveEmails() {
+		return person.getAllEmails().size() > 1;
+	}
 	
 	public String getAddAimLink() {
 		String token = claimVerifier.getAuthKey(signin.getUser(), null); 

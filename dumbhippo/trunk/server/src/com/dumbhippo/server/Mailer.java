@@ -9,6 +9,7 @@ public interface Mailer {
 	enum SpecialSender {
 		INVITATION("Dumb Hippo Invitation <invitations@dumbhippo.com>"),
 		LOGIN("Dumb Hippo Login <logins@dumbhippo.com>"),
+		VERIFIER("Dumb Hippo Address Verifier <verifier@dumbhippo.com>"),
 		NOBODY("nobody@dumbhippo.com");
 		
 		private String address;

@@ -8,6 +8,8 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
+<dh:bean id="account" class="com.dumbhippo.web.AccountPage" scope="page"/>
+
 <head>
 	<title>Your Account</title>
 	<link rel="stylesheet" type="text/css" href="/css2/account.css"/>
@@ -75,25 +77,48 @@
 			<dht:zoneBoxTitle>FRIENDS ONLY INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>This information will only be seen by friends.</dht:zoneBoxSubtitle>
 			<dht:formTable>
+				<dht:formTableRowStatus controlId='dhEmailEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Email addresses">
-					<table>
+					<table cellpadding="0" cellspacing="0" class="dh-address-table">
 						<tbody>
-							<tr><td>foo@bar.com</td><td><a href="FIXME">remove</a></td><td></td></tr>
-							<tr><td>foo@bar.com</td><td><a href="FIXME">remove</a></td><td></td></tr>
-							<tr><td><dht:textInput/></td><td><input type="button" value="Verify"/></td><td></td></tr>
+							<c:forEach items="${account.person.allEmails}" var="email" varStatus="status">
+								<tr>
+									<td><c:out value="${email.email}"/></td>
+									<td>
+										<c:if test="${account.canRemoveEmails}">
+											<c:set var="emailJs" scope="page">
+												<jsp:attribute name="value">
+													<dh:jsString value="${email.email}"/>
+												</jsp:attribute>
+											</c:set>
+											<a href="javascript:dh.account.removeClaimEmail(${emailJs});">remove</a>
+										</c:if>
+									</td>
+								</tr>
+								<tr class="dh-email-address-spacer">
+									<td></td>
+									<td></td>
+								</tr>
+							</c:forEach>
+							<tr><td><dht:textInput id='dhEmailEntry'/></td><td><input id='dhEmailVerifyButton' type="button" value="Verify" onclick="dh.account.verifyEmail();"/></td></tr>
 						</tbody>
 					</table>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhEmailEntry'>Verification mail sent to foo@bar.com.</dht:formTableRowStatus>
 				<dht:formTableRow label="AIM screen names">
-					<table>
-						<tbody>
-							<tr><td>foobar2000</td><td></td><td></td></tr>
-							<tr><td><dht:textInput/></td><td><input type="button" value="Verify"/></td><td></td></tr>
-						</tbody>
-					</table>
+					<c:forEach items="${account.person.allAims}" var="aim">
+						<div class="dh-aim-address">
+							<c:set var="aimJs" scope="page">
+								<jsp:attribute name="value">
+									<dh:jsString value="${aim.screenName}"/>
+								</jsp:attribute>
+							</c:set>
+							<c:out value="${aim.screenName}"/><a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
+						</div>
+					</c:forEach>
+					<div>
+						<a href="${account.addAimLink}">IM our friendly bot to add a new screen name</a>
+					</div>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhAimEntry'>Verification IM sent to foobar123.</dht:formTableRowStatus>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SECURITY INFO</dht:zoneBoxTitle>
@@ -103,7 +128,7 @@
 						<dht:textInput id="dhPasswordEntry" type="password" extraClass="dh-password-input"/>
 					</dht:formTableRow>
 					<dht:formTableRow label="Re-type password">
-						<dht:textInput  id="dhPasswordAgainEntry" type="password" extraClass="dh-password-input"/><span style="width: 10px;"></span><input id="dhSetPasswordButton" type="button" value="Set password"/>
+						<dht:textInput  id="dhPasswordAgainEntry" type="password" extraClass="dh-password-input"/><span style="width: 10px; height: 5px;"></span><input id="dhSetPasswordButton" type="button" value="Set password"/>
 					</dht:formTableRow>
 					<c:choose>
 						<c:when test="${signin.user.account.disabled}">

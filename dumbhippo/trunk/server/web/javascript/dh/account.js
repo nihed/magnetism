@@ -152,6 +152,47 @@ dh.account.generateRandomBio = function() {
 						});
 }
 
+
+dh.account.verifyEmail = function() {
+	var emailEntryNode = document.getElementById('dhEmailEntry');
+	if (emailEntryNode.value.indexOf("@") < 0) {
+		dh.account.showStatusMessage('dhEmailEntry', "Enter an email address, then click Verify");
+		return;
+	}
+	var address = emailEntryNode.value;
+  	dh.server.doPOST("sendclaimlinkemail",
+			 	     { "address" : address },
+  					 function(type, data, http) {
+	  					 dh.account.showStatusMessage('dhEmailEntry', "We sent mail to '" + address + "', click on the link in that mail");
+	  					 emailEntryNode.value = "";
+					 },
+					 function(type, error, http) {
+						 dh.account.showStatusMessage('dhEmailEntry', "Failed to send mail - check the address, or just try again...");
+					 });
+}
+
+dh.account.removeClaimEmail = function(address) {
+  	dh.server.doPOST("removeclaimemail",
+			 	     { "address" : address },
+  					 function(type, data, http) {
+  					 	document.location.reload();
+					 },
+					 function(type, error, http) {
+						 alert("Couldn't remove this address");
+					 });
+}
+
+dh.account.removeClaimAim = function(address) {
+  	dh.server.doPOST("removeclaimaim",
+			 	     { "address" : address },
+  					 function(type, data, http) {
+  					 	document.location.reload();
+					 },
+					 function(type, error, http) {
+						 alert("Couldn't remove this address");
+					 });
+}
+
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.account.currentValues['dhUsernameEntry']);
@@ -185,6 +226,15 @@ dhAccountInit = function() {
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
+	
+	// make pressing enter submit the email verify
+	var emailEntryNode = document.getElementById('dhEmailEntry');
+	emailEntryNode.onkeydown = function(ev) {
+		var key = dh.util.getKeyCode(ev);
+		if (key == ENTER) {
+			dh.account.verifyEmail();
+		}
+	}
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

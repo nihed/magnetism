@@ -114,6 +114,8 @@ dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.gec
 dh.util.getMainNode = function() {
 	var node = document.getElementById("dhMain");
 	if (!node)
+		node = document.getElementById("dhPage");
+	if (!node)
 		node = document.body;
 	return node;
 }

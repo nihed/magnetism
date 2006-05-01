@@ -7,6 +7,11 @@
 	font-size:			12px;
 }
 
+#dhContentColumn .dh-form-table .dh-address-table td
+{
+	font-size:			12px;
+}
+
 div.dh-save-status {
 	background-color:	#ffffcc;
 	color:				#cc0033;

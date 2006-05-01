@@ -12,14 +12,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
  * AccountClaim represents knowledge by the system that an Account
  * owns a particular resource. "Owner" in this context means the user of the
  * account/address, or the publisher of a web site.
- * 
- * CacheConcurrencyStrategy.READ_ONLY is probably not long-term possible,
- * since we'll have to add some way to "merge" accounts or whatever.
- * 
+ *
  * @author otaylor
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_ONLY)
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public class AccountClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 

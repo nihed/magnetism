@@ -504,6 +504,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
+		
+		// first be sure it isn't a dup - the db constraints check this too, 
+		// but it's more user friendly to no-op here than to throw a db exception
+		Set<AccountClaim> claims = claimedOwner.getAccountClaims();
+		for (AccountClaim claim : claims) {
+			if (claim.getResource().equals(res)) {
+				logger.debug("Found existing claim for {} on {}, not adding again", claimedOwner, res);
+				return;
+			}
+		}
+		
+		// Now create the new db claim
+		
 		AccountClaim ac = new AccountClaim(claimedOwner, res);
 		em.persist(ac);
 		
@@ -512,6 +525,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		claimedOwner.getAccountClaims().add(ac);
 	}
 
+	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res) {
+		if (!viewpoint.isOfUser(owner)) {
+			throw new RuntimeException("can only remove your own ownership claims");
+		}
+		Set<AccountClaim> claims = owner.getAccountClaims();
+		if (claims.size() < 2) {
+			// UI shouldn't let this happen, but we double-check here
+			throw new RuntimeException("you have to keep at least one address on an account");
+		}
+		for (AccountClaim claim : claims) {
+			if (claim.getResource().equals(res)) {
+				logger.debug("Found claim for {} on {}, removing it", owner, res);
+				res.setAccountClaim(null);
+				claims.remove(claim);
+				em.remove(claim);
+				return;
+			}
+		}
+		logger.warn("Tried but failed to remove claim for {} on {}", owner, res);
+	}
+	
 	private Contact findContactByUser(User owner, User contactUser) {
 		for (Contact contact : owner.getAccount().getContacts()) {
 			for (ContactClaim cc : contact.getResources()) {

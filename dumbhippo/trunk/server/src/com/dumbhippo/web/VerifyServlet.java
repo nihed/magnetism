@@ -118,7 +118,7 @@ public class VerifyServlet extends AbstractServlet {
 		ClaimVerifier verifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		
 		verifier.verify(null, token, null);
-		return redirectToNextPage(request, response, "/home", "Added address '" + token.getResource().getHumanReadableString() + "' to your account.");
+		return redirectToNextPage(request, response, "/account", null);
 	}
 
 	private String doLoginToken(HttpServletRequest request, HttpServletResponse response, LoginToken token) throws HumanVisibleException, ServletException, IOException {

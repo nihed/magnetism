@@ -59,3 +59,19 @@ div.dh-save-status {
 #dhChooseStockLinkContainer {
 	position:		relative;
 }
+
+.dh-aim-address {
+	padding-bottom:	5px;
+}
+
+.dh-aim-address a {
+	margin-left:	10px;	
+}
+
+tr.dh-email-address-spacer {
+	height:			5px;
+}
+
+#dhEmailEntry {
+	margin-right:	10px;
+}
