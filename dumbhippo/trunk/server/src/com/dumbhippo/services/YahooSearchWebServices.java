@@ -7,8 +7,10 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.NotFoundException;
 
 public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHandler> {
 
@@ -65,8 +67,70 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}
 	}
 	
+	public List<YahooSongResult> lookupAlbumSongs(String album, String artist) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=50&appid=");
+		sb.append(appId);
+		sb.append("&artist=");
+		sb.append(StringUtils.urlEncode(artist));
+		sb.append("&album=");
+		sb.append(StringUtils.urlEncode(album));
+
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo album songs search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Album songs search failed, returning nothing");
+			return Collections.emptyList();
+		} else {
+			return handler.getAlbumSongs();
+		}		
+	}
+
+	public List<YahooSongResult> lookupAlbumSongs(String albumId) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=50&appid=");
+		sb.append(appId);
+		sb.append("&albumid=");
+		sb.append(StringUtils.urlEncode(albumId));
+
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo album songs search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Album songs search failed, returning nothing");
+			return Collections.emptyList();
+		} else {
+			return handler.getAlbumSongs();
+		}		
+	}
+	
+	public List<YahooAlbumResult> lookupAlbums(String artistId) {		
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
+		sb.append(appId);
+		// 50 is the maximum number of results we can get with one request, 10 is the default 
+		// number
+		sb.append("&results=50");
+		sb.append("&artistid=");		
+		sb.append(StringUtils.urlEncode(artistId));
+
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo album search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Album search failed, returning nothing");
+			return Collections.emptyList();
+		} else {
+			return handler.getBestAlbums();
+		}
+	}
+	
 	public List<YahooSongDownloadResult> lookupDownloads(String songId) {
-			
+		
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songDownloadLocation?appid=");
 		sb.append(appId);
@@ -86,6 +150,26 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 				result.setSongId(songId);
 			}
 			return list;
+		}
+	}
+
+	public String lookupArtistId(String artist) throws NotFoundException {
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/artistSearch?appid=");
+		sb.append(appId);
+		sb.append("&artist=");
+		sb.append(StringUtils.urlEncode(artist));
+
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo artist search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Artist Id search failed, returning nothing");
+			throw new NotFoundException("Artist Id search failed, returning nothing");
+		} else {
+			return handler.getSingleArtistId();
 		}
 	}
 	

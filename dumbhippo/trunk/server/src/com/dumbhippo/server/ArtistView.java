@@ -1,19 +1,16 @@
 package com.dumbhippo.server;
 
-import com.dumbhippo.persistence.Track;
-
 public class ArtistView {
 
 	private String name;
 	
-	ArtistView() {
-		
-	}
-	
-	public ArtistView(Track track) {
-		this.name = track.getArtist();
+	ArtistView() {		
 	}
 
+	public ArtistView(String name) {
+		this.name = name;
+	}
+	
 	public String getName() {
 		return name;
 	}

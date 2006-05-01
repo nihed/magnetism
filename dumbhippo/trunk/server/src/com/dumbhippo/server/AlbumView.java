@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
-import com.dumbhippo.persistence.Track;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AlbumView {
 
@@ -10,18 +11,22 @@ public class AlbumView {
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
+	
+	private List<TrackView> tracks;
 
-	AlbumView() {
-		this.artistView = new ArtistView();
+	public AlbumView() {
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
+		this.artistView = new ArtistView();
+		tracks = new ArrayList<TrackView>();
 	}
 
-	public AlbumView(Track track) {
+	public AlbumView(String album, String artist) {
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
-		this.artistView = new ArtistView(track);
-		this.title = track.getAlbum();
+		this.artistView = new ArtistView(artist);
+		this.title = album;
+		tracks = new ArrayList<TrackView>();
 	}
 	
 	public int getSmallImageHeight() {
@@ -66,5 +71,17 @@ public class AlbumView {
 	
 	public ArtistView getArtistView() {
 		return artistView;
+	}
+	
+	public List<TrackView> getTracks() {
+		return tracks;
+	}
+	
+	public void addTrack(TrackView track) {
+		tracks.add(track);
+	}
+
+	public void setTracks(List<TrackView> tracks) {
+		this.tracks = tracks;
 	}
 }

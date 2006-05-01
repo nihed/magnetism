@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.ArtistView;
+import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonMusicView;
@@ -38,9 +39,11 @@ public class MusicSearchPage {
 	private TrackView trackView;
 	private AlbumView albumView;
 	private ArtistView artistView;
+	private ExpandedArtistView expandedArtistView;
 	private ListBean<TrackView> recommendations;
 	private ListBean<AlbumView> albumRecommendations;
 	private ListBean<ArtistView> artistRecommendations;
+	private ListBean<AlbumView> albumsByArtist;
 	
 	private ListBean<PersonMusicView> relatedPeople;
 
@@ -175,17 +178,30 @@ public class MusicSearchPage {
 				albumView = trackView.getAlbumView();
 			}
 			
-			if (albumView == null && artist != null) {
-				// try an artist-only search if album/track failed
+			if (artist != null && mode == Mode.ARTIST) {
+				// set an expandedArtistView if artist is set and we are in the artist mode
+				// we are not going to care for an artistView to be set in this case
+				try {
+					expandedArtistView = musicSystem.expandedArtistSearch(signin.getViewpoint(), artist);
+				} catch (NotFoundException e) {
+					logger.debug("Expanded artist not found {}", e.getMessage());
+				}
+			}
+			
+			if (albumView == null && artist != null && mode != Mode.ARTIST) {
+				// we still want the simple artist view to be set in this case
 				try {
 					artistView = musicSystem.artistSearch(signin.getViewpoint(), artist);
 				} catch (NotFoundException e) {
 					logger.debug("Artist not found {}", e.getMessage());
-				}
+				}				
 			}
 			
 			if (albumView != null && artistView == null) {
 				// if we got an album view, use the artist from it
+				// this will set artistView even if mode == Mode.ARTIST, but we are just not going to care
+				// for it
+				logger.debug("AlbumView {} has this simple AtristView {}", albumView, albumView.getArtistView());
 				artistView = albumView.getArtistView();
 			}
 		}
@@ -204,6 +220,19 @@ public class MusicSearchPage {
 	public ArtistView getArtistView() {
 		doSearch();
 		return artistView;
+	}
+
+	public ArtistView getExpandedArtistView() {
+		doSearch();
+		return expandedArtistView;
+	}
+	
+	public ListBean<AlbumView> getAlbumsByArtist() {
+		// we would not do anything in doSearch() if we already tried search
+		doSearch();
+		if (expandedArtistView != null)
+		    albumsByArtist = new ListBean<AlbumView>(expandedArtistView.getAlbums());		
+		return albumsByArtist;
 	}
 	
 	public SigninBean getSignin() {

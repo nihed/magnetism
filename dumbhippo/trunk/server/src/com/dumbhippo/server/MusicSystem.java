@@ -86,8 +86,31 @@ public interface MusicSystem {
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
 	
 	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException;
-	
+
+	/**
+	 * Returns an ArtistView that contains the artist's name if there is a matching track for the 
+	 * artist locally. Throws a NotFoundException if there is no matching track for the artist 
+	 * locally.
+	 * 
+	 * @param viewpoint
+	 * @param artist
+	 * @return an ArtistView that contains the artist's name
+	 * @throws NotFoundException
+	 */
 	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
+	
+	/**
+	 * Returns an ExpandedArtistView that includes albums made by the artist. First, attempts to
+	 * find a track with a matching artist among existing tracks. Queries an outside web service 
+	 * if a track with a matching artist is not found locally. Throws a NotFoundException if there
+	 * is no matching artist.
+	 * 
+	 * @param viewpoint
+	 * @param artist
+	 * @return an ExpandedArtistView that includes albums made by the artist
+	 * @throws NotFoundException
+	 */
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
 	
 	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name);
 	

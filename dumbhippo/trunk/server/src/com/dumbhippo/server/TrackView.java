@@ -7,6 +7,9 @@ import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 
 /**
+ * The TrackView does not necessarily represent a Track, but rather can 
+ * represent any album track, whether it has been played or not.
+ * 
  * FIXME the AlbumView is kind of retrofitted in here, it should 
  * really be TrackView.getAlbumView() and drop most of the "wrapper"
  * accessors
@@ -22,17 +25,27 @@ public class TrackView {
 	private Map<SongDownloadSource,String> downloads; 
 	private int durationSeconds;
 	private long lastListenTime;
+	private int trackNumber; // both -1 and 0 mean that track number is unknown/inapplicable
+	                         // valid track numbers are 1-based
 	
 	public TrackView() {
 		album = new AlbumView();
 	}
 	
 	public TrackView(Track track) {
-		this.album = new AlbumView(track);
+		this.album = new AlbumView(track.getAlbum(), track.getArtist());
 		this.name = track.getName();
 		this.durationSeconds = track.getDuration();
+		this.trackNumber = track.getTrackNumber();
 	}
 
+	public TrackView(String name, String album, String artist, int duration, int trackNumber) {
+		this.album = new AlbumView(album, artist);
+		this.name = name;
+		this.durationSeconds = duration;
+		this.trackNumber = trackNumber; 
+	}
+	
 	public AlbumView getAlbumView() {
 		return album;
 	}
@@ -127,6 +140,14 @@ public class TrackView {
 	public void setLastListenTime(long lastListenTime) {
 		this.lastListenTime = lastListenTime;
 	}	
+	
+	public int getTrackNumber() {
+		return trackNumber;
+	}
+	
+	public void setTrackNumber(int trackNumber) {
+		this.trackNumber = trackNumber;
+	}
 	
 	@Override
 	public String toString() {

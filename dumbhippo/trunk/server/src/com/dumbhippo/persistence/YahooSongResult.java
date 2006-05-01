@@ -4,33 +4,30 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name="YahooSongResult", 
-		   uniqueConstraints = 
-		      {@UniqueConstraint(columnNames={"track_id","songId"})}
-	      )
 public class YahooSongResult extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 
-	private Track track;
 	private long lastUpdated;
 	private String songId;
+	private String name;
 	private String albumId;
 	private String artistId;
 	private String publisher;
 	private int duration;
 	private String releaseDate;
-	private int trackNumber;
+	private int trackNumber; // -1 is our default value for a track number, in case we will 
+	                         // not obtain this information from yahoo request, though it is
+	                         // usually available, 0 is the value yahoo assigns to tracks for 
+	                         // which track number is inapplicable or unknown, valid tracks 
+	                         // are 1-based
 	private boolean noResultsMarker;
 	
 	public YahooSongResult() {
-		
+		duration = -1;
+		trackNumber = -1;
 	}
 
 	public void update(YahooSongResult results) {
@@ -39,6 +36,7 @@ public class YahooSongResult extends DBUnique {
 		
 		lastUpdated = results.lastUpdated;
 		songId = results.songId;
+		name = results.name;
 		albumId = results.albumId;
 		artistId = results.artistId;
 		publisher = results.publisher;
@@ -46,19 +44,6 @@ public class YahooSongResult extends DBUnique {
 		releaseDate = results.releaseDate;
 		trackNumber = results.trackNumber;
 		noResultsMarker = results.noResultsMarker;
-	}
-	
-	// each track can have a couple of different song IDs that 
-	// are interesting, in particular yahoo returns 
-	// a different song id for iTunes and everything else
-	@ManyToOne
-	@JoinColumn(nullable=false)
-	public Track getTrack() {
-		return track;
-	}
-
-	public void setTrack(Track track) {
-		this.track = track;
 	}
 	
 	@Column(nullable=true)
@@ -131,7 +116,7 @@ public class YahooSongResult extends DBUnique {
 		this.releaseDate = releaseDate;
 	}
 
-	@Column(nullable=true)
+	@Column(nullable=true, unique=true)
 	public String getSongId() {
 		return songId;
 	}
@@ -140,6 +125,15 @@ public class YahooSongResult extends DBUnique {
 		this.songId = songId;
 	}
 
+	@Column(nullable=true)
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	@Column(nullable=false)
 	public int getTrackNumber() {
 		return trackNumber;

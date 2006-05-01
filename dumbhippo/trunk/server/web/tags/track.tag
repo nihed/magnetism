@@ -2,6 +2,7 @@
 <%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="displayTrackNumber" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty linkifySong}">
 	<c:set var="linkifySong" value="true"/>
@@ -9,6 +10,10 @@
 
 <c:if test="${empty playItLink}">
 	<c:set var="playItLink" value="true"/>
+</c:if>
+
+<c:if test="${empty displayTrackNumber}">
+	<c:set var="displayTrackNumber" value="false"/>
 </c:if>
 
 <c:url value="/album" var="albumlink">
@@ -29,9 +34,12 @@
 			<img src="${track.smallImageUrl}" width="${track.smallImageWidth}" height="${track.smallImageHeight}"/>
 		</a>
 	</div>
-	<div class="dh-track-info">
+	<div class="dh-track-info">  	    
 		<c:if test="${!empty track.name}">
 			<div class="dh-track-name">
+				<c:if test="${displayTrackNumber}">
+                    <c:out value="${track.trackNumber} "/>
+                </c:if>  
 				<c:if test="${linkifySong}">
 					<c:url value="/song" var="songlink">
 						<c:param name="track" value="${track.name}"/>

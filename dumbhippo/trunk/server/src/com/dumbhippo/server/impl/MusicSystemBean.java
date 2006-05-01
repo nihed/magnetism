@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.ArtistView;
+import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
@@ -133,6 +134,10 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.artistSearch(viewpoint, artist);
 	}
 
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist) throws NotFoundException {
+		return internal.expandedArtistSearch(viewpoint, artist);
+	}
+	
 	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {
 		return internal.getRelatedPeopleWithArtists(viewpoint, artist, album, name);
 	}

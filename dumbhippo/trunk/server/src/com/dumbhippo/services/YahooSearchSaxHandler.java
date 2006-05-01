@@ -13,8 +13,10 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.SongDownloadSource;
+import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.NotFoundException;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
@@ -41,8 +43,9 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		Title,
 		Publisher,
 		ReleaseDate,
+		Tracks, 
 		RelatedAlbums,
-		Album,
+		Album, // element name for listing related albums
 		
 		// Song search
 		Length,
@@ -93,10 +96,12 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			values.put(e, v);
 		}
 		
+		// this will be an album id if an album search was done
 		public String getId() {
 			return id;
 		}
 
+		// this will be an album id if a song search was done
 		public String getAlbumId() {
 			return albumId;
 		}
@@ -181,6 +186,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		YahooSongResult song = new YahooSongResult();
 		song.setLastUpdated(new Date());
 		song.setSongId(r.getId());
+		song.setName(r.getValue(Element.Title));
 		song.setAlbumId(r.getAlbumId());
 		song.setArtistId(r.getArtistId());
 		song.setPublisher(r.getValue(Element.Publisher));
@@ -216,6 +222,47 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			}
 		}
 		return list;
+	}
+	
+	public List<YahooSongResult> getAlbumSongs() {
+		List<YahooSongResult> list = new ArrayList<YahooSongResult>();
+		
+		if (results.isEmpty()) {
+			logger.debug("No album songs results were parsed");
+		}
+		
+		for (Result r : results) {
+		    list.add(songFromResult(r));
+		}
+		return list;
+	}
+	
+	private YahooAlbumResult albumFromResult(Result r) {
+		YahooAlbumResult album = new YahooAlbumResult();
+		album.setLastUpdated(new Date());
+		album.setAlbumId(r.getId());
+		album.setAlbum( r.getValue(Element.Title));
+		album.setArtistId(r.getArtistId());
+		album.setArtist(r.getValue(Element.Artist));
+		album.setPublisher(r.getValue(Element.Publisher));
+		album.setTracksNumber(r.getValueInt(Element.Tracks));
+		album.setReleaseDate(r.getValue(Element.ReleaseDate));
+		return album;		
+	}
+	
+	public List<YahooAlbumResult> getBestAlbums() {
+		List<YahooAlbumResult> list = new ArrayList<YahooAlbumResult>();
+		
+		if (results.isEmpty()) {
+			logger.debug("No album results were parsed");
+		}
+
+		for (Result r : results) {
+			YahooAlbumResult albumResult = albumFromResult(r);
+		    list.add(albumResult);
+		}
+		//logger.debug("Got {} album results: {}", list.size(), list);
+		return list;			
 	}
 	
 	private YahooSongDownloadResult downloadFromResult(Result r) {
@@ -258,4 +305,13 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		//logger.debug("Got {} download results: {}", list.size(), list);
 		return list;		
 	}
+	
+	public String getSingleArtistId() throws NotFoundException {
+		if (results.isEmpty()) {
+			logger.debug("No artists were found");
+			throw new NotFoundException("No artists were found");
+		}
+
+		return results.get(0).getId();		
+	}	
 }

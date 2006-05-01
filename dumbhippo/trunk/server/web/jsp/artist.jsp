@@ -19,7 +19,7 @@
 
 	<dht:mainArea>
 		<c:choose>
-			<c:when test="${empty musicsearch.artistView}">
+			<c:when test="${empty musicsearch.expandedArtistView}">
 				We got nothing! We couldn't find anything about
 				the artist "<c:out value="${musicsearch.artist}"/>."
 			</c:when>
@@ -36,8 +36,22 @@
 			</c:when>
 			<c:otherwise>
 				<div>
-					<dht:artist artist="${musicsearch.artistView}" linkifyArtist="false"/>
+					<dht:artist artist="${musicsearch.expandedArtistView}" linkifyArtist="false"/>
 				</div>
+				<c:if test="${musicsearch.albumsByArtist.size > 0}">
+					<dht:largeTitle>Albums</dht:largeTitle>				    
+					<div>
+						<c:forEach items="${musicsearch.albumsByArtist.list}" var="artistalbum">
+							<dht:album album="${artistalbum}"/>
+							<%-- the tracks list bellow is a List, not a ListBean, because it is --%>
+							<%-- returned from outside the web tier due to double inderection --%>
+							<c:forEach items="${artistalbum.tracks}" var="track">
+								<dht:track track="${track}" displayTrackNumber="true"/>								
+						    </c:forEach>
+						</c:forEach>
+					</div>
+				</c:if>
+				
 				<c:if test="${musicsearch.relatedPeople.size > 0}">
 					<dht:largeTitle>Some Friends Who Listened to This Artist</dht:largeTitle>
 		
