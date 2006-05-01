@@ -488,3 +488,45 @@ dh.util.getPreparedUrl = function(url) {
     var preparedUrl = url.replace(/\s/g, "+")
     return preparedUrl
 }
+
+// get the node an event happened on
+dh.util.getEventNode = function(ev)
+{
+	if (ev)
+		return ev.target;
+	if (window.event)
+		return window.event.srcElement;
+};
+
+// cancel an event
+dh.util.cancelEvent = function(ev)
+{
+	if (ev) {
+		ev.preventDefault();
+		ev.stopPropagation();
+	}
+	
+	if (window.event) {
+		window.event.returnValue = false;
+		window.event.cancelBubble = true;
+	}
+};
+
+// Define common keycodes
+TAB = 9;
+ESC = 27;
+KEYUP = 38;
+KEYDN = 40;
+ENTER = 13;
+SHIFT = 16;
+CTRL = 17;
+ALT = 18;
+CAPS_LOCK = 20;
+
+dh.util.getKeyCode = function(ev)
+{
+	if (ev)
+		return ev.keyCode;
+	if (window.event)
+		return window.event.keyCode;
+};

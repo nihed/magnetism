@@ -22,71 +22,6 @@ dojo.provide("dh.textinput");
 dojo.require("dh.util");
 dojo.require("dojo.html");
 
-//Do you want to remember what keycode means what? Me neither.
-var TAB = 9;
-var ESC = 27;
-var KEYUP = 38;
-var KEYDN = 40;
-var ENTER = 13;
-var SHIFT = 16;
-var CTRL = 17;
-var ALT = 18;
-var CAPS_LOCK = 20;
-
-/********************************************************
-Helper function to determine the keycode pressed in a 
-browser-independent manner.
-********************************************************/
-dh.textinput.getKeyCode = function(ev)
-{
-	if(ev)			//Moz
-	{
-		return ev.keyCode;
-	}
-	if(window.event)	//IE
-	{
-		return window.event.keyCode;
-	}
-};
-
-/********************************************************
-Helper function to determine the event source element in a 
-browser-independent manner.
-********************************************************/
-dh.textinput.getEventSource = function(ev)
-{
-	if(ev)			//Moz
-	{
-		return ev.target;
-	}
-
-	if(window.event)	//IE
-	{
-		return window.event.srcElement;
-	}
-};
-
-/********************************************************
-Helper function to cancel an event in a 
-browser-independent manner.
-(Returning false helps too).
-********************************************************/
-dh.textinput.cancelEvent = function(ev)
-{
-	if(ev)			//Moz
-	{
-		ev.preventDefault();
-		ev.stopPropagation();
-	}
-	if(window.event)	//IE
-	{
-		// stop default action of the node
-		window.event.returnValue = false;
-		// stop bubbling
-		window.event.cancelBubble = true;
-	}
-};
-
 dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 {
 	//The 'me' variable allow you to access this object
@@ -189,8 +124,8 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.elem.onkeydown = function(ev) {
 		// in theory never happens since we do this on focus in
 		me._hideDefaultText();
-		var key = dh.textinput.getKeyCode(ev);
-		if (key == ENTER && me.elem.nodeName != 'TEXTAREA') {
+		var key = dh.util.getKeyCode(ev);
+		if (key == ENTER && me.elem.nodeName.toUpperCase() != 'TEXTAREA') {
 			me.activate();
 		}
 	}

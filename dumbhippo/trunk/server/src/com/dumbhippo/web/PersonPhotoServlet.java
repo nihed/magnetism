@@ -15,6 +15,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.UserViewpoint;
 
 public class PersonPhotoServlet extends AbstractPhotoServlet {
 	private static final long serialVersionUID = 1L;
@@ -41,7 +42,11 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		writePhotos(scaled, personId, true);
 		
 		identitySpider.incrementUserVersion(user.getId());
-				
+		
+		// if we upload a photo we have to remove the stock photo that 
+		// would otherwise override
+		identitySpider.setStockPhoto(new UserViewpoint(user), user, null);
+		
 		doFinalRedirect(request, response);
 	}
 

@@ -36,6 +36,7 @@ import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
@@ -706,6 +707,40 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new IllegalArgumentException("only support TEXT replies");
 	
 		out.write(StringUtils.getBytes("Polka makes me perky!"));
+		out.flush();
+	}
+	
+	public void doSetStockPhoto(UserViewpoint viewpoint, String photo) {
+		identitySpider.setStockPhoto(viewpoint, viewpoint.getViewer(), photo);
+	}
+	
+	public void getUserPhoto(OutputStream out, HttpResponseData contentType, String userId, String size)
+		throws IOException {
+		if (contentType != HttpResponseData.TEXT)
+			throw new IllegalArgumentException("only support TEXT replies");
+		
+		User user;
+		try {
+			user = identitySpider.lookupGuidString(User.class, userId);
+		} catch (ParseException e) {
+			throw new RuntimeException("bad guid", e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such person", e);
+		}
+
+		int sizeValue = Integer.parseInt(size);
+		switch (sizeValue) {
+		case Configuration.SHOT_SMALL_SIZE:
+		case Configuration.SHOT_MEDIUM_SIZE:
+		case Configuration.SHOT_LARGE_SIZE:
+			break;
+		default:
+			throw new RuntimeException("invalid photo size");
+		}
+		
+		String url = user.getPhotoUrl(sizeValue);
+		
+		out.write(StringUtils.getBytes(url));
 		out.flush();
 	}
 }

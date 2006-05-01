@@ -164,4 +164,13 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "bio" })
 	public void doSetMusicBio(UserViewpoint viewpoint, String bio);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "photo" })
+	public void doSetStockPhoto(UserViewpoint viewpoint, String photo);
+	
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( { "userId", "size" })
+	public void getUserPhoto(OutputStream out, HttpResponseData contentType, String userId, String size)
+		throws IOException;
 }

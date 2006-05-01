@@ -1,5 +1,7 @@
 dojo.provide("dh.account");
 dojo.require("dh.textinput");
+dojo.require("dh.fileinput");
+dojo.require("dh.photochooser");
 
 dh.account.linkClosures = {};
 dh.account.invokeLinkClosure = function(which) {
@@ -180,6 +182,9 @@ dhAccountInit = function() {
 		"Saving new MySpace name...",
 		"Your MySpace name has been saved.");
 	}
+	
+	// add some event handlers on the file input
+	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

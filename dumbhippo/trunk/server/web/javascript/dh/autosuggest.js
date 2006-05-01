@@ -1,4 +1,6 @@
 dojo.provide("dh.autosuggest");
+dojo.require("dh.util");
+
 /*******************************************************
 
 AutoSuggest - a javascript automatic text input completion component
@@ -95,7 +97,6 @@ dh.autosuggest.idCounter = 0;
 
 dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 {
-
 	//The 'me' variable allow you to access the AutoSuggest object
 	//from the elem's event handlers defined below.
 	var me = this;
@@ -124,17 +125,6 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	this.oldBodyOnMouseDown = null;
 
 	this.showing = false;
-
-	//Do you want to remember what keycode means what? Me neither.
-	var TAB = 9;
-	var ESC = 27;
-	var KEYUP = 38;
-	var KEYDN = 40;
-	var ENTER = 13;
-	var SHIFT = 16;
-	var CTRL = 17;
-	var ALT = 18;
-	var CAPS_LOCK = 20;
 
 	//The browsers' own autocomplete feature can be problematic, since it will 
 	//be making suggestions from the users' past input.
@@ -545,54 +535,19 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	Helper function to determine the keycode pressed in a 
 	browser-independent manner.
 	********************************************************/
-	this.getKeyCode = function(ev)
-	{
-		if(ev)			//Moz
-		{
-			return ev.keyCode;
-		}
-		if(window.event)	//IE
-		{
-			return window.event.keyCode;
-		}
-	};
-
+	this.getKeyCode = dh.util.getKeyCode;
+	
 	/********************************************************
 	Helper function to determine the event source element in a 
 	browser-independent manner.
 	********************************************************/
-	this.getEventSource = function(ev)
-	{
-		if(ev)			//Moz
-		{
-			return ev.target;
-		}
-	
-		if(window.event)	//IE
-		{
-			return window.event.srcElement;
-		}
-	};
+	this.getEventSource = dh.util.getEventNode;
 
 	/********************************************************
 	Helper function to cancel an event in a 
 	browser-independent manner.
 	(Returning false helps too).
 	********************************************************/
-	this.cancelEvent = function(ev)
-	{
-		if(ev)			//Moz
-		{
-			ev.preventDefault();
-			ev.stopPropagation();
-		}
-		if(window.event)	//IE
-		{
-			// stop default action of the node
-			window.event.returnValue = false;
-			// stop bubbling
-			window.event.cancelBubble = true;
-		}
-	};
+	this.cancelEvent = dh.util.cancelEvent;
 }
 

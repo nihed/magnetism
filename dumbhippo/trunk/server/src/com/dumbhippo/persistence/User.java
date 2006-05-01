@@ -14,9 +14,6 @@ import javax.persistence.Transient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.Person;
-
 /**
  * The User is a person who is known to the system and thus
  * owns an account.
@@ -33,13 +30,9 @@ public class User extends Person implements VersionedEntity {
 
 	private int version;
 	
-	public User() {}
+	private String stockPhoto;
 	
-	// FIXME: delete this method; it is only used for the special 
-	// theMan user, who is going away
-	public User(Guid guid) {
-		super(guid);
-	}
+	public User() {}
 	
 	// We use OneToMany here, because Hibernate can't cache
 	// a OneToOne inverse relationship (!). We then wrap it
@@ -87,6 +80,30 @@ public class User extends Person implements VersionedEntity {
 	protected void setAccountClaims(Set<AccountClaim> accountClaims) {
 		this.accountClaims = accountClaims;
 	}	
+	
+	@Column(nullable=true)
+	public String getStockPhoto() {
+		return stockPhoto;
+	}
+	
+	public void setStockPhoto(String stockPhoto) {
+		this.stockPhoto = stockPhoto;
+	}
+	
+	@Transient
+	public String getPhotoUrl(int size) {
+		if (stockPhoto != null && size == 60) {
+			return "/images2" + stockPhoto;
+		} else {
+			return "/files/headshots/" + size + "/" + getId() + "?v=" + version;
+		}
+	}
+	
+	// usable from jstl expression language since it has no args
+	@Transient
+	public String getPhotoUrl60() {
+		return getPhotoUrl(60);
+	}
 	
 	@Override
 	public String toString() {

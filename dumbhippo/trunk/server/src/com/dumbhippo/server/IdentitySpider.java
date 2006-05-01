@@ -327,6 +327,8 @@ public interface IdentitySpider {
 	 */
 	public void setMusicBio(UserViewpoint viewpoint, User user, String bio);
 	
+	public void setStockPhoto(UserViewpoint viewpoint, User user, String photo);
+	
 	/**
 	 * Associate a MySpace identity with an account holder. 
 	 * 

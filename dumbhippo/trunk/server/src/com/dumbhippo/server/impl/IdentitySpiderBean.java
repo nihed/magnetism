@@ -884,6 +884,25 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		acct.setMusicBio(bio);
 	}
 	
+	/**
+	 * Note that the photo CAN be null, which means to use the uploaded 
+	 * photo for the user instead of a photo filename.
+	 */
+	public void setStockPhoto(UserViewpoint viewpoint, User user, String photo) {
+		if (!viewpoint.isOfUser(user))
+			throw new RuntimeException("can only set one's own photo");
+		if (!em.contains(user)) {
+			// this happens from PersonPhotoServlet...
+			logger.debug("user not attached in setStockPhoto()");
+			try {
+				user = lookupGuid(User.class, user.getGuid());
+			} catch (NotFoundException e) {
+				throw new RuntimeException("invalid user id");
+			}
+		}
+		user.setStockPhoto(photo);
+	}
+	
 	public void setMySpaceName(User user, String name) {
 		// Refresh
 		try {

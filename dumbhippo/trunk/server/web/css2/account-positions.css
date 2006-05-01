@@ -54,3 +54,8 @@ div.dh-save-status {
 #dhContentColumn .dh-form-table #dhPictureEntry {
 	width:			288px;
 }
+
+/* Position this so the stock photo popup is relative to it */
+#dhChooseStockLinkContainer {
+	position:		relative;
+}

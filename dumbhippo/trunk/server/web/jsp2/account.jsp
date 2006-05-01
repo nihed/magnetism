@@ -19,6 +19,10 @@
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
 			'dhMyspaceEntry' : <dh:jsString value="${signin.user.account.mySpaceName}"/>
 		};
+		dh.account.reloadPhoto = function() {
+			dh.photochooser.reloadPhoto(document.getElementById('dhHeadshotImageContainer'),
+				<dh:jsString value="${signin.user.id}"/>, 60);
+		}
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -42,7 +46,7 @@
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Picture">
-					<div class="dh-image">
+					<div id="dhHeadshotImageContainer" class="dh-image">
 						<dht:headshot user="${signin.user}" size="60"/>
 					</div>
 					<div class="dh-next-to-image">
@@ -56,8 +60,8 @@
 								<input type="hidden" name="reloadTo" value="/account"/>
 							</form>
 						</div>
-						<div>
-							or <a href="FIXME">choose stock picture</a>
+						<div id="dhChooseStockLinkContainer">
+							or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>
 						</div>
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
@@ -114,5 +118,6 @@
 				</dht:formTable>
 		</dht:zoneBoxAccount>
 	</dht:contentColumn>
+	<dht:photoChooser/>
 </dht:twoColumnPage>
 </html>
