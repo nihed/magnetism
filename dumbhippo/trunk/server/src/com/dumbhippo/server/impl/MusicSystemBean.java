@@ -18,6 +18,7 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
@@ -77,10 +78,18 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getPopularTrackViews(maxResults);
 	}
 	
+	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
+		internal.pageLatestTrackViews(viewpoint, user, pageable);
+	}
+	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestTrackViews(viewpoint, user, maxResults);
 	}
 
+	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
+		internal.pageFrequentTrackViews(viewpoint, user, pageable);
+	}
+	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getFrequentTrackViews(viewpoint, user, maxResults);
 	}
@@ -105,8 +114,8 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getOnePlayTrackViews(viewpoint, maxResults);
 	}
 
-	public List<TrackView> getFriendsLatestTrackViews(UserViewpoint viewpoint, int maxResults) {
-		return internal.getFriendsLatestTrackViews(viewpoint,maxResults);
+	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
+		internal.pageFriendsLatestTrackViews(viewpoint, pageable);
 	}
 
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {

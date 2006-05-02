@@ -38,23 +38,23 @@
 				<dht:zoneBoxSubcolumn which="one">
 
 					<c:if test="${signin.valid}">
-						<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
+						<dht:zoneBoxTitle a="dhRecentSongs">MY RECENT SONGS</dht:zoneBoxTitle>
 						
-						<c:forEach items="${musicPerson.recentTracks.list}" var="track">
+						<c:forEach items="${musicPerson.recentTracks.results}" var="track">
 							<dht:track track="${track}" albumArt="true"/>
 						</c:forEach>
 	
-						<dht:moreExpander open="false"/>
+						<dht:expandablePager pageable="${musicPerson.recentTracks}" anchor="dhRecentSongs"/>
 	
 						<dht:zoneBoxSeparator/>
 
-						<dht:zoneBoxTitle>MY MOST PLAYED SONGS</dht:zoneBoxTitle>
+						<dht:zoneBoxTitle a="dhMostPlayedSongs">MY MOST PLAYED SONGS</dht:zoneBoxTitle>
 	
-						<c:forEach items="${musicPerson.mostPlayedTracks.list}" var="track">
+						<c:forEach items="${musicPerson.mostPlayedTracks.results}" var="track">
 							<dht:track track="${track}"/>
 						</c:forEach>
 	
-						<dht:moreExpander open="false"/>
+						<dht:expandablePager pageable="${musicPerson.mostPlayedTracks}" anchor="dhMostPlayedSongs"/>
 	
 						<dht:zoneBoxSeparator/>
 					</c:if>
@@ -98,9 +98,13 @@
 						
 						<dht:zoneBoxSeparator/>
 	
-						<dht:zoneBoxTitle>FRIENDS' RECENT SONGS</dht:zoneBoxTitle>
+						<dht:zoneBoxTitle a="dhFriendsRecentSongs">FRIENDS' RECENT SONGS</dht:zoneBoxTitle>
 	
-						<dht:moreExpander open="false"/>
+						<c:forEach items="${musicPerson.friendsRecentTracks.results}" var="track">
+							<dht:track track="${track}"/>
+						</c:forEach>
+
+						<dht:expandablePager pageable="${musicPerson.friendsRecentTracks}" anchor="dhFriendsRecentSongs"/>
 	
 						<dht:zoneBoxSeparator/>
 					</c:if>

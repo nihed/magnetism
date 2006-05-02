@@ -9,7 +9,10 @@
 	<div class="dh-more">
 	<c:choose>
 		<c:when test="${pageable.position == 0}">
-			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>MORE</a> (<c:out value="${pageable.totalCount}"/>)
+			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>MORE</a>
+			<c:if test="${pageable.bound < 0}">
+				 (<c:out value="${pageable.totalCount}"/>)
+			 </c:if>
 			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'><img src="/images2/arrow_right.gif"/></a>
 		</c:when>
 		<c:otherwise>

@@ -12,9 +12,12 @@ public class Pageable<T> {
 	private int position;
 	private int initialPerPage;
 	private int subsequentPerPage;
+	private int bound;
 	
 	public Pageable(String name) {
 		this.name = name;
+		this.totalCount = -1;
+		this.bound = -1;
 		initialPerPage = DEFAULT_INITIAL_PER_PAGE;
 		subsequentPerPage = DEFAULT_SUBSEQUENT_PER_PAGE;
 	}
@@ -68,6 +71,14 @@ public class Pageable<T> {
 		this.position = position;
 	}
 	
+	public int getBound() {
+		return bound;
+	}
+	
+	public void setBound(int bound) {
+		this.bound = bound;
+	}
+	
 	public int getStart() {
 		return position == 0 ? 0 : initialPerPage + (position - 1) * subsequentPerPage;
 	}
@@ -77,9 +88,13 @@ public class Pageable<T> {
 	}
 	
 	public int getPageCount() {
-		if (totalCount < initialPerPage)
+		int itemCount = totalCount;
+		if (bound >= 0 && itemCount > bound)
+			itemCount = bound;
+		
+		if (itemCount < initialPerPage)
 			return 1;
 		else
-			return 1 + (totalCount - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
+			return 1 + (itemCount - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
 	}
 }

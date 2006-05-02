@@ -34,6 +34,24 @@ public interface MusicSystem {
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults);
 	
+	/**
+	 * Retrieve the tracks that a user has listened to most recently
+	 * 
+	 * @param viewpoint Viewpoint retrieving the information
+	 * @param user the user listening to tracks
+	 * @param pageable object providing range to retrieve and in which to store results
+	 */
+	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable);
+	
+	/**
+	 * Retrieve the tracks a user has listened to most frequently.
+	 * 
+	 * @param viewpoint Viewpoint retrieving the information
+	 * @param user the user listening to tracks
+	 * @param pageable object providing range to retrieve and in which to store results  
+	 */
+	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable);
+	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults);
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults);
@@ -73,15 +91,14 @@ public interface MusicSystem {
 	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults);
 
 	/**
-	 * Returns a list of songs played most recently by friends of the viewing user.
+	 * Retrieve a list of songs played most recently by friends of the viewing user.
 	 * (This could be extended easily to handle friends of a different user, but
 	 * we don't need that at the moment.)
 	 * 
 	 * @param viewpoint Viewpoint retrieving the information
-	 * @param maxResults maximum number of results to return, if positive
-	 * @return a list of TrackViews for the most recent songs played by the viewpoints contacts
+	 * @param pageable object providing range to retrieve and in which to store results  
 	 */
-	public List<TrackView> getFriendsLatestTrackViews(UserViewpoint viewpoint, int maxResults);
+	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable);
 	
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
 	

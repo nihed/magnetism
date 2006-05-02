@@ -56,6 +56,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
@@ -204,7 +205,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
-		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 1);
+		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
 		if (list.isEmpty())
 			throw new NotFoundException("No current track");
 		return list.get(0);
@@ -215,7 +216,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		FREQUENT
 	}
 	
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int maxResults) {
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
 		
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
@@ -244,6 +245,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " + 
 				order);
 		q.setParameter("user", user);
+		q.setFirstResult(firstResult);
 		q.setMaxResults(maxResults);
 		
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
@@ -258,6 +260,27 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 		return results;
 	}
+	
+	private int countTrackHistory(Viewpoint viewpoint, User user) {
+		if (!identitySpider.getMusicSharingEnabled(user)) {
+			return 0;
+		}
+		
+		Query q;
+		
+		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user ");
+		q.setParameter("user", user);
+		
+		Object o = q.getSingleResult();
+		int count = ((Number)o).intValue();
+		
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && count > 1) {
+			// A non-friend can only see one result
+			count = 1;
+		}
+
+		return count;		
+	}
 
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, group);
@@ -267,7 +290,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
 		for (User m : members) {
-			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, maxResults);
+			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0, maxResults);
 			results.addAll(memberHistory);
 		}
 		
@@ -1439,15 +1462,27 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestTrackViews() for user {}", user);
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults);
 		return getViewsFromTrackHistories(history);
+	}
+	
+	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, pageable.getStart(), pageable.getCount());
+		pageable.setResults(getViewsFromTrackHistories(history));
+		pageable.setTotalCount(countTrackHistory(viewpoint, user));
 	}
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getFrequentTrackViews() for user {}", user);
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, maxResults);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, 0, maxResults);
 		
 		return getViewsFromTrackHistories(history);
+	}
+	
+	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, pageable.getStart(), pageable.getCount());
+		pageable.setResults(getViewsFromTrackHistories(history));
+		pageable.setTotalCount(countTrackHistory(viewpoint, user));
 	}
 
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
@@ -1501,7 +1536,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// The case to think about is someone playing an entire album, so their last dozen 
 		// tracks or so are all from the same album.
 		
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults*12);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults*12);
 		
 		Set<String> albums = new HashSet<String>();
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -1526,7 +1561,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// The case to think about is someone playing an entire album, so their last dozen 
 		// tracks or so are all from the same album/artist.
 		
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, maxResults*12);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults*12);
 		
 		Set<String> artists = new HashSet<String>();
 		List<Track> tracks = new ArrayList<Track>(history.size());
@@ -1542,23 +1577,25 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getArtistViewsFromTracks(tracks);		
 	}
 	
-	public List<TrackView> getFriendsLatestTrackViews(UserViewpoint viewpoint, int maxResults) {
-		// We really want to do something along the lines of 
+	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
+		// FIXME: We really want to do something along the lines of 
 		// GROUP BY h.track ORDER BY max(h.lastUpdated), but that won't work
 		// with MySQL 4, so we accept the possibility of duplicate tracks for 
-		// the moment.
+		// the moment. The way to fix this is to use native SQL ... see the handling
+		// of similar queries globally with the queries defined in TrackHistory.java
 		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
-		String queryString = "SELECT h FROM TrackHistory h WHERE h.user IN " + 
-			getUserSetSQL(contacts) + 
-			" ORDER BY h.lastUpdated DESC";
+		String where = "WHERE h.user IN " + getUserSetSQL(contacts);
 		
-		Query q = em.createQuery(queryString);
-		if (maxResults > 0)
-			q.setMaxResults(maxResults);
-
-		List<?> results = em.createQuery(queryString).getResultList();
+		Query q = em.createQuery("SELECT h FROM TrackHistory h " + where + " ORDER BY h.lastUpdated DESC");
+		q.setFirstResult(pageable.getStart());
+		q.setMaxResults(pageable.getCount());
+		List<?> results = q.getResultList();
 		
-		return getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results));
+		pageable.setResults(getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results)));
+		
+		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h " + where);
+		Object o = q.getSingleResult();
+		pageable.setTotalCount(((Number)o).intValue()); 
 	}
 	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {

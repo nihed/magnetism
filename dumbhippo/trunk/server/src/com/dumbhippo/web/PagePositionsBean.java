@@ -7,6 +7,11 @@ import com.dumbhippo.server.Pageable;
 import javax.servlet.http.HttpServletRequest;
 
 public class PagePositionsBean {
+	// When "viewing all results" isn't meaningful, we create a "bounded" 
+	// Pageable that has an arbitrary limit. 57 gives us 10 pages of results
+	// with the default page sizes of initial=3, subsequent=6
+	static final int DEFAULT_BOUND = 57;
+	
 	Map<String, Integer> positions;
 	
 	private PagePositionsBean(HttpServletRequest request) {
@@ -47,6 +52,13 @@ public class PagePositionsBean {
 		Integer position = positions.get(name);
 		if (position != null)
 			pageable.setPosition(position);
+		
+		return pageable;
+	}
+	
+	public <T> Pageable<T> createBoundedPageable(String name) {
+		Pageable<T> pageable = createPageable(name);
+		pageable.setBound(DEFAULT_BOUND);
 		
 		return pageable;
 	}

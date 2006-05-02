@@ -40,11 +40,9 @@
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
 					
-			<c:forEach items="${musicPerson.recentTracks.list}" var="track">
+			<c:forEach items="${musicPerson.recentTracks.results}" var="track">
 				<dht:track track="${track}" oneLine="true" playItLink="false"/>
 			</c:forEach>
-	
-			<dht:moreExpander open="false"/>
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>
