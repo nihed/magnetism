@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -21,34 +21,38 @@ public class FindPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FindPage.class);
 	
-	static private final int DEFAULT_COUNT = 15;
-	static private final int MAX_COUNT = 50;
+	// We override the default values from Pageable
+	static private final int INITIAL_PER_PAGE = 3;
+	static private final int SUBSEQUENT_PER_PAGE = 10;
 	
 	@Signin
 	private SigninBean signin;
+	
+	@PagePositions
+	private PagePositionsBean pagePositions;
 
 	private PostingBoard postBoard;
 	
 	private String searchText;
-	private int start;
-	private int count;
 
 	private PostSearchResult searchResult;
-	private ListBean<PostView> posts;
-
+	private Pageable<PostView> posts;
 	
 	public FindPage() {
-		searchText = "";
-		start = 0;
-		count = DEFAULT_COUNT;
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 	}
-	
+
 	private void ensureSearchResult() {
 		if (searchResult == null) {
 			searchResult = postBoard.searchPosts(signin.getViewpoint(), searchText);
-			List<PostView> resultList = postBoard.getPostSearchPosts(signin.getViewpoint(), searchResult, start, count);
-			posts = new ListBean<PostView>(resultList);
+			posts = pagePositions.createPageable("posts");
+			posts.setInitialPerPage(INITIAL_PER_PAGE);
+			posts.setSubsequentPerPage(SUBSEQUENT_PER_PAGE);
+
+			List<PostView> resultList = postBoard.getPostSearchPosts(signin.getViewpoint(), searchResult, posts.getStart(), posts.getCount());
+			
+			posts.setTotalCount(searchResult.getApproximateCount());
+			posts.setResults(resultList);
 		}
 	}
 	
@@ -64,48 +68,14 @@ public class FindPage {
 		return searchResult.getApproximateCount();
 	}
 	
-	public ListBean<PostView> getPosts() {
+	public Pageable<PostView> getPosts() {
 		ensureSearchResult();
 		
 		return posts;
 	}
-	
-	private String getParams(int start) {
-		if (start < 0)
-			start = 0;
-		
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("q=");
-		sb.append(StringUtils.urlEncode(searchText));
-		sb.append("&start=" + start);
-		sb.append("&count=" + getCount());
-		
-		
-		return sb.toString();
-	}
-	
-	public String getPreviousParams() {
-		return getParams(getStart() - getCount());
-	}
-	
-	public String getNextParams() {
-		return getParams(getStart() + getCount());
-	}
-	
+
 	public SigninBean getSignin() {
 		return signin;
-	}
-
-	public int getCount() {
-		return count;
-	}
-
-	public void setCount(int count) {
-		if (count > MAX_COUNT || count < 1)
-			this.count = MAX_COUNT;
-		else
-			this.count = count;
 	}
 
 	public String getSearchText() {
@@ -116,24 +86,5 @@ public class FindPage {
 		if (searchText != null)
 			searchText = searchText.trim();
 		this.searchText = searchText;
-	}
-
-	public int getStart() {
-		return start;
-	}
-
-	public void setStart(int start) {
-		if (start < 0)
-			start = 0;
-		this.start = start;
-	}
-	
-	public int getEnd() {
-		ensureSearchResult();
-
-		if (count <= posts.getSize())
-			return start + count - 1;
-		else
-			return start + posts.getSize() - 1;
 	}
 }

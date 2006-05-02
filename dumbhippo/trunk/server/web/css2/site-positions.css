@@ -100,6 +100,21 @@ form {
 	overflow:			hidden;
 }
 
+#dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-next-to-image .dh-extra-info table {
+	width:			453px;	
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-next-to-image {
+	float:			right;
+	width:			453px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-numeral {
+	width:				20px;
+	float:				left;
+	text-align:			right;
+}
+
 #dhSidebarColumn {
 	float:				left;
 	width:				200px;

@@ -17,6 +17,8 @@
 		</c:choose>
 	</div>
 	<div id="dhSearchBox">
-		Search: <input type="text" class="dh-text-input"/> <input type="button" value="Go"/>
+		<form action="/search" method="get">
+			Search: <input type="text" class="dh-text-input" name="q"/> <input type="submit" value="Go"/>
+		</form>
 	</div>
 </div>
