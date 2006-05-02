@@ -56,7 +56,7 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 			Date dayStart = null;
 			
 			Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
-			if (calendar.get(Calendar.HOUR) < 3)
+			if (calendar.get(Calendar.HOUR_OF_DAY) < 3)
 				calendar.add(Calendar.DAY_OF_YEAR, -1);
 			calendar.set(Calendar.HOUR_OF_DAY, 3);
 			calendar.set(Calendar.MINUTE, 0);
