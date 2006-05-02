@@ -206,7 +206,7 @@ public interface MessengerGlueRemote {
 	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param username the username that has a new session available
 	 */
-	public void onRoomUserAvailable(String serverIdentifier, String roomname, String username, boolean participant) throws NoSuchServerException;
+	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException;
 
 	/**
 	 * Called when a user joins the chatroom for a post.
@@ -214,7 +214,7 @@ public interface MessengerGlueRemote {
 	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param username the username that became unavailable
 	 */
-	public void onRoomUserUnavailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException;
+	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException;
 
 
 	/**

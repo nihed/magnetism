@@ -220,29 +220,33 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 	}
 
-	public void onRoomUserAvailable(String serverIdentifier, String roomname, String username, boolean participant) throws NoSuchServerException  {
+	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException  {
 		logger.debug("Jabber user {} has joined chatroom {}", username, roomname);
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
 			throw new NoSuchServerException(null);
 		
-		try {
-			server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username), participant);
-		} catch (ParseException e) {
-			logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
+		if (kind == ChatRoomKind.POST) {
+			try {
+				server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username), participant);
+			} catch (ParseException e) {
+				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
+			}
 		}
 	}
 
-	public void onRoomUserUnavailable(String serverIdentifier, String roomname, String username) throws NoSuchServerException {
+	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException {
 		logger.debug("Jabber user {} has left chatroom {}", username, roomname);
 		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
 		if (server == null)
 			throw new NoSuchServerException(null);
 		
-		try {
-			server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
-		} catch (ParseException e) {
-			logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
+		if (kind == ChatRoomKind.POST) {
+			try {
+				server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
+			} catch (ParseException e) {
+				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
+			}
 		}
 	}
 	

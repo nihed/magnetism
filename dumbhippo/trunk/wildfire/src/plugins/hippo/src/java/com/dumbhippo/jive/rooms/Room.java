@@ -425,8 +425,8 @@ public class Room {
 
 		if (needNotify) {
 			if (resourceWasPresent)
-				handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
-			handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
+				handler.getPresenceMonitor().onRoomUserUnavailable(kind, roomName, username);
+			handler.getPresenceMonitor().onRoomUserAvailable(kind, roomName, username, userInfo.getStatus());
 			RoomUserStatus oldStatus;
 			if (resourceWasParticipant)
 				oldStatus = RoomUserStatus.PARTICIPANT;
@@ -471,9 +471,9 @@ public class Room {
 		}
 
 		if (needNotify) {
-			handler.getPresenceMonitor().onRoomUserUnavailable(roomName, username);
+			handler.getPresenceMonitor().onRoomUserUnavailable(kind, roomName, username);
 			if (userInfo.getStatus() != RoomUserStatus.NONMEMBER)
-				handler.getPresenceMonitor().onRoomUserAvailable(roomName, username, userInfo.getStatus());
+				handler.getPresenceMonitor().onRoomUserAvailable(kind, roomName, username, userInfo.getStatus());
 			
 			Presence presence;
 			if (userInfo.getStatus() == RoomUserStatus.NONMEMBER)

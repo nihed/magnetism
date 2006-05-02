@@ -19,6 +19,7 @@ import org.jivesoftware.wildfire.SessionManagerListener;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import com.dumbhippo.jive.rooms.RoomUserStatus;
+import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.MessengerGlueRemote.NoSuchServerException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -48,10 +49,10 @@ public class PresenceMonitor implements SessionManagerListener {
 				RoomNotification roomNotification = (RoomNotification) notification;
 				if (roomNotification.status == RoomUserStatus.NONMEMBER) {
 					Log.debug("Sending notification of user leaving room");
-					glue.onRoomUserUnavailable(serverIdentifier, roomNotification.room, notification.user);
+					glue.onRoomUserUnavailable(serverIdentifier, roomNotification.kind, roomNotification.room, notification.user);
 				} else {
 					Log.debug("Sending notification of user joining room");
-					glue.onRoomUserAvailable(serverIdentifier, roomNotification.room, notification.user, roomNotification.status == RoomUserStatus.PARTICIPANT);
+					glue.onRoomUserAvailable(serverIdentifier, roomNotification.kind, roomNotification.room, notification.user, roomNotification.status == RoomUserStatus.PARTICIPANT);
 				}
 			} else if (notification instanceof UserNotification) {
 				UserNotification userNotification = (UserNotification) notification;
@@ -113,8 +114,9 @@ public class PresenceMonitor implements SessionManagerListener {
 										notifications.add(new ResourceConnectedNotification(entry.getKey()));
 									}
 									if (info.rooms != null) {
-										for (Entry<String, RoomUserStatus> roomEntry : info.rooms.entrySet())
-											notifications.add(new RoomNotification(entry.getKey(), roomEntry.getKey(), roomEntry.getValue()));
+										for (Entry<String, RoomEntry> roomEntry : info.rooms.entrySet())
+											notifications.add(new RoomNotification(entry.getKey(), roomEntry.getValue().getKind(), 
+													roomEntry.getKey(), roomEntry.getValue().getStatus()));
 									}
 								}
 							}
@@ -173,17 +175,41 @@ public class PresenceMonitor implements SessionManagerListener {
 		}
 	}
 	
-	private static class UserInfo {
-		private int sessionCount;
-		private Map<String, RoomUserStatus> rooms;
+	private static class RoomEntry {
+		private ChatRoomKind kind;
+		private String name;
+		private RoomUserStatus status;
 		
-		void addRoom(String room, RoomUserStatus status) {
-			if (rooms == null)
-				rooms = new HashMap<String, RoomUserStatus>();
-			rooms.put(room, status);
+		RoomEntry(ChatRoomKind kind, String name, RoomUserStatus status) {
+			this.kind = kind;
+			this.name = name;
+			this.status = status;
 		}
 		
-		void removeRoom(String room) {
+		ChatRoomKind getKind() {
+			return kind;
+		}
+		
+		String getName() {
+			return name;
+		}
+		
+		RoomUserStatus getStatus() {
+			return status;
+		}
+	}
+	
+	private static class UserInfo {
+		private int sessionCount;
+		private Map<String, RoomEntry> rooms;
+		
+		void addRoom(ChatRoomKind kind, String room, RoomUserStatus status) {
+			if (rooms == null)
+				rooms = new HashMap<String, RoomEntry>();
+			rooms.put(room, new RoomEntry(kind, room, status));
+		}
+		
+		void removeRoom(ChatRoomKind kind, String room) {
 			rooms.remove(room);
 		}
 	}
@@ -212,11 +238,13 @@ public class PresenceMonitor implements SessionManagerListener {
 	};
 	
 	private static class RoomNotification extends Notification {
+		private ChatRoomKind kind;
 		private String room;
 		private RoomUserStatus status;
 		
-		RoomNotification(String user, String room, RoomUserStatus status) {
+		RoomNotification(String user, ChatRoomKind kind, String room, RoomUserStatus status) {
 			super(user);
+			this.kind = kind;
 			this.room = room;
 			this.status = status;
 		}
@@ -310,7 +338,7 @@ public class PresenceMonitor implements SessionManagerListener {
 		onSessionCountChange(session, -1);
 	}
 	
-	public void onRoomUserAvailable(String room, String user, RoomUserStatus status) {
+	public void onRoomUserAvailable(ChatRoomKind kind, String room, String user, RoomUserStatus status) {
 		synchronized (userInfo) {
 			UserInfo info = userInfo.get(user);
 			if (info == null) {
@@ -318,21 +346,21 @@ public class PresenceMonitor implements SessionManagerListener {
 				return;
 			}
 			
-			info.addRoom(room, status);
+			info.addRoom(kind, room, status);
 			
-			notificationQueue.add(new RoomNotification(user, room, status));
+			notificationQueue.add(new RoomNotification(user, kind, room, status));
 		}
 	}
 	
-	public void onRoomUserUnavailable(String room, String user) {
+	public void onRoomUserUnavailable(ChatRoomKind kind, String room, String user) {
 		synchronized (userInfo) {
 			UserInfo info = userInfo.get(user);
 			if (info == null)
 				return;
 			
-			info.removeRoom(room);
+			info.removeRoom(kind, room);
 			
-			notificationQueue.add(new RoomNotification(user, room, RoomUserStatus.NONMEMBER));
+			notificationQueue.add(new RoomNotification(user, kind, room, RoomUserStatus.NONMEMBER));
 		}
 	}
 }
