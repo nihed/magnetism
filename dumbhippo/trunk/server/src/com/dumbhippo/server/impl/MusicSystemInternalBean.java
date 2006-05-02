@@ -678,14 +678,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (Object o : songObjects) {
 			results.add((YahooSongResult) o);
 		}
-	    long now = System.currentTimeMillis();
-		if (results.isEmpty() && (yahooAlbum.getLastUpdated().getTime() + FAILED_QUERY_TIMEOUT < now)) {	
-			needNewQuery = true;
-		}
 		
 		// We do not need to check for song update times in results, because they must be at least
 		// as recent as album update time if we already stored all songs. We always do the query if
 		// we didn't yet store all songs.
+	    long now = System.currentTimeMillis();	
 		if (yahooAlbum.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT < now) {
 			needNewQuery = true;
 			logger.debug("Outdated Yahoo result, will need to renew the search for album id {}", albumId);		
