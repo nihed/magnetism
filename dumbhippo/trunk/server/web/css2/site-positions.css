@@ -69,6 +69,10 @@ form {
 	top:			0px;
 }
 
+#dhHeaderLinks .dh-action-link {
+	display:		inline;
+}
+
 #dhContentColumn .dh-zone-box .dh-item-with-photo {
 	width:			478px;
 }

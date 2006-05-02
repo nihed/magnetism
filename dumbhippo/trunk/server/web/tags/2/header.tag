@@ -9,7 +9,7 @@
 	<div id="dhHeaderLinks">
 		<c:choose>
 			<c:when test="${signin.valid}">
-				<c:if test="${!disableHomeLink}"><a href="/home">HOME</a> | </c:if><a href="">Log out</a>
+				<c:if test="${!disableHomeLink}"><a href="/home">HOME</a> | </c:if><dht:actionLinkLogout/>
 			</c:when>
 			<c:otherwise>
 				<a href="">Sign up</a> | <a href="">Log in</a>
