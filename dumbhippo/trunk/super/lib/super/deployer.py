@@ -120,12 +120,12 @@ class Deployer:
         if (hostname != 'localhost.localdomain'):
             print >>outfile, "BuildHost: %s" % hostname
 
-        f = os.popen("svn status -Nuq %s" % self.superdir)
+        f = os.popen("svn info %s" % self.superdir)
         l = f.readlines()
         f.close()
 
         if (len(l) > 0):
-            m = re.match('.*:\s*([0-9]+)\s*', l[-1])
+            m = re.match('Revision:\s*([0-9]+)\s*', l[-1])
             if m:
                 print >>outfile, "SvnVersion: %s" % m.group(1)
 
