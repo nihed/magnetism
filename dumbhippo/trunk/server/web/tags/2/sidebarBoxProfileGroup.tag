@@ -40,7 +40,6 @@
 								<dht:actionLink
 								href="javascript:dh.actions.requestJoinRoom('${signin.userId}','${group.viewedGroupId}')" title="Chat with other group members">Join Chat</dht:actionLink>
 							</c:if>
-							<dht:actionLinkLogout/>
 						</div>
 					</td>
 				</tr>
