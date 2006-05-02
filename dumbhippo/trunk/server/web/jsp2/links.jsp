@@ -15,12 +15,16 @@
 	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
 			<div>
-				<input id="notifyPublicShares" type="checkbox" 
-					   <c:choose>
-					   <c:when test="${links.notifyPublicShares}">checked="true" onclick="dh.actions.setNotifyPublicShares(false);"</c:when>
-					   <c:otherwise>onclick="dh.actions.setNotifyPublicShares(true);"</c:otherwise>
-					   </c:choose>
-				/> <label for="notifyPublicShares">Receive publicly shared links</label>
+				<c:choose>
+					<%-- this is duplicated so we can set the checked attribute --%>
+					<c:when test="${links.notifyPublicShares}">
+						<input id="notifyPublicShares" type="checkbox" checked="true" onclick="dh.actions.setNotifyPublicShares(false);">
+					</c:when>
+					<c:otherwise>
+						<input id="notifyPublicShares" type="checkbox" onclick="dh.actions.setNotifyPublicShares(true);">
+					</c:otherwise>
+				</c:choose>
+			<label for="notifyPublicShares">Receive publicly shared links</label>			   
 			</div>
 			<dht:sidebarBoxSeparator/>
 			<dht:sidebarBoxTitle>FREAK LIST</dht:sidebarBoxTitle>

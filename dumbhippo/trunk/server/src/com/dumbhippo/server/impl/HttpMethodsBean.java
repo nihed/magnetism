@@ -172,20 +172,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				Set<PersonView> members = groupSystem.getMembers(viewpoint, g);
 				//logger.debug(members.size() + " members of " + g.getName());
 				for (PersonView member : members) {
-					if (sampleMembers.length() > PersonView.MAX_SHORT_NAME_LENGTH * 5) {
-						sampleMembers.append(" ...");
-						break;
-					}
+
 
 					User user = member.getUser(); // can return null
 					if (user != null && viewpoint.isOfUser(user))
 						continue; // skip ourselves
 
-					if (sampleMembers.length() > 0)
-						sampleMembers.append(" ");
-
-					String shortName = member.getTruncatedName();
-					sampleMembers.append(shortName);
+					String shortName = member.getTruncatedName();					
+					
+					if (sampleMembers.length() + shortName.length() > PersonView.MAX_SHORT_NAME_LENGTH * 3) {
+						sampleMembers.append(" ...");
+						break;
+					} else {	
+						if (sampleMembers.length() > 0)
+							sampleMembers.append(" ");
+						sampleMembers.append(shortName);
+					}
 				}
 
 				xml.appendTextNode("group", null, "id", g.getId(), "display", g

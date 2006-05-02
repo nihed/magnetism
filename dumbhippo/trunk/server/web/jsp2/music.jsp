@@ -13,7 +13,7 @@
 		<dht:sidebarPerson who="${signin.user.id}">
 			<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 				<div>
-					Music embed: <input type="radio"/> On <input type="radio"/> Off
+					Music embed: <input id="dhMusicOn" type="radio"/> <label for="dhMusicOn">On</label> <input type="radio" id="dhMusicOff"/> <label for="dhMusicOff">Off</label>
 				</div>
 				<div style="margin-top: 3px;"><a href="/nowplaying-themes">Edit theme</a></div>
 				<dht:sidebarBoxSeparator/>
