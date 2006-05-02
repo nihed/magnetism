@@ -87,5 +87,6 @@
 	<classpathentry kind="lib" path="taste/taste.jar"/>
 	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

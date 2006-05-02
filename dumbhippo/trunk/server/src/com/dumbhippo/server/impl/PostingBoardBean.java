@@ -41,7 +41,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.live.GroupPostAddedEvent;
+import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostViewedEvent;
@@ -268,7 +268,7 @@ public class PostingBoardBean implements PostingBoard {
 		for (Group g : groupRecipients) {
 			LiveGroup liveGroup = liveState.peekLiveGroup(g.getGuid());
 			if (liveGroup != null) {
-		        liveState.queueUpdate(new GroupPostAddedEvent(g.getGuid()));					
+		        liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), GroupEvent.Type.POST_ADDED));					
 			}
 		}
 		

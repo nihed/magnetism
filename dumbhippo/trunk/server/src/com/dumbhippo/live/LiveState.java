@@ -10,6 +10,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Synchronization;
+
+import org.jboss.ejb3.entity.InjectedEntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -395,6 +399,27 @@ public class LiveState {
 		synchronized(updateQueue) {
 			updateQueue.send(updateQueue.createObjectMessage(event));
 		}
+	}
+	
+	private class LiveStateTransactionSynchronization implements Synchronization {
+		private LiveEvent event;
+		
+		public LiveStateTransactionSynchronization(LiveEvent event) {
+			this.event = event;
+		}
+		
+		public void beforeCompletion() {
+		}
+
+		public void afterCompletion(int arg0) {
+			LiveState.getInstance().queueUpdate(event);
+		}
+	}
+	
+	public void queuePostTransactionUpdate(EntityManager em, LiveEvent event) {
+		InjectedEntityManager hem = (InjectedEntityManager) em;
+		Synchronization hook = new LiveStateTransactionSynchronization(event);
+		hem.getHibernateSession().getTransaction().registerSynchronization(hook);
 	}
 	
 	/**

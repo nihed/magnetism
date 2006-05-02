@@ -20,7 +20,7 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.GroupMembershipChangeEvent;
+import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
@@ -193,8 +193,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);
-			
-	        LiveState.getInstance().queueUpdate(new GroupMembershipChangeEvent(group.getGuid(), true));		
+		
+	        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
 		}
 	}
 	
@@ -207,7 +207,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
-		        LiveState.getInstance().queueUpdate(new GroupMembershipChangeEvent(group.getGuid(), false));						
+		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
 			}
 		} catch (NotFoundException e) {
 			// nothing to do
