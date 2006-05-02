@@ -60,24 +60,24 @@
 					</c:if>
 
 					<c:if test="${!signin.valid}">
-						<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+						<dht:zoneBoxTitle a="dhRecentSongs">RECENT SONGS</dht:zoneBoxTitle>
 						
-						<c:forEach items="${musicGlobal.recentTracks.list}" var="track">
+						<c:forEach items="${musicGlobal.recentTracks.results}" var="track">
 							<dht:track track="${track}" albumArt="true"/>
 						</c:forEach>
 	
-						<dht:moreExpander open="false"/>
+						<dht:expandablePager pageable="${musicGlobal.recentTracks}" anchor="dhRecentSongs"/>
 	
 						<dht:zoneBoxSeparator/>
 					</c:if>
 
-					<dht:zoneBoxTitle>MOST PLAYED SONGS EVER</dht:zoneBoxTitle>
+					<dht:zoneBoxTitle a="dhGlobalMostPlayedSongs">MOST PLAYED SONGS EVER</dht:zoneBoxTitle>
 
-					<c:forEach items="${musicGlobal.mostPlayedTracks.list}" var="track">
+					<c:forEach items="${musicGlobal.mostPlayedTracks.results}" var="track">
 						<dht:track track="${track}"/>
 					</c:forEach>
 
-					<dht:moreExpander open="false"/>
+					<dht:expandablePager pageable="${musicGlobal.mostPlayedTracks}" anchor="dhGlobalMostPlayedSongs"/>
 
 				</dht:zoneBoxSubcolumn>
 				<dht:zoneBoxSubcolumn which="two">
@@ -94,8 +94,6 @@
 							I've never been asked to DJ at friends' parties.
 						</div>
 	
-						<dht:moreExpander open="false"/>
-						
 						<dht:zoneBoxSeparator/>
 	
 						<dht:zoneBoxTitle a="dhFriendsRecentSongs">FRIENDS' RECENT SONGS</dht:zoneBoxTitle>
@@ -110,24 +108,24 @@
 					</c:if>
 
 					<c:if test="${!signin.valid}">
-						<dht:zoneBoxTitle>MOST PLAYED SONGS TODAY</dht:zoneBoxTitle>
+						<dht:zoneBoxTitle a="dhMostPlayedToday">MOST PLAYED SONGS TODAY</dht:zoneBoxTitle>
 						
-						<c:forEach items="${musicGlobal.mostPlayedToday.list}" var="track">
+						<c:forEach items="${musicGlobal.mostPlayedToday.results}" var="track">
 							<dht:track track="${track}"/>
 						</c:forEach>
 	
-						<dht:moreExpander open="false"/>
+						<dht:expandablePager pageable="${musicGlobal.mostPlayedToday}" anchor="dhMostPlayedToday"/>
 	
 						<dht:zoneBoxSeparator/>
 					</c:if>
 
-					<dht:zoneBoxTitle>ONE PLAY WONDERS</dht:zoneBoxTitle>
+					<dht:zoneBoxTitle a="dhOnePlayWonders">ONE PLAY WONDERS</dht:zoneBoxTitle>
 
-					<c:forEach items="${musicGlobal.onePlayTracks.list}" var="track">
+					<c:forEach items="${musicGlobal.onePlayTracks.results}" var="track">
 						<dht:track track="${track}"/>
 					</c:forEach>
 
-					<dht:moreExpander open="false"/>
+					<dht:expandablePager pageable="${musicGlobal.onePlayTracks}" anchor="dhOnePlayWonders"/>
 					
 				</dht:zoneBoxSubcolumn>
 			

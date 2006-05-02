@@ -1437,6 +1437,17 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return views;
 	}
 	
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		Query q = em.createQuery("SELECT h FROM TrackHistory h ORDER BY h.lastUpdated DESC");
+		q.setFirstResult(pageable.getStart());
+		q.setMaxResults(pageable.getCount());
+		List<?> results = q.getResultList();
+		pageable.setResults(getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results)));
+		
+		// Doing an exact count is expensive, our assumption is "lots and lots"
+		pageable.setTotalCount(pageable.getBound());
+	}
+	
 	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
 	// to get, but I guess we could try to be fancier
 	public List<TrackView> getPopularTrackViews(int maxResults) {
@@ -1499,9 +1510,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getViewsFromTrackHistories(history);
 	}
 	
-	private List<TrackView> getTrackViewsFromQuery(Query query, int maxResults) {
-		if (maxResults > 0)
-			query.setMaxResults(maxResults);
+	private void pageTrackViewsFromQuery(Query query, Pageable<TrackView> pageable) {
+		query.setFirstResult(pageable.getStart());
+		query.setMaxResults(pageable.getCount());
 		
 		List<?> objects = query.getResultList();
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
@@ -1509,22 +1520,32 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			futureViews.add(getTrackViewAsync((Track)o, -1));
 		}
 		
-		return getTrackViewResults(futureViews);
+		pageable.setResults(getTrackViewResults(futureViews));
 	}
 
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
-		return getTrackViewsFromQuery(em.createNamedQuery("trackHistoryMostPopularTracks"), maxResults);
+	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		pageTrackViewsFromQuery(em.createNamedQuery("trackHistoryMostPopularTracks"), pageable);
+		
+		// Doing an exact count is expensive, our assumption is "lots and lots"
+		pageable.setTotalCount(pageable.getBound());
 	}
 	
-	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {
-		return getTrackViewsFromQuery(em.createNamedQuery("trackHistoryOnePlayTracks"), maxResults);
+	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		pageTrackViewsFromQuery(em.createNamedQuery("trackHistoryOnePlayTracks"), pageable);
+		
+		// Doing an exact count is expensive and hard, our assumption is "lots and lots"
+		pageable.setTotalCount(pageable.getBound());
 	}
 	
-	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults) {
+	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable) {
 		Query query = em.createNamedQuery("trackHistoryMostPopularTracksSince");
 		query.setParameter("since", since);
+		pageTrackViewsFromQuery(query, pageable);
 		
-		return getTrackViewsFromQuery(query, maxResults);
+		Query countQuery = em.createQuery("SELECT COUNT(DISTINCT h.track) FROM TrackHistory h WHERE h.lastUpdated >= :since");
+		countQuery.setParameter("since", since);
+		Object o = countQuery.getSingleResult();
+		pageable.setTotalCount(((Number)o).intValue());
 	}
 
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {

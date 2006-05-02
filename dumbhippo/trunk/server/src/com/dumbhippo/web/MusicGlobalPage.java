@@ -8,42 +8,45 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.TrackView;
 
 public class MusicGlobalPage extends AbstractSigninOptionalPage {
-	
-	static private final int MAX_RESULTS = 3;
-	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
 	
 	private MusicSystem musicSystem;
 	
-	private ListBean<TrackView> recentTracks;
-	private ListBean<TrackView> mostPlayedTracks;
-	private ListBean<TrackView> mostPlayedToday;
-	private ListBean<TrackView> onePlayTracks;
+	@PagePositions
+	PagePositionsBean pagePositions;
+	
+	private Pageable<TrackView> recentTracks;
+	private Pageable<TrackView> mostPlayedTracks;
+	private Pageable<TrackView> mostPlayedToday;
+	private Pageable<TrackView> onePlayTracks;
 	
 	public MusicGlobalPage() {
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 	}
 
-	public ListBean<TrackView> getRecentTracks() {
+	public Pageable<TrackView> getRecentTracks() {
 		if (recentTracks == null) {
-			recentTracks = new ListBean<TrackView>(musicSystem.getPopularTrackViews(MAX_RESULTS));
+			recentTracks = pagePositions.createBoundedPageable("globalRecentTracks");
+			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), recentTracks);
 		}
 		
 		return recentTracks;
 	}
 	
-	public ListBean<TrackView> getMostPlayedTracks() {
+	public Pageable<TrackView> getMostPlayedTracks() {
 		if (mostPlayedTracks == null) {
-			mostPlayedTracks = new ListBean<TrackView>(musicSystem.getFrequentTrackViews(getSignin().getViewpoint(), MAX_RESULTS));
+			mostPlayedTracks = pagePositions.createBoundedPageable("globalMostPlayedTracks");
+			musicSystem.pageFrequentTrackViews(getSignin().getViewpoint(), mostPlayedTracks);
 		}
 		return mostPlayedTracks;
 	}
 
-	public ListBean<TrackView> getMostPlayedToday() {
+	public Pageable<TrackView> getMostPlayedToday() {
 		if (mostPlayedToday == null) {
 			// We define a "day" as 3am => 3am US/Eastern; I think its sort of fun
 			// to have a point in time where the list resets to empty and
@@ -61,16 +64,16 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 			
 			dayStart = calendar.getTime();
 			
-			logger.debug("Day start was {} hours ago", (System.currentTimeMillis() - dayStart.getTime()) / (60 * 60 * 1000));
-		
-			mostPlayedToday = new ListBean<TrackView>(musicSystem.getFrequentTrackViewsSince(getSignin().getViewpoint(), dayStart, MAX_RESULTS));
+			mostPlayedToday = pagePositions.createBoundedPageable("mostPlayedToday");
+			musicSystem.pageFrequentTrackViewsSince(getSignin().getViewpoint(), dayStart, mostPlayedToday);
 		}
 		return mostPlayedToday;
 	}
 
-	public ListBean<TrackView> getOnePlayTracks() {
+	public Pageable<TrackView> getOnePlayTracks() {
 		if (onePlayTracks == null) {
-			onePlayTracks = new ListBean<TrackView>(musicSystem.getOnePlayTrackViews(getSignin().getViewpoint(), MAX_RESULTS));
+			onePlayTracks = pagePositions.createBoundedPageable("onePlayTracks");
+			musicSystem.pageOnePlayTrackViews(getSignin().getViewpoint(), onePlayTracks);
 		}
 		return onePlayTracks;
 	}	

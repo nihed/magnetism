@@ -77,7 +77,7 @@
 				<div class="dh-zone-box-border dh-color-music">
 					<div class="dh-zone-box-content dh-color-normal">
 						<dht:requireMusicGlobalBean/>
-						<c:forEach items="${musicGlobal.recentTracks.list}" var="track" varStatus="status">
+						<c:forEach items="${musicGlobal.recentTracks.results}" var="track" varStatus="status">
 							<dht:track track="${track}" albumArt="true"/>
 							<c:if test="${!status.last}">
 								<dht:zoneBoxSeparator/>

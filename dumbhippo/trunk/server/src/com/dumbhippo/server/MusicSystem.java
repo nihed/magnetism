@@ -29,10 +29,16 @@ public interface MusicSystem {
 	public void setNowPlayingThemeImage(UserViewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException;
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
-
-	public List<TrackView> getPopularTrackViews(int maxResults) ;
 	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults);
+	/**
+	 * Retrieve the set of tracks that were played globally on the system most recently
+	 * 
+	 * @param viewpoint Viewpoint retrieving the information
+	 * @param pageable object providing range to retrieve and in which to store results
+	 */
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
+
+	public List<TrackView> getPopularTrackViews(int maxResults);
 	
 	/**
 	 * Retrieve the tracks that a user has listened to most recently
@@ -42,6 +48,8 @@ public interface MusicSystem {
 	 * @param pageable object providing range to retrieve and in which to store results
 	 */
 	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable);
+	
+	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults);
 	
 	/**
 	 * Retrieve the tracks a user has listened to most frequently.
@@ -59,36 +67,33 @@ public interface MusicSystem {
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults);
 
 	/**
-	 * Returns the globally most played tracks in the system.
+	 * Retrieve the globally most played tracks in the system.
 	 * 
 	 * @param viewpoint Viewpoint retrieving the information
-	 * @param maxResults maximum number of results to return, if positive 
-	 * @return a list of TrackViews for the most popular tracks
+	 * @param pageable object providing range to retrieve and in which to store results  
 	 */
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults);
+	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
 	
 	/**
-	 * Returns the globally most played tracks in the system since a specified
+	 * Retrieve the globally most played tracks in the system since a specified
 	 * date/time. (Since we only store one date per track per user, unlike
 	 * getFrequentTrackViews, "most played" is computed not as number of total
 	 * plays, but rather as number of distinct users playing the track)
 	 * 
 	 * @param viewpoint Viewpoint retrieving the information
 	 * @param since only consider tracks played after this date.
-	 * @param maxResults maximum number of results to return, if positive 
-	 * @return a list of TrackViews for the most popular tracks
+	 * @param pageable object providing range to retrieve and in which to store results  
 	 */
-	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults);
+	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable);
 	
 	/**
-	 * Returns the most recent tracks in the system that have only been
+	 * Retrieve the most recent tracks in the system that have only been
 	 * played once, ever.
 	 * 
 	 * @param viewpoint Viewpoint retrieving the information
-	 * @param maxResults maximum number of results to return, if positive
-	 * @return a list of TrackViews for the most recent songs played only once
+	 * @param pageable object providing range to retrieve and in which to store results  
 	 */
-	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults);
+	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
 
 	/**
 	 * Retrieve a list of songs played most recently by friends of the viewing user.

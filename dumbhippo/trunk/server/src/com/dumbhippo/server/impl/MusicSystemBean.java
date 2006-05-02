@@ -74,6 +74,10 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentTrackView(viewpoint, user);
 	}
 
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		internal.pageLatestTrackViews(viewpoint, pageable);
+	}
+	
 	public List<TrackView> getPopularTrackViews(int maxResults) {
 		return internal.getPopularTrackViews(maxResults);
 	}
@@ -102,16 +106,16 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getFrequentTrackViews(viewpoint, group, maxResults);
 	}
 		
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, int maxResults) {
-		return internal.getFrequentTrackViews(viewpoint, maxResults);
+	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		internal.pageFrequentTrackViews(viewpoint, pageable);
 	}
 	
-	public List<TrackView> getFrequentTrackViewsSince(Viewpoint viewpoint, Date since, int maxResults) {
-		return internal.getFrequentTrackViewsSince(viewpoint, since, maxResults);
+	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable) {
+		internal.pageFrequentTrackViewsSince(viewpoint, since, pageable);
 	}
 
-	public List<TrackView> getOnePlayTrackViews(Viewpoint viewpoint, int maxResults) {
-		return internal.getOnePlayTrackViews(viewpoint, maxResults);
+	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
+		internal.pageOnePlayTrackViews(viewpoint, pageable);
 	}
 
 	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
