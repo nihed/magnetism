@@ -348,35 +348,24 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	// The selection of Group is only needed for the CAN_SEE checks
-	static final String FIND_RAW_GROUPS_BY_USER_QUERY = 
+	static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group AND " +
-		"      gm.status  >= " + MembershipStatus.INVITED.ordinal();
-
-	static final String FIND_RAW_GROUPS_BY_CONTACT_QUERY = 
-		"SELECT gm.group FROM GroupMember gm, ContactClaim cc, Group g " +
-		"WHERE cc.resource = gm.member AND cc.contact = :member AND g = gm.group AND " +
 		"      gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 		Query q;
 		
-		String baseQuery;
-		if (member instanceof User)
-			baseQuery = FIND_RAW_GROUPS_BY_USER_QUERY;
-		else
-			baseQuery = FIND_RAW_GROUPS_BY_CONTACT_QUERY;
-		
 		String statusClause = getStatusClause(status);
 		
 		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
-			q = em.createQuery(baseQuery + statusClause); 
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause); 
 		} else if (viewpoint instanceof UserViewpoint) {
-			q = em.createQuery(baseQuery + " AND " + CAN_SEE + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause);
 			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
 		} else {
-			q = em.createQuery(baseQuery + " AND " + CAN_SEE_ANONYMOUS + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
 		}
 		q.setParameter("member", member);
 		Set<Group> ret = new HashSet<Group>();
@@ -391,30 +380,39 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	static final String FIND_GROUPS_QUERY = 
-		"SELECT gm FROM GroupMember gm, AccountClaim ac " +
-        "WHERE ac.resource = gm.member AND ac.owner = :member AND " +
+		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
+        "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group AND " +
         "      gm.status  >= " + MembershipStatus.INVITED.ordinal();
 
-	public Set<GroupView> findGroups(UserViewpoint viewpoint, User member) {
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
 		Query q;
+		boolean ownGroups = viewpoint.isOfUser(member);
 		
-		// See the usage of PostingBoardBean.VISIBLE_GROUP_WITH_MEMBER for
-		// how to implement the general case
-		if (!viewpoint.isOfUser(member))
-			throw new RuntimeException("Not implemented");
-		
-		q = em.createQuery(FIND_GROUPS_QUERY); 
+		if (ownGroups || viewpoint instanceof SystemViewpoint) {
+			// Special case this for effiency
+			q = em.createQuery(FIND_GROUPS_QUERY); 
+		} else if (viewpoint instanceof UserViewpoint) {
+			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE);
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
+		} else {
+			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS);
+		}
 		q.setParameter("member", member);
+		
 		Set<GroupView> result = new HashSet<GroupView>();
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
 			PersonView inviter  = null;
 			
-			if (groupMember.getStatus() == MembershipStatus.INVITED) {
-				User adder = groupMember.getAdder();
-				if (adder != null)
-					inviter = identitySpider.getPersonView(viewpoint, adder);
+			// Only get the inviter information for viewing the viewpoint's own groups
+			if (ownGroups) {
+				if (groupMember.getStatus() == MembershipStatus.INVITED) {
+					User adder = groupMember.getAdder();
+					if (adder != null)
+						inviter = identitySpider.getPersonView(viewpoint, adder);
+				}
 			}
+			
 			result.add(new GroupView(groupMember.getGroup(), groupMember, inviter));
 		}
 		return result;	

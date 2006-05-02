@@ -62,17 +62,17 @@ public interface GroupSystem {
 	public int incrementGroupVersion(String groupId);
 
 	/**
-	 * Find the groups that member is in. Currently, only the case
-	 * where member == viewpoint.getViewer() is implemented; if you
-	 * need the more general case, use findRawGroups(). (That doesn't
-	 * give the inviter information, but generally when you are viewing
-	 * someone else's groups, you don't want that.)
+	 * Find the groups that member is in. The returned GroupView objects
+	 * will include information about the user inviting the user to the
+	 * group only when the viewpoint is the member's own viewpoint; the
+	 * inviter information isn't interesting in other cases, so it's
+	 * not worth the expense to retrieve.
 	 * 
 	 * @param viewpoint the viewpoint of the viewer viewing member
 	 * @param member the person being viewed
 	 * @return a list of GroupView objects for the groups member is in
 	 */
-	public Set<GroupView> findGroups(UserViewpoint viewpoint, User member);	
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);	
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
