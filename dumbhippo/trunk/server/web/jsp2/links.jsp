@@ -46,10 +46,10 @@
 			<c:choose>
 				<c:when test="${signin.valid}">
 					<dht:requireLinksPersonBean who="${signin.user.id}"/>
-					<c:if test="${links.favoritePosts.size > 0}">
-						<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-						<dht:postList posts="${links.favoritePosts.list}" format="full"/>
-						<dht:moreExpander open="false"/>
+					<c:if test="${links.favoritePosts.resultCount > 0}">
+						<dht:zoneBoxTitle a="dhFavoritePosts">FAVES</dht:zoneBoxTitle>
+						<dht:postList posts="${links.favoritePosts.results}" format="full"/>
+						<dht:expandablePager pageable="${links.favoritePosts}" anchor="dhFavoritePosts"/>
 						<dht:zoneBoxSeparator/>
 					</c:if>
 					

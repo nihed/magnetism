@@ -17,17 +17,15 @@
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
-			<c:if test="${links.favoritePosts.size > 0}">
+			<c:if test="${links.favoritePosts.resultCount > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-				<dht:postList posts="${links.favoritePosts.list}" format="simple"/>
-				<dht:moreExpander open="false"/>
+				<dht:postList posts="${links.favoritePosts.results}" format="simple"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
 			<dht:zoneBoxTitle>SHARED BY <c:out value="${fn:toUpperCase(person.viewedPerson.name)}"/></dht:zoneBoxTitle>
 			<c:choose>
-				<c:when test="${links.sentPosts.size > 0}">
-					<dht:postList posts="${links.sentPosts.list}" format="simple"/>
-					<dht:moreExpander open="false"/>
+				<c:when test="${links.sentPosts.resultCount > 0}">
+					<dht:postList posts="${links.sentPosts.results}" format="simple"/>
 				</c:when>
 				<c:otherwise>
 					Nothing shared by <c:out value="${person.viewedPerson.name}"/> yet!
@@ -35,16 +33,18 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic disableJumpTo="true">
+			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>
-			<dht:zoneBoxSeparator/>
-			<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
-			<div class="dh-song"><a href="">Ice Ice Baby</a>
-				<span class="dh-song-details">by <a href="">Vanilla Ice</a> | Play at <a href="">iTunes</a> | <a href="">Yahoo!</a></span>
-			</div>
-			<div class="dh-song"><a href="">Faraway</a>
-				<span class="dh-song-details">by <a href="">Sleater-Kinney</a> | Play at <a href="">iTunes</a> | <a href="">Rhapsody</a></span>
-			</div>							
+			
+			<c:if test="${musicPerson.recentTracks.resultCount > 0}">
+				<dht:zoneBoxSeparator/>
+				<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+				
+				<c:forEach items="${musicPerson.recentTracks.results}" var="track">
+					<dht:track track="${track}" oneLine="true" playItLink="false"/>
+				</c:forEach>
+			</c:if>
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv disableJumpTo="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>

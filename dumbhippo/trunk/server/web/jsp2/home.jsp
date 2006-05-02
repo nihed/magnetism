@@ -18,9 +18,9 @@
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dht:requireLinksPersonBean who="${signin.user.id}"/>
-			<c:if test="${links.favoritePosts.size > 0}">
+			<c:if test="${links.favoritePosts.resultCount > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
-					<dht:postList posts="${links.favoritePosts.list}" format="simple"/>
+					<dht:postList posts="${links.favoritePosts.results}" format="simple"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
 			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>

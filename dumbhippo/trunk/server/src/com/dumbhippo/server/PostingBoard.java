@@ -47,7 +47,13 @@ public interface PostingBoard {
 	
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
 
-	public List<PostView> getFavoritePosts(Viewpoint viewpoint, User user, int start, int max);	
+	/**
+	 * Retrieve posts that a user has marked as "favorites"
+	 * @param viewpoint the viewpoint retrieving the information
+	 * @param user the user whose favorites to retrieve
+	 * @param pageable provides information about what posts to view and receives the result
+	 */
+	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable);	
 	
 	public boolean canViewPost(UserViewpoint viewpoint, Post post);
 	

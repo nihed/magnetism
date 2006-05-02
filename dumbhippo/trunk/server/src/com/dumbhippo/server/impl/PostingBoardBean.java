@@ -809,7 +809,7 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, null, start, max);
 	}
 	
-	public List<PostView> getFavoritePosts(Viewpoint viewpoint, User user, int start, int maxResults) {
+	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable) {
 		
 		/*
 		 // if only friends could see the faves list...
@@ -842,15 +842,17 @@ public class PostingBoardBean implements PostingBoard {
 			
 		});
 		
+		pageable.setTotalCount(dateSorted.size());
+		
 		List<PostView> views = new ArrayList<PostView>();
-		int i = Math.min(dateSorted.size(), start);
-		int count = Math.min(dateSorted.size() - start, maxResults);
+		int i = Math.min(dateSorted.size(), pageable.getStart());
+		int count = Math.min(dateSorted.size() - pageable.getStart(), pageable.getCount());
 		while (count > 0) {
 			views.add(getPostView(viewpoint, dateSorted.get(i)));
 			--count;
 			++i;
 		}
-		return views;
+		pageable.setResults(views);
 	}
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {

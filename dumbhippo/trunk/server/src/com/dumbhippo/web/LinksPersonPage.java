@@ -12,14 +12,11 @@ public class LinksPersonPage extends AbstractPersonPage {
 	@PagePositions
 	private PagePositionsBean pagePositions;
 	
-	// These have to match expandablePager.tag
-	static private final int INITIAL_RESULT_COUNT = 3;
-	
 	static private final Logger logger = GlobalSetup.getLogger(LinksPersonPage.class);
 	
 	private PostingBoard postBoard;
 	
-	private ListBean<PostView> favoritePosts;
+	private Pageable<PostView> favoritePosts;
 	
 	private Pageable<PostView> receivedPosts;
 	private Pageable<PostView> sentPosts;
@@ -39,10 +36,11 @@ public class LinksPersonPage extends AbstractPersonPage {
 		return receivedPosts;
 	}
 	
-	public ListBean<PostView> getFavoritePosts() {
+	public Pageable<PostView> getFavoritePosts() {
 		if (favoritePosts == null) {
 			logger.debug("Getting favorite posts for {}", getViewedUser());
-			favoritePosts = new ListBean<PostView>(postBoard.getFavoritePosts(getSignin().getViewpoint(), getViewedUser(), 0, INITIAL_RESULT_COUNT));
+			favoritePosts = pagePositions.createPageable("favoritePosts");
+			postBoard.pageFavoritePosts(getSignin().getViewpoint(), getViewedUser(), favoritePosts);
 		}
 		return favoritePosts;
 	}
