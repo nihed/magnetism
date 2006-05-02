@@ -69,12 +69,12 @@ dh.account.showStatus = function(controlId, statusText, linkText, linkHref, link
 	}
 }
 
-dh.account.showStatusMessage = function(controlId, message) {
-	dh.account.showStatus(controlId, message, "Close",
-		dh.account.makeLinkClosure(function() {
+dh.account.showStatusMessage = function(controlId, message, hideClose) {
+	dh.account.showStatus(controlId, message, hideClose ? null : "Close",
+		hideClose ? null : dh.account.makeLinkClosure(function() {
 			dh.account.hideStatus(controlId);
 		}),
-		"I've read this already, go away");
+		hideClose ? null : "I've read this already, go away");
 }
 
 dh.account.onValueChanged = function(entryObject, postMethod, argName, value,
@@ -163,7 +163,7 @@ dh.account.verifyEmail = function() {
   	dh.server.doPOST("sendclaimlinkemail",
 			 	     { "address" : address },
   					 function(type, data, http) {
-	  					 dh.account.showStatusMessage('dhEmailEntry', "We sent mail to '" + address + "', click on the link in that mail");
+	  					 dh.account.showStatusMessage('dhEmailEntry', "We sent mail to '" + address + "', click on the link in that mail.");
 	  					 emailEntryNode.value = "";
 					 },
 					 function(type, error, http) {
@@ -178,7 +178,7 @@ dh.account.removeClaimEmail = function(address) {
   					 	document.location.reload();
 					 },
 					 function(type, error, http) {
-						 alert("Couldn't remove this address");
+						 alert("Couldn't remove this address.");
 					 });
 }
 
@@ -189,7 +189,7 @@ dh.account.removeClaimAim = function(address) {
   					 	document.location.reload();
 					 },
 					 function(type, error, http) {
-						 alert("Couldn't remove this address");
+						 alert("Couldn't remove this address.");
 					 });
 }
 

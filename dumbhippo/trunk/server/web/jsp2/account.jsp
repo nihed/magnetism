@@ -16,6 +16,7 @@
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.account");
+		dojo.require("dh.password");
 		dh.account.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
@@ -124,11 +125,20 @@
 			<dht:zoneBoxTitle>SECURITY INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>Nobody sees this stuff but you.</dht:zoneBoxSubtitle>
 				<dht:formTable>
+					<dht:formTableRowStatus controlId='dhPasswordEntry'></dht:formTableRowStatus>
 					<dht:formTableRow label="Set a password">
 						<dht:textInput id="dhPasswordEntry" type="password" extraClass="dh-password-input"/>
 					</dht:formTableRow>
 					<dht:formTableRow label="Re-type password">
 						<dht:textInput  id="dhPasswordAgainEntry" type="password" extraClass="dh-password-input"/><span style="width: 10px; height: 5px;"></span><input id="dhSetPasswordButton" type="button" value="Set password"/>
+					</dht:formTableRow>
+					<dht:formTableRow label="">
+						A password is optional; you can also log in by sending a login link to any of your
+						email addresses or screen names.
+						<c:if test="${!account.hasPassword}">
+							<c:set var="removePasswordLinkStyle" value="display: none;" scope="page"/>
+						</c:if>
+						<a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Remove my password">Remove my current password.</a>
 					</dht:formTableRow>
 					<c:choose>
 						<c:when test="${signin.user.account.disabled}">

@@ -53,4 +53,8 @@ public class AccountPage {
 		return "aim:GoIM?screenname=" + config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME) 
 		+ "&message=Hey+Bot!+Crunch+this:+" + token;
 	}
+	
+	public boolean getHasPassword() {
+		return signin.getUser().getAccount().getHasPassword();
+	}
 }

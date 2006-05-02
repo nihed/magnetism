@@ -355,6 +355,11 @@ public class Account extends Resource {
 		return attempt.trim().equals(correct);
 	}
 	
+	@Transient
+	public boolean getHasPassword() {
+		return getPassword() != null;
+	}
+	
 	@Column(nullable=false)
 	public boolean isDisabled() {
 		return disabled;
