@@ -38,7 +38,20 @@ GTime       hippo_cookie_get_timestamp                  (HippoCookie *cookie);
 const char *hippo_cookie_get_name                       (HippoCookie *cookie);
 const char *hippo_cookie_get_value                      (HippoCookie *cookie);
 
-
+/* load a cookies.txt file; 
+ * NULL domain, NULL name, -1 port act as "wildcard" for this function, or 
+ * specify them to filter. Returns a list of HippoCookie.
+ */
+GSList*     hippo_load_cookies_file                     (const char *filename,
+                                                         const char *domain,
+                                                         int         port,
+                                                         const char *name,
+                                                         GError    **error);
+/* Merge multiple cookies.txt files; ignores failures to load any specific one */                                                         
+GSList*     hippo_load_cookies_files                    (GSList     *filenames,
+                                                         const char *domain,
+                                                         int         port,
+                                                         const char *name);
 
 G_END_DECLS
 
