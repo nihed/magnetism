@@ -1,0 +1,12 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("who-are-you-positions.css");
+
+.dh-login-type-header {
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.dh-login-text {
+	font-size: 12px;
+}
