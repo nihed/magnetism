@@ -1,11 +1,14 @@
 HEADERS= \
-    hippo/hippo-connection.h
+    hippo/hippo-connection.h \
+    hippo/hippo-cookies.h
 
 SOURCES= \
-    hippo/hippo-connection.c
+    hippo/hippo-connection.c \
+    hippo/hippo-cookies.c
 
 OBJECTS= \
-    hippo/hippo-connection.o
+    hippo/hippo-connection.o \
+    hippo/hippo-cookies.o
 
 CFLAGS=-Wall -g -O2
 
