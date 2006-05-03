@@ -86,6 +86,7 @@ static LmHandlerResult hippo_connection_handle_message (LmMessageHandler *handle
 
 struct _HippoConnection {
     GObject parent;
+    HippoPlatform *platform;
     HippoState state;
     int signin_timeout_id;
     int signin_timeout_count;
@@ -155,6 +156,9 @@ hippo_connection_finalize(GObject *object)
                     (GFunc)lm_message_unref, NULL);
     g_queue_free(connection->pending_room_messages);
 
+    g_object_unref(connection->platform);
+    connection->platform = NULL;
+
     G_OBJECT_CLASS(hippo_connection_parent_class)->finalize(object); 
 }
 
@@ -162,10 +166,16 @@ hippo_connection_finalize(GObject *object)
 /* === HippoConnection exported API === */
 
 
+/* "platform" should be a construct property, but I'm lazy */
 HippoConnection*
-hippo_connection_new(void)
+hippo_connection_new(HippoPlatform *platform)
 {
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+
     HippoConnection *connection = g_object_new(HIPPO_TYPE_CONNECTION, NULL);
+    
+    connection->platform = platform;
+    g_object_ref(connection->platform);
     
     return connection;
 }

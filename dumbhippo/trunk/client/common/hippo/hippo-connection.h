@@ -2,6 +2,7 @@
 #define __HIPPO_CONNECTION_H__
 
 #include <glib-object.h>
+#include <hippo/hippo-platform.h>
 
 G_BEGIN_DECLS
 
@@ -31,7 +32,7 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 #define HIPPO_CONNECTION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CONNECTION, HippoConnectionClass))
 
 GType        	 hippo_connection_get_type               (void) G_GNUC_CONST;
-HippoConnection *hippo_connection_new                    (void);
+HippoConnection *hippo_connection_new                    (HippoPlatform    *platform);
 HippoState       hippo_connection_get_state              (HippoConnection  *connection);
 gboolean         hippo_connection_signin                 (HippoConnection  *connection);
 void             hippo_connection_signout                (HippoConnection  *connection);

@@ -45,7 +45,7 @@ hippo_load_cookies(const char *domain,
     return cookies;
 }
 
-#if 1
+#if 0
 static void
 print_and_eat_cookies(GSList *cookies)
 {

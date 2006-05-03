@@ -440,7 +440,7 @@ hippo_load_cookies_files(GSList     *filenames,
         error = NULL;
         cookies = hippo_load_cookies_file(filename, domain, port, name, &error);
         if (error != NULL) {
-            g_printerr("Failed to load '%s': %s\n", filename, error->message);
+            /* g_printerr("Failed to load '%s': %s\n", filename, error->message); */
             g_error_free(error); 
         }
         
