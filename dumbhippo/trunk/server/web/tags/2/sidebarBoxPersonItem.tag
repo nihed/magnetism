@@ -29,8 +29,10 @@
 								</c:otherwise>
 							</c:choose>
 						</div>
-						<div class="dh-info">FIXME groups</div>
-						<div class="dh-info">FIXME posts</div>
+						<c:if test="${who.liveUser != null}">
+							<div class="dh-info">${who.liveUser.groupCount} groups</div>
+							<div class="dh-info">${who.liveUser.sentPostsCount} posts</div>
+						</c:if>
 					</div>
 				</td>
 			</tr>
