@@ -11,6 +11,7 @@ public class GroupEvent implements LiveEvent {
 	private static final long serialVersionUID = 1L;
 	
 	private Guid groupId;	
+	private Guid resourceId;
 	
 	public enum Type {
 		POST_ADDED, MEMBERSHIP_CHANGE;
@@ -19,10 +20,13 @@ public class GroupEvent implements LiveEvent {
 	private Type event;
 	
 	/**
-	 * @param groupId the group which was a recipient of a post
+	 * @param groupId the group which changed
+	 * @param resourceId the resource related to the change (new post, new member)
+	 * @param event the event type
 	 */
-	public GroupEvent(Guid groupId, Type event) {
+	public GroupEvent(Guid groupId, Guid resourceId, Type event) {
 		this.groupId = groupId;
+		this.resourceId = resourceId;
 		this.event = event;
 	}
 
@@ -37,8 +41,8 @@ public class GroupEvent implements LiveEvent {
 	public Type getEvent() {
 		return event;
 	}
-
-	public void setEvent(Type event) {
-		this.event = event;
+	
+	public Guid getResourceId() {
+		return resourceId;
 	}
 }

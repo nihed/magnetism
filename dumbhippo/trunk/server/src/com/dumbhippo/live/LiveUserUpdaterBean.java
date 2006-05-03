@@ -14,10 +14,12 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
 
 // Implementation of LiveUserUpdater
@@ -28,6 +30,9 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	@EJB
 	IdentitySpider identitySpider;
+	
+	@EJB
+	GroupSystem groupSystem;
 	
 	@EJB
 	PostingBoard postingBoard;
@@ -85,8 +90,20 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		}
 	}
 	
+	private void initializeGroups(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);		
+		user.setGroupCount(groupSystem.findGroupsCount(SystemViewpoint.getInstance(), dbUser));
+	}
+	
+	private void initializePostCount(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);		
+		user.setSentPostsCount(postingBoard.getPostsForCount(SystemViewpoint.getInstance(), dbUser));		
+	}
+	
 	public void initialize(LiveUser user) {
 		initializeFromPosts(user, getRecentPosts(user));
+		initializeGroups(user);
+		initializePostCount(user);
 	}
 	
 	private void initializeFromPosts(LiveUser user, List<PostView> recentPosts) {
@@ -150,6 +167,20 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			return;
 		update(user);
 	}
+	
+	public void handleGroupMembershipChanged(LiveUser luser) {
+		LiveState state = LiveState.getInstance();
+		LiveUser newUser = (LiveUser) luser.clone();		
+		initializeGroups(newUser);
+		state.updateLiveUser(newUser);		
+	}
+	
+	public void handlePostCreated(LiveUser luser) {
+		LiveState state = LiveState.getInstance();
+		LiveUser newUser = (LiveUser) luser.clone();		
+		initializePostCount(newUser);
+		state.updateLiveUser(newUser);			
+	}	
 
 	public void periodicUpdate(LiveUser user) {
 		if (!checkUpdate(user))

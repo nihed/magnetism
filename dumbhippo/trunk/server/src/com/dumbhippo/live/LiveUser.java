@@ -20,12 +20,16 @@ public class LiveUser extends LiveObject {
 	// Externally interesting variables - update .equals when adding one of these
 	private Hotness hotness;
 	private List<Guid> activePosts;
+	private int groupCount;
+	private int sentPostsCount;
 
 	LiveUser(Guid userId) {
 		super(userId);
 		this.hotness = Hotness.UNKNOWN;
 		this.activePosts = new ArrayList<Guid>();
 		this.availableCount = 0;
+		this.groupCount = 0;
+		this.sentPostsCount = 0;
 	}
 		
 	public void setAvailableCount(int availableCount) {
@@ -74,5 +78,21 @@ public class LiveUser extends LiveObject {
 		return super.equals(user) 
 				&& user.hotness.equals(hotness)
 				&& user.activePosts.equals(activePosts);
+	}
+
+	public int getGroupCount() {
+		return groupCount;
+	}
+
+	public void setGroupCount(int groupCount) {
+		this.groupCount = groupCount;
+	}
+
+	public int getSentPostsCount() {
+		return sentPostsCount;
+	}
+
+	public void setSentPostsCount(int sentPosts) {
+		this.sentPostsCount = sentPosts;
 	}
 }

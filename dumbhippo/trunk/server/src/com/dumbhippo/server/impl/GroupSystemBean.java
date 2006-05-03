@@ -194,7 +194,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 		
-	        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
+	        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
 		}
 	}
 	
@@ -207,7 +207,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
-		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
+		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
 			}
 		} catch (NotFoundException e) {
 			// nothing to do
@@ -379,25 +379,47 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return findRawGroups(viewpoint, member, null);
 	}
 
-	static final String FIND_GROUPS_QUERY = 
-		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount) {
+		Query q;		
+		StringBuilder queryStr = new StringBuilder("SELECT ");
+		boolean ownGroups = viewpoint.isOfUser(member);		
+	
+		if (isCount)
+			queryStr.append("count(gm)");
+		else
+			queryStr.append("gm");
+		
+		queryStr.append(" FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group AND " +
-        "      gm.status  >= " + MembershipStatus.INVITED.ordinal();
-
-	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
-		Query q;
-		boolean ownGroups = viewpoint.isOfUser(member);
+        "      gm.status  >= " + MembershipStatus.INVITED.ordinal());
 		
 		if (ownGroups || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
-			q = em.createQuery(FIND_GROUPS_QUERY); 
+			q = em.createQuery(queryStr.toString());				
 		} else if (viewpoint instanceof UserViewpoint) {
-			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE);
+			queryStr.append(" AND ");
+			queryStr.append(CAN_SEE);
+			q = em.createQuery(queryStr.toString());				
 			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
 		} else {
-			q = em.createQuery(FIND_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS);
+			queryStr.append(" AND ");
+			queryStr.append(CAN_SEE_ANONYMOUS);
+			q = em.createQuery(queryStr.toString());
 		}
+	
 		q.setParameter("member", member);
+		return q;
+	}
+	
+	public int findGroupsCount(Viewpoint viewpoint, User member) {
+		Query q = buildFindGroupsQuery(viewpoint, member, true);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();			
+	}
+	
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
+		Query q = buildFindGroupsQuery(viewpoint, member, false);
+		boolean ownGroups = viewpoint.isOfUser(member);
 		
 		Set<GroupView> result = new HashSet<GroupView>();
 		for (Object o : q.getResultList()) {

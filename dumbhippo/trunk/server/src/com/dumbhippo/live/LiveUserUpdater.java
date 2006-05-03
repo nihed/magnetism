@@ -19,7 +19,11 @@ public interface LiveUserUpdater {
 	
 	void periodicUpdate(LiveUser user);
 	
+	void handlePostCreated(LiveUser user);
+	
 	void handlePostViewed(Guid userGuid, LivePost post);
+	
+	void handleGroupMembershipChanged(LiveUser luser);
 
 	void sendAllNotifications(LiveUser luser);
 }

@@ -234,7 +234,7 @@ public class PersonView extends EntityView {
 		if (user == null)
 			return null;
 		LiveState state = LiveState.getInstance();
-		return state.peekLiveUser(user.getGuid());
+		return state.getLiveUser(user.getGuid());
 	}
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {

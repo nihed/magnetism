@@ -5,7 +5,6 @@ import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
@@ -40,10 +39,11 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 		liveGroup.setMemberCount(group.getMembers().size());
 	}
 
-	public void groupPostReceived(LiveGroup liveGroup, Post post) {
+	public void groupPostReceived(LiveGroup liveGroup) {
 		LiveState state = LiveState.getInstance();
 		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		newGroup.setTotalReceivedPosts(liveGroup.getTotalReceivedPosts() + 1);
+		Group group = loadGroup(liveGroup);		
+		newGroup.setTotalReceivedPosts(postingBoard.getGroupPostsCount(SystemViewpoint.getInstance(), group));
 		state.updateLiveGroup(newGroup);		
 	}
 

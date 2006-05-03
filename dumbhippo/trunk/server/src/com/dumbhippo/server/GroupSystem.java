@@ -72,7 +72,9 @@ public interface GroupSystem {
 	 * @param member the person being viewed
 	 * @return a list of GroupView objects for the groups member is in
 	 */
-	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);	
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);
+	
+	public int findGroupsCount(Viewpoint viewpoint, User member);
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	

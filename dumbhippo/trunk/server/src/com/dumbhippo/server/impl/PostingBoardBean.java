@@ -42,8 +42,8 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
-import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PostCreatedEvent;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Group;
@@ -266,11 +266,9 @@ public class PostingBoardBean implements PostingBoard {
 		
 		LiveState liveState = LiveState.getInstance();
 		for (Group g : groupRecipients) {
-			LiveGroup liveGroup = liveState.peekLiveGroup(g.getGuid());
-			if (liveGroup != null) {
-		        liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), GroupEvent.Type.POST_ADDED));					
-			}
+		    liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
 		}
+		liveState.queuePostTransactionUpdate(em, new PostCreatedEvent(post.getGuid(), poster.getGuid()));
 		
 		// tell the recommender engine, so ratings can be updated
 		recommenderSystem.addRatingForPostCreatedBy(post, poster);
