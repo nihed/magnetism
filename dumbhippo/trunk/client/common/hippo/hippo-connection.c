@@ -131,6 +131,7 @@ enum {
     STATE_CHANGED,
     AUTH_FAILURE,
     AUTH_SUCCESS,
+    NEW_POST,
     LAST_SIGNAL
 };
 
@@ -175,6 +176,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0); 
+
+    signals[NEW_POST] =
+        g_signal_new ("new_post",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__POINTER,
+            		  G_TYPE_NONE, 1, G_TYPE_POINTER);
           
     object_class->finalize = hippo_connection_finalize;
 }
@@ -231,6 +241,7 @@ hippo_connection_get_state(HippoConnection *connection)
     return connection->state;
 }
 
+/* Returns whether we have the login cookie */
 gboolean
 hippo_connection_signin(HippoConnection *connection)
 {
@@ -420,7 +431,7 @@ signin_timeout(gpointer data)
 
     connection->signin_timeout_count += 1;
     if (connection->signin_timeout_count == SIGN_IN_INITIAL_COUNT) {
-        // Try more slowly
+        /* Try more slowly */
         g_source_remove (connection->signin_timeout_id);
         connection->signin_timeout_id = g_timeout_add (SIGN_IN_SUBSEQUENT_TIMEOUT, signin_timeout, 
                                                         connection);
@@ -554,12 +565,10 @@ hippo_connection_state_change(HippoConnection *connection,
     if (connection->state == state)
         return;
         
-    connection->state = state;
-    
-    // g_print("IM connection state changed to %d", (int) state);
-    
+    connection->state = state;    
     hippo_connection_flush_outgoing(connection);
 
+    g_debug("Connection state = %s", hippo_state_debug_string(connection->state));
     g_signal_emit(connection, signals[STATE_CHANGED], 0);
 }
 
@@ -688,6 +697,25 @@ node_matches(LmMessageNode *node, const char *name, const char *expectedNamespac
     return strcmp(name, node->name) == 0 && (expectedNamespace == NULL || strcmp(expectedNamespace, ns) == 0);
 }
 
+LmMessageNode*
+find_child_node(LmMessageNode *node, 
+                const char    *element_namespace, 
+                const char    *element_name)
+{
+    LmMessageNode *child;
+    for (child = node->children; child; child = child->next) {
+        const char *ns = lm_message_node_get_attribute(child, "xmlns");
+        if (!(ns && strcmp(ns, element_namespace) == 0 && child->name))
+            continue;
+        if (strcmp(child->name, element_name) != 0)
+            continue;
+
+        return child;
+    }
+
+    return NULL;
+}
+
 static gboolean
 message_is_iq_with_namespace(LmMessage *message, const char *expectedNamespace, const char *documentElementName)
 {
@@ -722,11 +750,11 @@ on_client_info_reply(LmMessageHandler *handler,
     const char *download = lm_message_node_get_attribute(child, "download");
 
     if (!minimum || !current || !download) {
-        g_printerr("clientInfo reply missing attributes");
+        g_warning("clientInfo reply missing attributes");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    /* g_print("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download); */
+    g_debug("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
 
     /* FIXME store this somewhere */
 
@@ -773,7 +801,10 @@ handle_message (LmMessageHandler *handler,
                 LmMessage        *message,
                 gpointer          data)
 {
-    HippoConnection *connection = HIPPO_CONNECTION(data);/* FIXME
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    
+    g_debug("handle_message");
+    /* FIXME
     switch (im->processRoomMessage(message, false)) {
         case PROCESS_MESSAGE_IGNORE:
             break;
@@ -811,22 +842,19 @@ handle_message (LmMessageHandler *handler,
     if (im->handlePrefsChangedMessage(message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-
-    // Messages used to be HEADLINE, we accept both for compatibility
+    */
+    /* Messages used to be HEADLINE, we accept both for compatibility */
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
-        || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET // Shouldn't need this, default should be normal
+         /* Shouldn't need this, default should be normal */
+        || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-        LmMessageNode *child = findChildNode(message->node, "http://dumbhippo.com/protocol/post", "newPost");
+        LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/post", "newPost");
         if (child) {
-            HippoPtr<HippoPost> post;
-            if (im->parsePostData(child, "newPost", &post)) {
-                im->ui_->onLinkMessage(post);
-            } else {
-                im->ui_->logErrorU("failed to parse post stream in newPost");
-            }
-        } 
+            g_debug("newPost received");
+            /* FIXME parse the post and pass it to this signal as argument */
+            g_signal_emit(connection, signals[NEW_POST], 0, NULL);
+        }
     }
-*/
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -838,6 +866,10 @@ handle_presence (LmMessageHandler *handler,
                  gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
+    g_debug("handle_presence");
+
+    /* FIXME */
+
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
@@ -847,6 +879,8 @@ handle_disconnect (LmConnection       *lconnection,
                    gpointer            data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
+
+    g_debug("handle_disconnect reason=%d", reason);
 
     if (connection->state == HIPPO_STATE_SIGNED_OUT) {
         hippo_connection_clear(connection);
@@ -862,6 +896,8 @@ handle_open (LmConnection *lconnection,
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
+    g_debug("handle_open success=%d", success);
+
     if (success) {        hippo_connection_authenticate(connection);
     } else {
         hippo_connection_connect_failure(connection, NULL);
@@ -875,6 +911,8 @@ handle_authenticate(LmConnection *lconnection,
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessage *message;
+
+    g_debug("handle_authenticate success=%d", success);
 
     if (!success) {
         hippo_connection_auth_failure(connection, NULL);
@@ -906,4 +944,31 @@ handle_authenticate(LmConnection *lconnection,
     im->updatePrefs();
     */
     g_signal_emit(connection, signals[AUTH_SUCCESS], 0);
+}
+
+
+/* == Random cruft == */
+
+
+const char*
+hippo_state_debug_string(HippoState state)
+{
+    switch (state) {
+    case HIPPO_STATE_SIGNED_OUT:
+        return "SIGNED_OUT";
+    case HIPPO_STATE_SIGN_IN_WAIT:
+        return "SIGN_IN_WAIT";
+    case HIPPO_STATE_CONNECTING:
+        return "CONNECTING";
+    case HIPPO_STATE_RETRYING:
+        return "RETRYING";
+    case HIPPO_STATE_AUTHENTICATING:
+        return "AUTHENTICATING";
+    case HIPPO_STATE_AUTH_WAIT:
+        return "AUTH_WAIT";
+    case HIPPO_STATE_AUTHENTICATED:
+        return "AUTHENTICATED";
+    }
+    /* not a default case so we get a warning if we omit one from the switch */
+    return "WHAT THE?";
 }

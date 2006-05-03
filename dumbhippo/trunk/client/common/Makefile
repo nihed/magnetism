@@ -17,7 +17,7 @@ OBJECTS= \
     hippo/hippo-cookies.o    \
     hippo/hippo-platform.o
 
-CFLAGS=-Wall -g -O2 `pkg-config --cflags gobject-2.0 loudmouth-1.0` -I.
+CFLAGS=-Wall -g -O2 `pkg-config --cflags gobject-2.0 gthread-2.0 loudmouth-1.0` -I.
 
 all:	testhippo
 

@@ -85,7 +85,12 @@ hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
 
     hippo_platform_get_web_host_port(platform, &web_server, &web_port);
     
-    cookies = hippo_load_cookies(web_server, web_port, "auth");
+    g_print("Looking for login to %s:%d\n", web_server, web_port);
+    
+    /* We load cookies with -1 (wildcard) for the port because 
+     * the port doesn't seem to get saved in cookies.txt ...
+     */
+    cookies = hippo_load_cookies(web_server, -1, "auth");
     
     g_free(web_server);
     
@@ -136,21 +141,30 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
     
     if (impl->jabber_resource == NULL) {
         /* OK, this is pretty lame FIXME but it should get 
-         * us a unique per-session identifier most of the time 
+         * us a unique per-session identifier most of the time.
+         * Technically .Xauthority can change during the session though.
+         * anyway, FIXME
          */
         unsigned int dbus_session_hash = 0;
         unsigned int xauthority_hash = 0;
         const char *dbus_session;
         char *xauthority_file;
         char *xauthority;
+        gsize len;
         
         dbus_session = g_getenv("DBUS_SESSION_BUS_ADDRESS");
         if (dbus_session)
             dbus_session_hash = g_str_hash(dbus_session);
         
         xauthority_file = g_build_filename(g_get_home_dir(), ".Xauthority", NULL);
-        if (g_file_get_contents(xauthority_file, &xauthority, NULL, NULL)) {
-            xauthority_hash = g_str_hash(xauthority);
+        if (g_file_get_contents(xauthority_file, &xauthority, &len, NULL)) {
+            gsize i;
+            
+            /* g_str_hash assumes nul termination, this is a binary file */
+            xauthority_hash = 17;
+            for (i = 0; i < len; ++i) {
+                xauthority_hash = xauthority_hash * 37 + xauthority[i];
+            }
             g_free(xauthority);
         }
         g_free(xauthority_file);
@@ -158,25 +172,36 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         impl->jabber_resource = g_strdup_printf("%u-%u-%u",
             dbus_session_hash, xauthority_hash, g_str_hash(g_get_user_name()));
             
-        g_printerr("jabber resource: '%s'\n", impl->jabber_resource);
+        g_debug("jabber resource: '%s'\n", impl->jabber_resource);
     }
     return impl->jabber_resource;
 }
 
+
 static char*
 hippo_platform_impl_get_message_server(HippoPlatform *platform)
 {
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
 
-    /* FIXME */    
-    return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
+    /* FIXME */
+
+    if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
+        return g_strdup("dogfood.dumbhippo.com:21020");
+    else
+        return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
 }
 
 static char*
 hippo_platform_impl_get_web_server(HippoPlatform *platform)
 {
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
 
     /* FIXME */
-    return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
+
+    if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
+        return g_strdup("dogfood.dumbhippo.com:9080");
+    else
+        return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
 }
 
 static gboolean

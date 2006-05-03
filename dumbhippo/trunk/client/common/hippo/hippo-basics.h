@@ -18,6 +18,15 @@ typedef enum {
 #define HIPPO_DEFAULT_WEB_PORT       80
 #define HIPPO_DEFAULT_WEB_SERVER     HIPPO_DEFAULT_WEB_HOST ":80"
 
+typedef struct {
+    HippoInstanceType instance_type;
+    guint config_flag : 1;
+    guint install_launch : 1;
+    guint replace_existing : 1;
+    guint quit_existing : 1;
+    guint initial_debug_share : 1;
+} HippoOptions;
+
 gboolean hippo_parse_server          (const char *server,
                                       char      **host,
                                       int        *port);                 
@@ -35,6 +44,11 @@ gboolean hippo_parse_login_cookie    (const char *cookie_value,
 
 char*    hippo_id_to_jabber_id       (const char *guid);
 char*    hippo_id_from_jabber_id     (const char *jid);
+
+gboolean hippo_parse_options         (int          *argc_p,
+                                      char       ***argv_p,
+                                      HippoOptions *results);
+void     hippo_options_free_fields   (HippoOptions *options);
 
 G_END_DECLS
 

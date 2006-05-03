@@ -133,7 +133,7 @@ hippo_parse_login_cookie(const char *cookie_value,
         } else {
             /* Ignore unknown field */
         }
-        p = next_amp;
+        p = next_amp + 1;
     }
 
     /* Pre-Jan 2005 cookies may not have a host */
@@ -205,4 +205,63 @@ hippo_id_from_jabber_id(const char *jid)
     *out = '\0';
 
     return guid;
+}
+
+gboolean
+hippo_parse_options(int          *argc_p,
+                    char       ***argv_p,
+                    HippoOptions *results)
+{
+    static gboolean debug = FALSE;
+    static gboolean dogfood = FALSE;
+    static gboolean config_flag = FALSE;
+    static gboolean install_launch = FALSE;
+    static gboolean replace_existing = FALSE;
+    static gboolean quit_existing = FALSE;
+    static gboolean initial_debug_share = FALSE;    GError *error;
+
+    static const GOptionEntry entries[] = {
+        { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
+        { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
+        { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&install_launch, "Run appropriately at the end of the install" },
+        { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replace_existing, "Replace existing instance, if any" },
+        { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
+        { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
+        { NULL }
+    };
+
+    GOptionContext *context = g_option_context_new("The Mugshot application");
+    g_option_context_add_main_entries(context, entries, NULL);
+
+    error = NULL;
+    g_option_context_parse(context, argc_p, argv_p, &error);
+    if (error) {
+        g_printerr("%s\n", error->message);
+        return FALSE;
+    }
+    g_option_context_free(context);
+
+    if (debug)
+        results->instance_type = HIPPO_INSTANCE_DEBUG;
+    else if (dogfood)
+        results->instance_type = HIPPO_INSTANCE_DOGFOOD;
+    else
+        results->instance_type = HIPPO_INSTANCE_NORMAL;    
+    
+    results->config_flag = config_flag;
+    results->install_launch = install_launch;
+    results->replace_existing = replace_existing;
+    results->quit_existing = quit_existing;
+    results->initial_debug_share = initial_debug_share;
+    
+    return TRUE;
+}
+
+void
+hippo_options_free_fields(HippoOptions *options)
+{
+    /* Right now nothing is malloced in here so this is a no-op,
+     * but if we had string args to options, etc. we'd have 
+     * to free them here
+     */
 }
