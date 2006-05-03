@@ -39,7 +39,7 @@
   	onmouseover="dh.sharelink.highlightPossibleGroup();"
 	onmouseout="dh.sharelink.unhighlightPossibleGroup();"
 	href="javascript:dh.sharelink.toggleCreateGroup();">
-	Create Group from These
+	Create Group
 </a>
 <a id="dhAddMemberLink" class="dhActionLink dhInvisible"
 	onmouseover="dh.sharelink.highlightPossibleGroup();"

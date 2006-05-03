@@ -293,8 +293,9 @@ table, tr, td {
 	padding:					0.5em;
 	position:					absolute;
 	right:						3em;
-	bottom:						5em;
+	bottom:						8em;
 	width:						23em; /* a bit larger than the input inside it */
+	z-index:					2;
 }
 
 #dhCreateGroupName {
