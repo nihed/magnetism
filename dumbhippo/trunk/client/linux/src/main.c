@@ -1,5 +1,5 @@
+#include <hippo/hippo-common.h>
 #include "hippo-platform-impl.h"
-#include <hippo/hippo-connection.h>
 
 int
 main(int argc, char **argv)
@@ -9,7 +9,7 @@ main(int argc, char **argv)
     
     g_type_init ();
     
-    platform = g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL);
+    platform = hippo_platform_impl_new(HIPPO_INSTANCE_DOGFOOD);
     
     cookie = hippo_platform_read_login_cookie(platform);
     g_print("Login cookie is '%s'\n", cookie);

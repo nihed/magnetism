@@ -1,7 +1,7 @@
 #ifndef __HIPPO_COOKIES_LINUX_H__
 #define __HIPPO_COOKIES_LINUX_H__
 
-#include <hippo/hippo-cookies.h>
+#include <hippo/hippo-common.h>
 
 /* returns list of HippoCookie from the cookies.txt file we determine is relevant,
  * with the given domain, port, name

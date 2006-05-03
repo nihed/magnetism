@@ -1,4 +1,5 @@
 #include "hippo-cookies.h"
+#include "hippo-basics.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -217,48 +218,18 @@ static gboolean
 parse_domain(const char *server,
              char      **host,
              int        *port)
-{            
-    const char *p = server + strlen(server);
-
-    if (p == server)
+{
+    /* In theory this function isn't quite right (since cookie domain could e.g. 
+     * start with a period, and prefs domain could not) but we don't validate much
+     * right now anyway
+     */            
+    if (hippo_parse_server(server, host, port)) {
+        if (*port < 0)
+            *port = 80;
+        return TRUE;
+    } else {
         return FALSE;
-
-    *host = NULL;
-    *port = 80;
-
-    while (p > server) {
-        if (*(p - 1) == ':') {
-            gsize host_len = p - server - 1;
-            
-            if (host_len == 0)
-                return FALSE;
-            
-            *host = g_strndup(server, host_len);
-
-            if (*p) {
-                char *end = NULL;
-                long val;
-
-                val = strtol(p, &end, 10);
-                if (*end || end == p || val <= 0) {
-                    g_free(*host);
-                    return FALSE;
-                } else {
-                    *port = (int) val;
-                }
-            }
-            break;
-        }
-
-        p--;
     }
-    
-    /* no ':' seen */
-    if (*host == NULL) {
-        *host = g_strdup(server);
-    }
-    
-    return TRUE;
 }
 
 static gboolean

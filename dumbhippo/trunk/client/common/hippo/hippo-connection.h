@@ -1,7 +1,6 @@
 #ifndef __HIPPO_CONNECTION_H__
 #define __HIPPO_CONNECTION_H__
 
-#include <glib-object.h>
 #include <hippo/hippo-platform.h>
 
 G_BEGIN_DECLS

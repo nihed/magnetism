@@ -1,8 +1,7 @@
 #ifndef __HIPPO_PLATFORM_IMPL_H__
 #define __HIPPO_PLATFORM_IMPL_H__
 
-#include <glib-object.h>
-#include <hippo/hippo-platform.h>
+#include <hippo/hippo-common.h>
 
 G_BEGIN_DECLS
 
@@ -18,7 +17,7 @@ typedef struct _HippoPlatformImplClass HippoPlatformImplClass;
 
 GType        	 hippo_platform_impl_get_type               (void) G_GNUC_CONST;
 
-HippoPlatform*   hippo_platform_impl_new                    (void);
+HippoPlatform*   hippo_platform_impl_new                    (HippoInstanceType instance);
 
 G_END_DECLS
 

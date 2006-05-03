@@ -1,7 +1,7 @@
 #ifndef __HIPPO_PLATFORM_H__
 #define __HIPPO_PLATFORM_H__
 
-#include <glib-object.h>
+#include <hippo/hippo-basics.h>
 
 G_BEGIN_DECLS
 
@@ -18,12 +18,34 @@ typedef struct _HippoPlatformClass HippoPlatformClass;
 struct _HippoPlatformClass {
 	GTypeInterface base_iface;
 
-	char*  (* read_login_cookie) (HippoPlatform *platform);
+	char*  (* read_login_cookie)   (HippoPlatform *platform);
+	
+	/* Preferences */
+	char*     (* get_message_server)  (HippoPlatform *platform);
+	char*     (* get_web_server)      (HippoPlatform *platform);
+	gboolean  (* get_signin)          (HippoPlatform *platform);
+	
+	void     (* set_message_server)  (HippoPlatform *platform, const char *value);
+	void     (* set_web_server)      (HippoPlatform *platform, const char *value);
+	void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
 };
 
 GType        	 hippo_platform_get_type               (void) G_GNUC_CONST;
 
 char*            hippo_platform_read_login_cookie      (HippoPlatform *platform);
+
+/* Preferences */
+char*            hippo_platform_get_message_server     (HippoPlatform *platform); 
+char*            hippo_platform_get_web_server         (HippoPlatform *platform); 
+gboolean         hippo_platform_get_signin             (HippoPlatform *platform); 
+
+void            hippo_platform_set_message_server     (HippoPlatform  *platform,
+                                                       const char     *value); 
+void            hippo_platform_set_web_server         (HippoPlatform  *platform,
+                                                       const char     *value); 
+void            hippo_platform_set_signin             (HippoPlatform  *platform,
+                                                       gboolean        value);
+                                                       
 
 G_END_DECLS
 

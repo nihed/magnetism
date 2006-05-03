@@ -1,14 +1,18 @@
 HEADERS= \
+    hippo/hippo-basics.h        \
+    hippo/hippo-common.h        \
     hippo/hippo-connection.h    \
     hippo/hippo-cookies.h       \
     hippo/hippo-platform.h
 
 SOURCES= \
+    hippo/hippo-basics.c     \
     hippo/hippo-connection.c \
     hippo/hippo-cookies.c    \
     hippo/hippo-platform.c
 
 OBJECTS= \
+    hippo/hippo-basics.o     \
     hippo/hippo-connection.o \
     hippo/hippo-cookies.o    \
     hippo/hippo-platform.o
