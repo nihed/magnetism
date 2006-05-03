@@ -19,11 +19,21 @@ HippoCookie* hippo_cookie_new    (const char *domain,
 void         hippo_cookie_ref    (HippoCookie *cookie);
 void         hippo_cookie_unref  (HippoCookie *cookie);
 
+/* Cookie equals/hash doesn't include the timestamp or value, 
+ * that is two cookies are equal if setting one would overwrite
+ * the other one - so this equals/hash can be used to merge cookies
+ * files.
+ */
+gboolean     hippo_cookie_equals (HippoCookie *first,
+                                  HippoCookie *second);
+guint        hippo_cookie_hash   (HippoCookie *cookie);
+
 const char *hippo_cookie_get_domain                     (HippoCookie *cookie);
 int         hippo_cookie_get_port                       (HippoCookie *cookie);
 gboolean    hippo_cookie_get_all_hosts_match            (HippoCookie *cookie);
 const char *hippo_cookie_get_path                       (HippoCookie *cookie);
 gboolean    hippo_cookie_get_secure_connection_required (HippoCookie *cookie);
+/* timestamp is the expiration time */
 GTime       hippo_cookie_get_timestamp                  (HippoCookie *cookie);
 const char *hippo_cookie_get_name                       (HippoCookie *cookie);
 const char *hippo_cookie_get_value                      (HippoCookie *cookie);

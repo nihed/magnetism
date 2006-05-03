@@ -237,7 +237,8 @@ static GSList*
 hippo_load_cookies_file(const char *filename,
                         const char *domain,
                         int         port,
-                        const char *name)
+                        const char *name,
+                        GError    **error)
 {
     char *contents = NULL;
     gsize length = 0;
@@ -246,8 +247,8 @@ hippo_load_cookies_file(const char *filename,
     const char *line;
     GSList *cookies = NULL;
     
-    if (!g_file_get_contents(filename, &contents, &length, NULL)) {
-        return NULL;   
+    if (!g_file_get_contents(filename, &contents, &length, error)) {
+        return NULL;
     }
     
     end = contents + length + 1; /* end is AFTER the nul term so we can parse with no ending newline */
@@ -265,46 +266,143 @@ hippo_load_cookies_file(const char *filename,
     return g_slist_reverse(cookies);
 }
 
+static void
+listify_foreach(void *key, void *value, void *data)
+{
+    GSList **list_p = data;
+    *list_p = g_slist_prepend(*list_p, value);
+    hippo_cookie_ref(value);
+}
+
 GSList*
 hippo_load_cookies(const char *domain,
                    int         port,
                    const char *name)
 {
+    GHashTable *merge;
+    GSList *files;
+    const char *homedir;
+    GSList *merged_list;
+    GDir *dir;
+    char *firefox_dir;
     
+    files = NULL;
+    homedir = g_get_home_dir();
 
+    /* We load the epiphany cookies, and the cookies from all copies of firefox; 
+     * not really clear what we "should" do, how do we know which browser is someone's 
+     * "main" or "current"? I guess if any browser has our login cookie, the user's 
+     * account is effectively logged in from a security standpoint...
+     */
+
+    files = g_slist_prepend(files,
+        g_build_filename(homedir,
+        ".gnome2/epiphany/mozilla/epiphany/cookies.txt", NULL));
+
+    firefox_dir = g_build_filename(homedir, ".mozilla/firefox", NULL);
+    dir = g_dir_open(firefox_dir, 0, NULL); /* ignore errors */
+    if (dir != NULL) {
+        const char *subdir;
+        while ((subdir = g_dir_read_name(dir)) != NULL) {
+            char *cookie_file = g_build_filename(firefox_dir, subdir, "cookies.txt", NULL);
+            if (g_file_test(cookie_file, G_FILE_TEST_EXISTS))
+                files = g_slist_prepend(files, cookie_file);
+        }
+        g_dir_close(dir);
+    }
+    g_free(firefox_dir);
+    
+    merge = g_hash_table_new((GHashFunc)hippo_cookie_hash, (GEqualFunc) hippo_cookie_equals);
+
+    while (files != NULL) {
+        char *filename = files->data;
+        GSList *cookies;
+        GError *error;
+        
+        error = NULL;
+        cookies = hippo_load_cookies_file(filename, domain, port, name, &error);
+        if (error != NULL) {
+            g_printerr("Failed to load '%s': %s\n", filename, error->message);
+            g_error_free(error); 
+        }
+        
+        while (cookies != NULL) {
+            HippoCookie *cookie = cookies->data;
+    
+            HippoCookie *old = g_hash_table_lookup(merge, cookie);
+            if (old != NULL) {
+                /* Save the cookie that expires latest */
+                if (hippo_cookie_get_timestamp(old) < hippo_cookie_get_timestamp(cookie)) {
+                    /* replace the old one */
+                    g_hash_table_replace(merge, cookie, cookie);
+                } else {
+                    /* keep old one, delete this one */
+                    hippo_cookie_unref(cookie);
+                }
+            } else {
+                g_hash_table_replace(merge, cookie, cookie);
+            }
+
+            cookies = g_slist_remove(cookies, cookies->data);        
+        }
+        
+        files = g_slist_remove(files, files->data);
+        g_free(filename);
+    }
+
+    /* Now listify the hash table */
+    merged_list = NULL;
+    g_hash_table_foreach(merge, listify_foreach, &merged_list);
+    g_hash_table_destroy(merge);
+    return merged_list;
 }
 
 #if 1
+static void
+print_and_eat_cookies(GSList *cookies)
+{
+    int count;
+    
+    count = 1;
+    while (cookies != NULL) {
+        HippoCookie *cookie = cookies->data;
+
+        g_print("%d '%s:%d' all_hosts=%d path='%s' secure=%d time=%lu name='%s' value='%s'\n", count,
+            hippo_cookie_get_domain(cookie),
+            hippo_cookie_get_port(cookie),
+            hippo_cookie_get_all_hosts_match(cookie),
+            hippo_cookie_get_path(cookie),
+            hippo_cookie_get_secure_connection_required(cookie),
+            (unsigned long) hippo_cookie_get_timestamp(cookie),
+            hippo_cookie_get_name(cookie),
+            hippo_cookie_get_value(cookie));
+        
+        count += 1;
+        
+        cookies = g_slist_remove(cookies, cookies->data);
+        hippo_cookie_unref(cookie);
+    }
+}
+
 int
 main(int argc, char **argv)
 {
+    GSList *cookies;
     int i;
     
+    cookies = hippo_load_cookies(NULL, -1, NULL);
+    print_and_eat_cookies(cookies);
+    
     for (i = 1; i < argc; ++i) {
-        GSList *cookies;
-        int count;
-        
-        cookies = hippo_load_cookies_file(argv[i], NULL, -1, NULL);
-        
-        count = 1;
-        while (cookies != NULL) {
-            HippoCookie *cookie = cookies->data;
-
-            g_print("%d '%s:%d' all_hosts=%d path='%s' secure=%d time=%lu name='%s' value='%s\n", count,
-                hippo_cookie_get_domain(cookie),
-                hippo_cookie_get_port(cookie),
-                hippo_cookie_get_all_hosts_match(cookie),
-                hippo_cookie_get_path(cookie),
-                hippo_cookie_get_secure_connection_required(cookie),
-                (unsigned long) hippo_cookie_get_timestamp(cookie),
-                hippo_cookie_get_name(cookie),
-                hippo_cookie_get_value(cookie));
-            
-            count += 1;
-            
-            cookies = g_slist_remove(cookies, cookies->data);
-            hippo_cookie_unref(cookie);
+        GError *error = NULL;
+        cookies = hippo_load_cookies_file(argv[i], NULL, -1, NULL, &error);
+        if (error != NULL) {
+            g_printerr("Failed to load '%s': %s\n", argv[i], error->message);
+            g_error_free(error);
         }
+        
+        g_print("=== %s === ", argv[i]);   
+        print_and_eat_cookies(cookies);
     }
     
     return 0;

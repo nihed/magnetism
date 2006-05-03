@@ -23,11 +23,18 @@ hippo_cookie_new(const char *domain,
                  const char *value)
 {
     HippoCookie *cookie = g_new0(HippoCookie, 1);
+    
+    g_return_val_if_fail(domain != NULL, NULL);
+    g_return_val_if_fail(port > 0, NULL);
+    g_return_val_if_fail(path != NULL, NULL);
+    g_return_val_if_fail(name != NULL, NULL);
+    /* value can be NULL */
+    
     cookie->domain = g_strdup(domain);
     cookie->port = port;
-    cookie->all_hosts_match = all_hosts_match;
+    cookie->all_hosts_match = all_hosts_match != FALSE;
     cookie->path = g_strdup(path);
-    cookie->secure_connection_required = secure_connection_required;
+    cookie->secure_connection_required = secure_connection_required != FALSE;
     cookie->timestamp = timestamp;
     cookie->name = g_strdup(name);
     cookie->value = g_strdup(value);
@@ -57,6 +64,32 @@ hippo_cookie_unref  (HippoCookie *cookie)
         g_free(cookie->value);
         g_free(cookie);
     }
+}
+
+gboolean
+hippo_cookie_equals (HippoCookie *first,
+                     HippoCookie *second)
+{
+    return
+        strcmp(first->domain, second->domain) == 0 &&
+        first->port == second->port &&
+        first->all_hosts_match == second->all_hosts_match &&
+        strcmp(first->path, second->path) == 0 &&
+        first->secure_connection_required == second->secure_connection_required &&
+        strcmp(first->name, second->name) == 0;
+}
+                     
+guint
+hippo_cookie_hash (HippoCookie *cookie)
+{
+    guint hash;
+    
+    /* very scientific approach */
+    hash = g_str_hash(cookie->domain);
+    hash += cookie->port * 37;
+    hash += g_str_hash(cookie->path) * 37;
+    hash += g_str_hash(cookie->name) * 37;
+    return hash;
 }
 
 const char*
