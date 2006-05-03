@@ -11,6 +11,8 @@ static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000;    /* 30 seconds */
 static const int KEEP_ALIVE_RATE = 60;                  /* 1 minute; 0 disables */
 
 static const int RETRY_TIMEOUT = 60000;                 /* 1 minute */
+
+
 /* === OutgoingMessage internal class === */
 
 typedef struct OutgoingMessage OutgoingMessage;
@@ -70,6 +72,7 @@ static void     hippo_connection_connect              (HippoConnection *connecti
 static void     hippo_connection_disconnect           (HippoConnection *connection);
 static void     hippo_connection_state_change         (HippoConnection *connection,
                                                        HippoState       state);
+static void     hippo_connection_forget_auth          (HippoConnection *connection);
 static gboolean hippo_connection_load_auth            (HippoConnection *connection);
 static void     hippo_connection_authenticate         (HippoConnection *connection);
 static void     hippo_connection_clear                (HippoConnection *connection);
@@ -79,10 +82,26 @@ static void     hippo_connection_send_message         (HippoConnection *connecti
                                                        LmMessage *message,
                                                        LmMessageHandler *handler);
 static void     hippo_connection_get_client_info      (HippoConnection *connection);
-static LmHandlerResult hippo_connection_handle_message (LmMessageHandler *handler,
-                                                        LmConnection     *connection,
-                                                        LmMessage        *message,
-                                                        gpointer          data);
+
+
+/* Loudmouth handlers */
+static LmHandlerResult handle_message     (LmMessageHandler *handler,
+                                           LmConnection     *connection,
+                                           LmMessage        *message,
+                                           gpointer          data);
+static LmHandlerResult handle_presence    (LmMessageHandler *handler,
+                                           LmConnection     *connection,
+                                           LmMessage        *message,
+                                           gpointer          data);
+static void            handle_disconnect  (LmConnection       *connection,
+                                           LmDisconnectReason  reason,
+                                           gpointer            data);
+static void            handle_open        (LmConnection *connection,
+                                           gboolean      success,
+                                           gpointer      data);
+static void            handle_authenticate(LmConnection *connection,
+                                           gboolean      success,
+                                           gpointer      data);
 
 struct _HippoConnection {
     GObject parent;
@@ -98,6 +117,8 @@ struct _HippoConnection {
     GQueue *pending_room_messages;
     unsigned int music_sharing_enabled : 1;
     unsigned int music_sharing_primed : 1;
+    char *username;
+    char *password;
 };
 
 struct _HippoConnectionClass {
@@ -108,6 +129,8 @@ G_DEFINE_TYPE(HippoConnection, hippo_connection, G_TYPE_OBJECT);
 
 enum {
     STATE_CHANGED,
+    AUTH_FAILURE,
+    AUTH_SUCCESS,
     LAST_SIGNAL
 };
 
@@ -127,13 +150,31 @@ hippo_connection_class_init(HippoConnectionClass *klass)
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
   
     signals[STATE_CHANGED] =
-    g_signal_new ("state_changed",
-        		  G_TYPE_FROM_CLASS (object_class),
-        		  G_SIGNAL_RUN_FIRST,
-        		  0,
-        		  NULL, NULL,
-        		  g_cclosure_marshal_VOID__VOID,
-        		  G_TYPE_NONE, 0); 
+        g_signal_new ("state_changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0); 
+
+    signals[AUTH_FAILURE] =
+        g_signal_new ("auth_failure",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0); 
+
+    signals[AUTH_SUCCESS] =
+        g_signal_new ("auth_success",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0); 
           
     object_class->finalize = hippo_connection_finalize;
 }
@@ -155,6 +196,9 @@ hippo_connection_finalize(GObject *object)
     g_queue_foreach(connection->pending_room_messages,
                     (GFunc)lm_message_unref, NULL);
     g_queue_free(connection->pending_room_messages);
+
+    g_free(connection->username);
+    g_free(connection->password);
 
     g_object_unref(connection->platform);
     connection->platform = NULL;
@@ -337,6 +381,27 @@ hippo_connection_provide_priming_music (HippoConnection  *connection,
 
 /* === HippoConnection private methods === */
 
+static void
+hippo_connection_connect_failure(HippoConnection *connection,
+                                 const char      *message)
+{
+    /* message can be NULL */
+    hippo_connection_clear(connection);
+    hippo_connection_start_retry_timeout(connection);
+    hippo_connection_state_change(connection, HIPPO_STATE_RETRYING);
+}
+
+static void
+hippo_connection_auth_failure(HippoConnection *connection,
+                              const char      *message)
+{
+    /* message can be NULL */
+    hippo_connection_forget_auth(connection);
+    hippo_connection_start_signin_timeout(connection);
+    hippo_connection_state_change(connection, HIPPO_STATE_AUTH_WAIT);
+    g_signal_emit(connection, signals[AUTH_FAILURE], 0);
+}
+
 static gboolean 
 signin_timeout(gpointer data)
 {
@@ -418,7 +483,52 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
 static void
 hippo_connection_connect(HippoConnection *connection)
 {
+    char *message_host;
+    int message_port;
 
+    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
+
+    if (connection->lm_connection != NULL) {
+        g_warning("hippo_connection_connect() called when already connected");
+        return;
+    }
+
+    connection->lm_connection = lm_connection_new(message_host);
+    lm_connection_set_port(connection->lm_connection, message_port);
+    lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
+
+    LmMessageHandler *handler = lm_message_handler_new(handle_message, connection, NULL);
+    lm_connection_register_message_handler(connection->lm_connection, handler, 
+                                           LM_MESSAGE_TYPE_MESSAGE, 
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
+    handler = lm_message_handler_new(handle_presence, connection, NULL);
+    lm_connection_register_message_handler(connection->lm_connection, handler, 
+                                           LM_MESSAGE_TYPE_PRESENCE, 
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
+    lm_connection_set_disconnect_function(connection->lm_connection,
+            handle_disconnect, connection, NULL);
+
+    hippo_connection_state_change(connection, HIPPO_STATE_CONNECTING);
+
+    GError *error = NULL;
+
+    /* If lm_connection returns false, then handle_open won't be called
+     * at all. On a true return it will be called exactly once, but that 
+     * call might occur before or after lm_connection_open() returns, and
+     * may occur for success or for failure.
+     */
+    if (!lm_connection_open(connection->lm_connection, 
+                            handle_open, connection, NULL, 
+                            &error)) 
+    {
+        hippo_connection_connect_failure(connection, error ? error->message : "");
+        if (error)
+            g_error_free(error);
+    }
 }
 
 static void
@@ -453,17 +563,63 @@ hippo_connection_state_change(HippoConnection *connection,
     g_signal_emit(connection, signals[STATE_CHANGED], 0);
 }
 
+static void
+zero_str(char **s_p)
+{
+    g_free(*s_p);
+    *s_p = NULL;
+}
+
+static void
+hippo_connection_forget_auth(HippoConnection *connection)
+{
+    hippo_platform_delete_login_cookie(connection->platform);
+    zero_str(&connection->username);
+    zero_str(&connection->password);
+}
+
 static gboolean
 hippo_connection_load_auth(HippoConnection *connection)
-{
-
-    return FALSE;
+{    
+    /* always clear current username/password */
+    zero_str(&connection->username);
+    zero_str(&connection->password);
+    
+    return hippo_platform_read_login_cookie(connection->platform,
+                &connection->username, &connection->password);
 }
 
 static void
 hippo_connection_authenticate(HippoConnection *connection)
 {
+    char *jabber_id;
+    char *resource;
+    GError *error;
+     
+    if (connection->username == NULL || connection->password == NULL) {
+        hippo_connection_auth_failure(connection, "Not signed in");
+        return;
+    }
+    
+    jabber_id = hippo_id_to_jabber_id(connection->username);
+    resource = hippo_platform_get_jabber_resource(connection->platform);
 
+    error = NULL;
+    if (!lm_connection_authenticate(connection->lm_connection, 
+                                    jabber_id,
+                                    connection->password,
+                                    resource,
+                                    handle_authenticate, connection, NULL,
+                                    &error))
+    {
+        hippo_connection_auth_failure(connection, error ? error->message : NULL);
+        if (error)
+            g_error_free(error);
+    } else {
+        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATING);
+    }
+    g_free(jabber_id);
+    g_free(resource);
 }
 
 static void
@@ -609,11 +765,13 @@ hippo_connection_get_client_info(HippoConnection *connection)
     lm_message_handler_unref(handler);
 }
 
+/* === HippoConnection Loudmouth handlers === */
+
 static LmHandlerResult 
-hippo_connection_handle_message (LmMessageHandler *handler,
-                                 LmConnection     *lconnection,
-                                 LmMessage        *message,
-                                 gpointer          data)
+handle_message (LmMessageHandler *handler,
+                LmConnection     *lconnection,
+                LmMessage        *message,
+                gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);/* FIXME
     switch (im->processRoomMessage(message, false)) {
@@ -671,4 +829,81 @@ hippo_connection_handle_message (LmMessageHandler *handler,
 */
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static LmHandlerResult 
+handle_presence (LmMessageHandler *handler,
+                 LmConnection     *lconnection,
+                 LmMessage        *message,
+                 gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static void 
+handle_disconnect (LmConnection       *lconnection,
+                   LmDisconnectReason  reason,
+                   gpointer            data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+
+    if (connection->state == HIPPO_STATE_SIGNED_OUT) {
+        hippo_connection_clear(connection);
+    } else {
+        hippo_connection_connect_failure(connection, "Lost connection");
+    }
+}
+
+static void
+handle_open (LmConnection *lconnection,
+             gboolean      success,
+             gpointer      data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+
+    if (success) {        hippo_connection_authenticate(connection);
+    } else {
+        hippo_connection_connect_failure(connection, NULL);
+    }
+}
+
+static void 
+handle_authenticate(LmConnection *lconnection,
+                    gboolean      success,
+                    gpointer      data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessage *message;
+
+    if (!success) {
+        hippo_connection_auth_failure(connection, NULL);
+        return;
+    }
+
+    message = lm_message_new_with_sub_type(NULL, 
+                                           LM_MESSAGE_TYPE_PRESENCE, 
+                                           LM_MESSAGE_SUB_TYPE_AVAILABLE);
+
+    hippo_connection_send_message(connection, message);
+    hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);
+
+    /* FIXME
+
+    // Enter any chatrooms that we are (logically) connected to
+    for (unsigned long i = 0; i < im->chatRooms_.length(); i++) {
+        // We left the previous contents there while we were disconnected,
+        // clear it since we'll now get the current contents sent
+        im->chatRooms_[i]->clear();
+        if (im->chatRooms_[i]->getState() != HippoChatRoom::NONMEMBER) 
+            im->sendChatRoomEnter(im->chatRooms_[i], im->chatRooms_[i]->getState() == HippoChatRoom::PARTICIPANT);
+    }
+    */
+
+    hippo_connection_get_client_info(connection);
+
+    /* FIXME 
+    im->updatePrefs();
+    */
+    g_signal_emit(connection, signals[AUTH_SUCCESS], 0);
 }

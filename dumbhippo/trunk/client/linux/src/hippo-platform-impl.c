@@ -4,7 +4,12 @@
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
 static void      hippo_platform_impl_iface_init          (HippoPlatformClass      *klass);
-static char*     hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform);
+static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
+                                                          char                   **username_p,
+                                                          char                   **password_p);
+static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
+static char*     hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
+
 static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
 static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
 static gboolean  hippo_platform_impl_get_signin          (HippoPlatform           *platform);
@@ -19,6 +24,7 @@ static void      hippo_platform_impl_set_signin          (HippoPlatform         
 struct _HippoPlatformImpl {
     GObject parent;
     HippoInstanceType instance;
+    char *jabber_resource;
 };
 
 struct _HippoPlatformImplClass {
@@ -34,6 +40,8 @@ static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
+    klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
+    klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -63,31 +71,102 @@ hippo_platform_impl_new(HippoInstanceType instance)
     return HIPPO_PLATFORM(impl);
 }
 
-static char*
-hippo_platform_impl_read_login_cookie(HippoPlatform *platform)
+static gboolean
+hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
+                                      char         **username_p,
+                                      char         **password_p)
 {
     GSList *cookies;
-    
-    cookies = hippo_load_cookies("dogfood.dumbhippo.com", 80, "auth");
-    
-    if (cookies != NULL) {
-        HippoCookie *cookie = cookies->data;
-        /* in theory the cookie value could be NULL, which is OK, but be aware */
-        char *value = g_strdup(hippo_cookie_get_value(cookie));
-        cookies = g_slist_remove_link(cookies, cookies);
-        g_slist_foreach(cookies, (GFunc) hippo_cookie_unref, NULL);
-        g_slist_free(cookies);
-        hippo_cookie_unref(cookie);
-        return value;
-    }
+    char *web_server;
+    int web_port;
+    gboolean success;
+    HippoCookie *cookie;
+    char *value;
 
-    return NULL;
+    hippo_platform_get_web_host_port(platform, &web_server, &web_port);
+    
+    cookies = hippo_load_cookies(web_server, web_port, "auth");
+    
+    g_free(web_server);
+    
+    if (cookies == NULL)
+        return FALSE;
+
+    /* Extract value from first cookie and free the rest of them 
+     * (we only expect to have one, though)
+     */
+    
+    cookie = cookies->data;
+    /* in theory the cookie value could be NULL, which is OK, but be aware */        
+    value = g_strdup(hippo_cookie_get_value(cookie));
+    
+    cookies = g_slist_remove_link(cookies, cookies);
+    g_slist_foreach(cookies, (GFunc) hippo_cookie_unref, NULL);
+    g_slist_free(cookies);
+    hippo_cookie_unref(cookie);
+
+    /* Parse the value and return username/password
+     * hippo_parse_login_cookie allows a NULL value
+     */
+
+    success = hippo_parse_login_cookie(value, web_server, username_p, password_p);
+    g_free(value);
+    return success;
+}
+
+static void
+hippo_platform_impl_delete_login_cookie(HippoPlatform *platform)
+{
+    /* FIXME this is going to be a serious headache. 
+     * For browsers that aren't running we have to blow the cookie
+     * out of cookies.txt, for running browsers we have to hook into them
+     * and export an API to drop the cookie or something.
+     */
+
+}
+
+static char*
+hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
+{
+    /* On Windows we're using the hardware profile ID. Linux doesn't have 
+     * such a thing; arguably the resource should be per-user or per-session
+     * anyway. 
+     */
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    
+    if (impl->jabber_resource == NULL) {
+        /* OK, this is pretty lame FIXME but it should get 
+         * us a unique per-session identifier most of the time 
+         */
+        unsigned int dbus_session_hash = 0;
+        unsigned int xauthority_hash = 0;
+        const char *dbus_session;
+        char *xauthority_file;
+        char *xauthority;
+        
+        dbus_session = g_getenv("DBUS_SESSION_BUS_ADDRESS");
+        if (dbus_session)
+            dbus_session_hash = g_str_hash(dbus_session);
+        
+        xauthority_file = g_build_filename(g_get_home_dir(), ".Xauthority", NULL);
+        if (g_file_get_contents(xauthority_file, &xauthority, NULL, NULL)) {
+            xauthority_hash = g_str_hash(xauthority);
+            g_free(xauthority);
+        }
+        g_free(xauthority_file);
+        
+        impl->jabber_resource = g_strdup_printf("%u-%u-%u",
+            dbus_session_hash, xauthority_hash, g_str_hash(g_get_user_name()));
+            
+        g_printerr("jabber resource: '%s'\n", impl->jabber_resource);
+    }
+    return impl->jabber_resource;
 }
 
 static char*
 hippo_platform_impl_get_message_server(HippoPlatform *platform)
 {
-    g_return_val_if_fail(HIPPO_IS_PLATFORM_IMPL(platform), NULL);
+
     /* FIXME */    
     return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
 }
@@ -95,7 +174,7 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
 static char*
 hippo_platform_impl_get_web_server(HippoPlatform *platform)
 {
-    g_return_val_if_fail(HIPPO_IS_PLATFORM_IMPL(platform), NULL);
+
     /* FIXME */
     return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
 }
@@ -103,7 +182,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
 static gboolean
 hippo_platform_impl_get_signin(HippoPlatform *platform)
 {
-    g_return_val_if_fail(HIPPO_IS_PLATFORM_IMPL(platform), FALSE);
+
     /* FIXME */
     return TRUE;
 }
@@ -112,7 +191,7 @@ static void
 hippo_platform_impl_set_message_server(HippoPlatform  *platform,
                                        const char     *value)
 {
-    g_return_if_fail(HIPPO_IS_PLATFORM(platform));                                  
+
     /* FIXME */
 }
 
@@ -120,7 +199,7 @@ static void
 hippo_platform_impl_set_web_server(HippoPlatform  *platform,
                                    const char     *value)
 {
-    g_return_if_fail(HIPPO_IS_PLATFORM(platform));                                  
+
     /* FIXME */
 }
 
@@ -128,6 +207,6 @@ static void
 hippo_platform_impl_set_signin(HippoPlatform  *platform,
                                gboolean        value)
 {
-    g_return_if_fail(HIPPO_IS_PLATFORM(platform));                                  
+
     /* FIXME */
 }

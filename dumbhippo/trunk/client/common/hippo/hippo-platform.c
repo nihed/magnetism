@@ -32,12 +32,30 @@ hippo_platform_base_init(void *klass)
     }
 }
 
-char*
-hippo_platform_read_login_cookie(HippoPlatform *platform)
+gboolean
+hippo_platform_read_login_cookie(HippoPlatform *platform,
+                                 char         **username_p,
+                                 char         **password_p)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
     
-    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform);
+    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, username_p, password_p);
+}
+
+void
+hippo_platform_delete_login_cookie(HippoPlatform *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->delete_login_cookie(platform);
+}
+
+char*
+hippo_platform_get_jabber_resource(HippoPlatform *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_jabber_resource(platform);    
 }
 
 char*
@@ -86,4 +104,24 @@ hippo_platform_set_signin(HippoPlatform  *platform,
 {
     g_return_if_fail(HIPPO_IS_PLATFORM(platform));                                  
     HIPPO_PLATFORM_GET_CLASS(platform)->set_signin(platform, value);                              
+}
+
+void
+hippo_platform_get_message_host_port(HippoPlatform  *platform,
+                                     char          **host_p,
+                                     int            *port_p)
+{
+    char *server = hippo_platform_get_message_server(platform);
+    hippo_parse_message_server(server, host_p, port_p);
+    g_free(server);
+}
+
+void
+hippo_platform_get_web_host_port(HippoPlatform  *platform,
+                                 char          **host_p,
+                                 int            *port_p)
+{
+    char *server = hippo_platform_get_web_server(platform);
+    hippo_parse_web_server(server, host_p, port_p);
+    g_free(server);
 }

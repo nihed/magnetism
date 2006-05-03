@@ -28,6 +28,13 @@ void     hippo_parse_web_server      (const char *server,
                                       char      **host,
                                       int        *port);
 
+gboolean hippo_parse_login_cookie    (const char *cookie_value,
+                                      const char *required_host,
+                                      char      **username_p,
+                                      char      **password_p);
+
+char*    hippo_id_to_jabber_id       (const char *guid);
+char*    hippo_id_from_jabber_id     (const char *jid);
 
 G_END_DECLS
 

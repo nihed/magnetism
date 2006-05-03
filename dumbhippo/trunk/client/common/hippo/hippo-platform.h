@@ -18,7 +18,12 @@ typedef struct _HippoPlatformClass HippoPlatformClass;
 struct _HippoPlatformClass {
 	GTypeInterface base_iface;
 
-	char*  (* read_login_cookie)   (HippoPlatform *platform);
+	gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
+	                                   char          **username,
+	                                   char          **password);
+	void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
+	
+	char*     (* get_jabber_resource) (HippoPlatform  *platform);
 	
 	/* Preferences */
 	char*     (* get_message_server)  (HippoPlatform *platform);
@@ -32,20 +37,31 @@ struct _HippoPlatformClass {
 
 GType        	 hippo_platform_get_type               (void) G_GNUC_CONST;
 
-char*            hippo_platform_read_login_cookie      (HippoPlatform *platform);
+gboolean         hippo_platform_read_login_cookie      (HippoPlatform *platform,
+	                                                    char         **username,
+                  	                                    char         **password);
+void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
+char*            hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 
 /* Preferences */
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 
 char*            hippo_platform_get_web_server         (HippoPlatform *platform); 
 gboolean         hippo_platform_get_signin             (HippoPlatform *platform); 
 
-void            hippo_platform_set_message_server     (HippoPlatform  *platform,
-                                                       const char     *value); 
-void            hippo_platform_set_web_server         (HippoPlatform  *platform,
-                                                       const char     *value); 
-void            hippo_platform_set_signin             (HippoPlatform  *platform,
-                                                       gboolean        value);
+void             hippo_platform_set_message_server     (HippoPlatform  *platform,
+                                                        const char     *value); 
+void             hippo_platform_set_web_server         (HippoPlatform  *platform,
+                                                        const char     *value); 
+void             hippo_platform_set_signin             (HippoPlatform  *platform,
+                                                        gboolean        value);
                                                        
+/* Convenience wrappers on get_server stuff that parse the host/port */
+void             hippo_platform_get_message_host_port  (HippoPlatform  *platform,
+                                                        char          **host_p,
+                                                        int            *port_p);
+void             hippo_platform_get_web_host_port      (HippoPlatform  *platform,
+                                                        char          **host_p,
+                                                        int            *port_p);
 
 G_END_DECLS
 

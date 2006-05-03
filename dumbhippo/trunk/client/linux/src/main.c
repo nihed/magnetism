@@ -5,16 +5,22 @@ int
 main(int argc, char **argv)
 {
     HippoPlatform *platform;
-    char *cookie;
+    char *username;
+    char *password;
     
     g_type_init ();
     
     platform = hippo_platform_impl_new(HIPPO_INSTANCE_DOGFOOD);
     
-    cookie = hippo_platform_read_login_cookie(platform);
-    g_print("Login cookie is '%s'\n", cookie);
+    username = NULL;
+    password = NULL;
+    if (hippo_platform_read_login_cookie(platform, &username, &password))
+        g_print("Login info '%s' '%s'\n", username, password);
+    else
+        g_print("No login info found\n");
     
-    g_free (cookie);
+    g_free (username);
+    g_free (password);
 
     return 0;
 }
