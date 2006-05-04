@@ -82,8 +82,9 @@ static void     hippo_connection_send_message         (HippoConnection *connecti
                                                        LmMessage *message,
                                                        LmMessageHandler *handler);
 static void     hippo_connection_get_client_info      (HippoConnection *connection);
-
-
+static void     hippo_connection_update_prefs         (HippoConnection *connection);
+static void     hippo_connection_process_prefs_node   (HippoConnection *connection,
+                                                       LmMessageNode   *prefs_node);
 /* Loudmouth handlers */
 static LmHandlerResult handle_message     (LmMessageHandler *handler,
                                            LmConnection     *connection,
@@ -132,6 +133,7 @@ enum {
     AUTH_FAILURE,
     AUTH_SUCCESS,
     NEW_POST,
+    MUSIC_SHARING_TOGGLED,
     LAST_SIGNAL
 };
 
@@ -143,6 +145,15 @@ hippo_connection_init(HippoConnection *connection)
     connection->state = HIPPO_STATE_SIGNED_OUT;
     connection->pending_outgoing_messages = g_queue_new();
     connection->pending_room_messages = g_queue_new();
+    
+    /* these defaults are important to be sure we
+     * do nothing until we hear otherwise
+     * (and to be sure a signal is emitted if we need to
+     * do something, since stuff will have changed)
+     */
+    connection->music_sharing_enabled = FALSE;
+    connection->music_sharing_primed = TRUE;
+    
 }
 
 static void
@@ -185,6 +196,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__POINTER,
             		  G_TYPE_NONE, 1, G_TYPE_POINTER);
+
+    signals[MUSIC_SHARING_TOGGLED] =
+        g_signal_new ("music_sharing_toggled",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__BOOLEAN,
+            		  G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
           
     object_class->finalize = hippo_connection_finalize;
 }
@@ -345,7 +365,15 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
 }
 
 gboolean
-hippo_connection_get_need_priming_music (HippoConnection  *connection)
+hippo_connection_get_music_sharing_enabled (HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
+    
+    return connection->music_sharing_enabled;
+}
+
+gboolean
+hippo_connection_get_need_priming_music(HippoConnection  *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
     
@@ -353,8 +381,8 @@ hippo_connection_get_need_priming_music (HippoConnection  *connection)
 }
 
 void
-hippo_connection_provide_priming_music (HippoConnection  *connection,
-                                        const HippoSong **songs,
+hippo_connection_provide_priming_music(HippoConnection  *connection,
+                                       const HippoSong **songs,
                                         int               n_songs)
 {
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
@@ -793,7 +821,97 @@ hippo_connection_get_client_info(HippoConnection *connection)
     lm_message_handler_unref(handler);
 }
 
+static LmHandlerResult
+on_prefs_reply(LmMessageHandler *handler,
+               LmConnection     *lconnection,
+               LmMessage        *message,
+               gpointer          data)
+{ 
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *prefs_node = message->node->children;
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/prefs", "prefs")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (prefs_node == NULL || strcmp(prefs_node->name, "prefs") != 0)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+
+    hippo_connection_process_prefs_node(connection, prefs_node);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static void
+hippo_connection_update_prefs(HippoConnection *connection)
+{
+    LmMessage *message;
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    LmMessageNode *node = lm_message_get_node(message);
+    
+    LmMessageNode *child = lm_message_node_add_child (node, "prefs", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/prefs");
+    LmMessageHandler *handler = lm_message_handler_new(on_prefs_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    g_debug("Sent request for prefs");
+}
+
+static void
+hippo_connection_process_prefs_node(HippoConnection *connection,
+                                    LmMessageNode   *prefs_node)
+{
+    gboolean old_music_sharing_enabled = connection->music_sharing_enabled;
+    LmMessageNode *child;
+    
+    for (child = prefs_node->children; child != NULL; child = child->next) {
+        const char *key = lm_message_node_get_attribute(child, "key");
+        const char *value = lm_message_node_get_value(child);
+
+        if (key == NULL) {
+            g_debug("ignoring node '%s' with no 'key' attribute in prefs reply",
+                    child->name);
+            continue;
+        }
+        
+        if (strcmp(key, "musicSharingEnabled") == 0) {
+            connection->music_sharing_enabled = value != NULL && strcmp(value, "true") == 0;
+            g_debug("musicSharingEnabled set to %d", (int) connection->music_sharing_enabled);
+        } else if (strcmp(key, "musicSharingPrimed") == 0) {
+            connection->music_sharing_primed = value != NULL && strcmp(value, "true") == 0;
+            g_debug("musicSharingPrimed set to %d", (int) connection->music_sharing_primed);
+        } else {
+            g_debug("Unknown pref '%s'", key);
+        }
+    }
+    /* notify the music monitor engines that they may want to kick in or out */
+    if (old_music_sharing_enabled != connection->music_sharing_enabled)
+        g_signal_emit(connection, signals[MUSIC_SHARING_TOGGLED], 0,
+            (gboolean) connection->music_sharing_enabled);
+}
+
 /* === HippoConnection Loudmouth handlers === */
+
+gboolean
+handle_prefs_changed(HippoConnection *connection,
+                     LmMessage       *message)
+{
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/prefs", "prefs");
+    if (child == NULL)
+        return FALSE;
+    g_debug("handling prefsChanged message");
+
+    hippo_connection_process_prefs_node(connection, child);
+
+    return TRUE;
+}
 
 static LmHandlerResult 
 handle_message (LmMessageHandler *handler,
@@ -839,10 +957,12 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (im->handlePrefsChangedMessage(message)) {
+    */
+    
+    if (handle_prefs_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    */
+    
     /* Messages used to be HEADLINE, we accept both for compatibility */
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
          /* Shouldn't need this, default should be normal */
@@ -939,10 +1059,8 @@ handle_authenticate(LmConnection *lconnection,
     */
 
     hippo_connection_get_client_info(connection);
-
-    /* FIXME 
-    im->updatePrefs();
-    */
+    hippo_connection_update_prefs(connection);
+    
     g_signal_emit(connection, signals[AUTH_SUCCESS], 0);
 }
 

@@ -30,21 +30,22 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 #define HIPPO_IS_CONNECTION_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CONNECTION))
 #define HIPPO_CONNECTION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CONNECTION, HippoConnectionClass))
 
-GType        	 hippo_connection_get_type               (void) G_GNUC_CONST;
-HippoConnection *hippo_connection_new                    (HippoPlatform    *platform);
-HippoState       hippo_connection_get_state              (HippoConnection  *connection);
+GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
+HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
+HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
-gboolean         hippo_connection_signin                 (HippoConnection  *connection);
-void             hippo_connection_signout                (HippoConnection  *connection);
-void             hippo_connection_notify_post_clicked    (HippoConnection  *connection,
-                                                          const char       *post_id);
-void             hippo_connection_notify_music_changed   (HippoConnection  *connection,
-                                                          gboolean          currently_playing,
-                                                          const HippoSong  *song);
-gboolean         hippo_connection_get_need_priming_music (HippoConnection  *connection);
-void             hippo_connection_provide_priming_music  (HippoConnection  *connection,
-                                                          const HippoSong **songs,
-                                                          int               n_songs);
+gboolean         hippo_connection_signin                    (HippoConnection  *connection);
+void             hippo_connection_signout                   (HippoConnection  *connection);
+void             hippo_connection_notify_post_clicked       (HippoConnection  *connection,
+                                                             const char       *post_id);
+void             hippo_connection_notify_music_changed      (HippoConnection  *connection,
+                                                             gboolean          currently_playing,
+                                                             const HippoSong  *song);
+gboolean         hippo_connection_get_music_sharing_enabled (HippoConnection  *connection);
+gboolean         hippo_connection_get_need_priming_music    (HippoConnection  *connection);
+void             hippo_connection_provide_priming_music     (HippoConnection  *connection,
+                                                             const HippoSong **songs,
+                                                             int               n_songs);
                                                             
 
 /* return string form of enum values */

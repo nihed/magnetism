@@ -85,7 +85,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
 
     hippo_platform_get_web_host_port(platform, &web_server, &web_port);
     
-    g_print("Looking for login to %s:%d\n", web_server, web_port);
+    g_debug("Looking for login to %s:%d", web_server, web_port);
     
     /* We load cookies with -1 (wildcard) for the port because 
      * the port doesn't seem to get saved in cookies.txt ...
@@ -172,7 +172,7 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         impl->jabber_resource = g_strdup_printf("%u-%u-%u",
             dbus_session_hash, xauthority_hash, g_str_hash(g_get_user_name()));
             
-        g_debug("jabber resource: '%s'\n", impl->jabber_resource);
+        g_debug("jabber resource: '%s'", impl->jabber_resource);
     }
     return impl->jabber_resource;
 }

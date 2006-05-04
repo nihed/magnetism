@@ -37,7 +37,7 @@ hippo_platform_read_login_cookie(HippoPlatform *platform,
                                  char         **username_p,
                                  char         **password_p)
 {
-    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
     
     return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, username_p, password_p);
 }
@@ -45,7 +45,7 @@ hippo_platform_read_login_cookie(HippoPlatform *platform,
 void
 hippo_platform_delete_login_cookie(HippoPlatform *platform)
 {
-    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
 
     HIPPO_PLATFORM_GET_CLASS(platform)->delete_login_cookie(platform);
 }

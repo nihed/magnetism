@@ -14,7 +14,7 @@ hippo_load_cookies(const char *domain,
     files = NULL;
     homedir = g_get_home_dir();
 
-    /* We load the epiphany cookies, and the cookies from all copies of firefox; 
+    /* We load the epiphany cookies, and the cookies from all profiles of firefox; 
      * not really clear what we "should" do, how do we know which browser is someone's 
      * "main" or "current"? I guess if any browser has our login cookie, the user's 
      * account is effectively logged in from a security standpoint...
