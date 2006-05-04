@@ -20,12 +20,22 @@
 					Please enter some search terms
 				</c:when>
 				<c:otherwise>
-					<dht:searchSectionTitle a="dhMusicRadar">MUSIC RADAR</dht:searchSectionTitle>
-			
+					<dht:searchSectionTitle a="dhMusicRadar" query='${param["q"]}' pageable="${find.tracks}">MUSIC RADAR</dht:searchSectionTitle>
+
+					<c:if test="${!empty find.trackError}">
+						<c:out value="${find.trackError}"/>
+					</c:if>
+					
+					<c:forEach items="${find.tracks.results}" var="track">
+						<dht:track track="${track}" playItLink="false"/>
+					</c:forEach>
+
+					<dht:expandablePager pageable="${find.tracks}" anchor="dhMusicRadar"/>
+
 					<dht:zoneBoxSeparator/>
 					
 					<dht:searchSectionTitle a="dhLinkSwarm" query='${param["q"]}' pageable="${find.posts}">LINK SWARM</dht:searchSectionTitle>
-					<c:if test="${!empty find.error}">
+					<c:if test="${!empty find.postError}">
 						<c:out value="${find.error}"/>
 					</c:if>
 					

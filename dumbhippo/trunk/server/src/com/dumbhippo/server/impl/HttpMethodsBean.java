@@ -53,6 +53,7 @@ import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -704,6 +705,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		PostIndexer.getInstance().reindex();
+		TrackIndexer.getInstance().reindex();
 	}
 	
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {

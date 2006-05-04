@@ -16,6 +16,8 @@ import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.lucene.Indexed;
+import org.hibernate.lucene.Text;
 import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
@@ -61,6 +63,7 @@ import com.dumbhippo.GlobalSetup;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"digest"})}
 	      )
+@Indexed(index="index/track")
 public class Track extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	static private final Logger logger = GlobalSetup.getLogger(Track.class);
@@ -218,6 +221,7 @@ public class Track extends DBUnique {
 	}
 	
 	@Column(nullable=true)
+	@Text
 	public String getAlbum() {
 		return album;
 	}
@@ -227,6 +231,7 @@ public class Track extends DBUnique {
 	}
 
 	@Column(nullable=true)
+	@Text
 	public String getArtist() {
 		return artist;
 	}
@@ -272,6 +277,7 @@ public class Track extends DBUnique {
 	}
 
 	@Column(nullable=true)
+	@Text
 	public String getName() {
 		return name;
 	}

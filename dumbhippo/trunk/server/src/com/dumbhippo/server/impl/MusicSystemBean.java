@@ -20,6 +20,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicView;
+import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -157,5 +158,13 @@ public class MusicSystemBean implements MusicSystem {
 
 	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestArtistViews(viewpoint, user, maxResults);
+	}
+	
+	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
+		return internal.searchTracks(viewpoint, queryString);
+	}
+	
+	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count) {
+		return internal.getTrackSearchTracks(viewpoint, searchResult, start, count);
 	}
 }

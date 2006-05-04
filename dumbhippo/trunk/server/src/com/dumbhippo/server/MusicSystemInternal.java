@@ -1,10 +1,14 @@
 package com.dumbhippo.server;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
 import javax.ejb.Local;
+
+import org.apache.lucene.index.IndexWriter;
+import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Track;
@@ -81,4 +85,26 @@ public interface MusicSystemInternal extends MusicSystem {
 	public ExpandedArtistView getExpandedArtistView(String artist, String artistId) throws NotFoundException;
 
 	public Future<ArtistView> getArtistViewAsync(Track track);
+	
+	/**
+	 * Add the track given by a set of ids to the specified Lucene index. This is used internally
+	 * when new tracks are created.
+	 * 
+	 * @param writer a Lucene IndexWriter
+	 * @param builder a DocumentBuilder to use to create Lucene Document objects from Track
+	 * @param ids a list of Post ids to index
+	 * @throws IOException
+	 */
+	public void indexTracks(IndexWriter writer, DocumentBuilder<Track> builder, List<Object> ids) throws IOException;
+	
+	/**
+	 * Add all tracks in the database to the specified Lucene index. This is an internal implementation
+	 * detail of TrackIndex.reindex().
+	 * 
+	 * @param writer a Lucene IndexWriter
+	 * @param builder a DocumentBuilder to use to create Lucene Document objects from Track
+	 * @throws IOException
+	 */
+	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException;
+	
 }

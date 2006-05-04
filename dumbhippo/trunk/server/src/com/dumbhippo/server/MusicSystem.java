@@ -143,4 +143,32 @@ public interface MusicSystem {
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults);
 	
 	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults);
+	
+	/**
+	 * Search the database of tracks using Lucene.
+	 * 
+	 * @param viewpoint the viewpoint being searched from
+	 * @param queryString the search string to use, in Lucene syntax. The search
+	 *   will be done across both the title and description fields
+	 * @return a TrackSearchResult object representing the search; you should
+	 *    check the getError() method of this object to determine if an error
+	 *    occurred (such as an error parsing the query string) 
+	 */
+	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString);
+	
+	/**
+	 * Get a range of tracks from the result object returned from searchTracks(). 
+	 * This is slightly more efficient than calling TrackSearchResult getTracks(),
+	 * because we avoid some EJB overhead.
+	 * 
+	 * @param viewpoint the viewpoint for the returned TrackView objects; must be the same 
+	 *        as the viewpoint passed in when calling searchTracks()
+	 * @param
+	 * @param start the index of the first track to retrieve (starting at zero)
+	 * @param count the maximum number of items desired 
+	 * @return a list of TrackView objects; may have less than count items when no more
+	 *        are available. 
+	 */
+	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count);
+	
 }

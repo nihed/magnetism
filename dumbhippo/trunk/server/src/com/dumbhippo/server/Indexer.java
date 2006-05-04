@@ -64,6 +64,11 @@ public abstract class Indexer<T> {
 		ensureThread();
 	}
 
+	public void index(Object id) {
+		pending.add(id);
+		ensureThread();
+	}
+	
 	public void reindex() {
 		pending.add(new ReindexMarker());
 		ensureThread();

@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,6 +29,13 @@ import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryParser.MultiFieldQueryParser;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
+import org.apache.lucene.search.Hits;
+import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -58,8 +66,10 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicView;
-import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.TrackIndexer;
+import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -143,6 +153,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
+			TrackIndexer.getInstance().index(detached.getId());
 			return em.find(Track.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
@@ -2120,5 +2131,55 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		NowPlayingTheme theme = new NowPlayingTheme(basedOn, viewpoint.getViewer());
 		em.persist(theme);
 		return theme;
+	}
+
+	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
+		final String[] fields = { "Artist", "Album", "Name" };
+		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());
+		queryParser.setDefaultOperator(Operator.AND);
+		org.apache.lucene.search.Query query;
+		try {
+			query = queryParser.parse(queryString);
+			
+			Hits hits = TrackIndexer.getInstance().getSearcher().search(query);
+			
+			return new TrackSearchResult(hits);
+			
+		} catch (org.apache.lucene.queryParser.ParseException e) {
+			return new TrackSearchResult("Can't parse query '" + queryString + "'");
+		} catch (IOException e) {
+			return new TrackSearchResult("System error while searching, please try again");
+		}
+	}
+	
+	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count) {
+		// The efficiency gain of having this wrapper is that we pass the real 
+		// object to the method rather than the proxy; getTracks() can make many, 
+		// many calls back against the MusicSystem.
+		return searchResult.getTracks(this, viewpoint, start, count);
+	}
+		
+	public void indexTracks(IndexWriter writer, DocumentBuilder<Track> builder, List<Object> ids) throws IOException {
+		for (Object o : ids) {
+			Track track = em.find(Track.class, o);
+			if (track != null) {
+				Document document = builder.getDocument(track, track.getId());
+				writer.addDocument(document);
+				logger.debug("Indexed track with id {}", o);
+			} else {
+				logger.debug("Couldn't find track to index");
+			}
+		}
+		
+	}
+	
+	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException {
+		List<?> l = em.createQuery("SELECT t FROM Track t").getResultList();
+		List<Track> tracks = TypeUtils.castList(Track.class, l);
+		
+		for (Track track : tracks) {
+			Document document = builder.getDocument(track, track.getId());
+			writer.addDocument(document);
+		}
 	}
 }

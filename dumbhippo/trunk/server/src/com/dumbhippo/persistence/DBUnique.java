@@ -7,6 +7,8 @@ import javax.persistence.EmbeddableSuperclass;
 import javax.persistence.GeneratorType;
 import javax.persistence.Id;
 
+import org.hibernate.lucene.Keyword;
+
 @EmbeddableSuperclass
 public abstract class DBUnique implements Serializable {
 	private long id;
@@ -16,6 +18,7 @@ public abstract class DBUnique implements Serializable {
 	
 	@Id(generate = GeneratorType.AUTO)
 	@Column(nullable=false)
+	@Keyword(id=true) // No effect except for subclasses that are @Indexed
 	public long getId() {
 		return this.id;
 	}

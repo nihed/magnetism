@@ -353,10 +353,8 @@ public class PostingBoardBean implements PostingBoard {
 					return post;
 				}
 			});
+			PostIndexer.getInstance().index(detached.getGuid());
 			Post post = em.find(Post.class, detached.getId());
-			
-			// Asynchronously the new post to the Hibernate index 
-			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
 			
 			return post;
 		} catch (Exception e) {
