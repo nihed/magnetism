@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/who-are-you.css"/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_login500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/header_oops500.gif">
 	<p>Ooops!  Our system burped.  The developers have been notified. </p>
 	
 	<p><a href='javascript:history.back();'>Go back</a>
