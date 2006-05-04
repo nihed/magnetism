@@ -12,7 +12,7 @@
 	<dht:scriptIncludes/>
 	<dht:embedObject/>
 </head>
-<dht:twoColumnPage neverShowSidebar="true">
+<dht:twoColumnPage neverShowSidebar="true" searchText='${param["q"]}'>
 	<dht:contentColumn>
 		<dht:zoneBoxSearch>
 			<c:choose>
@@ -36,7 +36,7 @@
 					
 					<dht:searchSectionTitle a="dhLinkSwarm" query='${param["q"]}' pageable="${find.posts}">LINK SWARM</dht:searchSectionTitle>
 					<c:if test="${!empty find.postError}">
-						<c:out value="${find.error}"/>
+						<c:out value="${find.postError}"/>
 					</c:if>
 					
 					<dht:postList posts="${find.posts.results}" format="enumerated" enumerateStart="${find.posts.start + 1}"/>

@@ -3,6 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <div id="dhPageHeader">
 	<div id="dhHeaderLogo"><a href="/main"><img src="/images2/mugshot_logo.gif"/></a></div>
@@ -18,7 +19,14 @@
 	</div>
 	<div id="dhSearchBox">
 		<form action="/search" method="get">
-			Search: <input type="text" class="dh-text-input" name="q"/> <input type="submit" value="Go"/>
+			Search: 
+			<jsp:element name="input">
+				<jsp:attribute name="type">text</jsp:attribute>
+				<jsp:attribute name="class">dh-text-input</jsp:attribute>
+				<jsp:attribute name="name">q</jsp:attribute>
+				<jsp:attribute name="value">${searchText}</jsp:attribute>
+			</jsp:element>
+			<input type="submit" value="Go"/>
 		</form>
 	</div>
 </div>
