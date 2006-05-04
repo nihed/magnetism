@@ -23,16 +23,12 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.analysis.StopAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Searcher;
 import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
@@ -76,6 +72,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostView;
@@ -358,9 +355,8 @@ public class PostingBoardBean implements PostingBoard {
 			});
 			Post post = em.find(Post.class, detached.getId());
 			
-			// Add the new post to the Hibernate index; it would likely be better to 
-			// do this asynchronously
-			indexPost(post);
+			// Asynchronously the new post to the Hibernate index 
+			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
 			
 			return post;
 		} catch (Exception e) {
@@ -1070,67 +1066,40 @@ public class PostingBoardBean implements PostingBoard {
 		return result;
 	}
 
-	private void indexPosts(List<Post> posts, boolean create) {
-		try {
-			// FIXME: StopAnalyzer is quite crude; it doesn't do any stemming, for example
-						
-			// FIXME: Any changes to posts that run while this is going on
-			// will end up throwing an IOException because the will time
-			// out after a second of trying to getting the IndexWriter
-			// lock. The right setup is likely a thread that runs and
-			// does all indexing asynchronously, and can properly schedule
-			// a reindex without creating multiple IndexWriter() objects.
-
-			// FIXME: passing create=true to new IndexWriter creates a
-			// new index replacing anything existing. We need to check
-			// to make sure tha this doesn't break searches that go
-			// on concurrently. Searching on the old index or on the new
-			// index would be fine, but crashes isn't.
-			//
-			// Note that this method of recreating the index is not safe if posts 
-			// could be deleted from the database, since the incremental update 
-			// would delete them, then we'd add them back. However, we never
-			// currently delete posts. A single thread would also fix this
-			// by serializing access. Eventually we might want to do the
-			// indexing on a separate *machine* for the entire cluster, with
-			// the index exported by NFS or similar. (NFS locks, scary!)
-			
-			DocumentBuilder<Post> builder = new DocumentBuilder<Post>(Post.class);
-			IndexWriter writer = new IndexWriter(builder.getFile(), new StopAnalyzer(), create);
-			
-			for (Post post : posts) {
+	public void indexPosts(IndexWriter writer, DocumentBuilder<Post> builder, List<Object> ids) throws IOException {
+		for (Object o : ids) {
+			Guid guid = (Guid)o;
+			try {
+				Post post = loadRawPost(SystemViewpoint.getInstance(), guid);
 				Document document = builder.getDocument(post, post.getId());
 				writer.addDocument(document);
+				logger.debug("Indexed post with guid {}", guid);
+			} catch (NotFoundException e) {
+				logger.debug("Couldn't find post to index");
+				// ignore
 			}
-			writer.close();
-		} catch (IOException e) {
 		}
-		
 	}
 	
-	private void indexPost(Post post) {
-		indexPosts(Collections.singletonList(post), false);
-	}
-	
-	public void reindexAllPosts() {
+	public void indexAllPosts(IndexWriter writer, DocumentBuilder<Post> builder) throws IOException {
 		List<?> l = em.createQuery("SELECT p FROM Post p").getResultList();
-		indexPosts(TypeUtils.castList(Post.class, l), true);
+		List<Post> posts = TypeUtils.castList(Post.class, l);
+		
+		for (Post post : posts) {
+			Document document = builder.getDocument(post, post.getId());
+			writer.addDocument(document);
+		}
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "ExplicitTitle", "Text" };
-		// See comment on StopAnalyzer above
-		QueryParser queryParser = new MultiFieldQueryParser(fields, new StopAnalyzer());
+		QueryParser queryParser = new MultiFieldQueryParser(fields, PostIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;
 		try {
 			query = queryParser.parse(queryString);
 			
-			// FIXME: We should reuse one IndexReader, which is thread safe, rather
-			// than repeatedly creating new ones.
-			IndexReader reader = IndexReader.open(new DocumentBuilder<Post>(Post.class).getFile());
-			Searcher searcher = new IndexSearcher(reader);
-			Hits hits = searcher.search(query);
+			Hits hits = PostIndexer.getInstance().getSearcher().search(query);
 			
 			return new PostSearchResult(hits);
 			

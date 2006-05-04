@@ -49,6 +49,7 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
@@ -702,7 +703,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Only administrators can recreate the search indices");
 		}
 		
-		postingBoard.reindexAllPosts();
+		PostIndexer.getInstance().reindex();
 	}
 	
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {

@@ -17,7 +17,7 @@ dh.admin.reindexAll = function() {
    	dh.server.doPOST("reindexall",
 				     {},
 		  	    	 function(type, data, http) {
-		  	    	     alert("Succesfully reindexed everything");
+		  	    	     alert("Started reindexing process for indices");
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Failure reindexing");

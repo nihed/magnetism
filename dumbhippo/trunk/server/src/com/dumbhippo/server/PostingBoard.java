@@ -1,11 +1,15 @@
 package com.dumbhippo.server;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
+
+import org.apache.lucene.index.IndexWriter;
+import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
@@ -151,12 +155,6 @@ public interface PostingBoard {
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial);
 	
 	/**
-	 * Recreate the Lucene index for Post; this will be quite expensive
-	 * on any real data set.
-	 */
-	public void reindexAllPosts();
-	
-	/**
 	 * Search the database of posts using Lucene.
 	 * 
 	 * @param viewpoint the viewpoint being searched from
@@ -182,6 +180,27 @@ public interface PostingBoard {
 	 *        are available. 
 	 */
 	public List<PostView> getPostSearchPosts(Viewpoint viewpoint, PostSearchResult searchResult, int start, int count);
+	
+	/**
+	 * Add the posts given by a set of ids to the specified Lucene index. This is used internally
+	 * when new posts are created.
+	 * 
+	 * @param writer a Lucene IndexWriter
+	 * @param builder a DocumentBuilder to use to create Lucene Document objects from Posts
+	 * @param ids a list of Post Guids to index
+	 * @throws IOException
+	 */
+	public void indexPosts(IndexWriter writer, DocumentBuilder<Post> builder, List<Object> ids) throws IOException;
+	
+	/**
+	 * Add all posts in the database to the specified Lucene index. This is an internal implementation
+	 * detail of PostIndex.reindex().
+	 * 
+	 * @param writer a Lucene IndexWriter
+	 * @param builder a DocumentBuilder to use to create Lucene Document objects from Posts
+	 * @throws IOException
+	 */
+	public void indexAllPosts(IndexWriter writer, DocumentBuilder<Post> builder) throws IOException;
 	
 	/**
 	 * Sets whether the given post is a favorite of the given viewpoint user.
