@@ -5,6 +5,12 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+    HIPPO_ENTITY_RESOURCE,
+    HIPPO_ENTITY_GROUP,
+    HIPPO_ENTITY_PERSON
+} HippoEntityType;
+
 typedef struct _HippoEntity      HippoEntity;
 typedef struct _HippoEntityClass HippoEntityClass;
 
@@ -15,8 +21,16 @@ typedef struct _HippoEntityClass HippoEntityClass;
 #define HIPPO_IS_ENTITY_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_ENTITY))
 #define HIPPO_ENTITY_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_ENTITY, HippoEntityClass))
 
-GType        	 hippo_entity_get_type                  (void) G_GNUC_CONST;
-HippoEntity       *hippo_entity_new                       (void);
+GType        	 hippo_entity_get_type            (void) G_GNUC_CONST;
+HippoEntity*     hippo_entity_new                 (HippoEntityType type,
+                                                   const char     *guid);
+const char*      hippo_entity_get_guid            (HippoEntity    *entity);
+const char*      hippo_entity_get_name            (HippoEntity    *entity);
+const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
+void             hippo_entity_set_name            (HippoEntity    *entity,
+                                                   const char     *name);
+void             hippo_entity_set_small_photo_url (HippoEntity    *entity,
+                                                   const char     *url);
 
 G_END_DECLS
 
