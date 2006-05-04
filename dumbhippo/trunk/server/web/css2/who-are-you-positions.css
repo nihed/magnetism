@@ -1,13 +1,13 @@
 @CHARSET "UTF-8";
 
-.dh-login-type-header {
-	padding: 0em 2em;
-}
-
 #dhLoginNoPassword {
-	padding-right: 2em;
+	padding-right: 5px;
 }
 
 #dhLoginWithPassword {
-	padding-left: 2em;
+	padding-left: 20px;
+}
+
+#dhLoginSuccessful {
+	padding: 0px 5px;
 }

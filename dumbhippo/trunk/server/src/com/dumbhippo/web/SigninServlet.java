@@ -47,8 +47,6 @@ public class SigninServlet extends AbstractServlet {
 			password = password.trim();
 		if (password.length() == 0)
 			password = null;
-		boolean sendlink = request.getParameter("sendlink") != null;
-		boolean checkpassword = request.getParameter("checkpassword") != null;
 
 		String next = request.getParameter("next");
 		if (next == null)
@@ -58,34 +56,18 @@ public class SigninServlet extends AbstractServlet {
 			throw new HumanVisibleException("Please enter an email or AIM address you use with your DumbHippo account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
 		}
 		
-		if (!(sendlink || checkpassword) || (sendlink && checkpassword)) {
-			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Bad request asked to both send link and check password");
-		}
-		
-		if (checkpassword && password == null)
+		if (password == null)
 			password = ""; // if you click send password but don't put one in
 		
-		if (checkpassword) {
-			Pair<Client,User> result = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
-			String host = config.getBaseUrl().getHost();
-			LoginCookie loginCookie = new LoginCookie(host, result.getSecond().getId(), result.getFirst().getAuthKey());
-			response.addCookie(loginCookie.getCookie());
-			HttpSession sess = request.getSession(false);
-			if (sess != null)
-				sess.invalidate();
-			
-			return redirectToNextPage(request, response, next, null);
-		} else {
-			try {
-				signinSystem.sendSigninLink(address);
-			} catch (HumanVisibleException e) {
-				if (e.getHtmlSuggestion() == null)
-					e.setHtmlSuggestion("<a href=\"/who-are-you\">Try again</a>");
-				throw e;
-			}
-			request.setAttribute("address", address);
-			return "/signinsent";
-		}
+		Pair<Client,User> result = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
+		String host = config.getBaseUrl().getHost();
+		LoginCookie loginCookie = new LoginCookie(host, result.getSecond().getId(), result.getFirst().getAuthKey());
+		response.addCookie(loginCookie.getCookie());
+		HttpSession sess = request.getSession(false);
+		if (sess != null)
+			sess.invalidate();
+		
+		return redirectToNextPage(request, response, next, null);
 	}
 
 	@Override

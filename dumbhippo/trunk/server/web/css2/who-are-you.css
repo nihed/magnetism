@@ -10,3 +10,8 @@
 .dh-login-text {
 	font-size: 12px;
 }
+
+#dhLoginSuccessful {
+	font-weight: bold;
+	color: red;
+}

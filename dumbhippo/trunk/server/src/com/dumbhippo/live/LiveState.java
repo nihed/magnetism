@@ -15,7 +15,6 @@ import javax.persistence.EntityManager;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 
-import org.jboss.ejb3.entity.InjectedEntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
