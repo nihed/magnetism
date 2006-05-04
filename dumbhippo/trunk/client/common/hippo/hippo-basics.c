@@ -265,3 +265,24 @@ hippo_options_free_fields(HippoOptions *options)
      * to free them here
      */
 }
+
+const char*
+hippo_hotness_debug_string(HippoHotness hotness)
+{
+    switch (hotness) {
+    case HIPPO_HOTNESS_COLD:
+        return "COLD";
+    case HIPPO_HOTNESS_COOL:
+        return "COOL";
+    case HIPPO_HOTNESS_WARM:
+        return "WARM";
+    case HIPPO_HOTNESS_GETTING_HOT:
+        return "GETTING_HOT";
+    case HIPPO_HOTNESS_HOT:
+        return "HOT";
+    case HIPPO_HOTNESS_UNKNOWN:
+        return "UNKNOWN";
+    }
+    /* not a default case so we get a warning if we omit one from the switch */
+    return "WHAT THE?";
+}

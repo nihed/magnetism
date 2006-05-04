@@ -33,6 +33,7 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
 HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
+HippoHotness     hippo_connection_get_hotness               (HippoConnection  *connection);
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);

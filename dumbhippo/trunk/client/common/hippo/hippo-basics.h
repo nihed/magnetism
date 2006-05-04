@@ -11,6 +11,15 @@ typedef enum {
     HIPPO_INSTANCE_DEBUG
 } HippoInstanceType;
 
+typedef enum {
+    HIPPO_HOTNESS_COLD,
+    HIPPO_HOTNESS_COOL,
+    HIPPO_HOTNESS_WARM,
+    HIPPO_HOTNESS_GETTING_HOT,
+    HIPPO_HOTNESS_HOT,
+    HIPPO_HOTNESS_UNKNOWN
+} HippoHotness;
+
 #define HIPPO_DEFAULT_MESSAGE_HOST   "messages.dumbhippo.com"
 #define HIPPO_DEFAULT_MESSAGE_PORT   5222
 #define HIPPO_DEFAULT_MESSAGE_SERVER HIPPO_DEFAULT_MESSAGE_HOST ":5222"
@@ -49,6 +58,8 @@ gboolean hippo_parse_options         (int          *argc_p,
                                       char       ***argv_p,
                                       HippoOptions *results);
 void     hippo_options_free_fields   (HippoOptions *options);
+
+const char* hippo_hotness_debug_string(HippoHotness hotness);
 
 G_END_DECLS
 

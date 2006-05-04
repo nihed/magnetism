@@ -120,6 +120,7 @@ struct _HippoConnection {
     unsigned int music_sharing_primed : 1;
     char *username;
     char *password;
+    HippoHotness hotness;
 };
 
 struct _HippoConnectionClass {
@@ -134,6 +135,7 @@ enum {
     AUTH_SUCCESS,
     NEW_POST,
     MUSIC_SHARING_TOGGLED,
+    HOTNESS_CHANGED,
     LAST_SIGNAL
 };
 
@@ -154,6 +156,7 @@ hippo_connection_init(HippoConnection *connection)
     connection->music_sharing_enabled = FALSE;
     connection->music_sharing_primed = TRUE;
     
+    connection->hotness = HIPPO_HOTNESS_UNKNOWN;
 }
 
 static void
@@ -205,6 +208,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__BOOLEAN,
             		  G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+    signals[HOTNESS_CHANGED] =
+        g_signal_new ("hotness_changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__INT,
+            		  G_TYPE_NONE, 1, G_TYPE_INT);
           
     object_class->finalize = hippo_connection_finalize;
 }
@@ -259,6 +271,13 @@ hippo_connection_get_state(HippoConnection *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), HIPPO_STATE_SIGNED_OUT);
     return connection->state;
+}
+
+HippoHotness
+hippo_connection_get_hotness(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), HIPPO_HOTNESS_UNKNOWN);
+    return connection->hotness;
 }
 
 /* Returns whether we have the login cookie */
@@ -896,6 +915,44 @@ hippo_connection_process_prefs_node(HippoConnection *connection,
 
 /* === HippoConnection Loudmouth handlers === */
 
+static HippoHotness
+hotness_from_string(const char *str)
+{
+#define M(s,v) do { if (strcmp(str,(s)) == 0) { return (v); } } while(0)
+    M("COLD", HIPPO_HOTNESS_COLD);
+    M("COOL", HIPPO_HOTNESS_COOL);
+    M("WARM", HIPPO_HOTNESS_WARM);
+    M("GETTING_HOT", HIPPO_HOTNESS_GETTING_HOT);
+    M("HOT", HIPPO_HOTNESS_HOT);
+    
+    return HIPPO_HOTNESS_UNKNOWN;
+}
+
+gboolean
+handle_hotness_changed(HippoConnection *connection,
+                       LmMessage       *message)
+{
+   if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
+        HippoHotness hotness;
+        LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/hotness", "hotness");
+        if (!child)
+            return FALSE;
+        const char *hotness_str = lm_message_node_get_attribute(child, "value");
+        if (!hotness_str)
+            return FALSE;
+        hotness = hotness_from_string(hotness_str);
+ 
+        if (hotness != connection->hotness) {
+            g_debug("new hotness %s", hippo_hotness_debug_string(hotness));
+            connection->hotness = hotness;
+            g_signal_emit(connection, signals[HOTNESS_CHANGED], 0, hotness);
+        }
+ 
+        return TRUE;
+   }
+   return FALSE;
+}
+
 gboolean
 handle_prefs_changed(HippoConnection *connection,
                      LmMessage       *message)
@@ -940,10 +997,6 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (im->handleHotnessMessage(message)) {
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
     if (im->handleActivePostsMessage(message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
@@ -958,6 +1011,10 @@ handle_message (LmMessageHandler *handler,
     }
 
     */
+
+    if (handle_hotness_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
     
     if (handle_prefs_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
