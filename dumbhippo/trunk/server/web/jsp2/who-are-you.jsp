@@ -37,7 +37,7 @@
 				<tr><td class="dh-login-text">Email address or AIM:</td></tr>					
 				<tr><td><input type="text" class="dh-text-input" name="address"/></td></tr>
 				<tr><td class="dh-login-text">Password:</td></tr>
-				<tr><td><input type="password" name="password" onkeypress="return dhPasswordKeyPress(event)"/></td></tr>	
+				<tr><td><input type="password" name="password"/></td></tr>	
 				<tr><td><input id="dhPasswordButton" type="submit" value="Sign in with password" name="checkpassword"/></td></tr>
 			</table>
 		</td>
