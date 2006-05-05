@@ -14,6 +14,7 @@ import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.YahooAlbumResult;
+import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.NotFoundException;
@@ -182,6 +183,22 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	*/
 	
+	private YahooSongResult songFromResult(Result r, String artist, String album, String name) {
+		// we want to make sure we return results that match supplied fields exactly, 
+		// because otherwise yahoo will include results only subsets of which contain the 
+		// supplied fields, for example search for album "Martina McBride: Greatest Hits"
+		// returns both "Martina McBride: Greatest Hits" and 
+		// "Sing Like Martina McBride - Greatest Hits"
+		String resultAlbum = r.getValue(Element.Album);
+		String resultArtist = r.getValue(Element.Artist);
+		String resultName = r.getValue(Element.Title);
+		if (!resultName.equals(name) || !resultAlbum.equals(album) || !resultArtist.equals(artist)) {
+			return null;
+		}	
+
+		return songFromResult(r);		
+	}
+
 	private YahooSongResult songFromResult(Result r) {
 		YahooSongResult song = new YahooSongResult();
 		song.setLastUpdated(new Date());
@@ -196,7 +213,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		return song;		
 	}
 	
-	public List<YahooSongResult> getBestSongs() {
+	public List<YahooSongResult> getBestSongs(String artist, String album, String name) {
 		// FIXME this could doubtless be more sophisticated ...
 		// right now it just hopes the first two results are the 
 		// good ones. you sometimes need two different song IDs 
@@ -209,16 +226,26 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 
 		List<YahooSongResult> list = new ArrayList<YahooSongResult>();
 		Result r = results.get(0);
-		list.add(songFromResult(r));
+		YahooSongResult songResult = songFromResult(r, artist, album, name);
+		boolean usedFirstResult = false;
+		if (songResult != null) {
+		    list.add(songResult);
+		    usedFirstResult = true;
+		}
 		if (results.size() > 1) {
 			r = results.get(1);
 			// the rhapsody/yahoo/itunes/etc. good results 
 			// tend to have these fields...
-			if (r.getAlbumId() != null &&
-					r.getValue(Element.ReleaseDate) != null &&
-					r.getValue(Element.Publisher) != null && 
-					!r.getId().equals(results.get(0).getId())) {
-				list.add(songFromResult(r));
+			if (!usedFirstResult || 
+				(r.getAlbumId() != null &&
+				 r.getValue(Element.ReleaseDate) != null &&
+				 r.getValue(Element.Publisher) != null && 
+				 !r.getId().equals(results.get(0).getId()))) {
+				
+				songResult = songFromResult(r, artist, album, name);
+				if (songResult != null) {
+				    list.add(songResult);
+				}
 			}
 		}
 		return list;
@@ -314,4 +341,32 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 
 		return results.get(0).getId();		
 	}	
+
+	private YahooArtistResult artistFromResult(Result r) {
+		YahooArtistResult artist = new YahooArtistResult();
+		artist.setLastUpdated(new Date());
+		artist.setArtistId(r.getId());
+		artist.setArtist(r.getValue(Element.Name));
+		artist.setYahooMusicPageUrl(r.getValue(Element.YahooMusicPage));
+		artist.setSmallImageUrl(r.getValue(Element.Url));
+		artist.setSmallImageWidth(r.getValueInt(Element.Width));
+		artist.setSmallImageHeight(r.getValueInt(Element.Height));
+		return artist;		
+	}
+	
+	public List<YahooArtistResult> getBestArtists() {
+		if (results.isEmpty()) {
+			logger.debug("No artists were found");
+			return Collections.emptyList();
+		}
+		
+		List<YahooArtistResult> list = new ArrayList<YahooArtistResult>();
+		for (Result r : results) {
+			YahooArtistResult yahooArtist = artistFromResult(r);
+			if (yahooArtist != null)
+				list.add(yahooArtist);
+		}
+		
+		return list;		
+	}
 }

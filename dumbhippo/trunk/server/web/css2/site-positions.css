@@ -186,6 +186,7 @@ form {
 .dh-zone-box .dh-separator, .dh-sidebar-box .dh-separator {
 	margin-top:		10px;
 	margin-bottom:	10px;
+	clear:          left;
 }
 
 #dhContentColumn .dh-zone-box .dh-title {

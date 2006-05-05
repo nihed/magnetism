@@ -32,12 +32,12 @@ body.dh-gray-background-page {
 	color:				white;
 }
 
-.dh-color-group, .dh-color-account {
+.dh-color-group, .dh-color-account, .dh-color-artists {
 	background-color:	#666666;
 	color:				white;
 }
 
-.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited, .dh-color-account a:visited {
+.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited, .dh-color-account a:visited, .dh-color-artists a:visited {
 	color:				white;
 }
 
@@ -62,13 +62,17 @@ body.dh-gray-background-page {
 	color:		#60B635;
 }
 
-.dh-color-group-foreground, .dh-color-account-foreground {
+.dh-color-group-foreground, .dh-color-account-foreground, .dh-color-artists-foreground {
 	color:		#000000;
 }
 
 .dh-separator {
 	background-color:	#999999;
 	height:				1px;
+}
+
+.dh-separator-invisible {
+	background-color:	white;
 }
 
 .dh-album-art {

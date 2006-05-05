@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.YahooAlbumResult;
+import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.NotFoundException;
@@ -63,7 +64,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			logger.debug("Song search failed, returning nothing");
 			return Collections.emptyList();
 		} else {
-			return handler.getBestSongs();
+			return handler.getBestSongs(artist, album, name);
 		}
 	}
 	
@@ -107,13 +108,14 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}		
 	}
 	
-	public List<YahooAlbumResult> lookupAlbums(String artistId) {		
+	public List<YahooAlbumResult> lookupAlbums(String artistId, int resultsToReturn) {		
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
 		sb.append(appId);
 		// 50 is the maximum number of results we can get with one request, 10 is the default 
 		// number
-		sb.append("&results=50");
+		sb.append("&results=");
+		sb.append(StringUtils.urlEncode(Integer.toString(resultsToReturn)));
 		sb.append("&artistid=");		
 		sb.append(StringUtils.urlEncode(artistId));
 
@@ -126,6 +128,31 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			return Collections.emptyList();
 		} else {
 			return handler.getBestAlbums();
+		}
+	}
+	
+	public YahooAlbumResult lookupAlbum(String albumId) throws NotFoundException {		
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
+		sb.append(appId);
+		sb.append("&results=1");
+		sb.append("&albumid=");		
+		sb.append(StringUtils.urlEncode(albumId));
+
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo album search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Album search failed, returning nothing");
+			throw new NotFoundException("Album search failed, returning nothing");
+		} else {
+            List<YahooAlbumResult> albums = handler.getBestAlbums();
+            if (albums.isEmpty()) {
+            	throw new NotFoundException("No albums matching albumId " + albumId + " were found.");
+            }
+            // we requested 1 result, so there shouldn't be more than 1 result
+            return albums.get(0);
 		}
 	}
 	
@@ -170,6 +197,38 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			throw new NotFoundException("Artist Id search failed, returning nothing");
 		} else {
 			return handler.getSingleArtistId();
+		}
+	}
+
+	public List<YahooArtistResult> lookupArtist(String artist, String artistId) {
+		
+		StringBuilder sb = new StringBuilder();
+		// because we are not doing much with an artist id for now, one result is all we need,
+		// eventually, we might use more results that would provide us with different ids (using
+		// all of which we could lookup more albums), more results would also include results where
+		// multiple artists are performing together, such as "Miles Davis Quintet" or 
+		// "Miles Davis & John Coltrane", when searching for "Miles Davis"
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/artistSearch?results=1&appid=");
+		sb.append(appId);
+		// if artistId is not null, then use artistId only
+		if (artistId != null) {
+		    sb.append("&artistid=");
+		    sb.append(StringUtils.urlEncode(artistId));
+		} else {
+			// if artistId was null, artist has to be not null 
+		    sb.append("&artist=");
+		    sb.append(StringUtils.urlEncode(artist));			
+		}
+		
+		String wsUrl = sb.toString();
+		logger.debug("Loading yahoo artist search {}", wsUrl);
+		
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		if (handler == null) {
+			logger.debug("Artist search failed, returning nothing");
+			return Collections.emptyList();
+		} else {
+			return handler.getBestArtists();
 		}
 	}
 	

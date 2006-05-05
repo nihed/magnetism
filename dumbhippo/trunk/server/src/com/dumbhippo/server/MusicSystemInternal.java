@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
+import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 
@@ -59,10 +60,14 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public Future<List<YahooSongDownloadResult>> getYahooSongDownloadResultsAsync(String songId);
 	
-	public List<YahooAlbumResult> getYahooAlbumResultsSync(String artistId);
+	public List<YahooAlbumResult> getYahooAlbumResultsSync(YahooArtistResult artist);
 	
-    public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(String artistId);
+    public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist);
+    
+	public YahooAlbumResult getSingleYahooAlbumResultSync(String albumId) throws NotFoundException;
 		
+	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
+	
 	public TrackView getTrackView(Track track, long lastListen);
 	
 	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
@@ -83,7 +88,15 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @return view of an artist that includes artist's albums
 	 */
 	public ExpandedArtistView getExpandedArtistView(String artist, String artistId) throws NotFoundException;
-
+	
+	/**
+	 * Returns a view of an artist that contains one requested album.
+	 *  
+	 * @param album to display as part of this album's artist view
+	 * @return view of an artist that contains one requested album
+	 */
+	public ExpandedArtistView getExpandedArtistView(YahooAlbumResult album) throws NotFoundException;
+	
 	public Future<ArtistView> getArtistViewAsync(Track track);
 	
 	/**

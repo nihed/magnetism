@@ -32,7 +32,7 @@
 		</div>
 	</div>
 	<div class="dh-zone-box-border">
-		<div class="dh-zone-box-content dh-color-normal">					
+		<div class="dh-zone-box-content dh-color-normal">			
 			<jsp:doBody/>
 		</div>
 	</div>

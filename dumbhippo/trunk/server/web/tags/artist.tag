@@ -13,7 +13,7 @@
 <div class="dh-artist">
 	<div class="dh-artist-info">
 		<c:if test="${!empty artist.name}">
-			<div class="dh-artist-name">
+			<div class="dh-artist-zone-title">
 				<c:if test="${linkifyArtist}">
 					<a href="${artistlink}">
 				</c:if>

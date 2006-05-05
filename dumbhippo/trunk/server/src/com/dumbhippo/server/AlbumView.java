@@ -3,11 +3,14 @@ package com.dumbhippo.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dumbhippo.StringUtils;
+
 public class AlbumView {
 
 	private String title;
 	private ArtistView artistView;
-
+	private int releaseYear;
+	
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
@@ -15,6 +18,7 @@ public class AlbumView {
 	private List<TrackView> tracks;
 
 	public AlbumView() {
+		this.releaseYear = -1;
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
 		this.artistView = new ArtistView();
@@ -22,6 +26,7 @@ public class AlbumView {
 	}
 
 	public AlbumView(String album, String artist) {
+		this.releaseYear = -1;
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
 		this.artistView = new ArtistView(artist);
@@ -73,6 +78,14 @@ public class AlbumView {
 		return artistView;
 	}
 	
+	public int getReleaseYear() {
+		return releaseYear;
+	}
+
+	public void setReleaseYear(int releaseYear) {
+		this.releaseYear = releaseYear;
+	}
+	
 	public List<TrackView> getTracks() {
 		return tracks;
 	}
@@ -83,5 +96,13 @@ public class AlbumView {
 
 	public void setTracks(List<TrackView> tracks) {
 		this.tracks = tracks;
+	}
+	
+	public int getNumberOfTracks() {
+		return tracks.size();
+	}
+	
+	public String getTruncatedTitle() {
+	    return StringUtils.truncateString(title, 25);	
 	}
 }

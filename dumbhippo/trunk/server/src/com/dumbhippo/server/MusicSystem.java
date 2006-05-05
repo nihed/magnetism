@@ -134,6 +134,8 @@ public interface MusicSystem {
 	 */
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
 	
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
+	
 	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name);
 	
 	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name);

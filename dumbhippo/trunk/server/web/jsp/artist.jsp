@@ -4,8 +4,6 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="musicsearch" class="com.dumbhippo.web.MusicSearchPage" scope="request"/>
-<jsp:setProperty name="musicsearch" property="artistMode" value="true"/>
-
 <jsp:setProperty name="musicsearch" property="song" param="track"/>
 <jsp:setProperty name="musicsearch" property="album" param="album"/>
 <jsp:setProperty name="musicsearch" property="artist" param="artist"/>

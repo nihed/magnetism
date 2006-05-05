@@ -1,0 +1,81 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-zone-box .dh-artist-profile {
+	margin-bottom: 2px;
+}
+
+.dh-artist-image {
+    position: relative;
+    float: left;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+}
+
+.dh-artist-info {
+    position: relative;
+    float: left;
+    clear: right;
+}
+
+.dh-artist-bio {
+}
+
+#dhContentColumn .dh-zone-box .dh-album {
+	margin-top: 7px;
+	margin-bottom: 10px;
+}
+
+.dh-album-image {
+    position: relative;
+    float: left;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+}
+
+.dh-album-info {
+    position: relative;
+    float: left;
+    display: table;
+}
+
+.dh-album-title {
+    float:          left;
+    display:        table-cell;
+    margin-right:   2px;
+}
+
+.dh-album-year {
+    float:   left;
+    display: table-cell;
+    clear:   right;
+}
+
+.dh-songs {
+    float:   left;
+    display: table-row;
+    clear:   left;
+}
+
+.dh-album-track {
+    float:   left;
+    display: table-row;
+    clear:   left;
+    width:   390px;
+    padding: 3px;
+}
+
+.dh-album-track .dh-song-info .dh-song-name {
+    float: left;
+    display: inline;
+    width:			180px;
+	overflow:		hidden;
+	white-space:	nowrap;
+	text-overflow:	ellipsis;
+}
+
+.dh-album-track .dh-song-info .dh-song-links {
+    float: right;
+    display: inline;
+}

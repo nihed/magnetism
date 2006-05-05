@@ -1,9 +1,15 @@
 package com.dumbhippo.persistence;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.Transient;
 
 @Entity
 public class YahooAlbumResult extends DBUnique {
@@ -21,7 +27,9 @@ public class YahooAlbumResult extends DBUnique {
 	private boolean noResultsMarker;
 	private boolean allSongsStored;
 	
-	public YahooAlbumResult() {	
+	public YahooAlbumResult() {
+		noResultsMarker = false;
+		allSongsStored = false;
 	}
 
 	public void update(YahooAlbumResult results) {
@@ -147,6 +155,19 @@ public class YahooAlbumResult extends DBUnique {
 
 	public void setTracksNumber(int tracksNumber) {
 		this.tracksNumber = tracksNumber;
+	}
+	
+	@Transient
+	public int getReleaseYear() {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd");
+		try {
+		    Date date = dateFormat.parse(releaseDate);
+		    Calendar calendar = new GregorianCalendar();
+		    calendar.setTime(date);
+		    return calendar.get(Calendar.YEAR);
+		} catch (ParseException e) {
+			return -1;
+		}		
 	}
 	
 	@Override

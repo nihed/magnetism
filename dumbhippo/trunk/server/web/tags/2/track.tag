@@ -4,6 +4,9 @@
 <%@ attribute name="albumArt" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
+<%-- when we display a track as an album track, we display a track number, omit artist, --%>
+<%-- and display download links even if they are all disabled --%>
+<%@ attribute name="displayAsAlbumTrack" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty albumArt}">
 	<c:set var="albumArt" value="false"/>
@@ -21,16 +24,17 @@
 	<c:set var="playItLink" value="true"/>
 </c:if>
 
-<c:url value="/album" var="albumlink">
-	<c:param name="track" value="${track.name}"/>
+<c:if test="${empty displayAsAlbumTrack}">
+	<c:set var="displayAsAlbumTrack" value="false"/>
+</c:if>
+
+<c:url value="/artist" var="albumlink">
 	<c:param name="artist" value="${track.artist}"/>
 	<c:param name="album" value="${track.album}"/>
 </c:url>
 
 <c:url value="/artist" var="artistlink">
-	<c:param name="track" value="${track.name}"/>
 	<c:param name="artist" value="${track.artist}"/>
-	<c:param name="album" value="${track.album}"/>
 </c:url>
 
 <c:choose>
@@ -56,8 +60,11 @@
 	<div class="dh-song-info">
 		<c:if test="${!empty track.name}">
 			<div class="dh-song-name">
+				<c:if test="${displayAsAlbumTrack}">
+                    <c:out value="${track.trackNumber} "/>
+                </c:if> 			
 				<c:if test="${linkifySong}">
-					<c:url value="/song" var="songlink">
+					<c:url value="/artist" var="songlink">
 						<c:param name="track" value="${track.name}"/>
 						<c:param name="artist" value="${track.artist}"/>
 						<c:param name="album" value="${track.album}"/>
@@ -70,7 +77,7 @@
 				</c:if>
 			</div>
 		</c:if>
-		<c:if test="${!empty track.artist}">
+		<c:if test="${!empty track.artist && !displayAsAlbumTrack}">
 			<div class="dh-song-artist">
 				by
 				<a href="${artistlink}">
@@ -79,11 +86,10 @@
 			</div>
 		</c:if>
 		<c:if test="${playItLink}">
-			<c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl}">
+		    <c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl || displayAsAlbumTrack}">
 				<c:set var="itunesDisabled" value='${empty track.itunesUrl ? "disabled" : ""}'/>
 				<c:set var="yahooDisabled" value='${empty track.yahooUrl ? "disabled" : ""}'/>
 				<c:set var="rhapsodyDisabled" value='${empty track.rhapsodyUrl ? "disabled" : ""}'/>
-			
 				<div class="dh-song-links">Play at 
 					<c:choose>
 						<c:when test="${!empty track.itunesUrl}">
