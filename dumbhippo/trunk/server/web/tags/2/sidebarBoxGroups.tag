@@ -3,10 +3,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%-- If there are no groups for someone !self, just omit this box --%>
-<c:if test="${sidebar.groups.size > 0 || sidebar.self}">
+<c:if test="${person.groups.size > 0 || person.self}">
 	
 	<c:choose>
-		<c:when test="${sidebar.self}">
+		<c:when test="${person.self}">
 			<c:set var="title" value="MY GROUPS" scope="page"/>
 		</c:when>
 		<c:otherwise>
@@ -16,8 +16,8 @@
 	
 	<dht:sidebarBox boxClass="dh-groups-box" title="${title}" more="/groups">
 		<c:choose>
-			<c:when test="${sidebar.groups.size > 0}">
-				<c:forEach items="${sidebar.groups.list}" var="group">
+			<c:when test="${person.groups.size > 0}">
+				<c:forEach items="${person.groups.list}" var="group">
 					<dht:sidebarBoxGroupItem group="${group}"/>
 				</c:forEach>
 			</c:when>

@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <c:choose>
-	<c:when test="${sidebar.self}">
+	<c:when test="${person.self}">
 		<c:set var="title" value="MY PROFILE" scope="page"/>
 	</c:when>
 	<c:otherwise>
@@ -18,21 +18,21 @@
 				<tr valign="top">
 					<td>
 						<div class="dh-image">
-							<dht:headshot person="${sidebar.viewedPerson}"/>
+							<dht:headshot person="${person.viewedPerson}"/>
 						</div>
 					</td>
 					<td>
 						<div class="dh-next-to-image">
-							<div class="dh-name"><c:out value="${sidebar.viewedPerson.name}"/></div>
+							<div class="dh-name"><c:out value="${person.viewedPerson.name}"/></div>
 							<dht:actionLink href="/account" title="Set preferences, add addresses, and update your profile">Edit account</dht:actionLink>
 						</div>
 					</td>
 				</tr>
 			</tbody>
 		</table>
-		<c:if test="${!empty sidebar.viewedPerson.bioAsHtml}">
+		<c:if test="${!empty person.viewedPerson.bioAsHtml}">
 			<div class="dh-bio">
-				<c:out value="${sidebar.viewedPerson.bioAsHtml}" escapeXml="false"/>
+				<c:out value="${person.viewedPerson.bioAsHtml}" escapeXml="false"/>
 			</div>
 		</c:if>
 	</div>

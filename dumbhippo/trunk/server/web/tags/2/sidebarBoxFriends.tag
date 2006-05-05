@@ -3,10 +3,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%-- If there are no friends for someone !self, just omit this box --%>
-<c:if test="${sidebar.contacts.size > 0 || sidebar.self}">
+<c:if test="${person.contacts.size > 0 || person.self}">
 
 	<c:choose>
-		<c:when test="${sidebar.self}">
+		<c:when test="${person.self}">
 			<c:set var="title" value="MY FRIENDS" scope="page"/>
 		</c:when>
 		<c:otherwise>
@@ -16,8 +16,8 @@
 	
 	<dht:sidebarBox boxClass="dh-friends-box" title="${title}" more="/friends">
 		<c:choose>
-			<c:when test="${sidebar.contacts.size > 0}">
-				<c:forEach items="${sidebar.contacts.list}" var="person">
+			<c:when test="${person.contacts.size > 0}">
+				<c:forEach items="${person.contacts.list}" var="person">
 					<dht:personItem who="${person}"/>
 				</c:forEach>
 			</c:when>
