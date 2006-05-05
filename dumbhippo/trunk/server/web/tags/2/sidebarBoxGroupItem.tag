@@ -4,7 +4,7 @@
 
 <%@ attribute name="group" required="true" type="com.dumbhippo.server.GroupView" %>
 
-<div class="dh-item">
+<div class="dh-compact-item">
 	<table cellpadding="0" cellspacing="0">
 		<tbody>
 			<tr valign="top">

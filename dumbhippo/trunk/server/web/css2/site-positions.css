@@ -136,11 +136,11 @@ form {
 	overflow:			hidden;
 }
 
-.dh-sidebar-box .dh-item {
+.dh-compact-item {
 	margin-top:			10px;	
 }
 
-.dh-sidebar-box .dh-item .dh-image {
+.dh-compact-item .dh-image {
 	width:				60px;
 	height:				60px;
 	background-color:	white; /* debug */
@@ -149,23 +149,23 @@ form {
 	overflow:			hidden;
 }
 
-.dh-sidebar-box .dh-item .dh-next-to-image {
+.dh-compact-item .dh-next-to-image {
 	width:				110px;
 	margin-left:		10px;
 	overflow:			hidden;
 }
 
-.dh-sidebar-box .dh-item .dh-next-to-image .dh-name {
+.dh-compact-item .dh-next-to-image .dh-name {
 	/* on the page this is 10px, not sure where the extra px come from */
 	margin-bottom:		3px;
 }
 
-.dh-sidebar-box .dh-item .dh-bio {
-	margin-top:			10px;
+.dh-compact-item .dh-next-to-image .dh-action-link {
+	margin-top:			2px;
 }
 
-.dh-sidebar-box .dh-item .dh-next-to-image .dh-action-link {
-	margin-top:			2px;
+.dh-sidebar-box .dh-compact-item .dh-bio {
+	margin-top:			10px;
 }
 
 .dh-sidebar-box .dh-more {
@@ -282,3 +282,22 @@ form {
 	width:				100%;
 }
 
+#dhContentColumn .dh-two-column-list {
+	width:				478px;
+	overflow:			hidden;
+}
+
+#dhContentColumn .dh-two-column-list-inner {
+	width:				488px; /* Includes right margin of right column */
+}
+
+#dhContentColumn .dh-two-column-list .dh-compact-item {
+	float:				left;
+	width:				234px;
+	margin-right:		10px;
+	margin-bottom:		10px;
+}
+
+#dhContentColumn .dh-two-column-list .dh-compact-item .dh-next-to-image {
+	width:				164px;
+}

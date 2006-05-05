@@ -8,7 +8,7 @@
 	<c:set var="personLink" value="/person?who=${who.viewPersonPageId}" scope="page"/>
 </c:if>	
 
-<div class="dh-item">
+<div class="dh-compact-item">
 	<table cellpadding="0" cellspacing="0">
 		<tbody>
 			<tr valign="top">

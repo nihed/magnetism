@@ -25,15 +25,19 @@
 	<dht:contentColumn>
 		<dht:zoneBoxGroup back="/group?who=${group.viewedGroupId}">
 			<dht:zoneBoxTitle>ALL GROUP MEMBERS</dht:zoneBoxTitle>
-			<c:forEach items="${group.activeMembers.list}" var="person">
-				<dht:personItem who="${person}"/>
-			</c:forEach>
+			<dht:twoColumnList>
+				<c:forEach items="${group.activeMembers.list}" var="person">
+					<dht:personItem who="${person}"/>
+				</c:forEach>
+			</dht:twoColumnList>
 			
 			<c:if test="${group.invitedMembers.size > 0}">
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
-				<c:forEach items="${group.invitedMembers.list}" var="person">
-					<dht:personItem who="${person}"/>
-				</c:forEach>
+				<dht:twoColumnList>
+					<c:forEach items="${group.invitedMembers.list}" var="person">
+						<dht:personItem who="${person}"/>
+					</c:forEach>
+				</dht:twoColumnList>
 			</c:if>
 		</dht:zoneBoxGroup>
 	</dht:contentColumn>

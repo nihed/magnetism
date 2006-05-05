@@ -113,21 +113,21 @@ body.dh-gray-background-page {
 	font-size:			14px;
 }
 
-.dh-sidebar-box .dh-item .dh-next-to-image .dh-name {
+.dh-compact-item .dh-next-to-image .dh-name {
 	font-weight:		bold;
 	font-size:			12px;
 }
 
 /* the name in the profile is a little larger than elsewhere */
-.dh-profile-box .dh-item .dh-next-to-image .dh-name {
+.dh-profile-box .dh-compact-item .dh-next-to-image .dh-name {
 	font-size:			14px;
 }
 
-.dh-profile-box .dh-item .dh-next-to-image .dh-action-link {
+.dh-profile-box .dh-compact-item .dh-next-to-image .dh-action-link {
 	font-size:			12px;
 }
 
-.dh-sidebar-box .dh-item .dh-next-to-image .dh-info {
+.dh-compact-item .dh-next-to-image .dh-info {
 	font-size:			11px;
 }
 
