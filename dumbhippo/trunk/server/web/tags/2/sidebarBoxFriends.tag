@@ -18,7 +18,7 @@
 		<c:choose>
 			<c:when test="${sidebar.contacts.size > 0}">
 				<c:forEach items="${sidebar.contacts.list}" var="person">
-					<dht:sidebarBoxPersonItem who="${person}"/>
+					<dht:personItem who="${person}"/>
 				</c:forEach>
 			</c:when>
 			<c:otherwise>

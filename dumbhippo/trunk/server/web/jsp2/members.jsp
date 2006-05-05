@@ -26,13 +26,13 @@
 		<dht:zoneBoxGroup back="/group?who=${group.viewedGroupId}">
 			<dht:zoneBoxTitle>ALL GROUP MEMBERS</dht:zoneBoxTitle>
 			<c:forEach items="${group.activeMembers.list}" var="person">
-				<dht:sidebarBoxPersonItem who="${person}"/>
+				<dht:personItem who="${person}"/>
 			</c:forEach>
 			
 			<c:if test="${group.invitedMembers.size > 0}">
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
 				<c:forEach items="${group.invitedMembers.list}" var="person">
-					<dht:sidebarBoxPersonItem who="${person}"/>
+					<dht:personItem who="${person}"/>
 				</c:forEach>
 			</c:if>
 		</dht:zoneBoxGroup>

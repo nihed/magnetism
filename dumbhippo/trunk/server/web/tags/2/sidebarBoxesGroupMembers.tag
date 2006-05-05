@@ -6,7 +6,7 @@
 	<c:choose>
 		<c:when test="${group.activeMembers.size > 0}">
 			<c:forEach items="${group.activeMembers.list}" var="person">
-				<dht:sidebarBoxPersonItem who="${person}"/>
+				<dht:personItem who="${person}"/>
 			</c:forEach>
 		</c:when>
 		<c:otherwise>
@@ -24,7 +24,7 @@
 <c:if test="${group.invitedMembers.size > 0}">
 	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="NN INVITED MEMBERS" more="/members?group=${group.viewedGroupId}">
 		<c:forEach items="${group.invitedMembers.list}" var="person">
-			<dht:sidebarBoxPersonItem who="${person}"/>
+			<dht:personItem who="${person}"/>
 		</c:forEach>
 	</dht:sidebarBox>
 </c:if>
