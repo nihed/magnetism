@@ -7,6 +7,7 @@
 <%@ attribute name="topImage" required="true" type="java.lang.String" %>
 <%@ attribute name="bottomImage" required="true" type="java.lang.String" %>
 <%@ attribute name="more" required="false" type="java.lang.String" %>
+<%@ attribute name="back" required="false" type="java.lang.String" %>
 <%@ attribute name="disableJumpTo" required="false" type="java.lang.Boolean" %>
 
 <%-- provide the zone name to child nodes; this "set a global variable" approach
@@ -20,7 +21,10 @@
 		<div class="dh-zone-box-header-links">
 			<c:choose>
 				<c:when test="${!empty more}">
-					<dht:zoneBoxMoreHeader link="${more}"/>
+					<dht:zoneBoxLinkHeader value="MORE" link="${more}"/>
+				</c:when>
+				<c:when test="${!empty back}">
+					<dht:zoneBoxLinkHeader value="Go back" link="${back}"/>
 				</c:when>
 				<c:when test="${disableJumpTo}">
 					<%-- nothing --%>

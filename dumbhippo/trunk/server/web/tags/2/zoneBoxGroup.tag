@@ -2,6 +2,8 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dht:zoneBox zone="group" topImage="/images2/header_group500.gif" bottomImage="/images2/bottom_gray500.gif">
+<%@ attribute name="back" required="false" type="java.lang.String" %>
+
+<dht:zoneBox zone="group" topImage="/images2/header_group500.gif" bottomImage="/images2/bottom_gray500.gif" back="${back}">
 	<jsp:doBody/>
 </dht:zoneBox>

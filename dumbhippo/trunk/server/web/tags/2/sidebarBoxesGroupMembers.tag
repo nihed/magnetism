@@ -13,7 +13,7 @@
 			No members <%-- FIXME link to a place to add members --%>
 		</c:otherwise>
 	</c:choose>
-	<dht:moreLink more="/group-members"/>
+	<dht:moreLink more="/members/group=${group.viewedGroupId}"/>
 	<dht:sidebarBoxSeparator/>
 	<c:if test="${group.canShare}">
 		<dht:actionLink title="Share ${group.nameAsHtml} with friends" href="javascript:dh.util.openShareGroupWindow('${group.viewedGroupId}');">Invite new members</dht:actionLink>
@@ -22,7 +22,7 @@
 </dht:sidebarBox>
 
 <c:if test="${group.invitedMembers.size > 0}">
-	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="NN INVITED MEMBERS" more="/group-members">
+	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="NN INVITED MEMBERS" more="/members?group=${group.viewedGroupId}">
 		<c:forEach items="${group.invitedMembers.list}" var="person">
 			<dht:sidebarBoxPersonItem who="${person}"/>
 		</c:forEach>

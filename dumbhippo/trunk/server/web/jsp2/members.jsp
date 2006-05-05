@@ -1,0 +1,41 @@
+<html>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+
+<dh:bean id="group" class="com.dumbhippo.web.GroupPage" scope="request"/>
+<jsp:setProperty name="group" property="viewedGroupId" param="group"/>
+
+<c:if test="${empty group.viewedGroupId}">
+	<dht:errorPage>Group not found</dht:errorPage>
+</c:if>
+
+<head>
+	<title><c:out value="${group.name}"/>'s Mugshot</title>
+	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
+	<dht:scriptIncludes/>
+	<dht:embedObject/>
+    <script type="text/javascript">
+        dojo.require("dh.util");
+    </script>
+</head>
+<dht:twoColumnPage alwaysShowSidebar="true">
+	<dht:sidebarGroup/>
+	<dht:contentColumn>
+		<dht:zoneBoxGroup back="/group?who=${group.viewedGroupId}">
+			<dht:zoneBoxTitle>ALL GROUP MEMBERS</dht:zoneBoxTitle>
+			<c:forEach items="${group.activeMembers.list}" var="person">
+				<dht:sidebarBoxPersonItem who="${person}"/>
+			</c:forEach>
+			
+			<c:if test="${group.invitedMembers.size > 0}">
+				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
+				<c:forEach items="${group.invitedMembers.list}" var="person">
+					<dht:sidebarBoxPersonItem who="${person}"/>
+				</c:forEach>
+			</c:if>
+		</dht:zoneBoxGroup>
+	</dht:contentColumn>
+</dht:twoColumnPage>
+</html>
