@@ -27,10 +27,14 @@ HippoEntity*     hippo_entity_new                 (HippoEntityType type,
 const char*      hippo_entity_get_guid            (HippoEntity    *entity);
 const char*      hippo_entity_get_name            (HippoEntity    *entity);
 const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
+/* returns -1 if we don't know it */
+int              hippo_entity_get_version         (HippoEntity    *entity);
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
 void             hippo_entity_set_small_photo_url (HippoEntity    *entity,
                                                    const char     *url);
+void             hippo_entity_set_version         (HippoEntity    *entity,
+                                                   int             version);
 
 G_END_DECLS
 

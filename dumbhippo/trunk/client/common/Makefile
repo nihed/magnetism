@@ -6,6 +6,8 @@ HEADERS= \
     hippo/hippo-cookies.h       \
     hippo/hippo-data-cache.h    \
     hippo/hippo-entity.h        \
+    hippo/hippo-entity-protected.h  \
+    hippo/hippo-person.h        \
     hippo/hippo-platform.h      \
     hippo/hippo-post.h
 
@@ -16,6 +18,7 @@ SOURCES= \
     hippo/hippo-cookies.c       \
     hippo/hippo-data-cache.c    \
     hippo/hippo-entity.c        \
+    hippo/hippo-person.c        \
     hippo/hippo-platform.c      \
     hippo/hippo-post.c
 
@@ -26,6 +29,7 @@ OBJECTS= \
     hippo/hippo-cookies.o    \
     hippo/hippo-data-cache.o \
     hippo/hippo-entity.o     \
+    hippo/hippo-person.o     \
     hippo/hippo-platform.o   \
     hippo/hippo-post.o
 
