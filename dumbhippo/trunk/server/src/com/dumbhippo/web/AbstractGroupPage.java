@@ -103,7 +103,7 @@ public abstract class AbstractGroupPage {
 	}
 
 	public List<PersonView> getMembers(MembershipStatus status) {
-		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup, status));
+		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(signin.getViewpoint(), viewedGroup, status, -1));
 		if (result.isEmpty())
 			return null;
 		else

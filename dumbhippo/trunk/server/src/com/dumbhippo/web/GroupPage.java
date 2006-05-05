@@ -28,6 +28,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	protected static final Logger logger = GlobalSetup.getLogger(AbstractSigninOptionalPage.class);
 	
 	static private final int MAX_POSTS_SHOWN = 10;
+	static private final int MAX_MEMBERS_SHOWN = 5;
 	
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
@@ -47,6 +48,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<PersonView> invitedMembers;
 
 	private ListBean<PostView> posts;
+	private boolean allMembers;
 	
 	public GroupPage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -54,6 +56,8 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+		
+		allMembers = false;	
 	}
 	
 	public GroupView getViewedGroup() {
@@ -118,9 +122,14 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			adder = groupMember.getAdder();
 		}
 	}
+	
+	public void setAllMembers(boolean allMembers) {
+		this.allMembers = allMembers;
+	}
 
 	private List<PersonView> getMembers(MembershipStatus status) {
-		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status));
+		int maxResults = allMembers ? -1 : MAX_MEMBERS_SHOWN;
+		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status, maxResults));
 		return result;
 	}
  
@@ -224,6 +233,10 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	
 	public int getMaxPostsShown() {
 		return MAX_POSTS_SHOWN;
+	}
+	
+	public int getMaxMembersShown() {
+		return MAX_MEMBERS_SHOWN;
 	}
 	
 	public String getDownloadUrlWindows() {

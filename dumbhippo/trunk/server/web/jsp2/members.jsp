@@ -6,6 +6,7 @@
 
 <dh:bean id="group" class="com.dumbhippo.web.GroupPage" scope="request"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="group"/>
+<jsp:setProperty name="group" property="allMembers" value="true"/>
 
 <c:if test="${empty group.viewedGroupId}">
 	<dht:errorPage>Group not found</dht:errorPage>
@@ -32,6 +33,7 @@
 			</dht:twoColumnList>
 			
 			<c:if test="${group.invitedMembers.size > 0}">
+				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.invitedMembers.list}" var="person">

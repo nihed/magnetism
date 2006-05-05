@@ -285,6 +285,7 @@ form {
 #dhContentColumn .dh-two-column-list {
 	width:				478px;
 	overflow:			hidden;
+	margin-bottom:		15px;
 }
 
 #dhContentColumn .dh-two-column-list-inner {
@@ -296,6 +297,10 @@ form {
 	width:				234px;
 	margin-right:		10px;
 	margin-bottom:		10px;
+}
+
+#dhContentColumn .dh-two-column-list .dh-compact-item {
+	margin-bottom:		0px;
 }
 
 #dhContentColumn .dh-two-column-list .dh-compact-item .dh-next-to-image {

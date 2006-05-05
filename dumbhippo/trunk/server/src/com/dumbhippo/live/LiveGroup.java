@@ -12,6 +12,7 @@ public class LiveGroup extends LiveObject {
 
 	private int totalReceivedPosts;
 	private int memberCount;
+	private int invitedMemberCount;
 
 	public LiveGroup(Guid guid) {
 		super(guid);
@@ -47,11 +48,19 @@ public class LiveGroup extends LiveObject {
 		this.memberCount = memberCount;
 	}
 
+	public int getInvitedMemberCount() {
+		return invitedMemberCount;
+	}
+
+	public void setInvitedMemberCount(int invitedCount) {
+		this.invitedMemberCount = invitedCount;
+	}	
+
 	public int getTotalReceivedPosts() {
 		return totalReceivedPosts;
 	}
 
 	public void setTotalReceivedPosts(int totalReceivedPosts) {
 		this.totalReceivedPosts = totalReceivedPosts;
-	}	
+	}
 }

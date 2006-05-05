@@ -30,7 +30,7 @@ public interface GroupSystem {
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras);
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras);
 
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group);
 	

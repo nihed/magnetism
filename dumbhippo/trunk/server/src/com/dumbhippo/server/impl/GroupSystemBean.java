@@ -193,9 +193,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);
-		
-	        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
 		}
+		
+        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
 	}
 	
 	public void removeMember(User remover, Group group, Person person) {
@@ -268,8 +268,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return q;
 	}
 		
-	private List<Resource> getResourceMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
+	private List<Resource> getResourceMembers(Viewpoint viewpoint, Group group, int maxResults, MembershipStatus status) {
 		Query q = buildGetResourceMembersQuery(viewpoint, group, status, false);
+		if (maxResults >= 0)
+			q.setMaxResults(maxResults);
 		@SuppressWarnings("unchecked")
 		List<Resource> result = q.getResultList();
 		return result;
@@ -282,15 +284,15 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
-		return getMembers(viewpoint, group, null, extras);
+		return getMembers(viewpoint, group, null, -1, extras);
 	}
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, PersonViewExtra... extras) {
+	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras) {
 		
 		// The subversion history has some code to try doing this with fewer queries; 
 		// but for now keeping it simple
 		
-		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, status);
+		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, maxResults, status);
 		if (resourceMembers.size() == 0)
 			return Collections.emptySet();
 		
@@ -307,7 +309,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
-		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, status);
+		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, -1, status);
 		if (resourceMembers.size() == 0)
 			return Collections.emptySet();
 		
