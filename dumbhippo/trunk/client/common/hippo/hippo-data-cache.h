@@ -2,8 +2,9 @@
 #define __HIPPO_DATA_CACHE_H__
 
 #include <hippo/hippo-connection.h>
-#include <hippo/hippo-entity.h>
+#include <hippo/hippo-person.h>
 #include <hippo/hippo-post.h>
+#include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
 
@@ -39,6 +40,10 @@ HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
                                                           
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);
+
+HippoChatRoom*   hippo_data_cache_ensure_chat_room       (HippoDataCache  *cache,
+                                                          const char      *chat_id,
+                                                          HippoChatKind    kind);
 
 G_END_DECLS
 

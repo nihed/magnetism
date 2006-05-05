@@ -2,6 +2,7 @@
 #define __HIPPO_POST_H__
 
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
 
@@ -60,6 +61,10 @@ void             hippo_post_set_total_viewers         (HippoPost  *post,
                                                        int         value);
 void             hippo_post_set_have_viewed           (HippoPost  *post,
                                                        gboolean    value);
+
+HippoChatRoom*   hippo_post_get_chat_room             (HippoPost     *post);
+void             hippo_post_set_chat_room             (HippoPost     *post,
+                                                       HippoChatRoom *room);
 
 
 G_END_DECLS

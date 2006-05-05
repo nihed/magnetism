@@ -10,6 +10,7 @@ struct _HippoDataCache {
     HippoConnection *connection;
     GHashTable      *posts;
     GHashTable      *entities;
+    GHashTable      *group_chats;
 };
 
 struct _HippoDataCacheClass {
@@ -35,8 +36,9 @@ hippo_data_cache_init(HippoDataCache *cache)
     cache->posts = g_hash_table_new_full(g_str_hash, g_str_equal,
                                          g_free, (GFreeFunc) g_object_unref);
     cache->entities = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                            g_free, (GFreeFunc) g_object_unref);
-                                         
+                                            g_free, (GFreeFunc) g_object_unref);                                            
+    cache->group_chats = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                               g_free, (GFreeFunc) g_object_unref);                                         
 }
 
 static void
@@ -91,6 +93,8 @@ hippo_data_cache_finalize(GObject *object)
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
     g_hash_table_destroy(cache->posts);
     g_hash_table_destroy(cache->entities);
+
+    g_hash_table_destroy(cache->group_chats);
 
     hippo_connection_set_cache(cache->connection, NULL);
     g_object_unref(cache->connection);
@@ -216,3 +220,59 @@ hippo_data_cache_get_recent_posts(HippoDataCache  *cache)
     lrpd.list = g_slist_sort(lrpd.list, post_date_compare);
     return lrpd.list;
 }
+
+HippoChatRoom*
+hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
+                                  const char      *chat_id,
+                                  HippoChatKind    kind)
+{
+    if (kind == HIPPO_CHAT_POST) {
+        HippoPost *post;
+        HippoChatRoom *room;
+        gboolean created_post;
+        
+        post = hippo_data_cache_lookup_post(cache, chat_id);
+        if (post) {
+            /* can return NULL if we've never chatted */
+            room = hippo_post_get_chat_room(post);
+            g_object_ref(room);
+        } else {
+            room = NULL;
+        }
+
+        if (room == NULL) /* no post, or post has no room yet */
+            room = hippo_chat_room_new(chat_id, kind);
+            
+        g_assert(room != NULL);    
+            
+        if (post == NULL) {
+            post = hippo_post_new(chat_id);
+            hippo_post_set_chat_room(post, room);
+            created_post = TRUE;
+        } else {
+            created_post = FALSE;
+        }
+        
+        g_assert(post != NULL);
+        g_assert(hippo_post_get_chat_room(post) == room);
+        
+        if (created_post)
+            hippo_data_cache_add_post(cache, post);
+
+        g_object_unref(room); /* post still holds a ref */
+        return room;
+    } else if (kind == HIPPO_CHAT_GROUP) {
+        HippoChatRoom *room;
+        
+        room = g_hash_table_lookup(cache->group_chats, chat_id);
+        if (room == NULL) {
+            room = hippo_chat_room_new(chat_id, HIPPO_CHAT_GROUP);
+            g_hash_table_replace(cache->group_chats, g_strdup(chat_id), room);
+            g_object_unref(room); /* hash table still holds ref */
+        }
+        return room;
+    } else {
+        g_assert_not_reached();
+        return NULL;
+    }
+}                              

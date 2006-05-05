@@ -13,6 +13,11 @@ typedef enum {
     HIPPO_CHAT_PARTICIPANT
 } HippoChatState;
 
+typedef enum {
+    HIPPO_CHAT_POST,
+    HIPPO_CHAT_GROUP
+} HippoChatKind;
+
 typedef struct _HippoChatRoom      HippoChatRoom;
 typedef struct _HippoChatRoomClass HippoChatRoomClass;
 
@@ -25,9 +30,11 @@ typedef struct _HippoChatRoomClass HippoChatRoomClass;
 
 GType        	 hippo_chat_room_get_type               (void) G_GNUC_CONST;
 
-HippoChatRoom*   hippo_chat_room_new                    (const char *chat_id);
+HippoChatRoom*   hippo_chat_room_new                    (const char   *chat_id,
+                                                         HippoChatKind kind);
 
 const char*       hippo_chat_room_get_id                  (HippoChatRoom  *room);
+HippoChatKind     hippo_chat_room_get_kind                (HippoChatRoom  *room);
 HippoChatState    hippo_chat_room_get_state               (HippoChatRoom  *room);
 void              hippo_chat_room_set_title               (HippoChatRoom  *room,
                                                            const char     *title);

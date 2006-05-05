@@ -8,6 +8,7 @@ static void      hippo_chat_room_finalize    (GObject             *object);
 struct _HippoChatRoom {
     GObject parent;
     char *id;
+    HippoChatKind kind;
     HippoChatState state;
     char *title;
     GHashTable *viewers;
@@ -127,11 +128,13 @@ hippo_chat_room_finalize(GObject *object)
 }
 
 HippoChatRoom*
-hippo_chat_room_new(const char *chat_id)
+hippo_chat_room_new(const char   *chat_id,
+                    HippoChatKind kind)
 {
     HippoChatRoom *room = g_object_new(HIPPO_TYPE_CHAT_ROOM, NULL);
 
     room->id = g_strdup(chat_id);
+    room->kind = kind;
 
     return room;
 }
@@ -141,6 +144,13 @@ hippo_chat_room_get_id(HippoChatRoom *room)
 {
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), NULL);
     return room->id;
+}
+
+HippoChatKind
+hippo_chat_room_get_kind(HippoChatRoom *room)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_POST);
+    return room->kind;
 }
 
 HippoChatState

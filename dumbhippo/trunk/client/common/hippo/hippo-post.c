@@ -13,14 +13,23 @@ struct _HippoPost {
     char *title;
     char *description;
     GSList *recipients;
-    GSList *viewers;
     char *info;
     GTime date;
     int timeout;
+    guint have_viewed : 1;  
+    HippoChatRoom *chat_room;
+
+    /* FIXME all this info is also stored in the chat room,
+     * here it's from post-related XMPP messages and in the
+     * chat room from the chat-related messages. We should 
+     * always use the chat room info when we have it, probably.
+     * But this could be here for posts where we aren't chatting,
+     * allowing us to avoid loading the whole chat room.
+     */
     int viewing_user_count;
     int chatting_user_count;
     int total_viewers;
-    guint have_viewed : 1;  
+    GSList *viewers;
 };
 
 struct _HippoPostClass {
@@ -62,6 +71,9 @@ static void
 hippo_post_finalize(GObject *object)
 {
     HippoPost *post = HIPPO_POST(object);
+
+    if (post->chat_room)
+        g_object_unref(post->chat_room);
 
     g_free(post->guid);
     g_free(post->sender);
@@ -340,3 +352,27 @@ hippo_post_set_have_viewed(HippoPost  *post,
         hippo_post_emit_changed(post);
     }
 }                           
+
+HippoChatRoom*
+hippo_post_get_chat_room(HippoPost *post)
+{
+    g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
+    
+    return post->chat_room;
+}
+
+/* Don't emit the changed signal for this for now, it 
+ * wouldn't be interesting
+ */
+void
+hippo_post_set_chat_room(HippoPost     *post,
+                         HippoChatRoom *room)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+    
+    if (room)
+        g_object_ref(room);
+    if (post->chat_room)
+        g_object_unref(post->chat_room);
+    post->chat_room = room;
+}                         
