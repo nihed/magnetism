@@ -14,7 +14,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage disableHomeLink="true">
-	<dht:sidebarPerson who="${signin.user.id}"/>
+	<dht:sidebarPerson who="${signin.user.id}" page="home"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dht:requireLinksPersonBean who="${signin.user.id}"/>

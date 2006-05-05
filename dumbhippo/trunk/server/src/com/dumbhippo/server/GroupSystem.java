@@ -71,6 +71,7 @@ public interface GroupSystem {
 	 * @param viewpoint the viewpoint of the viewer viewing member
 	 * @param member the person being viewed
 	 * @return a list of GroupView objects for the groups member is in
+	 * @return maxResults if positive, maximum number of groups to return
 	 */
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);
 	
