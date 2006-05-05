@@ -1,4 +1,5 @@
 #include "hippo-entity.h"
+#include <string.h>
 
 /* === HippoEntity implementation === */
 
@@ -45,7 +46,7 @@ hippo_entity_class_init(HippoEntityClass *klass)
             		  G_SIGNAL_RUN_LAST,
             		  0,
             		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__POINTER,
+            		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
 
     signals[SMALL_PHOTO_CHANGED] =
@@ -107,14 +108,17 @@ hippo_entity_get_small_photo_url(HippoEntity    *entity)
     return entity->small_photo_url;
 }
 
-static void
+static gboolean
 set_str(char **s_p, const char *val)
 {
-    if (*s_p == val)
-        return;
+    if (*s_p == val) /* catches both null, and self assignment */
+        return FALSE;
+    if (*s_p && val && strcmp(*s_p, val) == 0)
+        return FALSE;        
         
     g_free(*s_p);
     *s_p = g_strdup(val);
+    return TRUE;
 }
 
 void
@@ -122,8 +126,8 @@ hippo_entity_set_name(HippoEntity    *entity,
                       const char     *name)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    set_str(&entity->name, name);
-    g_signal_emit(entity, signals[NAME_CHANGED], 0);
+    if (set_str(&entity->name, name))
+        g_signal_emit(entity, signals[NAME_CHANGED], 0);
 }
 
 void
@@ -131,6 +135,6 @@ hippo_entity_set_small_photo_url(HippoEntity    *entity,
                                  const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    set_str(&entity->small_photo_url, url);
-    g_signal_emit(entity, signals[SMALL_PHOTO_CHANGED], 0);
+    if (set_str(&entity->small_photo_url, url))
+        g_signal_emit(entity, signals[SMALL_PHOTO_CHANGED], 0);
 }

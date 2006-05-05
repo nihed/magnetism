@@ -165,7 +165,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
   
     signals[STATE_CHANGED] =
-        g_signal_new ("state_changed",
+        g_signal_new ("state-changed",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -174,7 +174,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  G_TYPE_NONE, 0); 
 
     signals[AUTH_FAILURE] =
-        g_signal_new ("auth_failure",
+        g_signal_new ("auth-failure",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -183,7 +183,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  G_TYPE_NONE, 0); 
 
     signals[AUTH_SUCCESS] =
-        g_signal_new ("auth_success",
+        g_signal_new ("auth-success",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -192,7 +192,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  G_TYPE_NONE, 0); 
 
     signals[NEW_POST] =
-        g_signal_new ("new_post",
+        g_signal_new ("new-post",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -201,7 +201,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  G_TYPE_NONE, 1, G_TYPE_POINTER);
 
     signals[MUSIC_SHARING_TOGGLED] =
-        g_signal_new ("music_sharing_toggled",
+        g_signal_new ("music-sharing-toggled",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -210,7 +210,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
     signals[HOTNESS_CHANGED] =
-        g_signal_new ("hotness_changed",
+        g_signal_new ("hotness-changed",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,

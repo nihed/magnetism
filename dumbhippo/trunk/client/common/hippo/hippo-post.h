@@ -16,7 +16,48 @@ typedef struct _HippoPostClass HippoPostClass;
 #define HIPPO_POST_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_POST, HippoPostClass))
 
 GType        	 hippo_post_get_type                  (void) G_GNUC_CONST;
-HippoPost       *hippo_post_new                       (void);
+HippoPost       *hippo_post_new                       (const char *guid);
+
+const char*      hippo_post_get_guid                  (HippoPost *post);
+const char*      hippo_post_get_sender                (HippoPost *post);
+const char*      hippo_post_get_url                   (HippoPost *post);
+const char*      hippo_post_get_description           (HippoPost *post);
+/* list of HippoEntity, list is not copied and entities not ref'd */
+GSList*          hippo_post_get_recipients            (HippoPost *post);
+GSList*          hippo_post_get_viewers               (HippoPost *post);
+const char*      hippo_post_get_info                  (HippoPost *post);
+GTime            hippo_post_get_date                  (HippoPost *post);
+int              hippo_post_get_timeout               (HippoPost *post);
+int              hippo_post_get_viewing_user_count    (HippoPost *post);
+int              hippo_post_get_chatting_user_count   (HippoPost *post);
+int              hippo_post_get_total_viewers         (HippoPost *post);
+gboolean         hippo_post_get_have_viewed           (HippoPost *post);
+
+void             hippo_post_set_sender                (HippoPost  *post,
+                                                       const char *value);
+void             hippo_post_set_url                   (HippoPost  *post,
+                                                       const char *value);
+void             hippo_post_set_description           (HippoPost  *post,
+                                                       const char *value);
+void             hippo_post_set_recipients            (HippoPost  *post,
+                                                       GSList     *value);
+void             hippo_post_set_viewers               (HippoPost  *post,
+                                                       GSList     *value);
+void             hippo_post_set_info                  (HippoPost  *post,
+                                                       const char *value);
+void             hippo_post_set_date                  (HippoPost  *post,
+                                                       GTime       value);
+void             hippo_post_set_timeout               (HippoPost  *post,
+                                                       int         value);
+void             hippo_post_set_viewing_user_count    (HippoPost  *post,
+                                                       int         value);
+void             hippo_post_set_chatting_user_count   (HippoPost  *post,
+                                                       int         value);
+void             hippo_post_set_total_viewers         (HippoPost  *post,
+                                                       int         value);
+void             hippo_post_set_have_viewed           (HippoPost  *post,
+                                                       gboolean    value);
+
 
 G_END_DECLS
 
