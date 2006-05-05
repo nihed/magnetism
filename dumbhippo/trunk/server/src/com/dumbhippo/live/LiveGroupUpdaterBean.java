@@ -9,7 +9,6 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.Viewpoint;
 
 // Implementation of LiveGroupUpdater
 @Stateless
@@ -30,28 +29,31 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 		return group;
 	}
 	
+	private void initializeTotalReceivedPosts(LiveGroup liveGroup, Group group) {
+		liveGroup.setTotalReceivedPosts(postingBoard.getGroupPostsCount(SystemViewpoint.getInstance(), group));
+	}
+	
+	private void initializeMemberCount(LiveGroup liveGroup, Group group) {
+		liveGroup.setMemberCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE));
+	}
+
 	public void initialize(LiveGroup liveGroup) {
-		Viewpoint viewpoint = SystemViewpoint.getInstance();
 		Group group = loadGroup(liveGroup);
-		int totalPosts = postingBoard.getGroupPostsCount(viewpoint, group);
-		liveGroup.setTotalReceivedPosts(totalPosts);
-		
-		liveGroup.setMemberCount(group.getMembers().size());
+		initializeTotalReceivedPosts(liveGroup, group);
+		initializeMemberCount(liveGroup, group);
 	}
 
 	public void groupPostReceived(LiveGroup liveGroup) {
 		LiveState state = LiveState.getInstance();
 		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		Group group = loadGroup(liveGroup);		
-		newGroup.setTotalReceivedPosts(postingBoard.getGroupPostsCount(SystemViewpoint.getInstance(), group));
+		initializeTotalReceivedPosts(liveGroup, loadGroup(liveGroup));
 		state.updateLiveGroup(newGroup);		
 	}
 
 	public void groupMemberCountChanged(LiveGroup liveGroup) {
 		LiveState state = LiveState.getInstance();
 		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		Group group = loadGroup(liveGroup);
-		newGroup.setMemberCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE));
+		initializeMemberCount(liveGroup, loadGroup(liveGroup));
 		state.updateLiveGroup(newGroup);				
 	}
 }
