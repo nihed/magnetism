@@ -10,6 +10,7 @@ struct _HippoPost {
     char *guid;
     char *sender;
     char *url;
+    char *title;
     char *description;
     GSList *recipients;
     GSList *viewers;
@@ -65,6 +66,7 @@ hippo_post_finalize(GObject *object)
     g_free(post->guid);
     g_free(post->sender);
     g_free(post->url);
+    g_free(post->title);
     g_free(post->description);
     g_slist_foreach(post->recipients, (GFunc) g_object_unref, NULL);
     g_slist_free(post->recipients);    
@@ -112,6 +114,13 @@ hippo_post_get_url(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
     return post->url;
+}
+
+const char*
+hippo_post_get_title(HippoPost *post)
+{
+    g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
+    return post->title;
 }
 
 const char*
@@ -212,6 +221,14 @@ hippo_post_set_url(HippoPost  *post,
 {
     g_return_if_fail(HIPPO_IS_POST(post));
     set_str(post, &post->url, value);
+}
+
+void
+hippo_post_set_title(HippoPost  *post,
+                   const char *value)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+    set_str(post, &post->title, value);
 }
 
 void

@@ -21,6 +21,7 @@ HippoPost       *hippo_post_new                       (const char *guid);
 const char*      hippo_post_get_guid                  (HippoPost *post);
 const char*      hippo_post_get_sender                (HippoPost *post);
 const char*      hippo_post_get_url                   (HippoPost *post);
+const char*      hippo_post_get_title                 (HippoPost *post);
 const char*      hippo_post_get_description           (HippoPost *post);
 /* list of HippoEntity, list is not copied and entities not ref'd */
 GSList*          hippo_post_get_recipients            (HippoPost *post);
@@ -36,6 +37,8 @@ gboolean         hippo_post_get_have_viewed           (HippoPost *post);
 void             hippo_post_set_sender                (HippoPost  *post,
                                                        const char *value);
 void             hippo_post_set_url                   (HippoPost  *post,
+                                                       const char *value);
+void             hippo_post_set_title                 (HippoPost  *post,
                                                        const char *value);
 void             hippo_post_set_description           (HippoPost  *post,
                                                        const char *value);

@@ -8,6 +8,7 @@ main(int argc, char **argv)
     HippoOptions options;
     GMainLoop *loop;
     HippoConnection *connection;
+    HippoDataCache *cache;
     
     g_thread_init(NULL);
     g_type_init ();
@@ -20,6 +21,8 @@ main(int argc, char **argv)
     hippo_options_free_fields(&options);
 
     connection = hippo_connection_new(platform);
+    cache = hippo_data_cache_new(connection);
+    
     if (hippo_connection_signin(connection))
         g_debug("Waiting for user to sign in");
     else

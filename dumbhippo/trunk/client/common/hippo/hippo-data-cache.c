@@ -92,6 +92,7 @@ hippo_data_cache_finalize(GObject *object)
     g_hash_table_destroy(cache->posts);
     g_hash_table_destroy(cache->entities);
 
+    hippo_connection_set_cache(cache->connection, NULL);
     g_object_unref(cache->connection);
 
     G_OBJECT_CLASS(hippo_data_cache_parent_class)->finalize(object); 
@@ -104,32 +105,51 @@ hippo_data_cache_new(HippoConnection *connection)
 
     cache->connection = connection;
     g_object_ref(cache->connection);
+    hippo_connection_set_cache(cache->connection, cache);
 
     return cache;
 }
 
-/* static for now... I think the public function should maybe be ensure_post 
- * or something that both creates and adds? need to look at callers to see.
- */
-static void
+void
 hippo_data_cache_add_post(HippoDataCache *cache,
                           HippoPost      *post)
 {
     g_return_if_fail(hippo_data_cache_lookup_post(cache, hippo_post_get_guid(post)) == NULL);
 
+    g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
     g_signal_emit(cache, signals[POST_ADDED], 0, post);
 }
 
-static void
+void
 hippo_data_cache_add_entity(HippoDataCache *cache,
                             HippoEntity    *entity)
 {
     g_return_if_fail(hippo_data_cache_lookup_entity(cache, hippo_entity_get_guid(entity)) == NULL);
 
+    g_object_ref(entity);
     g_hash_table_replace(cache->entities, g_strdup(hippo_entity_get_guid(entity)), entity);
     g_signal_emit(cache, signals[ENTITY_ADDED], 0, entity);    
 }
+
+HippoEntity*
+hippo_data_cache_ensure_bare_entity(HippoDataCache *cache,
+                                    HippoEntityType type,
+                                    const char     *guid)
+{
+    HippoEntity* entity;
+    
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    g_return_val_if_fail(guid != NULL, NULL);
+    
+    entity = hippo_data_cache_lookup_entity(cache, guid);
+    if (entity == NULL) {
+        entity = hippo_entity_new(type, guid);
+        hippo_data_cache_add_entity(cache, entity);
+        g_object_unref(entity);
+    }
+    return entity;
+}                                    
 
 HippoPost*
 hippo_data_cache_lookup_post(HippoDataCache  *cache, 

@@ -7,8 +7,7 @@
 
 G_BEGIN_DECLS
 
-typedef struct _HippoDataCache      HippoDataCache;
-typedef struct _HippoDataCacheClass HippoDataCacheClass;
+/* HippoDataCache forward-declared in hippo-connection.h */
 
 #define HIPPO_TYPE_DATA_CACHE              (hippo_data_cache_get_type ())
 #define HIPPO_DATA_CACHE(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_DATA_CACHE, HippoDataCache))
@@ -25,6 +24,19 @@ HippoPost*       hippo_data_cache_lookup_post            (HippoDataCache  *cache
                                                           const char      *guid);
 HippoEntity*     hippo_data_cache_lookup_entity          (HippoDataCache  *cache,
                                                           const char      *guid);
+/* A convenience method like ensure_post() doesn't work well because we want to be 
+ * able to init the properties of a post before adding it and thus emitting the 
+ * post-added signal
+ */
+void             hippo_data_cache_add_post               (HippoDataCache *cache,
+                                                          HippoPost      *post);
+void             hippo_data_cache_add_entity             (HippoDataCache *cache,
+                                                          HippoEntity    *entity);
+/* but sometimes we want an entity with no properties anyhow */
+HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
+                                                          HippoEntityType type,
+                                                          const char     *guid);
+                                                          
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);
 

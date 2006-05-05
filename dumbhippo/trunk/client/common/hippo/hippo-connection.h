@@ -5,6 +5,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoDataCache      HippoDataCache;
+typedef struct _HippoDataCacheClass HippoDataCacheClass;
+
 typedef enum {
     HIPPO_STATE_SIGNED_OUT,     // User hasn't asked to connect
     HIPPO_STATE_SIGN_IN_WAIT,   // Waiting for the user to sign in
@@ -32,6 +35,10 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 
 GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
+
+void             hippo_connection_set_cache                 (HippoConnection  *connection,
+                                                             HippoDataCache   *cache);
+
 HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
 HippoHotness     hippo_connection_get_hotness               (HippoConnection  *connection);
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
