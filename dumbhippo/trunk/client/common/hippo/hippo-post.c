@@ -23,8 +23,9 @@ struct _HippoPost {
      * here it's from post-related XMPP messages and in the
      * chat room from the chat-related messages. We should 
      * always use the chat room info when we have it, probably.
-     * But this could be here for posts where we aren't chatting,
-     * allowing us to avoid loading the whole chat room.
+     * But this could be here for posts while the chat room info
+     * is incoming. Currently we _always_ load the chat room info...
+     * but we don't have it when the post first appears.
      */
     int viewing_user_count;
     int chatting_user_count;
@@ -361,18 +362,20 @@ hippo_post_get_chat_room(HippoPost *post)
     return post->chat_room;
 }
 
-/* Don't emit the changed signal for this for now, it 
- * wouldn't be interesting
- */
 void
 hippo_post_set_chat_room(HippoPost     *post,
                          HippoChatRoom *room)
 {
     g_return_if_fail(HIPPO_IS_POST(post));
-    
+
+    if (room == post->chat_room)
+        return;
+            
     if (room)
         g_object_ref(room);
     if (post->chat_room)
         g_object_unref(post->chat_room);
     post->chat_room = room;
+    
+    hippo_post_emit_changed(post);
 }                         

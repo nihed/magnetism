@@ -2,6 +2,7 @@
 #define __HIPPO_CONNECTION_H__
 
 #include <hippo/hippo-platform.h>
+#include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
 
@@ -39,6 +40,9 @@ HippoConnection *hippo_connection_new                       (HippoPlatform    *p
 void             hippo_connection_set_cache                 (HippoConnection  *connection,
                                                              HippoDataCache   *cache);
 
+/* CAN RETURN NULL if we don't have auth information right now */
+const char*      hippo_connection_get_self_guid             (HippoConnection  *connection);
+
 HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
 HippoHotness     hippo_connection_get_hotness               (HippoConnection  *connection);
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
@@ -55,6 +59,22 @@ void             hippo_connection_provide_priming_music     (HippoConnection  *c
                                                              const HippoSong **songs,
                                                              int               n_songs);
                                                             
+/* enter/leave unconditionally send the presence message; send_state will 
+ * send the presence only if there's a need given old_state -> new_state
+ * transition, assuming no disconnect/connect between old and new state.
+ * To implement user clicking on a chat room to join, you'd use send_chat_room_state()
+ * which will send the presence and then we'll get back that we've joined and update
+ * HippoChatRoom accordingly.
+ */
+void             hippo_connection_send_chat_room_enter      (HippoConnection *connection,
+                                                             HippoChatRoom   *room,
+                                                             HippoChatState   state);
+void             hippo_connection_send_chat_room_leave      (HippoConnection *connection,
+                                                             HippoChatRoom   *room);
+void             hippo_connection_send_chat_room_state      (HippoConnection *connection,
+                                                             HippoChatRoom   *room,
+                                                             HippoChatState   old_state,
+                                                             HippoChatState   new_state);
 
 /* return string form of enum values */
 const char*      hippo_state_debug_string(HippoState state);

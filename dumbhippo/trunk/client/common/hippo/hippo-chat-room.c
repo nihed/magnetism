@@ -8,8 +8,8 @@ static void      hippo_chat_room_finalize    (GObject             *object);
 struct _HippoChatRoom {
     GObject parent;
     char *id;
+    char *jabber_id;
     HippoChatKind kind;
-    HippoChatState state;
     char *title;
     GHashTable *viewers;
     GHashTable *chatters;
@@ -26,7 +26,6 @@ G_DEFINE_TYPE(HippoChatRoom, hippo_chat_room, G_TYPE_OBJECT);
 
 enum {
     TITLE_CHANGED,
-    STATE_CHANGED,
     USER_STATE_CHANGED,
     MESSAGE_ADDED,
     CLEARED,
@@ -47,8 +46,6 @@ make_hash_tables(HippoChatRoom *room)
 static void
 hippo_chat_room_init(HippoChatRoom *room)
 {
-    room->state = HIPPO_CHAT_NONMEMBER;
-
     make_hash_tables(room);
 }
 
@@ -65,15 +62,6 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
-
-    signals[STATE_CHANGED] =
-        g_signal_new ("state-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__INT,
-            		  G_TYPE_NONE, 1, G_TYPE_INT);
 
     signals[USER_STATE_CHANGED] =
         g_signal_new ("user-state-changed",
@@ -122,6 +110,7 @@ hippo_chat_room_finalize(GObject *object)
     g_hash_table_destroy(room->viewers);
     g_hash_table_destroy(room->chatters);
     g_free(room->title);
+    g_free(room->jabber_id);
     g_free(room->id);
     
     G_OBJECT_CLASS(hippo_chat_room_parent_class)->finalize(object);
@@ -146,18 +135,25 @@ hippo_chat_room_get_id(HippoChatRoom *room)
     return room->id;
 }
 
+const char*
+hippo_chat_room_get_jabber_id(HippoChatRoom *room)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), NULL);
+    if (room->jabber_id == NULL) {
+        char *chat_jid;
+        
+        chat_jid = hippo_id_to_jabber_id(hippo_chat_room_get_id(room));
+        room->jabber_id = g_strconcat(chat_jid, "@rooms.dumbhippo.com", NULL);
+        g_free(chat_jid);
+    }
+    return room->jabber_id;
+}
+
 HippoChatKind
 hippo_chat_room_get_kind(HippoChatRoom *room)
 {
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_POST);
     return room->kind;
-}
-
-HippoChatState
-hippo_chat_room_get_state(HippoChatRoom  *room)
-{
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_NONMEMBER);
-    return room->state;
 }
 
 void
@@ -223,31 +219,6 @@ hippo_chat_room_get_users(HippoChatRoom  *room)
     g_hash_table_foreach(room->chatters, listify_foreach, &list);
     g_hash_table_foreach(room->viewers, listify_foreach, &list);
     return list;
-}
-
-/*
- * FIXME this is "write through" unlike the rest of HippoDataCache etc.
- * i.e. it updates local state before hearing back from the server.
- * Kind of strange.
- */
-void
-hippo_chat_room_set_state(HippoChatRoom  *room,
-                          HippoChatState  state)
-{
-    HippoChatState old_state;
-    
-    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    
-    if (room->state == state)
-        return;
-    old_state = room->state;
-    room->state = state;
-
-    /* FIXME this needs to send the appropriate XMPP, 
-     * see HippoIM::onChatRoomStateChange
-     */
-        
-    g_signal_emit(room, signals[STATE_CHANGED], 0, old_state);
 }
 
 int
@@ -356,17 +327,22 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
 }
 
 void
-hippo_chat_room_add_message(HippoChatRoom *room,
-                            HippoPerson   *sender,
-                            const char    *text,
-                            GTime          timestamp,
-                            int            serial)
+hippo_chat_room_add_message(HippoChatRoom    *room,
+                            HippoChatMessage *message)
 {
     GSList *link;
     GSList *prev;
+    int serial;    
     
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
     
+    if (room->messages == NULL) {
+        room->messages = g_slist_prepend(room->messages, message);
+        return;
+    }
+
+    serial = hippo_chat_message_get_serial(message);
+
     /* highest serial is earliest in the list */
     prev = NULL;
     for (link = room->messages; link != NULL; link = link->next) {
@@ -374,10 +350,10 @@ hippo_chat_room_add_message(HippoChatRoom *room,
         int old_serial = hippo_chat_message_get_serial(old);
         
         if (old_serial == serial) {
-            return; /* nothing to do, we already have this message */
+            /* We already have this message */
+            hippo_chat_message_free(message);
+            return;
         } else if (old_serial < serial) {
-            HippoChatMessage *message;
-            message = hippo_chat_message_new(sender, text, timestamp, serial);
             if (prev) {
                 g_assert(prev->next == link);
                 prev->next = g_slist_prepend(prev->next, message);
@@ -388,9 +364,10 @@ hippo_chat_room_add_message(HippoChatRoom *room,
             
             g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
             
-            break;
+            return;
+        } else {
+            prev = link;
         }
-        prev = link;
     }
 }
 

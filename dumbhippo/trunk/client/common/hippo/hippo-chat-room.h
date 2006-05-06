@@ -34,16 +34,16 @@ HippoChatRoom*   hippo_chat_room_new                    (const char   *chat_id,
                                                          HippoChatKind kind);
 
 const char*       hippo_chat_room_get_id                  (HippoChatRoom  *room);
+const char*       hippo_chat_room_get_jabber_id           (HippoChatRoom  *room);
 HippoChatKind     hippo_chat_room_get_kind                (HippoChatRoom  *room);
-HippoChatState    hippo_chat_room_get_state               (HippoChatRoom  *room);
+HippoChatState    hippo_chat_room_get_user_state          (HippoChatRoom  *room,
+                                                           HippoPerson    *person);
 void              hippo_chat_room_set_title               (HippoChatRoom  *room,
                                                            const char     *title);
 const char*       hippo_chat_room_get_title               (HippoChatRoom  *room);
 HippoChatMessage* hippo_chat_room_get_last_message        (HippoChatRoom  *room);
 /* need to unref each element and free the list when done with this */
 GSList*           hippo_chat_room_get_users               (HippoChatRoom  *room);
-void              hippo_chat_room_set_state               (HippoChatRoom  *room,
-                                                           HippoChatState  state);
 int               hippo_chat_room_get_viewing_user_count  (HippoChatRoom  *room);
 int               hippo_chat_room_get_chatting_user_count (HippoChatRoom  *room);
 
@@ -56,11 +56,11 @@ void     hippo_chat_room_set_filling             (HippoChatRoom *room,
 void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
                                                   HippoPerson   *person,
                                                   HippoChatState state);
-void     hippo_chat_room_add_message             (HippoChatRoom *room,
-                                                  HippoPerson   *sender,
-                                                  const char    *text,
-                                                  GTime          timestamp,
-                                                  int            serial);
+/* Ownership of the message passes to the chat room, which may IMMEDIATELY FREE
+ * the message if it's a dup
+ */
+void     hippo_chat_room_add_message             (HippoChatRoom    *room,
+                                                  HippoChatMessage *message);
 /* Called on reconnect, since users and messages will be resent */
 void     hippo_chat_room_clear                   (HippoChatRoom *room);
 

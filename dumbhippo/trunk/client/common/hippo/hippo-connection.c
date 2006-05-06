@@ -64,6 +64,12 @@ outgoing_message_unref(OutgoingMessage *outgoing)
 
 /* === HippoConnection implementation === */
 
+typedef enum {
+    PROCESS_MESSAGE_IGNORE,
+    PROCESS_MESSAGE_PEND,
+    PROCESS_MESSAGE_CONSUME
+} ProcessMessageResult;
+
 static void hippo_connection_finalize(GObject *object);
 
 static void     hippo_connection_start_signin_timeout (HippoConnection *connection);
@@ -90,6 +96,9 @@ static void     hippo_connection_process_prefs_node   (HippoConnection *connecti
 static void     hippo_connection_get_posts            (HippoConnection *connection);
 static void     hippo_connection_get_post             (HippoConnection *connection,
                                                        const char      *post_id);
+static void     hippo_connection_get_chat_room_details(HippoConnection *connection,
+                                                       HippoChatRoom   *room);
+static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* Loudmouth handlers */
 static LmHandlerResult handle_message     (LmMessageHandler *handler,
@@ -274,6 +283,13 @@ hippo_connection_set_cache(HippoConnection  *connection,
      g_return_if_fail(HIPPO_IS_CONNECTION(connection));
      
      connection->cache = cache;
+}
+
+const char*
+hippo_connection_get_self_guid(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+    return connection->username;
 }
 
 HippoState
@@ -1208,17 +1224,15 @@ hippo_connection_parse_post(HippoConnection *connection,
     g_slist_free(recipients);
 
     if (created_post) {
+        HippoChatRoom *room;
+        
         hippo_data_cache_add_post(connection->cache, post);
     
         /* Start filling in chatroom information for this post asynchronously */
-        /* FIXME 
-        HippoChatRoom *chatRoom = new HippoChatRoom(this, postId.m_str);
-        chatRooms_.append(chatRoom);
-        post->setChatRoom(chatRoom);
-        chatRoom->Release();
+        
+        room = hippo_data_cache_ensure_chat_room(connection->cache, post_guid, HIPPO_CHAT_POST);
 
-        getChatRoomDetails(chatRoom);
-        */
+        hippo_connection_get_chat_room_details(connection, room);
     }
     
     g_object_unref(post);
@@ -1322,7 +1336,7 @@ on_get_posts_reply(LmMessageHandler *handler,
     hippo_connection_parse_post_stream(connection, child, "on_get_posts_reply");
 
     /* Some chat room messages where we waiting for results may now be ready to process */
-    /* FIXME im->processPendingRoomMessages(); */
+    hippo_connection_process_pending_room_messages(connection);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1372,6 +1386,615 @@ hippo_connection_get_post(HippoConnection *connection,
     hippo_connection_get_recent_posts(connection, post_id);
 }
 
+static void 
+send_room_presence(HippoConnection *connection,
+                   HippoChatRoom   *room,
+                   LmMessageSubType subtype,
+                   HippoChatState   state)
+{
+    const char *to;
+    LmMessage *message;
+    
+    if (state == HIPPO_CHAT_NONMEMBER)
+        return;
+    
+    to = hippo_chat_room_get_jabber_id(room);
+    
+    message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_PRESENCE, subtype);
+
+    if (subtype == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
+        LmMessageNode *x_node;
+        LmMessageNode *user_info_node;
+        
+        x_node = lm_message_node_add_child(message->node, "x", NULL);
+        
+        lm_message_node_set_attribute(x_node, "xmlns", "http://jabber.org/protocol/muc");
+
+        user_info_node = lm_message_node_add_child(x_node, "userInfo", NULL);
+        lm_message_node_set_attribute(user_info_node, "xmlns", "http://dumbhippo.com/protocol/rooms");
+        lm_message_node_set_attribute(user_info_node, "role",
+                                      state == HIPPO_CHAT_PARTICIPANT ? "participant" : "visitor");
+    }
+
+    hippo_connection_send_message(connection, message);
+
+    lm_message_unref(message);
+}
+
+void
+hippo_connection_send_chat_room_enter(HippoConnection *connection,
+                                      HippoChatRoom   *room,
+                                      HippoChatState   state)
+{
+    send_room_presence(connection, room, LM_MESSAGE_SUB_TYPE_AVAILABLE,
+                       state);
+}
+
+void
+hippo_connection_send_chat_room_leave(HippoConnection *connection,
+                                      HippoChatRoom   *room)
+{
+    send_room_presence(connection, room, LM_MESSAGE_SUB_TYPE_UNAVAILABLE,
+                       HIPPO_CHAT_PARTICIPANT);
+}
+
+void
+hippo_connection_send_chat_room_state(HippoConnection *connection,
+                                      HippoChatRoom   *room,
+                                      HippoChatState   old_state,
+                                      HippoChatState   new_state)
+{
+    if (connection->state != HIPPO_STATE_AUTHENTICATED)
+        return;
+    
+    if (old_state == new_state)
+        return;
+    
+    if (old_state == HIPPO_CHAT_NONMEMBER) {
+        hippo_chat_room_clear(room);
+        hippo_connection_send_chat_room_enter(connection, room, new_state);
+    } else if (new_state == HIPPO_CHAT_NONMEMBER) {
+        hippo_connection_send_chat_room_leave(connection, room);
+    } else {
+        /* Change from Visitor => Participant or vice-versa */
+        hippo_connection_send_chat_room_enter(connection, room, new_state);
+    }
+}
+
+static gboolean
+parse_room_jid(const char *jid,
+               char      **chat_id_p,
+               char      **user_id_p)
+{
+    const char *at;
+    const char *slash;
+    char *room_name;
+ 
+    *chat_id_p = NULL;
+    *user_id_p = NULL;
+   
+    at = strchr(jid, '@');
+    if (!at)
+        return FALSE;
+
+    slash = strchr(at + 1, '/');
+    if (!slash)
+        slash = (at + 1) + strlen(at + 1);
+        
+    if (strncmp(at + 1, "rooms.dumbhippo.com", slash - (at + 1)) != 0)
+        return FALSE;
+
+    room_name = g_strndup(jid, at - jid);
+    *chat_id_p = hippo_id_from_jabber_id(room_name);
+    g_free(room_name);
+
+    if (*chat_id_p == NULL)
+        return FALSE;
+
+    if (slash) {
+        *user_id_p = hippo_id_from_jabber_id(slash + 1);
+        if (*user_id_p == NULL) {
+            g_free(*chat_id_p);
+            *chat_id_p = NULL;
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/* This reply has no content, it just signals the end of the 
+ * chat room data we asked the server to send.
+ */
+static LmHandlerResult
+on_get_chat_room_details_reply(LmMessageHandler *handler,
+                               LmConnection     *lconnection,
+                               LmMessage        *message,
+                               gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    const char *from;
+    char *chat_id;
+    char *user_id;
+    HippoChatRoom *room;
+    HippoChatKind kind;
+
+    from = lm_message_node_get_attribute(message->node, "from");
+
+    if (!from || !parse_room_jid(from, &chat_id, &user_id)) {
+        g_warning("getChatRoomDetails reply doesn't come from a chat room!");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    g_debug("end of chat room details for %s", chat_id);
+
+    room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &kind);
+    if (!room) {
+        g_warning("getChatRoomDetails reply for an unknown chatroom");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    hippo_chat_room_set_filling(room, FALSE);
+
+    /* FIXME the old code did the equivalent of emitting "changed" on 
+     * HippoPost here so the UI could update. We want to do this by having
+     * hippo_chat_room do that when set_filling(FALSE) perhaps, or just 
+     * by allowing the UI to update as we go along. Or have the UI 
+     * queue an idle when it gets the post changed signal, is another option.
+     * Anyway, doing it here isn't convenient anymore with the new code.
+     *
+     * Remove this comment once we're sure we've replaced the functionality.
+     */
+
+    /* process any pending notifications of new users / messages */
+    hippo_connection_process_pending_room_messages(connection);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static void
+hippo_connection_get_chat_room_details(HippoConnection *connection,
+                                       HippoChatRoom   *room)
+{
+    const char *to;
+    LmMessage *message;    
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+    
+    if (hippo_chat_room_get_filling(room)) {
+        /* not supposed to happen, if it does we could change 
+         * "filling" flag to a count
+         */
+        g_warning("already filling chat room and tried to do so again");
+        return;
+    }
+
+    hippo_chat_room_set_filling(room, TRUE);
+    to = hippo_chat_room_get_jabber_id(room);
+
+    message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_GET);
+
+    child = lm_message_node_add_child (message->node, "details", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
+
+    handler = lm_message_handler_new(on_get_chat_room_details_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    g_debug("Sent request for chat room details");
+}
+
+
+static gboolean
+parse_chat_user_info(HippoConnection *connection,
+                     LmMessageNode   *parent,
+                     HippoPerson     *person,
+                     HippoChatState  *status_p,
+                     gboolean        *newly_joined_p)
+{
+    LmMessageNode *info_node;
+    
+    info_node = find_child_node(parent, "http://dumbhippo.com/protocol/rooms", "userInfo");
+    if (!info_node) {
+        g_debug("Can't find userInfo node");
+        return FALSE;
+    }
+
+    {
+        int version_int;
+        HippoChatState status;
+        gboolean music_playing_bool;
+        const char *version = lm_message_node_get_attribute(info_node, "version");
+        const char *name = lm_message_node_get_attribute(info_node, "name");
+        const char *role = lm_message_node_get_attribute(info_node, "role");
+        const char *old_role = lm_message_node_get_attribute(info_node, "oldRole");
+        const char *arrangement_name = lm_message_node_get_attribute(info_node, "arrangementName");
+        const char *artist = lm_message_node_get_attribute(info_node, "artist");
+        const char *music_playing = lm_message_node_get_attribute(info_node, "musicPlaying");
+
+        if (!version || !name) {
+            g_warning("userInfo node without name and version");
+            return FALSE;
+        }        
+
+        version_int = atoi(version);
+        music_playing_bool = music_playing ? strcmp(music_playing, "TRUE") == 0 : FALSE;
+        
+        if (!role)
+            status = HIPPO_CHAT_PARTICIPANT;
+        else
+            status = strcmp(role, "participant") == 0 ? HIPPO_CHAT_PARTICIPANT : HIPPO_CHAT_VISITOR;
+
+        *status_p = status;
+        *newly_joined_p = old_role && strcmp(old_role, "nonmember") == 0;
+    
+        hippo_entity_set_version(HIPPO_ENTITY(person), version_int);
+        hippo_entity_set_name(HIPPO_ENTITY(person), name);
+        hippo_person_set_current_song(person, arrangement_name);
+        hippo_person_set_current_artist(person, artist);
+        hippo_person_set_music_playing(person, music_playing_bool);  
+    }
+
+    return TRUE;
+}
+
+static HippoChatMessage*
+parse_chat_message_info(HippoConnection  *connection, 
+                        LmMessageNode    *parent,
+                        HippoPerson      *sender,
+                        const char       *text,
+                        int              *version_p,
+                        const char      **name_p)
+{
+    LmMessageNode *info_node;
+    
+    info_node = find_child_node(parent, "http://dumbhippo.com/protocol/rooms", "messageInfo");
+    if (!info_node) {
+        g_debug("Can't find messageInfo node");
+        return FALSE;
+    }
+
+    {
+        const char *version_str = lm_message_node_get_attribute(info_node, "version");
+        const char *name_str = lm_message_node_get_attribute(info_node, "name");
+        const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
+        const char *serial_str = lm_message_node_get_attribute(info_node, "serial");
+        GTime timestamp;
+        int serial;
+
+        if (!version_str || !name_str || !timestamp_str || !serial_str) {
+            g_debug("messageInfo node without all fields");
+            return NULL;
+        }
+
+        *version_p = atoi(version_str);
+        *name_p = name_str;
+
+        timestamp = strtol(timestamp_str, NULL, 10);
+        serial = atoi(serial_str);
+        
+        return hippo_chat_message_new(sender, text, timestamp, serial);
+    }
+}
+
+static void
+process_room_chat_message(HippoConnection *connection,
+                          LmMessage       *message,
+                          HippoChatRoom   *room,
+                          const char      *user_id,
+                          gboolean         was_pending)
+{
+    const char *text;
+    LmMessageNode *body_node;
+    int version;
+    const char *name;
+    HippoChatMessage *chat_message;
+    HippoEntity *sender;
+    
+    body_node = lm_message_node_find_child(message->node, "body");
+    if (body_node)
+        text = lm_message_node_get_value(body_node);
+    else
+        text = NULL;
+
+    if (!text) {
+        g_debug("Chat room message without body");
+        return;
+    }
+
+    sender = hippo_data_cache_ensure_bare_entity(connection->cache, HIPPO_ENTITY_PERSON, user_id);
+
+    chat_message = parse_chat_message_info(connection, message->node, HIPPO_PERSON(sender),
+                                           text, &version, &name);
+    if (chat_message == NULL)
+        return;
+
+    /* update new info about the user */
+    hippo_entity_set_version(sender, version);
+    hippo_entity_set_name(sender, name);
+
+    /* We can usually skip this in the case where the message was pending - but
+     * it's tricky to get it exactly right. See comments in handleRoomPresence().
+     * Unlike presence, it's harmless to add the message again since we catch
+     * duplicate serials and ignore them.
+     */
+    /* Note, this passes ownership of the chat message and potentially 
+     * frees it immediately if it's a dup
+     */
+    hippo_chat_room_add_message(room, chat_message);
+
+    
+    /* FIXME verify this is now handled by signals, then delete this
+    
+    HippoPost *post = ui_->getDataCache().getPost(room->getChatId());
+    if (post && !room->getFilling()) {
+        if (room->getState() == HippoChatRoom::NONMEMBER)
+            ui_->onChatRoomMessage(post);
+        else
+            ui_->updatePost(post);
+    }
+    */
+}
+
+static void
+process_room_presence(HippoConnection *connection,
+                      LmMessage       *message,
+                      HippoChatRoom   *room,
+                      const char      *user_id,
+                      gboolean         was_pending)
+{
+    LmMessageSubType subtype;
+    HippoPost *post;
+    gboolean is_self;
+    
+    subtype = lm_message_get_sub_type(message);
+
+    /* remember that the chat may not be about a post in which case this
+     * will be null (can also be null if we just have never heard of this post?)
+     */
+    post = hippo_data_cache_lookup_post(connection->cache, hippo_chat_room_get_id(room));
+
+    is_self = (connection->username && strcmp(connection->username, user_id) == 0);
+
+    /* FIXME: If we get pend a chat room presence while getting the details of the 
+     * chatroom, then we'll have a more recent view of the chatroom's viewer set than that
+     * the message, so we don't want to update the chatroom, we just want to 
+     * notify the user. We should skip even notifying the user in the case where someone
+     * started viewing and then left before we got around to notifying
+     *
+     * The tricky bit here is if we had the chatroom around (the user had joined
+     * it by navigating to the post through /home, say), but not the post, then
+     * we still need to update the chatroom despite wasPending. So, we really
+     * need to keep more information around about the history of the message
+     */
+
+    /* FIXME - this was in the old code but makes no sense to me 
+       because I don't see where we update the viewer list on the post
+       again, and we don't fall back to using the chat room viewers list.
+       
+       See also comments in hippo-post.c about keeping redundant info
+       on the post itself and in the chat room.
+       
+       I think this line can be deleted, and HippoPost changed so that if 
+       it has a chat room, it always uses the viewer list from that and 
+       not post->viewers
+       
+    if (post)
+        post->resetCurrentViewers();
+    */
+    
+    if (subtype == LM_MESSAGE_SUB_TYPE_AVAILABLE) {
+        LmMessageNode *x_node;
+        HippoChatState status;
+        gboolean newly_joined;
+        HippoEntity *entity;
+        HippoPerson *person;
+        gboolean created_entity;
+        
+        x_node = find_child_node(message->node, "http://jabber.org/protocol/muc#user", "x");
+        if (!x_node) {
+            g_debug("Presence without x child");
+            return;
+        }
+
+        entity = hippo_data_cache_lookup_entity(connection->cache, user_id);
+        if (entity == NULL) {
+            entity = hippo_entity_new(HIPPO_ENTITY_PERSON, user_id);
+            created_entity = TRUE;
+        } else {
+            created_entity = FALSE;
+            g_object_ref(entity);
+        }
+        if (!HIPPO_IS_PERSON(entity)) {
+            g_warning("not a person entity corresponding to user_id");
+            return;
+        }
+        person = HIPPO_PERSON(entity);
+
+        if (!parse_chat_user_info(connection, x_node, person, &status, &newly_joined))
+            return;
+        if (created_entity) {
+            hippo_data_cache_add_entity(connection->cache, entity);
+        }
+        g_object_unref(entity);
+
+        /* add them to chat room or update their state in chat room */
+        hippo_chat_room_set_user_state(room, person, status);
+
+        if (is_self) {
+            if (post)
+                hippo_post_set_have_viewed(post, TRUE);
+        }
+
+        /* FIXME this should now work via signals, verify then remove this comment
+        if (artist && arrangementName) {
+            room->updateMusicForUser(userId, arrangementName, artist, musicPlaying);
+        }
+        */
+
+        /* The obvious algorithm to tell whether we should notify the user about this member: 
+         * was the user in room's list of users before doesn't work because of the case:
+         *
+         *   - Receive a message saying the user is newly joined, pend it
+         *   - Get the information about all the users (including the newly joined one)
+         *   - Process the pending message
+         *
+         * So instead, we go off the oldRole attribute in the <presence/> message which is 
+         * there for exactly this purpose... to distinguish "interesting" presence transitions
+         * like NONMEMBER => VISITOR from uninteresting ones like PARTICIPANT => VISITOR
+         */
+        /* FIXME this mess should get replaced by signal handling... verify then remove
+        if (post && !room->getFilling()) {
+            if (room->getState() == HippoChatRoom::NONMEMBER && newlyJoined)
+                ui_->onViewerJoin(post);
+            else
+                ui_->updatePost(post);
+        }
+        */
+
+    } else if (subtype == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
+        HippoEntity *entity;
+        
+        entity = hippo_data_cache_lookup_entity(connection->cache, user_id);
+        if (entity != NULL) {
+            hippo_chat_room_set_user_state(room, HIPPO_PERSON(entity), HIPPO_CHAT_NONMEMBER);            /* FIXME be sure we handle this via signals 
+            if (post && !room->getFilling())
+                ui_->updatePost(post);
+            */
+        }
+    }
+}
+
+ProcessMessageResult
+process_room_message(HippoConnection *connection,
+                     LmMessage       *message,
+                     gboolean         was_pending)
+{
+    /* this could be a chat message or a presence notification */
+
+    ProcessMessageResult result;
+    const char *from;
+    LmMessageNode *info_node;
+    const char *kind_str;
+    HippoChatKind kind;
+    char *chat_id;
+    char *user_id;
+    HippoChatRoom *room;
+    HippoChatKind existing_kind;
+
+    chat_id = NULL;
+    user_id = NULL;
+
+    /* IGNORE = run other handlers CONSUME = we handled it
+     * PEND = save for after we fill chatroom
+     */
+    result = PROCESS_MESSAGE_IGNORE;
+
+    from = lm_message_node_get_attribute(message->node, "from");
+    info_node = find_child_node(message->node, "http://dumbhippo.com/protocol/rooms", "roomInfo");
+    if (!info_node) {
+        g_debug("Can't find roomInfo node");
+        goto out;
+    }
+
+    kind_str = lm_message_node_get_attribute(info_node, "kind");
+    if (kind_str == NULL) {
+        /* assume it's an old server which lacked "kind" but was always about posts */
+        kind = HIPPO_CHAT_POST;
+    } else if (strcmp(kind_str, "post") == 0) {
+        kind = HIPPO_CHAT_POST;
+    } else if (strcmp(kind_str, "group") == 0) {
+        kind = HIPPO_CHAT_GROUP;
+    } else {
+        g_warning("Unknown chat kind %s", kind_str);
+        goto out;
+    }
+
+    if (!from || !parse_room_jid(from, &chat_id, &user_id)) {
+        g_warning("Failed to parse room ID");
+        goto out;
+    }
+
+    room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);
+    
+    if (room && existing_kind != kind) {
+        g_warning("confusion about kind of room %s, giving up", chat_id);
+        goto out;
+    }
+    
+    if (!room) {
+        /* This is a spontaneous message from a chatroom, which we'll bubble up
+         * for the user, right now only if the chat is about a post.
+         * In order to do that, we need both the rest of the information
+         * about the chatroom (the present users, and so forth), and also the information
+         * about the post like the title, description, and so on. We could get
+         * these two things in parallel, but to simplify, we first get the 
+         * post, to have a place to hang the chatroom off of, then we get the
+         * chat room information.
+         *
+         * Here we rely on the fact that we always get the chat room for every post.
+         */
+        if (kind == HIPPO_CHAT_POST) {
+            HippoPost *post;
+            
+            post = hippo_data_cache_lookup_post(connection->cache, chat_id);
+            if (!post) {
+                /* If multiple messages from a chatroom that we aren't part of come in,
+                 * we might retrieve the chat room information multiple times; but 
+                 * that's harmless, so we don't bother keeping track of what posts
+                 * we are in the process of retrieving.
+                 */
+                 hippo_connection_get_post(connection, chat_id);
+            }
+            result = PROCESS_MESSAGE_PEND;
+            goto out;
+        } else {
+            /* spontaneous messages that aren't about posts we just want to ignore */
+            result = PROCESS_MESSAGE_CONSUME;
+            goto out;
+        }
+    }
+
+    /* If we got a message and request the room contents in response to that,
+     * wait until we finish until we process that message
+     */
+    if (was_pending && hippo_chat_room_get_filling(room)) {
+        result = PROCESS_MESSAGE_PEND;
+        goto out;
+    }
+
+    if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE)
+        process_room_chat_message(connection, message, room, user_id, was_pending);
+    else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE)
+        process_room_presence(connection, message, room, user_id, was_pending);
+
+    result = PROCESS_MESSAGE_CONSUME;
+    
+  out:
+  
+    g_free(chat_id);
+    g_free(user_id);
+    
+    return result;
+}
+
+static void 
+hippo_connection_process_pending_room_messages(HippoConnection *connection)
+{
+    GList *l = connection->pending_room_messages->head;
+    while (l) {
+        GList *next = l->next;
+
+        LmMessage *message = l->data;
+        if (process_room_message(connection, message, TRUE) != PROCESS_MESSAGE_PEND) {
+            g_queue_delete_link(connection->pending_room_messages, l);
+            lm_message_unref(message);
+        }
+        
+        l = next;
+    }
+}
+
 /* === HippoConnection Loudmouth handlers === */
 
 gboolean
@@ -1400,7 +2023,7 @@ handle_live_post_changed(HippoConnection *connection,
      * up when viewers are added comes from the separate "chat room" path, so just
      * suppress things here. There's some work later to rip out this path, assuming that
      * we actually don't ever need to update the bubble display from livePostChanged
-     * ui_->onLinkMessage(post, false);
+     * ui_->onLinkMessage(post, FALSE);
      */
 
     return TRUE;
@@ -1468,18 +2091,19 @@ handle_message (LmMessageHandler *handler,
                 gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
-    /* FIXME
-    switch (im->processRoomMessage(message, FALSE)) {
+    
+    switch (process_room_message(connection, message, FALSE)) {
         case PROCESS_MESSAGE_IGNORE:
             break;
         case PROCESS_MESSAGE_CONSUME:
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         case PROCESS_MESSAGE_PEND:
             lm_message_ref(message);
-            g_queue_push_tail(im->pendingRoomMessages_, message);
+            g_queue_push_tail(connection->pending_room_messages, message);
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
      }
 
+    /* FIXME
     char *mySpaceName = NULL;
     if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
         im->handleMySpaceNameChangedMessage(mySpaceName);
@@ -1592,18 +2216,6 @@ handle_authenticate(LmConnection *lconnection,
 
     hippo_connection_send_message(connection, message);
     hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);
-
-    /* FIXME
-
-    // Enter any chatrooms that we are (logically) connected to
-    for (unsigned long i = 0; i < im->chatRooms_.length(); i++) {
-        // We left the previous contents there while we were disconnected,
-        // clear it since we'll now get the current contents sent
-        im->chatRooms_[i]->clear();
-        if (im->chatRooms_[i]->getState() != HippoChatRoom::NONMEMBER) 
-            im->sendChatRoomEnter(im->chatRooms_[i], im->chatRooms_[i]->getState() == HippoChatRoom::PARTICIPANT);
-    }
-    */
 
     hippo_connection_get_client_info(connection);
     hippo_connection_update_prefs(connection);
