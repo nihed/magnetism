@@ -15,6 +15,9 @@ struct _HippoDataCache {
     GHashTable      *entities;
     GHashTable      *group_chats;
     HippoPerson     *cached_self;
+    HippoHotness     hotness;
+    unsigned int     music_sharing_enabled : 1;
+    unsigned int     music_sharing_primed : 1;    
 };
 
 struct _HippoDataCacheClass {
@@ -27,6 +30,8 @@ enum {
     POST_REMOVED,
     ENTITY_ADDED,
     ENTITY_REMOVED,
+    MUSIC_SHARING_CHANGED,
+    HOTNESS_CHANGED,    
     LAST_SIGNAL
 };
 
@@ -40,9 +45,19 @@ hippo_data_cache_init(HippoDataCache *cache)
     cache->posts = g_hash_table_new_full(g_str_hash, g_str_equal,
                                          g_free, (GFreeFunc) g_object_unref);
     cache->entities = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                            g_free, (GFreeFunc) g_object_unref);                                            
+                                            g_free, (GFreeFunc) g_object_unref);
     cache->group_chats = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                               g_free, (GFreeFunc) g_object_unref);                                         
+                                               g_free, (GFreeFunc) g_object_unref);
+                                               
+    /* these defaults are important to be sure we
+     * do nothing until we hear otherwise
+     * (and to be sure a signal is emitted if we need to
+     * do something, since stuff will have changed)
+     */
+    cache->music_sharing_enabled = FALSE;
+    cache->music_sharing_primed = TRUE;
+    
+    cache->hotness = HIPPO_HOTNESS_UNKNOWN;                                               
 }
 
 static void
@@ -86,6 +101,24 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__OBJECT,
             		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
+    signals[MUSIC_SHARING_CHANGED] =
+        g_signal_new ("music-sharing-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
+    signals[HOTNESS_CHANGED] =
+        g_signal_new ("hotness-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__INT,
+            		  G_TYPE_NONE, 1, G_TYPE_INT);
+
     object_class->finalize = hippo_data_cache_finalize;
 }
 
@@ -128,6 +161,83 @@ hippo_data_cache_new(HippoConnection *connection)
 
     return cache;
 }
+
+HippoHotness
+hippo_data_cache_get_hotness(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), HIPPO_HOTNESS_COLD);
+    return cache->hotness;
+}
+
+gboolean
+hippo_data_cache_get_music_sharing_enabled(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), FALSE);
+    return cache->music_sharing_enabled;
+}
+
+gboolean
+hippo_data_cache_get_need_priming_music(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), FALSE);
+    return cache->music_sharing_enabled && !cache->music_sharing_primed;
+}
+
+void
+hippo_data_cache_set_hotness(HippoDataCache  *cache,
+                             HippoHotness     hotness)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    if (hotness != cache->hotness) {
+        g_debug("new hotness %s", hippo_hotness_debug_string(hotness));
+        cache->hotness = hotness;
+        g_signal_emit(cache, signals[HOTNESS_CHANGED], 0, hotness);
+    }
+}
+
+static void
+set_music_sharing(HippoDataCache *cache,
+                  gboolean        enabled,
+                  gboolean        primed)
+{
+    gboolean old_enabled;
+    gboolean old_need_primed;
+
+    /* note that need_primed is a function of two props (enabled and primed)
+     * on the data cache
+     */
+    old_enabled = hippo_data_cache_get_music_sharing_enabled(cache);
+    old_need_primed = hippo_data_cache_get_need_priming_music(cache);
+    
+    cache->music_sharing_enabled = enabled != FALSE;
+    cache->music_sharing_primed = primed != FALSE;
+    
+    if (old_enabled != hippo_data_cache_get_music_sharing_enabled(cache) ||
+        old_need_primed != hippo_data_cache_get_need_priming_music(cache)) {
+        g_debug("music sharing changed enabled = %d primed = %d",
+                cache->music_sharing_enabled, cache->music_sharing_primed);
+        g_signal_emit(cache, signals[MUSIC_SHARING_CHANGED], 0);
+    }
+}
+
+void
+hippo_data_cache_set_music_sharing_enabled(HippoDataCache  *cache,
+                                           gboolean         enabled)
+{    
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    set_music_sharing(cache, enabled, cache->music_sharing_primed);
+}
+
+void
+hippo_data_cache_set_music_sharing_primed(HippoDataCache  *cache,
+                                          gboolean         primed)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    set_music_sharing(cache, cache->music_sharing_enabled, primed);
+}                                          
 
 void
 hippo_data_cache_add_post(HippoDataCache *cache,

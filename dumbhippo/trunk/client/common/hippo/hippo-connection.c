@@ -1,5 +1,5 @@
 #include "hippo-connection.h"
-#include "hippo-data-cache.h"
+#include "hippo-data-cache-internal.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
@@ -132,11 +132,8 @@ struct _HippoConnection {
     GQueue *pending_outgoing_messages;
     /* queue of LmMessage */
     GQueue *pending_room_messages;
-    unsigned int music_sharing_enabled : 1;
-    unsigned int music_sharing_primed : 1;
     char *username;
     char *password;
-    HippoHotness hotness;
 };
 
 struct _HippoConnectionClass {
@@ -149,8 +146,6 @@ enum {
     STATE_CHANGED,
     AUTH_FAILURE,
     AUTH_SUCCESS,
-    MUSIC_SHARING_TOGGLED,
-    HOTNESS_CHANGED,
     LAST_SIGNAL
 };
 
@@ -162,16 +157,6 @@ hippo_connection_init(HippoConnection *connection)
     connection->state = HIPPO_STATE_SIGNED_OUT;
     connection->pending_outgoing_messages = g_queue_new();
     connection->pending_room_messages = g_queue_new();
-    
-    /* these defaults are important to be sure we
-     * do nothing until we hear otherwise
-     * (and to be sure a signal is emitted if we need to
-     * do something, since stuff will have changed)
-     */
-    connection->music_sharing_enabled = FALSE;
-    connection->music_sharing_primed = TRUE;
-    
-    connection->hotness = HIPPO_HOTNESS_UNKNOWN;
 }
 
 static void
@@ -205,24 +190,6 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0); 
-
-    signals[MUSIC_SHARING_TOGGLED] =
-        g_signal_new ("music-sharing-toggled",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__BOOLEAN,
-            		  G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
-
-    signals[HOTNESS_CHANGED] =
-        g_signal_new ("hotness-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__INT,
-            		  G_TYPE_NONE, 1, G_TYPE_INT);
           
     object_class->finalize = hippo_connection_finalize;
 }
@@ -297,13 +264,6 @@ hippo_connection_get_state(HippoConnection *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), HIPPO_STATE_SIGNED_OUT);
     return connection->state;
-}
-
-HippoHotness
-hippo_connection_get_hotness(HippoConnection  *connection)
-{
-    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), HIPPO_HOTNESS_UNKNOWN);
-    return connection->hotness;
 }
 
 /* Returns whether we have the login cookie */
@@ -385,9 +345,10 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
     g_return_if_fail(!currently_playing || song != NULL);
     
     /* If the user has music sharing off, then we never send their info
-     * to the server.
+     * to the server. (this is a last-ditch protection; we aren't supposed
+     * to be monitoring the music app either in this case)
      */
-    if (!connection->music_sharing_enabled)
+    if (!hippo_data_cache_get_music_sharing_enabled(connection->cache))
         return;
 
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
@@ -409,45 +370,32 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
     /* g_print("Sent music changed xmpp message"); */
 }
 
-gboolean
-hippo_connection_get_music_sharing_enabled (HippoConnection  *connection)
-{
-    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
-    
-    return connection->music_sharing_enabled;
-}
-
-gboolean
-hippo_connection_get_need_priming_music(HippoConnection  *connection)
-{
-    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
-    
-    return connection->music_sharing_enabled && !connection->music_sharing_primed;
-}
-
 void
 hippo_connection_provide_priming_music(HippoConnection  *connection,
                                        const HippoSong **songs,
                                         int               n_songs)
 {
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *music;
+    int i;
+    
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     g_return_if_fail(songs != NULL);
 
-    if (!connection->music_sharing_enabled || connection->music_sharing_primed) {
+    if (!hippo_data_cache_get_need_priming_music(connection->cache)) {
         /* didn't need to prime after all (maybe someone beat us to it) */
         return;
     }
 
-    LmMessage *message;
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
-    LmMessageNode *node = lm_message_get_node(message);
+    node = lm_message_get_node(message);
 
-    LmMessageNode *music = lm_message_node_add_child (node, "music", NULL);
+    music = lm_message_node_add_child (node, "music", NULL);
     lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
     lm_message_node_set_attribute(music, "type", "primingTracks");
 
-    int i;
     for (i = 0; i < n_songs; ++i) {
         LmMessageNode *track = lm_message_node_add_child(music, "track", NULL);
         add_track_props(track, songs[i]->keys, songs[i]->values);
@@ -457,9 +405,9 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
 
     lm_message_unref(message);
     /* we should also get back a notification from the server when this changes,
-       but we want to avoid re-priming so this adds robustness
+     * but we want to avoid re-priming so this adds robustness
      */
-    connection->music_sharing_primed = TRUE;
+    hippo_data_cache_set_music_sharing_primed(connection->cache, TRUE);
 }
 
 
@@ -916,7 +864,10 @@ static void
 hippo_connection_process_prefs_node(HippoConnection *connection,
                                     LmMessageNode   *prefs_node)
 {
-    gboolean old_music_sharing_enabled = connection->music_sharing_enabled;
+    gboolean music_sharing_enabled = FALSE;
+    gboolean saw_music_sharing_enabled = FALSE;
+    gboolean music_sharing_primed = TRUE;
+    gboolean saw_music_sharing_primed = FALSE;
     LmMessageNode *child;
     
     for (child = prefs_node->children; child != NULL; child = child->next) {
@@ -930,19 +881,25 @@ hippo_connection_process_prefs_node(HippoConnection *connection,
         }
         
         if (strcmp(key, "musicSharingEnabled") == 0) {
-            connection->music_sharing_enabled = value != NULL && strcmp(value, "TRUE") == 0;
-            g_debug("musicSharingEnabled set to %d", (int) connection->music_sharing_enabled);
+            music_sharing_enabled = value != NULL && strcmp(value, "TRUE") == 0;
+            saw_music_sharing_enabled = TRUE;
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
-            connection->music_sharing_primed = value != NULL && strcmp(value, "TRUE") == 0;
-            g_debug("musicSharingPrimed set to %d", (int) connection->music_sharing_primed);
+            music_sharing_primed = value != NULL && strcmp(value, "TRUE") == 0;
+            saw_music_sharing_primed = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
         }
     }
-    /* notify the music monitor engines that they may want to kick in or out */
-    if (old_music_sharing_enabled != connection->music_sharing_enabled)
-        g_signal_emit(connection, signals[MUSIC_SHARING_TOGGLED], 0,
-            (gboolean) connection->music_sharing_enabled);
+    
+    
+    /* Important to set primed then enabled, so when the signal is emitted from the 
+     * data cache for enabled, primed will already be set.
+     */
+    if (saw_music_sharing_primed)
+        hippo_data_cache_set_music_sharing_primed(connection->cache, music_sharing_primed);
+    
+    if (saw_music_sharing_enabled)
+        hippo_data_cache_set_music_sharing_enabled(connection->cache, music_sharing_enabled);
 }
 
 static gboolean
@@ -2056,11 +2013,7 @@ handle_hotness_changed(HippoConnection *connection,
             return FALSE;
         hotness = hotness_from_string(hotness_str);
  
-        if (hotness != connection->hotness) {
-            g_debug("new hotness %s", hippo_hotness_debug_string(hotness));
-            connection->hotness = hotness;
-            g_signal_emit(connection, signals[HOTNESS_CHANGED], 0, hotness);
-        }
+        hippo_data_cache_set_hotness(connection->cache, hotness);
  
         return TRUE;
    }
@@ -2159,7 +2112,10 @@ handle_presence (LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     g_debug("handle_presence");
 
-    /* FIXME */
+    if (process_room_message(connection, message, FALSE) == PROCESS_MESSAGE_PEND) {
+        lm_message_ref(message);
+        g_queue_push_tail(connection->pending_room_messages, message);
+    }
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }

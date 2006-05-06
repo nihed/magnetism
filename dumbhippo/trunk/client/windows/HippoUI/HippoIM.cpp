@@ -73,6 +73,10 @@ delete_outgoing_message(void *p, void *user_data)
 
 HippoIM::~HippoIM()
 {
+    /* FIXME the chat room destructor calls removeChatRoom 
+     * which pulls it out of this array... fortunately we never
+     * destroy HippoIM right now.
+     */
     for (unsigned long i = 0; i < chatRooms_.length(); i++)
         delete chatRooms_[i];
 
