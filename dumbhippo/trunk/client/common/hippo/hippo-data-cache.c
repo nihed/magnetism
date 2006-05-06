@@ -1,4 +1,4 @@
-#include "hippo-data-cache.h"
+#include "hippo-data-cache-internal.h"
 
 static void      hippo_data_cache_init                (HippoDataCache       *cache);
 static void      hippo_data_cache_class_init          (HippoDataCacheClass  *klass);
@@ -12,6 +12,7 @@ struct _HippoDataCache {
     GObject          parent;
     HippoConnection *connection;
     GHashTable      *posts;
+    GSList          *active_posts;
     GHashTable      *entities;
     GHashTable      *group_chats;
     HippoPerson     *cached_self;
@@ -31,7 +32,8 @@ enum {
     ENTITY_ADDED,
     ENTITY_REMOVED,
     MUSIC_SHARING_CHANGED,
-    HOTNESS_CHANGED,    
+    HOTNESS_CHANGED,
+    ACTIVE_POSTS_CHANGED,
     LAST_SIGNAL
 };
 
@@ -119,6 +121,15 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__INT,
             		  G_TYPE_NONE, 1, G_TYPE_INT);
 
+    signals[ACTIVE_POSTS_CHANGED] =
+        g_signal_new ("active-posts-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
     object_class->finalize = hippo_data_cache_finalize;
 }
 
@@ -126,6 +137,8 @@ static void
 hippo_data_cache_finalize(GObject *object)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(object);
+
+    hippo_data_cache_clear_active_posts(cache);
 
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
     g_hash_table_destroy(cache->posts);
@@ -344,6 +357,107 @@ hippo_data_cache_get_recent_posts(HippoDataCache  *cache)
     
     lrpd.list = g_slist_sort(lrpd.list, post_date_compare);
     return lrpd.list;
+}
+
+GSList*
+hippo_data_cache_get_active_posts(HippoDataCache  *cache)
+{
+    GSList *copy;
+
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+   
+    copy = g_slist_copy(cache->active_posts);
+    g_slist_foreach(copy, (GFunc) g_object_ref, NULL);
+    return copy;    
+}
+
+static gboolean
+clear_active_posts_no_signal(HippoDataCache *cache)
+{
+    GSList *tmp;
+
+    if (cache->active_posts == NULL)
+        return FALSE; /* don't emit changed signal */
+    
+    tmp = cache->active_posts;
+    cache->active_posts = NULL;
+    g_slist_foreach(tmp, (GFunc) g_object_unref, NULL);
+    g_slist_free(tmp);
+    
+    return TRUE;
+}
+
+void
+hippo_data_cache_clear_active_posts(HippoDataCache  *cache)
+{    
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    
+    if (clear_active_posts_no_signal(cache))
+        g_signal_emit(cache, signals[ACTIVE_POSTS_CHANGED], 0);
+}
+
+
+static gboolean
+add_active_posts_no_signal(HippoDataCache  *cache,
+                           GSList          *posts)
+{                           
+    GSList *link;
+    GSList *copy;
+    gboolean added_anything;
+
+    added_anything = FALSE;
+
+    /* Make a backward copy so we can prepend each post 
+     * and end up keeping their order
+     */
+    copy = g_slist_copy(posts);
+    copy = g_slist_reverse(copy);
+
+    /* This is a terrible algorithm but the lists are supposed
+     * to be very short so it should be OK
+     */
+    for (link = copy; link != NULL; link = link->next) {
+        HippoPost *post = link->data;
+        if (g_slist_find(cache->active_posts, post)) {
+            ; /* nothing, already in there */
+        } else {
+            cache->active_posts = g_slist_prepend(cache->active_posts, post);
+            g_object_ref(post);
+            added_anything = TRUE;
+        }
+    }
+    
+    g_slist_free(copy);
+
+    return added_anything;
+}
+
+void
+hippo_data_cache_add_active_posts(HippoDataCache  *cache,
+                                  GSList          *posts)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    if (add_active_posts_no_signal(cache, posts)) {
+        g_signal_emit(cache, signals[ACTIVE_POSTS_CHANGED], 0);
+    }
+}
+
+void
+hippo_data_cache_set_active_posts(HippoDataCache  *cache,
+                                  GSList          *posts)
+{
+    gboolean cleared;
+    gboolean added;
+    
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    cleared = clear_active_posts_no_signal(cache);
+    added = add_active_posts_no_signal(cache, posts);
+    if (cleared || added) {
+        g_signal_emit(cache, signals[ACTIVE_POSTS_CHANGED], 0);
+    }
 }
 
 HippoChatRoom*

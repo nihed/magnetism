@@ -920,7 +920,8 @@ is_live_post(LmMessageNode *node)
 
 static gboolean
 hippo_connection_parse_live_post(HippoConnection *connection,
-                                 LmMessageNode   *child)
+                                 LmMessageNode   *child,
+                                 HippoPost      **post_p)
 {
     HippoPost *post;
     LmMessageNode *node;
@@ -998,7 +999,10 @@ hippo_connection_parse_live_post(HippoConnection *connection,
     if (seen_self)
         hippo_post_set_have_viewed(post, TRUE);
 
-    g_object_unref(post);
+    if (post_p)
+        *post_p = post;
+    else
+        g_object_unref(post);
 
     return TRUE;
     
@@ -1215,7 +1219,7 @@ hippo_connection_parse_post_stream(HippoConnection *connection,
                 return FALSE;
             }
         } else if (is_live_post(subchild)) {
-            if (!hippo_connection_parse_live_post(connection, subchild)) {
+            if (!hippo_connection_parse_live_post(connection, subchild, NULL)) {
                 g_warning("failed to parse live post in %s", func_name);
                 return FALSE;
             }
@@ -1263,7 +1267,7 @@ hippo_connection_parse_post_data(HippoConnection *connection,
                 return FALSE;
             }
 
-            if (!hippo_connection_parse_live_post(connection, subchild)) {
+            if (!hippo_connection_parse_live_post(connection, subchild, NULL)) {
                 g_warning("failed to parse live post in %s", func_name);
                 return FALSE;
             }
@@ -1986,6 +1990,67 @@ handle_live_post_changed(HippoConnection *connection,
     return TRUE;
 }
 
+gboolean
+handle_active_posts_message(HippoConnection *connection,
+                            LmMessage       *message)
+{
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE
+       || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET) {
+        LmMessageNode *child;
+        LmMessageNode *subchild;
+        GSList *active_posts;    
+        
+        child = find_child_node(message->node, "http://dumbhippo.com/protocol/post", "activePostsChanged");
+        if (!child)
+            return FALSE;
+            
+        g_debug("handling activePostsChanged message");
+        
+        active_posts = NULL;
+        
+        for (subchild = child->children; subchild; subchild = subchild->next) {
+            if (is_entity(subchild)) {
+                if (!hippo_connection_parse_entity(connection, subchild)) {
+                    g_warning("failed to parse entity in activePostsChanged");
+                }
+            } else if (is_post(subchild)) {
+                if (!hippo_connection_parse_post(connection, subchild)) {
+                    g_warning("failed to parse post in activePostsChanged");
+                }
+                /* The ordering is important here - we expect the post node to come first,
+                 * when the live post data is seen we add it
+                 */
+                continue;
+            } else if (is_live_post(subchild)) {
+                HippoPost *post;
+                
+                if (!hippo_connection_parse_live_post(connection, subchild, &post)) {
+                    g_warning("failed to parse live post in activePostsChanged");
+                } else {
+                    g_assert(post != NULL);
+                    g_assert(HIPPO_IS_POST(post));
+                    active_posts = g_slist_prepend(active_posts, post);
+                }
+                continue;
+            }
+        }
+
+        /* Keep the server's order */        
+        active_posts = g_slist_reverse(active_posts);
+        
+        /* Set on the data cache, emitting active-posts-changed signal */
+        hippo_data_cache_set_active_posts(connection->cache, active_posts);
+
+        /* free it all */
+        g_slist_foreach(active_posts, (GFunc) g_object_unref, NULL);
+        g_slist_free(active_posts);
+        
+        return TRUE;
+   } else {
+       return FALSE;
+   }
+}
+
 static HippoHotness
 hotness_from_string(const char *str)
 {
@@ -2063,16 +2128,16 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (im->handleActivePostsMessage(message)) {
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
     if (im->checkMySpaceContactCommentMessage(message)) {
         im->handleMySpaceContactCommentMessage();
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
     */
+
+    if (handle_active_posts_message(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
 
     if (handle_live_post_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;

@@ -40,6 +40,7 @@ HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
                                                           
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);
+GSList*          hippo_data_cache_get_active_posts       (HippoDataCache  *cache);
 
 HippoChatRoom*   hippo_data_cache_lookup_chat_room       (HippoDataCache  *cache,
                                                           const char      *chat_id,
