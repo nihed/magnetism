@@ -46,6 +46,9 @@ void             hippo_data_cache_add_active_posts          (HippoDataCache  *ca
                                                              GSList          *posts);
 void             hippo_data_cache_set_active_posts          (HippoDataCache  *cache,
                                                              GSList          *posts);
+                                                             
+void             hippo_data_cache_set_myspace_name          (HippoDataCache  *cache,
+                                                             const char      *name);
    
 G_END_DECLS
 

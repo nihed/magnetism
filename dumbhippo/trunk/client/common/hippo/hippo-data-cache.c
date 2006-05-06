@@ -1,4 +1,5 @@
 #include "hippo-data-cache-internal.h"
+#include <string.h>
 
 static void      hippo_data_cache_init                (HippoDataCache       *cache);
 static void      hippo_data_cache_class_init          (HippoDataCacheClass  *klass);
@@ -16,6 +17,7 @@ struct _HippoDataCache {
     GHashTable      *entities;
     GHashTable      *group_chats;
     HippoPerson     *cached_self;
+    char            *myspace_name;
     HippoHotness     hotness;
     unsigned int     music_sharing_enabled : 1;
     unsigned int     music_sharing_primed : 1;    
@@ -34,6 +36,7 @@ enum {
     MUSIC_SHARING_CHANGED,
     HOTNESS_CHANGED,
     ACTIVE_POSTS_CHANGED,
+    MYSPACE_NAME_CHANGED,
     LAST_SIGNAL
 };
 
@@ -130,6 +133,15 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
 
+    signals[MYSPACE_NAME_CHANGED] =
+        g_signal_new ("myspace-name-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__STRING,
+            		  G_TYPE_NONE, 1, G_TYPE_STRING);
+
     object_class->finalize = hippo_data_cache_finalize;
 }
 
@@ -196,6 +208,13 @@ hippo_data_cache_get_need_priming_music(HippoDataCache *cache)
     return cache->music_sharing_enabled && !cache->music_sharing_primed;
 }
 
+const char*
+hippo_data_cache_get_myspace_name(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    return cache->myspace_name;
+}
+
 void
 hippo_data_cache_set_hotness(HippoDataCache  *cache,
                              HippoHotness     hotness)
@@ -251,6 +270,25 @@ hippo_data_cache_set_music_sharing_primed(HippoDataCache  *cache,
     
     set_music_sharing(cache, cache->music_sharing_enabled, primed);
 }                                          
+
+void
+hippo_data_cache_set_myspace_name(HippoDataCache  *cache,
+                                  const char      *name)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    if (name == cache->myspace_name) /* catches both NULL, and self-assignment */
+        return;
+    
+    if (!name || !cache->myspace_name || strcmp(name, cache->myspace_name) != 0) {
+        g_free(cache->myspace_name);
+        cache->myspace_name = g_strdup(name);
+        
+        g_debug("new myspace name '%s'", cache->myspace_name ? cache->myspace_name : "NULL");
+        
+        g_signal_emit(cache, signals[MYSPACE_NAME_CHANGED], 0, cache->myspace_name);
+    }
+}
 
 void
 hippo_data_cache_add_post(HippoDataCache *cache,

@@ -146,6 +146,7 @@ enum {
     STATE_CHANGED,
     AUTH_FAILURE,
     AUTH_SUCCESS,
+    MYSPACE_CHANGED,
     LAST_SIGNAL
 };
 
@@ -190,7 +191,16 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0); 
-          
+
+    signals[MYSPACE_CHANGED] =
+        g_signal_new ("myspace-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0); 
+
     object_class->finalize = hippo_connection_finalize;
 }
 
@@ -1854,7 +1864,8 @@ process_room_message(HippoConnection *connection,
     from = lm_message_node_get_attribute(message->node, "from");
     info_node = find_child_node(message->node, "http://dumbhippo.com/protocol/rooms", "roomInfo");
     if (!info_node) {
-        g_debug("Can't find roomInfo node");
+        /* not a room message */
+        /* g_debug("Can't find roomInfo node"); */
         goto out;
     }
 
@@ -1977,7 +1988,7 @@ handle_live_post_changed(HippoConnection *connection,
 
     if (!hippo_connection_parse_post_data(connection, child, "livePostChanged")) {
         g_warning("failed to parse post stream from livePostChanged");
-        return FALSE;
+        return TRUE; /* still handled, just busted */
     }
 
     /* We don't display any information from the link message currently -- the bubbling
@@ -1991,7 +2002,7 @@ handle_live_post_changed(HippoConnection *connection,
 }
 
 gboolean
-handle_active_posts_message(HippoConnection *connection,
+handle_active_posts_changed(HippoConnection *connection,
                             LmMessage       *message)
 {
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE
@@ -2068,21 +2079,26 @@ gboolean
 handle_hotness_changed(HippoConnection *connection,
                        LmMessage       *message)
 {
-   if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
-        HippoHotness hotness;
-        LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/hotness", "hotness");
-        if (!child)
-            return FALSE;
-        const char *hotness_str = lm_message_node_get_attribute(child, "value");
-        if (!hotness_str)
-            return FALSE;
-        hotness = hotness_from_string(hotness_str);
- 
-        hippo_data_cache_set_hotness(connection->cache, hotness);
- 
+    HippoHotness hotness;
+    const char *hotness_str;
+    LmMessageNode *child;
+
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+        
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/hotness", "hotness");
+    if (!child)
+        return FALSE;
+    hotness_str = lm_message_node_get_attribute(child, "value");
+    if (!hotness_str) {
+        g_warning("No hotness value in hotness message");
         return TRUE;
-   }
-   return FALSE;
+    }
+    hotness = hotness_from_string(hotness_str);
+
+    hippo_data_cache_set_hotness(connection->cache, hotness);
+
+    return TRUE;
 }
 
 gboolean
@@ -2099,6 +2115,49 @@ handle_prefs_changed(HippoConnection *connection,
 
     hippo_connection_process_prefs_node(connection, child);
 
+    return TRUE;
+}
+
+static gboolean
+handle_myspace_name_changed(HippoConnection *connection,
+                            LmMessage       *message)
+{
+    LmMessageNode *child;
+    const char *name;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/myspace", "mySpaceNameChanged");
+    if (child == NULL)
+        return FALSE;
+    name = lm_message_node_get_attribute(child, "name");
+    if (!name) {
+        g_warning("No name in mySpaceNameChanged message");
+        return TRUE; /* still handled it */
+    }
+       
+    hippo_data_cache_set_myspace_name(connection->cache, name);
+    
+    return TRUE;
+}
+
+static gboolean
+handle_myspace_contact_comment(HippoConnection *connection,
+                               LmMessage       *message)
+{
+    LmMessageNode *child;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/myspace", "mySpaceContactComment");
+    if (child == NULL)
+        return FALSE;
+    
+    /* signal that we need to re-poll myspace for new comments */
+    g_signal_emit(connection, signals[MYSPACE_CHANGED], 0);
+    
     return TRUE;
 }
 
@@ -2121,21 +2180,7 @@ handle_message (LmMessageHandler *handler,
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
      }
 
-    /* FIXME
-    char *mySpaceName = NULL;
-    if (im->checkMySpaceNameChangedMessage(message, &mySpaceName)) {
-        im->handleMySpaceNameChangedMessage(mySpaceName);
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    if (im->checkMySpaceContactCommentMessage(message)) {
-        im->handleMySpaceContactCommentMessage();
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    */
-
-    if (handle_active_posts_message(connection, message)) {
+    if (handle_active_posts_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -2148,6 +2193,14 @@ handle_message (LmMessageHandler *handler,
     }
     
     if (handle_prefs_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (handle_myspace_name_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
+    if (handle_myspace_contact_comment(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
     
