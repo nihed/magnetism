@@ -6,7 +6,7 @@
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <div id="dhPageHeader">
-	<div id="dhHeaderLogo"><a href="/main"><img src="/images2/mugshot_logo.gif"/></a></div>
+	<dht:logo/>
 	<div id="dhHeaderLinks">
 		<c:choose>
 			<c:when test="${signin.valid}">

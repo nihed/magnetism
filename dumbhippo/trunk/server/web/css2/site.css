@@ -140,6 +140,11 @@ body.dh-gray-background-page {
 	background: 		#EFEFEF;
 }
 
+.dh-zone-box-title-text {
+	font-size:			18px;
+	color:				white;
+}
+
 #dhContentColumn .dh-zone-box .dh-shared-link {
 	font-size:			14px;
 	font-weight:		bold;

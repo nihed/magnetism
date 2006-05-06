@@ -84,6 +84,7 @@ public class RewriteServlet extends HttpServlet {
 		//
 		// While we are add it, we time the page for performancing monitoring
 		
+		boolean transactionCreated = false;
 		long startTime = System.currentTimeMillis();
 		UserTransaction tx;
 		try {
@@ -94,11 +95,18 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		try {
-			tx.begin();
-		} catch (NotSupportedException e) {
-			throw new RuntimeException("Error starting transaction", e); 
+			if (tx.getStatus() != Status.STATUS_NO_TRANSACTION) {
+				try {
+					tx.begin();
+					transactionCreated = true;
+				} catch (NotSupportedException e) {
+					throw new RuntimeException("Error starting transaction", e); 
+				} catch (SystemException e) {
+					throw new RuntimeException("Error starting transaction", e); 
+				}
+			}
 		} catch (SystemException e) {
-			throw new RuntimeException("Error starting transaction", e); 
+			throw new RuntimeException("Error getting transaction status", e);
 		}
 		
 		try {
@@ -115,7 +123,8 @@ public class RewriteServlet extends HttpServlet {
 				// the transaction should be rolled back; we just roll it back
 				// always if an exception occurs. After all, the transaction
 				// probably didn't do any writing to start with.
-				tx.setRollbackOnly();
+				if (transactionCreated)
+					tx.setRollbackOnly();
 			} catch (SystemException e) {
 				throw new RuntimeException("Error setting transaction for rollback");
 			}
@@ -127,6 +136,7 @@ public class RewriteServlet extends HttpServlet {
 			else
 				throw new RuntimeException(t);
 		} finally {
+			if (transactionCreated) {
 			try {
 				if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
 					tx.rollback();
@@ -140,6 +150,7 @@ public class RewriteServlet extends HttpServlet {
 				throw new RuntimeException("Error ending transaction", e);
 			} catch (HeuristicRollbackException e) {
 				throw new RuntimeException("Error ending transaction", e);
+			}
 			}
 		}		
 	}
