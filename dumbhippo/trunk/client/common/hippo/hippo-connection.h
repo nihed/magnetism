@@ -72,6 +72,9 @@ void             hippo_connection_send_chat_room_state      (HippoConnection *co
                                                              HippoChatRoom   *room,
                                                              HippoChatState   old_state,
                                                              HippoChatState   new_state);
+void             hippo_connection_send_chat_room_message    (HippoConnection *connection,
+                                                             HippoChatRoom   *room,
+                                                             const char      *text);
 
 void hippo_connection_request_myspace_blog_comments (HippoConnection *connection);
 void hippo_connection_request_myspace_contacts      (HippoConnection *connection);

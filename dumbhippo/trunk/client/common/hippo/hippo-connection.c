@@ -1791,6 +1791,25 @@ hippo_connection_send_chat_room_state(HippoConnection *connection,
     }
 }
 
+void
+hippo_connection_send_chat_room_message(HippoConnection *connection,
+                                        HippoChatRoom   *room,
+                                        const char      *text)
+{
+    const char *to;
+    LmMessage *message;
+    LmMessageNode *body;
+        
+    to = hippo_chat_room_get_jabber_id(room);
+    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
+
+    body = lm_message_node_add_child(message->node, "body", text);
+
+    hippo_connection_send_message(connection, message);
+
+    lm_message_unref(message);
+}
+
 static gboolean
 parse_room_jid(const char *jid,
                char      **chat_id_p,
