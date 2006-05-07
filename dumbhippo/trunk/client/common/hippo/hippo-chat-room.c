@@ -405,7 +405,7 @@ hippo_chat_room_clear(HippoChatRoom *room)
 /* This is a "value object", has to be copied instead of ref'd */
 
 struct _HippoChatMessage {
-    int magic;
+    guint32 magic;
     HippoPerson *person;
     char *text;
     GTime timestamp;
