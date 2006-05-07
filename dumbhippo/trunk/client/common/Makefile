@@ -5,6 +5,7 @@ HEADERS= \
     hippo/hippo-connection.h    \
     hippo/hippo-cookies.h       \
     hippo/hippo-data-cache.h    \
+    hippo/hippo-data-cache-internal.h \
     hippo/hippo-entity.h        \
     hippo/hippo-entity-protected.h  \
     hippo/hippo-myspace.h	\

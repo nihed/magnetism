@@ -13,6 +13,7 @@
  */
 
 #include <hippo/hippo-data-cache.h>
+#include <hippo/hippo-myspace.h>
 
 G_BEGIN_DECLS
 
@@ -49,7 +50,13 @@ void             hippo_data_cache_set_active_posts          (HippoDataCache  *ca
                                                              
 void             hippo_data_cache_set_myspace_name          (HippoDataCache  *cache,
                                                              const char      *name);
-   
+
+/* these take ownership of the list members but not the list */
+void             hippo_data_cache_set_myspace_blog_comments (HippoDataCache  *cache,
+                                                             GSList          *comments);
+void             hippo_data_cache_set_myspace_contacts      (HippoDataCache  *cache,
+                                                             GSList          *contacts);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DATA_CACHE_INTERNAL_H__ */

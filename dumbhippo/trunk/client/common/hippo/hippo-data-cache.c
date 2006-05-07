@@ -18,6 +18,8 @@ struct _HippoDataCache {
     GHashTable      *group_chats;
     HippoPerson     *cached_self;
     char            *myspace_name;
+    GSList          *myspace_contacts;
+    GSList          *myspace_comments;
     HippoHotness     hotness;
     unsigned int     music_sharing_enabled : 1;
     unsigned int     music_sharing_primed : 1;    
@@ -37,6 +39,8 @@ enum {
     HOTNESS_CHANGED,
     ACTIVE_POSTS_CHANGED,
     MYSPACE_NAME_CHANGED,
+    MYSPACE_COMMENTS_CHANGED,
+    MYSPACE_CONTACTS_CHANGED,
     LAST_SIGNAL
 };
 
@@ -142,6 +146,24 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__STRING,
             		  G_TYPE_NONE, 1, G_TYPE_STRING);
 
+    signals[MYSPACE_COMMENTS_CHANGED] =
+        g_signal_new ("myspace-comments-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
+    signals[MYSPACE_CONTACTS_CHANGED] =
+        g_signal_new ("myspace-contacts-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
     object_class->finalize = hippo_data_cache_finalize;
 }
 
@@ -149,6 +171,9 @@ static void
 hippo_data_cache_finalize(GObject *object)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(object);
+
+    hippo_data_cache_set_myspace_blog_comments(cache, NULL);
+    hippo_data_cache_set_myspace_contacts(cache, NULL);
 
     hippo_data_cache_clear_active_posts(cache);
 
@@ -691,3 +716,43 @@ hippo_data_cache_on_authenticate(HippoConnection      *connection,
      */
      hippo_data_cache_foreach_chat_room(cache, update_chat_room_func, cache);
 }
+
+GSList*
+hippo_data_cache_get_myspace_blog_comments(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    return cache->myspace_comments;
+}
+
+GSList*
+hippo_data_cache_get_myspace_contacts(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    return cache->myspace_contacts;
+}
+
+void
+hippo_data_cache_set_myspace_blog_comments(HippoDataCache  *cache,
+                                           GSList          *comments)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    g_slist_foreach(cache->myspace_comments, (GFunc) hippo_myspace_blog_comment_free, NULL);
+    g_slist_free(cache->myspace_comments);
+    cache->myspace_comments = g_slist_copy(comments);
+    
+    g_signal_emit(cache, signals[MYSPACE_COMMENTS_CHANGED], 0);
+}
+                                           
+void
+hippo_data_cache_set_myspace_contacts(HippoDataCache  *cache,
+                                      GSList          *contacts)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+
+    g_slist_foreach(cache->myspace_contacts, (GFunc) hippo_myspace_contact_free, NULL);
+    g_slist_free(cache->myspace_contacts);
+    cache->myspace_contacts = g_slist_copy(contacts);
+    
+    g_signal_emit(cache, signals[MYSPACE_CONTACTS_CHANGED], 0);
+}                                      

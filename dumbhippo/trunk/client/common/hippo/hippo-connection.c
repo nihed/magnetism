@@ -1007,18 +1007,19 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *child;
     LmMessageNode *subchild;
+    GSList *comments;
     
     child = message->node->children;
 
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    /* FIXME
-    
-    HippoArray<HippoMySpaceBlogComment*> comments;
-    */
+
+    comments = NULL;
     for (subchild = child->children; subchild; subchild = subchild->next) {
         LmMessageNode *comment_node;
+        int comment_id;
+        int poster_id;
     
         if (strcmp (subchild->name, "comment") != 0)
             continue;
@@ -1027,23 +1028,27 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
         if (!(comment_node && comment_node->value)) {
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
-        /* FIXME
-        HippoMySpaceBlogComment *comment = new HippoMySpaceBlogComment();
-        comment->commentId = strtol(comment_node->value, NULL, 10);
+        
+        comment_id = strtol(comment_node->value, NULL, 10);
+
         comment_node = lm_message_node_get_child (subchild, "posterId");
         if (!(comment_node && comment_node->value)) {
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        }
-        comment->posterId = strtol(comment_node->value, NULL, 10);
-        im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment->commentId);
-        comments.append(comment);
-        */
+        }        
+        
+        poster_id = strtol(comment_node->value, NULL, 10);
+        
+        g_debug("Got myspace comment id %d poster %d\n", comment_id, poster_id);
+        
+        comments = g_slist_prepend(comments,
+                    hippo_myspace_blog_comment_new(comment_id, poster_id));
     }
 
-    /* FIXME
-      Takes ownership of comments
-    im->ui_->setSeenMySpaceComments(&comments);
-    */
+    /* This takes ownership of the comments in the list but not the list itself */
+    hippo_data_cache_set_myspace_blog_comments(connection->cache, comments);
+    
+    g_slist_free(comments);
+    
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
@@ -1071,7 +1076,6 @@ hippo_connection_request_myspace_blog_comments(HippoConnection *connection)
     g_debug("Sent request for MySpace blog comments");
 }
 
-
 static LmHandlerResult
 on_get_myspace_contacts_reply(LmMessageHandler *handler,
                               LmConnection     *lconnection,
@@ -1081,6 +1085,7 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *child;
     LmMessageNode *subchild;
+    GSList *contacts;
     
     child = message->node->children;
 
@@ -1089,9 +1094,8 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    /* FIXME 
-    HippoArray<HippoMySpaceContact *> contacts;
-    */
+
+    contacts = NULL;
     for (subchild = child->children; subchild; subchild = subchild->next) {
         const char *name;
         const char *friend_id;
@@ -1104,21 +1108,18 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
         friend_id = lm_message_node_get_attribute(subchild, "friendID");
         if (!friend_id)
             continue;
-
-    /* FIXME
-        HippoBSTR contactName;
-        contactName.setUTF8(name);
-        HippoBSTR contactFriendId;
-        contactFriendId.setUTF8(friendID);
-        HippoMySpaceContact * contact = new HippoMySpaceContact(contactName, contactFriendId);
-        contacts.append(contact);
-        g_debug("getMySpaceContacts: contact=%s", name);
-        */
+            
+        contacts = g_slist_prepend(contacts,
+                hippo_myspace_contact_new(name, friend_id));
+                
+        g_debug("got myspace contact '%s'", name);
     }
 
-    /*FIXME
-    im->ui_->setMySpaceContacts(contacts);
-    */
+    /* takes ownership of contacts but not the list */
+    hippo_data_cache_set_myspace_contacts(connection->cache, contacts);
+    
+    g_slist_free(contacts);
+
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 

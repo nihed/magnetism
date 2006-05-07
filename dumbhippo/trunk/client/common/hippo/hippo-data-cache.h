@@ -54,6 +54,10 @@ gboolean         hippo_data_cache_get_music_sharing_enabled (HippoDataCache   *c
 gboolean         hippo_data_cache_get_need_priming_music    (HippoDataCache   *cache);
 const char*      hippo_data_cache_get_myspace_name          (HippoDataCache   *cache);
 
+/* these don't copy the list or the list members */
+GSList*          hippo_data_cache_get_myspace_blog_comments (HippoDataCache   *cache);
+GSList*          hippo_data_cache_get_myspace_contacts      (HippoDataCache   *cache);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DATA_CACHE_H__ */
