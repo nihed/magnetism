@@ -177,7 +177,11 @@ char*
 hippo_id_from_jabber_id(const char *jid)
 {
     const char *p;
-    unsigned int count = 0;
+    unsigned int count;
+    char *guid;
+    char *out;
+    
+    count = 0;
     for (p = jid; *p; p++) {
         if (*(p + 1) && *(p + 1) == '_') {
             count++;
@@ -186,8 +190,8 @@ hippo_id_from_jabber_id(const char *jid)
         count++;
     }
 
-    char *guid = g_new(char, count + 1);
-    char *out = guid;
+    guid = g_new(char, count + 1);
+    out = guid;
     for (p = jid; *p; p++) {
         char c = *p;
         if (*(p + 1) && *(p + 1) == '_') {

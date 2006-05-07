@@ -93,12 +93,13 @@ static void     hippo_connection_get_client_info      (HippoConnection *connecti
 static void     hippo_connection_update_prefs         (HippoConnection *connection);
 static void     hippo_connection_process_prefs_node   (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
-static void     hippo_connection_get_posts            (HippoConnection *connection);
-static void     hippo_connection_get_post             (HippoConnection *connection,
+static void     hippo_connection_request_recent_posts (HippoConnection *connection);
+static void     hippo_connection_request_post         (HippoConnection *connection,
                                                        const char      *post_id);
 static void     hippo_connection_get_chat_room_details(HippoConnection *connection,
                                                        HippoChatRoom   *room);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
+static void     hippo_connection_request_myspace_name (HippoConnection *connection);
 
 /* Loudmouth handlers */
 static LmHandlerResult handle_message     (LmMessageHandler *handler,
@@ -239,9 +240,11 @@ hippo_connection_finalize(GObject *object)
 HippoConnection*
 hippo_connection_new(HippoPlatform *platform)
 {
+    HippoConnection *connection;
+    
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
 
-    HippoConnection *connection = g_object_new(HIPPO_TYPE_CONNECTION, NULL);
+    connection = g_object_new(HIPPO_TYPE_CONNECTION, NULL);
     
     connection->platform = platform;
     g_object_ref(connection->platform);
@@ -314,17 +317,20 @@ hippo_connection_notify_post_clicked(HippoConnection *connection,
                                      const char      *post_id)
 {
     LmMessage *message;
-    
+    LmMessageNode *node;
+    LmMessageNode *method;
+    LmMessageNode *guid_arg;
+            
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
-    LmMessageNode *node = lm_message_get_node(message);
+    node = lm_message_get_node(message);
 
-    LmMessageNode *method = lm_message_node_add_child (node, "method", NULL);
+    method = lm_message_node_add_child (node, "method", NULL);
     lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/servermethod");
     lm_message_node_set_attribute(method, "name", "postClicked");
-    LmMessageNode *guid_arg = lm_message_node_add_child (method, "arg", NULL);
+    guid_arg = lm_message_node_add_child (method, "arg", NULL);
     lm_message_node_set_value (guid_arg, post_id);
 
     hippo_connection_send_message(connection, message);
@@ -350,7 +356,9 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
                                       const HippoSong *song)
 {
     LmMessage *message;
-    
+    LmMessageNode *node;
+    LmMessageNode *music;
+            
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     g_return_if_fail(!currently_playing || song != NULL);
     
@@ -363,9 +371,9 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
 
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
-    LmMessageNode *node = lm_message_get_node(message);
+    node = lm_message_get_node(message);
 
-    LmMessageNode *music = lm_message_node_add_child (node, "music", NULL);
+    music = lm_message_node_add_child (node, "music", NULL);
     lm_message_node_set_attribute(music, "xmlns", "http://dumbhippo.com/protocol/music");
     lm_message_node_set_attribute(music, "type", "musicChanged");
 
@@ -527,7 +535,9 @@ hippo_connection_connect(HippoConnection *connection)
 {
     char *message_host;
     int message_port;
-
+    LmMessageHandler *handler;
+    GError *error;
+    
     hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
 
     if (connection->lm_connection != NULL) {
@@ -539,7 +549,7 @@ hippo_connection_connect(HippoConnection *connection)
     lm_connection_set_port(connection->lm_connection, message_port);
     lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
 
-    LmMessageHandler *handler = lm_message_handler_new(handle_message, connection, NULL);
+    handler = lm_message_handler_new(handle_message, connection, NULL);
     lm_connection_register_message_handler(connection->lm_connection, handler, 
                                            LM_MESSAGE_TYPE_MESSAGE, 
                                            LM_HANDLER_PRIORITY_NORMAL);
@@ -556,7 +566,7 @@ hippo_connection_connect(HippoConnection *connection)
 
     hippo_connection_state_change(connection, HIPPO_STATE_CONNECTING);
 
-    GError *error = NULL;
+    error = NULL;
 
     /* If lm_connection returns FALSE, then handle_open won't be called
      * at all. On a TRUE return it will be called exactly once, but that 
@@ -728,7 +738,7 @@ node_matches(LmMessageNode *node, const char *name, const char *expectedNamespac
     return strcmp(name, node->name) == 0 && (expectedNamespace == NULL || strcmp(expectedNamespace, ns) == 0);
 }
 
-LmMessageNode*
+static LmMessageNode*
 find_child_node(LmMessageNode *node, 
                 const char    *element_namespace, 
                 const char    *element_name)
@@ -748,18 +758,21 @@ find_child_node(LmMessageNode *node,
 }
 
 static gboolean
-message_is_iq_with_namespace(LmMessage *message, const char *expectedNamespace, const char *documentElementName)
+message_is_iq_with_namespace(LmMessage  *message,
+                             const char *expected_namespace,
+                             const char *document_element_name)
 {
     LmMessageNode *child = message->node->children;
 
     if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
         lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
         !child || child->next ||
-        !node_matches(child, documentElementName, expectedNamespace))
+        !node_matches(child, document_element_name, expected_namespace))
     {
         return FALSE;
+    } else {
+        return TRUE;
     }
-    return TRUE;
 }
 
 static LmHandlerResult
@@ -769,16 +782,18 @@ on_client_info_reply(LmMessageHandler *handler,
                      gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
-
-    LmMessageNode *child = message->node->children;
-
+    LmMessageNode *child;        const char *minimum;
+    const char *current;
+    const char *download;    
+    
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/clientinfo", "clientInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    const char *minimum = lm_message_node_get_attribute(child, "minimum");
-    const char *current = lm_message_node_get_attribute(child, "current");
-    const char *download = lm_message_node_get_attribute(child, "download");
+    child = message->node->children;
+    minimum = lm_message_node_get_attribute(child, "minimum");
+    current = lm_message_node_get_attribute(child, "current");
+    download = lm_message_node_get_attribute(child, "download");
 
     if (!minimum || !current || !download) {
         g_warning("clientInfo reply missing attributes");
@@ -791,12 +806,11 @@ on_client_info_reply(LmMessageHandler *handler,
 
     /* Next get the MySpace info, current hotness, recent posts */
     /* FIXME 
-    im->getMySpaceName();
     im->getHotness();
     */
     
-    /* get some recent posts */
-    hippo_connection_get_posts(connection);
+    hippo_connection_request_myspace_name(connection);
+    hippo_connection_request_recent_posts(connection);
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -805,11 +819,16 @@ static void
 hippo_connection_get_client_info(HippoConnection *connection)
 {
     LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+                
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
-    LmMessageNode *node = lm_message_get_node(message);
+    node = lm_message_get_node(message);
     
-    LmMessageNode *child = lm_message_node_add_child (node, "clientInfo", NULL);
+    child = lm_message_node_add_child (node, "clientInfo", NULL);
+
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
 #ifdef G_OS_WIN32
 #define PLATFORM "windows"
@@ -822,7 +841,7 @@ hippo_connection_get_client_info(HippoConnection *connection)
      * and thus won't self-upgrade
      */
     lm_message_node_set_attribute(child, "platform", "windows");
-    LmMessageHandler *handler = lm_message_handler_new(on_client_info_reply, connection, NULL);
+    handler = lm_message_handler_new(on_client_info_reply, connection, NULL);
 
     hippo_connection_send_message_with_reply(connection, message, handler);
 
@@ -855,13 +874,17 @@ static void
 hippo_connection_update_prefs(HippoConnection *connection)
 {
     LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+    
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
-    LmMessageNode *node = lm_message_get_node(message);
+    node = lm_message_get_node(message);
     
-    LmMessageNode *child = lm_message_node_add_child (node, "prefs", NULL);
+    child = lm_message_node_add_child (node, "prefs", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/prefs");
-    LmMessageHandler *handler = lm_message_handler_new(on_prefs_reply, connection, NULL);
+    handler = lm_message_handler_new(on_prefs_reply, connection, NULL);
 
     hippo_connection_send_message_with_reply(connection, message, handler);
 
@@ -912,6 +935,265 @@ hippo_connection_process_prefs_node(HippoConnection *connection,
         hippo_data_cache_set_music_sharing_enabled(connection->cache, music_sharing_enabled);
 }
 
+static LmHandlerResult
+on_get_myspace_name_reply(LmMessageHandler *handler,
+                          LmConnection     *lconnection,
+                          LmMessage        *message,
+                          gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    const char *name;
+    
+    child = message->node->children;
+
+    if (!message_is_iq_with_namespace(message,
+          "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    name = lm_message_node_get_attribute(child, "mySpaceName");
+
+    if (!name) {
+        g_warning("getMySpaceName reply missing attributes");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    g_debug("getMySpaceName response: name=%s", name);
+    hippo_data_cache_set_myspace_name(connection->cache, name);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static void
+hippo_connection_request_myspace_name(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+            
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getName");
+    handler = lm_message_handler_new(on_get_myspace_name_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    g_debug("Sent request for MySpace name");
+}
+
+static LmHandlerResult
+on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
+                                   LmConnection     *lconnection,
+                                   LmMessage        *message,
+                                   gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+    
+    child = message->node->children;
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    /* FIXME
+    
+    HippoArray<HippoMySpaceBlogComment*> comments;
+    */
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        LmMessageNode *comment_node;
+    
+        if (strcmp (subchild->name, "comment") != 0)
+            continue;
+
+        comment_node = lm_message_node_get_child (subchild, "commentId");
+        if (!(comment_node && comment_node->value)) {
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        /* FIXME
+        HippoMySpaceBlogComment *comment = new HippoMySpaceBlogComment();
+        comment->commentId = strtol(comment_node->value, NULL, 10);
+        comment_node = lm_message_node_get_child (subchild, "posterId");
+        if (!(comment_node && comment_node->value)) {
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        comment->posterId = strtol(comment_node->value, NULL, 10);
+        im->ui_->debugLogU("getMySpaceComments: commentid=%d", comment->commentId);
+        comments.append(comment);
+        */
+    }
+
+    /* FIXME
+      Takes ownership of comments
+    im->ui_->setSeenMySpaceComments(&comments);
+    */
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_myspace_blog_comments(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getBlogComments");
+    handler = lm_message_handler_new(on_get_myspace_blog_comments_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    g_debug("Sent request for MySpace blog comments");
+}
+
+
+static LmHandlerResult
+on_get_myspace_contacts_reply(LmMessageHandler *handler,
+                              LmConnection     *lconnection,
+                              LmMessage        *message,
+                              gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+    
+    child = message->node->children;
+
+    g_debug("got reply for getMySpaceContacts");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    /* FIXME 
+    HippoArray<HippoMySpaceContact *> contacts;
+    */
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        const char *name;
+        const char *friend_id;
+                
+        if (strcmp (subchild->name, "contact") != 0)
+            continue;
+        name = lm_message_node_get_attribute(subchild, "name");
+        if (!name)
+            continue;
+        friend_id = lm_message_node_get_attribute(subchild, "friendID");
+        if (!friend_id)
+            continue;
+
+    /* FIXME
+        HippoBSTR contactName;
+        contactName.setUTF8(name);
+        HippoBSTR contactFriendId;
+        contactFriendId.setUTF8(friendID);
+        HippoMySpaceContact * contact = new HippoMySpaceContact(contactName, contactFriendId);
+        contacts.append(contact);
+        g_debug("getMySpaceContacts: contact=%s", name);
+        */
+    }
+
+    /*FIXME
+    im->ui_->setMySpaceContacts(contacts);
+    */
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_myspace_contacts(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(child, "type", "getContacts");
+    handler = lm_message_handler_new(on_get_myspace_contacts_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    g_debug("Sent request for MySpace contacts");
+}
+
+void
+hippo_connection_add_myspace_comment(HippoConnection *connection,
+                                     int              comment_id,
+                                     int              poster_id)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *subnode;
+    LmMessageNode *prop;
+    char *comment_id_str;
+    char *poster_id_str;
+    
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    subnode = lm_message_node_add_child (node, "addBlogComment", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(subnode, "type", "addBlogComment");
+    
+    prop = lm_message_node_add_child(subnode, "commentId", NULL);
+    comment_id_str = g_strdup_printf("%d", comment_id);
+    lm_message_node_set_value(prop, comment_id_str);
+    g_free(comment_id_str);
+
+    prop = lm_message_node_add_child(subnode, "posterId", NULL);
+    poster_id_str = g_strdup_printf("%d", poster_id);
+    lm_message_node_set_value(prop, poster_id_str);
+    g_free(poster_id_str);
+
+    hippo_connection_send_message(connection, message);
+    lm_message_unref(message);
+    g_debug("Sent MySpace comment xmpp message comment_id %d poster_id %d", comment_id, poster_id);
+}
+
+void
+hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
+                                             const char      *myspace_name)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *subnode;
+
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    subnode = lm_message_node_add_child (node, "notifyContactComment", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/myspace");
+    lm_message_node_set_attribute(subnode, "type", "notifyContactComment");
+    lm_message_node_set_attribute(subnode, "name", myspace_name);
+
+    hippo_connection_send_message(connection, message);
+    lm_message_unref(message);
+    g_debug("Sent MySpace contact post xmpp message");
+}
+
 static gboolean
 get_entity_guid(LmMessageNode *node,
                 const char   **guid_p)
@@ -922,6 +1204,7 @@ get_entity_guid(LmMessageNode *node,
     *guid_p = attr;
     return TRUE;
 }
+
 static gboolean
 is_live_post(LmMessageNode *node)
 {
@@ -1245,11 +1528,11 @@ hippo_connection_parse_post_data(HippoConnection *connection,
 {
     gboolean seen_post;
     gboolean seen_live_post;
+    LmMessageNode *subchild;
     
     seen_post = FALSE;
     seen_live_post = FALSE;
 
-    LmMessageNode *subchild;
     for (subchild = node->children; subchild; subchild = subchild->next) {
         if (is_entity(subchild)) {
             if (!hippo_connection_parse_entity(connection, subchild)) {
@@ -1289,22 +1572,22 @@ hippo_connection_parse_post_data(HippoConnection *connection,
 }
 
 static LmHandlerResult
-on_get_posts_reply(LmMessageHandler *handler,
-                   LmConnection     *lconnection,
-                   LmMessage        *message,
-                   gpointer          data)
+on_request_posts_reply(LmMessageHandler *handler,
+                       LmConnection     *lconnection,
+                       LmMessage        *message,
+                       gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *child = message->node->children;
 
-    g_debug("Got reply for getRecentPosts");
+    g_debug("Got reply for recentPosts");
 
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/post", "recentPosts")) {
         g_warning("Mismatched getRecentPosts reply");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    hippo_connection_parse_post_stream(connection, child, "on_get_posts_reply");
+    hippo_connection_parse_post_stream(connection, child, "on_request_posts_reply");
 
     /* Some chat room messages where we waiting for results may now be ready to process */
     hippo_connection_process_pending_room_messages(connection);
@@ -1316,8 +1599,8 @@ on_get_posts_reply(LmMessageHandler *handler,
  * there are wrappers for this for clarity, don't call this directly
  */
 static void
-hippo_connection_get_recent_posts(HippoConnection *connection,
-                                  const char      *post_id)
+hippo_connection_request_posts_impl(HippoConnection *connection,
+                                    const char      *post_id)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -1334,7 +1617,7 @@ hippo_connection_get_recent_posts(HippoConnection *connection,
     if (post_id)
         lm_message_node_set_attribute(child, "id", post_id);
 
-    handler = lm_message_handler_new(on_get_posts_reply, connection, NULL);
+    handler = lm_message_handler_new(on_request_posts_reply, connection, NULL);
 
     hippo_connection_send_message_with_reply(connection, message, handler);
 
@@ -1344,17 +1627,17 @@ hippo_connection_get_recent_posts(HippoConnection *connection,
 }
 
 static void
-hippo_connection_get_posts(HippoConnection *connection)
+hippo_connection_request_recent_posts(HippoConnection *connection)
 {
-    hippo_connection_get_recent_posts(connection, NULL);
+    hippo_connection_request_posts_impl(connection, NULL);
 }
 
 static void
-hippo_connection_get_post(HippoConnection *connection,
-                          const char      *post_id)
+hippo_connection_request_post(HippoConnection *connection,
+                              const char      *post_id)
 {
     g_return_if_fail(post_id != NULL);
-    hippo_connection_get_recent_posts(connection, post_id);
+    hippo_connection_request_posts_impl(connection, post_id);
 }
 
 static void 
@@ -1836,7 +2119,7 @@ process_room_presence(HippoConnection *connection,
     }
 }
 
-ProcessMessageResult
+static ProcessMessageResult
 process_room_message(HippoConnection *connection,
                      LmMessage       *message,
                      gboolean         was_pending)
@@ -1916,7 +2199,7 @@ process_room_message(HippoConnection *connection,
                  * that's harmless, so we don't bother keeping track of what posts
                  * we are in the process of retrieving.
                  */
-                 hippo_connection_get_post(connection, chat_id);
+                 hippo_connection_request_post(connection, chat_id);
             }
             result = PROCESS_MESSAGE_PEND;
             goto out;
@@ -1969,7 +2252,7 @@ hippo_connection_process_pending_room_messages(HippoConnection *connection)
 
 /* === HippoConnection Loudmouth handlers === */
 
-gboolean
+static gboolean
 handle_live_post_changed(HippoConnection *connection,
                          LmMessage       *message)
 {
@@ -2001,7 +2284,7 @@ handle_live_post_changed(HippoConnection *connection,
     return TRUE;
 }
 
-gboolean
+static gboolean
 handle_active_posts_changed(HippoConnection *connection,
                             LmMessage       *message)
 {
@@ -2075,7 +2358,7 @@ hotness_from_string(const char *str)
     return HIPPO_HOTNESS_UNKNOWN;
 }
 
-gboolean
+static gboolean
 handle_hotness_changed(HippoConnection *connection,
                        LmMessage       *message)
 {
@@ -2101,14 +2384,16 @@ handle_hotness_changed(HippoConnection *connection,
     return TRUE;
 }
 
-gboolean
+static gboolean
 handle_prefs_changed(HippoConnection *connection,
                      LmMessage       *message)
 {
+    LmMessageNode *child;
+    
     if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
         return FALSE;
 
-    LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/prefs", "prefs");
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/prefs", "prefs");
     if (child == NULL)
         return FALSE;
     g_debug("handling prefsChanged message");

@@ -33,7 +33,7 @@ OBJECTS= \
     hippo/hippo-platform.o   \
     hippo/hippo-post.o
 
-CFLAGS=-Wall -g -ggdb -O `pkg-config --cflags gobject-2.0 gthread-2.0 loudmouth-1.0` -I.
+CFLAGS=-Wall -Wdeclaration-after-statement -Wmissing-prototypes -Wchar-subscripts -Wmissing-declarations -Wnested-externs -Wpointer-arith -Wcast-align -Wfloat-equal -Wsign-compare -g -ggdb -O `pkg-config --cflags gobject-2.0 gthread-2.0 loudmouth-1.0` -I.
 
 all:	libhippo.a
 

@@ -73,6 +73,15 @@ void             hippo_connection_send_chat_room_state      (HippoConnection *co
                                                              HippoChatState   old_state,
                                                              HippoChatState   new_state);
 
+void hippo_connection_request_myspace_blog_comments (HippoConnection *connection);
+void hippo_connection_request_myspace_contacts      (HippoConnection *connection);
+void hippo_connection_add_myspace_comment           (HippoConnection *connection,
+                                                     int              comment_id,
+                                                     int              poster_id);
+void hippo_connection_notify_myspace_contact_post   (HippoConnection *connection,
+                                                     const char      *myspace_name);
+
+
 /* return string form of enum values */
 const char*      hippo_state_debug_string(HippoState state);
 
