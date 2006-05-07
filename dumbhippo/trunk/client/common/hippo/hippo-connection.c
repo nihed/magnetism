@@ -100,6 +100,7 @@ static void     hippo_connection_get_chat_room_details(HippoConnection *connecti
                                                        HippoChatRoom   *room);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 static void     hippo_connection_request_myspace_name (HippoConnection *connection);
+static void     hippo_connection_request_hotness      (HippoConnection *connection);
 
 /* Loudmouth handlers */
 static LmHandlerResult handle_message     (LmMessageHandler *handler,
@@ -805,10 +806,18 @@ on_client_info_reply(LmMessageHandler *handler,
     /* FIXME store this somewhere */
 
     /* Next get the MySpace info, current hotness, recent posts */
-    /* FIXME 
-    im->getHotness();
-    */
-    
+
+    /* FIXME this is kind of borked up; if we need the client info before
+     * we can do other stuff, then we should have a state for waiting for 
+     * client info, and really shouldn't count ourselves authenticated/connected
+     * until we have it. For example, right now HippoDataCache rejoins chatrooms
+     * on AUTH_SUCCESS, and instead it should do that here.
+     */
+
+    /* FIXME the server seems to send the hotness spontaneously anyway,
+     * so this request is pointless?
+     */
+    hippo_connection_request_hotness(connection);
     hippo_connection_request_myspace_name(connection);
     hippo_connection_request_recent_posts(connection);
     
@@ -1192,6 +1201,72 @@ hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
     hippo_connection_send_message(connection, message);
     lm_message_unref(message);
     g_debug("Sent MySpace contact post xmpp message");
+}
+
+static HippoHotness
+hotness_from_string(const char *str)
+{
+#define M(s,v) do { if (strcmp(str,(s)) == 0) { return (v); } } while(0)
+    M("COLD", HIPPO_HOTNESS_COLD);
+    M("COOL", HIPPO_HOTNESS_COOL);
+    M("WARM", HIPPO_HOTNESS_WARM);
+    M("GETTING_HOT", HIPPO_HOTNESS_GETTING_HOT);
+    M("HOT", HIPPO_HOTNESS_HOT);
+    
+    return HIPPO_HOTNESS_UNKNOWN;
+}
+
+static LmHandlerResult
+on_request_hotness_reply(LmMessageHandler *handler,
+                         LmConnection     *lconnection,
+                         LmMessage        *message,
+                         gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    const char *hotness_str;
+
+    child = message->node->children;
+
+    g_debug("got reply for getHotness");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/hotness", "hotness")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    hotness_str = lm_message_node_get_attribute(child, "value");
+    if (!hotness_str) {
+        g_warning("No hotness value in reply to get hotness");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    hippo_data_cache_set_hotness(connection->cache, hotness_from_string(hotness_str));
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static void
+hippo_connection_request_hotness(HippoConnection *connection)                                
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    LmMessageHandler *handler;
+    
+    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "hotness", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/hotness");
+    lm_message_node_set_attribute(child, "type", "getValue");
+    handler = lm_message_handler_new(on_request_hotness_reply, connection, NULL);
+
+    hippo_connection_send_message_with_reply(connection, message, handler);
+
+    lm_message_unref(message);
+    lm_message_handler_unref(handler);
+    g_debug("Sent request for hotness");
 }
 
 static gboolean
@@ -2343,19 +2418,6 @@ handle_active_posts_changed(HippoConnection *connection,
    } else {
        return FALSE;
    }
-}
-
-static HippoHotness
-hotness_from_string(const char *str)
-{
-#define M(s,v) do { if (strcmp(str,(s)) == 0) { return (v); } } while(0)
-    M("COLD", HIPPO_HOTNESS_COLD);
-    M("COOL", HIPPO_HOTNESS_COOL);
-    M("WARM", HIPPO_HOTNESS_WARM);
-    M("GETTING_HOT", HIPPO_HOTNESS_GETTING_HOT);
-    M("HOT", HIPPO_HOTNESS_HOT);
-    
-    return HIPPO_HOTNESS_UNKNOWN;
 }
 
 static gboolean
