@@ -122,19 +122,44 @@ public interface MusicSystem {
 	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
 	
 	/**
-	 * Returns an ExpandedArtistView that includes albums made by the artist. First, attempts to
-	 * find a track with a matching artist among existing tracks. Queries an outside web service 
-	 * if a track with a matching artist is not found locally. Throws a NotFoundException if there
-	 * is no matching artist.
+	 * Returns an ExpandedArtistView that includes albums made by the artist that fall into albumsByArtist 
+	 * pageable object criteria. Sets the results field of albumsByArtist to contain the same albums
+	 * as the returned artist view.
+	 * 
+	 * First, attempts to find a track with a matching artist among existing tracks. Queries an outside 
+	 * web service if a track with a matching artist is not found locally. Throws a NotFoundException if 
+	 * there is no matching artist.
 	 * 
 	 * @param viewpoint
-	 * @param artist
-	 * @return an ExpandedArtistView that includes albums made by the artist
+	 * @param artist an artist name, must not be null
+	 * @param albumsByArtist a Pageable object that contains information on what albums should be 
+	 *        added to the artist view
+	 * @return an ExpandedArtistView that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
-	
-	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+
+	/**
+	 * Returns an ExpandedArtistView that includes albums made by the artist that fall into albumsByArtist 
+	 * pageable object criteria. Returns the album that matches specified artist, album and song as a top  
+	 * album on the first page. Sets the results field of albumsByArtist to contain the same albums
+	 * as the returned artist view.
+	 * 
+	 * Attempts to find a track that matches parameters among existing tracks. If a track is
+	 * not found, attempts to find a matching YahooSongResult in the existing database cache. Currently,
+	 * if neither succeeds, does not query an outside web service. Throws a NotFoundException if 
+	 * there is no matching album/song stored locally.
+	 * 
+	 * @param viewpoint
+	 * @param artist an artist name, must not be null
+	 * @param album an album name
+	 * @param name a song name
+	 * @param albumsByArtist a Pageable object that contains information on what albums should be 
+	 *        added to the artist view
+	 * @return an ExpandedArtistView that contains requested albums
+	 * @throws NotFoundException
+	 */
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> pageable) throws NotFoundException;
 	
 	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name);
 	

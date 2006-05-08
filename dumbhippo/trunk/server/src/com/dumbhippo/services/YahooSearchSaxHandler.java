@@ -17,7 +17,6 @@ import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
-import com.dumbhippo.server.NotFoundException;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
@@ -121,11 +120,13 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	private List<Result> results;
+	private int totalResultsAvailable;
 	private String errorMessage;
 	
 	YahooSearchSaxHandler() {
 		super(Element.class, Element.IGNORED);
 		results = new ArrayList<Result>();
+		totalResultsAvailable = -1;
 	}
 
 	private Result currentResult() {
@@ -140,7 +141,16 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	
 	@Override
 	protected void openElement(Element c) throws SAXException {
-		//logger.debug("opening element " + c);
+		// logger.debug("opening element " + c);
+		if (c == Element.ResultSet) {
+		    String totalResultsAvailableString = currentAttributes().getValue("totalResultsAvailable");
+			try {
+				totalResultsAvailable = Integer.parseInt(totalResultsAvailableString);
+			} catch (NumberFormatException e1) {
+			    totalResultsAvailable = -1;
+				logger.error("numberFormatException when parsing value for totalResultsAvailable");
+			}
+		}
 		if (c == Element.Result) {
 			String id = currentAttributes().getValue("id");
 			Result result = new Result(id);
@@ -278,6 +288,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	public List<YahooAlbumResult> getBestAlbums() {
+		logger.debug("total results available is {} when getting best albums " + totalResultsAvailable);
 		List<YahooAlbumResult> list = new ArrayList<YahooAlbumResult>();
 		
 		if (results.isEmpty()) {
@@ -290,6 +301,10 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		}
 		//logger.debug("Got {} album results: {}", list.size(), list);
 		return list;			
+	}
+	
+	public int getTotalResultsAvailable() {
+		return totalResultsAvailable;
 	}
 	
 	private YahooSongDownloadResult downloadFromResult(Result r) {
@@ -332,15 +347,6 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		//logger.debug("Got {} download results: {}", list.size(), list);
 		return list;		
 	}
-	
-	public String getSingleArtistId() throws NotFoundException {
-		if (results.isEmpty()) {
-			logger.debug("No artists were found");
-			throw new NotFoundException("No artists were found");
-		}
-
-		return results.get(0).getId();		
-	}	
 
 	private YahooArtistResult artistFromResult(Result r) {
 		YahooArtistResult artist = new YahooArtistResult();

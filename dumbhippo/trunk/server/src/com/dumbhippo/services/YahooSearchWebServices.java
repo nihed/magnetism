@@ -1,11 +1,13 @@
 package com.dumbhippo.services;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
@@ -16,7 +18,10 @@ import com.dumbhippo.server.NotFoundException;
 public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHandler> {
 
 	static private final Logger logger = GlobalSetup.getLogger(YahooSearchWebServices.class);
-	
+
+	// 50 is the maximum number of results we can get with one request, 10 is the default number
+	static public final int maxResultsToReturn = 50;
+
 	private String appId;
 	
 	public YahooSearchWebServices(int timeoutMilliseconds) {
@@ -61,7 +66,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Song search failed, returning nothing");
+			logger.error("Song search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
 			return handler.getBestSongs(artist, album, name);
@@ -82,7 +87,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Album songs search failed, returning nothing");
+			logger.error("Album songs search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
 			return handler.getAlbumSongs();
@@ -101,19 +106,22 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Album songs search failed, returning nothing");
+			logger.error("Album songs search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
 			return handler.getAlbumSongs();
 		}		
 	}
 	
-	public List<YahooAlbumResult> lookupAlbums(String artistId, int resultsToReturn) {		
+	public Pair<Integer, List<YahooAlbumResult>> lookupAlbums(String artistId, 
+			                                                 int start,
+			                                                 int resultsToReturn) {		
 		StringBuilder sb = new StringBuilder();
-		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
+		sb.append("http://192.168.150.128:2080/AudioSearchService/V1/albumSearch?appid=");
+		// sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
 		sb.append(appId);
-		// 50 is the maximum number of results we can get with one request, 10 is the default 
-		// number
+		sb.append("&start=");
+		sb.append(StringUtils.urlEncode(Integer.toString(start)));
 		sb.append("&results=");
 		sb.append(StringUtils.urlEncode(Integer.toString(resultsToReturn)));
 		sb.append("&artistid=");		
@@ -124,10 +132,10 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Album search failed, returning nothing");
-			return Collections.emptyList();
+			logger.error("Album search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
+			return new Pair<Integer, List<YahooAlbumResult>>(-1, new ArrayList<YahooAlbumResult>());
 		} else {
-			return handler.getBestAlbums();
+			return new Pair<Integer, List<YahooAlbumResult>>(handler.getTotalResultsAvailable(), handler.getBestAlbums());
 		}
 	}
 	
@@ -144,7 +152,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Album search failed, returning nothing");
+			logger.error("Album search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			throw new NotFoundException("Album search failed, returning nothing");
 		} else {
             List<YahooAlbumResult> albums = handler.getBestAlbums();
@@ -169,7 +177,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Download search failed, returning nothing");
+			logger.error("Download search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
 			List<YahooSongDownloadResult> list = handler.getBestDownloads();
@@ -177,26 +185,6 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 				result.setSongId(songId);
 			}
 			return list;
-		}
-	}
-
-	public String lookupArtistId(String artist) throws NotFoundException {
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/artistSearch?appid=");
-		sb.append(appId);
-		sb.append("&artist=");
-		sb.append(StringUtils.urlEncode(artist));
-
-		String wsUrl = sb.toString();
-		logger.debug("Loading yahoo artist search {}", wsUrl);
-		
-		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
-		if (handler == null) {
-			logger.debug("Artist Id search failed, returning nothing");
-			throw new NotFoundException("Artist Id search failed, returning nothing");
-		} else {
-			return handler.getSingleArtistId();
 		}
 	}
 
@@ -225,7 +213,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		
 		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
 		if (handler == null) {
-			logger.debug("Artist search failed, returning nothing");
+			logger.error("Artist search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
 			return handler.getBestArtists();

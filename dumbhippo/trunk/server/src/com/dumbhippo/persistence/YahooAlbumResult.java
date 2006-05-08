@@ -57,7 +57,7 @@ public class YahooAlbumResult extends DBUnique {
 	// when an album has multiple artists, so albumId is unique 
 	// by itself and doesn't need to be combined with artistId to 
 	// provide a unique key.
-	@JoinColumn(nullable=true, unique = true)
+	@JoinColumn(nullable=true, unique=true)
 	public String getAlbumId() {
 		return albumId;
 	}

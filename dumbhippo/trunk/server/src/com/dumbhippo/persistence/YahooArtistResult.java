@@ -17,11 +17,15 @@ public class YahooArtistResult extends DBUnique {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	private boolean noResultsMarker;
+	private int totalAlbumsByArtist;
+	private boolean initialAlbumsStored;
 	private boolean allAlbumsStored;
 	
 	
 	public YahooArtistResult() {
 		noResultsMarker = false;
+		totalAlbumsByArtist = -1;
+		initialAlbumsStored = false;
 		allAlbumsStored = false;
 	}
 
@@ -37,6 +41,8 @@ public class YahooArtistResult extends DBUnique {
 		smallImageWidth = results.smallImageWidth;
 		smallImageHeight = results.smallImageHeight;
 		noResultsMarker = results.noResultsMarker;
+		totalAlbumsByArtist = results.totalAlbumsByArtist;
+		initialAlbumsStored = results.initialAlbumsStored;
 		allAlbumsStored = results.allAlbumsStored;
 	}
 	
@@ -116,6 +122,23 @@ public class YahooArtistResult extends DBUnique {
 	
 	public void setNoResultsMarker(boolean noResultsMarker) {
 		this.noResultsMarker = noResultsMarker;
+	}
+
+	@Column(nullable=false)
+	public int getTotalAlbumsByArtist() {
+		return totalAlbumsByArtist;
+	}
+	public void setTotalAlbumsByArtist(int totalAlbumsByArtist) {
+		this.totalAlbumsByArtist = totalAlbumsByArtist;
+	}
+	
+	@Column(nullable=false)
+	public boolean isInitialAlbumsStored() {
+	    return this.initialAlbumsStored;
+	}
+	
+	public void setInitialAlbumsStored(boolean initialAlbumsStored) {
+	    this.initialAlbumsStored = initialAlbumsStored;
 	}
 	
 	@Column(nullable=false)

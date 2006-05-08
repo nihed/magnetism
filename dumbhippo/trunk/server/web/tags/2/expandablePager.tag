@@ -11,8 +11,13 @@
 		<c:when test="${pageable.position == 0}">
 			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>MORE</a>
 			<c:if test="${pageable.bound < 0}">
-				 (<c:out value="${pageable.totalCount}"/>)
+				 <span class="dh-more-count"> 
+				     <a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>
+				         (<c:out value="${pageable.totalCount}"/>)
+				     </a>
+				 </span>    
 			 </c:if>
+			 </a>
 			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'><img src="/images2/arrow_right.gif"/></a>
 		</c:when>
 		<c:otherwise>

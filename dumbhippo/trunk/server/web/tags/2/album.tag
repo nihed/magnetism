@@ -4,14 +4,23 @@
 
 <%@ attribute name="album" required="true" type="com.dumbhippo.server.AlbumView"%>
 
+<c:url value="/artist" var="albumlink">
+	<c:param name="artist" value="${album.artist}"/>
+	<c:param name="album" value="${album.title}"/>
+</c:url>
+
 <div class="dh-album">
     <div class="dh-album-image">
-        <img src="${album.smallImageUrl}" width="${album.smallImageWidth}" height="${album.smallImageHeight}"/>
+        <a href="${albumlink}">
+            <img src="${album.smallImageUrl}" width="${album.smallImageWidth}" height="${album.smallImageHeight}"/>
+        </a>    
     </div>       
     <div class="dh-album-info">      
         <div class="dh-album-title">
             <c:if test="${!empty album.title}">
-                <c:out value="${album.truncatedTitle}"/>
+                <a href="${albumlink}">
+                    <c:out value="${album.truncatedTitle}"/>
+                </a>    
             </c:if>
         </div>
         <div class="dh-album-year">

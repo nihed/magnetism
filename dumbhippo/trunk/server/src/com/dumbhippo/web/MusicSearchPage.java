@@ -7,11 +7,15 @@ import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.SystemViewpoint;
 
 public class MusicSearchPage {
 
 	static private final Logger logger = GlobalSetup.getLogger(MusicSearchPage.class);
+	
+	@PagePositions
+	PagePositionsBean pagePositions;
 	
 	private MusicSystem musicSystem;
 	
@@ -20,18 +24,14 @@ public class MusicSearchPage {
 	private String album;
 	
 	private ExpandedArtistView expandedArtistView;
-	private ListBean<AlbumView> albumsByArtist;
-	private AlbumView bestAlbumView;
+	private Pageable<AlbumView> albumsByArtist;
 	
 	boolean expandedArtistViewRetrieved;
-	boolean bestAlbumViewRetrieved;
 
 	public MusicSearchPage() {
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		expandedArtistView = null;
-		bestAlbumView = null;
 		expandedArtistViewRetrieved = false;
-		bestAlbumViewRetrieved = false;
 	}
 	
 	public String getAlbum() {
@@ -66,7 +66,12 @@ public class MusicSearchPage {
 		
 		if (artist != null) {
 			try {
-				expandedArtistView = musicSystem.expandedArtistSearch(SystemViewpoint.getInstance(), artist, album, song);
+			    albumsByArtist = pagePositions.createPageable("albumsByArtist"); 				
+				// we will know which albums to load into the expandedArtistView based on the Pageable,
+			    // the Pageable will come back from this call with the right albums set in its results field,
+			    // they will be the same albums as expandedArtistView.getAlbums()
+				expandedArtistView = 
+					musicSystem.expandedArtistSearch(SystemViewpoint.getInstance(), artist, album, song, albumsByArtist);
 			} catch (NotFoundException e) {
 				logger.debug("Expanded artist not found {}", e.getMessage());
 			}
@@ -74,32 +79,8 @@ public class MusicSearchPage {
 		return expandedArtistView;
 	}
 	
-	public ListBean<AlbumView> getAlbumsByArtist() {
-	    getExpandedArtistView();
-		if (expandedArtistView != null)
-		    albumsByArtist = new ListBean<AlbumView>(expandedArtistView.getAlbums());		
+	public Pageable<AlbumView> getAlbumsByArtist() {
+		getExpandedArtistView();
 		return albumsByArtist;
-	}
-	
-	public AlbumView getBestAlbum() {
-		if (bestAlbumViewRetrieved) {
-			return bestAlbumView;
-		}
-	    bestAlbumViewRetrieved = true;
-		
-	    getExpandedArtistView();
-		if (expandedArtistView != null) {
-			if (!expandedArtistView.getAlbums().isEmpty()) {
-				bestAlbumView = expandedArtistView.getAlbums().get(0);
-			}
-		    for (AlbumView albumView : expandedArtistView.getAlbums()) {
-		    	// this is a quick check so that we display an album with some album art
-		    	if (!albumView.getSmallImageUrl().contains("no_image_available")) {
-		    	    bestAlbumView = albumView;
-		    	    break;
-		    	}
-		    }		    
-		}
-		return bestAlbumView;    
 	}
 }

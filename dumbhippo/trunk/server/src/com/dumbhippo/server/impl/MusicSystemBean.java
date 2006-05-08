@@ -148,12 +148,12 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.artistSearch(viewpoint, artist);
 	}
 
-	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist) throws NotFoundException {
-		return internal.expandedArtistSearch(viewpoint, artist);
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+		return internal.expandedArtistSearch(viewpoint, artist, albumsByArtist);
 	}
 
-	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		return internal.expandedArtistSearch(viewpoint, artist, album, name);
+	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+		return internal.expandedArtistSearch(viewpoint, artist, album, name, albumsByArtist);
 	}
 	
 	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {

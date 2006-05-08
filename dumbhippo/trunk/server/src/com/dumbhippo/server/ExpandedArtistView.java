@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExpandedArtistView extends ArtistView {
-
+	
 	private List<AlbumView> albums;
 	
 	private String yahooMusicPageUrl;
@@ -12,10 +12,13 @@ public class ExpandedArtistView extends ArtistView {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
+	private int totalAlbumsByArtist;
+	
 	ExpandedArtistView() {
 		super();
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
+		this.totalAlbumsByArtist = 0;
 	    albums = new ArrayList<AlbumView>();	
 	}
 
@@ -23,11 +26,17 @@ public class ExpandedArtistView extends ArtistView {
 		super(name);
 		this.smallImageWidth = -1;
 		this.smallImageHeight = -1;
+		this.totalAlbumsByArtist = 0;
 	    albums = new ArrayList<AlbumView>();
-	}
+    }
 	
 	public List<AlbumView> getAlbums() {
 		return albums;
+	}
+
+	public void pageAlbums(Pageable<AlbumView> pageable) {
+		pageable.setResults(albums);
+	    pageable.setTotalCount(totalAlbumsByArtist);
 	}
 	
 	public void addAlbum(AlbumView album) {
@@ -66,5 +75,13 @@ public class ExpandedArtistView extends ArtistView {
 	public void setSmallImageWidth(int smallImageWidth) {
 		this.smallImageWidth = smallImageWidth;
 	}
+	
+	public int getTotalAlbumsByArtist() {
+		return totalAlbumsByArtist;
+	}
+
+	public void setTotalAlbumsByArtist(int totalAlbumsByArtist) {
+		this.totalAlbumsByArtist = totalAlbumsByArtist;
+	}	
 }
 

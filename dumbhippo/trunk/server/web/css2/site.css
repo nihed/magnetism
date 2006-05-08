@@ -136,6 +136,10 @@ body.dh-gray-background-page {
 	font-weight:		bold;
 }
 
+.dh-more-count a:link, .dh-more-count a:visited {
+    color:              black;  
+}
+
 .dh-zone-box .dh-bottom-image, .dh-zone-box .dh-header-image {
 	background: 		#EFEFEF;
 }

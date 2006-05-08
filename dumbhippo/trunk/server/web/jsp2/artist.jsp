@@ -21,15 +21,21 @@
 		        <c:when test="${not empty musicsearch.expandedArtistView}">
                     <dht:artistProfile artist="${musicsearch.expandedArtistView}"/>
                     <dht:zoneBoxSeparator/>
+                    <a name="dhAlbumsByArtist"></a>
                     <div class="dh-artist-zone-title">DISCOGRAPHY</div>
-                    <c:choose>
-                        <c:when test="${not empty musicsearch.bestAlbum}">
-                            <dht:album album="${musicsearch.bestAlbum}"/>
-                        </c:when>
-                        <c:otherwise>
-                            There were not matching albums.
-                        </c:otherwise>
-                    </c:choose>            
+                    
+                    <c:if test="${musicsearch.albumsByArtist.resultCount <= 0}">
+                        There were not matching albums.
+                    </c:if>            
+                       
+                    <c:forEach items="${musicsearch.albumsByArtist.results}" var="album">
+					    <dht:album album="${album}"/>
+					</c:forEach>
+	
+	                 <div class="dh-artist-more">
+					    <dht:expandablePager pageable="${musicsearch.albumsByArtist}" anchor="dhAlbumsByArtist"/>
+					</div>
+						
                     <%-- if we don't use something like this separator, zone background color comes --%>
                     <%-- under the displayed album --%>
                     <dht:zoneBoxSeparator visible="false"/>
