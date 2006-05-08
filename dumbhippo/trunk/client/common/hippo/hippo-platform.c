@@ -50,7 +50,7 @@ hippo_platform_delete_login_cookie(HippoPlatform *platform)
     HIPPO_PLATFORM_GET_CLASS(platform)->delete_login_cookie(platform);
 }
 
-char*
+const char*
 hippo_platform_get_jabber_resource(HippoPlatform *platform)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);

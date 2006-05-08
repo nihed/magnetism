@@ -644,7 +644,7 @@ static void
 hippo_connection_authenticate(HippoConnection *connection)
 {
     char *jabber_id;
-    char *resource;
+    const char *resource;
     GError *error;
      
     if (connection->username == NULL || connection->password == NULL) {
@@ -670,7 +670,6 @@ hippo_connection_authenticate(HippoConnection *connection)
         hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATING);
     }
     g_free(jabber_id);
-    g_free(resource);
 }
 
 static void

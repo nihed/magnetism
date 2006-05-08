@@ -4,12 +4,7 @@
  **/
 
 #include <HippoUtil.h>
-
-enum HippoInstanceType {
-    HIPPO_INSTANCE_NORMAL,
-    HIPPO_INSTANCE_DOGFOOD,
-    HIPPO_INSTANCE_DEBUG
-};
+#include <hippo/hippo-basics.h>
 
 class HippoPreferences
 {

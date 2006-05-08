@@ -4,11 +4,14 @@
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
 static void      hippo_platform_impl_iface_init          (HippoPlatformClass      *klass);
+
+static void      hippo_platform_impl_finalize            (GObject                 *object);
+
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
                                                           char                   **username_p,
                                                           char                   **password_p);
 static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
-static char*     hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
+static const char* hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
 
 static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
 static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
@@ -59,8 +62,9 @@ hippo_platform_impl_init(HippoPlatformImpl       *impl)
 static void
 hippo_platform_impl_class_init(HippoPlatformImplClass  *klass)
 {
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
-
+    object_class->finalize = hippo_platform_impl_finalize;
 }
 
 HippoPlatform*
@@ -71,28 +75,38 @@ hippo_platform_impl_new(HippoInstanceType instance)
     return HIPPO_PLATFORM(impl);
 }
 
+static void
+hippo_platform_impl_finalize(GObject *object)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object);
+
+    g_free(impl->jabber_resource);
+    
+    G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
+}
+
 static gboolean
 hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
                                       char         **username_p,
                                       char         **password_p)
 {
     GSList *cookies;
-    char *web_server;
+    char *web_host;
     int web_port;
     gboolean success;
     HippoCookie *cookie;
     char *value;
 
-    hippo_platform_get_web_host_port(platform, &web_server, &web_port);
+    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
     
-    g_debug("Looking for login to %s:%d", web_server, web_port);
+    g_debug("Looking for login to %s:%d", web_host, web_port);
     
     /* We load cookies with -1 (wildcard) for the port because 
      * the port doesn't seem to get saved in cookies.txt ...
      */
-    cookies = hippo_load_cookies(web_server, -1, "auth");
+    cookies = hippo_load_cookies(web_host, -1, "auth");
     
-    g_free(web_server);
+    g_free(web_host);
     
     if (cookies == NULL)
         return FALSE;
@@ -114,7 +128,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
      * hippo_parse_login_cookie allows a NULL value
      */
 
-    success = hippo_parse_login_cookie(value, web_server, username_p, password_p);
+    success = hippo_parse_login_cookie(value, web_host, username_p, password_p);
     g_free(value);
     return success;
 }
@@ -130,7 +144,7 @@ hippo_platform_impl_delete_login_cookie(HippoPlatform *platform)
 
 }
 
-static char*
+static const char*
 hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
 {
     /* On Windows we're using the hardware profile ID. Linux doesn't have 

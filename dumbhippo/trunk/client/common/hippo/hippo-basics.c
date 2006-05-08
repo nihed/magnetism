@@ -136,8 +136,10 @@ hippo_parse_login_cookie(const char *cookie_value,
         p = next_amp + 1;
     }
 
-    /* Pre-Jan 2005 cookies may not have a host */
-    if (host != NULL && strcmp(required_host, host) != 0) {
+    /* Pre-Jan 2005 cookies may not have a host, we no longer accept that,
+     * nor do we accept a mismatched host 
+     */
+    if (host == NULL || strcmp(required_host, host) != 0) {
         g_free(host);
         g_free(username);
         g_free(password);

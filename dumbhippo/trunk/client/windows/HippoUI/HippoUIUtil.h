@@ -39,16 +39,23 @@ public:
 class HippoUStr 
 {
 public:
-    HippoUStr(HippoBSTR bstr) {
+    HippoUStr(const HippoBSTR &bstr) {
         if (bstr.m_str)       
             str = g_utf16_to_utf8((gunichar2 *)bstr.m_str, SysStringLen(bstr.m_str), NULL, NULL, NULL);
         else
             str = NULL;
     }
 
-    HippoUStr(WCHAR wstr) {
+    HippoUStr(WCHAR *wstr) {
         if (wstr)
             str = g_utf16_to_utf8((gunichar2 *)wstr, -1, NULL, NULL, NULL);
+        else
+            str = NULL;
+    }
+
+    HippoUStr(WCHAR *wstr, int len) {
+        if (wstr)
+            str = g_utf16_to_utf8((gunichar2 *)wstr, len, NULL, NULL, NULL);
         else
             str = NULL;
     }
@@ -57,8 +64,16 @@ public:
         g_free(str);
     }
 
-    const char *c_str() {
+    const char *c_str() const {
         return str;
+    }
+
+    // get a g_malloc allocated string and unset this one;
+    // must be g_free'd 
+    char *steal() {
+        char *tmp = str;
+        str = NULL;
+        return tmp;
     }
 
 private:

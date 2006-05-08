@@ -23,7 +23,7 @@ struct _HippoPlatformClass {
 	                                   char          **password);
 	void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
 	
-	char*     (* get_jabber_resource) (HippoPlatform  *platform);
+	const char* (* get_jabber_resource) (HippoPlatform  *platform);
 	
 	/* Preferences */
 	char*     (* get_message_server)  (HippoPlatform *platform);
@@ -41,7 +41,7 @@ gboolean         hippo_platform_read_login_cookie      (HippoPlatform *platform,
 	                                                    char         **username,
                   	                                    char         **password);
 void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
-char*            hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
+const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 
 /* Preferences */
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 

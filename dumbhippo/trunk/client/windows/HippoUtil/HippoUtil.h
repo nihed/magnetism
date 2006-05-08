@@ -316,6 +316,20 @@ public:
         delete [] buf;
     }
 
+    // FIXME could be more efficient
+    void appendUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
+        HippoBSTR tmp;
+        tmp.setUTF8(utf8, len);
+        Append(tmp);
+    }
+
+    // FIXME could be more efficient
+    static HippoBSTR fromUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
+        HippoBSTR tmp;
+        tmp.setUTF8(utf8, len);
+        return tmp;
+    }
+
     bool endsWith(const HippoBSTR &suffix) {
         if (Length() < suffix.Length())
             return false;
