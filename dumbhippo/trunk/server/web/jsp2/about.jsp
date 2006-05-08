@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_oops500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/header_aboutus500.gif">
 
 	<p>Mugshot is an experiment in software design for people.</p>
 
