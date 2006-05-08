@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth"
+				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
@@ -35,7 +35,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
+				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
 				OutputFile="$(OutDir)/HippoUI.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"
@@ -177,6 +177,9 @@
 				RelativePath=".\HippoMySpace.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoPlatformImpl.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoPreferences.cpp">
 			</File>
 			<File
@@ -276,6 +279,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoMySpace.h">
+			</File>
+			<File
+				RelativePath=".\HippoPlatformImpl.h">
 			</File>
 			<File
 				RelativePath=".\HippoPreferences.h">
