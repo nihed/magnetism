@@ -95,7 +95,7 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		try {
-			if (tx.getStatus() != Status.STATUS_NO_TRANSACTION) {
+			if (tx.getStatus() == Status.STATUS_NO_TRANSACTION) {
 				try {
 					tx.begin();
 					transactionCreated = true;
