@@ -2,6 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  **/
+#pragma once
 
 #include <HippoUtil.h>
 #include <hippo/hippo-basics.h>
@@ -13,13 +14,9 @@ public:
 
     void getMessageServer(BSTR *server) throw (std::bad_alloc);
     void setMessageServer(BSTR server);
-    void parseMessageServer(BSTR         *host,
-                            unsigned int *port);
 
     void getWebServer(BSTR *server) throw (std::bad_alloc);
     void setWebServer(BSTR server);
-    void parseWebServer(BSTR         *host,
-                        unsigned int *port);
 
     bool getSignIn();
     void setSignIn(bool signIn);
@@ -33,11 +30,6 @@ public:
 private:
     void load();
     void save();
-    void parseServer(BSTR          server,
-                     const WCHAR  *defaultHost,
-                     unsigned int  defaultPort,
-                     BSTR         *host,
-                     unsigned int *port);
 
     // Whether to use a separate debug registry section
     HippoInstanceType instanceType_;

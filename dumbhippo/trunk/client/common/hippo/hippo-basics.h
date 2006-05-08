@@ -20,12 +20,19 @@ typedef enum {
     HIPPO_HOTNESS_UNKNOWN
 } HippoHotness;
 
-#define HIPPO_DEFAULT_MESSAGE_HOST   "messages.dumbhippo.com"
-#define HIPPO_DEFAULT_MESSAGE_PORT   5222
-#define HIPPO_DEFAULT_MESSAGE_SERVER HIPPO_DEFAULT_MESSAGE_HOST ":5222"
-#define HIPPO_DEFAULT_WEB_HOST       "dumbhippo.com"
-#define HIPPO_DEFAULT_WEB_PORT       80
-#define HIPPO_DEFAULT_WEB_SERVER     HIPPO_DEFAULT_WEB_HOST ":80"
+#define HIPPO_DEFAULT_MESSAGE_HOST     "messages.dumbhippo.com"
+#define HIPPO_DEFAULT_MESSAGE_PORT     5222
+#define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"
+#define HIPPO_DEFAULT_WEB_HOST         "dumbhippo.com"
+#define HIPPO_DEFAULT_WEB_PORT         80
+#define HIPPO_DEFAULT_WEB_SERVER       HIPPO_DEFAULT_WEB_HOST ":80"
+
+#ifdef G_OS_WIN32
+#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"messages.dumbhippo.com"
+#define HIPPO_DEFAULT_MESSAGE_SERVER_L HIPPO_DEFAULT_MESSAGE_HOST_L L":5222"
+#define HIPPO_DEFAULT_WEB_HOST_L       L"dumbhippo.com"
+#define HIPPO_DEFAULT_WEB_SERVER_L     HIPPO_DEFAULT_WEB_HOST_L L":80"
+#endif
 
 typedef struct {
     HippoInstanceType instance_type;

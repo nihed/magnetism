@@ -9,6 +9,7 @@
 #include "HippoUI.h"
 #include "HippoUIUtil.h"
 #include "HippoMySpace.h"
+#include "HippoPreferences.h"
 
 static const int SIGN_IN_INITIAL_TIMEOUT = 5000; /* 5 seconds */
 static const int SIGN_IN_INITIAL_COUNT = 60;     /* 5 minutes */
@@ -440,88 +441,14 @@ copySubstring(WCHAR *str, WCHAR *end, BSTR *to)
 bool
 HippoIM::loadAuth()
 {
-    WCHAR staticBuffer[1024];
-    WCHAR *allocBuffer = NULL;
-    WCHAR *cookieBuffer = staticBuffer;
-    DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
-    char *cookie = NULL;
-    HippoBSTR url;
+    HippoPlatform *platform = ui_->getPlatform();
+    HippoUStr usernameU;
+    HippoUStr passwordU;
 
-    username_ = NULL;
-    password_ = NULL;
+    hippo_platform_read_login_cookie(platform, &usernameU, &passwordU);
 
-    // We look for an auth key for the particular server being used; otherwise,
-    // we might get a cookie for dumbhippo.com when we are trying to log
-    // into dogfood.dumbhippo.com.
-    HippoBSTR matchHost;
-    unsigned int matchPort; // unused
-    ui_->getPreferences()->parseWebServer(&matchHost, &matchPort);
-
-    try {
-        getAuthURL(&url);
-    } catch (...) {
-        goto out;
-    }
-
-retry:
-    if (!InternetGetCookieEx(url, 
-                             L"auth",
-                             cookieBuffer, &cookieSize,
-                             0,
-                             NULL))
-    {
-        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-            cookieBuffer = allocBuffer = new WCHAR[cookieSize];
-            if (!cookieBuffer)
-                goto out;
-            goto retry;
-        }
-    }
-
-    WCHAR *p = cookieBuffer;
-    WCHAR *nextCookie = NULL;
-    for (WCHAR *p = cookieBuffer; p < cookieBuffer + cookieSize; p = nextCookie + 1) {
-        HippoBSTR host;
-        HippoBSTR username;
-        HippoBSTR password;
-
-        nextCookie = wcschr(p, ';');
-        if (!nextCookie)
-            nextCookie = cookieBuffer + cookieSize;
-
-        while (*p == ' ' || *p == '\t') // Skip whitespace after ;
-            p++;
-
-        if (!startsWith(p, L"auth="))
-            continue;
-
-        p += 5; // Skip 'auth='
-
-        WCHAR *nextKey = NULL;
-        for (; p < nextCookie; p = nextKey + 1) {
-            nextKey = wcschr(p, '&');
-            if (!nextKey || nextKey > nextCookie)
-                nextKey = nextCookie;
-
-            if (startsWith(p, L"host="))
-                copySubstring(p + 5, nextKey, &host);
-            else if (startsWith(p, L"name="))
-                copySubstring(p + 5, nextKey, &username);
-            else if (startsWith(p, L"password="))
-                copySubstring(p + 9, nextKey, &password);
-        }
-
-        // Old (pre-Jan 2005) cookies may not have a host
-        if (host.m_str == 0 || wcscmp(host.m_str, matchHost.m_str) == 0) {
-            username_ = username;
-            password_ = password;
-            if (host != NULL)
-                break;
-        }
-    }
-
-out:
-    delete[] allocBuffer;
+    username_ = usernameU.toBSTR();
+    password_ = passwordU.toBSTR();
 
     ui_->debugLogW(L"authentication information: u=\"%s\" p=\"%s\"", username_.m_str ? username_.m_str : L"(null)",
                    password_.m_str ? password_.m_str : L"(null)");
@@ -530,23 +457,22 @@ out:
 
 void
 HippoIM::connect()
-{
-    HippoBSTR messageServer;
-    unsigned int port;
-
-    ui_->getPreferences()->parseMessageServer(&messageServer, &port);
-    HippoUStr messageServerU(messageServer);
-    
+{    
     if (lmConnection_) {
         hippoDebugDialog(L"connect() called when there is an existing connection");
         return;
     }
+    HippoPlatform *platform = ui_->getPlatform();
 
-    lmConnection_ = lm_connection_new(messageServerU.c_str());
+    HippoUStr hostU;
+    int port;
+    hippo_platform_get_message_host_port(platform, &hostU, &port);
+
+    lmConnection_ = lm_connection_new(hostU.c_str());
     lm_connection_set_port(lmConnection_, port);
     lm_connection_set_keep_alive_rate(lmConnection_, KEEP_ALIVE_RATE);
 
-    ui_->debugLogU("Connecting to %s:%d", messageServerU.c_str(), port);
+    ui_->debugLogU("Connecting to %s:%d", hostU, port);
 
     LmMessageHandler *handler = lm_message_handler_new(onMessage, (gpointer)this, NULL);
     lm_connection_register_message_handler(lmConnection_, handler, 

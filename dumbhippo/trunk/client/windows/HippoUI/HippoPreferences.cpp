@@ -15,8 +15,8 @@ static const WCHAR DUMBHIPPO_SUBKEY[] = L"Software\\DumbHippo\\Client";
 static const WCHAR DUMBHIPPO_SUBKEY_DOGFOOD[] = L"Software\\DumbHippo\\DogfoodClient";
 static const WCHAR DUMBHIPPO_SUBKEY_DEBUG[] = L"Software\\DumbHippo\\DebugClient";
 
-static const WCHAR DEFAULT_MESSAGE_SERVER[] = L"messages.dumbhippo.com";
-static const WCHAR DEFAULT_WEB_SERVER[] = L"dumbhippo.com";
+static const WCHAR DEFAULT_MESSAGE_SERVER[] = HIPPO_DEFAULT_MESSAGE_SERVER_L;
+static const WCHAR DEFAULT_WEB_SERVER[] = HIPPO_DEFAULT_WEB_SERVER_L;
 
 HippoPreferences::HippoPreferences(HippoInstanceType instanceType)
 {
@@ -33,57 +33,6 @@ HippoPreferences::getMessageServer(BSTR *server)
         messageServer_.CopyTo(server);
     else
         HippoBSTR(DEFAULT_MESSAGE_SERVER).CopyTo(server);
-}
-
-void
-HippoPreferences::parseServer(BSTR          server,
-                              const WCHAR  *defaultHost,
-                              unsigned int  defaultPort,
-                              BSTR         *host,
-                              unsigned int *port)
-{
-    *host = NULL;
-    *port = defaultPort;
-
-    if (server) {
-        const WCHAR *p = server + SysStringLen(server);
-
-        while (p > server) {
-            if (*(p - 1) == ':') {
-                HippoBSTR tmpStr((UINT)(p - server - 1), server);
-                tmpStr.CopyTo(host);
-
-                if (*p) {
-                    WCHAR *end;
-                    long tmp;
-
-                    tmp = wcstol(p, &end, 10);
-                    if (!*end) 
-                        *port = tmp;
-                }
-                break;
-            }
-
-            p--;
-        }
-
-        if (p == server) {
-            HippoBSTR tmpStr(server);
-            tmpStr.CopyTo(host);
-        }
-    }
-
-    if (!*host) {
-        HippoBSTR tmpStr(defaultHost);
-        tmpStr.CopyTo(host);
-    }
-}
-
-void
-HippoPreferences::parseMessageServer(BSTR         *host,
-                                     unsigned int *port)
-{
-    parseServer(messageServer_, DEFAULT_MESSAGE_SERVER, 5222, host, port);
 }
 
 void 
@@ -109,13 +58,6 @@ HippoPreferences::setWebServer(BSTR server)
     webServer_ = server;
 
     save();
-}
-
-void
-HippoPreferences::parseWebServer(BSTR         *host,
-                                 unsigned int *port)
-{
-    parseServer(webServer_, DEFAULT_WEB_SERVER, 80, host, port);
 }
 
 bool 
@@ -199,7 +141,7 @@ HippoPreferences::getInstanceDescription()
     switch (instanceType_) {
         case HIPPO_INSTANCE_NORMAL:
         default:
-            return L"DumbHippo - Share links and more!";
+            return L"Mugshot";
         case HIPPO_INSTANCE_DOGFOOD:
             return L"DumbHippo - I prefer dog food!";
         case HIPPO_INSTANCE_DEBUG:

@@ -21,6 +21,9 @@
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
 #include "HippoRemoteWindow.h"
+#include "HippoPreferences.h"
+#include "HippoPlatformImpl.h"
+#include "HippoUIUtil.h"
 
 #include <glib.h>
 
@@ -47,7 +50,6 @@ static const int CHECK_IDLE_TIME = 5 * 1000;
 static const int HOTNESS_BLINK_TIME = 150;
 
 HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
-    : preferences_(instanceType)
 {
     refCount_ = 1;
     instanceType_ = instanceType;
@@ -57,6 +59,9 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     hippoLoadTypeInfo(L"HippoUtil.dll",
                       &IID_IHippoUI, &uiTypeInfo_,
                       NULL);
+
+    platform_ = hippo_platform_impl_new(instanceType);
+    g_object_unref(G_OBJECT(platform_));
 
     notificationIcon_.setUI(this);
     bubble_.setUI(this);
@@ -384,7 +389,7 @@ HippoUI::setIcons(void)
     trayIcon_ = (HICON)LoadImage(instance_, icon,
                                  IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
-    const WCHAR *currentDesc = preferences_.getInstanceDescription();
+    const WCHAR *currentDesc = getPreferences()->getInstanceDescription();
     tooltip_ = currentDesc;
     if (!connected_)
         tooltip_.Append(L" (disconnected)");
@@ -642,7 +647,7 @@ HippoUI::create(HINSTANCE instance)
     }
 
     im_.setUI(this);
-    if (preferences_.getSignIn()) {
+    if (hippo_platform_get_signin(platform_)) {
         if (im_.signIn())
             showSignInWindow();
     }
@@ -684,10 +689,16 @@ HippoUI::destroy()
     revokeActive();
 }
 
-HippoPreferences *
+HippoPlatform *
+HippoUI::getPlatform()
+{
+    return platform_;
+}
+
+HippoPreferences*
 HippoUI::getPreferences()
 {
-    return &preferences_;
+    return hippo_platform_impl_get_preferences(HIPPO_PLATFORM_IMPL(platform_));
 }
 
 void
@@ -891,6 +902,20 @@ HippoUI::crackUrl(BSTR url, URL_COMPONENTS *components)
     return true;
 }
 
+static void
+getWebHostPort(HippoPlatform *platform,
+               BSTR          *hostReturn,
+               unsigned int  *portReturn)
+{
+    char *host;
+    int port;
+    hippo_platform_get_web_host_port(platform, &host, &port);
+    HippoBSTR hostBSTR = HippoBSTR::fromUTF8(host, -1);
+    g_free(host);
+    hostBSTR.CopyTo(hostReturn);
+    *portReturn = (unsigned int) port;
+}
+
 bool
 HippoUI::isFramedPost(BSTR url, BSTR postId)
 {
@@ -900,12 +925,13 @@ HippoUI::isFramedPost(BSTR url, BSTR postId)
 
     if (components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS)
         return false;
-
+    
     HippoBSTR host;
     unsigned int port;
-    preferences_.parseWebServer(&host, &port);
+    getWebHostPort(platform_, &host, &port);
+
     if (components.dwHostNameLength != host.Length() ||
-        wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
+        wcsncmp(components.lpszHostName, host.m_str, components.dwHostNameLength) != 0 ||
         port != components.nPort)
         return false;
 
@@ -932,9 +958,10 @@ HippoUI::isSiteURL(BSTR url)
 
     HippoBSTR host;
     unsigned int port;
-    preferences_.parseWebServer(&host, &port);
+    getWebHostPort(platform_, &host, &port);
+
     if (components.dwHostNameLength != host.Length() ||
-        wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
+        wcsncmp(components.lpszHostName, host.m_str, components.dwHostNameLength) != 0 ||
         port != components.nPort)
         return false;
 
@@ -961,7 +988,7 @@ HippoUI::isNoFrameURL(BSTR url)
 
     HippoBSTR host;
     unsigned int port;
-    preferences_.parseWebServer(&host, &port);
+    getWebHostPort(platform_, &host, &port);
     if (components.dwHostNameLength != host.Length() ||
         wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
         port != components.nPort)
@@ -1231,7 +1258,7 @@ RETRY_REGISTER:
 
     QueryInterface(IID_IHippoUI, (LPVOID *)&pHippoUI);
     HRESULT hr = RegisterActiveObject(pHippoUI, 
-                                      *preferences_.getInstanceClassId(),
+                                      *(getPreferences()->getInstanceClassId()),
                                       ACTIVEOBJECT_STRONG, &registerHandle_);
     pHippoUI->Release();
 
@@ -1251,7 +1278,7 @@ RETRY_REGISTER:
 
         HippoPtr<IUnknown> unknown;
         HippoPtr<IHippoUI> oldUI;
-        if (SUCCEEDED (GetActiveObject(*preferences_.getInstanceClassId(), NULL, &unknown)))
+        if (SUCCEEDED (GetActiveObject(*(getPreferences()->getInstanceClassId()), NULL, &unknown)))
             unknown->QueryInterface<IHippoUI>(&oldUI);
 
         if (replaceExisting_) {
@@ -1364,11 +1391,11 @@ HippoUI::showPreferences()
         SendDlgItemMessage(preferencesDialog_, IDC_LOGOICON, STM_SETICON, (WPARAM)bigIcon_, 0);
 
         HippoBSTR messageServer;
-        preferences_.getMessageServer(&messageServer);
+        getPreferences()->getMessageServer(&messageServer);
         SetDlgItemText(preferencesDialog_, IDC_MESSAGE_SERVER, messageServer);
 
         HippoBSTR webServer;
-        preferences_.getWebServer(&webServer);
+        getPreferences()->getWebServer(&webServer);
         SetDlgItemText(preferencesDialog_, IDC_WEB_SERVER, webServer);
     }
     
@@ -1593,7 +1620,7 @@ HippoUI::getRemoteURL(BSTR  appletName,
     HippoBSTR webServer;
     HippoBSTR url(L"http://");
 
-    preferences_.getWebServer(&webServer);
+    getPreferences()->getWebServer(&webServer);
 
     url.Append(webServer);
 
@@ -1710,13 +1737,15 @@ HippoUI::preferencesProc(HWND   dialog,
             messageServer[0] = '\0';
             GetDlgItemText(dialog, IDC_MESSAGE_SERVER, 
                            messageServer, sizeof(messageServer) / sizeof(messageServer[0]));
-            ui->preferences_.setMessageServer(HippoBSTR(messageServer));
+            HippoUStr messageServerU(messageServer);
+            hippo_platform_set_message_server(ui->platform_, messageServerU.c_str());
 
             WCHAR webServer[128];
             webServer[0] = '\0';
             GetDlgItemText(dialog, IDC_WEB_SERVER, 
                            webServer, sizeof(webServer) / sizeof(webServer[0]));
-            ui->preferences_.setWebServer(HippoBSTR(webServer));
+            HippoUStr webServerU(webServer);
+            hippo_platform_set_web_server(ui->platform_, webServerU.c_str());
 
             EndDialog(dialog, TRUE);
         }

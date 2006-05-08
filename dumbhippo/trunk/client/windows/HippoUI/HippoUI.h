@@ -5,6 +5,7 @@
 #pragma once
 
 #include <glib.h>
+#include <hippo/hippo-platform.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoBubble.h"
@@ -14,7 +15,6 @@
 #include "HippoLogWindow.h"
 #include "HippoDataCache.h"
 #include "HippoMenu.h"
-#include "HippoPreferences.h"
 #include "HippoUpgrader.h"
 #include "HippoFlickr.h"
 #include "HippoIM.h"
@@ -23,6 +23,9 @@
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoMySpace.h"
+#include "HippoUIUtil.h"
+
+class HippoPreferences;
 
 struct HippoBrowserInfo
 {
@@ -68,6 +71,7 @@ public:
     bool create(HINSTANCE instance);
     void destroy();
 
+    HippoPlatform *getPlatform();
     HippoPreferences *getPreferences();
 
     void showMenu(UINT buttonFlag);
@@ -237,9 +241,10 @@ private:
 
     HippoBSTR currentURL_;
 
+    HippoGObjectPtr<HippoPlatform> platform_;
+
     HippoBubble bubble_;
     HippoMenu menu_;
-    HippoPreferences preferences_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
     HippoIM im_;

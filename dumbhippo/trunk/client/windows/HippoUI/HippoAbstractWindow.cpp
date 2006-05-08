@@ -175,12 +175,14 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::launchBrowser(const HippoBST
 bool
 HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR &host)
 {
-    HippoBSTR serverHost;
-    unsigned int serverPort;
+    HippoUStr serverHost;
+    int port;
+    HippoPlatform *platform;
 
-    abstractWindow_->ui_->getPreferences()->parseWebServer(&serverHost, &serverPort);
+    platform = abstractWindow_->ui_->getPlatform();
+    hippo_platform_get_web_host_port(platform, &serverHost, &port);
 
-    return host == serverHost;
+    return host == serverHost.toBSTR();
 }
 
 HRESULT 

@@ -1,7 +1,7 @@
 #ifndef __HIPPO_PLATFORM_IMPL_H__
 #define __HIPPO_PLATFORM_IMPL_H__
 
-#include <hippo/hippo-common.h>
+#include <hippo/hippo-platform.h>
 #include "HippoPreferences.h"
 
 typedef struct _HippoPlatformImpl      HippoPlatformImpl;
