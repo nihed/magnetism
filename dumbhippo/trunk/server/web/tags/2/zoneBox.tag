@@ -8,7 +8,7 @@
 <%@ attribute name="topText" required="false" type="java.lang.String" %>
 <%@ attribute name="bottomImage" required="true" type="java.lang.String" %>
 <%@ attribute name="more" required="false" type="java.lang.String" %>
-<%@ attribute name="back" required="false" type="java.lang.String" %>
+<%@ attribute name="back" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disableJumpTo" required="false" type="java.lang.Boolean" %>
 
 <%-- provide the zone name to child nodes; this "set a global variable" approach
@@ -34,7 +34,7 @@
 					<dht:zoneBoxLinkHeader value="MORE" link="${more}"/>
 				</c:when>
 				<c:when test="${!empty back}">
-					<dht:zoneBoxLinkHeader value="Go back" link="${back}"/>
+					<dht:zoneBoxLinkHeader value="Go back" link="javascript:history.go(-1)"/>
 				</c:when>
 				<c:when test="${disableJumpTo}">
 					<%-- nothing --%>

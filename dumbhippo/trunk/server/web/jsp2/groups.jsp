@@ -12,12 +12,10 @@
 	<c:when test='${empty param["who"]}'>
 		<c:set var="fromHome" value='true' scope="page"/>
 		<c:set var="who" value='${signin.user.id}' scope="page"/>
-		<c:set var="back" value='/home'/>
 	</c:when>
 	<c:otherwise>
 		<c:set var="fromHome" value='false' scope="page"/>
 		<c:set var="who" value='${param["who"]}' scope="page"/>
-		<c:set var="back" value='/person?who=${who}'/>
 	</c:otherwise>
 </c:choose>
 
@@ -36,7 +34,7 @@
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
-		<dht:zoneBoxGroups back='${back}'>
+		<dht:zoneBoxGroups back='true'>
 			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "MY " : "" }'/>GROUPS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 				<c:forEach items="${person.groups.list}" var="group">

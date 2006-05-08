@@ -2,8 +2,6 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="page" required="false" type="java.lang.String" %>
-
 <%-- If there are no groups for someone !self, just omit this box --%>
 <c:if test="${person.groups.size > 0 || person.self}">
 	
@@ -23,14 +21,7 @@
 					<dht:groupItem group="${group}"/>
 				</c:forEach>
 				<c:if test="${person.groups.size > 3}">
-					<c:choose>
-						<c:when test='${page == "home"}'>
-							<dht:moreLink more="/groups"/>
-						</c:when>
-						<c:otherwise>
-							<dht:moreLink more="/groups?who=${person.viewedUserId}"/>
-						</c:otherwise>
-					</c:choose>
+					<dht:moreLink more="/groups?who=${person.viewedUserId}"/>
 				</c:if>
 			</c:when>
 			<c:otherwise>

@@ -3,7 +3,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="who" required="true" type="java.lang.String" %>
-<%@ attribute name="page" required="false" type="java.lang.String" %>
 
 <c:if test="${showSidebar}"> <%-- set in twoColumnPage tag --%>
 	<dht:requirePersonBean who="${who}"/>
@@ -12,7 +11,7 @@
 		<dht:sidebarBoxProfile/>
 		<%-- any extra boxes go here --%>
 		<jsp:doBody/>
-		<dht:sidebarBoxGroups page="${page}"/>
-		<dht:sidebarBoxFriends page="${page}"/>
+		<dht:sidebarBoxGroups/>
+		<dht:sidebarBoxFriends/>
 	</dht:sidebarColumn>
 </c:if>
