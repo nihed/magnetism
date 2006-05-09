@@ -79,7 +79,11 @@ void
 GAbstractSource::remove()
 {
     if (source_ != NULL) {
+        // source may already be destroyed, but that's OK
+        // since we had a ref and g_source_destroy() silently allows
+        // multiple calls
         g_source_destroy(source_);
+        g_source_unref (source_);
         source_ = NULL;
     }
 }
@@ -99,7 +103,7 @@ GAbstractSource::add_impl(GSource *source, GSourceFunc callback, Slot *slot)
     g_source_set_callback(source_, callback, slot, free_slot);
 
     g_source_attach(source_, NULL);
-    g_source_unref (source_);
+    // keep source ref so we can handle the source returning false to remove itself
 }
 
 void
