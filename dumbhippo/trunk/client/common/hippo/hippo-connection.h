@@ -44,6 +44,10 @@ void             hippo_connection_set_cache                 (HippoConnection  *c
 const char*      hippo_connection_get_self_guid             (HippoConnection  *connection);
 
 HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
+/* are we in a state such that the main app should go about its normal server interactions?
+ * (right now this means state == AUTHENTICATED) 
+ */
+gboolean         hippo_connection_get_connected             (HippoConnection  *connection);
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);

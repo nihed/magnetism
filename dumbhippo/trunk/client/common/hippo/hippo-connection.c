@@ -86,7 +86,8 @@ static void     hippo_connection_authenticate         (HippoConnection *connecti
 static void     hippo_connection_clear                (HippoConnection *connection);
 static void     hippo_connection_flush_outgoing       (HippoConnection *connection);
 static void     hippo_connection_send_message         (HippoConnection *connection,
-                                                       LmMessage       *message);static void     hippo_connection_send_message_with_reply(HippoConnection *connection,
+                                                       LmMessage       *message);
+static void     hippo_connection_send_message_with_reply(HippoConnection *connection,
                                                        LmMessage *message,
                                                        LmMessageHandler *handler);
 static void     hippo_connection_get_client_info      (HippoConnection *connection);
@@ -280,6 +281,13 @@ hippo_connection_get_state(HippoConnection *connection)
     return connection->state;
 }
 
+gboolean
+hippo_connection_get_connected(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
+    return connection->state == HIPPO_STATE_AUTHENTICATED;
+}
+
 /* Returns whether we have the login cookie */
 gboolean
 hippo_connection_signin(HippoConnection *connection)
@@ -422,7 +430,8 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
 
     hippo_connection_send_message(connection, message);
 
-    lm_message_unref(message);
+    lm_message_unref(message);
+
     /* we should also get back a notification from the server when this changes,
      * but we want to avoid re-priming so this adds robustness
      */
@@ -607,7 +616,8 @@ hippo_connection_state_change(HippoConnection *connection,
     if (connection->state == state)
         return;
         
-    connection->state = state;    
+    connection->state = state;
+    
     hippo_connection_flush_outgoing(connection);
 
     g_debug("Connection state = %s", hippo_state_debug_string(connection->state));
@@ -782,7 +792,8 @@ on_client_info_reply(LmMessageHandler *handler,
                      gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
-    LmMessageNode *child;        const char *minimum;
+    LmMessageNode *child;    
+    const char *minimum;
     const char *current;
     const char *download;    
     
@@ -1379,7 +1390,8 @@ hippo_connection_parse_live_post(HippoConnection *connection,
         g_object_unref(post);
     g_slist_free(viewers);
     return FALSE;
-}
+}
+
 static gboolean
 is_entity(LmMessageNode *node)
 {
@@ -1513,7 +1525,8 @@ hippo_connection_parse_post(HippoConnection *connection,
     node = lm_message_node_get_child (post_node, "recipients");
     if (!node)
         return FALSE;
-    for (subchild = node->children; subchild; subchild = subchild->next) {
+
+    for (subchild = node->children; subchild; subchild = subchild->next) {
         const char *entity_id;
         HippoEntity *entity;
         if (!get_entity_guid(subchild, &entity_id))
@@ -2205,7 +2218,8 @@ process_room_presence(HippoConnection *connection,
         
         entity = hippo_data_cache_lookup_entity(connection->cache, user_id);
         if (entity != NULL) {
-            hippo_chat_room_set_user_state(room, HIPPO_PERSON(entity), HIPPO_CHAT_NONMEMBER);            /* FIXME be sure we handle this via signals 
+            hippo_chat_room_set_user_state(room, HIPPO_PERSON(entity), HIPPO_CHAT_NONMEMBER);
+            /* FIXME be sure we handle this via signals 
             if (post && !room->getFilling())
                 ui_->updatePost(post);
             */
@@ -2629,7 +2643,8 @@ handle_open (LmConnection *lconnection,
 
     g_debug("handle_open success=%d", success);
 
-    if (success) {        hippo_connection_authenticate(connection);
+    if (success) {
+        hippo_connection_authenticate(connection);
     } else {
         hippo_connection_connect_failure(connection, NULL);
     }
