@@ -117,8 +117,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			                                                 int start,
 			                                                 int resultsToReturn) {		
 		StringBuilder sb = new StringBuilder();
-		sb.append("http://192.168.150.128:2080/AudioSearchService/V1/albumSearch?appid=");
-		// sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
 		sb.append(appId);
 		sb.append("&start=");
 		sb.append(StringUtils.urlEncode(Integer.toString(start)));
