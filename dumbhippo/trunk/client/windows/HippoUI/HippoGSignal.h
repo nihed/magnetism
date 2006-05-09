@@ -117,3 +117,52 @@ private:
         return slot->invoke(arg1);
     }
 };
+
+class GAbstractSource
+{
+public:
+    ~GAbstractSource();
+
+    void remove();
+
+protected:
+    GAbstractSource()
+        : source_(NULL)
+    {
+    }
+
+    void add_impl(GSource *source, GSourceFunc callback, Slot *slot);
+
+private:
+    GSource *source_;
+}; // end of class GAbstractSource
+
+class GIdle
+    : GAbstractSource
+{
+public:
+    GIdle()
+    {
+    }
+
+    void add(Slot0<bool> *slot);
+
+private:
+    static gboolean gcallback(void *data);
+
+}; // end of class GIdle
+
+class GTimeout
+    : GAbstractSource
+{
+public:
+    GTimeout()
+    {
+    }
+
+    void add(unsigned int milliseconds, Slot0<bool> *slot);
+
+private:
+    static gboolean gcallback(void *data);
+
+}; // end of class GTimeout
