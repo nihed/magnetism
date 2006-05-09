@@ -13,6 +13,13 @@ img {
 	border-style:		none;	
 }
 
+/* This class violates the naming conventions for backward compatibility, since
+   it's referenced from javascript which may apply to old pages.
+ */
+.dhInvisible {
+	display:			none;
+}
+
 body.dh-gray-background-page {
 	background-color:	#efefef;
 }

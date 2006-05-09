@@ -19,7 +19,6 @@
 			var messageNode = document.getElementById('dhSelfInviteMessage${N}');
 			dh.util.clearNode(messageNode);
 			messageNode.appendChild(document.createTextNode(message));
-			messageNode.style.display = "block";
 		}
 		var dhSelfInvite${N} = function() {
 			var addressNode = document.getElementById('dhSelfInviteAddress${N}');
@@ -56,7 +55,7 @@
 		<input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
 	</div>
 	<br/>
-	<div id="dhSelfInviteMessage${N}" class="dh-landing-result">
+	<div id="dhSelfInviteMessage${N}" class="dh-landing-result dhInvisible">
 		Thinking...
 	</div>
 </div>

@@ -1,8 +1,9 @@
 package com.dumbhippo.server;
 
 public enum Character {
-	MUSIC_GEEK("Melodie", "butterfly@dumbhippo.com"),
-	LOVES_ACTIVITY("Haley", "hippo@dumbhippo.com");
+	MUSIC_GEEK("Melodie", "mugshot@mugshot.com"),
+	LOVES_ACTIVITY("Haley", "hippo@dumbhippo.com"),
+	MUGSHOT("Mugshot", "mugshot@mugshot.com");	
 	
 	private String defaultNickname;
 	private String email;

@@ -3,5 +3,5 @@
 @IMPORT url("landing-positions.css");
 
 .dh-landing-result {
-	display: none;
+	color: red;
 }

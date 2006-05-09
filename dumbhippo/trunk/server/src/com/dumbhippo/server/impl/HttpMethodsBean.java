@@ -636,6 +636,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case MUSIC_INVITE_PAGE_200602:
 				character = Character.MUSIC_GEEK;
 				break;
+			case GENERIC_LANDING_200606:
+				character = Character.MUGSHOT;
+				break;
 			default:
 				character = null;
 				break;
@@ -656,7 +659,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				// this does NOT check whether the account has invitations left,
 				// that's why we do it above. 
 				note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
-							"Welcome!", "Thanks for inviting yourself.");
+							"Mugshot Beacon Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Link Swarm.");
 				if (note == null)
 					note = "Your invitation is on its way (check your email)";
 			}

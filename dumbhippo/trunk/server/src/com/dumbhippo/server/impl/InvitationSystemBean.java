@@ -56,6 +56,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	private EntityManager em;
 	
 	@EJB
+	private IdentitySpider identitySpider;
+	
+	@EJB
 	private AccountSystem accounts;
 	
 	@EJB
@@ -539,23 +542,21 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			throw new RuntimeException(e);
 		}
 		
-		if (subject == null || subject.trim().length() == 0)
-			subject = "Invitation from " + inviterName + " to join Dumb Hippo";
+		User mugshot = identitySpider.getCharacter(Character.MUGSHOT);
+		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
+		
+		if (isMugshotInvite) {
+			subject = "Mugshot Download";
+		} else if (subject == null || subject.trim().length() == 0) {
+			subject = "Invitation from " + inviterName + " to join Mugshot";
+		}
 		
 		StringBuilder messageText = new StringBuilder();
 		XmlBuilder messageHtml = new XmlBuilder();
 		
 		messageHtml.appendHtmlHead("");
 		messageHtml.append("<body>\n");
-		
-		messageHtml.append("<div style=\"padding: 1em;\">\n");
-		messageHtml.appendTextNode("a", "Click here to start using Dumb Hippo", "href", invite.getAuthURL(baseurlObject));
-		messageHtml.append("</div>\n");
 
-		messageText.append("\nFollow this link to start using Dumb Hippo:\n      ");
-		messageText.append(invite.getAuthURL(baseurlObject));
-		messageText.append("\n\n");
-		
 		if (message != null && message.trim().length() > 0) {
 			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
 			messageHtml.appendTextAsHtml(message, null);
@@ -565,20 +566,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			messageText.append("\n\n");
 		}
 		
-		messageHtml.append("<div style=\"padding: 1em;\">\n");
-		messageHtml.append("This was sent to you by <a href=\"");
-		messageHtml.appendEscaped(baseurl + "/person?who=" + inviter.getId());
-		messageHtml.append("\">");
-		messageHtml.appendEscaped(inviterName);
-		messageHtml.append("</a> using ");
-		messageHtml.appendTextNode("a", "Dumb Hippo", "href", baseurl);
+		messageHtml.append("<div style=\"padding: 1em;\">");
+		messageHtml.appendTextNode("a", "http://mugshot.org/download/", "href", invite.getAuthURL(baseurlObject));
 		messageHtml.append("</div>\n");
 		
-		messageText.append("This was sent to you by ");
-		messageText.append(inviterName);
-		messageText.append(" using Dumb Hippo at ");
-		messageText.append(baseurl);
-		messageText.append("\n");
+		messageText.append(invite.getAuthURL(baseurlObject));
+		messageText.append("\n\n");
+		
+		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you other stuff again unless you ask.  Thanks!!";
+		
+		messageHtml.appendTextNode("div", noSpamDisclaimer);
+		messageText.append(noSpamDisclaimer);
 		
 		messageHtml.append("</body>\n</html>\n");
 		

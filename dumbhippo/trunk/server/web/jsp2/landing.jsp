@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="viewperson" class="com.dumbhippo.web.PersonMusicPage" scope="request"/>
+<dh:bean id="landing" class="com.dumbhippo.web.LandingPage" scope="request"/>
 
 <head>
 	<title>Welcome to Mugshot</title>
@@ -19,7 +19,7 @@
 	<div>
 		<img src="/images2/mugshot_tagline.gif"/>
 	</div>
-	<dht:selfInvite promotion="${viewperson.promotion}" invitesAvailable="${viewperson.selfInvitations}"/>
+	<dht:selfInvite promotion="${landing.promotion}" invitesAvailable="${landing.selfInvitations}"/>
 	<dht:notevil/>
 	<div id="dhMusicRadarTag">
 		<img src="/images2/musicradartag.gif"/>
