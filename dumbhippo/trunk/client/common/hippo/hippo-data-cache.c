@@ -212,6 +212,14 @@ hippo_data_cache_new(HippoConnection *connection)
     return cache;
 }
 
+HippoConnection*
+hippo_data_cache_get_connection(HippoDataCache  *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    return cache->connection;
+}
+
 HippoHotness
 hippo_data_cache_get_hotness(HippoDataCache *cache)
 {
@@ -247,9 +255,11 @@ hippo_data_cache_set_hotness(HippoDataCache  *cache,
     g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
     
     if (hotness != cache->hotness) {
-        g_debug("new hotness %s", hippo_hotness_debug_string(hotness));
+        HippoHotness old = cache->hotness;
+        g_debug("new hotness %s from %s", hippo_hotness_debug_string(hotness),
+            hippo_hotness_debug_string(old));
         cache->hotness = hotness;
-        g_signal_emit(cache, signals[HOTNESS_CHANGED], 0, hotness);
+        g_signal_emit(cache, signals[HOTNESS_CHANGED], 0, old);
     }
 }
 
@@ -377,6 +387,8 @@ hippo_data_cache_lookup_entity(HippoDataCache  *cache,
 typedef struct {
     GTimeVal now;
     GSList *list;
+    int count;
+    gboolean build_list;
 } ListRecentPostsData;
 
 static void
@@ -387,8 +399,11 @@ list_recent_posts(void *key, void *value, void *data)
     GTime postDate = hippo_post_get_date(post);
     
     if ((postDate + (60 * 60 * 24)) > lrpd->now.tv_sec) {
-        lrpd->list = g_slist_prepend(lrpd->list, post);
-        g_object_ref(post);
+        if (lrpd->build_list) {
+            lrpd->list = g_slist_prepend(lrpd->list, post);
+            g_object_ref(post);
+        }
+        lrpd->count += 1;
     }
 }
 
@@ -405,6 +420,29 @@ post_date_compare(const void *a, const void *b)
         return 0; 
 }
 
+static void
+walk_recent_posts_internal(HippoDataCache      *cache,
+                           ListRecentPostsData *lrpd_p,
+                           gboolean             build_list)
+{
+    ListRecentPostsData lrpd;
+
+    g_get_current_time(&lrpd.now);
+    lrpd.list = NULL;
+    lrpd.count = 0;
+    lrpd.build_list = build_list;
+
+    /* ref's each post */
+    g_hash_table_foreach(cache->posts, list_recent_posts, &lrpd);
+    
+    if (build_list)
+        lrpd.list = g_slist_sort(lrpd.list, post_date_compare);
+    else
+        g_assert(lrpd.list == NULL);
+
+    *lrpd_p = lrpd;
+}
+
 GSList*
 hippo_data_cache_get_recent_posts(HippoDataCache  *cache)
 {
@@ -412,14 +450,23 @@ hippo_data_cache_get_recent_posts(HippoDataCache  *cache)
     
     g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
 
-    g_get_current_time(&lrpd.now);
-    lrpd.list = NULL;
+    walk_recent_posts_internal(cache, &lrpd, TRUE);
 
-    /* ref's each post */
-    g_hash_table_foreach(cache->posts, list_recent_posts, &lrpd);
-    
-    lrpd.list = g_slist_sort(lrpd.list, post_date_compare);
     return lrpd.list;
+}
+
+int
+hippo_data_cache_get_recent_posts_count(HippoDataCache  *cache)
+{
+    ListRecentPostsData lrpd;
+    
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    walk_recent_posts_internal(cache, &lrpd, FALSE);
+
+    g_assert(lrpd.list == NULL);
+
+    return lrpd.count;
 }
 
 GSList*
