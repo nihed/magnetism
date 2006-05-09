@@ -38,6 +38,12 @@
     color:              black;
 }
 
+.dh-album-buy {
+    font-size:          12px;
+	font-weight:		bold;
+    color:              black;
+}
+
 .dh-songs {
     font-size:         12px;
     color:             blue;

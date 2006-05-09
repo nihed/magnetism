@@ -28,6 +28,15 @@
                 (<c:out value="${album.releaseYear}"/>)
             </c:if>
 	    </div>
+	    
+	    <c:choose>
+	        <c:when test="${!empty album.productUrl}">
+                <div class="dh-album-buy">Buy at 
+		            <a class="dh-song-link" href="${album.productUrl}">Amazon</a>
+                </div>
+	        </c:when>
+        </c:choose>
+	    
 	    <dht:moreExpander open="true" text="songs"/>
 	    <%-- the tracks list bellow is a List, not a ListBean, because it is --%>
         <%-- returned from outside the web tier due to double inderection --%>

@@ -51,6 +51,12 @@
 .dh-album-year {
     float:   left;
     display: table-cell;
+    margin-right:   2px;
+}
+
+.dh-album-buy {
+    float:   left;
+    display: table-cell;
     clear:   right;
 }
 

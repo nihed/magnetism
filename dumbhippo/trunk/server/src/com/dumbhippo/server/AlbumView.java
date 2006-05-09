@@ -15,6 +15,8 @@ public class AlbumView {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
+	private String productUrl;
+	
 	private List<TrackView> tracks;
 
 	public AlbumView() {
@@ -58,6 +60,14 @@ public class AlbumView {
 		this.smallImageWidth = smallImageWidth;
 	}
 
+	public String getProductUrl() {
+		return productUrl;
+	}
+	
+	public void setProductUrl(String productUrl) {
+		this.productUrl = productUrl;
+	}
+	
 	public String getTitle() {
 		return title;
 	}

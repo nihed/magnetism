@@ -1415,7 +1415,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}	
 				if (albumView.getArtist() == null) {
 					albumView.setArtist(amazonAlbum.getArtist());
-				}				
+				}
+				// also drag along the product URL, so we can display that
+				// TODO: handle this in a generic way that supports multiple providers, like downloads
+				if (amazonAlbum.getProductUrl() != null) {
+					albumView.setProductUrl(amazonAlbum.getProductUrl());
+				}			
 			}
 			
 		} catch (Exception e) {
