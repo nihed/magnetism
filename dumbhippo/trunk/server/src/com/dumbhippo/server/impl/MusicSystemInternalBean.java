@@ -408,13 +408,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	// this is called from getYahooAlbumResultsAsync which is currently not used anywhere
-	static private class YahooAlbumTask implements Callable<List<YahooAlbumResult>> {
+	static private class YahooAlbumResultsTask implements Callable<List<YahooAlbumResult>> {
 
 		private YahooArtistResult artist;
 		private Pageable<AlbumView> albumsByArtist;
 		private YahooAlbumResult albumToExclude;
 		
-		public YahooAlbumTask(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
+		public YahooAlbumResultsTask(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
 			this.artist = artist;
 			this.albumsByArtist = albumsByArtist;
 			this.albumToExclude = albumToExclude;
@@ -426,6 +426,30 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
 			return musicSystem.getYahooAlbumResultsSync(artist, albumsByArtist, albumToExclude);
+		}
+	}
+
+	static private class YahooAlbumSearchTask implements Callable<YahooAlbumResult> {
+		
+		private String yahooAlbumId;
+
+		public YahooAlbumSearchTask(String yahooAlbumId) {
+			this.yahooAlbumId = yahooAlbumId;
+		}
+		
+		public YahooAlbumResult call() {
+			logger.debug("Entering YahooAlbumSearchTask thread for yahhoAlbumId {}", yahooAlbumId);				
+
+			// we do this instead of an inner class to work right with threads
+			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+			
+			try {
+			    YahooAlbumResult yahooAlbumResult = musicSystem.getYahooAlbumSync(yahooAlbumId);
+			    return yahooAlbumResult;
+			} catch (NotFoundException e) {
+				logger.debug(e.getMessage());
+				return null;
+			}
 		}
 	}
 	
@@ -470,20 +494,20 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	static private class GetAlbumViewTask implements Callable<AlbumView> {
 
-		private String album;
-		private String artist;
+		private Future<YahooAlbumResult> futureYahooAlbum;
+		private Future<AmazonAlbumResult> futureAmazonAlbum;
 		
-		public GetAlbumViewTask(String album, String artist) {
-			this.album = album;
-			this.artist = artist;
+		public GetAlbumViewTask(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
+			this.futureYahooAlbum = futureYahooAlbum;
+			this.futureAmazonAlbum = futureAmazonAlbum;
 		}
 		
 		public AlbumView call() {
-			logger.debug("Entering GetAlbumViewTask thread for album {}, artist {}", album, artist);
+			logger.debug("Entering GetAlbumViewTask thread for a futureYahooAlbum and a futureAmazonAlbum");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
-			return musicSystem.getAlbumView(album, artist);
+			return musicSystem.getAlbumView(futureYahooAlbum, futureAmazonAlbum);
 		}
 	}
 	
@@ -935,7 +959,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public List<YahooAlbumResult> getYahooAlbumResultsSync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
 		
-		// we require the artist and an artistId to be set
+		// we require the artist and the artistId to be set
 		if ((artist == null) || (artist.getArtistId() == null)) {
 			logger.error("artist or artistId is null when requesting yahoo album results for an artist");
 			throw new RuntimeException("artist or artistId is null when requesting yahoo album results for an artist");
@@ -1013,7 +1037,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	}
 	
-	private YahooAlbumResult updateSingleAlbumResultSync(YahooAlbumResult oldResult, String albumId) throws NotFoundException {
+	private YahooAlbumResult updateYahooAlbumResultSync(YahooAlbumResult oldResult, String albumId) throws NotFoundException {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
 		try {
 		    YahooAlbumResult newResult = ws.lookupAlbum(albumId);
@@ -1045,7 +1069,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	public YahooAlbumResult getSingleYahooAlbumResultSync(String albumId) throws NotFoundException {
+	public YahooAlbumResult getYahooAlbumSync(String albumId) throws NotFoundException {
 		
 		// we require the albumId field
 		if (albumId == null) {
@@ -1081,10 +1105,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         }
 		
 		if (needNewQuery) {
-			// passing in the old results here is a race, since the db could have 
+			// passing in the old result here is a race, since the db could have 
 			// changed underneath us - but the worst case is that we just fail to
-			// get results once in a while
-			return updateSingleAlbumResultSync(yahooAlbum, albumId);
+			// get results once in a while		
+			return updateYahooAlbumResultSync(yahooAlbum, albumId);
 		} else {
 			logger.debug("Returning Yahoo album result from database cache for albumId {}: {}", albumId, yahooAlbum);
 			return yahooAlbum;
@@ -1236,16 +1260,22 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	// currently not used
 	public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
-		FutureTask<List<YahooAlbumResult>> futureAlbum =
-			new FutureTask<List<YahooAlbumResult>>(new YahooAlbumTask(artist, albumsByArtist, albumToExclude));
+		FutureTask<List<YahooAlbumResult>> futureAlbums =
+			new FutureTask<List<YahooAlbumResult>>(new YahooAlbumResultsTask(artist, albumsByArtist, albumToExclude));
+		threadPool.execute(futureAlbums);
+		return futureAlbums;
+	}
+
+	public Future<YahooAlbumResult> getYahooAlbumAsync(String yahooAlbumId) {
+		FutureTask<YahooAlbumResult> futureAlbum =
+			new FutureTask<YahooAlbumResult>(new YahooAlbumSearchTask(yahooAlbumId));
 		threadPool.execute(futureAlbum);
 		return futureAlbum;
 	}
 	
 	public Future<AmazonAlbumResult> getAmazonAlbumAsync(String album, String artist) {
 		FutureTask<AmazonAlbumResult> futureAlbum =
-			new FutureTask<AmazonAlbumResult>(
-			    new AmazonAlbumSearchTask(album, artist));
+			new FutureTask<AmazonAlbumResult>(new AmazonAlbumSearchTask(album, artist));
 		threadPool.execute(futureAlbum);
 		return futureAlbum;		
 	}
@@ -1334,17 +1364,35 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return result;
 	}
 	
-	private void fillAlbumInfo(Future<AmazonAlbumResult> futureAlbum, AlbumView albumView) {
-		try {
+	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
+		try {			
 			// set defaults for the image
 			albumView.setSmallImageUrl(config.getProperty(HippoProperty.BASEURL) + "/images/no_image_available75x75light.gif");
 			albumView.setSmallImageWidth(75);
 			albumView.setSmallImageHeight(75);
 			
-			// now get the real stuff
-			AmazonAlbumResult album;
+			// first see what we can get from yahoo album result
+			if (yahooAlbum != null) {
+			    albumView.setReleaseYear(yahooAlbum.getReleaseYear());
+                if (yahooAlbum.getSmallImageUrl() != null) {
+			        albumView.setSmallImageUrl(yahooAlbum.getSmallImageUrl());
+			        albumView.setSmallImageHeight(yahooAlbum.getSmallImageHeight());
+			        albumView.setSmallImageWidth(yahooAlbum.getSmallImageWidth());	
+                }
+				// sometimes we get an empty album view passed in, in which case we also
+				// want to fill out the album title and artist name
+				if (albumView.getTitle() == null) {
+					albumView.setTitle(yahooAlbum.getAlbum());
+				}	
+				if (albumView.getArtist() == null) {
+					albumView.setArtist(yahooAlbum.getArtist());            
+				}           
+			}
+			
+			// now get the amazon stuff
+			AmazonAlbumResult amazonAlbum;
 			try {
-				album = futureAlbum.get();
+				amazonAlbum = futureAmazonAlbum.get();
 			} catch (InterruptedException e) {
 				logger.warn("amazon album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
@@ -1352,28 +1400,47 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.warn("amazon album get thread execution exception {}", e.getMessage());
 				throw new RuntimeException(e);
 			}
-			if (album != null) {
-				if (album.getSmallImageUrl() != null) {
-					albumView.setSmallImageUrl(album.getSmallImageUrl());
-					albumView.setSmallImageWidth(album.getSmallImageWidth());
-					albumView.setSmallImageHeight(album.getSmallImageHeight());
+						
+			if (amazonAlbum != null) {
+				// if album artwork was not available from yahoo, we are after album artwork from amazon
+				if (amazonAlbum.getSmallImageUrl() != null && (yahooAlbum == null || yahooAlbum.getSmallImageUrl() == null)) {
+					albumView.setSmallImageUrl(amazonAlbum.getSmallImageUrl());
+					albumView.setSmallImageWidth(amazonAlbum.getSmallImageWidth());
+					albumView.setSmallImageHeight(amazonAlbum.getSmallImageHeight());
 				}
-				// sometimes we get an empty album view passed in, in which case we also
-				// want to fill out the album title and artist name
+					
+				// in case we did not find a related yahoo album, but have a related amazon album 
 				if (albumView.getTitle() == null) {
-					albumView.setTitle(album.getAlbum());
+					albumView.setTitle(amazonAlbum.getAlbum());
 				}	
 				if (albumView.getArtist() == null) {
-					albumView.setArtist(album.getArtist());
+					albumView.setArtist(amazonAlbum.getArtist());
 				}				
 			}
+			
 		} catch (Exception e) {
-			logger.debug("Failed to get Amazon album information", e);
+			logger.debug("Failed to get album information", e);
 		}
 	}
 	
-	private void fillAlbumInfo(Future<AmazonAlbumResult> futureAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
-			fillAlbumInfo(futureAlbum, albumView);
+	private void fillAlbumInfo(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
+		YahooAlbumResult yahooAlbum = null;
+	    if (futureYahooAlbum != null) {	
+			try {
+				yahooAlbum = futureYahooAlbum.get();
+			} catch (InterruptedException e) {
+				logger.warn("yahoo album get thread interrupted {}", e.getMessage());
+				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				logger.warn("yahoo album get thread execution exception {}", e.getMessage());
+				throw new RuntimeException(e);
+			}
+	    }
+		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
+	}
+	
+	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
+			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
 			List<YahooSongResult> albumTracks;
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
@@ -1460,17 +1527,28 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
 		
-		Future<AmazonAlbumResult> futureAlbum = getAmazonAlbumAsync(track.getAlbum(), track.getArtist());
+		String yahooAlbumId = null;
+		Future<YahooAlbumResult> futureYahooAlbum = null;
+		Future<AmazonAlbumResult> futureAmazonAlbum = getAmazonAlbumAsync(track.getAlbum(), track.getArtist());
 		try {
 			// get our song IDs; no point doing it async...
 			List<YahooSongResult> songs = getYahooSongResultsSync(track);
+			
 			// start a thread to get each download url
 			List<Future<List<YahooSongDownloadResult>>> downloads = new ArrayList<Future<List<YahooSongDownloadResult>>>(); 
 			for (YahooSongResult song : songs) {
 				if (!song.isNoResultsMarker()) {
 				    downloads.add(getYahooSongDownloadResultsAsync(song.getSongId()));
+				    if (yahooAlbumId == null) {
+				    	yahooAlbumId = song.getAlbumId();
+				    }
 				}
 			}
+			// if yahooAlbumId is not null, get a YahooAlbumResult for it, so we can get an album artwork for the track
+			if (yahooAlbumId != null) {
+				futureYahooAlbum = getYahooAlbumAsync(yahooAlbumId);
+			}
+			
 			for (Future<List<YahooSongDownloadResult>> futureDownloads : downloads) {
 				List<YahooSongDownloadResult> ds;
 				try {
@@ -1500,32 +1578,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		} catch (Exception e) {
 			logger.warn("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
 		}
-		fillAlbumInfo(futureAlbum, view.getAlbumView());
+		
+		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		return view;
 	}
 
-	public AlbumView getAlbumView(String album, String artist) {
-		// this method should never throw due to Yahoo or Amazon failure;
-		// we should just return a view without the extra information.
-		
-		Future<AmazonAlbumResult> futureAlbum = getAmazonAlbumAsync(album, artist);
-		AlbumView view = new AlbumView(album, artist);
-		fillAlbumInfo(futureAlbum, view);
-		return view;
-	}
-	
-	public AlbumView getAlbumView(Future<AmazonAlbumResult> futureAlbum) {
+	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
 		
 		AlbumView view = new AlbumView();
-		fillAlbumInfo(futureAlbum, view);
+		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view);
 		return view;
 	}
 	
-	public AlbumView getAlbumView(Future<AmazonAlbumResult> futureAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
+	public AlbumView getAlbumView(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
-		fillAlbumInfo(futureAlbum, futureAlbumTracks, view);
+		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
 		return view;		
 	}
 	
@@ -1562,24 +1631,24 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		fillArtistInfo(yahooArtist, view);
 		
 		// can start threads to get each album cover and to get songs for each album in parallel 
-		Map<String, Future<AmazonAlbumResult>> futureAlbums = new HashMap<String, Future<AmazonAlbumResult>>();		
+		Map<String, Future<AmazonAlbumResult>> futureAmazonAlbums = new HashMap<String, Future<AmazonAlbumResult>>();		
 		Map<String, Future<List<YahooSongResult>>> futureTracks = new HashMap<String, Future<List<YahooSongResult>>>();
 		Map<String, YahooAlbumResult> yahooAlbums = new HashMap<String, YahooAlbumResult>();
 		for (YahooAlbumResult yahooAlbum : albums) {
 			if (!yahooAlbum.isNoResultsMarker()) {
-			    futureAlbums.put(yahooAlbum.getAlbumId(), getAmazonAlbumAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
+			    futureAmazonAlbums.put(yahooAlbum.getAlbumId(), getAmazonAlbumAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
 			    // getAlbumTracksAsync is responsible for doing all the sorting, so we get a clean sorted list here
 			    futureTracks.put(yahooAlbum.getAlbumId(), getYahooSongResultsAsync(yahooAlbum.getAlbumId()));
 			    yahooAlbums.put(yahooAlbum.getAlbumId(), yahooAlbum);
 			}
 		}		
 		
-		// futureAlbums and futureTracks key sets should be the same
-		for (String albumId : futureAlbums.keySet()) {
-			Future<AmazonAlbumResult> futureAlbum = futureAlbums.get(albumId);
+		// all key sets should be the same
+		for (String albumId : yahooAlbums.keySet()) {
+			YahooAlbumResult yahooAlbum = yahooAlbums.get(albumId);
+			Future<AmazonAlbumResult> futureAmazonAlbum = futureAmazonAlbums.get(albumId);
 			Future<List<YahooSongResult>> futureAlbumTracks = futureTracks.get(albumId);
-			AlbumView albumView = getAlbumView(futureAlbum, futureAlbumTracks);
-			albumView.setReleaseYear(yahooAlbums.get(albumId).getReleaseYear());
+			AlbumView albumView = getAlbumView(yahooAlbum, futureAmazonAlbum, futureAlbumTracks);
 			view.addAlbum(albumView);			
 		}		
 	}
@@ -1630,8 +1699,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             Future<AmazonAlbumResult> amazonAlbum = getAmazonAlbumAsync(album.getAlbum(), album.getArtist());
             Future<List<YahooSongResult>> albumTracks = getYahooSongResultsAsync(album.getAlbumId());
 
-		    AlbumView albumView = getAlbumView(amazonAlbum, albumTracks);
-	        albumView.setReleaseYear(album.getReleaseYear());
+		    AlbumView albumView = getAlbumView(album, amazonAlbum, albumTracks);
 	        view.addAlbum(albumView);			
 		}
 		
@@ -1657,9 +1725,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
 	}
 	
-	public Future<AlbumView> getAlbumViewAsync(String album, String artist) {
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
 		FutureTask<AlbumView> futureView = 
-			new FutureTask<AlbumView>(new GetAlbumViewTask(album, artist));
+			new FutureTask<AlbumView>(new GetAlbumViewTask(futureYahooAlbum, futureAmazonAlbum));
 		threadPool.execute(futureView);
 		return futureView;
 	}
@@ -1722,7 +1790,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// spawn threads in parallel
 		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
 		for (Track t : tracks) {
-			futureViews.add(getAlbumViewAsync(t.getAlbum(), t.getArtist()));
+			Future<AmazonAlbumResult> futureAmazonAlbum = getAmazonAlbumAsync(t.getAlbum(), t.getArtist());			
+			List<YahooSongResult> songs = getYahooSongResultsSync(t);
+			String yahooAlbumId = null;
+			Future<YahooAlbumResult> futureYahooAlbum = null;
+			
+			for (YahooSongResult song : songs) {
+				if (!song.isNoResultsMarker() && yahooAlbumId == null) {
+				    	yahooAlbumId = song.getAlbumId();
+				    	break; 
+				}
+			}
+		
+		    if (yahooAlbumId != null) {
+			    futureYahooAlbum = getYahooAlbumAsync(yahooAlbumId);
+		    }
+		    
+			futureViews.add(getAlbumViewAsync(futureYahooAlbum, futureAmazonAlbum));
 		}
 	
 		// now harvest all the results
@@ -2086,29 +2170,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		return ret;
 	}
-	
-	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		//logger.debug("song search artist " + artist + " album " + album + " name " + name);
-        //TODO: eventually, this song search should not limit itself to only existing tracks, 
-		// but get matching songs from the web service 
-		return getTrackView(getMatchingTrack(viewpoint, artist, album, name));
-	}
-	
-	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException {
-		try {
-		    Track track = getMatchingTrack(viewpoint, artist, album, null);		
-		    return getAlbumView(track.getAlbum(), track.getArtist());
-		} catch (NotFoundException e) {
-			// if there was no matching track for the album, we still should be able to display the album
-			return getAlbumView(album, artist);
-		}
-	}
-
-	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException {
-		Track track = getMatchingTrack(viewpoint, artist, null, null);
-		
-		return getArtistView(track);
-	}
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
         String artistId = null;
@@ -2152,7 +2213,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			List<YahooSongResult> songs = getYahooSongResultsSync(track);
 			if (!songs.isEmpty() && !songs.get(0).isNoResultsMarker()) {
 				String albumId = songs.get(0).getAlbumId();
-                YahooAlbumResult yahooAlbum = getSingleYahooAlbumResultSync(albumId);	
+				// we want to get yahoo album here synchronously
+                YahooAlbumResult yahooAlbum = getYahooAlbumSync(albumId);	
                 // albumsByArtist is a pageable object that contains information on what albums the expanded
                 // artist view should be loaded with, it also needs to have these albums set in its results field
     			ExpandedArtistView artistView = getExpandedArtistView(yahooAlbum, albumsByArtist);

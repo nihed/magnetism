@@ -283,6 +283,9 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		album.setArtist(r.getValue(Element.Artist));
 		album.setPublisher(r.getValue(Element.Publisher));
 		album.setTracksNumber(r.getValueInt(Element.Tracks));
+		album.setSmallImageUrl(r.getValue(Element.Url));
+		album.setSmallImageWidth(r.getValueInt(Element.Width));
+		album.setSmallImageHeight(r.getValueInt(Element.Height));
 		album.setReleaseDate(r.getValue(Element.ReleaseDate));
 		return album;		
 	}

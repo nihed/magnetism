@@ -105,22 +105,6 @@ public interface MusicSystem {
 	 */
 	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable);
 	
-	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
-	
-	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException;
-
-	/**
-	 * Returns an ArtistView that contains the artist's name if there is a matching track for the 
-	 * artist locally. Throws a NotFoundException if there is no matching track for the artist 
-	 * locally.
-	 * 
-	 * @param viewpoint
-	 * @param artist
-	 * @return an ArtistView that contains the artist's name
-	 * @throws NotFoundException
-	 */
-	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException;
-	
 	/**
 	 * Returns an ExpandedArtistView that includes albums made by the artist that fall into albumsByArtist 
 	 * pageable object criteria. Sets the results field of albumsByArtist to contain the same albums

@@ -24,6 +24,9 @@ public class YahooAlbumResult extends DBUnique {
 	private String publisher;
 	private String releaseDate;
 	private int tracksNumber;
+	private String smallImageUrl;
+	private int smallImageWidth;
+	private int smallImageHeight;
 	private boolean noResultsMarker;
 	private boolean allSongsStored;
 	
@@ -44,6 +47,9 @@ public class YahooAlbumResult extends DBUnique {
 		publisher = results.publisher;
 		releaseDate = results.releaseDate;
 		tracksNumber = results.tracksNumber;
+		smallImageUrl = results.smallImageUrl;
+		smallImageWidth = results.smallImageWidth;
+		smallImageHeight = results.smallImageHeight;
 		noResultsMarker = results.noResultsMarker;
 		allSongsStored = results.allSongsStored;
 	}
@@ -93,6 +99,30 @@ public class YahooAlbumResult extends DBUnique {
 		this.artist = artist;
 	}
 
+	@Column(nullable=true)
+	public String getSmallImageUrl() {
+		return smallImageUrl;
+	}
+	public void setSmallImageUrl(String smallImageUrl) {
+		this.smallImageUrl = smallImageUrl;
+	}
+	
+	@Column(nullable=false)
+	public int getSmallImageHeight() {
+		return smallImageHeight;
+	}
+	public void setSmallImageHeight(int smallImageHeight) {
+		this.smallImageHeight = smallImageHeight;
+	}
+
+	@Column(nullable=false)
+	public int getSmallImageWidth() {
+		return smallImageWidth;
+	}
+	public void setSmallImageWidth(int smallImageWidth) {
+		this.smallImageWidth = smallImageWidth;
+	}
+	
 	@Column(nullable=false)
 	public Date getLastUpdated() {
 		return new Date(lastUpdated);

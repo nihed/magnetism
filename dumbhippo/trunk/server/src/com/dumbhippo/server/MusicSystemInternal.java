@@ -64,7 +64,9 @@ public interface MusicSystemInternal extends MusicSystem {
 	
     public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
     
-	public YahooAlbumResult getSingleYahooAlbumResultSync(String albumId) throws NotFoundException;
+	public YahooAlbumResult getYahooAlbumSync(String albumId) throws NotFoundException;
+	
+	public Future<YahooAlbumResult> getYahooAlbumAsync(String albumId);
 		
 	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
 	
@@ -73,10 +75,12 @@ public interface MusicSystemInternal extends MusicSystem {
 	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
-
-	public AlbumView getAlbumView(String album, String artist);
 	
-	public Future<AlbumView> getAlbumViewAsync(String album, String artist);
+	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
+
+	public AlbumView getAlbumView(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
+	
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
 	
 	public ArtistView getArtistView(Track track);
 	

@@ -122,14 +122,6 @@ public class MusicSystemBean implements MusicSystem {
 	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
 		internal.pageFriendsLatestTrackViews(viewpoint, pageable);
 	}
-
-	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
-		return internal.songSearch(viewpoint, artist, album, name);
-	}
-
-	public AlbumView albumSearch(Viewpoint viewpoint, String artist, String album) throws NotFoundException {
-		return internal.albumSearch(viewpoint, artist, album);
-	}
 	
 	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name) {
 		return internal.getRelatedPeopleWithTracks(viewpoint, artist, album, name);
@@ -142,10 +134,6 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
-	}
-
-	public ArtistView artistSearch(Viewpoint viewpoint, String artist) throws NotFoundException {
-		return internal.artistSearch(viewpoint, artist);
 	}
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
