@@ -229,3 +229,13 @@ body.dh-gray-background-page {
 .dh-text-input-showing-default {
 	color:				#aaaaaa;
 }
+
+.dh-special-subtitle {
+	color: rgb(145,50,92);
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-disclaimer {
+	font-size: 10px;
+}

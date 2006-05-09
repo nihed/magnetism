@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+
+body {
+	width: 500px;
+	/* centers in IE */
+	text-align: center;
+}
+
+#dhLandingContainer {
+	width: 500px;
+	/* centers the page in Firefox */
+	margin-left:	auto;
+	margin-right:	auto;
+}
+
+#dhLinkSwarmTag {
+	margin-top: 20px;
+}

@@ -1,0 +1,29 @@
+@CHARSET "UTF-8";
+
+body {
+	width: 700px;
+	height: 450px;
+	/* centers in IE */
+	text-align: center;
+}
+
+#dhDownloadContainer {
+	width: 700px;
+	height: 450px;
+	/* centers the page in Firefox */
+	margin-left:	auto;
+	margin-right:	auto;
+}
+
+.dh-download-separator {
+	width: 1px;
+	margin: 0px 20px;
+}
+
+#dhDownloadImg {
+	margin-right: 10px;
+}
+
+.dh-download-disclaimer {
+	margin-top: 20px;
+}

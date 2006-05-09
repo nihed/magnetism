@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("download-positions.css");
+
+.dh-download-separator {
+	background: black;
+}
+
+.dh-download-instructions {
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.dh-download-product {
+	font-size: 18px;
+	font-weight: bold;
+}
