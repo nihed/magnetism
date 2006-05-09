@@ -108,16 +108,12 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.elem.onchange = function(ev) {
 		me.activate();
 	}
-	
-	this.elem.onmousedown = function(ev) {
+
+	this.elem.onfocus = function(ev) {
 		me._hideDefaultText();
 	}
 	
-	this.elem.onfocusin = function(ev) {
-		me._hideDefaultText();
-	}
-	
-	this.elem.onfocusout = function(ev) {
+	this.elem.onblur = function(ev) {
 		me.activate();
 	}
 	
