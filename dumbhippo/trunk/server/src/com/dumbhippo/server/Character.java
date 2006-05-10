@@ -1,9 +1,12 @@
 package com.dumbhippo.server;
 
 public enum Character {
-	MUSIC_GEEK("Melodie", "mugshot@mugshot.com"),
-	LOVES_ACTIVITY("Haley", "hippo@dumbhippo.com"),
-	MUGSHOT("Mugshot", "mugshot@mugshot.com");	
+	/* We map all of these to the same character because we only have one
+	 * user-visible one now.  Possibly we could delete this class entirely.
+	 */
+	MUSIC_GEEK("Melodie", "mugshot@mugshot.org"),
+	LOVES_ACTIVITY("Haley", "mugshot@dumbhippo.org"),
+	MUGSHOT("Mugshot", "mugshot@mugshot.org");	
 	
 	private String defaultNickname;
 	private String email;
