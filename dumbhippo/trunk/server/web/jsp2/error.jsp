@@ -18,7 +18,16 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/header_oops500.gif">
-	<p class="dh-error-header"><c:out value='${text}'/></p>
+	<p class="dh-error-header">
+		<c:choose>
+			<c:when test='${!empty errorHtml}'>
+				${errorHtml}
+			</c:when>
+			<c:otherwise>
+				<c:out value='${text}'/>
+			</c:otherwise>
+		</c:choose>
+	</p>
 	<p><a href='javascript:history.back();'>Go back</a>
 	<c:if test='${!empty param["retry"]}'> or <a href='${param["retry"]}'>try again</a></c:if></p>
 </dht:systemPage>	
