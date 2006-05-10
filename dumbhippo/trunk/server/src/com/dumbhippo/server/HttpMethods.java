@@ -151,6 +151,10 @@ public interface HttpMethods {
 	@HttpParams( { "address", "promotion" })
 	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException;
 	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "address", "subject", "message" })
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException;
+	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId" })
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId);

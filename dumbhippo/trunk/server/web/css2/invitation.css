@@ -1,0 +1,23 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("invitation-positions.css");
+
+#dhContentColumn .dh-zone-box .dh-message {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-weight:		bold;
+	border:				1px solid #cc0033;
+	-moz-border-radius:	5px;
+}
+
+#dhContentColumn .dh-form-table {
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-invitation {
+	font-size: 			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-invitation .dh-sent {
+	color: 				#606060;
+}

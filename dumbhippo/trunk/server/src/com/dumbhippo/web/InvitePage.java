@@ -20,7 +20,6 @@ public class InvitePage extends AbstractInvitePage {
 	
 	public InvitePage() {
 		checkedForPreviousInvitation = false;
-		maxInvitationsShown = 3;
 	}
 	
 	public String getEmail() {

@@ -1,0 +1,38 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-zone-box .dh-message {
+	padding:		5px;
+	margin-bottom:	5px;
+}
+
+#dhContentColumn .dh-form-table {
+	width:			478px;
+	margin-top:		10px;
+	margin-bottom:	10px;
+}
+
+#dhContentColumn .dh-form-table .dh-spacer-row {
+	height:			5px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell {
+	padding-right:	10px;
+}
+
+#dhContentColumn #dhAddressEntry {
+	width:			183px;
+}
+
+#dhContentColumn #dhSubjectEntry {
+	width:			309px;
+}
+
+#dhContentColumn #dhMessageEntry {
+	width:			309px;
+}
+
+#dhContentColumn .dh-zone-box .dh-invitation .dh-address {
+	padding-right:	10px;
+}
+
+

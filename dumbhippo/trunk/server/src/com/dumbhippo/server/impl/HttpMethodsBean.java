@@ -679,6 +679,28 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException
+	{
+		if (contentType != HttpResponseData.XML)
+			throw new IllegalArgumentException("only support XML replies");
+		
+		address = address.trim();
+		
+		// This error won't get back to the client
+		if (address.equals("") || !address.contains("@")) 
+			throw new RuntimeException("Missing or invalid email address");
+
+		String note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
+		
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("sendEmailInvitationReply");
+		xml.appendTextNode("message", note);
+		xml.closeElement();
+		out.write(xml.getBytes());
+		out.flush();
+	}
+	
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
