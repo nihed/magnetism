@@ -306,3 +306,7 @@ form {
 #dhContentColumn .dh-two-column-list .dh-compact-item .dh-next-to-image {
 	width:				164px;
 }
+
+.dh-invisible {
+    display:    none;
+}

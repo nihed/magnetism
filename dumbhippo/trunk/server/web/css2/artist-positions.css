@@ -1,6 +1,8 @@
 @CHARSET "UTF-8";
 
 #dhContentColumn .dh-zone-box .dh-artist-profile {
+    position:      relative;
+    width:         100%;
 	margin-bottom: 2px;
 }
 
@@ -86,6 +88,12 @@
 .dh-album-track .dh-song-info .dh-song-links {
     float: right;
     display: inline;
+}
+
+.dh-album .dh-album-info .dh-album-buy {
+    float: right;
+    display: inline;
+    margin-right: 20px;
 }
 
 #dhContentColumn .dh-zone-box .dh-artist-more .dh-more {

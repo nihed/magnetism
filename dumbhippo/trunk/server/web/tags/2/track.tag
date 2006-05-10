@@ -93,28 +93,18 @@
 				<div class="dh-song-links">Play at 
 					<c:choose>
 						<c:when test="${!empty track.itunesUrl}">
-							<a class="dh-song-link" href="${track.itunesUrl}">iTunes</a>
+							<a class="dh-music-source-link" href="${track.itunesUrl}">iTunes</a>,
 						</c:when>
 						<c:otherwise>
-							<span class="dh-song-link-disabled">iTunes</span>
+							<span class="dh-music-source-link-disabled">iTunes</span>,
 						</c:otherwise>
 					</c:choose>
-					|
 					<c:choose>
 						<c:when test="${!empty track.yahooUrl}">
-							<a class="dh-song-link" href="${track.yahooUrl}">Yahoo</a>
+							<a class="dh-music-source-link" href="${track.yahooUrl}">Yahoo! Music</a>
 						</c:when>
 						<c:otherwise>
-							<span class="dh-song-link-disabled">Yahoo</span>
-						</c:otherwise>
-					</c:choose>
-					|
-					<c:choose>
-						<c:when test="${!empty track.rhapsodyUrl}">
-							<a class="dh-song-link" href="${track.rhapsodyUrl}">Rhapsody</a>
-						</c:when>
-						<c:otherwise>
-							<span class="dh-song-link-disabled">Rhapsody</span>
+							<span class="dh-music-source-link-disabled">Yahoo! Music</span>
 						</c:otherwise>
 					</c:choose>
 				</div>

@@ -23,16 +23,17 @@
                     <dht:zoneBoxSeparator/>
                     <a name="dhAlbumsByArtist"></a>
                     <div class="dh-artist-zone-title">DISCOGRAPHY</div>
-                    
                     <c:if test="${musicsearch.albumsByArtist.resultCount <= 0}">
                         There were not matching albums.
                     </c:if>            
                        
+                    <c:set var="count" value="1"/>   
                     <c:forEach items="${musicsearch.albumsByArtist.results}" var="album">
-					    <dht:album album="${album}"/>
+					    <dht:album album="${album}" order="${count}"/>
+					    <c:set var="count" value="${count+1}"/>
 					</c:forEach>
 	
-	                 <div class="dh-artist-more">
+	                <div class="dh-artist-more">
 					    <dht:expandablePager pageable="${musicsearch.albumsByArtist}" anchor="dhAlbumsByArtist"/>
 					</div>
 						

@@ -7,8 +7,6 @@
     </div>       
     <div class="dh-artist-info">      
         <div class="dh-artist-name">
-            <!-- TODO: do we want to make sure that artist name is all caps like other zone titles? -->
-            <!-- What should happen with the page title then? -->
             <c:out value="${artist.name}"/>
         </div>
         <div class="dh-artist-bio">
