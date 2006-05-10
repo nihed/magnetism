@@ -71,7 +71,14 @@
 					</c:url>
 					<a href="${songlink}">
 				</c:if>
-					<c:out value="${track.name}"/>
+				<c:choose>
+		            <c:when test="${displayAsAlbumTrack}">
+					    <c:out value="${track.truncatedName}"/>
+					</c:when>
+					<c:otherwise> 
+					    <c:out value="${track.name}"/>
+					</c:otherwise>
+				</c:choose>	    					   
 				<c:if test="${linkifySong}">
 					</a>
 				</c:if>

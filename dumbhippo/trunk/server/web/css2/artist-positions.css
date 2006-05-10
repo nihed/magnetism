@@ -77,16 +77,15 @@
 }
 
 .dh-album-track .dh-song-info .dh-song-name {
-    float: left;
-    display: inline;
-    width:			180px;
-	overflow:		hidden;
-	white-space:	nowrap;
-	text-overflow:	ellipsis;
+    float:       left;
+    display:     inline;
+    width:       220px;
+	overflow:    hidden;
+	white-space: nowrap;
 }
 
 .dh-album-track .dh-song-info .dh-song-links {
-    float: right;
+    float:   right;
     display: inline;
 }
 

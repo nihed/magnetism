@@ -1005,6 +1005,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// now we know our database is in the best standing possible, it's time for THE query
 		
 		String albumToExcludeClause = "";
+		int startResult = albumsByArtist.getStart();
 		int maxResults = albumsByArtist.getCount();
 		if (albumToExclude != null) {
 			albumToExcludeClause = "AND album.albumId != :albumToExcludeId";
@@ -1012,6 +1013,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				// we know that the excluded album will be at the first position, so we need to return one
 				// album less
 				maxResults = albumsByArtist.getCount() - 1;
+			} else {
+				// past the first page, start index that we need to use for the query must be one
+				// less that albumsByArtist.getStart(), because the query excludes the first album
+				// displayed on the first page
+				startResult = albumsByArtist.getStart() - 1;
 			}
 		}
 		
@@ -1023,10 +1029,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			q.setParameter("albumToExcludeId", albumToExclude.getAlbumId());
 		}
 		
-		q.setFirstResult(albumsByArtist.getStart());
+		q.setFirstResult(startResult);
 		q.setMaxResults(maxResults);
 		List<?> objects = q.getResultList();
-	
 		List<YahooAlbumResult> results = new ArrayList<YahooAlbumResult>(); 
 	    for (Object o : objects) {
 		    results.add((YahooAlbumResult) o);

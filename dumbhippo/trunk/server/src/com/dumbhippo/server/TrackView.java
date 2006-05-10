@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 
@@ -99,6 +100,10 @@ public class TrackView {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getTruncatedName() {
+	    return StringUtils.truncateString(name, 34);	
 	}
 
 	public int getSmallImageHeight() {

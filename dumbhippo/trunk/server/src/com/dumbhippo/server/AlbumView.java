@@ -113,6 +113,6 @@ public class AlbumView {
 	}
 	
 	public String getTruncatedTitle() {
-	    return StringUtils.truncateString(title, 25);	
+	    return StringUtils.truncateString(title, 31);	
 	}
 }
