@@ -5,7 +5,7 @@ public enum Character {
 	 * user-visible one now.  Possibly we could delete this class entirely.
 	 */
 	MUSIC_GEEK("Melodie", "mugshot@mugshot.org"),
-	LOVES_ACTIVITY("Haley", "mugshot@dumbhippo.org"),
+	LOVES_ACTIVITY("Haley", "mugshot@mugshot.org"),
 	MUGSHOT("Mugshot", "mugshot@mugshot.org");	
 	
 	private String defaultNickname;
