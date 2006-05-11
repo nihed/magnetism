@@ -1481,8 +1481,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.warn("yahoo album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
 			} catch (ExecutionException e) {
-				logger.warn("yahoo album get thread execution exception {}", e.getMessage());
-				throw new RuntimeException(e);
+				// it is ok to call fillAlbumInfo bellow with yahooAlbum being null
+				logger.error("yahoo album get thread execution exception {}", e.getMessage());
 			}
 	    }
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
