@@ -29,7 +29,7 @@
 			</c:otherwise>
 		</c:choose>
 	</p>
-	<p><a href='javascript:history.back();'>Go back</a>
+	<p>&#171; <a href='javascript:history.back();'>Go back</a>
 	<c:if test='${!empty param["retry"]}'> or <a href='${param["retry"]}'>try again</a></c:if></p>
 </dht:systemPage>	
 </html>

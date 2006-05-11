@@ -13,7 +13,7 @@
 		<c:when test="${logoOnly}"><center><dht:logo/></center></c:when>
 		<c:otherwise><dht:header disableHomeLink="${disableHomeLink}"/></c:otherwise>
 	</c:choose>
-	<dht:zoneBox zone="system" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
+	<dht:zoneBox zone="group" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
 		<jsp:doBody/>
 	</dht:zoneBox>
 	<dht:footer/>
