@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 
 /**
@@ -34,11 +32,8 @@ public class AbnormalErrorServlet extends AbstractServlet {
         "javax.servlet.error.exception"        
     };
 
-    private Configuration config;
-    
 	@Override
 	public void init() {
-		config = WebEJBUtil.defaultLookup(Configuration.class);
 	}
     
     private void handleRequest(HttpServletRequest request, HttpServletResponse response) throws HttpException,
@@ -63,9 +58,7 @@ public class AbnormalErrorServlet extends AbstractServlet {
     		logger.error("Error servlet broke! ", t);
     	}
     	// now redirect to error page
-    	throw new HumanVisibleException("There was an unexpected problem with the site. Please try again; " 
-    			+ "or if you can describe the situation causing the error and when it occurred, mail us at "
-    			+ config.getProperty(HippoProperty.FEEDBACK_EMAIL) + " and we'll investigate as soon as we can.");
+    	throw new HumanVisibleException("Oops!  Our site burped.");
     }
     
     @Override
