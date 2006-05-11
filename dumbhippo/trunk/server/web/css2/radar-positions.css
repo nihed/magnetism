@@ -1,0 +1,21 @@
+@CHARSET "UTF-8";
+
+.dh-radar-code {
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+	width: 450px;
+}
+
+.dh-radar-propset {
+	margin-left: 20px;
+}
+
+.dh-radar-separator {
+	width: 1px;
+}
+
+.dh-radar-option {
+	padding-left: 10px;
+	padding-right: 10px;
+}
