@@ -291,7 +291,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	public List<YahooAlbumResult> getBestAlbums() {
-		logger.debug("total results available is {} when getting best albums " + totalResultsAvailable);
+		logger.debug("total results available is {} when getting best albums ", totalResultsAvailable);
 		List<YahooAlbumResult> list = new ArrayList<YahooAlbumResult>();
 		
 		if (results.isEmpty()) {

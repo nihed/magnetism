@@ -64,10 +64,22 @@ public interface MusicSystemInternal extends MusicSystem {
 	
     public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
     
-	public YahooAlbumResult getYahooAlbumSync(String albumId) throws NotFoundException;
+	public YahooAlbumResult getYahooAlbumSync(YahooSongResult yahooSong) throws NotFoundException;
 	
-	public Future<YahooAlbumResult> getYahooAlbumAsync(String albumId);
+	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong);
 		
+	/*
+	 * Returns a yahoo artist that matches an artist name and an artistId. Might return an artist with a different 
+	 * name, if an artist with a different name matches a passed in artist id, or if multiple artist names match the
+	 * same artist id, and we've been storing a different name mapped to the artistId that the passed in artist name
+	 * also maps to. 
+	 * 
+	 * At least one parameter out of artist and artistId must not be null.
+	 * 
+	 * @param artist name of the artist
+	 * @param artistId yahoo id for the artist
+	 * @return YahooArtistResult that represents the artist
+	 */
 	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
 	
 	public TrackView getTrackView(Track track, long lastListen);

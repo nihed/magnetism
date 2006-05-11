@@ -431,20 +431,20 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	static private class YahooAlbumSearchTask implements Callable<YahooAlbumResult> {
 		
-		private String yahooAlbumId;
+		private YahooSongResult yahooSong;
 
-		public YahooAlbumSearchTask(String yahooAlbumId) {
-			this.yahooAlbumId = yahooAlbumId;
+		public YahooAlbumSearchTask(YahooSongResult yahooSong) {
+			this.yahooSong = yahooSong;
 		}
 		
 		public YahooAlbumResult call() {
-			logger.debug("Entering YahooAlbumSearchTask thread for yahhoAlbumId {}", yahooAlbumId);				
+			logger.debug("Entering YahooAlbumSearchTask thread for yahooSong {}", yahooSong);				
 
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
 			
 			try {
-			    YahooAlbumResult yahooAlbumResult = musicSystem.getYahooAlbumSync(yahooAlbumId);
+			    YahooAlbumResult yahooAlbumResult = musicSystem.getYahooAlbumSync(yahooSong);
 			    return yahooAlbumResult;
 			} catch (NotFoundException e) {
 				logger.debug(e.getMessage());
@@ -541,14 +541,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			for (YahooSongResult old : oldResults) {
 				old.setLastUpdated(new Date(updateTime));
 			}
-			
-			if (oldResults.isEmpty()) {
+
+			// because this method can be called asynchronously from multiple 
+			// places, we should double check if there is already a no results marker 
+			// associated with the track, otherwise we get multiple no results markers 
+			// associated with a single track, which is harmless, but unnecessary
+			// we should only add a no results marker if there are no other results 
+			// associated with a track
+			if (oldResults.isEmpty() && track.getYahooSongResults().isEmpty()) {
 				YahooSongResult marker = new YahooSongResult();
 				marker.setNoResultsMarker(true);
 				marker.setLastUpdated(new Date(updateTime));
 				em.persist(marker);
-				track.addYahooSongResult(marker);
-				// we don't need to return this marker though, returning empty oldResults is good enough
+                logger.debug("adding a no results marker for track {}", track);
+                track.addYahooSongResult(marker);
+                // we don't need to return this marker though, returning empty oldResults is good enough
 			}
 			
 			return oldResults;
@@ -632,7 +639,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		List<YahooSongResult> results = new ArrayList<YahooSongResult>();
-	    results.addAll(track.getYahooSongResults());	
+	    results.addAll(track.getYahooSongResults());
 		boolean needNewQuery = results.isEmpty();
 		if (!needNewQuery) {
 			// the outdated results, if any, could be a special magic result with the NoResultsMarker 
@@ -1062,7 +1069,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	}
 	
-	private YahooAlbumResult updateYahooAlbumResultSync(YahooAlbumResult oldResult, String albumId) throws NotFoundException {
+	private YahooAlbumResult updateYahooAlbumResultSync(YahooAlbumResult oldResult, YahooSongResult yahooSong) throws NotFoundException {
+
+		String albumId = yahooSong.getAlbumId();
+		String artistId = yahooSong.getArtistId();
+		
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
 		try {
 		    YahooAlbumResult newResult = ws.lookupAlbum(albumId);
@@ -1085,6 +1096,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				// we got no results, so set the no results marker
 				YahooAlbumResult marker = new YahooAlbumResult();
 				marker.setAlbumId(albumId);
+				// this is an important bit, because artistId must not be null in the YahooAlbumResult table,
+				// and setting it will ensure that if later we query fo albums based on this artistId, and
+				// the album with the given albumId becomes available, we will not try to insert an duplicate
+				// albumId into the table 
+				marker.setArtistId(artistId);
 				marker.setNoResultsMarker(true);
 				marker.setLastUpdated(new Date(updateTime));
 				em.persist(marker);
@@ -1094,14 +1110,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	public YahooAlbumResult getYahooAlbumSync(String albumId) throws NotFoundException {
+	public YahooAlbumResult getYahooAlbumSync(YahooSongResult yahooSong) throws NotFoundException {
+
+		String albumId = yahooSong.getAlbumId();
+		String artistId = yahooSong.getArtistId();
 		
-		// we require the albumId field
-		if (albumId == null) {
-			logger.error("albumId is null when requesting a single yahoo album result for an album id");
-			throw new RuntimeException("albumId is null when requesting a single yahoo album result for an album id");
+		// all YahooSongResults that are not no results markers must have albumId and artistId, 
+		// and this function must not be passed in no results markers
+		if ((albumId == null) || (artistId == null)) {
+			logger.error("albumId or artistId is null when requesting a single yahoo album result for a yahoo song");
+			throw new RuntimeException("albumId or artistId is null when requesting a single yahoo album result for a yahoo song");
 		}
-		
+
+		// because we are getting/updating yahoo album result, we do not need to pass in an artistId to the query
 		Query q = em.createQuery("FROM YahooAlbumResult album WHERE album.albumId = :albumId");
 		q.setParameter("albumId", albumId);
 
@@ -1110,8 +1131,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         try {
 		    yahooAlbum  = (YahooAlbumResult)q.getSingleResult();
 		} catch (EntityNotFoundException e) { 
-			// we must know about this album id because we have a track and got an
-			// associated YahooSongResult for it, it's time to get the album info too!
+			// we must know about the YahooSongResult because we have a track associated with it, 
+			// it's time to get the album info too!
 			needNewQuery = true;
 		} catch (NonUniqueResultException e) {
 			// this should not be allowed by the database schema
@@ -1133,9 +1154,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// passing in the old result here is a race, since the db could have 
 			// changed underneath us - but the worst case is that we just fail to
 			// get results once in a while		
-			return updateYahooAlbumResultSync(yahooAlbum, albumId);
+			return updateYahooAlbumResultSync(yahooAlbum, yahooSong);
 		} else {
-			logger.debug("Returning Yahoo album result from database cache for albumId {}: {}", albumId, yahooAlbum);
+			logger.debug("Returning Yahoo album result from database cache for yahooSong {}: {}", yahooSong, yahooAlbum);
 			return yahooAlbum;
 		}
 	}
@@ -1211,6 +1232,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				    YahooArtistResult yahooArtist  = (YahooArtistResult)q.getSingleResult();
 				    logger.debug("Artist with artist id {} already existed in the database: {}", 
 				    		     n.getArtistId(), yahooArtist);
+				    results.add(yahooArtist);
 				} catch (EntityNotFoundException e) { 
                     // coast is clear, we can insert the new result					
 					em.persist(n);
@@ -1314,9 +1336,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return futureAlbums;
 	}
 
-	public Future<YahooAlbumResult> getYahooAlbumAsync(String yahooAlbumId) {
+	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong) {
 		FutureTask<YahooAlbumResult> futureAlbum =
-			new FutureTask<YahooAlbumResult>(new YahooAlbumSearchTask(yahooAlbumId));
+			new FutureTask<YahooAlbumResult>(new YahooAlbumSearchTask(yahooSong));
 		threadPool.execute(futureAlbum);
 		return futureAlbum;
 	}
@@ -1482,11 +1504,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			try {
 				yahooAlbum = futureYahooAlbum.get();
 			} catch (InterruptedException e) {
-				logger.warn("yahoo album get thread interrupted {}", e.getMessage());
+				logger.error("yahoo album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
 			} catch (ExecutionException e) {
-				// it is ok to call fillAlbumInfo bellow with yahooAlbum being null
 				logger.error("yahoo album get thread execution exception {}", e.getMessage());
+				throw new RuntimeException(e);
 			}
 	    }
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
@@ -1580,7 +1602,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
 		
-		String yahooAlbumId = null;
+		YahooSongResult yahooSong = null;
 		Future<YahooAlbumResult> futureYahooAlbum = null;
 		Future<AmazonAlbumResult> futureAmazonAlbum = getAmazonAlbumAsync(track.getAlbum(), track.getArtist());
 		try {
@@ -1592,14 +1614,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			for (YahooSongResult song : songs) {
 				if (!song.isNoResultsMarker()) {
 				    downloads.add(getYahooSongDownloadResultsAsync(song.getSongId()));
-				    if (yahooAlbumId == null) {
-				    	yahooAlbumId = song.getAlbumId();
+				    // we need one of these song results to get an album info for the track
+				    if (yahooSong == null) {
+				    	yahooSong = song;
 				    }
 				}
 			}
-			// if yahooAlbumId is not null, get a YahooAlbumResult for it, so we can get an album artwork for the track
-			if (yahooAlbumId != null) {
-				futureYahooAlbum = getYahooAlbumAsync(yahooAlbumId);
+			// if yahooSong is not null, get a YahooAlbumResult for it, so we can get an album artwork for the track
+			if (yahooSong != null) {
+				futureYahooAlbum = getYahooAlbumAsync(yahooSong);
 			}
 			
 			for (Future<List<YahooSongDownloadResult>> futureDownloads : downloads) {
@@ -1715,10 +1738,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (yahooArtist.isNoResultsMarker()) {
 			 throw new NotFoundException("Artist " + artist + " artistId " + artistId + " was not found.");
 		}
-		
-        if  (artistId == null) {
-        	artistId = yahooArtist.getArtistId();
-        }
 		
         fillAlbumsByArtist(yahooArtist, albumsByArtist, null, view);
         
@@ -1845,18 +1864,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (Track t : tracks) {
 			Future<AmazonAlbumResult> futureAmazonAlbum = getAmazonAlbumAsync(t.getAlbum(), t.getArtist());			
 			List<YahooSongResult> songs = getYahooSongResultsSync(t);
-			String yahooAlbumId = null;
 			Future<YahooAlbumResult> futureYahooAlbum = null;
-			
-			for (YahooSongResult song : songs) {
-				if (!song.isNoResultsMarker() && yahooAlbumId == null) {
-				    	yahooAlbumId = song.getAlbumId();
-				    	break; 
-				}
-			}
 		
-		    if (yahooAlbumId != null) {
-			    futureYahooAlbum = getYahooAlbumAsync(yahooAlbumId);
+			// if the first song stored is a no results marker, there must be no other songs 
+			// associated with the track
+		    if (!songs.isEmpty() && !songs.get(0).isNoResultsMarker()) {
+			    futureYahooAlbum = getYahooAlbumAsync(songs.get(0));
 		    }
 		    
 			futureViews.add(getAlbumViewAsync(futureYahooAlbum, futureAmazonAlbum));
@@ -2265,9 +2278,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	        // check if any YahooSongResult cache updating is in order 
 			List<YahooSongResult> songs = getYahooSongResultsSync(track);
 			if (!songs.isEmpty() && !songs.get(0).isNoResultsMarker()) {
-				String albumId = songs.get(0).getAlbumId();
 				// we want to get yahoo album here synchronously
-                YahooAlbumResult yahooAlbum = getYahooAlbumSync(albumId);	
+                YahooAlbumResult yahooAlbum = getYahooAlbumSync(songs.get(0));	
                 // albumsByArtist is a pageable object that contains information on what albums the expanded
                 // artist view should be loaded with, it also needs to have these albums set in its results field
     			ExpandedArtistView artistView = getExpandedArtistView(yahooAlbum, albumsByArtist);
