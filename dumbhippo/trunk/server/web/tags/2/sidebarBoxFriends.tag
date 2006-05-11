@@ -30,7 +30,7 @@
 		</c:choose>
 		<c:if test="${person.signin.user.account.invitations > 0}">
 			<dht:sidebarBoxSeparator/>
-			<dht:actionLink href="/invitation" title="Invite a friend">Invite a friend (${person.viewedUser.account.invitations} invitations left)</dht:actionLink>
+			<dht:actionLink href="/invitation" title="Invite a friend">Invite a friend (${person.signin.user.account.invitations} invitations left)</dht:actionLink>
 		</c:if>
 	</dht:sidebarBox>
 </c:if>
