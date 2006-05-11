@@ -15,6 +15,7 @@
 <head>
 	<title>Oops!</title>
 	<link rel="stylesheet" type="text/css" href="/css2/error.css"/>
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/header_oops500.gif">

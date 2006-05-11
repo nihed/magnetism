@@ -6,6 +6,7 @@
 <head>
 	<title>Terms of Use</title>
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/header_termsofuse500.gif">

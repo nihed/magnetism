@@ -6,6 +6,7 @@
 <head>
 	<title>Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/main.css"/>
+	<dht:faviconIncludes/>
 	<script type="text/javascript">
 		var onMouseIn = function(node, rolloverSrc) {
 			if (rolloverSrc != node.src) {

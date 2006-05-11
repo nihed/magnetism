@@ -10,7 +10,8 @@
 
 <head>
 	<title><c:out value="${musicsearch.expandedArtistView.name}"/></title>
-    <link rel="stylesheet" type="text/css" href="/css2/artist.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/artist.css"/>
+	<dht:scriptIncludes/>
 	<dht:scriptIncludes/>	
 </head>
 

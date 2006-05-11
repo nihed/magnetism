@@ -10,6 +10,7 @@
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>

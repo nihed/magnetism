@@ -8,6 +8,7 @@
 <head>
 	<title>Welcome to Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/landing.css"/>	
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.util");

@@ -14,6 +14,7 @@
 <head>
 	<title>My Invitations</title>
 	<link rel="stylesheet" type="text/css" href="/css2/invitation.css"/>
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.invitation")
