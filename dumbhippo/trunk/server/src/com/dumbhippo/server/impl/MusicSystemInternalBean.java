@@ -1200,9 +1200,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		// remaining newResults weren't previously saved
 		for (YahooArtistResult n : newResults) {
-			// sometimes different names for the artist map to the same id, e.i. "Belle & Sebastian"  and
+			// sometimes different names for the artist map to the same id, i.e. "Belle & Sebastian"  and
 			// "Belle and Sebastian" both map to the same id, so if we were looking up an artist result just 
-			// based on ann artist name, we need to double-check that the artist with this id doesn't 
+			// based on an artist name, we need to double-check that the artist with this id doesn't 
 			// exhist in our database
 			if (artistId == null) {
 			    Query q = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
@@ -1220,7 +1220,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					logger.error("Multiple yahoo artist results for artist id {}", n.getArtistId());
 					throw new RuntimeException("Multiple yahoo artist results for artist id " + n.getArtistId());
 				}
+			} else {
+				em.persist(n);
+				results.add(n);				
 			}
+			
 		}
 		
 		return results;
