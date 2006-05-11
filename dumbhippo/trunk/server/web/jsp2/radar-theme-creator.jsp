@@ -1,7 +1,7 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
-<%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <dh:bean id="nowplaying" class="com.dumbhippo.web.NowPlayingThemeCreatorPage" scope="request"/>
 <jsp:setProperty name="nowplaying" property="themeId" param="theme"/>
@@ -30,14 +30,14 @@
 		<dht:zoneBoxSubtitle>Preview: Music Playing</dht:zoneBoxSubtitle>
 		<div>
 			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="active" hasLabel="false"/>
-			<dht:nowPlayingPhotoUpload themeId="${nowplaying.themeId}" mode="active" linkText="Change Background Image" reloadTo="/radar-theme-creator?theme=${nowplaying.themeId}"/>
+			<dht:radarPhotoUpload themeId="${nowplaying.themeId}" mode="active" linkText="Change Background Image" reloadTo="/radar-theme-creator?theme=${nowplaying.themeId}"/>
 		</div>
 
 		<dht:zoneBoxSubtitle>Preview: Music Stopped</dht:zoneBoxSubtitle>
 		
 		<div>
 			<dh:nowPlaying userId="${nowplaying.signin.userId}" themeId="${nowplaying.themeId}" forceMode="inactive" hasLabel="false"/>
-			<dht:nowPlayingPhotoUpload themeId="${nowplaying.themeId}" mode="inactive" linkText="Change Background Image" reloadTo="/radar-theme-creator?theme=${nowplaying.themeId}"/>
+			<dht:radarPhotoUpload themeId="${nowplaying.themeId}" mode="inactive" linkText="Change Background Image" reloadTo="/radar-theme-creator?theme=${nowplaying.themeId}"/>
 		</div>
 		
 		<div>
@@ -53,99 +53,97 @@
 		</div>
 		
 		<c:if test="${nowplaying.theme.draft}">
-			<dht:smallTitle>Theme Properties</dht:smallTitle>
-	
 			<div>
 			Themes are 440 pixels wide and 120 pixels high.
 			</div>
 	
-			<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+			<dht:radarProperty themeId="${nowplaying.theme.id}"
 				property="name" currentValue="${nowplaying.theme.name}"
 				label="Theme Name"/>
 				
 			<dht:zoneBoxSubtitle>Album art</dht:zoneBoxSubtitle>				
 			<div class="dh-radar-propset">
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumArtX" currentValue="${nowplaying.theme.albumArtX}"
 					label="Album Art X"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumArtY" currentValue="${nowplaying.theme.albumArtY}"
 					label="Album Art Y"/>
 			</div>
 
 			<dht:zoneBoxSubtitle>Song title</dht:zoneBoxSubtitle>				
 			<div class="dh-radar-propset">
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="titleTextX" currentValue="${nowplaying.theme.titleTextX}"
 					label="Song Title X"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="titleTextY" currentValue="${nowplaying.theme.titleTextY}"
 					label="Song Title Y"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="titleTextColor" currentValue="${nowplaying.theme.titleTextColor}"
 					label="Song Title Text Color"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="titleTextFontSize" currentValue="${nowplaying.theme.titleTextFontSize}"
 					label="Song Title Size"/>
 			</div>
 	
 			<dht:zoneBoxSubtitle>Artist</dht:zoneBoxSubtitle>				
 			<div class="dh-radar-propset">		
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="artistTextX" currentValue="${nowplaying.theme.artistTextX}"
 					label="Artist X"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="artistTextY" currentValue="${nowplaying.theme.artistTextY}"
 					label="Artist Y"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="artistTextColor" currentValue="${nowplaying.theme.artistTextColor}"
 					label="Artist Text Color"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="artistTextFontSize" currentValue="${nowplaying.theme.artistTextFontSize}"
 					label="Artist Text Size"/>
 			</div>
 			
 			<dht:zoneBoxSubtitle>Album</dht:zoneBoxSubtitle>				
 			<div class="dh-radar-propset">		
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumTextX" currentValue="${nowplaying.theme.albumTextX}"
 					label="Album Title X"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumTextY" currentValue="${nowplaying.theme.albumTextY}"
 					label="Album Title Y"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumTextColor" currentValue="${nowplaying.theme.albumTextColor}"
 					label="Album Title Color"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="albumTextFontSize" currentValue="${nowplaying.theme.albumTextFontSize}"
 					label="Album Title Size"/>
 			</div>
 
 			<dht:zoneBoxSubtitle>Status</dht:zoneBoxSubtitle>				
 			<div class="dh-radar-propset">
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="statusTextX" currentValue="${nowplaying.theme.statusTextX}"
 					label="Status Title X"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="statusTextY" currentValue="${nowplaying.theme.statusTextY}"
 					label="Status Title Y"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="statusTextColor" currentValue="${nowplaying.theme.statusTextColor}"
 					label="Status Text Color"/>
 	
-				<dht:nowPlayingProperty themeId="${nowplaying.theme.id}"
+				<dht:radarProperty themeId="${nowplaying.theme.id}"
 					property="statusTextFontSize" currentValue="${nowplaying.theme.statusTextFontSize}"
 					label="Status Text Size"/>
 			</div>

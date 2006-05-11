@@ -16,7 +16,7 @@
 				<div>
 					Music embed: <input id="dhMusicOn" type="radio"/> <label for="dhMusicOn">On</label> <input type="radio" id="dhMusicOff"/> <label for="dhMusicOff">Off</label>
 				</div>
-				<div style="margin-top: 3px;"><a href="/nowplaying-themes">Edit theme</a></div>
+				<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
 				<dht:sidebarBoxSeparator/>
 				<div><a href="/music-bio">Edit my music bio</a></div>
 			</dht:sidebarBoxControls>
