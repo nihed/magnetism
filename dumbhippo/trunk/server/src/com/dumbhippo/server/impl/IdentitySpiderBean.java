@@ -61,7 +61,8 @@ import com.dumbhippo.server.util.EJBUtil;
 public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote {
 	static private final Logger logger = GlobalSetup.getLogger(IdentitySpider.class);
 	
-	private static final boolean DEFAULT_DEFAULT_SHARE_PUBLIC = true;	
+	private static final boolean DEFAULT_DEFAULT_SHARE_PUBLIC = true;
+	private static final boolean DEFAULT_ENABLE_MUSIC_SHARING = true;		
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -833,7 +834,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// we only share your music if your account is enabled, AND music sharing is enabled.
 		// but we return only the music sharing flag here since the two settings are distinct
 		// in the UI. The pref we send to the client is a composite of the two.
-		Account account = getMaybeDetachedAccount(user); 
+		Account account = getMaybeDetachedAccount(user);
+		Boolean musicSharingEnabled = account.isMusicSharingEnabled();
+		if (musicSharingEnabled == null)
+			return DEFAULT_ENABLE_MUSIC_SHARING;			
 		return account.isMusicSharingEnabled();
 	}
 	

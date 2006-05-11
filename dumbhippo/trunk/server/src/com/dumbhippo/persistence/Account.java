@@ -65,7 +65,7 @@ public class Account extends Resource {
 	private String mySpaceName;
 	private String mySpaceFriendId;
 	
-	private boolean musicSharingEnabled;
+	private Boolean musicSharingEnabled;
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
 	
@@ -396,8 +396,8 @@ public class Account extends Resource {
 	}
 
 
-	@Column(nullable=false)
-	public boolean isMusicSharingEnabled() {
+	@Column(nullable=true)
+	public Boolean isMusicSharingEnabled() {
 		return musicSharingEnabled;
 	}
 
