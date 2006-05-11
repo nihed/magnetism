@@ -58,7 +58,8 @@ public class AbnormalErrorServlet extends AbstractServlet {
     		logger.error("Error servlet broke! ", t);
     	}
     	// now redirect to error page
-    	throw new HumanVisibleException("Oops!  Our site burped.");
+    	throw new HumanVisibleException("Woah! How'd you see this?  We have millions of monkeys checking for errors like this every day."
+    			+ "  Our crew has been notified of the problem and will be unloading more monkeys to address this area.");
     }
     
     @Override
