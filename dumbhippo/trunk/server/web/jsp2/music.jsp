@@ -3,6 +3,11 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
+<c:if test="${signin.valid}">
+	<dht:requireMusicPersonBean who="${signin.user.id}"/>
+</c:if>
+<dht:requireMusicGlobalBean/>
+
 <head>
 	<title>Mugshot Music Radar</title>
 	<link rel="stylesheet" type="text/css" href="/css2/music.css"/>
@@ -14,9 +19,22 @@
 		<dht:sidebarPerson who="${signin.user.id}">
 			<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 				<div>
-					Music embed: <input id="dhMusicOn" type="radio"/> <label for="dhMusicOn">On</label> <input type="radio" id="dhMusicOff"/> <label for="dhMusicOff">Off</label>
+					Music embed: 
+					<c:choose>
+					<%-- this is duplicated so we can set the checked attribute...sigh --%>
+					<c:when test="${signin.musicSharingEnabled}">
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
+					</c:when>
+					<c:otherwise>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
+					</c:otherwise>
+					</c:choose>
 				</div>
-				<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
+				<c:if test="${signin.musicSharingEnabled}">				
+					<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
+				</c:if>
 				<dht:sidebarBoxSeparator/>
 				<div><a href="/music-bio">Edit my music bio</a></div>
 			</dht:sidebarBoxControls>
@@ -31,11 +49,6 @@
 			</c:if>
 
 			<dht:zoneBoxSubcolumns>
-				<c:if test="${signin.valid}">
-					<dht:requireMusicPersonBean who="${signin.user.id}"/>
-				</c:if>
-				<dht:requireMusicGlobalBean/>
-
 				<dht:zoneBoxSubcolumn which="one">
 
 					<c:if test="${signin.valid}">
