@@ -24,7 +24,9 @@
 					<td>
 						<div class="dh-next-to-image">
 							<div class="dh-name"><c:out value="${person.viewedPerson.name}"/></div>
+					<c:if test="${person.self}">
 							<dht:actionLink href="/account" title="Set preferences, add addresses, and update your profile">Edit account</dht:actionLink>
+					</c:if>
 						</div>
 					</td>
 				</tr>
