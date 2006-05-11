@@ -13,7 +13,7 @@
 	<c:when test="${signin.valid}">
 	<dht:requireLinksPersonBean who="${signin.user.id}"/>
 	<dht:sidebarPerson who="${signin.user.id}">
-		<dht:sidebarBoxControls title="LINK SWARM CONTROLS" more="/spammers-and-freaks">
+		<dht:sidebarBoxControls title="LINK SWARM CONTROLS">
 			<div>
 				<c:choose>
 					<%-- this is duplicated so we can set the checked attribute --%>
@@ -25,14 +25,6 @@
 					</c:otherwise>
 				</c:choose>
 			<label for="notifyPublicShares">Receive publicly shared links</label>			   
-			</div>
-			<dht:sidebarBoxSeparator/>
-			<dht:sidebarBoxTitle>FREAK LIST</dht:sidebarBoxTitle>
-			<div>
-				<input type="checkbox"/> Spammer McSpammy
-			</div>
-			<div>
-				<input type="checkbox"/> Spams McSpam
 			</div>
 		</dht:sidebarBoxControls>		
 	</dht:sidebarPerson>
