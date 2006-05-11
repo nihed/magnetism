@@ -26,7 +26,7 @@
 			and AIM addresses (if you provide them), and so forth.
 			</li>
 			<li>A stranger you haven't added as a friend can see some limited information, 
-			such as your name and photo, and (if you have music sharing enabled) 
+			such as your name and photo, and (unless music sharing is disabled) 
 			the song you're listening to right now. They can also see any 
 			public groups you're in, but not private groups.
 			</li>
@@ -36,7 +36,7 @@
 			<li>
 			If you install it, the client software running on your computer looks at whether 
 			you're around  and when you look at shared stuff, in order to display that 
-			information to your friends. If you enable music sharing, we track a history of 
+			information to your friends.  Unless you disable music sharing, we track a history of 
 			what music you listen to so your friends can browse it.
 			</li>
 			<li>
