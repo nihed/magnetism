@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+#dhRadarTag {
+	margin-bottom: 10px;
+}
+
 .dh-radar-code {
 	margin-left: auto;
 	margin-right: auto;

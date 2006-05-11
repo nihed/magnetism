@@ -14,7 +14,7 @@
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
 		
-		<div><img src="/images2/musicradartag.gif"/></div>
+		<div id="dhRadarTag"><img src="/images2/musicradartag.gif"/></div>
 	
 		<dht:beaconSamples/>
 		
@@ -26,27 +26,37 @@
 	
 		<dht:zoneBoxTitle>HOW TO PUT MUSIC RADAR ON YOUR MYSPACE PAGE</dht:zoneBoxTitle>
 		
-		<ul>
+		<ol>
 			<li>Copy the HTML code in the box below</li>
 			<li>On your MySpace <i>Edit Profile</i> page, click <b>Edit</b> for the <i>About Me</i> section.</li>
 			<li>Paste the code anywhere in the <i>About Me</i> box, and click <b>Preview</b>.</li>
 			<li>On the <i>Preview</i> page, click <b>Submit</b></li>
-		</ul>
+		</ol>
 		
 		<div>
 			<!--  don't add whitespace inside the textarea tag -->
 			<textarea class="dh-radar-code" readonly="readonly" rows="7" wrap="off"><dh:nowPlaying userId="${nowplaying.signin.userId}" escapeXml="true" embedOnly="true"/></textarea>
 		</div>
 
-		<div>
+		<p class="dh-radar-explanatory">
 			You don't need to change any code to give your Music Radar a new look.  Simply
 			<a href="/radar-themes">Browse and Edit themes</a> and your changes will
 			update instantly.
-		</div>
-
-		<div>
+		</p>
+		<p class="dh-radar-explanatory">
 			If you're an HTML geek, <a href="/radar-html">here are some technical details</a>.
-		</div>	
+		</p>	
+		<dht:zoneBoxSeparator/>		
+	
+		<dht:zoneBoxSubtitle>Having trouble getting Music Radar to display songs?</dht:zoneBoxSubtitle>
+		<ul>
+		<c:if test="${!signin.musicSharingEnabled}">
+			<li><a href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn music sharing on</a></li>
+		</c:if>
+		<li>Make sure that iTunes is on, and that a song is playing.</li>
+		<li>Try restarting iTunes.</li>
+		<li><a href="javascript:window.location.reload();">Refresh</a> your browser.</li>
+		</ul>
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>

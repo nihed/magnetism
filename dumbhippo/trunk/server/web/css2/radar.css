@@ -5,3 +5,11 @@
 .dh-radar-separator {
 	background: gray;
 }
+
+#dhBeaconSample {
+	border: 1px solid black;
+}
+
+.dh-radar-explanatory {
+	font-size: 12px;
+}
