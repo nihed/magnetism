@@ -111,3 +111,15 @@ dh.model.objectFromXmlNode = function(element) {
 		dojo.raise("unknown xml node " + element.nodeName);
 	}
 }
+
+dh.model.findGuid = function(set, id) {
+	// set can be an array or a hash
+	for (var prop in set) {
+		if (dojo.lang.has(set[prop], "id")) {
+			if (id == set[prop]["id"]) {
+				return prop;
+			}
+		}
+	}
+	return null;
+}

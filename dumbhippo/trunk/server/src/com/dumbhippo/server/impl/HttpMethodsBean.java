@@ -305,7 +305,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(
 				GuidPersistable.class, recipientGuids);
 
-		postingBoard.doShareGroupPost(viewpoint.getViewer(), group, description, recipients,
+		postingBoard.doShareGroupPost(viewpoint.getViewer(), group, null, description, recipients,
 				true);
 	}
 
@@ -701,6 +701,60 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException
+	{
+		if (contentType != HttpResponseData.XML)
+			throw new IllegalArgumentException("only support XML replies");
+		
+		Contact contact;
+		
+		if (inviteeId != null) {
+			try {
+				contact = identitySpider.lookupGuidString(Contact.class, inviteeId);
+			} catch (ParseException e) {
+				throw new RuntimeException("bad invitee guid", e);
+			} catch (NotFoundException e) {
+				throw new RuntimeException("no such invitee guid", e);
+			}
+			
+		} else if (inviteeAddress != null) {
+			inviteeAddress = inviteeAddress.trim();
+
+			if (inviteeAddress.equals("") || !inviteeAddress.contains("@")) 
+				throw new RuntimeException("Missing or invalid email address");
+
+			EmailResource resource = identitySpider.getEmail(inviteeAddress);
+			contact = identitySpider.createContact(viewpoint.getViewer(), resource);
+		} else {
+			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
+		}
+		
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("No such group");
+		}
+
+		GuidPersistable recipient = (GuidPersistable)contact;
+		Set<GuidPersistable> recipients = Collections.singleton(recipient);
+		try {
+			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, true);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("doShareGroup unxpectedly couldn't find contact recipient");
+		}
+		
+		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
+		
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("sendEmailInvitationReply");
+		xml.appendTextNode("message", contactView.getName() + " has been invited to the group " + group.getName());
+		xml.closeElement();
+		out.write(xml.getBytes());
+		out.flush();
+	}
+
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {

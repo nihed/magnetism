@@ -46,18 +46,6 @@ dh.share.recipientsChangedCallback = null;
 //  canAddRecipientCallback(personOrGroupObj)
 dh.share.canAddRecipientCallback = null;
 
-dh.share.findGuid = function(set, id) {
-	// set can be an array or a hash
-	for (var prop in set) {
-		if (dojo.lang.has(set[prop], "id")) {
-			if (id == set[prop]["id"]) {
-				return prop;
-			}
-		}
-	}
-	return null;
-}
-
 // merges an XML document into allKnownIds and returns an array
 // of the newly-added items
 dh.share.mergeObjectsDocument = function(doc) {
@@ -128,7 +116,7 @@ dh.share.removeRecipient = function(recipientId, node) {
 		node = dh.share.findIdNode(recipientId);
 	}
 
-	var objIndex = dh.share.findGuid(dh.share.selectedRecipients, recipientId);
+	var objIndex = dh.model.findGuid(dh.share.selectedRecipients, recipientId);
 	dh.share.selectedRecipients.splice(objIndex, 1);
 	
 	var tr = node.parentNode	
@@ -222,7 +210,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 	
 	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
 	
-	var objKey = dh.share.findGuid(dh.share.allKnownIds, selectedId);
+	var objKey = dh.model.findGuid(dh.share.allKnownIds, selectedId);
 	if (!objKey) {
 		// user should never get here
 		alert("something went wrong adding that person ... (" + selectedId + ")");
@@ -231,7 +219,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 	
 	var obj = dh.share.allKnownIds[objKey];
 	
-	if (!dh.share.findGuid(dh.share.selectedRecipients, obj.id)) {
+	if (!dh.model.findGuid(dh.share.selectedRecipients, obj.id)) {
 		
 		if (dh.share.canAddRecipientCallback && 
 			!dh.share.canAddRecipientCallback(obj)) {
@@ -356,166 +344,14 @@ dh.share.loadContacts = function() {
 			});
 }
 
-dh.share.makeHighlightNode = function(word, match, type) {
-	var index = word.toLowerCase().indexOf(match.toLowerCase());
-
-	var elem = type || 'li';
-
-	var obj = document.createElement(elem);
-
-	var preText = word.substring(0,index);
-	var preSpan = document.createElement("span");
-	preSpan.appendChild(document.createTextNode(preText));
-
-	var matchText = word.substring(index, index + match.length);
-	var matchStrong = document.createElement("strong");
-	matchStrong.appendChild(document.createTextNode(matchText));
-
-	var postText = word.substring(index + match.length,word.length);
-	var postSpan = document.createElement("span");
-	postSpan.appendChild(document.createTextNode(postText));
-
-	obj.appendChild(preSpan);
-	obj.appendChild(matchStrong);
-	obj.appendChild(postSpan);
-
-	return obj;
-}
-
-dh.share.findInStringArray = function(strings, func, data) {
-	for (var i = 0; i < strings.length; ++i) {
-		if (func(strings[i], data))
-			return dh.share.makeHighlightNode(strings[i], data);
-	}
-	return null;
-}
-
-dh.share.sortEligibleCompare = function(a, b) {
-	aText = dojo.dom.textContent(a[0])
-	bText = dojo.dom.textContent(b[0])	
-	if (aText.localeCompare) // don't trust this to exist...
-		return aText.localeCompare(bText);
-	else {
-		if (aText < bText)
-			return -1;
-		else if (aText > bText)
-			return 1;
-		else
-			return 0;
-	}
-}
-
-dh.share.sortEligible = function(array) {
-	array.sort(dh.share.sortEligibleCompare);
-	return array;
-}
-
 dh.share.getEligibleRecipients = function() {
-
-	var results = new Array();
-
-	if (dh.share.autoSuggest.menuMode) {
-		// in menu mode, we just show everyone according to their name
-		for (var id in dh.share.allKnownIds) {
-			var obj = dh.share.allKnownIds[id];
-			var node = document.createElement("li");
-			node.appendChild(document.createTextNode(obj.displayName));
-			results.push([node, obj.id]);			
-		}
-		
-		return dh.share.sortEligible(results);
+    if (dh.share.autoSuggest.menuMode) {
+  		return dh.suggestutils.getMenuRecipients(dh.share.allKnownIds)
+	} else {
+   		return dh.suggestutils.getMatchingRecipients(dh.share.allKnownIds, 
+   													 dh.share.autoSuggest.inputText,
+                                             		 dh.share.selectedRecipients)
 	}
-
-	var matchNameFunc = function (word, match) {
-		// Check whole word first
-		if (word.toLowerCase().indexOf(match.toLowerCase()) == 0) {
-			return true;
-		} else {
-			// Now split the word up on spaces so we match
-			// second half of the word just like the first half
-			var splitSuggestion = word.split(' ');
-			for (j in splitSuggestion) {
-				var sug = splitSuggestion[j].toLowerCase();
-				if (sug.indexOf(match.toLowerCase()) == 0) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
-	var matchEmailFunc = function (word, match) {
-		//Check whole email first
-		if (word.toLowerCase().indexOf(match.toLowerCase()) == 0) {
-			return true;
-		} else {
-			// Now split the email up on the @ so we match
-			// second half of the word just like the first half
-			var splitEmail = word.split('@')[0].split('.');
-			for (j in splitEmail) {
-				var sug = splitEmail[j].toLowerCase();
-				if(sug.indexOf(match.toLowerCase()) == 0) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	var searchStr = dojo.string.trim(dh.share.autoSuggest.inputText);
-
-	if (searchStr.length == 0)
-		return results; // no eligible when the input is empty
-
-	for (var id in dh.share.allKnownIds) {
-		var obj = dh.share.allKnownIds[id];
-		
-		var found = null;
-		var matchedNode = null;
-		if (matchNameFunc(obj.displayName, searchStr)) {
-			found = obj;
-			matchedNode = dh.share.makeHighlightNode(obj.displayName, searchStr);
-		} else if (obj.email && matchEmailFunc(obj.email, searchStr)) {
-			found = obj;
-			matchedNode = dh.share.makeHighlightNode(obj.email, searchStr);
-		} else if (obj.aim && matchNameFunc(obj.aim, searchStr)) {
-			found = obj;
-			matchedNode = dh.share.makeHighlightNode(obj.aim, searchStr);
-		} else {
-			// look in all emails and aims; but checking primary
-			// email and aim first was deliberate, even though 
-			// we'll check them again here
-			if (obj.emails) {
-				var n = dh.share.findInStringArray(obj.emails, matchEmailFunc, searchStr);
-				if (n) {
-					found = obj;
-					matchedNode = n;
-				}
-			}
-			if (!found && obj.aims) {
-				var n = dh.share.findInStringArray(obj.aims, matchNameFunc, searchStr);
-				if (n) {
-					found = obj;
-					matchedNode = n;
-				}
-			}
-		}
-		
-		if (found && found.isPerson() && !found.hasAccount && !found.email) {
-			// we can't share with someone who is only an aim address
-			found = null;
-			matchedNode = null;
-		}
-		
-		if (found) {
-			if (!dh.share.findGuid(dh.share.selectedRecipients,
-						               found.id)) {
-				results.push([matchedNode, found.id]);
-			}
-		}
-	}
-	
-	return dh.share.sortEligible(results);
 }
 
 // Returns the ID of an exact match for 'str', if any. (Case is ignored;
@@ -537,7 +373,7 @@ dh.share.findExactMatch = function(str) {
 }
 
 dh.share.isToTheWorld = function() {
-	return dh.share.findGuid(dh.share.selectedRecipients, dh.share.theWorld.id) != null;
+	return dh.model.findGuid(dh.share.selectedRecipients, dh.share.theWorld.id) != null;
 }
 
 dh.share.getRecipients = function() {

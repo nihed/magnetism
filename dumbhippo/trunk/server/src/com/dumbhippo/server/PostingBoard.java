@@ -90,7 +90,7 @@ public interface PostingBoard {
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 
-	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
 		throws NotFoundException;
 	
 	public void doShareLinkTutorialPost(User recipient);

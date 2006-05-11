@@ -225,6 +225,7 @@ body.dh-gray-background-page {
 }
 
 .dh-text-input {
+    font-family:		sans-serif;
 	border:				1px solid #CCCCCC;
 	background-color:	#FFFFFF;
 	color:				#000000;

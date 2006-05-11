@@ -2,6 +2,8 @@
 @IMPORT url("site.css");
 @IMPORT url("invitation-positions.css");
 
+/* Shared between invitation.jsp and group-invitation.jsp */
+
 #dhContentColumn .dh-zone-box .dh-message {
 	background-color:	#ffffcc;
 	color:				#cc0033;
@@ -14,10 +16,56 @@
 	font-size:			12px;
 }
 
+#dhContentColumn .dh-form-table textarea {
+	font-size:			12px;
+}
+
 #dhContentColumn .dh-zone-box .dh-invitation {
 	font-size: 			12px;
 }
 
 #dhContentColumn .dh-zone-box .dh-invitation .dh-sent {
 	color: 				#606060;
+}
+
+#dhAutoSuggest {
+    display:            none;
+    cursor:             pointer;
+}
+
+/* Suggestion list styling; similar rules are in sharelink.css */
+
+.dh-suggestion-list {
+	z-index:            2; /* on top */
+    font-size:          12px;
+    background:         Window;
+    padding:            2px;
+    border:             1px solid WindowText;
+    height:             250px;
+    overflow:           auto;
+    text-align:			left;
+}
+
+.dh-suggestion-list ul
+{
+	padding:			0;
+    margin:             0;
+    list-style-type:    none;
+}
+
+.dh-suggestion-list a
+{
+    text-decoration:    none;
+    color:              WindowText;
+}
+
+.dh-suggestion-list .dh-selected
+{
+    background:         Highlight;
+    color:              HighlightText;
+}
+
+.dh-suggestion-list .dh-selected a
+{
+    color:              HighlightText;
 }

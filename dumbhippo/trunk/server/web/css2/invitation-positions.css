@@ -15,8 +15,16 @@
 	height:			5px;
 }
 
-#dhContentColumn .dh-form-table .dh-control-cell {
+#dhContentColumn .dh-form-table .dh-label-cell {
 	padding-right:	10px;
+}
+
+#dhContentColumn .dh-form-table input {
+	vertical-align: middle;
+}
+
+#dhContentColumn .dh-form-table img {
+	vertical-align: middle;
 }
 
 #dhContentColumn #dhAddressEntry {

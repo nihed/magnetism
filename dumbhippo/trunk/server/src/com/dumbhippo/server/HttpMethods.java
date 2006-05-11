@@ -155,6 +155,11 @@ public interface HttpMethods {
 	@HttpParams( { "address", "subject", "message" })
 	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException;
 	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })
+	@HttpOptions( optionalParams = { "inviteeId", "inviteeAddress" } )
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException;
+
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId" })
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId);

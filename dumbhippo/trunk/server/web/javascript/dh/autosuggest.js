@@ -303,10 +303,11 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	{
 		var selectedId = this.getSelected();
 
-		this.onSelected(selectedId);
-
 		this.elem.value = ''; //this.eligible[this.highlighted];
 		this.inputText = '';
+
+		this.onSelected(selectedId);
+
 		this.hideDiv();
 	};
 	

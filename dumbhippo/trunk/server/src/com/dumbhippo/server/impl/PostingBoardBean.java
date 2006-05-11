@@ -277,7 +277,7 @@ public class PostingBoardBean implements PostingBoard {
 		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, false);
 	}
 	
-	public Post doShareGroupPost(User poster, Group group, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
 	throws NotFoundException {
 		
 		for (GuidPersistable r : recipients) {
@@ -295,7 +295,8 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException("We created an invalid url for a group", e);
 		}
 		
-		String title = group.getName();
+		if (title == null)
+			title = group.getName();
 			
 		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
 		
