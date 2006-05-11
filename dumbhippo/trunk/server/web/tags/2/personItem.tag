@@ -3,6 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${!empty who.viewPersonPageId}">
 	<c:set var="personLink" value="/person?who=${who.viewPersonPageId}" scope="page"/>
@@ -14,7 +15,7 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
-						<dht:headshot person="${who}"/>
+						<dht:headshot person="${who}" invited="${invited}"/>
 					</div>
 				</td>
 				<td>

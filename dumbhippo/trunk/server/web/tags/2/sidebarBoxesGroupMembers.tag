@@ -23,7 +23,7 @@
 <c:if test="${group.invitedMembers.size > 0}">
 	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="${group.viewedGroup.liveGroup.invitedMemberCount} INVITED MEMBERS">
 		<c:forEach items="${group.invitedMembers.list}" var="person">
-			<dht:personItem who="${person}"/>
+			<dht:personItem who="${person}" invited="true"/>
 		</c:forEach>
 		<c:if test="${group.viewedGroup.liveGroup.invitedMemberCount > group.maxMembersShown}">
 			<dht:moreLink more="/members?group=${group.viewedGroupId}"/>
