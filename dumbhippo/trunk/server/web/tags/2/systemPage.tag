@@ -16,5 +16,6 @@
 	<dht:zoneBox zone="system" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
 		<jsp:doBody/>
 	</dht:zoneBox>
+	<dht:footer/>
 </dht:body>
 
