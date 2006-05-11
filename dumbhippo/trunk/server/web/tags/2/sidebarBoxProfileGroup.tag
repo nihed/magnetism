@@ -28,11 +28,13 @@
 							<c:choose>
 								<c:when test="${group.canLeave}">
 									 <dht:actionLink href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="I can't take it anymore! Let yourself out of this group.">Leave Group</dht:actionLink>
-									 <dht:actionLink href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</dht:actionLink>
 								</c:when>
 								<c:when test="${group.canJoin}">
 									 <dht:actionLink href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="Become a group member">Join Group</dht:actionLink>
 								</c:when>
+								<c:when test="${group.canShare}">
+									 <dht:actionLink href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</dht:actionLink>
+								 </c:when>
 							</c:choose>
 						   <%-- The browser.gecko check is here because the dynamic hiding of
 						        the control when the chat object fails to load doesn't work

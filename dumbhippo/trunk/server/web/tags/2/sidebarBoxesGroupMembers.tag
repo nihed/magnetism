@@ -17,9 +17,6 @@
 		</c:otherwise>
 	</c:choose>
 	<dht:sidebarBoxSeparator/>
-	<c:if test="${group.canShare}">
-		<dht:actionLink title="Share ${group.nameAsHtml} with friends" href="javascript:dh.util.openShareGroupWindow('${group.viewedGroupId}');">Invite new members</dht:actionLink>
-	</c:if>	
 	<dht:actionLink href="FIXME" title="Create a new group of your very own">Create a group</dht:actionLink>
 </dht:sidebarBox>
 
