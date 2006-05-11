@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 @Entity
 public class YahooSongResult extends DBUnique {
@@ -149,5 +150,15 @@ public class YahooSongResult extends DBUnique {
 			return "{YahooSongResult:NoResultsMarker}";
 		else
 			return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
+	}
+	
+	@Transient
+	public boolean isValid() {
+	    if ((songId != null) && !songId.equals("") 
+	        && (artistId != null) && !artistId.equals("") 
+	        && (albumId != null) && !albumId.equals("")) {
+	    	return true;
+	    }
+	    return false;
 	}
 }

@@ -558,7 +558,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// let's see if any of the new results are already in the YahooSongResult table,
 		// if they are, we just need to connect the existing YahooSongResult with this track
 		for (Iterator<YahooSongResult> i = newResults.iterator(); i.hasNext();) {
-            YahooSongResult n = i.next();
+		    YahooSongResult n = i.next();
+		    if (!n.isValid()) {
+		    	// ignore the invalid results
+		    	continue;
+		    }		    	
 			Query q = em.createQuery("SELECT song FROM YahooSongResult song WHERE song.songId = :songId");
 			q.setParameter("songId", n.getSongId());	
 			try {
@@ -579,6 +583,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			boolean stillFound = false;
 			if (!old.isNoResultsMarker()) {
 			    for (YahooSongResult n : newResults) {
+				    if (!n.isValid()) {
+				    	// ignore the invalid results
+				    	continue;
+				    }	
 				    logger.debug("comparing: {} {}", n.getSongId(), old.getSongId());
 				    if (n.getSongId().equals(old.getSongId())) {
 					    // it's ok to remove an object from newResults because we break out of the
@@ -600,6 +608,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		// remaining newResults weren't previously saved
 		for (YahooSongResult n : newResults) {
+		    if (!n.isValid()) {
+		    	// ignore the invalid results
+		    	continue;
+		    }	
 			logger.debug("inserting song with songId {} into YahooSongResult table", n.getSongId());
 			em.persist(n);
 			track.addYahooSongResult(n);
@@ -679,6 +691,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// while the noResultsMarker entry never has an albumId set,
 			// so we do not need to check for it here
 			for (YahooSongResult n : newResults) {
+			    if (!n.isValid()) {
+			    	// ignore the invalid results
+			    	continue;
+			    }	
 				if (n.getSongId().equals(old.getSongId())) {
 					newResults.remove(n);
 					old.update(n); // old is attached, so this gets saved
@@ -693,6 +709,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		// remaining newResults weren't previously saved
 		for (YahooSongResult n : newResults) {
+		    if (!n.isValid()) {
+		    	// ignore the invalid results
+		    	continue;
+		    }	
 			em.persist(n);
 			results.add(n);
 		}
@@ -1180,8 +1200,27 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		// remaining newResults weren't previously saved
 		for (YahooArtistResult n : newResults) {
-			em.persist(n);
-			results.add(n);
+			// sometimes different names for the artist map to the same id, e.i. "Belle & Sebastian"  and
+			// "Belle and Sebastian" both map to the same id, so if we were looking up an artist result just 
+			// based on ann artist name, we need to double-check that the artist with this id doesn't 
+			// exhist in our database
+			if (artistId == null) {
+			    Query q = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
+			    q.setParameter("artistId", n.getArtistId());		
+		        try {
+				    YahooArtistResult yahooArtist  = (YahooArtistResult)q.getSingleResult();
+				    logger.debug("Artist with artist id {} already existed in the database: {}", 
+				    		     n.getArtistId(), yahooArtist);
+				} catch (EntityNotFoundException e) { 
+                    // coast is clear, we can insert the new result					
+					em.persist(n);
+					results.add(n);
+				} catch (NonUniqueResultException e) {
+					// this should not be allowed by the database schema
+					logger.error("Multiple yahoo artist results for artist id {}", n.getArtistId());
+					throw new RuntimeException("Multiple yahoo artist results for artist id " + n.getArtistId());
+				}
+			}
 		}
 		
 		return results;
