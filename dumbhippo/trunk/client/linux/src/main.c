@@ -8,14 +8,32 @@ struct HippoApp {
     HippoConnection *connection;
     HippoDataCache *cache;
     HippoStatusIcon *icon;
+    GtkWidget *about_dialog;
 };
 
 void
 hippo_app_quit(HippoApp *app)
 {
+    g_debug("Quitting main loop");
     g_main_loop_quit(app->loop);
 }
 
+void
+hippo_app_show_about(HippoApp *app)
+{
+    if (app->about_dialog == NULL) {
+        app->about_dialog = g_object_new(GTK_TYPE_ABOUT_DIALOG,
+            "name", "Mugshot",
+            "version", VERSION,
+            "copyright", "Copyright 2006 Red Hat, Inc. and others",
+            "website", "http://mugshot.org",
+            NULL);
+        g_signal_connect(app->about_dialog, "destroy",
+            G_CALLBACK(gtk_widget_destroyed), &app->about_dialog);
+    }
+    
+    gtk_window_present(GTK_WINDOW(app->about_dialog));
+}
 
 static HippoApp *the_app;
 
@@ -56,7 +74,12 @@ main(int argc, char **argv)
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
     
     g_main_loop_run(the_app->loop);
-    
+
+    g_debug("Main loop exited");
+
+    if (the_app->about_dialog)
+        gtk_object_destroy(GTK_OBJECT(the_app->about_dialog));
+    g_object_unref(the_app->icon);
     g_main_loop_unref(the_app->loop);
     g_free(the_app);
 

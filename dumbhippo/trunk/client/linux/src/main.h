@@ -11,7 +11,8 @@ typedef struct HippoApp HippoApp;
 
 HippoApp* hippo_get_app(void);
 
-void hippo_app_quit(HippoApp *app);
+void       hippo_app_quit           (HippoApp *app);
+void       hippo_app_show_about     (HippoApp *app);
 
 G_END_DECLS
 
