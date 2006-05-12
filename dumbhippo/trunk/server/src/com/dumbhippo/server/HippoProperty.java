@@ -17,7 +17,8 @@ public enum HippoProperty {
 	EBAY_APPID("dumbhippo.server.ebay.appid", null),
 	EBAY_CERTID("dumbhippo.server.ebay.certid", null),
 	BUILDSTAMP("dumbhippo.server.buildstamp", "0"), 
-	ENABLE_ADMIN_CONSOLE("dumbhippo.server.adminconsole.enable", "false");
+	ENABLE_ADMIN_CONSOLE("dumbhippo.server.adminconsole.enable", "false"),
+	STEALTH_MODE("dumbhippo.server.stealthmode", "false");
 	
 	private String key;
 	private String def;

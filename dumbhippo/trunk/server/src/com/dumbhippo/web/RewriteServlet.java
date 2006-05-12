@@ -294,10 +294,10 @@ public class RewriteServlet extends HttpServlet {
 		ServletConfig config = getServletConfig();
 		context = config.getServletContext();
 
-		stealthMode = true;
-		String stealthModeString = config.getInitParameter("stealthMode");
-		if (stealthModeString != null)
-			stealthMode = Boolean.parseBoolean(stealthModeString);
+        Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
+        
+		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
+		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
@@ -385,7 +385,6 @@ public class RewriteServlet extends HttpServlet {
 		}
 		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);
 		
-        Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);
         
         // We store the builtstamp in the servlet context so we can reference it from JSP pages
