@@ -1,0 +1,4 @@
+# note, while this is in common/ right now there's no way to run glib-genmarshal on windows
+# so you'd have to do some extra work of some kind if using the marshalers in libhippo itself
+VOID:UINT,UINT
+BOOLEAN:INT

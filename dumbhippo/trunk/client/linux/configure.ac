@@ -170,6 +170,9 @@ PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
 
+GLIB_GENMARSHAL=`pkg-config --variable=glib_genmarshal glib-2.0`
+AC_SUBST(GLIB_GENMARSHAL)
+
 AC_OUTPUT([
 Makefile
 ])

@@ -53,7 +53,7 @@ main(int argc, char **argv)
     else
         g_debug("Found login cookie");
     
-    gtk_status_icon_set_visible(the_app->icon, TRUE);
+    gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
     
     g_main_loop_run(the_app->loop);
     

@@ -214,8 +214,6 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  G_TYPE_NONE,
 		  0);
 
-#if 0
-    /* FIXME have to replace the marshaler here */
   /**
    * GtkStatusIcon::popup-menu:
    * @status_icon: the object which received the signal
@@ -245,10 +243,7 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);
-#endif
 
-#if 0
-/* FIXME marshaler */
   /**
    * GtkStatusIcon::size-changed:
    * @status_icon: the object which received the signal
@@ -273,7 +268,6 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  G_TYPE_BOOLEAN,
 		  1,
 		  G_TYPE_INT);
-#endif
 
   g_type_class_add_private (class, sizeof (GtkStatusIconPrivate));
 }
@@ -676,13 +670,10 @@ emit_popup_menu_signal (GtkStatusIcon *status_icon,
 			guint          button,
 			guint32        activate_time)
 {
-#if 0
-  /* FIXME fix signal marshaler */
   g_signal_emit (status_icon,
 		 status_icon_signals [POPUP_MENU_SIGNAL], 0,
 		 button,
 		 activate_time);
-#endif		 
 }
 
 #ifdef GDK_WINDOWING_X11
@@ -693,13 +684,10 @@ emit_size_changed_signal (GtkStatusIcon *status_icon,
 {
   gboolean handled = FALSE;
   
-#if 0
-  /* FIXME fix signal marshaler */
   g_signal_emit (status_icon,
 		 status_icon_signals [SIZE_CHANGED_SIGNAL], 0,
 		 size,
 		 &handled);
-#endif
 
   return handled;
 }

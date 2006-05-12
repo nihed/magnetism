@@ -39,8 +39,29 @@ libhippo_la_LIBADD = 			\
 # for future reference
 libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
 
+# linking this to libhippo.la is just to get the marshalers, it's kind of lame
+# but it all ends up in one big static link in the end anyhow
 libgtkcopy_la_LIBADD = 			\
-	$(LIBGTKCOPY_LIBS)
+	$(LIBGTKCOPY_LIBS) libhippo.la
+
+MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-marshal.list
+# the "config" dir seems like a convenient place that's already 
+# in everyone's include path ... I dunno
+MARSHAL_DIR=$(top_builddir)/config/hippo
+MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-marshal.h
+MARSHAL_BODY=$(MARSHAL_DIR)/hippo-marshal.c
+
+BUILT_SOURCES=					\
+	$(MARSHAL_HEADER)			\
+	$(MARSHAL_BODY)
+
+$(MARSHAL_HEADER): $(MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	$(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --header > $(MARSHAL_HEADER)
+
+$(MARSHAL_BODY): $(MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
 mugshot_SOURCES	=				\
 	src/hippo-cookies-linux.c		\
@@ -51,6 +72,10 @@ mugshot_SOURCES	=				\
 	src/hippo-status-icon.h			\
 	src/main.c				\
 	src/main.h
+
+LIBHIPPO_BUILT_SOURCEFILES =					\
+	$(MARSHAL_HEADER)					\
+	$(MARSHAL_BODY)
 
 LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
@@ -80,10 +105,11 @@ LIBHIPPO_SOURCEFILES =						\
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
-nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES)
+nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES)
 dist-hook:
 	mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/hippo
+	cp $(COMMONSRCDIR)/hippo/hippo-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
 
 libgtkcopy_la_SOURCES=				\
@@ -92,3 +118,14 @@ libgtkcopy_la_SOURCES=				\
 	gtk/gtkstatusicon.h			\
 	gtk/gtktrayicon.h			\
 	gtk/gtktrayicon-x11.c
+
+
+MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES)
+
+# if srcdir!=builddir, clean out maintainer-clean files from builddir
+# this allows dist to pass.
+distclean-local:
+	if test $(srcdir) != . ; then		\
+	  rm -f $(MAINTAINERCLEANFILES) ;	\
+	  rmdir $(MARSHAL_DIR) ;		\
+	fi

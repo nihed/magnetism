@@ -6,6 +6,10 @@
 
 #include <gtk/gtk.h>
 #include <config.h>
+#include <hippo/hippo-marshal.h>
+
+#define _gtk_marshal_VOID__UINT_UINT hippo_marshal_VOID__UINT_UINT
+#define _gtk_marshal_BOOLEAN__INT hippo_marshal_BOOLEAN__INT
 
 #if (GTK_MINOR_VERSION < 8)
 #define G_PARAM_STATIC_NICK 0
