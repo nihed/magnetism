@@ -11,6 +11,7 @@ dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.model");
 dojo.require("dh.autosuggest");
+dojo.require("dh.suggestutils");
 
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;

@@ -1,10 +1,10 @@
-// This file provides glue between the generic autosuggest box in dh.autosuggest
-// and the data model for groups/users/contacts/etc. implemented in dh.model
-
 dojo.provide("dh.suggestutils")
 dojo.require("dh.model")
 dojo.require("dojo.dom");
 dojo.require("dojo.string");
+
+// This file provides glue between the generic autosuggest box in dh.autosuggest
+// and the data model for groups/users/contacts/etc. implemented in dh.model
 
 dh.suggestutils._makeHighlightNode = function(word, match, type) {
 	var index = word.toLowerCase().indexOf(match.toLowerCase());
