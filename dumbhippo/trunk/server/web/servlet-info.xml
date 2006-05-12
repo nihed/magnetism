@@ -188,7 +188,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,artist,download,framer,getradar,group,groups,landing,links,main,members,music,person,privacy,radar-html,radar-themes,search,terms,tv</param-value>
+          <param-value>about,artist,download,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,music-learnmore,person,privacy,radar-html,radar-themes,search,terms,tv</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
