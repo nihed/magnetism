@@ -32,9 +32,11 @@
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>
 		<dht:zoneBoxAccount>
-			<dht:zoneBoxTitle>PUBLIC INFO</dht:zoneBoxTitle>
-			<dht:zoneBoxSubtitle>This information will be visible on your profile page.</dht:zoneBoxSubtitle>
-			<dht:formTable>
+			<c:choose>
+			<c:when test="${!signin.user.account.disabled}">
+				<dht:zoneBoxTitle>PUBLIC INFO</dht:zoneBoxTitle>
+				<dht:zoneBoxSubtitle>This information will be visible on your profile page.</dht:zoneBoxSubtitle>
+				<dht:formTable>
 				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="User name">
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
@@ -141,31 +143,37 @@
 						</c:if>
 						<a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Remove my password">Remove my current password.</a>
 					</dht:formTableRow>
-					<c:choose>
-						<c:when test="${signin.user.account.disabled}">
-							<dht:formTableRow label="Enable account">
-								<div>
-									<input type="button" value="Enable account" onclick="javascript:dh.actions.setAccountDisabled(false);"/>
-								</div>
-								<div>
-									Enabling your account will let you use all the features of Mugshot.
-								</div>
-							</dht:formTableRow>						
-						</c:when>
-						<c:otherwise>
-							<dht:formTableRow label="Disable account">
-								<div>
-									<input type="button" value="Disable account" onclick="javascript:dh.actions.setAccountDisabled(true);"/>
-								</div>
-								<div>
-									Disabling your account means we don't show any information on your
-									public profile page, and we will never send you email for any reason.
-									You can enable your account again at any time.
-								</div>
-							</dht:formTableRow>
-						</c:otherwise>
-					</c:choose>
+					<dht:formTableRow label="Disable account">
+						<div>
+							<input type="button" value="Disable account" onclick="javascript:dh.actions.setAccountDisabled(true);"/>
+						</div>
+						<div>
+							Disabling your account means we don't show any information on your
+							public profile page, and we will never send you email for any reason.
+							You can enable your account again at any time.
+						</div>
+					</dht:formTableRow>
 				</dht:formTable>
+				</c:when>
+				<c:otherwise>
+					<dht:formTable>
+					<dht:formTableRow label="Enable account">
+					        <div class="dh-account-disabled-message">
+						        <c:out value="${signin.user.nickname}" />, your account is disabled.
+						</div>
+						<div>
+						<p>
+							Enable your account to interact with friends and groups, share 
+							links, and use Music Radar to display your playlists.
+						</p>
+						</div>
+						<div>
+							<input type="button" value="Enable account" onclick="javascript:dh.actions.setAccountDisabled(false);"/>
+						</div>
+					</dht:formTableRow>						
+					</dht:formTable>
+				</c:otherwise>
+			</c:choose>
 		</dht:zoneBoxAccount>
 	</dht:contentColumn>
 	<dht:photoChooser/>

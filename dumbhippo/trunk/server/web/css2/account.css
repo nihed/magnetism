@@ -18,7 +18,11 @@ div.dh-save-status {
 	font-weight:		bold;
 	-moz-border-radius:	5px;
 }
-
+div.dh-account-disabled-message {
+	color:			#cc0033;
+	background-color:	inherit;
+	font-weight:		bold;
+}
 /* the Undo link in the save status thing */
 .dh-save-status a, .dh-save-status a:visited {
 	font-weight:		normal;
