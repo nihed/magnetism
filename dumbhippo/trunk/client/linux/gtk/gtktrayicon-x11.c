@@ -22,17 +22,11 @@
  * http://www.freedesktop.org/wiki/Standards/systemtray-spec
  */
 
-#include <config.h>
+#include <gtk/gtksimulated.h>
 #include <string.h>
-#include <libintl.h>
+#include <gtk/gtktrayicon.h>
 
-#include "gtkintl.h"
-#include "gtkprivate.h"
-#include "gtktrayicon.h"
-
-#include "gtkalias.h"
-
-#include "x11/gdkx.h"
+#include <gdk/gdkx.h>
 #include <X11/Xatom.h>
 
 #define SYSTEM_TRAY_REQUEST_DOCK    0
@@ -500,8 +494,3 @@ _gtk_tray_icon_get_orientation (GtkTrayIcon *icon)
 
   return icon->priv->orientation;
 }
-
-
-#define __GTK_TRAY_ICON_X11_C__
-#include "gtkaliasdef.c"
-

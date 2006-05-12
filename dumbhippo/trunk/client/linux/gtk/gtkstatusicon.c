@@ -25,27 +25,13 @@
  *	Tor Lillqvist <tml@novell.com>
  */
 
-#include <config.h>
 #include <string.h>
 
-#include "gtkstatusicon.h"
-
-#include "gtkintl.h"
-#include "gtkiconfactory.h"
-#include "gtkmarshalers.h"
-#include "gtktooltips.h"
-#include "gtktrayicon.h"
-
-#include "gtkprivate.h"
-#include "gtkwidget.h"
-
-#include "gtkalias.h"
+#include <gtk/gtkstatusicon.h>
+#include <gtk/gtktrayicon.h>
+#include <gtk/gtksimulated.h>
 
 #ifdef GDK_WINDOWING_WIN32
-#include "gtkicontheme.h"
-#include "gtklabel.h"
-
-#include "win32/gdkwin32.h"
 #define WM_GTK_TRAY_NOTIFICATION (WM_USER+1)
 #endif
 
@@ -228,6 +214,8 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  G_TYPE_NONE,
 		  0);
 
+#if 0
+    /* FIXME have to replace the marshaler here */
   /**
    * GtkStatusIcon::popup-menu:
    * @status_icon: the object which received the signal
@@ -257,7 +245,10 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);
+#endif
 
+#if 0
+/* FIXME marshaler */
   /**
    * GtkStatusIcon::size-changed:
    * @status_icon: the object which received the signal
@@ -282,6 +273,7 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  G_TYPE_BOOLEAN,
 		  1,
 		  G_TYPE_INT);
+#endif
 
   g_type_class_add_private (class, sizeof (GtkStatusIconPrivate));
 }
@@ -684,10 +676,13 @@ emit_popup_menu_signal (GtkStatusIcon *status_icon,
 			guint          button,
 			guint32        activate_time)
 {
+#if 0
+  /* FIXME fix signal marshaler */
   g_signal_emit (status_icon,
 		 status_icon_signals [POPUP_MENU_SIGNAL], 0,
 		 button,
 		 activate_time);
+#endif		 
 }
 
 #ifdef GDK_WINDOWING_X11
@@ -698,10 +693,13 @@ emit_size_changed_signal (GtkStatusIcon *status_icon,
 {
   gboolean handled = FALSE;
   
+#if 0
+  /* FIXME fix signal marshaler */
   g_signal_emit (status_icon,
 		 status_icon_signals [SIZE_CHANGED_SIGNAL], 0,
 		 size,
 		 &handled);
+#endif
 
   return handled;
 }
@@ -1630,6 +1628,3 @@ gtk_status_icon_position_menu (GtkMenu  *menu,
   *push_in = FALSE;
 #endif /* GDK_WINDOWING_X11 */
 }
-
-#define __GTK_STATUS_ICON_C__
-#include "gtkaliasdef.c"
