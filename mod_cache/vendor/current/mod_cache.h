@@ -1,4 +1,5 @@
-/* Copyright 2000-2004 The Apache Software Foundation
+/* Copyright 2000-2005 The Apache Software Foundation or its licensors, as
+ * applicable.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,11 +134,18 @@ typedef struct {
     /** ignore client's requests for uncached responses */
     int ignorecachecontrol;
     int ignorecachecontrol_set;
+    /** store the headers that should not be stored in the cache */
+    apr_array_header_t *ignore_headers;
+    /* flag if CacheIgnoreHeader has been set */
+    #define CACHE_IGNORE_HEADERS_SET   1
+    #define CACHE_IGNORE_HEADERS_UNSET 0
+    int ignore_headers_set;
 } cache_server_conf;
 
 /* cache info information */
 typedef struct cache_info cache_info;
 struct cache_info {
+    int status;
     char *content_type;
     char *etag;
     char *lastmods;         /* last modified of cache entity */
@@ -153,7 +161,6 @@ struct cache_info {
     apr_time_t ius;    /*  If-UnModified_Since header value    */
     const char *im;         /* If-Match header value */
     const char *inm;         /* If-None-Match header value */
-
 };
 
 /* cache handle information */
@@ -204,7 +211,11 @@ struct cache_provider_list {
 
 struct cache_handle {
     cache_object_t *cache_obj;
-    apr_table_t *req_hdrs;   /* These are the original request headers */
+    apr_table_t *req_hdrs;        /* cached request headers */
+    apr_table_t *resp_hdrs;       /* cached response headers */
+    apr_table_t *resp_err_hdrs;   /* cached response err headers */
+    const char *content_type;     /* cached content type */
+    int status;                   /* cached status */
 };
 
 /* per request cache information */
@@ -214,7 +225,10 @@ typedef struct {
     const char *provider_name;              /* current cache provider name */
     int fresh;				/* is the entitey fresh? */
     cache_handle_t *handle;		/* current cache handle */
-    int in_checked;			/* CACHE_IN must cache the entity */
+    cache_handle_t *stale_handle;	/* stale cache handle */
+    apr_table_t *stale_headers;		/* original request headers. */
+    int in_checked;			/* CACHE_SAVE must cache the entity */
+    int block_response;			/* CACHE_SAVE must block response. */
     apr_bucket_brigade *saved_brigade;  /* copy of partial response */
     apr_off_t saved_size;               /* length of saved_brigade */
     apr_time_t exp;                     /* expiration */
@@ -230,17 +244,17 @@ CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_
 
 /**
  * Check the freshness of the cache object per RFC2616 section 13.2 (Expiration Model)
- * @param cache cache_request_rec
+ * @param h cache_handle_t
  * @param r request_rec
  * @return 0 ==> cache object is stale, 1 ==> cache object is fresh
  */
-CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache, request_rec *r);
+CACHE_DECLARE(int) ap_cache_check_freshness(cache_handle_t *h, request_rec *r);
 CACHE_DECLARE(apr_time_t) ap_cache_hex2usec(const char *x);
 CACHE_DECLARE(void) ap_cache_usec2hex(apr_time_t j, char *y);
 CACHE_DECLARE(char *) generate_name(apr_pool_t *p, int dirlevels, 
                                     int dirlength, 
                                     const char *name);
-CACHE_DECLARE(int) ap_cache_request_is_conditional(request_rec *r);
+CACHE_DECLARE(int) ap_cache_request_is_conditional(apr_table_t *table);
 CACHE_DECLARE(cache_provider_list *)ap_cache_get_providers(request_rec *r, cache_server_conf *conf, const char *url);
 CACHE_DECLARE(int) ap_cache_liststr(apr_pool_t *p, const char *list,
                                     const char *key, char **val);
@@ -249,7 +263,9 @@ CACHE_DECLARE(const char *)ap_cache_tokstr(apr_pool_t *p, const char *list, cons
 /* Create a new table consisting of those elements from a request_rec's
  * headers_out that are allowed to be stored in a cache
  */
-CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(apr_pool_t *pool, apr_table_t *t);
+CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(apr_pool_t *pool,
+                                                        apr_table_t *t,
+                                                        server_rec *s);
 
 /**
  * cache_storage.c

@@ -1,4 +1,5 @@
-/* Copyright 2000-2004 The Apache Software Foundation
+/* Copyright 2000-2005 The Apache Software Foundation or its licensors, as
+ * applicable.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,6 @@ APR_OPTIONAL_FN_TYPE(ap_cache_generate_key) *cache_generate_key;
  */
 static ap_filter_rec_t *cache_save_filter_handle;
 static ap_filter_rec_t *cache_out_filter_handle;
-static ap_filter_rec_t *cache_conditional_filter_handle;
 
 /*
  * CACHE handler
@@ -131,14 +131,10 @@ static int cache_url_handler(request_rec *r, int lookup)
      * If no existing cache file (DECLINED)
      *   add cache_save filter
      * If cached file (OK)
-     *   If fresh cache file
-     *     clear filter stack
-     *     add cache_out filter
-     *     return OK
-     *   If stale cache file
-     *       add cache_conditional filter (which updates cache)
+     *   clear filter stack
+     *   add cache_out filter
+     *   return OK
      */
-
     rv = cache_select_url(r, url);
     if (rv != OK) {
         if (rv == DECLINED) {
@@ -158,38 +154,6 @@ static int cache_url_handler(request_rec *r, int lookup)
     }
 
     /* We have located a suitable cache file now. */
-
-    /* RFC2616 13.2 - Check cache object expiration */
-    cache->fresh = ap_cache_check_freshness(cache, r);
-
-    /* What we have in our cache isn't fresh. */
-    if (!cache->fresh) {
-        /* If our stale cached response was conditional... */
-        if (!lookup && ap_cache_request_is_conditional(r)) {
-            info = &(cache->handle->cache_obj->info);
-
-            /* fudge response into a conditional */
-            if (info && info->etag) {
-                /* if we have a cached etag */
-                apr_table_set(r->headers_in, "If-None-Match", info->etag);
-            }
-            else if (info && info->lastmods) {
-                /* if we have a cached IMS */
-                apr_table_set(r->headers_in, "If-Modified-Since",
-                              info->lastmods);
-            }
-        }
-
-        /* Add cache_conditional_filter to see if we can salvage
-         * later.
-         */
-        ap_add_output_filter_handle(cache_conditional_filter_handle,
-                                    NULL, r, r->connection);
-        return DECLINED;
-    }
-
-    /* fresh data available */
-
     info = &(cache->handle->cache_obj->info);
 
     if (info && info->lastmod) {
@@ -256,7 +220,10 @@ static int cache_out_filter(ap_filter_t *f, apr_bucket_brigade *bb)
     ap_log_error(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r->server,
                  "cache: running CACHE_OUT filter");
 
-    /* recall_body() was called in cache_select_url() */
+    /* restore status of cached response */
+    r->status = cache->handle->status;
+
+    /* recall_headers() was called in cache_select_url() */
     cache->provider->recall_body(cache->handle, r->pool, bb);
 
     /* This filter is done once it has served up its content */
@@ -269,49 +236,19 @@ static int cache_out_filter(ap_filter_t *f, apr_bucket_brigade *bb)
 
 
 /*
- * CACHE_CONDITIONAL filter
- * ------------------------
- *
- * Decide whether or not cached content should be delivered
- * based on our fudged conditional request.
- * If response HTTP_NOT_MODIFIED
- *   replace ourselves with cache_out filter
- * Otherwise
- *   replace ourselves with cache_save filter
- */
-
-static int cache_conditional_filter(ap_filter_t *f, apr_bucket_brigade *in)
-{
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, f->r->server,
-                 "cache: running CACHE_CONDITIONAL filter");
-
-    if (f->r->status == HTTP_NOT_MODIFIED) {
-        /* replace ourselves with CACHE_OUT filter */
-        ap_add_output_filter_handle(cache_out_filter_handle, NULL,
-                                    f->r, f->r->connection);
-    }
-    else {
-        /* replace ourselves with CACHE_SAVE filter */
-        ap_add_output_filter_handle(cache_save_filter_handle, NULL,
-                                    f->r, f->r->connection);
-    }
-    ap_remove_output_filter(f);
-
-    return ap_pass_brigade(f->next, in);
-}
-
-
-/*
  * CACHE_SAVE filter
  * ---------------
  *
  * Decide whether or not this content should be cached.
- * If we decide no it should:
+ * If we decide no it should not:
  *   remove the filter from the chain
  * If we decide yes it should:
- *   pass the data to the storage manager
- *   pass the data to the next filter (the network)
- *
+ *   Have we already started saving the response?
+ *      If we have started, pass the data to the storage manager via store_body
+ *      Otherwise:
+ *        Check to see if we *can* save this particular response.
+ *        If we can, call cache_create_entity() and save the headers and body
+ *   Finally, pass the data to the next filter (the network or whatever)
  */
 
 static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
@@ -322,7 +259,7 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
     cache_request_rec *cache;
     cache_server_conf *conf;
     char *url = r->unparsed_uri;
-    const char *cc_in, *cc_out, *cl;
+    const char *cc_in, *cc_out, *cl, *vary_out;
     const char *exps, *lastmods, *dates, *etag;
     apr_time_t exp, date, lastmod, now;
     apr_off_t size;
@@ -333,7 +270,9 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
     /* check first whether running this filter has any point or not */
     /* If the user has Cache-Control: no-store from RFC 2616, don't store! */
     cc_in = apr_table_get(r->headers_in, "Cache-Control");
-    if (r->no_cache || ap_cache_liststr(NULL, cc_in, "no-store", NULL)) {
+    vary_out = apr_table_get(r->headers_out, "Vary");
+    if (r->no_cache || ap_cache_liststr(NULL, cc_in, "no-store", NULL) || 
+        ap_cache_liststr(NULL, vary_out, "*", NULL)) {
         ap_remove_output_filter(f);
         return ap_pass_brigade(f->next, in);
     }
@@ -357,6 +296,12 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
      * This section passes the brigades into the cache modules, but only
      * if the setup section (see below) is complete.
      */
+    if (cache->block_response) {
+        /* We've already sent down the response and EOS.  So, ignore
+         * whatever comes now.
+         */
+        return APR_SUCCESS;
+    }
 
     /* have we already run the cachability check and set up the
      * cached file handle? 
@@ -379,7 +324,6 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
      * parameters, and decides whether this URL should be cached at
      * all. This section is* run before the above section.
      */
-    info = apr_pcalloc(r->pool, sizeof(cache_info));
 
     /* read expiry date; if a bad date, then leave it so the client can
      * read it 
@@ -399,7 +343,7 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
 
     /* read the last-modified date; if the date is bad, then delete it */
     lastmods = apr_table_get(r->err_headers_out, "Last-Modified");
-    if (lastmods ==NULL) {
+    if (lastmods == NULL) {
         lastmods = apr_table_get(r->headers_out, "Last-Modified");
     }
     if (lastmods != NULL) {
@@ -451,7 +395,8 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
          */
         reason = "Query string present but no expires header";
     }
-    else if (r->status == HTTP_NOT_MODIFIED && (NULL == cache->handle)) {
+    else if (r->status == HTTP_NOT_MODIFIED &&
+             !cache->handle && !cache->stale_handle) {
         /* if the server said 304 Not Modified but we have no cache
          * file - pass this untouched to the user agent, it's not for us.
          */
@@ -517,6 +462,8 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
         /* ship the data up the stack */
         return ap_pass_brigade(f->next, in);
     }
+
+    /* Make it so that we don't execute this path again. */
     cache->in_checked = 1;
 
     /* Set the content length if known. 
@@ -575,35 +522,36 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
      * - cache->handle == NULL. In this case there is no previously
      * cached entity anywhere on the system. We must create a brand
      * new entity and store the response in it.
-     * - cache->handle != NULL. In this case there is a stale
+     * - cache->stale_handle != NULL. In this case there is a stale
      * entity in the system which needs to be replaced by new
      * content (unless the result was 304 Not Modified, which means
      * the cached entity is actually fresh, and we should update
      * the headers).
      */
+
+    /* Did we have a stale cache entry that really is stale? */
+    if (cache->stale_handle) {
+        if (r->status == HTTP_NOT_MODIFIED) {
+            /* Oh, hey.  It isn't that stale!  Yay! */
+            cache->handle = cache->stale_handle;
+            info = &cache->handle->cache_obj->info;
+        }
+        else {
+            /* Oh, well.  Toss it. */
+            cache->provider->remove_entity(cache->stale_handle);
+            /* Treat the request as if it wasn't conditional. */
+            cache->stale_handle = NULL;
+        }
+    }
+
     /* no cache handle, create a new entity */
     if (!cache->handle) {
         rv = cache_create_entity(r, url, size);
+        info = apr_pcalloc(r->pool, sizeof(cache_info));
+        /* We only set info->status upon the initial creation. */
+        info->status = r->status;
     }
-    /* pre-existing cache handle and 304, make entity fresh */
-    else if (r->status == HTTP_NOT_MODIFIED) {
-        /* update headers: TODO */
 
-        /* remove this filter ??? */
-
-        /* XXX is this right?  we must set rv to something other than OK 
-         * in this path
-         */
-        rv = HTTP_NOT_MODIFIED;
-    }
-    /* pre-existing cache handle and new entity, replace entity
-     * with this one
-     */
-    else {
-        cache->provider->remove_entity(cache->handle);
-        rv = cache_create_entity(r, url, size);
-    }
-    
     if (rv != OK) {
         /* Caching layer declined the opportunity to cache the response */
         ap_remove_output_filter(f);
@@ -706,12 +654,37 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
     info->content_type = apr_pstrdup(r->pool, r->content_type);
     info->etag = apr_pstrdup(r->pool, etag);
     info->lastmods = apr_pstrdup(r->pool, lastmods);
-    info->filename = apr_pstrdup(r->pool, r->filename );
+    info->filename = apr_pstrdup(r->pool, r->filename);
 
     /*
      * Write away header information to cache.
      */
     rv = cache->provider->store_headers(cache->handle, r, info);
+
+    /* Did we actually find an entity before, but it wasn't really stale? */
+    if (rv == APR_SUCCESS && cache->stale_handle) {
+        apr_bucket_brigade *bb;
+        apr_bucket *bkt;
+
+        bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
+
+        /* Were we initially a conditional request? */
+        if (ap_cache_request_is_conditional(cache->stale_headers)) {
+            /* FIXME: Should we now go and make sure it's really not
+             * modified since what the user thought?
+             */
+            bkt = apr_bucket_eos_create(bb->bucket_alloc);
+            APR_BRIGADE_INSERT_TAIL(bb, bkt);
+        }
+        else {
+            r->status = info->status;
+            cache->provider->recall_body(cache->handle, r->pool, bb);
+        }
+
+        cache->block_response = 1;
+        return ap_pass_brigade(f->next, bb);
+    }
+
     if (rv == APR_SUCCESS) {
         rv = cache->provider->store_body(cache->handle, r, in);
     }
@@ -749,6 +722,9 @@ static void * create_cache_config(apr_pool_t *p, server_rec *s)
     ps->no_last_mod_ignore = 0;
     ps->ignorecachecontrol = 0;
     ps->ignorecachecontrol_set = 0 ;
+    /* array of headers that should not be stored in cache */
+    ps->ignore_headers = apr_array_make(p, 10, sizeof(char *));
+    ps->ignore_headers_set = CACHE_IGNORE_HEADERS_UNSET;
     return ps;
 }
 
@@ -785,6 +761,10 @@ static void * merge_cache_config(apr_pool_t *p, void *basev, void *overridesv)
         (overrides->ignorecachecontrol_set == 0)
         ? base->ignorecachecontrol
         : overrides->ignorecachecontrol;
+    ps->ignore_headers =
+        (overrides->ignore_headers_set == CACHE_IGNORE_HEADERS_UNSET)
+        ? base->ignore_headers
+        : overrides->ignore_headers;
     return ps;
 }
 static const char *set_cache_ignore_no_last_mod(cmd_parms *parms, void *dummy,
@@ -814,6 +794,34 @@ static const char *set_cache_ignore_cachecontrol(cmd_parms *parms,
     return NULL;
 }
 
+static const char *add_ignore_header(cmd_parms *parms, void *dummy,
+                                     const char *header)
+{
+    cache_server_conf *conf;
+    char **new;
+
+    conf =
+        (cache_server_conf *)ap_get_module_config(parms->server->module_config,
+                                                  &cache_module);
+    if (!strncasecmp(header, "None", 4)) {
+        /* if header None is listed clear array */
+        conf->ignore_headers->nelts = 0;
+    }
+    else {
+        if ((conf->ignore_headers_set == CACHE_IGNORE_HEADERS_UNSET) ||
+            (conf->ignore_headers->nelts)) {
+            /* Only add header if no "None" has been found in header list
+             * so far.
+             * (When 'None' is passed, IGNORE_HEADERS_SET && nelts == 0.)
+             */
+            new = (char **)apr_array_push(conf->ignore_headers);
+            (*new) = (char*)header;
+        }
+    }
+    conf->ignore_headers_set = CACHE_IGNORE_HEADERS_SET;
+    return NULL;
+}
+
 static const char *add_cache_enable(cmd_parms *parms, void *dummy, 
                                     const char *type, 
                                     const char *url)
@@ -835,7 +843,7 @@ static const char *add_cache_disable(cmd_parms *parms, void *dummy,
                                      const char *url)
 {
     cache_server_conf *conf;
-    struct cache_enable *new;
+    struct cache_disable *new;
 
     conf =
         (cache_server_conf *)ap_get_module_config(parms->server->module_config,
@@ -946,6 +954,9 @@ static const command_rec cache_cmds[] =
                   NULL, 
                   RSRC_CONF, 
                   "Ignore requests from the client for uncached content"),
+    AP_INIT_ITERATE("CacheIgnoreHeaders", add_ignore_header, NULL, RSRC_CONF,
+                    "A space separated list of headers that should not be "
+                    "stored by the cache"),
     AP_INIT_TAKE1("CacheLastModifiedFactor", set_cache_factor, NULL, RSRC_CONF,
                   "The factor used to estimate Expires date from "
                   "LastModified date"),
@@ -980,11 +991,6 @@ static void register_hooks(apr_pool_t *p)
                                   cache_out_filter, 
                                   NULL,
                                   AP_FTYPE_CONTENT_SET-1);
-    cache_conditional_filter_handle =
-        ap_register_output_filter("CACHE_CONDITIONAL", 
-                                  cache_conditional_filter, 
-                                  NULL,
-                                  AP_FTYPE_CONTENT_SET);
     ap_hook_post_config(cache_post_config, NULL, NULL, APR_HOOK_REALLY_FIRST);
 }
 

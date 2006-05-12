@@ -1,4 +1,5 @@
-/* Copyright 2001-2004 The Apache Software Foundation
+/* Copyright 2001-2005 The Apache Software Foundation or its licensors, as
+ * applicable.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +22,15 @@
 
 /* -------------------------------------------------------------- */
 
+extern module AP_MODULE_DECLARE_DATA cache_module;
+
 /* return true if the request is conditional */
-CACHE_DECLARE(int) ap_cache_request_is_conditional(request_rec *r)
+CACHE_DECLARE(int) ap_cache_request_is_conditional(apr_table_t *table)
 {
-    if (apr_table_get(r->headers_in, "If-Match") ||
-        apr_table_get(r->headers_in, "If-None-Match") ||
-        apr_table_get(r->headers_in, "If-Modified-Since") ||
-        apr_table_get(r->headers_in, "If-Unmodified-Since")) {
+    if (apr_table_get(table, "If-Match") ||
+        apr_table_get(table, "If-None-Match") ||
+        apr_table_get(table, "If-Modified-Since") ||
+        apr_table_get(table, "If-Unmodified-Since")) {
         return 1;
     }
     return 0;
@@ -118,7 +121,7 @@ CACHE_DECLARE(apr_int64_t) ap_cache_current_age(cache_info *info,
     return apr_time_sec(current_age);
 }
 
-CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache, 
+CACHE_DECLARE(int) ap_cache_check_freshness(cache_handle_t *h,
                                             request_rec *r)
 {
     apr_int64_t age, maxage_req, maxage_cresp, maxage, smaxage, maxstale;
@@ -129,7 +132,7 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
     const char *expstr = NULL;
     char *val;
     apr_time_t age_c = 0;
-    cache_info *info = &(cache->handle->cache_obj->info);
+    cache_info *info = &(h->cache_obj->info);
 
     /*
      * We now want to check if our cached data is still fresh. This depends
@@ -163,20 +166,20 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
      * entity, and it's value is in the past, it has expired.
      * 
      */
-    cc_cresp = apr_table_get(r->headers_out, "Cache-Control");
-    cc_ceresp = apr_table_get(r->err_headers_out, "Cache-Control");
-    cc_req = apr_table_get(r->headers_in, "Cache-Control");
-    
-    if ((agestr = apr_table_get(r->headers_out, "Age"))) {
+    cc_cresp = apr_table_get(h->resp_hdrs, "Cache-Control");
+    cc_ceresp = apr_table_get(h->resp_err_hdrs, "Cache-Control");
+    cc_req = apr_table_get(h->req_hdrs, "Cache-Control");
+
+    if ((agestr = apr_table_get(h->resp_hdrs, "Age"))) {
         age_c = apr_atoi64(agestr);
     }
-    else if ((agestr = apr_table_get(r->err_headers_out, "Age"))) {
+    else if ((agestr = apr_table_get(h->resp_err_hdrs, "Age"))) {
         age_c = apr_atoi64(agestr);
         age_in_errhdr = 1;
     }
 
-    if (!(expstr = apr_table_get(r->err_headers_out, "Expires"))) {
-        expstr = apr_table_get(r->headers_out, "Expires");
+    if (!(expstr = apr_table_get(h->resp_err_hdrs, "Expires"))) {
+        expstr = apr_table_get(h->resp_hdrs, "Expires");
     }
 
     /* calculate age of object */
@@ -267,23 +270,23 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
         const char *warn_head;
         apr_table_t *head_ptr;
 
-        warn_head = apr_table_get(r->headers_out, "Warning");
+        warn_head = apr_table_get(h->resp_hdrs, "Warning");
         if (warn_head != NULL) {
-            head_ptr = r->headers_out;
+            head_ptr = h->resp_hdrs;
         }
         else {
-            warn_head = apr_table_get(r->err_headers_out, "Warning");
-            head_ptr = r->err_headers_out;
+            warn_head = apr_table_get(h->resp_err_hdrs, "Warning");
+            head_ptr = h->resp_err_hdrs;
         }
 
         /* it's fresh darlings... */
         /* set age header on response */
         if (age_in_errhdr) {
-            apr_table_set(r->err_headers_out, "Age",
+            apr_table_set(h->resp_err_hdrs, "Age",
                           apr_psprintf(r->pool, "%lu", (unsigned long)age));
         }
         else {
-            apr_table_set(r->headers_out, "Age",
+            apr_table_set(h->resp_hdrs, "Age",
                           apr_psprintf(r->pool, "%lu", (unsigned long)age));
         }
 
@@ -517,8 +520,13 @@ CACHE_DECLARE(char *)generate_name(apr_pool_t *p, int dirlevels,
  * headers table that are allowed to be stored in a cache.
  */
 CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(apr_pool_t *pool,
-                                                        apr_table_t *t)
+                                                        apr_table_t *t,
+                                                        server_rec *s)
 {
+    cache_server_conf *conf;
+    char **header;
+    int i;
+
     /* Make a copy of the headers, and remove from
      * the copy any hop-by-hop headers, as defined in Section
      * 13.5.1 of RFC 2616
@@ -533,5 +541,15 @@ CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(apr_pool_t *pool,
     apr_table_unset(headers_out, "Trailers");
     apr_table_unset(headers_out, "Transfer-Encoding");
     apr_table_unset(headers_out, "Upgrade");
+
+    conf = (cache_server_conf *)ap_get_module_config(s->module_config,
+                                                     &cache_module);
+    /* Remove the user defined headers set with CacheIgnoreHeaders.
+     * This may break RFC 2616 compliance on behalf of the administrator.
+     */
+    header = (char **)conf->ignore_headers->elts;
+    for (i = 0; i < conf->ignore_headers->nelts; i++) {
+        apr_table_unset(headers_out, header[i]);
+    }
     return headers_out;
 }
