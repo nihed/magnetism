@@ -1,6 +1,7 @@
 #ifndef __HIPPO_MAIN_H__
 #define __HIPPO_MAIN_H__
 
+#include <config.h>
 #include <hippo/hippo-common.h>
 #include <gtk/gtk.h>
 

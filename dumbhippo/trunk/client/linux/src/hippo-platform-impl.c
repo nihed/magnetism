@@ -1,3 +1,4 @@
+#include <config.h>
 #include "hippo-platform-impl.h"
 #include "hippo-cookies-linux.h"
 

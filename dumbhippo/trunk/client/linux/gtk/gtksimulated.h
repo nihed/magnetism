@@ -5,12 +5,22 @@
 #define GTK_SIMULATED_H
 
 #include <gtk/gtk.h>
+#include <config.h>
+
+#if (GTK_MINOR_VERSION < 8)
+#define G_PARAM_STATIC_NICK 0
+#define G_PARAM_STATIC_BLURB 0
+#define G_PARAM_STATIC_NAME 0
+#define I_(string) string
+#define g_object_ref_sink(o) do { gtk_object_ref(GTK_OBJECT(o)); gtk_object_sink(GTK_OBJECT(o)); } while(0)
+#else
+/* not really I18N-related, but also a string marker macro */
+#define I_(string) g_intern_static_string (string)
+#endif
 
 #define GTK_PARAM_READABLE G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
 #define GTK_PARAM_WRITABLE G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
 #define GTK_PARAM_READWRITE G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
-
-#define GETTEXT_PACKAGE "gtk20"
 
 #include <glib/gi18n-lib.h>
 
@@ -19,8 +29,5 @@
 #else
 #define P_(String) (String)
 #endif
-
-/* not really I18N-related, but also a string marker macro */
-#define I_(string) g_intern_static_string (string)
 
 #endif /* GTK_SIMULATED_H */

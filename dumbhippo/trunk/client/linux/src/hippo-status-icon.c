@@ -1,3 +1,4 @@
+#include <config.h>
 #include "hippo-status-icon.h"
 #include <gtk/gtkstatusicon.h>
 
