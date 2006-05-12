@@ -2,6 +2,6 @@
 @IMPORT url("site.css");
 @IMPORT url("links-positions.css");
 
-.dh-controls-box {
+div.dh-controls-box {
 	background-color:		#FAC7A9;
 }
