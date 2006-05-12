@@ -15,7 +15,7 @@
 	<dht:requireLinksPersonBean who="${signin.user.id}"/>
 	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS">
-			<div>
+			<div class="dh-public-shares-toggle">
 				<c:choose>
 					<%-- this is duplicated so we can set the checked attribute --%>
 					<c:when test="${links.notifyPublicShares}">
@@ -25,7 +25,7 @@
 						<input id="notifyPublicShares" type="checkbox" onclick="dh.actions.setNotifyPublicShares(true);">
 					</c:otherwise>
 				</c:choose>
-			<label for="notifyPublicShares">Receive publicly shared links</label>			   
+			<label for="notifyPublicShares">Get All "World" Bubbles</label>			   
 			</div>
 		</dht:sidebarBoxControls>		
 	</dht:sidebarPerson>
