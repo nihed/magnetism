@@ -90,6 +90,18 @@ static int cache_url_handler(request_rec *r, int lookup)
     cache->providers = providers;
 
     /*
+     * DumbHippo addition: skip caching if we were given the
+     * server's auth cookie, since we need to give user-specific
+     * content.
+     */
+
+    if (!hippo_cache_check(r, conf, path)) {
+	ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
+		     "cache_hippo: skipping caching of %s because of auth cookie", url);
+	return DECLINED;
+    }
+
+    /*
      * Are we allowed to serve cached info at all?
      */
 
@@ -733,6 +745,9 @@ static void * create_cache_config(apr_pool_t *p, server_rec *s)
     ps->cacheenable = apr_array_make(p, 10, sizeof(struct cache_enable));
     /* array of URL prefixes for which caching is disabled */
     ps->cachedisable = apr_array_make(p, 10, sizeof(struct cache_disable));
+    ps->hippo_always = apr_array_make(p, 10, sizeof(struct cache_disable));
+    ps->hippo_server_name = NULL;
+    ps->hippo_server_name_len = 0;
     /* maximum time to cache a document */
     ps->maxex = DEFAULT_CACHE_MAXEXPIRE;
     ps->maxex_set = 0;
@@ -766,6 +781,15 @@ static void * merge_cache_config(apr_pool_t *p, void *basev, void *overridesv)
     ps->cacheenable = apr_array_append(p, 
                                        base->cacheenable, 
                                        overrides->cacheenable);
+    /* array of URL prefixes for which caching is enabled even when authorized */
+    ps->hippo_always = apr_array_append(p, 
+                                        base->hippo_always, 
+                                        overrides->hippo_always);
+
+    /* Server name to look for in DumbHippo authorization cookies */
+    ps->hippo_server_name = overrides->hippo_server_name ? overrides->hippo_server_name : base->hippo_server_name;
+    ps->hippo_server_name_len = overrides->hippo_server_name ? overrides->hippo_server_name_len : base->hippo_server_name_len;
+
     /* maximum time to cache a document */
     ps->maxex = (overrides->maxex_set == 0) ? base->maxex : overrides->maxex;
     /* default time to cache a document */
@@ -835,7 +859,7 @@ static const char *add_cache_disable(cmd_parms *parms, void *dummy,
                                      const char *url)
 {
     cache_server_conf *conf;
-    struct cache_enable *new;
+    struct cache_disable *new;
 
     conf =
         (cache_server_conf *)ap_get_module_config(parms->server->module_config,
@@ -906,6 +930,35 @@ static const char *set_cache_complete(cmd_parms *parms, void *dummy,
     return NULL;
 }
 
+static const char *set_cache_hippo_server_name(cmd_parms *parms, void *dummy,
+                                               const char *arg)
+{
+    cache_server_conf *conf;
+
+    conf =
+        (cache_server_conf *)ap_get_module_config(parms->server->module_config,
+                                                  &cache_module);
+    conf->hippo_server_name = arg;
+    conf->hippo_server_name_len = strlen(arg);
+
+    return NULL;
+}
+
+static const char *add_cache_hippo_always(cmd_parms *parms, void *dummy,
+                                          const char *url)
+{
+    cache_server_conf *conf;
+    struct cache_disable *new;
+
+    conf =
+        (cache_server_conf *)ap_get_module_config(parms->server->module_config,
+                                                  &cache_module);
+    new = apr_array_push(conf->hippo_always);
+    new->url = url;
+    new->urllen = strlen(url);
+    return NULL;
+}
+
 static int cache_post_config(apr_pool_t *p, apr_pool_t *plog,
                              apr_pool_t *ptemp, server_rec *s)
 {
@@ -952,6 +1005,10 @@ static const command_rec cache_cmds[] =
     AP_INIT_TAKE1("CacheForceCompletion", set_cache_complete, NULL, RSRC_CONF,
                   "Percentage of download to arrive for the cache to force "
                   "complete transfer"),
+    AP_INIT_TAKE1("CacheHippoServerName", set_cache_hippo_server_name, NULL, RSRC_CONF,
+                  "If a DumbHippo authorization cookie is found for the given server, don't cache the request"),
+    AP_INIT_TAKE1("CacheHippoAlways", add_cache_hippo_always, NULL, RSRC_CONF,
+                  "For these partial URL prefixes, cache even if the DumbHippo authorization cookie is found"),
     {NULL}
 };
 

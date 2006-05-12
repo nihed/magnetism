@@ -119,6 +119,7 @@ struct cache_disable {
 typedef struct {
     apr_array_header_t *cacheenable;	/* URLs to cache */
     apr_array_header_t *cachedisable;	/* URLs not to cache */
+    apr_array_header_t *hippo_always;	/* URLs to cache even when authorized */
     apr_time_t maxex;			/* Maximum time to keep cached files in msecs */
     int maxex_set;
     apr_time_t defex;           /* default time to keep cached file in msecs */
@@ -133,6 +134,8 @@ typedef struct {
     /** ignore client's requests for uncached responses */
     int ignorecachecontrol;
     int ignorecachecontrol_set;
+    const char *hippo_server_name;
+    apr_size_t hippo_server_name_len;
 } cache_server_conf;
 
 /* cache info information */
@@ -271,6 +274,11 @@ apr_status_t cache_store_entity_body(cache_handle_t *h, request_rec *r, apr_buck
 apr_status_t cache_recall_entity_headers(cache_handle_t *h, request_rec *r);
 apr_status_t cache_recall_entity_body(cache_handle_t *h, apr_pool_t *p, apr_bucket_brigade *bb);
 */
+
+/**
+ * hippo_cookie.c
+ */
+int hippo_cache_check(request_rec *r, cache_server_conf *conf, const char *url);
 
 /* hooks */
 
