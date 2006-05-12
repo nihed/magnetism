@@ -401,7 +401,7 @@ public class Account extends Resource {
 		return musicSharingEnabled;
 	}
 
-	public void setMusicSharingEnabled(boolean musicSharingEnabled) {
+	public void setMusicSharingEnabled(Boolean musicSharingEnabled) {
 		this.musicSharingEnabled = musicSharingEnabled;
 	}
 
