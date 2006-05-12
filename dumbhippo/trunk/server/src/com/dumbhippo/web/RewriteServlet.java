@@ -229,12 +229,25 @@ public class RewriteServlet extends HttpServlet {
 		
 		String afterSlash = path.substring(1);
 		
+		// We force the page to be in one of our configuration parameters,
+		// since otherwise, its too easy to forget to update the configuration
+		// parameters, even with the warnings we output below.
+		
+		boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
+		boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
+		boolean isNoSignin = noSignin.contains(afterSlash);
+		
+		if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
 		// If this is a request to one of the pages configured as requiresLogin,
 		// and the user isn't signed in, go to /who-are-you, storing the real
 		// destination in the query string. This only works for GET, since we'd
 		// have to save the POST parameters somewhere.
 		
-		if ((requiresSignin.contains(afterSlash) || (stealthMode && requiresSigninStealth.contains(afterSlash))) && 
+		if ((isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
 			!hasSignin(request) && 
 			request.getMethod().toUpperCase().equals("GET")) { 
 			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
@@ -344,8 +357,8 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					logger.warn(".jsp {} does not have its signin requirements specified", p);
-					requiresSigninStealth.add(p);
+					// This warning needs to be reenabled when we remove unused pages from /jsp
+					// logger.error(".jsp {} does not have its signin requirements specified", p);
 				}
 			}
 		}
@@ -355,8 +368,7 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					logger.warn(".jsp {} does not have its signin requirements specified", p);
-					requiresSigninStealth.add(p);
+					logger.error(".jsp {} does not have its signin requirements specified", p);
 				}
 			}
 		}
@@ -366,8 +378,7 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					logger.warn(".html {} does not have its signin requirements specified", p);
-					requiresSigninStealth.add(p);
+					logger.error(".html {} does not have its signin requirements specified", p);
 				}
 			}
 		}
