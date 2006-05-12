@@ -457,7 +457,7 @@ static int cache_save_filter(ap_filter_t *f, apr_bucket_brigade *in)
         /* if a broken Expires header is present, don't cache it */
         reason = apr_pstrcat(p, "Broken expires header: ", exps, NULL);
     }
-    else if (r->args && exps == NULL) {
+    else if (r->args && exps == NULL && (conf->hippo_ignore_no_expires == 0)) {
         /* if query string present but no expiration time, don't cache it
          * (RFC 2616/13.9)
          */
@@ -762,6 +762,8 @@ static void * create_cache_config(apr_pool_t *p, server_rec *s)
     ps->complete_set = 0;
     ps->no_last_mod_ignore_set = 0;
     ps->no_last_mod_ignore = 0;
+    ps->hippo_ignore_no_expires_set = 0;
+    ps->hippo_ignore_no_expires = 0;
     ps->ignorecachecontrol = 0;
     ps->ignorecachecontrol_set = 0 ;
     return ps;
@@ -809,6 +811,10 @@ static void * merge_cache_config(apr_pool_t *p, void *basev, void *overridesv)
         (overrides->ignorecachecontrol_set == 0)
         ? base->ignorecachecontrol
         : overrides->ignorecachecontrol;
+    ps->hippo_ignore_no_expires =
+        (overrides->hippo_ignore_no_expires_set == 0)
+        ? base->hippo_ignore_no_expires
+        : overrides->hippo_ignore_no_expires;
     return ps;
 }
 static const char *set_cache_ignore_no_last_mod(cmd_parms *parms, void *dummy,
@@ -959,6 +965,19 @@ static const char *add_cache_hippo_always(cmd_parms *parms, void *dummy,
     return NULL;
 }
 
+static const char *set_cache_hippo_ignore_no_expires(cmd_parms *parms, void *dummy,
+                                                int flag)
+{
+    cache_server_conf *conf;
+
+    conf =
+        (cache_server_conf *)ap_get_module_config(parms->server->module_config,
+                                                  &cache_module);
+    conf->hippo_ignore_no_expires = flag;
+    conf->hippo_ignore_no_expires_set = 1;
+    return NULL;
+
+}
 static int cache_post_config(apr_pool_t *p, apr_pool_t *plog,
                              apr_pool_t *ptemp, server_rec *s)
 {
@@ -1009,6 +1028,9 @@ static const command_rec cache_cmds[] =
                   "If a DumbHippo authorization cookie is found for the given server, don't cache the request"),
     AP_INIT_TAKE1("CacheHippoAlways", add_cache_hippo_always, NULL, RSRC_CONF,
                   "For these partial URL prefixes, cache even if the DumbHippo authorization cookie is found"),
+    AP_INIT_FLAG("CacheHippoIgnoreNoExpires", set_cache_hippo_ignore_no_expires, NULL, 
+                 RSRC_CONF, 
+                 "Cache responses with a query string and no Expires"),
     {NULL}
 };
 

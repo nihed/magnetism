@@ -136,6 +136,9 @@ typedef struct {
     int ignorecachecontrol_set;
     const char *hippo_server_name;
     apr_size_t hippo_server_name_len;
+    /** cache requests with query strings even when there is no Expires: */
+    int hippo_ignore_no_expires_set;
+    int hippo_ignore_no_expires;
 } cache_server_conf;
 
 /* cache info information */
