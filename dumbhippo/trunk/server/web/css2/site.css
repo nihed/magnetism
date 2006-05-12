@@ -109,6 +109,20 @@ body.dh-gray-background-page {
 	font-weight:		bold;
 }
 
+#dhWebServices {
+    font-size:			12px;
+    font-weight:		500; /* 400 is same as normal, 700 is same as bold */
+    color:              black;
+}
+
+#dhWebServices a:link, #dhWebServices a:visited {
+    color:              black;  
+}
+
+#dhWebServices a:hover {
+    color:              blue; /* this looks better than text-decoration: underline; */
+}
+
 .dh-sidebar-box {
 	background-color:	#CFCFCF;
 	font-size:			12px;

@@ -73,6 +73,14 @@ form {
 	display:		inline;
 }
 
+#dhWebServices {
+	text-align:		center;
+}
+
+.dh-yahoo-attribution, .dh-amazon-attribution {
+    margin:         15px; /* Yahoo! request */
+}
+
 #dhContentColumn .dh-zone-box .dh-item-with-photo {
 	width:			478px;
 }

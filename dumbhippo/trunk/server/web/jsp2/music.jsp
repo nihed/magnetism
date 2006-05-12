@@ -144,6 +144,8 @@
 				</dht:zoneBoxSubcolumn>
 			
 			</dht:zoneBoxSubcolumns>
+			<dht:zoneBoxSeparator/>
+            <dht:webServicesAttributions/>     
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>

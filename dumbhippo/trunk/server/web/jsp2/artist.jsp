@@ -11,7 +11,7 @@
 <head>
 	<title><c:out value="${musicsearch.expandedArtistView.name}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/artist.css"/>
-	<dht:scriptIncludes/>
+	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>	
 </head>
 
@@ -37,15 +37,13 @@
 	                <div class="dh-artist-more">
 					    <dht:expandablePager pageable="${musicsearch.albumsByArtist}" anchor="dhAlbumsByArtist"/>
 					</div>
-						
-                    <%-- if we don't use something like this separator, zone background color comes --%>
-                    <%-- under the displayed album --%>
-                    <dht:zoneBoxSeparator visible="false"/>
                 </c:when>
                 <c:otherwise>
                     There were no matching results.
                 </c:otherwise>
             </c:choose>    
+            <dht:zoneBoxSeparator/>
+            <dht:webServicesAttributions/>            
         </dht:zoneBoxArtists>
 	</dht:contentColumn>
 </dht:twoColumnPage>
