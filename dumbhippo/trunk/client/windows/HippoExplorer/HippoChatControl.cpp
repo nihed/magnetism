@@ -430,6 +430,9 @@ HippoChatControl::Join(BOOL participant)
     if (participant)
         participantCount_++;
 
+    hippoDebugLogW(L"HippoChatControl::Join memberCount = %d participantCount = %d",
+                   memberCount_, participantCount_);
+
     if (chatRoom_) {
         if (memberCount_ == 1) {
             chatRoom_->Join(participant);
@@ -452,6 +455,9 @@ HippoChatControl::Leave(BOOL participant)
     memberCount_--;
     if (participant)
         participantCount_--;
+
+    hippoDebugLogW(L"HippoChatControl::Leave memberCount = %d participantCount = %d",
+                   memberCount_, participantCount_);
 
     if (chatRoom_) {
         if (memberCount_ == 0) {

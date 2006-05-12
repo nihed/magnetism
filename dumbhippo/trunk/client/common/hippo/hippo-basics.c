@@ -224,7 +224,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean install_launch = FALSE;
     static gboolean replace_existing = FALSE;
     static gboolean quit_existing = FALSE;
-    static gboolean initial_debug_share = FALSE;    GError *error;
+    static gboolean initial_debug_share = FALSE;    static gboolean verbose = FALSE;    GError *error;
 
     static const GOptionEntry entries[] = {
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
@@ -233,10 +233,11 @@ hippo_parse_options(int          *argc_p,
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replace_existing, "Replace existing instance, if any" },
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
+        { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
         { NULL }
     };
 
-    GOptionContext *context = g_option_context_new("The Mugshot application");
+    GOptionContext *context = g_option_context_new("Mugshot");
     g_option_context_add_main_entries(context, entries, NULL);
 
     error = NULL;
@@ -259,7 +260,8 @@ hippo_parse_options(int          *argc_p,
     results->replace_existing = replace_existing;
     results->quit_existing = quit_existing;
     results->initial_debug_share = initial_debug_share;
-    
+    results->verbose = verbose;
+
     return TRUE;
 }
 

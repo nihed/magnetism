@@ -4,8 +4,9 @@
  **/
 #pragma once
 
+#include "stdafx.h"
 #include <glib.h>
-#include <hippo/hippo-platform.h>
+#include <hippo/hippo-common.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include "HippoBubble.h"
@@ -13,22 +14,26 @@
 #include "HippoChatWindow.h"
 #include "HippoIcon.h"
 #include "HippoLogWindow.h"
-#include "HippoDataCache.h"
 #include "HippoMenu.h"
 #include "HippoUpgrader.h"
 #include "HippoFlickr.h"
-#include "HippoIM.h"
 #include "HippoExternalBrowser.h"
-#include "HippoMenu.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoMySpace.h"
 #include "HippoUIUtil.h"
+#include "HippoGSignal.h"
 
 class HippoPreferences;
 
 struct HippoBrowserInfo
 {
+    // circumvent constness
+    IWebBrowser2* getBrowser() const {
+        const IWebBrowser2 *b = browser;
+        return const_cast<IWebBrowser2*>(b);
+    }
+
     HippoPtr<IWebBrowser2> browser;
     HippoBSTR url;
     HippoBSTR title;
@@ -73,6 +78,8 @@ public:
 
     HippoPlatform *getPlatform();
     HippoPreferences *getPreferences();
+    HippoDataCache *getDataCache();
+    HippoConnection *getConnection();
 
     void showMenu(UINT buttonFlag);
     HippoExternalBrowser *launchBrowser(BSTR url);
@@ -84,23 +91,13 @@ public:
     void logHresult(const WCHAR *text, HRESULT result);
     void logLastHresult(const WCHAR *text);
 
-    void onConnectionChange(bool connected);
-    void onAuthFailure();
-    void onAuthSuccess();
-    void setClientInfo(const char *minVersion,
-                       const char *currentVersion,
-                       const char *downloadUrl);
-    void setMySpaceName(const char *name);
-    void getSeenMySpaceComments();
-    void getMySpaceContacts();
     void onUpgradeReady();
-    void onLinkMessage(HippoPost *link);
 
     void setHaveMissedBubbles(bool haveMissed);
 
     int getRecentMessageCount();
 
-    bool isShareActive(BSTR postId);
+    bool isShareActive(HippoPost *post);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
@@ -115,40 +112,7 @@ public:
     HICON getSmallIcon() { return smallIcon_; }
     HICON getBigIcon() { return bigIcon_; }
 
-    void onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack);
-
-    void onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment, bool doDisplay);
-    void setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments);
-    void setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts);
-    void onCreatingMySpaceContactPost(HippoMySpaceContact *contact);
-    void onReceivingMySpaceContactPost();
-
-    void onViewerJoin(HippoPost *post);
-    void onChatRoomMessage(HippoPost *post);
-    void updatePost(HippoPost *post);
-
-    void clearActivePosts();
-
-    HippoDataCache &getDataCache();
-
-    void addActivePost(HippoPost *post);
-
-    typedef enum {
-        UNKNOWN,
-        COLD,
-        COOL,
-        WARM,
-        GETTING_HOT,
-        HOT
-    } Hotness;
-
-    void setHotness(BSTR hotness);
-
-    bool getNeedPrimingTracks();
-    void providePrimingTracks(HippoPlaylist *playlist);
-    void setMusicSharingEnabled(bool enabled) { 
-        music_.setEnabled(enabled);
-    }
+    void bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment);
 
 private:
     class HippoUIUpgradeWindowCallback : public HippoIEWindowCallback
@@ -169,7 +133,6 @@ private:
 
     void showSignInWindow();
     void showPreferences();
-    void updateForgetPassword();
 
     // Register an "internal" browser instance that we don't want
     // to allow sharing of, and that we quit when the HippoUI
@@ -184,8 +147,6 @@ private:
     // Check if an URL points to /account, or another page that we
     // want to avoid framing
     bool isNoFrameURL(BSTR url);
-
-    static int checkIdle(gpointer data);
 
     static int idleHotnessBlink(gpointer data);
 
@@ -214,7 +175,18 @@ private:
                                             WPARAM wParam,
                                             LPARAM lParam);
 
-    static gboolean idleShowDebugShare(gpointer data);
+    //// Idles and timeouts
+
+    bool timeoutShowDebugShare();
+    bool timeoutCheckIdle();
+
+    //// Signal handlers 
+
+    void onHotnessChanged(int oldHotness);
+    void onConnectedChanged(gboolean connected);
+    void onHasAuthChanged();
+    void onAuthFailed();
+    void onAuthSucceeded();
 
 private:
     // If true, this is a debug instance, acts as a separate global
@@ -224,7 +196,7 @@ private:
     // tell it to exit rather than erroring out.
     bool replaceExisting_;
     bool initialShowDebugShare_;
-    bool connected_;
+
     // Whether we are registered as the active HippoUI object
     bool registered_; 
 
@@ -242,17 +214,25 @@ private:
     HippoBSTR currentURL_;
 
     HippoGObjectPtr<HippoPlatform> platform_;
+    HippoGObjectPtr<HippoDataCache> dataCache_;
+
+    GConnection1<void,int> hotnessChanged_;
+    GConnection1<void,gboolean> connectedChanged_;
+    GConnection0<void> authFailed_;
+    GConnection0<void> authSucceeded_;
+    GConnection0<void> hasAuthChanged_;
+
+    GTimeout showDebugShareTimeout_;
+    GTimeout checkIdleTimeout_;
 
     HippoBubble bubble_;
     HippoMenu menu_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
-    HippoIM im_;
     HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
     HippoMusic music_;
-    HippoMySpace *mySpace_;
-    HippoDataCache dataCache_;
+    HippoMySpace mySpace_;
 
     HippoBubbleList *recentPostList_;
     HippoRemoteWindow *currentShare_;
@@ -278,7 +258,5 @@ private:
 
     bool idle_; // is the user idle
     bool haveMissedBubbles_; // has the user not seen bubbles
-    HippoUI::Hotness hotness_;
     bool screenSaverRunning_; // is the screen saver running
-    unsigned checkIdleTimeoutId_;
 };

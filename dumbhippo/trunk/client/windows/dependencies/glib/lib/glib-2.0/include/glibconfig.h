@@ -11,6 +11,7 @@
 
 #include <limits.h>
 #include <float.h>
+#include <stddef.h>
 
 G_BEGIN_DECLS
 
@@ -69,7 +70,7 @@ typedef unsigned __int64 guint64;
 #define GLIB_SIZEOF_SIZE_T 4
 
 typedef signed int gssize;
-typedef unsigned int gsize;
+typedef _W64 unsigned int gsize;
 #define G_GSIZE_MODIFIER ""
 #define G_GSSIZE_FORMAT "i"
 #define G_GSIZE_FORMAT "u"

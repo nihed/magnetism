@@ -14,6 +14,19 @@ struct _HippoChatRoom {
     GHashTable *viewers;
     GHashTable *chatters;
     GSList *messages; /* sorted latest -> oldest */
+
+    /* FIXME These two counts are preserved across connect/disconnect
+     * which is wrong if we change login ID. However, it can't be fixed
+     * here due to the "refcount" behavior; the UI code or whatever that 
+     * does the joins/leaves affecting the count will have to know
+     * to leave the chatroom on login ID change.
+     */
+
+    /* number of times we want to be a participant */
+    int participant_count;
+    /* number of times we want to be a viewer */
+    int visitor_count;
+
     guint filling : 1;
 };
 
@@ -27,6 +40,12 @@ G_DEFINE_TYPE(HippoChatRoom, hippo_chat_room, G_TYPE_OBJECT);
 enum {
     TITLE_CHANGED,
     USER_STATE_CHANGED,
+    /* JOINED is emitted for a subset of STATE_CHANGED where the state went
+     * from nonmember to either viewer or participant, and the chat room
+     * isn't in the "filling" state. This means we may want to specially
+     * indicate the new member of the chat to users.
+     */
+    USER_JOINED,
     MESSAGE_ADDED,
     CLEARED,
     LAST_SIGNAL
@@ -65,6 +84,15 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
 
     signals[USER_STATE_CHANGED] =
         g_signal_new ("user-state-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__OBJECT,
+            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+
+    signals[USER_JOINED] =
+        g_signal_new ("user-joined",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
             		  0,
@@ -237,6 +265,14 @@ hippo_chat_room_get_chatting_user_count(HippoChatRoom  *room)
     return g_hash_table_size(room->chatters);
 }
 
+GSList*
+hippo_chat_room_get_messages(HippoChatRoom *room)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), NULL);
+
+    return room->messages;
+}
+
 gboolean
 hippo_chat_room_get_filling(HippoChatRoom *room)
 {
@@ -322,7 +358,11 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
     }
 
     g_signal_emit(room, signals[USER_STATE_CHANGED], 0, person);
-    
+
+    if (!room->filling && old_state == HIPPO_CHAT_NONMEMBER) {
+        g_signal_emit(room, signals[USER_JOINED], 0, person);
+    }
+
     g_object_unref(person);
 }
 
@@ -398,6 +438,59 @@ hippo_chat_room_clear(HippoChatRoom *room)
     
     g_hash_table_destroy(old_viewers);
     g_hash_table_destroy(old_chatters);        
+}
+
+void
+hippo_chat_room_increment_state_count(HippoChatRoom *room,
+                                      HippoChatState state)
+{
+    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    g_return_if_fail(state != HIPPO_CHAT_NONMEMBER);
+
+    if (state == HIPPO_CHAT_PARTICIPANT) {
+        room->participant_count += 1;
+        g_debug("participant_count for %s incremented to %d visitor_count %d",
+                room->id, room->participant_count, room->visitor_count);
+    } else if (state == HIPPO_CHAT_VISITOR) {
+        room->visitor_count += 1;
+        g_debug("visitor_count for %s incremented to %d participant_count %d",
+                room->id, room->visitor_count, room->participant_count);
+    }
+}
+
+void
+hippo_chat_room_decrement_state_count(HippoChatRoom *room,
+                                      HippoChatState state)
+{
+    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    g_return_if_fail(state != HIPPO_CHAT_NONMEMBER);
+    
+    if (state == HIPPO_CHAT_PARTICIPANT) {
+        g_return_if_fail(room->participant_count >= 0);
+        
+        room->participant_count -= 1;
+        g_debug("participant_count for %s decremented to %d visitor_count %d",
+                room->id, room->participant_count, room->visitor_count);
+    } else if (state == HIPPO_CHAT_VISITOR) {
+        g_return_if_fail(room->visitor_count >= 0);
+
+        room->visitor_count -= 1;
+        g_debug("visitor_count for %s decremented to %d participant_count %d",
+                room->id, room->visitor_count, room->participant_count);
+    }
+}
+
+HippoChatState
+hippo_chat_room_get_desired_state(HippoChatRoom *room)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), 0);
+
+    if (room->participant_count > 0)
+        return HIPPO_CHAT_PARTICIPANT;
+    else if (room->visitor_count > 0)
+        return HIPPO_CHAT_VISITOR;
+    else
+        return HIPPO_CHAT_NONMEMBER;
 }
 
 /* === HippoChatMessage === */

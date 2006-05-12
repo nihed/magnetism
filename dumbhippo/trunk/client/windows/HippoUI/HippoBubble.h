@@ -5,13 +5,13 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include "HippoDataCache.h"
+#include <hippo/hippo-common.h>
 #include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 #include "HippoDispatchableObject.h"
-
-class HippoPost;
+#include <HippoArray.h>
+#include <set>
 
 class HippoBubble :
     public HippoDispatchableObject<IHippoBubble, HippoBubble>,
@@ -23,15 +23,10 @@ public:
 
     static ITypeInfo *getTypeInfo();
 
-    void setLinkNotification(bool isRedisplay, HippoPost *share);
-    void addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment);
+    void addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceCommentData &comment);
     void setIdle(bool idle);
     void setScreenSaverRunning(bool screenSaverRunning);
     void showMissedBubbles();
-
-    void onViewerJoin(HippoPost *post);
-    void onChatRoomMessage(HippoPost *post);
-    void updatePost(HippoPost *post);
 
     void setShareHasChatActive(const WCHAR *postId, bool isActive);
 
@@ -50,6 +45,7 @@ protected:
     virtual void initializeWindow();
     virtual void initializeIE();
     virtual void initializeBrowser();
+    virtual void initializeUI();
 
     virtual bool processMessage(UINT   message,
                                 WPARAM wParam,
@@ -62,8 +58,6 @@ private:
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;
 
-    HippoArray<HippoBSTR> activeChatShares_;
-
     bool shown_;
     bool idle_;
     bool haveMouse_;
@@ -73,6 +67,21 @@ private:
     int desiredHeight_;
     HDC layerDC_;
     HBITMAP oldBitmap_;
+
+    std::set<HippoPost*> connectedPosts_;
+
+    GConnection1<void,HippoPost*> postAdded_;           // HippoDataCache::post-added
+
+    void onUserJoined(HippoPerson *person, HippoPost *post);
+    void onMessageAdded(HippoChatMessage *message, HippoPost *post);
+    void onPostChanged(HippoPost *post);
+    void onPostAdded(HippoPost *post);
+    
+    void connectPost(HippoPost *post);
+    void disconnectPost(HippoPost *post);
+    void disconnectAllPosts();
+
+    void setLinkNotification(bool isRedisplay, HippoPost *share);
 
     void setShown();
     void moveResizeWindow(void);

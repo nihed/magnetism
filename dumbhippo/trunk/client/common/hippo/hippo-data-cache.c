@@ -1,4 +1,5 @@
 #include "hippo-data-cache-internal.h"
+#include "hippo-connection.h"
 #include <string.h>
 
 static void      hippo_data_cache_init                (HippoDataCache       *cache);
@@ -6,7 +7,8 @@ static void      hippo_data_cache_class_init          (HippoDataCacheClass  *kla
 
 static void      hippo_data_cache_finalize            (GObject              *object);
 
-static void      hippo_data_cache_on_authenticate     (HippoConnection      *connection,
+static void      hippo_data_cache_on_connect          (HippoConnection      *connection,
+                                                       gboolean              connected,
                                                        void                 *data);
 
 struct _HippoDataCache {
@@ -23,6 +25,7 @@ struct _HippoDataCache {
     HippoHotness     hotness;
     unsigned int     music_sharing_enabled : 1;
     unsigned int     music_sharing_primed : 1;    
+    HippoClientInfo  client_info;
 };
 
 struct _HippoDataCacheClass {
@@ -172,10 +175,13 @@ hippo_data_cache_finalize(GObject *object)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(object);
 
+    hippo_data_cache_set_myspace_name(cache, NULL);
     hippo_data_cache_set_myspace_blog_comments(cache, NULL);
     hippo_data_cache_set_myspace_contacts(cache, NULL);
 
     hippo_data_cache_clear_active_posts(cache);
+
+    hippo_data_cache_set_client_info(cache, NULL);
 
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
     g_hash_table_destroy(cache->posts);
@@ -190,10 +196,10 @@ hippo_data_cache_finalize(GObject *object)
     }
 
     g_signal_handlers_disconnect_by_func(cache->connection,
-                                 G_CALLBACK(hippo_data_cache_on_authenticate), cache);
+                                 G_CALLBACK(hippo_data_cache_on_connect), cache);
     hippo_connection_set_cache(cache->connection, NULL);
     g_object_unref(cache->connection);
-    
+
     G_OBJECT_CLASS(hippo_data_cache_parent_class)->finalize(object); 
 }
 
@@ -206,8 +212,8 @@ hippo_data_cache_new(HippoConnection *connection)
     g_object_ref(cache->connection);
     hippo_connection_set_cache(cache->connection, cache);
 
-    g_signal_connect(cache->connection, "auth-success",
-                     G_CALLBACK(hippo_data_cache_on_authenticate), cache);
+    g_signal_connect(cache->connection, "connected-changed",
+                     G_CALLBACK(hippo_data_cache_on_connect), cache);
 
     return cache;
 }
@@ -329,10 +335,24 @@ void
 hippo_data_cache_add_post(HippoDataCache *cache,
                           HippoPost      *post)
 {
+    HippoChatRoom *room;
+    
     g_return_if_fail(hippo_data_cache_lookup_post(cache, hippo_post_get_guid(post)) == NULL);
 
     g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
+        
+    /* Start filling in chatroom information for this post asynchronously.
+     * Note this creates the guarantee that all posts have a chat room != NULL
+     * from the start, which some code may well rely on.
+     */
+      
+    room = hippo_data_cache_ensure_chat_room(cache,
+            hippo_post_get_guid(post), HIPPO_CHAT_POST);
+
+    hippo_connection_request_chat_room_details(cache->connection, room);
+
+    g_debug("Post %s added, emitting post-added", hippo_post_get_guid(post));
     g_signal_emit(cache, signals[POST_ADDED], 0, post);
 }
 
@@ -382,6 +402,20 @@ hippo_data_cache_lookup_entity(HippoDataCache  *cache,
     g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
    
     return g_hash_table_lookup(cache->entities, guid);
+}
+
+HippoPerson*
+hippo_data_cache_get_self(HippoDataCache   *cache)
+{
+    const char *self_id;
+
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    self_id = hippo_connection_get_self_guid(cache->connection);
+    if (self_id == NULL)
+        return NULL; /* means we aren't connected */
+
+    return HIPPO_PERSON(hippo_data_cache_ensure_bare_entity(cache, HIPPO_ENTITY_PERSON, self_id));
 }
 
 typedef struct {
@@ -460,7 +494,7 @@ hippo_data_cache_get_recent_posts_count(HippoDataCache  *cache)
 {
     ListRecentPostsData lrpd;
     
-    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), 0);
 
     walk_recent_posts_internal(cache, &lrpd, FALSE);
 
@@ -578,7 +612,8 @@ hippo_data_cache_lookup_chat_room(HippoDataCache  *cache,
     HippoChatRoom *room;
     HippoPost *post;
 
-    *kind_p = -1; /* more reliably detect bugs */
+    if (kind_p)
+        *kind_p = -1; /* more reliably detect bugs */
 
     post = hippo_data_cache_lookup_post(cache, chat_id);
     if (post)
@@ -587,13 +622,15 @@ hippo_data_cache_lookup_chat_room(HippoDataCache  *cache,
         room = NULL;
         
     if (room != NULL) {
-        *kind_p = HIPPO_CHAT_POST;
+        if (kind_p)
+            *kind_p = HIPPO_CHAT_POST;
         return room;
     }
     
     room = g_hash_table_lookup(cache->group_chats, chat_id);
     if (room != NULL) {
-        *kind_p = HIPPO_CHAT_GROUP;
+        if (kind_p)
+            *kind_p = HIPPO_CHAT_GROUP;
         return room;
     }
     
@@ -724,16 +761,12 @@ update_chat_room_func(HippoChatRoom *room,
                       void          *data)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(data);
-    HippoChatState state;
-
-    /* We must get our previous state before clearing the chat room of users */
-    state = hippo_chat_room_get_user_state(room, cache->cached_self);
     
-    /* Now re-enter the room with the same state we had before */
-    hippo_chat_room_clear(room);
-    if (state != HIPPO_CHAT_NONMEMBER) {
-        hippo_connection_send_chat_room_enter(cache->connection, room, state);
-    }
+    /* be sure we know we aren't in the room */
+    hippo_chat_room_set_user_state(room, cache->cached_self, HIPPO_CHAT_NONMEMBER);
+
+    /* Now clear, rejoin, and reload the chat room */
+    hippo_connection_rejoin_chat_room(cache->connection, room);
 }
 
 /* FIXME this is kind of broken; really we need to blow up the whole cache
@@ -742,26 +775,49 @@ update_chat_room_func(HippoChatRoom *room,
  * valid anymore.
  */
 static void
-hippo_data_cache_on_authenticate(HippoConnection      *connection,
-                                 void                 *data)
+hippo_data_cache_on_connect(HippoConnection      *connection,
+                            gboolean              connected,
+                            void                 *data)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(data);
-    const char *self_id;
-    
-    self_id = hippo_connection_get_self_guid(cache->connection);
-    
-    /* This should not be NULL, since we authenticated. It can be 
-     * NULL if called when not authenticated.
-     */
-    g_assert(self_id != NULL);
 
-    /* note that cached_self may change to a different person each time we auth */
-    cache->cached_self = HIPPO_PERSON(hippo_data_cache_ensure_bare_entity(cache, HIPPO_ENTITY_PERSON, self_id));
+    if (connected) {
+        const char *self_id;
+        
+        self_id = hippo_connection_get_self_guid(cache->connection);
+        
+        /* This should not be NULL, since we authenticated. It can be 
+         * NULL if called when not authenticated.
+         */
+        g_assert(self_id != NULL);
 
-    /* This only matters the second time we authenticate. 
-     * For each chat room we were previously in, rejoin it.
-     */
-     hippo_data_cache_foreach_chat_room(cache, update_chat_room_func, cache);
+        /* note that cached_self may change to a different person each time we auth */
+        cache->cached_self = HIPPO_PERSON(hippo_data_cache_ensure_bare_entity(cache, HIPPO_ENTITY_PERSON, self_id));
+        g_object_ref(cache->cached_self);
+
+        /* This only matters the second time we authenticate. 
+         * For each chat room we were previously in, rejoin it.
+         */
+        hippo_data_cache_foreach_chat_room(cache, update_chat_room_func, cache);
+
+        hippo_connection_request_prefs(connection);
+        /* FIXME the server seems to send the hotness spontaneously anyway,
+         * so this request is pointless?
+         */
+        hippo_connection_request_hotness(connection);
+        hippo_connection_request_recent_posts(connection);
+    } else {
+        /* Clear stuff, so we get "changed" signals both on disconnect 
+         * and again on reconnect, and so we don't have stale data on
+         * reconnect. FIXME more stuff needs to be cleared here, e.g. 
+         * all the users and posts probably... or if there's a 
+         * connection-spanning cache, it needs to be thought through.
+         */
+        hippo_data_cache_set_myspace_name(cache, NULL);
+        hippo_data_cache_set_myspace_blog_comments(cache, NULL);
+        hippo_data_cache_set_myspace_contacts(cache, NULL);
+        hippo_data_cache_set_client_info(cache, NULL);
+    }
 }
 
 GSList*
@@ -803,3 +859,35 @@ hippo_data_cache_set_myspace_contacts(HippoDataCache  *cache,
     
     g_signal_emit(cache, signals[MYSPACE_CONTACTS_CHANGED], 0);
 }                                      
+
+const HippoClientInfo*
+hippo_data_cache_get_client_info(HippoDataCache   *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    return &cache->client_info;
+}
+
+static void
+zero_str(char **s_p)
+{
+    g_free(*s_p);
+    *s_p = NULL;
+}
+
+void
+hippo_data_cache_set_client_info(HippoDataCache        *cache,
+                                 const HippoClientInfo *info)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+
+    zero_str(&cache->client_info.current);
+    zero_str(&cache->client_info.minimum);
+    zero_str(&cache->client_info.download);
+
+    if (info) {
+        cache->client_info.current = g_strdup(info->current);
+        cache->client_info.minimum = g_strdup(info->minimum);
+        cache->client_info.download = g_strdup(info->download);
+    }
+}

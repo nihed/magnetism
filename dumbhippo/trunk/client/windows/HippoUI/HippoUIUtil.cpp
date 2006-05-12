@@ -133,3 +133,22 @@ HippoUIUtil::splitString(const HippoBSTR       &str,
 
     result.append(HippoBSTR(strData));
 }
+
+// It seems to help Windows get a backtrace if we 
+// trigger G_IS_OBJECT failure here instead of 
+// inside g_object_ref
+void
+HippoGObjectRefcounter::ref(GObject *object)
+{
+    if (!G_IS_OBJECT(object))
+        G_BREAKPOINT();
+    g_object_ref(object);
+}
+
+void
+HippoGObjectRefcounter::unref(GObject *object)
+{
+    if (!G_IS_OBJECT(object))
+        G_BREAKPOINT();
+    g_object_unref(object);
+}

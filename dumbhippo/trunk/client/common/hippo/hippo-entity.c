@@ -104,6 +104,13 @@ hippo_entity_get_guid(HippoEntity    *entity)
     return entity->guid;
 }
 
+HippoEntityType
+hippo_entity_get_entity_type(HippoEntity    *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), -1);
+    return entity->type;
+}
+
 const char*
 hippo_entity_get_name(HippoEntity    *entity)
 {

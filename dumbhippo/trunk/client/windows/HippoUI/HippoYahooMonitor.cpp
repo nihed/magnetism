@@ -172,7 +172,7 @@ HippoYahooMonitorImpl::setEnabled(bool enabled)
 void
 HippoYahooMonitorImpl::attemptConnect()
 {
-    hippoDebugLogU("YAHOO CONNECT %s", __FUNCTION__);
+    hippoDebugLogU("YAHOO CONNECT %s enabled = %d", __FUNCTION__, enabled_);
 
     if (state_ == CONNECTED || !enabled_)
         return;

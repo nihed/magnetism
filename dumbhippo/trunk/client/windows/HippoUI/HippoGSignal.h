@@ -4,17 +4,19 @@
  */
 #pragma once
 
-#include <stdafx.h>
+#include "stdafx.h"
 #include <glib-object.h>
+
+// This file has underscore_names instead of studlyCaps for no particular reason 
+// (well, it's copied from the old Inti codebase that was like that, and it 
+// feels sort of natural since it's a GLib related file)
+// change it all at once, or else stay consistent, don't mix in caps at random.
 
 class Slot
 {
 public:
 
-    void ref ()
-    {
-        ref_count_ += 1;
-    }
+    void ref ();
 
     void unref ();
 
@@ -22,7 +24,7 @@ public:
 
 protected:
     Slot ()
-        : ref_count_(1), floating_(true)
+        : ref_count_(1), floating_(true), deleted_(false)
     {
     }
 
@@ -30,7 +32,8 @@ protected:
 
 private:
     unsigned int ref_count_;
-    bool floating_;
+    unsigned int floating_ : 1;
+    unsigned int deleted_ : 1;
 
     // not copyable
     Slot (const Slot&);
@@ -48,6 +51,9 @@ public:
 
     void disconnect();
 
+    static void unmanaged_disconnect(GObject *object, unsigned int id);
+    static void named_disconnect(GObject *object, const char *connection_name);
+
 protected:
     GConnection()
         : obj_(NULL), id_(0)
@@ -56,9 +62,18 @@ protected:
 
     void connect_impl(GObject *object, const char *signal, GCallback callback, Slot *slot);
 
+    static unsigned int unmanaged_connect_impl(GObject *object, const char *signal, GCallback callback, Slot *slot);
+    static void named_connect_impl(GObject *object, const char *connection_name,
+                                   const char *signal, GCallback callback, Slot *slot);
+
 private:
     GObject *obj_;
     guint id_;
+    
+    // disallow copying; to allow this we'd need a refcounted "impl" object inside the connection
+    GConnection(const GConnection &other);
+    const GConnection &operator=(const GConnection &other);
+
 }; // end of class Connection
 
 /*
@@ -73,7 +88,6 @@ private:
  * If obj is destroyed the connection is automatically disconnected, and if you connect
  * to another object it's disconnected, and the GConnection's destructor also disconnects.
  * So there's no cleanup to worry about after the initial connect.
- *
  * 
  * FIXME the little codegen.py script needs extending to autogenerate the GConnection variants
  */
@@ -91,9 +105,17 @@ public:
         connect_impl(object, signal, (GCallback) gcallback, slot);
     }
 
+    static unsigned int unmanaged_connect(GObject *object, const char *signal, Slot0<ReturnType> *slot) {
+        return unmanaged_connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+
+    static void named_connect(GObject *object, const char *connection_name, const char *signal, Slot0<ReturnType> *slot) {
+        return named_connect_impl(object, connection_name, signal, (GCallback) gcallback, slot);
+    }
+
 private:
     static ReturnType gcallback(GObject *object, void *data) {
-        Slot1<ReturnType> *slot = data;
+        Slot0<ReturnType> *slot = static_cast<Slot0<ReturnType>*>(data);
         return slot->invoke();
     }
 };
@@ -111,9 +133,17 @@ public:
         connect_impl(object, signal, (GCallback) gcallback, slot);
     }
 
+    static unsigned int unmanaged_connect(GObject *object, const char *signal, Slot1<ReturnType,Arg1Type> *slot) {
+        return unmanaged_connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+    
+    static void named_connect(GObject *object, const char *connection_name, const char *signal, Slot1<ReturnType,Arg1Type> *slot) {
+        return named_connect_impl(object, connection_name, signal, (GCallback) gcallback, slot);
+    }
+
 private:
     static ReturnType gcallback(GObject *object, Arg1Type arg1, void *data) {
-        Slot1<ReturnType,Arg1Type> *slot = data;
+        Slot1<ReturnType,Arg1Type> *slot = static_cast<Slot1<ReturnType,Arg1Type>*>(data);
         return slot->invoke(arg1);
     }
 };
@@ -121,7 +151,7 @@ private:
 class GAbstractSource
 {
 public:
-    ~GAbstractSource();
+    virtual ~GAbstractSource();
 
     void remove();
 
@@ -135,10 +165,14 @@ protected:
 
 private:
     GSource *source_;
+
+    GAbstractSource(const GAbstractSource &other);
+    const GAbstractSource &operator=(const GAbstractSource &other);
+
 }; // end of class GAbstractSource
 
 class GIdle
-    : GAbstractSource
+    : public GAbstractSource
 {
 public:
     GIdle()
@@ -153,7 +187,7 @@ private:
 }; // end of class GIdle
 
 class GTimeout
-    : GAbstractSource
+    : public GAbstractSource
 {
 public:
     GTimeout()

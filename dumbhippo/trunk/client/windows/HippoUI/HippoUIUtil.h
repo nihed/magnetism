@@ -100,22 +100,30 @@ private:
     char *str;
 };
 
+/* this is just so the implementations aren't templatized */
+class HippoGObjectRefcounter {
+protected:
+    static void ref(GObject *object);
+    static void unref(GObject *object);
+};
+
 template<class T>
 class HippoGObjectPtr
+    : private HippoGObjectRefcounter
 {
 public:
     HippoGObjectPtr() : raw_(0) {
     }
     HippoGObjectPtr(T *t) : raw_(t) {
         if (raw_)
-            g_object_ref(G_OBJECT(raw_));
+            ref(G_OBJECT(raw_));
     }
     HippoGObjectPtr(const HippoGObjectPtr &other) : raw_(0) {
         assign(other.raw_);
     }
     ~HippoGObjectPtr() {
         if (raw_) {
-            g_object_unref(G_OBJECT(raw_));
+            unref(G_OBJECT(raw_));
         }
     }
     operator T *(){
@@ -125,12 +133,23 @@ public:
         return raw_;
     }
 
+    // FIXME These two conversions make operator == and != ambiguous, which kind 
+    // of sucks... but they are needed to make the GLib cast macros work.
+    // possible solutions include use .g_obj() instead of the conversion, 
+    // operator bool, explicit operator==, ... some of those could have their
+    // own issues. I did add operator! for now and you can also solve it 
+    // by casting NULL to a type, like "ptr == (GtkWidget*)NULL"
+
     operator GObject *() {
         return (GObject*) raw_;
     }
 
     operator GTypeInstance *() {
         return (GTypeInstance*) raw_;
+    }
+
+    bool operator!() {
+        return !raw_;
     }
 
     T **operator&() {
@@ -153,9 +172,9 @@ private:
     void assign(T *t) {
         // ref first to protect against self-assignment
         if (t)
-            g_object_ref(G_OBJECT(t));
+            ref(G_OBJECT(t));
         if (raw_)
-            g_object_unref(G_OBJECT(raw_));
+            unref(G_OBJECT(raw_));
         raw_ = t;
     }
 };

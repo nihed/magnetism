@@ -1,5 +1,6 @@
 #pragma once
 #include "HippoMusicMonitor.h"
+#include "HippoGSignal.h"
 
 class HippoUI;
 
@@ -14,7 +15,6 @@ public:
     ~HippoMusic();
 
     void setUI(HippoUI *ui);
-    void setEnabled(bool enabled);
 
     ////// HippoMusicListener methods
     virtual void onCurrentTrackChanged(HippoMusicMonitor *monitor, bool haveTrack, const HippoTrackInfo & newTrack);
@@ -26,5 +26,10 @@ private:
     HippoPtr<HippoPlaylistSource> iTunes_;
     HippoPtr<HippoMusicMonitor> yahoo_;
 
+    GConnection0<void> musicSharingChanged_;
+
     void updateEnabled();
+
+    //// signal handlers
+    void onMusicSharingChanged();
 };

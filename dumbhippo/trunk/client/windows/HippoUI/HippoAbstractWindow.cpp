@@ -39,6 +39,8 @@ void
 HippoAbstractWindow::setUI(HippoUI *ui)
 {
     ui_ = ui;
+    if (ui_)
+        initializeUI();
 }
 
 void
@@ -119,6 +121,11 @@ HippoAbstractWindow::initializeIE()
 
 void 
 HippoAbstractWindow::initializeBrowser()
+{
+}
+
+void 
+HippoAbstractWindow::initializeUI()
 {
 }
 

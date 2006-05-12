@@ -8,6 +8,7 @@
 #include <HippoUtil.h>
 #include "HippoBubble.h"
 #include "HippoUI.h"
+#include "HippoComWrappers.h"
 
 #include "cleangdiplus.h"
 
@@ -59,6 +60,8 @@ HippoBubble::HippoBubble(void)
 
 HippoBubble::~HippoBubble(void)
 {
+    disconnectAllPosts();
+
     if (layerDC_) {
         // We have to select the original bitmap back into the DC before freeing
         // it or we'll leak the last bitmap we installed
@@ -97,6 +100,13 @@ HippoBubble::getURL()
     ui_->getAppletURL(L"notification.xml", &srcURL);
 
     return srcURL;
+}
+
+void
+HippoBubble::initializeUI()
+{
+    postAdded_.connect(G_OBJECT(ui_->getDataCache()), "post-added",
+    slot(this, &HippoBubble::onPostAdded));
 }
 
 void
@@ -161,6 +171,9 @@ HippoBubble::processMessage(UINT   message,
 void 
 HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
 {
+    // watch future changes to this post
+    connectPost(share);
+
     if (!create())
         return;
 
@@ -169,7 +182,7 @@ HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
     // Note if you change the arguments to this function, you must change notification.js
     ie_->createInvocation(L"dhAddLinkShare")
         .addBool(isRedisplay)
-        .addDispatch(share)
+        .addDispatch(HippoPostWrapper::getWrapper(share, ui_->getDataCache()))
         .getResult(&result);
 
     if (result.vt != VT_BOOL) {
@@ -182,15 +195,15 @@ HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
         ui_->debugLogU("dhAddLinkShare returned false");
         return;
     }
-    if (ui_->isShareActive(share->getId().m_str)) {
-        ui_->debugLogW(L"chat is active for postId %s, not showing", share->getId().m_str);
+    if (ui_->isShareActive(share)) {
+        ui_->debugLogU("chat is active for postId %s, not showing", hippo_post_get_guid(share));
         return;
     }
     setShown();
 }
 
 void 
-HippoBubble::addMySpaceCommentNotification(long myId, long blogId, HippoMySpaceBlogComment &comment)
+HippoBubble::addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceCommentData &comment)
 {
     if (!create())
         return;
@@ -268,7 +281,8 @@ HippoBubble::showMissedBubbles()
 }
 
 void 
-HippoBubble::onViewerJoin(HippoPost *post)
+HippoBubble::onUserJoined(HippoPerson *person,
+                          HippoPost   *post)
 {
     if (!ie_) {
         if (!create())
@@ -276,14 +290,15 @@ HippoBubble::onViewerJoin(HippoPost *post)
     }
 
     ie_->createInvocation(L"dhViewerJoined")
-        .addDispatch(post)
+        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .run();
 
     setShown();
 }
 
 void 
-HippoBubble::onChatRoomMessage(HippoPost *post)
+HippoBubble::onMessageAdded(HippoChatMessage *message,
+                            HippoPost        *post)
 {
     if (!ie_) {
         if (!create())
@@ -291,21 +306,90 @@ HippoBubble::onChatRoomMessage(HippoPost *post)
     }
 
     ie_->createInvocation(L"dhChatRoomMessage")
-        .addDispatch(post)
+        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .run();
 
     setShown();
 }
 
 void 
-HippoBubble::updatePost(HippoPost *post)
+HippoBubble::onPostChanged(HippoPost *post)
 {
     if (!ie_)
         return;
 
     ie_->createInvocation(L"dhUpdatePost")
-        .addDispatch(post)
+        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .run();
+}
+
+void
+HippoBubble::onPostAdded(HippoPost *post)
+{
+    if (hippo_post_get_new(post)) {
+        hippoDebugLogU("New post %s needs bubbling up",
+            hippo_post_get_guid(post));
+        hippo_post_set_new(post, FALSE);
+        setLinkNotification(false, post);
+    } else {
+        hippoDebugLogU("Post %s is not new, not bubbling up for now",
+            hippo_post_get_guid(post));
+    }
+}
+
+void
+HippoBubble::connectPost(HippoPost *post)
+{
+    hippoDebugLogU("Bubble connecting post %s",
+            hippo_post_get_guid(post));
+
+    std::set<HippoPost*>::iterator i = connectedPosts_.find(post);
+    if (i != connectedPosts_.end()) {
+        hippoDebugLogU("Post was already connected");
+        return;
+    }
+
+    GConnection0<void>::named_connect(G_OBJECT(post), "hippo-bubble-changed",
+        "changed", bind(slot(this, &HippoBubble::onPostChanged), post));
+
+    HippoChatRoom *room = hippo_post_get_chat_room(post);
+    GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-user-joined",
+        "user-joined", bind(slot(this, &HippoBubble::onUserJoined), post));
+    GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-message-added",
+        "message-added", bind(slot(this, &HippoBubble::onMessageAdded), post));
+
+    g_object_ref(post);
+    connectedPosts_.insert(post);
+}
+
+void
+HippoBubble::disconnectPost(HippoPost *post)
+{
+    hippoDebugLogU("Bubble disconnecting post %s",
+            hippo_post_get_guid(post));
+
+    std::set<HippoPost*>::iterator i = connectedPosts_.find(post);
+    if (i != connectedPosts_.end()) {
+        GConnection::named_disconnect(G_OBJECT(post), "hippo-bubble-changed");
+
+        HippoChatRoom *room = hippo_post_get_chat_room(post);
+        GConnection::named_disconnect(G_OBJECT(room), "hippo-bubble-user-joined");
+        GConnection::named_disconnect(G_OBJECT(room), "hippo-bubble-message-added");
+        
+        connectedPosts_.erase(i);
+        g_object_unref(post);
+    } else {
+        hippoDebugLogU("Post wasn't connected anyhow");
+    }
+}
+
+void
+HippoBubble::disconnectAllPosts()
+{
+    std::set<HippoPost*>::iterator i;
+    while ((i = connectedPosts_.begin()) != connectedPosts_.end()) {
+        disconnectPost(*i);
+    }
 }
 
 void

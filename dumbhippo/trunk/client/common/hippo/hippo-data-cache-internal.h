@@ -57,6 +57,9 @@ void             hippo_data_cache_set_myspace_blog_comments (HippoDataCache  *ca
 void             hippo_data_cache_set_myspace_contacts      (HippoDataCache  *cache,
                                                              GSList          *contacts);
 
+void             hippo_data_cache_set_client_info           (HippoDataCache        *cache,
+                                                             const HippoClientInfo *info);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DATA_CACHE_INTERNAL_H__ */

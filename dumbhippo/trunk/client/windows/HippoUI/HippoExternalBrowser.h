@@ -10,7 +10,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include <shlobj.h>
 #include <mshtml.h>
 #include <HippoUtil.h>
 

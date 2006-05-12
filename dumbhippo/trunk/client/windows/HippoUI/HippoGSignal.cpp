@@ -1,28 +1,45 @@
-#include <stdafx.h>
+#include "stdafx.h"
 
 #include "HippoGSignal.h"
 
 Slot::~Slot ()
 {
+    // a non-deleted slot has to have refcount > 0 and !deleted_,
+    // so we have two chances to detected a deleted slot and throw
+    // a nice assertion failure
+    assert(ref_count_ == 0);
+    deleted_ = true;
+}
 
+void
+Slot::ref()
+{
+    g_return_if_fail(ref_count_ > 0);
+    g_return_if_fail(!deleted_);
 
+    ref_count_ += 1;
 }
 
 void
 Slot::unref ()
 {
-  ref_count_ -= 1;
-  if (ref_count_ == 0)
-    delete this;
+    g_return_if_fail(ref_count_ > 0);
+    g_return_if_fail(!deleted_);
+
+    ref_count_ -= 1;
+    if (ref_count_ == 0)
+        delete this;
 }
 
 void
 Slot::sink ()
 {
-if (floating_)
-    {
-      floating_ = false;
-      unref ();
+    g_return_if_fail(ref_count_ > 0);
+    g_return_if_fail(!deleted_);
+
+    if (floating_) {
+        floating_ = false;
+        unref ();
     }
 }
 
@@ -54,7 +71,8 @@ GConnection::disconnect()
 }
 
 // it's probably fine to disconnect by data and not store the ids, since nobody 
-// is ever going to bother reusing slots
+// is ever going to bother reusing slots. I guess storing the slot* is just as 
+// expensive though.
 void
 GConnection::connect_impl(GObject *object, const char *signal, GCallback callback, Slot *slot)
 {
@@ -63,11 +81,56 @@ GConnection::connect_impl(GObject *object, const char *signal, GCallback callbac
     g_assert(id_ == 0);
     g_assert(obj_ == NULL);
 
+    id_ = unmanaged_connect_impl(object, signal, callback, slot);
+    obj_ = object;
+    // FIXME I bet we could stick this on the closure somehow and avoid the extra weak ref
+    // book-keeping
+    g_object_add_weak_pointer(object, reinterpret_cast<void**>(& obj_));
+}
+
+void
+GConnection::unmanaged_disconnect(GObject *object, unsigned int id)
+{
+    g_signal_handler_disconnect(object, id);
+}
+
+unsigned int
+GConnection::unmanaged_connect_impl(GObject *object, const char *signal, GCallback callback, Slot *slot)
+{
     slot->ref();
     slot->sink();
-    id_ = g_signal_connect_data(object, signal, callback, slot, free_slot_closure, G_CONNECT_AFTER);
-    obj_ = object;
-    g_object_add_weak_pointer(object, reinterpret_cast<void**>(& obj_));
+    return g_signal_connect_data(object, signal, callback, slot, free_slot_closure, G_CONNECT_AFTER);
+}
+
+void
+GConnection::named_disconnect(GObject *object, const char *connection_name)
+{
+    void *id_ptr = g_object_get_data(object, connection_name);
+    // to fix the warning we need to use C++-style casts, but GPOINTER_TO_UINT 
+    // has a little magic beyond just a cast so skipping it for now FIXME
+    unsigned int id = GPOINTER_TO_UINT(id_ptr);
+    if (id != 0) {
+        g_signal_handler_disconnect(object, id);
+        g_object_set_data(object, connection_name, NULL);
+    }
+}
+
+void
+GConnection::named_connect_impl(GObject *object, const char *connection_name,
+                                const char *signal, GCallback callback, Slot *slot)
+{
+    void *id_ptr = g_object_get_data(object, connection_name);
+    // to fix the warning we need to use C++-style casts, but GPOINTER_TO_UINT 
+    // has a little magic beyond just a cast so skipping it for now FIXME
+    unsigned int id = GPOINTER_TO_UINT(id_ptr);
+    
+    if (id != 0) {
+        g_signal_handler_disconnect(object, id);
+    }
+
+    id = unmanaged_connect_impl(object, signal, callback, slot);    
+    id_ptr = GUINT_TO_POINTER(id);
+    g_object_set_data(object, connection_name, id_ptr);
 }
 
 GAbstractSource::~GAbstractSource()
@@ -79,10 +142,9 @@ void
 GAbstractSource::remove()
 {
     if (source_ != NULL) {
-        // source may already be destroyed, but that's OK
-        // since we had a ref and g_source_destroy() silently allows
-        // multiple calls
-        g_source_destroy(source_);
+        // source may already be destroyed...
+        if ((source_->flags & G_HOOK_FLAG_ACTIVE) != 0)
+            g_source_destroy(source_);
         g_source_unref (source_);
         source_ = NULL;
     }

@@ -30,8 +30,8 @@ typedef struct _HippoChatRoomClass HippoChatRoomClass;
 
 GType        	 hippo_chat_room_get_type               (void) G_GNUC_CONST;
 
-HippoChatRoom*   hippo_chat_room_new                    (const char   *chat_id,
-                                                         HippoChatKind kind);
+HippoChatRoom*    hippo_chat_room_new                     (const char   *chat_id,
+                                                           HippoChatKind kind);
 
 const char*       hippo_chat_room_get_id                  (HippoChatRoom  *room);
 const char*       hippo_chat_room_get_jabber_id           (HippoChatRoom  *room);
@@ -46,6 +46,8 @@ HippoChatMessage* hippo_chat_room_get_last_message        (HippoChatRoom  *room)
 GSList*           hippo_chat_room_get_users               (HippoChatRoom  *room);
 int               hippo_chat_room_get_viewing_user_count  (HippoChatRoom  *room);
 int               hippo_chat_room_get_chatting_user_count (HippoChatRoom  *room);
+/* This is not a copy, don't need to free list or its members */
+GSList*           hippo_chat_room_get_messages            (HippoChatRoom  *room);
 
 /* === Methods used by HippoConnection to keep chat room updated === */
 
@@ -63,6 +65,14 @@ void     hippo_chat_room_add_message             (HippoChatRoom    *room,
                                                   HippoChatMessage *message);
 /* Called on reconnect, since users and messages will be resent */
 void     hippo_chat_room_clear                   (HippoChatRoom *room);
+
+/* bump our count of desiring PARTICIPANT or VISITOR */
+void            hippo_chat_room_increment_state_count (HippoChatRoom *room,
+                                                       HippoChatState state);
+void            hippo_chat_room_decrement_state_count (HippoChatRoom *room,
+                                                       HippoChatState state);
+/* based on the above counts, what state would the logged-in user like to be in */
+HippoChatState  hippo_chat_room_get_desired_state     (HippoChatRoom *room);
 
 /* === Methods on HippoChatMessage === */
 

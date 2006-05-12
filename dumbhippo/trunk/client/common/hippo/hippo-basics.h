@@ -41,6 +41,7 @@ typedef struct {
     guint replace_existing : 1;
     guint quit_existing : 1;
     guint initial_debug_share : 1;
+    guint verbose : 1;
 } HippoOptions;
 
 gboolean hippo_parse_server          (const char *server,

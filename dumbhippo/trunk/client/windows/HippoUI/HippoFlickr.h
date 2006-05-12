@@ -72,7 +72,7 @@ private:
         bool findFirstNamedChildTextValue(IXMLDOMElement *top, WCHAR *expectedName, HippoBSTR &ret);
 
         virtual void handleCompleteXML(IXMLDOMElement *doc) = 0;
-        virtual void onError() { flickr_->state_ = HippoFlickr::State::FATAL_ERROR; delete this; }
+        virtual void onError() { flickr_->state_ = FATAL_ERROR; delete this; }
     };
     class HippoFlickrAbstractAuthInvocation : public HippoFlickrRESTInvocation {
     public:

@@ -6,7 +6,6 @@
 
 #include "stdafx.h"
 #include "HippoChatRoom.h"
-#include "HippoIM.h"
 #include "HippoLogWindow.h"
 #include <HippoUtilDispId.h>
 

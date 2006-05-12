@@ -34,6 +34,7 @@ int              hippo_post_get_viewing_user_count    (HippoPost *post);
 int              hippo_post_get_chatting_user_count   (HippoPost *post);
 int              hippo_post_get_total_viewers         (HippoPost *post);
 gboolean         hippo_post_get_have_viewed           (HippoPost *post);
+gboolean         hippo_post_get_new                   (HippoPost *post);
 
 void             hippo_post_set_sender                (HippoPost  *post,
                                                        const char *value);
@@ -60,6 +61,8 @@ void             hippo_post_set_chatting_user_count   (HippoPost  *post,
 void             hippo_post_set_total_viewers         (HippoPost  *post,
                                                        int         value);
 void             hippo_post_set_have_viewed           (HippoPost  *post,
+                                                       gboolean    value);
+void             hippo_post_set_new                   (HippoPost  *post,
                                                        gboolean    value);
 
 HippoChatRoom*   hippo_post_get_chat_room             (HippoPost     *post);

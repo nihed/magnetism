@@ -164,6 +164,11 @@ protected:
      **/
     virtual void initializeBrowser();
 
+    /** 
+     * Do any initialization after the UI is set
+     */
+    virtual void initializeUI();
+
     /**
      * Called on incoming messages sent to the window. If you
      * don't handle the event yourself, you should chain up to

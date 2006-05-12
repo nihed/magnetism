@@ -72,8 +72,9 @@ lm_debug_init (void)
 						    NUM_DEBUG_KEYS);
 	}
 
-	g_log_set_handler (LM_LOG_DOMAIN, LM_LOG_LEVEL_ALL, 
-			   debug_log_handler, NULL);
+    if ((debug_flags & G_LOG_LEVEL_MASK) != 0)
+	    g_log_set_handler (LM_LOG_DOMAIN, debug_flags, 
+			       debug_log_handler, NULL);
 
 	initialized = TRUE;
 }

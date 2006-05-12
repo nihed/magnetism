@@ -8,6 +8,7 @@
 #include <process.h>
 #include <strsafe.h>
 #include <exdisp.h>
+#include <Windows.h>
 #include <HippoUtil.h>
 #include <HippoRegistrar.h>
 #include <HippoURLParser.h>
@@ -24,6 +25,7 @@
 #include "HippoPreferences.h"
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
+#include "HippoComWrappers.h"
 
 #include <glib.h>
 
@@ -51,6 +53,8 @@ static const int HOTNESS_BLINK_TIME = 150;
 
 HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
 {
+    HippoConnection *connection;
+
     refCount_ = 1;
     instanceType_ = instanceType;
     replaceExisting_ = replaceExisting;
@@ -61,25 +65,37 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
                       NULL);
 
     platform_ = hippo_platform_impl_new(instanceType);
-    g_object_unref(G_OBJECT(platform_));
+    g_object_unref(G_OBJECT(platform_)); // remove extra ref
+
+    connection = hippo_connection_new(platform_);
+    dataCache_ = hippo_data_cache_new(connection);
+
+    g_object_unref(connection); // owned now by data cache
+    g_object_unref(G_OBJECT(dataCache_)); // remove extra ref
+
+    // Set up connections
+    hotnessChanged_.connect(dataCache_, "hotness-changed", slot(this, &HippoUI::onHotnessChanged));
+    connectedChanged_.connect(G_OBJECT(connection), "connected-changed", slot(this, &HippoUI::onConnectedChanged));
+    hasAuthChanged_.connect(G_OBJECT(connection), "has-auth-changed", slot(this, &HippoUI::onHasAuthChanged));
+    authFailed_.connect(G_OBJECT(connection), "auth-failed", slot(this, &HippoUI::onAuthFailed));
+    authSucceeded_.connect(G_OBJECT(connection), "auth-succeeded", slot(this, &HippoUI::onAuthSucceeded));
 
     notificationIcon_.setUI(this);
     bubble_.setUI(this);
     menu_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
+    // FIXME this is disabled since it's hosed up, see HippoMySpace.h comments
+    // mySpace_.setUI(this);
 
-    hotness_ = HippoUI::Hotness::UNKNOWN;
     hotnessBlinkCount_ = 0;
     idleHotnessBlinkId_ = 0;
 
     preferencesDialog_ = NULL;
 
-    connected_ = false;
     registered_ = false;
 
     flickr_ = NULL;
-    mySpace_ = NULL;
 
     nextBrowserCookie_ = 0;
 
@@ -94,7 +110,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     idle_ = FALSE;
     haveMissedBubbles_ = FALSE;
     screenSaverRunning_ = FALSE;
-    checkIdleTimeoutId_ = 0;
 
     recentPostList_ = NULL;
     currentShare_ = NULL;
@@ -237,8 +252,9 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
         if (browsers_[i].cookie == cookie) {
             browsers_[i].url = url;
             browsers_[i].title = title;
-            if (mySpace_)
-                mySpace_->browserChanged(browsers_[i]);
+
+            mySpace_.browserChanged(browsers_[i]);
+
             return S_OK;
         }
     }
@@ -277,10 +293,11 @@ HippoUI::ShowMissed()
 STDMETHODIMP
 HippoUI::ShowRecent()
 {
-    std::vector<HippoPost *> recent;
-    dataCache_.getRecentPosts(recent);
+    GSList *recent;
 
-    if (recent.size() == 0) // No recent links, just ignore
+    recent = hippo_data_cache_get_recent_posts(dataCache_);
+
+    if (recent == NULL) // No recent links, just ignore
         return S_OK;
 
     if (!recentPostList_) {
@@ -291,12 +308,12 @@ HippoUI::ShowRecent()
         recentPostList_->hide();
         recentPostList_->clear();
     }
-
-    std::vector<HippoPost *>::const_iterator it = recent.begin();
-    while (it != recent.end()) {
-        recentPostList_->addLinkShare(*it);
-        it++;
+    
+    for (GSList *link = recent; link != NULL; link = link->next) {
+        recentPostList_->addLinkShare(HIPPO_POST(link->data));
     }
+    g_slist_foreach(recent, (GFunc) g_object_unref, NULL);
+    g_slist_free(recent);
 
     recentPostList_->show();
 
@@ -356,29 +373,29 @@ HippoUI::setIcons(void)
     }
 
     // And always load the notification icon
-    if (!connected_) {
+    if (!hippo_connection_get_connected(getConnection())) {
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0);
     } else if (hotnessBlinkCount_ % 2 == 1) {
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
-        switch (hotness_) {
-        case HippoUI::Hotness::COLD:
+        switch (hippo_data_cache_get_hotness(getDataCache())) {
+        case HIPPO_HOTNESS_COLD:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_1);
             break;
-        case HippoUI::Hotness::COOL:
+        case HIPPO_HOTNESS_COOL:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_2);
             break;
-        case HippoUI::Hotness::WARM:
+        case HIPPO_HOTNESS_WARM:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_3);
             break;
-        case HippoUI::Hotness::GETTING_HOT:
+        case HIPPO_HOTNESS_GETTING_HOT:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_4);
             break;
-        case HippoUI::Hotness::HOT:
+        case HIPPO_HOTNESS_HOT:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_5);
             break;
         default:
-        case HippoUI::Hotness::UNKNOWN:
+        case HIPPO_HOTNESS_UNKNOWN:
             icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0); // need different icon for this?
             break;
         }
@@ -391,16 +408,18 @@ HippoUI::setIcons(void)
 
     const WCHAR *currentDesc = getPreferences()->getInstanceDescription();
     tooltip_ = currentDesc;
-    if (!connected_)
+    if (!hippo_connection_get_connected(getConnection()))
         tooltip_.Append(L" (disconnected)");
 }
 
 void
-HippoUI::onConnectionChange(bool connected)
+HippoUI::onConnectedChanged(gboolean connected)
 {
-    if (connected_ == connected)
-        return;
-    connected_ = connected;
+    if (connected) {
+        const HippoClientInfo *info;
+        info = hippo_data_cache_get_client_info(getDataCache());
+        upgrader_.setUpgradeInfo(info->minimum, info->current, info->download);
+    }
     updateIcon();
 }
 
@@ -412,52 +431,34 @@ HippoUI::updateIcon()
     notificationIcon_.updateTip(tooltip_.m_str);
 }
 
-void 
-HippoUI::setHotness(BSTR str)
+// takes int and not HippoHotness to avoid any possible 
+// issues with signal marshaling through GObject ... 
+// (the callback connected to GObject is generated with the
+// arg type in the GConnection)
+void
+HippoUI::onHotnessChanged(int oldHotnessInt)
 {
-    HippoUI::Hotness hotness;
+    HippoHotness oldHotness = (HippoHotness) oldHotnessInt;
+    HippoHotness hotness;
 
+    hotness = hippo_data_cache_get_hotness(dataCache_);
 
-    if (!wcscmp(str, L"COLD"))
-        hotness = HippoUI::Hotness::COLD;
-    else if (!wcscmp(str, L"COOL"))
-        hotness = HippoUI::Hotness::COOL;
-    else if (!wcscmp(str, L"WARM"))
-        hotness = HippoUI::Hotness::WARM;
-    else if (!wcscmp(str, L"GETTING_HOT"))
-        hotness = HippoUI::Hotness::GETTING_HOT;
-    else if (!wcscmp(str, L"HOT"))
-        hotness = HippoUI::Hotness::HOT;
-    else
-        hotness = HippoUI::Hotness::UNKNOWN;
+    if (hotness == oldHotness)
+        return; /* should never happen though */
 
-    if (hotness == hotness_)
-        return;
     if (idleHotnessBlinkId_ > 0)
         g_source_remove(idleHotnessBlinkId_);
     idleHotnessBlinkId_ = 0;
     hotnessBlinkCount_ = 0;
-    debugLogU("hotness changing from %d to %d", hotness_, hotness);
-    HippoUI::Hotness oldHotness = hotness_;
-    hotness_ = hotness;
-    if (oldHotness != HippoUI::Hotness::UNKNOWN) {
+    
+    debugLogU("hotness changing from %d to %d", oldHotness, hotness);
+
+    if (oldHotness != HIPPO_HOTNESS_UNKNOWN) {
         idleHotnessBlinkId_ = g_idle_add(HippoUI::idleHotnessBlink, this);
     } else {
         // If we're transitioning from UNKNOWN, don't do blink
         updateIcon();
     }
-}
-
-bool
-HippoUI::getNeedPrimingTracks()
-{
-    return im_.getNeedPrimingTracks();
-}
-
-void
-HippoUI::providePrimingTracks(HippoPlaylist *playlist)
-{
-    im_.providePrimingTracks(playlist);
 }
 
 int
@@ -485,6 +486,8 @@ testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusIn
     HippoUI *ui = (HippoUI*) uctx;
 }
 
+#if 0
+// FIXME
 static gboolean
 idleAddTestViewers(gpointer data)
 {
@@ -514,10 +517,12 @@ idleAddTestViewers(gpointer data)
     ui->onLinkMessage(linkshare);
     return FALSE;
 }
+#endif
 
-gboolean
-HippoUI::idleShowDebugShare(gpointer data)
+bool
+HippoUI::timeoutShowDebugShare()
 {
+#if 0
     static const WCHAR photoUrl[] = L"/files/headshots/48/PfqZScwvsH0R9f";
 
     HippoUI *ui = (HippoUI*)data;
@@ -606,8 +611,8 @@ HippoUI::idleShowDebugShare(gpointer data)
     blogComment.content.setUTF8("Blah, blah, blah... Blah!");
 
     ui->bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
-
-    return FALSE;
+#endif
+    return false; // remove idle
 }
 
 bool
@@ -646,18 +651,17 @@ HippoUI::create(HINSTANCE instance)
         return false;
     }
 
-    im_.setUI(this);
     if (hippo_platform_get_signin(platform_)) {
-        if (im_.signIn())
+        if (hippo_connection_signin(getConnection()))
             showSignInWindow();
     }
 
-    checkIdleTimeoutId_ = g_timeout_add(CHECK_IDLE_TIME, checkIdle, this);
+    checkIdleTimeout_.add(CHECK_IDLE_TIME, slot(this, &HippoUI::timeoutCheckIdle));
 
     registerStartup();
 
-    if (this->initialShowDebugShare_) {
-        g_timeout_add(10000, idleShowDebugShare, this);
+    if (initialShowDebugShare_) {
+        showDebugShareTimeout_.add(10000, slot(this, &HippoUI::timeoutShowDebugShare));
     }
 
     return true;
@@ -681,9 +685,6 @@ HippoUI::destroy()
         signinWindow_ = NULL;
     }
 
-    if (checkIdleTimeoutId_)
-        g_source_remove(checkIdleTimeoutId_);
-
     notificationIcon_.destroy();
     
     revokeActive();
@@ -693,6 +694,18 @@ HippoPlatform *
 HippoUI::getPlatform()
 {
     return platform_;
+}
+
+HippoConnection*
+HippoUI::getConnection()
+{
+    return hippo_data_cache_get_connection(dataCache_);
+}
+
+HippoDataCache*
+HippoUI::getDataCache()
+{
+    return dataCache_;
 }
 
 HippoPreferences*
@@ -798,16 +811,31 @@ HippoUI::ShowChatWindow(BSTR chatId)
 }
 
 HRESULT
-HippoUI::GetChatRoom(BSTR postId, IHippoChatRoom **result)
+HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)
 {
-    return im_.getChatRoom(postId, result);
+    *result = NULL;
+
+    HippoUStr chatIdU(chatId);
+    HippoChatRoom *room = hippo_data_cache_lookup_chat_room(dataCache_, chatIdU.c_str(), NULL);
+ 
+    if (room != NULL) {
+        *result = HippoChatRoomWrapper::getWrapper(room, dataCache_);
+        (*result)->AddRef();
+    }
+
+    return S_OK;
 }
 
 STDMETHODIMP
 HippoUI::GetLoginId(BSTR *ret)
 {
-    // GUID is same as username
-    im_.getUsername(ret);
+    const char *selfGuidU = hippo_connection_get_self_guid(getConnection());
+    if (selfGuidU) {
+        HippoBSTR::fromUTF8(selfGuidU, -1).CopyTo(ret);
+    } else {
+        // not logged in right now
+        *ret = NULL;
+    }
     return S_OK;
 }
 
@@ -1133,25 +1161,30 @@ HippoUI::logLastHresult(const WCHAR *text)
 }
 
 void 
-HippoUI::onAuthFailure()
+HippoUI::onAuthFailed()
 {
-    updateForgetPassword();
     showSignInWindow();
 }
 
 
 bool 
-HippoUI::isShareActive(BSTR postId)
+HippoUI::isShareActive(HippoPost *post)
 {
-    HippoChatRoom *chatRoom = im_.findChatRoom(postId);
-    if (chatRoom != NULL && chatRoom->getState() != HippoChatRoom::NONMEMBER)
-        return TRUE;
+    HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);
+        
+    HippoPerson *self = hippo_data_cache_get_self(dataCache_);
+
+    if (chatRoom != NULL &&
+        hippo_chat_room_get_user_state(chatRoom, self) != HIPPO_CHAT_NONMEMBER)
+        return true;
+    
+    HippoBSTR postId = HippoBSTR::fromUTF8(hippo_post_get_guid(post), -1);
     for (UINT i = 0; i < browsers_.length(); i++) {
         if (isFramedPost(browsers_[i].url, postId)) {
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 void 
@@ -1170,39 +1203,9 @@ HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
 }
 
 void
-HippoUI::onAuthSuccess()
+HippoUI::onAuthSucceeded()
 {
-    updateForgetPassword();
-}
-
-void 
-HippoUI::setClientInfo(const char *minVersion,
-                       const char *currentVersion,
-                       const char *downloadUrl)
-{
-    upgrader_.setUpgradeInfo(minVersion, currentVersion, downloadUrl);
-}
-
-void 
-HippoUI::setMySpaceName(const char *name)
-{
-    if (mySpace_)
-        delete mySpace_;
-    HippoBSTR wName;
-    wName.setUTF8(name);
-    mySpace_ = new HippoMySpace(wName, this);
-}
-
-void
-HippoUI::getSeenMySpaceComments()
-{
-    im_.getMySpaceSeenBlogComments();
-}
-
-void
-HippoUI::getMySpaceContacts()
-{
-    im_.getMySpaceContacts();
+    // currently does nothing
 }
 
 void
@@ -1226,12 +1229,6 @@ HippoUI::onUpgradeReady()
 }
 
 void 
-HippoUI::onLinkMessage(HippoPost *post)
-{
-    bubble_.setLinkNotification(false, post);
-}
-
-void 
 HippoUI::setHaveMissedBubbles(bool haveMissed)
 {
     if (haveMissedBubbles_ != haveMissed) {
@@ -1243,9 +1240,7 @@ HippoUI::setHaveMissedBubbles(bool haveMissed)
 int
 HippoUI::getRecentMessageCount()
 {
-    std::vector<HippoPost *> recent;
-    dataCache_.getRecentPosts(recent);
-    return (int) recent.size();
+    return hippo_data_cache_get_recent_posts_count(getDataCache());
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
@@ -1399,25 +1394,24 @@ HippoUI::showPreferences()
         SetDlgItemText(preferencesDialog_, IDC_WEB_SERVER, webServer);
     }
     
-    updateForgetPassword();
+    onHasAuthChanged(); // update the password button sensitivity
     ShowWindow(preferencesDialog_, SW_SHOW);
 }
 
 void 
-HippoUI::updateForgetPassword()
+HippoUI::onHasAuthChanged()
 {
     if (!preferencesDialog_)
         return;
 
     HWND forgetPassButton = GetDlgItem(preferencesDialog_, IDC_FORGETPASSWORD);
     if (forgetPassButton)
-        EnableWindow(forgetPassButton, im_.hasAuth());
+        EnableWindow(forgetPassButton, hippo_connection_get_has_auth(getConnection()));
 }
 
-int
-HippoUI::checkIdle(gpointer data) 
+bool
+HippoUI::timeoutCheckIdle() 
 {
-    HippoUI *ui = (HippoUI *)data;
     LASTINPUTINFO lastInput;
     DWORD currentTime;
 
@@ -1437,14 +1431,14 @@ HippoUI::checkIdle(gpointer data)
     currentTime = GetTickCount();
 
     if (currentTime - lastInput.dwTime > USER_IDLE_TIME) {
-        if (!ui->idle_) {
-            ui->idle_ = TRUE;
-            ui->bubble_.setIdle(TRUE);
+        if (!idle_) {
+            idle_ = true;
+            bubble_.setIdle(true);
         }
     } else {
-        if (ui->idle_) {
-            ui->idle_ = FALSE;
-            ui->bubble_.setIdle(FALSE);
+        if (idle_) {
+            idle_ = false;
+            bubble_.setIdle(false);
         }
     }
 
@@ -1455,12 +1449,12 @@ HippoUI::checkIdle(gpointer data)
      */
     BOOL screenSaverRunning;
     SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, (void *)&screenSaverRunning, 0);
-    if (!ui->screenSaverRunning_ != !screenSaverRunning) {
-        ui->screenSaverRunning_ = screenSaverRunning != FALSE;
-        ui->bubble_.setScreenSaverRunning(ui->screenSaverRunning_);
+    if (!screenSaverRunning_ != !screenSaverRunning) {
+        screenSaverRunning_ = screenSaverRunning != FALSE;
+        bubble_.setScreenSaverRunning(screenSaverRunning_);
     }
 
-    return TRUE;
+    return true;
 }
 
 static bool
@@ -1545,8 +1539,8 @@ HippoUI::updateMenu()
         info.fType = MFT_STRING;
         info.wID = IDM_SIGN_IN;
 
-        HippoIM::State state = im_.getState();
-        if (state == HippoIM::SIGNED_OUT || state == HippoIM::SIGN_IN_WAIT) {
+        HippoState state = hippo_connection_get_state(getConnection());
+        if (state == HIPPO_STATE_SIGNED_OUT || state == HIPPO_STATE_SIGN_IN_WAIT) {
             info.wID = IDM_SIGN_IN;
             StringCchCopy(menubuf, sizeof(menubuf) / sizeof(TCHAR), TEXT("Sign In..."));
         } else {
@@ -1660,11 +1654,11 @@ HippoUI::processMessage(UINT   message,
         switch (wmId)
         {
         case IDM_SIGN_IN:
-            if (im_.signIn())
+            if (hippo_connection_signin(getConnection()))
                 showSignInWindow();
             return true;
         case IDM_SIGN_OUT:
-            im_.signOut();
+            hippo_connection_signout(getConnection());
             return true;
         case IDM_RECENT:
             ShowRecent();
@@ -1728,8 +1722,7 @@ HippoUI::preferencesProc(HWND   dialog,
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_FORGETPASSWORD:
-            ui->im_.forgetAuth();
-            ui->updateForgetPassword();
+            hippo_connection_forget_auth(ui->getConnection());
             return TRUE;
         case IDOK:
         {
@@ -1838,87 +1831,11 @@ HippoUI::unregisterWindowMsgHook(HWND window)
     // fixme
 }
 
-void
-HippoUI::onCurrentTrackChanged(bool haveTrack, const HippoTrackInfo & newTrack)
-{
-    im_.notifyMusicTrackChanged(haveTrack, newTrack);
-}
-
+// notification from HippoMySpace when we have a new comment to bubble
 void 
-HippoUI::onNewMySpaceComment(long myId, long blogId, HippoMySpaceBlogComment &comment, bool doDisplay)
+HippoUI::bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment)
 {
-    im_.addMySpaceComment(comment);
-    if (doDisplay)
-        bubble_.addMySpaceCommentNotification(myId, blogId, comment);
-}
-
-void 
-HippoUI::setSeenMySpaceComments(HippoArray<HippoMySpaceBlogComment*> *comments)
-{
-    mySpace_->setSeenComments(comments);
-}
-
-void 
-HippoUI::setMySpaceContacts(HippoArray<HippoMySpaceContact *> &contacts)
-{
-    mySpace_->setContacts(contacts);
-}
-
-void 
-HippoUI::onCreatingMySpaceContactPost(HippoMySpaceContact *contact)
-{
-    im_.notifyMySpaceContactPost(contact);
-}
-
-void
-HippoUI::onReceivingMySpaceContactPost() 
-{
-    mySpace_->onReceivingMySpaceContactPost();
-}
-
-void 
-HippoUI::onViewerJoin(HippoPost *post)
-{
-    bubble_.onViewerJoin(post);
-    menu_.updatePost(post);
-    if (recentPostList_)
-        recentPostList_->updatePost(post);
-}
-
-void 
-HippoUI::onChatRoomMessage(HippoPost *post)
-{
-    bubble_.onChatRoomMessage(post);
-    menu_.updatePost(post);
-    if (recentPostList_)
-        recentPostList_->updatePost(post);
-}
-
-void 
-HippoUI::updatePost(HippoPost *post)
-{
-    bubble_.updatePost(post);
-    menu_.updatePost(post);
-    if (recentPostList_)
-        recentPostList_->updatePost(post);
-}
-
-void
-HippoUI::clearActivePosts()
-{
-    menu_.clearActivePosts();
-}
-
-void 
-HippoUI::addActivePost(HippoPost *post)
-{
-    menu_.addActivePost(post);
-}
-
-HippoDataCache &
-HippoUI::getDataCache()
-{
-    return dataCache_;
+    bubble_.addMySpaceCommentNotification(myId, blogId, comment);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32
@@ -2101,6 +2018,79 @@ test_alloc_failure_behavior()
 #endif
 }
 
+/* A little cut-and-paste out of loudmouth to avoid including all 
+ * of its headers here; kind of lame, sue me. It's just for debug spew.
+ */
+typedef enum {
+    LM_LOG_LEVEL_VERBOSE = 1 << (G_LOG_LEVEL_USER_SHIFT),
+    LM_LOG_LEVEL_NET     = 1 << (G_LOG_LEVEL_USER_SHIFT + 1),
+    LM_LOG_LEVEL_PARSER  = 1 << (G_LOG_LEVEL_USER_SHIFT + 2),
+    LM_LOG_LEVEL_ALL     = (LM_LOG_LEVEL_NET |
+                LM_LOG_LEVEL_VERBOSE |
+                LM_LOG_LEVEL_PARSER)
+} LmLogLevelFlags;
+
+#ifndef LM_LOG_DOMAIN
+#  define LM_LOG_DOMAIN "LM"
+#endif
+
+static void
+log_handler(const char    *log_domain,
+            GLogLevelFlags log_level,
+            const char    *message,
+            void          *user_data)
+{
+    const char *prefix;
+
+    if (log_level & G_LOG_FLAG_RECURSION) {
+        hippoDebugLogU("Mugshot: log recursed");
+        return;
+    }
+
+    switch (log_level & G_LOG_LEVEL_MASK) {
+        case G_LOG_LEVEL_DEBUG:
+            prefix = "DEBUG: ";
+            break;
+        case G_LOG_LEVEL_WARNING:
+            prefix = "WARNING: ";
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            prefix = "CRITICAL: ";
+            break;
+        case G_LOG_LEVEL_ERROR:
+            prefix = "ERROR: ";
+            break;
+        case G_LOG_LEVEL_INFO:
+            prefix = "INFO: ";
+            break;
+        case G_LOG_LEVEL_MESSAGE:
+            prefix = "MESSAGE: ";
+            break;
+        default:
+            prefix = "";
+            break;
+    }
+
+    GString *gstr = g_string_new("Mugshot: ");
+    if (log_domain && strcmp(log_domain, LM_LOG_DOMAIN) == 0)
+        g_string_append(gstr, "LM: ");
+    
+    g_string_append(gstr, prefix);
+    g_string_append(gstr, message);
+
+    hippoDebugLogU("%s", gstr->str);
+    g_string_free(gstr, TRUE);
+
+    // glib will do this for us, but if we abort in our own code which has
+    // debug symbols, visual studio gets less confused about the backtrace.
+    // at least, that's my experience.
+    if (log_level & G_LOG_FLAG_FATAL) {
+        if (IsDebuggerPresent())
+            G_BREAKPOINT();
+        abort();
+    }
+}
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -2113,16 +2103,16 @@ WinMain(HINSTANCE hInstance,
     int result;
     int argc;
     char **argv;
+    HippoOptions options;
+    GLogFunc old_default_handler;
+    unsigned int loudmouth_handler;
 
-    static gboolean debug = FALSE;
-    static gboolean dogfood = FALSE;
-    static gboolean configFlag = FALSE;
-    static gboolean doInstallLaunch = FALSE;
-    static gboolean replaceExisting = FALSE;
-    static gboolean doQuitExisting = FALSE;
-    static gboolean initialDebugShare = FALSE;
-
-    HippoInstanceType instanceType;
+    g_thread_init(NULL);
+    old_default_handler = g_log_set_default_handler(log_handler, NULL);
+    loudmouth_handler = g_log_set_handler(LM_LOG_DOMAIN,
+                            (GLogLevelFlags) (LM_LOG_LEVEL_ALL | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
+                            log_handler, NULL);
+    g_type_init();
 
     char *command_line = GetCommandLineA();
     GError *error = NULL;
@@ -2132,38 +2122,22 @@ WinMain(HINSTANCE hInstance,
         return 1;
     }
 
-    static const GOptionEntry entries[] = {
-        { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
-        { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
-        { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doInstallLaunch, "Run appropriately at the end of the install" },
-        { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replaceExisting, "Replace existing instance, if any" },
-        { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&doQuitExisting, "Tell any existing instances to quit" },
-        { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initialDebugShare, "Show an initial dummy debug share" },
-        { NULL }
-    };
-
-    g_thread_init(NULL);
-
-    GOptionContext *context = g_option_context_new("The dumbhippo.com notification icon");
-    g_option_context_add_main_entries(context, entries, NULL);
-
-    g_option_context_parse(context, &argc, &argv, &error);
-    if (error) {
-        g_printerr("%s\n", error->message);
+    // FIXME there's a problem here in that if hippo_parse_options removes
+    // parsed options (not sure if it does but it should) then we'd leak those elements
+    // of argv. Need to copy argv first for purposes of freeing it, or something.
+    if (!hippo_parse_options(&argc, &argv, &options)) {
         return 1;
     }
-    g_option_context_free(context);
+
     g_strfreev(argv);
 
-    if (debug)
-        instanceType = HIPPO_INSTANCE_DEBUG;
-    else if (dogfood)
-        instanceType = HIPPO_INSTANCE_DOGFOOD;
-    else
-        instanceType = HIPPO_INSTANCE_NORMAL;
+    if (!options.verbose) {
+        g_log_set_default_handler(old_default_handler, NULL);
+        g_log_remove_handler(LM_LOG_DOMAIN, loudmouth_handler);
+    }
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
-    if (doInstallLaunch) {
+    if (options.install_launch) {
         CoInitialize(NULL);
         closeWelcome();
         CoUninitialize();
@@ -2171,7 +2145,7 @@ WinMain(HINSTANCE hInstance,
         return 0;
     }
 
-    if (doQuitExisting) {
+    if (options.quit_existing) {
         CoInitialize(NULL);
         quitExisting(HIPPO_INSTANCE_NORMAL);
         quitExisting(HIPPO_INSTANCE_DEBUG);
@@ -2194,8 +2168,7 @@ WinMain(HINSTANCE hInstance,
 
     editToolbar();
 
-    ui = new HippoUI(instanceType,
-                     replaceExisting != FALSE, initialDebugShare != FALSE);
+    ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
     if (!ui->create(hInstance))
         return 0;
 
@@ -2205,6 +2178,8 @@ WinMain(HINSTANCE hInstance,
     g_source_attach(source, NULL);
 
     test_alloc_failure_behavior();
+
+    hippo_options_free_fields(&options);
 
     g_main_loop_run(loop);
 

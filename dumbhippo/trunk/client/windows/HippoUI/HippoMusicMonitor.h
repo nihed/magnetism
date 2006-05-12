@@ -37,6 +37,7 @@ public:                                                                         
 
 // Keep the fields here in sync with Java Track class on the server,
 // and with the code that stuffs HippoTrackInfo into an XMPP message,
+// with toGStringVectors() method,
 // and with any music player backends...
 // one exception is the Location property which doesn't leave the local 
 // system since it would have no meaning on the server
@@ -46,6 +47,11 @@ public:
     HippoTrackInfo() 
     {
     }
+
+    // this includes only the "remote" properties,
+    // i.e. excludes location
+#define HIPPO_TRACK_N_PROPERTIES 10
+#define HIPPO_TRACK_N_PROPERTIES_WITH_LOCAL (HIPPO_TRACK_N_PROPERTIES + 1)
 
     HIPPO_TRACK_INFO_PROP(Type);
     HIPPO_TRACK_INFO_PROP(Format);
@@ -104,6 +110,10 @@ public:
         else
             return HippoBSTR(L"[track ???]");
     }
+
+    // free with g_strfreev
+    void toGStringVectors(char ***keysReturn,
+                          char ***valuesReturn) const;
 
 private:
 #define BUFSIZE 32

@@ -8,6 +8,7 @@
 #include <HippoUtil.h>
 #include "HippoBubbleList.h"
 #include "HippoUI.h"
+#include "HippoComWrappers.h"
 
 // These values basically don't matter, since the javascript code drives the size
 static const int BASE_WIDTH = 400;
@@ -29,6 +30,7 @@ HippoBubbleList::HippoBubbleList(void)
 
 HippoBubbleList::~HippoBubbleList(void)
 {
+    disconnectAllPosts();
 }
 
 void
@@ -113,16 +115,18 @@ HippoBubbleList::addLinkShare(HippoPost *share)
     if (!create())
         return;
 
+    connectPost(share);
+
     variant_t result;
     ui_->debugLogW(L"Invoking dhAddLinkShare");
     // Note if you change the arguments to this function, you must change bubbleList.js
     ie_->createInvocation(L"dhAddLinkShare")
-        .addDispatch(share)
+        .addDispatch(HippoPostWrapper::getWrapper(share, ui_->getDataCache()))
         .getResult(&result);
 }
 
 void
-HippoBubbleList::addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceBlogComment &comment)
+HippoBubbleList::addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceCommentData &comment)
 {
     if (!create())
         return;
@@ -141,15 +145,74 @@ HippoBubbleList::addMySpaceCommentNotification(long myId, long blogId, const Hip
         .run();
 }
 
-void 
-HippoBubbleList::updatePost(HippoPost *post)
+void
+HippoBubbleList::onPostChanged(HippoPost *post)
 {
     if (!ie_)
         return;
 
     ie_->createInvocation(L"dhUpdatePost")
-        .addDispatch(post)
+        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .run();
+}
+
+void
+HippoBubbleList::onMessageAdded(HippoChatMessage *message,
+                                HippoPost        *post)
+{
+    onPostChanged(post);
+}
+
+void
+HippoBubbleList::onUserJoined(HippoPerson      *user,
+                              HippoPost        *post)
+{
+    onPostChanged(post);
+}
+
+void
+HippoBubbleList::connectPost(HippoPost *post)
+{
+    std::set<HippoPost*>::iterator i = connectedPosts_.find(post);
+    if (i != connectedPosts_.end())
+        return;
+
+    GConnection0<void>::named_connect(G_OBJECT(post), "hippo-bubble-list-changed",
+        "changed", bind(slot(this, &HippoBubbleList::onPostChanged), post));
+
+    HippoChatRoom *room = hippo_post_get_chat_room(post);
+    GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-list-user-joined",
+        "user-joined", bind(slot(this, &HippoBubbleList::onUserJoined), post));
+    GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-list-message-added",
+        "message-added", bind(slot(this, &HippoBubbleList::onMessageAdded), post));
+
+    g_object_ref(post);
+    connectedPosts_.insert(post);
+}
+
+void
+HippoBubbleList::disconnectPost(HippoPost *post)
+{
+    std::set<HippoPost*>::iterator i = connectedPosts_.find(post);
+    if (i != connectedPosts_.end()) {
+        GConnection::named_disconnect(G_OBJECT(post), "hippo-bubble-list-changed");
+
+        HippoChatRoom *room = hippo_post_get_chat_room(post);
+        GConnection::named_disconnect(G_OBJECT(room), "hippo-bubble-list-user-joined");
+        GConnection::named_disconnect(G_OBJECT(room), "hippo-bubble-list-message-added");
+        
+        connectedPosts_.erase(i);
+        g_object_unref(post);
+    }
+}
+
+void
+HippoBubbleList::disconnectAllPosts()
+{
+    std::set<HippoPost*>::iterator i;
+    while ((i = connectedPosts_.begin()) != connectedPosts_.end()) {
+        disconnectPost(*i);
+    }
 }
 
 void 
@@ -157,6 +220,8 @@ HippoBubbleList::clear()
 {
     if (!create())
         return;
+
+    disconnectAllPosts();
 
     ui_->debugLogW(L"Invoking dhBubbleListClear");
 

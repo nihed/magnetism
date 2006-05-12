@@ -25,6 +25,7 @@ GType        	 hippo_entity_get_type            (void) G_GNUC_CONST;
 HippoEntity*     hippo_entity_new                 (HippoEntityType type,
                                                    const char     *guid);
 const char*      hippo_entity_get_guid            (HippoEntity    *entity);
+HippoEntityType  hippo_entity_get_entity_type     (HippoEntity    *entity);
 const char*      hippo_entity_get_name            (HippoEntity    *entity);
 const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
 /* returns -1 if we don't know it */

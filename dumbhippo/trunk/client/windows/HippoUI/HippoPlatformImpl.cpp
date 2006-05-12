@@ -1,9 +1,9 @@
-#include <stdafx.h>
+#include "stdafx.h"
 
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include <HippoUtil.h>
-#include <shlobj.h>
+#include <Windows.h>
 #include <mshtml.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);

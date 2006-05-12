@@ -313,6 +313,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	connection = connect_data->connection;
 	
 	if (connection->io_watch_connect != 0) {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Removing io_watch_connect on connection success");
 		g_source_destroy (g_main_context_find_source_by_id(connection->context,
 								   connection->io_watch_connect));
 		connection->io_watch_connect = 0;
@@ -344,6 +345,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 		if (!_lm_ssl_begin (connection->ssl, connection->fd,
 				    connection->server,
 				    NULL)) {
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "SSL begin failed, closing connection");
 #ifdef __WIN32__
 			shutdown (connection->fd, SD_BOTH);
 			closesocket (connection->fd);
@@ -364,6 +366,8 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	g_io_channel_set_flags (connection->io_channel,
 				flags, NULL);
 	
+    g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Adding io_watch_in on new connection");
+
 	connection->io_watch_in = 
 		connection_add_watch (connection,
 				      connection->io_channel,
@@ -426,7 +430,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	LmConnection *connection;
 	
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
-	       "Connection failed: %s (error %d)\n",
+	       "Connection failed: %s (error %d)",
 	       strerror (error), error);
 	
 	connection = connect_data->connection;
@@ -434,6 +438,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	connect_data->current_addr = connect_data->current_addr->ai_next;
 	
 	if (connection->io_watch_connect != 0) {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Removing io_watch_connect on error");
 		g_source_destroy (g_main_context_find_source_by_id(connection->context,
 								   connection->io_watch_connect));
 		connection->io_watch_connect = 0;
@@ -481,16 +486,34 @@ connection_connect_cb (GIOChannel   *source,
 
 	connect_data = (LmConnectData *) data;
 	
-	if (condition == G_IO_ERR) {
+    g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "connect_cb on fd %d err=%d out=%d in=%d hup=%d",
+            connect_data->fd, condition & G_IO_ERR, condition & G_IO_OUT, condition & G_IO_IN, condition & G_IO_HUP); 
+
+    /* NOTE G_IO_ERR will _not_ happen, you get IO_OUT then you have to use getsockopt to see what went 
+     * wrong. But leaving G_IO_ERR in for paranoia.
+     */
+
+    error = 0;
+	if (condition == G_IO_ERR || condition == G_IO_OUT) {
 		/* get the real error from the socket */
-		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
-			    &error, &len);
-		_lm_connection_failed_with_error (connect_data, error);
-		return FALSE;
-	} else if (condition == G_IO_OUT) {
-		_lm_connection_succeeded (connect_data);
-	} else {
-		g_assert_not_reached ();
+        gboolean failed = TRUE;
+		if (getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
+            &error, &len) < 0) {
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "getsockopt failed code %d", WSAGetLastError());
+        } else {
+            if (error != 0) {
+                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "socket error status %d", error);
+            } else {
+                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "getsockopt says socket is ready");
+                failed = FALSE;
+            }
+        }
+        
+        if (failed) {
+		    _lm_connection_failed_with_error (connect_data, error);
+        } else {
+            _lm_connection_succeeded (connect_data);
+        }
 	}
 
 	return FALSE;
@@ -501,7 +524,14 @@ set_socket_nonblocking (int fd)
 {
 #ifdef __WIN32__
     ULONG arg = 1;
-    ioctlsocket (fd, FIONBIO, &arg);
+    int res;
+
+    if ((res = ioctlsocket (fd, FIONBIO, &arg)) < 0) {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "setting socket %d nonblocking FAILED: %d",
+            fd, WSAGetLastError());
+    } else {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "successfully set socket %d nonblocking", fd);
+    }
 #else
     int              flags;
 
@@ -540,7 +570,7 @@ connection_do_connect (LmConnectData *connect_data)
 		     NI_NUMERICHOST | NI_NUMERICSERV);
 
 	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-	       "Trying %s port %s...\n", name, portname);
+	       "Trying %s port %s...", name, portname);
 	
 	fd = socket (addr->ai_family, 
 		     addr->ai_socktype, 
@@ -555,8 +585,9 @@ connection_do_connect (LmConnectData *connect_data)
 	 * a Win32 channel causes it to be closed; this causes the non-blocking
 	 * connect code not to work.
 	 */
+    /* FIXME Also, async connection code seems to be broken somehow... disabled for now */
 #ifdef __WIN32__
-	if (!glib_check_version (2, 8, 0))
+	if (FALSE && !glib_check_version (2, 8, 0))
 #endif
 		set_socket_nonblocking (fd);
 	
@@ -565,11 +596,15 @@ connection_do_connect (LmConnectData *connect_data)
 
 	if (res < 0) {
 #ifdef __WIN32__
-		in_progress = WSAGetLastError() == WSAEWOULDBLOCK;
+        int errcode = WSAGetLastError();
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Connect to %d failed with code %d",
+            fd, errcode); /* strerror won't work, don't bother trying */
+		in_progress = errcode == WSAEWOULDBLOCK;
 #else
 		in_progress = errno == EINPROGRESS;
 #endif
 		if (!in_progress) {		
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "not in_progress, closing socket");
 #ifdef __WIN32__
 			closesocket (fd);
 #else
@@ -584,6 +619,7 @@ connection_do_connect (LmConnectData *connect_data)
 	connect_data->io_channel = g_io_channel_unix_new (fd);
 	if (in_progress) {
 		if (connection->proxy) {
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "adding io_watch_connect with proxy");
 			connection->io_watch_connect =
 			connection_add_watch (connection,
 				    	      connect_data->io_channel,
@@ -591,6 +627,7 @@ connection_do_connect (LmConnectData *connect_data)
 					      (GIOFunc) _lm_proxy_connect_cb, 
 					      connect_data);
 		} else {
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "adding io_watch_connect without proxy");
 			connection->io_watch_connect =
 			connection_add_watch (connection,
 					      connect_data->io_channel,
@@ -714,7 +751,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		proxy_server = lm_proxy_get_server (connection->proxy);
 		/* connect through proxy */
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n", proxy_server);
+		       "Going to connect to %s", proxy_server);
 
 		result = getaddrinfo (proxy_server, NULL, &req, &ans);
 		if (result != 0) {
@@ -728,7 +765,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	} else { /* connect directly */
 	        int result;
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n", 
+		       "Going to connect to %s", 
 		       connection->server);
 
 		result = getaddrinfo (connection->server, NULL, &req, &ans);
@@ -762,17 +799,23 @@ connection_do_open (LmConnection *connection, GError **error)
 static void
 connection_do_close (LmConnection *connection)
 {
+    g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "connection_do_close");
+
 	connection_stop_keep_alive (connection);
 
 	if (connection->io_channel) {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "destroying io_watch_in");
 		g_source_destroy (g_main_context_find_source_by_id (
 			connection->context, connection->io_watch_in));
+#if 0
 		g_source_destroy (g_main_context_find_source_by_id (
 			connection->context, connection->io_watch_err));
 		g_source_destroy (g_main_context_find_source_by_id (
 			connection->context, connection->io_watch_hup));
+#endif
 
 		if (connection->io_watch_connect != 0) {
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "destroying io_watch_connect");
 			g_source_destroy (g_main_context_find_source_by_id(connection->context,
 									   connection->io_watch_connect));
 			connection->io_watch_connect = 0;
@@ -784,7 +827,7 @@ connection_do_close (LmConnection *connection)
 		connection->fd = -1;
 	}
 
-	
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "destroying incoming_source");
 	g_source_destroy (connection->incoming_source);
 	g_source_unref (connection->incoming_source);
 
@@ -804,8 +847,12 @@ connection_in_event (GIOChannel   *source,
 	gchar     buf[IN_BUFFER_SIZE];
 	gsize     bytes_read;
 	GIOStatus status;
-       
+
+    g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "connection_in_event err=%d out=%d in=%d hup=%d",
+            condition & G_IO_ERR, condition & G_IO_OUT, condition & G_IO_IN, condition & G_IO_HUP); 
+
 	if (!connection->io_channel) {
+        g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "no io channel anymore, returning");
 		return FALSE;
 	}
 
@@ -843,15 +890,15 @@ connection_in_event (GIOChannel   *source,
 	}
 
 	buf[bytes_read] = '\0';
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "RECV [%d]:", 
 	       (int)bytes_read);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
+	       "-----------------------------------");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'", buf);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
+	       "-----------------------------------");
 
-	lm_verbose ("Read: %d chars\n", (int)bytes_read);
+	lm_verbose ("Read: %d chars", (int)bytes_read);
 
 	lm_parser_parse (connection->parser, buf);
 	
@@ -897,9 +944,7 @@ connection_send (LmConnection  *connection,
 		 const gchar   *str, 
 		 gint           len, 
 		 GError       **error)
-{
-	gsize             bytes_written;
-	
+{	
 	if (connection->state < LM_CONNECTION_STATE_OPENING) {
 		g_set_error (error,
 			     LM_ERROR,
@@ -912,23 +957,50 @@ connection_send (LmConnection  *connection,
 		len = strlen (str);
 	}
 
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nSEND:\n");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "SEND:");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s\n", str);
+	       "-----------------------------------");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s", str);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
+	       "-----------------------------------");
 
 	if (connection->ssl) {
 		if (!_lm_ssl_send (connection->ssl, str, len)) {
-			
+		    g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "SSL send of %d bytes failed", len);	
 			connection_error_event (connection->io_channel, 
 						G_IO_HUP,
 						connection);
 		}
 	} else {
-		g_io_channel_write_chars (connection->io_channel, str, len, 
-					  &bytes_written, NULL);
+        GError *tmp_error;
+        GIOStatus status;
+        const char *p;
+        gsize remaining;
+        p = str;
+        remaining = len;
+        while (TRUE) {
+          	gsize bytes_written;
+
+            tmp_error = NULL;
+		    status = g_io_channel_write_chars (connection->io_channel, p, remaining,
+					        &bytes_written, &tmp_error);
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Wrote %d bytes of %d IO status %d",
+                   bytes_written, remaining, status);
+            if (tmp_error != NULL) {
+                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "IO error writing: '%s'",
+                       tmp_error->message);
+                g_propagate_error(error, tmp_error);
+                return FALSE;
+            }
+            if (bytes_written < remaining) {
+                p += bytes_written;
+                remaining -= bytes_written;
+                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%d bytes left to write", remaining);
+                continue;
+            } else {
+                break;
+            }
+        }
 	}
 
 	return TRUE;
@@ -1935,7 +2007,7 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 			continue;
 		}
 
-		for (n = 0; n < g_queue_get_length (connection->incoming_messages); n++) {
+		for (n = 0; n < (int) g_queue_get_length (connection->incoming_messages); n++) {
 			LmMessage *m;
 
 			m = (LmMessage *) g_queue_peek_nth (connection->incoming_messages, n);

@@ -10,6 +10,13 @@ G_BEGIN_DECLS
 
 /* HippoDataCache forward-declared in hippo-connection.h */
 
+typedef struct
+{
+    char *minimum;
+    char *current;
+    char *download;
+} HippoClientInfo;
+
 #define HIPPO_TYPE_DATA_CACHE              (hippo_data_cache_get_type ())
 #define HIPPO_DATA_CACHE(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_DATA_CACHE, HippoDataCache))
 #define HIPPO_DATA_CACHE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_DATA_CACHE, HippoDataCacheClass))
@@ -60,6 +67,11 @@ const char*      hippo_data_cache_get_myspace_name          (HippoDataCache   *c
 /* these don't copy the list or the list members */
 GSList*          hippo_data_cache_get_myspace_blog_comments (HippoDataCache   *cache);
 GSList*          hippo_data_cache_get_myspace_contacts      (HippoDataCache   *cache);
+
+/* CAN RETURN NULL if we aren't connected */
+HippoPerson*     hippo_data_cache_get_self                  (HippoDataCache   *cache);
+
+const HippoClientInfo* hippo_data_cache_get_client_info     (HippoDataCache   *cache);
 
 G_END_DECLS
 

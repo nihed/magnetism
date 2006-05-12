@@ -442,6 +442,7 @@ ot.set ( open ("HippoSignals.h", 'w'),
 
 ot.write_to_header("// Generated file from codegen.py ; do not edit\n")
 ot.write_to_impl("// Generated file from codegen.py ; do not edit\n")
+ot.write_to_impl("#include \"stdafx.h\"\n")
 
 ot.write_to_header("#pragma once\n\n");
 

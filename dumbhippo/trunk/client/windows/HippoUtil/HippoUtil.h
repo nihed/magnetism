@@ -316,6 +316,7 @@ public:
         delete [] buf;
     }
 
+    // note that NULL utf8 is allowed if len<=0
     // FIXME could be more efficient
     void appendUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
         HippoBSTR tmp;
@@ -323,6 +324,7 @@ public:
         Append(tmp);
     }
 
+    // note that NULL utf8 is allowed if len<=0
     // FIXME could be more efficient
     static HippoBSTR fromUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
         HippoBSTR tmp;

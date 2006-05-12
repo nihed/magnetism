@@ -2,6 +2,51 @@
 #include "HippoMusicMonitor.h"
 #include "HippoITunesMonitor.h"
 #include "HippoYahooMonitor.h"
+#include <glib-object.h>
+#include "HippoUIUtil.h"
+
+void
+HippoTrackInfo::toGStringVectors(char ***keysReturn,
+                                 char ***valuesReturn) const
+{
+    int    i;
+    char **keys;
+    char **values;
+    int    n_props_check;
+
+    n_props_check = 0;
+
+#define ADD_PROP(lower, upper)              \
+  do {                                      \
+    ++n_props_check;                        \
+    if (has ## upper ()) {                  \
+        HippoUStr value(get ## upper ());   \
+        keys[i] = g_strdup(#lower);         \
+        values[i] = value.steal();          \
+        ++i;                                \
+    }                                       \
+  } while(0)
+
+    keys = g_new0(char*, HIPPO_TRACK_N_PROPERTIES + 1);
+    values = g_new0(char*, HIPPO_TRACK_N_PROPERTIES + 1);
+
+    i = 0;
+    ADD_PROP(type, Type);
+    ADD_PROP(format, Format);
+    ADD_PROP(name, Name);
+    ADD_PROP(artist, Artist);
+    ADD_PROP(album, Album);
+    ADD_PROP(url, Url);
+    ADD_PROP(duration, Duration);
+    ADD_PROP(fileSize, FileSize);
+    ADD_PROP(trackNumber, TrackNumber);
+    ADD_PROP(discIdentifier, DiscIdentifier);
+
+    g_assert(n_props_check == HIPPO_TRACK_N_PROPERTIES);
+
+    *keysReturn = keys;
+    *valuesReturn = values;
+}
 
 void
 HippoMusicMonitor::addListener(HippoMusicListener *listener)

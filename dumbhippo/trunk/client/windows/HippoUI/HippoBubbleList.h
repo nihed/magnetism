@@ -4,13 +4,13 @@
  **/
 #pragma once
 
+#include <set>
 #include <HippoUtil.h>
-#include "HippoDataCache.h"
+#include <hippo/hippo-common.h>
+#include "HippoGSignal.h"
 #include "HippoAbstractWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
-
-class HippoPost;
 
 class HippoBubbleList :
     public IHippoBubbleList,
@@ -22,8 +22,7 @@ public:
     ~HippoBubbleList();
 
     void addLinkShare(HippoPost *share);
-    void updatePost(HippoPost *post);
-    void addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceBlogComment &comment);
+    void addMySpaceCommentNotification(long myId, long blogId, const HippoMySpaceCommentData &comment);
     void clear();
 
     // IUnknown methods
@@ -56,6 +55,16 @@ private:
     DWORD refCount_;
     int desiredWidth_;
     int desiredHeight_;
+
+    std::set<HippoPost*> connectedPosts_;
+
+    void onUserJoined(HippoPerson *person, HippoPost *post);
+    void onMessageAdded(HippoChatMessage *message, HippoPost *post);
+    void onPostChanged(HippoPost *post);
+    
+    void connectPost(HippoPost *post);
+    void disconnectPost(HippoPost *post);
+    void disconnectAllPosts();
 
     void moveResizeWindow();
 };

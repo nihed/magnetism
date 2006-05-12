@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include "HippoMenu.h"
 #include "HippoUI.h"
+#include "HippoComWrappers.h"
 
 // These values basically don't matter, since the javascript code drives the size
 static const int BASE_WIDTH = 200;
@@ -33,6 +34,7 @@ HippoMenu::HippoMenu(void)
 
 HippoMenu::~HippoMenu(void)
 {
+    clearActivePosts(false);
 }
 
 void 
@@ -50,32 +52,34 @@ HippoMenu::popup(int mouseX, int mouseY)
 }
 
 void 
-HippoMenu::clearActivePosts()
+HippoMenu::clearActivePosts(bool notify)
 {
     for (int i = (int)activePosts_.size() - 1; i >= 0; i--) {
-        invokeRemoveActivePost(i);
+        disconnectPost(activePosts_[i]);
+        if (notify)
+            invokeRemoveActivePost(i);
     }
     activePosts_.clear();
 }
-    
+
 void 
 HippoMenu::addActivePost(HippoPost *post)
 {
-    HippoBSTR postId = post->getId();
-
     int i = 0;
-    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
+    for (std::vector<HippoGObjectPtr<HippoPost> >::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {
-        if ((*iter)->getId() == postId) {
+        if (post == *iter) {
             activePosts_.erase(iter);
+            disconnectPost(*iter);
             invokeRemoveActivePost(i);
             break;
         }
     }
 
     activePosts_.insert(activePosts_.begin(), post);
+    connectPost(post);
     invokeInsertActivePost(0, post);
 }
  
@@ -92,7 +96,7 @@ HippoMenu::invokeInsertActivePost(int i, HippoPost *post)
     if (ie_)
         ie_->createInvocation(L"dhMenuInsertActivePost")
             .addLong(i)
-            .addDispatch(post)
+            .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
             .run();
 }
 
@@ -103,18 +107,73 @@ HippoMenu::updatePost(HippoPost *post)
         return;
 
     int i = 0;
-    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
+    for (std::vector<HippoGObjectPtr<HippoPost> >::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {
-        if ((*iter)->getId() == post->getId()) {
+        if (post == *iter) {
             ie_->createInvocation(L"dhMenuUpdatePost")
-                .addLong(i)
-                .addDispatch(post)
-                .run();
-            break;
+                        .addLong(i)
+                        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))               
+                        .run();
         }
     }
+}
+
+void
+HippoMenu::onActivePostsChanged()
+{
+    clearActivePosts(true);
+
+    GSList *active = hippo_data_cache_get_active_posts(ui_->getDataCache());
+
+    for (GSList *link = active; link != NULL; link = link->next) {
+        HippoPost *post = HIPPO_POST(link->data);
+        
+        addActivePost(post);
+
+        g_object_unref(G_OBJECT(post));
+    }
+
+    g_slist_free(active);
+}
+
+void
+HippoMenu::onPostChanged(HippoPost *post)
+{
+    g_return_if_fail(HIPPO_IS_POST(post)); // double-check the HippoGSignal.h stuff ;-)
+    updatePost(post);
+}
+
+void
+HippoMenu::onMessageAdded(HippoChatMessage *message,
+                          HippoPost        *post)
+{
+    
+}
+
+void
+HippoMenu::connectPost(HippoPost *post)
+{
+    GConnection0<void>::named_connect(G_OBJECT(post), "hippo-menu-connection", "changed", 
+            bind(slot(this, &HippoMenu::onPostChanged), post));
+
+    HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);
+
+    g_return_if_fail(chatRoom != NULL);
+
+    GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(chatRoom), "hippo-menu-connection",
+                "message-added", 
+                bind(slot(this, &HippoMenu::onMessageAdded), post));
+}
+
+void
+HippoMenu::disconnectPost(HippoPost *post)
+{
+    GConnection::named_disconnect(G_OBJECT(post), "hippo-menu-connection");
+    
+    HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);
+    GConnection::named_disconnect(G_OBJECT(chatRoom), "hippo-menu-connection");
 }
 
 void
@@ -149,6 +208,14 @@ HippoMenu::getURL()
 void
 HippoMenu::initializeWindow()
 {
+    assert(ui_ != NULL);
+
+    activePostsChanged_.connect(G_OBJECT(ui_->getDataCache()), "active-posts-changed",
+            slot(this, &HippoMenu::onActivePostsChanged));
+
+    // initially load active posts
+    onActivePostsChanged();
+
     moveResizeWindow();
 }
     
@@ -171,7 +238,7 @@ HippoMenu::initializeBrowser()
     ie_->createInvocation(L"dhInit").add(appletURL).run();
 
     int i = 0;
-    for (std::vector<HippoPtr<HippoPost> >::iterator iter = activePosts_.begin();
+    for (std::vector<HippoGObjectPtr<HippoPost> >::iterator iter = activePosts_.begin();
          iter != activePosts_.end();
          iter++, i++) 
     {

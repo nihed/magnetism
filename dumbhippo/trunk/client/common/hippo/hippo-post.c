@@ -16,16 +16,18 @@ struct _HippoPost {
     char *info;
     GTime date;
     int timeout;
-    guint have_viewed : 1;  
+    /* have we clicked on this post ever */
+    guint have_viewed : 1;
+    /* did we just now get this as a newPost message 
+     * (gets unset when we bubble it up)
+     */
+    guint is_new : 1;
     HippoChatRoom *chat_room;
 
-    /* FIXME all this info is also stored in the chat room,
-     * here it's from post-related XMPP messages and in the
-     * chat room from the chat-related messages. We should 
-     * always use the chat room info when we have it, probably.
-     * But this could be here for posts while the chat room info
-     * is incoming. Currently we _always_ load the chat room info...
-     * but we don't have it when the post first appears.
+    /* Once we load the chat room, it overrides viewing_user_count and chatting_user_count
+     * which are the CURRENT counts of people actively present. The total_viewers and 
+     * viewers fields are people who have EVER viewed the post, so the chat room 
+     * does not override those.
      */
     int viewing_user_count;
     int chatting_user_count;
@@ -182,14 +184,26 @@ int
 hippo_post_get_viewing_user_count(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->viewing_user_count;
+
+    /* When we first get a Post, the data in the post is more accurate -
+     * waiting until we are filled to use the chatroom count avoids
+     * the user seeing a count-up as the chatroom fills
+     */
+    if (post->chat_room && !hippo_chat_room_get_filling(post->chat_room))
+        return hippo_chat_room_get_viewing_user_count(post->chat_room);
+    else
+        return post->viewing_user_count;
 }
 
 int
 hippo_post_get_chatting_user_count(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->chatting_user_count;
+
+    if (post->chat_room && !hippo_chat_room_get_filling(post->chat_room))
+        return hippo_chat_room_get_chatting_user_count(post->chat_room);
+    else
+        return post->chatting_user_count;
 }
 
 int
@@ -204,6 +218,13 @@ hippo_post_get_have_viewed(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
     return post->have_viewed;
+}
+
+gboolean
+hippo_post_get_new(HippoPost *post)
+{
+    g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
+    return post->is_new;
 }
 
 static void
@@ -353,6 +374,18 @@ hippo_post_set_have_viewed(HippoPost  *post,
         hippo_post_emit_changed(post);
     }
 }                           
+
+void
+hippo_post_set_new(HippoPost  *post,
+                   gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+    value = value != FALSE;
+    if (post->is_new != value) {
+        post->is_new = value;
+        hippo_post_emit_changed(post);
+    }
+}
 
 HippoChatRoom*
 hippo_post_get_chat_room(HippoPost *post)
