@@ -132,19 +132,19 @@
 				RelativePath=".\HippoBubbleList.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoChatRoom.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoDataCache.cpp">
+				RelativePath=".\HippoComWrappers.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoExternalBrowser.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoFlickr.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoGSignal.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoHTTP.cpp">
@@ -154,9 +154,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoIEWindow.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoIM.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.cpp">
@@ -236,19 +233,19 @@
 				RelativePath=".\HippoBubbleList.h">
 			</File>
 			<File
-				RelativePath=".\HippoChatRoom.h">
-			</File>
-			<File
 				RelativePath=".\HippoChatWindow.h">
 			</File>
 			<File
-				RelativePath=".\HippoDataCache.h">
+				RelativePath=".\HippoComWrappers.h">
 			</File>
 			<File
 				RelativePath=".\HippoExternalBrowser.h">
 			</File>
 			<File
 				RelativePath=".\HippoFlickr.h">
+			</File>
+			<File
+				RelativePath=".\HippoGSignal.h">
 			</File>
 			<File
 				RelativePath=".\HippoHTTP.h">
@@ -258,9 +255,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoIEWindow.h">
-			</File>
-			<File
-				RelativePath=".\HippoIM.h">
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.h">

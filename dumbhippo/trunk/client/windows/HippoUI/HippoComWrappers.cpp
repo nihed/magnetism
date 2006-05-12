@@ -392,7 +392,7 @@ HippoPostWrapper::get_CurrentViewers(IHippoEntityCollection **viewers)
 /////////////////////////////////////////////////////////////////////////
 
 HippoChatRoomWrapper::HippoChatRoomWrapper(HippoChatRoom *room)
-    : refCount_(1), HippoComWrapper(room)
+    : refCount_(1), HippoComWrapper<HippoChatRoom,HippoChatRoomWrapper>(room)
 {
     connectionPointContainer_.setWrapper(static_cast<IHippoChatRoom *>(this));
 

@@ -50,7 +50,7 @@ class HippoComWrapperDispatchable
 protected:
 
     explicit HippoComWrapperDispatchable(OriginalType *object)
-        : HippoComWrapper(object)
+        : HippoComWrapper<OriginalType,WrapperType>(object)
     {
     }
 
@@ -65,7 +65,7 @@ class HippoEntityWrapper
 public:
 
     explicit HippoEntityWrapper(HippoEntity *entity) 
-        : HippoComWrapperDispatchable(entity) 
+        : HippoComWrapperDispatchable<HippoEntity,IHippoEntity,HippoEntityWrapper>(entity) 
     {
     }
 
@@ -119,7 +119,7 @@ class HippoPostWrapper
 {
 public:
     explicit HippoPostWrapper(HippoPost *post)
-        : HippoComWrapperDispatchable(post)
+        : HippoComWrapperDispatchable<HippoPost,IHippoPost,HippoPostWrapper>(post)
     {
     }
 
