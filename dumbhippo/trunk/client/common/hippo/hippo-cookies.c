@@ -6,6 +6,7 @@
 
 struct HippoCookie {
     int refcount;
+    HippoBrowserKind origin_browser;
     char *domain;
     int         port;
     gboolean    all_hosts_match;
@@ -17,14 +18,15 @@ struct HippoCookie {
 };
 
 HippoCookie*
-hippo_cookie_new(const char *domain,
-                 int         port,
-                 gboolean    all_hosts_match,
-                 const char *path,
-                 gboolean    secure_connection_required,
-                 GTime       timestamp,
-                 const char *name,
-                 const char *value)
+hippo_cookie_new(HippoBrowserKind origin_browser,
+                 const char      *domain,
+                 int              port,
+                 gboolean         all_hosts_match,
+                 const char      *path,
+                 gboolean         secure_connection_required,
+                 GTime            timestamp,
+                 const char      *name,
+                 const char      *value)
 {
     HippoCookie *cookie = g_new0(HippoCookie, 1);
     
@@ -34,6 +36,7 @@ hippo_cookie_new(const char *domain,
     g_return_val_if_fail(name != NULL, NULL);
     /* value can be NULL */
     
+    cookie->origin_browser = origin_browser;
     cookie->domain = g_strdup(domain);
     cookie->port = port;
     cookie->all_hosts_match = all_hosts_match != FALSE;
@@ -75,6 +78,7 @@ hippo_cookie_equals (HippoCookie *first,
                      HippoCookie *second)
 {
     return
+        first->origin_browser == second->origin_browser &&
         strcmp(first->domain, second->domain) == 0 &&
         first->port == second->port &&
         first->all_hosts_match == second->all_hosts_match &&
@@ -89,11 +93,18 @@ hippo_cookie_hash (HippoCookie *cookie)
     guint hash;
     
     /* very scientific approach */
-    hash = g_str_hash(cookie->domain);
+    hash = g_direct_hash(GINT_TO_POINTER(cookie->origin_browser));
+    hash += g_str_hash(cookie->domain) * 37;
     hash += cookie->port * 37;
     hash += g_str_hash(cookie->path) * 37;
     hash += g_str_hash(cookie->name) * 37;
     return hash;
+}
+
+HippoBrowserKind
+hippo_cookie_get_origin_browser(HippoCookie *cookie)
+{
+    return cookie->origin_browser;
 }
 
 const char*
@@ -269,7 +280,8 @@ parse_line(GSList    **cookies_p,
            const char *end,
            const char *domain_filter,
            int         port_filter,
-           const char *name_filter)
+           const char *name_filter,
+           HippoBrowserKind browser)
 {
     const char *p;
     const char *start;
@@ -332,7 +344,8 @@ parse_line(GSList    **cookies_p,
             (port_filter < 0 || port_filter == port) &&
             (name_filter == NULL || strcmp(name_filter, fields[ATTR_NAME].text) == 0)) {
             HippoCookie *cookie;
-            cookie = hippo_cookie_new(domain, port, all_hosts_match,
+            cookie = hippo_cookie_new(browser,
+                                      domain, port, all_hosts_match,
                                       fields[PATH].text,
                                       secure_connection_required, timestamp,
                                       fields[ATTR_NAME].text,
@@ -351,7 +364,8 @@ parse_line(GSList    **cookies_p,
 
 /* NULL domain, NULL name, -1 port act as "wildcard" for this function */
 GSList*
-hippo_load_cookies_file(const char *filename,
+hippo_load_cookies_file(HippoBrowserKind browser,
+                        const char *filename,
                         const char *domain,
                         int         port,
                         const char *name,
@@ -374,7 +388,7 @@ hippo_load_cookies_file(const char *filename,
         g_assert(p >= line);
         /* \r\n comes out as an extra empty line and gets ignored */
         if (*p == '\r' || *p == '\n' || *p == '\0') {
-            parse_line(&cookies, line, p, domain, port, name);
+            parse_line(&cookies, line, p, domain, port, name, browser);
             line = p + 1;
         }
     }
@@ -392,24 +406,26 @@ listify_foreach(void *key, void *value, void *data)
 }
 
 GSList*
-hippo_load_cookies_files(GSList     *filenames,
+hippo_load_cookies_files(const HippoCookiesFile *files,
+                         int         n_files,
                          const char *domain,
                          int         port,
                          const char *name)
 {
     GHashTable *merge;
     GSList *merged_list;
-    GSList *l;
+    int i;
     
     merge = g_hash_table_new((GHashFunc)hippo_cookie_hash, (GEqualFunc) hippo_cookie_equals);
 
-    for (l = filenames; l != NULL; l = l->next) {
-        char *filename = l->data;
+    for (i = 0; i < n_files; ++i) {
+        char *filename = files[i].filename;
+        HippoBrowserKind browser = files[i].browser;
         GSList *cookies;
         GError *error;
         
         error = NULL;
-        cookies = hippo_load_cookies_file(filename, domain, port, name, &error);
+        cookies = hippo_load_cookies_file(browser, filename, domain, port, name, &error);
         if (error != NULL) {
             /* g_printerr("Failed to load '%s': %s\n", filename, error->message); */
             g_error_free(error); 

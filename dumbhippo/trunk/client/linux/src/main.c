@@ -35,6 +35,103 @@ hippo_app_show_about(HippoApp *app)
     gtk_window_present(GTK_WINDOW(app->about_dialog));
 }
 
+/* use_login_browser uses the browser we've logged in to 
+ * the site with; if it's FALSE, we would want to use 
+ * the user's default browser instead, which will almost 
+ * always be the same presumably.
+ * 
+ * The idea is that links that go to our site need to 
+ * use our login browser, other links should use the
+ * user's browser.
+ * 
+ * Right now only use_login_browser is implemented anyhow
+ * though ;-)
+ */
+void
+hippo_app_open_url(HippoApp   *app,
+                   gboolean    use_login_browser,
+                   const char *url)
+{
+    HippoBrowserKind browser;
+    char *command;
+    char *quoted;
+    GError *error;
+    
+    g_debug("Opening url '%s'", url);
+    
+    browser = hippo_connection_get_auth_browser(app->connection);
+    
+    quoted = g_shell_quote(url);
+    
+    switch (browser) {
+    case HIPPO_BROWSER_EPIPHANY:
+        command = g_strdup_printf("epiphany %s", quoted);
+        break;
+    case HIPPO_BROWSER_FIREFOX:
+    default:
+        command = g_strdup_printf("firefox %s", quoted);    
+        break;
+    }
+  
+    error = NULL;
+    if (!g_spawn_command_line_async(command, &error)) {
+        GtkWidget *dialog;
+        
+        dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
+                                        GTK_BUTTONS_CLOSE,
+                                        _("Couldn't start your web browser!"));
+        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", error->message);
+        g_signal_connect(dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+        
+        gtk_widget_show(dialog);
+        
+        g_debug("Failed to launch browser: %s", error->message);
+        g_error_free(error);
+    }
+    
+    g_free(command);
+    g_free(quoted);
+}
+
+static char*
+make_absolute_url(HippoApp   *app,
+                  const char *relative)
+{
+    char *server;
+    char *url;
+    g_return_val_if_fail(*relative == '/', NULL);
+    server = hippo_platform_get_web_server(app->platform);
+    url = g_strdup_printf("http://%s%s", server, relative);
+    g_free(server);
+    return url;
+}                  
+
+void
+hippo_app_show_home(HippoApp *app)
+{
+    char *url;
+    url = make_absolute_url(app, "/home");
+    hippo_app_open_url(app, TRUE, url);
+    g_free(url);
+}
+
+void
+hippo_app_visit_post(HippoApp   *app,
+                     HippoPost  *post)
+{
+    char *url;
+    char *relative;
+    relative = g_strdup_printf("/visit?post=%s", hippo_post_get_guid(post));
+    url = make_absolute_url(app, relative);
+    hippo_app_open_url(app, TRUE, url);
+    g_free(relative);
+    g_free(url);
+}
+
+/* 
+ * Singleton HippoApp and main()
+ */
+
 static HippoApp *the_app;
 
 HippoApp*
@@ -63,7 +160,9 @@ main(int argc, char **argv)
     the_app->loop = g_main_loop_new(NULL, FALSE);
 
     the_app->connection = hippo_connection_new(the_app->platform);
+    g_object_unref(the_app->platform); /* let connection keep it alive */
     the_app->cache = hippo_data_cache_new(the_app->connection);
+    g_object_unref(the_app->connection); /* let the data cache keep it alive */
     the_app->icon = hippo_status_icon_new(the_app->cache);
     
     if (hippo_connection_signin(the_app->connection))
@@ -80,6 +179,7 @@ main(int argc, char **argv)
     if (the_app->about_dialog)
         gtk_object_destroy(GTK_OBJECT(the_app->about_dialog));
     g_object_unref(the_app->icon);
+    g_object_unref(the_app->cache);
     g_main_loop_unref(the_app->loop);
     g_free(the_app);
 

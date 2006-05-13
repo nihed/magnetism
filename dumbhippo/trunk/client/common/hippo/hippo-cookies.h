@@ -2,19 +2,27 @@
 #define __HIPPO_COOKIES_H__
 
 #include <glib-object.h>
+#include <hippo/hippo-basics.h>
 
 G_BEGIN_DECLS
 
 typedef struct HippoCookie HippoCookie;
 
-HippoCookie* hippo_cookie_new    (const char *domain,
-                                  int         port,
-                                  gboolean    all_hosts_match,
-                                  const char *path,
-                                  gboolean    secure_connection_required,
-                                  GTime       timestamp,
-                                  const char *name,
-                                  const char *value);
+
+typedef struct {
+    char *filename;
+    HippoBrowserKind browser;
+} HippoCookiesFile;
+
+HippoCookie* hippo_cookie_new    (HippoBrowserKind origin_browser,
+                                  const char      *domain,
+                                  int              port,
+                                  gboolean         all_hosts_match,
+                                  const char      *path,
+                                  gboolean         secure_connection_required,
+                                  GTime            timestamp,
+                                  const char      *name,
+                                  const char      *value);
 
 void         hippo_cookie_ref    (HippoCookie *cookie);
 void         hippo_cookie_unref  (HippoCookie *cookie);
@@ -28,6 +36,7 @@ gboolean     hippo_cookie_equals (HippoCookie *first,
                                   HippoCookie *second);
 guint        hippo_cookie_hash   (HippoCookie *cookie);
 
+HippoBrowserKind hippo_cookie_get_origin_browser        (HippoCookie *cookie);
 const char *hippo_cookie_get_domain                     (HippoCookie *cookie);
 int         hippo_cookie_get_port                       (HippoCookie *cookie);
 gboolean    hippo_cookie_get_all_hosts_match            (HippoCookie *cookie);
@@ -42,13 +51,15 @@ const char *hippo_cookie_get_value                      (HippoCookie *cookie);
  * NULL domain, NULL name, -1 port act as "wildcard" for this function, or 
  * specify them to filter. Returns a list of HippoCookie.
  */
-GSList*     hippo_load_cookies_file                     (const char *filename,
+GSList*     hippo_load_cookies_file                     (HippoBrowserKind browser,
+                                                         const char *filename,
                                                          const char *domain,
                                                          int         port,
                                                          const char *name,
                                                          GError    **error);
 /* Merge multiple cookies.txt files; ignores failures to load any specific one */                                                         
-GSList*     hippo_load_cookies_files                    (GSList     *filenames,
+GSList*     hippo_load_cookies_files                    (const HippoCookiesFile *files,
+                                                         int         n_files,
                                                          const char *domain,
                                                          int         port,
                                                          const char *name);

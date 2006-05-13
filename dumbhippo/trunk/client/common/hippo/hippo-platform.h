@@ -19,6 +19,7 @@ struct _HippoPlatformClass {
 	GTypeInterface base_iface;
 
 	gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
+	                                   HippoBrowserKind *origin_browser_p,
 	                                   char          **username,
 	                                   char          **password);
 	void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
@@ -37,9 +38,10 @@ struct _HippoPlatformClass {
 
 GType        	 hippo_platform_get_type               (void) G_GNUC_CONST;
 
-gboolean         hippo_platform_read_login_cookie      (HippoPlatform *platform,
-	                                                    char         **username,
-                  	                                    char         **password);
+gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platform,
+                 	                                    HippoBrowserKind *origin_browser_p,
+	                                                    char            **username_p,
+                  	                                    char            **password_p);
 void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
 const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 

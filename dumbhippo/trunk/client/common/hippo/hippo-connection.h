@@ -43,6 +43,7 @@ void             hippo_connection_set_cache                 (HippoConnection  *c
 
 gboolean         hippo_connection_get_has_auth              (HippoConnection  *connection);
 void             hippo_connection_forget_auth               (HippoConnection  *connection);
+HippoBrowserKind hippo_connection_get_auth_browser          (HippoConnection  *connection);
 
 /* CAN RETURN NULL if we don't have auth information right now */
 const char*      hippo_connection_get_self_guid             (HippoConnection  *connection);

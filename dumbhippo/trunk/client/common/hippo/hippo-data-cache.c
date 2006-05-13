@@ -175,6 +175,8 @@ hippo_data_cache_finalize(GObject *object)
 {
     HippoDataCache *cache = HIPPO_DATA_CACHE(object);
 
+    g_debug("Finalizing data cache");
+
     hippo_data_cache_set_myspace_name(cache, NULL);
     hippo_data_cache_set_myspace_blog_comments(cache, NULL);
     hippo_data_cache_set_myspace_contacts(cache, NULL);

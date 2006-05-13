@@ -20,6 +20,13 @@ typedef enum {
     HIPPO_HOTNESS_UNKNOWN
 } HippoHotness;
 
+typedef enum 
+{
+    HIPPO_BROWSER_IE,
+    HIPPO_BROWSER_FIREFOX,
+    HIPPO_BROWSER_EPIPHANY
+} HippoBrowserKind;
+
 #define HIPPO_DEFAULT_MESSAGE_HOST     "messages.dumbhippo.com"
 #define HIPPO_DEFAULT_MESSAGE_PORT     5222
 #define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"

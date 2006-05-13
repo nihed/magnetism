@@ -347,9 +347,11 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
     
     switch(state) {
     case HIPPO_CHAT_VISITOR:
+        g_object_ref(person); /* extra ref for the hash */
         g_hash_table_replace(room->viewers, g_strdup(guid), person);
         break; 
     case HIPPO_CHAT_PARTICIPANT:
+        g_object_ref(person); /* extra ref for the hash */    
         g_hash_table_replace(room->chatters, g_strdup(guid), person);    
         break;
     case HIPPO_CHAT_NONMEMBER:

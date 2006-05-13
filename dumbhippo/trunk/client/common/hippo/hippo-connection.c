@@ -142,6 +142,7 @@ struct _HippoConnection {
     GQueue *pending_outgoing_messages;
     /* queue of LmMessage */
     GQueue *pending_room_messages;
+    HippoBrowserKind login_browser;
     char *username;
     char *password;
 };
@@ -179,6 +180,16 @@ hippo_connection_init(HippoConnection *connection)
     connection->state = HIPPO_STATE_SIGNED_OUT;
     connection->pending_outgoing_messages = g_queue_new();
     connection->pending_room_messages = g_queue_new();
+
+    /* default browsers if we don't discover otherwise 
+     * (we'll use whatever the user has logged in with
+     * if they've logged in with something)
+     */
+#ifdef G_OS_WIN32
+    connection->login_browser = HIPPO_BROWSER_IE;
+#else
+    connection->login_browser = HIPPO_BROWSER_FIREFOX;
+#endif
 }
 
 static void
@@ -248,6 +259,8 @@ hippo_connection_finalize(GObject *object)
 {
     HippoConnection *connection = HIPPO_CONNECTION(object);
 
+    g_debug("Finalizing connection");
+
     hippo_connection_stop_signin_timeout(connection);
     hippo_connection_stop_retry_timeout(connection);
     
@@ -309,6 +322,14 @@ hippo_connection_get_has_auth(HippoConnection  *connection)
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
 
     return connection->username && connection->password;
+}
+
+HippoBrowserKind
+hippo_connection_get_auth_browser(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), 0);
+
+    return connection->login_browser;
 }
 
 static void
@@ -735,6 +756,7 @@ hippo_connection_load_auth(HippoConnection *connection)
     zero_str(&connection->password);
     
     result = hippo_platform_read_login_cookie(connection->platform,
+                &connection->login_browser,
                 &connection->username, &connection->password);
 
     if (connection->username) {

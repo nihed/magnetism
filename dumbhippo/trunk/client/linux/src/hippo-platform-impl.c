@@ -9,6 +9,7 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
+                                                          HippoBrowserKind        *origin_browser_p,
                                                           char                   **username_p,
                                                           char                   **password_p);
 static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
@@ -81,15 +82,18 @@ hippo_platform_impl_finalize(GObject *object)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object);
 
+    g_debug("Finalizing platform impl");
+
     g_free(impl->jabber_resource);
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
 
 static gboolean
-hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
-                                      char         **username_p,
-                                      char         **password_p)
+hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
+                                      HippoBrowserKind *origin_browser_p,
+                                      char            **username_p,
+                                      char            **password_p)
 {
     GSList *cookies;
     char *web_host;
@@ -119,6 +123,9 @@ hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
     cookie = cookies->data;
     /* in theory the cookie value could be NULL, which is OK, but be aware */        
     value = g_strdup(hippo_cookie_get_value(cookie));
+    
+    if (origin_browser_p)
+        *origin_browser_p = hippo_cookie_get_origin_browser(cookie);
     
     cookies = g_slist_remove_link(cookies, cookies);
     g_slist_foreach(cookies, (GFunc) hippo_cookie_unref, NULL);

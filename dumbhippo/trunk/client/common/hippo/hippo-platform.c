@@ -33,13 +33,14 @@ hippo_platform_base_init(void *klass)
 }
 
 gboolean
-hippo_platform_read_login_cookie(HippoPlatform *platform,
-                                 char         **username_p,
-                                 char         **password_p)
+hippo_platform_read_login_cookie(HippoPlatform    *platform,
+                                 HippoBrowserKind *origin_browser_p,
+                                 char            **username_p,
+                                 char            **password_p)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
     
-    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, username_p, password_p);
+    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, origin_browser_p, username_p, password_p);
 }
 
 void
