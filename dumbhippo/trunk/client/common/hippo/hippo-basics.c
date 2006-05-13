@@ -226,6 +226,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean quit_existing = FALSE;
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
+    static char *join_chat_id = NULL;
     GError *error;
 
     static const GOptionEntry entries[] = {
@@ -234,6 +235,7 @@ hippo_parse_options(int          *argc_p,
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&install_launch, "Run appropriately at the end of the install" },
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replace_existing, "Replace existing instance, if any" },
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
+        { "join-chat", '\0', 0, G_OPTION_ARG_STRING, (gpointer)&join_chat_id, "Join a chat", "CHAT_ID" },        
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
         { NULL }
@@ -263,6 +265,7 @@ hippo_parse_options(int          *argc_p,
     results->quit_existing = quit_existing;
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
+    results->join_chat_id = join_chat_id;
 
     return TRUE;
 }
@@ -270,10 +273,7 @@ hippo_parse_options(int          *argc_p,
 void
 hippo_options_free_fields(HippoOptions *options)
 {
-    /* Right now nothing is malloced in here so this is a no-op,
-     * but if we had string args to options, etc. we'd have 
-     * to free them here
-     */
+    g_free(options->join_chat_id);
 }
 
 const char*

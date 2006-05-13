@@ -43,6 +43,7 @@ typedef enum
 
 typedef struct {
     HippoInstanceType instance_type;
+    char *join_chat_id;
     guint config_flag : 1;
     guint install_launch : 1;
     guint replace_existing : 1;
