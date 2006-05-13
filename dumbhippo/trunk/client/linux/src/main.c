@@ -1,6 +1,7 @@
 #include "main.h"
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
+#include "hippo-chat-window.h"
 
 struct HippoApp {
     GMainLoop *loop;
@@ -9,6 +10,7 @@ struct HippoApp {
     HippoDataCache *cache;
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
+    GHashTable *chat_windows;
 };
 
 void
@@ -128,16 +130,68 @@ hippo_app_visit_post(HippoApp   *app,
     g_free(url);
 }
 
+static void
+on_chat_window_destroy(HippoChatWindow *window,
+                       HippoApp        *app)
+{
+    HippoChatRoom *room;
+    
+    room = hippo_chat_window_get_room(window);
+    g_hash_table_remove(app->chat_windows,
+                        hippo_chat_room_get_id(room));
+}
+
 void
 hippo_app_join_chat(HippoApp   *app,
                     const char *chat_id)
 {
-    HippoChatRoom *room;
+    HippoChatWindow *window;
+
+    window = g_hash_table_lookup(app->chat_windows, chat_id);
+    if (window == NULL) {
+        HippoChatRoom *room;
+        /* FIXME for now assuming group chat, see bug #423 */
+        room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_GROUP);
+        window = hippo_chat_window_new(app->cache, room);
+        g_hash_table_replace(app->chat_windows, g_strdup(chat_id), window);
+        g_signal_connect(window, "destroy", G_CALLBACK(on_chat_window_destroy), app);
+    }
     
-    /* FIXME for now assuming group chat, see bug #423 */
-    room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_GROUP);
+    gtk_window_present(GTK_WINDOW(window));   
+}
+
+static HippoApp*
+hippo_app_new(HippoInstanceType instance_type)
+{
+    HippoApp *app = g_new0(HippoApp, 1);
+
+    app->platform = hippo_platform_impl_new(instance_type);
+
+    app->loop = g_main_loop_new(NULL, FALSE);
+
+    app->connection = hippo_connection_new(app->platform);
+    g_object_unref(app->platform); /* let connection keep it alive */
+    app->cache = hippo_data_cache_new(app->connection);
+    g_object_unref(app->connection); /* let the data cache keep it alive */
+    app->icon = hippo_status_icon_new(app->cache);
     
-    /* FIXME create chat GUI */
+    app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    
+    return app;
+}
+
+static void
+hippo_app_free(HippoApp *app)
+{
+    g_hash_table_destroy(app->chat_windows);
+    app->chat_windows = NULL;
+
+    if (app->about_dialog)
+        gtk_object_destroy(GTK_OBJECT(app->about_dialog));
+    g_object_unref(app->icon);
+    g_object_unref(app->cache);
+    g_main_loop_unref(app->loop);
+    g_free(app);
 }
 
 /* 
@@ -168,20 +222,10 @@ main(int argc, char **argv)
     g_thread_init(NULL);
     gtk_init(&argc, &argv);
 
-    the_app = g_new0(HippoApp, 1);
-
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
-    
-    the_app->platform = hippo_platform_impl_new(options.instance_type);
 
-    the_app->loop = g_main_loop_new(NULL, FALSE);
-
-    the_app->connection = hippo_connection_new(the_app->platform);
-    g_object_unref(the_app->platform); /* let connection keep it alive */
-    the_app->cache = hippo_data_cache_new(the_app->connection);
-    g_object_unref(the_app->connection); /* let the data cache keep it alive */
-    the_app->icon = hippo_status_icon_new(the_app->cache);
+    the_app = hippo_app_new(options.instance_type);
     
     if (hippo_connection_signin(the_app->connection))
         g_debug("Waiting for user to sign in");
@@ -200,12 +244,7 @@ main(int argc, char **argv)
 
     g_debug("Main loop exited");
 
-    if (the_app->about_dialog)
-        gtk_object_destroy(GTK_OBJECT(the_app->about_dialog));
-    g_object_unref(the_app->icon);
-    g_object_unref(the_app->cache);
-    g_main_loop_unref(the_app->loop);
-    g_free(the_app);
+    hippo_app_free(the_app);
 
     return 0;
 }

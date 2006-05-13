@@ -63,14 +63,16 @@ $(MARSHAL_BODY): $(MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
-mugshot_SOURCES	=				\
+mugshot_SOURCES	=				    \
+	src/hippo-chat-window.c		    \
+	src/hippo-chat-window.h		    \
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
-	src/main.c				\
+	src/main.c				        \
 	src/main.h
 
 LIBHIPPO_BUILT_SOURCEFILES =					\
@@ -83,6 +85,7 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
+        $(COMMONSRCDIR)/hippo/hippo-common-internal.h           \
 	$(COMMONSRCDIR)/hippo/hippo-connection.c		\
 	$(COMMONSRCDIR)/hippo/hippo-connection.h		\
 	$(COMMONSRCDIR)/hippo/hippo-cookies.c			\

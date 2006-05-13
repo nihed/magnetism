@@ -1,3 +1,4 @@
+#include <hippo/hippo-common-internal.h>
 #include "hippo-chat-room.h"
 #include <string.h>
 
@@ -50,7 +51,7 @@ enum {
     CLEARED,
     LAST_SIGNAL
 };
-  
+
 static int signals[LAST_SIGNAL];  
 
 static void
@@ -152,6 +153,7 @@ hippo_chat_room_new(const char   *chat_id,
 
     room->id = g_strdup(chat_id);
     room->kind = kind;
+    room->title = g_strdup(_("Loading..."));
 
     return room;
 }

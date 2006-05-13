@@ -72,6 +72,9 @@ gboolean hippo_parse_login_cookie    (const char *cookie_value,
 char*    hippo_id_to_jabber_id       (const char *guid);
 char*    hippo_id_from_jabber_id     (const char *jid);
 
+gboolean hippo_verify_guid           (const char      *possible_guid);
+gboolean hippo_verify_guid_wide      (const gunichar2 *possible_guid);
+
 void hippo_set_print_debug_func      (HippoPrintDebugFunc func);
 void hippo_override_loudmouth_log    (void);
 

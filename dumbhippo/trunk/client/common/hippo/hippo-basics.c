@@ -213,6 +213,49 @@ hippo_id_from_jabber_id(const char *jid)
     return guid;
 }
 
+#define VALID_GUID_CHAR(c)                    \
+             (((c) >= '0' && (c) <= '9') ||   \
+              ((c) >= 'A' && (c) <= 'Z') ||   \
+              ((c) >= 'a' && (c) <= 'z'))
+#define GUID_LEN 14
+
+/* keep in sync with below */
+gboolean
+hippo_verify_guid(const char *possible_guid)
+{
+    const char *p;
+    p = possible_guid;
+    while (*p) {
+        if (!VALID_GUID_CHAR(*p))
+              return FALSE;
+            
+        ++p;
+    }
+    if ((p - possible_guid) != GUID_LEN)
+        return FALSE;
+        
+    return TRUE;
+}
+
+/* keep in sync with above */
+gboolean
+hippo_verify_guid_wide(const gunichar2 *possible_guid)
+{
+    const gunichar2 *p;
+    
+    p = possible_guid;
+    while (*p) {
+        if (!VALID_GUID_CHAR(*p))
+              return FALSE;
+            
+        ++p;
+    }
+    if ((p - possible_guid) != (sizeof(gunichar2) * GUID_LEN))
+        return FALSE;
+        
+    return TRUE;
+}
+
 static HippoPrintDebugFunc hippo_print_debug_func = NULL;
 
 void
@@ -367,6 +410,11 @@ hippo_parse_options(int          *argc_p,
         return FALSE;
     }
     g_option_context_free(context);
+
+    if (join_chat_id && !hippo_verify_guid(join_chat_id)) {
+        g_printerr("Invalid chat id '%s'\n", join_chat_id);
+        return FALSE;
+    }
 
     if (debug)
         results->instance_type = HIPPO_INSTANCE_DEBUG;
