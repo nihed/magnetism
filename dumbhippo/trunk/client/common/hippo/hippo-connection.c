@@ -22,11 +22,12 @@ typedef struct OutgoingMessage OutgoingMessage;
 struct OutgoingMessage {
     int               refcount;
     LmMessage        *message;
-    LmMessageHandler *handler;
+    LmHandleMessageFunction handler;
 };
 
 static OutgoingMessage*
-outgoing_message_new(LmMessage *message, LmMessageHandler *handler)
+outgoing_message_new(LmMessage               *message,
+                     LmHandleMessageFunction  handler)
 {
     OutgoingMessage *outgoing = g_new0(OutgoingMessage, 1);
     outgoing->refcount = 1;
@@ -34,11 +35,11 @@ outgoing_message_new(LmMessage *message, LmMessageHandler *handler)
     outgoing->handler = handler;
     if (message)
         lm_message_ref(message);
-    if (handler)
-        lm_message_handler_ref(handler);
     return outgoing;
 }
 
+#if 0
+/* not used right now */
 static void
 outgoing_message_ref(OutgoingMessage *outgoing)
 {
@@ -46,6 +47,7 @@ outgoing_message_ref(OutgoingMessage *outgoing)
     g_return_if_fail(outgoing->refcount > 0);
     outgoing->refcount += 1;
 }
+#endif
 
 static void
 outgoing_message_unref(OutgoingMessage *outgoing)
@@ -56,8 +58,6 @@ outgoing_message_unref(OutgoingMessage *outgoing)
     if (outgoing->refcount == 0) {
         if (outgoing->message)
             lm_message_unref(outgoing->message);
-        if (outgoing->handler)
-            lm_message_handler_unref(outgoing->handler);
         g_free(outgoing);
     }
 }
@@ -69,6 +69,22 @@ typedef enum {
     PROCESS_MESSAGE_PEND,
     PROCESS_MESSAGE_CONSUME
 } ProcessMessageResult;
+
+
+/* 
+ * SendMode
+ * 
+ * We keep an "offline queue" of stuff to send when we become connected. This queue
+ * makes sense for some messages (such as notifying that a post has clicked, or a
+ * a song has played) and does not make sense for others (such as sending presence
+ * to a chat room). hippo_connection_send() has an argument hinting what to do here.
+ */
+
+typedef enum {
+    SEND_MODE_IGNORE_IF_DISCONNECTED,
+    SEND_MODE_IMMEDIATELY,
+    SEND_MODE_AFTER_AUTH
+} SendMode;
 
 static void hippo_connection_finalize(GObject *object);
 
@@ -85,10 +101,12 @@ static void     hippo_connection_authenticate         (HippoConnection *connecti
 static void     hippo_connection_clear                (HippoConnection *connection);
 static void     hippo_connection_flush_outgoing       (HippoConnection *connection);
 static void     hippo_connection_send_message         (HippoConnection *connection,
-                                                       LmMessage       *message);
+                                                       LmMessage       *message,
+                                                       SendMode         mode);
 static void     hippo_connection_send_message_with_reply(HippoConnection *connection,
-                                                       LmMessage *message,
-                                                       LmMessageHandler *handler);
+                                                       LmMessage         *message,
+                                                       LmHandleMessageFunction handler,
+                                                       SendMode           mode);
 static void     hippo_connection_request_client_info  (HippoConnection *connection);
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
@@ -420,9 +438,6 @@ hippo_connection_notify_post_clicked(HippoConnection *connection,
             
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
-
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
@@ -433,7 +448,7 @@ hippo_connection_notify_post_clicked(HippoConnection *connection,
     guid_arg = lm_message_node_add_child (method, "arg", NULL);
     lm_message_node_set_value (guid_arg, post_id);
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
 }
@@ -462,9 +477,6 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     g_return_if_fail(!currently_playing || song != NULL);
 
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
-
     /* If the user has music sharing off, then we never send their info
      * to the server. (this is a last-ditch protection; we aren't supposed
      * to be monitoring the music app either in this case)
@@ -485,7 +497,7 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
         add_track_props(music, song->keys, song->values);
     }
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
     /* g_print("Sent music changed xmpp message"); */
@@ -503,9 +515,6 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
     
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     g_return_if_fail(songs != NULL);
-
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
 
     if (!hippo_data_cache_get_need_priming_music(connection->cache)) {
         /* didn't need to prime after all (maybe someone beat us to it) */
@@ -525,7 +534,7 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
         add_track_props(track, songs[i].keys, songs[i].values);
     }
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
 
@@ -568,6 +577,8 @@ signin_timeout(gpointer data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
+    g_debug("Signin timeout");
+
     if (hippo_connection_load_auth(connection)) {
         hippo_connection_stop_signin_timeout(connection);
 
@@ -595,6 +606,7 @@ static void
 hippo_connection_start_signin_timeout(HippoConnection *connection)
 {
     if (connection->signin_timeout_id == 0) {
+        g_debug("Installing signin timeout for %g seconds", SIGN_IN_INITIAL_TIMEOUT / 1000.0);    
         connection->signin_timeout_id = g_timeout_add(SIGN_IN_INITIAL_TIMEOUT, 
                                                       signin_timeout, connection);
         connection->signin_timeout_count = 0;
@@ -605,6 +617,7 @@ static void
 hippo_connection_stop_signin_timeout(HippoConnection *connection)
 {
     if (connection->signin_timeout_id != 0) {
+        g_debug("Removing signin timeout");
         g_source_remove (connection->signin_timeout_id);
         connection->signin_timeout_id = 0;
         connection->signin_timeout_count = 0;
@@ -617,6 +630,8 @@ retry_timeout(gpointer data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
+    g_debug("Retry timeout");
+
     hippo_connection_stop_retry_timeout(connection);
     hippo_connection_connect(connection);
 
@@ -626,16 +641,18 @@ retry_timeout(gpointer data)
 static void
 hippo_connection_start_retry_timeout(HippoConnection *connection)
 {
-    if (connection->retry_timeout_id == 0)
+    if (connection->retry_timeout_id == 0) {
+        g_debug("Installing retry timeout for %g seconds", RETRY_TIMEOUT / 1000.0);
         connection->retry_timeout_id = g_timeout_add(RETRY_TIMEOUT, 
-                                                    retry_timeout, connection);
-
+                                                     retry_timeout, connection);
+    }                                                    
 }
 
 static void
 hippo_connection_stop_retry_timeout(HippoConnection *connection)
 {
     if (connection->retry_timeout_id != 0) {
+        g_debug("Removing retry timeout");
         g_source_remove (connection->retry_timeout_id);
         connection->retry_timeout_id = 0;
     }
@@ -659,6 +676,9 @@ hippo_connection_connect(HippoConnection *connection)
     g_debug("Connecting to %s port %d", message_host, message_port);
 
     connection->lm_connection = lm_connection_new(message_host);
+    
+    hippo_override_loudmouth_log(); /* lm installed its log handler the first time we did connection_new */
+
     lm_connection_set_port(connection->lm_connection, message_port);
     lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
 
@@ -815,19 +835,58 @@ hippo_connection_clear(HippoConnection *connection)
 
 static void
 hippo_connection_send_message(HippoConnection *connection,
-                              LmMessage       *message)
+                              LmMessage       *message,
+                              SendMode         mode)
 {
-    hippo_connection_send_message_with_reply(connection, message, NULL);
+    hippo_connection_send_message_with_reply(connection, message, NULL, mode);
+}
+
+static void
+send_immediately(HippoConnection         *connection,
+                 LmMessage               *message,
+                 LmHandleMessageFunction  handler)
+{
+    GError *error;
+    
+    if (connection->lm_connection == NULL) {
+        g_debug("not sending message, not connected");
+        return;
+    }
+    
+    error = NULL;
+    if (handler != NULL) {
+        LmMessageHandler *handler_obj = lm_message_handler_new(handler, connection, NULL);
+        lm_connection_send_with_reply(connection->lm_connection, message, handler_obj, &error);
+        lm_message_handler_unref(handler_obj);
+    } else {
+        lm_connection_send(connection->lm_connection, message, &error);
+    }
+    if (error) {
+        g_debug("Failed sending message: %s", error->message);
+        g_error_free(error);
+    }
 }
 
 static void
 hippo_connection_send_message_with_reply(HippoConnection  *connection,
                                          LmMessage        *message,
-                                         LmMessageHandler *handler)
+                                         LmHandleMessageFunction handler,
+                                         SendMode          mode)
 {
-    g_queue_push_tail(connection->pending_outgoing_messages, outgoing_message_new(message, handler));
+    if (mode == SEND_MODE_IGNORE_IF_DISCONNECTED) {
+        if (!hippo_connection_get_connected(connection))
+            return;    
+        else
+            mode = SEND_MODE_AFTER_AUTH;
+    }
+    
+    if (mode == SEND_MODE_IMMEDIATELY) {
+        send_immediately(connection, message, handler);
+    } else {
+        g_queue_push_tail(connection->pending_outgoing_messages, outgoing_message_new(message, handler));
 
-    hippo_connection_flush_outgoing(connection);
+        hippo_connection_flush_outgoing(connection);    
+    }
 }
 
 static void
@@ -839,19 +898,11 @@ hippo_connection_flush_outgoing(HippoConnection *connection)
         g_print("%d messages backlog to clear", connection->pending_outgoing_messages->length);
 #endif
 
-    while ((connection->state == HIPPO_STATE_AUTHENTICATED ||
-            connection->state == HIPPO_STATE_AWAITING_CLIENT_INFO) &&
+    /* We only flush the queue AFTER we have the client info */
+    while (connection->state == HIPPO_STATE_AUTHENTICATED &&
            connection->pending_outgoing_messages->length > 0) {
         OutgoingMessage *om = g_queue_pop_head(connection->pending_outgoing_messages);
-        GError *error = NULL;
-        if (om->handler != NULL)
-            lm_connection_send_with_reply(connection->lm_connection, om->message, om->handler, &error);
-        else
-            lm_connection_send(connection->lm_connection, om->message, &error);
-        if (error) {
-            // g_printerr("Failed sending message: %s", error->message);
-            g_error_free(error);
-        }
+        send_immediately(connection, om->message, om->handler);
         outgoing_message_unref(om);
     }
 
@@ -955,7 +1006,6 @@ hippo_connection_request_client_info(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
                 
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -975,12 +1025,10 @@ hippo_connection_request_client_info(HippoConnection *connection)
      * and thus won't self-upgrade
      */
     lm_message_node_set_attribute(child, "platform", "windows");
-    handler = lm_message_handler_new(on_client_info_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
 }
 
 static LmHandlerResult
@@ -1010,7 +1058,6 @@ hippo_connection_request_prefs(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
     
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1018,12 +1065,11 @@ hippo_connection_request_prefs(HippoConnection *connection)
     
     child = lm_message_node_add_child (node, "prefs", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/prefs");
-    handler = lm_message_handler_new(on_prefs_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message, on_prefs_reply, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for prefs");
 }
 
@@ -1106,7 +1152,6 @@ hippo_connection_request_myspace_name(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
             
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1115,12 +1160,12 @@ hippo_connection_request_myspace_name(HippoConnection *connection)
     child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
     lm_message_node_set_attribute(child, "type", "getName");
-    handler = lm_message_handler_new(on_get_myspace_name_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message, on_get_myspace_name_reply,
+                                             SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for MySpace name");
 }
 
@@ -1184,7 +1229,6 @@ hippo_connection_request_myspace_blog_comments(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
 
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1193,12 +1237,12 @@ hippo_connection_request_myspace_blog_comments(HippoConnection *connection)
     child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
     lm_message_node_set_attribute(child, "type", "getBlogComments");
-    handler = lm_message_handler_new(on_get_myspace_blog_comments_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message, on_get_myspace_blog_comments_reply,
+                                             SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for MySpace blog comments");
 }
 
@@ -1255,7 +1299,6 @@ hippo_connection_request_myspace_contacts(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
 
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1264,12 +1307,12 @@ hippo_connection_request_myspace_contacts(HippoConnection *connection)
     child = lm_message_node_add_child (node, "mySpaceInfo", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/myspace");
     lm_message_node_set_attribute(child, "type", "getContacts");
-    handler = lm_message_handler_new(on_get_myspace_contacts_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message,
+                                             on_get_myspace_contacts_reply, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for MySpace contacts");
 }
 
@@ -1303,7 +1346,7 @@ hippo_connection_add_myspace_comment(HippoConnection *connection,
     lm_message_node_set_value(prop, poster_id_str);
     g_free(poster_id_str);
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
     lm_message_unref(message);
     g_debug("Sent MySpace comment xmpp message comment_id %d poster_id %d", comment_id, poster_id);
 }
@@ -1325,7 +1368,7 @@ hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
     lm_message_node_set_attribute(subnode, "type", "notifyContactComment");
     lm_message_node_set_attribute(subnode, "name", myspace_name);
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
     lm_message_unref(message);
     g_debug("Sent MySpace contact post xmpp message");
 }
@@ -1378,7 +1421,6 @@ hippo_connection_request_hotness(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
     
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1387,12 +1429,12 @@ hippo_connection_request_hotness(HippoConnection *connection)
     child = lm_message_node_add_child (node, "hotness", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/hotness");
     lm_message_node_set_attribute(child, "type", "getValue");
-    handler = lm_message_handler_new(on_request_hotness_reply, connection, NULL);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message,
+                                             on_request_hotness_reply, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for hotness");
 }
 
@@ -1805,11 +1847,7 @@ hippo_connection_request_posts_impl(HippoConnection *connection,
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    LmMessageHandler *handler;
     
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
-
     message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
@@ -1820,12 +1858,11 @@ hippo_connection_request_posts_impl(HippoConnection *connection,
     if (post_id)
         lm_message_node_set_attribute(child, "id", post_id);
 
-    handler = lm_message_handler_new(on_request_posts_reply, connection, NULL);
-
-    hippo_connection_send_message_with_reply(connection, message, handler);
+    hippo_connection_send_message_with_reply(connection, message, on_request_posts_reply,
+                                             SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
-    lm_message_handler_unref(handler);
+
     g_debug("Sent request for recent posts");
 }
 
@@ -1855,9 +1892,6 @@ send_room_presence(HippoConnection *connection,
     if (state == HIPPO_CHAT_NONMEMBER)
         return;
 
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
-
     to = hippo_chat_room_get_jabber_id(room);
     
     message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_PRESENCE, subtype);
@@ -1876,7 +1910,7 @@ send_room_presence(HippoConnection *connection,
                                       state == HIPPO_CHAT_PARTICIPANT ? "participant" : "visitor");
     }
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_IGNORE_IF_DISCONNECTED);
 
     lm_message_unref(message);
 }
@@ -1903,10 +1937,7 @@ hippo_connection_send_chat_room_state(HippoConnection *connection,
                                       HippoChatRoom   *room,
                                       HippoChatState   old_state,
                                       HippoChatState   new_state)
-{
-    if (!hippo_connection_get_connected(connection))
-        return; /* should we warn also? */
-    
+{    
     if (old_state == new_state)
         return;
     
@@ -2020,7 +2051,7 @@ hippo_connection_send_chat_room_message(HippoConnection *connection,
 
     body = lm_message_node_add_child(message->node, "body", text);
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
 }
@@ -2123,7 +2154,6 @@ hippo_connection_request_chat_room_details(HippoConnection *connection,
     const char *to;
     LmMessage *message;    
     LmMessageNode *child;
-    LmMessageHandler *handler;
     
     if (hippo_chat_room_get_filling(room)) {
         /* not supposed to happen, if it does we could change 
@@ -2141,11 +2171,11 @@ hippo_connection_request_chat_room_details(HippoConnection *connection,
     child = lm_message_node_add_child (message->node, "details", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
 
-    handler = lm_message_handler_new(on_get_chat_room_details_reply, connection, NULL);
+    hippo_connection_send_message_with_reply(connection, message, on_get_chat_room_details_reply,
+                                             SEND_MODE_AFTER_AUTH);
 
-    hippo_connection_send_message_with_reply(connection, message, handler);
-
-    g_debug("Sent request for chat room details");
+    g_debug("Sent request for chat room details on '%s' '%s'",
+            hippo_chat_room_get_id(room), hippo_chat_room_get_jabber_id(room));
 }
 
 
@@ -2862,7 +2892,7 @@ handle_authenticate(LmConnection *lconnection,
                                            LM_MESSAGE_TYPE_PRESENCE, 
                                            LM_MESSAGE_SUB_TYPE_AVAILABLE);
 
-    hippo_connection_send_message(connection, message);
+    hippo_connection_send_message(connection, message, SEND_MODE_IMMEDIATELY);
     hippo_connection_state_change(connection, HIPPO_STATE_AWAITING_CLIENT_INFO);
 
     hippo_connection_request_client_info(connection);

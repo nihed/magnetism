@@ -52,6 +52,8 @@ typedef struct {
     guint verbose : 1;
 } HippoOptions;
 
+typedef void (* HippoPrintDebugFunc) (const char *message);
+
 gboolean hippo_parse_server          (const char *server,
                                       char      **host,
                                       int        *port);                 
@@ -69,6 +71,9 @@ gboolean hippo_parse_login_cookie    (const char *cookie_value,
 
 char*    hippo_id_to_jabber_id       (const char *guid);
 char*    hippo_id_from_jabber_id     (const char *jid);
+
+void hippo_set_print_debug_func      (HippoPrintDebugFunc func);
+void hippo_override_loudmouth_log    (void);
 
 gboolean hippo_parse_options         (int          *argc_p,
                                       char       ***argv_p,

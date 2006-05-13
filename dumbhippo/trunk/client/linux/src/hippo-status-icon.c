@@ -134,11 +134,12 @@ menu_item_from_post(HippoPost *post)
     
     item_markup = g_string_new(NULL);
     
+    g_string_append(item_markup, "<b>");
+    append_escaped(item_markup, title);
+    g_string_append(item_markup, "</b>");
+    
     if (chatting > 0 || viewing > 0) {
-        g_string_append(item_markup, "<b>");
-        append_escaped(item_markup, title);
-        g_string_append(item_markup, "</b>\n");
-                       
+        g_string_append(item_markup, "\n");                     
         if (chatting == 1) {
             append_escaped(item_markup, _("1 person chatting right now"));
         } else if (chatting > 1) {
@@ -154,8 +155,6 @@ menu_item_from_post(HippoPost *post)
         } else {
             g_assert_not_reached();
         }
-    } else {
-        append_escaped(item_markup, title);
     }
     
     item = gtk_menu_item_new_with_label("");

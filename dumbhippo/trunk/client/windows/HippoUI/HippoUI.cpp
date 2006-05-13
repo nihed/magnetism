@@ -2018,79 +2018,6 @@ test_alloc_failure_behavior()
 #endif
 }
 
-/* A little cut-and-paste out of loudmouth to avoid including all 
- * of its headers here; kind of lame, sue me. It's just for debug spew.
- */
-typedef enum {
-    LM_LOG_LEVEL_VERBOSE = 1 << (G_LOG_LEVEL_USER_SHIFT),
-    LM_LOG_LEVEL_NET     = 1 << (G_LOG_LEVEL_USER_SHIFT + 1),
-    LM_LOG_LEVEL_PARSER  = 1 << (G_LOG_LEVEL_USER_SHIFT + 2),
-    LM_LOG_LEVEL_ALL     = (LM_LOG_LEVEL_NET |
-                LM_LOG_LEVEL_VERBOSE |
-                LM_LOG_LEVEL_PARSER)
-} LmLogLevelFlags;
-
-#ifndef LM_LOG_DOMAIN
-#  define LM_LOG_DOMAIN "LM"
-#endif
-
-static void
-log_handler(const char    *log_domain,
-            GLogLevelFlags log_level,
-            const char    *message,
-            void          *user_data)
-{
-    const char *prefix;
-
-    if (log_level & G_LOG_FLAG_RECURSION) {
-        hippoDebugLogU("Mugshot: log recursed");
-        return;
-    }
-
-    switch (log_level & G_LOG_LEVEL_MASK) {
-        case G_LOG_LEVEL_DEBUG:
-            prefix = "DEBUG: ";
-            break;
-        case G_LOG_LEVEL_WARNING:
-            prefix = "WARNING: ";
-            break;
-        case G_LOG_LEVEL_CRITICAL:
-            prefix = "CRITICAL: ";
-            break;
-        case G_LOG_LEVEL_ERROR:
-            prefix = "ERROR: ";
-            break;
-        case G_LOG_LEVEL_INFO:
-            prefix = "INFO: ";
-            break;
-        case G_LOG_LEVEL_MESSAGE:
-            prefix = "MESSAGE: ";
-            break;
-        default:
-            prefix = "";
-            break;
-    }
-
-    GString *gstr = g_string_new("Mugshot: ");
-    if (log_domain && strcmp(log_domain, LM_LOG_DOMAIN) == 0)
-        g_string_append(gstr, "LM: ");
-    
-    g_string_append(gstr, prefix);
-    g_string_append(gstr, message);
-
-    hippoDebugLogU("%s", gstr->str);
-    g_string_free(gstr, TRUE);
-
-    // glib will do this for us, but if we abort in our own code which has
-    // debug symbols, visual studio gets less confused about the backtrace.
-    // at least, that's my experience.
-    if (log_level & G_LOG_FLAG_FATAL) {
-        if (IsDebuggerPresent())
-            G_BREAKPOINT();
-        abort();
-    }
-}
-
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -2104,14 +2031,8 @@ WinMain(HINSTANCE hInstance,
     int argc;
     char **argv;
     HippoOptions options;
-    GLogFunc old_default_handler;
-    unsigned int loudmouth_handler;
 
     g_thread_init(NULL);
-    old_default_handler = g_log_set_default_handler(log_handler, NULL);
-    loudmouth_handler = g_log_set_handler(LM_LOG_DOMAIN,
-                            (GLogLevelFlags) (LM_LOG_LEVEL_ALL | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
-                            log_handler, NULL);
     g_type_init();
 
     char *command_line = GetCommandLineA();
@@ -2130,11 +2051,6 @@ WinMain(HINSTANCE hInstance,
     }
 
     g_strfreev(argv);
-
-    if (!options.verbose) {
-        g_log_set_default_handler(old_default_handler, NULL);
-        g_log_remove_handler(LM_LOG_DOMAIN, loudmouth_handler);
-    }
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (options.install_launch) {

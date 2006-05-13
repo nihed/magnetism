@@ -20,6 +20,8 @@ void       hippo_app_open_url       (HippoApp   *app,
                                      const char *url);
 void       hippo_app_visit_post     (HippoApp   *app,
                                      HippoPost  *post);
+void       hippo_app_join_chat      (HippoApp   *app,
+                                     const char *chat_id);
 
 G_END_DECLS
 

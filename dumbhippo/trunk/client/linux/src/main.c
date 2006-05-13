@@ -128,6 +128,18 @@ hippo_app_visit_post(HippoApp   *app,
     g_free(url);
 }
 
+void
+hippo_app_join_chat(HippoApp   *app,
+                    const char *chat_id)
+{
+    HippoChatRoom *room;
+    
+    /* FIXME for now assuming group chat, see bug #423 */
+    room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_GROUP);
+    
+    /* FIXME create chat GUI */
+}
+
 /* 
  * Singleton HippoApp and main()
  */
@@ -140,10 +152,18 @@ hippo_get_app(void)
     return the_app;
 }
 
+static void
+print_debug_func(const char *message)
+{
+    g_printerr("%s\n", message);
+}
+
 int
 main(int argc, char **argv)
 {
     HippoOptions options;
+     
+    hippo_set_print_debug_func(print_debug_func);
      
     g_thread_init(NULL);
     gtk_init(&argc, &argv);
@@ -154,8 +174,6 @@ main(int argc, char **argv)
         return 1;
     
     the_app->platform = hippo_platform_impl_new(options.instance_type);
-
-    hippo_options_free_fields(&options);
 
     the_app->loop = g_main_loop_new(NULL, FALSE);
 
@@ -171,6 +189,12 @@ main(int argc, char **argv)
         g_debug("Found login cookie");
     
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
+    
+    if (options.join_chat_id) {
+        hippo_app_join_chat(the_app, options.join_chat_id);
+    }
+    
+    hippo_options_free_fields(&options);
     
     g_main_loop_run(the_app->loop);
 
