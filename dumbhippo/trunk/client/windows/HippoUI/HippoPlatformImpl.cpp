@@ -5,6 +5,7 @@
 #include <HippoUtil.h>
 #include <Windows.h>
 #include <mshtml.h>
+#include <hippo/hippo-basics.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
@@ -13,6 +14,7 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
+                                                          HippoBrowserKind        *origin_browser_p,
                                                           char                   **username_p,
                                                           char                   **password_p);
 static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
@@ -141,9 +143,10 @@ getAuthUrl(HippoPlatform *platform,
 }
 
 static gboolean
-hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
-                                      char         **username_p,
-                                      char         **password_p)
+hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
+                                      HippoBrowserKind *origin_browser_p,
+                                      char            **username_p,
+                                      char            **password_p)
 {
     char *web_host;
     int web_port;
@@ -154,6 +157,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform *platform,
     DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
     char *cookie = NULL;
 
+    *origin_browser_p = HIPPO_BROWSER_IE;
     *username_p = NULL;
     *password_p = NULL;
 
