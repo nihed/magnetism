@@ -12,8 +12,7 @@
 	<dht:scriptIncludes/>
 </head>
 
-<body>
-	<div id="dhDownloadContainer">
+<dht:body>
 	<img src="/images2/mugshot_tagline.gif"/>
 	<div class="dh-special-subtitle">Thanks for trying us out!  Here's how to start using our tools...</div>
 	<table cellspacing="15px" cellpadding="0" align="center">
@@ -41,7 +40,6 @@
 	<div class="dh-special-subtitle">Clicking that link will activate Link Swarm, and take you
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
-	</div>
-</body>
+</dht:body>
 
 </html>

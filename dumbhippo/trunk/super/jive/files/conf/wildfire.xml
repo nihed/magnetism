@@ -10,6 +10,11 @@
         <current>@@clientWindowsCurrent@@</current>
         <download>@@clientWindowsDownload@@</download>
       </windows>
+      <linux>
+        <minimum>@@clientLinuxMinimum@@</minimum>
+        <current>@@clientLinuxCurrent@@</current>
+        <download>@@clientLinuxDownload@@</download>
+      </linux>      
     </client>
   </dumbhippo>
   <adminConsole> 

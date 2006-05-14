@@ -17,11 +17,13 @@ public class ChatRoomUser implements Serializable {
 	private String username;
 	private int version;
 	private String name;
+	private String smallPhotoUrl;	
 	
-	public ChatRoomUser(String username, int version, String name) {
+	public ChatRoomUser(String username, int version, String name, String smallPhotoUrl) {
 		this.username = username;
 		this.version = version;
 		this.name = name;
+		this.smallPhotoUrl = smallPhotoUrl;		
 	}
 	
 	public String getUsername() {
@@ -34,5 +36,9 @@ public class ChatRoomUser implements Serializable {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String getSmallPhotoUrl() {
+		return smallPhotoUrl;
 	}
 }

@@ -6,6 +6,7 @@
 <%@ attribute name="neverShowSidebar" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
+<%@ attribute name="logoOnly" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
 	<c:when test="${alwaysShowSidebar}">
@@ -20,9 +21,16 @@
 </c:choose>
 
 <dht:body extraClass="dh-gray-background-page">
-	<dht:header disableHomeLink="${disableHomeLink}" searchText="${searchText}"/>
-		<div id="dhPageContent">
-			<jsp:doBody/>
-		</div>
+	<c:choose>
+		<c:when test="${logoOnly}">
+			<center><dht:logo/></center>
+		</c:when>
+		<c:otherwise>
+			<dht:header disableHomeLink="${disableHomeLink}"/>
+		</c:otherwise>
+	</c:choose>
+	<div id="dhPageContent">
+		<jsp:doBody/>
+	</div>
 	<dht:footer/>
 </dht:body>

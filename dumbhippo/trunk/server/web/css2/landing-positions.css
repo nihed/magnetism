@@ -1,16 +1,8 @@
 @CHARSET "UTF-8";
 
-body {
-	width: 500px;
-	/* centers in IE */
-	text-align: center;
-}
-
-#dhLandingContainer {
-	width: 500px;
-	/* centers the page in Firefox */
-	margin-left:	auto;
-	margin-right:	auto;
+.dh-body-without-sidebar #dhPage {
+	width:			500px;
+	text-align:		center; /* we want centered text */	
 }
 
 #dhLinkSwarmTag {

@@ -9,8 +9,10 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.jive.PresenceMonitor;
 
@@ -57,6 +59,16 @@ public class RoomHandler implements Component {
 		return address;
 	}
 	
+	private void sendErrorIQReply(Packet packet, PacketError.Condition condition, String error) {
+		Log.debug("Sending error reply back to ");
+		IQ reply = IQ.createResultIQ((IQ) packet);
+		reply.setError(new PacketError(condition, 
+				   PacketError.Type.modify, 
+				   error));
+		reply.setTo(packet.getFrom());
+		XMPPServer.getInstance().getPacketRouter().route(reply);		
+	}
+	
 	public void processPacket(Packet packet) {
 		JID from = packet.getFrom();
 		JID to = packet.getTo();
@@ -67,12 +79,29 @@ public class RoomHandler implements Component {
 		
 		// We only allow DumbHippo users to join our chatrooms; this allows
 		// us to use the node name rather than the full JID as an identifier
-		if (!from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName()))
-			return; // Ignore
+		if (!from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName())) {
+ 			if (packet instanceof IQ) {
+				Log.warn("Attempt to join room from unknown user at '" + from.getDomain() + "'");
+				sendErrorIQReply(packet, PacketError.Condition.forbidden,
+							"You can't join this room");
+			}
+			
+			return;
+		}
 		
 		Room room = getRoom(to.getNode(), from.getNode());
-		if (room == null)
-			return; // Ignore
+		if (room == null) {
+			// the client needs an error here so it can display to the user 
+			// if they click on an untrusted chat id and it turns out 
+			// to be busted.
+			if (packet instanceof IQ) {
+				Log.debug("Attempt to join nonexistent room '" + to.getNode() + "'");
+				sendErrorIQReply(packet, PacketError.Condition.item_not_found,
+							"Can't find that chat room");
+			}
+
+			return;
+		}
 		
 		room.processPacket(packet);			
 	}
@@ -113,4 +142,4 @@ public class RoomHandler implements Component {
 		}
 		return roomsForUser;
 	}
-}	
+}

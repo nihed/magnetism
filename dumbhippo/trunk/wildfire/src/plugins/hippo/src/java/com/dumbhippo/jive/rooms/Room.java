@@ -40,6 +40,7 @@ public class Room {
 	private static class UserInfo {
 		private String username;
 		private String name;
+		private String smallPhotoUrl;		
 		private String arrangementName;
 		private String artist;
 		private boolean musicPlaying;
@@ -48,10 +49,11 @@ public class Room {
 		private int presentCount;
 		
 		
-		public UserInfo(String username, int version, String name) {
+		public UserInfo(String username, int version, String name, String smallPhotoUrl) {
 			this.username = username;
 			this.version = version;
 			this.name = name;
+			this.smallPhotoUrl = smallPhotoUrl;			
 			this.arrangementName = "";
 			this.artist = "";
 			this.musicPlaying = false;
@@ -67,6 +69,10 @@ public class Room {
 		
 		public String getName() {
 			return name;
+		}
+		
+		public String getSmallPhotoUrl() {
+			return smallPhotoUrl;
 		}
 		
 		public int getParticipantCount() {
@@ -187,7 +193,7 @@ public class Room {
 		for (ChatRoomUser user : info.getAllowedUsers()) {
 			Log.debug("Allowed user: " + user.getUsername());
 			allowedUsers.put(user.getUsername(), 
-						     new UserInfo(user.getUsername(), user.getVersion(), user.getName()));
+						     new UserInfo(user.getUsername(), user.getVersion(), user.getName(), user.getSmallPhotoUrl()));
 		}
 		
 		for (ChatRoomMessage message : info.getHistory()) {
@@ -314,6 +320,7 @@ public class Room {
 		Element child = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
+		info.addAttribute("smallPhoto", userInfo.getSmallPhotoUrl());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("role", roleString(userInfo.getStatus()));
 		if (oldStatus != null) {
@@ -322,7 +329,7 @@ public class Room {
 		info.addAttribute("arrangementName", userInfo.getArrangementName());
 		info.addAttribute("artist", userInfo.getArtist()); 
 		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
-	
+
 		addRoomInfo(presence);
 		
 		return presence;
@@ -556,7 +563,8 @@ public class Room {
 			// <message/> elements, *then* we send the result of the IQ
 			// to indicate that we are finished.
 			sendRoomDetails(false, fromJid);
-			
+		
+			addRoomInfo(reply);
 		} else {
 			reply.setError(Condition.feature_not_implemented);
 		}

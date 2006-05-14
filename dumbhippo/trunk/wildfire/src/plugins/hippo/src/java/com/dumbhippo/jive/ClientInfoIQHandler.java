@@ -29,18 +29,23 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
         	makeError(reply, "clientInfo IQ missing platform attribute");
         	return reply;
         }
-        
-		if (!platform.equals("windows")) {
-			makeError(reply, "clientInfo IQ: unrecognized platform: " + platform);
-			return reply;
-		}
- 
+
 		Document document = DocumentFactory.getInstance().createDocument();
-		Element childElement = document.addElement("clientInfo", "http://dumbhippo.com/protocol/clientinfo"); 
-		childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.windows.minimum"));
-		childElement.addAttribute("current", JiveGlobals.getXMLProperty("dumbhippo.client.windows.current"));
-		childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.windows.download"));
-		reply.setChildElement(childElement);		
+		Element childElement = document.addElement("clientInfo", "http://dumbhippo.com/protocol/clientinfo");
+		if (platform.equals("windows")) {
+			childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.windows.minimum"));
+			childElement.addAttribute("current", JiveGlobals.getXMLProperty("dumbhippo.client.windows.current"));
+			childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.windows.download"));
+		} else if (platform.equals("linux")) {
+			childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.linux.minimum"));
+			childElement.addAttribute("current", JiveGlobals.getXMLProperty("dumbhippo.client.linux.current"));
+			childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.linux.download"));
+		} else {
+			Log.debug("Unknown platform '" + platform + "' in clientInfo IQ");
+			makeError(reply, "clientInfo IQ: unrecognized platform: '" + platform + "'");
+			return reply;			
+		}
+		reply.setChildElement(childElement);
 
      	return reply;
 	}

@@ -52,6 +52,10 @@ public class User extends Person implements VersionedEntity {
 	
 	@Transient
 	public Account getAccount() {
+		if (accounts.size() != 1) {
+			throw new IllegalStateException("User should have an associated account, probably account never loaded before detaching, " + 
+					accounts.size() + " accounts associated with: " + this);
+		}
 		return accounts.iterator().next();
 	}
 	

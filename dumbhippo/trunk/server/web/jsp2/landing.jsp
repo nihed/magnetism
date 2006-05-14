@@ -15,8 +15,7 @@
 		dojo.require("dh.welcome");
 	</script>
 </head>
-<body>
-	<div id="dhLandingContainer">
+<dht:body>
 	<div>
 		<img src="/images2/mugshot_tagline.gif"/>
 	</div>
@@ -33,7 +32,6 @@
 	<div id="dhLinkSwarmSample">
 		<img src="/images2/bubblesample.gif"/>
 	</div>
-	<div class="dh-landing-explanatory">A desktop tool for Windows.  Instantly get the buzz on cool sites.</div>	
-	</div>
-</body>
+	<div class="dh-landing-explanatory">A desktop tool for Windows.  Instantly get the buzz on cool sites.</div>
+</dht:body>
 </html>
