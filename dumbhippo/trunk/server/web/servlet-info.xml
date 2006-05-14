@@ -188,11 +188,11 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,artist,download,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,music-learnmore,person,privacy,radar-html,radar-themes,search,terms,tv</param-value>
+          <param-value>about,artist,download,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,music-learnmore,person,privacy,radar-html,radar-themes,search,terms,tv,visit</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,chatwindow,friends,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first</param-value>
+          <param-value>account,admin,chatwindow,friends,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

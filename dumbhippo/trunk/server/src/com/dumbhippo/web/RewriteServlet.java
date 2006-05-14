@@ -229,15 +229,15 @@ public class RewriteServlet extends HttpServlet {
 		
 		String afterSlash = path.substring(1);
 		
-		// We force the page to be in one of our configuration parameters,
-		// since otherwise, its too easy to forget to update the configuration
-		// parameters, even with the warnings we output below.
-		
 		boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
 		boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
 		boolean isNoSignin = noSignin.contains(afterSlash);
 		
+		// We force the page to be in one of our configuration parameters,
+		// since otherwise, its too easy to forget to update the configuration
+		// parameters, even with the warnings we output below.
 		if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
+			logger.warn("Page signin requirements not specified");
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -248,8 +248,8 @@ public class RewriteServlet extends HttpServlet {
 		// have to save the POST parameters somewhere.
 		
 		if ((isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
-			!hasSignin(request) && 
-			request.getMethod().toUpperCase().equals("GET")) { 
+				!hasSignin(request) && 
+				request.getMethod().toUpperCase().equals("GET")) { 
 			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
 			if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
 				url = url + "&wouldBePublic=true";
@@ -257,7 +257,7 @@ public class RewriteServlet extends HttpServlet {
 			response.sendRedirect(url);
 			return;
 		}
-			
+		
 		// Now handle the primary set of user visible pages, which is a merge
 		// of static HTML and JSP's.
 		
@@ -357,8 +357,9 @@ public class RewriteServlet extends HttpServlet {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
-					// This warning needs to be reenabled when we remove unused pages from /jsp
-					// logger.error(".jsp {} does not have its signin requirements specified", p);
+					// This warning is generated superfluously on some unused /jsp pages
+					// for now
+					logger.error(".jsp {} does not have its signin requirements specified", p);
 				}
 			}
 		}

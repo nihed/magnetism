@@ -22,18 +22,22 @@ public class TrackIndexer extends Indexer<Track> {
 		builder = new DocumentBuilder<Track>(Track.class);
 	}
 	
+	@Override
 	protected String getIndexName() {
 		return "Tracks";
 	}
-	
+
+	@Override
 	protected DocumentBuilder<Track> getBuilder() {
 		return builder; 
 	}
 	
+	@Override
 	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
 		EJBUtil.defaultLookup(MusicSystemInternal.class).indexTracks(writer, builder, ids);
 	}
 	
+	@Override
 	protected void doIndexAll(IndexWriter writer) throws IOException {
 		EJBUtil.defaultLookup(MusicSystemInternal.class).indexAllTracks(writer, builder);
 	}
