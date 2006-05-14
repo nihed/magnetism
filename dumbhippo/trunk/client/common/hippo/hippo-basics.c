@@ -1,5 +1,10 @@
 #include "hippo-basics.h"
 
+#ifdef G_OS_WIN32
+#define _WIN32_WINNT 0x0400 /* for IsDebuggerPresent() */
+#include <HippoStdAfx.h>
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 

@@ -458,7 +458,7 @@ void
 HippoChatRoomWrapper::onUserStateChanged(HippoPerson *person)
 {
     HippoChatState state = hippo_chat_room_get_user_state(delegate_, person);
-    if (state == HIPPO_CHAT_PARTICIPANT) {
+    if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
         addMember(person);
     } else {
         removeMember(person, true);
@@ -527,7 +527,7 @@ HippoChatRoomWrapper::notifyUserJoin(HippoPerson *user)
         return;
 
     HippoChatState state = hippo_chat_room_get_user_state(delegate_, user);
-    g_return_if_fail(state != HIPPO_CHAT_NONMEMBER);
+    g_return_if_fail(state != HIPPO_CHAT_STATE_NONMEMBER);
 
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(HIPPO_ENTITY(user)), -1);
     HippoBSTR guid = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(user)), -1);
@@ -541,7 +541,7 @@ HippoChatRoomWrapper::notifyUserJoin(HippoPerson *user)
             VARIANTARG args[4];
 
             args[0].vt = VT_BOOL;
-            args[0].boolVal = state == HIPPO_CHAT_PARTICIPANT ? TRUE : FALSE;
+            args[0].boolVal = state == HIPPO_CHAT_STATE_PARTICIPANT ? TRUE : FALSE;
             args[1].vt = VT_BSTR;
             args[1].bstrVal = name.m_str;
             args[2].vt = VT_INT;
@@ -853,7 +853,7 @@ HippoChatRoomWrapper::Join(BOOL participant)
     hippoDebugLogW(L"HippoChatRoomWrapper::Join participant = %d", participant);
 
     hippo_connection_join_chat_room(hippo_data_cache_get_connection(cache_), delegate_,
-        participant ? HIPPO_CHAT_PARTICIPANT : HIPPO_CHAT_VISITOR);
+        participant ? HIPPO_CHAT_STATE_PARTICIPANT : HIPPO_CHAT_STATE_VISITOR);
 
     return S_OK;
 }
@@ -864,7 +864,7 @@ HippoChatRoomWrapper::Leave(BOOL participant)
     hippoDebugLogW(L"HippoChatRoomWrapper::Leave participant = %d", participant);
 
     hippo_connection_leave_chat_room(hippo_data_cache_get_connection(cache_), delegate_,
-        participant ? HIPPO_CHAT_PARTICIPANT : HIPPO_CHAT_VISITOR);
+        participant ? HIPPO_CHAT_STATE_PARTICIPANT : HIPPO_CHAT_STATE_VISITOR);
 
     return S_OK;
 }

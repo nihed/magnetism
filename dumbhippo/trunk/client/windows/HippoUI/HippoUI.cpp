@@ -816,7 +816,12 @@ HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)
     *result = NULL;
 
     HippoUStr chatIdU(chatId);
-    HippoChatRoom *room = hippo_data_cache_lookup_chat_room(dataCache_, chatIdU.c_str(), NULL);
+
+    if (!hippo_verify_guid(chatIdU.c_str())) {
+        return E_INVALIDARG;
+    }
+
+    HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
  
     if (room != NULL) {
         *result = HippoChatRoomWrapper::getWrapper(room, dataCache_);
@@ -1175,7 +1180,7 @@ HippoUI::isShareActive(HippoPost *post)
     HippoPerson *self = hippo_data_cache_get_self(dataCache_);
 
     if (chatRoom != NULL &&
-        hippo_chat_room_get_user_state(chatRoom, self) != HIPPO_CHAT_NONMEMBER)
+        hippo_chat_room_get_user_state(chatRoom, self) != HIPPO_CHAT_STATE_NONMEMBER)
         return true;
     
     HippoBSTR postId = HippoBSTR::fromUTF8(hippo_post_get_guid(post), -1);
@@ -2018,6 +2023,12 @@ test_alloc_failure_behavior()
 #endif
 }
 
+static void
+print_debug_func(const char *message)
+{
+    hippoDebugLogU("%s", message);
+}
+
 int APIENTRY 
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -2042,6 +2053,8 @@ WinMain(HINSTANCE hInstance,
         g_printerr("%s\n", error->message);
         return 1;
     }
+
+    hippo_set_print_debug_func(print_debug_func);
 
     // FIXME there's a problem here in that if hippo_parse_options removes
     // parsed options (not sure if it does but it should) then we'd leak those elements
