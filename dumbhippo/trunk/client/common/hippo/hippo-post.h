@@ -69,7 +69,6 @@ HippoChatRoom*   hippo_post_get_chat_room             (HippoPost     *post);
 void             hippo_post_set_chat_room             (HippoPost     *post,
                                                        HippoChatRoom *room);
 
-
 G_END_DECLS
 
 #endif /* __HIPPO_POST_H__ */

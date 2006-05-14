@@ -150,8 +150,8 @@ hippo_app_join_chat(HippoApp   *app,
     window = g_hash_table_lookup(app->chat_windows, chat_id);
     if (window == NULL) {
         HippoChatRoom *room;
-        /* FIXME for now assuming group chat, see bug #423 */
-        room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_GROUP);
+
+        room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
         window = hippo_chat_window_new(app->cache, room);
         g_hash_table_replace(app->chat_windows, g_strdup(chat_id), window);
         g_signal_connect(window, "destroy", G_CALLBACK(on_chat_window_destroy), app);

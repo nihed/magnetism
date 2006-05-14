@@ -5,17 +5,40 @@
 
 G_BEGIN_DECLS
 
+/*
+ * CHAT ROOM LIFECYCLE OVERVIEW
+ * 
+ * When a chat room is created, it asks the server for the current chat state.
+ * during this time, loading = TRUE. When the room is fully loaded, loading=FALSE
+ * and the room emits the "loaded" signal.
+ * 
+ * (note, loading=FALSE when a chat room is just created, the loading flag means 
+ * we've called request_details and don't have a reply yet. but we always request_details
+ * right away)
+ * 
+ * Once a room is loaded, it's guaranteed to have known kind POST, GROUP, or BROKEN.
+ * BROKEN means the server hadn't heard of the room.
+ * 
+ * Before a room is loaded, if the kind is known it will be set, but the kind may
+ * be UNKNOWN.
+ * 
+ * If we disconnect and reconnect to the server, the chat room can re-enter the
+ * loading=TRUE state. If it does so, the "cleared" signal will be emitted first.
+ */
+
 typedef struct _HippoChatMessage   HippoChatMessage;
 
 typedef enum {
-    HIPPO_CHAT_NONMEMBER,
-    HIPPO_CHAT_VISITOR,
-    HIPPO_CHAT_PARTICIPANT
+    HIPPO_CHAT_STATE_NONMEMBER,
+    HIPPO_CHAT_STATE_VISITOR,
+    HIPPO_CHAT_STATE_PARTICIPANT
 } HippoChatState;
 
 typedef enum {
-    HIPPO_CHAT_POST,
-    HIPPO_CHAT_GROUP
+    HIPPO_CHAT_KIND_UNKNOWN,
+    HIPPO_CHAT_KIND_POST,
+    HIPPO_CHAT_KIND_GROUP,
+    HIPPO_CHAT_KIND_BROKEN
 } HippoChatKind;
 
 typedef struct _HippoChatRoom      HippoChatRoom;
@@ -35,6 +58,7 @@ HippoChatRoom*    hippo_chat_room_new                     (const char   *chat_id
 
 const char*       hippo_chat_room_get_id                  (HippoChatRoom  *room);
 const char*       hippo_chat_room_get_jabber_id           (HippoChatRoom  *room);
+gboolean          hippo_chat_room_get_loading             (HippoChatRoom  *room);
 HippoChatKind     hippo_chat_room_get_kind                (HippoChatRoom  *room);
 HippoChatState    hippo_chat_room_get_user_state          (HippoChatRoom  *room,
                                                            HippoPerson    *person);
@@ -51,10 +75,12 @@ GSList*           hippo_chat_room_get_messages            (HippoChatRoom  *room)
 
 /* === Methods used by HippoConnection to keep chat room updated === */
 
-/* Set while we are using a <details/> IQ to fill a chatroom we aren't part of */
-gboolean hippo_chat_room_get_filling             (HippoChatRoom *room);
-void     hippo_chat_room_set_filling             (HippoChatRoom *room,
-                                                  gboolean       filling);
+/* Set while we are loading the chat room details with connection_request_details */
+void     hippo_chat_room_set_loading             (HippoChatRoom *room,
+                                                  int            generation,
+                                                  gboolean       loading);
+void     hippo_chat_room_set_kind                (HippoChatRoom *room,
+                                                  HippoChatKind  kind);
 void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
                                                   HippoPerson   *person,
                                                   HippoChatState state);
@@ -64,7 +90,8 @@ void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
 void     hippo_chat_room_add_message             (HippoChatRoom    *room,
                                                   HippoChatMessage *message);
 /* Called on reconnect, since users and messages will be resent */
-void     hippo_chat_room_clear                   (HippoChatRoom *room);
+void     hippo_chat_room_reconnected             (HippoConnection *connection,
+                                                  HippoChatRoom   *room);
 
 /* bump our count of desiring PARTICIPANT or VISITOR */
 void            hippo_chat_room_increment_state_count (HippoChatRoom *room,

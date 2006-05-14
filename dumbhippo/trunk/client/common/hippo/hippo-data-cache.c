@@ -17,7 +17,7 @@ struct _HippoDataCache {
     GHashTable      *posts;
     GSList          *active_posts;
     GHashTable      *entities;
-    GHashTable      *group_chats;
+    GHashTable      *chats;
     HippoPerson     *cached_self;
     char            *myspace_name;
     GSList          *myspace_contacts;
@@ -58,8 +58,8 @@ hippo_data_cache_init(HippoDataCache *cache)
                                          g_free, (GFreeFunc) g_object_unref);
     cache->entities = g_hash_table_new_full(g_str_hash, g_str_equal,
                                             g_free, (GFreeFunc) g_object_unref);
-    cache->group_chats = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                               g_free, (GFreeFunc) g_object_unref);
+    cache->chats = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                         g_free, (GFreeFunc) g_object_unref);
                                                
     /* these defaults are important to be sure we
      * do nothing until we hear otherwise
@@ -187,7 +187,7 @@ hippo_data_cache_finalize(GObject *object)
 
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
     g_hash_table_destroy(cache->posts);
-    g_hash_table_destroy(cache->group_chats);
+    g_hash_table_destroy(cache->chats);
     
     /* destroy entities after stuff pointing to entities */
     g_hash_table_destroy(cache->entities);
@@ -343,14 +343,10 @@ hippo_data_cache_add_post(HippoDataCache *cache,
 
     g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
-        
-    /* Start filling in chatroom information for this post asynchronously.
-     * Note this creates the guarantee that all posts have a chat room != NULL
-     * from the start, which some code may well rely on.
-     */
-      
-    room = hippo_data_cache_ensure_chat_room(cache,
-            hippo_post_get_guid(post), HIPPO_CHAT_POST);
+ 
+    room = hippo_data_cache_ensure_chat_room(cache, hippo_post_get_guid(post),
+                                      HIPPO_CHAT_KIND_POST);
+    g_assert(hippo_post_get_chat_room(post) == room);
 
     g_debug("Post %s added, emitting post-added", hippo_post_get_guid(post));
     g_signal_emit(cache, signals[POST_ADDED], 0, post);
@@ -610,106 +606,54 @@ hippo_data_cache_lookup_chat_room(HippoDataCache  *cache,
                                   HippoChatKind   *kind_p)
 {
     HippoChatRoom *room;
-    HippoPost *post;
 
     if (kind_p)
         *kind_p = -1; /* more reliably detect bugs */
 
-    post = hippo_data_cache_lookup_post(cache, chat_id);
-    if (post)
-        room = hippo_post_get_chat_room(post);
-    else
-        room = NULL;
-        
+    room = g_hash_table_lookup(cache->chats, chat_id);
     if (room != NULL) {
         if (kind_p)
-            *kind_p = HIPPO_CHAT_POST;
-        return room;
-    }
-    
-    room = g_hash_table_lookup(cache->group_chats, chat_id);
-    if (room != NULL) {
-        if (kind_p)
-            *kind_p = HIPPO_CHAT_GROUP;
+            *kind_p = hippo_chat_room_get_kind(room);
         return room;
     }
     
     return room;
-}                                  
+}
 
 HippoChatRoom*
 hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
                                   const char      *chat_id,
                                   HippoChatKind    kind)
 {
-    if (kind == HIPPO_CHAT_POST) {
+    HippoChatRoom *room;
+
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    g_return_val_if_fail(chat_id != NULL, NULL);
+    g_return_val_if_fail(hippo_verify_guid(chat_id), NULL);
+    
+    room = g_hash_table_lookup(cache->chats, chat_id);
+    if (room == NULL) {
         HippoPost *post;
-        HippoChatRoom *room;
-        gboolean created_post;
-        gboolean created_room;
         
-        post = hippo_data_cache_lookup_post(cache, chat_id);
-        if (post) {
-            /* can return NULL, right now only when a post is first 
-             * created since we quickly ask for the chat room on all posts
-             */
-            room = hippo_post_get_chat_room(post);
-            if (room)
-                g_object_ref(room);
+        if (kind == HIPPO_CHAT_KIND_POST || kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            post = hippo_data_cache_lookup_post(cache, chat_id);
+            if (post != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
+                kind = HIPPO_CHAT_KIND_POST;
+            }
         } else {
-            room = NULL;
+            post = NULL;
         }
-
-        if (room == NULL) {
-            /* no post, or post has no room yet */
-            room = hippo_chat_room_new(chat_id, kind);
-            created_room = TRUE;
-        } else {
-            created_room = FALSE;
-        }
+        
+        room = hippo_chat_room_new(chat_id, kind);
+        if (post)
+            hippo_post_set_chat_room(post, room);
             
-        g_assert(room != NULL);    
-            
-        if (post == NULL) {
-            post = hippo_post_new(chat_id);
-            created_post = TRUE;
-        } else {
-            created_post = FALSE;
-        }
-        
-        /* no-op if the room is already set on the post */
-        hippo_post_set_chat_room(post, room);
-        
-        g_assert(post != NULL);
-        g_assert(hippo_post_get_chat_room(post) == room);
-        
-        /* request the chat room info */
-        if (created_room)
-            hippo_connection_request_chat_room_details(cache->connection, room);
-        
-        /* now add the post if appropriate */
-        if (created_post)
-            hippo_data_cache_add_post(cache, post);
-
-        g_object_unref(room); /* post still holds a ref so it won't be finalized */
-        return room;
-    } else if (kind == HIPPO_CHAT_GROUP) {
-        HippoChatRoom *room;
-        
-        room = g_hash_table_lookup(cache->group_chats, chat_id);
-        if (room == NULL) {
-            room = hippo_chat_room_new(chat_id, HIPPO_CHAT_GROUP);
-            hippo_connection_request_chat_room_details(cache->connection, room);
-            /* hand our refcount to the group_chats hashtable */
-            g_hash_table_replace(cache->group_chats, g_strdup(chat_id), room);
-        }
-        return room;
-    } else {
-        g_assert_not_reached();
-        return NULL;
+        hippo_connection_request_chat_room_details(cache->connection, room);
+        /* hand our refcount to the chats hashtable */
+        g_hash_table_replace(cache->chats, g_strdup(chat_id), room);
     }
+    return room;
 }
-
 
 typedef void (* HippoChatRoomFunc) (HippoChatRoom *room,
                                     void          *data);
@@ -731,20 +675,7 @@ apply_closure(HippoChatRoom   *room,
 }              
 
 static void
-foreach_post_chat_room_func(void *key, void *value, void *data)
-{
-    HippoPost *post = HIPPO_POST(value);
-    ChatRoomClosure *closure = data;
-    HippoChatRoom *room;
-    
-    room = hippo_post_get_chat_room(post);
-    if (room) {
-        apply_closure(room, closure);
-    }
-}
-
-static void
-foreach_group_chat_room_func(void *key, void *value, void *data)
+foreach_chat_room_func(void *key, void *value, void *data)
 {
     HippoChatRoom *room = HIPPO_CHAT_ROOM(value);
     ChatRoomClosure *closure = data;
@@ -763,8 +694,7 @@ hippo_data_cache_foreach_chat_room (HippoDataCache    *cache,
     
     g_object_ref(cache);
     
-    g_hash_table_foreach(cache->posts, foreach_post_chat_room_func, &closure);
-    g_hash_table_foreach(cache->group_chats, foreach_group_chat_room_func, &closure);
+    g_hash_table_foreach(cache->chats, foreach_chat_room_func, &closure);
     
     g_object_unref(cache);
 }                                                                       
@@ -776,7 +706,7 @@ update_chat_room_func(HippoChatRoom *room,
     HippoDataCache *cache = HIPPO_DATA_CACHE(data);
     
     /* be sure we know we aren't in the room */
-    hippo_chat_room_set_user_state(room, cache->cached_self, HIPPO_CHAT_NONMEMBER);
+    hippo_chat_room_set_user_state(room, cache->cached_self, HIPPO_CHAT_STATE_NONMEMBER);
 
     /* Now clear, rejoin, and reload the chat room */
     hippo_connection_rejoin_chat_room(cache->connection, room);

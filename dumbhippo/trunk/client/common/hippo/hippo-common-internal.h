@@ -2,6 +2,7 @@
 #define __HIPPO_COMMON_INTERNAL_H__
 
 #include <glib-object.h>
+#include <hippo/hippo-basics.h>
 
 G_BEGIN_DECLS
 

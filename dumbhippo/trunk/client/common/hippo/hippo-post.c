@@ -189,7 +189,7 @@ hippo_post_get_viewing_user_count(HippoPost *post)
      * waiting until we are filled to use the chatroom count avoids
      * the user seeing a count-up as the chatroom fills
      */
-    if (post->chat_room && !hippo_chat_room_get_filling(post->chat_room))
+    if (post->chat_room && !hippo_chat_room_get_loading(post->chat_room))
         return hippo_chat_room_get_viewing_user_count(post->chat_room);
     else
         return post->viewing_user_count;
@@ -200,7 +200,7 @@ hippo_post_get_chatting_user_count(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
 
-    if (post->chat_room && !hippo_chat_room_get_filling(post->chat_room))
+    if (post->chat_room && !hippo_chat_room_get_loading(post->chat_room))
         return hippo_chat_room_get_chatting_user_count(post->chat_room);
     else
         return post->chatting_user_count;
@@ -263,6 +263,9 @@ hippo_post_set_title(HippoPost  *post,
 {
     g_return_if_fail(HIPPO_IS_POST(post));
     set_str(post, &post->title, value);
+    
+    if (post->chat_room)
+        hippo_chat_room_set_title(post->chat_room, post->title);
 }
 
 void
@@ -409,6 +412,9 @@ hippo_post_set_chat_room(HippoPost     *post,
     if (post->chat_room)
         g_object_unref(post->chat_room);
     post->chat_room = room;
+
+    if (post->chat_room)
+        hippo_chat_room_set_title(post->chat_room, post->title);
     
     hippo_post_emit_changed(post);
-}                         
+}

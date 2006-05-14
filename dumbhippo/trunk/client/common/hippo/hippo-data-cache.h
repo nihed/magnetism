@@ -8,7 +8,7 @@
 
 G_BEGIN_DECLS
 
-/* HippoDataCache forward-declared in hippo-connection.h */
+/* HippoDataCache forward-declared in hippo-basics.h */
 
 typedef struct
 {

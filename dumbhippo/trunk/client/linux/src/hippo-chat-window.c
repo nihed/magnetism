@@ -18,6 +18,8 @@ static void      on_user_state_changed                 (HippoChatRoom         *r
                                                         HippoChatWindow       *window);
 static void      on_title_changed                      (HippoChatRoom         *room,
                                                         HippoChatWindow       *window);
+static void      on_loaded                             (HippoChatRoom         *room,
+                                                        HippoChatWindow       *window);
 static void      on_cleared                            (HippoChatRoom         *room,
                                                         HippoChatWindow       *window);
 static void      on_user_changed                       (HippoPerson           *user,
@@ -31,11 +33,13 @@ struct _HippoChatWindow {
     GtkWindow parent;
     HippoDataCache *cache;
     HippoChatRoom *room;
+    GtkWindowGroup *window_group;    
     GtkWidget *title_label;
     GtkWidget *member_view;
     GtkWidget *chat_log;
     GtkWidget *send_entry;
     GtkWidget *send_button;
+    GtkWidget *error_dialog;
 };
 
 struct _HippoChatWindowClass {
@@ -85,6 +89,9 @@ hippo_chat_window_new(HippoDataCache *cache,
 
     window->cache = cache;
     g_object_ref(window->cache);
+
+    window->window_group = gtk_window_group_new();
+    gtk_window_group_add_window(window->window_group, GTK_WINDOW(window));
 
     gtk_container_set_border_width(GTK_CONTAINER(window), SPACING);
 
@@ -156,8 +163,9 @@ hippo_chat_window_new(HippoDataCache *cache,
     g_signal_connect(window->room, "user-state-changed", G_CALLBACK(on_user_state_changed), window);
     g_signal_connect(window->room, "message-added", G_CALLBACK(on_message_added), window);
     g_signal_connect(window->room, "cleared", G_CALLBACK(on_cleared), window);
+    g_signal_connect(window->room, "loaded", G_CALLBACK(on_loaded), window);    
     
-    hippo_connection_join_chat_room(get_connection(window), window->room, HIPPO_CHAT_PARTICIPANT);
+    hippo_connection_join_chat_room(get_connection(window), window->room, HIPPO_CHAT_STATE_PARTICIPANT);
     
     return window;
 }
@@ -171,9 +179,10 @@ hippo_chat_window_destroy(GtkObject *gtk_object)
         g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_title_changed), window);
         g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_user_state_changed), window);
         g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_message_added), window);
-        g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_cleared), window);        
+        g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_cleared), window);      
+        g_signal_handlers_disconnect_by_func(window->room, G_CALLBACK(on_loaded), window);      
         
-        hippo_connection_leave_chat_room(get_connection(window), window->room, HIPPO_CHAT_PARTICIPANT);        
+        hippo_connection_leave_chat_room(get_connection(window), window->room, HIPPO_CHAT_STATE_PARTICIPANT);
         
         g_object_unref(window->room);
         window->room = NULL;
@@ -250,9 +259,39 @@ on_title_changed(HippoChatRoom         *room,
     
     gtk_label_set_text(GTK_LABEL(window->title_label),
                        title);
-    window_title = g_strdup_printf(_("%s - Mugshot Chat"), title);
+    if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_POST) {
+        window_title = g_strdup_printf(_("%s - Mugshot Link Chat"), title);
+    } else if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_GROUP) {
+        window_title = g_strdup_printf(_("%s - Mugshot Group Chat"), title);
+    } else {
+        window_title = g_strdup_printf(_("%s - Mugshot Chat"), title);
+    }
     gtk_window_set_title(GTK_WINDOW(window), window_title);
     g_free(window_title);
+}
+
+static void
+on_loaded(HippoChatRoom         *room,
+          HippoChatWindow       *window)
+{
+    if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_BROKEN) {
+        if (window->error_dialog)
+            gtk_object_destroy(GTK_OBJECT(window->error_dialog));
+        window->error_dialog = gtk_message_dialog_new(GTK_WINDOW(window),
+                                        GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
+                                        GTK_MESSAGE_ERROR,
+                                        GTK_BUTTONS_CLOSE,
+                                        _("This chat doesn't seem to exist!"));
+        gtk_window_group_add_window(window->window_group, GTK_WINDOW(window->error_dialog));
+        
+        g_signal_connect(window->error_dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+        g_signal_connect(window->error_dialog, "destroy", G_CALLBACK(gtk_widget_destroyed),
+                        &window->error_dialog);
+        /* destroy chat window with this error dialog */
+        g_signal_connect_swapped(window->error_dialog, "destroy", G_CALLBACK(gtk_widget_destroy), window);
+
+        gtk_widget_show(window->error_dialog);
+    }
 }
 
 static void

@@ -5,6 +5,12 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoDataCache      HippoDataCache;
+typedef struct _HippoDataCacheClass HippoDataCacheClass;
+
+typedef struct _HippoConnection      HippoConnection;
+typedef struct _HippoConnectionClass HippoConnectionClass;
+
 typedef enum {
     HIPPO_INSTANCE_NORMAL,
     HIPPO_INSTANCE_DOGFOOD,

@@ -6,9 +6,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct _HippoDataCache      HippoDataCache;
-typedef struct _HippoDataCacheClass HippoDataCacheClass;
-
 typedef enum {
     HIPPO_STATE_SIGNED_OUT,     // User hasn't asked to connect
     HIPPO_STATE_SIGN_IN_WAIT,   // Waiting for the user to sign in
@@ -25,9 +22,6 @@ typedef struct {
     char **values;
 } HippoSong;
 
-typedef struct _HippoConnection      HippoConnection;
-typedef struct _HippoConnectionClass HippoConnectionClass;
-
 #define HIPPO_TYPE_CONNECTION              (hippo_connection_get_type ())
 #define HIPPO_CONNECTION(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CONNECTION, HippoConnection))
 #define HIPPO_CONNECTION_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_CONNECTION, HippoConnectionClass))
@@ -37,6 +31,8 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 
 GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
+
+int              hippo_connection_get_generation            (HippoConnection  *connection);
 
 void             hippo_connection_set_cache                 (HippoConnection  *connection,
                                                              HippoDataCache   *cache);

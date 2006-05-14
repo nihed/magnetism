@@ -1,5 +1,6 @@
 #include <hippo/hippo-common-internal.h>
 #include "hippo-chat-room.h"
+#include "hippo-connection.h"
 #include <string.h>
 
 static void      hippo_chat_room_init        (HippoChatRoom       *room);
@@ -28,7 +29,9 @@ struct _HippoChatRoom {
     /* number of times we want to be a viewer */
     int visitor_count;
 
-    guint filling : 1;
+    int generation;
+    int loading_generation;
+    guint loading : 1;
 };
 
 struct _HippoChatRoomClass {
@@ -43,11 +46,12 @@ enum {
     USER_STATE_CHANGED,
     /* JOINED is emitted for a subset of STATE_CHANGED where the state went
      * from nonmember to either viewer or participant, and the chat room
-     * isn't in the "filling" state. This means we may want to specially
+     * isn't in the "loading" state. This means we may want to specially
      * indicate the new member of the chat to users.
      */
     USER_JOINED,
     MESSAGE_ADDED,
+    LOADED,
     CLEARED,
     LAST_SIGNAL
 };
@@ -110,6 +114,15 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
             		  g_cclosure_marshal_VOID__POINTER,
             		  G_TYPE_NONE, 1, G_TYPE_POINTER);
 
+    signals[LOADED] =
+        g_signal_new ("loaded",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
     signals[CLEARED] =
         g_signal_new ("cleared",
             		  G_TYPE_FROM_CLASS (object_class),
@@ -153,7 +166,11 @@ hippo_chat_room_new(const char   *chat_id,
 
     room->id = g_strdup(chat_id);
     room->kind = kind;
-    room->title = g_strdup(_("Loading..."));
+
+    room->generation = -1;
+    room->loading_generation = -1;
+
+    hippo_chat_room_set_title(room, NULL);
 
     return room;
 }
@@ -182,7 +199,7 @@ hippo_chat_room_get_jabber_id(HippoChatRoom *room)
 HippoChatKind
 hippo_chat_room_get_kind(HippoChatRoom *room)
 {
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_POST);
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_KIND_UNKNOWN);
     return room->kind;
 }
 
@@ -192,13 +209,17 @@ hippo_chat_room_set_title(HippoChatRoom  *room,
 {
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
     
+    if (title == NULL) {
+        title = _("Loading...");
+    }
+    
     if (title == room->title ||
         (title && room->title && strcmp(title, room->title) == 0))
         return;
         
     g_free(room->title);
     room->title = g_strdup(title);
-    
+        
     g_signal_emit(room, signals[TITLE_CHANGED], 0, room->title);
 }
 
@@ -276,20 +297,65 @@ hippo_chat_room_get_messages(HippoChatRoom *room)
 }
 
 gboolean
-hippo_chat_room_get_filling(HippoChatRoom *room)
+hippo_chat_room_get_loading(HippoChatRoom *room)
 {
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
+
+    if (room->generation > room->loading_generation)
+        return FALSE; /* haven't called set_loading yet in this generation */
     
-    return room->filling;
+    return room->loading;
 }
 
 void
-hippo_chat_room_set_filling(HippoChatRoom *room,
-                            gboolean       filling)
+hippo_chat_room_set_loading(HippoChatRoom *room,
+                            int            generation,
+                            gboolean       loading)
 {
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+
+    g_debug("Setting loading=%d generation %d on room %s (%p) old loading %d old generation %d",
+            loading, generation, room->id, room, room->loading, room->loading_generation);
     
-    room->filling = filling;
+    if (room->loading_generation != generation) {
+        room->loading_generation = generation;
+        /* the old pending chat details isn't going to show */
+        room->loading = FALSE;
+    }
+    
+    loading = loading != FALSE;
+    
+    if (room->loading == loading)
+        return;
+    
+    room->loading = loading;
+    
+    if (!room->loading) {
+        g_signal_emit(G_OBJECT(room), signals[LOADED], 0);
+    }
+}
+
+void
+hippo_chat_room_set_kind(HippoChatRoom *room,
+                         HippoChatKind  kind)
+{
+    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    g_return_if_fail(room->loading);
+    
+    if (room->kind == kind)
+        return;
+    
+    /* Kind can go UNKNOWN->anything and anything->BROKEN but not 
+     * GROUP->POST or GROUP->UNKNOWN or anything like that 
+     */
+    if (room->kind != HIPPO_CHAT_KIND_UNKNOWN) {
+        if (kind != HIPPO_CHAT_KIND_BROKEN) {
+            g_warning("Can't change chat room kind after it's already been set");
+            return;
+        }
+    }
+    
+    room->kind = kind;
 }
 
 HippoChatState
@@ -299,16 +365,16 @@ hippo_chat_room_get_user_state(HippoChatRoom *room,
     HippoChatState state;
     const char *guid;
     
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_NONMEMBER);
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_STATE_NONMEMBER);
     
     guid = hippo_entity_get_guid(HIPPO_ENTITY(person));
     
     if (g_hash_table_lookup(room->viewers, guid) != NULL)
-        state = HIPPO_CHAT_VISITOR;
+        state = HIPPO_CHAT_STATE_VISITOR;
     else if (g_hash_table_lookup(room->chatters, guid) != NULL)
-        state = HIPPO_CHAT_PARTICIPANT;
+        state = HIPPO_CHAT_STATE_PARTICIPANT;
     else
-        state = HIPPO_CHAT_NONMEMBER;
+        state = HIPPO_CHAT_STATE_NONMEMBER;
         
     return state;
 }
@@ -336,34 +402,34 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
     g_object_ref(person);
     
     switch (old_state) {
-    case HIPPO_CHAT_VISITOR:
+    case HIPPO_CHAT_STATE_VISITOR:
         g_hash_table_remove(room->viewers, guid);
         break; 
-    case HIPPO_CHAT_PARTICIPANT:
+    case HIPPO_CHAT_STATE_PARTICIPANT:
         g_hash_table_remove(room->viewers, guid);
         break;
-    case HIPPO_CHAT_NONMEMBER:
+    case HIPPO_CHAT_STATE_NONMEMBER:
         /* no old entry to remove */        
         break;
     }
     
     switch(state) {
-    case HIPPO_CHAT_VISITOR:
+    case HIPPO_CHAT_STATE_VISITOR:
         g_object_ref(person); /* extra ref for the hash */
         g_hash_table_replace(room->viewers, g_strdup(guid), person);
         break; 
-    case HIPPO_CHAT_PARTICIPANT:
+    case HIPPO_CHAT_STATE_PARTICIPANT:
         g_object_ref(person); /* extra ref for the hash */    
         g_hash_table_replace(room->chatters, g_strdup(guid), person);    
         break;
-    case HIPPO_CHAT_NONMEMBER:
+    case HIPPO_CHAT_STATE_NONMEMBER:
         /* no new entry to insert */
         break;
     }
 
     g_signal_emit(room, signals[USER_STATE_CHANGED], 0, person);
 
-    if (!room->filling && old_state == HIPPO_CHAT_NONMEMBER) {
+    if (!room->loading && old_state == HIPPO_CHAT_STATE_NONMEMBER) {
         g_signal_emit(room, signals[USER_JOINED], 0, person);
     }
 
@@ -417,12 +483,26 @@ hippo_chat_room_add_message(HippoChatRoom    *room,
 
 /* Called on reconnect, since users and messages will be resent */
 void
-hippo_chat_room_clear(HippoChatRoom *room)
+hippo_chat_room_reconnected(HippoConnection *connection,
+                            HippoChatRoom   *room)
 {
     GHashTable *old_viewers;
     GHashTable *old_chatters;
+    int new_generation;
     
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+
+    new_generation = hippo_connection_get_generation(connection);
+
+    g_debug("Clearing chat room old generation %d new %d",
+            room->generation, new_generation);
+
+    if (room->generation == new_generation) {
+        g_debug("No disconnect has happened, no need to clear");
+        return;
+    }
+    
+    room->generation = new_generation;
 
     /* Save old tables to hold refs while
      * we emit the "cleared" signal so 
@@ -437,6 +517,8 @@ hippo_chat_room_clear(HippoChatRoom *room)
     make_hash_tables(room);
     
     free_messages(room);
+
+    hippo_connection_request_chat_room_details(connection, room);
     
     g_signal_emit(room, signals[CLEARED], 0);
     
@@ -449,13 +531,13 @@ hippo_chat_room_increment_state_count(HippoChatRoom *room,
                                       HippoChatState state)
 {
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    g_return_if_fail(state != HIPPO_CHAT_NONMEMBER);
+    g_return_if_fail(state != HIPPO_CHAT_STATE_NONMEMBER);
 
-    if (state == HIPPO_CHAT_PARTICIPANT) {
+    if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
         room->participant_count += 1;
         g_debug("participant_count for %s incremented to %d visitor_count %d",
                 room->id, room->participant_count, room->visitor_count);
-    } else if (state == HIPPO_CHAT_VISITOR) {
+    } else if (state == HIPPO_CHAT_STATE_VISITOR) {
         room->visitor_count += 1;
         g_debug("visitor_count for %s incremented to %d participant_count %d",
                 room->id, room->visitor_count, room->participant_count);
@@ -467,15 +549,15 @@ hippo_chat_room_decrement_state_count(HippoChatRoom *room,
                                       HippoChatState state)
 {
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    g_return_if_fail(state != HIPPO_CHAT_NONMEMBER);
+    g_return_if_fail(state != HIPPO_CHAT_STATE_NONMEMBER);
     
-    if (state == HIPPO_CHAT_PARTICIPANT) {
+    if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
         g_return_if_fail(room->participant_count >= 0);
         
         room->participant_count -= 1;
         g_debug("participant_count for %s decremented to %d visitor_count %d",
                 room->id, room->participant_count, room->visitor_count);
-    } else if (state == HIPPO_CHAT_VISITOR) {
+    } else if (state == HIPPO_CHAT_STATE_VISITOR) {
         g_return_if_fail(room->visitor_count >= 0);
 
         room->visitor_count -= 1;
@@ -490,11 +572,11 @@ hippo_chat_room_get_desired_state(HippoChatRoom *room)
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), 0);
 
     if (room->participant_count > 0)
-        return HIPPO_CHAT_PARTICIPANT;
+        return HIPPO_CHAT_STATE_PARTICIPANT;
     else if (room->visitor_count > 0)
-        return HIPPO_CHAT_VISITOR;
+        return HIPPO_CHAT_STATE_VISITOR;
     else
-        return HIPPO_CHAT_NONMEMBER;
+        return HIPPO_CHAT_STATE_NONMEMBER;
 }
 
 /* === HippoChatMessage === */
