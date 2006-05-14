@@ -289,6 +289,7 @@ log_handler(const char    *log_domain,
             void          *user_data)
 {
     const char *prefix;
+    GString *gstr;
 
     if (log_level & G_LOG_FLAG_RECURSION) {
         (*hippo_print_debug_func)("Mugshot: log recursed");
@@ -330,7 +331,7 @@ log_handler(const char    *log_domain,
             break;
     }
 
-    GString *gstr = g_string_new("Mugshot: ");
+    gstr = g_string_new("Mugshot: ");
     
     g_string_append(gstr, prefix);
     g_string_append(gstr, message);
