@@ -25,6 +25,7 @@ hippo_load_cookies(const char *domain,
     files[n_files].filename = g_build_filename(homedir,
         ".gnome2/epiphany/mozilla/epiphany/cookies.txt", NULL);
     files[n_files].browser = HIPPO_BROWSER_EPIPHANY;
+    g_debug("Using '%s' as cookie file %d", files[n_files].filename, n_files);    
     ++n_files;
 
     firefox_dir = g_build_filename(homedir, ".mozilla/firefox", NULL);
@@ -32,15 +33,20 @@ hippo_load_cookies(const char *domain,
     if (dir != NULL) {
         const char *subdir;
         while ((subdir = g_dir_read_name(dir)) != NULL) {
-
+            char *cookie_file;
+            g_debug("Reading firefox subdir/file '%s'", subdir);
             if (n_files >= MAX_FILES)
                 break;
 
-            char *cookie_file = g_build_filename(firefox_dir, subdir, "cookies.txt", NULL);
+            cookie_file = g_build_filename(firefox_dir, subdir, "cookies.txt", NULL);
+            g_debug("Checking for cookies file '%s'\n", cookie_file);
             if (g_file_test(cookie_file, G_FILE_TEST_EXISTS)) {
                 files[n_files].filename = cookie_file;
                 files[n_files].browser = HIPPO_BROWSER_FIREFOX;
+                g_debug("  using as cookie file %d", n_files);                
                 ++n_files;
+            } else {
+                g_free(cookie_file);
             }
         }
         g_dir_close(dir);
@@ -48,6 +54,9 @@ hippo_load_cookies(const char *domain,
     g_free(firefox_dir);
     
     cookies = hippo_load_cookies_files(files, n_files, domain, port, name);
+    
+    g_debug("Loaded %d cookies matching domain '%s' port %d cookie name '%s'",
+            g_slist_length(cookies), domain, port, name);
     
     do {
         --n_files;

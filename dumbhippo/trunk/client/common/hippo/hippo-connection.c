@@ -547,6 +547,7 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
 
 /* === HippoConnection private methods === */
 
+/* also used for client info failure */
 static void
 hippo_connection_connect_failure(HippoConnection *connection,
                                  const char      *message)
@@ -973,6 +974,7 @@ on_client_info_reply(LmMessageHandler *handler,
     const char *download;
     
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/clientinfo", "clientInfo")) {
+        hippo_connection_connect_failure(connection, "Client info reply was wrong thing");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -982,7 +984,7 @@ on_client_info_reply(LmMessageHandler *handler,
     download = lm_message_node_get_attribute(child, "download");
 
     if (!minimum || !current || !download) {
-        g_warning("clientInfo reply missing attributes");
+        hippo_connection_connect_failure(connection, "Client info reply was missing attributes");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -1018,13 +1020,10 @@ hippo_connection_request_client_info(HippoConnection *connection)
 #define PLATFORM "windows"
 #endif
 #ifdef G_OS_UNIX
-#define PLATFORM "x11"
-#endif 
-    /* FIXME windows hardcoded for now because the server won't reply about linux, need to 
-     * fix... it's unclear this is useful for linux anyhow since the linux client uses RPM
-     * and thus won't self-upgrade
-     */
-    lm_message_node_set_attribute(child, "platform", "windows");
+#define PLATFORM "linux"
+#endif
+
+    lm_message_node_set_attribute(child, "platform", PLATFORM);
 
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
 
@@ -2114,6 +2113,15 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
     HippoChatRoom *room;
     HippoChatKind kind;
 
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_ERROR) {
+        g_debug("Error reply for chat room details");
+    }
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT) {
+        g_debug("Chat room details IQ reply is not type RESULT but %d",
+                lm_message_get_sub_type(message));
+    }
+
     from = lm_message_node_get_attribute(message->node, "from");
 
     if (!from || !parse_room_jid(from, &chat_id, &user_id)) {
@@ -2792,10 +2800,11 @@ handle_message (LmMessageHandler *handler,
         if (child) {
             g_debug("newPost received");
             hippo_connection_parse_post_data(connection, child, TRUE, "newPost");
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
-    } else {
-        g_debug("handle_message: message not handled");
     }
+    
+    g_debug("handle_message: message not handled by any of our handlers");
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }

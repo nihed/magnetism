@@ -127,15 +127,17 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     if (origin_browser_p)
         *origin_browser_p = hippo_cookie_get_origin_browser(cookie);
     
-    cookies = g_slist_remove_link(cookies, cookies);
+    g_debug("Parsing cookie value '%s' from browser %d",
+        value ? value : "NULL", hippo_cookie_get_origin_browser(cookie));    
+    
+    /* Free cookies! */
     g_slist_foreach(cookies, (GFunc) hippo_cookie_unref, NULL);
     g_slist_free(cookies);
-    hippo_cookie_unref(cookie);
 
     /* Parse the value and return username/password
      * hippo_parse_login_cookie allows a NULL value
      */
-
+     
     success = hippo_parse_login_cookie(value, web_host, username_p, password_p);
     g_free(value);
     return success;
@@ -209,6 +211,8 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
 
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.dumbhippo.com:21020");
+    else if (impl->instance == HIPPO_INSTANCE_DEBUG)
+        return g_strdup("hp.debug.dumbhippo.com:21020");
     else
         return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
 }
@@ -222,6 +226,8 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
 
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.dumbhippo.com:9080");
+    else if (impl->instance == HIPPO_INSTANCE_DEBUG)
+        return g_strdup("hp.debug.dumbhippo.com:8080");        
     else
         return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
 }

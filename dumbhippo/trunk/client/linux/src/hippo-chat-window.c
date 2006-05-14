@@ -2,6 +2,7 @@
 #include "hippo-chat-window.h"
 #include "main.h"
 #include <gtk/gtk.h>
+#include <string.h>
 
 static void      hippo_chat_window_init                (HippoChatWindow       *window);
 static void      hippo_chat_window_class_init          (HippoChatWindowClass  *klass);
@@ -21,7 +22,10 @@ static void      on_cleared                            (HippoChatRoom         *r
                                                         HippoChatWindow       *window);
 static void      on_user_changed                       (HippoPerson           *user,
                                                         HippoChatWindow       *window);
-
+static void      on_send_message                       (GtkWidget             *entry_or_button,
+                                                        HippoChatWindow       *window);
+static void      on_send_entry_changed                 (GtkWidget             *entry,
+                                                        HippoChatWindow       *window);
 
 struct _HippoChatWindow {
     GtkWindow parent;
@@ -109,6 +113,10 @@ hippo_chat_window_new(HippoDataCache *cache,
     gtk_box_pack_end(GTK_BOX(hbox), vbox2, TRUE, TRUE, 0);
 
     window->chat_log = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(window->chat_log), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(window->chat_log), FALSE);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(window->chat_log), SPACING);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(window->chat_log), SPACING);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
@@ -130,6 +138,15 @@ hippo_chat_window_new(HippoDataCache *cache,
 
     gtk_window_set_default_size(GTK_WINDOW(window), 600, 400);
 
+    /* Set up widget signals */
+
+    on_send_entry_changed(window->send_entry, window);
+    
+    g_signal_connect(window->send_entry, "changed", G_CALLBACK(on_send_entry_changed), window);
+    g_signal_connect(window->send_entry, "activate", G_CALLBACK(on_send_message), window);    
+    g_signal_connect(window->send_button, "clicked", G_CALLBACK(on_send_message), window);
+
+    /* Now connect to chat room */
     window->room = room;
     g_object_ref(window->room);
 
@@ -195,9 +212,25 @@ on_message_added(HippoChatRoom         *room,
                  HippoChatMessage      *message,
                  HippoChatWindow       *window)
 {
-
+    GtkTextBuffer *buffer;
+    GtkTextIter iter;
+    const char *text;
+    int len;
+    
+    text = hippo_chat_message_get_text(message);
+    len = strlen(text);
+    
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log));
+    
+    gtk_text_buffer_get_end_iter(buffer, &iter);
+    gtk_text_buffer_insert(buffer, &iter, text, len);
+    
+    /* If the inserted text did not end in a newline, insert one. */
+    if (!gtk_text_iter_starts_line(&iter)) {
+        gtk_text_buffer_insert(buffer, &iter, "\n", 1);
+    }
 }
-                 
+
 static void
 on_user_state_changed(HippoChatRoom         *room,
                       HippoPerson           *user,
@@ -236,3 +269,52 @@ on_user_changed(HippoPerson           *user,
 
 
 }                
+
+static gboolean
+is_all_whitespace(const char *text)
+{
+    const char *p;
+    
+    p = text;
+    while (*p) {
+        gunichar c = g_utf8_get_char(p);
+        
+        if (!g_unichar_isspace(c))
+            return FALSE;
+    
+        p = g_utf8_next_char(p); 
+    }
+    return TRUE;
+}
+
+static void
+on_send_message(GtkWidget             *entry_or_button,
+                HippoChatWindow       *window)
+{
+    HippoConnection *connection;
+    const char *text;
+    
+    connection = get_connection(window);
+    
+    text = gtk_entry_get_text(GTK_ENTRY(window->send_entry));
+    
+    /* the send button isn't enabled if all whitespace, but you can still
+     * press enter on the entry and get here
+     */
+    if (is_all_whitespace(text))
+        return;    
+    
+    hippo_connection_send_chat_room_message(connection, window->room, text);
+    
+    gtk_entry_set_text(GTK_ENTRY(window->send_entry), "");
+}
+
+static void
+on_send_entry_changed(GtkWidget             *entry,
+                      HippoChatWindow       *window)
+{
+    const char *text;
+    
+    text = gtk_entry_get_text(GTK_ENTRY(window->send_entry));
+    gtk_widget_set_sensitive(window->send_button, !is_all_whitespace(text));
+}

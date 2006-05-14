@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 0.1)
+AM_INIT_AUTOMAKE(mugshot, 1.1.0)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -63,6 +63,11 @@ if test "x$GCC" = "xyes"; then
   case " $CFLAGS " in
   *[\ \	]-Wchar-subscripts[\ \	]*) ;;
   *) CFLAGS="$CFLAGS -Wchar-subscripts" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wdeclaration-after-statement[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wdeclaration-after-statement" ;;
   esac
 
   case " $CFLAGS " in
