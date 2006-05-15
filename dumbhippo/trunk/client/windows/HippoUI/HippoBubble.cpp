@@ -106,7 +106,9 @@ void
 HippoBubble::initializeUI()
 {
     postAdded_.connect(G_OBJECT(ui_->getDataCache()), "post-added",
-    slot(this, &HippoBubble::onPostAdded));
+        slot(this, &HippoBubble::onPostAdded));
+    chatRoomLoaded_.connect(G_OBJECT(ui_->getDataCache()), "chat-room-loaded",
+        slot(this, &HippoBubble::onChatRoomLoaded));
 }
 
 void
@@ -284,6 +286,9 @@ void
 HippoBubble::onUserJoined(HippoPerson *person,
                           HippoPost   *post)
 {
+    if (ui_->isShareActive(post)) // Already have a window open
+        return;
+
     if (!ie_) {
         if (!create())
             return;
@@ -300,6 +305,9 @@ void
 HippoBubble::onMessageAdded(HippoChatMessage *message,
                             HippoPost        *post)
 {
+    if (ui_->isShareActive(post)) // Already have a window open
+        return;
+
     if (!ie_) {
         if (!create())
             return;
@@ -338,6 +346,20 @@ HippoBubble::onPostAdded(HippoPost *post)
 }
 
 void
+HippoBubble::onChatRoomLoaded(HippoChatRoom *room)
+{
+    if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_POST) {
+        HippoDataCache *cache = ui_->getDataCache();
+        HippoPost *post = hippo_data_cache_lookup_post(ui_->getDataCache(), hippo_chat_room_get_id(room));
+
+        GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-user-joined",
+            "user-joined", bind(slot(this, &HippoBubble::onUserJoined), post));
+        GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-message-added",
+            "message-added", bind(slot(this, &HippoBubble::onMessageAdded), post));
+    }
+}
+
+void
 HippoBubble::connectPost(HippoPost *post)
 {
     hippoDebugLogU("Bubble connecting post %s",
@@ -351,12 +373,6 @@ HippoBubble::connectPost(HippoPost *post)
 
     GConnection0<void>::named_connect(G_OBJECT(post), "hippo-bubble-changed",
         "changed", bind(slot(this, &HippoBubble::onPostChanged), post));
-
-    HippoChatRoom *room = hippo_post_get_chat_room(post);
-    GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-user-joined",
-        "user-joined", bind(slot(this, &HippoBubble::onUserJoined), post));
-    GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-message-added",
-        "message-added", bind(slot(this, &HippoBubble::onMessageAdded), post));
 
     g_object_ref(post);
     connectedPosts_.insert(post);

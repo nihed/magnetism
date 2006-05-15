@@ -71,11 +71,13 @@ private:
     std::set<HippoPost*> connectedPosts_;
 
     GConnection1<void,HippoPost*> postAdded_;           // HippoDataCache::post-added
+    GConnection1<void,HippoChatRoom*> chatRoomLoaded_;  // HippoDataCache::chat-room-loaded
 
     void onUserJoined(HippoPerson *person, HippoPost *post);
     void onMessageAdded(HippoChatMessage *message, HippoPost *post);
     void onPostChanged(HippoPost *post);
     void onPostAdded(HippoPost *post);
+    void onChatRoomLoaded(HippoChatRoom *room);
     
     void connectPost(HippoPost *post);
     void disconnectPost(HippoPost *post);

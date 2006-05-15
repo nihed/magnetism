@@ -2,14 +2,24 @@
 #include "hippo-connection.h"
 #include <string.h>
 
+typedef void (* HippoChatRoomFunc) (HippoChatRoom *room,
+                                    void          *data);
+
 static void      hippo_data_cache_init                (HippoDataCache       *cache);
 static void      hippo_data_cache_class_init          (HippoDataCacheClass  *klass);
 
 static void      hippo_data_cache_finalize            (GObject              *object);
 
+static void      hippo_data_cache_foreach_chat_room   (HippoDataCache       *cache,
+                                                       HippoChatRoomFunc     func,
+                                                       void                 *data);
+
 static void      hippo_data_cache_on_connect          (HippoConnection      *connection,
                                                        gboolean              connected,
                                                        void                 *data);
+static void      hippo_data_cache_on_chat_room_loaded (HippoChatRoom        *chat_room,
+                                                       void                 *data);
+
 
 struct _HippoDataCache {
     GObject          parent;
@@ -44,6 +54,7 @@ enum {
     MYSPACE_NAME_CHANGED,
     MYSPACE_COMMENTS_CHANGED,
     MYSPACE_CONTACTS_CHANGED,
+    CHAT_ROOM_LOADED,
     LAST_SIGNAL
 };
 
@@ -167,7 +178,24 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
 
+    signals[POST_ADDED] =
+        g_signal_new ("chat-room-loaded",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__OBJECT,
+            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+
     object_class->finalize = hippo_data_cache_finalize;
+}
+
+static void
+disconnect_chat_room(HippoChatRoom *chat_room,
+                     void          *data)
+{
+    HippoDataCache *cache = (HippoDataCache *)data;
+    g_signal_handlers_disconnect_by_func(chat_room, (void *)hippo_data_cache_on_chat_room_loaded, cache);
 }
 
 static void
@@ -186,9 +214,12 @@ hippo_data_cache_finalize(GObject *object)
     hippo_data_cache_set_client_info(cache, NULL);
 
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
+
     g_hash_table_destroy(cache->posts);
+
+    hippo_data_cache_foreach_chat_room(cache, disconnect_chat_room, cache);
     g_hash_table_destroy(cache->chats);
-    
+
     /* destroy entities after stuff pointing to entities */
     g_hash_table_destroy(cache->entities);
 
@@ -647,6 +678,9 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
         room = hippo_chat_room_new(chat_id, kind);
         if (post)
             hippo_post_set_chat_room(post, room);
+
+        g_signal_connect(room, "loaded",
+                         G_CALLBACK(hippo_data_cache_on_chat_room_loaded), cache);
             
         hippo_connection_request_chat_room_details(cache->connection, room);
         /* hand our refcount to the chats hashtable */
@@ -654,9 +688,6 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
     }
     return room;
 }
-
-typedef void (* HippoChatRoomFunc) (HippoChatRoom *room,
-                                    void          *data);
 
 typedef struct {
     HippoChatRoomFunc  func;
@@ -761,6 +792,15 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
         hippo_data_cache_set_myspace_contacts(cache, NULL);
         hippo_data_cache_set_client_info(cache, NULL);
     }
+}
+
+static void      
+hippo_data_cache_on_chat_room_loaded (HippoChatRoom *chat_room,
+                                      void          *data)
+{
+    HippoDataCache *cache = data;
+
+    g_signal_emit(cache, signals[CHAT_ROOM_LOADED], 0, chat_room);
 }
 
 GSList*
