@@ -111,6 +111,7 @@ public class NoMailSystemBean implements NoMailSystem {
 						token = (ToggleNoMailToken) q.getSingleResult();
 						if (token.isExpired()) {
 							em.remove(token);
+							em.flush(); // Sync to database before creating a new token
 							throw new EntityNotFoundException("found expired nomail token, making a new one");
 						}
 					} catch (EntityNotFoundException e) {
