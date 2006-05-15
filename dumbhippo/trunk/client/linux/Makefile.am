@@ -64,12 +64,14 @@ $(MARSHAL_BODY): $(MARSHAL_LIST)
 	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
 mugshot_SOURCES	=				    \
-	src/hippo-chat-window.c		    \
-	src/hippo-chat-window.h		    \
+	src/hippo-chat-window.c		    	\
+	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
 	src/hippo-http.c			\
 	src/hippo-http.h			\
+	src/hippo-image-cache.c			\
+	src/hippo-image-cache.h			\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-status-icon.c			\
