@@ -3,6 +3,7 @@
 // Used by HippoUI.rc
 //
 #define IDC_MYICON                      2
+#define IDI_SWARM1                      5
 #define IDD_HIPPOUI_DIALOG              102
 #define IDD_PREFERENCES                 102
 #define IDS_APP_TITLE                   103
@@ -35,6 +36,13 @@
 #define IDI_DUMBHIPPO_4                 155
 #define IDI_DUMBHIPPO_5                 157
 #define IDI_DUMBHIPPO_0                 159
+#define IDI_SWARM2                      161
+#define IDI_SWARM3                      162
+#define IDI_SWARM4                      163
+#define IDI_SWARM5                      164
+#define IDI_SWARM5B                     165
+#define IDI_ICON1                       167
+#define IDI_LINKSWARM                   167
 #define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
@@ -58,7 +66,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        160
+#define _APS_NEXT_RESOURCE_VALUE        168
 #define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124
