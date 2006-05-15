@@ -177,20 +177,40 @@ GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 LOUDMOUTH_REQUIRED=1.0
 # earlier might work, but this is what's in FC4 and thus has been tested
-CURL_REQUIRED=7.15.1
+CURL_REQUIRED=7.13.1
 
 ## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
 ## on the link line... we don't want to link to all that stuff. So just do -lcurl
 ## For now people doing static linking or putting libcurl in a funny prefix will have to h4x0r the following
 ## lines (try just "PKG_CHECK_MODULES(CURL, libcurl >= $CURL_REQUIRED)" if you don't care about linking to 
 ## all the extra goo)
+## Also, older curl has curl-config instead of a .pc file... mumble grumble
 CURL_LIBS=-lcurl
 CURL_CFLAGS=
 PKG_CHECK_EXISTS(libcurl >= $CURL_REQUIRED, have_curl=true, have_curl=false)
+warn_about_curl_version=false
 if $have_curl ; then
     AC_MSG_NOTICE([Found libcurl, using link flags $CURL_LIBS])
 else
-    AC_MSG_ERROR([libcurl not found or too old; you might have to install curl-devel for example])
+    AC_MSG_WARN([no pkg-config enabled libcurl found; checking for old-timey version of curl])
+
+    AC_CHECK_HEADERS([curl/curl.h])
+    AC_CHECK_HEADERS([curl/easy.h], [have_curl_headers=true], [have_curl_headers=false],
+        [#if HAVE_CURL_CURL_H
+         #include <curl/curl.h>
+         #endif
+        ])
+    if $have_curl_headers ; then
+        AC_CHECK_LIB(curl, curl_easy_perform, have_curl=true, have_curl=false)
+    else
+        have_curl=false
+    fi
+    if $have_curl ; then
+        warn_about_curl_version=true
+        AC_MSG_WARN([libcurl seems to exist, but we don't know what version it is; if you get weird problems then try upgrading...])
+    else
+        AC_MSG_ERROR([no libcurl found on system, on some systems you could solve this by installing the curl-devel package])
+    fi
 fi
 
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
@@ -226,3 +246,12 @@ echo "
 
         Now type 'make' to build $PACKAGE
 "
+
+if test "$warn_about_curl_version" ; then
+    echo "
+        ***** libcurl was found but we couldn't tell what version it is.
+        ***** we've tested with versions $CURL_REQUIRED and above.
+        ***** If you have an older version, the build might fail or 
+        ***** there may be bugs at runtime, or, it might work - we don't know!
+    "
+fi
