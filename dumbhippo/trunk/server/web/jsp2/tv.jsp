@@ -17,12 +17,12 @@
 	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxTv>
-			<dht:zoneBoxTitle a="dhReceivedPosts">Coming Soon!</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle a="dhReceivedPosts">COMING SOON!</dht:zoneBoxTitle>
 			<p>
 			TV Party is our next step, we're working on it right now.  And we're not creating this behind a magic curtain or anything but right here out in the exhibitionist open.  Check out the links below for our progress and join the <a href="">TV Party Development Group</a> to see more!
 			</p>
 			<dht:zoneBoxSeparator/>
-			<dht:zoneBoxTitle a="dhSentPosts">Links</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle a="dhSentPosts">PROGRESS</dht:zoneBoxTitle>
 			<ul>
 				<li><a href="">Our Blog</a> with <a href="">TV Party Posts</a></li>
 				<li><a href="">The <a href="">Design Process</a> we use to create new stuff like this</li>
