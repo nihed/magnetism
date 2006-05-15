@@ -23,7 +23,7 @@ public class MusicPersonPage extends AbstractPersonPage {
 		if (recentTracks == null) {
 			logger.debug("Getting recent tracks for {}", getViewedUser());
 			recentTracks = pagePositions.createBoundedPageable("recentTracks"); 
-			getMusicSystem().pageLatestTrackViews(getUserSignin().getViewpoint(), getViewedUser(), recentTracks);
+			getMusicSystem().pageLatestTrackViews(getViewpoint(), getViewedUser(), recentTracks);
 		}
 		return recentTracks;
 	}
@@ -32,7 +32,7 @@ public class MusicPersonPage extends AbstractPersonPage {
 		if (mostPlayedTracks == null) {
 			logger.debug("Getting most played tracks for {}", getViewedUser());
 			mostPlayedTracks = pagePositions.createBoundedPageable("mostPlayedTracks"); 
-			getMusicSystem().pageFrequentTrackViews(getUserSignin().getViewpoint(), getViewedUser(), mostPlayedTracks);
+			getMusicSystem().pageFrequentTrackViews(getViewpoint(), getViewedUser(), mostPlayedTracks);
 		}
 		return mostPlayedTracks;
 	}

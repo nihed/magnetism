@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
@@ -96,6 +97,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 				logger.debug("bad userId as person parameter {}", userId);
 			}
 		}
+	}
+	
+	public Viewpoint getViewpoint() {
+		if (getSignin().isValid()) {
+			return getUserSignin().getViewpoint();
+		}
+		return AnonymousViewpoint.getInstance();
 	}
 	
 	public PersonView getViewedPerson() {
