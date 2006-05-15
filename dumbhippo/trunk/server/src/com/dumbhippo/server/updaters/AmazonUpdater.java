@@ -44,8 +44,8 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 
 	@Override
 	protected int getMaxAgeMilliseconds() {
-		// keep amazon info for 1 day
-		return 1000 * 60 * 60 * 24;
+		// keep amazon info for 1 hour
+		return 1000 * 60 * 60;
 	}
 	
 	@Override
