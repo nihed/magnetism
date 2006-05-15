@@ -10,8 +10,7 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage>
-	<c:choose>
-	<c:when test="${signin.valid}">
+	<c:if test="${signin.valid}">
 	<dht:requireLinksPersonBean who="${signin.user.id}"/>
 	<dht:sidebarPerson who="${signin.user.id}">
 		<dht:sidebarBoxControls title="LINK SWARM CONTROLS">
@@ -29,11 +28,7 @@
 			</div>
 		</dht:sidebarBoxControls>		
 	</dht:sidebarPerson>
-	</c:when>
-	<c:otherwise>
-		FIXME
-	</c:otherwise>
-	</c:choose>
+	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
 			<c:choose>
@@ -70,12 +65,17 @@
 					</c:choose>
 				</c:when>
 				<c:otherwise><%-- not signed in case --%>
-					<div>
-					<b>LINK SWARM.</b> Stop spending lonely nights alone with nothing to do. Now you can be 
-					alone sharing links with strangers! Live the dream.
+					<div id="dhLinkSwarmTag">
+						<img src="/images2/linkswarmtag.gif"/>
 					</div>
-					<div><a href="">GET IT NOW</a></div>
-					<div>FIXME screenshot goes here</div>
+					<div id="dhLinkSwarmSample">
+						<img src="/images2/bubblesample.gif"/>
+					</div>
+					<div>
+					<span class="dh-option-list">
+					<a class="dh-option-list-option" href="/links-learnmore">Learn More</a>
+					</span>
+					</div>					
 					<dht:zoneBoxSeparator/>
 					<dht:requireLinksGlobalBean/>
 					<dht:zoneBoxTitle>RECENTLY SHARED</dht:zoneBoxTitle>
@@ -87,10 +87,12 @@
 						<c:otherwise>
 							Nobody anywhere has ever shared anything!
 						</c:otherwise>
-					</c:choose>					
+					</c:choose>
+					<%-- not implemented yet 	
 					<dht:zoneBoxTitle>QUIPS</dht:zoneBoxTitle>
 					FIXME
 					<dht:moreExpander open="false"/>
+					--%>
 				</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxWeb>
