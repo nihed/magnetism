@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_privacy500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/header_privacy500.gif" fullHeader="true">
 
     <p>Martin: Well, you don't know my cat. It's very demanding.<br/>
     Debi: It? You don't know if it's a boy or a girl?<br/>

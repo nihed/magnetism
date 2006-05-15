@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_aboutus500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/header_aboutus500.gif" fullHeader="true">
 
 	<p>Mugshot is an experiment in software design for people.</p>
 

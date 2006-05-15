@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_termsofuse500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/header_termsofuse500.gif" fullHeader="true">
 
 	<p>FIXME: formal terms of use from legal</p>
 

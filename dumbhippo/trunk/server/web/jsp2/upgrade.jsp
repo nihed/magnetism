@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage topText="A new version of Mugshot is available" logoOnly="true" disableJumpTo="true">
+<dht:systemPage topText="A new version of Mugshot is available" disableJumpTo="true">
 	<table cellspacing="0" cellpadding="0">
 	<tr>
 	<td><img id="dhUpgradeLogo" src="/images2/muggray60x60.png"/></td>

@@ -5,8 +5,9 @@
 <%@ attribute name="topImage" required="false" type="java.lang.String" %>
 <%@ attribute name="topText" required="false" type="java.lang.String" %>
 <%@ attribute name="disableJumpTo" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="fullHeader" required="false" type="java.lang.Boolean" %>
 
-<dht:twoColumnPage neverShowSidebar="true">
+<dht:twoColumnPage neverShowSidebar="true" logoOnly="${!fullHeader}">
 	<dht:zoneBox zone="group" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
 		<jsp:doBody/>
 	</dht:zoneBox>
