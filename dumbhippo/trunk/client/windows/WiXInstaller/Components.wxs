@@ -12,6 +12,7 @@
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="intlDll"     Name="intl.dll"                                     src="intl.dll"              DiskId="1" Vital="yes"/>
 		        <File Id="glibDll"     Name="libglib-.dll" LongName="libglib-2.0-0.dll"    src="libglib-2.0-0.dll"     DiskId="1" Vital="yes"/>
+		        <File Id="gobjectDll"  Name="libgobje.dll" LongName="libgobject-2.0-0.dll" src="libgobject-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="gthreadDll"  Name="libgthre.dll" LongName="libgthread-2.0-0.dll" src="libgthread-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		    </Component>
 
