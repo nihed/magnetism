@@ -27,24 +27,16 @@
 	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
 	<br/>
 	<c:if test="${signin.valid}">
-		<table cellspacing="0" cellpadding="0">
-		<tr>
+		<span class="dh-option-list">	
 		<c:if test="${theme.creator eq signin.user}">
-			<td class="dh-radar-option">
-			<a href="/radar-theme-creator?theme=${theme.id}">Edit</a>
-			</td>
-			<td class="dh-radar-separator"><div></div></td>			
+			<a class="dh-option-list-option" href="/radar-theme-creator?theme=${theme.id}">Edit</a>
+			|
 		</c:if>
-		<td class="dh-radar-option">		
-		<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
-		</td>
+		<a class="dh-option-list-option" href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
 		<c:if test="${!theme.draft && !alreadyCurrent}">
-			<td class="dh-radar-separator"><div></div></td>
-			<td class="dh-radar-option">
-			<a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
-			</td>
+			|
+			<a class="dh-option-list-option" href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
 		</c:if>
-		</tr>
-		</table>
+		</span>
 	</c:if>
 </div>

@@ -318,3 +318,8 @@ form {
 .dh-invisible {
     display:    none;
 }
+
+.dh-option-list-option {
+	margin-left: 5px;
+	margin-right: 5px;
+}

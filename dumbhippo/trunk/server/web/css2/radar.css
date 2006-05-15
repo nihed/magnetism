@@ -2,14 +2,6 @@
 @IMPORT url("site.css");
 @IMPORT url("radar-positions.css");
 
-.dh-radar-separator {
-	background: gray;
-}
-
-#dhBeaconSample {
-	border: 1px solid black;
-}
-
 .dh-radar-explanatory {
 	font-size: 12px;
 }

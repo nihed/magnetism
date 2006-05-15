@@ -261,3 +261,11 @@ body.dh-gray-background-page {
 .dh-disclaimer {
 	font-size: 10px;
 }
+
+#dhBeaconSample {
+	border: 1px solid black;	
+}
+
+.dh-option-list {
+	font-size: 12px;
+}

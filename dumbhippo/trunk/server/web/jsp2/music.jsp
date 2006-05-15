@@ -42,11 +42,20 @@
 	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
-			<c:if test="${signin.valid}">
-				<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
-			
-				<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
-			</c:if>
+			<c:choose>
+				<c:when test="${signin.valid}">
+					<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>		
+					<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+				</c:when>
+				<c:otherwise>
+					<span class="dh-option-list">
+					<a class="dh-option-list-option" href="/music-learnmore">Learn More</a>
+					|
+					<a class="dh-option-list-option" href="/radar-themes">Browse themes</a>
+					</span>
+					<div><dht:beaconSamples/></div>					
+				</c:otherwise>
+			</c:choose>
 
 			<dht:zoneBoxSubcolumns>
 				<dht:zoneBoxSubcolumn which="one">
