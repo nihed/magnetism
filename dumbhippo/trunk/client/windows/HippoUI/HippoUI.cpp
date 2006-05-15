@@ -1177,10 +1177,8 @@ HippoUI::isShareActive(HippoPost *post)
 {
     HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);
         
-    HippoPerson *self = hippo_data_cache_get_self(dataCache_);
-
     if (chatRoom != NULL &&
-        hippo_chat_room_get_user_state(chatRoom, self) != HIPPO_CHAT_STATE_NONMEMBER)
+        hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER)
         return true;
     
     HippoBSTR postId = HippoBSTR::fromUTF8(hippo_post_get_guid(post), -1);
