@@ -14,9 +14,9 @@
 	<tr>
 	<td><img id="dhUpgradeLogo" src="/images2/muggray60x60.png"/></td>
 	<td>
-	<p>Version 1.1.44</p>
+	<p>Version 1.1.45</p>
 	<ul>
-		<li>There is now a chat room for each group, in addition to the per-post chatrooms</li>
+		<li>Now with GObject, for smoother starts and better gas mileage</li>
 	</ul>
 	</td>
 	</tr>		
