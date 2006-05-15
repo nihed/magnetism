@@ -106,7 +106,7 @@ make_absolute_url(HippoApp   *app,
     url = g_strdup_printf("http://%s%s", server, relative);
     g_free(server);
     return url;
-}                  
+}
 
 void
 hippo_app_show_home(HippoApp *app)

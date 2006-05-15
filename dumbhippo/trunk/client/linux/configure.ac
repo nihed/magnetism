@@ -20,6 +20,9 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE",[The name of the gettext d
  ## must come before we use the $USE_MAINTAINER_MODE variable later
 AM_MAINTAINER_MODE
 
+## don't rerun to this point if we abort
+AC_CACHE_SAVE
+
 # libtool versioning
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
@@ -47,6 +50,9 @@ AC_PROG_CXX
 AC_PROG_LIBTOOL
 AC_ISC_POSIX
 AC_HEADER_STDC
+
+## don't rerun to this point if we abort
+AC_CACHE_SAVE
 
 ## example of how to do an arg
 ## AC_ARG_ENABLE(qt,               [  --enable-qt           enable Qt-friendly client library],enable_qt=$enableval,enable_qt=auto)
@@ -170,13 +176,36 @@ AM_CONDITIONAL(COMMON_OUTSIDE_TREE, $common_outside_tree)
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 LOUDMOUTH_REQUIRED=1.0
+# earlier might work, but this is what's in FC4 and thus has been tested
+CURL_REQUIRED=7.15.1
+
+## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
+## on the link line... we don't want to link to all that stuff. So just do -lcurl
+## For now people doing static linking or putting libcurl in a funny prefix will have to h4x0r the following
+## lines (try just "PKG_CHECK_MODULES(CURL, libcurl >= $CURL_REQUIRED)" if you don't care about linking to 
+## all the extra goo)
+CURL_LIBS=-lcurl
+CURL_CFLAGS=
+PKG_CHECK_EXISTS(libcurl >= $CURL_REQUIRED, have_curl=true, have_curl=false)
+if $have_curl ; then
+    AC_MSG_NOTICE([Found libcurl, using link flags $CURL_LIBS])
+else
+    AC_MSG_ERROR([libcurl not found or too old; you might have to install curl-devel for example])
+fi
 
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
+MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS"
+MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
+AC_SUBST(MUGSHOT_LIBS)
+AC_SUBST(MUGSHOT_CFLAGS)
 
-GLIB_GENMARSHAL=`pkg-config --variable=glib_genmarshal glib-2.0`
+GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
+
+PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, true,
+    AC_MSG_ERROR([Right now things aren't going to work with GTK+ 2.9 or above]))
 
 AC_OUTPUT([
 Makefile

@@ -68,6 +68,8 @@ mugshot_SOURCES	=				    \
 	src/hippo-chat-window.h		    \
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
+	src/hippo-http.c			\
+	src/hippo-http.h			\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-status-icon.c			\

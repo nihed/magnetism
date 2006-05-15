@@ -401,6 +401,8 @@ hippo_parse_options(int          *argc_p,
         { NULL }
     };
 
+    g_assert(hippo_print_debug_func != NULL);
+
     /* on Windows, the point of this is that stderr/stdout don't show up anywhere so 
      * we want to reroute; on Linux, the point is to suppress DEBUG level in some cases
      */
