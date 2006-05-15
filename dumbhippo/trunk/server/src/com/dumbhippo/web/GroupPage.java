@@ -18,6 +18,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -36,6 +37,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	
+	@PagePositions
+	PagePositionsBean pagePositions;
+	
 	private GroupView viewedGroup;
 	private String viewedGroupId;
 	private boolean fromInvite;
@@ -47,7 +51,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<PersonView> activeMembers;
 	private ListBean<PersonView> invitedMembers;
 
-	private ListBean<PostView> posts;
+	private Pageable<PostView> posts;
 	private boolean allMembers;
 	
 	public GroupPage() {		
@@ -212,11 +216,12 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		this.fromInvite = fromInvite;
 	}
 	
-	public ListBean<PostView> getPosts() {
+	public Pageable<PostView> getPosts() {
 		assert getViewedGroup() != null;
 		
 		if (posts == null) {
-			posts = new ListBean<PostView>(postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), 0, MAX_POSTS_SHOWN));
+			posts = pagePositions.createPageable("groupPosts");
+			postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), posts);
 		}
 		return posts;
 	}

@@ -778,7 +778,7 @@ public class PostingBoardBean implements PostingBoard {
 		Query q = buildGetGroupPostsQuery(viewpoint, recipient, search, false);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
-
+	
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max) {
 		if (!viewpoint.isOfUser(user))
 			return Collections.emptyList();
@@ -975,6 +975,11 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
 		return getGroupPosts(viewpoint, recipient, null, start, max);
+	}
+	
+	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable) {
+		pageable.setResults(getGroupPosts(viewpoint, recipient, pageable.getStart(), pageable.getCount()));
+		pageable.setTotalCount(getGroupPostsCount(viewpoint, recipient));
 	}
 	
 	static final String GET_HOT_POSTS_QUERY = 

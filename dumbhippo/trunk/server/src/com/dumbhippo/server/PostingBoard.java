@@ -49,6 +49,15 @@ public interface PostingBoard {
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
 	
+	/**
+	 * Gets information about posts sent to a group in a pageable fashion.
+	 * 
+	 * @param viewpoint the viewpoint retrieving the information
+	 * @param recipient the group that received the posts
+	 * @param pageable provides information about what posts to view and receives the result
+	 */
+	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable);
+
 	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
 
 	/**
