@@ -60,6 +60,7 @@
 				</dht:formTable>
 			</c:if>
 			<c:if test="${invites.outstandingInvitations.size > 0}">
+				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<table>
 					<c:forEach items="${invites.outstandingInvitations.list}" var="invitation">

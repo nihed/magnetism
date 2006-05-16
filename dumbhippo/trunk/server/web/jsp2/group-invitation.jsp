@@ -62,6 +62,7 @@
 				</dht:formTable>
 			</c:if>
 			<c:if test="${group.invitedMembers.size > 0}">
+				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.invitedMembers.list}" var="person">
