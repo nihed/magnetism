@@ -11,6 +11,7 @@
 <%@ attribute name="displayAsAlbumTrack" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="order" required="false" type="java.lang.Integer"%>
 <%@ attribute name="songOrder" required="false" type="java.lang.Integer"%>
+<%@ attribute name="displaySinglePersonMusicPlay" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty displayAsAlbumTrack}">
 	<c:set var="displayAsAlbumTrack" value="false"/>
@@ -37,6 +38,10 @@
 
 <c:if test="${empty playItLink}">
 	<c:set var="playItLink" value="true"/>
+</c:if>
+
+<c:if test="${empty displaySinglePersonMusicPlay}">
+	<c:set var="displaySinglePersonMusicPlay" value="false"/>
 </c:if>
 
 <c:url value="/artist" var="albumlink">
@@ -153,14 +158,11 @@
 		</c:if>
 		<c:if test="${displayAsAlbumTrack}">
 		    <div id="dhSongPlaysOpened${order}s${songOrder}" class="${songPlaysOpenedClass}">
-		        <c:choose>
-		            <c:when test="${track.trackNumber >= 10}">
-		                <div class="dh-song-plays dh-double-digit-track-song-plays">
-		            </c:when>
-		           	<c:otherwise>
-		           		<div class="dh-song-plays">
-		           	</c:otherwise>	             
-                </c:choose>
+		        <c:set var="songPlaysClass" value="dh-song-plays"/>
+		        <c:if test="${track.trackNumber >= 10}">
+		            <c:set var="songPlaysClass" value="dh-song-plays dh-double-digit-track-song-plays"/>           
+                </c:if>
+                <div class="${songPlaysClass}">
 		            <c:choose>
 		                <c:when test="${track.totalPlays == 0}">
 		                    0 plays
@@ -199,6 +201,12 @@
                 </div>
 		  	</div>      
 		</c:if>		
+		<c:if test="${displaySinglePersonMusicPlay && !(empty track.singlePersonMusicPlayView)}">
+		    <br/>
+		    <div class="dh-song-plays-person">	
+		        played by <dht:personName who="${track.singlePersonMusicPlayView.person}" identifySelf="true"/>
+		    </div>  
+		</c:if>    
 	</div>
 	<c:if test="${albumArt}">
 		<div class="dh-grow-div-around-floats"></div>

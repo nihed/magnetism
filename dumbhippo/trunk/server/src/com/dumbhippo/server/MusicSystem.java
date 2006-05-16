@@ -38,7 +38,7 @@ public interface MusicSystem {
 	 */
 	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
 
-	public List<TrackView> getPopularTrackViews(int maxResults);
+	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults);
 	
 	/**
 	 * Retrieve the tracks that a user has listened to most recently

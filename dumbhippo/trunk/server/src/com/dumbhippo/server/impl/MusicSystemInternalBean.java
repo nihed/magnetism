@@ -1836,15 +1836,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		futureView.run(); // so we can call get()
 		return futureView;
 	}
-
-	private List<TrackView> getTrackViewResults(List<Future<TrackView>> futureViews) {
+	
+	private List<TrackView> getViewsFromTrackHistories(Viewpoint viewpoint, List<TrackHistory> tracks, boolean includePersonMusicPlay) {
 		
-		// now harvest all the results
+		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
+		
+		// spawn a bunch of yahoo updater threads in parallel
+		Map<TrackHistory, Future<TrackView>> futureViews = new HashMap<TrackHistory, Future<TrackView>>(tracks.size());
+		for (TrackHistory t : tracks) {
+			futureViews.put(t, getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
+		}
+	
+        // now harvest all the results
 		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
-		for (Future<TrackView> fv : futureViews) {
+		for (TrackHistory t : futureViews.keySet()) {
 			TrackView v;
 			try {
-				v = fv.get();
+				v = futureViews.get(t).get();
+				if (includePersonMusicPlay) {
+				    // add the person who made this "track history" 
+		            List<PersonMusicPlayView> personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
+				    personMusicPlayViews.add(new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
+				    v.setPersonMusicPlayViews(personMusicPlayViews);
+				}
 			} catch (InterruptedException e) {
 				throw new RuntimeException("Future<TrackView> was interrupted: " + e.getMessage(), e);
 			} catch (ExecutionException e) {
@@ -1857,19 +1871,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		return views;
-	}
-	
-	private List<TrackView> getViewsFromTrackHistories(List<TrackHistory> tracks) {
-		
-		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
-		
-		// spawn a bunch of yahoo updater threads in parallel
-		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(tracks.size());
-		for (TrackHistory t : tracks) {
-			futureViews.add(getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
-		}
-	
-		return getTrackViewResults(futureViews);
 	}
 
 	private List<AlbumView> getAlbumViewsFromTracks(List<Track> tracks) {
@@ -1947,7 +1948,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q.setFirstResult(pageable.getStart());
 		q.setMaxResults(pageable.getCount());
 		List<?> results = q.getResultList();
-		pageable.setResults(getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results)));
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false));
 		
 		// Doing an exact count is expensive, our assumption is "lots and lots"
 		pageable.setTotalCount(pageable.getBound());
@@ -1955,7 +1956,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
 	// to get, but I guess we could try to be fancier
-	public List<TrackView> getPopularTrackViews(int maxResults) {
+	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults) {
 		Query q;
 	
 		// FIXME this should try to get only one track per user or something, but 
@@ -1973,18 +1974,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.debug("Ignoring TrackHistory with null track");
 		}
 		
-		return getViewsFromTrackHistories(results);
+		return getViewsFromTrackHistories(viewpoint, results, false);
 	}
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults);
-		return getViewsFromTrackHistories(history);
+		return getViewsFromTrackHistories(viewpoint, history, false);
 	}
 	
 	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, pageable.getStart(), pageable.getCount());
-		pageable.setResults(getViewsFromTrackHistories(history));
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, false));
 		pageable.setTotalCount(countTrackHistory(viewpoint, user));
 	}
 	
@@ -1992,12 +1993,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		//logger.debug("getFrequentTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, 0, maxResults);
 		
-		return getViewsFromTrackHistories(history);
+		return getViewsFromTrackHistories(viewpoint, history, false);
 	}
 	
 	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, pageable.getStart(), pageable.getCount());
-		pageable.setResults(getViewsFromTrackHistories(history));
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, false));
 		pageable.setTotalCount(countTrackHistory(viewpoint, user));
 	}
 
@@ -2005,14 +2006,36 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		//logger.debug("getLatestTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
 		
-		return getViewsFromTrackHistories(history);
+		return getViewsFromTrackHistories(viewpoint, history, true);
 	}
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		//logger.debug("getFrequentTrackViews() for group {}", group);
 		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
 		
-		return getViewsFromTrackHistories(history);
+		return getViewsFromTrackHistories(viewpoint, history, false);
+	}
+	
+	private List<TrackView> getTrackViewResults(List<Future<TrackView>> futureViews) {
+		
+		// now harvest all the results
+		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
+		for (Future<TrackView> fv : futureViews) {
+			TrackView v;
+			try {
+				v = fv.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Future<TrackView> was interrupted: " + e.getMessage(), e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException("Future<TrackView> had execution exception: " + e.getMessage(), e);
+			}
+			
+			assert v != null;
+			
+			views.add(v);
+		}
+		
+		return views;
 	}
 	
 	private void pageTrackViewsFromQuery(Query query, Pageable<TrackView> pageable) {
@@ -2117,7 +2140,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		q.setMaxResults(pageable.getCount());
 		List<?> results = q.getResultList();
 		
-		pageable.setResults(getViewsFromTrackHistories(TypeUtils.castList(TrackHistory.class, results)));
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false));
 		
 		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h " + where);
 		Object o = q.getSingleResult();

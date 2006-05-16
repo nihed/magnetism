@@ -201,6 +201,13 @@ public class TrackView {
 		return personMusicPlayViews;
 	}
 	
+	public PersonMusicPlayView getSinglePersonMusicPlayView() {
+		if (!personMusicPlayViews.isEmpty()) {
+			return personMusicPlayViews.get(0);
+		}
+		return null;
+	}
+	
 	public void setPersonMusicPlayViews(List<PersonMusicPlayView> personMusicPlayViews) {
 		this.personMusicPlayViews = personMusicPlayViews;
 	}

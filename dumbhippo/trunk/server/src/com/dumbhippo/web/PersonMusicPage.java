@@ -54,7 +54,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	public ListBean<TrackView> getPopularTracks() {
 		if (popularTracks == null) {
-			popularTracks = new ListBean<TrackView>(getMusicSystem().getPopularTrackViews(LIST_SIZE));
+			popularTracks = new ListBean<TrackView>(getMusicSystem().getPopularTrackViews(getSignin().getViewpoint(), LIST_SIZE));
 		}
 		
 		return popularTracks;

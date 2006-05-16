@@ -29,7 +29,7 @@
 			<c:if test="${group.latestTracks.size > 0}">
 				<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
 				<c:forEach var="track" items="${group.latestTracks.list}">
-					<div><c:out value="${track.name}"/> by <c:out value="${track.artist}"/> played by FIXME</div>
+				     <dht:track track="${track}" oneLine="true" displaySinglePersonMusicPlay="true"/>
 				</c:forEach>
 				<dht:zoneBoxSeparator/>
 			</c:if>
