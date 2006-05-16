@@ -1,6 +1,7 @@
 #include <config.h>
 #include "hippo-chat-window.h"
 #include "main.h"
+#include "hippo-person-renderer.h"
 #include <gtk/gtk.h>
 #include <string.h>
 
@@ -9,6 +10,12 @@ static void      hippo_chat_window_class_init          (HippoChatWindowClass  *k
 
 static void      hippo_chat_window_finalize            (GObject               *object);
 static void      hippo_chat_window_destroy             (GtkObject             *object);
+
+static void      hippo_chat_window_connect_user        (HippoChatWindow *window,
+                                                        HippoPerson     *person);
+static void      hippo_chat_window_disconnect_user     (HippoChatWindow *window,
+                                                        HippoPerson     *person);
+static void      hippo_chat_window_disconnect_all_users(HippoChatWindow *window);
 
 static void      on_message_added                      (HippoChatRoom         *room,
                                                         HippoChatMessage      *message,
@@ -29,19 +36,27 @@ static void      on_send_message                       (GtkWidget             *e
 static void      on_send_entry_changed                 (GtkWidget             *entry,
                                                         HippoChatWindow       *window);
 
+enum {
+    MEMBER_COLUMN_PERSON,
+    MEMBER_NUM_COLUMNS
+};
+
 struct _HippoChatWindow {
     GtkWindow parent;
     HippoDataCache *cache;
     HippoChatRoom *room;
-    GtkWindowGroup *window_group;    
+    GtkWindowGroup *window_group;
     GtkWidget *title_label;
     GtkWidget *member_view;
+    GtkTreeModel *member_model;
     GtkWidget *chat_log_view;
     GtkWidget *send_entry;
     GtkWidget *send_button;
     GtkWidget *error_dialog;
     
     GHashTable *message_tags;
+    
+    GHashTable *connected_users;
 };
 
 struct _HippoChatWindowClass {
@@ -54,6 +69,7 @@ G_DEFINE_TYPE(HippoChatWindow, hippo_chat_window, GTK_TYPE_WINDOW);
 static void
 hippo_chat_window_init(HippoChatWindow  *window)
 {
+    window->member_model = GTK_TREE_MODEL(gtk_list_store_new(MEMBER_NUM_COLUMNS, HIPPO_TYPE_PERSON));
 }
 
 static void
@@ -73,6 +89,7 @@ get_connection(HippoChatWindow *window)
 }
 
 #define SPACING 10
+#define MEMBER_VIEW_WIDTH 140
 
 HippoChatWindow*
 hippo_chat_window_new(HippoDataCache *cache,
@@ -84,7 +101,9 @@ hippo_chat_window_new(HippoDataCache *cache,
     GtkWidget *hbox;
     GtkWidget *hbox2;
     GtkWidget *sw;
-    
+    GtkCellRenderer *renderer;
+    GtkTreeViewColumn *column;
+        
     window = g_object_new(HIPPO_TYPE_CHAT_WINDOW,
                           NULL);
 
@@ -107,12 +126,13 @@ hippo_chat_window_new(HippoDataCache *cache,
     hbox = gtk_hbox_new(FALSE, SPACING);
     gtk_box_pack_end(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
     
-    window->member_view = gtk_tree_view_new();
-    gtk_widget_set_size_request(window->member_view, 140, -1);
-
+    window->member_view = gtk_tree_view_new_with_model(window->member_model);
+    gtk_widget_set_size_request(window->member_view, MEMBER_VIEW_WIDTH, -1);
+    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(window->member_view), FALSE);
+    
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
-                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(sw), window->member_view);
     gtk_box_pack_start(GTK_BOX(hbox), sw, FALSE, FALSE, 0);
@@ -146,6 +166,52 @@ hippo_chat_window_new(HippoDataCache *cache,
 
     gtk_window_set_default_size(GTK_WINDOW(window), 600, 400);
 
+    /* Set up the tree view */
+    renderer = hippo_person_renderer_new();
+    g_object_set(G_OBJECT(renderer), "xalign", 0.0, "xpad", 2, "ypad", 2, NULL);
+    
+    gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(window->member_view),
+                                                -1, _("People"),
+                                                renderer, 
+                                                "person", MEMBER_COLUMN_PERSON,
+                                                NULL);
+    column = gtk_tree_view_get_column(GTK_TREE_VIEW(window->member_view), MEMBER_COLUMN_PERSON);
+    gtk_tree_view_column_set_fixed_width(column, MEMBER_VIEW_WIDTH);
+    gtk_tree_view_column_set_clickable(column, FALSE);
+
+    /* Now connect to chat room */
+    window->room = room;
+    g_object_ref(window->room);
+
+    on_title_changed(window->room, window);
+    
+    {
+        GSList *members = hippo_chat_room_get_users(window->room);
+        while (members != NULL) {
+            HippoChatState state;
+            HippoPerson *person = HIPPO_PERSON(members->data);
+            members = g_slist_remove(members, members->data);
+            
+            /* FIXME this is O(n^2) because we scan the list model
+             * to see if the person is already in there every time -
+             * part of the fix might be to do this on_loaded not 
+             * on construct.
+             */
+            state = hippo_chat_room_get_user_state(window->room, person);
+            if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
+                on_user_state_changed(window->room, person, window);
+            }
+            
+            g_object_unref(person);   
+        }
+    }
+
+    g_signal_connect(window->room, "title-changed", G_CALLBACK(on_title_changed), window);
+    g_signal_connect(window->room, "user-state-changed", G_CALLBACK(on_user_state_changed), window);
+    g_signal_connect(window->room, "message-added", G_CALLBACK(on_message_added), window);
+    g_signal_connect(window->room, "cleared", G_CALLBACK(on_cleared), window);
+    g_signal_connect(window->room, "loaded", G_CALLBACK(on_loaded), window);    
+
     /* Set up widget signals */
 
     on_send_entry_changed(window->send_entry, window);
@@ -154,18 +220,7 @@ hippo_chat_window_new(HippoDataCache *cache,
     g_signal_connect(window->send_entry, "activate", G_CALLBACK(on_send_message), window);    
     g_signal_connect(window->send_button, "clicked", G_CALLBACK(on_send_message), window);
 
-    /* Now connect to chat room */
-    window->room = room;
-    g_object_ref(window->room);
-
-    on_title_changed(window->room, window);
-
-    g_signal_connect(window->room, "title-changed", G_CALLBACK(on_title_changed), window);
-    g_signal_connect(window->room, "user-state-changed", G_CALLBACK(on_user_state_changed), window);
-    g_signal_connect(window->room, "message-added", G_CALLBACK(on_message_added), window);
-    g_signal_connect(window->room, "cleared", G_CALLBACK(on_cleared), window);
-    g_signal_connect(window->room, "loaded", G_CALLBACK(on_loaded), window);    
-    
+    /* Finally, join the room */    
     hippo_connection_join_chat_room(get_connection(window), window->room, HIPPO_CHAT_STATE_PARTICIPANT);
     
     return window;
@@ -193,6 +248,8 @@ hippo_chat_window_destroy(GtkObject *gtk_object)
         g_hash_table_destroy(window->message_tags);
         window->message_tags = NULL;
     }    
+ 
+    hippo_chat_window_disconnect_all_users(window);
     
     /* will get destroyed by default container destroy */
     window->title_label = NULL;
@@ -209,6 +266,10 @@ hippo_chat_window_finalize(GObject *object)
 {
     HippoChatWindow *window = HIPPO_CHAT_WINDOW(object);
 
+    hippo_chat_window_disconnect_all_users(window);
+
+    g_object_unref(window->member_model);
+
     g_object_unref(window->cache);
     
     G_OBJECT_CLASS(hippo_chat_window_parent_class)->finalize(object);
@@ -220,6 +281,66 @@ hippo_chat_window_get_room(HippoChatWindow *window)
     g_return_val_if_fail(HIPPO_IS_CHAT_WINDOW(window), NULL);
     
     return window->room;
+}
+
+static void
+hippo_chat_window_connect_user(HippoChatWindow *window,
+                               HippoPerson     *person)
+{
+    if (window->connected_users == NULL) {
+        window->connected_users = g_hash_table_new(g_direct_hash, g_direct_equal);    
+    }
+    
+    if (g_hash_table_lookup(window->connected_users, person) != NULL) {
+        return;
+    }    
+
+    g_debug("Chat window connecting to user '%s'", hippo_entity_get_guid(HIPPO_ENTITY(person)));
+
+    /* a weak ref would be better, but harder */
+    g_object_ref(person);
+    g_signal_connect(G_OBJECT(person), "changed", G_CALLBACK(on_user_changed), window);
+    g_hash_table_insert(window->connected_users, person, person);
+}
+
+static void
+hippo_chat_window_disconnect_user(HippoChatWindow *window,
+                                  HippoPerson     *person)
+{
+    if (window->connected_users == NULL)
+        return;
+
+    if (g_hash_table_lookup(window->connected_users, person) == NULL) {
+        return;
+    }
+    
+    g_debug("Chat window disconnecting from user '%s'", hippo_entity_get_guid(HIPPO_ENTITY(person)));
+    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(person), G_CALLBACK(on_user_changed), window);
+    g_hash_table_remove(window->connected_users, person);
+    g_object_unref(person);
+}                                  
+
+static void
+disconnect_user_foreach(void *key, void *value, void *data)
+{
+    HippoPerson *person = HIPPO_PERSON(value);
+    HippoChatWindow *window = HIPPO_CHAT_WINDOW(data);
+   
+    /* can't just call disconnect_user since it modifies the hash */
+    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(person), G_CALLBACK(on_user_changed), window);
+    g_object_unref(person);
+}
+
+static void
+hippo_chat_window_disconnect_all_users(HippoChatWindow *window)
+{
+    if (window->connected_users) {
+        g_hash_table_foreach(window->connected_users, disconnect_user_foreach, window);
+        g_hash_table_destroy(window->connected_users);
+        window->connected_users = NULL;   
+    }
 }
 
 static GtkTextTag*
@@ -364,10 +485,14 @@ on_picture_loaded_for_log(GdkPixbuf *pixbuf,
         
         gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
         
-        if (where == PICTURE_ON_RIGHT)
+        if (where == PICTURE_ON_RIGHT) {
             gtk_text_iter_forward_to_line_end(&iter);
-        
+            gtk_text_buffer_insert(buffer, &iter, " ", 1);
+        }
         gtk_text_buffer_insert_pixbuf(buffer, &iter, pixbuf);
+        if (where == PICTURE_ON_LEFT) {
+            gtk_text_buffer_insert(buffer, &iter, " ", 1);
+        }
     }
     if (!gtk_text_mark_get_deleted(mark))
         gtk_text_buffer_delete_mark(buffer, mark);
@@ -431,17 +556,70 @@ on_message_added(HippoChatRoom         *room,
     /* if the load photo callback was invoked synchronously, the mark is already deleted here... 
      * also our buffer iterators are invalidated
      */
-    picture_mark = NULL;    
+    picture_mark = NULL;
+    
+    /* watch this user (no-op if already watching) */
+    hippo_chat_window_connect_user(window, sender);
+}
+
+static gboolean
+find_existing_tree_row(HippoChatWindow *window,
+                       HippoPerson     *person,
+                       GtkTreeIter     *iter)
+{
+    if (!gtk_tree_model_get_iter_first(window->member_model, iter))
+        return FALSE;
+
+    do {
+        HippoPerson *value = NULL;
+        gtk_tree_model_get(window->member_model, iter,
+                           MEMBER_COLUMN_PERSON, &value, -1);
+        g_object_unref(value);
+        if (value == person)
+            return TRUE;
+    } while (gtk_tree_model_iter_next(window->member_model, iter));
+    
+    return FALSE;
 }
 
 static void
 on_user_state_changed(HippoChatRoom         *room,
-                      HippoPerson           *user,
+                      HippoPerson           *person,
                       HippoChatWindow       *window)
 {
+    HippoChatState state;
+    GtkTreeIter iter;
+    gboolean exists;
+    
+    state = hippo_chat_room_get_user_state(room, person);
 
+    exists = find_existing_tree_row(window, person, &iter);
+    
+    g_debug("User %s room %s new state %d in tree view %d",
+            hippo_entity_get_guid(HIPPO_ENTITY(person)), hippo_chat_room_get_id(room),
+            state, exists);
+    
+    if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
+        /* be sure they are in the members list */
+        if (!exists) {
+            gtk_list_store_append(GTK_LIST_STORE(window->member_model), &iter);
+            gtk_list_store_set(GTK_LIST_STORE(window->member_model), &iter,
+                               MEMBER_COLUMN_PERSON, person, -1);
+            /* watch this user (no-op if already watching) */
+            hippo_chat_window_connect_user(window, person);
+        }
+        /* O(n) assertions! woo! */
+        g_assert(find_existing_tree_row(window, person, &iter));
+    } else {
+        /* be sure they are not in the members list */
+        if (exists) {
+            gtk_list_store_remove(GTK_LIST_STORE(window->member_model), &iter);
+        }
+        /* O(n) assertions! woo! */
+        g_assert(!find_existing_tree_row(window, person, &iter));
+    }
 }
-                      
+
 static void
 on_title_changed(HippoChatRoom         *room,
                  HippoChatWindow       *window)
@@ -492,16 +670,41 @@ static void
 on_cleared(HippoChatRoom         *room,
            HippoChatWindow       *window)
 {
+    GtkTextBuffer *new_buffer;
 
-}           
+    hippo_chat_window_disconnect_all_users(window);
+    
+    gtk_list_store_clear(GTK_LIST_STORE(window->member_model));
+    
+    if (window->message_tags != NULL) {
+        g_hash_table_destroy(window->message_tags);
+        window->message_tags = NULL;
+    }
+    
+    /* just replace the whole buffer, to get an empty one without 
+     * any tags
+     */
+    new_buffer = gtk_text_buffer_new(NULL);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(window->chat_log_view), new_buffer);
+    g_object_unref(new_buffer);
+}
 
 static void
-on_user_changed(HippoPerson           *user,
+on_user_changed(HippoPerson           *person,
                 HippoChatWindow       *window)
 {
+    GtkTreeIter iter;
 
+    g_debug("User '%s' change handler for chat window", hippo_entity_get_guid(HIPPO_ENTITY(person)));
 
-}                
+    if (find_existing_tree_row(window, person, &iter)) {
+        GtkTreePath *path = gtk_tree_model_get_path(window->member_model, &iter);
+        gtk_tree_model_row_changed(window->member_model, path, &iter);
+        gtk_tree_path_free(path);
+    }
+    
+    /* FIXME also update photos in the chat log */
+}
 
 static gboolean
 is_all_whitespace(const char *text)
