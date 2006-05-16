@@ -2442,8 +2442,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             // If the viewer is the user themself, we want to include
             // them in the result, because that prevents our pages
             // from looking strangely empty.
-            if ((viewpoint != null) && viewpoint.isOfUser(user) && (selfMusicPlayView == null)) {  
-            	selfMusicPlayView = new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated());
+            if ((viewpoint != null) && viewpoint.isOfUser(user)) {  
+                if (selfMusicPlayView == null) {   
+            	    selfMusicPlayView = new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated());
+                }
             	continue;
             }
 
