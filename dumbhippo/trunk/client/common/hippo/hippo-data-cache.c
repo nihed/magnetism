@@ -11,6 +11,7 @@ static void      hippo_data_cache_class_init          (HippoDataCacheClass  *kla
 static void      hippo_data_cache_finalize            (GObject              *object);
 
 static void      hippo_data_cache_foreach_chat_room   (HippoDataCache       *cache,
+                                                       gboolean              in_cache_finalize,
                                                        HippoChatRoomFunc     func,
                                                        void                 *data);
 
@@ -178,7 +179,7 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
 
-    signals[POST_ADDED] =
+    signals[CHAT_ROOM_LOADED] =
         g_signal_new ("chat-room-loaded",
             		  G_TYPE_FROM_CLASS (object_class),
             		  G_SIGNAL_RUN_LAST,
@@ -217,7 +218,7 @@ hippo_data_cache_finalize(GObject *object)
 
     g_hash_table_destroy(cache->posts);
 
-    hippo_data_cache_foreach_chat_room(cache, disconnect_chat_room, cache);
+    hippo_data_cache_foreach_chat_room(cache, TRUE, disconnect_chat_room, cache);
     g_hash_table_destroy(cache->chats);
 
     /* destroy entities after stuff pointing to entities */
@@ -718,6 +719,7 @@ foreach_chat_room_func(void *key, void *value, void *data)
 
 static void
 hippo_data_cache_foreach_chat_room (HippoDataCache    *cache,
+                                    gboolean           in_cache_finalize,
                                     HippoChatRoomFunc  func,
                                     void              *data)
 {
@@ -726,11 +728,13 @@ hippo_data_cache_foreach_chat_room (HippoDataCache    *cache,
     closure.func = func;
     closure.data = data;
     
-    g_object_ref(cache);
+    if (!in_cache_finalize)
+        g_object_ref(cache);
     
     g_hash_table_foreach(cache->chats, foreach_chat_room_func, &closure);
     
-    g_object_unref(cache);
+    if (!in_cache_finalize)
+        g_object_unref(cache);
 }                                                                       
 
 static void
@@ -775,7 +779,7 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
         /* This only matters the second time we authenticate. 
          * For each chat room we were previously in, rejoin it.
          */
-        hippo_data_cache_foreach_chat_room(cache, update_chat_room_func, cache);
+        hippo_data_cache_foreach_chat_room(cache, FALSE, update_chat_room_func, cache);
 
         hippo_connection_request_prefs(connection);
         /* FIXME the server seems to send the hotness spontaneously anyway,
