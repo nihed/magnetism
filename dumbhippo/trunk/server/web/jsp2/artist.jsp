@@ -25,7 +25,7 @@
                     <a name="dhAlbumsByArtist"></a>
                     <div class="dh-artist-zone-title">DISCOGRAPHY</div>
                     <c:if test="${musicsearch.albumsByArtist.resultCount <= 0}">
-                        There were not matching albums.
+                        There were no matching albums.
                     </c:if>            
                        
                     <c:set var="count" value="1"/>   
