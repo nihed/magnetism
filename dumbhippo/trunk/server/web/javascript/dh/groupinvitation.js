@@ -1,6 +1,5 @@
 dojo.provide("dh.groupinvitation")
 dojo.require("dh.autosuggest")
-dojo.require("dh.invitation")
 dojo.require("dh.model")
 dojo.require("dh.server")
 dojo.require("dh.suggestutils")
@@ -9,6 +8,15 @@ dojo.require("dojo.string")
 
 // hash of all persons we should autocomplete on, keyed by guid
 dh.groupinvitation.allKnownIds = { };
+
+dh.groupinvitation.reloadWithMessage = function(message) {
+	// We do this as a POST to avoid including the message in the URL
+	var body = dojo.string.trim(dh.groupinvitation.messageEntry.getValue())
+	
+	document.getElementById("dhReloadMessage").value = message
+	document.getElementById("dhReloadBody").value = body
+	document.forms["dhReloadForm"].submit()
+}
 
 // merges an XML document into allKnownIds
 dh.groupinvitation.mergeObjectsDocument = function(doc) {
@@ -91,7 +99,7 @@ dh.groupinvitation.send = function() {
                     function(type, document, http) {
                     	var messages = document.getElementsByTagName("message")
                     	if (messages.length > 0) {
-                    		dh.invitation.reloadWithMessage(dojo.dom.textContent(messages[0]))
+                    		dh.groupinvitation.reloadWithMessage(dojo.dom.textContent(messages[0]))
                 		} else {
 	                        dojo.debug("Didn't get message in response to sendgroupinvitation");
                 		}

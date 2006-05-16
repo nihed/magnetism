@@ -20,20 +20,16 @@
 <dh:bean id="invites" class="com.dumbhippo.web.InvitesPage" scope="page"/>
 
 <head>
-	<title>My Invitations</title>
+	<title>Invitations to <c:out value="${group.name}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/invitation.css"/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/dh/suggestutils.js"></script>
-	<script type="text/javascript" src="/javascript/dh/groupinvitation.js"></script>
 	<script type="text/javascript">
-//		dojo.require("dh.groupinvitation")
+		dojo.require("dh.groupinvitation")
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>
 		dh.groupinvitation.initialValues = {
 			'dhAddressEntry' : '',
 			'dhSubjectEntry' : 'Join the ' + <dh:jsString value="${group.name}"/> + ' group on Mugshot',
-			'dhMessageEntry' : 	
-	'Mugshot has cool tools for showing your iTunes playlist on MySpace, ' +
-	'and sharing and chatting about cool links with cool friends. Like you!'
+			'dhMessageEntry' : <dh:jsString value="${!empty param['body'] ? param['body'] : group.viewedGroup.group.description}"/>
 		}
 		dojo.event.connect(dojo, "loaded", dj_global, "dhGroupInvitationInit");
 	</script>
@@ -65,7 +61,7 @@
 					</tr>
 				</dht:formTable>
 			</c:if>
-			<c:if test="${invites.outstandingInvitations.size > 0}">
+			<c:if test="${group.invitedMembers.size > 0}">
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.invitedMembers.list}" var="person">
@@ -78,5 +74,6 @@
 </dht:twoColumnPage>
 <form id="dhReloadForm" action="/group-invitation?group=${group.viewedGroupId}" method="post">
 	<input id="dhReloadMessage" name="message" type="hidden"/>
+	<input id="dhReloadBody" name="body" type="hidden"/>	
 </form>
 </html>
