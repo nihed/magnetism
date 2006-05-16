@@ -20,7 +20,7 @@
 		dojo.require("dh.groupaccount")
 		dh.formtable.currentValues = {
 			'dhGroupNameEntry' : <dh:jsString value="${group.name}"/>,
-			'dhAboutGroupEntry' : <dh:jsString value="${!empty group.viewedGroup.group.description ? group.viewedGroup.group.description : ''}"/>,
+			'dhAboutGroupEntry' : <dh:jsString value="${!empty group.viewedGroup.group.description ? group.viewedGroup.group.description : ''}"/>
 		};		
 		dh.groupaccount.groupId = <dh:jsString value="${group.viewedGroupId}"/>
 		dh.groupaccount.reloadPhoto = function() {
