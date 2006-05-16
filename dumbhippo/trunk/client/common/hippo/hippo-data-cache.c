@@ -881,3 +881,70 @@ hippo_data_cache_set_client_info(HippoDataCache        *cache,
         cache->client_info.download = g_strdup(info->download);
     }
 }
+
+static HippoEntity *
+add_debug_person(HippoDataCache *cache, const char *guid, const char *name)
+{
+    HippoEntity *entity = hippo_entity_new(HIPPO_ENTITY_PERSON, guid);
+    hippo_entity_set_name(entity, name);
+    hippo_entity_set_small_photo_url(entity, "/files/headshots/60/default");
+
+    hippo_data_cache_add_entity(cache, entity);
+
+    return entity;
+}
+
+void
+hippo_data_cache_add_debug_data(HippoDataCache *cache)
+{
+    HippoEntity *person1, *person2, *person3, *person4;
+    GSList *recipients = NULL;
+    GSList *comments = NULL;
+    HippoPost *linkshare1, *linkshare2;
+
+    person1 = add_debug_person(cache, "55a1fbae7f2807", "Colin");
+    person2 = add_debug_person(cache, "25a1fbae7f2807", "Owen Taylor");
+    person3 = add_debug_person(cache, "35a1fbae7f2807", "Colin Walters");
+    person4 = add_debug_person(cache, "a5a1fbae7f2807", "Bryan Clark");
+
+    recipients = g_slist_append(recipients, person1);
+
+    linkshare1 = hippo_post_new("42424242424242");
+    hippo_post_set_url(linkshare1, "http://www.gnome.org");
+    hippo_post_set_title(linkshare1, "Here is the title make this long enough so that it will wrap and cause problems");
+    hippo_post_set_sender(linkshare1, hippo_entity_get_guid(person1));
+    hippo_post_set_description(linkshare1, 
+                               "The body of the message. Again we want a lot of text here so that "
+                               "we can see wrapping and all sorts of fun things like that which will "
+                               "cause differences from what we would have if we had a short title without "
+                               "the kind of excessive length that you see here.");
+    hippo_post_set_recipients(linkshare1, recipients);
+    hippo_post_set_timeout(linkshare1, 0);
+    hippo_post_set_new(linkshare1, TRUE);
+
+    hippo_data_cache_add_post(cache, linkshare1);
+
+    linkshare2 = hippo_post_new("43434343434343");
+    hippo_post_set_url(linkshare2, "http://flickr.com/photos/tweedie/63302017/");
+    hippo_post_set_title(linkshare2, "funny photo");
+    hippo_post_set_sender(linkshare2, hippo_entity_get_guid(person1));
+    hippo_post_set_description(linkshare2, "Wow, this photo is funny");
+    hippo_post_set_recipients(linkshare2, recipients);
+    hippo_post_set_timeout(linkshare2, 0);
+    hippo_post_set_new(linkshare2, TRUE);
+
+    hippo_post_set_info(linkshare2, 
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<postInfo>"
+        "    <flickr>"
+        "        <photos>"
+        "             <photo>"
+        "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
+        "                  <photoId>73029609</photoId>"
+        "             </photo>"
+        "        </photos>"
+        "    </flickr>"
+        "</postInfo>");
+    
+    hippo_data_cache_add_post(cache, linkshare2);
+}

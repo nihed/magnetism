@@ -73,6 +73,8 @@ HippoPerson*     hippo_data_cache_get_self                  (HippoDataCache   *c
 
 const HippoClientInfo* hippo_data_cache_get_client_info     (HippoDataCache   *cache);
 
+void             hippo_data_cache_add_debug_data            (HippoDataCache   *cache);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DATA_CACHE_H__ */
