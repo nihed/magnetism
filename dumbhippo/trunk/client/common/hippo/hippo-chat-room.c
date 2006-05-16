@@ -391,6 +391,10 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
     
     old_state = hippo_chat_room_get_user_state(room, person);
     
+    g_debug("Updating chat state room '%s' person '%s/%s' old state %d state %d",
+            room->id, hippo_entity_get_guid(HIPPO_ENTITY(person)), hippo_entity_get_name(HIPPO_ENTITY(person)),
+            old_state, state);
+    
     if (old_state == state)
         return;
     

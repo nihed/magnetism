@@ -2042,7 +2042,6 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
 {
     HippoPerson *self;
     HippoChatState desired_state;
-    HippoChatState old_state;
 
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
@@ -2050,18 +2049,17 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
     self = hippo_data_cache_get_self(connection->cache);
     g_return_if_fail(self != NULL);
 
-    old_state = hippo_chat_room_get_user_state(room, self);
-
-    /* have to do this _after_ getting the old state */
+    /* clear all data we have cached about the chat room */
     hippo_chat_room_reconnected(connection, room);
 
+    /* but we preserved our "join count" so we know if we wanted
+     * to be in the room
+     */
     desired_state = hippo_chat_room_get_desired_state(room);
 
-    if (old_state != desired_state) {
-        /* FIXME same issue as in join_or_leave_chat_room above */
-        hippo_chat_room_set_user_state(room, self, desired_state);
-        hippo_connection_send_chat_room_state(connection, room, old_state, desired_state);
-    }
+    /* FIXME same issue as in join_or_leave_chat_room above */
+    hippo_chat_room_set_user_state(room, self, desired_state);
+    hippo_connection_send_chat_room_state(connection, room, HIPPO_CHAT_STATE_NONMEMBER, desired_state);
 }
 
 void
