@@ -12,11 +12,11 @@ dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
 							'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
 							'wolfman.gif' ];
 
-dh.photochooser.group_nophoto = '/group_pix1/nophoto.gif';
+dh.photochooser.group_nophoto = '/group_pix1/nogroupphoto.gif';
 dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
 							   'bowling.gif', 'cards.gif', 'cows.gif', 'dudes.gif',
 							   'fish.gif', 'flock.gif', 'flowers.gif', 'geese.gif',
-							   'kittens.gif', 'nogroupphoto.gif', 'penguins.gif', 'pills.gif',
+							   'kittens.gif', 'penguins.gif', 'pills.gif',
 							   'pirates.gif' ];
 
 dh.photochooser.type = "user"
@@ -170,9 +170,12 @@ dh.photochooser.show = function(aboveNode, postSelectFunc) {
 		e.appendChild(chooser);
 	}
 	
-	/* This isn't precision, just "kind of next to" */
-	chooser.style.left = "75%";
-	chooser.style.bottom = "-20px";
+	/* This isn't precision, just "kind of next to", with 0px it just covers the file input 
+	 * IE considers a scrollbar click as mouse input ergo it doesn't allow people to scroll horizontally 
+	 * and see the rest of the stock photos under 800x600
+	 */
+	chooser.style.left = "0px";
+	chooser.style.bottom = "15px";
 	chooser.style.display = 'block';
 	
 	document.body.onkeydown = function(ev) {
