@@ -51,8 +51,6 @@ class PostInfoSaxHandler extends EnumSaxHandler<NodeName> {
 		Node node = stack.get(stack.size() - 1);
 		String content = getCurrentContent();
 
-		System.out.println("closing " + element + " content ='" + content + "'");
-		
 		// don't set content if we already have children
 		if (node.isEmpty())
 			node.setContent(content);
