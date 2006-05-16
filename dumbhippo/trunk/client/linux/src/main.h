@@ -5,6 +5,7 @@
 #include <hippo/hippo-common.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
+#include "hippo-image-cache.h"
 
 G_BEGIN_DECLS
 
@@ -22,6 +23,13 @@ void       hippo_app_visit_post     (HippoApp   *app,
                                      HippoPost  *post);
 void       hippo_app_join_chat      (HippoApp   *app,
                                      const char *chat_id);
+/* use this only for user and group photos, caching is weird 
+ * if the cache for lots of image types interacts
+ */
+void       hippo_app_load_photo     (HippoApp               *app,
+                                     HippoEntity            *entity,
+                                     HippoImageCacheLoadFunc func,
+                                     void                   *data);
 
 G_END_DECLS
 

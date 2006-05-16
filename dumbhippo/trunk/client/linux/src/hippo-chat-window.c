@@ -36,10 +36,12 @@ struct _HippoChatWindow {
     GtkWindowGroup *window_group;    
     GtkWidget *title_label;
     GtkWidget *member_view;
-    GtkWidget *chat_log;
+    GtkWidget *chat_log_view;
     GtkWidget *send_entry;
     GtkWidget *send_button;
     GtkWidget *error_dialog;
+    
+    GHashTable *message_tags;
 };
 
 struct _HippoChatWindowClass {
@@ -52,7 +54,6 @@ G_DEFINE_TYPE(HippoChatWindow, hippo_chat_window, GTK_TYPE_WINDOW);
 static void
 hippo_chat_window_init(HippoChatWindow  *window)
 {
-    
 }
 
 static void
@@ -119,17 +120,17 @@ hippo_chat_window_new(HippoDataCache *cache,
     vbox2 = gtk_vbox_new(FALSE, SPACING);
     gtk_box_pack_end(GTK_BOX(hbox), vbox2, TRUE, TRUE, 0);
 
-    window->chat_log = gtk_text_view_new();
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(window->chat_log), FALSE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(window->chat_log), FALSE);
-    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(window->chat_log), SPACING);
-    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(window->chat_log), SPACING);
+    window->chat_log_view = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(window->chat_log_view), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(window->chat_log_view), FALSE);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(window->chat_log_view), SPACING);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(window->chat_log_view), SPACING);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), window->chat_log);    
+    gtk_container_add(GTK_CONTAINER(sw), window->chat_log_view);    
     gtk_box_pack_start(GTK_BOX(vbox2), sw, TRUE, TRUE, 0);
 
     hbox2 = gtk_hbox_new(FALSE, SPACING);
@@ -188,10 +189,15 @@ hippo_chat_window_destroy(GtkObject *gtk_object)
         window->room = NULL;
     }
     
+    if (window->message_tags != NULL) {
+        g_hash_table_destroy(window->message_tags);
+        window->message_tags = NULL;
+    }    
+    
     /* will get destroyed by default container destroy */
     window->title_label = NULL;
     window->member_view = NULL;
-    window->chat_log = NULL;
+    window->chat_log_view = NULL;
     window->send_entry = NULL;
     window->send_button = NULL;
     
@@ -216,6 +222,163 @@ hippo_chat_window_get_room(HippoChatWindow *window)
     return window->room;
 }
 
+static GtkTextTag*
+tag_for_serial(HippoChatWindow *window,
+               int              serial)
+{
+    GtkTextTag *tag;
+    GtkTextBuffer *buffer;
+    
+    if (window->message_tags == NULL) {
+        /* hash message serials to GtkTextTag delimiting representation of that message */
+        window->message_tags = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, (GFreeFunc) g_object_unref);
+    }
+    
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log_view));
+    
+    tag = g_hash_table_lookup(window->message_tags, GINT_TO_POINTER(serial));
+    if (tag == NULL) {
+        tag = gtk_text_buffer_create_tag(buffer, NULL, NULL);
+        g_object_ref(tag);
+        g_hash_table_replace(window->message_tags, GINT_TO_POINTER(serial), tag);
+    }
+    
+    return tag;
+}
+
+static gboolean
+find_message_bounds(HippoChatWindow *window,
+                    int              serial,
+                    GtkTextIter     *start,
+                    GtkTextIter     *end)
+{
+    GtkTextTag *tag;
+    GtkTextIter iter;
+    GtkTextBuffer *buffer;
+    
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log_view));
+    tag = tag_for_serial(window, serial);
+    
+    gtk_text_buffer_get_start_iter(buffer, &iter);
+    if (!gtk_text_iter_begins_tag(&iter, tag)) {
+        if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
+            return FALSE; /* tag doesn't exist in buffer */
+        }
+    }
+    if (start)
+        *start = iter;
+    if (!gtk_text_iter_forward_to_tag_toggle(&iter, tag)) {
+        g_warning("Tag starts but never ends!");
+        g_assert_not_reached();   
+    }
+    if (end)
+        *end = iter;
+    return TRUE;
+}
+
+typedef struct {
+    int new_serial;
+    int lower_serial;
+    int higher_serial;
+} FindInsertionData;
+
+static void
+find_insertion_foreach(void *key, void *value, void *data)
+{
+    FindInsertionData *fid = data;
+    int this_serial = GPOINTER_TO_INT(key);
+    
+    if (this_serial == fid->new_serial) {
+        g_warning("Finding insertion point for a message %d already in the buffer!", fid->new_serial);
+        return;
+    }
+    
+    if (this_serial > fid->lower_serial && this_serial < fid->new_serial)
+        fid->lower_serial = this_serial;
+    if (this_serial < fid->higher_serial && this_serial > fid->new_serial)
+        fid->higher_serial = this_serial;
+}
+
+static void
+find_insertion_point(HippoChatWindow *window,
+                     int              serial,
+                     GtkTextIter     *iter)
+{
+    FindInsertionData fid;
+    GtkTextBuffer *buffer;
+
+    /* This function finds an insertion point for a message that 
+     * isn't already in the buffer
+     */
+
+#define BELOW_REAL_SERIAL -2
+#define ABOVE_REAL_SERIAL G_MAXINT
+
+    fid.new_serial = serial;
+    fid.lower_serial = BELOW_REAL_SERIAL;
+    fid.higher_serial = ABOVE_REAL_SERIAL;
+
+    if (window->message_tags != NULL) {
+        g_hash_table_foreach(window->message_tags, find_insertion_foreach, &fid);
+    } else {
+        /* can't possibly be any rows in there already */   
+        ;
+    }
+    
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log_view));
+    
+    if (fid.lower_serial == BELOW_REAL_SERIAL) {
+        gtk_text_buffer_get_start_iter(buffer, iter);
+    } else if (fid.higher_serial == ABOVE_REAL_SERIAL) {
+        gtk_text_buffer_get_end_iter(buffer, iter);
+    } else {
+        /* we are between two existing messages, find the point after 
+         * the first one
+         */
+        if (!find_message_bounds(window, fid.lower_serial, NULL, iter)) {
+            g_warning("Did not find bounds of message %d we knew to exist", fid.lower_serial);
+            /* don't crash */
+            gtk_text_buffer_get_end_iter(buffer, iter);
+        }
+    }
+}
+
+enum {
+    PICTURE_ON_LEFT,
+    PICTURE_ON_RIGHT
+};
+
+static void
+on_picture_loaded_for_log(GdkPixbuf *pixbuf,
+                          void      *data)
+{
+    GtkTextMark *mark;
+    GtkTextBuffer *buffer;
+    int where;
+    
+    mark = GTK_TEXT_MARK(data);
+    buffer = gtk_text_mark_get_buffer(mark);
+    
+    /* pixbuf is NULL if we failed to load an image,
+     * and buffer is NULL if we destroyed the chat window
+     */
+    if (pixbuf && buffer) {
+        GtkTextIter iter;
+        
+        where = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mark), "where"));
+        
+        gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
+        
+        if (where == PICTURE_ON_RIGHT)
+            gtk_text_iter_forward_to_line_end(&iter);
+        
+        gtk_text_buffer_insert_pixbuf(buffer, &iter, pixbuf);
+    }
+    if (!gtk_text_mark_get_deleted(mark))
+        gtk_text_buffer_delete_mark(buffer, mark);
+    g_object_unref(mark);
+}
+
 static void
 on_message_added(HippoChatRoom         *room,
                  HippoChatMessage      *message,
@@ -225,18 +388,49 @@ on_message_added(HippoChatRoom         *room,
     GtkTextIter iter;
     const char *text;
     int len;
+    int serial;
+    GtkTextMark *picture_mark;
+    HippoPerson *sender;
+    HippoPerson *self;
+    GtkTextTag *tag;
+    
+    serial = hippo_chat_message_get_serial(message);
+    sender = hippo_chat_message_get_person(message);
+    self = hippo_data_cache_get_self(window->cache);
+    
+    if (find_message_bounds(window, serial, NULL, NULL)) {
+        /* we already have this message */
+        return;
+    }
     
     text = hippo_chat_message_get_text(message);
     len = strlen(text);
     
-    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log));
-    
-    gtk_text_buffer_get_end_iter(buffer, &iter);
-    gtk_text_buffer_insert(buffer, &iter, text, len);
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(window->chat_log_view));
+  
+    find_insertion_point(window, serial, &iter);
+
+    picture_mark = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
+  
+    tag = tag_for_serial(window, serial);
+    if (self && self == sender) {
+        g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_LEFT, NULL);
+        g_object_set_data(G_OBJECT(picture_mark), "where", GINT_TO_POINTER(PICTURE_ON_LEFT));
+    } else {
+        g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_RIGHT, NULL);
+        g_object_set_data(G_OBJECT(picture_mark), "where", GINT_TO_POINTER(PICTURE_ON_RIGHT));        
+    }
+    g_object_ref(picture_mark);
+    hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(sender),
+                         on_picture_loaded_for_log, picture_mark);
+    /* if the load photo callback was invoked synchronously, the mark is already deleted here... */
+    picture_mark = NULL;
+
+    gtk_text_buffer_insert_with_tags(buffer, &iter, text, len, tag, NULL);
     
     /* If the inserted text did not end in a newline, insert one. */
     if (!gtk_text_iter_starts_line(&iter)) {
-        gtk_text_buffer_insert(buffer, &iter, "\n", 1);
+        gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", 1, tag, NULL);
     }
 }
 

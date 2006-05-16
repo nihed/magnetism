@@ -11,6 +11,7 @@ struct HippoApp {
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
     GHashTable *chat_windows;
+    HippoImageCache *photo_cache;
 };
 
 void
@@ -160,6 +161,24 @@ hippo_app_join_chat(HippoApp   *app,
     gtk_window_present(GTK_WINDOW(window));   
 }
 
+void
+hippo_app_load_photo(HippoApp               *app,
+                     HippoEntity            *entity,
+                     HippoImageCacheLoadFunc func,
+                     void                   *data)
+{
+    const char *url;
+    
+    url = hippo_entity_get_small_photo_url(entity);
+    
+    if (url == NULL) {
+        /* not gonna succeed in loading this... */
+        (* func)(NULL, data);
+    } else {
+        hippo_image_cache_load(app->photo_cache, url, func, data);
+    }
+}
+
 static HippoApp*
 hippo_app_new(HippoInstanceType instance_type)
 {
@@ -174,6 +193,8 @@ hippo_app_new(HippoInstanceType instance_type)
     app->cache = hippo_data_cache_new(app->connection);
     g_object_unref(app->connection); /* let the data cache keep it alive */
     app->icon = hippo_status_icon_new(app->cache);
+    
+    app->photo_cache = hippo_image_cache_new();
     
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     
@@ -190,6 +211,7 @@ hippo_app_free(HippoApp *app)
         gtk_object_destroy(GTK_OBJECT(app->about_dialog));
     g_object_unref(app->icon);
     g_object_unref(app->cache);
+    g_object_unref(app->photo_cache);
     g_main_loop_unref(app->loop);
     g_free(app);
 }
@@ -224,6 +246,10 @@ main(int argc, char **argv)
 
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
+
+    if (options.instance_type == HIPPO_INSTANCE_DEBUG) {
+        gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(), "/home/hp/workspace/trunk/client/linux/icons");
+    }
 
     the_app = hippo_app_new(options.instance_type);
     
