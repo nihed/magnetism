@@ -320,7 +320,7 @@ public class Room {
 		Element child = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
-		info.addAttribute("smallPhoto", userInfo.getSmallPhotoUrl());
+		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("role", roleString(userInfo.getStatus()));
 		if (oldStatus != null) {
@@ -501,6 +501,7 @@ public class Room {
 		Element messageElement = outgoing.getElement();
 		Element info = messageElement.addElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
+		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
