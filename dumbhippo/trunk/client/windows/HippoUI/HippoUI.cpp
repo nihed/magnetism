@@ -486,122 +486,12 @@ testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusIn
     HippoUI *ui = (HippoUI*) uctx;
 }
 
-#if 0
-// FIXME
-static gboolean
-idleAddTestViewers(gpointer data)
-{
-    HippoUI *ui = (HippoUI*)data;
-    HippoDataCache &cache = ui->getDataCache();
-
-
-    HippoPost *linkshare = cache.getPost(HippoBSTR(L"42"));
-    if (!linkshare)
-        return FALSE;
-
-    HippoPtr<HippoEntityCollection> viewers;
-    cache.createEntityCollection(&viewers);
-    HippoPtr<IHippoEntityCollection> recipients;
-    linkshare->get_Recipients(&recipients);
-    for (int i = 0; i < 2; i++) {
-        HippoPtr<IHippoEntity> recipient;
-        recipients->item(i, &recipient);
-        HippoBSTR id;
-        recipient->get_Id(&id);
-        viewers->addMember(cache.getEntity(id));
-    }
-    linkshare->setViewers(viewers);
-
-    linkshare->setTimeout(0);
-
-    ui->onLinkMessage(linkshare);
-    return FALSE;
-}
-#endif
-
 bool
 HippoUI::timeoutShowDebugShare()
 {
-#if 0
-    static const WCHAR photoUrl[] = L"/files/headshots/48/PfqZScwvsH0R9f";
+    hippo_data_cache_add_debug_data(dataCache_);
 
-    HippoUI *ui = (HippoUI*)data;
-    HippoDataCache &cache = ui->getDataCache();
-
-    HippoPtr<HippoEntity> person1;
-    cache.createEntity(L"15a1fbae7f2807", HippoEntity::PERSON, &person1);
-    person1->setSmallPhotoUrl(photoUrl);
-    person1->setName(L"Colin");
-    cache.addEntity(person1);
-
-    HippoPtr<HippoEntity> person2;
-    cache.createEntity(L"25a1fbae7f2807", HippoEntity::PERSON, &person2);
-    person2->setSmallPhotoUrl(photoUrl);
-    person2->setName(L"Owen Taylor");
-    cache.addEntity(person2);
-
-    HippoPtr<HippoEntity> person3;
-    cache.createEntity(L"35a1fbae7f2807", HippoEntity::PERSON, &person3);
-    person3->setSmallPhotoUrl(photoUrl);
-    person3->setName(L"Colin Walters");
-    cache.addEntity(person3);
-
-    HippoPtr<HippoEntity> person4;
-    cache.createEntity(L"a35baeea7f2807", HippoEntity::PERSON, &person4);
-    person2->setSmallPhotoUrl(photoUrl);
-    person4->setName(L"Bryan Clark");
-    cache.addEntity(person4);
-
-    HippoPtr<HippoEntityCollection> recipients;
-    cache.createEntityCollection(&recipients);
-    recipients->addMember(person1);
-    recipients->addMember(person2);
-
-    HippoPtr<HippoPost> linkshare1;
-    cache.createPost(L"42", &linkshare1);
-
-    linkshare1->setUrl(L"http://www.gnome.org");
-    linkshare1->setTitle(L"Here is the title make this long enough so that it will wrap and cause problems");
-    linkshare1->setSender(person1);
-    linkshare1->setDescription(L"The body of the message. Again we want a lot of text here so that "
-                                L"we can see wrapping and all sorts of fun things like that which will "
-                                L"cause differences from what we would have if we had a short title without "
-                                L"the kind of excessive length that you see here.");
-
-    linkshare1->setRecipients(recipients);
-
-    linkshare1->setTimeout(0);
-    ui->onLinkMessage(linkshare1);
-
-    g_timeout_add(2000, idleAddTestViewers, ui);
-
-    HippoPtr<HippoPost> linkshare2;
-    cache.createPost(L"2", &linkshare2);
-
-    linkshare2->setUrl(L"http://flickr.com/photos/tweedie/63302017/");
-    linkshare2->setTitle(L"funny photo");
-    linkshare2->setSender(person1);
-    linkshare2->setDescription(L"Wow, this photo is funny");
-
-    linkshare2->setRecipients(recipients);
-
-    linkshare2->setTimeout(0);
-
-    linkshare2->setInfo(
-        L"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        L"<postInfo>"
-        L"    <flickr>"
-        L"        <photos>"
-        L"             <photo>"
-        L"                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
-        L"                  <photoId>73029609</photoId>"
-        L"             </photo>"
-        L"        </photos>"
-        L"    </flickr>"
-        L"</postInfo>");
-    ui->onLinkMessage(linkshare2);
-
-    HippoMySpaceBlogComment blogComment;
+    HippoMySpaceCommentData blogComment;
 
     // Bryan commenting on Colin's blog
     blogComment.commentId = -1;
@@ -610,8 +500,8 @@ HippoUI::timeoutShowDebugShare()
     blogComment.posterName.setUTF8("Bryan");
     blogComment.content.setUTF8("Blah, blah, blah... Blah!");
 
-    ui->bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
-#endif
+    bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
+
     return false; // remove idle
 }
 
@@ -661,7 +551,7 @@ HippoUI::create(HINSTANCE instance)
     registerStartup();
 
     if (initialShowDebugShare_) {
-        showDebugShareTimeout_.add(10000, slot(this, &HippoUI::timeoutShowDebugShare));
+        showDebugShareTimeout_.add(3000, slot(this, &HippoUI::timeoutShowDebugShare));
     }
 
     return true;
