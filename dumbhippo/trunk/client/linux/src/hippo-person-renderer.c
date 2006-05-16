@@ -34,12 +34,14 @@ static void hippo_person_renderer_render       (GtkCellRenderer      *cell,
 
 enum {
 	PROP_ZERO,
-	PROP_PERSON
+	PROP_PERSON,
+	PROP_PHOTO
 };
 
 struct _HippoPersonRenderer {
     GtkCellRenderer parent;
     HippoPerson *person;
+    GdkPixbuf *photo;
     PangoLayout *name_layout;
 };
 
@@ -76,6 +78,14 @@ hippo_person_renderer_class_init(HippoPersonRendererClass  *klass)
                             							_("The person to render"),
                             							HIPPO_TYPE_PERSON,
                             							G_PARAM_READWRITE));
+                            							
+    g_object_class_install_property(object_class,
+                				    PROP_PHOTO,
+                                    g_param_spec_object("photo",
+                             							_("Photo pixbuf"),
+                            							_("The pixbuf to render for this person"),
+                                                        GDK_TYPE_PIXBUF,
+                            							G_PARAM_READWRITE));                            							
 }
 
 GtkCellRenderer*
@@ -108,6 +118,11 @@ hippo_person_renderer_finalize(GObject *object)
         renderer->person = NULL;
     }
 
+    if (renderer->photo) {
+        g_object_unref(renderer->photo);
+        renderer->photo = NULL;
+    }
+
     nuke_caches(renderer);
     
     G_OBJECT_CLASS(hippo_person_renderer_parent_class)->finalize(object);
@@ -125,8 +140,11 @@ hippo_person_renderer_get_property(GObject              *object,
 
     switch (param_id) {
     case PROP_PERSON:
-        g_value_set_object (value, G_OBJECT(renderer->person));
+        g_value_set_object(value, G_OBJECT(renderer->person));
         break;
+    case PROP_PHOTO:
+        g_value_set_object(value, G_OBJECT(renderer->photo));
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, param_id, pspec);
         break;
@@ -154,6 +172,16 @@ hippo_person_renderer_set_property(GObject              *object,
             if (renderer->person)
                 g_object_unref(renderer->person);
             renderer->person = new_person;
+        }
+        break;
+    case PROP_PHOTO:        
+        {
+            GdkPixbuf *new_pixbuf;
+            new_pixbuf = (GdkPixbuf*) g_value_dup_object(value);
+            
+            if (renderer->photo)
+                g_object_unref(renderer->photo);
+            renderer->photo = new_pixbuf;
         }
         break;
     default:
@@ -187,6 +215,8 @@ update_caches(HippoPersonRenderer *renderer,
     }        
 }
 
+#define PHOTO_RIGHT_MARGIN 5
+
 static void
 hippo_person_renderer_get_size(GtkCellRenderer      *cell,
                                GtkWidget            *widget,
@@ -202,15 +232,30 @@ hippo_person_renderer_get_size(GtkCellRenderer      *cell,
     int full_width;
     int full_height;
     PangoRectangle name_rect;
+    int photo_width;
+    int photo_height;
 
     renderer = HIPPO_PERSON_RENDERER(cell);
 
     update_caches(renderer, widget);
-  
+
     pango_layout_get_pixel_extents(renderer->name_layout, NULL, &name_rect);
+
+    if (renderer->photo) {
+        photo_width = gdk_pixbuf_get_width(renderer->photo);
+        photo_height = gdk_pixbuf_get_height(renderer->photo);
+    } else {
+        photo_width = 0;
+        photo_height = 0;
+    }
 
     content_width = name_rect.width;
     content_height = name_rect.height;
+  
+    if (photo_width > 0 && photo_height > 0) {
+        content_width += photo_width + PHOTO_RIGHT_MARGIN;
+        content_height = MAX(photo_height, content_height); 
+    }
   
     full_width  = (int) cell->xpad * 2 + content_width;
     full_height = (int) cell->ypad * 2 + content_height;
@@ -254,6 +299,8 @@ hippo_person_renderer_render(GtkCellRenderer      *cell,
     GdkRectangle content_rect;
     GdkRectangle draw_rect;
     GtkStateType state;
+    int photo_width;
+    int photo_height;
     /* cairo_t *cr; */
 
     renderer = HIPPO_PERSON_RENDERER(cell);
@@ -261,6 +308,14 @@ hippo_person_renderer_render(GtkCellRenderer      *cell,
     hippo_person_renderer_get_size(cell, widget, cell_area, 
                                    &content_rect.x, &content_rect.y,
                                    &content_rect.width, &content_rect.height);
+
+    if (renderer->photo) {
+        photo_width = gdk_pixbuf_get_width(renderer->photo);
+        photo_height = gdk_pixbuf_get_height(renderer->photo);
+    } else {
+        photo_width = 0;
+        photo_height = 0;
+    }
     
     content_rect.x += cell_area->x;
     content_rect.y += cell_area->y;
@@ -283,7 +338,15 @@ hippo_person_renderer_render(GtkCellRenderer      *cell,
     }
 
     gtk_paint_layout(widget->style, window, state, TRUE, expose_area, widget, "hippopersonrenderer",
-                     content_rect.x, content_rect.y, renderer->name_layout);
+                     content_rect.x + photo_width + (photo_width > 0 ? PHOTO_RIGHT_MARGIN : 0),
+                     content_rect.y,
+                     renderer->name_layout);
+    if (renderer->photo) {
+        gdk_draw_pixbuf(window, widget->style->fg_gc[state], renderer->photo, 
+                        0, 0, content_rect.x, content_rect.y + (content_rect.height - photo_height) / 2,
+                        photo_width, photo_height, GDK_RGB_DITHER_NORMAL, 0, 0);
+    }                        
+                             
     /*
     cr = gdk_cairo_create(window);
     gdk_cairo_rectangle (cr, &draw_rect);

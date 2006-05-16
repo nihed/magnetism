@@ -38,6 +38,7 @@ static void      on_send_entry_changed                 (GtkWidget             *e
 
 enum {
     MEMBER_COLUMN_PERSON,
+    MEMBER_COLUMN_PHOTO,    
     MEMBER_NUM_COLUMNS
 };
 
@@ -69,7 +70,7 @@ G_DEFINE_TYPE(HippoChatWindow, hippo_chat_window, GTK_TYPE_WINDOW);
 static void
 hippo_chat_window_init(HippoChatWindow  *window)
 {
-    window->member_model = GTK_TREE_MODEL(gtk_list_store_new(MEMBER_NUM_COLUMNS, HIPPO_TYPE_PERSON));
+    window->member_model = GTK_TREE_MODEL(gtk_list_store_new(MEMBER_NUM_COLUMNS, HIPPO_TYPE_PERSON, GDK_TYPE_PIXBUF));
 }
 
 static void
@@ -174,6 +175,7 @@ hippo_chat_window_new(HippoDataCache *cache,
                                                 -1, _("People"),
                                                 renderer, 
                                                 "person", MEMBER_COLUMN_PERSON,
+                                                "photo", MEMBER_COLUMN_PHOTO,
                                                 NULL);
     column = gtk_tree_view_get_column(GTK_TREE_VIEW(window->member_view), MEMBER_COLUMN_PERSON);
     gtk_tree_view_column_set_fixed_width(column, MEMBER_VIEW_WIDTH);
@@ -689,19 +691,62 @@ on_cleared(HippoChatRoom         *room,
     g_object_unref(new_buffer);
 }
 
+typedef struct
+{
+    HippoChatWindow *window;
+    HippoPerson *person;
+} TreePictureData;
+
+static void
+on_picture_loaded_for_tree(GdkPixbuf *pixbuf,
+                           void      *data)
+{
+    TreePictureData *tpd = data;
+    
+    if (tpd->window) {
+        g_object_remove_weak_pointer(G_OBJECT(tpd->window), (void**) &tpd->window);
+    }
+    if (tpd->person) {
+        g_object_remove_weak_pointer(G_OBJECT(tpd->person), (void**) &tpd->person);
+    }
+
+    /* note pixbuf can be NULL */
+
+    if (tpd->window && tpd->person) {
+        GtkTreeIter iter;
+        if (find_existing_tree_row(tpd->window, tpd->person, &iter)) {
+            gtk_list_store_set(GTK_LIST_STORE(tpd->window->member_model), &iter,
+                               MEMBER_COLUMN_PHOTO, pixbuf, -1);
+        }
+    }
+
+    g_free(tpd);
+}
+
 static void
 on_user_changed(HippoPerson           *person,
                 HippoChatWindow       *window)
 {
     GtkTreeIter iter;
+    TreePictureData *tpd;
 
     g_debug("User '%s' change handler for chat window", hippo_entity_get_guid(HIPPO_ENTITY(person)));
 
     if (find_existing_tree_row(window, person, &iter)) {
-        GtkTreePath *path = gtk_tree_model_get_path(window->member_model, &iter);
+        GtkTreePath *path;
+                
+        path = gtk_tree_model_get_path(window->member_model, &iter);
         gtk_tree_model_row_changed(window->member_model, path, &iter);
         gtk_tree_path_free(path);
     }
+    
+    tpd = g_new0(TreePictureData, 1);
+    tpd->person = person;
+    tpd->window = window;
+    g_object_add_weak_pointer(G_OBJECT(tpd->person), (void**) &tpd->person);
+    g_object_add_weak_pointer(G_OBJECT(tpd->window), (void**) &tpd->window);
+    hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(person),
+                         on_picture_loaded_for_tree, tpd);
     
     /* FIXME also update photos in the chat log */
 }
