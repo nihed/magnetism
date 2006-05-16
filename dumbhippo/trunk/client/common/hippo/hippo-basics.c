@@ -189,29 +189,33 @@ hippo_id_from_jabber_id(const char *jid)
     char *out;
     
     count = 0;
-    for (p = jid; *p; p++) {
+    p = jid;
+    while (*p != '\0') {
         if (*(p + 1) && *(p + 1) == '_') {
-            count++;
-            p++;
+            ++count;
+            ++p;
         }
-        count++;
+        ++count;
+        ++p;
     }
 
     guid = g_new(char, count + 1);
     out = guid;
-    for (p = jid; *p; p++) {
+    p = jid;
+    while (*p != '\0') {
         char c = *p;
         if (*(p + 1) && *(p + 1) == '_') {
             if (*p >= 'A' && c <= 'Z') {
                 c = c + ('a' - 'A');
             }
-            p++;
+            ++p;
         } else {
             if (*p >= 'a' && c <= 'z') {
                 c = c - ('a' - 'A');
             }
         }
         *(out++) = c;
+        ++p;
     }
     *out = '\0';
 

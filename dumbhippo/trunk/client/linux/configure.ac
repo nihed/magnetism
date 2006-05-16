@@ -227,6 +227,10 @@ AC_SUBST(GLIB_GENMARSHAL)
 PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, true,
     AC_MSG_ERROR([Right now things aren't going to work with GTK+ 2.9 or above]))
 
+#### define absolute path to srcdir for debugging-only code
+ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
+AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
+
 AC_OUTPUT([
 Makefile
 ])

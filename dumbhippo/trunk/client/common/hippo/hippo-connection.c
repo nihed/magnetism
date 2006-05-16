@@ -1635,7 +1635,7 @@ hippo_connection_parse_entity(HippoConnection *connection,
 
     hippo_entity_set_name(entity, name);
     hippo_entity_set_small_photo_url(entity, small_photo_url);
-   
+ 
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
     }
@@ -2113,7 +2113,8 @@ parse_room_jid(const char *jid,
     if (*chat_id_p == NULL)
         return FALSE;
 
-    if (slash) {
+    /* *slash == '\0' if there was no slash */
+    if (*slash == '/') {
         *user_id_p = hippo_id_from_jabber_id(slash + 1);
         if (*user_id_p == NULL) {
             g_free(*chat_id_p);
@@ -2309,6 +2310,7 @@ parse_chat_user_info(HippoConnection *connection,
         gboolean music_playing_bool;
         const char *version = lm_message_node_get_attribute(info_node, "version");
         const char *name = lm_message_node_get_attribute(info_node, "name");
+        const char *small_photo_url = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
         const char *role = lm_message_node_get_attribute(info_node, "role");
         const char *old_role = lm_message_node_get_attribute(info_node, "oldRole");
         const char *arrangement_name = lm_message_node_get_attribute(info_node, "arrangementName");
@@ -2333,6 +2335,7 @@ parse_chat_user_info(HippoConnection *connection,
     
         hippo_entity_set_version(HIPPO_ENTITY(person), version_int);
         hippo_entity_set_name(HIPPO_ENTITY(person), name);
+        hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
         hippo_person_set_current_song(person, arrangement_name);
         hippo_person_set_current_artist(person, artist);
         hippo_person_set_music_playing(person, music_playing_bool);  
@@ -2347,7 +2350,8 @@ parse_chat_message_info(HippoConnection  *connection,
                         HippoPerson      *sender,
                         const char       *text,
                         int              *version_p,
-                        const char      **name_p)
+                        const char      **name_p,
+                        const char      **small_photo_url_p)
 {
     LmMessageNode *info_node;
     
@@ -2360,18 +2364,20 @@ parse_chat_message_info(HippoConnection  *connection,
     {
         const char *version_str = lm_message_node_get_attribute(info_node, "version");
         const char *name_str = lm_message_node_get_attribute(info_node, "name");
+        const char *small_photo_url_str = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
         const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
         const char *serial_str = lm_message_node_get_attribute(info_node, "serial");
         GTime timestamp;
         int serial;
 
-        if (!version_str || !name_str || !timestamp_str || !serial_str) {
+        if (!version_str || !name_str || !timestamp_str || !serial_str || !small_photo_url_str) {
             g_debug("messageInfo node without all fields");
             return NULL;
         }
 
         *version_p = atoi(version_str);
         *name_p = name_str;
+        *small_photo_url_p = small_photo_url_str;
 
         timestamp = strtol(timestamp_str, NULL, 10);
         serial = atoi(serial_str);
@@ -2391,6 +2397,7 @@ process_room_chat_message(HippoConnection *connection,
     LmMessageNode *body_node;
     int version;
     const char *name;
+    const char *photo_url;
     HippoChatMessage *chat_message;
     HippoEntity *sender;
     
@@ -2408,13 +2415,14 @@ process_room_chat_message(HippoConnection *connection,
     sender = hippo_data_cache_ensure_bare_entity(connection->cache, HIPPO_ENTITY_PERSON, user_id);
 
     chat_message = parse_chat_message_info(connection, message->node, HIPPO_PERSON(sender),
-                                           text, &version, &name);
+                                           text, &version, &name, &photo_url);
     if (chat_message == NULL)
         return;
 
     /* update new info about the user */
     hippo_entity_set_version(sender, version);
     hippo_entity_set_name(sender, name);
+    hippo_entity_set_small_photo_url(sender, photo_url);
 
     /* We can usually skip this in the case where the message was pending - but
      * it's tricky to get it exactly right. See comments in handleRoomPresence().

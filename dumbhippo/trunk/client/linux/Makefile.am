@@ -136,3 +136,15 @@ distclean-local:
 	  rm -f $(MAINTAINERCLEANFILES) ;	\
 	  rmdir $(MARSHAL_DIR) ;		\
 	fi
+
+SMALLICONSUBDIR=icons/hicolor/22x22/apps
+smallicondir=$(datadir)/$(SMALLICONSUBDIR)
+smallicon_DATA=					\
+	$(SMALLICONSUBDIR)/mugshot_swarm_1.png	\
+	$(SMALLICONSUBDIR)/mugshot_swarm_2.png	\
+	$(SMALLICONSUBDIR)/mugshot_swarm_3.png	\
+	$(SMALLICONSUBDIR)/mugshot_swarm_4.png	\
+	$(SMALLICONSUBDIR)/mugshot_swarm_5.png
+
+EXTRA_DIST= \
+	$(smallicon_DATA)

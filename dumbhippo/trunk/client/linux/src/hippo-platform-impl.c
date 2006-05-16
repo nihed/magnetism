@@ -111,10 +111,10 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
      */
     cookies = hippo_load_cookies(web_host, -1, "auth");
     
-    g_free(web_host);
-    
-    if (cookies == NULL)
+    if (cookies == NULL) {
+        g_free(web_host);
         return FALSE;
+    }        
 
     /* Extract value from first cookie and free the rest of them 
      * (we only expect to have one, though)
@@ -140,6 +140,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
      
     success = hippo_parse_login_cookie(value, web_host, username_p, password_p);
     g_free(value);
+    g_free(web_host);
     return success;
 }
 

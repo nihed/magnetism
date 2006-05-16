@@ -14,7 +14,7 @@ static const HotnessIcon icon_names[] = {
    { HIPPO_HOTNESS_WARM, "mugshot_swarm_3" },
    { HIPPO_HOTNESS_GETTING_HOT, "mugshot_swarm_4" },
    { HIPPO_HOTNESS_HOT, "mugshot_swarm_5" },
-   { HIPPO_HOTNESS_UNKNOWN, "mugshot_swarm_2" }
+   { HIPPO_HOTNESS_UNKNOWN, "mugshot_swarm_1" }
 };
 
 static void      hippo_status_icon_init                (HippoStatusIcon       *icon);
@@ -204,23 +204,26 @@ menu_item_from_post(HippoPost *post)
     return item;
 }
 
+#define MAX_POSTS_IN_MENU 6
 static void
 add_posts(GtkWidget *menu,
           GSList   **posts,
-          int       *remaining_p)
+          GSList   **so_far_p)
 {
     GSList *link;
     
     for (link = *posts; link != NULL; link = link->next) {
         HippoPost *post = HIPPO_POST(link->data);
         
-        if (*remaining_p > 0) {
+        /* O(n^2) awesome */
+        if (g_slist_length(*so_far_p) < MAX_POSTS_IN_MENU && 
+            g_slist_find(*so_far_p, post) == NULL) {
             GtkWidget *item = menu_item_from_post(post);
             
             gtk_widget_show(item);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
             
-            *remaining_p -= 1;
+            *so_far_p = g_slist_prepend(*so_far_p, post);
         } else {        
             /* displayed too much already */;
         }
@@ -235,13 +238,12 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
                              guint          button,
                              guint32        activate_time)
 {
-#define MAX_POSTS_IN_MENU 6
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(gtk_icon);
     GtkWidget *menu_item;
     GtkWidget *label;
     GdkModifierType state;
     gboolean leet_mode;
-    int remaining;
+    GSList *so_far;
     GSList *posts;
     
     leet_mode = FALSE;
@@ -255,19 +257,21 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     icon->popup_menu = gtk_menu_new();
 
     /* add_posts frees the post lists */
-    remaining = MAX_POSTS_IN_MENU;
+    so_far = NULL;
     posts = hippo_data_cache_get_active_posts(icon->cache);
-    add_posts(icon->popup_menu, &posts, &remaining);
-    if (remaining > 0) {
+    add_posts(icon->popup_menu, &posts, &so_far);
+    if (g_slist_length(so_far) < MAX_POSTS_IN_MENU) {
         posts = hippo_data_cache_get_recent_posts(icon->cache);
-        add_posts(icon->popup_menu, &posts, &remaining);
+        add_posts(icon->popup_menu, &posts, &so_far);
     }
 
-    if (remaining < MAX_POSTS_IN_MENU) {
+    if (so_far != NULL) {
         menu_item = gtk_separator_menu_item_new();
         gtk_widget_show(menu_item);
         gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
     }
+    
+    g_slist_free(so_far);
     
     menu_item = gtk_image_menu_item_new_from_stock(GTK_STOCK_HOME, NULL);
     label = gtk_bin_get_child(GTK_BIN(menu_item));

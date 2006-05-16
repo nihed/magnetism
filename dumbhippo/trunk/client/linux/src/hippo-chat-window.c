@@ -288,11 +288,6 @@ find_insertion_foreach(void *key, void *value, void *data)
     FindInsertionData *fid = data;
     int this_serial = GPOINTER_TO_INT(key);
     
-    if (this_serial == fid->new_serial) {
-        g_warning("Finding insertion point for a message %d already in the buffer!", fid->new_serial);
-        return;
-    }
-    
     if (this_serial > fid->lower_serial && this_serial < fid->new_serial)
         fid->lower_serial = this_serial;
     if (this_serial < fid->higher_serial && this_serial > fid->new_serial)
@@ -420,11 +415,6 @@ on_message_added(HippoChatRoom         *room,
         g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_RIGHT, NULL);
         g_object_set_data(G_OBJECT(picture_mark), "where", GINT_TO_POINTER(PICTURE_ON_RIGHT));        
     }
-    g_object_ref(picture_mark);
-    hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(sender),
-                         on_picture_loaded_for_log, picture_mark);
-    /* if the load photo callback was invoked synchronously, the mark is already deleted here... */
-    picture_mark = NULL;
 
     gtk_text_buffer_insert_with_tags(buffer, &iter, text, len, tag, NULL);
     
@@ -432,6 +422,16 @@ on_message_added(HippoChatRoom         *room,
     if (!gtk_text_iter_starts_line(&iter)) {
         gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", 1, tag, NULL);
     }
+
+    /* insert photo last to avoid invalidating iters */
+
+    g_object_ref(picture_mark);
+    hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(sender),
+                         on_picture_loaded_for_log, picture_mark);
+    /* if the load photo callback was invoked synchronously, the mark is already deleted here... 
+     * also our buffer iterators are invalidated
+     */
+    picture_mark = NULL;    
 }
 
 static void

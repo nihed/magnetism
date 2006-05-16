@@ -22,6 +22,7 @@ typedef struct {
     unsigned int  loading : 1;
     /* tried to free entry with pending load, free it on load complete */
     unsigned int  free_on_load : 1;
+    unsigned int  in_strong_cache : 1;
 } CacheEntry;
 
 static void      hippo_image_cache_init                (HippoImageCache       *cache);
@@ -31,8 +32,8 @@ static void      hippo_image_cache_finalize            (GObject               *o
 
 struct _HippoImageCache {
     GObject parent;
-    CacheEntry *strong_cache[MAX_STRONG_ENTRIES];    
-
+    CacheEntry *strong_cache[MAX_STRONG_ENTRIES];
+    
     /* the CacheEntry in here are never dropped right now, just the pixbuf
      * they point to. Simplifies things a little.
      */
@@ -240,6 +241,7 @@ hippo_image_cache_finalize(GObject *object)
     for (i = 0; i < MAX_STRONG_ENTRIES; ++i) {
         CacheEntry *entry = cache->strong_cache[i];
         if (entry != NULL) {
+            g_assert(entry->in_strong_cache);
             g_assert(entry->pixbuf != NULL); /* invariant that strong entries have a pixbuf */
             
             cache->strong_cache[i] = NULL;
@@ -247,6 +249,7 @@ hippo_image_cache_finalize(GObject *object)
             g_object_unref(entry->pixbuf);
             
             entry->pixbuf = NULL;
+            entry->in_strong_cache = FALSE;
         }
     }
     
@@ -275,11 +278,11 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
     }
 
     g_assert(s->entry->pixbuf == pixbuf);
-
+    
     /* replace a strong ref with this new one if we have a pixbuf to 
      * strongly ref
      */
-    if (pixbuf) {
+    if (pixbuf && !s->entry->in_strong_cache) {
         int i;
         CacheEntry *old_strong;
             
@@ -303,13 +306,17 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
         
         g_debug("Replacing old strong-ref '%s' with new strong-ref '%s' entry %d", 
                 old_strong ? old_strong->url : "none", s->entry->url, i);
-        
+
+        g_assert(s->entry->pixbuf != NULL);        
         g_object_ref(s->entry->pixbuf);
+        s->entry->in_strong_cache = TRUE;
+        s->cache->strong_cache[i] = s->entry;
         if (old_strong) {
             g_assert(old_strong->pixbuf);       /* invariant that strong entries have a pixbuf */
+            g_assert(old_strong->in_strong_cache);
+            old_strong->in_strong_cache = FALSE;
             g_object_unref(old_strong->pixbuf); /* old_strong->pixbuf may be set to NULL here */
         }
-        s->cache->strong_cache[i] = s->entry;
     }
     
     g_free(s);
@@ -330,10 +337,14 @@ hippo_image_cache_load(HippoImageCache          *cache,
     }
     g_assert(entry != NULL);
     
-    if (entry->pixbuf == NULL) {
+    /* don't check entry->in_strong_cache here, so each load attempt 
+     * has its own chance to end up in the strong cache
+     */
+    if (entry->pixbuf == NULL &&
+        !entry->loading) {
         /* this will be newly-loaded so add our strong ref callback
          * which will add a strong ref on the pixbuf if the http 
-         * request returns successfully
+         * request returns successfully.
          */
         StrongRefData *s;
         s = g_new0(StrongRefData, 1);

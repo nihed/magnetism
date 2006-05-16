@@ -171,11 +171,17 @@ hippo_app_load_photo(HippoApp               *app,
     
     url = hippo_entity_get_small_photo_url(entity);
     
+    g_debug("Loading photo for entity '%s' url '%s'",
+        hippo_entity_get_guid(entity),
+        url ? url : "null");
+    
     if (url == NULL) {
         /* not gonna succeed in loading this... */
         (* func)(NULL, data);
     } else {
-        hippo_image_cache_load(app->photo_cache, url, func, data);
+        char *absolute = make_absolute_url(app, url);
+        hippo_image_cache_load(app->photo_cache, absolute, func, data);
+        g_free(absolute);
     }
 }
 
@@ -248,7 +254,8 @@ main(int argc, char **argv)
         return 1;
 
     if (options.instance_type == HIPPO_INSTANCE_DEBUG) {
-        gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(), "/home/hp/workspace/trunk/client/linux/icons");
+        gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(),
+                                          ABSOLUTE_TOP_SRCDIR "/icons");
     }
 
     the_app = hippo_app_new(options.instance_type);

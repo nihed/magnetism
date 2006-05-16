@@ -145,6 +145,7 @@ hippo_entity_set_small_photo_url(HippoEntity    *entity,
                                  const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
     hippo_entity_set_string(entity, &entity->small_photo_url, url);
 }
 

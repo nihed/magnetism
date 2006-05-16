@@ -377,6 +377,9 @@ hippo_data_cache_add_post(HippoDataCache *cache,
  
     room = hippo_data_cache_ensure_chat_room(cache, hippo_post_get_guid(post),
                                       HIPPO_CHAT_KIND_POST);
+    if (hippo_post_get_chat_room(post) == NULL) {
+        hippo_post_set_chat_room(post, room);
+    }
     g_assert(hippo_post_get_chat_room(post) == room);
 
     g_debug("Post %s added, emitting post-added", hippo_post_get_guid(post));
