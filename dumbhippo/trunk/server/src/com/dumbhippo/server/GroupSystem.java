@@ -18,7 +18,15 @@ import com.dumbhippo.persistence.User;
 
 @Local
 public interface GroupSystem {
-	public Group createGroup(User creator, String name, GroupAccess access);
+	/**
+	 * Create a new group
+	 * @param creator the User creating the group; the group will be created with only this user as a member
+	 * @param name name for the new group
+	 * @param access the visibility of the group
+	 * @param description initial description for the group, may be null
+	 * @return the newly created group
+	 */
+	public Group createGroup(User creator, String name, GroupAccess access, String description);
 	
 	public void deleteGroup(User deleter, Group group);
 	
@@ -111,4 +119,14 @@ public interface GroupSystem {
 	 * @param serial counter (starts at zero) of messages for the group
 	 */
 	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial);
+
+
+	/**
+	 * Checks whether the given viewpoint is allowed to change settings of a group
+	 * such as the group's name and description.
+	 * @param viewpoint viewpoint of a user who wants to edit the group
+	 * @param group the group to edit
+	 * @return true if the user of the viewpoint is allowed to edit group settings
+	 */
+	public boolean canEditGroup(UserViewpoint viewpoint, Group group);
 }

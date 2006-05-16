@@ -269,3 +269,34 @@ body.dh-gray-background-page {
 .dh-option-list {
 	font-size: 12px;
 }
+
+#dhContentColumn .dh-form-table {
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-form-table textarea {
+	font-size:			12px;
+}
+
+div.dh-save-status {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-weight:		bold;
+	-moz-border-radius:	5px;
+}
+
+/* the Undo link in the save status thing */
+.dh-save-status a, .dh-save-status a:visited {
+	font-weight:		normal;
+	color:				#cc0033;
+	margin-left:		5px;
+	text-decoration:	underline;
+}
+
+#dhContentColumn .dh-zone-box .dh-message {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-weight:		bold;
+	border:				1px solid #cc0033;
+	-moz-border-radius:	5px;
+}

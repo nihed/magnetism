@@ -18,14 +18,14 @@
 	<script type="text/javascript">
 		dojo.require("dh.account");
 		dojo.require("dh.password");
-		dh.account.currentValues = {
+		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
 			'dhMyspaceEntry' : <dh:jsString value="${signin.user.account.mySpaceName}"/>
 		};
+		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
-			dh.photochooser.reloadPhoto(document.getElementById('dhHeadshotImageContainer'),
-				<dh:jsString value="${signin.user.id}"/>, 60);
+			dh.photochooser.reloadPhoto([document.getElementById('dhHeadshotImageContainer')], 60);
 		}
 	</script>
 </head>

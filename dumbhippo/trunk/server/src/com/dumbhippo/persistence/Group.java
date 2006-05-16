@@ -12,6 +12,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Entity
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
@@ -21,6 +22,8 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	private GroupAccess access;
 	private String name;
 	private int version;
+	private String description;
+	private String stockPhoto;
 	private Set<GroupMember> members;
 	private boolean markedForDelete;
 		
@@ -96,6 +99,39 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	
 	public void setVersion(int version) {
 		this.version = version;
+	}
+	
+	@Column(nullable=true)
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	@Column(nullable=true)
+	public String getStockPhoto() {
+		return stockPhoto;
+	}
+	
+	public void setStockPhoto(String stockPhoto) {
+		this.stockPhoto = stockPhoto;
+	}
+	
+	@Transient
+	public String getPhotoUrl(int size) {
+		if (stockPhoto != null && size == 60) {
+			return "/images2" + stockPhoto;
+		} else {
+			return "/files/groupshots/" + size + "/" + getId() + "?v=" + version;
+		}
+	}
+	
+	// usable from jstl expression language since it has no args
+	@Transient
+	public String getPhotoUrl60() {
+		return getPhotoUrl(60);
 	}
 	
 	/**

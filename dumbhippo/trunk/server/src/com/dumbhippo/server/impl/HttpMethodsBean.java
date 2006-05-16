@@ -53,6 +53,7 @@ import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
@@ -314,16 +315,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType,
-			UserViewpoint viewpoint, String name, String members, boolean secret)
+			UserViewpoint viewpoint, String name, String members, boolean secret, String description)
 			throws IOException, ParseException, NotFoundException {
-		Set<String> memberGuids = splitIdList(members);
-
-		Set<Person> memberPeople = identitySpider.lookupGuidStrings(
-				Person.class, memberGuids);
+		Set<Person> memberPeople;
+		
+		if (members != null) {
+			Set<String> memberGuids = splitIdList(members);
+			memberPeople = identitySpider.lookupGuidStrings(Person.class, memberGuids);
+		} else {
+			memberPeople = Collections.emptySet();
+		}
 
 		Group group = 
 			groupSystem.createGroup(viewpoint.getViewer(), name,
-			 	                    secret ? GroupAccess.SECRET : GroupAccess.PUBLIC_INVITE);
+			 	                    secret ? GroupAccess.SECRET : GroupAccess.PUBLIC_INVITE,
+			 	                   	description);
 		for (Person p : memberPeople)
 			groupSystem.addMember(viewpoint.getViewer(), group, p);
 
@@ -376,6 +382,55 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name) {
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			
+			if (!groupSystem.canEditGroup(viewpoint, group))
+				throw new RuntimeException("Only active members can edit a group");
+			
+			name = name.trim();
+			if (name == "")
+				throw new RuntimeException("Name is empty");
+			
+			group.setName(name);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}		
+	}
+	
+	public void doSetGroupDescription(UserViewpoint viewpoint, String groupId, String description) {
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			
+			if (!groupSystem.canEditGroup(viewpoint, group))
+				throw new RuntimeException("Only active members can edit a group");
+			
+			description = description.trim();
+			if (description == "")
+				throw new RuntimeException("Description is empty");
+			
+			group.setDescription(description);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}		
+	}
+	
+	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo) {
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			
+			if (!groupSystem.canEditGroup(viewpoint, group))
+				throw new RuntimeException("Only active members can edit a group");
+			
+			// FIXMEL validate the photo
+			
+			group.setStockPhoto(photo);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}		
 	}
 
 	public void doAddContactPerson(UserViewpoint viewpoint, String contactId) {
@@ -848,6 +903,34 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		String url = user.getPhotoUrl(sizeValue);
+		
+		out.write(StringUtils.getBytes(url));
+		out.flush();
+	}
+	
+	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, String groupId, String size)
+		throws IOException {
+		if (contentType != HttpResponseData.TEXT)
+			throw new IllegalArgumentException("only support TEXT replies");
+		
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), groupId);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such person", e);
+		}
+
+		int sizeValue = Integer.parseInt(size);
+		switch (sizeValue) {
+		case Configuration.SHOT_SMALL_SIZE:
+		case Configuration.SHOT_MEDIUM_SIZE:
+		case Configuration.SHOT_LARGE_SIZE:
+			break;
+		default:
+			throw new RuntimeException("invalid photo size");
+		}
+		
+		String url = group.getPhotoUrl(sizeValue);
 		
 		out.write(StringUtils.getBytes(url));
 		out.flush();

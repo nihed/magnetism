@@ -323,3 +323,46 @@ form {
 	margin-left: 5px;
 	margin-right: 5px;
 }
+
+#dhContentColumn .dh-form-table {
+	width:			478px;
+	margin-top:		10px;
+	margin-bottom:	10px;
+}
+
+#dhContentColumn .dh-form-table .dh-label-cell {
+	padding-right:	10px;
+}
+
+#dhContentColumn .dh-form-table .dh-spacer-row {
+	height:			10px;
+}
+
+#dhContentColumn .dh-form-table .dh-image {
+	float: 			left;
+}
+
+#dhContentColumn .dh-form-table .dh-next-to-image {
+	float:			right;
+	width:			288px;
+	vertical-align: top;
+}
+
+#dhContentColumn .dh-form-table #dhPictureEntry {
+	width:			288px;
+}
+
+/* Position this so the stock photo popup is relative to it */
+#dhChooseStockLinkContainer {
+	position:		relative;
+}
+
+div.dh-save-status {
+	padding:		4px;
+	width:			468px;
+}
+
+#dhContentColumn .dh-zone-box .dh-message {
+	padding:		5px;
+	margin-bottom:	5px;
+}

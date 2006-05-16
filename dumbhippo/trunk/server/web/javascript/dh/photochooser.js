@@ -3,7 +3,7 @@ dojo.require("dh.util");
 dojo.require("dojo.style");
 
 // FIXME automate getting this from the app server
-dh.photochooser.nophoto = '/user_pix1/nophoto.gif';
+dh.photochooser.user_nophoto = '/user_pix1/nophoto.gif';
 dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
 							'bear2.gif', 'clown.gif', 'devil.gif', 'duck.gif',
 							'eye.gif', 'giraffe.gif', 'greenie.gif', 'kitty.gif',
@@ -12,6 +12,14 @@ dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
 							'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
 							'wolfman.gif' ];
 
+dh.photochooser.group_nophoto = '/group_pix1/nophoto.gif';
+dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
+							   'bowling.gif', 'cards.gif', 'cows.gif', 'dudes.gif',
+							   'fish.gif', 'flock.gif', 'flowers.gif', 'geese.gif',
+							   'kittens.gif', 'nogroupphoto.gif', 'penguins.gif', 'pills.gif',
+							   'pirates.gif' ];
+
+dh.photochooser.type = "user"
 dh.photochooser.pages = [];
 dh.photochooser.onSelected = null;
 dh.photochooser.showing = false;
@@ -74,23 +82,40 @@ dh.photochooser.setPage = function(number) {
 	}
 }
 
-dh.photochooser.reloadPhoto = function(imgAncestorNode, userId, size) {
-	var imgNode = null;
-	if (imgAncestorNode.nodeName.toLowerCase() == 'img') {
-		imgNode = imgAncestorNode;
-	} else {
-		var imgs = imgAncestorNode.getElementsByTagName('img');
-		if (imgs.length != 1) {
-			alert("ambiguous reloadPhoto, " + imgs.length + " img tags found");
-			return;
+dh.photochooser.reloadPhoto = function(imgAncestorNodes, size) {
+	var imgNodes = [];
+	for (var i = 0; i < imgAncestorNodes.length; i++) {
+		var imgAncestorNode = imgAncestorNodes[i]
+		var imgNode
+		if (imgAncestorNode.nodeName.toLowerCase() == 'img') {
+			imgNode = imgAncestorNode;
+		} else {
+			var imgs = imgAncestorNode.getElementsByTagName('img');
+			if (imgs.length != 1) {
+				alert("ambiguous reloadPhoto, " + imgs.length + " img tags found");
+				return;
+			}
+			imgNode = imgs[0];
 		}
-		imgNode = imgs[0];
+		imgNodes.push(imgNode)
 	}
-	dh.server.getTextGET("userphoto",
-						{ "userId" : userId, 
-							"size" : size },
+	
+	var method
+	var args = { "size" : size }
+	
+	if (dh.photochooser.type == "user") {
+		method = "userphoto"
+		args["groupId"] = dh.photochooser.id
+	} else {
+		method = "groupphoto"
+		args["groupId"] = dh.photochooser.id
+	}
+	
+	dh.server.getTextGET(method, args,
 						function(type, data, http) {
-							imgNode.src = data;
+							for (var i = 0; i < imgNodes.length; i++) {
+								imgNodes[i].src = data;
+							}
 						},
 						function(type, error, http) {
 							// displays broken image, better than 
@@ -105,8 +130,16 @@ dh.photochooser.show = function(aboveNode, postSelectFunc) {
 		return;
 		
 	dh.photochooser.onSelected = function(chosenImageName) {
-	   	dh.server.doPOST("setstockphoto",
-				     		{ "photo" : chosenImageName },
+		var method
+		var args = { "photo" : chosenImageName }
+		if (dh.photochooser.type == "user") {
+			method = "setstockphoto"
+		} else {
+			method = "setgroupstockphoto"
+			args["groupId"] = dh.photochooser.id
+		}
+			
+	   	dh.server.doPOST(method, args,
 			  	    		function(type, data, http) {
 			  	    			//alert("set photo to " + chosenImageName);
 								dh.photochooser.hide();
@@ -183,12 +216,27 @@ dh.photochooser.hide = function() {
 	dh.photochooser.showing = false;
 }
 
-dhPhotoChooserInit = function() {
+dh.photochooser.init = function(type, id) {
+	if (type == null)
+		type = "user"
+
+	dh.photochooser.type = type
+	dh.photochooser.id = id
+
+	var url
+	var pix
+	if (type == "user") {	
+		url = "/user_pix1" 
+		pix = dh.photochooser.user_pix1
+		dh.photochooser.nophoto = dh.photochooser.user_nophoto
+	} else { 
+		url = "/group_pix1" 
+		pix = dh.photochooser.group_pix1
+		dh.photochooser.nophoto = dh.photochooser.group_nophoto
+	}
+
 	// slurp into 16-cell pages
-	while (dh.photochooser.user_pix1.length > 0) {
-		dh.photochooser.pages.push(dh.photochooser.makePage("/user_pix1",
-			dh.photochooser.user_pix1));
+	while (pix.length > 0) {
+		dh.photochooser.pages.push(dh.photochooser.makePage(url, pix))
 	}
 }
-
-dojo.event.connect(dojo, "loaded", dj_global, "dhPhotoChooserInit");

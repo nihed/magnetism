@@ -192,7 +192,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,chatwindow,friends,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first</param-value>
+          <param-value>account,admin,chatwindow,create-group,friends,group-account,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

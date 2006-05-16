@@ -4,8 +4,16 @@
 <%@ attribute name="group" required="true" type="com.dumbhippo.server.GroupView"%>
 <%@ attribute name="size" required="false" type="java.lang.String" %>
 <c:if test="${empty size}">
-	<c:set var="size" value="48"/>
+	<c:set var="size" value="60"/>
 </c:if>
-<a href="/group?who=${group.group.id}" style="text-decoration: none;"><dh:png src="/files/groupshots/${size}/${group.group.id}?v=${group.group.version}" style="width: ${size}; height: ${size};"/></a>
+<c:choose>
+	<c:when test="${size == 60}">
+		<c:set var="photoUrl" value="${group.group.photoUrl60}" scope="page"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="photoUrl" value="/files/groupshots/${size}/${group.group.id}?v=${group.group.version}" scope="page"/>
+	</c:otherwise>
+</c:choose>
+<a href="/group?who=${group.group.id}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/></a>
 
 

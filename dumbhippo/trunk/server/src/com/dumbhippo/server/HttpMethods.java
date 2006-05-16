@@ -38,8 +38,9 @@ public interface HttpMethods {
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "name", "members", "secret" })
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String name, String memberIds, boolean secret)
+	@HttpParams( { "name", "members", "secret", "description" })
+	@HttpOptions( optionalParams = { "members", "description" } )
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String name, String memberIds, boolean secret, String description)
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
@@ -79,6 +80,18 @@ public interface HttpMethods {
 	@HttpParams( { "groupId" })
 	public void doLeaveGroup(UserViewpoint viewpoint, String groupId);
 	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId", "name" })
+	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId", "description" })
+	public void doSetGroupDescription(UserViewpoint viewpoint, String groupId, String name);
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId", "photo" })
+	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo);
+
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email) throws IOException;
@@ -197,5 +210,10 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.TEXT)
 	@HttpParams( { "userId", "size" })
 	public void getUserPhoto(OutputStream out, HttpResponseData contentType, String userId, String size)
+		throws IOException;
+
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( { "groupId", "size" })
+	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, String groupId, String size)
 		throws IOException;
 }

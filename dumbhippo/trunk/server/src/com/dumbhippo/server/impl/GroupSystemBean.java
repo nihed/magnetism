@@ -58,11 +58,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	@EJB
 	private TransactionRunner runner;
 	
-	public Group createGroup(User creator, String name, GroupAccess access) {
+	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
 			throw new IllegalArgumentException("null group creator");
 		
 		Group g = new Group(name, access);
+		g.setDescription(description);
 		
 		em.persist(g);
 		
@@ -348,7 +349,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
 		}
 	}
-
+	
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
@@ -547,5 +548,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp, serial);
 		em.persist(groupMessage);
+	}
+
+	public boolean canEditGroup(UserViewpoint viewpoint, Group group) {
+		try {
+			GroupMember member = getGroupMember(group, viewpoint.getViewer());
+			return member.getStatus() == MembershipStatus.ACTIVE;
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }
