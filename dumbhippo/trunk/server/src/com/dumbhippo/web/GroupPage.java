@@ -26,7 +26,7 @@ import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 
 public class GroupPage extends AbstractSigninOptionalPage {
-	protected static final Logger logger = GlobalSetup.getLogger(AbstractSigninOptionalPage.class);
+	protected static final Logger logger = GlobalSetup.getLogger(GroupPage.class);
 	
 	static private final int MAX_POSTS_SHOWN = 10;
 	static private final int MAX_MEMBERS_SHOWN = 5;

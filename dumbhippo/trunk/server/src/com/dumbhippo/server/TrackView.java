@@ -1,6 +1,8 @@
 package com.dumbhippo.server;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import com.dumbhippo.StringUtils;
@@ -28,9 +30,18 @@ public class TrackView {
 	private long lastListenTime;
 	private int trackNumber; // both -1 and 0 mean that track number is unknown/inapplicable
 	                         // valid track numbers are 1-based
+	private int totalPlays;
+	private int numberOfFriendsWhoPlayedTrack;
+	private boolean showExpanded;
+	private List<PersonMusicPlayView> personMusicPlayViews;
+	
 	
 	public TrackView() {
-		album = new AlbumView();
+		this.album = new AlbumView();
+		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
+		this.totalPlays = -1;
+		this.numberOfFriendsWhoPlayedTrack = -1;
+		this.showExpanded = false;
 	}
 	
 	public TrackView(Track track) {
@@ -38,6 +49,10 @@ public class TrackView {
 		this.name = track.getName();
 		this.durationSeconds = track.getDuration();
 		this.trackNumber = track.getTrackNumber();
+		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
+		this.totalPlays = -1;
+		this.numberOfFriendsWhoPlayedTrack = -1;
+		this.showExpanded = false;
 	}
 
 	public TrackView(String name, String album, String artist, int duration, int trackNumber) {
@@ -45,6 +60,10 @@ public class TrackView {
 		this.name = name;
 		this.durationSeconds = duration;
 		this.trackNumber = trackNumber; 
+		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
+		this.totalPlays = -1;
+		this.numberOfFriendsWhoPlayedTrack = -1;
+		this.showExpanded = false;
 	}
 	
 	public AlbumView getAlbumView() {
@@ -152,6 +171,38 @@ public class TrackView {
 	
 	public void setTrackNumber(int trackNumber) {
 		this.trackNumber = trackNumber;
+	}
+	
+	public int getTotalPlays() {
+		return totalPlays;
+	}
+	
+	public void setTotalPlays(int totalPlays) {
+		this.totalPlays = totalPlays;
+	}	
+
+	public int getNumberOfFriendsWhoPlayedTrack() {
+		return numberOfFriendsWhoPlayedTrack;
+	}
+	
+	public void setNumberOfFriendsWhoPlayedTrack(int numberOfFriendsWhoPlayedTrack) {
+		this.numberOfFriendsWhoPlayedTrack = numberOfFriendsWhoPlayedTrack;
+	}	
+	
+	public boolean isShowExpanded() {
+		return showExpanded;
+	}
+	
+	public void setShowExpanded(boolean showExpanded) {
+		this.showExpanded = showExpanded;
+	}	
+	
+	public List<PersonMusicPlayView> getPersonMusicPlayViews() {
+		return personMusicPlayViews;
+	}
+	
+	public void setPersonMusicPlayViews(List<PersonMusicPlayView> personMusicPlayViews) {
+		this.personMusicPlayViews = personMusicPlayViews;
 	}
 	
 	@Override

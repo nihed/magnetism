@@ -9,8 +9,9 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.Viewpoint;
 
-public class MusicSearchPage {
+public class MusicSearchPage extends AbstractSigninOptionalPage {
 
 	static private final Logger logger = GlobalSetup.getLogger(MusicSearchPage.class);
 	
@@ -70,8 +71,12 @@ public class MusicSearchPage {
 				// we will know which albums to load into the expandedArtistView based on the Pageable,
 			    // the Pageable will come back from this call with the right albums set in its results field,
 			    // they will be the same albums as expandedArtistView.getAlbums()
+			    Viewpoint viewpoint = SystemViewpoint.getInstance();
+			    if (getSignin().isValid()) {
+			    	viewpoint = getSignin().getViewpoint();
+			    }
 				expandedArtistView = 
-					musicSystem.expandedArtistSearch(SystemViewpoint.getInstance(), artist, album, song, albumsByArtist);
+					musicSystem.expandedArtistSearch(viewpoint, artist, album, song, albumsByArtist);
 			} catch (NotFoundException e) {
 				logger.debug("Expanded artist not found {}", e.getMessage());
 			}

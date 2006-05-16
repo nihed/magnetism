@@ -90,7 +90,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
 
-	public AlbumView getAlbumView(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
 	
 	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
 	
@@ -99,24 +99,27 @@ public interface MusicSystemInternal extends MusicSystem {
 	/**
 	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
 	 * 
+	 * @param viewpoint
 	 * @param artist artist's name
 	 * @param artistId if you don't know artistId, just pass in null for it
 	 * @param albumsByArtist a Pageable object that contains information on what albums should be added to the artist view
 	 * @return view of an artist that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView getExpandedArtistView(String artist, String artistId, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, String artistId, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
 	
 	/**
 	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
 	 * Keeps the position of the requested album as a top album on the first page. 
 	 *  
-	 * @param album to display as part of this album's artist view
+	 * @param viewpoint 
+	 * @param song a song to expand when displaying the artist's view 
+	 * @param album to display as the first album in the artist's view
 	 * @param albumsByArtist a Pageable object that contains information on what albums should be added to the artist view
 	 * @return view of an artist that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView getExpandedArtistView(YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongResult song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
 	
 	public Future<ArtistView> getArtistViewAsync(Track track);
 	

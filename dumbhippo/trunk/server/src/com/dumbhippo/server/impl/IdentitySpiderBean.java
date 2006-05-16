@@ -335,6 +335,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
+		// given the viewpoint, set whether the view is of self
+		if (viewpoint.isOfUser(pv.getUser())) {
+			pv.setViewOfSelf(true);
+		} else {
+			pv.setViewOfSelf(false);
+		}
+		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the database work, even though we only return the requested information to keep 
 		// other code honest		

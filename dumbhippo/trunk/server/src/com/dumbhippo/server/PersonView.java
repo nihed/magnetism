@@ -45,6 +45,7 @@ public class PersonView extends EntityView {
 	private String fallbackName;
 	private Guid fallbackIdentifyingGuid;
 	private String bioAsHtmlCached;
+	private boolean viewOfSelf;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -693,5 +694,13 @@ public class PersonView extends EntityView {
 			bioAsHtmlCached = xml.toString(); 
 		}
 		return bioAsHtmlCached;
+	}
+	
+	public boolean isViewOfSelf() {
+		return viewOfSelf;
+	}
+	
+	public void setViewOfSelf(boolean viewOfSelf) {
+		this.viewOfSelf = viewOfSelf;
 	}
 }

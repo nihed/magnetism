@@ -5,10 +5,6 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 
-<c:if test="${!empty who.viewPersonPageId}">
-	<c:set var="personLink" value="/person?who=${who.viewPersonPageId}" scope="page"/>
-</c:if>	
-
 <div class="dh-compact-item">
 	<table cellpadding="0" cellspacing="0">
 		<tbody>
@@ -20,19 +16,10 @@
 				</td>
 				<td>
 					<div class="dh-next-to-image">
-						<div class="dh-name">
-							<c:choose>
-								<c:when test="${!empty personLink}">
-									<a href="${personLink}"><c:out value="${who.name}"/></a>
-								</c:when>
-								<c:otherwise>
-									<c:out value="${who.name}"/>
-								</c:otherwise>
-							</c:choose>
-						</div>
+						<dht:personName who="${who}"/>
 						<c:if test="${who.liveUser != null}">
 							<div class="dh-info">${who.liveUser.groupCount} groups</div>
-							<div class="dh-info">${who.liveUser.sentPostsCount} posts</div>
+							<div class="dh-info">${who.liveUser.sentPostsCount} posts</div> 
 						</c:if>
 					</div>
 				</td>

@@ -68,7 +68,7 @@
                     </c:otherwise>
                 </c:choose>                  
                 <div class="dh-album-track${trackParity}${firstTrack}${lastTrack}">            
-                    <dht:track track="${track}" displayAsAlbumTrack="true" playItLink="true"/>								
+                    <dht:track track="${track}" displayAsAlbumTrack="true" playItLink="true" order="${order}" songOrder="${count}"/>								
                 </div>    
                 <c:set var="firstTrack" value=""/>
                 <c:set var="count" value="${count+1}"/>

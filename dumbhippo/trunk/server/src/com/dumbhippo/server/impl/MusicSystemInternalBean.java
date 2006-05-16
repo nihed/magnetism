@@ -67,6 +67,7 @@ import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.PersonMusicPlayView;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
@@ -1507,14 +1508,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				logger.error("yahoo album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
 			} catch (ExecutionException e) {
-				logger.error("yahoo album get thread execution exception {}", e.getMessage());
-				throw new RuntimeException(e);
+ 				// it is ok to call fillAlbumInfo bellow with yahooAlbum being null
+ 				logger.error("yahoo album get thread execution exception {}", e.getMessage());
 			}
 	    }
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
 	}
 	
-	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
+	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
 			List<YahooSongResult> albumTracks;
@@ -1539,13 +1540,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					// based on each YahooSongResult and add them to the right albumTrack
 					
 					if (albumTrack.getTrackNumber() > 0) {
-						TrackView trackView = new TrackView(albumTrack.getName(), 
-                                                            albumView.getTitle(),
-                                                            albumView.getArtist(),
-                                                            albumTrack.getDuration(),
-                                                            albumTrack.getTrackNumber());
-						sortedTracks.put(albumTrack.getTrackNumber(), trackView);
-                        if (trackDownloads.get(albumTrack.getTrackNumber()) == null) {
+						
+						// we only need one of the songs with a given track number to create a track view,
+						// but we need to go through all song results to get all the downloads
+						if (sortedTracks.get(albumTrack.getTrackNumber()) == null) {
+					   	    TrackView trackView = new TrackView(albumTrack.getName(), 
+                                                                albumView.getTitle(),
+                                                                albumView.getArtist(),
+                                                                albumTrack.getDuration(),
+                                                                albumTrack.getTrackNumber());
+						    // if we are displaying this album because of a particular song search, 
+						    // we want to display this song initially expanded
+                            // because a single track can have multiple valid YahooSongResults associated
+						    // with it (e.g. for different downloads), we do not want to check the equality
+						    // of yahooSong and albumTrack here, but rather the equality of the song
+						    // names
+						    if ((yahooSong != null) && yahooSong.getName().equals(albumTrack.getName())) {
+                        	    trackView.setShowExpanded(true);
+                            }
+						    fillTrackViewWithTrackHistory(viewpoint, trackView);						
+						    sortedTracks.put(albumTrack.getTrackNumber(), trackView);
+						}
+						
+						if (trackDownloads.get(albumTrack.getTrackNumber()) == null) {
                         	ArrayList<Future<List<YahooSongDownloadResult>>> downloads =
                         		new ArrayList<Future<List<YahooSongDownloadResult>>>();
                         	// if the trackNumber was positive this can't be a no results marker,
@@ -1668,9 +1685,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 	
-	public AlbumView getAlbumView(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
-		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
+		fillAlbumInfo(viewpoint, yahooSong, yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
 		return view;		
 	}
 	
@@ -1697,7 +1714,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         }
     }
 	 
-	private void fillAlbumsByArtist(YahooArtistResult yahooArtist, Pageable<AlbumView> albumsByArtist, 
+	private void fillAlbumsByArtist(Viewpoint viewpoint, YahooArtistResult yahooArtist, Pageable<AlbumView> albumsByArtist, 
 			                        YahooAlbumResult albumToExclude, ExpandedArtistView view) {
 		// get albums using an artistId
 		List<YahooAlbumResult> albums = getYahooAlbumResultsSync(yahooArtist, albumsByArtist, albumToExclude);
@@ -1724,12 +1741,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			YahooAlbumResult yahooAlbum = yahooAlbums.get(albumId);
 			Future<AmazonAlbumResult> futureAmazonAlbum = futureAmazonAlbums.get(albumId);
 			Future<List<YahooSongResult>> futureAlbumTracks = futureTracks.get(albumId);
-			AlbumView albumView = getAlbumView(yahooAlbum, futureAmazonAlbum, futureAlbumTracks);
+			AlbumView albumView = getAlbumView(viewpoint, null, yahooAlbum, futureAmazonAlbum, futureAlbumTracks);
 			view.addAlbum(albumView);			
 		}		
 	}
 	
-	public ExpandedArtistView getExpandedArtistView(String artist, String artistId, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, String artistId, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		ExpandedArtistView view = new ExpandedArtistView(artist);
 
 	    // this call would throw a NotFoundException if an artist was not found, and would never return null
@@ -1739,12 +1756,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			 throw new NotFoundException("Artist " + artist + " artistId " + artistId + " was not found.");
 		}
 		
-        fillAlbumsByArtist(yahooArtist, albumsByArtist, null, view);
+        fillAlbumsByArtist(viewpoint, yahooArtist, albumsByArtist, null, view);
         
 		return view;
 	}
 	
-	public ExpandedArtistView getExpandedArtistView(YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongResult song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		
 		// we require the album field
 		if (album == null) {
@@ -1771,11 +1788,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             Future<AmazonAlbumResult> amazonAlbum = getAmazonAlbumAsync(album.getAlbum(), album.getArtist());
             Future<List<YahooSongResult>> albumTracks = getYahooSongResultsAsync(album.getAlbumId());
 
-		    AlbumView albumView = getAlbumView(album, amazonAlbum, albumTracks);
+		    AlbumView albumView = getAlbumView(viewpoint, song, album, amazonAlbum, albumTracks);
 	        view.addAlbum(albumView);			
 		}
 		
-        fillAlbumsByArtist(yahooArtist, albumsByArtist, album, view);
+        fillAlbumsByArtist(viewpoint, yahooArtist, albumsByArtist, album, view);
 	    
 		return view;
 	}
@@ -2255,7 +2272,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
         // albumsByArtist is a pageable object that contains information on what albums the expanded
         // artist view should be loaded with, it also needs to have these albums set in its results field
-		ExpandedArtistView artistView = getExpandedArtistView(artist, artistId, albumsByArtist);
+		ExpandedArtistView artistView = getExpandedArtistView(viewpoint, artist, artistId, albumsByArtist);
 		artistView.pageAlbums(albumsByArtist);
 		return artistView;
 	}
@@ -2282,7 +2299,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
                 YahooAlbumResult yahooAlbum = getYahooAlbumSync(songs.get(0));	
                 // albumsByArtist is a pageable object that contains information on what albums the expanded
                 // artist view should be loaded with, it also needs to have these albums set in its results field
-    			ExpandedArtistView artistView = getExpandedArtistView(yahooAlbum, albumsByArtist);
+                YahooSongResult songToExpand = null;
+                if (name != null) {
+                	//this was a search based on a song name, not just an album search
+                	songToExpand = songs.get(0);
+                }
+    			ExpandedArtistView artistView = getExpandedArtistView(viewpoint, songToExpand, yahooAlbum, albumsByArtist);
     			artistView.pageAlbums(albumsByArtist);
     		    return artistView;
 			}		
@@ -2294,12 +2316,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	    // in other cases we have to do a query to get YahooAlbumResult
 		// if we displayed it, we have to have it locally, but in order to update it or to fulfill
 		// arbitrary user-defined searches we will need to use lookupSong, and then lookupAlbum for this song
-		// (or rather with a given album id)
+		// (or rather with a given album id)		
 		Query q = buildAlbumQuery(viewpoint, artist, album, name, 1);
 			
 		try {
 			YahooAlbumResult yahooAlbum = (YahooAlbumResult)q.getSingleResult();
-			ExpandedArtistView artistView = getExpandedArtistView(yahooAlbum, albumsByArtist);
+			ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
 			artistView.pageAlbums(albumsByArtist);
 		    return artistView;
 		} catch (EntityNotFoundException e) { 
@@ -2317,6 +2339,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private static final int MAX_RELATED_FRIENDS_RESULTS = 5;
 	private static final int MAX_RELATED_ANON_RESULTS = 5;
 	private static final int MAX_SUGGESTIONS_PER_FRIEND = 3;
+	private static final int MAX_RELATED_PEOPLE_RESULTS = 3;
 	
 	private enum RelatedType {
 		ALBUMS,
@@ -2338,6 +2361,137 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		sb.append(")");
 		
 		return new String(sb);
+	}
+	
+	private void fillTrackViewWithTrackHistory(Viewpoint viewpoint, TrackView trackView) {
+
+        List<Track> tracks = getMatchingTracks(viewpoint, trackView.getArtist(), trackView.getAlbum(), trackView.getName());
+        if (tracks.size() == 0) {
+        	trackView.setTotalPlays(0);
+            // setting the number of friends who played this track is only relevant if we have a user viewpoint
+            if (viewpoint instanceof UserViewpoint) {
+        	    trackView.setNumberOfFriendsWhoPlayedTrack(0);
+            }
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder("FROM TrackHistory h WHERE h.track.id IN (");
+        for (Track t : tracks) {
+            sb.append(t.getId());
+            sb.append(",");
+        }
+        if (sb.charAt(sb.length()-1) == ',') {
+            sb.setLength(sb.length() - 1);
+        }
+        sb.append(")");
+
+        Set<User> contacts = new HashSet<User>();
+
+        if (viewpoint instanceof UserViewpoint) {
+        	// we will not limit the query to h.user.id being in the contacts list, but we
+        	// will give a preference to people in that list when constructing the list to return
+            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+        }
+
+        // we want to desplay the most recent plays
+        sb.append(" ORDER BY h.lastUpdated DESC");
+        
+        Query q = em.createQuery(sb.toString());
+
+        // views contains results that we'll definitely want to display
+        Map<User, PersonMusicPlayView> views = new HashMap<User, PersonMusicPlayView>();
+        
+        // extraViews is used only if we have a user viewpoint, and are trying to fill in views
+        // with user's friends only, but might supplement them in the end with the extra views 
+        // to return more results
+        Map<User, PersonMusicPlayView> extraViews = new HashMap<User, PersonMusicPlayView>();
+        
+        // we keep this list of encountered contacts to be able to calculate the number of
+        // contacts who played this track, to make sure that we count each contact only once,
+        // and to do this counting separately from compiling the views map that should only
+        // contain results we'll definitely want to display
+        List<User> encounteredContacts = new ArrayList<User>();
+        
+        // avoid including the user in the results, but include the user if we still need more
+        // results in the very end
+        PersonMusicPlayView selfMusicPlayView = null;
+        
+        int totalPlays = 0;
+        int numberOfFriendsWhoPlayedTrack = 0;
+        List<?> history = q.getResultList();
+        for (Object o : history) {
+            TrackHistory h = (TrackHistory) o;
+
+    		totalPlays = totalPlays + h.getTimesPlayed();
+
+            User user = h.getUser();
+            
+            // we check this here to be able to short-circuit the rest of the logic if we have enough results
+    		if (contacts.contains(user) && (!encounteredContacts.contains(user))) {
+    			numberOfFriendsWhoPlayedTrack++;
+    			encounteredContacts.add(user);
+    		}
+        	
+    		if (views.size() >= MAX_RELATED_PEOPLE_RESULTS) {
+                // the only reason we are still in this loop is to sum up the number of times this track
+        		// was played and the number of friends who played it
+        		continue;
+        	}
+    		
+
+            // If the viewer is the user themself, we want to include
+            // them in the result, because that prevents our pages
+            // from looking strangely empty.
+            if ((viewpoint != null) && viewpoint.isOfUser(user) && (selfMusicPlayView == null)) {  
+            	selfMusicPlayView = new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated());
+            	continue;
+            }
+
+            if (!contacts.isEmpty()) {
+                // we are filling out the views with person's contacts
+            	if (contacts.contains(user)) {          	
+            		// it is correct to use the first track history that related to a given contact because we are interested
+            		// in the most recent play and track histories were sorted by the time of the last update
+            		if (views.get(user) == null) {
+            			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+            		}
+            	} else {
+            		if (extraViews.get(user) == null) {    			
+            			extraViews.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+              		}            		
+            	}
+            } else {
+        		if (views.get(user) == null) {
+        			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));            			
+        		}                	
+            }
+        }
+        
+        trackView.setTotalPlays(totalPlays);
+        
+        // setting the number of friends who played this track is only relevant if we have a user viewpoint
+        if (viewpoint instanceof UserViewpoint) {
+            trackView.setNumberOfFriendsWhoPlayedTrack(numberOfFriendsWhoPlayedTrack);
+        }
+        
+        List<PersonMusicPlayView> personViewsForTrack = new ArrayList<PersonMusicPlayView>();
+        personViewsForTrack.addAll(views.values());
+        
+        // the order of plays might not be chronological, but they will be in the order:
+        // your friends, other people, you, and chronological within each category
+        for (PersonMusicPlayView pmpv : extraViews.values()) {
+            if	(personViewsForTrack.size() >= MAX_RELATED_PEOPLE_RESULTS) {
+            	break;
+            }
+            personViewsForTrack.add(pmpv);
+        }	
+        
+        if ((personViewsForTrack.size() < MAX_RELATED_PEOPLE_RESULTS) && (selfMusicPlayView != null)) {
+        	personViewsForTrack.add(selfMusicPlayView);
+        }
+        
+        trackView.setPersonMusicPlayViews(personViewsForTrack);
+
 	}
 	
 	private List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name, RelatedType type) {

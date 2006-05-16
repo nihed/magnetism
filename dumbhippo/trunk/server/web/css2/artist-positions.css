@@ -8,40 +8,40 @@
 
 .dh-artist-image {
     position: relative;
-    float: left;
-    width: 80px;
-    height: 80px;
+    float:    left;
+    width:    80px;
+    height:   80px;
     overflow: hidden;
 }
 
 .dh-artist-info {
     position: relative;
-    float: left;
-    clear: right;
+    float:    left;
+    clear:    right;
 }
 
 .dh-artist-bio {
 }
 
 #dhContentColumn .dh-zone-box .dh-album {
-	margin-top: 7px;
+	margin-top:    7px;
 	margin-bottom: 10px;
 }
 
 .dh-album-image {
     position: relative;
-    float: left;
-    clear: left;
-    width: 80px;
-    height: 80px;
+    float:    left;
+    clear:    left;
+    width:    80px;
+    height:   80px;
     overflow: hidden;
 }
 
 .dh-album-info {
     position: relative;
-    float: left;
-    clear: right;
-    display: table;
+    float:    left;
+    clear:    right;
+    display:  table;
 }
 
 .dh-album-title {
@@ -51,8 +51,8 @@
 }
 
 .dh-album-year {
-    float:   left;
-    display: table-cell;
+    float:          left;
+    display:        table-cell;
     margin-right:   2px;
 }
 
@@ -89,14 +89,30 @@
     display: inline;
 }
 
+.dh-album-track .dh-song-info .dh-song-plays {
+    float:       left;
+    display:     block;
+    margin-left: 5px;
+}
+
+.dh-album-track .dh-song-info .dh-double-digit-track-song-plays {
+    margin-left: 8px;
+}
+
+.dh-album-track .dh-song-info .dh-song-plays ul {
+    margin-top:    0px;
+    margin-left:   25px;
+    margin-bottom: 0px;
+}
+
 .dh-album .dh-album-info .dh-album-buy {
-    float: right;
-    display: inline;
+    float:        right;
+    display:      inline;
     margin-right: 20px;
 }
 
 #dhContentColumn .dh-zone-box .dh-artist-more .dh-more {
     position: relative;
     float:    left;
-    clear:    both;
+    clear:    both; 
 }

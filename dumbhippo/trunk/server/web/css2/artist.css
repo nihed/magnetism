@@ -85,3 +85,7 @@
 	overflow:			hidden;
 	color:				#666666;
 }
+
+.dh-album-track .dh-song-info .dh-song-plays {
+    color:              black;
+}
