@@ -21,7 +21,7 @@
 					<dht:groupItem group="${group}"/>
 				</c:forEach>
 				<c:if test="${person.groups.size > 3}">
-					<dht:moreLink more="/groups?who=${person.viewedUserId}"/>
+					<dht:moreLink moreName="ALL GROUPS" more="/groups?who=${person.viewedUserId}"/>
 				</c:if>
 			</c:when>
 			<c:otherwise>

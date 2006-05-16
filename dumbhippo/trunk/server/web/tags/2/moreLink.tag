@@ -3,5 +3,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="more" required="true" type="java.lang.String" %>
+<%@ attribute name="moreName" required="false" type="java.lang.String" %>
 
-<div class="dh-more"><a href="${more}">MORE</a></div>
+<c:if test="${empty moreName}">
+	<c:set var="moreName" value="MORE" scope="page"/>
+</c:if>
+
+<div class="dh-more"><a href="${more}"><c:out value="${moreName}"/></a></div>
