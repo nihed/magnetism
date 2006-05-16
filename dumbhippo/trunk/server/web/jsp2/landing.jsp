@@ -12,7 +12,7 @@
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
 		dojo.require("dh.util");
-		dojo.require("dh.welcome");
+		dojo.require("dh.download");
 	</script>
 </head>
 <dht:body>
@@ -32,6 +32,6 @@
 	<div id="dhLinkSwarmSample">
 		<img src="/images2/bubblesample.gif"/>
 	</div>
-	<div class="dh-landing-explanatory">A desktop tool for Windows.  Instantly get the buzz on cool sites.</div>
+	<div class="dh-landing-explanatory">A desktop tool for Windows and Linux.  Instantly get the buzz on cool sites.</div>
 </dht:body>
 </html>

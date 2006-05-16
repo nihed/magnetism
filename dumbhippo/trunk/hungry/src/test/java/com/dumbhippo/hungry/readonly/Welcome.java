@@ -16,7 +16,7 @@ public class Welcome extends SignedInPageTestCase {
 	
 	@Override
 	public void testPage() {
-		t.beginAt("/welcome");
+		t.beginAt("/download");
 		validatePage();
 	}
 

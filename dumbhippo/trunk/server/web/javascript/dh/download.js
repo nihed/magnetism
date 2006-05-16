@@ -1,34 +1,34 @@
-dojo.provide("dh.welcome")
+dojo.provide("dh.download")
 
 dojo.require("dojo.string")
 dojo.require("dh.server")
 
-dh.welcome.nameNow = false
+dh.download.nameNow = false
 
-dh.welcome.onNowSelected = function() {
-	dh.welcome.nameNow = true
-	dh.welcome.updateDownload()
+dh.download.onNowSelected = function() {
+	dh.download.nameNow = true
+	dh.download.updateDownload()
 }
 
-dh.welcome.onLaterSelected = function() {
-	dh.welcome.nameNow = false
-	dh.welcome.updateDownload()
+dh.download.onLaterSelected = function() {
+	dh.download.nameNow = false
+	dh.download.updateDownload()
 }
 
-dh.welcome.updateDownload = function() {
+dh.download.updateDownload = function() {
 	var mySpaceDownload = document.getElementById("dhMySpaceDownload")
 	var mySpaceName = document.getElementById("dhMySpaceName")
 
-	mySpaceName.disabled = !dh.welcome.nameNow
-	mySpaceDownload.disabled = dh.welcome.nameNow && dojo.string.trim(mySpaceName.value).length == 0
+	mySpaceName.disabled = !dh.download.nameNow
+	mySpaceDownload.disabled = dh.download.nameNow && dojo.string.trim(mySpaceName.value).length == 0
 }
 
-dh.welcome.doDownload = function(url) {
+dh.download.doDownload = function(url) {
 	var mySpaceName = document.getElementById("dhMySpaceName")
 	var name = dojo.string.trim(mySpaceName.value)
 
 	window.open(url, "_self")	
-	if (dh.welcome.nameNow) {
+	if (dh.download.nameNow) {
 		dh.server.doPOST("setmyspacename",
 						{ 
 							"name" : name
@@ -41,13 +41,13 @@ dh.welcome.doDownload = function(url) {
 	}
 }
 
-dh.welcome.init = function() {
+dh.download.init = function() {
 	// this node only exists if coming from myspace stuff
 	var myspaceNowNode = document.getElementById("dhMySpaceRadioNow")
 	if (myspaceNowNode) {
-		dh.welcome.nameNow = myspaceNowNode.checked
-		dh.welcome.updateDownload()
+		dh.download.nameNow = myspaceNowNode.checked
+		dh.download.updateDownload()
 	}
 }
 
-dojo.event.connect(dojo, "loaded", function () { dh.welcome.init() })
+dojo.event.connect(dojo, "loaded", function () { dh.download.init() })

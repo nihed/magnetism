@@ -1647,13 +1647,13 @@ HippoUI::preferencesProc(HWND   dialog,
 }
 
 /* Finds all IE and Explorer windows on the system, and closes any pointing
- * to http://*.dumbhippo.com/welcome. This is meant for the initial install
- * when the user has installed our software from /welcome and we don't want
- * to leave the /welcome page there in an internet explorer window without
+ * to http://*.dumbhippo.com/download. This is meant for the initial install
+ * when the user has installed our software from /download and we don't want
+ * to leave the /download page there in an internet explorer window without
  * instrumentation.
  */
 static void
-closeWelcome()
+closeDownload()
 {
     HippoPtr<IShellWindows> shellWindows;
     HRESULT hr = CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL, IID_IShellWindows, (void **)&shellWindows);
@@ -1689,7 +1689,7 @@ closeWelcome()
                 continue;
 
             HippoBSTR urlPath = parser.getUrlPath();
-            if (!(urlPath.m_str && wcscmp(urlPath.m_str, L"/welcome") == 0))
+            if (!(urlPath.m_str && wcscmp(urlPath.m_str, L"/download") == 0))
                 continue;
 
             HippoBSTR hostName = parser.getHostName();
@@ -1956,7 +1956,7 @@ WinMain(HINSTANCE hInstance,
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (options.install_launch) {
         CoInitialize(NULL);
-        closeWelcome();
+        closeDownload();
         CoUninitialize();
         installLaunch(hInstance);
         return 0;

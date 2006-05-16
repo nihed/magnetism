@@ -20,12 +20,14 @@ import com.dumbhippo.server.PromotionCode;
 /**
  * @author otaylor
  *
- * Displays information for the logged in user, such as links recently
- * shared with him.
+ * Backing bean for the /download page.
+ *
+ * Formerly used for more; so has various informatino for the logged in user, such as 
+ * links recently shared with him.
  */
-public class WelcomePage {
+public class DownloadPage {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(WelcomePage.class);
+	static private final Logger logger = GlobalSetup.getLogger(DownloadPage.class);
 	static private final int MAX_RECEIVED_POSTS_SHOWN = 6;
 	
 	@Signin
@@ -45,7 +47,7 @@ public class WelcomePage {
 	private ListBean<GroupView> groups;
 	private InvitationToken creatingInvitation;
 	
-	public WelcomePage() {
+	public DownloadPage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);

@@ -66,7 +66,7 @@ public class VerifyServlet extends AbstractServlet {
 					UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
 					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 					spider.setAccountDisabled(viewpoint.getViewer(), true);
-					// now on to /welcome as normal
+					// now on to /download as normal
 				} else {
 					// just send them to the /account page where they can disable, not
 					// worth some complicated solution; this will require a signin first
@@ -107,7 +107,7 @@ public class VerifyServlet extends AbstractServlet {
 			return null;
 		} else {
 			// this forwards to we-miss-you.jsp if the account is disabled
-			return redirectToNextPage(request, response, "/welcome", null);
+			return redirectToNextPage(request, response, "/download", null);
 		}
 	}
 	
