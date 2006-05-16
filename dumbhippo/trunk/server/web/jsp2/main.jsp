@@ -41,27 +41,9 @@
 <%-- can use dht:body once we don't need onload here --%>
 <body onload="init();" class="dh-gray-background-page">
 	<div id="dhPage">
-		<div id="dhMainTopBox">
-			<div id="dhMainLogo"><img src="/images2/logotag.gif"/></div>
-			<table id="dhMainLargeIntro">
-				<tbody>
-					<tr>
-						<td>
-							<div>Name tags don't tell people what you're about. Show the world what you're sharing, 
-							listening to, and watching. Let them know the real you.
-							</div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<div id="dhMainMiddleBox">
-			Admit it, you share links and listen to tunes at work or school. Real multi-taskers also 
-			watch TV. Use that anti-productiveness more productively. Display your music playlist as a
-			mood flag. Discuss sites and shows with friends you can't meet at the water cooler. See what
-			other people are doing when they should be working. <a href="/signup">Sign&nbsp;up</a> or
-			<a href="/who-are-you">Log&nbsp;in</a> to <b>Mugshot</b> and get busy!
-		</div>
+
+		<div id="dhMainLogo"><img src="/images2/mugshot_topper.gif"/></div>
+
 		<div id="dhMainContent">
 			<div class="dh-zone-box">
 				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome.gif"/></a></div>

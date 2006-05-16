@@ -2,14 +2,6 @@
 @IMPORT url("site.css");
 @IMPORT url("main-positions.css");
 
-#dhMainLargeIntro {
-	font-size:	20px;
-}
-
-#dhMainMiddleBox {
-	font-size:	14px;	
-}
-
 .dh-zone-box .dh-title {
 	font-size:		14px;
 	font-weight:	bold;

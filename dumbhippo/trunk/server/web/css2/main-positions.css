@@ -9,20 +9,7 @@
 }
 
 #dhMainLogo {
-	float:			left;	
-}
-
-#dhMainLargeIntro {
-	float:			left;
-	height:			128px;
-	margin-left:	10px;
-}
-
-#dhMainMiddleBox {
-	clear:			both;
-	/* if you use margin-top firefox but not IE will ignore it, so use padding */
-	padding-top:	10px;
-	padding-bottom:	20px;
+	margin-bottom:		10px;
 }
 
 .dh-zone-box  {
