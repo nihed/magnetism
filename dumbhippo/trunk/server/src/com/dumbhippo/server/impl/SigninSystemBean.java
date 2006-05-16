@@ -240,6 +240,6 @@ public class SigninSystemBean implements SigninSystem {
 		
 		// be sure we get a new account so it's attached
 		Account account = accountSystem.lookupAccountByUser(user);
-		account.setPassword(password);
+		account.setPasswordPlainText(password);
 	}
 }

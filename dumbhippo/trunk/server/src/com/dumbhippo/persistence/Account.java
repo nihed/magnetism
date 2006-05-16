@@ -1,7 +1,10 @@
 package com.dumbhippo.persistence;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -18,6 +21,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 
 
 /**
@@ -60,7 +64,9 @@ public class Account extends Resource {
 	
 	private boolean disabled;
 	
+	// a hex-encoded SHA-1 hash of the password is stored
 	private String password;
+	private Integer passwordSalt;
 	
 	private String mySpaceName;
 	private String mySpaceFriendId;
@@ -334,25 +340,106 @@ public class Account extends Resource {
 		this.wasSentShareLinkTutorial = wasSentShareLinkTutorial;
 	}
 
+	/** 
+	 * Return the SHA-1 hash of the given plainText hex-encoded in a String
+	 * @param plainText A String with the plain text, or null
+	 * @param salt An integer containing the password salt
+	 * @return A String with the hex-encoded hash, or null if either input was null
+	 */
+	protected String secureHash(String plainText, Integer salt) {
+		if (plainText == null)
+			return null;
+		if (salt == null)
+			return null;
+		
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException nsae) {
+			throw new RuntimeException("SHA-1 algorithm unavailable", nsae);
+		}
+		
+		// get a String representation of the salt int, possibly including a minus sign
+		String saltText = salt.toString();
+		
+		md.update(StringUtils.getBytes(plainText));
+		md.update(StringUtils.getBytes(saltText));
+
+		byte[] hashRaw = md.digest();
+		return StringUtils.hexEncode(hashRaw);
+	}
+	
 	/**
-	 * This IS nullable.
-	 * @return password if any or null
+	 * Get the salt for the user's password
+	 * @return salt bytes as String, or null if none have been set
+	 */
+	public Integer getPasswordSalt() {
+		return passwordSalt;
+	}
+
+	/**
+	 * Set the salt for the user's password
+	 * @param password String containing the password salt, or null to clear the salt
+	 */
+	public void setPasswordSalt(Integer passwordSalt) {
+		this.passwordSalt = passwordSalt;
+	}
+
+	/**
+	 * Get the hash of the Account's password. This IS nullable.
+	 * 
+	 * @return A String containing the hash of the password, or null to clear password
 	 */
 	protected String getPassword() {
 		return password;
 	}
 
+	/**
+	 * Set the Account's hashed password
+	 * @param password A String with the hash of the password, or null to clear it
+	 */
 	public void setPassword(String password) {
-		if (password != null)
+		if (password != null) {
 			password = password.trim(); // paranoia
+		}
 		this.password = password;
 	}
 
+	/**
+	 * Set the Account's hash password given a plaintext password, including
+	 * generation of salt bytes.
+	 * @param password
+	 */
+	public void setPasswordPlainText(String password) {
+		String passwordHash = null;
+		if (password == null) {
+			setPassword(null);
+			setPasswordSalt(null);
+		} else { 
+			Random random = new Random();		
+			Integer passwordSalt = random.nextInt();
+			passwordHash = secureHash(password.trim(), passwordSalt);
+			setPassword(passwordHash);
+			setPasswordSalt(passwordSalt);
+		}
+	}
+	
+	/**
+	 * Check a password attempt against the Account's stored password, if any
+	 * @param attempt A String with the plain text password attempt
+	 * @return A boolean true if the password matches
+	 */
 	public boolean checkPassword(String attempt) {
-		String correct = getPassword();
-		if (correct == null)
+		String correctHash = getPassword();
+		Integer passwordSalt = getPasswordSalt();
+		if (correctHash == null)
 			return false;
-		return attempt.trim().equals(correct);
+		if (passwordSalt == null)
+			return false;
+		if (attempt == null)
+			return false;
+		String attemptHash = secureHash(attempt.trim(), passwordSalt);
+		return attemptHash.equals(correctHash);
 	}
 	
 	@Transient

@@ -138,8 +138,11 @@ public abstract class AbstractServlet extends HttpServlet {
 				builder.append("'" + v + "',");
 			}
 			builder.deleteCharAt(builder.length() - 1); // drop comma
-			
-			logger.debug("param {} = {}", name, builder);
+			// suppress plaintext password from appearing in log
+			String showValue = builder.toString();
+			if (name.equals("password")) 
+				showValue = "[SUPPRESSED FROM LOG]";
+			logger.debug("param {} = {}", name, showValue);
 		}
 	}
 	

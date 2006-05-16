@@ -209,8 +209,13 @@ public class HttpMethodsServlet extends AbstractServlet {
 					response.setContentType(requestedContentType.getMimeType());
 
 				try {
-					if (logger.isDebugEnabled())
-						logger.debug("Invoking method {} with args {}", m.getName(), Arrays.toString(methodArgs));
+					if (logger.isDebugEnabled()) {
+						String showArgs = Arrays.toString(methodArgs);
+						// suppress plaintext password from appearing in log
+						if ((m.getName() != null) && (m.getName().equals("doSetPassword")))
+							showArgs = "[SUPPRESSED FROM LOG]";
+						logger.debug("Invoking method {} with args {}", m.getName(), showArgs);
+					}
 					m.invoke(object, methodArgs);
 				} catch (IllegalArgumentException e) {
 					logger.error("invoking method on http methods bean {}", e.getMessage());
