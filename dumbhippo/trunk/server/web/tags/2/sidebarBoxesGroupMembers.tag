@@ -9,7 +9,7 @@
 				<dht:personItem who="${person}"/>
 			</c:forEach>
 			<c:if test="${group.viewedGroup.liveGroup.memberCount > group.maxMembersShown}">
-				<dht:moreLink more="/members?group=${group.viewedGroupId}"/>
+				<dht:moreLink moreName="ALL MEMBERS" more="/members?group=${group.viewedGroupId}"/>
 			</c:if>
 		</c:when>
 		<c:otherwise>
@@ -26,7 +26,7 @@
 			<dht:personItem who="${person}" invited="true"/>
 		</c:forEach>
 		<c:if test="${group.viewedGroup.liveGroup.invitedMemberCount > group.maxMembersShown}">
-			<dht:moreLink more="/members?group=${group.viewedGroupId}"/>
+			<dht:moreLink moreName="ALL INVITED MEMBERS" more="/members?group=${group.viewedGroupId}"/>
 		</c:if>
 	</dht:sidebarBox>
 </c:if>
