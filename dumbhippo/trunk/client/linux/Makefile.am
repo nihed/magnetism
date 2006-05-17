@@ -174,14 +174,14 @@ libgtkcopy_la_SOURCES=				\
 	gtk/gtktrayicon-x11.c
 
 
-MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES)
+MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES) $(EMBEDDED_IMAGE_HEADER)
 
 # if srcdir!=builddir, clean out maintainer-clean files from builddir
 # this allows dist to pass.
 distclean-local:
 	if test $(srcdir) != . ; then		\
 	  rm -f $(MAINTAINERCLEANFILES) ;	\
-	  rmdir $(MARSHAL_DIR) ;		\
+	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
 SMALLICONSUBDIR=icons/hicolor/22x22/apps
