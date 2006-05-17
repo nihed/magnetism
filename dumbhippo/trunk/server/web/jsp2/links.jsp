@@ -40,7 +40,7 @@
 						<dht:expandablePager pageable="${links.favoritePosts}" anchor="dhFavoritePosts"/>
 						<dht:zoneBoxSeparator/>
 					</c:if>
-					
+
 					<dht:zoneBoxTitle a="dhReceivedPosts">SHARED WITH ME</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.receivedPosts.resultCount > 0}">
@@ -51,8 +51,21 @@
 							Nothing shared with you yet!
 						</c:otherwise>
 					</c:choose>
-					
 					<dht:zoneBoxSeparator/>
+
+					<dht:requireLinksGlobalBean/>
+					<dht:zoneBoxTitle a="dhRecentlyShared">RECENTLY SHARED</dht:zoneBoxTitle>
+					<c:choose>
+						<c:when test="${linksGlobal.hotPosts.size > 0}">
+							<dht:postList posts="${linksGlobal.hotPosts.list}" format="full" favesMode="add-only"/>
+							<dht:moreExpander open="false"/>
+						</c:when>
+						<c:otherwise>
+							Nobody anywhere has ever shared anything!
+						</c:otherwise>
+					</c:choose>
+					<dht:zoneBoxSeparator/>
+										
 					<dht:zoneBoxTitle a="dhSentPosts">SHARED BY ME</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.sentPosts.resultCount > 0}">

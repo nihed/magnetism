@@ -24,13 +24,22 @@
 					<dht:postList posts="${links.favoritePosts.results}" format="simple"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.receivedPosts.totalCount > 0}">
+				    <dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
 					<dht:postList posts="${links.receivedPosts.results}" format="simple"/>
 				</c:when>
 				<c:otherwise>
-					Nothing shared with you yet!
+					<dht:requireLinksGlobalBean/>
+					<dht:zoneBoxTitle>RECENTLY SHARED</dht:zoneBoxTitle>
+					<c:choose>
+						<c:when test="${linksGlobal.hotPosts.size > 0}">
+							<dht:postList posts="${linksGlobal.hotPosts.list}" format="simple"/>
+						</c:when>
+						<c:otherwise>
+							Nobody anywhere has ever shared anything!
+						</c:otherwise>
+					</c:choose>
 				</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxWeb>
