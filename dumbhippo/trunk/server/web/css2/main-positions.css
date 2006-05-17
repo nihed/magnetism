@@ -46,6 +46,8 @@
 
 .dh-zone-box .dh-item {
 	position:	relative;
+	width:			210px;
+	overflow-x:		hidden;
 }
 
 .dh-song-with-art {
