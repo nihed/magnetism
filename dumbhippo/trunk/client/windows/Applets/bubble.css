@@ -5,44 +5,62 @@ body
     font-family: Sans-Serif;
 }
 
+.dh-notification-top
+{
+    overflow: hidden;
+}
+
+.dh-notification-main
+{
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
 .dh-close-button 
 {
-    position: absolute;
-    margin-left: 2px;
-    margin-bottom: 2px;
-    top: 0px;
-    right: 0px;
+    background-image: url(bubclose.png);
+    width: 23px;
+    height: 23px;
 }
 
-.dh-nav-mask-img
+.dh-notification-main
 {
+    position: relative;
+    width: 396px;
+}
+
+.dh-notification-color
+{
+    position: relative;
+    background-color: #F16D1C;
+    width: 384px;
+    left: 3px;
+}
+
+.dh-notification-color-whiteout
+{
+    background-color: white;
     position: absolute;
-    top: 0px;
+    width: 384px;
+    height: 1px;
     left: 0px;
+    bottom: -1px;
+    overflow: hidden;
 }
 
-.dh-left-img
+.dh-fix-position-absolute-hack 
 {
-    position: absolute;
-    top: 0px;
-    left: 51px;
-}
-
-.dh-right-img
-{
-    position: absolute;
-    top: 0px;
-    right: 0px;
+    width: 0px;
+    height: 0px;
+    overflow: hidden
 }
 
 .dh-notification-leftside
 {
-    background-color: rgb(20%,60%,100%);        
-    position: absolute;
-    width: 92px;
-    left: 64px;
+    float: left;
+    width: 78px;
+    left: 0px;
     top: 3px;
-    height: 117px;
     color: White;
     text-align: center;
 }
@@ -51,45 +69,50 @@ body
 {
     border-style: none; 
     display: block;
+    margin-top: 8px;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 1em;
 }
 
 .dh-notification-photo
 {
-    /* Right now the Java code scales headshots to a max of 48px in each
+    /* Right now the Java code scales headshots to a max of 60px in each
      * dimension, but preserving aspect ratio. If height < width the below
-     * will mangle the aspect again. If changing from 48px, also change the 
+     * will mangle the aspect again. If changing from 60px, also change the 
      * Java code. We need to fix the Java code to always produce exactly 
-     * 48x48 images though (i.e. pad images with transparency) since 
+     * 60x60 images though (i.e. pad images with transparency) since 
      * css can't be smart about "max size of largest dimension".
      * height is fixed here because for a headshot height>width seems more 
      * likely than width>height.
      */
     display: block;
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
+    border: 1px solid White;
 }
 
-.dh-notification-photolink {
+.dh-notification-photolink 
+{
+    margin-top:             2px;
+    margin-bottom:          2px;
     text-align:             center;
     width:                  100%;
     text-overflow:          ellipsis;
     overflow:               hidden;
-    font-size:              x-small;
-    color:                  White;
+    font-size:              12px;
+    color:                  Black;
 }
 
 .dh-notification-navigation
 {
     color: Blue;
-    font-size: x-small;
+    position: relative;
+    font-size: 12px;
     position: absolute;
     text-align: center;
     left: 0px;
-    width: 66px;
     bottom: 0px;
+    width: 68px;
 }
 
 .dh-notification-navigation-text
@@ -97,67 +120,108 @@ body
     color: Gray;
 }
 
-.dh-notification-navigation-button
+.dh-notification-navigation-buttons
 {
-    border: none;
+    overflow: hidden;
+    margin-top: 1px;
+    margin-bottom: 4px;
+}
+
+.dh-notification-arrow 
+{
+    width: 12px;
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 11px;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-position: center top;
+}
+
+.dh-notification-left-arrow-active
+{
+    background-image: url(blueleftarrow.gif);
+}
+
+.dh-notification-left-arrow-inactive
+{
+    background-image: url(grayleftarrow.gif);
+}
+
+.dh-notification-right-arrow-active
+{
+    background-image: url(bluerightarrow.gif);
+}
+
+.dh-notification-right-arrow-inactive
+{
+    background-image: url(grayrightarrow.gif);
 }
 
 .dh-notification-rightside
 {
+    padding-top: 5px;
+    float: left;
     color: White;
-    background-color: rgb(20%,60%,100%);    
-    position: absolute;
-    top: 3px;
-    left: 156px;
-    right: 3px;
-    height: 117px;
+    position: relative;
+    width: 306px;
 }
 
-/* See comment in dh.notification.display._fixupLayout() if you change this */
+.dh-clear
+{
+    clear: both;
+}
+
+.dh-notification-logo 
+{
+    margin-top: 3px;
+    margin-bottom: 2px;
+    background-image: url(bublinkswarm.gif);
+    background-repeat: no-repeat;
+    width: 112px;
+    height: 17px;
+}
+
 .dh-notification-title 
 {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-size: small;
-    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    width: 303px;
 }
 
-.dh-notification-title-seen
+.dh-notification-title a
 {
-    color: Gray;
+    color: White;
 }
 
 .dh-notification-body
 {
     width: 100%;
     vertical-align: top;
-    overflow: hidden;
-    font-size: x-small;
-    height: 82px;
-}
-
-.dh-notification-bottomright
-{
-    position: absolute;
-    bottom: 0px;
-    width: 100%;
+    font-size: 12px;
 }
 
 .dh-notification-meta-outer
 {
-    font-size: small;
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
+    font-size: 12px;
+    color: Black;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    width: 100%;
+    width: 384px;
+    text-align: right;
+    padding-right: 6px;
+    padding-bottom: 5px;
 }
 
 .dh-notification-meta
 {
-    font-size: x-small;
+    font-size: 12px;
+    color: Black;
+    text-align: right;
 }
 
 span.dh-notification-recipient
@@ -179,12 +243,9 @@ span.dh-notification-group-recipient
 
 .dh-notification-swarm-nav
 {
-    position: absolute;
-    left: 64px;
-    top: 121px;
-    width: 380px;
+    width: 100%;
     text-align: center;
-    font-size: x-small;
+    font-size: 12px;
     color: Blue;
     white-space: nowrap;
 }
@@ -196,13 +257,8 @@ span.dh-notification-group-recipient
 
 .dh-notification-swarm
 {
-    position: absolute;
-    left: 64px;
-    top: 143px;
-    width: 380px;
     height: 34px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
 }
 
 .dh-notification-whos-there
@@ -228,7 +284,7 @@ span.dh-notification-group-recipient
     color: #944e0f;
     left: 0px;
     bottom: 0px;
-    font-size: x-small;
+    font-size: 12px;
 }
 
 .dh-notification-chat-count
@@ -237,7 +293,7 @@ span.dh-notification-group-recipient
     color: #944e0f;
     right: 0px;
     bottom: 0px;
-    font-size: x-small;
+    font-size: 12px;
 }
 
 .dh-notification-chat-sender-photo
@@ -257,3 +313,98 @@ span.dh-notification-self-viewer
 {
     font-weight: bold;
 }
+
+.dh-l 
+{
+    position: absolute;
+    left: 0px;
+    height: 1024px;
+    color: red;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-r
+{
+    position: absolute;
+    right: 0px;
+    height: 1024px;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-t
+{
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-b
+{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-tl
+{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-tr
+{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-bl
+{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-br
+{
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-notification-color-tl
+{
+    background-image: url(lsorange_tl.png);   
+    width: 8px;
+    height: 8px;
+}
+
+.dh-notification-color-bl
+{
+    background-image: url(lsorange_bl.png);
+    width: 8px;
+    height: 8px;
+}
+
+.dh-notification-color-br
+{
+    background-image: url(lsorange_br.png);
+    width: 8px;
+    height: 8px;
+}
+

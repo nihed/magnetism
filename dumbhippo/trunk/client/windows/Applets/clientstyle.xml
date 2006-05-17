@@ -4,6 +4,9 @@
         version="1.0">
     <xsl:param name="appleturl"/>
     <xsl:output method="html" encoding="UTF-8"/>
+    <xsl:template match="dh:base">
+        <base href="${appleturl}"></base>
+    </xsl:template>
     <xsl:template match="dh:bubbleListScript">
         <script language="javascript" src="{$appleturl}bubble.js"></script>
         <script language="javascript" src="{$appleturl}bubbleList.js"></script>

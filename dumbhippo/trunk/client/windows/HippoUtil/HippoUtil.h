@@ -267,6 +267,13 @@ public:
         }
     }
 
+    BSTR stealContents() {
+        BSTR tmp = m_str;
+        m_str = 0;
+
+        return tmp;
+    }
+
     unsigned int Length() const {
         if (m_str == 0)
             return 0;

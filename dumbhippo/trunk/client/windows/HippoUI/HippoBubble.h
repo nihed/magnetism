@@ -13,13 +13,15 @@
 #include <HippoArray.h>
 #include <set>
 
+class HippoBubbleImages;
+
 class HippoBubble :
     public HippoDispatchableObject<IHippoBubble, HippoBubble>,
     public HippoAbstractWindow
 {
 public:
     HippoBubble();
-    ~HippoBubble();
+    virtual ~HippoBubble();
 
     static ITypeInfo *getTypeInfo();
 
@@ -54,6 +56,8 @@ protected:
     virtual void onClose(bool fromScript);
 
 private:
+    HippoBubbleImages *images_;
+
     HippoBSTR currentLink_;
     HippoBSTR currentLinkId_;
     HippoBSTR currentSenderUrl_;

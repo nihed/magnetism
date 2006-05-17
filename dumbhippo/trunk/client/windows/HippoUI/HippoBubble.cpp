@@ -12,11 +12,202 @@
 
 #include "cleangdiplus.h"
 
+// A simple image buffer class; the data it stores is in 32-bpp premultipled
+// ARGB. GDI+ is used for PNG loading; after loading the data, we free the 
+// Gdiplus::Bitmap structures and work solely with the pixel data  to keep things 
+// simple. (We need to go straight to the pixel data anyways to do the combining 
+// we want to do, and combining GDI+ with direct pixel access is tricky.)
+
+static const UINT EMPTY_BUFFER[] = { 0 };
+
+class HippoImageBuffer {
+public:
+    HippoImageBuffer();
+    ~HippoImageBuffer();
+
+    void load(HippoUI *ui, const WCHAR *path);
+
+    int getWidth()  { return data_.Width; }
+    int getHeight() { return data_.Height; }
+    UINT *getPixels() { return buffer_ ;}
+
+    // Combine the image onto the given bitmap data, with the upper left at x/y
+    void combine(BITMAPINFO *bitmapInfo, void *bits, int x, int y);
+    // Combine the image onto the given bitmap data, tiling it over the given rectangle
+    void tile(BITMAPINFO *bitmapInfo, void *bits, int x0, int y0, int x1, int y1);
+
+private:
+    void initFromBitmap(Gdiplus::Bitmap *bitmap);
+ 
+    Gdiplus::BitmapData data_;
+    UINT *buffer_;
+};
+
+HippoImageBuffer::HippoImageBuffer()
+{
+    buffer_ = (UINT *)EMPTY_BUFFER;
+    data_.Width = 1;
+    data_.Height = 1;
+    data_.Stride = 4;
+    data_.PixelFormat = PixelFormat32bppPARGB;
+    data_.Scan0 = (BYTE *)buffer_;
+}
+
+HippoImageBuffer::~HippoImageBuffer()
+ {
+    if (buffer_ != EMPTY_BUFFER)
+        delete[] buffer_;
+}
+
+void
+HippoImageBuffer::load(HippoUI *ui, const WCHAR *path)
+{
+    HippoBSTR filename;
+    ui->getAppletPath(HippoBSTR(path), &filename);
+    
+    // If loading fails, we leave the original data, a 1x1 empty image, in place
+    Gdiplus::Bitmap result(filename.m_str, false);
+    if (result.GetLastStatus() == Gdiplus::Ok) {
+        initFromBitmap(&result);
+    } else {
+        hippoDebugLogW(L"Failed to load image %ls, status = %d", filename, (int)result.GetLastStatus());
+    }
+}
+
+void 
+HippoImageBuffer::initFromBitmap(Gdiplus::Bitmap *bitmap)
+{
+    if (buffer_ != EMPTY_BUFFER)
+        delete[] buffer_;
+
+    buffer_ = new UINT[bitmap->GetWidth() * bitmap->GetHeight()];
+    data_.Width = bitmap->GetWidth();
+    data_.Height = bitmap->GetHeight();
+    data_.Stride = 4 * bitmap->GetWidth();
+    data_.Scan0 = (BYTE *)buffer_;
+
+    Gdiplus::Rect rect(0, 0, data_.Width, data_.Height);
+
+    
+    bitmap->LockBits(&rect, (UINT)Gdiplus::ImageLockModeRead | (UINT)Gdiplus::ImageLockModeUserInputBuf, PixelFormat32bppPARGB, &data_);
+    bitmap->UnlockBits(&data_);
+}
+
+void 
+HippoImageBuffer::combine(BITMAPINFO *bitmapInfo, void *bits, int x, int y)
+{
+    tile(bitmapInfo, bits, x, y, x + getWidth(), y + getHeight());
+}
+
+void 
+HippoImageBuffer::tile(BITMAPINFO *bitmapInfo, void *bits, int x0, int y0, int x1, int y1)
+{
+    // The way we combine images is that where we have alpha == 0xff in the source
+    // image, we leave the destination image untouched, otherwise we replace the
+    // destination pixel with the source pixel; basically we are "fixing up" the
+    // image we drew with IE, which can't handle partial alpha on the background
+    // of a web page, by replacing just the partially alpha pixels
+
+    int destWidth = bitmapInfo->bmiHeader.biWidth;
+    int destHeight = - bitmapInfo->bmiHeader.biHeight;
+
+    if (x0 < 0)
+        x0 = 0;
+    if (y0 < 0)
+        y0 = 0;
+    if (x1 > destWidth)
+        x1 = destWidth;
+    if (y1 > destHeight)
+        y1 = destHeight;
+
+    const UINT *srcRow = buffer_;
+    UINT *destRow = (UINT *)bits + y0 * destWidth + x0;
+
+    int j = 0;
+    for (int y = y0; y < y1; y++, j++) {
+        if (j == getHeight()) {
+            j = 0;
+            srcRow = getPixels();
+        }
+
+        const UINT *src = srcRow;
+        UINT *dest = destRow;
+
+        int i = 0;
+        for (int x = x0; x < x1; x++, i++) {
+            if (i == getWidth()) {
+                i = 0;
+                src = srcRow;
+            }
+
+            UINT srcPixel = *src;
+            if ((srcPixel & 0xFF000000) != 0xFF000000)
+                *dest = srcPixel;
+
+            src++;
+            dest++;
+        }
+
+        srcRow += getWidth();
+        destRow += destWidth;
+    }
+}
+
+// This class tracks the images we combine with the web-browser's image to
+// produce the bubble with a drop shadow
+
+class HippoBubbleImages {
+public:
+    HippoBubbleImages(HippoUI *ui);
+    
+    // Combine the drop-shadow onto the given bitmap data
+    void combineImages(BITMAPINFO *bitmapInfo, void *bits);
+
+private:
+    HippoImageBuffer cornerTR_;
+    HippoImageBuffer cornerTL_;
+    HippoImageBuffer cornerBR_;
+    HippoImageBuffer cornerBL_;
+    HippoImageBuffer edgeT_;
+    HippoImageBuffer edgeB_;
+    HippoImageBuffer edgeL_;
+    HippoImageBuffer edgeR_;
+};
+
+HippoBubbleImages::HippoBubbleImages(HippoUI *ui)
+{
+    cornerTR_.load(ui, L"wbubcnr_tr.png");
+    cornerTL_.load(ui, L"wbubcnr_tl.png");
+    cornerBR_.load(ui, L"wbubcnr_br.png");
+    cornerBL_.load(ui, L"wbubcnr_bl.png");
+    edgeL_.load(ui, L"bubedge_l.png");
+    edgeR_.load(ui, L"bubedge_r.png");
+    edgeT_.load(ui, L"bubedge_t.png");
+    edgeB_.load(ui, L"bubedge_b.png");
+}
+
+void 
+HippoBubbleImages::combineImages(BITMAPINFO *bitmapInfo, void *bits)
+{
+    int destWidth = bitmapInfo->bmiHeader.biWidth;
+    int destHeight = - bitmapInfo->bmiHeader.biHeight;
+
+    cornerTL_.combine(bitmapInfo, bits, 0, 0);
+    cornerTR_.combine(bitmapInfo, bits, destWidth - cornerTR_.getWidth(), 0);
+    cornerBL_.combine(bitmapInfo, bits, 0, destHeight - cornerBL_.getHeight());
+    cornerBR_.combine(bitmapInfo, bits, destWidth - cornerBR_.getWidth(), destHeight - cornerBR_.getHeight());
+
+    edgeT_.tile(bitmapInfo, bits, cornerTL_.getWidth(), 0, destWidth - cornerTR_.getWidth(), edgeT_.getHeight());
+    edgeB_.tile(bitmapInfo, bits, cornerBL_.getWidth(), destHeight - edgeB_.getHeight(), destWidth - cornerBR_.getWidth(), destHeight);
+    edgeL_.tile(bitmapInfo, bits, 0, cornerTL_.getHeight(), edgeL_.getWidth(), destHeight - cornerBL_.getHeight());
+    edgeR_.tile(bitmapInfo, bits, destWidth - edgeR_.getWidth(), cornerTR_.getHeight(), destWidth, destHeight - cornerBR_.getHeight());
+}
+
 // These values basically don't matter, since the bubble picks its own
 // size, but matching the values from bubble.js may save a bit on resizing
 static const int BASE_WIDTH = 450;
 static const int BASE_HEIGHT = 123;
-static const int SWARM_HEIGHT = 180;
+static const int BLARM_HEIGHT = 180;
 static const UINT_PTR CHECK_MOUSE = 1;
 
 HippoBubble::HippoBubble(void)
@@ -30,6 +221,7 @@ HippoBubble::HippoBubble(void)
     desiredHeight_ = BASE_HEIGHT;
     layerDC_ = NULL;
     oldBitmap_ = NULL;
+    images_ = NULL;
  
     // Notes on animation
     // 
@@ -70,6 +262,9 @@ HippoBubble::~HippoBubble(void)
 
         DeleteDC(layerDC_);
     }
+
+    if (images_)
+        delete images_;
 }
 
 ITypeInfo *
@@ -88,7 +283,7 @@ HippoBubble::moveResizeWindow()
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-    moveResize(desktopRect.right - desiredWidth_, (desktopRect.bottom - desiredHeight_) - 5,
+    moveResize(desktopRect.right - desiredWidth_, desktopRect.bottom - desiredHeight_,
                desiredWidth_, desiredHeight_);
 }
 
@@ -544,6 +739,9 @@ HippoBubble::SetHaveMissedBubbles(BOOL haveMissed)
 STDMETHODIMP 
 HippoBubble::UpdateDisplay()
 {
+    if (!images_)
+        images_ = new HippoBubbleImages(ui_);
+
     bool firstTime = layerDC_ == NULL;
 
     if (firstTime)
@@ -551,13 +749,12 @@ HippoBubble::UpdateDisplay()
 
     int width = desiredWidth_;
     int height = desiredHeight_;
-
     BITMAPINFO bitmapInfo;
 
     ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
     bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bitmapInfo.bmiHeader.biWidth = width;
-    bitmapInfo.bmiHeader.biHeight = height;
+    bitmapInfo.bmiHeader.biHeight = - height; // Negative, so that we are top-down
     bitmapInfo.bmiHeader.biSizeImage = 4 * width * height;
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
@@ -595,65 +792,12 @@ HippoBubble::UpdateDisplay()
     if (FAILED(hr))
         return hr;
 
-    hippoDebugLogU("redrawing layered window, height=%d width=%d", height, width);
-
     // This makes the entire image default to opaque
     unsigned char *p = (unsigned char *)bits;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             p[3] = 0xff;
             p += 4;
-        }
-    }
-
-    p = (unsigned char *)bits;
-
-    // Black means transparent - go over top right and bottom right corners
-    int radius = 3;
-    for (int i = 0; i < radius; i++) {
-        for (int j = 0; j < radius; j++) {
-            int x = (width-i);
-            int y = (height-j);
-            unsigned char *pos = (p + (width*y + x)*4);
-            if (pos[0] == 0 && pos[1] == 0 && pos[2] == 0)
-                pos[3] = 0;
-        }
-    }
-    radius = 20;
-    for (int i = 0; i < radius; i++) {
-        for (int j = 0; j < radius; j++) {
-            int x = (width-i);
-            int y = j;
-            unsigned char *pos = (p + (width*y + x)*4);
-            if (pos[0] == 0 && pos[1] == 0 && pos[2] == 0)
-                pos[3] = 0;
-        }
-    }
-
-    HippoBSTR maskPath;
-    ui_->getAppletPath(height == BASE_HEIGHT ? L"bubbleNavMask.png" : L"bubbleNavMaskSwarm.png", &maskPath);
-    Gdiplus::Bitmap navMask(maskPath.m_str, false);
-    Gdiplus::Status st = navMask.GetLastStatus();
-
-    UINT navWidth = navMask.GetWidth();
-    UINT navHeight = navMask.GetHeight();
-    for (UINT i = 0; i < navWidth; i++) {
-        for (UINT j = 0; j < navHeight; j++) {
-            Gdiplus::Color pixel;
-            // GDI+ bitmap coordinates differ from GDI bitmaps
-            UINT y = (navHeight - j) - 1;
-            navMask.GetPixel(i, y, &pixel);
-            // We use blue as a mask
-            UINT alpha = pixel.GetAlpha();
-            unsigned char *pos = (p + (width*j + i)*4);
-            if (pixel.GetBlue() != 255) {
-                pos[0] = pixel.GetBlue();
-                pos[1] = pixel.GetGreen();
-                pos[2] = pixel.GetRed();
-                pos[3] = pixel.GetAlpha();
-            } else if (alpha == 0) {
-                pos[0] = pos[1] = pos[2] = pos[3] = 0;
-            }
         }
     }
 
@@ -665,6 +809,8 @@ HippoBubble::UpdateDisplay()
     blend.BlendFlags = 0;
     blend.SourceConstantAlpha = 0xff;
     blend.AlphaFormat = AC_SRC_ALPHA;
+
+    images_->combineImages(&bitmapInfo, bits);
 
     // If AnimateWindow() was used to fade the window out, we'd need to force the WS_EX_LAYERED back into 
     // the extended attributes. But that's incompatible with the shape anyways so there isn't much point

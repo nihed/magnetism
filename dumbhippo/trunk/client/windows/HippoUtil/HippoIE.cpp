@@ -366,7 +366,7 @@ HippoIEImpl::embedBrowser()
     sfArray = SafeArrayCreateVector(VT_VARIANT, 0, 1);
     hresult = SafeArrayAccessData(sfArray,(LPVOID*) & param);
     param->vt = VT_BSTR;
-    param->bstrVal = actualData;
+    param->bstrVal = actualData.stealContents();
     hresult = SafeArrayUnaccessData(sfArray);
     // Append the transformed XML to the document
     hresult = doc->write(sfArray);

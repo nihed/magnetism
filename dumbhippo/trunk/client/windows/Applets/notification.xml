@@ -2,6 +2,7 @@
 <!-- note this file must actually be XML to make XSLT work -->
 <html xmlns:dh="http://dumbhippo.com/schema/clientjs">
     <head>
+        <dh:base/>
         <dh:coreStyle/>
         <dh:notificationStyle/>
         <title>dumbhippo notification</title>

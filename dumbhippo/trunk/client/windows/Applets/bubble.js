@@ -8,20 +8,15 @@ dh.bubble = {}
 // Generic display code for a single notification bubble
 //////////////////////////////////////////////////////////////////////////////
     
-dh.bubble.BASE_WIDTH = 399
-dh.bubble.NAVIGATION_WIDTH = 51
-dh.bubble.BASE_HEIGHT = 123
-dh.bubble.SWARM_HEIGHT = 180
 // Extra amount of height to add when we are using the list images rather than 
 // the standalone images. The difference here is the difference between a 3
 // pixel and 5 pixel white border for the top and bottom of the bubble
-dh.bubble.LIST_EXTRA_HEIGHT = 4
     
 // Create a new bubble object    
 // @param isStandaloneBubble if true, then this is the standalone notification bubble,
 //        and should get the navigation arrows and close button, and the appropriate
 //        images for the sides.
-dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
+dh.bubble.Bubble = function(isStandaloneBubble) {
     // Whether to include the quit button and previous/next arrows
     this._isStandaloneBubble = isStandaloneBubble
 
@@ -71,70 +66,76 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         function appendDiv(parent, className) {
             return append(parent, "div", className)
         }
+        function createDecoratedDiv(className) {
+            var div = document.createElement("div")
+            div.setAttribute("className", className)
+            appendDiv(div, className + "-tl dh-tl")
+            appendDiv(div, className + "-tr dh-tr")
+            appendDiv(div, className + "-bl dh-bl")
+            appendDiv(div, className + "-br dh-br")
+            appendDiv(div, className + "-t dh-t")
+            appendDiv(div, className + "-b dh-b")
+            appendDiv(div, className + "-l dh-l")
+            appendDiv(div, className + "-r dh-r")
+            
+            return div
+        }
+        function appendDecoratedDiv(parent, className) {
+            var div = createDecoratedDiv(className)
+            parent.appendChild(div)
+            
+            return div
+        }
     
         var bubble = this  // for callback closures
 
-        this._topDiv = document.createElement("div")
-        this._topDiv.setAttribute("className", "dh-notification-top")
+        this._topDiv = createDecoratedDiv("dh-notification-top")
         
         if (this._isStandaloneBubble) {
             var navDiv = appendDiv(this._topDiv, "dh-notification-navigation")
-            this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
-            this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
-            
-            this._leftImg = dh.util.createPngElement(dh.appletUrl + "bubbleLeft.png", 33, dh.bubble.BASE_HEIGHT)
-            this._leftImg.className = "dh-left-img"
-            this._leftImg.zIndex = 1         
-            this._rightImg = dh.util.createPngElement(dh.appletUrl + "bubbleRight.png", 24, dh.bubble.BASE_HEIGHT)
-            this._rightImg.className = "dh-right-img"
-            this._rightImg.zIndex = 1         
-            this._leftImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleLeftSwarm.png", 33, dh.bubble.SWARM_HEIGHT)
-            this._leftImgSwarm.className = "dh-left-img"
-            this._leftImgSwarm.zIndex = 1            
-            this._rightImgSwarm = dh.util.createPngElement(dh.appletUrl + "bubbleRightSwarm.png", 27, dh.bubble.SWARM_HEIGHT)
-            this._rightImgSwarm.className = "dh-right-img"              
-            this._rightImgSwarm.zIndex = 1
-        } else {
-            function createImage(src, className, height) {
-                var img = document.createElement("img")
-                img.src = dh.appletUrl + src
-                img.width = 10
-                img.height = height
-                img.className = className
-                img.zIndex = 1
-                return img
-            }
-            
-            this._leftImg = createImage("listBubbleLeft.png", "dh-left-img", dh.bubble.BASE_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
-            this._rightImg = createImage("listBubbleRight.png", "dh-right-img", dh.bubble.BASE_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
-            this._leftImgSwarm = createImage("listBubbleLeftSwarm.png", "dh-left-img", dh.bubble.SWARM_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
-            this._rightImgSwarm = createImage("listBubbleRightSwarm.png", "dh-right-img", dh.bubble.SWARM_HEIGHT + dh.bubble.LIST_EXTRA_HEIGHT)
+                this._navText = appendDiv(navDiv, "dh-notification-navigation-text")
+                this._navButtons = appendDiv(navDiv, "dh-notification-navigation-buttons")
+            appendDiv(this._topDiv, "dh-notification-shadow")
         }
+
+        var mainDiv = appendDiv(this._topDiv, "dh-notification-main")
         
-        var leftSide = appendDiv(this._topDiv, "dh-notification-leftside")
-        this._leftImgSpan = append(this._topDiv, "span") 
-        this._photoDiv = appendDiv(leftSide, "dh-notification-photo-div")
-        this._photoLinkDiv = appendDiv(leftSide, "dh-notification-photolink")
-        this._rightsideDiv = appendDiv(this._topDiv, "dh-notification-rightside")
-        this._titleDiv = appendDiv(this._rightsideDiv, "dh-notification-title")
-        this._bodyDiv = appendDiv(this._rightsideDiv, "dh-notification-body")
-        this._rightImgSpan = append(this._topDiv, "span")       
-        this._bottomrightDiv = appendDiv(this._rightsideDiv, "dh-notification-bottomright")
-        var metaOuterDiv = appendDiv(this._bottomrightDiv, "dh-notification-viewers-outer")
-        this._metaSpan = append(metaOuterDiv, "span", "dh-notification-meta")
+            var colorDiv = appendDecoratedDiv(mainDiv, "dh-notification-color")
+                // The absolutely positioned corner divs vanish unless we add this div
+                // here; it isn't one of the well-known IE bugs, but probably a more
+                // obscure bug; the div is styled to 0 width/height
+                var hackDiv = appendDiv(colorDiv, "dh-fix-position-absolute-hack")
+                hackDiv.appendChild(document.createTextNode(" "))
+                
+                var leftSide = appendDiv(colorDiv, "dh-notification-leftside")
+                    this._photoDiv = appendDiv(leftSide, "dh-notification-photo-div")
+                    this._photoLinkDiv = appendDiv(leftSide, "dh-notification-photolink")
         
-        this._swarmNavDiv = appendDiv(this._topDiv, "dh-notification-swarm-nav")
-        this._swarmDiv = appendDiv(this._topDiv, "dh-notification-swarm")
+                this._rightsideDiv = appendDiv(colorDiv, "dh-notification-rightside")
+                    if (this._isStandaloneBubble)
+                        appendDiv(this._rightsideDiv, "dh-notification-logo")
+                    this._titleDiv = appendDiv(this._rightsideDiv, "dh-notification-title")
+                    this._bodyDiv = appendDiv(this._rightsideDiv, "dh-notification-body")
+                    
+                var metaOuterDiv = appendDiv(colorDiv, "dh-notification-meta-outer")
+                    this._metaSpan = append(metaOuterDiv, "span", "dh-notification-meta")
+                    
+                appendDiv(colorDiv, "dh-clear")
+                // Standard IE hack to fix up for off-by-one positioning of bottom/right floats
+                appendDiv(colorDiv, "dh-notification-color-whiteout")
+                
+                if (this._isStandaloneBubble) {
+                    this._closeButton = appendDiv(this._rightsideDiv, "dh-close-button dh-tr")
+                    this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
+                        bubble.onClose();
+                        e.stopPropagation();
+                        return false;
+                    })
+                }
         
-        if (this._isStandaloneBubble) {
-            this._closeButton = append(this._topDiv, "img", "dh-close-button")
-            this._closeButton.setAttribute("src", dh.appletUrl + "close.png")
-            this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
-                bubble.onClose();
-                e.stopPropagation();
-                return false;
-            })
-        }
+            this._swarmNavDiv = appendDiv(mainDiv, "dh-notification-swarm-nav")
+            this._swarmDiv = appendDiv(mainDiv, "dh-notification-swarm")
+        
         
         return this._topDiv
     }
@@ -160,18 +161,23 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         dh.util.dom.replaceContents(this._navText, document.createTextNode((position + 1) + " of " + numNotifications))
         
         dh.util.dom.clearNode(this._navButtons)
-        var button = document.createElement("img")
-        button.className = "dh-notification-navigation-button"
-        button.setAttribute("src", dh.appletUrl + "activeLeft.png")
+        
+        var button = document.createElement("span")
+        if (position == 0)
+            button.className = "dh-notification-arrow dh-notification-left-arrow-inactive"
+        else
+            button.className = "dh-notification-arrow dh-notification-left-arrow-active"
         this._navButtons.appendChild(button)
         button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onPrevious()
             return false;
         })
         
-        button = document.createElement("img")
-        button.className = "dh-notification-navigation-button"
-        button.src = dh.appletUrl + "activeRight.png"
+        button = document.createElement("span")
+        if (position == numNotifications - 1)
+            button.className = "dh-notification-arrow dh-notification-right-arrow-inactive"
+        else
+            button.className = "dh-notification-arrow dh-notification-right-arrow-active"
         this._navButtons.appendChild(button)
         button.onclick = dh.util.dom.stdEventHandler(function (e) {
             bubble.onNext()
@@ -185,6 +191,8 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         this._page = page
         if (this._swarmPages && this._swarmPages.length > 0)
             this._updateSwarmPage()
+                        
+        this.onSizeChange()
         this.onUpdateDisplay()
     }
     
@@ -221,25 +229,16 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
     // Get the width of the bubble's desired area
     // @return the desired width, in pixels
     this.getWidth = function() {
-        var width = dh.bubble.BASE_WIDTH
-        if (this._isStandaloneBubble)
-            width += dh.bubble.NAVIGATION_WIDTH
-            
-        return width
+        return this._topDiv.offsetWidth
     }
 
     // Get the height of the bubble's desired area
-    // @return the desired width, in pixels
+    // @return the desired height, in pixels
     this.getHeight = function() {
-        var extraHeight
-        if (this._isStandaloneBubble)
-            extraHeight = 0
-        else
-            extraHeight = dh.bubble.LIST_EXTRA_HEIGHT
-        if (this._swarmDisplay)
-            return extraHeight + dh.bubble.SWARM_HEIGHT
-        else
-            return extraHeight + dh.bubble.BASE_HEIGHT
+        var height = this._topDiv.offsetHeight
+        if (height % 2 == 1) // force even, because of IE off-by-one bugs in positioning of the bottom elements
+           height -= 1
+        return height
     }
 
     // Render a single recipient
@@ -307,29 +306,14 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
         } else {
             this._setSwarmDisplay(false)
         }
-
-        dh.util.dom.clearNode(this._leftImgSpan)
-        dh.util.dom.clearNode(this._rightImgSpan)
-        var leftImg;
-        var rightImg;
-        if (this._swarmDisplay) {
-            leftImg = this._leftImgSwarm
-            rightImg = this._rightImgSwarm            
-        } else {
-            leftImg = this._leftImg
-            rightImg = this._rightImg
-        }
-        this._leftImgSpan.appendChild(leftImg)
-        this._rightImgSpan.appendChild(rightImg)
         
         this._fixupLayout()
+        this.onSizeChange()
         this.onUpdateDisplay()
     }
     
-    // Adjust various sizes that we can't make the CSS handle
+    // Adjust various sizes that we can't make the CSS handle, nothing for now
     this._fixupLayout = function() {
-        if (this._isStandaloneBubble)
-            this._titleDiv.style.width = (this._rightsideDiv.clientWidth - this._closeButton.offsetWidth) + "px"
     }
     
     // Set whether the viewer bubble is currently showing
@@ -345,8 +329,6 @@ dh.bubble.Bubble = function(isStandaloneBubble, heightAdjust) {
                 this._swarmDiv.style.display = "none"
                 this._swarmNavDiv.style.display = "none"
             }
-            
-            this.onSizeChange()
         }
     }   
     
@@ -426,8 +408,6 @@ dh.bubble.PostData = function(post) {
     
     this.appendTitleContent = function(bubble, parent) {
         var a = bubble.createSharedLinkLink(this.post.Title, this.post.Id, this.post.Url)
-        if (this.post.HaveViewed)
-            dh.util.prependCssClass(a, "dh-notification-title-seen") 
         parent.appendChild(a)
     }
         

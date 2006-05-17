@@ -50,12 +50,6 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\bubbleLeft.png">
-		</File>
-		<File
-			RelativePath=".\bubbleLeftSwarm.png">
-		</File>
-		<File
 			RelativePath=".\bubbleList.css"
 			DeploymentContent="TRUE">
 		</File>
@@ -68,23 +62,22 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
-			RelativePath=".\bubbleNavMask.png">
+			RelativePath=".\bubclose.png">
 		</File>
 		<File
-			RelativePath=".\bubbleNavMaskSwarm.png">
+			RelativePath=".\bubedge_b.png">
 		</File>
 		<File
-			RelativePath=".\bubbleRight.png">
+			RelativePath=".\bubedge_l.png">
 		</File>
 		<File
-			RelativePath=".\bubbleRightSwarm.png">
+			RelativePath=".\bubedge_r.png">
+		</File>
+		<File
+			RelativePath=".\bubedge_t.png">
 		</File>
 		<File
 			RelativePath=".\clientstyle.xml"
-			DeploymentContent="TRUE">
-		</File>
-		<File
-			RelativePath=".\close.png"
 			DeploymentContent="TRUE">
 		</File>
 		<File
@@ -103,16 +96,31 @@
 			RelativePath=".\groupChat.png">
 		</File>
 		<File
-			RelativePath=".\listBubbleLeft.png">
+			RelativePath=".\ls_bubshadow.png">
 		</File>
 		<File
-			RelativePath=".\listBubbleLeftSwarm.png">
+			RelativePath=".\lsorange_bl.png">
 		</File>
 		<File
-			RelativePath=".\listBubbleRight.png">
+			RelativePath=".\lsorange_br.png">
 		</File>
 		<File
-			RelativePath=".\listBubbleRightSwarm.png">
+			RelativePath=".\lsorange_tl.png">
+		</File>
+		<File
+			RelativePath=".\lsorange_tr.png">
+		</File>
+		<File
+			RelativePath=".\lswhite_bl.png">
+		</File>
+		<File
+			RelativePath=".\lswhite_br.png">
+		</File>
+		<File
+			RelativePath=".\lswhite_tl.png">
+		</File>
+		<File
+			RelativePath=".\lswhite_tr.png">
 		</File>
 		<File
 			RelativePath=".\Makefile">
@@ -137,6 +145,21 @@
 		<File
 			RelativePath=".\notification.xml"
 			DeploymentContent="TRUE">
+		</File>
+		<File
+			RelativePath=".\wbubcnr_bl.png">
+		</File>
+		<File
+			RelativePath=".\wbubcnr_br.png">
+		</File>
+		<File
+			RelativePath=".\wbubcnr_tl.png">
+		</File>
+		<File
+			RelativePath=".\wbubcnr_tr.png">
+		</File>
+		<File
+			RelativePath=".\wbubedge_bmix.png">
 		</File>
 	</Files>
 	<Globals>
