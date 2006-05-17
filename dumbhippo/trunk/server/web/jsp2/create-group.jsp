@@ -45,7 +45,7 @@
 				</dht:formTableRow>
 			</dht:formTable>
 			<input id="dhCreateGroupSave" type="button" value="Save and start inviting people" onclick="dh.groupaccount.createGroup()"/>
-			<input id="dhCreateGroupCancel" type="button" value="Cancel" onclick="document.location.href='/home'"/>
+			<input id="dhCreateGroupCancel" type="button" value="Cancel" onclick="document.location.href='/'"/>
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
 </dht:twoColumnPage>

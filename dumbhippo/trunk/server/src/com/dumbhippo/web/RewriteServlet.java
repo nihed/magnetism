@@ -165,21 +165,25 @@ public class RewriteServlet extends HttpServlet {
 		// this line of debug is cut-and-pasted over to AbstractServlet also
 		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), request.getMethod(), path);
 		
-		// The root URL is special-cased, we redirect it depending
+		// Support for legacy /home, main, and /comingsoon URLs;
+		// forward them all to the root URL; see next stanza for
+		// the special case treatment they will then get
+		if (path.equals("/home") || path.equals("/main") || path.equals("/comingsoon")) {
+			response.sendRedirect("");
+			return;
+		}
+		
+		// The root URL is special-cased, we forward it depending
 		// on whether the user is signed in and depending on our
-		// configuration. Note that we don't use encodeRedirectURL()
-		// here because that will add ;jsessionid=1230811241...
-		// when page is accessed without an existing session, which is 
-		// silly, since we don't support cookie-less operation anywhere
-		// else.
+		// configuration.
 		
 		if (path.equals("/")) {
 			if (hasSignin(request))
-				response.sendRedirect("home");
+				handleJsp(request, response, "/jsp2/home.jsp");
 			else if (stealthMode)
-				response.sendRedirect("comingsoon");
+				handleJsp(request, response, "/jsp2/comingsoon.jsp");
 			else
-				response.sendRedirect("main");
+				handleJsp(request, response, "/jsp2/main.jsp");
 			return;
 		}
 		

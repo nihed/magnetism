@@ -39,12 +39,12 @@ dh.menu.Menu = function() {
 
     this.showHome = function() {
         window.close()
-        this._openSiteLink("home")
+        this._openSiteLink("")
     }
 
 //    this.showHot = function() {
 //        window.close()
-//        this._openSiteLink("home")
+//        this._openSiteLink("")
 //    }
 
     this.showRecent = function() {

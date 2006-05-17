@@ -50,7 +50,7 @@ public class SigninServlet extends AbstractServlet {
 
 		String next = request.getParameter("next");
 		if (next == null)
-			next = "/home";
+			next = "/";
 		
 		if (address == null) {
 			throw new HumanVisibleException("Please enter an email or AIM address you use with your DumbHippo account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");

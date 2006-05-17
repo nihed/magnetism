@@ -34,7 +34,7 @@ public class WantsInServlet extends AbstractServlet {
 		if (address != null)
 			address = address.trim();
 		if (address == null || address.length() == 0 || address.indexOf('@') < 1 || address.equals("let@me.in.please")) {
-			throw new HumanVisibleException("You have to put in an email address").setHtmlSuggestion("<a href=\"/comingsoon\">Try again</a>");
+			throw new HumanVisibleException("You have to put in an email address").setHtmlSuggestion("<a href=\"/\">Try again</a>");
 		}
 		
 		wantsInSystem.addWantsIn(address);

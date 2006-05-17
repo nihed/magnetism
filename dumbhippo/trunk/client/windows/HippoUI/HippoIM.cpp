@@ -1989,7 +1989,7 @@ HippoIM::handleRoomPresence (LmMessage        *message,
     // started viewing and then left before we got around to notifying
     //
     // The tricky bit here is if we had the chatroom around (the user had joined
-    // it by navigating to the post through /home, say), but not the post, then
+    // it by navigating to the post through their home page, say), but not the post, then
     // we still need to update the chatroom despite wasPending. So, we really
     // need to keep more information around about the history of the message
 

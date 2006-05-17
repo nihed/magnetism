@@ -103,7 +103,7 @@ public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
 	
 	protected void doFinalRedirect(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, HumanVisibleException {
 		if (reloadTo == null)
-			reloadTo = "/home";
+			reloadTo = "/";
 		response.sendRedirect(reloadTo);
 	}
 }

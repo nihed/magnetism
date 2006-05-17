@@ -295,7 +295,7 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 						},
 						function(type, data, http) {
 							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
-							dh.util.goToNextPage("home", "You've been shared!");
+							dh.util.goToNextPage("", "You've been shared!");
 						},
 						function(type, error, http) {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));

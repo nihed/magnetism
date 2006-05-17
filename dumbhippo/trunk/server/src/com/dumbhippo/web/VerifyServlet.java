@@ -133,7 +133,7 @@ public class VerifyServlet extends AbstractServlet {
 		
 		String next = request.getParameter("next");
 		if (next == null)
-			next = "/home";
+			next = "/";
 				
 		return redirectToNextPage(request, response, next, null);
 	}
@@ -189,10 +189,10 @@ public class VerifyServlet extends AbstractServlet {
 				throw new HumanVisibleException("For your security, the verification link for enabling or disabling email has expired after " + ToggleNoMailToken.getExpirationInDays() 
 						+ " days. If you ever get mail from us again, it will have a new link valid for " + ToggleNoMailToken.getExpirationInDays() + " days.");
 			else
-				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
+				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/\">Main</a>");
 		} catch (TokenUnknownException e) {
 			logger.debug("token unknown: {}", e.getMessage());
-			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/main\">Main</a>");
+			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/\">Main</a>");
 		}
 		
 		assert token != null;

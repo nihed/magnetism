@@ -114,7 +114,7 @@ void
 hippo_app_show_home(HippoApp *app)
 {
     char *url;
-    url = make_absolute_url(app, "/home");
+    url = make_absolute_url(app, "/");
     hippo_app_open_url(app, TRUE, url);
     g_free(url);
 }

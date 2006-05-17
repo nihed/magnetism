@@ -295,7 +295,7 @@ dh.sharelink.doSubmit = function() {
 							} catch (e) { 
 								dojo.debug("error signaling sharelink complete: " + e)
 							}
-							dh.util.goToNextPage("home", "You've been shared!");
+							dh.util.goToNextPage("", "You've been shared!");
 						},
 						function(type, error, http) {
 							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));

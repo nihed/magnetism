@@ -64,7 +64,7 @@ dh.actions.signOut = function() {
    	dh.server.doPOST("signout", { },
 		  	    	 function(type, data, http) {
 		  	    	 	// don't reload the current page since often it will require signin
-			  	    	 window.open("/main", "_self");
+			  	    	 window.open("/", "_self");
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't sign out");
