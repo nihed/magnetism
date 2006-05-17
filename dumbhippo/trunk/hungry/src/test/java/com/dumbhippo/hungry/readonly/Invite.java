@@ -17,7 +17,7 @@ public class Invite extends SignedInPageTestCase {
 	
 	@Override
 	public void testPage() {
-		t.beginAt("/invite");
+		t.beginAt("/invitation");
 		validatePage();
 	}
 
@@ -25,11 +25,12 @@ public class Invite extends SignedInPageTestCase {
 		CheatSheet cs = CheatSheet.getReadOnly();
 		int invites = cs.getNumberOfInvitations(getUserId());
 		if (invites > 0) {
-			t.assertFormElementPresent("email");
-			t.assertFormElementPresent("subject");
-			t.assertFormElementPresent("message");
+			t.setWorkingForm("dhInvitationForm");
+			t.assertFormElementPresent("dhAddressEntry");
+			t.assertFormElementPresent("dhSubjectEntry");
+			t.assertFormElementPresent("dhMessageEntry");
 		} else {
-			t.assertTextPresent("Out Of Invites");
+			t.assertTextPresent("NO INVITATIONS REMAINING");
 		}
 	}
 }

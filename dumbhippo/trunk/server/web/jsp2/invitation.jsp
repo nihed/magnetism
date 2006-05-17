@@ -41,9 +41,10 @@
 			<div class="dh-message" id="dhMessageDiv" style='display: ${empty param["message"] ? "none" : "block"};'>
 				<c:out value='${param["message"]}'/>
 			</div>
-			<c:if test="${signin.user.account.invitations > 0}">
+			<c:choose>
+			<c:when test="${signin.user.account.invitations > 0}">
 				<dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
-				<dht:formTable>
+				<dht:formTable name="dhInvitationForm">
 					<dht:formTableRow label="Friend's email address">
 						<dht:textInput id="dhAddressEntry"/>
 					</dht:formTableRow>
@@ -58,7 +59,11 @@
 						<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.invitation.send()"/></td>
 					</tr>
 				</dht:formTable>
-			</c:if>
+			</c:when>
+			<c:otherwise>
+				<dht:zoneBoxTitle>NO INVITATIONS REMAINING</dht:zoneBoxTitle>			
+			</c:otherwise>
+			</c:choose>
 			<c:if test="${invites.outstandingInvitations.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>

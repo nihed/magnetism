@@ -21,7 +21,7 @@ public class Welcome extends SignedInPageTestCase {
 	}
 
 	public void validatePage() {
-		t.assertLinkPresentWithText("Download Now");
+		t.assertLinkPresentWithText("Click here to download");
 	}
 
 }

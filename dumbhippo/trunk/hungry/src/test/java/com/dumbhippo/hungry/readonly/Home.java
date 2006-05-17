@@ -20,13 +20,10 @@ public class Home extends SignedInPageTestCase {
 	public void testPage() {
 		t.beginAt("/home");
 		validatePage();
-		t.clickLinkWithText("Your Public Page");
-		ViewPerson vp = new ViewPerson(t, getUserId());
-		vp.validatePage();
 	}
 
 	public void validatePage() {
 		//t.dumpResponse();
-		t.assertLinkPresentWithText("Your Public Page");
+		t.assertLinkPresentWithText("Edit account");
 	}
 }

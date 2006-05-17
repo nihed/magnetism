@@ -16,7 +16,7 @@
 	<table cellspacing="0px" cellpadding="0px">
 		<tr valign="top">
 		<td width="240px" align="center">
-		<form id="dhLoginNoPasswordForm">				
+		<form id="dhLoginNoPasswordForm" name="dhLoginNoPasswordForm" action="/signinpost" method="post">				
 			<table id="dhLoginNoPassword" width="100%" cellspacing="0px" cellpadding="0px">
 				<tr><td class="dh-login-type-header">Log in without password</td></tr>
 				<tr><td><div id="dhLoginSuccessful" class="dh-login-text" style="display: none;">Login link sent! Check your email or AIM.</div></td></tr>
@@ -29,11 +29,11 @@
 		</td>
 		<td width="1px" style="background: gray;"><div></div></td>
 		<td width="240px" align="center">
-		<form id="dhLoginWithPasswordForm" action="/signinpost" method="post">
+		<form id="dhLoginWithPasswordForm" name="dhLoginWithPasswordForm" action="/signinpost" method="post">
 			<c:if test='${!empty param["next"]}'>
 				<input type="hidden" value='${param["next"]}' name="next"/>
 			</c:if>				
-			<table id="dhLoginWithPassword" width="100%" width="100%"  cellspacing="0px" cellpadding="0px">
+			<table id="dhLoginWithPassword" width="100%" cellspacing="0px" cellpadding="0px">
 				<tr><td class="dh-login-type-header">Log in with password</td></tr>
 				<tr><td class="dh-login-text">Email address or AIM:</td></tr>					
 				<tr><td><input type="text" class="dh-text-input" name="address"/></td></tr>
@@ -41,6 +41,7 @@
 				<tr><td><input type="password" name="password"/></td></tr>	
 				<tr><td><input id="dhPasswordButton" type="submit" value="Sign in with password" name="checkpassword"/></td></tr>
 			</table>
+		</form>
 		</td>
 		</tr>
 	</table>

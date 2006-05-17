@@ -23,9 +23,9 @@
 
 <c:choose>
 	<c:when test="${multiline}">
-		<textarea id="${id}" class="dh-text-input ${extraClass}" rows="5"></textarea>
+		<textarea id="${id}" name="${id}" class="dh-text-input ${extraClass}" rows="5"></textarea>
 	</c:when>
 	<c:otherwise>
-		<input id="${id}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
+		<input id="${id}" name="${id}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
 	</c:otherwise>
 </c:choose>
