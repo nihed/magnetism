@@ -51,7 +51,7 @@
 		
 		<dht:zoneBoxSeparator/>
 		
-		<div><a href="/music-learnmore">Learn more about Music Radar</a></div>
+		<div><a href="/radar-learnmore">Learn more about Music Radar</a></div>
 		</dht:zoneBoxWeb>
 	</dht:contentColumn>
 </dht:twoColumnPage>
