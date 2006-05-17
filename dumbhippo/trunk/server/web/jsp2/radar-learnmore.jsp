@@ -10,7 +10,7 @@
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>
-		<dht:zoneBoxWeb>	
+		<dht:zoneBoxMusic>	
 		
 		<div>
 		<table cellspacing="0" cellpadding="0">
@@ -45,7 +45,7 @@
 		<dht:zoneBoxSeparator/>
 		
 		<div class="dh-music-learnmore-section"><a href="/links-learnmore">Learn more about Link Swarm</a></div>		
-		</dht:zoneBoxWeb>
+		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>
 </html>
