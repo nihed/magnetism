@@ -42,7 +42,9 @@
 <body onload="init();" class="dh-gray-background-page">
 	<div id="dhPage">
 
-		<div id="dhMainLogo"><img src="/images2/mugshot_topper.gif"/></div>
+		<div id="dhMainLogo">
+		    <div id="dhMainLogoLinks"><a class="dh-logo-link" href="/who-are-you">Log In</a> | <a class="dh-logo-link" href="/signup">Sign Up</a></div>
+		</div>
 
 		<div id="dhMainContent">
 			<div class="dh-zone-box">

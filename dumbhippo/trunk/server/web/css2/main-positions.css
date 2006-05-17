@@ -9,7 +9,17 @@
 }
 
 #dhMainLogo {
+	height:			120px;
+	width:			710px;
+	position:		relative;
+	background-image:	url("/images2/mugshot_topper.gif");
 	margin-bottom:		10px;
+}
+
+#dhMainLogoLinks {
+	position:		absolute;
+	bottom:			14px;
+	right:			42px;
 }
 
 .dh-zone-box  {
@@ -46,7 +56,7 @@
 .dh-song-with-art .dh-song-info {
 	width:				124px;
 }
-.
+
 .dh-zone-box .dh-item .dh-song-item-details {
 	/* must be padding not margin or an IE bug will assign the margin
 	   to the album art also */
