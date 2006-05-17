@@ -44,6 +44,7 @@
 	<div id="dhPage">
 
 		<div id="dhMainLogo">
+		    <img src="/images2/mugshot_topper.gif" />
 		    <div id="dhMainLogoLinks"><a class="dh-logo-link" href="/who-are-you">Log In</a> | <a class="dh-logo-link" href="/signup">Sign Up</a></div>
 		</div>
 
