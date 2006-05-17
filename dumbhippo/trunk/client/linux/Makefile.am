@@ -148,5 +148,12 @@ smallicon_DATA=					\
 	$(SMALLICONSUBDIR)/mugshot_swarm_4.png	\
 	$(SMALLICONSUBDIR)/mugshot_swarm_5.png
 
+SMALLERICONSUBDIR=icons/hicolor/16x16/apps
+smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
+smallericon_DATA=					\
+	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
+	$(SMALLERICONSUBDIR)/mugshot_note_off.png
+
+
 EXTRA_DIST= \
-	$(smallicon_DATA)
+	$(smallicon_DATA) $(smallericon_DATA)

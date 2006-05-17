@@ -43,6 +43,10 @@ struct _HippoPersonRenderer {
     HippoPerson *person;
     GdkPixbuf *photo;
     PangoLayout *name_layout;
+    PangoLayout *song_layout;
+    PangoLayout *artist_layout;
+    GdkPixbuf *note_on;
+    GdkPixbuf *note_off;
 };
 
 struct _HippoPersonRendererClass {
@@ -106,6 +110,14 @@ nuke_caches(HippoPersonRenderer *renderer)
         g_object_unref(renderer->name_layout);
         renderer->name_layout = NULL;
     }
+    if (renderer->song_layout) {
+        g_object_unref(renderer->song_layout);
+        renderer->song_layout = NULL;
+    }
+    if (renderer->artist_layout) {
+        g_object_unref(renderer->artist_layout);
+        renderer->artist_layout = NULL;
+    }
 }
 
 static void
@@ -124,6 +136,13 @@ hippo_person_renderer_finalize(GObject *object)
     }
 
     nuke_caches(renderer);
+
+    if (renderer->note_on) {
+        g_object_unref(renderer->note_on);
+    }
+    if (renderer->note_off) {
+        g_object_unref(renderer->note_off);
+    }
     
     G_OBJECT_CLASS(hippo_person_renderer_parent_class)->finalize(object);
 }
@@ -191,31 +210,195 @@ hippo_person_renderer_set_property(GObject              *object,
 }
 
 static void
+make_layout(GtkWidget    *widget,
+            PangoLayout **layout_p,
+            const char   *value)
+{
+    if (value == NULL)
+        value = "";
+
+    if (*layout_p == NULL) {
+        *layout_p = gtk_widget_create_pango_layout(widget, value);
+    } else {
+        const char *old = pango_layout_get_text(*layout_p);
+        if (old && strcmp(old, value) == 0)
+            /* nothing */;
+        else
+            pango_layout_set_text(*layout_p, value, -1);
+    }
+}
+
+#define PHOTO_SIZE 60
+#define PHOTO_MARGIN_RIGHT 5
+#define NOTE_SIZE 16
+/* we truncate to this */
+#define TOTAL_WIDTH 140
+#define NAME_MARGIN_BOTTOM 5
+#define NOTE_MARGIN_RIGHT 3
+#define SONG_MARGIN_BOTTOM 3
+
+static void
 update_caches(HippoPersonRenderer *renderer,
               GtkWidget           *widget)
 {
     const char *name;
- 
-    /* FIXME right now the caches really aren't since we fully recreate each time */
+    const char *song;
+    const char *artist;
+    GtkIconTheme *icon_theme;
+    GdkPixbuf *note_on;
+    GdkPixbuf *note_off;            
     
     if (renderer->person == NULL) {
         name = NULL;
+        song = NULL;
+        artist = NULL;
     } else {
         /* some of these can return NULL */
         name = hippo_entity_get_name(HIPPO_ENTITY(renderer->person));
+        song = hippo_person_get_current_song(renderer->person);
+        artist = hippo_person_get_current_artist(renderer->person);
     }
     
-    if (name == NULL)
-        name = "";
-
-    if (renderer->name_layout == NULL) {
-        renderer->name_layout = gtk_widget_create_pango_layout(widget, name);
-    } else {
-        pango_layout_set_text(renderer->name_layout, name, -1);
-    }        
+    make_layout(widget, &renderer->name_layout, name);
+    make_layout(widget, &renderer->song_layout, song);
+    make_layout(widget, &renderer->artist_layout, artist);
+    
+    /* this strongly relies on the icon theme caching the pixbufs
+     * so it typically ends up as a no-op
+     */
+    icon_theme = gtk_icon_theme_get_for_screen(gtk_widget_get_screen(widget));
+    note_on = gtk_icon_theme_load_icon(icon_theme, "mugshot_note_on", NOTE_SIZE, 0, NULL);
+    note_off = gtk_icon_theme_load_icon(icon_theme, "mugshot_note_on", NOTE_SIZE, 0, NULL);
+    
+    if (note_on) {
+        if (renderer->note_on)
+            g_object_unref(renderer->note_on);
+        renderer->note_on = note_on;
+    }
+    if (note_off) {
+        if (renderer->note_off)
+            g_object_unref(renderer->note_off);
+        renderer->note_off = note_off;
+    }
 }
 
-#define PHOTO_RIGHT_MARGIN 5
+static void
+compute_size(GtkCellRenderer      *cell,
+             GtkWidget            *widget,
+             GdkRectangle         *cell_area,
+             /* content rect relative to cell area */
+             GdkRectangle         *content_rect_p,
+             /* individual items relative to content_rect.x, content_rect.y */
+             GdkRectangle         *photo_rect_p,
+             GdkRectangle         *name_rect_p,
+             GdkRectangle         *song_rect_p,
+             GdkRectangle         *artist_rect_p,
+             GdkRectangle         *note_rect_p)
+{
+    HippoPersonRenderer *renderer;
+    PangoRectangle prect;
+    GdkRectangle content_rect;
+    GdkRectangle photo_rect;
+    GdkRectangle name_rect;
+    GdkRectangle song_rect;
+    GdkRectangle artist_rect;
+    GdkRectangle note_rect;
+    int padded_width;
+    int padded_height;
+    int photo_margin;
+
+    renderer = HIPPO_PERSON_RENDERER(cell);
+
+    update_caches(renderer, widget);
+
+    /* First get all the sizes, then compute positions */
+
+    if (renderer->photo) {
+        photo_rect.width = PHOTO_SIZE;
+        photo_rect.height = PHOTO_SIZE;
+        photo_margin = PHOTO_MARGIN_RIGHT;
+    } else {
+        photo_rect.width = 0;
+        photo_rect.height = 0;
+        photo_margin = 0;
+    }
+    
+    note_rect.width = NOTE_SIZE;
+    note_rect.height = NOTE_SIZE;
+
+    pango_layout_get_pixel_extents(renderer->name_layout, NULL, &prect);
+    name_rect.width = prect.width;
+    name_rect.height = prect.height;
+    
+    pango_layout_get_pixel_extents(renderer->song_layout, NULL, &prect);
+    song_rect.width = prect.width;
+    song_rect.height = prect.height;    
+
+    pango_layout_get_pixel_extents(renderer->artist_layout, NULL, &prect);
+    artist_rect.width = prect.width;
+    artist_rect.height = prect.height;    
+
+    /* now positions */
+
+    photo_rect.x = 0;
+    photo_rect.y = 0;
+    
+    name_rect.x = photo_rect.x + photo_rect.width + photo_margin;
+    name_rect.y = 0;
+    
+    note_rect.x = name_rect.x;
+    note_rect.y = name_rect.y + name_rect.height + NAME_MARGIN_BOTTOM;
+    
+    song_rect.x = note_rect.x + note_rect.y + NOTE_MARGIN_RIGHT;
+    song_rect.y = note_rect.y;
+    
+    artist_rect.x = song_rect.x;
+    artist_rect.y = song_rect.y + song_rect.height + SONG_MARGIN_BOTTOM;
+
+    /* Now compute content rect by union of all other rects, then 
+     * translate to be relative to the cell
+     */
+    content_rect.x = 0;
+    content_rect.y = 0;
+    content_rect.width = 0;
+    content_rect.height = 0;
+
+    gdk_rectangle_union(&content_rect, &photo_rect, &content_rect);    
+    gdk_rectangle_union(&content_rect, &name_rect, &content_rect);
+    gdk_rectangle_union(&content_rect, &note_rect, &content_rect);
+    gdk_rectangle_union(&content_rect, &song_rect, &content_rect);    
+    gdk_rectangle_union(&content_rect, &artist_rect, &content_rect);
+
+    if (photo_rect.height < content_rect.height) {
+        /* center photo rect vertically */
+        photo_rect.y = (content_rect.height - photo_rect.height) / 2;
+    }
+
+    padded_width  = (int) cell->xpad * 2 + content_rect.width;
+    padded_height = (int) cell->ypad * 2 + content_rect.height;
+
+    if (cell_area && content_rect.width > 0 && content_rect.height > 0) {
+        content_rect.x = (((gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL) ?
+                            1.0 - cell->xalign : cell->xalign) * 
+                            (cell_area->width - padded_width - cell->xpad * 2));
+        content_rect.x = MAX (content_rect.x, 0) + cell->xpad;
+
+        content_rect.y = (cell->yalign *
+                           (cell_area->height - padded_height - 2 * cell->ypad));
+        content_rect.y = MAX (content_rect.y, 0) + cell->ypad;
+    }
+    
+    content_rect.width = padded_width;
+    content_rect.height = padded_height;
+    
+#define OUT(what) do { if (what ## _p) { * what ## _p = what; }  } while(0)
+    OUT(content_rect);
+    OUT(photo_rect);
+    OUT(name_rect);
+    OUT(song_rect);
+    OUT(artist_rect);
+    OUT(note_rect);
+}
 
 static void
 hippo_person_renderer_get_size(GtkCellRenderer      *cell,
@@ -226,65 +409,19 @@ hippo_person_renderer_get_size(GtkCellRenderer      *cell,
                                gint                 *width_p,
                                gint                 *height_p)
 {
-    HippoPersonRenderer *renderer;
-    int content_width;
-    int content_height;
-    int full_width;
-    int full_height;
-    PangoRectangle name_rect;
-    int photo_width;
-    int photo_height;
-
-    renderer = HIPPO_PERSON_RENDERER(cell);
-
-    update_caches(renderer, widget);
-
-    pango_layout_get_pixel_extents(renderer->name_layout, NULL, &name_rect);
-
-    if (renderer->photo) {
-        photo_width = gdk_pixbuf_get_width(renderer->photo);
-        photo_height = gdk_pixbuf_get_height(renderer->photo);
-    } else {
-        photo_width = 0;
-        photo_height = 0;
-    }
-
-    content_width = name_rect.width;
-    content_height = name_rect.height;
-  
-    if (photo_width > 0 && photo_height > 0) {
-        content_width += photo_width + PHOTO_RIGHT_MARGIN;
-        content_height = MAX(photo_height, content_height); 
-    }
-  
-    full_width  = (int) cell->xpad * 2 + content_width;
-    full_height = (int) cell->ypad * 2 + content_height;
-  
-    if (x_offset_p)
-        *x_offset_p = 0;
+    GdkRectangle content_rect;
+    
+    compute_size(cell, widget, cell_area, &content_rect, 
+                 NULL, NULL, NULL, NULL, NULL);
+    if (x_offset_p)                 
+        *x_offset_p = content_rect.x;
     if (y_offset_p)
-        *y_offset_p = 0;
-
-    if (cell_area && content_width > 0 && content_height > 0) {
-        if (x_offset_p) {
-            *x_offset_p = (((gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL) ?
-                            1.0 - cell->xalign : cell->xalign) * 
-                            (cell_area->width - full_width - cell->xpad * 2));
-            *x_offset_p = MAX (*x_offset_p, 0) + cell->xpad;
-        }
-        if (y_offset_p) {
-            *y_offset_p = (cell->yalign *
-                           (cell_area->height - full_height - 2 * cell->ypad));
-            *y_offset_p = MAX (*y_offset_p, 0) + cell->ypad;
-	    }
-    }
-
+        *y_offset_p = content_rect.y;
     if (width_p)
-        *width_p = full_width;
-  
+        *width_p = content_rect.width;
     if (height_p)
-        *height_p = full_height;
-}
+        *height_p = content_rect.height;
+}                               
 
 static void
 hippo_person_renderer_render(GtkCellRenderer      *cell,
@@ -297,29 +434,25 @@ hippo_person_renderer_render(GtkCellRenderer      *cell,
 {
     HippoPersonRenderer *renderer;
     GdkRectangle content_rect;
+    GdkRectangle photo_rect;
+    GdkRectangle name_rect;
+    GdkRectangle song_rect;
+    GdkRectangle artist_rect;
+    GdkRectangle note_rect;    
     GdkRectangle draw_rect;
     GtkStateType state;
-    int photo_width;
-    int photo_height;
     /* cairo_t *cr; */
 
     renderer = HIPPO_PERSON_RENDERER(cell);
-    
-    hippo_person_renderer_get_size(cell, widget, cell_area, 
-                                   &content_rect.x, &content_rect.y,
-                                   &content_rect.width, &content_rect.height);
 
-    if (renderer->photo) {
-        photo_width = gdk_pixbuf_get_width(renderer->photo);
-        photo_height = gdk_pixbuf_get_height(renderer->photo);
-    } else {
-        photo_width = 0;
-        photo_height = 0;
-    }
-    
+    /* content_rect relative to cell area, others relative to content_rect */
+    compute_size(cell, widget, cell_area, &content_rect, &photo_rect,
+                 &name_rect, &song_rect, &artist_rect, &note_rect);
+               
+    /* move content_rect relative to the window */
     content_rect.x += cell_area->x;
-    content_rect.y += cell_area->y;
-    
+    content_rect.y += cell_area->y;               
+                 
     if (!gdk_rectangle_intersect (cell_area, &content_rect, &draw_rect) ||
         !gdk_rectangle_intersect (expose_area, &draw_rect, &draw_rect))
         return;
@@ -337,16 +470,38 @@ hippo_person_renderer_render(GtkCellRenderer      *cell,
         state = GTK_STATE_NORMAL;
     }
 
-    gtk_paint_layout(widget->style, window, state, TRUE, expose_area, widget, "hippopersonrenderer",
-                     content_rect.x + photo_width + (photo_width > 0 ? PHOTO_RIGHT_MARGIN : 0),
-                     content_rect.y,
-                     renderer->name_layout);
+    /* draw name */
+#define PAINT_LAYOUT(what) \
+    gtk_paint_layout(widget->style, window, state, TRUE, &draw_rect, widget, "hippopersonrenderer",   \
+                     content_rect.x + what##_rect.x,                                                   \
+                     content_rect.y + what##_rect.y,                                                   \
+                     renderer->what##_layout)
+    PAINT_LAYOUT(name);
+    PAINT_LAYOUT(song);
+    PAINT_LAYOUT(artist);
+        
+    /* draw photo */
     if (renderer->photo) {
         gdk_draw_pixbuf(window, widget->style->fg_gc[state], renderer->photo, 
-                        0, 0, content_rect.x, content_rect.y + (content_rect.height - photo_height) / 2,
-                        photo_width, photo_height, GDK_RGB_DITHER_NORMAL, 0, 0);
+                        0, 0, content_rect.x + photo_rect.x, content_rect.y + photo_rect.y,
+                        -1, -1, GDK_RGB_DITHER_NORMAL, 0, 0);
     }                        
-                             
+
+    /* draw note */
+    if (renderer->person) {
+        gboolean playing = hippo_person_get_music_playing(renderer->person);
+        GdkPixbuf *note;
+        if (playing)
+            note = renderer->note_on;
+        else
+            note = renderer->note_off;
+        if (note) {
+            gdk_draw_pixbuf(window, widget->style->fg_gc[state], note,
+                            0, 0, content_rect.x + note_rect.x, content_rect.y + note_rect.y,
+                            -1, -1, GDK_RGB_DITHER_NORMAL, 0, 0);
+        }
+    }
+
     /*
     cr = gdk_cairo_create(window);
     gdk_cairo_rectangle (cr, &draw_rect);
