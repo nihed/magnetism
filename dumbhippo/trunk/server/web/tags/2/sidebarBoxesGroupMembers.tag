@@ -16,8 +16,10 @@
 			No members <%-- FIXME link to a place to add members --%>
 		</c:otherwise>
 	</c:choose>
+	<%-- not implemented yet
 	<dht:sidebarBoxSeparator/>
 	<dht:actionLink href="FIXME" title="Create a new group of your very own">Create a group</dht:actionLink>
+	--%>
 </dht:sidebarBox>
 
 <c:if test="${group.invitedMembers.size > 0}">
