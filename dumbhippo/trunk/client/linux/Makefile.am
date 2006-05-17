@@ -63,7 +63,9 @@ $(MARSHAL_BODY): $(MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
-mugshot_SOURCES	=				    \
+mugshot_SOURCES	=				\
+	src/hippo-bubble.c			\
+	src/hippo-bubble.h			\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
