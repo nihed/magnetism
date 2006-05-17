@@ -567,7 +567,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		messageHtml.append("<div style=\"padding: 1em;\">");
-		messageHtml.appendTextNode("a", "http://mugshot.org/download/", "href", invite.getAuthURL(baseurlObject));
+		messageHtml.appendTextNode("a", invite.getAuthURL(baseurlObject), "href", invite.getAuthURL(baseurlObject));
 		messageHtml.append("</div>\n");
 		
 		messageText.append(invite.getAuthURL(baseurlObject));
