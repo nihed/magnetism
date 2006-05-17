@@ -224,6 +224,10 @@ form {
 	height: 32px;
 }
 
+.dh-zone-box-title-text {
+	padding-top: 3px;
+}
+
 #dhContentColumn .dh-zone-box {
 	margin-bottom:		10px;
 }

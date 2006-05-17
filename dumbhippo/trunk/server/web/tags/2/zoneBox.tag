@@ -21,7 +21,7 @@
 		<c:choose>
 			<c:when test="${!empty topText}">
 				<div class="dh-zone-box-title-container">
-					<table cellspacing="0" cellpadding="0" width="100%">
+					<table cellspacing="0" cellpadding="0" width="100%" height="100%">
 					<tr valign="middle" align="center"><td>
 						<div class="dh-zone-box-title-text">
 						<c:out value="${topText}"/>
