@@ -44,6 +44,10 @@ public class ExpandedArtistView extends ArtistView {
 		albums.add(album);
 	}
 
+	public String getWikipediaUrl() {
+	    return "http://wikipedia.org/wiki/" + getName().replace(" ", "_");	
+	}
+	
 	public String getYahooMusicPageUrl() {
 		return yahooMusicPageUrl;
 	}
