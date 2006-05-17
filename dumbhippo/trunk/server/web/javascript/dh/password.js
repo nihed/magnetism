@@ -5,7 +5,6 @@ dojo.require("dojo.html");
 dojo.require("dojo.string");
 dojo.require("dh.util");
 dojo.require("dh.server");
-dojo.require("dh.account");
 
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
@@ -31,7 +30,7 @@ dh.password.unqueueValidationMessage = function() {
 dh.password.showValidationMessageNow = function() {
 	if (dh.password.validationTimeout) {
 		dh.password.unqueueValidationMessage();
-		dh.account.showStatusMessage('dhPasswordEntry', dh.password.validationMessage, true);
+		dh.formtable.showStatusMessage('dhPasswordEntry', dh.password.validationMessage, true);
 	}
 }
 
@@ -41,7 +40,7 @@ dh.password.queueValidationMessage = function(message) {
 	dh.password.unqueueValidationMessage();
 	dh.password.validationMessage = message;
 	dh.password.validationTimeout = setTimeout(function() {
-		dh.account.showStatusMessage('dhPasswordEntry', dh.password.validationMessage, true);
+		dh.formtable.showStatusMessage('dhPasswordEntry', dh.password.validationMessage, true);
 	}, 1500);
 }
 
@@ -103,10 +102,10 @@ dh.password.setPassword = function(password) {
 						
 						var removeNode = document.getElementById('dhRemovePasswordLink');
 						if (password && password.length > 0) {
-							dh.account.showStatusMessage('dhPasswordEntry', "Your new password has been saved.");
+							dh.formtable.showStatusMessage('dhPasswordEntry', "Your new password has been saved.");
 							removeNode.style.display = 'inline';
 						} else {
-							dh.account.showStatusMessage('dhPasswordEntry', "Your password has been removed.");
+							dh.formtable.showStatusMessage('dhPasswordEntry', "Your password has been removed.");
 							removeNode.style.display = 'none';
 						}
 						
@@ -114,7 +113,7 @@ dh.password.setPassword = function(password) {
 					},
 					function(type, error, http) {
 						dh.password.inProgress = false;
-						dh.account.showStatusMessage('dhPasswordEntry', "Failed to set your password... try again?");
+						dh.formtable.showStatusMessage('dhPasswordEntry', "Failed to set your password... try again?");
 					});
 }
 
