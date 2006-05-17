@@ -65,7 +65,7 @@ dhPasswordFormUpdate = function(ev) {
 			dh.password.queueValidationMessage("Your password should have at least 6 letters or numbers in it.");
 		else {
 			dh.password.unqueueValidationMessage();
-			dh.account.hideStatus('dhPasswordEntry');
+			dh.formtable.hideStatus('dhPasswordEntry');
 		}
 		invalid = true;
 	} else {
