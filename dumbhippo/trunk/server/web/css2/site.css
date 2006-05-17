@@ -134,6 +134,11 @@ body.dh-gray-background-page {
 	font-size:			14px;
 }
 
+.dh-sidebar-box .dh-sidebar-box-empty {
+	text-align:		center;
+	color:			#666666;
+}
+
 .dh-compact-item .dh-next-to-image .dh-name {
 	font-weight:		bold;
 	font-size:			12px;

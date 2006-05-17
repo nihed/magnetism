@@ -25,8 +25,10 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
-				No groups <%-- FIXME link to a place to add groups --%>
+				<p class="dh-sidebar-box-empty">Start your own group</p>
 			</c:otherwise>
 		</c:choose>
+		<dht:sidebarBoxSeparator/>
+		<dht:actionLink href="/create-group" title="Create a new group of your very own">Create a new group</dht:actionLink>
 	</dht:sidebarBox>
 </c:if>
