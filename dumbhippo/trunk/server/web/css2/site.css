@@ -139,6 +139,15 @@ body.dh-gray-background-page {
 	color:			#666666;
 }
 
+.dh-sidebar-box .dh-sidebar-box-empty a {
+	color:			#666666;
+	text-decoration:	underline;
+}
+
+.dh-sidebar-box .dh-sidebar-box-empty a:visited {
+	color:			#666666;
+}
+
 .dh-compact-item .dh-next-to-image .dh-name {
 	font-weight:		bold;
 	font-size:			12px;

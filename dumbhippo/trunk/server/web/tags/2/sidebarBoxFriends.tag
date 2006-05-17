@@ -25,7 +25,14 @@
 				</c:if>
 			</c:when>
 			<c:otherwise>
-				No friends <%-- FIXME link to a place to add friends --%>
+			<c:choose>
+				<c:when test="${person.signin.user.account.invitations > 0}">
+					<p class="dh-sidebar-box-empty">Email <a href="/invitation">invites</a> to some friends</p>
+				</c:when>
+				<c:otherwise>
+					<p class="dh-sidebar-box-empty">A loner huh?</p>
+				</c:otherwise>
+			</c:choose>
 			</c:otherwise>
 		</c:choose>
 		<c:if test="${person.signin.user.account.invitations > 0}">
