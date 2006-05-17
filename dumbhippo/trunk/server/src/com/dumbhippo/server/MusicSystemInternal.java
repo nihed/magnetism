@@ -101,12 +101,11 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * 
 	 * @param viewpoint
 	 * @param artist artist's name
-	 * @param artistId if you don't know artistId, just pass in null for it
 	 * @param albumsByArtist a Pageable object that contains information on what albums should be added to the artist view
 	 * @return view of an artist that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, String artistId, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
 	
 	/**
 	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
