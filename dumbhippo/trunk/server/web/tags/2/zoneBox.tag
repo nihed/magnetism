@@ -17,12 +17,18 @@
 
 <div class="dh-zone-box dh-color-${zone}">
 	<%-- Having whitespace in here seems to confuse IE, so it's a huge line; probably there's some better way --%>
-	<div class="dh-zone-box-header">
+	<div class="dh-zone-box-header dh-zone-box-header-${zoneName}">
 		<c:choose>
-			<c:when test="${!empty topText}"><table cellspacing="0" cellpadding="0"><tr valign="middle" align="center"><td>
-				<div class="dh-zone-box-title-text" style='background: url("/images2/header_blank500.gif"); width: 500px; height: 32px;'><center>
-				<c:out value="${topText}"/>
-				</div></td></tr></table>
+			<c:when test="${!empty topText}">
+				<div class="dh-zone-box-title-container">
+					<table cellspacing="0" cellpadding="0" width="100%">
+					<tr valign="middle" align="center"><td>
+						<div class="dh-zone-box-title-text">
+						<c:out value="${topText}"/>
+						</div>
+					</td></tr>
+					</table>
+				</div>
 			</c:when>
 			<c:otherwise>
 				<img src="${topImage}" class="dh-header-image"/>			

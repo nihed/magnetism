@@ -23,7 +23,7 @@
 <dht:body extraClass="dh-gray-background-page">
 	<c:choose>
 		<c:when test="${logoOnly}">
-			<center><dht:logo/></center>
+			<center><div id="dhPageHeader"><dht:logo/></div></center>
 		</c:when>
 		<c:otherwise>
 			<dht:header disableHomeLink="${disableHomeLink}"/>

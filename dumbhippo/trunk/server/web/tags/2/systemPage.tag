@@ -8,7 +8,9 @@
 <%@ attribute name="fullHeader" required="false" type="java.lang.Boolean" %>
 
 <dht:twoColumnPage neverShowSidebar="true" logoOnly="${!fullHeader}">
-	<dht:zoneBox zone="group" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
+<dht:contentColumn>
+	<dht:zoneBox zone="system" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
 		<jsp:doBody/>
 	</dht:zoneBox>
+</dht:contentColumn>
 </dht:twoColumnPage>

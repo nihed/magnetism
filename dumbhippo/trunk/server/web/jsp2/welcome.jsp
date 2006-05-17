@@ -3,11 +3,11 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="download" class="com.dumbhippo.web.DownloadPage" scope="request"/>
+<dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
 
 <head>
 	<title>Mugshot</title>
-	<link rel="stylesheet" type="text/css" href="/css2/download.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/welcome.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
@@ -20,7 +20,7 @@
 	<td>
 		<table cellspacing="0" cellpadding="0">
 			<tr><td><img id="dhDownloadImg" src="/images2/buzzer63x58.gif"/></td>
-			<td class="dh-download-instructions">1. <a class="dh-download-product" href="${download.downloadUrlWindows}">Click here to download</a>.<br/>
+			<td class="dh-download-instructions">1. <a class="dh-download-product" href="${welcome.downloadUrlWindows}">Click here to download</a>.<br/>
 			    The software will install automatically.</td>
 			</tr>
 		</table>

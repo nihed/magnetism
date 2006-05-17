@@ -39,7 +39,7 @@ body.dh-gray-background-page {
 	color:				white;
 }
 
-.dh-color-group, .dh-color-account, .dh-color-artists {
+.dh-color-group, .dh-color-account, .dh-color-artists, .dh-color-system {
 	background-color:	#666666;
 	color:				white;
 }
@@ -69,7 +69,7 @@ body.dh-gray-background-page {
 	color:		#60B635;
 }
 
-.dh-color-group-foreground, .dh-color-account-foreground, .dh-color-artists-foreground {
+.dh-color-group-foreground, .dh-color-account-foreground, .dh-color-artists-foreground .dh-color-system-foreground {
 	color:		#000000;
 }
 
@@ -163,6 +163,14 @@ body.dh-gray-background-page {
 
 .dh-zone-box .dh-bottom-image, .dh-zone-box .dh-header-image {
 	background: 		#EFEFEF;
+}
+
+.dh-zone-box-header-system {
+	background:			#efefef;
+}
+
+.dh-zone-box-title-container {
+	background:			url("/images2/header_blank500.gif");
 }
 
 .dh-zone-box-title-text {
