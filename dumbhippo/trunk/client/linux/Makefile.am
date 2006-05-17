@@ -44,16 +44,51 @@ libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT)
 libgtkcopy_la_LIBADD = 			\
 	$(LIBGTKCOPY_LIBS) libhippo.la
 
-MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-marshal.list
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
-MARSHAL_DIR=$(top_builddir)/config/hippo
+BUILT_SRC_DIR=$(top_builddir)/config/hippo
+
+EMBEDDEDIMAGEDIR=images
+EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_blmix.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_bl.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_brmix.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_br.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_tlmix.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_tl.png	\
+	$(EMBEDDEDIMAGEDIR)/obubcnr_tr.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_bmix.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_b.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_lmix.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_l.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_r.png	\
+	$(EMBEDDEDIMAGEDIR)/obubedge_t.png
+
+EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
+$(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
+	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
+	ALL_NAMES="" ;									\
+	for I in $(EMBEDDED_IMAGES); do							\
+	    IMG=$(srcdir)/$$I ;								\
+	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/images\///g'` ;		\
+	    echo "Writing embedded image $$IMG with name $$NAME" ;			\
+	    gdk-pixbuf-csource --struct --raw --static "$$IMG"				\
+                                --name="$$NAME"						\
+				>> $(EMBEDDED_IMAGE_HEADER) || exit 1;			\
+	    ALL_NAMES="$$ALL_NAMES $$NAME" ;						\
+        done ;										\
+        echo 'struct { const char *name; '  >> $(EMBEDDED_IMAGE_HEADER) ;		\
+        echo 'GdkPixbuf *pixbuf; '  >> $(EMBEDDED_IMAGE_HEADER) ;			\
+	echo 'const GdkPixdata *pixdata; } catalog[] = {' >> $(EMBEDDED_IMAGE_HEADER) ;	\
+	for I in $$ALL_NAMES ; do							\
+            echo "{ \"$$I\", NULL, &$$I }," >> $(EMBEDDED_IMAGE_HEADER) ;		\
+	done ;										\
+	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
+
+MARSHAL_DIR=$(BUILT_SRC_DIR)
+MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-marshal.list
 MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-marshal.h
 MARSHAL_BODY=$(MARSHAL_DIR)/hippo-marshal.c
-
-BUILT_SOURCES=					\
-	$(MARSHAL_HEADER)			\
-	$(MARSHAL_BODY)
 
 $(MARSHAL_HEADER): $(MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
@@ -63,6 +98,12 @@ $(MARSHAL_BODY): $(MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
+
+BUILT_SOURCES=					\
+	$(MARSHAL_HEADER)			\
+	$(MARSHAL_BODY)				\
+	$(EMBEDDED_IMAGE_HEADER)
+
 mugshot_SOURCES	=				\
 	src/hippo-bubble.c			\
 	src/hippo-bubble.h			\
@@ -70,6 +111,8 @@ mugshot_SOURCES	=				\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
+	src/hippo-embedded-image.c		\
+	src/hippo-embedded-image.h		\
 	src/hippo-http.c			\
 	src/hippo-http.h			\
 	src/hippo-image-cache.c			\
@@ -80,7 +123,7 @@ mugshot_SOURCES	=				\
 	src/hippo-platform-impl.h		\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
-	src/main.c				        \
+	src/main.c				\
 	src/main.h
 
 LIBHIPPO_BUILT_SOURCEFILES =					\
@@ -156,6 +199,5 @@ smallericon_DATA=					\
 	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
 	$(SMALLERICONSUBDIR)/mugshot_note_off.png
 
-
 EXTRA_DIST= \
-	$(smallicon_DATA) $(smallericon_DATA)
+	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES)

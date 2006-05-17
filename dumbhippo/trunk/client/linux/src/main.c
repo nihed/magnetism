@@ -2,6 +2,7 @@
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
+#include "hippo-bubble.h"
 
 struct HippoApp {
     GMainLoop *loop;
@@ -259,12 +260,15 @@ main(int argc, char **argv)
     }
 
     the_app = hippo_app_new(options.instance_type);
-    
+ 
+ #if 0
+    /* FIXME actual point of app disabled for testing the bubble ;-) */
     if (hippo_connection_signin(the_app->connection))
         g_debug("Waiting for user to sign in");
     else
         g_debug("Found login cookie");
-    
+#endif
+
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
     
     if (options.join_chat_id) {
@@ -272,6 +276,14 @@ main(int argc, char **argv)
     }
     
     hippo_options_free_fields(&options);
+
+    {
+        GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+        GtkWidget *bubble = hippo_bubble_new();
+        gtk_container_add(GTK_CONTAINER(window), bubble);
+        gtk_widget_set_size_request(bubble, 400, 300);
+        gtk_widget_show_all(window);
+    }
     
     g_main_loop_run(the_app->loop);
 
