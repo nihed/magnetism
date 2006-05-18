@@ -103,6 +103,11 @@ import com.dumbhippo.persistence.VersionedEntity;
 		return group.getGuid(); 
 	}
 	
+	@Override
+	public String getSmallPhotoUrl() {
+		return group.getPhotoUrl60();
+	}
+	
 	public LiveGroup getLiveGroup() {
 		return LiveState.getInstance().getLiveGroup(getGroup().getGuid());
 	}

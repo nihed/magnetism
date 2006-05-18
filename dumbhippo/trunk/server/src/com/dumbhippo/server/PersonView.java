@@ -653,6 +653,14 @@ public class PersonView extends EntityView {
 		}
 	}
 
+	@Override
+	public String getSmallPhotoUrl() {
+		if (user != null)
+			return user.getPhotoUrl60();
+		else
+			return "/images2/invited60x60.gif";
+	}
+	
 	/**
 	 * If the PersonView has no User or resources stored in it, then this should be set to the guid of a 
 	 * resource that the contact owns.
