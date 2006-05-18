@@ -13,6 +13,7 @@ public class MakeBootstrapUser extends Signin {
 	public void testPage() {
 		super.testPage();
 		
+		t.setWorkingForm("dhLoginWithPasswordForm");
 		t.setFormElement("address", "bootstrap@example.com");
 		t.setFormElement("password", "blahblah");
 		t.submit("checkpassword");
