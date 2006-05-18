@@ -61,46 +61,19 @@
 				<dht:zoneBoxSubcolumn which="one">
 
 					<c:if test="${signin.valid}">
-						<dht:zoneBoxTitle a="dhRecentSongs">MY RECENT SONGS</dht:zoneBoxTitle>
-						
-						<c:forEach items="${musicPerson.recentTracks.results}" var="track">
-							<dht:track track="${track}" albumArt="true"/>
-						</c:forEach>
-	
-						<dht:expandablePager pageable="${musicPerson.recentTracks}" anchor="dhRecentSongs"/>
-	
-						<dht:zoneBoxSeparator/>
 
-						<dht:zoneBoxTitle a="dhMostPlayedSongs">MY MOST PLAYED SONGS</dht:zoneBoxTitle>
-	
-						<c:forEach items="${musicPerson.mostPlayedTracks.results}" var="track">
-							<dht:track track="${track}"/>
-						</c:forEach>
-	
-						<dht:expandablePager pageable="${musicPerson.mostPlayedTracks}" anchor="dhMostPlayedSongs"/>
-	
-						<dht:zoneBoxSeparator/>
+						<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" albumArt="true" pageable="${musicGlobal.recentTracks}" separator="true"/>
+
+						<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" separator="true"/>
 					</c:if>
 
 					<c:if test="${!signin.valid}">
-						<dht:zoneBoxTitle a="dhRecentSongs">RECENT SONGS</dht:zoneBoxTitle>
-						
-						<c:forEach items="${musicGlobal.recentTracks.results}" var="track">
-							<dht:track track="${track}" albumArt="true"/>
-						</c:forEach>
-	
-						<dht:expandablePager pageable="${musicGlobal.recentTracks}" anchor="dhRecentSongs"/>
-	
-						<dht:zoneBoxSeparator/>
+
+						<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
+
 					</c:if>
 
-					<dht:zoneBoxTitle a="dhGlobalMostPlayedSongs">MOST PLAYED SONGS EVER</dht:zoneBoxTitle>
-
-					<c:forEach items="${musicGlobal.mostPlayedTracks.results}" var="track">
-						<dht:track track="${track}"/>
-					</c:forEach>
-
-					<dht:expandablePager pageable="${musicGlobal.mostPlayedTracks}" anchor="dhGlobalMostPlayedSongs"/>
+					<dht:trackList name="MOST PLAYED SONGS EVER" id="dhGlobalMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" />
 
 				</dht:zoneBoxSubcolumn>
 				<dht:zoneBoxSubcolumn which="two">
@@ -119,36 +92,14 @@
 	
 						<dht:zoneBoxSeparator/>
 	
-						<dht:zoneBoxTitle a="dhFriendsRecentSongs">FRIENDS' RECENT SONGS</dht:zoneBoxTitle>
-	
-						<c:forEach items="${musicPerson.friendsRecentTracks.results}" var="track">
-							<dht:track track="${track}"/>
-						</c:forEach>
-
-						<dht:expandablePager pageable="${musicPerson.friendsRecentTracks}" anchor="dhFriendsRecentSongs"/>
-	
-						<dht:zoneBoxSeparator/>
+						<dht:trackList name="FRIENDS' RECENT SONGS" id="dhFriendsRecentSongs" tracks="${musicGlobal.friendsRecentTracks.results}" pageable="${musicGlobal.friendsRecentTracks}" separator="true"/>
 					</c:if>
 
 					<c:if test="${!signin.valid}">
-						<dht:zoneBoxTitle a="dhMostPlayedToday">MOST PLAYED SONGS TODAY</dht:zoneBoxTitle>
-						
-						<c:forEach items="${musicGlobal.mostPlayedToday.results}" var="track">
-							<dht:track track="${track}"/>
-						</c:forEach>
-	
-						<dht:expandablePager pageable="${musicGlobal.mostPlayedToday}" anchor="dhMostPlayedToday"/>
-	
-						<dht:zoneBoxSeparator/>
+						<dht:trackList name="MOST PLAYED SONGS TODAY" id="dhMostPlayedToday" tracks="${musicGlobal.mostPlayedToday.results}" pageable="${musicGlobal.mostPlayedToday}" separator="true"/>
 					</c:if>
 
-					<dht:zoneBoxTitle a="dhOnePlayWonders">ONE PLAY WONDERS</dht:zoneBoxTitle>
-
-					<c:forEach items="${musicGlobal.onePlayTracks.results}" var="track">
-						<dht:track track="${track}"/>
-					</c:forEach>
-
-					<dht:expandablePager pageable="${musicGlobal.onePlayTracks}" anchor="dhOnePlayWonders"/>
+					<dht:trackList name="ONE PLAY WONDERS" id="dhOnePlayWonders" tracks="${musicGlobal.onePlayTracks.results}" pageable="${musicGlobal.onePlayTracks}" />
 					
 				</dht:zoneBoxSubcolumn>
 			
