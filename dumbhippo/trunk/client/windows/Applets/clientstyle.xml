@@ -15,9 +15,6 @@
     <xsl:template match="dh:coreScript"> 
         <script language="javascript" src="{$appleturl}dh.js"></script>
     </xsl:template>
-    <xsl:template match="dh:flickrScript">
-        <script language="javascript" src="{$appleturl}flickrstatus.js"></script>
-    </xsl:template>    
     <xsl:template match="dh:menuScript">
         <script language="javascript" src="{$appleturl}menu.js"></script>
     </xsl:template>

@@ -232,6 +232,7 @@ ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
 AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
 
 AC_OUTPUT([
+mugshot.spec
 Makefile
 ])
 
