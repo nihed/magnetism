@@ -111,7 +111,7 @@ public class TestClient {
 			
 			Message message = new Message();
 			
-			message.setTo(friend.getOwner().getId() + "@dumbhippo.com");
+			message.setTo(friend.getOwner().getId() + "@mugshot.org");
 			message.setBody("This is the message body");
 			
 			connection.sendPacket(message);

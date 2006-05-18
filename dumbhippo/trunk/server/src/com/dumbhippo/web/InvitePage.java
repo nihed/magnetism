@@ -79,7 +79,7 @@ public class InvitePage extends AbstractInvitePage {
         if (getPreviousInvitation() != null) {
         	return previousInvitation.getInviterData().getInvitationSubject();
         } else {
-        	return "Invitation from " + getPerson().getName() + " to use Dumb Hippo";
+        	return "Invitation from " + getPerson().getName() + " to use Mugshot";
         }        	
 	}
 	

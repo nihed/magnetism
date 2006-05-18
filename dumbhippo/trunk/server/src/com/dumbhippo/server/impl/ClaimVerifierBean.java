@@ -116,16 +116,16 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			
 			bodyText.append("\n");
 			bodyText.append("Click this link to add '" + resource.getEmail() + "' to your account: " + link + "\n");
-			bodyText.append("NOTE: Anyone with access to this email account will be able to log in to your DumbHippo account.\n");
+			bodyText.append("NOTE: Anyone with access to this email account will be able to log in to your Mugshot account.\n");
 			bodyText.append("\n");
 			
 			bodyHtml.appendHtmlHead("");
 			bodyHtml.append("<body>\n");
 			bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
-			bodyHtml.append("<p>NOTE: <b>Anyone</b> with access to this email account will be able to log in to your DumbHippo account.</p>");
+			bodyHtml.append("<p>NOTE: <b>Anyone</b> with access to this email account will be able to log in to your Mugshot account.</p>");
 			bodyHtml.append("</body>\n</html>\n");
 			
-			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your DumbHippo account",
+			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
 					bodyText.toString(), bodyHtml.toString());
 			mailer.sendMessage(message);
 		} else {
@@ -137,8 +137,8 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			}
 			String link = getClaimVerifierLink(user, resource);
 			XmlBuilder bodyHtml = new XmlBuilder();
-			bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your DumbHippo account", "href", link);
-			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your DumbHippo account.");
+			bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your Mugshot account", "href", link);
+			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your Mugshot account.");
 			
 			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
 			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);

@@ -352,8 +352,8 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		private Message createMessageFor(User user, Message.Type type) {
-			// FIXME should dumbhippo.com domain be hardcoded here?			
-			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
+			// FIXME should mugshot.org domain be hardcoded here?			
+			return new Message(user.getGuid().toJabberId("mugshot.org"), type);
 		}
 		
 		private Message createMessageFor(User user) {
@@ -612,7 +612,7 @@ public class MessageSenderBean implements MessageSender {
 			if (recipientInviteUrl != null) {
 				format = "<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n"
 					+ "<a href=\"%s\">%s</a> created an open "
-					+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Dumb Hippo</a>\n"
+					+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Mugshot</a>\n"
 					+ "</div>\n";
 				messageHtml.append(String.format(format, 
 						// FIXME handle null public page url
@@ -630,7 +630,7 @@ public class MessageSenderBean implements MessageSender {
 				stopLink = "";
 			
 			format = "<div style=\"text-align:center;margin-top:1em;font-size:8pt;\">\n" 
-				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's DumbHippo?</a> %s\n"
+				+ "<a style=\"font-size:8pt;\" href=\"%s\">What's Mugshot?</a> %s\n"
 				+ "</div>\n";
 			messageHtml.append(String.format(format,
 					recipientInviteUrl != null ? XmlBuilder.escape(recipientInviteUrl) : XmlBuilder.escape(baseurl),

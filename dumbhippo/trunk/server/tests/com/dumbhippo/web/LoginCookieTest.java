@@ -15,7 +15,7 @@ public class LoginCookieTest extends TestCase {
 		Account acct = new Account(h);
 		Client c = new Client(acct);
 		acct.authorizeNewClient(c);
-		String host = "test.dumbhippo.com";
+		String host = "test.mugshot.org";
 		String personId = h.getId();
 		String authKey = c.getAuthKey();
 		LoginCookie loginCookie = new LoginCookie(host, personId, authKey);

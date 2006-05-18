@@ -242,7 +242,7 @@ class Bot implements Runnable {
 			return;
 		switch (random.nextInt(5)) {
 		case 0:
-			client.sendMessage(buddy, chatRoomId, "You suck");
+			client.sendMessage(buddy, chatRoomId, "You are nice");
 			break;
 		case 1:
 			client.sendMessage(buddy, chatRoomId, "Blah blah blah blah blah blah blah");
@@ -254,7 +254,7 @@ class Bot implements Runnable {
 			client.sendMessage(buddy, chatRoomId, "Do I repeat myself often?");
 			break;
 		case 4:
-			client.sendMessage(buddy, chatRoomId, "I may be dumb, but I'm not stupid");
+			client.sendMessage(buddy, chatRoomId, "La la la");
 			break;
 		}
 	}

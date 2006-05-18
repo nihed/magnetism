@@ -33,7 +33,7 @@
           <property name="mail.smtp.port" value="@@mailPort@@"/>
 
           <!-- Change to the address mail will be from  -->
-          <property name="mail.from" value="nobody@dumbhippo.com"/>
+          <property name="mail.from" value="nobody@mugshot.org"/>
 
           <!-- Enable debugging output from the javamail classes -->
           <property name="mail.debug" value="false"/>

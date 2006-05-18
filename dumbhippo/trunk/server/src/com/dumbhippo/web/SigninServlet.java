@@ -53,7 +53,7 @@ public class SigninServlet extends AbstractServlet {
 			next = "/";
 		
 		if (address == null) {
-			throw new HumanVisibleException("Please enter an email or AIM address you use with your DumbHippo account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
+			throw new HumanVisibleException("Please enter an email or AIM address you use with your Mugshot account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
 		}
 		
 		if (password == null)

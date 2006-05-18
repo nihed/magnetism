@@ -1,11 +1,11 @@
 package com.dumbhippo.server;
 
 public enum HippoProperty {
-	BASEURL("dumbhippo.server.baseurl", "http://dumbhippo.com"),
+	BASEURL("dumbhippo.server.baseurl", "http://mugshot.org"),
 	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	DISABLE_EMAIL("dumbhippo.server.email.disable", "false"),
-	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@dumbhippo.com"),
-	DOWNLOADURL_WINDOWS("dumbhippo.server.downloadurl.windows", "http://devel.dumbhippo.com/download/DumbHippo-current.msi"),
+	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),
+	DOWNLOADURL_WINDOWS("dumbhippo.server.downloadurl.windows", "http://devel.mugshot.org/download/Mugshot-current.msi"),
 	XMPP_ADDRESS("dumbhippo.server.xmpp.address", null),
 	XMPP_PORT("dumbhippo.server.xmpp.port", null),
 	XMPP_ADMINUSER("dumbhippo.server.xmpp.adminuser", null),

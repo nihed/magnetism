@@ -180,7 +180,7 @@ public class VerifyServlet extends AbstractServlet {
 		} catch (TokenExpiredException e) {
 			logger.debug("token expired: {}", e.getMessage());
 			if (e.getTokenClass() == InvitationToken.class)
-				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
+				throw new HumanVisibleException("Your invitation has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
 				throw new HumanVisibleException("The sign-in link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here</a>");
 			else if (e.getTokenClass() == ResourceClaimToken.class)
@@ -204,7 +204,7 @@ public class VerifyServlet extends AbstractServlet {
 				// expired is ruled out because of the above checks, so the invitation must
 				// have been deleted, but we'll be gentle to the impressionable public and display
 				// the same message that shows up when the invitation has really expired
-				throw new HumanVisibleException("Your invitation to DumbHippo has expired! Ask the person who sent you this to invite you again.");
+				throw new HumanVisibleException("Your invitation has expired! Ask the person who sent you this to invite you again.");
 			}
 			return doInvitationToken(request, response, (InvitationToken) token);
 		} else if (token instanceof LoginToken) {

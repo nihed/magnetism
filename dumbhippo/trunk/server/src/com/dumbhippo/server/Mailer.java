@@ -7,10 +7,10 @@ import javax.mail.internet.MimeMessage;
 public interface Mailer {
 
 	enum SpecialSender {
-		INVITATION("Dumb Hippo Invitation <invitations@dumbhippo.com>"),
-		LOGIN("Dumb Hippo Login <logins@dumbhippo.com>"),
-		VERIFIER("Dumb Hippo Address Verifier <verifier@dumbhippo.com>"),
-		NOBODY("nobody@dumbhippo.com");
+		INVITATION("Mugshot Invitation <invitations@mugshot.org>"),
+		LOGIN("Mugshot Login <logins@mugshot.org>"),
+		VERIFIER("Mugshot Address Verifier <verifier@mugshot.org>"),
+		NOBODY("nobody@mugshot.org");
 		
 		private String address;
 		

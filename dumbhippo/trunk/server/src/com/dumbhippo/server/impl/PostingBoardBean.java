@@ -331,8 +331,8 @@ public class PostingBoardBean implements PostingBoard {
 	public void doShareLinkTutorialPost(User recipient) {
 		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
 				configuration.getProperty(HippoProperty.BASEURL) + "/account",
-				"What is this DumbHippo thing?",
-				"Set up your account and learn to use DumbHippo by visiting this link");
+				"What is this Mugshot thing?",
+				"Set up your account and learn to use Mugshot by visiting this link");
 	}
 
 	public void doNowPlayingTutorialPost(User recipient) {

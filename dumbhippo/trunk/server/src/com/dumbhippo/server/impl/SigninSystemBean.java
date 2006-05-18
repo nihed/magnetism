@@ -78,7 +78,7 @@ public class SigninSystemBean implements SigninSystem {
 			bodyHtml.appendTextNode("a", "Click here to sign in", "href", link);
 			bodyHtml.append("</body>\n</html>\n");
 			
-			mailer.setMessageContent(message, "Sign in to DumbHippo", bodyText.toString(), bodyHtml.toString());
+			mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString());
 			mailer.sendMessage(message);
 		} else {
 			AimResource resource;
@@ -117,13 +117,13 @@ public class SigninSystemBean implements SigninSystem {
 		"Caution: this is a one-time link and needs to be opened in Internet\n" +
 		"  Explorer on Windows to work. If you normally use a different web\n" +
 		"  browser, cut-and-paste the link into Internet Explorer. If you need\n" +
-		"  help, please mail feedback@dumbhippo.com or reply to this mail\n" +
+		"  help, please mail feedback@mugshot.org or reply to this mail\n" +
 		"\n" +
 		"We apologize for the inconvenience, and hope you'll keep trying out\n" +
 		"our stuff.\n" +
 		"\n" +
 		"Owen Taylor\n" +
-		"DumbHippo Team Member\n" +
+		"Mugshot Team Member\n" +
 		"";
 	
 	final static String REPAIR_HTML =
@@ -148,13 +148,13 @@ public class SigninSystemBean implements SigninSystem {
 		"Caution: this is a one-time link and needs to be opened in Internet\n" +
 		"   Explorer on Windows to work. If you normally use a different web\n" +
 		"   browser, cut-and-paste the link into Internet Explorer. If you need\n" +
-		"  help, please mail feedback@dumbhippo.com or reply to this mail\n" +
+		"  help, please mail feedback@mugshot.org or reply to this mail\n" +
 		"</p><p>\n" +
 		"We apologize for the inconvenience, and hope you'll keep trying out\n" +
 		"our stuff.\n" +
 		"</p><p>\n" +
 		"Owen Taylor<br/>\n" +
-		"DumbHippo Team Member\n" +
+		"Mugshot Team Member\n" +
 		"</p>\n";
 		
 
@@ -183,7 +183,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		bodyHtml.append("</body>\n</html>\n");
 		
-		mailer.setMessageContent(message, "We messed up with DumbHippo", bodyText.toString(), bodyHtml.toString());
+		mailer.setMessageContent(message, "We messed up with Mugshot", bodyText.toString(), bodyHtml.toString());
 		mailer.sendMessage(message);
 	}
 
