@@ -46,7 +46,6 @@
 	<classpathentry kind="lib" path="hungry/lib/xercesImpl.jar"/>
 	<classpathentry kind="lib" path="hungry/lib/xmlParserAPIs.jar"/>
 	<classpathentry kind="lib" path="hungry/lib/jwebunit-1.2.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.jar"/>
 	<classpathentry kind="src" path="wildfire/src/java"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/activation.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/ant.jar"/>
@@ -88,5 +87,6 @@
 	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
+	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

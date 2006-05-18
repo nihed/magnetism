@@ -21,14 +21,11 @@ public class Signin extends PageTestCase {
 	}
 	
 	public void validatePage() {
-		// Disable for now
-		/*
 		t.assertFormPresent("dhLoginNoPasswordForm");
-		t.assertFormPresent("dhLoginWithPasswordForm");		
+		t.assertFormPresent("dhLoginWithPasswordForm");
 		t.setWorkingForm("dhLoginNoPasswordForm");		
 		t.assertFormElementPresent("sendlink");	
 		t.setWorkingForm("dhLoginWithPasswordForm");			
 		t.assertFormElementPresent("checkpassword");
-		*/
 	}
 }

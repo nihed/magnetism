@@ -26,10 +26,6 @@ public class ViewPersonAnonymous extends PageTestCase {
 	}
 
 	public void validatePage() {
-		// should turn out to be a signin page, since 
-		// we're in "stealth mode"
-		Signin signin = new Signin(t);
-		signin.setUp();
-		signin.validatePage();
+		// FIXME check for nonexistence of private items
 	}
 }
