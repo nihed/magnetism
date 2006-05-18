@@ -16,14 +16,14 @@
 	
 		<c:choose>
 			<c:when test="${bookmark.browser.ieAtLeast60}">
-				<p>If you have Internet Explorer, <a href="/welcome">the DumbHippo software</a>
+				<p>If you have Internet Explorer, <a href="/welcome">the Mugshot software</a>
 				adds a toolbar button for sharing links. Go there now and don't worry about this page.
 				</p>
 			</c:when>
 			<c:otherwise>
 				<p>For Firefox and Safari users, bookmarking this link is an alternative to
 					the Internet Explorer toolbar button
-					included in <a href="/welcome">the DumbHippo software</a>.
+					included in <a href="/welcome">the Mugshot software</a>.
 				</p>
 			</c:otherwise>
 		</c:choose>
@@ -38,7 +38,7 @@
 		
 		<p style="text-align: center;">
 			<%-- keep in sync with dh.util.openShareWindow --%>
-			<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);" style="font-size: 200%;">Dumb Hippo It!</a>
+			<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);" style="font-size: 200%;">Mugshot It!</a>
 		<br/>
 		Bookmark this, then click on the bookmark when you visit a web site you want to share
 		with friends.
@@ -62,7 +62,7 @@
 					If the bookmark doesn't show up on your toolbar, try going to the View menu
 					and under Toolbars be sure Bookmarks Toolbar has been checked.
 					<br/>
-					If you have a bookmarks toolbar but the DumbHippo link is not on it,
+					If you have a bookmarks toolbar but the Mugshot link is not on it,
 					try choosing Manage Bookmarks from the Bookmarks menu, and 
 					moving the bookmark to your Personal Toolbar folder.
 				</c:when>
@@ -73,7 +73,7 @@
 					To bookmark the link in Internet Explorer, click it with the <b>right</b> mouse
 					button and choose "Add to Favorites..." from the menu.
 					<br/>
-					With Internet Explorer, you can also <a href="/welcome">download the DumbHippo 
+					With Internet Explorer, you can also <a href="/welcome">download the Mugshot 
 					application</a> instead of using this bookmark.
 				</c:when>
 				<c:otherwise>

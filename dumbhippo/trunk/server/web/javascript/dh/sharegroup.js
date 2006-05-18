@@ -29,7 +29,7 @@ dh.sharegroup.updateInvitations = function() {
 	else if (remaining == 1)
 		message = "You can invite one more person via email";
 	else
-		message = "No more email invitations! You can only share this group with existing DumbHippo users";
+		message = "No more email invitations! You can only share this group with existing Mugshot users";
 
 	dojo.dom.textContent(dh.sharegroup.inviteCountMessage, message)
 

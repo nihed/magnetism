@@ -10,7 +10,7 @@
 			<div id="dhInformationBar"><a class="dh-information" href="/account">(re-enable your account)</a></div>
 		</c:when>
 		<c:when test="${browser.windows && !signin.user.account.wasSentShareLinkTutorial}">
-			<div id="dhInformationBar"><a class="dh-information" href="/welcome">Download DumbHippo Software Now</a></div>
+			<div id="dhInformationBar"><a class="dh-information" href="/welcome">Download Mugshot Software Now</a></div>
 		</c:when>
 	</c:choose>
 </c:if>

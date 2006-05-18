@@ -10,7 +10,7 @@
 </c:if>
 
 <head>
-	<title>Repair DumbHippo</title>
+	<title>Repair Mugshot</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
@@ -24,23 +24,23 @@
 		<dht:toolbar/>
   
 		<div class="dh-welcome-message">
-			<p class="dh-welcome-headline">The DumbHippo Repair Page</p>
+			<p class="dh-welcome-headline">The Mugshot Repair Page</p>
 			
 			<c:choose>
 				
 				<c:when test="${welcome.browser.windows}">
 					<p>
-						You are now logged into DumbHippo; the next step in repairing your
-						DumbHippo configuration is to download and install the current
+						You are now logged into Mugshot; the next step in repairing your
+						Mugshot configuration is to download and install the current
 						version of the client software.
 					</p>
 					<p>
-						<a href="${welcome.downloadUrlWindows}">Click here to download the DumbHippo software</a>.
+						<a href="${welcome.downloadUrlWindows}">Click here to download the Mugshot software</a>.
 					</p>
 					<p>
 						Once you've downloaded and installed the software, it will start running 
 						automatically, and you'll be back up and running with all the features of
-						DumbHippo.
+						Mugshot.
 					</p>
 					
 					<c:if test="${!welcome.browser.ie}">
@@ -56,7 +56,7 @@
 				<c:otherwise>
 				
 					<p>
-						The full DumbHippo
+						The full Mugshot
 						experience relies on a <a href="${welcome.downloadUrlWindows}">Windows-only download</a>
 						(we're working on support for other platforms!). However, you can use the basics
 						without downloading the application. <a href="/bookmark">Go here</a> to learn how
