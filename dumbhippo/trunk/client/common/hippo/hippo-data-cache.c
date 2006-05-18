@@ -546,6 +546,29 @@ hippo_data_cache_get_active_posts(HippoDataCache  *cache)
     return copy;    
 }
 
+static void
+list_all_posts_foreach(void *key, void *value, void *data)
+{   
+    GSList **result = data;
+    HippoPost *post = HIPPO_POST(value);
+
+    g_object_ref(post);
+    *result = g_slist_prepend(*result, post);
+}
+
+GSList*
+hippo_data_cache_get_all_posts(HippoDataCache  *cache)
+{
+    GSList *result = NULL;
+
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+   
+    /* ref's each post */
+    g_hash_table_foreach(cache->posts, list_all_posts_foreach, &result);
+
+    return result;    
+}
+
 static gboolean
 clear_active_posts_no_signal(HippoDataCache *cache)
 {
