@@ -78,6 +78,7 @@ hippo_bubble_init(HippoBubble       *bubble)
 {
     GdkColor white;
     GdkPixbuf *pixbuf;
+    GtkWidget *widget;
 
     GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
     
@@ -103,11 +104,18 @@ hippo_bubble_init(HippoBubble       *bubble)
                      G_CALLBACK(destroy_toplevel_on_click), NULL);
                      
 
+    bubble->sender_photo = gtk_event_box_new();
+    gtk_widget_modify_bg(bubble->sender_photo, GTK_STATE_NORMAL, &white);
+    gtk_container_set_border_width(GTK_CONTAINER(bubble->sender_photo), 2);
 #if 0
-    bubble->sender_photo = gtk_image_new();
+    wigdet = gtk_image_new();
 #else
-    bubble->sender_photo = gtk_image_new_from_stock(GTK_STOCK_STOP, GTK_ICON_SIZE_LARGE_TOOLBAR);
-#endif        
+    widget = gtk_image_new_from_stock(GTK_STOCK_STOP, GTK_ICON_SIZE_LARGE_TOOLBAR);
+#endif
+    /* photo is always supposed to be this size */
+    gtk_widget_set_size_request(widget, 60, 60);
+    gtk_container_add(GTK_CONTAINER(bubble->sender_photo), widget);
+
     hookup_widget(bubble, &bubble->sender_photo);
     
 #if 0
@@ -116,9 +124,7 @@ hippo_bubble_init(HippoBubble       *bubble)
     bubble->sender_name = gtk_label_new("Stevo");
 #endif
     hookup_widget(bubble, &bubble->sender_name);
-    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->sender_name), PANGO_ELLIPSIZE_END); */
     gtk_label_set_single_line_mode(GTK_LABEL(bubble->sender_name), TRUE);
-    
     
     pixbuf = hippo_embedded_image_get("bublinkswarm");
     bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
@@ -128,24 +134,34 @@ hippo_bubble_init(HippoBubble       *bubble)
 #if 0
     bubble->link_title = gtk_label_new(NULL);
 #else
-    bubble->link_title = gtk_label_new("Space Monkeys Invade Downtown");
+    bubble->link_title = gtk_label_new("<u>Space Monkeys Invade Downtown</u>");
 #endif
     hookup_widget(bubble, &bubble->link_title);
-    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->link_title), PANGO_ELLIPSIZE_END); */
+
+    gtk_label_set_use_markup(GTK_LABEL(bubble->link_title), TRUE);    
     gtk_label_set_single_line_mode(GTK_LABEL(bubble->link_title), TRUE);
     gtk_widget_modify_fg(bubble->link_title, GTK_STATE_NORMAL, &white);
 
 #if 0
     bubble->link_description = gtk_label_new(NULL);
 #else
-    bubble->link_description = gtk_label_new("I wouldn't have believed it unless I saw it with my own two eyes!");
+    bubble->link_description = gtk_label_new("<small>I wouldn't have believed it unless I saw it with my own two eyes!</small>");
 #endif
     hookup_widget(bubble, &bubble->link_description);
     
     gtk_widget_modify_fg(bubble->link_description, GTK_STATE_NORMAL, &white);
     gtk_label_set_line_wrap(GTK_LABEL(bubble->link_description), TRUE);
+    gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE); 
+
+#if 0
+    bubble->recipients = gtk_label_new(NULL);
+#else
+    bubble->recipients = gtk_label_new("Sent to you, John, Anne");
+#endif
+    hookup_widget(bubble, &bubble->recipients);
     
-    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->link_description), PANGO_ELLIPSIZE_END); */
+    gtk_label_set_line_wrap(GTK_LABEL(bubble->recipients), TRUE);
+    gtk_label_set_use_markup(GTK_LABEL(bubble->recipients), TRUE);     
 }
 
 static void
@@ -343,10 +359,11 @@ compute_layout(GtkWidget          *widget,
                GdkRectangle       *close_rect_p)
 {
     GtkContainer *container;
+    HippoBubble *bubble;
     GdkPixbuf *tl_pixbuf;
     GdkPixbuf *bl_pixbuf;
     GdkPixbuf *tr_pixbuf;
-    GdkPixbuf *br_pixbuf;    
+    GdkPixbuf *br_pixbuf;
     GdkRectangle border_rect;
     GdkRectangle content_rect;
     GdkRectangle bottom_edge_rect;
@@ -360,6 +377,7 @@ compute_layout(GtkWidget          *widget,
     int bottom_edge_height;
 
     container = GTK_CONTAINER(widget);
+    bubble = HIPPO_BUBBLE(widget);
 
     tr_pixbuf = hippo_embedded_image_get("obubcnr_tr");
     bl_pixbuf = hippo_embedded_image_get("obubcnr_bl");
@@ -592,9 +610,11 @@ compute_content_widgets_layout(HippoBubble  *bubble,
     GdkRectangle link_description;
 
     /* assumes widget requisitions are up-to-date */
-#define GET_REQ(what) do {                                \
-      what.width = bubble->what->requisition.width;       \
-      what.height = bubble->what->requisition.height;     \
+#define GET_REQ(what) do {                                  \
+      GtkRequisition req;                                   \
+      gtk_widget_get_child_requisition(bubble->what, &req); \
+      what.width = req.width;                               \
+      what.height = req.height;                             \
     } while(0)
         
     GET_REQ(sender_photo);
@@ -604,7 +624,7 @@ compute_content_widgets_layout(HippoBubble  *bubble,
     /* center name under photo */
     GET_REQ(sender_name);
     sender_name.x = sender_photo.x + (sender_photo.width - sender_name.width) / 2;
-    sender_name.y = sender_photo.y + sender_photo.height + 10;
+    sender_name.y = sender_photo.y + sender_photo.height + 5;
     
     /* link swarm logo aligned top with photo */
     GET_REQ(link_swarm_logo);
@@ -618,7 +638,7 @@ compute_content_widgets_layout(HippoBubble  *bubble,
     GET_REQ(link_description);
     link_description.x = link_title.x;
     link_description.y = link_title.y + link_title.height + 5;
-    
+        
 #define OUT(what) do { if (what ## _p) { * what ## _p = what; }  } while(0)
     OUT(sender_photo);
     OUT(sender_name);
@@ -636,12 +656,14 @@ hippo_bubble_size_request(GtkWidget         *widget,
     GtkContainer *container;
     GtkFixed *fixed;    
     GList *link;
+    GtkRequisition req;
     GdkRectangle content_child_rect;
     GdkRectangle sender_photo_rect;
     GdkRectangle sender_name_rect;
     GdkRectangle link_swarm_logo_rect;
     GdkRectangle link_title_rect;
     GdkRectangle link_description_rect;
+    GdkRectangle recipients_rect;
     GdkRectangle border_rect;
     GdkRectangle offset_content_rect;
     GdkRectangle close_event_box_rect;
@@ -675,6 +697,15 @@ hippo_bubble_size_request(GtkWidget         *widget,
     gdk_rectangle_union(&content_child_rect, &link_title_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &link_description_rect, &content_child_rect);
     
+    /* have to special case the recipients thing */
+    gtk_widget_get_child_requisition(bubble->recipients, &req);
+    recipients_rect.width = req.width;
+    recipients_rect.height = req.height;
+    recipients_rect.x = content_child_rect.x + content_child_rect.width - recipients_rect.width - 10;
+    recipients_rect.y = content_child_rect.y + content_child_rect.height + 10;
+    
+    gdk_rectangle_union(&content_child_rect, &recipients_rect, &content_child_rect);
+    
     /* see what other stuff goes around the content widgets */
     compute_layout(widget, &content_child_rect, BASE_IS_CONTENT_REQUISITION, &border_rect,
                    &offset_content_rect, NULL, NULL, NULL, NULL, &close_event_box_rect);
@@ -703,6 +734,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     OFFSET(link_title);
     OFFSET(link_description);
     OFFSET(close_event_box);
+    OFFSET(recipients);
 #undef OFFSET    
 }
 
