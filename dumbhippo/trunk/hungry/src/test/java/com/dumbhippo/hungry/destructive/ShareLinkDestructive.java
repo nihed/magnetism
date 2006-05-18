@@ -65,7 +65,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 				"title", title, 
 				"description", description,
 				"recipients", commaRecipients,
-				"secret", Boolean.toString(secret));
+				"isPublic", Boolean.toString(!secret));
 		
 		for (JabberClient c : recipientClients) {
 			if (!c.isConnected())
