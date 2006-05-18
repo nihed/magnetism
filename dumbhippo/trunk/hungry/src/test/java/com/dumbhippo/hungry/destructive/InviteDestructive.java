@@ -38,9 +38,10 @@ public class InviteDestructive extends Invite {
 		String name = sb.toString() + " Doe";
 		String email = sb.toString() + "@example.com";
 		
-		t.setFormElement("subject", "Yo " + name + ", join up");
-		t.setFormElement("email", email);
-		t.setFormElement("message", "This is my message to you");
+		t.setWorkingForm("dhInvitationForm");
+		t.setFormElement("dhSubjectEntry", "Yo " + name + ", join up");
+		t.setFormElement("dhAddressEntry", email);
+		t.setFormElement("dhMessageEntry", "This is my message to you");
 		
 		t.submit();
 	}

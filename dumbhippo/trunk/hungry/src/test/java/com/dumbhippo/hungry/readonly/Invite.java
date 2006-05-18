@@ -25,11 +25,14 @@ public class Invite extends SignedInPageTestCase {
 		CheatSheet cs = CheatSheet.getReadOnly();
 		int invites = cs.getNumberOfInvitations(getUserId());
 		if (invites > 0) {
+			t.assertTextNotPresent("NO INVITATIONS REMAINING");
+			t.assertFormPresent("dhInvitationForm");			
 			t.setWorkingForm("dhInvitationForm");
 			t.assertFormElementPresent("dhAddressEntry");
 			t.assertFormElementPresent("dhSubjectEntry");
 			t.assertFormElementPresent("dhMessageEntry");
 		} else {
+			t.assertFormNotPresent("dhInvitationForm");				
 			t.assertTextPresent("NO INVITATIONS REMAINING");
 		}
 	}
