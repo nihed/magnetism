@@ -15,7 +15,20 @@
 	<dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage disableHomeLink="true">
-	<dht:sidebarPerson who="${signin.user.id}"/>
+	<dht:sidebarPerson who="${signin.user.id}">
+	<c:choose>
+		<c:when test="${browser.gecko}">
+			<dht:sidebarBoxControls title="FIREFOX CONTROLS">
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Mozilla Firefox Browser">Bookmark Page</dht:actionLink>
+			</dht:sidebarBoxControls>
+		</c:when>
+		<c:when test="${browser.khtml}">
+			<dht:sidebarBoxControls title="SAFARI CONTROLS">
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Safari Browser">Bookmark Page</dht:actionLink>
+			</dht:sidebarBoxControls>
+		</c:when>
+	</c:choose>
+	</dht:sidebarPerson>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
 			<dht:requireLinksPersonBean who="${signin.user.id}"/>
@@ -44,15 +57,28 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
-			<dht:requireMusicPersonBean who="${signin.user.id}"/>
-			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
-			<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
-			<dht:zoneBoxSeparator/>
-			<dht:zoneBoxTitle>MY RECENT SONGS</dht:zoneBoxTitle>
-					
-			<c:forEach items="${musicPerson.recentTracks.results}" var="track">
-				<dht:track track="${track}" oneLine="true" playItLink="false"/>
-			</c:forEach>
+			<c:choose>
+				<c:when test="${signin.musicSharingEnabled}">
+					<dht:requireMusicPersonBean who="${signin.user.id}"/>
+					<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+					<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+					<dht:zoneBoxSeparator/>
+					<dht:trackList name="MY RECENT SONGS" tracks="${musicPerson.recentTracks.results}" oneLine="true" />
+				</c:when>
+				<c:otherwise>
+					<dht:requireMusicGlobalBean/>
+					<table><tr>
+					<td rowSpan="2"><img src="/images2/musicradar32x44.gif" /></td>
+					<td><a style="font-weight:bold;" href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn on Music Radar</a> to share your music taste with others.</td>
+					</tr><tr>
+					<td><a href="/radar-learnmore">Learn More</a></td>
+					</tr></table>
+					<dht:zoneBoxSeparator/>
+					<dht:trackList name="MOST PLAYED SONGS TODAY" tracks="${musicGlobal.mostPlayedToday.results}" separator="true" oneLine="true" />
+					<dht:trackList name="ONE PLAY WONDERS" tracks="${musicGlobal.onePlayTracks.results}" oneLine="true" />
+
+				</c:otherwise>
+			</c:choose>
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>
