@@ -42,6 +42,12 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\blueleftarrow.gif">
+		</File>
+		<File
+			RelativePath=".\bluerightarrow.gif">
+		</File>
+		<File
 			RelativePath=".\bubble.css"
 			DeploymentContent="TRUE">
 		</File>
@@ -77,6 +83,9 @@
 			RelativePath=".\bubedge_t.png">
 		</File>
 		<File
+			RelativePath=".\bublinkswarm.gif">
+		</File>
+		<File
 			RelativePath=".\clientstyle.xml"
 			DeploymentContent="TRUE">
 		</File>
@@ -93,7 +102,16 @@
 			DeploymentContent="TRUE">
 		</File>
 		<File
+			RelativePath=".\grayleftarrow.gif">
+		</File>
+		<File
+			RelativePath=".\grayrightarrow.gif">
+		</File>
+		<File
 			RelativePath=".\groupChat.png">
+		</File>
+		<File
+			RelativePath=".\linkswarm.gif">
 		</File>
 		<File
 			RelativePath=".\ls_bubshadow.png">

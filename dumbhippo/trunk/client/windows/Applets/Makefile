@@ -18,6 +18,7 @@ all: *.xml *.css *.png *.js
     copy flickrstatus.js $(OUTDIR)\applets    
     copy gray*arrow.gif $(OUTDIR)\applets
     copy groupChat.png $(OUTDIR)\applets
+    copy linkswarm.gif $(OUTDIR)\applets
     copy ls_bubshadow.png $(OUTDIR)\applets
     copy lsorange_*.png $(OUTDIR)\applets
     copy lswhite_*.png $(OUTDIR)\applets

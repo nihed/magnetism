@@ -3,19 +3,7 @@
 
 dh.menu = {}
 
-dh.menu.WIDTH = 200
-// Border around the entire menu
-dh.menu.BORDER = 1
-// Margin around individual items (note that the margins collapse between items)
-dh.menu.MARGIN = 3
-// Number of rows of standard menu items
-dh.menu.NUM_STANDARD = 2
-
 dh.menu.Menu = function() {
-    // List of the currently displayed posts; we use this mostly to get references
-    // to the post objects when computing our desired size
-    this.posts = []
-
     this.exit = function() {
         window.close()
         window.external.application.Exit()
@@ -42,11 +30,6 @@ dh.menu.Menu = function() {
         this._openSiteLink("")
     }
 
-//    this.showHot = function() {
-//        window.close()
-//        this._openSiteLink("")
-//    }
-
     this.showRecent = function() {
         window.close()
         window.external.application.ShowRecent()
@@ -70,101 +53,70 @@ dh.menu.Menu = function() {
     
     // Compute our desired size
     this.resize = function() {
-        // Margins and border
-        var height = 2 * (dh.menu.MARGIN + dh.menu.BORDER)
-        
-        // Standard menu items; we assume they are all the same
-        var homeDiv = document.getElementById("dhMenuHome")
-        height += dh.menu.NUM_STANDARD * homeDiv.clientHeight + (dh.menu.NUM_STANDARD - 1) * dh.menu.MARGIN
-        
-        // Active posts; again we assume they are all the same
-        if (this.posts.length > 0) {
-            var postInfo = this.posts[0] 
-            var postHeight = postInfo.titleDiv.clientHeight + postInfo.metaDiv.clientHeight
-            if (postInfo.image.clientHeight > postHeight)
-                postHeight = postInfo.image.clientHeight
-                
-            height += this.posts.length * (postHeight + dh.menu.MARGIN)
-        }
-        
-        window.external.application.Resize(dh.menu.WIDTH, height)
+        table = document.getElementById("dhMenuTable")
+        window.external.application.Resize(table.offsetWidth + 6, table.offsetHeight + 6)
     }
     
     this.insertActivePost = function(position, post) {
-        var activePostsDiv = document.getElementById("dhActivePosts")
+        var menuTableBody = document.getElementById("dhMenuTableBody")
         
-        var postDiv = document.createElement("div")
-        postDiv.className = "dh-active-post"
-        
-        postDiv.onclick = dh.util.dom.stdEventHandler(function (e) {
+        var row = document.createElement("tr")
+        row.className = "dh-menu-post-row"
+
+        row.onmouseenter = dh.util.dom.stdEventHandler(function (e) {
+            row.className = "dh-menu-post-row dh-menu-post-row-hover"
+            return true
+        })
+        row.onmouseleave = dh.util.dom.stdEventHandler(function (e) {
+            row.className = "dh-menu-post-row"
+            return true
+        })
+        row.onclick = dh.util.dom.stdEventHandler(function (e) {
             dh.display._openSiteLink("visit?post=" + post.Id)
             return false
         })
-        postDiv.onmouseenter = dh.util.dom.stdEventHandler(function (e) {
-            postDiv.className = "dh-active-post dh-active-post-hover"
-            return true
-        })
-        postDiv.onmouseleave = dh.util.dom.stdEventHandler(function (e) {
-            postDiv.className = "dh-active-post"
-            return true
-        })
-        
-        var postInfo = {}
-        
-        postInfo.image = dh.util.createPngElement(dh.appletUrl + "groupChat.png", 24, 24)
-        postInfo.image.className = "dh-active-post-icon"
-        postDiv.appendChild(postInfo.image)
+
+        var titleCell = document.createElement("td")
+        titleCell.className = "dh-menu-title-column dh-menu-title-cell"
+        row.appendChild(titleCell)
         
         var chattingUserCount = post.ChattingUserCount
         var viewingUserCount = post.ViewingUserCount
         
-        if (chattingUserCount == 0)
-            postInfo.image.style.visibility = "hidden"
-            
-        postInfo.titleDiv = document.createElement("div")
-        postInfo.titleDiv.className = "dh-active-post-title"
-        postInfo.titleDiv.appendChild(document.createTextNode(post.Title))
-        postDiv.appendChild(postInfo.titleDiv)
+        var titleDiv = document.createElement("div")
+        titleDiv.className = "dh-menu-post-title"
+        titleDiv.appendChild(document.createTextNode(post.Title))
+        titleCell.appendChild(titleDiv)
         
-        postInfo.metaDiv = document.createElement("div")
-        postInfo.metaDiv.className = "dh-active-post-meta"
-        if (chattingUserCount > 1)
-            postInfo.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") people chatting right now"))
-        else if (chattingUserCount > 0)
-            postInfo.metaDiv.appendChild(document.createTextNode("(" + chattingUserCount + ") person chatting right now"))
-        else if (viewingUserCount > 1)
-            postInfo.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") people looking at this now"))
-        else if (viewingUserCount > 0)
-            postInfo.metaDiv.appendChild(document.createTextNode("(" + viewingUserCount + ") person looking at this now"))
-        else
-            postInfo.metaDiv.appendChild(document.createTextNode("Sent by " + post.Sender.Name))
-        postDiv.appendChild(postInfo.metaDiv)
-
-        var before
-        if (position < activePostsDiv.childNodes.length)
-            before = activePostsDiv.childNodes[position]
-        else
-            before = null
-            
-        activePostsDiv.insertBefore(postDiv, before)
-
-        // Fix up widths to deal with limitations of CSS in doing 2-D layout without tables
-        // the '4' is a mysterious fudge factor, probably having to do with some extra padding
-        // around the floated image
-        var textWidth = dh.menu.WIDTH - postInfo.image.offsetWidth - 2 * (dh.menu.MARGIN + dh.menu.BORDER) - 4
-        postInfo.titleDiv.style.width = textWidth + "px"
-        postInfo.metaDiv.style.width = textWidth + "px"
+        var metaCell = document.createElement("td")
+        metaCell.className = "dh-menu-meta-column dh-menu-meta-cell"
+        row.appendChild(metaCell)
         
-        this.posts.splice(position, 0, postInfo)
+        metaCell.appendChild(document.createTextNode("Sent by " + post.Sender.Name + " "))
+        
+        if (chattingUserCount > 0 || viewingUserCount > 0)  {
+            var userCountSpan = document.createElement("span")
+            userCountSpan.className = "dh-menu-post-user-count"
+            metaCell.appendChild(userCountSpan)
+            
+            var userCountText
+            
+            if (chattingUserCount > 0)
+                userCountText = "(" + chattingUserCount + " chatting)"
+            else if (viewingUserCount > 0)
+                userCountText = "(" + chattingUserCount + " looking)"
+                
+            userCountSpan.appendChild(document.createTextNode(userCountText))
+        }
+
+        menuTableBody.insertBefore(row, menuTableBody.childNodes[position + 1])
         
         this.resize()
     }
     
     this.removeActivePost = function(position) {
-        var activePostsDiv = document.getElementById("dhActivePosts")
-        activePostsDiv.removeChild(activePostsDiv.childNodes[position])
-        
-        this.posts.splice(position, 1)
+        var menuTableBody = document.getElementById("dhMenuTableBody")
+        menuTableBody.removeChild(menuTableBody.childNodes[position + 1])
         
         this.resize()
     }
