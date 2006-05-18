@@ -33,7 +33,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDI_DUMBHIPPO           ICON                    "DumbHippo.ico"
 IDI_DUMBHIPPO_HOT       ICON                    "DumbHippoHot.ico"
 IDI_LINKSWARM           ICON                    "linkswarmbig.ico"
-IDI_LINKSWARM_PRELIGHT  ICON                    "icon1.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
