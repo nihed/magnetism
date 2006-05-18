@@ -38,9 +38,9 @@ struct _HippoBubbleClass {
 G_DEFINE_TYPE(HippoBubble, hippo_bubble, GTK_TYPE_FIXED);
 
 static gboolean
-destroy_toplevel_on_click(GtkWidget *widget,
-                          GdkEvent  *event,
-                          void      *ignored)
+delete_toplevel_on_click(GtkWidget *widget,
+                         GdkEvent  *event,
+                         void      *ignored)
 {
     GtkWidget *toplevel;
     int width, height;
@@ -58,8 +58,18 @@ destroy_toplevel_on_click(GtkWidget *widget,
         
     toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     
-    if (toplevel != NULL)
-        gtk_widget_destroy(toplevel);
+    if (toplevel != NULL) {
+        /* Synthesize delete_event */
+        GdkEvent *event;
+
+        event = gdk_event_new (GDK_DELETE);
+  
+        event->any.window = g_object_ref(toplevel->window);
+        event->any.send_event = TRUE;
+  
+        gtk_main_do_event (event);
+        gdk_event_free (event);
+    }
 
     return FALSE;        
 }
@@ -129,28 +139,23 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_widget_add_events(bubble->close_event_box,
                           GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
     g_signal_connect(G_OBJECT(bubble->close_event_box), "button-release-event",
-                     G_CALLBACK(destroy_toplevel_on_click), NULL);
+                     G_CALLBACK(delete_toplevel_on_click), NULL);
                      
 
     bubble->sender_photo = gtk_event_box_new();
     gtk_widget_modify_bg(bubble->sender_photo, GTK_STATE_NORMAL, &white);
     gtk_container_set_border_width(GTK_CONTAINER(bubble->sender_photo), 2);
-#if 0
-    wigdet = gtk_image_new();
-#else
-    widget = gtk_image_new_from_stock(GTK_STOCK_STOP, GTK_ICON_SIZE_LARGE_TOOLBAR);
-#endif
+
+    widget = gtk_image_new();
     /* photo is always supposed to be this size */
     gtk_widget_set_size_request(widget, 60, 60);
+    gtk_widget_show(widget);
     gtk_container_add(GTK_CONTAINER(bubble->sender_photo), widget);
 
     hookup_widget(bubble, &bubble->sender_photo);
     
-#if 0
     bubble->sender_name = gtk_label_new(NULL);
-#else
-    bubble->sender_name = gtk_label_new("Stevo");
-#endif
+
     hookup_widget(bubble, &bubble->sender_name);
     gtk_misc_set_alignment(GTK_MISC(bubble->sender_name), 0.0, 0.0);
     
@@ -165,11 +170,8 @@ hippo_bubble_init(HippoBubble       *bubble)
                                       NULL);
     hookup_widget(bubble, &bubble->link_title);
     
-#if 0
     widget = gtk_label_new(NULL);
-#else
-    widget = gtk_label_new("<u>Space Monkeys Invade Downtown</u>");
-#endif
+
     gtk_container_add(GTK_CONTAINER(bubble->link_title), widget);
     gtk_widget_show(widget);
     
@@ -178,11 +180,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &white);
 
-#if 0
     bubble->link_description = gtk_label_new(NULL);
-#else
-    bubble->link_description = gtk_label_new("<small>I wouldn't have believed it unless I saw it with my own two eyes!</small>");
-#endif
+
     hookup_widget(bubble, &bubble->link_description);
     
     gtk_widget_modify_fg(bubble->link_description, GTK_STATE_NORMAL, &white);
@@ -190,11 +189,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE);
     gtk_misc_set_alignment(GTK_MISC(bubble->link_description), 0.0, 0.0);
 
-#if 0
     bubble->recipients = gtk_label_new(NULL);
-#else
-    bubble->recipients = gtk_label_new("Sent to you, John, Anne");
-#endif
+
     hookup_widget(bubble, &bubble->recipients);
     
     gtk_misc_set_alignment(GTK_MISC(bubble->recipients), 1.0, 1.0);
@@ -604,6 +600,7 @@ event_box_get_event_window(GtkWidget *event_box)
     
     children = gdk_window_get_children(event_box->window);
     
+    event_window = NULL;
     for (link = children; link != NULL; link = link->next) {
         event_window = children->data;
         user_data = NULL;
@@ -762,6 +759,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     GdkRectangle close_event_box_rect;
     int xoffset;
     int yoffset;
+    int right_clearance;
     
     bubble = HIPPO_BUBBLE(widget);
     container = GTK_CONTAINER(widget);
@@ -798,6 +796,15 @@ hippo_bubble_size_request(GtkWidget         *widget,
     recipients_rect.y = content_child_rect.y + content_child_rect.height + 10;
     
     gdk_rectangle_union(&content_child_rect, &recipients_rect, &content_child_rect);
+
+    /* if the LINK SWARM is the longest thing, it tends to overlap the close button; 
+     * so add a little padding then
+     */
+    right_clearance = (content_child_rect.x + content_child_rect.width) - 
+                      (link_swarm_logo_rect.x + link_swarm_logo_rect.width);
+    if (right_clearance < 20) {
+        content_child_rect.width += (20 - right_clearance);
+    }
     
     /* see what other stuff goes around the content widgets */
     compute_layout(widget, &content_child_rect, BASE_IS_CONTENT_REQUISITION, &border_rect,
@@ -858,4 +865,92 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
                    NULL, NULL, NULL, NULL,
                    &close_event_box_rect);
     gtk_widget_size_allocate(bubble->close_event_box, &close_event_box_rect);                   
+}
+
+void
+hippo_bubble_set_sender_guid(HippoBubble *bubble,
+                            const char  *value)
+{
+
+}
+                            
+void
+hippo_bubble_set_sender_name(HippoBubble *bubble, 
+                             const char  *value)
+{
+    char *s;
+    
+    s = g_markup_printf_escaped("<u>%s</u>", value);
+    gtk_label_set_markup(GTK_LABEL(bubble->sender_name), s);
+    g_free(s);
+}
+
+void
+hippo_bubble_set_sender_photo(HippoBubble *bubble, 
+                              GdkPixbuf   *pixbuf)
+{
+    GtkWidget *image;
+    
+    image = GTK_BIN(bubble->sender_photo)->child;
+    gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
+}
+
+void
+hippo_bubble_set_link_title(HippoBubble *bubble, 
+                            const char  *title,
+                            const char  *url)
+{
+    GtkWidget *label;
+    char *s;
+    
+    label = GTK_BIN(bubble->link_title)->child;    
+    
+    s = g_markup_printf_escaped("<u>%s</u>", title);
+    gtk_label_set_markup(GTK_LABEL(label), s);
+    g_free(s);
+    set_label_sizes(bubble);    
+}
+       
+void
+hippo_bubble_set_link_description(HippoBubble *bubble, 
+                                  const char  *value)
+{
+    GtkWidget *label;
+    char *s;
+    
+    label = bubble->link_description;
+    
+    s = g_markup_printf_escaped("<small>%s</small>", value);
+    gtk_label_set_markup(GTK_LABEL(label), s);
+    g_free(s);
+    set_label_sizes(bubble);
+}
+                                  
+void
+hippo_bubble_set_recipients(HippoBubble *bubble, 
+                            const HippoRecipientInfo *recipients,
+                            int          n_recipients)
+{
+    int i;
+    GString *gstr;
+    char *s;
+    GtkWidget *label;
+    
+    label = bubble->recipients;
+    
+    gstr = g_string_new(NULL);
+    
+    for (i = 0; i < n_recipients; ++i) {
+        g_string_append(gstr, recipients[i].name);
+        if ((i + 1) != n_recipients)
+            g_string_append(gstr, ", ");
+    }
+ 
+    s = g_markup_printf_escaped(_("Sent to %s"), gstr->str);
+    gtk_label_set_markup(GTK_LABEL(label), s);
+    
+    g_free(s);
+    g_string_free(gstr, TRUE);
+    
+    set_label_sizes(bubble);
 }

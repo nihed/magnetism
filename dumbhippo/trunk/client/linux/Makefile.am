@@ -109,6 +109,10 @@ BUILT_SOURCES=					\
 mugshot_SOURCES	=				\
 	src/hippo-bubble.c			\
 	src/hippo-bubble.h			\
+	src/hippo-bubble-manager.c		\
+	src/hippo-bubble-manager.h		\
+	src/hippo-bubble-util.c			\
+	src/hippo-bubble-util.h			\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\

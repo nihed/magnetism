@@ -1,10 +1,14 @@
 #ifndef __HIPPO_BUBBLE_H__
 #define __HIPPO_BUBBLE_H__
 
-#include <hippo/hippo-common.h>
 #include <gtk/gtkwidget.h>
 
 G_BEGIN_DECLS
+
+typedef struct {
+    const char *name;
+    const char *entity_guid;
+} HippoRecipientInfo;
 
 typedef struct _HippoBubble      HippoBubble;
 typedef struct _HippoBubbleClass HippoBubbleClass;
@@ -20,6 +24,21 @@ GType        	 hippo_bubble_get_type               (void) G_GNUC_CONST;
 
 GtkWidget*       hippo_bubble_new                    (void);
 
+void             hippo_bubble_set_sender_guid        (HippoBubble *bubble,
+                                                      const char  *value);
+void             hippo_bubble_set_sender_name        (HippoBubble *bubble, 
+                                                      const char  *value);
+void             hippo_bubble_set_sender_photo       (HippoBubble *bubble, 
+                                                      GdkPixbuf   *pixbuf);
+void             hippo_bubble_set_link_title         (HippoBubble *bubble, 
+                                                      const char  *title,
+                                                      const char  *url);
+void             hippo_bubble_set_link_description   (HippoBubble *bubble, 
+                                                      const char  *value);
+void             hippo_bubble_set_recipients         (HippoBubble *bubble, 
+                                                      const HippoRecipientInfo *recipients,
+                                                      int          n_recipients);
+                                                      
 G_END_DECLS
 
 #endif /* __HIPPO_BUBBLE_H__ */

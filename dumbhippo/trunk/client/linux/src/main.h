@@ -21,6 +21,10 @@ void       hippo_app_open_url       (HippoApp   *app,
                                      const char *url);
 void       hippo_app_visit_post     (HippoApp   *app,
                                      HippoPost  *post);
+void       hippo_app_visit_entity   (HippoApp    *app,
+                                     HippoEntity *entity);
+void       hippo_app_visit_entity_id(HippoApp    *app,
+                                     const char  *guid);
 void       hippo_app_join_chat      (HippoApp   *app,
                                      const char *chat_id);
 /* use this only for user and group photos, caching is weird 
@@ -30,6 +34,10 @@ void       hippo_app_load_photo     (HippoApp               *app,
                                      HippoEntity            *entity,
                                      HippoImageCacheLoadFunc func,
                                      void                   *data);
+
+/* less typing */
+#define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (ptr))
+#define REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (ptr)); } } while(0)
 
 G_END_DECLS
 

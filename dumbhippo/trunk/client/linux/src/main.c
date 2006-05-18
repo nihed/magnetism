@@ -3,6 +3,7 @@
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
 #include "hippo-bubble.h"
+#include "hippo-bubble-manager.h"
 
 struct HippoApp {
     GMainLoop *loop;
@@ -133,6 +134,49 @@ hippo_app_visit_post(HippoApp   *app,
 }
 
 static void
+visit_entity(HippoApp       *app,
+             const char     *id,
+             HippoEntityType type)
+{
+    char *url;
+    char *relative;
+    if (type == HIPPO_ENTITY_PERSON)
+        relative = g_strdup_printf("/person?who=%s", id);
+    else if (type == HIPPO_ENTITY_GROUP)
+        relative = g_strdup_printf("/person?who=%s", id);
+    else {
+        g_warning("Can't visit entity '%s' due to type %d", id, type);
+        return;
+    }        
+    url = make_absolute_url(app, relative);
+    hippo_app_open_url(app, TRUE, url);
+    g_free(relative);
+    g_free(url);
+    
+}             
+
+void
+hippo_app_visit_entity(HippoApp    *app,
+                       HippoEntity *entity)
+{
+    visit_entity(app, hippo_entity_get_guid(entity),
+                 hippo_entity_get_entity_type(entity));
+}
+                       
+void
+hippo_app_visit_entity_id(HippoApp    *app,
+                          const char  *guid)
+{
+    HippoEntity *entity;
+    entity = hippo_data_cache_lookup_entity(app->cache, guid);
+    if (entity == NULL) {
+        g_warning("Don't know about entity '%s' can't go to their page", guid);
+        return;
+    }
+    hippo_app_visit_entity(app, entity);
+}
+
+static void
 on_chat_window_destroy(HippoChatWindow *window,
                        HippoApp        *app)
 {
@@ -204,6 +248,8 @@ hippo_app_new(HippoInstanceType instance_type)
     app->photo_cache = hippo_image_cache_new();
     
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    hippo_bubble_manager_manage(app->cache);
     
     return app;
 }
@@ -211,6 +257,8 @@ hippo_app_new(HippoInstanceType instance_type)
 static void
 hippo_app_free(HippoApp *app)
 {
+    hippo_bubble_manager_unmanage(app->cache);
+
     g_hash_table_destroy(app->chat_windows);
     app->chat_windows = NULL;
 
@@ -221,6 +269,18 @@ hippo_app_free(HippoApp *app)
     g_object_unref(app->photo_cache);
     g_main_loop_unref(app->loop);
     g_free(app);
+}
+
+static gboolean
+show_debug_share_timeout(void *data)
+{
+    HippoApp *app = data;
+    
+    g_debug("Adding debug share data");
+    
+    hippo_data_cache_add_debug_data(app->cache);
+    /* remove timeout */
+    return FALSE;
 }
 
 /* 
@@ -260,23 +320,26 @@ main(int argc, char **argv)
     }
 
     the_app = hippo_app_new(options.instance_type);
- 
-#if 0
-    /* FIXME actual point of app disabled for testing the bubble ;-) */
+
     if (hippo_connection_signin(the_app->connection))
         g_debug("Waiting for user to sign in");
     else
         g_debug("Found login cookie");
-#endif
 
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
     
     if (options.join_chat_id) {
         hippo_app_join_chat(the_app, options.join_chat_id);
     }
+
+    if (options.initial_debug_share) {
+        /* timeout removes itself */
+        g_timeout_add(2000, show_debug_share_timeout, the_app);
+    }
     
     hippo_options_free_fields(&options);
 
+#if 0
     {
         GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         GtkWidget *bubble = hippo_bubble_new();
@@ -284,7 +347,7 @@ main(int argc, char **argv)
         gtk_container_add(GTK_CONTAINER(window), bubble);
         gtk_widget_show_all(window);
     }
-    
+#endif    
     g_main_loop_run(the_app->loop);
 
     g_debug("Main loop exited");
