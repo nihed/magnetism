@@ -352,8 +352,8 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		private Message createMessageFor(User user, Message.Type type) {
-			// FIXME should mugshot.org domain be hardcoded here?			
-			return new Message(user.getGuid().toJabberId("mugshot.org"), type);
+			// FIXME should dumbhippo.com domain be hardcoded here?			
+			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
 		}
 		
 		private Message createMessageFor(User user) {
