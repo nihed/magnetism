@@ -13,7 +13,11 @@ import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.impl.ConfigurationBean;
 
 public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHandler> {
 
@@ -24,9 +28,18 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 
 	private String appId;
 	
-	public YahooSearchWebServices(int timeoutMilliseconds) {
+	public YahooSearchWebServices(int timeoutMilliseconds, Configuration config) {
 		super(timeoutMilliseconds);
-		this.appId = "dumbhippo";
+		try {
+			this.appId = config.getPropertyNoDefault(HippoProperty.YAHOO_APP_ID);
+			if (appId.trim().length() == 0)
+				appId = null;
+		} catch (PropertyNotFoundException e) {
+			appId = null;
+		}
+
+		if (appId == null)
+			logger.warn("Yahoo! app ID is not set, can't make Yahoo! web services calls.");
 	}
 	
 	/** 
@@ -220,7 +233,10 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 	}
 	
 	static public final void main(String[] args) {
-		YahooSearchWebServices ws = new YahooSearchWebServices(6000);
+		ConfigurationBean config = new ConfigurationBean();
+		config.init();
+		
+		YahooSearchWebServices ws = new YahooSearchWebServices(6000, config);
 		List<YahooSongResult> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven", -1, -1);
 		for (YahooSongResult r : list) {
 			System.out.println("Got result: " + r);

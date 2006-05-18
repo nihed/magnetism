@@ -518,7 +518,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private void updateSongResultsSync(List<YahooSongResult> oldResults, Track track) {
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		List<YahooSongResult> newResults = ws.lookupSong(track.getArtist(), track.getAlbum(), track.getName(),
 				track.getDuration(), track.getTrackNumber());
 		
@@ -661,7 +661,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	private List<YahooSongResult> updateSongResultsSync(List<YahooSongResult> oldResults, YahooAlbumResult album) {
 		
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		// it can also work based on ws.lookupAlbumSongs(album.getTitle(), album.getArtist());
 		List<YahooSongResult> newResults = ws.lookupAlbumSongs(album.getAlbumId());
 
@@ -785,7 +785,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private List<YahooSongDownloadResult> updateSongDownloadResultsSync(List<YahooSongDownloadResult> oldResults, String songId) {
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		List<YahooSongDownloadResult> newResults = ws.lookupDownloads(songId);
 		
 		logger.debug("New song download results for songId {}: {}", songId, newResults);
@@ -887,7 +887,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		String artistId = artist.getArtistId();
 
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		
 		int start = 1;		
 		int resultsToReturn = albumsByArtist.getInitialPerPage() + albumsByArtist.getSubsequentPerPage();
@@ -1072,7 +1072,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		String albumId = yahooSong.getAlbumId();
 		String artistId = yahooSong.getArtistId();
 		
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		try {
 		    YahooAlbumResult newResult = ws.lookupAlbum(albumId);
 		    logger.debug("New album result for albumId {}: {}", albumId, newResult);
@@ -1162,7 +1162,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private String updateYahooArtistResultsSync(List<YahooArtistResult> oldResults, String artist, String artistId) {
 		// return an updatedArtistId only if tha passed in artist name will still not be found in the database, 
 		// but there is a different name for the same artist in the database
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT);
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		List<YahooArtistResult> newResults = ws.lookupArtist(artist, artistId);
 		
 		logger.debug("New artist results for artist {} artistId {}: {}", 
