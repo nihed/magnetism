@@ -8,6 +8,7 @@
 <head>
         <title>Get Music Radar</title>
         <link rel="stylesheet" type="text/css" href="/css2/radar.css"/>
+	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">

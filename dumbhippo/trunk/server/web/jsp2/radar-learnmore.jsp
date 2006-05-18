@@ -6,6 +6,7 @@
 <head>
         <title>About Music Radar</title>
         <link rel="stylesheet" type="text/css" href="/css2/music-learnmore.css"/>
+	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
