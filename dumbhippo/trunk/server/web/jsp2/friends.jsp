@@ -39,7 +39,7 @@
 			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "MY " : "" }'/>FRIENDS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 				<c:forEach items="${person.contacts.list}" var="person">
-					<dht:personItem who="${person}"/>
+					<dht:personItem who="${person}" invited="true"/>
 				</c:forEach>
 			</dht:twoColumnList>
 		</dht:zoneBoxFriends>

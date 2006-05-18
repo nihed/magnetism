@@ -18,7 +18,7 @@
 		<c:choose>
 			<c:when test="${person.contacts.size > 0}">
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
-					<dht:personItem who="${person}"/>
+					<dht:personItem who="${person}" invited="true"/>
 				</c:forEach>
 				<c:if test="${person.contacts.size > 3}">
 					<dht:moreLink moreName="ALL FRIENDS" more="/friends?who=${person.viewedUserId}"/>
