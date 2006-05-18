@@ -3,10 +3,10 @@
 <assemblyIdentity
     version="0.1.0.0"
     processorArchitecture="x86"
-    name="RedHat.DumbHippo.HippoUI"
+    name="RedHat.Mugshot.Mugshot"
     type="win32"
 />
-<description>Windows client for dumbhippo.com</description>
+<description>Mugshot Windows client</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity

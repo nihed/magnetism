@@ -20,7 +20,7 @@
 				BuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug all"
 				ReBuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean all"
 				CleanCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean"
-				Output="DumbHippo.msi"/>
+				Output="Mugshot.msi"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -32,7 +32,7 @@
 				BuildCommandLine="nmake all"
 				ReBuildCommandLine="nmake clean all"
 				CleanCommandLine="nmake clean"
-				Output="DumbHippo.msi"/>
+				Output="Mugshot.msi"/>
 		</Configuration>
 	</Configurations>
 	<References>

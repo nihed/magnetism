@@ -17,7 +17,7 @@
 static const int MIN_HEIGHT = 125;
 static const int MAX_HEIGHT = 125; // -1 is no max
 static const int DEFAULT_HEIGHT = 125;
-static const WCHAR *TITLE = L"DumbHippo";
+static const WCHAR *TITLE = L"Mugshot";
 static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
 
 HippoExplorerBar::HippoExplorerBar()
@@ -458,8 +458,7 @@ HippoExplorerBar::registerWindowClass()
     windowClass.cbClsExtra = 0;
     windowClass.cbWndExtra = 0;
     windowClass.hInstance = dllInstance;
-    windowClass.hIcon = (HICON)LoadImage(dllInstance, MAKEINTRESOURCE(IDI_DUMBHIPPO),
-                                         IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    windowClass.hIcon = 0;
     windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
     windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     windowClass.lpszMenuName = NULL;

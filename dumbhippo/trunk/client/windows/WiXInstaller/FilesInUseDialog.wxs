@@ -5,7 +5,7 @@
             <!-- The installer looks for the particular Dialog ID 'FilesInUse' -->
 	    <Dialog Id="FilesInUse" Width="250" Height="200" Title="[ProductName]">
 	        <Control Id="filesInUseText" Type="Text" X="10" Y="10" Width="230" Height="25">
-	            <Text>Some open windows are using bits of DumbHippo. Please try closing them.</Text>
+	            <Text>Some open windows are using bits of Mugshot. Please try closing them.</Text>
 	        </Control>
 	        <Control Id="filesInUseList" Type="ListBox" X="10" Y="40" Width="230" Height="128" Property="FileInUseProcess"/>
 	        <Control Id="retryButton" Type="PushButton" X="123" Y="173" Width="56" Height="17">

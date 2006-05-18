@@ -451,7 +451,7 @@ hippo_connection_notify_post_clicked(HippoConnection *connection,
             
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
 
@@ -497,7 +497,7 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
     if (!hippo_data_cache_get_music_sharing_enabled(connection->cache))
         return;
 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
 
@@ -534,7 +534,7 @@ hippo_connection_provide_priming_music(HippoConnection  *connection,
         return;
     }
 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
 
@@ -1035,7 +1035,7 @@ hippo_connection_request_client_info(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
                 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1084,7 +1084,7 @@ hippo_connection_request_prefs(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
     
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1178,7 +1178,7 @@ hippo_connection_request_myspace_name(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
             
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1255,7 +1255,7 @@ hippo_connection_request_myspace_blog_comments(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1325,7 +1325,7 @@ hippo_connection_request_myspace_contacts(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1353,7 +1353,7 @@ hippo_connection_add_myspace_comment(HippoConnection *connection,
     char *comment_id_str;
     char *poster_id_str;
     
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
 
@@ -1384,7 +1384,7 @@ hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
     LmMessageNode *node;
     LmMessageNode *subnode;
 
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_SET);
     node = lm_message_get_node(message);
 
@@ -1447,7 +1447,7 @@ hippo_connection_request_hotness(HippoConnection *connection)
     LmMessageNode *node;
     LmMessageNode *child;
     
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -1873,7 +1873,7 @@ hippo_connection_request_posts_impl(HippoConnection *connection,
     LmMessageNode *node;
     LmMessageNode *child;
     
-    message = lm_message_new_with_sub_type("admin@dumbhippo.com", LM_MESSAGE_TYPE_IQ,
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
@@ -2101,7 +2101,7 @@ parse_room_jid(const char *jid,
     if (!slash)
         slash = (at + 1) + strlen(at + 1);
         
-    if (strncmp(at + 1, "rooms.dumbhippo.com", slash - (at + 1)) != 0)
+    if (strncmp(at + 1, HIPPO_ROOMS_JID_DOMAIN, slash - (at + 1)) != 0)
         return FALSE;
 
     room_name = g_strndup(jid, at - jid);

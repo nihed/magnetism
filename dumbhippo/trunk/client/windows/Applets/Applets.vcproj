@@ -34,14 +34,6 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\activeLeft.png"
-			DeploymentContent="TRUE">
-		</File>
-		<File
-			RelativePath=".\activeRight.png"
-			DeploymentContent="TRUE">
-		</File>
-		<File
 			RelativePath=".\blueleftarrow.gif">
 		</File>
 		<File
@@ -175,9 +167,6 @@
 		</File>
 		<File
 			RelativePath=".\wbubcnr_tr.png">
-		</File>
-		<File
-			RelativePath=".\wbubedge_bmix.png">
 		</File>
 	</Files>
 	<Globals>

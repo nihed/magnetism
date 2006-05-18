@@ -14,8 +14,6 @@ all: *.xml *.css *.png *.js
     copy dh.js $(OUTDIR)\applets
     copy clientstyle.xml $(OUTDIR)\applets
     copy flickr.js $(OUTDIR)\applets	
-    copy flickrstatus.xml $(OUTDIR)\applets
-    copy flickrstatus.js $(OUTDIR)\applets    
     copy gray*arrow.gif $(OUTDIR)\applets
     copy groupChat.png $(OUTDIR)\applets
     copy linkswarm.gif $(OUTDIR)\applets

@@ -10,7 +10,8 @@
 // changing things so that the control can only be used from *exactly* the web
 // servers specified in the preferences. (You'd have to check for either the
 // normal or the debug servers.)
-static const WCHAR ALLOWED_HOST_SUFFIX[] = L"dumbhippo.com";
+static const WCHAR *ALLOWED_HOST_SUFFIXES[] = { L"dumbhippo.com", L"mugshot.org" };
+static const int ALLOWED_HOST_SUFFIX_COUNT = sizeof(ALLOWED_HOST_SUFFIXES) / sizeof(ALLOWED_HOST_SUFFIXES[0]);
 
 bool 
 hippoVerifyGuid(const HippoBSTR &guid)
@@ -37,20 +38,25 @@ bool
 hippoIsOurServer(const HippoBSTR &host)
 {
     unsigned int hostLength = host.Length();
+    
+    for (int i = 0; i < ALLOWED_HOST_SUFFIX_COUNT; i++) {
+        const WCHAR *allowedHostSuffix = ALLOWED_HOST_SUFFIXES[i];
+        size_t allowedHostLength = wcslen(allowedHostSuffix);
+        if (hostLength < allowedHostLength)
+            continue;
 
-    size_t allowedHostLength = wcslen(ALLOWED_HOST_SUFFIX);
-    if (hostLength < allowedHostLength)
-        return false;
+        // check for "SUFFIX" or "<foo>.SUFFIX"
+        if (wcsncmp(host.m_str + hostLength - allowedHostLength,
+                    allowedHostSuffix,
+                    allowedHostLength) != 0)
+            continue;
 
-    // check for "SUFFIX" or "<foo>.SUFFIX"
-    if (wcsncmp(host.m_str + hostLength - allowedHostLength,
-                ALLOWED_HOST_SUFFIX,
-                allowedHostLength) != 0)
-        return false;
+        if (hostLength > allowedHostLength && 
+            *(host.m_str + hostLength - allowedHostLength - 1) != '.')
+            continue;
 
-    if (hostLength > allowedHostLength && 
-        *(host.m_str + hostLength - allowedHostLength - 1) != '.')
-        return false;
+        return true;
+    }
 
-    return true;
+    return false;
 }

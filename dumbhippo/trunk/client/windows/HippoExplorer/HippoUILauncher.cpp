@@ -156,7 +156,7 @@ HippoUILauncher::launchUI()
     }
 
     if (!spawnUI()) {
-        hippoDebugDialog(L"Couldn't start DumbHippo client");
+        hippoDebugDialog(L"Could not start Mugshot client");
         return E_FAIL;
     }
 
@@ -189,7 +189,7 @@ HippoUILauncher::spawnUI()
     if (i == 0)  // No \ in path?
         return false;
 
-    if (FAILED(StringCchCopy(fileBuf + i, MAX_PATH - i, L"HippoUI.exe")))
+    if (FAILED(StringCchCopy(fileBuf + i, MAX_PATH - i, L"Mugshot.exe")))
         return false;
 
     return _wspawnl(_P_NOWAIT, fileBuf, L"HippoUI", NULL) != -1;
@@ -208,7 +208,7 @@ HippoUILauncher::uiWaitTimer()
         uiWaitCount_--;
         if (uiWaitCount_ == 0) {
             stopUIWait();
-            listener_->onLaunchFailure(this, L"Could not start DumbHippo client.");
+            listener_->onLaunchFailure(this, L"Could not start Mugshot client.");
         }
     }
 }

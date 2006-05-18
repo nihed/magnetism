@@ -11,9 +11,9 @@
 #include <limits.h>
 #include <glib.h>
 
-static const WCHAR DUMBHIPPO_SUBKEY[] = L"Software\\DumbHippo\\Client";
-static const WCHAR DUMBHIPPO_SUBKEY_DOGFOOD[] = L"Software\\DumbHippo\\DogfoodClient";
-static const WCHAR DUMBHIPPO_SUBKEY_DEBUG[] = L"Software\\DumbHippo\\DebugClient";
+static const WCHAR HIPPO_SUBKEY[] = HIPPO_REGISTRY_KEY L"\\Client";
+static const WCHAR HIPPO_SUBKEY_DOGFOOD[] = HIPPO_REGISTRY_KEY L"\\DogfoodClient";
+static const WCHAR HIPPO_SUBKEY_DEBUG[] = HIPPO_REGISTRY_KEY L"\\DebugClient";
 
 static const WCHAR DEFAULT_MESSAGE_SERVER[] = HIPPO_DEFAULT_MESSAGE_SERVER_L;
 static const WCHAR DEFAULT_WEB_SERVER[] = HIPPO_DEFAULT_WEB_SERVER_L;
@@ -107,11 +107,11 @@ HippoPreferences::getInstanceSubkey()
     switch (instanceType_) {
         case HIPPO_INSTANCE_NORMAL:
         default:
-            return DUMBHIPPO_SUBKEY;
+            return HIPPO_SUBKEY;
         case HIPPO_INSTANCE_DOGFOOD:
-            return DUMBHIPPO_SUBKEY_DOGFOOD;
+            return HIPPO_SUBKEY_DOGFOOD;
         case HIPPO_INSTANCE_DEBUG:
-            return DUMBHIPPO_SUBKEY_DEBUG;
+            return HIPPO_SUBKEY_DEBUG;
     }
 }
 
@@ -143,8 +143,8 @@ HippoPreferences::getInstanceDescription()
         default:
             return L"Mugshot";
         case HIPPO_INSTANCE_DOGFOOD:
-            return L"DumbHippo - I prefer dog food!";
+            return L"Mugshot - I prefer dog food!";
         case HIPPO_INSTANCE_DEBUG:
-            return L"DumbHippo - Eat pesky bugs!";
+            return L"Mugshot - Eat pesky bugs!";
     }
 }

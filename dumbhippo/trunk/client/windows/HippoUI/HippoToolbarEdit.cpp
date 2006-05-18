@@ -5,12 +5,13 @@
 
 #include "stdafx.h"
 #include <ShlGuid.h> // For CLSID_InternetButtons
+#include <HippoUtil.h>
 #include "HippoRegKey.h"
 #include "HippoToolbarEdit.h"
 
 // Note that we don't bother splitting this into normal and debug, since there
 // is only one toolbar button that is used for both.
-static const WCHAR DUMBHIPPO_SUBKEY[] = L"Software\\DumbHippo\\Client";
+static const WCHAR HIPPO_SUBKEY[] = HIPPO_REGISTRY_KEY L"\\Client";
 static const WCHAR COMMAND_MAPPING_SUBKEY[] = L"Software\\Microsoft\\Internet Explorer\\Extensions\\CmdMapping";
 static const WCHAR TOOLBAR_SUBKEY[] = L"Software\\Microsoft\\Internet Explorer\\Toolbar";
 
@@ -92,7 +93,7 @@ HippoToolbarEdit::wasPreviouslyAdded()
 {
     bool previouslyAdded = false;
 
-    HippoRegKey key(HKEY_CURRENT_USER, DUMBHIPPO_SUBKEY, false);
+    HippoRegKey key(HKEY_CURRENT_USER, HIPPO_SUBKEY, false);
     key.loadBool(L"AddedToolbarButton", &previouslyAdded);
 
     return previouslyAdded;
@@ -102,7 +103,7 @@ HippoToolbarEdit::wasPreviouslyAdded()
 void
 HippoToolbarEdit::setPreviouslyAdded()
 {
-    HippoRegKey key(HKEY_CURRENT_USER, DUMBHIPPO_SUBKEY, true);
+    HippoRegKey key(HKEY_CURRENT_USER, HIPPO_SUBKEY, true);
     key.saveBool(L"AddedToolbarButton", true);
 }
 

@@ -121,14 +121,9 @@ copySubstring(WCHAR *str, WCHAR *end, BSTR *to)
 }
 
 static void
-getAuthUrl(HippoPlatform *platform,
-           BSTR          *authUrl)
+makeAuthUrl(const char *web_host,
+            BSTR       *authUrl)
 {
-    char *web_host;
-    int web_port;
-
-    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
-
     // we're getting the cookies we would send to this url if we were 
     // sending this url an HTTP request. We ignore the web_port stuff
     // since browser behavior is unpredictable then, we just assume 
@@ -138,34 +133,37 @@ getAuthUrl(HippoPlatform *platform,
     tmp.Append(L"/");
     
     tmp.CopyTo(authUrl);
+}
+
+static void
+getAuthUrl(HippoPlatform *platform,
+           BSTR          *authUrl)
+{
+    char *web_host;
+    int web_port;
+
+    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
+    makeAuthUrl(web_host, authUrl);
 
     g_free(web_host);
 }
 
 static gboolean
-hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
-                                      HippoBrowserKind *origin_browser_p,
-                                      char            **username_p,
-                                      char            **password_p)
+do_read_login_cookie(const char       *web_host,
+                     char            **username_p,
+                     char            **password_p)
 {
-    char *web_host;
-    int web_port;
-    HippoBSTR authUrl;
     WCHAR staticBuffer[1024];
     WCHAR *allocBuffer = NULL;
     WCHAR *cookieBuffer = staticBuffer;
     DWORD cookieSize = sizeof(staticBuffer) / sizeof(staticBuffer[0]);
     char *cookie = NULL;
+    HippoBSTR authUrl;
 
-    *origin_browser_p = HIPPO_BROWSER_IE;
     *username_p = NULL;
     *password_p = NULL;
-
-    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
     
-    g_debug("Looking for login to %s:%d", web_host, web_port);
-
-    getAuthUrl(platform, &authUrl);
+    makeAuthUrl(web_host, &authUrl);
 
 retry:
     if (!InternetGetCookieEx(authUrl, 
@@ -210,9 +208,30 @@ retry:
 
 out:
     delete[] allocBuffer;
-    g_free(web_host);
 
     return (*username_p && *password_p);
+}
+
+static gboolean
+hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
+                                      HippoBrowserKind *origin_browser_p,
+                                      char            **username_p,
+                                      char            **password_p)
+{
+    char *web_host;
+    int web_port;
+
+    *origin_browser_p = HIPPO_BROWSER_IE;
+
+    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
+    
+    g_debug("Looking for login to %s:%d", web_host, web_port);
+
+    gboolean result = do_read_login_cookie(web_host, username_p, password_p);
+
+    g_free(web_host);
+
+    return result;
 }
 
 static void
@@ -221,6 +240,63 @@ hippo_platform_impl_delete_login_cookie(HippoPlatform *platform)
     HippoBSTR authUrl;
     getAuthUrl(platform, &authUrl);
     InternetSetCookie(authUrl, NULL,  L"auth=; Path=/");
+}
+
+void
+hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
+                                           const char *to_web_host)
+{
+    char *username;
+    char *password;
+
+    // See if we already have a cookie from the new host
+    if (do_read_login_cookie(to_web_host, &username, &password)) {
+        g_free(username);
+        g_free(password);
+
+        return;
+    }
+
+    if (!do_read_login_cookie(from_web_host, &username, &password))
+        return;
+
+    GDate *date = g_date_new();
+    GTimeVal timeval;
+    g_get_current_time(&timeval);
+    g_date_set_time_val(date, &timeval);
+    g_date_add_days(date, 5 * 365); // 5 years, more or less
+
+    // Can't use g_date_strftime, since that would be unpredictably located
+    // while we need fixed english-locale DAY, DD-MMM-YYYY HH:MM:SS GMT
+
+    static const char *days[] = {
+        "Mon", "Tue", "Wed", "The", "Fri", "Sat", "Sun"
+    };
+
+    static const char * const months[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
+    char *cookieUTF8 = g_strdup_printf("auth=host=%s&name=%s&password=%s; Path=/; expires = %s, %02d-%s-%04d 00:00:00 GMT", 
+                                       to_web_host, 
+                                       username, 
+                                       password, 
+                                       days[(int)g_date_get_weekday(date) - 1],
+                                       g_date_get_day(date),
+                                       months[(int)g_date_get_month(date) - 1],
+                                       g_date_get_year(date));
+    g_date_free(date);
+
+    HippoBSTR cookie;
+    cookie.setUTF8(cookieUTF8, -1);
+    g_free(cookieUTF8);
+    
+    HippoBSTR authUrl;
+    makeAuthUrl(to_web_host, &authUrl);
+    InternetSetCookie(authUrl, NULL, cookie);
+
+    g_free(username);
+    g_free(password);
 }
 
 static const char*

@@ -5,7 +5,7 @@
         <dh:base/>
         <dh:coreStyle/>
         <dh:notificationStyle/>
-        <title>dumbhippo notification</title>
+        <title>Mugshot Notification</title>
         <dh:coreScript/>
         <dh:notificationScript/>           
     </head>

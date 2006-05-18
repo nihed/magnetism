@@ -6,7 +6,7 @@
     <Fragment Id="dhComponents">
 	<Directory Id="TARGETDIR" Name="SourceDir">
 	    <Directory Id="ProgramFilesFolder">
-		<Directory Id="INSTALLLOCATION" Name="DHippo" LongName="DumbHippo">
+		<Directory Id="INSTALLLOCATION" Name="Mugshot">
 		    <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
 		        <File Id="charsetDll"  Name="charset.dll"                                  src="charset.dll"           DiskId="1" Vital="yes"/>
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
@@ -47,7 +47,7 @@
                             <Registry Name="Default Visible" Value="Yes" Type="string" />
                             <Registry Name="ButtonText" Value="Share Link" Type="string" />
                             <Registry Name="MenuText" Value="Share Link..." Type="string" />
-                            <Registry Name="MenuStatusBar" Value="Share the current web page via DumbHippo" Type="string" />
+                            <Registry Name="MenuStatusBar" Value="Share the current web page via Mugshot" Type="string" />
                             <Registry Name="Icon" Value="[!hippoExplorerDll],130" Type="string" />
                             <Registry Name="HotIcon" Value="[!hippoExplorerDll],131" Type="string" />
                             <Registry Name="CLSID" Value="{1FBA04EE-3024-11d2-8F1F-0000F87ABD16}" Type="string" />
@@ -67,8 +67,8 @@
 		    </Component>
 		    
 		    <Component Id="hippoUI" Guid="10D21177-EC47-4FA7-BEE5-06F6DEBECFE5">
-		        <File Id="hippoUIExe" Name="HippoUI.exe" src="HippoUI.exe" DiskId="1" Vital="yes">
-		            <Shortcut Id="hippoUiShortcut" Directory="ProgramMenuFolder" Name="DumbHip" LongName="DumbHippo"/>
+		        <File Id="mugshotExe" Name="Mugshot.exe" src="Mugshot.exe" DiskId="1" Vital="yes">
+		            <Shortcut Id="mugshotShortcut" Directory="ProgramMenuFolder" Name="Mugshot"/>
 		        </File>
 		    </Component>
 		    

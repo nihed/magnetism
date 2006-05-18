@@ -137,7 +137,7 @@ registerToolbarAction(HippoRegistrar *registrar)
     CHECK_BOOL(key.saveString(L"Default Visible", L"Yes"));
     CHECK_BOOL(key.saveString(L"ButtonText", L"Share Link"));
     CHECK_BOOL(key.saveString(L"MenuText", L"Share Link..."));
-    CHECK_BOOL(key.saveString(L"MenuStatusBar", L"Share the current web page via DumbHippo"));
+    CHECK_BOOL(key.saveString(L"MenuStatusBar", L"Share the current web page via Mugshot"));
 
     // Note that HotIcon / Icon here are windows concepts corresponding to grayscale and prelighted/color
     // icons, they have nothing to do with our system's idea of "hotness" (and in fact right now 

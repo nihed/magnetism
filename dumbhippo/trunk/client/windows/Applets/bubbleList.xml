@@ -5,7 +5,7 @@
         <dh:base/>
         <dh:coreStyle/>
         <dh:bubbleListStyle/>
-        <title>dumbhippo notification</title>
+        <title>Mugshot Recent Links</title>
         <dh:coreScript/>
         <dh:bubbleListScript/>           
     </head>

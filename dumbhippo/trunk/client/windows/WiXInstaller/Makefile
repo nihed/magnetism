@@ -20,12 +20,12 @@ INPUTS =		\
     $(OUTDIR)\*.exe	\
     $(OUTDIR)\applets\*   
 
-all: dirs $(OUTDIR)\DumbHippo.msi
+all: dirs $(OUTDIR)\Mugshot.msi
 
 {.}.wxs{$(INTDIR)}.wixobj:
     candle -out $@ $<
 
-$(OUTDIR)\DumbHippo.msi: $(OBJECTS) $(INPUTS)
+$(OUTDIR)\Mugshot.msi: $(OBJECTS) $(INPUTS)
     light -b $(OUTDIR) -out $@ $(OBJECTS)
 
 dirs:
@@ -33,5 +33,5 @@ dirs:
     -mkdir $(OUTDIR)
 
 clean:
-    -del $(OUTDIR)\DumbHippo.msi
+    -del $(OUTDIR)\Mugshot.msi
     -del $(INTDIR)\*.wixobj

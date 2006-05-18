@@ -19,6 +19,8 @@
 #define DLLEXPORT __declspec(dllimport)
 #endif
 
+#define HIPPO_REGISTRY_KEY L"Software\\Mugshot"
+
 class HResultException : public std::exception {
 private:
     HRESULT hResult_;

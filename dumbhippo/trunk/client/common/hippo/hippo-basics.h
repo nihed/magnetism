@@ -33,19 +33,23 @@ typedef enum
     HIPPO_BROWSER_EPIPHANY
 } HippoBrowserKind;
 
-#define HIPPO_DEFAULT_MESSAGE_HOST     "messages.dumbhippo.com"
+#define HIPPO_DEFAULT_MESSAGE_HOST     "messages.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_PORT     5222
 #define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"
-#define HIPPO_DEFAULT_WEB_HOST         "dumbhippo.com"
+#define HIPPO_DEFAULT_WEB_HOST         "mugshot.org"
 #define HIPPO_DEFAULT_WEB_PORT         80
 #define HIPPO_DEFAULT_WEB_SERVER       HIPPO_DEFAULT_WEB_HOST ":80"
 
 #ifdef G_OS_WIN32
-#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"messages.dumbhippo.com"
+#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"messages.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_SERVER_L HIPPO_DEFAULT_MESSAGE_HOST_L L":5222"
-#define HIPPO_DEFAULT_WEB_HOST_L       L"dumbhippo.com"
+#define HIPPO_DEFAULT_WEB_HOST_L       L"mugshot.org"
 #define HIPPO_DEFAULT_WEB_SERVER_L     HIPPO_DEFAULT_WEB_HOST_L L":80"
 #endif
+
+#define HIPPO_JID_DOMAIN "dumbhippo.com"
+#define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN
+#define HIPPO_ADMIN_JID "admin@" HIPPO_JID_DOMAIN
 
 typedef struct {
     HippoInstanceType instance_type;

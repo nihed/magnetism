@@ -12,7 +12,7 @@
 #include "HippoRegKey.h"
 #include "Version.h"
 
-static const WCHAR *DUMBHIPPO_SUBKEY_UPGRADE = L"Software\\DumbHippo\\Upgrade";
+static const WCHAR *HIPPO_SUBKEY_UPGRADE = HIPPO_REGISTRY_KEY L"\\Upgrade";
 
 // Parse a positive integer, return false if parsing fails
 static bool
@@ -237,7 +237,7 @@ HippoUpgrader::openDownloadFile(BSTR  basename,
 {
     WCHAR path[MAX_PATH];
     SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-    if (StringCchCat(path, MAX_PATH, L"\\DumbHippo") != S_OK ||
+    if (StringCchCat(path, MAX_PATH, L"\\Mugshot") != S_OK ||
         (!CreateDirectory(path, NULL) &&
          GetLastError() != ERROR_ALREADY_EXISTS))
     {
@@ -275,7 +275,7 @@ void
 HippoUpgrader::loadProgress()
 {
     HippoRegKey key(HKEY_CURRENT_USER, 
-                    DUMBHIPPO_SUBKEY_UPGRADE,
+                    HIPPO_SUBKEY_UPGRADE,
                     false);
 
     progressUrl_ = NULL;
@@ -301,7 +301,7 @@ void
 HippoUpgrader::saveProgress()
 {
     HippoRegKey key(HKEY_CURRENT_USER, 
-                    DUMBHIPPO_SUBKEY_UPGRADE,
+                    HIPPO_SUBKEY_UPGRADE,
                     true);
 
     key.saveString(L"DownloadUrl", progressUrl_);

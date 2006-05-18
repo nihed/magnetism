@@ -190,7 +190,7 @@ hippo_chat_room_get_jabber_id(HippoChatRoom *room)
         char *chat_jid;
         
         chat_jid = hippo_id_to_jabber_id(hippo_chat_room_get_id(room));
-        room->jabber_id = g_strconcat(chat_jid, "@rooms.dumbhippo.com", NULL);
+        room->jabber_id = g_strconcat(chat_jid, "@" HIPPO_ROOMS_JID_DOMAIN, NULL);
         g_free(chat_jid);
     }
     return room->jabber_id;

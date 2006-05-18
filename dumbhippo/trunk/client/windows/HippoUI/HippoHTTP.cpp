@@ -338,7 +338,7 @@ asyncStatusUpdate(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInf
 
 HippoHTTP::HippoHTTP(void)
 {
-    inetHandle_ = InternetOpen(L"DumbHippo Client/1.0", INTERNET_OPEN_TYPE_PRECONFIG,
+    inetHandle_ = InternetOpen(L"Mugshot Client/1.0", INTERNET_OPEN_TYPE_PRECONFIG,
                                NULL, NULL, INTERNET_FLAG_ASYNC);
     InternetSetStatusCallback(inetHandle_, asyncStatusUpdate);
 }

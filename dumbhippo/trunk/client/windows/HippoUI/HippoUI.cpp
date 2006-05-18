@@ -21,6 +21,7 @@
 #include "Resource.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
+#include "HippoRegKey.h"
 #include "HippoRemoteWindow.h"
 #include "HippoPreferences.h"
 #include "HippoPlatformImpl.h"
@@ -38,6 +39,8 @@
 
 // Generated code for HippoUI.idl
 #include "HippoUI_i.c"
+
+static const WCHAR *HIPPO_CLIENT_SUBKEY = HIPPO_REGISTRY_KEY L"\\Client";
 
 static const int MAX_LOADSTRING = 100;
 static const TCHAR *CLASS_NAME = TEXT("HippoUIClass");
@@ -396,7 +399,7 @@ HippoUI::setIcons(void)
             break;
         default:
         case HIPPO_HOTNESS_UNKNOWN:
-            icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_0); // need different icon for this?
+            icon = MAKEINTRESOURCE(IDI_SWARM1); // need different icon for this?
             break;
         }
     }
@@ -762,7 +765,7 @@ void
 HippoUI::showSignInWindow()
 {
     if (!signinWindow_) {
-        signinWindow_ = new HippoRemoteWindow(this, L"Sign in to DumbHippo", NULL);
+        signinWindow_ = new HippoRemoteWindow(this, L"Sign in to Mugshot", NULL);
     } else {
         signinWindow_->setForegroundWindow();
     }
@@ -1115,7 +1118,7 @@ HippoUI::onUpgradeReady()
         delete upgradeWindow_;
     if (!upgradeWindowCallback_) 
         upgradeWindowCallback_ = new HippoUIUpgradeWindowCallback(this);
-    upgradeWindow_ = new HippoRemoteWindow(this, L"New version of DumbHippo!", upgradeWindowCallback_);
+    upgradeWindow_ = new HippoRemoteWindow(this, L"New version of Mugshot!", upgradeWindowCallback_);
     HippoBSTR url;
     getRemoteURL(HippoBSTR(L"upgrade"), &url);
     upgradeWindow_->navigate(url);
@@ -1151,7 +1154,7 @@ RETRY_REGISTER:
     pHippoUI->Release();
 
     if (FAILED(hr)) {
-        MessageBox(NULL, TEXT("Error registering Dumb Hippo"), NULL, MB_OK);
+        MessageBox(NULL, TEXT("Error registering Mugshot"), NULL, MB_OK);
         return false;
     } else if (hr == MK_S_MONIKERALREADYREGISTERED) {
         // Duplicates are actually succesfully registered, so we have to remove
@@ -1214,7 +1217,7 @@ HippoUI::registerStartup()
         WCHAR commandLine[MAX_PATH];
         GetModuleFileName(instance_, commandLine, sizeof(commandLine) / sizeof(commandLine[0]));
         HippoRegistrar registrar(NULL);
-        registrar.registerStartupProgram(L"DumbHippo", commandLine);
+        registrar.registerStartupProgram(L"Mugshot", commandLine);
     }
 }
 
@@ -1224,7 +1227,7 @@ HippoUI::unregisterStartup()
 {
     if (instanceType_ == HIPPO_INSTANCE_NORMAL) {
         HippoRegistrar registrar(NULL);
-        registrar.unregisterStartupProgram(L"DumbHippo");
+        registrar.unregisterStartupProgram(L"Mugshot");
     }
 }
 
@@ -1647,10 +1650,10 @@ HippoUI::preferencesProc(HWND   dialog,
 }
 
 /* Finds all IE and Explorer windows on the system, and closes any pointing
- * to http://*.dumbhippo.com/download. This is meant for the initial install
- * when the user has installed our software from /download and we don't want
- * to leave the /download page there in an internet explorer window without
- * instrumentation.
+ * to http://*.dumbhippo.com/download or http://*.mugshot.org/download. This 
+ * is meant for the initial install when the user has installed our software from
+ * /download and we don't want to leave the /download page there in an internet 
+ * explorer window without instrumentation.
  */
 static void
 closeDownload()
@@ -1694,7 +1697,10 @@ closeDownload()
 
             HippoBSTR hostName = parser.getHostName();
             if (!(hostName &&
-                  (wcscmp(hostName.m_str, L"dumbhippo.com") == 0 || hostName.endsWith(L".dumbhippo.com"))))
+                  (wcscmp(hostName.m_str, L"dumbhippo.com") == 0 || 
+                   hostName.endsWith(L".dumbhippo.com") ||
+                   wcscmp(hostName.m_str, L"mugshot.org") == 0 || 
+                   hostName.endsWith(L".mugshot.org"))))
                 continue;
 
             browser->Quit();
@@ -1893,6 +1899,23 @@ editToolbar()
 }
 
 static void
+migrateCookie()
+{
+    bool migratedDumbHippoCookie = false;
+
+    HippoRegKey loadKey(HKEY_CURRENT_USER, HIPPO_CLIENT_SUBKEY, false);
+    loadKey.loadBool(L"MigratedDumbHippoCookie", &migratedDumbHippoCookie);
+
+    if (migratedDumbHippoCookie)
+        return;
+
+    hippo_platform_impl_windows_migrate_cookie("dumbhippo.com", "mugshot.org");
+
+    HippoRegKey saveKey(HKEY_CURRENT_USER, HIPPO_CLIENT_SUBKEY, true);
+    saveKey.saveBool(L"MigratedDumbHippoCookie", true);
+}
+
+static void
 test_alloc_failure_behavior()
 {
 #if 0
@@ -1984,6 +2007,7 @@ WinMain(HINSTANCE hInstance,
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     editToolbar();
+    migrateCookie();
 
     ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
     if (!ui->create(hInstance))

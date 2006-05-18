@@ -19,4 +19,8 @@ GType             hippo_platform_impl_get_type               (void) G_GNUC_CONST
 HippoPlatform*    hippo_platform_impl_new                    (HippoInstanceType  instance);
 HippoPreferences* hippo_platform_impl_get_preferences        (HippoPlatformImpl *impl);
 
+// Here so we can share cookie reading code with the standard cookie handling
+void hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
+                                                const char *to_web_host);
+
 #endif /* __HIPPO_PLATFORM_IMPL_H__ */

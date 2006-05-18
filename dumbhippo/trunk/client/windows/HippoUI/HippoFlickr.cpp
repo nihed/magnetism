@@ -19,7 +19,7 @@ extern "C" {
 
 #include <wincrypt.h>
 
-static const WCHAR *DUMBHIPPO_SUBKEY_FLICKR = L"Software\\DumbHippo\\Flickr";
+static const WCHAR *HIPPO_SUBKEY_FLICKR = HIPPO_REGISTRY_KEY L"\\Flickr";
 
 HippoFlickr::HippoFlickr(HippoUI *ui) : baseServiceUrl_(L"http://www.flickr.com/services/rest/"), 
                                         authServiceUrl_(L"http://flickr.com/services/auth/"),
@@ -41,7 +41,7 @@ HippoFlickr::HippoFlickr(HippoUI *ui) : baseServiceUrl_(L"http://www.flickr.com/
                       NULL);
 
     HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
-                               DUMBHIPPO_SUBKEY_FLICKR,
+                               HIPPO_SUBKEY_FLICKR,
                                false);
     HippoBSTR userId;
     if (hippoFlickrReg.loadString(L"userId", &userId)) {
@@ -515,7 +515,7 @@ void
 HippoFlickr::checkToken()
 {
     HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
-                               DUMBHIPPO_SUBKEY_FLICKR,
+                               HIPPO_SUBKEY_FLICKR,
                                false);
     HippoBSTR token;
     if (hippoFlickrReg.loadString(L"token", &token)) {
@@ -664,7 +664,7 @@ HippoFlickr::HippoFlickrTokenInvocation::handleAuth(WCHAR *token, WCHAR *nsid)
     this->flickr_->notifyUserId();
     flickr_->ui_->debugLogW(L"got Flickr auth token %s, userid %s", flickr_->authToken_.m_str, flickr_->userId_.m_str);
     HippoRegKey hippoFlickrReg(HKEY_CURRENT_USER, 
-                               DUMBHIPPO_SUBKEY_FLICKR,
+                               HIPPO_SUBKEY_FLICKR,
                                true);
     hippoFlickrReg.saveString(L"token", flickr_->authToken_);
     hippoFlickrReg.saveString(L"userId", flickr_->userId_);

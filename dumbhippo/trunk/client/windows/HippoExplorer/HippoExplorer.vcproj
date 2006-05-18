@@ -245,9 +245,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\icon1.ico">
-			</File>
-			<File
 				RelativePath=".\linkswarmbig.ico">
 			</File>
 		</Filter>
