@@ -57,28 +57,18 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
-			<c:choose>
-				<c:when test="${signin.musicSharingEnabled}">
-					<dht:requireMusicPersonBean who="${signin.user.id}"/>
-					<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
-					<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
-					<dht:zoneBoxSeparator/>
-					<dht:trackList name="MY RECENT SONGS" tracks="${musicPerson.recentTracks.results}" oneLine="true" />
-				</c:when>
-				<c:otherwise>
-					<dht:requireMusicGlobalBean/>
-					<table><tr>
-					<td rowSpan="2"><img src="/images2/musicradar32x44.gif" /></td>
-					<td><a style="font-weight:bold;" href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn on Music Radar</a> to share your music taste with others.</td>
-					</tr><tr>
-					<td><a href="/radar-learnmore">Learn More</a></td>
-					</tr></table>
-					<dht:zoneBoxSeparator/>
-					<dht:trackList name="MOST PLAYED SONGS TODAY" tracks="${musicGlobal.mostPlayedToday.results}" separator="true" oneLine="true" />
-					<dht:trackList name="ONE PLAY WONDERS" tracks="${musicGlobal.onePlayTracks.results}" oneLine="true" />
+			<c:if test="${signin.musicSharingEnabled}">
+				<dht:requireMusicPersonBean who="${signin.user.id}"/>
+				<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+				<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+				<dht:zoneBoxSeparator/>
+				<dht:trackList name="FRIENDS' RECENT SONGS" tracks="${musicPerson.friendsRecentTracks.results}" separator="true" oneLine="true" />
+			</c:if>
 
-				</c:otherwise>
-			</c:choose>
+			<dht:turnOnRadar/>
+
+			<dht:requireMusicGlobalBean/>
+			<dht:trackList name="MOST PLAYED SONGS TODAY" tracks="${musicGlobal.mostPlayedToday.results}" oneLine="true" />
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>

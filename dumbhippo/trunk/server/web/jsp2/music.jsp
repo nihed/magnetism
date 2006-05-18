@@ -44,8 +44,15 @@
 		<dht:zoneBoxMusic>
 			<c:choose>
 				<c:when test="${signin.valid}">
-					<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>		
-					<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+					<c:choose>
+						<c:when test="${signin.musicSharingEnabled}">
+							<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+							<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
+						</c:when>
+						<c:otherwise>
+							<dht:turnOnRadar/>
+						</c:otherwise>
+					</c:choose>
 				</c:when>
 				<c:otherwise>
 					<span class="dh-option-list">
@@ -58,27 +65,21 @@
 			</c:choose>
 
 			<dht:zoneBoxSubcolumns>
+
 				<dht:zoneBoxSubcolumn which="one">
 
 					<c:if test="${signin.valid}">
-
-						<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" albumArt="true" pageable="${musicGlobal.recentTracks}" separator="true"/>
-
-						<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" separator="true"/>
+						<dht:trackList name="FRIENDS' RECENT SONGS" id="dhFriendsRecentSongs" tracks="${musicPerson.friendsRecentTracks.results}" pageable="${musicPerson.friendsRecentTracks}" separator="true" albumArt="true" />
 					</c:if>
 
-					<c:if test="${!signin.valid}">
+					<dht:trackList name="MOST PLAYED SONGS EVER" id="dhGlobalMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" separator="true" />
 
-						<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
-
-					</c:if>
-
-					<dht:trackList name="MOST PLAYED SONGS EVER" id="dhGlobalMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" />
+					<dht:trackList name="ONE PLAY WONDERS" id="dhOnePlayWonders" tracks="${musicGlobal.onePlayTracks.results}" pageable="${musicGlobal.onePlayTracks}" />
 
 				</dht:zoneBoxSubcolumn>
 				<dht:zoneBoxSubcolumn which="two">
-					
-					<c:if test="${signin.valid}">
+				<c:choose>
+					<c:when test="${signin.valid}">
 						<dht:zoneBoxTitle>MY MUSIC BIO</dht:zoneBoxTitle>
 		
 						<div class="dh-bio">				
@@ -91,15 +92,21 @@
 						</div>
 	
 						<dht:zoneBoxSeparator/>
+
+							<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
+
+							<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" />
 	
-						<dht:trackList name="FRIENDS' RECENT SONGS" id="dhFriendsRecentSongs" tracks="${musicGlobal.friendsRecentTracks.results}" pageable="${musicGlobal.friendsRecentTracks}" separator="true"/>
-					</c:if>
+					</c:when>
+					<c:otherwise>
 
-					<c:if test="${!signin.valid}">
 						<dht:trackList name="MOST PLAYED SONGS TODAY" id="dhMostPlayedToday" tracks="${musicGlobal.mostPlayedToday.results}" pageable="${musicGlobal.mostPlayedToday}" separator="true"/>
-					</c:if>
 
-					<dht:trackList name="ONE PLAY WONDERS" id="dhOnePlayWonders" tracks="${musicGlobal.onePlayTracks.results}" pageable="${musicGlobal.onePlayTracks}" />
+						<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
+
+					</c:otherwise>
+				</c:choose>
+
 					
 				</dht:zoneBoxSubcolumn>
 			

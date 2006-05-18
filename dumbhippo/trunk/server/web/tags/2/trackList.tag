@@ -21,15 +21,23 @@
         <c:set var="oneLine" value="false"/>
 </c:if>
 
-<dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
+<%--
+  Our general rule of thumb for using this section is that if the tracks rely on circumstances not fulfilled 
+  like the person having friends or having listened to something then we hide it by default.  The other
+  sections don't matter as much because they are global, while they can adhere to this guideline it just
+  isn't important since they should _never_ be empty or we lose.
+--%>
+
 <c:if test="${!empty tracks}">
+<dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
 	<c:forEach items="${tracks}" var="track">
 		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}"/>
 	</c:forEach>
 	<c:if test="${!empty pageable}">
 		<dht:expandablePager pageable="${pageable}" anchor="${id}"/>
 	</c:if>
+	<c:if test="${!empty separator && separator}">
+		<dht:zoneBoxSeparator/>
+	</c:if>
 </c:if>
-<c:if test="${!empty separator && separator}">
-	<dht:zoneBoxSeparator/>
-</c:if>
+
