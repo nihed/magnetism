@@ -12,8 +12,6 @@
 #define IDI_DUMBHIPPO                   130
 #define IDI_DUMBHIPPO_HOT               131
 #define IDI_LINKSWARM                   132
-#define IDI_ICON1                       133
-#define IDI_LINKSWARM_PRELIGHT          133
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

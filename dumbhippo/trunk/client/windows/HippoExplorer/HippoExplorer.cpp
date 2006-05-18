@@ -143,7 +143,7 @@ registerToolbarAction(HippoRegistrar *registrar)
     // icons, they have nothing to do with our system's idea of "hotness" (and in fact right now 
     // we're just lazy and use the same icon for both)
 
-    hr = StringCchPrintf(iconPath, MAX_PATH, L"%s,%d", registrar->getModulePath(), IDI_LINKSWARM_PRELIGHT);
+    hr = StringCchPrintf(iconPath, MAX_PATH, L"%s,%d", registrar->getModulePath(), IDI_LINKSWARM);
     if (FAILED(hr))
         goto out;
     CHECK_BOOL(key.saveString(L"HotIcon", iconPath));
