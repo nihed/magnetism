@@ -18,7 +18,7 @@ public class GetSession extends SignedInPageTestCase {
 	}
 	
 	public String getSessionCookie() {
-		t.beginAt("/home");
+		t.beginAt("/"); // should be "home" not "main" for a logged in user
 		return t.getTestContext().getWebClient().getCookieValue("JSESSIONID");
 	}
 		

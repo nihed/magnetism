@@ -3,7 +3,7 @@ package com.dumbhippo.hungry.performance;
 public class Home extends TimePage {
 
 	public Home() {
-		super("/home");
+		super("/");  // should be "home" not "main" for a logged in user
 	}
 	
 	public void testSingle() {

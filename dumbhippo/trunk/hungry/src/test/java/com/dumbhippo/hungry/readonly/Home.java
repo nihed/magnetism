@@ -18,7 +18,7 @@ public class Home extends SignedInPageTestCase {
 	
 	@Override
 	public void testPage() {
-		t.beginAt("/home");
+		t.beginAt("/");  // should be "home" not "main" for a logged in user
 		validatePage();
 	}
 
