@@ -9,7 +9,7 @@ static void      hippo_bubble_class_init          (HippoBubbleClass  *klass);
 
 static void      hippo_bubble_finalize            (GObject           *object);
 
-static void      hippo_bubble_realize             (GtkWidget         *widget);
+static void      hippo_bubble_map                 (GtkWidget         *widget);
 
 static gboolean  hippo_bubble_expose_event        (GtkWidget         *widget,
             	       	                           GdkEventExpose    *event);
@@ -63,6 +63,34 @@ destroy_toplevel_on_click(GtkWidget *widget,
 
     return FALSE;        
 }
+
+
+static void
+set_max_label_width(GtkWidget   *label,
+                    int          max_width,
+                    gboolean     ellipsize)
+{
+    GtkRequisition req;
+    
+    gtk_widget_set_size_request(label, -1, -1);
+
+    gtk_widget_size_request(label, &req);
+    
+    if (req.width > max_width) {
+        gtk_widget_set_size_request(label, max_width, -1);
+        if (ellipsize)
+            gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
+    }
+}
+
+static void
+set_label_sizes(HippoBubble *bubble)
+{
+    set_max_label_width(bubble->link_title, 280, TRUE);
+    set_max_label_width(bubble->link_description, 300, FALSE);
+    set_max_label_width(bubble->recipients, 280, TRUE);
+}
+
 
 static void
 hookup_widget(HippoBubble *bubble,
@@ -124,23 +152,31 @@ hippo_bubble_init(HippoBubble       *bubble)
     bubble->sender_name = gtk_label_new("Stevo");
 #endif
     hookup_widget(bubble, &bubble->sender_name);
-    gtk_label_set_single_line_mode(GTK_LABEL(bubble->sender_name), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(bubble->sender_name), 0.0, 0.0);
     
     pixbuf = hippo_embedded_image_get("bublinkswarm");
     bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
     hookup_widget(bubble, &bubble->link_swarm_logo);
     
     
-#if 0
-    bubble->link_title = gtk_label_new(NULL);
-#else
-    bubble->link_title = gtk_label_new("<u>Space Monkeys Invade Downtown</u>");
-#endif
+    bubble->link_title = g_object_new(GTK_TYPE_EVENT_BOX,
+                                      "visible-window", FALSE,
+                                      "above-child", TRUE,
+                                      NULL);
     hookup_widget(bubble, &bubble->link_title);
-
-    gtk_label_set_use_markup(GTK_LABEL(bubble->link_title), TRUE);    
-    gtk_label_set_single_line_mode(GTK_LABEL(bubble->link_title), TRUE);
-    gtk_widget_modify_fg(bubble->link_title, GTK_STATE_NORMAL, &white);
+    
+#if 0
+    widget = gtk_label_new(NULL);
+#else
+    widget = gtk_label_new("<u>Space Monkeys Invade Downtown</u>");
+#endif
+    gtk_container_add(GTK_CONTAINER(bubble->link_title), widget);
+    gtk_widget_show(widget);
+    
+    gtk_label_set_use_markup(GTK_LABEL(widget), TRUE);    
+    gtk_label_set_single_line_mode(GTK_LABEL(widget), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &white);
 
 #if 0
     bubble->link_description = gtk_label_new(NULL);
@@ -151,7 +187,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     
     gtk_widget_modify_fg(bubble->link_description, GTK_STATE_NORMAL, &white);
     gtk_label_set_line_wrap(GTK_LABEL(bubble->link_description), TRUE);
-    gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE); 
+    gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(bubble->link_description), 0.0, 0.0);
 
 #if 0
     bubble->recipients = gtk_label_new(NULL);
@@ -160,8 +197,11 @@ hippo_bubble_init(HippoBubble       *bubble)
 #endif
     hookup_widget(bubble, &bubble->recipients);
     
+    gtk_misc_set_alignment(GTK_MISC(bubble->recipients), 1.0, 1.0);
     gtk_label_set_line_wrap(GTK_LABEL(bubble->recipients), TRUE);
-    gtk_label_set_use_markup(GTK_LABEL(bubble->recipients), TRUE);     
+    gtk_label_set_use_markup(GTK_LABEL(bubble->recipients), TRUE);
+    
+    set_label_sizes(bubble);
 }
 
 static void
@@ -175,7 +215,7 @@ hippo_bubble_class_init(HippoBubbleClass  *klass)
     widget_class->expose_event = hippo_bubble_expose_event;
     widget_class->size_request = hippo_bubble_size_request;
     widget_class->size_allocate = hippo_bubble_size_allocate;
-    widget_class->realize = hippo_bubble_realize;
+    widget_class->map = hippo_bubble_map;
 }
 
 GtkWidget*
@@ -550,10 +590,63 @@ hippo_bubble_expose_event(GtkWidget      *widget,
     return FALSE;
 }
 
-static void
-hippo_bubble_realize(GtkWidget *widget)
+/* whee, circumvent GtkEventBoxPrivate */
+static GdkWindow*
+event_box_get_event_window(GtkWidget *event_box)
 {
-    GTK_WIDGET_CLASS(hippo_bubble_parent_class)->realize(widget);
+    GList *children;
+    GdkWindow *event_window;
+    GList *link;
+    void *user_data;
+    
+    g_return_val_if_fail(GTK_IS_EVENT_BOX(event_box), NULL);
+    g_return_val_if_fail(event_box->window != NULL, NULL);
+    
+    children = gdk_window_get_children(event_box->window);
+    
+    for (link = children; link != NULL; link = link->next) {
+        event_window = children->data;
+        user_data = NULL;
+        gdk_window_get_user_data(event_window, &user_data);
+        if (GDK_WINDOW_OBJECT(event_window)->input_only &&
+            user_data == event_box) {
+            break;
+        }
+        event_window = NULL;
+    }
+
+    if (event_window == NULL) {
+        g_warning("did not find event box input window, %d children", g_list_length(children));
+    }
+    
+    g_list_free(children);
+    
+    return event_window;
+}
+
+static void
+hippo_bubble_map(GtkWidget *widget)
+{
+    GdkCursor *cursor;
+    HippoBubble *bubble;
+    GdkWindow *event_window;
+    
+    bubble = HIPPO_BUBBLE(widget);
+    
+    /* this is in map not realize since in realize our children aren't
+     * realized yet... there's probably a better way. container_map maps
+     * all children but container_realize does not realize all children
+     */
+    GTK_WIDGET_CLASS(hippo_bubble_parent_class)->map(widget); 
+    
+    set_label_sizes(HIPPO_BUBBLE(widget));
+    
+    cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
+                                        GDK_HAND2);
+    event_window = event_box_get_event_window(bubble->link_title);
+    gdk_window_set_cursor(event_window, cursor);
+    gdk_display_flush(gtk_widget_get_display(widget));
+    gdk_cursor_unref(cursor);
 }
 
 static GtkFixedChild*
