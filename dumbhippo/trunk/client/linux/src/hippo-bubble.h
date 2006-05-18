@@ -18,7 +18,7 @@ typedef struct _HippoBubbleClass HippoBubbleClass;
 
 GType        	 hippo_bubble_get_type               (void) G_GNUC_CONST;
 
-HippoBubble*     hippo_bubble_new                    (void);
+GtkWidget*       hippo_bubble_new                    (void);
 
 G_END_DECLS
 

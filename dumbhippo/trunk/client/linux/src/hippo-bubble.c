@@ -9,11 +9,25 @@ static void      hippo_bubble_class_init          (HippoBubbleClass  *klass);
 
 static void      hippo_bubble_finalize            (GObject           *object);
 
+static void      hippo_bubble_realize             (GtkWidget         *widget);
+
 static gboolean  hippo_bubble_expose_event        (GtkWidget         *widget,
             	       	                           GdkEventExpose    *event);
 
+static void      hippo_bubble_size_request        (GtkWidget         *widget,
+            	       	                           GtkRequisition    *requisition);
+static void      hippo_bubble_size_allocate       (GtkWidget         *widget,
+            	       	                           GtkAllocation     *allocation);
+
 struct _HippoBubble {
     GtkFixed parent;
+    GtkWidget *sender_photo;
+    GtkWidget *sender_name;
+    GtkWidget *link_swarm_logo;
+    GtkWidget *link_title;
+    GtkWidget *link_description;
+    GtkWidget *recipients;
+    GtkWidget *close_event_box;
 };
 
 struct _HippoBubbleClass {
@@ -23,10 +37,115 @@ struct _HippoBubbleClass {
 
 G_DEFINE_TYPE(HippoBubble, hippo_bubble, GTK_TYPE_FIXED);
 
+static gboolean
+destroy_toplevel_on_click(GtkWidget *widget,
+                          GdkEvent  *event,
+                          void      *ignored)
+{
+    GtkWidget *toplevel;
+    int width, height;
+    
+    if (event->type != GDK_BUTTON_RELEASE ||
+        event->button.button != 1) {
+        return FALSE;
+    }
+    
+    gdk_drawable_get_size(event->button.window, &width, &height);
+    
+    if (event->button.x < 0 || event->button.y < 0 ||
+        event->button.x > width || event->button.y > height)
+        return FALSE;
+        
+    toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
+    
+    if (toplevel != NULL)
+        gtk_widget_destroy(toplevel);
+
+    return FALSE;        
+}
+
+static void
+hookup_widget(HippoBubble *bubble,
+              GtkWidget  **widget_p)
+{
+    g_signal_connect(G_OBJECT(*widget_p), "destroy", G_CALLBACK(gtk_widget_destroyed), widget_p);
+    gtk_container_add(GTK_CONTAINER(bubble), *widget_p);
+    gtk_widget_show(*widget_p);
+}
+
 static void
 hippo_bubble_init(HippoBubble       *bubble)
 {
+    GdkColor white;
+    GdkPixbuf *pixbuf;
 
+    GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
+    
+    /* we want a white background */    
+    
+    white.red = 0xFFFF;
+    white.green = 0xFFFF;
+    white.blue = 0xFFFF;
+    white.pixel = 0;
+    gtk_widget_modify_bg(GTK_WIDGET(bubble), GTK_STATE_NORMAL, &white);
+    
+    /* create widgets */
+
+    bubble->close_event_box = g_object_new(GTK_TYPE_EVENT_BOX,
+                                           "visible-window", FALSE,
+                                           NULL);
+
+    hookup_widget(bubble, &bubble->close_event_box);
+    
+    gtk_widget_add_events(bubble->close_event_box,
+                          GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+    g_signal_connect(G_OBJECT(bubble->close_event_box), "button-release-event",
+                     G_CALLBACK(destroy_toplevel_on_click), NULL);
+                     
+
+#if 0
+    bubble->sender_photo = gtk_image_new();
+#else
+    bubble->sender_photo = gtk_image_new_from_stock(GTK_STOCK_STOP, GTK_ICON_SIZE_LARGE_TOOLBAR);
+#endif        
+    hookup_widget(bubble, &bubble->sender_photo);
+    
+#if 0
+    bubble->sender_name = gtk_label_new(NULL);
+#else
+    bubble->sender_name = gtk_label_new("Stevo");
+#endif
+    hookup_widget(bubble, &bubble->sender_name);
+    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->sender_name), PANGO_ELLIPSIZE_END); */
+    gtk_label_set_single_line_mode(GTK_LABEL(bubble->sender_name), TRUE);
+    
+    
+    pixbuf = hippo_embedded_image_get("bublinkswarm");
+    bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
+    hookup_widget(bubble, &bubble->link_swarm_logo);
+    
+    
+#if 0
+    bubble->link_title = gtk_label_new(NULL);
+#else
+    bubble->link_title = gtk_label_new("Space Monkeys Invade Downtown");
+#endif
+    hookup_widget(bubble, &bubble->link_title);
+    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->link_title), PANGO_ELLIPSIZE_END); */
+    gtk_label_set_single_line_mode(GTK_LABEL(bubble->link_title), TRUE);
+    gtk_widget_modify_fg(bubble->link_title, GTK_STATE_NORMAL, &white);
+
+#if 0
+    bubble->link_description = gtk_label_new(NULL);
+#else
+    bubble->link_description = gtk_label_new("I wouldn't have believed it unless I saw it with my own two eyes!");
+#endif
+    hookup_widget(bubble, &bubble->link_description);
+    
+    gtk_widget_modify_fg(bubble->link_description, GTK_STATE_NORMAL, &white);
+    gtk_label_set_line_wrap(GTK_LABEL(bubble->link_description), TRUE);
+    
+    /* gtk_label_set_ellipsize(GTK_LABEL(bubble->link_description), PANGO_ELLIPSIZE_END); */
 }
 
 static void
@@ -38,16 +157,19 @@ hippo_bubble_class_init(HippoBubbleClass  *klass)
     object_class->finalize = hippo_bubble_finalize;
     
     widget_class->expose_event = hippo_bubble_expose_event;
+    widget_class->size_request = hippo_bubble_size_request;
+    widget_class->size_allocate = hippo_bubble_size_allocate;
+    widget_class->realize = hippo_bubble_realize;
 }
 
-HippoBubble*
+GtkWidget*
 hippo_bubble_new(void)
 {
     HippoBubble *bubble;
 
     bubble = g_object_new(HIPPO_TYPE_BUBBLE, NULL);
 
-    return HIPPO_BUBBLE(bubble);
+    return GTK_WIDGET(bubble);
 }
 
 static void
@@ -124,9 +246,9 @@ tile_pixbuf(GtkWidget    *widget,
             GdkRectangle *clip_area,
             GdkRectangle *tile_area)
 {
-    int x;
-    int y; 
-    int stop_at;
+    int x = 0;
+    int y = 0; 
+    int stop_at = 0;
     GdkRectangle clip_rect;
 
     if (!gdk_rectangle_intersect(tile_area, clip_area, &clip_rect))
@@ -198,98 +320,417 @@ tile_pixbuf(GtkWidget    *widget,
     
     /* put clip rect back */
     gdk_gc_set_clip_rectangle(gc, clip_area);
+}                 
+
+typedef enum {
+    BASE_IS_WIDGET_ALLOCATION,
+    BASE_IS_CONTENT_REQUISITION
+} BaseMode;
+
+/* border_rect is the rect of our bubble border, not of the whole 
+ * widget e.g. it wouldn't include GtkContainer::border-width
+ */
+static void
+compute_layout(GtkWidget          *widget,
+               const GdkRectangle *base,
+               BaseMode            mode,
+               GdkRectangle       *border_rect_p,
+               GdkRectangle       *content_rect_p,
+               GdkRectangle       *bottom_edge_rect_p,
+               GdkRectangle       *top_edge_rect_p,
+               GdkRectangle       *left_edge_rect_p,
+               GdkRectangle       *right_edge_rect_p,
+               GdkRectangle       *close_rect_p)
+{
+    GtkContainer *container;
+    GdkPixbuf *tl_pixbuf;
+    GdkPixbuf *bl_pixbuf;
+    GdkPixbuf *tr_pixbuf;
+    GdkPixbuf *br_pixbuf;    
+    GdkRectangle border_rect;
+    GdkRectangle content_rect;
+    GdkRectangle bottom_edge_rect;
+    GdkRectangle top_edge_rect;
+    GdkRectangle left_edge_rect;
+    GdkRectangle right_edge_rect;
+    GdkRectangle close_rect;
+    int left_edge_width;
+    int right_edge_width;
+    int top_edge_height;    
+    int bottom_edge_height;
+
+    container = GTK_CONTAINER(widget);
+
+    tr_pixbuf = hippo_embedded_image_get("obubcnr_tr");
+    bl_pixbuf = hippo_embedded_image_get("obubcnr_bl");
+    tl_pixbuf = hippo_embedded_image_get("obubcnr_tl");    
+    br_pixbuf = hippo_embedded_image_get("obubcnr_br");
+
+    /* don't use tr_pixbuf in this since it's the close button and 
+     * "too big"
+     */
+    left_edge_width = MAX(gdk_pixbuf_get_width(tl_pixbuf), gdk_pixbuf_get_width(bl_pixbuf));
+    right_edge_width = gdk_pixbuf_get_width(br_pixbuf);
+    top_edge_height = gdk_pixbuf_get_height(tl_pixbuf);
+    bottom_edge_height = MAX(gdk_pixbuf_get_height(br_pixbuf), gdk_pixbuf_get_height(bl_pixbuf));
+
+    if (mode == BASE_IS_WIDGET_ALLOCATION) {
+        /* "size allocate" mode */
+        
+        border_rect = *base;
+
+        border_rect.x += container->border_width;
+        border_rect.y += container->border_width;
+        border_rect.width -= 2 * container->border_width;
+        border_rect.height -= 2 * container->border_width;
+    } else if (mode == BASE_IS_CONTENT_REQUISITION) {
+        /* "size request" mode and the x/y are essentially meaningless */
+            
+        border_rect = *base;
+        
+        border_rect.width += left_edge_width + right_edge_width;
+        border_rect.height += top_edge_height + bottom_edge_height;
+    } else {
+        g_assert_not_reached();
+    }
+    
+    bottom_edge_rect = border_rect;
+    top_edge_rect = border_rect;
+    left_edge_rect = border_rect;
+    right_edge_rect = border_rect;
+    
+    left_edge_rect.y += gdk_pixbuf_get_height(tl_pixbuf);
+    left_edge_rect.height -= gdk_pixbuf_get_height(tl_pixbuf);
+    left_edge_rect.height -= gdk_pixbuf_get_height(bl_pixbuf);
+    left_edge_rect.width = left_edge_width;
+    
+    right_edge_rect.y += gdk_pixbuf_get_height(tr_pixbuf);
+    right_edge_rect.height -= gdk_pixbuf_get_height(tr_pixbuf);    
+    right_edge_rect.height -= gdk_pixbuf_get_height(br_pixbuf);
+    right_edge_rect.width = right_edge_width;
+    
+    right_edge_rect.x = border_rect.x + border_rect.width - right_edge_rect.width;
+            
+    top_edge_rect.x += gdk_pixbuf_get_width(tl_pixbuf);    
+    top_edge_rect.width -= gdk_pixbuf_get_width(tl_pixbuf);
+    top_edge_rect.width -= gdk_pixbuf_get_width(tr_pixbuf);    
+    top_edge_rect.height = top_edge_height;
+    
+    bottom_edge_rect.x += gdk_pixbuf_get_width(bl_pixbuf);
+    bottom_edge_rect.width -= gdk_pixbuf_get_width(bl_pixbuf);
+    bottom_edge_rect.width -= gdk_pixbuf_get_width(br_pixbuf);
+    bottom_edge_rect.height = bottom_edge_height;
+
+    bottom_edge_rect.y = border_rect.y + border_rect.height - bottom_edge_rect.height;
+
+    content_rect.x = left_edge_rect.x + left_edge_rect.width;
+    content_rect.y = top_edge_rect.y + top_edge_rect.height;
+    content_rect.width = border_rect.width - left_edge_rect.width - right_edge_rect.width;
+    content_rect.height = border_rect.height - top_edge_rect.height - bottom_edge_rect.height;
+    
+    close_rect.x = border_rect.x + border_rect.width - gdk_pixbuf_get_width(tr_pixbuf);
+    close_rect.y = border_rect.y;
+    close_rect.width = gdk_pixbuf_get_width(tr_pixbuf);
+    close_rect.height = gdk_pixbuf_get_height(tr_pixbuf);
+    
+#define OUT(what) do { if (what ## _p) { * what ## _p = what; }  } while(0)
+    OUT(border_rect);
+    OUT(content_rect);
+    OUT(bottom_edge_rect);
+    OUT(top_edge_rect);
+    OUT(left_edge_rect);
+    OUT(right_edge_rect);
+    OUT(close_rect);
+#undef OUT   
 }
 
 static gboolean
 hippo_bubble_expose_event(GtkWidget      *widget,
             		      GdkEventExpose *event)
+{    
+    GdkGC *gc;
+    GdkPixbuf *pixbuf;
+    GdkRectangle child_clip;        
+    GdkRectangle border_clip;
+    GdkRectangle border_rect;
+    GdkRectangle content_rect;
+    GdkRectangle bottom_edge_rect;
+    GdkRectangle top_edge_rect;
+    GdkRectangle left_edge_rect;
+    GdkRectangle right_edge_rect;
+    
+    if (!GTK_WIDGET_DRAWABLE(widget))
+        return FALSE;
+    
+    child_clip = event->area;
+        
+    compute_layout(widget, &widget->allocation,
+                    BASE_IS_WIDGET_ALLOCATION,
+                    &border_rect, &content_rect, 
+                    &bottom_edge_rect, &top_edge_rect,
+                    &left_edge_rect, &right_edge_rect, NULL);
+    
+    gdk_rectangle_intersect(&border_rect, &event->area, &border_clip);
+    gdk_rectangle_intersect(&content_rect, &event->area, &child_clip);
+    
+    gc = gdk_gc_new(widget->window);
+    gdk_gc_set_clip_rectangle(gc, &border_clip); 
+    
+    gdk_rgb_gc_set_foreground(gc, 0xFFFFFF);
+    gdk_draw_rectangle(widget->window, gc, TRUE,
+                        border_rect.x, border_rect.y,
+                        border_rect.width, border_rect.height);
+
+    /* IT'S ORANGE BABY */
+    gdk_rgb_gc_set_foreground(gc, 0xF16D1C);
+    gdk_draw_rectangle(widget->window, gc, TRUE,
+                        content_rect.x, content_rect.y,
+                        content_rect.width, content_rect.height);
+
+    /* now stamp the little pixmap pieces all over */    
+    pixbuf = hippo_embedded_image_get("obubcnr_tr");
+    draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_EAST,
+                border_rect.x + border_rect.width,
+                border_rect.y);
+    
+    pixbuf = hippo_embedded_image_get("obubcnr_br");
+    draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_EAST,
+                border_rect.x + border_rect.width,
+                border_rect.y + border_rect.height);
+    
+    pixbuf = hippo_embedded_image_get("obubcnr_bl");
+    draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_WEST,
+                border_rect.x,
+                border_rect.y + border_rect.height);
+                                
+    pixbuf = hippo_embedded_image_get("obubcnr_tl");
+    draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_WEST,
+                border_rect.x,
+                border_rect.y);
+                
+    pixbuf = hippo_embedded_image_get("obubedge_b");
+    tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_SOUTH,
+                &border_clip, &bottom_edge_rect);
+
+    pixbuf = hippo_embedded_image_get("obubedge_t");
+    tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_NORTH,
+                &border_clip, &top_edge_rect);
+
+    pixbuf = hippo_embedded_image_get("obubedge_l");
+    tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_WEST,
+                &border_clip, &left_edge_rect);
+
+    pixbuf = hippo_embedded_image_get("obubedge_r");
+    tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_EAST,
+                &border_clip, &right_edge_rect);
+
+    /* tough to set child_clip without messing up the drawing */
+    GTK_WIDGET_CLASS(hippo_bubble_parent_class)->expose_event(widget, event);
+
+    g_object_unref(gc);
+    
+    return FALSE;
+}
+
+static void
+hippo_bubble_realize(GtkWidget *widget)
 {
-    if (GTK_WIDGET_DRAWABLE(widget)) {
-        GtkContainer *container = GTK_CONTAINER(widget);
-        GdkGC *gc;
-        GdkPixbuf *pixbuf;
-        GdkRectangle orange_rect;
-        GdkRectangle bottom_edge_rect;
-        GdkRectangle top_edge_rect;
-        GdkRectangle left_edge_rect;
-        GdkRectangle right_edge_rect;                
-        
-        gc = gdk_gc_new(widget->window);
-        gdk_gc_set_clip_rectangle(gc, &event->area);
-        
-        orange_rect.x = widget->allocation.x;
-        orange_rect.y = widget->allocation.y;
-        orange_rect.width = widget->allocation.width;
-        orange_rect.height = widget->allocation.height;
-        
-        orange_rect.x += container->border_width;
-        orange_rect.y += container->border_width;
-        orange_rect.width -= 2 * container->border_width;
-        orange_rect.height -= 2 * container->border_width;
-        
-        /* IT'S ORANGE BABY */
-        gdk_rgb_gc_set_foreground(gc, 0xF16D1C);        
-        gdk_draw_rectangle(widget->window, gc, TRUE,
-                           orange_rect.x, orange_rect.y,
-                           orange_rect.width, orange_rect.height);
+    GTK_WIDGET_CLASS(hippo_bubble_parent_class)->realize(widget);
+}
 
-        /* now stamp the little pixmap pieces all over */
-        bottom_edge_rect = orange_rect;
-        top_edge_rect = orange_rect;
-        left_edge_rect = orange_rect;
-        right_edge_rect = orange_rect;
-        
-        pixbuf = hippo_embedded_image_get("obubcnr_tr");
-        draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_EAST,
-                    orange_rect.x + orange_rect.width,
-                    orange_rect.y);
-        top_edge_rect.width -= gdk_pixbuf_get_width(pixbuf);
-        right_edge_rect.y += gdk_pixbuf_get_height(pixbuf);
-        right_edge_rect.height -= gdk_pixbuf_get_height(pixbuf);
-        
-        pixbuf = hippo_embedded_image_get("obubcnr_br");
-        draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_EAST,
-                    orange_rect.x + orange_rect.width,
-                    orange_rect.y + orange_rect.height);
-        bottom_edge_rect.width -= gdk_pixbuf_get_width(pixbuf);
-        right_edge_rect.height -= gdk_pixbuf_get_height(pixbuf);
-        
-        pixbuf = hippo_embedded_image_get("obubcnr_bl");
-        draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_WEST,
-                    orange_rect.x,
-                    orange_rect.y + orange_rect.height);
-        bottom_edge_rect.x += gdk_pixbuf_get_width(pixbuf);
-        bottom_edge_rect.width -= gdk_pixbuf_get_width(pixbuf);
-        left_edge_rect.height -= gdk_pixbuf_get_height(pixbuf);                   
-                                 
-        pixbuf = hippo_embedded_image_get("obubcnr_tl");
-        draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_WEST,
-                    orange_rect.x,
-                    orange_rect.y);
-        left_edge_rect.y += gdk_pixbuf_get_height(pixbuf);
-        left_edge_rect.height -= gdk_pixbuf_get_height(pixbuf);
-        top_edge_rect.x += gdk_pixbuf_get_width(pixbuf);
-        top_edge_rect.width -= gdk_pixbuf_get_width(pixbuf);
-                    
-        pixbuf = hippo_embedded_image_get("obubedge_b");
-        tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_SOUTH,
-                    &event->area, &bottom_edge_rect);
-
-        pixbuf = hippo_embedded_image_get("obubedge_t");
-        tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_NORTH,
-                    &event->area, &top_edge_rect);
-
-        pixbuf = hippo_embedded_image_get("obubedge_l");
-        tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_WEST,
-                    &event->area, &left_edge_rect);
-
-        pixbuf = hippo_embedded_image_get("obubedge_r");
-        tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_EAST,
-                    &event->area, &right_edge_rect);
-
-                    
-        g_object_unref(gc);
+static GtkFixedChild*
+find_fixed_child(GtkFixed  *fixed,
+                 GtkWidget *widget)
+{
+    GList *link;
+    
+    for (link = fixed->children; link != NULL; link = link->next) {
+        GtkFixedChild *child = link->data;
+        if (child->widget == widget)
+            return child;
     }
-    /* Now draw the child widgets on there */  
-    return GTK_WIDGET_CLASS(hippo_bubble_parent_class)->expose_event(widget, event);
+
+    return NULL;
+}
+
+/* If this hack breaks, we just have to change to a direct container 
+ * subclass instead of fixed, but this is convenient for now
+ */
+static void
+fixed_move_no_queue_resize(HippoBubble    *bubble,
+                           GtkWidget      *widget,
+                           int             x,
+                           int             y)
+{
+    GtkFixedChild *child;
+
+    child = find_fixed_child(GTK_FIXED(bubble), widget);
+
+    gtk_widget_freeze_child_notify (widget);
+    child->x = x;
+    gtk_widget_child_notify (widget, "x");
+    child->y = y;
+    gtk_widget_child_notify (widget, "y");
+
+    gtk_widget_thaw_child_notify (widget);
+
+    /* DO NOT QUEUE RESIZE */
+}
+
+static void
+compute_content_widgets_layout(HippoBubble  *bubble,
+                               GdkRectangle *sender_photo_p,
+                               GdkRectangle *sender_name_p,
+                               GdkRectangle *link_swarm_logo_p,
+                               GdkRectangle *link_title_p,
+                               GdkRectangle *link_description_p)
+{
+    GdkRectangle sender_photo;
+    GdkRectangle sender_name;
+    GdkRectangle link_swarm_logo;
+    GdkRectangle link_title;
+    GdkRectangle link_description;
+
+    /* assumes widget requisitions are up-to-date */
+#define GET_REQ(what) do {                                \
+      what.width = bubble->what->requisition.width;       \
+      what.height = bubble->what->requisition.height;     \
+    } while(0)
+        
+    GET_REQ(sender_photo);
+    sender_photo.x = 10;
+    sender_photo.y = 10;
+
+    /* center name under photo */
+    GET_REQ(sender_name);
+    sender_name.x = sender_photo.x + (sender_photo.width - sender_name.width) / 2;
+    sender_name.y = sender_photo.y + sender_photo.height + 10;
+    
+    /* link swarm logo aligned top with photo */
+    GET_REQ(link_swarm_logo);
+    link_swarm_logo.x = sender_photo.x + sender_photo.width + 10;
+    link_swarm_logo.y = sender_photo.y;
+
+    GET_REQ(link_title);
+    link_title.x = link_swarm_logo.x;
+    link_title.y = link_swarm_logo.y + link_swarm_logo.height + 10;
+    
+    GET_REQ(link_description);
+    link_description.x = link_title.x;
+    link_description.y = link_title.y + link_title.height + 5;
+    
+#define OUT(what) do { if (what ## _p) { * what ## _p = what; }  } while(0)
+    OUT(sender_photo);
+    OUT(sender_name);
+    OUT(link_swarm_logo);
+    OUT(link_title);
+    OUT(link_description);
+#undef OUT
+}
+
+static void
+hippo_bubble_size_request(GtkWidget         *widget,
+            	       	  GtkRequisition    *requisition)
+{
+    HippoBubble *bubble;
+    GtkContainer *container;
+    GtkFixed *fixed;    
+    GList *link;
+    GdkRectangle content_child_rect;
+    GdkRectangle sender_photo_rect;
+    GdkRectangle sender_name_rect;
+    GdkRectangle link_swarm_logo_rect;
+    GdkRectangle link_title_rect;
+    GdkRectangle link_description_rect;
+    GdkRectangle border_rect;
+    GdkRectangle offset_content_rect;
+    GdkRectangle close_event_box_rect;
+    int xoffset;
+    int yoffset;
+    
+    bubble = HIPPO_BUBBLE(widget);
+    container = GTK_CONTAINER(widget);
+    fixed = GTK_FIXED(widget);
+        
+    /* update all the widget->requisition */
+    for (link = fixed->children; link != NULL; link = link->next) {
+        GtkFixedChild *child = link->data;
+        if (GTK_WIDGET_VISIBLE(child->widget)) {
+            gtk_widget_size_request(child->widget, NULL);
+        }            
+    }
+    
+    /* layout children starting from 0,0 assuming no border or anything */
+    compute_content_widgets_layout(bubble, &sender_photo_rect, &sender_name_rect,
+                   &link_swarm_logo_rect, &link_title_rect, &link_description_rect);
+    
+    /* compute union of these rects */
+    content_child_rect.x = 0;
+    content_child_rect.y = 0;
+    content_child_rect.width = 0;
+    content_child_rect.height = 0;    
+    gdk_rectangle_union(&content_child_rect, &sender_photo_rect, &content_child_rect);
+    gdk_rectangle_union(&content_child_rect, &sender_name_rect, &content_child_rect);
+    gdk_rectangle_union(&content_child_rect, &link_swarm_logo_rect, &content_child_rect);
+    gdk_rectangle_union(&content_child_rect, &link_title_rect, &content_child_rect);
+    gdk_rectangle_union(&content_child_rect, &link_description_rect, &content_child_rect);
+    
+    /* see what other stuff goes around the content widgets */
+    compute_layout(widget, &content_child_rect, BASE_IS_CONTENT_REQUISITION, &border_rect,
+                   &offset_content_rect, NULL, NULL, NULL, NULL, &close_event_box_rect);
+
+    /* note that all x,y coord stuff at this point is purely to set the GtkFixed child position,
+     * which does not include container->border_width
+     */
+    xoffset = offset_content_rect.x - border_rect.x; /* we expect border_rect.x, y to be 0 */
+    yoffset = offset_content_rect.y - border_rect.y;
+    
+    /* Now we know our requisition */
+    requisition->width = border_rect.width + container->border_width * 2;
+    requisition->height = border_rect.height + container->border_width * 2;
+    
+    /* side effect, we update where GtkFixed will display widgets on expose,
+     * and help it gets its size allocate right
+     */
+#define OFFSET(what) do {                                      \
+        fixed_move_no_queue_resize(bubble, bubble->what,       \
+            what##_rect.x + xoffset, what##_rect.y + yoffset); \
+    } while(0)
+    
+    OFFSET(sender_photo);
+    OFFSET(sender_name);
+    OFFSET(link_swarm_logo);
+    OFFSET(link_title);
+    OFFSET(link_description);
+    OFFSET(close_event_box);
+#undef OFFSET    
+}
+
+static void
+hippo_bubble_size_allocate(GtkWidget         *widget,
+            	       	   GtkAllocation     *allocation)
+{
+    /* We make no real effort to handle getting a too-small allocation... if you're using 
+     * a busted window manager that ignores hints, we take patches.
+     */
+    HippoBubble *bubble;
+    GdkRectangle border_rect;
+    GdkRectangle content_rect;
+    GdkRectangle close_event_box_rect;    
+
+    bubble = HIPPO_BUBBLE(widget);
+
+    /* Give every widget its size request and GtkFixed position, computed
+     * at size request time
+     */
+    GTK_WIDGET_CLASS(hippo_bubble_parent_class)->size_allocate(widget, allocation);
+    
+    /* Now change our mind on some of them ... */
+    
+    compute_layout(widget, &widget->allocation,
+                   BASE_IS_WIDGET_ALLOCATION,
+                   &border_rect, &content_rect, 
+                   NULL, NULL, NULL, NULL,
+                   &close_event_box_rect);
+    gtk_widget_size_allocate(bubble->close_event_box, &close_event_box_rect);                   
 }

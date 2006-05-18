@@ -261,7 +261,7 @@ main(int argc, char **argv)
 
     the_app = hippo_app_new(options.instance_type);
  
- #if 0
+#if 0
     /* FIXME actual point of app disabled for testing the bubble ;-) */
     if (hippo_connection_signin(the_app->connection))
         g_debug("Waiting for user to sign in");
@@ -280,8 +280,8 @@ main(int argc, char **argv)
     {
         GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         GtkWidget *bubble = hippo_bubble_new();
+        gtk_container_set_border_width(GTK_CONTAINER(bubble), 10);
         gtk_container_add(GTK_CONTAINER(window), bubble);
-        gtk_widget_set_size_request(bubble, 400, 300);
         gtk_widget_show_all(window);
     }
     

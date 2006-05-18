@@ -50,6 +50,7 @@ BUILT_SRC_DIR=$(top_builddir)/config/hippo
 
 EMBEDDEDIMAGEDIR=images
 EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/bublinkswarm.gif	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_blmix.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_bl.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_brmix.png	\
@@ -70,7 +71,8 @@ $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
 	ALL_NAMES="" ;									\
 	for I in $(EMBEDDED_IMAGES); do							\
 	    IMG=$(srcdir)/$$I ;								\
-	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/images\///g'` ;		\
+	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/.gif//g'` ;		\
+	    NAME=`echo "$$NAME" | sed -e 's/images\///g'` ;				\
 	    echo "Writing embedded image $$IMG with name $$NAME" ;			\
 	    gdk-pixbuf-csource --struct --raw --static "$$IMG"				\
                                 --name="$$NAME"						\
