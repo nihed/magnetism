@@ -251,7 +251,7 @@ echo "
         Now type 'make' to build $PACKAGE
 "
 
-if test "$warn_about_curl_version" ; then
+if "$warn_about_curl_version" ; then
     echo "
         ***** libcurl was found but we couldn't tell what version it is.
         ***** we've tested with versions $CURL_REQUIRED and above.
