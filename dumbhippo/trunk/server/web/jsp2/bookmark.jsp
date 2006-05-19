@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
+<dh:bean id="bookmark" class="com.dumbhippo.web.BookmarkPage" scope="request"/>
 
 <c:choose>
 <c:when test='${(browser.ie && browser.windows && empty param["browser"]) || param["browser"] == "ie" }'>
