@@ -81,6 +81,9 @@ hippo_status_icon_new(HippoDataCache *cache)
                      "icon-name", icon_names[HIPPO_HOTNESS_UNKNOWN].icon_name,
                      NULL);
 
+    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon), 
+                                _("Mugshot"));
+    
     icon->cache = cache;
     g_object_ref(icon->cache);
 

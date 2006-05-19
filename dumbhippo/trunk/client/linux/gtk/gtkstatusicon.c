@@ -27,9 +27,10 @@
 
 #include <string.h>
 
-#include <gtk/gtkstatusicon.h>
-#include <gtk/gtktrayicon.h>
-#include <gtk/gtksimulated.h>
+/* keep this after system gtk headers, before bundled gtk headers */
+#include "gtksimulated.h"
+#include "gtkstatusicon.h"
+#include "gtktrayicon.h"
 
 #ifdef GDK_WINDOWING_WIN32
 #define WM_GTK_TRAY_NOTIFICATION (WM_USER+1)

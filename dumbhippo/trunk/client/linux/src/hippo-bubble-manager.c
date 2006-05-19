@@ -19,7 +19,7 @@ bubble_window_new(void)
     GdkColor border_color;
     
     window = g_new0(BubbleWindow, 1);
-    window->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    window->window = gtk_window_new(GTK_WINDOW_POPUP);
     gtk_window_set_decorated(GTK_WINDOW(window->window), FALSE);
     gtk_window_set_resizable(GTK_WINDOW(window->window), FALSE);
     border_color.red = 0x9999;
@@ -74,6 +74,7 @@ manager_bubble_post(BubbleManager *manager,
     }
 
     g_debug("Showing bubble window");
+    
     gtk_widget_show(window->window);
 }
 

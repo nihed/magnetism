@@ -21,6 +21,7 @@
 #define __GTK_TRAY_ICON_H__
 
 #include <gtk/gtkplug.h>
+#include "gtksimulated.h" /* after system gtk headers */
 
 G_BEGIN_DECLS
 

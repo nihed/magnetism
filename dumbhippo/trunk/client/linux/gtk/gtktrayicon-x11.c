@@ -21,13 +21,14 @@
  * This is an implementation of the freedesktop.org "system tray" spec,
  * http://www.freedesktop.org/wiki/Standards/systemtray-spec
  */
-
-#include <gtk/gtksimulated.h>
 #include <string.h>
-#include <gtk/gtktrayicon.h>
+#include "gtksimulated.h" /* before gtktrayicon, after any other system gtk headers */
+#include "gtktrayicon.h"
 
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
+
+
 
 #define SYSTEM_TRAY_REQUEST_DOCK    0
 #define SYSTEM_TRAY_BEGIN_MESSAGE   1

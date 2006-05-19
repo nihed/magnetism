@@ -18,7 +18,7 @@ AM_CPPFLAGS=-DHIPPO_COMPILATION -I$(top_builddir)/config -I$(COMMONSRCDIR)
 # -Itop_srcdir gets our cut-and-pasted gtk
 mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
-	$(top_srcdir)			\
+	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)
 
 libhippo_la_CPPFLAGS =			\
@@ -37,12 +37,10 @@ libhippo_la_LIBADD = 			\
 
 # none of this actually matters since it's just a convenience library, keeping it 
 # for future reference
-libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
+# libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
 
-# linking this to libhippo.la is just to get the marshalers, it's kind of lame
-# but it all ends up in one big static link in the end anyhow
 libgtkcopy_la_LIBADD = 			\
-	$(LIBGTKCOPY_LIBS) libhippo.la
+	$(LIBGTKCOPY_LIBS)
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
@@ -100,10 +98,26 @@ $(MARSHAL_BODY): $(MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_marshal $(MARSHAL_LIST) --body) > $(MARSHAL_BODY)
 
+## yeah, right now the same marshal.list is used both places ...
+## we generate two marshaller files since there are two static libs
+## and we don't want to link them to each other.
+GTK_MARSHAL_LIST=$(MARSHAL_LIST)
+GTK_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-gtk-marshal.h
+GTK_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-gtk-marshal.c
+
+$(GTK_MARSHAL_HEADER): $(GTK_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	$(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --header > $(GTK_MARSHAL_HEADER)
+
+$(GTK_MARSHAL_BODY): $(GTK_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	(echo "#include \"hippo-gtk-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --body) > $(GTK_MARSHAL_BODY)
 
 BUILT_SOURCES=					\
 	$(MARSHAL_HEADER)			\
 	$(MARSHAL_BODY)				\
+	$(GTK_MARSHAL_HEADER)			\
+	$(GTK_MARSHAL_BODY)			\
 	$(EMBEDDED_IMAGE_HEADER)
 
 mugshot_SOURCES	=				\
@@ -172,15 +186,21 @@ dist-hook:
 	cp $(COMMONSRCDIR)/hippo/hippo-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
 
+LIBGTKCOPY_BUILT_SOURCEFILES=			\
+	$(GTK_MARSHAL_HEADER)			\
+	$(GTK_MARSHAL_BODY)
+
 libgtkcopy_la_SOURCES=				\
+	gtk/hippo-gtk-renamings.h		\
 	gtk/gtksimulated.h			\
 	gtk/gtkstatusicon.c			\
 	gtk/gtkstatusicon.h			\
 	gtk/gtktrayicon.h			\
-	gtk/gtktrayicon-x11.c
+	gtk/gtktrayicon-x11.c			\
+	$(LIBGTKCOPY_BUILT_SOURCEFILES)
 
 
-MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES) $(EMBEDDED_IMAGE_HEADER)
+MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES) $(LIBGTKCOPY_BUILT_SOURCEFILES) $(EMBEDDED_IMAGE_HEADER)
 
 # if srcdir!=builddir, clean out maintainer-clean files from builddir
 # this allows dist to pass.
