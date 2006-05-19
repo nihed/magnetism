@@ -36,7 +36,7 @@
 		
 		<div>
 			<c:if test="${nowplaying.theme.creator eq signin.user}">
-				<a href="/nowplaying-theme-creator?theme=${nowplaying.theme.id}">Edit</a>
+				<a href="/radar-theme-creator?theme=${nowplaying.theme.id}">Edit</a>
 			</c:if>
 			<c:if test="${!nowplaying.theme.draft}">
 				<a href="javascript:dh.nowplaying.setTheme('${nowplaying.theme.id}');">Set As Current Theme</a>

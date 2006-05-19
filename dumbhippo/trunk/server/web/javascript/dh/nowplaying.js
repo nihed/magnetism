@@ -7,7 +7,7 @@ dh.nowplaying.createNewTheme = function(basedOn) {
 	dh.server.getTextPOST("createnewnowplayingtheme",
 				     basedOn ? { "basedOn" : basedOn } : {},
 		  	    	 function(type, data, http) {	  
-		  	    	 	 document.location.href = "/nowplaying-theme-creator?theme=" + data;
+		  	    	 	 document.location.href = "/radar-theme-creator?theme=" + data;
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't create the theme");

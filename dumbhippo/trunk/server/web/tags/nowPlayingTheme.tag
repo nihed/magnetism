@@ -19,16 +19,15 @@
 	</c:if>
 	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
 	<c:if test="${!empty theme.basedOn}">
-		based on
-		<a href="/nowplaying-theme?theme=${theme.basedOn.id}">'<c:out value="${theme.basedOn.name}"/>'
-		by <c:out value="${theme.basedOn.creator.nickname}"/></a>
+		based on '<c:out value="${theme.basedOn.name}"/>'
+		by <c:out value="${theme.basedOn.creator.nickname}"/>
 	</c:if>
 	<br/>
 	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
 	<br/>
 	<c:if test="${signin.valid}">
 		<c:if test="${theme.creator eq signin.user}">
-			<a href="/nowplaying-theme-creator?theme=${theme.id}">Edit</a>
+			<a href="/radar-theme-creator?theme=${theme.id}">Edit</a>
 		</c:if>
 		<a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
 		<c:if test="${!theme.draft && !alreadyCurrent}">
