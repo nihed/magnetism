@@ -26,13 +26,14 @@ GtkWidget*       hippo_bubble_new                    (void);
 
 void             hippo_bubble_set_sender_guid        (HippoBubble *bubble,
                                                       const char  *value);
+void             hippo_bubble_set_post_guid          (HippoBubble *bubble,
+                                                      const char  *value);
 void             hippo_bubble_set_sender_name        (HippoBubble *bubble, 
                                                       const char  *value);
 void             hippo_bubble_set_sender_photo       (HippoBubble *bubble, 
                                                       GdkPixbuf   *pixbuf);
 void             hippo_bubble_set_link_title         (HippoBubble *bubble, 
-                                                      const char  *title,
-                                                      const char  *url);
+                                                      const char  *title);
 void             hippo_bubble_set_link_description   (HippoBubble *bubble, 
                                                       const char  *value);
 void             hippo_bubble_set_recipients         (HippoBubble *bubble, 

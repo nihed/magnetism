@@ -125,9 +125,10 @@ on_post_changed(HippoPost *post,
     } else {
         hippo_bubble_set_sender_name(bubble, hippo_entity_get_name(sender));
     }
+    hippo_bubble_set_sender_guid(bubble, sender_id);
 
-    hippo_bubble_set_link_title(bubble, hippo_post_get_title(watch->post),
-                    hippo_post_get_url(watch->post));
+    hippo_bubble_set_link_title(bubble, hippo_post_get_title(watch->post));
+    hippo_bubble_set_post_guid(bubble, hippo_post_get_guid(watch->post));
 
     bubble_watch_ref(BUBBLE_WATCH(watch)); /* on_sender_photo_loaded will unref */    
     hippo_app_load_photo(hippo_get_app(), sender, on_sender_photo_loaded, watch);

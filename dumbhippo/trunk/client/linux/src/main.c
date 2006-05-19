@@ -133,6 +133,20 @@ hippo_app_visit_post(HippoApp   *app,
     g_free(url);
 }
 
+void
+hippo_app_visit_post_id(HippoApp   *app,
+                        const char *guid)
+{
+    HippoPost *post;
+    
+    post = hippo_data_cache_lookup_post(app->cache, guid);
+    if (post == NULL) {
+        g_warning("don't know about post '%s' can't open its page", guid);
+        return;
+    }
+    hippo_app_visit_post(app, post);
+}
+
 static void
 visit_entity(HippoApp       *app,
              const char     *id,

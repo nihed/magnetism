@@ -4,6 +4,11 @@
 #include "main.h"
 #include "hippo-embedded-image.h"
 
+typedef enum {
+    LINK_CLICK_VISIT_SENDER,
+    LINK_CLICK_VISIT_POST
+} LinkClickAction;
+
 static void      hippo_bubble_init                (HippoBubble       *bubble);
 static void      hippo_bubble_class_init          (HippoBubbleClass  *klass);
 
@@ -19,6 +24,9 @@ static void      hippo_bubble_size_request        (GtkWidget         *widget,
 static void      hippo_bubble_size_allocate       (GtkWidget         *widget,
             	       	                           GtkAllocation     *allocation);
 
+static void      hippo_bubble_link_click_action   (HippoBubble       *bubble,
+                                                   LinkClickAction    action);
+
 struct _HippoBubble {
     GtkFixed parent;
     GtkWidget *sender_photo;
@@ -28,6 +36,8 @@ struct _HippoBubble {
     GtkWidget *link_description;
     GtkWidget *recipients;
     GtkWidget *close_event_box;
+    char      *sender_id;
+    char      *post_id;
 };
 
 struct _HippoBubbleClass {
@@ -37,12 +47,80 @@ struct _HippoBubbleClass {
 
 G_DEFINE_TYPE(HippoBubble, hippo_bubble, GTK_TYPE_FIXED);
 
-static gboolean
-delete_toplevel_on_click(GtkWidget *widget,
-                         GdkEvent  *event,
-                         void      *ignored)
+/* whee, circumvent GtkEventBoxPrivate */
+static GdkWindow*
+event_box_get_event_window(GtkEventBox *event_box)
 {
-    GtkWidget *toplevel;
+    GList *children;
+    GdkWindow *event_window;
+    GList *link;
+    void *user_data;
+    GtkWidget *widget;
+    
+    g_return_val_if_fail(GTK_IS_EVENT_BOX(event_box), NULL);
+    g_return_val_if_fail(GTK_WIDGET_REALIZED(event_box), NULL);
+    
+    widget = GTK_WIDGET(event_box);
+    g_return_val_if_fail(widget->window != NULL, NULL);
+    
+    if (gtk_event_box_get_visible_window(event_box)) {
+        return widget->window;
+    }
+    
+    /* event_box->window is the parent window of the event box */
+    
+    children = gdk_window_get_children(widget->window);
+    
+    event_window = NULL;
+    for (link = children; link != NULL; link = link->next) {
+        event_window = children->data;
+        user_data = NULL;
+        gdk_window_get_user_data(event_window, &user_data);        
+        if (GDK_WINDOW_OBJECT(event_window)->input_only &&
+            user_data == event_box) {
+            break;
+        }
+        event_window = NULL;
+    }
+
+    if (event_window == NULL) {
+        g_warning("did not find event box input window, %d children of %s",
+                  g_list_length(children), G_OBJECT_TYPE_NAME(event_box));
+    }
+    
+    g_list_free(children);
+    
+    return event_window;
+}
+
+static void
+set_hand_cursor(GtkEventBox *event_box)
+{
+    GdkCursor *cursor;
+    GdkWindow *event_window;
+    GtkWidget *widget;
+    
+    widget = GTK_WIDGET(event_box);
+    
+    cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
+                                        GDK_HAND2);
+    event_window = event_box_get_event_window(event_box);
+    gdk_window_set_cursor(event_window, cursor);
+    
+    gdk_display_flush(gtk_widget_get_display(widget));
+    gdk_cursor_unref(cursor);
+}
+
+static void
+connect_hand_cursor_on_realize(GtkEventBox *event_box)
+{
+    g_signal_connect_after(G_OBJECT(event_box), "realize", G_CALLBACK(set_hand_cursor), NULL);
+}
+
+static gboolean
+is_button_release_over_widget(GtkWidget *widget,
+                              GdkEvent  *event)
+{
     int width, height;
     
     if (event->type != GDK_BUTTON_RELEASE ||
@@ -55,25 +133,55 @@ delete_toplevel_on_click(GtkWidget *widget,
     if (event->button.x < 0 || event->button.y < 0 ||
         event->button.x > width || event->button.y > height)
         return FALSE;
+
+    return TRUE;
+}                              
+
+static gboolean
+delete_toplevel_on_click(GtkWidget *widget,
+                         GdkEvent  *event,
+                         void      *ignored)
+{
+    GtkWidget *toplevel;
         
+    if (!is_button_release_over_widget(widget, event))
+        return FALSE;
+    
     toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     
     if (toplevel != NULL) {
         /* Synthesize delete_event */
         GdkEvent *event;
 
-        event = gdk_event_new (GDK_DELETE);
+        event = gdk_event_new(GDK_DELETE);
   
         event->any.window = g_object_ref(toplevel->window);
         event->any.send_event = TRUE;
   
-        gtk_main_do_event (event);
-        gdk_event_free (event);
+        gtk_main_do_event(event);
+        gdk_event_free(event);
     }
 
     return FALSE;        
 }
 
+static gboolean
+link_click_action_on_click(GtkWidget *widget,
+                           GdkEvent  *event,
+                           void      *data)
+{
+    LinkClickAction action;
+    GtkWidget *bubble;
+ 
+    if (!is_button_release_over_widget(widget, event))
+        return FALSE;
+
+    action = GPOINTER_TO_INT(data);
+
+    bubble = gtk_widget_get_ancestor(widget, HIPPO_TYPE_BUBBLE);
+    hippo_bubble_link_click_action(HIPPO_BUBBLE(bubble), action);
+    return FALSE;
+}
 
 static void
 set_max_label_width(GtkWidget   *label,
@@ -95,13 +203,23 @@ set_max_label_width(GtkWidget   *label,
 }
 
 static void
+connect_link_action(GtkWidget      *widget,
+                    LinkClickAction action)
+{
+    g_signal_connect(G_OBJECT(widget), "button-release-event",
+                     G_CALLBACK(link_click_action_on_click),
+                     GINT_TO_POINTER(action));                  
+    connect_hand_cursor_on_realize(GTK_EVENT_BOX(widget));                     
+}
+
+static void
 set_label_sizes(HippoBubble *bubble)
 {
     set_max_label_width(GTK_BIN(bubble->link_title)->child, 280, TRUE);
     set_max_label_width(bubble->link_description, 300, FALSE);
     set_max_label_width(bubble->recipients, 280, TRUE);
+    set_max_label_width(GTK_BIN(bubble->sender_name)->child, 76, TRUE);
 }
-
 
 static void
 hookup_widget(HippoBubble *bubble,
@@ -137,8 +255,6 @@ hippo_bubble_init(HippoBubble       *bubble)
 
     hookup_widget(bubble, &bubble->close_event_box);
     
-    gtk_widget_add_events(bubble->close_event_box,
-                          GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
     g_signal_connect(G_OBJECT(bubble->close_event_box), "button-release-event",
                      G_CALLBACK(delete_toplevel_on_click), NULL);
                      
@@ -146,6 +262,7 @@ hippo_bubble_init(HippoBubble       *bubble)
     bubble->sender_photo = gtk_event_box_new();
     gtk_widget_modify_bg(bubble->sender_photo, GTK_STATE_NORMAL, &white);
     gtk_container_set_border_width(GTK_CONTAINER(bubble->sender_photo), 2);
+    connect_link_action(bubble->sender_photo, LINK_CLICK_VISIT_SENDER);
 
     widget = gtk_image_new();
     /* photo is always supposed to be this size */
@@ -155,10 +272,19 @@ hippo_bubble_init(HippoBubble       *bubble)
 
     hookup_widget(bubble, &bubble->sender_photo);
     
-    bubble->sender_name = gtk_label_new(NULL);
+    bubble->sender_name = g_object_new(GTK_TYPE_EVENT_BOX,
+                                       "visible-window", FALSE,
+                                       "above-child", TRUE,
+                                       NULL);
 
     hookup_widget(bubble, &bubble->sender_name);
-    gtk_misc_set_alignment(GTK_MISC(bubble->sender_name), 0.0, 0.0);
+    connect_link_action(bubble->sender_name, LINK_CLICK_VISIT_SENDER);
+    
+    widget = gtk_label_new(NULL);
+    gtk_container_add(GTK_CONTAINER(bubble->sender_name), widget);
+    gtk_widget_show(widget);
+    
+    gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     
     pixbuf = hippo_embedded_image_get("bublinkswarm");
     bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
@@ -170,9 +296,9 @@ hippo_bubble_init(HippoBubble       *bubble)
                                       "above-child", TRUE,
                                       NULL);
     hookup_widget(bubble, &bubble->link_title);
+    connect_link_action(bubble->link_title, LINK_CLICK_VISIT_POST);
     
     widget = gtk_label_new(NULL);
-
     gtk_container_add(GTK_CONTAINER(bubble->link_title), widget);
     gtk_widget_show(widget);
     
@@ -229,6 +355,9 @@ static void
 hippo_bubble_finalize(GObject *object)
 {
     HippoBubble *bubble = HIPPO_BUBBLE(object);
+
+    g_free(bubble->sender_id);
+    g_free(bubble->post_id);
 
     G_OBJECT_CLASS(hippo_bubble_parent_class)->finalize(object);
 }
@@ -587,64 +716,17 @@ hippo_bubble_expose_event(GtkWidget      *widget,
     return FALSE;
 }
 
-/* whee, circumvent GtkEventBoxPrivate */
-static GdkWindow*
-event_box_get_event_window(GtkWidget *event_box)
-{
-    GList *children;
-    GdkWindow *event_window;
-    GList *link;
-    void *user_data;
-    
-    g_return_val_if_fail(GTK_IS_EVENT_BOX(event_box), NULL);
-    g_return_val_if_fail(event_box->window != NULL, NULL);
-    
-    children = gdk_window_get_children(event_box->window);
-    
-    event_window = NULL;
-    for (link = children; link != NULL; link = link->next) {
-        event_window = children->data;
-        user_data = NULL;
-        gdk_window_get_user_data(event_window, &user_data);
-        if (GDK_WINDOW_OBJECT(event_window)->input_only &&
-            user_data == event_box) {
-            break;
-        }
-        event_window = NULL;
-    }
-
-    if (event_window == NULL) {
-        g_warning("did not find event box input window, %d children", g_list_length(children));
-    }
-    
-    g_list_free(children);
-    
-    return event_window;
-}
-
 static void
 hippo_bubble_map(GtkWidget *widget)
 {
-    GdkCursor *cursor;
     HippoBubble *bubble;
-    GdkWindow *event_window;
     
     bubble = HIPPO_BUBBLE(widget);
     
-    /* this is in map not realize since in realize our children aren't
-     * realized yet... there's probably a better way. container_map maps
-     * all children but container_realize does not realize all children
-     */
     GTK_WIDGET_CLASS(hippo_bubble_parent_class)->map(widget); 
-    
+
+    /* OK, this is probably a questionable location for this... */    
     set_label_sizes(HIPPO_BUBBLE(widget));
-    
-    cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
-                                        GDK_HAND2);
-    event_window = event_box_get_event_window(bubble->link_title);
-    gdk_window_set_cursor(event_window, cursor);
-    gdk_display_flush(gtk_widget_get_display(widget));
-    gdk_cursor_unref(cursor);
 }
 
 static GtkFixedChild*
@@ -882,20 +964,38 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
 
 void
 hippo_bubble_set_sender_guid(HippoBubble *bubble,
-                            const char  *value)
+                             const char  *value)
 {
-
+    if (bubble->sender_id != value) {
+        g_free(bubble->sender_id);
+        bubble->sender_id = g_strdup(value);
+    }
 }
-                            
+
+void
+hippo_bubble_set_post_guid(HippoBubble *bubble,
+                           const char  *value)
+{
+    if (bubble->post_id != value) {
+        g_free(bubble->post_id);
+        bubble->post_id = g_strdup(value);
+    }
+}
+                           
 void
 hippo_bubble_set_sender_name(HippoBubble *bubble, 
                              const char  *value)
 {
     char *s;
+    GtkWidget *label;
+    
+    label = GTK_BIN(bubble->sender_name)->child;
     
     s = g_markup_printf_escaped("<u>%s</u>", value);
-    gtk_label_set_markup(GTK_LABEL(bubble->sender_name), s);
+    gtk_label_set_markup(GTK_LABEL(label), s);
     g_free(s);
+    
+    set_label_sizes(bubble);
 }
 
 void
@@ -910,8 +1010,7 @@ hippo_bubble_set_sender_photo(HippoBubble *bubble,
 
 void
 hippo_bubble_set_link_title(HippoBubble *bubble, 
-                            const char  *title,
-                            const char  *url)
+                            const char  *title)
 {
     GtkWidget *label;
     char *s;
@@ -967,3 +1066,19 @@ hippo_bubble_set_recipients(HippoBubble *bubble,
     
     set_label_sizes(bubble);
 }
+
+static void
+hippo_bubble_link_click_action(HippoBubble       *bubble,
+                               LinkClickAction    action)
+{
+    switch (action) {
+    case LINK_CLICK_VISIT_SENDER:
+        if (bubble->sender_id)
+            hippo_app_visit_entity_id(hippo_get_app(), bubble->sender_id);
+        break;
+    case LINK_CLICK_VISIT_POST:
+        if (bubble->post_id)
+            hippo_app_visit_post_id(hippo_get_app(), bubble->post_id);
+        break;
+    }
+}                               
