@@ -13,7 +13,7 @@
 				<c:if test="${!disableHomeLink}"><a href="/">HOME</a> | </c:if><dht:actionLinkLogout/>
 			</c:when>
 			<c:otherwise>
-				<a href="">Sign up</a> | <a href="/who-are-you">Log in</a>
+				<a href="/signup">Sign up</a> | <a href="/who-are-you">Log in</a>
 			</c:otherwise>
 		</c:choose>
 	</div>

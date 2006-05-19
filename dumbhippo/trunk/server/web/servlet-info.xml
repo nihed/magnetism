@@ -184,7 +184,7 @@
       <!-- Every page (other than psa-*) must be in one of these lists; please keep them alphabetical -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>comingsoon,error,unknownlink,upgrade,who-are-you</param-value>
+          <param-value>comingsoon,error,unknownlink,upgrade,who-are-you,signup</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
