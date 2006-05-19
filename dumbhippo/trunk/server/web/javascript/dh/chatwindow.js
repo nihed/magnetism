@@ -237,7 +237,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
 								                
 			nextSibling = nextSibling.nextSibling
 						                
-			if (nextSibling.className.indexOf("dh-chat-message-user-first") >= 0) {
+			if (nextSibling && nextSibling.className.indexOf("dh-chat-message-user-first") >= 0) {
 			    doneWithNextSiblings = true    
 			}
         }  
