@@ -14,9 +14,12 @@
 	<tr>
 	<td><img id="dhUpgradeLogo" src="/images2/muggray60x60.png"/></td>
 	<td>
-	<p>Version 1.1.45</p>
+	<p>Version 1.1.46</p>
 	<ul>
-		<li>Now with GObject, for smoother starts and better gas mileage</li>
+		<li>Mugshot, what's Mugshot? It's still the same old dumb hippo that you know and love</li>
+		<li>Orange isn't just a color, it's a whole new way of experiencing the world.</li>
+		<li>Trust us, we're digitally signed</li>
+		<li>Now with GObject, for smoother starts and better gas mileage.</li>
 	</ul>
 	</td>
 	</tr>		
