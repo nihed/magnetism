@@ -704,6 +704,22 @@ public class PersonView extends EntityView {
 		return bioAsHtmlCached;
 	}
 	
+	public String getMusicBioAsHtml() {
+		// the cache is because jsp's can be expected to test this for null
+		// then use it, and we don't want to do the htmlizing twice
+		if (bioAsHtmlCached == null) {
+			if (user == null)
+				return null;
+			String bio = user.getAccount().getMusicBio();
+			if (bio == null)
+				return null;
+			XmlBuilder xml = new XmlBuilder();
+			xml.appendTextAsHtml(user.getAccount().getMusicBio(), null);
+			bioAsHtmlCached = xml.toString(); 
+		}
+		return bioAsHtmlCached;
+	}
+	
 	public boolean isViewOfSelf() {
 		return viewOfSelf;
 	}

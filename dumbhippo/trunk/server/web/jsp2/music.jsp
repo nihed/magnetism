@@ -36,7 +36,7 @@
 					<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
 				</c:if>
 				<dht:sidebarBoxSeparator/>
-				<div><a href="/music-bio">Edit my music bio</a></div>
+				<div><a href="/account">Edit my music bio</a></div>
 			</dht:sidebarBoxControls>
 		</dht:sidebarPerson>
 	</c:if>
@@ -80,19 +80,15 @@
 				<dht:zoneBoxSubcolumn which="two">
 				<c:choose>
 					<c:when test="${signin.valid}">
-						<dht:zoneBoxTitle>MY MUSIC BIO</dht:zoneBoxTitle>
-		
-						<div class="dh-bio">				
-							It all started when I was six years old, listening to the radio on 
-							cross-country trips in the family car. Mom and Dad would sing drinking songs 
-							to pass the hours, and before long I was singing along too. So now I enjoy 
-							"normal" music like everyone else (MC Hammer, Spaghetti Arms Johnson, 
-							Vanilla Ice) as well as class polkas and accordian standards. Suprisingly 
-							I've never been asked to DJ at friends' parties.
-						</div>
-	
-						<dht:zoneBoxSeparator/>
-
+								
+						<c:if test="${!empty person.viewedPerson.musicBioAsHtml}">
+						    <dht:zoneBoxTitle>MY MUSIC BIO</dht:zoneBoxTitle>
+						        <div class="dh-bio">
+						            <c:out value="${signin.user.account.musicBio}" escapeXml="false"/>
+						        </div>
+						    <dht:zoneBoxSeparator/>
+						</c:if>
+						
 							<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
 
 							<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" />

@@ -13,7 +13,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:twoColumnPage>
+<dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
@@ -37,15 +37,36 @@
 			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>
+			<dht:zoneBoxSeparator/>
 			
-			<c:if test="${musicPerson.recentTracks.resultCount > 0}">
-				<dht:zoneBoxSeparator/>
-				<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
-				
-				<c:forEach items="${musicPerson.recentTracks.results}" var="track">
-					<dht:track track="${track}" oneLine="true" playItLink="false"/>
-				</c:forEach>
-			</c:if>
+			<c:choose>
+			<c:when test="${!empty person.viewedPerson.musicBioAsHtml}">
+			    <dht:zoneBoxSubcolumns>
+				    <dht:zoneBoxSubcolumn which="one">
+			            <c:if test="${musicPerson.recentTracks.resultCount > 0}">
+				            <dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+				            <c:forEach items="${musicPerson.recentTracks.results}" var="track">
+				            <dht:track track="${track}" oneLine="false" playItLink="false"/>
+				            </c:forEach>
+			            </c:if>
+				    </dht:zoneBoxSubcolumn>
+				    <dht:zoneBoxSubcolumn which="two">
+						<dht:zoneBoxTitle>MUSIC BIO</dht:zoneBoxTitle>
+						<div class="dh-bio">
+						    <c:out value="${person.viewedPerson.musicBioAsHtml}" escapeXml="false"/>
+						</div>
+			 	    </dht:zoneBoxSubcolumn>
+			    </dht:zoneBoxSubcolumns>
+			</c:when>
+			<c:otherwise>
+			            <c:if test="${musicPerson.recentTracks.resultCount > 0}">
+				            <dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+				            <c:forEach items="${musicPerson.recentTracks.results}" var="track">
+				            <dht:track track="${track}" oneLine="true" playItLink="false"/>
+				            </c:forEach>
+			            </c:if>
+			</c:otherwise>
+			</c:choose>
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv disableJumpTo="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>

@@ -21,6 +21,7 @@
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
+			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 			'dhMyspaceEntry' : <dh:jsString value="${signin.user.account.mySpaceName}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
@@ -48,6 +49,15 @@
 					</div>
 					<div>
 						<dht:textInput id="dhBioEntry" multiline="true"/>
+					</div>
+				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhMusicBioEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="My music bio">
+					<div>
+						<input type="button" value="Generate a random music bio!" onclick="dh.account.generateRandomBio();"/>
+					</div>
+					<div>
+						<dht:textInput id="dhMusicBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>

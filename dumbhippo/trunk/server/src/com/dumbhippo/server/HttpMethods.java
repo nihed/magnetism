@@ -200,7 +200,7 @@ public interface HttpMethods {
 	public void doSetBio(UserViewpoint viewpoint, String bio);
 
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "bio" })
+	@HttpParams( { "musicbio" })
 	public void doSetMusicBio(UserViewpoint viewpoint, String bio);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
