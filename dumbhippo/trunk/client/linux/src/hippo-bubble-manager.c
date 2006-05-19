@@ -1,81 +1,55 @@
 #include "hippo-bubble-manager.h"
 
 typedef struct {
-    GtkWidget *window;
-    HippoBubble *bubble;
-} BubbleWindow;
-
-typedef struct {
     int refcount;
     HippoDataCache *cache;
-    GHashTable *chats;
-    GSList *bubbles;
+    GHashTable     *chats;
+    GtkWidget      *window;
+    GtkWidget      *notebook;
 } BubbleManager;
 
-static BubbleWindow*
-bubble_window_new(void) 
+static gboolean
+find_bubble_for_post(BubbleManager *manager,
+                     HippoPost     *post,
+                     HippoBubble  **bubble_p)
 {
-    BubbleWindow *window;
-    GdkColor border_color;
+    GList *children;
+    GList *link;
     
-    window = g_new0(BubbleWindow, 1);
-    window->window = gtk_window_new(GTK_WINDOW_POPUP);
-    gtk_window_set_decorated(GTK_WINDOW(window->window), FALSE);
-    gtk_window_set_resizable(GTK_WINDOW(window->window), FALSE);
-    border_color.red = 0x9999;
-    border_color.green = 0x9999;
-    border_color.blue = 0x9999;
-    gtk_widget_modify_bg(window->window, GTK_STATE_NORMAL, &border_color);
-    gtk_container_set_border_width(GTK_CONTAINER(window->window), 1);
-    
-    window->bubble = HIPPO_BUBBLE(hippo_bubble_new());
-    gtk_container_add(GTK_CONTAINER(window->window), GTK_WIDGET(window->bubble));
-    gtk_widget_show(GTK_WIDGET(window->bubble));
-    
-    ADD_WEAK(&window->window);
-    ADD_WEAK(&window->bubble);
-    
-    return window;
-}
-
-static void
-bubble_window_free(BubbleWindow *window)
-{
-    if (window->window) {
-        gtk_object_destroy(GTK_OBJECT(window->window));
+    children = gtk_container_get_children(GTK_CONTAINER(manager->notebook));
+    for (link = children; link != NULL; link = link->next) {
+        HippoBubble *bubble = HIPPO_BUBBLE(link->data);
+     
+        if (hippo_bubble_get_post(bubble) == post) {
+            g_list_free(children);
+            *bubble_p = bubble;
+            return TRUE;
+        }
     }
-
-    REMOVE_WEAK(&window->window);
-    REMOVE_WEAK(&window->bubble);
-    g_free(window);
-}
+    
+    *bubble_p = NULL;
+    return FALSE;
+}                     
 
 static void
 manager_bubble_post(BubbleManager *manager,
                     HippoPost     *post)
 {
-    GSList *link;
-    BubbleWindow *window;
-    
-    window = NULL;
-    for (link = manager->bubbles; link != NULL; link = link->next) {
-        BubbleWindow *w = link->data;
-     
-        if (hippo_bubble_get_post(w->bubble) == post) {
-            window = w;
-            break;
-        }
-    }
-    
-    if (window == NULL) {
-        window = bubble_window_new();
-        hippo_bubble_set_post(window->bubble, post, manager->cache);
-        manager->bubbles = g_slist_append(manager->bubbles, window);
+    HippoBubble *bubble;
+    int page;
+
+    if (!find_bubble_for_post(manager, post, &bubble)) {
+        bubble = HIPPO_BUBBLE(hippo_bubble_new());
+        hippo_bubble_set_post(bubble, post, manager->cache);
+        gtk_notebook_append_page(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble), NULL);
+        gtk_widget_show(GTK_WIDGET(bubble));
     }
 
     g_debug("Showing bubble window");
-    
-    gtk_widget_show(window->window);
+
+    page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
+    gtk_window_present(GTK_WINDOW(manager->window));
 }
 
 static HippoPost*
@@ -174,15 +148,13 @@ static void
 manager_disconnect(BubbleManager *manager)
 {
     if (manager->cache) {
-        GSList *link;
-        
-        for (link = manager->bubbles; link != NULL; link = link->next) {
-            BubbleWindow *w = link->data;
-            bubble_window_free(w);         
+        /* remove all notebook pages and hide window */
+        while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook)) > 0) {
+            gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), 0);
         }
-        g_slist_free(manager->bubbles);
-        manager->bubbles = NULL;
-    
+        gtk_widget_hide(manager->window);
+        
+        /* nuke everything */
         g_hash_table_foreach(manager->chats, foreach_disconnect, manager);
         g_hash_table_destroy(manager->chats);
         manager->chats  = NULL;
@@ -209,21 +181,65 @@ manager_unref(BubbleManager *manager)
     if (manager->refcount == 0) {
         g_debug("Finalizing bubble manager");
         manager_disconnect(manager);
+        gtk_object_destroy(GTK_OBJECT(manager->window));
         g_free(manager);
     }
+}
+
+static gboolean
+window_delete_event(GtkWindow     *window,
+                    GdkEvent      *event,
+                    BubbleManager *manager)
+{
+    /* change this to remove current bubble, and hide window 
+     * if no more bubbles
+     */
+
+    int page;
+    
+    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(manager->notebook));
+    if (page >= 0) {
+        gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), page);
+    }
+    
+    if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook)) == 0) {
+        gtk_widget_hide(GTK_WIDGET(window));
+    }
+
+    /* don't destroy us */
+    return TRUE;
 }
 
 static BubbleManager*
 manager_new(void)
 {
     BubbleManager *manager;
+    GdkColor border_color;
     
     manager = g_new0(BubbleManager, 1);
     manager->refcount = 1;
+    
+    manager->window = gtk_window_new(GTK_WINDOW_POPUP);
+    gtk_window_set_decorated(GTK_WINDOW(manager->window), FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(manager->window), FALSE);
+    border_color.red = 0x9999;
+    border_color.green = 0x9999;
+    border_color.blue = 0x9999;
+    gtk_widget_modify_bg(manager->window, GTK_STATE_NORMAL, &border_color);
+    gtk_container_set_border_width(GTK_CONTAINER(manager->window), 1);
+    
+    g_signal_connect(G_OBJECT(manager->window), "delete-event", 
+                    G_CALLBACK(window_delete_event), manager);
+    
+    /* the various bubbles are in notebook pages */
+    manager->notebook = gtk_notebook_new();
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK(manager->notebook), FALSE);
+    gtk_notebook_set_show_border(GTK_NOTEBOOK(manager->notebook), FALSE);    
+    gtk_container_add(GTK_CONTAINER(manager->window), GTK_WIDGET(manager->notebook));
+    gtk_widget_show(GTK_WIDGET(manager->notebook));
 
     return manager;
 }
-
 
 static void
 manager_attach(BubbleManager   *manager,

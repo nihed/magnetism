@@ -83,6 +83,7 @@ set_max_label_width(GtkWidget   *label,
     GtkRequisition req;
     
     gtk_widget_set_size_request(label, -1, -1);
+    gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_NONE);
 
     gtk_widget_size_request(label, &req);
     
@@ -848,7 +849,9 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     HippoBubble *bubble;
     GdkRectangle border_rect;
     GdkRectangle content_rect;
-    GdkRectangle close_event_box_rect;    
+    GdkRectangle close_event_box_rect;
+    GtkRequisition requisition;
+    GdkRectangle recipients_rect;
 
     bubble = HIPPO_BUBBLE(widget);
 
@@ -864,7 +867,17 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
                    &border_rect, &content_rect, 
                    NULL, NULL, NULL, NULL,
                    &close_event_box_rect);
-    gtk_widget_size_allocate(bubble->close_event_box, &close_event_box_rect);                   
+    gtk_widget_size_allocate(bubble->close_event_box, &close_event_box_rect);
+    
+    /* Move recipients out to the corner,
+     * if we got a larger allocation than we wanted 
+     */
+    gtk_widget_get_child_requisition(bubble->recipients, &requisition);
+    recipients_rect.width = requisition.width;
+    recipients_rect.height = requisition.height;
+    recipients_rect.x = content_rect.x + content_rect.width - recipients_rect.width;
+    recipients_rect.y = content_rect.y + content_rect.height - recipients_rect.height;
+    gtk_widget_size_allocate(bubble->recipients, &recipients_rect);
 }
 
 void
