@@ -159,7 +159,8 @@ http_func(const char *content_type,
     /* note that this will immediately NULL the pixbuf if there were no 
      * strong references added during the callbacks
      */
-    g_object_unref(entry->pixbuf);
+    if (entry->pixbuf)
+        g_object_unref(entry->pixbuf);
     
     if (entry->free_on_load) {
         cache_entry_free(entry);

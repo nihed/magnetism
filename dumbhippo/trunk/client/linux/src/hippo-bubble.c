@@ -96,7 +96,7 @@ set_max_label_width(GtkWidget   *label,
 static void
 set_label_sizes(HippoBubble *bubble)
 {
-    set_max_label_width(bubble->link_title, 280, TRUE);
+    set_max_label_width(GTK_BIN(bubble->link_title)->child, 280, TRUE);
     set_max_label_width(bubble->link_description, 300, FALSE);
     set_max_label_width(bubble->recipients, 280, TRUE);
 }
