@@ -230,6 +230,67 @@ hippo_app_load_photo(HippoApp               *app,
     }
 }
 
+void
+hippo_app_put_window_by_icon(HippoApp  *app,
+                             GtkWindow *window)
+{
+    GtkOrientation orientation;
+    int x, y, width, height;
+    GdkScreen *screen;
+    GdkRectangle monitor;
+    int monitor_num;
+    int window_x, window_y;
+    GtkRequisition req;
+    gboolean is_west;
+    gboolean is_north;
+
+    orientation = hippo_gtk_status_icon_get_orientation(GTK_STATUS_ICON(app->icon));
+    hippo_gtk_status_icon_get_screen_geometry(GTK_STATUS_ICON(app->icon), &screen,
+        &x, &y, &width, &height);
+
+    monitor_num = gdk_screen_get_monitor_at_point(screen, x, y);
+    if (monitor_num < 0)
+        monitor_num = 0;
+
+    gdk_screen_get_monitor_geometry(screen, monitor_num, &monitor);
+
+#define GAP 3
+
+    is_west = ((x + width / 2) < (monitor.x + monitor.width / 2));
+    is_north = ((y + height / 2) < (monitor.y + monitor.height / 2));
+
+    /* this just assumes a borderless window for now, doesn't mess with gravity,
+     * though it would be easily fixed if we ever cared
+     */
+
+    gtk_widget_size_request(GTK_WIDGET(window), &req);
+    if (orientation == GTK_ORIENTATION_VERTICAL) {
+        if (is_west) {
+            window_x = x + width + GAP;
+        } else {
+            window_x = x - req.width - GAP;
+        }
+        if (is_north) {
+            window_y = y;
+        } else {
+            window_y = y + height - req.height;
+        }
+    } else {
+        if (is_west) {
+            window_x = x;
+        } else {
+            window_x = x + width - req.width;
+        }
+        if (is_north) {
+            window_y = y + height + GAP;
+        } else {
+            window_y = y - req.height - GAP;
+        }
+    }
+    
+    gtk_window_move(window, window_x, window_y);
+}
+
 static HippoApp*
 hippo_app_new(HippoInstanceType instance_type)
 {

@@ -35,6 +35,9 @@ void       hippo_app_load_photo     (HippoApp               *app,
                                      HippoImageCacheLoadFunc func,
                                      void                   *data);
 
+void       hippo_app_put_window_by_icon(HippoApp  *app,
+                                        GtkWindow *window);
+
 /* less typing */
 #define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (ptr))
 #define REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (ptr)); } } while(0)

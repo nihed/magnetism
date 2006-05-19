@@ -49,6 +49,9 @@ manager_bubble_post(BubbleManager *manager,
 
     page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
     gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
+    
+    hippo_app_put_window_by_icon(hippo_get_app(), GTK_WINDOW(manager->window));
+    
     gtk_window_present(GTK_WINDOW(manager->window));
 }
 

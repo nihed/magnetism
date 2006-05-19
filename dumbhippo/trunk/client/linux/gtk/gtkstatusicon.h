@@ -111,6 +111,15 @@ void                  gtk_status_icon_position_menu      (GtkMenu            *me
 							  gboolean           *push_in,
 							  gpointer            user_data);
 
+GtkOrientation hippo_gtk_status_icon_get_orientation     (GtkStatusIcon *status_icon);
+void           hippo_gtk_status_icon_get_screen_geometry (GtkStatusIcon *status_icon,
+                                                          GdkScreen    **screen_p,
+                                                          int           *x_p,
+                                                          int           *y_p,
+                                                          int           *width_p,
+                                                          int           *height_p);
+
+
 G_END_DECLS
 
 #endif /* __GTK_STATUS_ICON_H__ */

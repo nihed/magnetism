@@ -1617,3 +1617,44 @@ gtk_status_icon_position_menu (GtkMenu  *menu,
   *push_in = FALSE;
 #endif /* GDK_WINDOWING_X11 */
 }
+
+GtkOrientation
+hippo_gtk_status_icon_get_orientation (GtkStatusIcon *status_icon)
+{
+  GtkStatusIconPrivate *priv;
+  GtkTrayIcon *tray_icon;
+
+  g_return_val_if_fail (GTK_IS_STATUS_ICON (status_icon), GTK_ORIENTATION_HORIZONTAL);
+
+  priv = status_icon->priv;
+  tray_icon = GTK_TRAY_ICON (priv->tray_icon);
+
+  return _gtk_tray_icon_get_orientation (tray_icon);
+}
+
+void
+hippo_gtk_status_icon_get_screen_geometry (GtkStatusIcon *status_icon,
+                                           GdkScreen    **screen_p,
+                                           int           *x_p,
+                                           int           *y_p,
+                                           int           *width_p,
+                                           int           *height_p)
+{
+  GtkStatusIconPrivate *priv;
+  GtkWidget *widget;
+
+  g_return_if_fail (GTK_IS_STATUS_ICON (status_icon));
+
+  priv = status_icon->priv;
+  widget = priv->tray_icon;
+
+  if (screen_p)
+    *screen_p = gtk_widget_get_screen(widget);
+
+  /* we get position via round trip and size locally, which 
+   * is kinda bogus I guess
+   */
+  gdk_window_get_origin (widget->window, x_p, y_p);
+  gdk_drawable_get_size (widget->window, width_p, height_p);
+}
+
