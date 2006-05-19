@@ -16,7 +16,7 @@ HippoChatWindow::HippoChatWindow(void)
     hippoLoadTypeInfo((WCHAR *)0, &IID_IHippoChatWindow, &ifaceTypeInfo_, NULL);
 
     setClassName(L"HippoChatWindowClass");
-    setTitle(L"Hippo Chat");
+    setTitle(L"Mugshot Chat");
     setApplication(this);
 }
 
