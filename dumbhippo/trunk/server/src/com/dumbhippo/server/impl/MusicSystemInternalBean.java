@@ -383,6 +383,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+
+			if (track != null) {			
+			    logger.debug("Obtained transaction in YahooSongTask thread for track {}", track);
+			} else {
+			    logger.debug("Obtained transaction in YahooSongTask thread for album id {}", albumId);				
+			}
 			
 			if (track != null)
 				return musicSystem.getYahooSongResultsSync(track);
@@ -403,7 +409,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Entering YahooSongDownloadTask thread for songId {}", songId);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
-			
+
+		    logger.debug("Obtained transaction in YahooSongDownloadTask thread for songId {}", songId);
+		    
 			return musicSystem.getYahooSongDownloadResultsSync(songId);
 		}
 	}
@@ -425,7 +433,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Entering YahooAlbumTask thread for artist {}", artist);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
-			
+			logger.debug("Obtained transaction in YahooAlbumTask thread for artist {}", artist);			
 			return musicSystem.getYahooAlbumResultsSync(artist, albumsByArtist, albumToExclude);
 		}
 	}
@@ -443,6 +451,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+
+			logger.debug("Obtained transaction in YahooAlbumSearchTask thread for yahooSong {}", yahooSong);	
 			
 			try {
 			    YahooAlbumResult yahooAlbumResult = musicSystem.getYahooAlbumSync(yahooSong);
@@ -469,6 +479,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+
+			logger.debug("Obtained transaction in AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);	
 			
 			return musicSystem.getAmazonAlbumSync(album, artist);
 		}
@@ -488,6 +500,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Entering GetTrackViewTask thread for track {}", track);
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+
+			logger.debug("Obtained transaction in GetTrackViewTask thread for track {}", track);
 			
 			return musicSystem.getTrackView(track, lastListen);
 		}
@@ -507,6 +521,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Entering GetAlbumViewTask thread for a futureYahooAlbum and a futureAmazonAlbum");
 			// we do this instead of an inner class to work right with threads
 			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
+			
+			logger.debug("Obtained transaction in GetAlbumViewTask thread for a futureYahooAlbum and a futureAmazonAlbum");
 			
 			return musicSystem.getAlbumView(futureYahooAlbum, futureAmazonAlbum);
 		}
