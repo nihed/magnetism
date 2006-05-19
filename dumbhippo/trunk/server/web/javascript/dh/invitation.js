@@ -28,7 +28,7 @@ dh.invitation.showInfo = function(message) {
 dh.invitation.send = function() {
 	var address = dojo.string.trim(dh.invitation.addressEntry.getValue())
 	var subject = dojo.string.trim(dh.invitation.subjectEntry.getValue())
-	var message = dojo.string.trim(dh.invitation.subjectEntry.getValue())
+	var message = dojo.string.trim(dh.invitation.messageEntry.getValue())
 	
 	if (address == "" || address.indexOf("@") < 0) {
 		alert("Please enter a valid email address")
