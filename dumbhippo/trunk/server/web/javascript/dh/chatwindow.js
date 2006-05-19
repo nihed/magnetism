@@ -96,7 +96,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     textDiv.className = "dh-chat-message-text"
 
     var messageFontStyle = dh.chat.getMessageFontStyle(message)
-    var textSidePadding = 10	
+    var textSidePadding = 8
     var textPadding = 2
     
     var textWidth = dh.util.getTextWidth(message.text, this.MESSAGES_FONT_FAMILY, null, messageFontStyle) + textSidePadding*2
@@ -154,7 +154,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
         }
     }
     else {
-        message.div.style.marginLeft = (textAreaWidth - textWidth) + this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT + "px"      	
+        message.div.style.marginLeft = (textAreaWidth - textWidth) + this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT + "px" 
     }
 	
 	// if this is not a first message in a given batch of messages, make sure that they all are
@@ -314,9 +314,9 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
     // it means that the old music selection was stopped
     var useOldMusicInfo = ((arrangementName == "") && (artist == "") && !musicPlaying)
     if (!musicPlaying) {
-        userDiv.style.backgroundImage = "url(/images/personAreaMusicStopped.jpg)"    
+        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOff.gif)"    
     } else {
-        userDiv.style.backgroundImage = "url(/images/personArea.jpg)"
+        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOn.gif)"
     }
    
     if (useOldMusicInfo) {
@@ -333,7 +333,7 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
         return;
     } 
 
-    var arrangementLinkUrl = "/song?track=" + arrangementName + "&artist=" + artist 
+    var arrangementLinkUrl = "/artist?track=" + arrangementName + "&artist=" + artist 
              
     if (!arrangementNameDiv) {
         arrangementNameDiv = document.createElement("div")
@@ -394,27 +394,50 @@ dh.chatwindow.resizeElements = function() {
     var postInfoDiv = document.getElementById("dhChatPostInfoDiv")
     var peopleContainer = document.getElementById("dhChatPeopleContainer")
     var peopleDiv = document.getElementById("dhChatPeopleDiv")
-    var adsDiv = document.getElementById("dhChatAdsDiv")
+    var messagesContainer = document.getElementById("dhChatMessagesContainer")    
     var messagesDiv = document.getElementById("dhChatMessagesDiv")
     var messageInput = document.getElementById("dhChatMessageInput")
-    var sendButton = document.getElementById("dhChatSendButton")
+    var sendButtonDiv = document.getElementById("dhChatSendButtonArea")
     
+    // to make things align, the offsets for these elements need to be adjusted
+    // depending on whether the window dimensions are even or odd
+    var chatMessagesNECorner = document.getElementById("dhChatMessagesNE")
+    var chatSendButton = document.getElementById("dhChatSendButton")
+    var chatPeopleSWCorner = document.getElementById("dhChatPeopleSW")
+        
+    if ((width % 2) == 0) {
+        chatMessagesNECorner.style.right = "-4px"    
+        chatSendButton.style.right = "-1px"          
+    } else {
+        chatMessagesNECorner.style.right = "-5px"
+        chatSendButton.style.right = "-2px"                
+    }
+  
+    if ((height % 2) == 0) {
+        chatSendButton.style.bottom = "-1px"         
+        chatPeopleSWCorner.style.bottom = "-7px"
+    } else {
+        chatSendButton.style.bottom = "0px"
+        chatPeopleSWCorner.style.bottom = "-6px"               
+    }
+     
 	var bottomHeight = height - (postInfoDiv.offsetHeight + 30)
 	var bottomY = postInfoDiv.offsetHeight + 20
     
-    var peopleHeight = 3 * (bottomHeight / 4)
+    var peopleHeight = bottomHeight
     peopleContainer.style.top = bottomY + "px"
     peopleContainer.style.height = peopleHeight + "px"
-    peopleDiv.style.top = 17 + "px";
-    peopleDiv.style.height = (peopleHeight - 17) + "px"
-    adsDiv.style.top = (bottomY + peopleHeight) + "px"
-    adsDiv.style.height = (bottomHeight - peopleHeight) + "px"
-    adsDiv.style.width = (width - 60) + "px"
+    peopleDiv.style.top = 10 + "px"
+    peopleDiv.style.height = (peopleHeight - 50) + "px"
+    peopleDiv.style.width = (peopleContainer.offsetWidth - 6) + "px"
 
-	messagesDiv.style.top = bottomY + "px"
-    messagesDiv.style.left = (10 + peopleContainer.offsetWidth) + "px"
+	messagesContainer.style.top = bottomY + "px"
+    messagesContainer.style.left = (10 + peopleContainer.offsetWidth) + "px"
+    messagesContainer.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
+    messagesContainer.style.height = peopleContainer.offsetHeight + "px"
+    
     messagesDiv.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
-    messagesDiv.style.height = (bottomHeight - (messageInput.offsetHeight + 10)) + "px"
+    messagesDiv.style.height = (bottomHeight - (messageInput.offsetHeight + 40)) + "px"
     
     //_resizeMessage is the callback function that we want to be called for each message
     this._messageList.foreachMessage(function(message, before) { dh.chatwindow._resizeMessage(message, before) })
@@ -422,13 +445,12 @@ dh.chatwindow.resizeElements = function() {
     // new one only after resizing is done
     this._setTextAreaWidth(this._calculateTextAreaWidth(messagesDiv.offsetWidth))
 
-	messageInput.style.top = (bottomY + messagesDiv.offsetHeight) + "px"
-    messageInput.style.left = (10 + peopleContainer.offsetWidth) + "px"
-    messageInput.style.width = ((width - 30) - peopleContainer.offsetWidth - sendButton.offsetWidth - 2) + "px"
+	messageInput.style.top = messagesDiv.offsetHeight + "px"
+    messageInput.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
     
-    sendButton.style.left = (10 + peopleContainer.offsetWidth + messageInput.offsetWidth) + "px"
-    sendButton.style.top = (bottomY + messagesDiv.offsetHeight) + "px"
-    sendButton.style.height = messageInput.offsetHeight + "px"
+    sendButtonDiv.style.top = (messagesDiv.offsetHeight + messageInput.offsetHeight) + "px"
+    sendButtonDiv.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
+    sendButtonDiv.style.height = (peopleHeight - (messagesDiv.offsetHeight + messageInput.offsetHeight)) + "px" 
 }
 
 dh.chatwindow.sendClicked = function() {
@@ -472,8 +494,8 @@ dh.chatwindow._setTextAreaWidth = function(textAreaWidth) {
 }
 
 dh.chatwindow._calculateTextAreaWidth = function(messageDivWidth) {
-    // 30 is for the scroll bar and such
-    return messageDivWidth - this.PHOTO_WIDTH*2 - 30
+    // 40 is for the scroll bar and border
+    return messageDivWidth - this.PHOTO_WIDTH*2 - 40
 }
 
 dh.chatwindow.init = function() {
