@@ -30,11 +30,11 @@
 		    <Component Id="hippoExplorer" Guid="D933FFD1-6ACC-4CF9-87A4-5EAECF43CD01">
 		        <File Id="hippoExplorerDll" Name="HippoExp.dll" LongName="HippoExplorer.dll" src="HippoExplorer.dll"  DiskId="1" Vital="yes"/>
 		        <TypeLib Id="39794B35-15C8-43b8-A1D7-AEB345E8355C" Language="0"/>
-		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Hippo Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Hippo Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Hippo Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Hippo Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="Hi&amp;ppo Bar" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Mugshot Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Mugshot Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Mugshot Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Mugshot Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="&amp;Mugshot Bar" Context="InprocServer32" ThreadingModel="apartment"/>
                         <Registry Root="HKCR" Key="CLSID\{174D2323-9AF2-4257-B8BD-849865E4F1AE}\Implemented Categories\{00021494-0000-0000-C000-000000000046}"/>
                         <!-- Remove registry entries to force rescan of explorer bars; the first of these is documented in 
                              explorer bar creation docs, but I think it is obsolete. The second is found in KB q247705 and
@@ -53,16 +53,16 @@
                             <Registry Name="CLSID" Value="{1FBA04EE-3024-11d2-8F1F-0000F87ABD16}" Type="string" />
                             <Registry Name="ClsidExtension" Value="{8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F}" Type="string" />
                         </Registry>
-                        <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836}" Value="Hippo Tracker" Type="string" />
+                        <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836}" Value="Mugshot Tracker" Type="string" />
 		    </Component>
 		    
 		    <Component Id="hippoShellExt" Guid="4A7068C1-20B6-423A-B51A-5195E69FEED2">
 		        <File Id="hippoShellExtDll" Name="HippoShe.dll" LongName="HippoShellExt.dll" src="HippoShellExt.dll"  DiskId="1" Vital="yes"/>
-		        <Class Id="BD176713-C30F-4C24-97D8-134DEADC97E8" Server="hippoShellExtDll" Description="Hippo Shell Extension" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="BD176713-C30F-4C24-97D8-134DEADC97E8" Server="hippoShellExtDll" Description="Mugshot Shell Extension" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <!-- when we want to use HippoShellExt again, delete this line and uncomment the one below -->
-                <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension"/>		        
+                <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Mugshot Shell Extension"/>		        
                 <!--
-		        <Registry Root="HKCR" Key="*\shellex\ContextMenuHandlers\Hippo Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
+		        <Registry Root="HKCR" Key="*\shellex\ContextMenuHandlers\Mugshot Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
 		        -->
 		    </Component>
 		    

@@ -124,7 +124,7 @@ registerToolbarAction(HippoRegistrar *registrar)
     } while (0)
     
     hr = registrar->registerInprocServer(CLSID_HippoToolbarAction,
-                                         TEXT("Hippo Toolbar Action"));
+                                         TEXT("Mugshot Toolbar Action"));
     if (FAILED(hr))
         return hr;
 
@@ -182,7 +182,7 @@ DllRegisterServer(void)
         return hr;
 
     hr = registrar.registerInprocServer(CLSID_HippoExplorerBar,
-                                        TEXT("Hi&ppo Bar"));
+                                        TEXT("&Mugshot Bar"));
     if (FAILED(hr))
         return hr;
 
@@ -198,22 +198,22 @@ DllRegisterServer(void)
     RegDeleteKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Discardable\\PostSetup\\Component Categories\\{00021494-0000-0000-C000-000000000046}\\Enum");
 
     hr = registrar.registerInprocServer(CLSID_HippoTracker,
-                                        TEXT("Hippo Tracker"));
+                                        TEXT("Mugshot Tracker"));
     if (FAILED(hr))
         return hr;
 
     hr = registrar.registerBrowserHelperObject(CLSID_HippoTracker,
-                                               TEXT("Hippo Tracker"));
+                                               TEXT("Mugshot Tracker"));
     if (FAILED(hr))
         return hr;
     
     hr = registrar.registerInprocServer(CLSID_HippoChatControl,
-                                        TEXT("Hippo Chat Control"));
+                                        TEXT("Mugshot Chat Control"));
     if (FAILED(hr))
         return hr;
 
     hr = registrar.registerInprocServer(CLSID_HippoEmbed,
-                                        TEXT("Hippo Embed"));
+                                        TEXT("Mugshot Embed"));
     if (FAILED(hr))
         return hr;
 

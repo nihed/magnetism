@@ -226,13 +226,13 @@ DllRegisterServer(void)
     HRESULT hr;
 
     hr = registrar.registerInprocServer(CLSID_HippoShellExt,
-                                        L"Hippo Shell Extension");
+                                        L"Mugshot Shell Extension");
     if (FAILED(hr))
         return hr;
 
     // *un*register, since this module isn't used at the moment
     hr = registrar.unregisterGlobalShellCtxMenu(// CLSID_HippoShellExt,
-                                                L"Hippo Shell Extension");
+                                                L"Mugshot Shell Extension");
     if (FAILED(hr))
         return hr;
 
