@@ -245,6 +245,8 @@ form {
 	position:			relative;
 	width:				500px;
 	height:				32px;
+/* IE hack to prevent white space from appearing, font-size must be explicitly set in child nodes */
+	font-size:			0;
 }
 
 .dh-zone-box-header-links {
