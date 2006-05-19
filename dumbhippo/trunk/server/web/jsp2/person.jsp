@@ -18,6 +18,9 @@
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
+			<c:if test="${!signin.valid}">
+			        <dht:linkSwarmPromo separator="true" />
+			</c:if>
 			<c:if test="${links.favoritePosts.resultCount > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
 				<dht:postList posts="${links.favoritePosts.results}" format="simple"/>
@@ -34,6 +37,9 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic disableJumpTo="true">
+			<c:if test="${!signin.valid}">
+			        <dht:musicRadarPromo separator="true" musicLink="true"/>
+			</c:if>
 			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>
 			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>

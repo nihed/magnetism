@@ -55,11 +55,7 @@
 					</c:choose>
 				</c:when>
 				<c:otherwise>
-					<span class="dh-option-list">
-					<a class="dh-option-list-option" href="/radar-learnmore">Learn More</a>
-					|
-					<a class="dh-option-list-option" href="/radar-themes">Browse themes</a>
-					</span>
+				        <dht:musicRadarPromo/>
 					<div><dht:beaconSamples/></div>					
 				</c:otherwise>
 			</c:choose>
