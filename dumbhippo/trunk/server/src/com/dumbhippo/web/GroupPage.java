@@ -96,34 +96,38 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			}
 		}
 		
-		if (group != null && getSignin().isValid()) {
-			UserViewpoint viewpoint = (UserViewpoint)getSignin().getViewpoint();
-		
-			
-			try {
-				groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
-			} catch (NotFoundException e) {
-				groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
-			}
-			
-			viewedGroup = new GroupView(group, groupMember, null);			
-			
-			// If you view a group you were invited to, you get added; you can leave again and then 
-			// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
-			if (groupMember.getStatus() == MembershipStatus.INVITED) {
-				groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
-				
-				// reload the groupMember to have the new state
+		if (group != null) {
+			if (getSignin().isValid()) {
+				UserViewpoint viewpoint = (UserViewpoint)getSignin().getViewpoint();
+						
 				try {
 					groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
 				} catch (NotFoundException e) {
 					groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
 				}
-	
-				justAdded = true;
+				
+				viewedGroup = new GroupView(group, groupMember, null);			
+				
+				// If you view a group you were invited to, you get added; you can leave again and then 
+				// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
+				if (groupMember.getStatus() == MembershipStatus.INVITED) {
+					groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
+					
+					// reload the groupMember to have the new state
+					try {
+						groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
+					} catch (NotFoundException e) {
+						groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
+					}
+		
+					justAdded = true;
+				}
+		
+				adder = groupMember.getAdder();
+			} else {
+				groupMember = new GroupMember(group, null, MembershipStatus.NONMEMBER);
+				viewedGroup = new GroupView(group, groupMember, null);
 			}
-	
-			adder = groupMember.getAdder();
 		}
 	}
 	
