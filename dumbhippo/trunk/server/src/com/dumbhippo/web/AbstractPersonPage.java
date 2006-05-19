@@ -16,7 +16,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
@@ -134,10 +133,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	// We don't show group's you haven't accepted the invitation for on your public page
 	public ListBean<GroupView> getGroups() {
-		Viewpoint viewpoint = getSignin().getViewpoint();
-		// For now we only display groups for users from non-anonymous viewpoints
-		if (groups == null && viewpoint instanceof UserViewpoint) {
-			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups((UserViewpoint) viewpoint, getViewedUser())));
+		if (groups == null) {
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser())));
 		}
 		return groups;
 	}	
