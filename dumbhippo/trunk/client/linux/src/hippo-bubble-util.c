@@ -148,12 +148,15 @@ update_viewers(PostWatch        *watch)
 #define MAX_VIEWERS_SHOWN 10
     HippoViewerInfo infos[MAX_VIEWERS_SHOWN];
     int n_viewers;    
-    
+    HippoPerson *self;
+        
     /* be sure we're still the current post */
     if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
         return;
 
     room = watch->room;
+    self = hippo_data_cache_get_self(watch->cache);
+    /* remember self is null if not logged in */
 
     /* reload viewer list, preferring people there live */
     n_viewers = 0;    
@@ -163,6 +166,9 @@ update_viewers(PostWatch        *watch)
         
         if (n_viewers == MAX_VIEWERS_SHOWN)
             break;
+
+        if (user == self)
+            continue;
     
         infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
         infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
@@ -180,6 +186,9 @@ update_viewers(PostWatch        *watch)
             
             if (n_viewers == MAX_VIEWERS_SHOWN)
                 break;
+
+            if (user == self)
+                continue;
     
             infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
             infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
@@ -291,10 +300,10 @@ on_post_changed(HippoPost *post,
             if (entity != HIPPO_ENTITY(self)) {
                 infos[i].name = hippo_entity_get_name(entity);
                 infos[i].entity_guid = hippo_entity_get_guid(entity);
+                ++i;
             }
             
             recipients = recipients->next;
-            ++i;
         }
         
         hippo_bubble_set_recipients(bubble, infos, i);
