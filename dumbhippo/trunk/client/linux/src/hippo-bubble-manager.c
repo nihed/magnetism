@@ -32,6 +32,9 @@ find_bubble_for_post(BubbleManager *manager,
     return FALSE;
 }                     
 
+/* this has to be called manually; GTK 2.10 has page-added/page-removed 
+ * on gtknotebook but earlier versions don't
+ */
 static void
 update_bubble_paging(BubbleManager *manager)
 {
@@ -51,16 +54,6 @@ update_bubble_paging(BubbleManager *manager)
     }
     
     g_list_free(children);
-}
-
-static void
-on_notebook_add_or_remove(GtkWidget     *notebook,
-                          GtkWidget     *child,
-                          BubbleManager *manager)
-{
-    if (HIPPO_IS_BUBBLE(child)) {
-        update_bubble_paging(manager);
-    }        
 }
 
 /* note, our job in this file is just to be sure the bubble exists
@@ -93,6 +86,8 @@ manager_bubble_post(BubbleManager    *manager,
 
     page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
     gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
+    
+    update_bubble_paging(manager);
     
     hippo_app_put_window_by_icon(hippo_get_app(), GTK_WINDOW(manager->window));
  
@@ -252,6 +247,8 @@ window_delete_event(GtkWindow     *window,
         gtk_widget_hide(GTK_WIDGET(window));
     }
 
+    update_bubble_paging(manager);
+
     /* don't destroy us */
     return TRUE;
 }
@@ -286,11 +283,6 @@ manager_new(void)
     gtk_notebook_set_show_border(GTK_NOTEBOOK(manager->notebook), FALSE);    
     gtk_container_add(GTK_CONTAINER(manager->window), GTK_WIDGET(manager->notebook));
     gtk_widget_show(GTK_WIDGET(manager->notebook));
-
-    g_signal_connect_after(G_OBJECT(manager->notebook), "add",
-                           G_CALLBACK(on_notebook_add_or_remove), manager);
-    g_signal_connect_after(G_OBJECT(manager->notebook), "remove",
-                           G_CALLBACK(on_notebook_add_or_remove), manager);
 
     return manager;
 }

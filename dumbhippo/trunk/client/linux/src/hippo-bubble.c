@@ -42,6 +42,9 @@ struct _HippoBubble {
     GtkWidget *link_description;
     GtkWidget *recipients;
     GtkWidget *close_event_box;
+    GtkWidget *n_of_n;
+    GtkWidget *left_arrow;
+    GtkWidget *right_arrow;
     char      *sender_id;
     char      *post_id;
     int        page; /* [0,total_pages) */
@@ -281,6 +284,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     GtkWidget *widget;
 
     GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
+    bubble->page = 0;
+    bubble->total_pages = 1;
     
     /* we want a white background */
     
@@ -366,6 +371,34 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_misc_set_alignment(GTK_MISC(bubble->recipients), 1.0, 1.0);
     gtk_label_set_line_wrap(GTK_LABEL(bubble->recipients), TRUE);
     gtk_label_set_use_markup(GTK_LABEL(bubble->recipients), TRUE);
+
+    bubble->left_arrow = g_object_new(GTK_TYPE_EVENT_BOX,
+                                      "visible-window", FALSE,
+                                      "above-child", TRUE,
+                                      NULL);
+    connect_page_action(bubble->left_arrow, PAGE_ACTION_PREVIOUS);
+
+    widget = gtk_image_new();
+    gtk_widget_show(widget);
+    gtk_container_add(GTK_CONTAINER(bubble->left_arrow), widget);
+    hookup_widget(bubble, &bubble->left_arrow);
+    gtk_widget_hide(bubble->left_arrow); /* override hookup_widget */
+
+    bubble->right_arrow = g_object_new(GTK_TYPE_EVENT_BOX,
+                                       "visible-window", FALSE,
+                                       "above-child", TRUE,
+                                       NULL);
+    connect_page_action(bubble->right_arrow, PAGE_ACTION_NEXT);
+
+    widget = gtk_image_new();
+    gtk_widget_show(widget);
+    gtk_container_add(GTK_CONTAINER(bubble->right_arrow), widget);
+    hookup_widget(bubble, &bubble->right_arrow);
+    gtk_widget_hide(bubble->right_arrow); /* override hookup_widget */    
+
+    bubble->n_of_n = gtk_label_new(NULL);
+    hookup_widget(bubble, &bubble->n_of_n);
+    gtk_widget_hide(bubble->n_of_n); /* override hookup_widget */        
     
     set_label_sizes(bubble);
 }
@@ -552,8 +585,12 @@ typedef enum {
     BASE_IS_CONTENT_REQUISITION
 } BaseMode;
 
+/* width of the area with the paging arrows */
+#define PAGING_AREA_WIDTH 60
+
 /* border_rect is the rect of our bubble border, not of the whole 
  * widget e.g. it wouldn't include GtkContainer::border-width
+ * or the paging/extras areas outside the bubble
  */
 static void
 compute_layout(GtkWidget          *widget,
@@ -602,23 +639,35 @@ compute_layout(GtkWidget          *widget,
     bottom_edge_height = MAX(gdk_pixbuf_get_height(br_pixbuf), gdk_pixbuf_get_height(bl_pixbuf));
 
     if (mode == BASE_IS_WIDGET_ALLOCATION) {
-        /* "size allocate" mode */
+        /* "size allocate" mode: "base" is our entire size allocation 
+         * for the widget. We want to subtract everything that isn't
+         * the bubble to get down to border_rect
+         */
         
         border_rect = *base;
 
-        border_rect.x += container->border_width;
-        border_rect.y += container->border_width;
         border_rect.width -= 2 * container->border_width;
+        if (bubble->total_pages > 1)
+            border_rect.width -= PAGING_AREA_WIDTH;        
         border_rect.height -= 2 * container->border_width;
     } else if (mode == BASE_IS_CONTENT_REQUISITION) {
-        /* "size request" mode and the x/y are essentially meaningless */
+        /* "size request" mode: "base" is the size request of the stuff 
+         * inside the bubble area, i.e. the content_rect. We want to add
+         * the bubble borders to get border_rect.
+         */
             
         border_rect = *base;
-        
+
         border_rect.width += left_edge_width + right_edge_width;
         border_rect.height += top_edge_height + bottom_edge_height;
     } else {
         g_assert_not_reached();
+    }
+
+    border_rect.x += container->border_width;
+    border_rect.y += container->border_width;
+    if (bubble->total_pages > 1) {
+        border_rect.x += PAGING_AREA_WIDTH;
     }
     
     bottom_edge_rect = border_rect;
@@ -907,7 +956,8 @@ hippo_bubble_size_request(GtkWidget         *widget,
     content_child_rect.x = 0;
     content_child_rect.y = 0;
     content_child_rect.width = 0;
-    content_child_rect.height = 0;    
+    content_child_rect.height = 0;
+    
     gdk_rectangle_union(&content_child_rect, &sender_photo_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &sender_name_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &link_swarm_logo_rect, &content_child_rect);
@@ -936,15 +986,29 @@ hippo_bubble_size_request(GtkWidget         *widget,
     compute_layout(widget, &content_child_rect, BASE_IS_CONTENT_REQUISITION, &border_rect,
                    &offset_content_rect, NULL, NULL, NULL, NULL, &close_event_box_rect);
 
-    /* note that all x,y coord stuff at this point is purely to set the GtkFixed child position,
-     * which does not include container->border_width
+    /* get offset to the gtk_fixed_put() child positions,
+     * which does not include container->border_width, but does include any 
+     * other offsets that compute_layout took into account.
      */
-    xoffset = offset_content_rect.x - border_rect.x; /* we expect border_rect.x, y to be 0 */
-    yoffset = offset_content_rect.y - border_rect.y;
+    xoffset = offset_content_rect.x - container->border_width;
+    yoffset = offset_content_rect.y - container->border_width;
     
-    /* Now we know our requisition */
-    requisition->width = border_rect.width + container->border_width * 2;
-    requisition->height = border_rect.height + container->border_width * 2;
+    /* Now we know our requisition, the below assumes that border width is the 
+     * only "extra space" outside the border on right/bottom but lets compute_layout
+     * add both border width and paging area on the left
+     */
+    requisition->width = border_rect.x + border_rect.width + container->border_width;
+    requisition->height = border_rect.y + border_rect.height + container->border_width;
+
+#if 0
+    g_print("Size req on %p, %d x %d; border_rect %d,%d %dx%d\n"
+            "  offset_content_rect %d,%d %dx%d\n"
+            "  content_child_rect  %d,%d %dx%d\n",
+        bubble, requisition->width, requisition->height,
+            border_rect.x, border_rect.y, border_rect.width, border_rect.height,
+            offset_content_rect.x, offset_content_rect.y, offset_content_rect.width, offset_content_rect.height,
+            content_child_rect.x, content_child_rect.y, content_child_rect.width, content_child_rect.height);
+#endif 
     
     /* side effect, we update where GtkFixed will display widgets on expose,
      * and help it gets its size allocate right
@@ -972,13 +1036,19 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
      * a busted window manager that ignores hints, we take patches.
      */
     HippoBubble *bubble;
+    GtkContainer *container;
     GdkRectangle border_rect;
     GdkRectangle content_rect;
     GdkRectangle close_event_box_rect;
     GtkRequisition requisition;
     GdkRectangle recipients_rect;
+    GdkRectangle left_arrow_rect;
+    GdkRectangle right_arrow_rect;
+    GdkRectangle n_of_n_rect;
+    int both_arrows_width;
 
     bubble = HIPPO_BUBBLE(widget);
+    container = GTK_CONTAINER(widget);
 
     /* Give every widget its size request and GtkFixed position, computed
      * at size request time
@@ -1003,6 +1073,51 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     recipients_rect.x = content_rect.x + content_rect.width - recipients_rect.width;
     recipients_rect.y = content_rect.y + content_rect.height - recipients_rect.height;
     gtk_widget_size_allocate(bubble->recipients, &recipients_rect);
+
+    /* put the paging stuff on the bottom of paging area. */
+    gtk_widget_get_child_requisition(bubble->left_arrow, &requisition);
+    left_arrow_rect.width = requisition.width;
+    left_arrow_rect.height = requisition.height;
+
+    gtk_widget_get_child_requisition(bubble->right_arrow, &requisition);
+    right_arrow_rect.width = requisition.width;
+    right_arrow_rect.height = requisition.height;
+    
+    gtk_widget_get_child_requisition(bubble->n_of_n, &requisition);
+    n_of_n_rect.width = requisition.width;
+    n_of_n_rect.height = requisition.height;
+
+    both_arrows_width = MIN(PAGING_AREA_WIDTH, right_arrow_rect.width + left_arrow_rect.width + 10);
+
+    /* center the arrows */
+    left_arrow_rect.x = container->border_width + (PAGING_AREA_WIDTH - both_arrows_width) / 2;
+    left_arrow_rect.y = allocation->height - 10 - left_arrow_rect.height;
+    right_arrow_rect.x = left_arrow_rect.x + left_arrow_rect.width + 10;
+    right_arrow_rect.y = allocation->height - 10 - right_arrow_rect.height;
+
+    /* Label has a size_request set of the whole PAGING_AREA_WIDTH, so we put it at border_width, 
+     * and it centers self horizontally; we just need to set it vertically.
+     */
+    n_of_n_rect.x = container->border_width;
+    n_of_n_rect.y = MIN(left_arrow_rect.y, right_arrow_rect.y) - 10 - n_of_n_rect.height;
+    
+    /* After doing all layout, grow the event boxes on the arrows so there's a larger hit target. 
+     * This should not change the visuals, only the input-only event box window. GtkImage is a
+     * GtkMisc so will center itself in the expanded event box. The padding between the 
+     * two arrows is 10, so if changing this avoid overlapping the two boxes.
+     */
+    left_arrow_rect.x -= 5;
+    left_arrow_rect.width += 10;
+    left_arrow_rect.y -= 5;
+    left_arrow_rect.height += 10;
+    right_arrow_rect.x -= 5;
+    right_arrow_rect.width += 10;
+    right_arrow_rect.y -= 5;
+    right_arrow_rect.height += 10;
+    
+    gtk_widget_size_allocate(bubble->left_arrow, &left_arrow_rect);
+    gtk_widget_size_allocate(bubble->right_arrow, &right_arrow_rect);
+    gtk_widget_size_allocate(bubble->n_of_n, &n_of_n_rect);    
 }
 
 void
@@ -1147,6 +1262,19 @@ hippo_bubble_set_last_chat_photo(HippoBubble *bubble,
 {
     g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
 }
+
+static void
+set_arrow(GtkWidget  *event_box,
+          const char *image_name)
+{
+    GtkWidget *image;
+    GdkPixbuf *pixbuf;
+
+    image = GTK_BIN(event_box)->child;
+    pixbuf = hippo_embedded_image_get(image_name);
+    g_return_if_fail(pixbuf != NULL);
+    gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
+}
                                  
 void
 hippo_bubble_set_page_n_of_total(HippoBubble *bubble,
@@ -1154,10 +1282,51 @@ hippo_bubble_set_page_n_of_total(HippoBubble *bubble,
                                  int          total)
 {
     g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+    g_return_if_fail(total > 0);    
+    g_return_if_fail(n < total);
     
     if (bubble->page == n && bubble->total_pages == total)
         return;
-}                                 
+        
+    bubble->page = n;
+    bubble->total_pages = total;
+    
+    /* Update widgets */
+    if (total == 1) {
+        gtk_widget_hide(bubble->n_of_n);
+        gtk_widget_hide(bubble->left_arrow);
+        gtk_widget_hide(bubble->right_arrow);
+    } else {
+        char *s;
+    
+        s = g_strdup_printf("%d of %d", n + 1, total);
+        gtk_label_set_text(GTK_LABEL(bubble->n_of_n), s);
+        g_free(s);
+
+        /* FIXME we could also drop the hand cursor off the 
+         * insensitive ones, would be nicer
+         */
+        if (n == 0) {
+            set_arrow(bubble->left_arrow, "grayleftarrow");
+        } else {
+            set_arrow(bubble->left_arrow, "blueleftarrow");
+        }
+        if ((n + 1) == total) {
+            set_arrow(bubble->right_arrow, "grayrightarrow");
+        } else {
+            set_arrow(bubble->right_arrow, "bluerightarrow");
+        }
+
+        /* label will center in the paging area */
+        gtk_widget_set_size_request(bubble->n_of_n, PAGING_AREA_WIDTH, -1);
+        
+        /* rest of positioning these widgets is in size_request / size_allocate */                      
+
+        gtk_widget_show(bubble->n_of_n);
+        gtk_widget_show(bubble->left_arrow);
+        gtk_widget_show(bubble->right_arrow);    
+    }
+}
 
 void
 hippo_bubble_set_reason(HippoBubble      *bubble,

@@ -409,7 +409,7 @@ main(int argc, char **argv)
 
     if (options.initial_debug_share) {
         /* timeout removes itself */
-        g_timeout_add(2000, show_debug_share_timeout, the_app);
+        g_timeout_add(1000, show_debug_share_timeout, the_app);
     }
     
     hippo_options_free_fields(&options);
