@@ -44,18 +44,22 @@
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="About me">
+					<%--
 					<div>
 						<input type="button" value="Generate a random bio!" onclick="dh.account.generateRandomBio();"/>
 					</div>
+					--%>
 					<div>
 						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhMusicBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My music bio">
+				    <%--
 					<div>
 						<input type="button" value="Generate a random music bio!" onclick="dh.account.generateRandomBio();"/>
 					</div>
+					--%>
 					<div>
 						<dht:textInput id="dhMusicBioEntry" multiline="true"/>
 					</div>
