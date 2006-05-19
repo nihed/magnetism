@@ -1711,11 +1711,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					}
 				}
 			}
+			fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		} catch (Exception e) {
-			logger.warn("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
+			logger.error("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
 		}
 		
-		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		return view;
 	}
 
