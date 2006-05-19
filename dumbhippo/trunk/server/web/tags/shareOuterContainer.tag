@@ -4,21 +4,42 @@
 <%-- This tag defines the outer border of a share --%>
 <div id="dhShareOuterDiv">
 <table id="dhShareOuter" cellspacing="0" cellpadding="0" width="100%" height="100%">
-    <tr><td align="left" id="dhShareTL"><img src="/images/${buildStamp}/shareLinkTL.png"/></td>
-    <td id="dhShareTop">&nbsp;</td>
-    <td align="right" id="dhShareTR"><img src="/images/${buildStamp}/shareLinkTR.png"/></td>
+	<tr style="height: 8px">
+	<td class="dh-share-border" style="width: 8px;"></td>
+	<td class="dh-share-border" style="width: 12px;"></td>
+	<td class="dh-share-border"></td>
+	<td class="dh-share-border" style="width: 12px;"></td>
+	<td class="dh-share-border" style="width: 8px;"></td>
+	</tr>
+    <tr style="height: 12px">
+	<td class="dh-share-border"></td>
+    <td align="left" id="dhShareTL"><img src="/images2/${buildStamp}/lswhite_tl.png"/></td>
+    <td></td>
+    <td align="right" id="dhShareTR"><img src="/images2/${buildStamp}/lswhite_tr.png"/></td>
+	<td class="dh-share-border"></td>
     </tr>
     <tr>
-    <td id="dhShareLeftBorder" align="left">&nbsp;</td>    
+	<td class="dh-share-border"></td>
+    <td></td>
     <td id="dhShareMain" align="center" valign="middle">
-	<jsp:doBody/>
+		<jsp:doBody/>
 	</td>
-    <td id="dhShareRightBorder" align="right">&nbsp;</td>
+    <td></td>
+	<td class="dh-share-border"></td>
     </tr>
-    <tr>
-    <td align="left" valign="bottom" id="dhShareBL"><img src="/images/${buildStamp}/shareLinkBL.png"/></td>
-    <td width="100%" valign="bottom" id="dhShareBottom">&nbsp;</td>
-    <td align="right" valign="bottom" id="dhShareBR"><img src="/images/${buildStamp}/shareLinkBR.png"/></td>
+    <tr style="height: 12px">
+	<td class="dh-share-border"></td>
+    <td align="left" valign="bottom" id="dhShareBL"><img src="/images2/${buildStamp}/lswhite_bl.png"/></td>
+    <td></td>
+    <td align="right" valign="bottom" id="dhShareBR"><img src="/images2/${buildStamp}/lswhite_br.png"/></td>
+	<td class="dh-share-border"></td>
     </tr>
+	<tr style="height: 8px">
+	<td class="dh-share-border"></td>
+	<td class="dh-share-border"></td>
+	<td class="dh-share-border"></td>
+	<td class="dh-share-border"></td>
+	<td class="dh-share-border"></td>
+	</tr>
 </table> <!-- ends dhShareOuter --> 
 </div> <!-- ends dhShareOuterDiv -->

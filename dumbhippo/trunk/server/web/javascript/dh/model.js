@@ -20,7 +20,7 @@ dh.model.GuidPersistable = function(id, displayName) {
 }
 dojo.inherits(dh.model.GuidPersistable, Object);
 
-dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, hasAccount) {
+dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, hasAccount, photoUrl) {
 	this.id = id;
 	if (userId == "")
 		userId = null;
@@ -31,14 +31,16 @@ dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, ha
 	this.emails = emails ? emails : []; // array of string, can be empty
 	this.aims = aims ? aims : []; // array of string, can be empty
 	this.hasAccount = hasAccount;
+	this.photoUrl = photoUrl;
 	this.kind = "person";
 }
 dojo.inherits(dh.model.Person, dh.model.GuidPersistable);
 
-dh.model.Group = function(id, displayName, sampleMembers) {
+dh.model.Group = function(id, displayName, sampleMembers, photoUrl) {
 	this.id = id;
 	this.displayName = displayName;
 	this.sampleMembers = sampleMembers; // can be null
+	this.photoUrl = photoUrl;
 	this.kind = "group";
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
@@ -67,6 +69,7 @@ dh.model.personFromXmlNode = function(element) {
 	var aim = element.getAttribute("aim");
 	var emails = element.getAttribute("emails");
 	var aims = element.getAttribute("aims");
+	var photoUrl = element.getAttribute("photoUrl");
 	var hasAccount = element.getAttribute("hasAccount");
 
 	if (emails)
@@ -81,7 +84,7 @@ dh.model.personFromXmlNode = function(element) {
 		dojo.raise("no display attr on <person> node");
 	
 	return new dh.model.Person(id, userId, displayName, email, aim, emails, aims, 
-		hasAccount == "true" ? true : false);
+		hasAccount == "true" ? true : false, photoUrl);
 }
 
 dh.model.groupFromXmlNode = function(element) {
@@ -91,6 +94,7 @@ dh.model.groupFromXmlNode = function(element) {
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
 	var sampleMembers = element.getAttribute("sampleMembers");
+	var photoUrl = element.getAttribute("photoUrl");
 
 	// note, empty string is "false", so group name, which is what is usually
 	// used for the display attribute, must not be blank	
@@ -99,7 +103,7 @@ dh.model.groupFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <group> node");
 	
-	return new dh.model.Group(id, displayName, sampleMembers);
+	return new dh.model.Group(id, displayName, sampleMembers, photoUrl);
 }
 
 dh.model.objectFromXmlNode = function(element) {

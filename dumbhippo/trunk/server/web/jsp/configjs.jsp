@@ -8,6 +8,7 @@ var dhDebug = false;
 var dhServerUri = "/";
 var dhScriptRoot = dhServerUri + "javascript/${buildStamp}/";
 var dhImageRoot = dhServerUri + "images/${buildStamp}/";
+var dhImageRoot2 = dhServerUri + "images2/${buildStamp}/";
 if (dhDebug && document.location.toString().substring(0,5) == "file:") {
 	// typical developer setup would use this
 	dhServerUri = "http://127.0.0.1:8080/";

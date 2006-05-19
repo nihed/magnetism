@@ -157,7 +157,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						hasAccount, "email",
 						primaryEmail != null ? primaryEmail.getEmail() : null,
 						"aim", primaryAim != null ? primaryAim.getScreenName()
-								: null, "emails", emailsStr, "aims", aimsStr);
+								: null, "emails", emailsStr, "aims", aimsStr,
+						"photoUrl", p.getSmallPhotoUrl());
 			}
 		}
 	}
@@ -193,8 +194,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					}
 				}
 
-				xml.appendTextNode("group", null, "id", g.getId(), "display", g
-						.getName(), "sampleMembers", sampleMembers.toString(),
+				xml.appendTextNode("group", null, "id", g.getId(), 
+						"display", g.getName(), 
+						"photoUrl", g.getPhotoUrl60(),
+						"sampleMembers", sampleMembers.toString(),
 						"count", Integer.toString(members.size()));
 			}
 		}

@@ -1,5 +1,10 @@
 #!/bin/sh
 
+srcdir=`dirname $0`
+test -z "$srcdir" && srcdir=.
+
+ORIGDIR=`pwd`
+cd $srcdir
 PACKAGE="mugshot"
 
 have_libtool=false
@@ -73,5 +78,7 @@ autoheader
 automake --add-missing -Woverride
 autoconf
 
-./configure $@ --enable-maintainer-mode --enable-compile-warnings
+cd $ORIGDIR || exit $?
+
+$srcdir/configure $@ --enable-maintainer-mode --enable-compile-warnings
 

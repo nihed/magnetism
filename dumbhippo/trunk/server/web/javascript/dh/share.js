@@ -248,28 +248,28 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		tr1.appendChild(td);
 		
 		var imgSrc;
-		if (obj.isPerson()) {
-			if (obj.userId) {
-				imgSrc = dhHeadshotsRoot + obj.userId;
-			} else {
-				imgSrc = dhHeadshotsRoot + "default";
-			}
-		} else if (obj.isTheWorld()) {
-			imgSrc = dhImageRoot + "worldShare.png";			
+		if (obj.isTheWorld()) {
+			imgSrc = dhImageRoot2 + "worldShare60.png";			
 		} else {
-			imgSrc = dhGroupshotsRoot + obj.id;
+			imgSrc = obj.photoUrl
 		}
 		td.setAttribute("valign", "top")
-		td.setAttribute("align", "right")
+		td.setAttribute("align", "left")
+		
+		var borderDiv = document.createElement("div")
+		borderDiv.className = "dh-share-recipient-photo-border"
+		td.appendChild(borderDiv)
+		
 		var div = document.createElement("div")		
 		div.style.background = "url(" + imgSrc + ")";		
-		td.appendChild(div)
-		dojo.html.addClass(div, "dhShareRecipientPersonPhoto");				
+		borderDiv.appendChild(div)
+		div.className = "dh-share-recipient-photo"
 		
 		var removeImg = document.createElement("img")
-		removeImg.setAttribute("src", "/images/xblue.gif")
-		removeImg.setAttribute("width", "13px")
-		removeImg.setAttribute("height", "13px")
+		removeImg.setAttribute("src", dhImageRoot2 + "picclose.gif")
+		removeImg.setAttribute("width", "12px")
+		removeImg.setAttribute("height", "12px")
+		removeImg.className = "dh-share-remove-recipient"
 		dojo.event.connect(removeImg, "onclick", dj_global, "dhRemoveRecipientClicked");		
 		div.appendChild(removeImg)
 		
@@ -280,26 +280,28 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		
 		var div = document.createElement("div")
 		td.appendChild(div)
-		dojo.html.addClass(div, "dhShareRecipientPersonName");
-		td.setAttribute("align", "right")
-		td.setAttribute("valign", "bottom")
+		div.className = "dh-share-recipient-person-name"
+		td.setAttribute("align", "left")
+		td.setAttribute("valign", "top")
 		div.appendChild(document.createTextNode(obj.displayName));
 		tr2.appendChild(td);		
 
 		var tr3  = document.createElement("tr");
 		tbody.appendChild(tr3);
 		var td = document.createElement("td");
-		td.setAttribute("align", "right")
+		td.setAttribute("align", "left")
 		td.setAttribute("valign", "top")	
-		dojo.html.addClass(td, "dhRecipientNote");	
 		tr3.appendChild(td);
+		div = document.createElement("div")
+		td.appendChild(div)
+		div.className = "dh-share-recipient-note"
 		if (obj.isGroup()) {
-			td.appendChild(document.createTextNode(obj.sampleMembers));
+			div.appendChild(document.createTextNode(obj.sampleMembers));
 		} else if (obj.isTheWorld()) {
-			td.appendChild(document.createTextNode("public share"))	
+			div.appendChild(document.createTextNode("public share"))	
 		} else {
 			if (!obj.hasAccount)
-				td.appendChild(document.createTextNode("via email"));
+				div.appendChild(document.createTextNode("via email"));
 		}
 
 		if (!dh.util.disableOpacityEffects)
