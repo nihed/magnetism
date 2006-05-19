@@ -10,7 +10,7 @@ dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
 							'mask.gif', 'monster.gif', 'mysteryman.gif', 'oooh.gif',
 							'puffer.gif', 'pug.gif', 'purplehead.gif', 'robo.gif',
 							'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
-							'wolfman.gif' ];
+							'wolfman.gif', 'ghost.gif', 'hippo.gif', 'monkey.gif' ];
 
 dh.photochooser.group_nophoto = '/group_pix1/nogroupphoto.gif';
 dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
