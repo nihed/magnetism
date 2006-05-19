@@ -21,7 +21,7 @@ var dhInit = function(serverUrl, appletUrl, selfId, maxVerticalSize) {
 }
 
 dh.bubblelist.BORDER = 2 // Border around entire page
-dh.bubblelist.BUBBLE_MARGIN = 7 // Margin around bubbles (collapses between)
+dh.bubblelist.BUBBLE_MARGIN = 8 // Margin around bubbles (collapses between)
 
 dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -38,11 +38,6 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
         }
     
         var div = bubble.create()
-        
-        // Add a div that we'll use to hide a CSS positioning bug in IE
-        var borderFixupDiv = document.createElement("div")
-        borderFixupDiv.className = "dh-bubble-border-fixup"
-        div.appendChild(borderFixupDiv)
         
         var bubbleListTop = document.getElementById("dhBubbleListTop")
         bubbleListTop.insertBefore(div, bubbleListTop.firstChild)
@@ -116,10 +111,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
         var someChanged = false
         for (var i = 0; i < this.notifications.length; i++) {
             var bubble = this.notifications[i].bubble
-            // The + 1 here is to make the default size even, so the borders match;
-            // see the comment for '.dh-bubble-border-fixup' in bubbleList.css for 
-            // why we'll end up with 1 pixel more on the right otherwise
-            var bubbleWidth = bubble.getWidth() + 2 * (dh.bubblelist.BUBBLE_MARGIN + dh.bubblelist.BORDER) + 1
+            var bubbleWidth = bubble.getWidth() + 2 * (dh.bubblelist.BUBBLE_MARGIN + dh.bubblelist.BORDER)
             var bubbleHeight = bubble.getHeight()
             
             // In some cases, IE doesn't reflow the list correctly on height changes
@@ -127,7 +119,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
             // that actually changed by setting their height to 0 then back to
             // the correct height works around this
             var lastHeight = this.notifications[i].lastHeight
-            var heightChanged = lastHeight != null && lastHeight != bubbleHeight
+            var heightChanged = lastHeight == null || lastHeight != bubbleHeight
             if (someChanged)
                 this.notifications[i].div.style.height = "0px"
             this.notifications[i].lastHeight = bubbleHeight
@@ -154,7 +146,7 @@ dh.bubblelist.Display = function (serverUrl, appletUrl, selfId) {
             bubbleListTop.style.height = height
 
             height = dh.maxVerticalSize
-            width += 21; // Allow for the width of the scrollbar
+            width += 16; // Allow for the width of the scrollbar
             document.body.scroll = "yes"
         } else {
             document.body.scroll = "no"
