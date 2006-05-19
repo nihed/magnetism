@@ -2,7 +2,16 @@
 #include "hippo-chat-window.h"
 #include "main.h"
 #include "hippo-person-renderer.h"
-#include <gtk/gtk.h>
+#include <gtk/gtkwindow.h>
+#include <gtk/gtktreeview.h>
+#include <gtk/gtktextview.h>
+#include <gtk/gtkliststore.h>
+#include <gtk/gtktextmark.h>
+#include <gtk/gtkentry.h>
+#include <gtk/gtkbutton.h>
+#include <gtk/gtkvbox.h>
+#include <gtk/gtkhbox.h>
+#include <gtk/gtkscrolledwindow.h>
 #include <string.h>
 
 static void      hippo_chat_window_init                (HippoChatWindow       *window);

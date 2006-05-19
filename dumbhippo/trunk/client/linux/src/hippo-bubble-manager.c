@@ -27,13 +27,55 @@ find_bubble_for_post(BubbleManager *manager,
         }
     }
     
+    g_list_free(children);
     *bubble_p = NULL;
     return FALSE;
 }                     
 
 static void
-manager_bubble_post(BubbleManager *manager,
-                    HippoPost     *post)
+update_bubble_paging(BubbleManager *manager)
+{
+    GList *children;
+    GList *link;
+    int i;
+    int total;
+    
+    total = gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook));
+    
+    i = 0;
+    children = gtk_container_get_children(GTK_CONTAINER(manager->notebook));
+    for (link = children; link != NULL; link = link->next) {
+        HippoBubble *bubble = HIPPO_BUBBLE(link->data);
+        hippo_bubble_set_page_n_of_total(bubble, i, total);
+        ++i;     
+    }
+    
+    g_list_free(children);
+}
+
+static void
+on_notebook_add_or_remove(GtkWidget     *notebook,
+                          GtkWidget     *child,
+                          BubbleManager *manager)
+{
+    if (HIPPO_IS_BUBBLE(child)) {
+        update_bubble_paging(manager);
+    }        
+}
+
+/* note, our job in this file is just to be sure the bubble exists
+ * and has the right "reason";
+ * The bubble itself is responsible for watching changes to the post
+ * and chat room in hippo-bubble-util.c, so e.g. a "recent links"
+ * window could share that code.
+ * 
+ * So basically don't call most of the bubble setters in this file 
+ * or it will be broken.
+ */
+static void
+manager_bubble_post(BubbleManager    *manager,
+                    HippoPost        *post,
+                    HippoBubbleReason reason)
 {
     HippoBubble *bubble;
     int page;
@@ -47,12 +89,16 @@ manager_bubble_post(BubbleManager *manager,
 
     g_debug("Showing bubble window");
 
+    hippo_bubble_set_reason(bubble, reason);
+
     page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
     gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
     
     hippo_app_put_window_by_icon(hippo_get_app(), GTK_WINDOW(manager->window));
-    
-    gtk_window_present(GTK_WINDOW(manager->window));
+ 
+    /* don't gtk_window_present since we don't want focus
+     */   
+    gtk_widget_show(manager->window);
 }
 
 static HippoPost*
@@ -76,8 +122,7 @@ on_user_joined(HippoChatRoom *room,
     HippoPost *post;
     post = manager_post_for_room(manager, room);
     if (post != NULL) {                
-        manager_bubble_post(manager, post);
-        /* FIXME add the "viewed by" annotation to the bubble */
+        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_VIEWER);
     }
 }
 
@@ -93,11 +138,9 @@ on_message_added(HippoChatRoom    *room,
     
     post = manager_post_for_room(manager, room);    
     if (post != NULL) {                
-        manager_bubble_post(manager, post);
-        
-        /* FIXME add the "someone said" annotation to the bubble */
+        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_CHAT);
     }
-}                                
+}
 
 static void
 chat_room_disconnect(BubbleManager *manager,
@@ -134,7 +177,7 @@ on_post_added(HippoDataCache *cache,
     if (hippo_post_get_new(post)) {
         hippo_post_set_new(post, FALSE);
 
-        manager_bubble_post(manager, post);
+        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_NEW);
     }
 }
 
@@ -230,9 +273,12 @@ manager_new(void)
     border_color.blue = 0x9999;
     gtk_widget_modify_bg(manager->window, GTK_STATE_NORMAL, &border_color);
     gtk_container_set_border_width(GTK_CONTAINER(manager->window), 1);
+
+    gtk_window_set_accept_focus(GTK_WINDOW(manager->window), FALSE);
+    gtk_window_set_focus_on_map(GTK_WINDOW(manager->window), FALSE);
     
     g_signal_connect(G_OBJECT(manager->window), "delete-event", 
-                    G_CALLBACK(window_delete_event), manager);
+                     G_CALLBACK(window_delete_event), manager);
     
     /* the various bubbles are in notebook pages */
     manager->notebook = gtk_notebook_new();
@@ -240,6 +286,11 @@ manager_new(void)
     gtk_notebook_set_show_border(GTK_NOTEBOOK(manager->notebook), FALSE);    
     gtk_container_add(GTK_CONTAINER(manager->window), GTK_WIDGET(manager->notebook));
     gtk_widget_show(GTK_WIDGET(manager->notebook));
+
+    g_signal_connect_after(G_OBJECT(manager->notebook), "add",
+                           G_CALLBACK(on_notebook_add_or_remove), manager);
+    g_signal_connect_after(G_OBJECT(manager->notebook), "remove",
+                           G_CALLBACK(on_notebook_add_or_remove), manager);
 
     return manager;
 }

@@ -1,5 +1,6 @@
 #include <config.h>
 #include <gtk/gtkcontainer.h>
+#include <gtk/gtknotebook.h>
 #include "hippo-bubble.h"
 #include "main.h"
 #include "hippo-embedded-image.h"
@@ -8,6 +9,11 @@ typedef enum {
     LINK_CLICK_VISIT_SENDER,
     LINK_CLICK_VISIT_POST
 } LinkClickAction;
+
+typedef enum {
+    PAGE_ACTION_NEXT,
+    PAGE_ACTION_PREVIOUS
+} PageAction;
 
 static void      hippo_bubble_init                (HippoBubble       *bubble);
 static void      hippo_bubble_class_init          (HippoBubbleClass  *klass);
@@ -38,6 +44,8 @@ struct _HippoBubble {
     GtkWidget *close_event_box;
     char      *sender_id;
     char      *post_id;
+    int        page; /* [0,total_pages) */
+    int        total_pages;
 };
 
 struct _HippoBubbleClass {
@@ -183,6 +191,31 @@ link_click_action_on_click(GtkWidget *widget,
     return FALSE;
 }
 
+static gboolean
+page_notebook_on_click(GtkWidget *widget,
+                       GdkEvent  *event,
+                       void      *data)
+{
+    GtkWidget *notebook;
+    PageAction action;
+        
+    if (!is_button_release_over_widget(widget, event))
+        return FALSE;
+    
+    notebook = gtk_widget_get_ancestor(widget, GTK_TYPE_NOTEBOOK);
+    action = GPOINTER_TO_INT(data);
+    
+    if (notebook != NULL) {
+        if (action == PAGE_ACTION_NEXT) {
+            gtk_notebook_next_page(GTK_NOTEBOOK(notebook));
+        } else {
+            gtk_notebook_prev_page(GTK_NOTEBOOK(notebook));
+        }
+    }
+
+    return FALSE;
+}
+
 static void
 set_max_label_width(GtkWidget   *label,
                     int          max_width,
@@ -209,6 +242,16 @@ connect_link_action(GtkWidget      *widget,
     g_signal_connect(G_OBJECT(widget), "button-release-event",
                      G_CALLBACK(link_click_action_on_click),
                      GINT_TO_POINTER(action));                  
+    connect_hand_cursor_on_realize(GTK_EVENT_BOX(widget));
+}
+
+static void
+connect_page_action(GtkWidget      *widget,
+                    PageAction      action)
+{
+    g_signal_connect(G_OBJECT(widget), "button-release-event",
+                     G_CALLBACK(page_notebook_on_click),
+                     GINT_TO_POINTER(action));
     connect_hand_cursor_on_realize(GTK_EVENT_BOX(widget));                     
 }
 
@@ -239,7 +282,7 @@ hippo_bubble_init(HippoBubble       *bubble)
 
     GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
     
-    /* we want a white background */    
+    /* we want a white background */
     
     white.red = 0xFFFF;
     white.green = 0xFFFF;
@@ -966,6 +1009,8 @@ void
 hippo_bubble_set_sender_guid(HippoBubble *bubble,
                              const char  *value)
 {
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+    
     if (bubble->sender_id != value) {
         g_free(bubble->sender_id);
         bubble->sender_id = g_strdup(value);
@@ -976,6 +1021,8 @@ void
 hippo_bubble_set_post_guid(HippoBubble *bubble,
                            const char  *value)
 {
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+
     if (bubble->post_id != value) {
         g_free(bubble->post_id);
         bubble->post_id = g_strdup(value);
@@ -988,6 +1035,8 @@ hippo_bubble_set_sender_name(HippoBubble *bubble,
 {
     char *s;
     GtkWidget *label;
+
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
     
     label = GTK_BIN(bubble->sender_name)->child;
     
@@ -1003,6 +1052,8 @@ hippo_bubble_set_sender_photo(HippoBubble *bubble,
                               GdkPixbuf   *pixbuf)
 {
     GtkWidget *image;
+
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
     
     image = GTK_BIN(bubble->sender_photo)->child;
     gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
@@ -1014,6 +1065,8 @@ hippo_bubble_set_link_title(HippoBubble *bubble,
 {
     GtkWidget *label;
     char *s;
+
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
     
     label = GTK_BIN(bubble->link_title)->child;    
     
@@ -1029,6 +1082,8 @@ hippo_bubble_set_link_description(HippoBubble *bubble,
 {
     GtkWidget *label;
     char *s;
+    
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));    
     
     label = bubble->link_description;
     
@@ -1048,6 +1103,8 @@ hippo_bubble_set_recipients(HippoBubble *bubble,
     char *s;
     GtkWidget *label;
     
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+        
     label = bubble->recipients;
     
     gstr = g_string_new(NULL);
@@ -1065,6 +1122,49 @@ hippo_bubble_set_recipients(HippoBubble *bubble,
     g_string_free(gstr, TRUE);
     
     set_label_sizes(bubble);
+}
+
+void
+hippo_bubble_set_viewers(HippoBubble *bubble,
+                         const HippoViewerInfo *viewers,
+                         int          n_viewers)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));    
+
+}
+
+void
+hippo_bubble_set_last_chat_message(HippoBubble *bubble,
+                                   const char  *message)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+
+}
+                                   
+void
+hippo_bubble_set_last_chat_photo(HippoBubble *bubble,
+                                 GdkPixbuf   *pixbuf)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+}
+                                 
+void
+hippo_bubble_set_page_n_of_total(HippoBubble *bubble,
+                                 int          n,
+                                 int          total)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+    
+    if (bubble->page == n && bubble->total_pages == total)
+        return;
+}                                 
+
+void
+hippo_bubble_set_reason(HippoBubble      *bubble,
+                        HippoBubbleReason reason)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+
 }
 
 static void

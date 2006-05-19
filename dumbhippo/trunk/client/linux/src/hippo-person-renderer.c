@@ -1,7 +1,7 @@
 #include <config.h>
 #include "hippo-person-renderer.h"
 #include "main.h"
-#include <gtk/gtk.h>
+#include <gtk/gtkcellrenderer.h>
 #include <string.h>
 
 static void      hippo_person_renderer_init                (HippoPersonRenderer       *renderer);

@@ -3,7 +3,22 @@
 
 #include <config.h>
 #include <hippo/hippo-common.h>
-#include <gtk/gtk.h>
+/* avoiding gtk/gtk.h because of the internal gtk/ copy stuff,
+ * this plays it safer. maybe it speeds up compilation a tiny 
+ * bit too, who knows.
+ */
+#include <gtk/gtkwidget.h>
+#include <gtk/gtkmain.h>
+#include <gtk/gtkimage.h>
+#include <gtk/gtkeventbox.h>
+#include <gtk/gtklabel.h>
+#include <gtk/gtkstock.h>
+#include <gtk/gtknotebook.h>
+#include <gtk/gtkimagemenuitem.h>
+#include <gtk/gtkseparatormenuitem.h>
+#include <gtk/gtkicontheme.h>
+#include <gtk/gtkaboutdialog.h>
+#include <gtk/gtkmessagedialog.h>
 #include <glib/gi18n-lib.h>
 #include "hippo-image-cache.h"
 
