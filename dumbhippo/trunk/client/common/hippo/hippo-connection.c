@@ -577,7 +577,7 @@ static void
 hippo_connection_auth_failure(HippoConnection *connection,
                               const char      *message)
 {
-    g_debug("Auth failure message: '%s'", message ? message : NULL);
+    g_debug("Auth failure message: '%s'", message ? message : "NULL");
 
     /* message can be NULL */
     hippo_connection_forget_auth(connection);
