@@ -112,10 +112,16 @@ update_last_message(PostWatch        *watch)
     
     if (last == NULL) {
         hippo_bubble_set_last_chat_photo(watch->base.bubble, NULL);
-        hippo_bubble_set_last_chat_message(watch->base.bubble, NULL);
+        hippo_bubble_set_last_chat_message(watch->base.bubble, NULL, NULL);
     } else {
+        const char *sender_id;
+        
+        sender_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(last)));
+
         hippo_bubble_set_last_chat_message(watch->base.bubble,
-                                        hippo_chat_message_get_text(last));
+                                        hippo_chat_message_get_text(last),
+                                        sender_id);
+                                        
 
         /* FIXME ordering of this isn't guaranteed, i.e. we could get a reply for 
          * a previous chatter after the reply for this chatter
@@ -138,8 +144,32 @@ on_chat_message_added(HippoChatRoom    *room,
     update_last_message(watch);
 }
 
+#if 0
 static void
-update_viewers(PostWatch        *watch)
+warn_if_entity_list_has_dups(GSList *value)
+{
+    GHashTable *table;
+    
+    table = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    while (value != NULL) {
+        HippoEntity *new = HIPPO_ENTITY(value->data);
+        HippoEntity *old = g_hash_table_lookup(table, hippo_entity_get_guid(new));
+        if (old != NULL) {
+            g_warning("Entity list has dup new '%s' %p old '%s' %p", 
+                       hippo_entity_get_guid(new), new,
+                       hippo_entity_get_guid(old), old);
+        }
+        g_hash_table_replace(table, (char*) hippo_entity_get_guid(new), new);
+    
+        value = value->next;
+    }
+    g_hash_table_destroy(table);
+}
+#endif
+
+static void
+update_viewers(PostWatch *watch)
 {
     GSList *chatters;
     GSList *link;
@@ -159,7 +189,7 @@ update_viewers(PostWatch        *watch)
     /* remember self is null if not logged in */
 
     /* reload viewer list, preferring people there live */
-    n_viewers = 0;    
+    n_viewers = 0;
     chatters = hippo_chat_room_get_users(room);
     for (link = chatters; link != NULL; link = link->next) {
         HippoPerson *user = HIPPO_PERSON(link->data);
@@ -167,41 +197,41 @@ update_viewers(PostWatch        *watch)
         if (n_viewers == MAX_VIEWERS_SHOWN)
             break;
 
-        if (user == self)
-            continue;
-    
-        infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
-        infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
-        infos[n_viewers].present = TRUE;
-        infos[n_viewers].chatting = hippo_chat_room_get_user_state(room, user) == HIPPO_CHAT_STATE_PARTICIPANT;
-    
-        ++n_viewers;
+        if (user != self) {
+            infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
+            infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
+            infos[n_viewers].present = TRUE;
+            infos[n_viewers].chatting =
+                hippo_chat_room_get_user_state(room, user) == HIPPO_CHAT_STATE_PARTICIPANT;
+            ++n_viewers;
+        }
     }
-    
+   
     /* show some people who have visited in the past */
     if (n_viewers < MAX_VIEWERS_SHOWN) {
-        ever_viewed = hippo_post_get_viewers(watch->post);
+        ever_viewed = hippo_post_get_viewers(watch->post);       
         for (link = ever_viewed; link != NULL; link = link->next) {
             HippoPerson *user = HIPPO_PERSON(link->data);
             
             if (n_viewers == MAX_VIEWERS_SHOWN)
                 break;
 
-            if (user == self)
-                continue;
-    
-            infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
-            infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
-            infos[n_viewers].present = FALSE;
-            infos[n_viewers].chatting = FALSE;
-        
-            ++n_viewers;
+            if (user != self && g_slist_find(chatters, user) == NULL) {
+                infos[n_viewers].name = hippo_entity_get_name(HIPPO_ENTITY(user));
+                infos[n_viewers].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(user));
+                infos[n_viewers].present = FALSE;
+                infos[n_viewers].chatting = FALSE;
+            
+                ++n_viewers;
+            }
         }
     }
     
     /* "ever_viewed" isn't a copy, but "chatters" is */
     g_slist_foreach(chatters, (GFunc) g_object_unref, NULL);
     g_slist_free(chatters);
+    
+    hippo_bubble_set_viewers(watch->base.bubble, infos, n_viewers);
 }
 
 static void

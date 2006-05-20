@@ -276,10 +276,36 @@ hippo_post_set_description(HippoPost  *post,
     set_str(post, &post->description, value);                           
 }
 
+#if 0
+static void
+warn_if_entity_list_has_dups(GSList *value)
+{
+    GHashTable *table;
+    
+    table = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    while (value != NULL) {
+        HippoEntity *new = HIPPO_ENTITY(value->data);
+        HippoEntity *old = g_hash_table_lookup(table, hippo_entity_get_guid(new));
+        if (old != NULL) {
+            g_warning("Entity list has dup new '%s' %p old '%s' %p", 
+                       hippo_entity_get_guid(new), new,
+                       hippo_entity_get_guid(old), old);
+        }
+        g_hash_table_replace(table, (char*) hippo_entity_get_guid(new), new);
+    
+        value = value->next;
+    }
+    g_hash_table_destroy(table);
+}
+#endif
+
 static void
 set_entity_list(HippoPost *post, GSList **list_p, GSList *value)
 {
     GSList *copy;
+    
+    /* warn_if_entity_list_has_dups(value); */
     
     copy = g_slist_copy(value);
     g_slist_foreach(copy, (GFunc) g_object_ref, NULL);
@@ -304,7 +330,7 @@ hippo_post_set_viewers(HippoPost  *post,
     g_return_if_fail(HIPPO_IS_POST(post));
     set_entity_list(post, &post->viewers, value);
 }
-                       
+
 void
 hippo_post_set_info(HippoPost  *post,
                     const char *value)

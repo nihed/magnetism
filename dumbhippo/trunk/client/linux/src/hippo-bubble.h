@@ -57,13 +57,14 @@ void             hippo_bubble_set_viewers            (HippoBubble *bubble,
                                                       const HippoViewerInfo    *viewers,
                                                       int          n_viewers);
 void             hippo_bubble_set_last_chat_message  (HippoBubble *bubble,
-                                                      const char  *message);
+                                                      const char  *message,
+                                                      const char  *sender_id);
 void             hippo_bubble_set_last_chat_photo    (HippoBubble *bubble,
                                                       GdkPixbuf   *pixbuf);
 void             hippo_bubble_set_page_n_of_total    (HippoBubble *bubble,
                                                       int          n,
                                                       int          total);
-void             hippo_bubble_set_reason             (HippoBubble *bubble,
+void             hippo_bubble_notify_reason          (HippoBubble *bubble,
                                                       HippoBubbleReason reason);
 
 G_END_DECLS

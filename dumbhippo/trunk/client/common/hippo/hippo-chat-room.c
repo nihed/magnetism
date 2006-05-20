@@ -410,7 +410,7 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
         g_hash_table_remove(room->viewers, guid);
         break; 
     case HIPPO_CHAT_STATE_PARTICIPANT:
-        g_hash_table_remove(room->viewers, guid);
+        g_hash_table_remove(room->chatters, guid);
         break;
     case HIPPO_CHAT_STATE_NONMEMBER:
         /* no old entry to remove */        

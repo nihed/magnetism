@@ -82,7 +82,7 @@ manager_bubble_post(BubbleManager    *manager,
 
     g_debug("Showing bubble window");
 
-    hippo_bubble_set_reason(bubble, reason);
+    hippo_bubble_notify_reason(bubble, reason);
 
     page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
     gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);

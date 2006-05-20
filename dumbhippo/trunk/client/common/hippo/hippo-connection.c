@@ -1527,15 +1527,17 @@ hippo_connection_parse_live_post(HippoConnection *connection,
          */
         if (connection->username && strcmp(entity_id, connection->username) == 0)
             seen_self = TRUE;
-        
-        /* FIXME the old C++ code did not create an entity here if it wasn't 
-         * already in the cache ... not clear to me why, needs another look
-         * (is it because we don't know the entity type?)
-         */
-        /* entity = hippo_data_cache_ensure_bare_entity(connection->cache, ?, entity_id); */
+
+        /* This entity is supposed to be in the cache; essentially the get posts messages
+         * first send a list of all referenced entities with name+photo, then in this node 
+         * they only have the guid. So if we don't have the entity here, we haven't 
+         * processed the list of referenced entities, or didn't get it. Which is a bug probably.
+         */        
         entity = hippo_data_cache_lookup_entity(connection->cache, entity_id);
         if (entity)
             viewers = g_slist_prepend(viewers, entity);
+        else
+            g_warning("entity '%s' in recentViewers on livePost is unknown", entity_id);
     }
 
     node = lm_message_node_get_child (child, "chattingUserCount");
@@ -1715,16 +1717,17 @@ hippo_connection_parse_post(HippoConnection *connection,
         HippoEntity *entity;
         if (!get_entity_guid(subchild, &entity_id))
             return FALSE;
-        
-        /* FIXME the old C++ code did not create an entity here if it wasn't 
-         * already in the cache ... not clear to me why, needs another look
-         * (is it because we don't know the entity type?)
-         */
-        
-        /* entity = hippo_data_cache_ensure_bare_entity(connection->cache, ?, entity_id); */
+
+        /* This entity is supposed to be in the cache; essentially the get posts messages
+         * first send a list of all referenced entities with name+photo, then in this node 
+         * they only have the guid. So if we don't have the entity here, we haven't 
+         * processed the list of referenced entities, or didn't get it. Which is a bug probably.
+         */        
         entity = hippo_data_cache_lookup_entity(connection->cache, entity_id);
         if (entity)
             recipients = g_slist_prepend(recipients, entity);
+        else
+            g_warning("Post receipient '%s' was not in the cache prior to post message", entity_id);
     }
 
     post = hippo_data_cache_lookup_post(connection->cache, post_guid);

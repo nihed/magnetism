@@ -272,8 +272,6 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
         /* cache got nuked with http request pending */    
         g_free(s);
         return;
-    } else {
-        REMOVE_WEAK(&s->cache);
     }
 
     g_assert(s->entry->pixbuf == pixbuf);
@@ -319,6 +317,8 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
     }
     
     g_free(s);
+    
+    REMOVE_WEAK(&s->cache);
 }
 
 void
