@@ -81,10 +81,9 @@ cache_entry_free(CacheEntry *entry)
     }
 
     /* be sure all callbacks get an error reply if they haven't */
-    if (entry->pixbuf) {
-        g_object_remove_weak_pointer(G_OBJECT(entry->pixbuf), (void**)&entry->pixbuf);
-        entry->pixbuf = NULL;
-    }
+    REMOVE_WEAK(&entry->pixbuf);
+    entry->pixbuf = NULL;
+
     cache_entry_invoke_callbacks(entry);
     
     g_free(entry->url);
@@ -145,10 +144,9 @@ http_func(const char *content_type,
     if (content_type != NULL && content_or_error->len > 0) {
         entry->pixbuf = parse_pixbuf(entry->url, content_or_error);
     }
-    
-    if (entry->pixbuf) {
-        g_object_add_weak_pointer(G_OBJECT(entry->pixbuf), (void**)&entry->pixbuf);
-    }
+
+    if (entry->pixbuf)    
+        ADD_WEAK(&entry->pixbuf);
     
     /* if pixbuf is NULL we failed, otherwise we succeeded.
      * either way we invoke the callbacks.
@@ -275,7 +273,7 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
         g_free(s);
         return;
     } else {
-        g_object_remove_weak_pointer(G_OBJECT(s->cache), (void**)&s->cache);
+        REMOVE_WEAK(&s->cache);
     }
 
     g_assert(s->entry->pixbuf == pixbuf);
@@ -351,7 +349,7 @@ hippo_image_cache_load(HippoImageCache          *cache,
         s = g_new0(StrongRefData, 1);
         s->cache = cache;
         s->entry = entry;
-        g_object_add_weak_pointer(G_OBJECT(s->cache), (void**) &s->cache);
+        ADD_WEAK(&s->cache);
         cache_entry_load(entry, strong_ref_on_load, s);
     }
     cache_entry_load(entry, func, data);

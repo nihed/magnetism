@@ -712,12 +712,8 @@ on_picture_loaded_for_tree(GdkPixbuf *pixbuf,
 {
     TreePictureData *tpd = data;
     
-    if (tpd->window) {
-        g_object_remove_weak_pointer(G_OBJECT(tpd->window), (void**) &tpd->window);
-    }
-    if (tpd->person) {
-        g_object_remove_weak_pointer(G_OBJECT(tpd->person), (void**) &tpd->person);
-    }
+    REMOVE_WEAK(&tpd->window);
+    REMOVE_WEAK(&tpd->person);
 
     /* note pixbuf can be NULL */
 
@@ -752,8 +748,9 @@ on_user_changed(HippoPerson           *person,
     tpd = g_new0(TreePictureData, 1);
     tpd->person = person;
     tpd->window = window;
-    g_object_add_weak_pointer(G_OBJECT(tpd->person), (void**) &tpd->person);
-    g_object_add_weak_pointer(G_OBJECT(tpd->window), (void**) &tpd->window);
+    ADD_WEAK(&tpd->person);
+    ADD_WEAK(&tpd->window);
+
     hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(person),
                          on_picture_loaded_for_tree, tpd);
     
