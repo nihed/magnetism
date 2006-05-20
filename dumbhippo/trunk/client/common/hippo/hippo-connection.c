@@ -2152,13 +2152,12 @@ parse_room_info(HippoConnection *connection,
     if (kind_str == NULL) {
         /* assume it's an old server which lacked "kind" but was always about posts */
         kind = HIPPO_CHAT_KIND_POST;
-    } else if (strcmp(kind_str, "post") == 0) {
-        kind = HIPPO_CHAT_KIND_POST;
-    } else if (strcmp(kind_str, "group") == 0) {
-        kind = HIPPO_CHAT_KIND_GROUP;
     } else {
-        g_warning("Unknown chat kind %s", kind_str);
-        return FALSE;
+        kind = hippo_parse_chat_kind(kind_str);
+        if (kind == HIPPO_CHAT_KIND_BROKEN || kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            g_warning("Invalid chat kind %s", kind_str);
+            return FALSE;
+        }
     }
 
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);

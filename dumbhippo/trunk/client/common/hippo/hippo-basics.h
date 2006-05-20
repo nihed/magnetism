@@ -12,6 +12,13 @@ typedef struct _HippoConnection      HippoConnection;
 typedef struct _HippoConnectionClass HippoConnectionClass;
 
 typedef enum {
+    HIPPO_ERROR_FAILED
+} HippoError;
+
+#define HIPPO_ERROR hippo_error_quark()
+GQuark hippo_error_quark(void);
+
+typedef enum {
     HIPPO_INSTANCE_NORMAL,
     HIPPO_INSTANCE_DOGFOOD,
     HIPPO_INSTANCE_DEBUG
@@ -32,6 +39,39 @@ typedef enum
     HIPPO_BROWSER_FIREFOX,
     HIPPO_BROWSER_EPIPHANY
 } HippoBrowserKind;
+
+typedef enum {
+    HIPPO_CHAT_STATE_NONMEMBER,
+    HIPPO_CHAT_STATE_VISITOR,
+    HIPPO_CHAT_STATE_PARTICIPANT
+} HippoChatState;
+
+typedef enum {
+    HIPPO_CHAT_KIND_UNKNOWN,
+    HIPPO_CHAT_KIND_POST,
+    HIPPO_CHAT_KIND_GROUP,
+    HIPPO_CHAT_KIND_BROKEN
+} HippoChatKind;
+
+typedef enum 
+{
+    HIPPO_URI_ACTION_BROKEN,
+    HIPPO_URI_ACTION_JOIN_CHAT
+} HippoUriAction;
+
+#define HIPPO_URI_SCHEME     "mugshot"
+#define HIPPO_URI_SCHEME_LEN 7
+
+typedef struct {
+    HippoUriAction action;
+    char *server;
+    union {
+        struct {
+            char         *chat_id;
+            HippoChatKind kind;
+        } join_chat;
+    } u;
+} HippoUriActionData;
 
 #define HIPPO_DEFAULT_MESSAGE_HOST     "messages.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_PORT     5222
@@ -94,6 +134,14 @@ gboolean hippo_parse_options         (int          *argc_p,
 void     hippo_options_free_fields   (HippoOptions *options);
 
 const char* hippo_hotness_debug_string(HippoHotness hotness);
+
+gboolean hippo_parse_uri                   (const char         *uri,
+                                            HippoUriActionData *data,
+                                            GError            **error);
+void     hippo_uri_action_data_free_fields (HippoUriActionData *data);
+
+/* same strings used in URIs, the xmpp protocol */
+HippoChatKind hippo_parse_chat_kind        (const char *str);
 
 G_END_DECLS
 

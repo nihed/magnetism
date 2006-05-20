@@ -28,19 +28,6 @@ G_BEGIN_DECLS
 
 typedef struct _HippoChatMessage   HippoChatMessage;
 
-typedef enum {
-    HIPPO_CHAT_STATE_NONMEMBER,
-    HIPPO_CHAT_STATE_VISITOR,
-    HIPPO_CHAT_STATE_PARTICIPANT
-} HippoChatState;
-
-typedef enum {
-    HIPPO_CHAT_KIND_UNKNOWN,
-    HIPPO_CHAT_KIND_POST,
-    HIPPO_CHAT_KIND_GROUP,
-    HIPPO_CHAT_KIND_BROKEN
-} HippoChatKind;
-
 typedef struct _HippoChatRoom      HippoChatRoom;
 typedef struct _HippoChatRoomClass HippoChatRoomClass;
 
