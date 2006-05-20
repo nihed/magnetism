@@ -249,6 +249,9 @@ window_delete_event(GtkWindow     *window,
 
     update_bubble_paging(manager);
 
+    /* if we closed a bubble we need to redo the positioning */
+    hippo_app_put_window_by_icon(hippo_get_app(), window);
+
     /* don't destroy us */
     return TRUE;
 }

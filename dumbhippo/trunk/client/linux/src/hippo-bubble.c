@@ -7,7 +7,8 @@
 
 typedef enum {
     LINK_CLICK_VISIT_SENDER,
-    LINK_CLICK_VISIT_POST
+    LINK_CLICK_VISIT_POST,
+    LINK_CLICK_VISIT_LAST_MESSAGE_SENDER
 } LinkClickAction;
 
 typedef enum {
@@ -45,8 +46,13 @@ struct _HippoBubble {
     GtkWidget *n_of_n;
     GtkWidget *left_arrow;
     GtkWidget *right_arrow;
+    GtkWidget *whos_there;
+    GtkWidget *someone_said;
+    GtkWidget *last_message;
+    GtkWidget *last_message_photo;
     char      *sender_id;
     char      *post_id;
+    char      *last_message_sender_id;
     int        page; /* [0,total_pages) */
     int        total_pages;
 };
@@ -280,22 +286,30 @@ static void
 hippo_bubble_init(HippoBubble       *bubble)
 {
     GdkColor white;
+    GdkColor blue;
     GdkPixbuf *pixbuf;
     GtkWidget *widget;
 
     GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
     bubble->page = 0;
     bubble->total_pages = 1;
-    
-    /* we want a white background */
-    
+
     white.red = 0xFFFF;
     white.green = 0xFFFF;
     white.blue = 0xFFFF;
     white.pixel = 0;
+
+    /* #3A6EA5 (matches the arrow images) */
+    blue.red = 0x3a3a;
+    blue.green = 0x6e6e;
+    blue.blue = 0xa5a5;
+    blue.pixel = 0;
+    
+    /* we want a white background */
+    
     gtk_widget_modify_bg(GTK_WIDGET(bubble), GTK_STATE_NORMAL, &white);
     
-    /* create widgets */
+    /* Detect clicks on the close button */
 
     bubble->close_event_box = g_object_new(GTK_TYPE_EVENT_BOX,
                                            "visible-window", FALSE,
@@ -306,19 +320,22 @@ hippo_bubble_init(HippoBubble       *bubble)
     g_signal_connect(G_OBJECT(bubble->close_event_box), "button-release-event",
                      G_CALLBACK(delete_toplevel_on_click), NULL);
                      
+    /* Sender's photo */
 
     bubble->sender_photo = gtk_event_box_new();
+    gtk_event_box_set_visible_window(GTK_EVENT_BOX(bubble->sender_photo), TRUE);
     gtk_widget_modify_bg(bubble->sender_photo, GTK_STATE_NORMAL, &white);
-    gtk_container_set_border_width(GTK_CONTAINER(bubble->sender_photo), 2);
     connect_link_action(bubble->sender_photo, LINK_CLICK_VISIT_SENDER);
 
     widget = gtk_image_new();
-    /* photo is always supposed to be this size */
-    gtk_widget_set_size_request(widget, 60, 60);
+    /* photo is always supposed to be 60x60, we want 2px white border */
+    gtk_widget_set_size_request(widget, 62, 62);
     gtk_widget_show(widget);
     gtk_container_add(GTK_CONTAINER(bubble->sender_photo), widget);
 
     hookup_widget(bubble, &bubble->sender_photo);
+    
+    /* Sender's name label */
     
     bubble->sender_name = g_object_new(GTK_TYPE_EVENT_BOX,
                                        "visible-window", FALSE,
@@ -334,10 +351,13 @@ hippo_bubble_init(HippoBubble       *bubble)
     
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     
+    /* link swarm logo text */
+    
     pixbuf = hippo_embedded_image_get("bublinkswarm");
     bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
     hookup_widget(bubble, &bubble->link_swarm_logo);
     
+    /* link title */
     
     bubble->link_title = g_object_new(GTK_TYPE_EVENT_BOX,
                                       "visible-window", FALSE,
@@ -355,6 +375,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &white);
 
+    /* Link description text */
+
     bubble->link_description = gtk_label_new(NULL);
 
     hookup_widget(bubble, &bubble->link_description);
@@ -364,6 +386,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE);
     gtk_misc_set_alignment(GTK_MISC(bubble->link_description), 0.0, 0.0);
 
+    /* "sent to you, ..." label */
+
     bubble->recipients = gtk_label_new(NULL);
 
     hookup_widget(bubble, &bubble->recipients);
@@ -371,6 +395,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_misc_set_alignment(GTK_MISC(bubble->recipients), 1.0, 1.0);
     gtk_label_set_line_wrap(GTK_LABEL(bubble->recipients), TRUE);
     gtk_label_set_use_markup(GTK_LABEL(bubble->recipients), TRUE);
+
+    /* Left page arrow */
 
     bubble->left_arrow = g_object_new(GTK_TYPE_EVENT_BOX,
                                       "visible-window", FALSE,
@@ -384,6 +410,8 @@ hippo_bubble_init(HippoBubble       *bubble)
     hookup_widget(bubble, &bubble->left_arrow);
     gtk_widget_hide(bubble->left_arrow); /* override hookup_widget */
 
+    /* Right page arrow */
+
     bubble->right_arrow = g_object_new(GTK_TYPE_EVENT_BOX,
                                        "visible-window", FALSE,
                                        "above-child", TRUE,
@@ -396,10 +424,63 @@ hippo_bubble_init(HippoBubble       *bubble)
     hookup_widget(bubble, &bubble->right_arrow);
     gtk_widget_hide(bubble->right_arrow); /* override hookup_widget */    
 
+    /* page N of N label */
+
     bubble->n_of_n = gtk_label_new(NULL);
     hookup_widget(bubble, &bubble->n_of_n);
     gtk_widget_hide(bubble->n_of_n); /* override hookup_widget */        
+
+    /* photo of person who sent last message */
+
+    bubble->last_message_photo = g_object_new(GTK_TYPE_EVENT_BOX,
+                                      "visible-window", FALSE,
+                                      "above-child", TRUE,
+                                      NULL);
+    connect_link_action(bubble->last_message_photo,
+                        LINK_CLICK_VISIT_LAST_MESSAGE_SENDER);
+
+    widget = gtk_image_new();
+    gtk_widget_show(widget);
+    gtk_container_add(GTK_CONTAINER(bubble->last_message_photo), widget);
+    hookup_widget(bubble, &bubble->last_message_photo);
+    gtk_widget_hide(bubble->last_message_photo); /* override hookup_widget */
+
+    /* Text of last chat message */
+    bubble->last_message = gtk_label_new(NULL);
+    hookup_widget(bubble, &bubble->last_message);
+    gtk_widget_hide(bubble->last_message); /* override hookup_widget */        
+
+    /* The "someone said" link */
+
+    bubble->someone_said = g_object_new(GTK_TYPE_EVENT_BOX,
+                                      "visible-window", FALSE,
+                                      "above-child", TRUE,
+                                      NULL);
+    hookup_widget(bubble, &bubble->someone_said);
+    gtk_widget_hide(bubble->someone_said); /* override hookup_widget */
     
+    widget = gtk_label_new(NULL);
+    gtk_container_add(GTK_CONTAINER(bubble->someone_said), widget);
+    gtk_widget_show(widget);
+    
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &blue);
+    
+    /* The "who's there" link */
+
+    bubble->whos_there = g_object_new(GTK_TYPE_EVENT_BOX,
+                                      "visible-window", FALSE,
+                                      "above-child", TRUE,
+                                      NULL);
+    hookup_widget(bubble, &bubble->whos_there);
+    gtk_widget_hide(bubble->whos_there); /* override hookup_widget */     
+    
+    widget = gtk_label_new(NULL);
+    gtk_container_add(GTK_CONTAINER(bubble->whos_there), widget);
+    gtk_widget_show(widget);
+    
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &blue);
+
+    /* Get the right initial size request */    
     set_label_sizes(bubble);
 }
 
@@ -434,6 +515,7 @@ hippo_bubble_finalize(GObject *object)
 
     g_free(bubble->sender_id);
     g_free(bubble->post_id);
+    g_free(bubble->last_message_sender_id);
 
     G_OBJECT_CLASS(hippo_bubble_parent_class)->finalize(object);
 }
@@ -1349,5 +1431,8 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
         if (bubble->post_id)
             hippo_app_visit_post_id(hippo_get_app(), bubble->post_id);
         break;
+    case LINK_CLICK_VISIT_LAST_MESSAGE_SENDER:
+        if (bubble->last_message_sender_id)
+            hippo_app_visit_entity_id(hippo_get_app(), bubble->last_message_sender_id);
     }
 }                               
