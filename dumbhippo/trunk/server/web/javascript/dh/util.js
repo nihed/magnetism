@@ -1,6 +1,14 @@
 dojo.provide("dh.util");
 dojo.require("dojo.html");
 
+// pure coding elegance
+var dhUrlRegex = null;
+try {
+	dojo.require("dh.breaksfirefox10");
+} catch (e) {
+	dhUrlRegex = /hellothisregexmatchesnothingwhatsoeverexceptsomebodybeingfunnylalalalalalalalalalalalalalalalalalala/;
+}
+
 dh.util.getParamsFromLocation = function() {
 	var query = window.location.search.substring(1);
 	dojo.debug("query: " + query);
@@ -408,12 +416,8 @@ dh.util.insertTextWithLinks = function(textElement, text) {
 // url as it appears in the text, and another one containing a valid
 // url that can be linked to; otherwise, returns null
 dh.util.getNextUrl = function(text, i) {     
-    // we mainly identify a url by it containing a dot and two or three letters after it, which
-    // can then be followed by a slash and more letters and acceptable characters 
-    // this should superset almost all possibly ways to type in a url
-    // we also use http://, https://, www, web, ftp, and ftp:// to identify urls like www.amazon, which
-    // are also accepted by the browers
-    var reg = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)|(ftp\.)|(ftp:\/\/)/i
+
+    var reg = dhUrlRegex;
 
     var regArray = reg.exec(text.substring(i, text.length))
     var urlStart = -1

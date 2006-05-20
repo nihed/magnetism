@@ -20,5 +20,5 @@
 <![endif]-->
 
 <!-- using a "permalink" on purpose here (no build stamp) -->
-<link rel="icon" href="/images/favicon.ico" />
-<link rel="shortcut icon" href="/images/favicon.ico" />
+<link rel="icon" href="/images2/favicon.ico" />
+<link rel="shortcut icon" href="/images2/favicon.ico" />
