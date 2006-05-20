@@ -8,4 +8,4 @@ dojo.provide('dh.breaksfirefox10')
 // we also use http://, https://, www, web, ftp, and ftp:// to identify urls like www.amazon, which
 // are also accepted by the browers
 
-dhUrlRegex = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)|(ftp\.)|(ftp:\/\/)/i
+dh.breaksfirefox10.urlRegex = /([^\s"'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)|(ftp\.)|(ftp:\/\/)/i

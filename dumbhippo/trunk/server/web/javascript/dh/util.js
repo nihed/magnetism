@@ -2,11 +2,11 @@ dojo.provide("dh.util");
 dojo.require("dojo.html");
 
 // pure coding elegance
-var dhUrlRegex = null;
 try {
 	dojo.require("dh.breaksfirefox10");
 } catch (e) {
-	dhUrlRegex = /hellothisregexmatchesnothingwhatsoeverexceptsomebodybeingfunnylalalalalalalalalalalalalalalalalalala/;
+	dh.breaksfirefox10 = {};
+	dh.breaksfirefox10.urlRegex = /hellothisregexmatchesnothingwhatsoeverexceptsomebodybeingfunnylalalalalalalalalalalalalalalalalalala/;
 }
 
 dh.util.getParamsFromLocation = function() {
@@ -415,9 +415,8 @@ dh.util.insertTextWithLinks = function(textElement, text) {
 // if one is found, returns an array of two strings, one containing the
 // url as it appears in the text, and another one containing a valid
 // url that can be linked to; otherwise, returns null
-dh.util.getNextUrl = function(text, i) {     
-
-    var reg = dhUrlRegex;
+dh.util.getNextUrl = function(text, i) {	
+    var reg = dh.breaksfirefox10.urlRegex;
 
     var regArray = reg.exec(text.substring(i, text.length))
     var urlStart = -1
