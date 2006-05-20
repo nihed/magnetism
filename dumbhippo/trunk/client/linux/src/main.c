@@ -220,6 +220,15 @@ hippo_app_join_chat(HippoApp   *app,
     gtk_window_present(GTK_WINDOW(window));   
 }
 
+gboolean
+hippo_app_post_is_active(HippoApp   *app,
+                         const char *post_id)
+{
+    /* FIXME we should also detect having a post open in a browser */
+
+    return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
+}
+
 void
 hippo_app_load_photo(HippoApp               *app,
                      HippoEntity            *entity,

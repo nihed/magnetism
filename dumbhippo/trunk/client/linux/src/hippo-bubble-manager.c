@@ -1,12 +1,142 @@
 #include "hippo-bubble-manager.h"
 
+/* 7 seconds */
+#define BUBBLE_LENGTH_MILLISECONDS 7000
+#define BUBBLE_LENGTH_SECONDS (BUBBLE_LENGTH_MILLISECONDS / 1000)
+
 typedef struct {
     int refcount;
     HippoDataCache *cache;
     GHashTable     *chats;
     GtkWidget      *window;
     GtkWidget      *notebook;
+    guint           popdown_timeout;
+    guint           window_contains_pointer : 1;
 } BubbleManager;
+
+static void remove_popdown_timeout  (BubbleManager *manager);
+static void update_bubble_paging    (BubbleManager *manager);
+
+static void
+manager_remove_bubble_by_page(BubbleManager *manager,
+                              int            page)
+{
+    g_return_if_fail(page >= 0);
+
+    gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), page);
+    
+    if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook)) == 0) {
+        gtk_widget_hide(manager->window);
+        remove_popdown_timeout(manager);
+    } else {
+        update_bubble_paging(manager); /* changes window size, before positioning */
+        /* if we closed a bubble we need to redo the positioning */
+        hippo_app_put_window_by_icon(hippo_get_app(), GTK_WINDOW(manager->window));
+    }
+}
+
+static void
+manager_remove_bubble(BubbleManager *manager,
+                      HippoBubble   *bubble)
+{
+    int page;
+    
+    page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook),
+                                 GTK_WIDGET(bubble));
+    if (page >= 0)
+        manager_remove_bubble_by_page(manager, page);
+}
+
+static GTime
+bubble_get_timestamp(HippoBubble *bubble)
+{
+    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(bubble), "bubble-timestamp"));
+}
+
+static void
+bubble_set_timestamp(HippoBubble *bubble,
+                     GTime        timestamp)
+{
+    g_object_set_data(G_OBJECT(bubble), "bubble-timestamp", GINT_TO_POINTER(timestamp));
+}
+
+static gboolean
+popdown_timeout(void *data)
+{
+    BubbleManager *manager = data;
+    GList *children;
+    GList *link;
+    GTime now;
+    GTimeVal tv;
+    gboolean all_timed_out;
+    
+    g_get_current_time(&tv);
+    now = tv.tv_sec;
+    
+    all_timed_out = TRUE;
+    children = gtk_container_get_children(GTK_CONTAINER(manager->notebook));
+    for (link = children; link != NULL; link = link->next) {
+        HippoBubble *bubble = HIPPO_BUBBLE(link->data);
+        GTime bubble_time = bubble_get_timestamp(bubble);
+
+        /* consider updating bubble timestamp */
+        if (bubble_time > now) {
+            /* clock went backward ... fixup bubble time */
+            bubble_set_timestamp(bubble, now);
+        } else if (manager->window_contains_pointer) {
+            /* all bubbles are reset if user is doing stuff with them */
+            bubble_set_timestamp(bubble, now);
+        }
+        
+        /* see if we've timed out */
+        if ((now - bubble_time) > BUBBLE_LENGTH_SECONDS) {
+            /* this bubble timed out */
+            ;
+        } else {
+            all_timed_out = FALSE;
+        }
+    }
+    
+    g_list_free(children);
+    
+    if (all_timed_out) {
+        gtk_widget_hide(manager->window);
+        remove_popdown_timeout(manager); /* remove ourselves */    
+    }
+    
+    /* stay installed, unless we just removed ourselves */
+    return TRUE;
+}
+
+static void
+ensure_popdown_timeout(BubbleManager *manager)
+{
+    if (manager->popdown_timeout == 0) {
+        /* maximum "error" on bubble length is the timeout 
+         * length, so we go for 1 second on the timeout
+         * which checks on bubbles
+         */
+        manager->popdown_timeout =
+            g_timeout_add(1000,
+                          popdown_timeout, manager);
+    }
+}
+
+static void
+remove_popdown_timeout(BubbleManager *manager)
+{
+    if (manager->popdown_timeout != 0) {
+        g_source_remove(manager->popdown_timeout);
+        manager->popdown_timeout = 0;
+    }
+}
+
+static void
+reset_popdown_timeout(BubbleManager *manager)
+{
+    remove_popdown_timeout(manager);
+    ensure_popdown_timeout(manager);
+}
 
 static gboolean
 find_bubble_for_post(BubbleManager *manager,
@@ -62,6 +192,8 @@ update_bubble_paging(BubbleManager *manager)
  * and chat room in hippo-bubble-util.c, so e.g. a "recent links"
  * window could share that code.
  * 
+ * We also simply skip updating the bubble if the chat is open.
+ * 
  * So basically don't call most of the bubble setters in this file 
  * or it will be broken.
  */
@@ -72,6 +204,11 @@ manager_bubble_post(BubbleManager    *manager,
 {
     HippoBubble *bubble;
     int page;
+    GTimeVal tv;
+    
+    /* if chat is open, we don't want to bubble */
+    if (hippo_app_post_is_active(hippo_get_app(), hippo_post_get_guid(post)))
+        return;
 
     if (!find_bubble_for_post(manager, post, &bubble)) {
         bubble = HIPPO_BUBBLE(hippo_bubble_new());
@@ -90,6 +227,10 @@ manager_bubble_post(BubbleManager    *manager,
     update_bubble_paging(manager);
     
     hippo_app_put_window_by_icon(hippo_get_app(), GTK_WINDOW(manager->window));
+    
+    g_get_current_time(&tv);
+    bubble_set_timestamp(bubble, tv.tv_sec);
+    ensure_popdown_timeout(manager);
  
     /* don't gtk_window_present since we don't want focus
      */   
@@ -240,20 +381,32 @@ window_delete_event(GtkWindow     *window,
     
     page = gtk_notebook_get_current_page(GTK_NOTEBOOK(manager->notebook));
     if (page >= 0) {
-        gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), page);
+        manager_remove_bubble_by_page(manager, page);
     }
-    
-    if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook)) == 0) {
-        gtk_widget_hide(GTK_WIDGET(window));
-    }
-
-    update_bubble_paging(manager);
-
-    /* if we closed a bubble we need to redo the positioning */
-    hippo_app_put_window_by_icon(hippo_get_app(), window);
 
     /* don't destroy us */
     return TRUE;
+}
+
+static gboolean
+window_enter_leave_event(GtkWidget     *window,
+                         GdkEvent      *event,
+                         BubbleManager *manager)
+{
+    GtkWidget *event_widget;
+    
+    event_widget = gtk_get_event_widget(event);
+    
+    if (event_widget == window &&
+        ((GdkEventCrossing*) event)->detail != GDK_NOTIFY_INFERIOR) {        
+        if (event->type == GDK_ENTER_NOTIFY) {
+            manager->window_contains_pointer = TRUE;
+        } else if (event->type == GDK_LEAVE_NOTIFY) {
+            manager->window_contains_pointer = FALSE;
+        }
+    }
+    
+    return FALSE;
 }
 
 static BubbleManager*
@@ -279,6 +432,11 @@ manager_new(void)
     
     g_signal_connect(G_OBJECT(manager->window), "delete-event", 
                      G_CALLBACK(window_delete_event), manager);
+
+    g_signal_connect(G_OBJECT(manager->window), "enter-notify-event", 
+                     G_CALLBACK(window_enter_leave_event), manager);
+    g_signal_connect(G_OBJECT(manager->window), "leave-notify-event", 
+                     G_CALLBACK(window_enter_leave_event), manager);
     
     /* the various bubbles are in notebook pages */
     manager->notebook = gtk_notebook_new();
