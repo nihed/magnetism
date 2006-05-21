@@ -245,7 +245,7 @@ public class PostView {
 	public LivePost getLivePost() {
 		if (livePost == null) {
 			LiveState liveState = LiveState.getInstance();
-			livePost = liveState.peekLivePost(post.getGuid());
+			livePost = liveState.getLivePost(post.getGuid());
 		}
 		return livePost;
 	}

@@ -50,7 +50,15 @@
 							</td>
 							<td align="right">
 								<%-- FIXME --%>
-								<div class="dh-counts">${post.livePost.totalViewerCount} views						
+								<div class="dh-counts">
+									<c:choose>
+										<c:when test="${post.livePost.totalViewerCount == 1}">
+											1 view
+										</c:when>
+										<c:otherwise>
+											${post.livePost.totalViewerCount} views
+										</c:otherwise>
+									</c:choose>
 									<c:choose>
 										<c:when test="${favesMode == 'none' || !signin.valid}">
 											

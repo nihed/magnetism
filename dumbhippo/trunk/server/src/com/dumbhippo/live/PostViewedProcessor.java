@@ -56,6 +56,7 @@ public class PostViewedProcessor implements LiveEventProcessor {
 		LivePost livePost = state.getLivePost(post.getGuid());
 		livePost = (LivePost) livePost.clone();
 		livePost.addViewer(event.getViewerId(), event.getViewedDate());
+		livePost.setTotalViewerCount(livePost.getTotalViewerCount() + 1);
 		state.updateLivePost(livePost);
 	
 		logger.debug("{} clicked on {}", event.getViewerId(), event.getPostId());
