@@ -11,8 +11,7 @@ dh.actions.requestJoinRoom = function(userId, chatId) {
 	} else {
 		// should only show up when we suck and don't remove the "join chat" option
 		// in advance, but here as a fallback
-		alert("Chat requires the Mugshot software to be installed on Windows Internet Explorer; " + 
-		"we're working on a web-only version, stay tuned");
+		alert("Can't join chat! Mugshot software not found installed on your system, or more likely, our page is messed up.");
 	}
 }
 

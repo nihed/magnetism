@@ -12,6 +12,25 @@
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
 
+<%-- FIXME this chat stuff is cut-and-pasted from actionLinkChat in 
+     the new tags/2 tags; need to unify ... --%>
+<c:choose>
+   <%-- The browser.ie check is necessary because the dynamic hiding of
+        the control when the chat object fails to load doesn't work
+        correctly in firefox 1.0. could also be !(browser.gecko && !browser.gecko15)
+        or something probably, but only IE is known to work anyhow --%>
+
+	<c:when test="${signin.valid && browser.ie}">
+		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.requestJoinRoom('${signin.userId}','${framer.post.post.id}')"/>
+	</c:when>
+	<c:when test="${signin.valid && browser.linux && browser.gecko}">
+		<c:set scope="page" var="joinChatUri" value="mugshot://${signin.server}/joinChat?id=${framer.post.post.id}&kind=post"/>
+	</c:when>
+	<c:otherwise>
+		<%-- we don't know how to chat...  --%>
+	</c:otherwise>
+</c:choose>
+
 <head>
 	<title><c:out value="${title}"/></title>
 	<dht:stylesheets href="frames.css" iehref="frames-iefixes.css" />
@@ -95,19 +114,16 @@
 					<div id="dhPostActionsSE"></div>
 					<div id="dhPostActionsBorderBlueout"></div>
 					<div id="dhPostActions">
-					   <%-- The browser.gecko check is here because the dynamic hiding of
-					        the control when the chat object fails to load doesn't work
-					        correctly in firefox 1.0 --%>
-					   <c:if test="${framer.signin.userId != null && !browser.gecko}">
+					    <c:if test="${!empty joinChatUri}">
 							<div class="dh-post-action" id="dhPostJoinChat">
-								<a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.actions.requestJoinRoom('${framer.signin.userId}','${framer.post.post.id}')">Join Chat</a>
+								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Join Chat</a>
 							</div>
-						</c:if>
+					    </c:if>
 					   <c:if test="${!param.browserBar}">
 							<div class="dh-post-action">
 								<a href="${url}" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${url}" target="_top">Remove Frame</a>
 							</div>
-						</c:if>
+						</c:if>					    
 						<div class="dh-post-action">
 							<a href="javascript:dh.framer.goHome();" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.goHome()" target="_top">Back Home</a>
 						</div>

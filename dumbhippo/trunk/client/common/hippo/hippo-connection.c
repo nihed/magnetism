@@ -2138,6 +2138,7 @@ parse_room_info(HippoConnection *connection,
     HippoChatKind existing_kind;
     HippoChatKind kind;
     const char *kind_str;
+    const char *title;
     LmMessageNode *info_node;
 
     if (kind_p)
@@ -2160,15 +2161,22 @@ parse_room_info(HippoConnection *connection,
         }
     }
 
+    title = lm_message_node_get_attribute(info_node, "title");
+    /* title can be NULL, roomInfo only optionally has it */
+
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);
     
     if (room) {
+        if (title)
+            hippo_chat_room_set_title(room, title);
+    
         if (existing_kind != HIPPO_CHAT_KIND_UNKNOWN && existing_kind != kind) {
             g_warning("confusion about kind of room %s, giving up", chat_id);
             return FALSE;
         } else if (existing_kind == HIPPO_CHAT_KIND_UNKNOWN) {
             hippo_chat_room_set_kind(room, kind);
         }
+                    
         if (kind_p)
             *kind_p = hippo_chat_room_get_kind(room);
     } else {

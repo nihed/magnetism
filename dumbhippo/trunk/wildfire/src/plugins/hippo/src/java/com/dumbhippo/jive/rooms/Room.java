@@ -177,6 +177,8 @@ public class Room {
 	
 	private ChatRoomKind kind;
 
+	private String title;
+	
 	private Room(RoomHandler handler, ChatRoomInfo info) {
 		this.handler = handler; 
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
@@ -190,6 +192,8 @@ public class Room {
 		
 		this.roomName = info.getChatId();
 		this.kind = info.getKind();
+		this.title = info.getTitle();
+		
 		for (ChatRoomUser user : info.getAllowedUsers()) {
 			Log.debug("Allowed user: " + user.getUsername());
 			allowedUsers.put(user.getUsername(), 
@@ -302,10 +306,12 @@ public class Room {
 		return null; // Not reached
 	}
 	
-	private void addRoomInfo(Packet outgoing) {
+	private void addRoomInfo(Packet outgoing, boolean needTitle) {
 		Element messageElement = outgoing.getElement();
 		Element roomInfo = messageElement.addElement("roomInfo", "http://dumbhippo.com/protocol/rooms");
 		roomInfo.addAttribute("kind", kind.name().toLowerCase());
+		if (needTitle)
+			roomInfo.addAttribute("title", title);
 	}
 	
 	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {
@@ -330,7 +336,7 @@ public class Room {
 		info.addAttribute("artist", userInfo.getArtist()); 
 		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
 
-		addRoomInfo(presence);
+		addRoomInfo(presence, false);
 		
 		return presence;
 	}
@@ -339,7 +345,7 @@ public class Room {
 		Presence presence = new Presence(Presence.Type.unavailable);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
-		addRoomInfo(presence);
+		addRoomInfo(presence, false);
 		
 		return presence;
 	}
@@ -506,7 +512,7 @@ public class Room {
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 
-		addRoomInfo(outgoing);
+		addRoomInfo(outgoing, false);
 		
 		return outgoing;
 	}
@@ -565,7 +571,7 @@ public class Room {
 			// to indicate that we are finished.
 			sendRoomDetails(false, fromJid);
 		
-			addRoomInfo(reply);
+			addRoomInfo(reply, true);
 		} else {
 			reply.setError(Condition.feature_not_implemented);
 		}

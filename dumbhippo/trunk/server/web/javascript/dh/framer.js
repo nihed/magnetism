@@ -129,12 +129,16 @@ dh.framer.init = function() {
     if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
 		chatControl.Rescan()
 	} else {
+		// NOTE this is currently partially handled in the jsp, where 
+		// we have non-activex fallbacks sometimes. So be careful.
+		
 		// If we don't have the ActiveX controls available to chat, hide them
     	document.getElementById("dhPostViewingList").style.visibility = "hidden"
     	document.getElementById("dhPostChatLog").style.visibility = "hidden"
     	document.getElementById("dhPostChatLabel").style.visibility = "hidden"
-    	var joinChat = document.getElementById("dhPostJoinChat")
-    	if (joinChat)
-	    	joinChat.style.display = "none"
+    	// there's a fallback for this at least part of the time
+    	// var joinChat = document.getElementById("dhPostJoinChat")
+    	// if (joinChat)
+	    //	joinChat.style.display = "none"
     }
 }

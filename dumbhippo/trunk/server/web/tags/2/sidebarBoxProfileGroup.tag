@@ -38,13 +38,9 @@
 							<c:if test="${group.canShare}">
 								 <dht:actionLink href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</dht:actionLink>
 							</c:if>
-						   <%-- The browser.gecko check is here because the dynamic hiding of
-						        the control when the chat object fails to load doesn't work
-						        correctly in firefox 1.0 --%>
-						   	<c:if test="${signin.valid && !browser.gecko}">
-								<dht:actionLink
-								href="javascript:dh.actions.requestJoinRoom('${signin.userId}','${group.viewedGroupId}')" title="Chat with other group members">Join Chat</dht:actionLink>
-							</c:if>
+							<c:if test="${group.member}">
+								<dht:actionLinkChat chatId="${group.viewedGroupId}" kind="group"/>
+							</c:if>								
 						</div>
 					</td>
 				</tr>

@@ -24,6 +24,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/invitation.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
+	<dht:embedObject/>
 	<script type="text/javascript">
 		dojo.require("dh.groupinvitation")
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>
@@ -39,11 +40,13 @@
 	<dht:sidebarGroup/>
 	<dht:contentColumn>
 		<dht:zoneBoxInvitation back='true'>
-			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->
+			<div></div> <%-- IE bug workaround, display:none as first child causes problems --%>
 			<div class="dh-message" id="dhMessageDiv" style='display: ${empty param["message"] ? "none" : "block"};'>
 				<c:out value='${param["message"]}'/>
 			</div>
-			<c:if test="${signin.user.account.invitations > 0}">
+			<%-- FIXME obviously this if is stupid, just made it
+			     always-true temporarily until can ask about the right fix --%>
+			<c:if test="${signin.user.account.invitations >= 0}">
 				<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
 				<dht:formTable>
 					<dht:formTableRow label="Member or email address">

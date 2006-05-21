@@ -9,6 +9,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -25,6 +26,8 @@ public abstract class SigninBean  {
 	
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
 	private static final String SIGNIN_BEAN_KEY = "signin";
+	
+	private String server;
 	
 	public static SigninBean getForRequest(HttpServletRequest request) {
 		SigninBean result = null;
@@ -105,6 +108,29 @@ public abstract class SigninBean  {
 	public static void unsetCookie(HttpServletResponse response) {
 		response.addCookie(LoginCookie.newDeleteCookie());
 		logger.debug("Unset auth cookie");
+	}
+	
+	/** 
+	 * Return the server in host:port format suitable for use in a URI,
+	 * used for example to generate mugshot: URIs or absolute links.
+	 * 
+	 * Sets a precedent for random global configuration available from 
+	 * SigninBean, for better or worse. Add a "config" bean? This 
+	 * is a simple approach for now, we'll see if it gets out of hand.
+	 * 
+	 * @return the server name
+	 */
+	public String getServer() {
+		if (server == null) {
+			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+			String url = config.getPropertyFatalIfUnset(HippoProperty.BASEURL);
+			// if you get this exception, should probably just add new 
+			// config props for host and port
+			if (!url.startsWith("http://") || url.endsWith("/"))
+				throw new RuntimeException("FIXME need to be smarter");
+			server = url.substring("http://".length());
+		}
+		return server;
 	}
 	
 	public abstract boolean isValid();
