@@ -434,7 +434,10 @@ hippo_parse_options(int          *argc_p,
      */
     g_log_set_default_handler(log_handler, NULL);
     
-    context = g_option_context_new("Mugshot");
+    /* the argument here is a little odd, look at where it goes in --help output
+     * before changing it
+     */
+    context = g_option_context_new("");
     g_option_context_add_main_entries(context, entries, NULL);
 
     error = NULL;
@@ -878,6 +881,24 @@ hippo_parse_chat_kind(const char *str)
         return HIPPO_CHAT_KIND_BROKEN;
 }
 
+const char*
+hippo_chat_kind_as_string(HippoChatKind kind)
+{
+    switch (kind) {
+    case HIPPO_CHAT_KIND_POST:
+        return "post";
+    case HIPPO_CHAT_KIND_GROUP:
+        return "group";
+    case HIPPO_CHAT_KIND_UNKNOWN:
+        return "unknown";
+    case HIPPO_CHAT_KIND_BROKEN:
+        return "broken";
+    }
+    
+    g_warning("Invalid HippoChatKind value %d", kind);
+    return NULL;
+}
+
 static const char*
 hippo_uri_valid_tests[] = { 
     /* both chat kinds */
@@ -943,7 +964,7 @@ test_uri_parsing(void)
             g_error("Successfully parsed invalid test uri '%s'", uri);
         }
         g_assert(error != NULL);
-        g_printerr("Error: %s\n", error->message);
+        /* g_printerr("Error: %s\n", error->message); */
         g_error_free(error);
         /* should not have to free data on failure */
     }

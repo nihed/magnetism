@@ -8,7 +8,7 @@ COMMONSRCDIR=$(top_srcdir)/common-dist
 endif
 
 noinst_LTLIBRARIES = libhippo.la libgtkcopy.la
-bin_PROGRAMS = mugshot
+bin_PROGRAMS = mugshot mugshot-uri-handler
 
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
@@ -21,6 +21,10 @@ mugshot_CPPFLAGS = 			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)
 
+mugshot_uri_handler_CPPFLAGS =		\
+	$(AM_CPPFLAGS)			\
+	$(MUGSHOT_URI_HANDLER_CFLAGS)
+
 libhippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	$(LIBHIPPO_CFLAGS)
@@ -31,6 +35,9 @@ libgtkcopy_la_CPPFLAGS =		\
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
 mugshot_LDADD= libhippo.la libgtkcopy.la
+
+mugshot_uri_handler_LDFLAGS=$(MUGSHOT_URI_HANDLER_LIBS)
+mugshot_uri_handler_LDADD= libhippo.la
 
 libhippo_la_LIBADD = 			\
 	$(LIBHIPPO_LIBS)
@@ -135,6 +142,10 @@ mugshot_SOURCES	=				\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
+	src/hippo-dbus-client.c			\
+	src/hippo-dbus-client.h			\
+	src/hippo-dbus-server.c			\
+	src/hippo-dbus-server.h			\
 	src/hippo-embedded-image.c		\
 	src/hippo-embedded-image.h		\
 	src/hippo-http.c			\
@@ -149,6 +160,11 @@ mugshot_SOURCES	=				\
 	src/hippo-status-icon.h			\
 	src/main.c				\
 	src/main.h
+
+mugshot_uri_handler_SOURCES=			\
+	src/hippo-dbus-client.c			\
+	src/hippo-dbus-client.h			\
+	src/uri-handler.c
 
 LIBHIPPO_BUILT_SOURCEFILES =					\
 	$(MARSHAL_HEADER)					\

@@ -1,9 +1,12 @@
+#include <config.h>
+#include <string.h>
 #include "main.h"
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
 #include "hippo-bubble.h"
 #include "hippo-bubble-manager.h"
+#include "hippo-dbus-server.h"
 
 struct HippoApp {
     GMainLoop *loop;
@@ -14,6 +17,9 @@ struct HippoApp {
     GtkWidget *about_dialog;
     GHashTable *chat_windows;
     HippoImageCache *photo_cache;
+    HippoDBus *dbus;
+    /* see join_chat() comment */
+    const char *creating_chat_id;
 };
 
 void
@@ -211,10 +217,19 @@ hippo_app_join_chat(HippoApp   *app,
     if (window == NULL) {
         HippoChatRoom *room;
 
+        /* this can cause a bubble, which will open since post_is_active relies
+         * on the chat window being inserted, something we're about to do... 
+         * so we have a little hack here
+         */
+        g_assert(app->creating_chat_id == NULL); /* no recursion */
+        app->creating_chat_id = chat_id;
+        
         room = hippo_data_cache_ensure_chat_room(app->cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
         window = hippo_chat_window_new(app->cache, room);
         g_hash_table_replace(app->chat_windows, g_strdup(chat_id), window);
         g_signal_connect(window, "destroy", G_CALLBACK(on_chat_window_destroy), app);
+        
+        app->creating_chat_id = NULL;
     }
     
     gtk_window_present(GTK_WINDOW(window));   
@@ -225,7 +240,10 @@ hippo_app_post_is_active(HippoApp   *app,
                          const char *post_id)
 {
     /* FIXME we should also detect having a post open in a browser */
-
+    
+    if (app->creating_chat_id && strcmp(post_id, app->creating_chat_id) == 0)
+        return TRUE;
+        
     return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
 }
 
@@ -314,14 +332,29 @@ hippo_app_put_window_by_icon(HippoApp  *app,
     gtk_window_move(window, window_x, window_y);
 }
 
+static void
+on_dbus_disconnected(HippoDBus *dbus,
+                     HippoApp  *app)
+{
+    hippo_app_quit(app);
+}
+
 static HippoApp*
-hippo_app_new(HippoInstanceType instance_type)
+hippo_app_new(HippoInstanceType  instance_type,
+              HippoPlatform     *platform,
+              HippoDBus         *dbus)
 {
     HippoApp *app = g_new0(HippoApp, 1);
 
-    app->platform = hippo_platform_impl_new(instance_type);
+    app->platform = platform;
+    g_object_ref(app->platform);
 
     app->loop = g_main_loop_new(NULL, FALSE);
+    app->dbus = dbus;
+    g_object_ref(app->dbus);
+
+    g_signal_connect(G_OBJECT(app->dbus), "disconnected",
+                     G_CALLBACK(on_dbus_disconnected), app);
 
     app->connection = hippo_connection_new(app->platform);
     g_object_unref(app->platform); /* let connection keep it alive */
@@ -341,6 +374,9 @@ hippo_app_new(HippoInstanceType instance_type)
 static void
 hippo_app_free(HippoApp *app)
 {
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
+                             G_CALLBACK(on_dbus_disconnected), app);
+
     hippo_bubble_manager_unmanage(app->cache);
 
     g_hash_table_destroy(app->chat_windows);
@@ -351,6 +387,7 @@ hippo_app_free(HippoApp *app)
     g_object_unref(app->icon);
     g_object_unref(app->cache);
     g_object_unref(app->photo_cache);
+    g_object_unref(app->dbus);
     g_main_loop_unref(app->loop);
     g_free(app);
 }
@@ -389,10 +426,18 @@ int
 main(int argc, char **argv)
 {
     HippoOptions options;
+    HippoDBus *dbus;
+    HippoPlatform *platform;
+    char *server;
+    GError *error; 
      
     hippo_set_print_debug_func(print_debug_func);
      
     g_thread_init(NULL);
+    
+    /* not marked for translation, it's a trademark */
+    g_set_application_name("Mugshot");
+    
     gtk_init(&argc, &argv);
 
     if (!hippo_parse_options(&argc, &argv, &options))
@@ -402,8 +447,40 @@ main(int argc, char **argv)
         gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(),
                                           ABSOLUTE_TOP_SRCDIR "/icons");
     }
+    
+    platform = hippo_platform_impl_new(options.instance_type);
+    server = hippo_platform_get_web_server(platform);
 
-    the_app = hippo_app_new(options.instance_type);
+    error = NULL;
+    dbus = hippo_dbus_try_to_acquire(server,
+                                     (options.quit_existing || options.replace_existing),
+                                     &error);
+    if (dbus == NULL) {
+        g_assert(error != NULL);
+        g_printerr(_("Can't connect to session message bus: %s\n"), error->message);
+        g_error_free(error);
+        return 1;
+    } else {
+        g_assert(error == NULL);
+    }
+    
+    if (options.quit_existing) {
+        /* we kicked off the other guy, now just exit ourselves */
+        return 1;
+    }
+
+    /* Now let HippoApp take over the logic, since we know we 
+     * want to exist as a running app
+     */
+    the_app = hippo_app_new(options.instance_type, platform, dbus);
+
+    /* get rid of all this, the app has taken over */
+    g_object_unref(dbus);
+    dbus = NULL;
+    g_object_unref(platform);
+    platform = NULL;
+    g_free(server);
+    server = NULL;
 
     if (hippo_connection_signin(the_app->connection))
         g_debug("Waiting for user to sign in");
@@ -435,6 +512,12 @@ main(int argc, char **argv)
     g_main_loop_run(the_app->loop);
 
     g_debug("Main loop exited");
+
+    g_debug("Dropping loudmouth connection");
+    hippo_connection_signout(the_app->connection);
+
+    g_debug("Releasing dbus");
+    hippo_dbus_blocking_shutdown(the_app->dbus);
 
     hippo_app_free(the_app);
 

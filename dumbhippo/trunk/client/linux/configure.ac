@@ -176,7 +176,10 @@ AM_CONDITIONAL(COMMON_OUTSIDE_TREE, $common_outside_tree)
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 LOUDMOUTH_REQUIRED=1.0
-# earlier might work, but this is what's in FC4 and thus has been tested
+# unfortunately this breaks us on FC4
+DBUS_REQUIRED=0.61
+DBUS_GLIB_REQUIRED=0.61
+# earlier might work, but this is what's been tested
 CURL_REQUIRED=7.13.1
 
 ## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
@@ -215,17 +218,17 @@ fi
 
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
+PKG_CHECK_MODULES(MUGSHOT_URI_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED)
 
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
 
-PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, true,
-    AC_MSG_ERROR([Right now things aren't going to work with GTK+ 2.9 or above]))
+PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
 
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
@@ -257,5 +260,14 @@ if "$warn_about_curl_version" ; then
         ***** we've tested with versions $CURL_REQUIRED and above.
         ***** If you have an older version, the build might fail or 
         ***** there may be bugs at runtime, or, it might work - we don't know!
+    "
+fi
+
+if "$have_gtk210" ; then
+    echo "
+        ***** GTK+ 2.9 or above may conflict with cut-and-pasted GTK+ 2.9
+        ***** code in the gtk/ subdirectory. 
+        ***** We tried to avoid the problem but haven't tested it yet.
+        ***** Try it and let us know.
     "
 fi

@@ -335,6 +335,8 @@ manager_disconnect(BubbleManager *manager)
             gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), 0);
         }
         gtk_widget_hide(manager->window);
+
+        remove_popdown_timeout(manager);
         
         /* nuke everything */
         g_hash_table_foreach(manager->chats, foreach_disconnect, manager);

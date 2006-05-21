@@ -141,7 +141,8 @@ gboolean hippo_parse_uri                   (const char         *uri,
 void     hippo_uri_action_data_free_fields (HippoUriActionData *data);
 
 /* same strings used in URIs, the xmpp protocol */
-HippoChatKind hippo_parse_chat_kind        (const char *str);
+HippoChatKind hippo_parse_chat_kind        (const char   *str);
+const char*   hippo_chat_kind_as_string    (HippoChatKind kind);
 
 G_END_DECLS
 
