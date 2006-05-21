@@ -333,6 +333,15 @@ hippo_app_put_window_by_icon(HippoApp  *app,
 }
 
 static void
+on_dbus_song_changed(HippoDBus *dbus,
+                     HippoSong *song,
+                     HippoApp  *app)
+{
+    if (song)
+        hippo_connection_notify_music_changed(app->connection, TRUE, song);
+}
+
+static void
 on_dbus_disconnected(HippoDBus *dbus,
                      HippoApp  *app)
 {
@@ -355,6 +364,8 @@ hippo_app_new(HippoInstanceType  instance_type,
 
     g_signal_connect(G_OBJECT(app->dbus), "disconnected",
                      G_CALLBACK(on_dbus_disconnected), app);
+    g_signal_connect(G_OBJECT(app->dbus), "song-changed",
+                     G_CALLBACK(on_dbus_song_changed), app);
 
     app->connection = hippo_connection_new(app->platform);
     g_object_unref(app->platform); /* let connection keep it alive */
@@ -376,6 +387,8 @@ hippo_app_free(HippoApp *app)
 {
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
                              G_CALLBACK(on_dbus_disconnected), app);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
+                             G_CALLBACK(on_dbus_song_changed), app);
 
     hippo_bubble_manager_unmanage(app->cache);
 

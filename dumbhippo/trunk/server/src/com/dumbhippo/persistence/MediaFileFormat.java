@@ -14,5 +14,6 @@ public enum MediaFileFormat {
 	UNKNOWN,
 	MP3,
 	WMA,
-	AAC;
+	AAC,
+	VORBIS;
 }
