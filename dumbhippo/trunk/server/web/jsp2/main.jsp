@@ -47,63 +47,69 @@
 		    <img src="/images2/mugshot_topper.gif" />
 		    <div id="dhMainLogoLinks"><a class="dh-logo-link" href="/who-are-you">Log In</a> | <a class="dh-logo-link" href="/signup">Sign Up</a></div>
 		</div>
-
-		<div id="dhMainContent">
-			<div class="dh-zone-box">
-				<div><a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome.gif"/></a></div>
-				<div class="dh-zone-box-border dh-color-web">
-					<div class="dh-zone-box-content dh-color-normal">
-						<dht:requireLinksGlobalBean/>
-						<dht:postList posts="${linksGlobal.hotPosts.list}" format="full" separators="true" favesMode='none'/>
-					</div>
-				</div>
+		
+		<table id="dhMainContent" cellspacing="0" cellpadding="0">
+		<tbody>
+		<tr>
+		<td class="dh-zone-box-header">
+			<a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome.gif"/></a>
+		</td>
+		<td class="dh-zone-box-spacer"></td>
+		<td class="dh-zone-box-header">
+			<a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome.gif"/></a>
+		</td>
+		<td class="dh-zone-box-spacer"></td>
+		<td class="dh-zone-box-header">
+			<a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome.gif"/></a>
+		</td>
+		</tr>
+		<tr>
+		<td id="dhZoneBoxWeb" class="dh-zone-box dh-color-normal" valign="top">
+			<div class="dh-zone-box-content">
+				<dht:requireLinksGlobalBean/>
+				<dht:postList posts="${linksGlobal.hotPosts.list}" format="full" separators="true" favesMode='none'/>
 			</div>
-			<div class="dh-zone-box-spacer"> </div>
-			<div class="dh-zone-box">
-				<div><a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome.gif"/></a></div>
-				<div class="dh-zone-box-border dh-color-music">
-					<div class="dh-zone-box-content dh-color-normal">
-						<dht:requireMusicGlobalBean/>
-						<c:forEach items="${musicGlobal.recentTracks.results}" var="track" varStatus="status">
-							<dht:track track="${track}" albumArt="true"/>
-							<c:if test="${!status.last}">
-								<dht:zoneBoxSeparator/>
-							</c:if>
-						</c:forEach>
-					</div>
-				</div>
-			</div>
-			<div class="dh-zone-box-spacer"> </div>
-			<div class="dh-zone-box">
-				<div><a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome.gif"/></a></div>
-				<div class="dh-zone-box-border dh-color-tv">
-					<div class="dh-zone-box-content dh-color-normal">
-						<div class="dh-item">
-							Coming Soon
-						</div>
+		</td>
+		<td></td>
+		<td id="dhZoneBoxMusic" class="dh-zone-box dh-color-normal" valign="top">
+			<div class="dh-zone-box-content">
+				<dht:requireMusicGlobalBean/>
+				<c:forEach items="${musicGlobal.recentTracks.results}" var="track" varStatus="status">
+					<dht:track track="${track}" albumArt="true"/>
+					<c:if test="${!status.last}">
 						<dht:zoneBoxSeparator/>
-						<div class="dh-item">
-							We're working on this. Let us know what you think of 
-							<a href="/tv">our mockups so far</a>.
-						</div>
-					</div>
+					</c:if>
+				</c:forEach>
+			</div>
+		</td>
+		<td></td>
+		<td id="dhZoneBoxTv" class="dh-zone-box dh-color-normal" valign="top">
+			<div class="dh-zone-box-content">
+				<div class="dh-item">
+					Coming Soon
+				</div>
+				<dht:zoneBoxSeparator/>
+				<div class="dh-item">
+					We're working on this. Let us know what you think of 
+					<a href="/tv">our mockups so far</a>.
 				</div>
 			</div>
-			<div class="dh-grow-div-around-floats"><div></div></div>
-		</div>
-		<div id="dhMainColumnBottoms">
-			<div id="dhMainColumnOneLeftSide" class="dh-column-side dh-color-web"><div></div></div>
-			<div id="dhMainColumnOneRightSide" class="dh-column-side dh-color-web"><div></div></div>
-			<div id="dhMainColumnOneTwoGap" class="dh-column-gap"><div></div></div>
-			<div id="dhMainColumnTwoLeftSide" class="dh-column-side dh-color-music"><div></div></div>
-			<div id="dhMainColumnTwoRightSide" class="dh-column-side dh-color-music"><div></div></div>			
-			<div id="dhMainColumnTwoThreeGap" class="dh-column-gap"><div></div></div>
-			<div id="dhMainColumnThreeLeftSide" class="dh-column-side dh-color-tv"><div></div></div>
-			<div id="dhMainColumnThreeRightSide" class="dh-column-side dh-color-tv"><div></div></div>
-			<div id="dhMainColumnOneBottom" class="dh-column-bottom"><img src="/images2/bottom_link230.gif" class="dh-bottom-image"/></div>
-			<div id="dhMainColumnTwoBottom" class="dh-column-bottom"><img src="/images2/bottom_music230.gif" class="dh-bottom-image"/></div>
-			<div id="dhMainColumnThreeBottom" class="dh-column-bottom"><img src="/images2/bottom_tvparty230.gif" class="dh-bottom-image"/></div>
-		</div>
+		</td>
+		</tr>	
+		<tr>
+		<td>
+			<img src="/images2/bottom_link230.gif" class="dh-bottom-image"/>
+		</td>
+		<td></td>
+		<td>
+			<img src="/images2/bottom_music230.gif" class="dh-bottom-image"/>
+		</td>
+		<td></td>
+		<td>
+			<img src="/images2/bottom_tvparty230.gif" class="dh-bottom-image"/>
+		</td>
+		</tbody>
+		</table>
 		<dht:footer/>
 	</div>
 </body>

@@ -2,6 +2,20 @@
 @IMPORT url("site.css");
 @IMPORT url("main-positions.css");
 
+#dhZoneBoxWeb {
+	border-left: 1px solid #F16D1C;
+	border-right: 1px solid #F16D1C;
+}
+
+#dhZoneBoxMusic {
+	border-left: 1px solid #36AAE8;
+	border-right: 1px solid #36AAE8;
+}
+
+#dhZoneBoxTv {
+	border-left: 1px solid #60B635;
+	border-right: 1px solid #60B635;
+}
 
 .dh-logo-link, #dhMainLogoLinks {
 	color:			#ffffff;
@@ -33,20 +47,4 @@
 
 .dh-zone-box .dh-attribution .dh-name-link {
 	font-weight:	bold;
-}
-
-.dh-bottom-image {
-	background: 	#EFEFEF;
-}
-
-#dhMainContent {
-	background-color: 	#FFFFFF;
-}
-
-#dhMainContent .dh-zone-box-spacer {
-	background-color: 	#EFEFEF;
-}
-
-.dh-column-gap {
-	background-color: 	#EFEFEF;
 }
