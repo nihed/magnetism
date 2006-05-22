@@ -13,31 +13,10 @@ dh.wantsin.send = function() {
 		return false;
 	}
 	return true;
-
-	/*
-	dh.server.getXmlPOST("wantsin",
-	        {
-        		"address" : address
-        	},
-        	function(type, document, http) {
-        		var messages = document.getElementsByTagName("message")
-        	        if (messages.length > 0) {
-				dh.formtable.showStatusMessage("dhWantsInEmailEntry",messages[0],false);
-        	        } else {
-               			dojo.debug("Didn't get message in response to wantsin");
-                	}
-        	},
-        	function(type, error, http) {
-        		dojo.debug("sendemailinvitation got back error " + dhAllPropsAsString(error));
-        	}
-	)
-	*/
-
 }
-
 
 dhWantsInInit = function() {
 	dh.wantsin.dhWantsInEmailEntry = new dh.textinput.Entry(document.getElementById("dhWantsInEmailEntry"), "email@example.com")
-
-
 }
+
+dojo.event.connect(dojo, "loaded", dj_global, "dhWantsInInit");

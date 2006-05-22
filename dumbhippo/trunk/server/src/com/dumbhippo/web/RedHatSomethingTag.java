@@ -5,6 +5,9 @@ import java.io.IOException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
+
 public class RedHatSomethingTag extends SimpleTagSupport {
 
 	// if you put HTML chars in here you have to add xml escaping on output below
@@ -60,8 +63,13 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 		"Tangle",
 		"Whisper",
 		"Cluster",
-		"Ruffle"
+		"Ruffle",
+		"On-Line Cyber Cafe"
 	};
+	
+	/* default to true for safety */
+	private static boolean stealthMode = true;
+	private static boolean loadedStealthMode = false;
 	
 	private String pickSomething() {
 		// use seconds not milliseconds, milliseconds might always be multiples of 10 or something 
@@ -71,8 +79,19 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 	
 	@Override
 	public void doTag() throws IOException {
+
+		if (!loadedStealthMode) {
+	        Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
+	        
+			String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
+			stealthMode = Boolean.parseBoolean(stealthModeString);
+			loadedStealthMode = true;
+		}
 		
 		JspWriter writer = getJspContext().getOut();
-		writer.print("<a href=\"http://redhat.com\">A Red Hat " + pickSomething() + "</a>");
+		if (stealthMode)
+			writer.print("Today's Word Is: " + pickSomething() + "");
+		else
+			writer.print("&copy; 2006 Red Hat, Inc. <a href=\"http://redhat.com\">A Red Hat " + pickSomething() + "</a>");
 	}
 }

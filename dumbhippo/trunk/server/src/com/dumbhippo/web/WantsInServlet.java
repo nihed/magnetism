@@ -30,10 +30,10 @@ public class WantsInServlet extends AbstractServlet {
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, HttpException, HumanVisibleException {
-		String address = request.getParameter("dhWantsInEmailEntry");
+		String address = request.getParameter("address");
 		if (address != null)
 			address = address.trim();
-		if (address == null || address.length() == 0 || address.indexOf('@') < 1 || address.equals("let@me.in.please")) {
+		if (address == null || address.length() == 0 || address.indexOf('@') < 1 || address.endsWith("example.com")) {
 			throw new HumanVisibleException("You have to put in an email address").setHtmlSuggestion("<a href=\"/\">Try again</a>");
 		}
 		

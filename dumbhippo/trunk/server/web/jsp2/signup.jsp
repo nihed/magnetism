@@ -8,11 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/site.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-        <script type="text/javascript" src="/javascript/dh/wantsin.js"></script>
-        <script type="text/javascript">
-                dojo.require("dh.wantsin")
-                dojo.event.connect(dojo, "loaded", dj_global, "dhWantsInInit");
-        </script>
+    <script type="text/javascript" src="/javascript/dh/wantsin.js"></script>
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/header_signup500.gif" fullHeader="true">
 
@@ -20,7 +16,7 @@
 
 	<form action="/wantsin" method="post" onsubmit="return dh.wantsin.send();">
 	<table>
-	     <tr><td>Email Address:</td><td><dht:textInput id="dhWantsInEmailEntry"/></td></tr>
+	     <tr><td>Email Address:</td><td><dht:textInput id="dhWantsInEmailEntry" name="address"/></td></tr>
 	     <tr><td> </td>
 	         <td style="text-align:right;"><input type="submit" id="dhWantsInSend" value="Sign Me Up!" /></td></tr>
 	</table>

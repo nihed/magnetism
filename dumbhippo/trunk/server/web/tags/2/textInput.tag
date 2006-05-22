@@ -6,6 +6,7 @@
 <%@ attribute name="extraClass" required="false" type="java.lang.String" %>
 <%@ attribute name="type" required="false" type="java.lang.String" %>
 <%@ attribute name="id" required="false" type="java.lang.String" %>
+<%@ attribute name="name" required="false" type="java.lang.String" %>
 
 <c:if test="${empty type}">
 	<c:set var="type" value="text" scope="page"/>
@@ -20,12 +21,15 @@
 <c:if test="${empty id}">
 	<c:set var="id" value="dhTextInput${N}" scope="page"/>
 </c:if>
+<c:if test="${empty name}">
+	<c:set var="name" value="${id}" scope="page"/>
+</c:if>
 
 <c:choose>
 	<c:when test="${multiline}">
-		<textarea id="${id}" name="${id}" class="dh-text-input ${extraClass}" rows="5"></textarea>
+		<textarea id="${id}" name="${name}" class="dh-text-input ${extraClass}" rows="5"></textarea>
 	</c:when>
 	<c:otherwise>
-		<input id="${id}" name="${id}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
+		<input id="${id}" name="${name}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
 	</c:otherwise>
 </c:choose>
