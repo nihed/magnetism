@@ -22,12 +22,15 @@ public class BrowserBean implements Serializable {
 	private Browser browser;
 	private int browserVersion;
 	
+	private OS osRequested;
+	private Browser browserRequested;
+	
 	private BrowserBean(HttpServletRequest request) {
 		
 		os = OS.Unknown;
 		browser = Browser.Unknown;
 		browserVersion = 0;
-		
+				
 		String userAgent = request.getHeader("User-Agent");
 		if (userAgent == null) {
 			logger.debug("No User-Agent");
@@ -40,6 +43,14 @@ public class BrowserBean implements Serializable {
 			os = OS.Mac;
 		else if (userAgent.contains("Windows"))
 			os = OS.Windows;
+		
+		/* note that we aren't counting IE before 5.0 or not on Windows 
+		 * as IE ... it's just Unknown.
+		 * For Netscape 4 and old Mozilla I'm guessing we should do
+		 * the same but would require some research into
+		 * gecko/netscape user agent history to see which changes make
+		 * sense. 
+		 */
 		
 		if (userAgent.contains("Gecko")) {
 			browser = Browser.Gecko;
@@ -56,20 +67,51 @@ public class BrowserBean implements Serializable {
 				}
 			}
 		} else if (userAgent.contains("Konqueror") ||
-				userAgent.contains("Safari"))
+				userAgent.contains("Safari")) {
 			browser = Browser.Khtml;
-		else if (userAgent.contains("Opera"))
+		} else if (userAgent.contains("Opera")) {
 			browser = Browser.Opera;
-		else if (userAgent.contains("MSIE 5.0")) {
+		} else if (os == OS.Windows && userAgent.contains("MSIE 5.0")) {
 			browser = Browser.IE;
-		} else if (userAgent.contains("MSIE 5.5")) {
+		} else if (os == OS.Windows && userAgent.contains("MSIE 5.5")) {
 			browser = Browser.IE;
 			browserVersion = 55;
-		} else if (userAgent.contains("MSIE 6") ||
-				userAgent.contains("MSIE 7") ||
-				userAgent.contains("MSIE 8")) {
+		} else if (os == OS.Windows && 
+				(userAgent.contains("MSIE 6") ||
+				 userAgent.contains("MSIE 7") ||
+				 userAgent.contains("MSIE 8"))) {
 			browser = Browser.IE;
 			browserVersion = 60;
+		}
+		
+		String platformOverrideStr = request.getParameter("platform");
+		String browserOverrideStr = request.getParameter("browser");
+		osRequested = null;
+		browserRequested = null;
+		
+		if (platformOverrideStr != null) {
+			platformOverrideStr = platformOverrideStr.toLowerCase();
+			for (OS o : OS.values()) {
+				if (o.name().toLowerCase().equals(platformOverrideStr)) {
+					osRequested = o;
+					break;
+				}
+			}
+		}		
+
+		if (browserOverrideStr != null) {
+			browserOverrideStr = browserOverrideStr.toLowerCase();
+			for (Browser b : Browser.values()) {
+				if (b.name().toLowerCase().equals(browserOverrideStr)) {
+					browserRequested = b;
+					break;
+				}
+			}
+			/* allow special browser=safari parameter */
+			if (browserRequested == null && browserOverrideStr.equals("safari")) {
+				osRequested = OS.Mac;
+				browserRequested = Browser.Khtml;
+			}
 		}
 		
 		logger.debug("User agent is '{}' analysis {}", userAgent, this);
@@ -85,10 +127,32 @@ public class BrowserBean implements Serializable {
 		return bean;
 	}
 
+	/* 
+	 * The "isFooRequested" flavors indicate whether the user explicitly 
+	 * chose the given platform/browser, e.g. on /bookmark where you can
+	 * look at other browser versions even if you're using a different browser.
+	 * 
+	 * The plain "isFoo" indicate what user agent someone is using, 
+	 * which should be used if you're trying to choose which html/css to 
+	 * display or something like that. 
+	 */
+	
+	private boolean isRequested(Browser b) {
+		return browserRequested == b || (browserRequested == null && browser == b);
+	}
+	
+	private boolean isRequested(OS o) {
+		return osRequested == o || (osRequested == null && os == o);
+	}
+	
 	public boolean isGecko() {
 		return browser == Browser.Gecko;
 	}
 
+	public boolean isGeckoRequested() {
+		return isRequested(Browser.Gecko);
+	}
+	
 	public boolean isGeckoAtLeast10() {
 		return isGecko() && browserVersion >= 10;
 	}
@@ -101,6 +165,10 @@ public class BrowserBean implements Serializable {
 		return browser == Browser.IE;
 	}
 
+	public boolean isIeRequested() {
+		return isRequested(Browser.IE);
+	}
+	
 	public boolean isIeAtLeast55() {
 		return isIe() && browserVersion >= 55;
 	}
@@ -113,22 +181,50 @@ public class BrowserBean implements Serializable {
 		return browser == Browser.Khtml;
 	}
 
+	public boolean isKhtmlRequested() {
+		return isRequested(Browser.Khtml);
+	}
+	
 	public boolean isLinux() {
 		return os == OS.Linux;
 	}
 
+	public boolean isLinuxRequested() {
+		return isRequested(OS.Linux);
+	}
+	
 	public boolean isMac() {
 		return os == OS.Mac;
 	}
 
+	public boolean isMacRequested() {
+		return isRequested(OS.Mac);
+	}
+	
 	public boolean isOpera() {
 		return browser == Browser.Opera;
 	}
 
+	public boolean isOperaRequested() {
+		return isRequested(Browser.Opera);
+	}
+	
 	public boolean isWindows() {
 		return os == OS.Windows;
 	}
+	
+	public boolean isWindowsRequested() {
+		return isRequested(OS.Windows);
+	}
 
+	public boolean isSafari() {
+		return isMac() && isKhtml();
+	}
+
+	public boolean isSafariRequested() {
+		return isMacRequested() && isKhtmlRequested();
+	}
+	
 	public String getSupportedBrowsers() {
 		return "Internet Explorer 6 and Firefox 1.5";
 	}
@@ -143,6 +239,6 @@ public class BrowserBean implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + "}";
+		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + "}";
 	}
 }

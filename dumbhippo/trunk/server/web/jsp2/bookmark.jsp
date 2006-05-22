@@ -6,18 +6,16 @@
 <dh:bean id="bookmark" class="com.dumbhippo.web.BookmarkPage" scope="request"/>
 
 <c:choose>
-<c:when test='${(browser.ie && browser.windows && empty param["browser"]) || param["browser"] == "ie" }'>
-	<c:set var="isIeWin" value="true" scope="page"/>
+<%-- note that by "IE" browser bean means specifically "Windows IE" --%>
+<c:when test='${browser.ieRequested}'>
 	<c:set var="unsupported" value="false" scope="page"/>	
 </c:when>
-<c:when test='${(browser.gecko && empty param["browser"]) || param["browser"] =="gecko" }'>
-	<c:set var="isIeWin" value="false" scope="page"/>
+<c:when test='${browser.geckoRequested}'>
 	<c:set var="dragDestImg" value="bookmarkfirefox.gif" scope="page"/>
 	<c:set var="browserTitle" value="FIREFOX" scope="page"/>
 	<c:set var="unsupported" value="false" scope="page"/>	
 </c:when>
-<c:when test='${(browser.khtml && browser.mac && empty param["browser"]) || param["browser"] == "safari" }'>
-	<c:set var="isIeWin" value="false" scope="page"/>
+<c:when test='${browser.safariRequested}'>
 	<c:set var="dragDestImg" value="bookmarksafari.gif" scope="page"/>
 	<c:set var="browserTitle" value="SAFARI" scope="page"/>
 	<c:set var="unsupported" value="false" scope="page"/>	
@@ -35,7 +33,7 @@
 </head>
 <dht:systemPage topImage="/images2/header_bookmark500.gif" fullHeader="true">
 <c:choose>
-	<c:when test="${isIeWin}">
+	<c:when test="${browser.ieRequested}">
 		<dht:zoneBoxTitle>USING MUGSHOT LINK SWARM</dht:zoneBoxTitle>	
 		Since you're using Internet Explorer, you can <a href="/welcome">download</a> the
 		Link Swarm application and share links right from your Explorer toolbar.
