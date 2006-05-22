@@ -85,9 +85,9 @@
 						    <dht:zoneBoxSeparator/>
 						</c:if>
 						
-							<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
+							<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}" pageable="${musicPerson.recentTracks}" separator="true"/>
 
-							<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" />
+							<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicPerson.mostPlayedTracks.results}" pageable="${musicPerson.mostPlayedTracks}" />
 	
 					</c:when>
 					<c:otherwise>
