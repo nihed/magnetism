@@ -219,6 +219,27 @@ libgtkcopy_la_SOURCES=				\
 	gtk/gtktrayicon-x11.c			\
 	$(LIBGTKCOPY_BUILT_SOURCEFILES)
 
+HUGEICONSUBDIR=icons/hicolor/128x128/apps
+hugeicondir=$(datadir)/$(HUGEICONSUBDIR)
+hugeicon_DATA=				\
+	$(HUGEICONSUBDIR)/mugshot.png
+
+NORMALICONSUBDIR=icons/hicolor/48x48/apps
+normalicondir=$(datadir)/$(NORMALICONSUBDIR)
+normalicon_DATA=				\
+	$(NORMALICONSUBDIR)/mugshot.gif
+
+MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
+mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)
+mediumicon_DATA=				\
+	$(MEDIUMICONSUBDIR)/mugshot.gif
+
+SMALLISHICONSUBDIR=icons/hicolor/24x24/apps
+smallishicondir=$(datadir)/$(SMALLISHICONSUBDIR)
+smallishicon_DATA=				\
+	$(SMALLISHICONSUBDIR)/mugshot.gif
+
+
 SMALLICONSUBDIR=icons/hicolor/22x22/apps
 smallicondir=$(datadir)/$(SMALLICONSUBDIR)
 smallicon_DATA=					\
@@ -231,6 +252,7 @@ smallicon_DATA=					\
 SMALLERICONSUBDIR=icons/hicolor/16x16/apps
 smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
 smallericon_DATA=					\
+	$(SMALLERICONSUBDIR)/mugshot.gif		\
 	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
 	$(SMALLERICONSUBDIR)/mugshot_note_off.png
 
@@ -260,8 +282,10 @@ else
 install-data-local:
 endif
 
-EXTRA_DIST= \
-	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES) version.in \
+EXTRA_DIST=								\
+	$(smallicon_DATA) $(smallericon_DATA) $(smallishicon_DATA)	\
+	$(mediumicon_DATA) $(normalicon_DATA) $(hugeicon_DATA)		\
+	$(EMBEDDED_IMAGES) version.in					\
 	$(schema_DATA) $(desktopfiles_in_files)
 
 MAINTAINERCLEANFILES=							\

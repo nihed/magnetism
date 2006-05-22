@@ -50,6 +50,18 @@ for S in $SCHEMAS; do
   gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null
 done
 
+touch --no-create %{_datadir}/icons/hicolor
+if [ -x /usr/bin/gtk-update-icon-cache ]; then
+  gtk-update-icon-cache -q %{_datadir}/icons/hicolor
+fi
+
+%postun
+touch --no-create %{_datadir}/icons/hicolor
+if [ -x /usr/bin/gtk-update-icon-cache ]; then
+  gtk-update-icon-cache -q %{_datadir}/icons/hicolor
+fi
+
+
 %files
 %defattr(-,root,root,-)
 %doc
@@ -57,7 +69,12 @@ done
 %{_bindir}/mugshot
 %{_bindir}/mugshot-uri-handler
 %{_datadir}/icons/hicolor/16x16/apps/*.png
+%{_datadir}/icons/hicolor/16x16/apps/*.gif
 %{_datadir}/icons/hicolor/22x22/apps/*.png
+%{_datadir}/icons/hicolor/24x24/apps/*.gif
+%{_datadir}/icons/hicolor/32x32/apps/*.gif
+%{_datadir}/icons/hicolor/48x48/apps/*.gif
+%{_datadir}/icons/hicolor/128x128/apps/*.png
 %{_datadir}/mugshot
 %{_datadir}/gnome/autostart/mugshot.desktop
 %{_sysconfdir}/gconf/schemas/*.schemas

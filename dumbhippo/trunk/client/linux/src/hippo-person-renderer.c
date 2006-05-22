@@ -260,6 +260,11 @@ update_caches(HippoPersonRenderer *renderer,
     }
     
     make_layout(widget, &renderer->name_layout, name);
+    /* FIXME better to omit the note and the space for music 
+     * entirely, but this keeps it from looking broken for now
+     */
+    if (song == NULL || *song == '\0')
+        song = _("No song");
     make_layout(widget, &renderer->song_layout, song);
     make_layout(widget, &renderer->artist_layout, artist);
     

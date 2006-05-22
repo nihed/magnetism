@@ -87,6 +87,7 @@ hippo_app_show_about(HippoApp *app)
             "version", VERSION,
             "copyright", "Copyright 2006 Red Hat, Inc. and others",
             "website", "http://mugshot.org",
+            "logo-icon-name", "mugshot",
             NULL);
         g_signal_connect(app->about_dialog, "destroy",
             G_CALLBACK(gtk_widget_destroyed), &app->about_dialog);
@@ -794,6 +795,7 @@ main(int argc, char **argv)
     g_set_application_name("Mugshot");
     
     gtk_init(&argc, &argv);
+    gtk_window_set_default_icon_name("mugshot");
 
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
