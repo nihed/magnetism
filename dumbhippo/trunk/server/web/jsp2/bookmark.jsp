@@ -16,7 +16,7 @@
 	<c:set var="browserTitle" value="FIREFOX" scope="page"/>
 	<c:set var="unsupported" value="false" scope="page"/>	
 </c:when>
-<c:when test='${(browser.khtml && os.mac && empty param["browser"]) || param["browser"] == "safari" }'>
+<c:when test='${(browser.khtml && browser.mac && empty param["browser"]) || param["browser"] == "safari" }'>
 	<c:set var="isIeWin" value="false" scope="page"/>
 	<c:set var="dragDestImg" value="bookmarksafari.gif" scope="page"/>
 	<c:set var="browserTitle" value="SAFARI" scope="page"/>
