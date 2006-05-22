@@ -219,17 +219,6 @@ libgtkcopy_la_SOURCES=				\
 	gtk/gtktrayicon-x11.c			\
 	$(LIBGTKCOPY_BUILT_SOURCEFILES)
 
-
-MAINTAINERCLEANFILES=$(LIBHIPPO_BUILT_SOURCEFILES) $(LIBGTKCOPY_BUILT_SOURCEFILES) $(EMBEDDED_IMAGE_HEADER)
-
-# if srcdir!=builddir, clean out maintainer-clean files from builddir
-# this allows dist to pass.
-distclean-local:
-	if test $(srcdir) != . ; then		\
-	  rm -f $(MAINTAINERCLEANFILES) ;	\
-	  rmdir $(BUILT_SRC_DIR) ;		\
-	fi
-
 SMALLICONSUBDIR=icons/hicolor/22x22/apps
 smallicondir=$(datadir)/$(SMALLICONSUBDIR)
 smallicon_DATA=					\
@@ -250,5 +239,39 @@ smallericon_DATA=					\
 versiondir=$(pkgdatadir)
 version_DATA=version
 
+desktopfilesdir=$(datadir)/gnome/autostart
+desktopfiles_in_files=mugshot.desktop.in
+desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
+desktopfiles_DATA = $(desktopfiles_files)
+# intltool not here until po exists and all that
+#@INTLTOOL_DESKTOP_RULE@
+mugshot.desktop: mugshot.desktop.in
+	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
+
+## no point adding intltool stuff to these uri handler schemas, the
+## docs would just be the generic gnome-vfs uri handler docs
+schemadir   = @GCONF_SCHEMA_FILE_DIR@
+schema_DATA = mugshot-uri-handler.schemas
+
+if GCONF_SCHEMAS_INSTALL
+install-data-local:
+        GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) $(GCONFTOOL) --makefile-install-rule $(schema_DATA)
+else
+install-data-local:
+endif
+
 EXTRA_DIST= \
-	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES) version.in
+	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES) version.in \
+	$(schema_DATA) $(desktopfiles_in_files)
+
+MAINTAINERCLEANFILES=							\
+	$(LIBHIPPO_BUILT_SOURCEFILES) $(LIBGTKCOPY_BUILT_SOURCEFILES)	\
+	$(EMBEDDED_IMAGE_HEADER) $(desktopfiles_files)
+
+# if srcdir!=builddir, clean out maintainer-clean files from builddir
+# this allows dist to pass.
+distclean-local:
+	if test $(srcdir) != . ; then		\
+	  rm -f $(MAINTAINERCLEANFILES) ;	\
+	  rmdir $(BUILT_SRC_DIR) ;		\
+	fi

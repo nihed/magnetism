@@ -230,6 +230,18 @@ AC_SUBST(GLIB_GENMARSHAL)
 
 PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
 
+## used for .desktop file in theory, disabled until we have actual translations
+## IT_PROG_INTLTOOL([0.34.90])
+
+## we just need these checks to get the gconf schemas stuff
+AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
+if test x"$GCONFTOOL" = xno; then
+    AC_MSG_ERROR([gconftool-2 executable not found in your path - should be installed with GConf])
+fi
+
+AM_GCONF_SOURCE_2
+
+
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
 AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
