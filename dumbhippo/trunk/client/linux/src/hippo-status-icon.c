@@ -278,7 +278,7 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     
     menu_item = gtk_image_menu_item_new_from_stock(GTK_STOCK_HOME, NULL);
     label = gtk_bin_get_child(GTK_BIN(menu_item));
-    gtk_label_set_text(GTK_LABEL(label), _("Your Home"));
+    gtk_label_set_text(GTK_LABEL(label), _("My Mugshot home page"));
     g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(hippo_app_show_home),
         hippo_get_app());
     gtk_widget_show(menu_item);

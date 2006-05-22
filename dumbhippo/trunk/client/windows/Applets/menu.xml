@@ -23,7 +23,7 @@
                 <tr class="dh-menu-footer-row">
                     <td></td>
                     <td class="dh-menu-meta-column dh-menu-action-cell">
-                        <a href="#" onclick="dh.display.showHome()" id="dhMenuHome" class="dh-menu-link">My Mugshot profile page &#x00BB;</a>
+                        <a href="#" onclick="dh.display.showHome()" id="dhMenuHome" class="dh-menu-link">My Mugshot home page &#x00BB;</a>
                     </td>
                 </tr>
             </tbody>
