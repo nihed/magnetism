@@ -13,7 +13,7 @@ bin_PROGRAMS = mugshot mugshot-uri-handler
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -I$(top_builddir)/config -I$(COMMONSRCDIR)
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
 
 # -Itop_srcdir gets our cut-and-pasted gtk
 mugshot_CPPFLAGS = 			\
@@ -245,5 +245,10 @@ smallericon_DATA=					\
 	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
 	$(SMALLERICONSUBDIR)/mugshot_note_off.png
 
+## we install a file containing our version, so the running app 
+## can check its version vs. the installed app
+versiondir=$(pkgdatadir)
+version_DATA=version
+
 EXTRA_DIST= \
-	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES)
+	$(smallicon_DATA) $(smallericon_DATA) $(EMBEDDED_IMAGES) version.in

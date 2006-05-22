@@ -1,3 +1,4 @@
+#include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
 #include <loudmouth/loudmouth.h>
@@ -168,6 +169,9 @@ struct _HippoConnection {
     HippoBrowserKind login_browser;
     char *username;
     char *password;
+    unsigned int too_old : 1;
+    unsigned int upgrade_available : 1;
+    char *download_url;
 };
 
 struct _HippoConnectionClass {
@@ -180,7 +184,7 @@ enum {
     /* Any kind of state change; new states may be added later.. */
     STATE_CHANGED,
     /* Emitted when we become ready to do arbitrary stuff, after all the initial authentication
-     * (and probably should be after getting client info, though currently it isn't) 
+     * and if we are a "new enough" client
      */
     CONNECTED_CHANGED,
     /* Emitted whenever we successfully load or forget the login cookie */
@@ -191,6 +195,10 @@ enum {
      * emitted after _auth_, not after connection (see CONNECTED_CHANGED) 
      */
     AUTH_SUCCEEDED,
+    /* Emitted when we get the client info, even if we're "too old" and thus 
+     * won't connect successfully. Comes just before CONNECTED_CHANGED.
+     */
+    CLIENT_INFO_AVAILABLE,
     MYSPACE_CHANGED,
     LAST_SIGNAL
 };
@@ -265,6 +273,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0); 
 
+    signals[CLIENT_INFO_AVAILABLE] =
+        g_signal_new ("client-info-available",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
     signals[MYSPACE_CHANGED] =
         g_signal_new ("myspace-changed",
             		  G_TYPE_FROM_CLASS (object_class),
@@ -303,6 +320,8 @@ hippo_connection_finalize(GObject *object)
     g_object_unref(connection->platform);
     connection->platform = NULL;
 
+    g_free(connection->download_url);
+
     G_OBJECT_CLASS(hippo_connection_parent_class)->finalize(object); 
 }
 
@@ -332,6 +351,30 @@ hippo_connection_get_generation(HippoConnection  *connection)
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), -1);
     
     return connection->generation;
+}
+
+gboolean
+hippo_connection_get_too_old(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
+    
+    return connection->too_old;
+}
+
+gboolean
+hippo_connection_get_upgrade_available(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
+    
+    return connection->upgrade_available;
+}
+
+const char*
+hippo_connection_get_download_url(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+    
+    return connection->download_url;
 }
 
 void
@@ -1022,9 +1065,37 @@ on_client_info_reply(LmMessageHandler *handler,
     info.download = (char*)download;
     hippo_data_cache_set_client_info(connection->cache, &info);
     
-    /* Now fully authenticated */
-    hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);     
-
+    /* FIXME right now this is only on Linux because it's too close to release to 
+     * mess with HippoUpgrader, but logic should really be shared. Also I believe
+     * the above data cache involvement should be nuked; the new accessors added
+     * to HippoConnection and used on Linux should be enough.
+     * 
+     * But right now Windows uses the data cache stuff and potentially 
+     * relies on staying connected while too old.
+     */
+#ifdef G_OS_UNIX
+    if (hippo_compare_versions(VERSION, minimum) < 0) {
+        connection->too_old = TRUE;
+    }
+    if (hippo_compare_versions(VERSION, current) < 0) {
+        connection->upgrade_available = TRUE;
+    }
+    g_free(connection->download_url);
+    connection->download_url = g_strdup(download);
+#endif /* G_OS_UNIX */
+    
+    g_signal_emit(G_OBJECT(connection), signals[CLIENT_INFO_AVAILABLE], 0);
+    
+    if (connection->too_old) {
+        /* we sign out rather than connect_failure because we don't want to retry,
+         * the user has to exit this process and start a new one first
+         */
+        hippo_connection_signout(connection);
+    } else {
+        /* Now fully authenticated */
+        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);     
+    }
+    
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 

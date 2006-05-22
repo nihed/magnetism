@@ -34,6 +34,10 @@ HippoConnection *hippo_connection_new                       (HippoPlatform    *p
 
 int              hippo_connection_get_generation            (HippoConnection  *connection);
 
+gboolean         hippo_connection_get_too_old               (HippoConnection  *connection);
+gboolean         hippo_connection_get_upgrade_available     (HippoConnection  *connection);
+const char*      hippo_connection_get_download_url          (HippoConnection  *connection);
+
 void             hippo_connection_set_cache                 (HippoConnection  *connection,
                                                              HippoDataCache   *cache);
 

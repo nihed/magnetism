@@ -93,13 +93,13 @@ typedef struct {
 
 typedef struct {
     HippoInstanceType instance_type;
-    char *join_chat_id;
-    guint config_flag : 1;
     guint install_launch : 1;
     guint replace_existing : 1;
     guint quit_existing : 1;
     guint initial_debug_share : 1;
     guint verbose : 1;
+    char **restart_argv;
+    int    restart_argc;
 } HippoOptions;
 
 typedef void (* HippoPrintDebugFunc) (const char *message);
@@ -143,6 +143,9 @@ void     hippo_uri_action_data_free_fields (HippoUriActionData *data);
 /* same strings used in URIs, the xmpp protocol */
 HippoChatKind hippo_parse_chat_kind        (const char   *str);
 const char*   hippo_chat_kind_as_string    (HippoChatKind kind);
+
+int      hippo_compare_versions            (const char *version_a,
+                                            const char *version_b);
 
 G_END_DECLS
 

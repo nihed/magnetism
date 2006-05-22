@@ -236,6 +236,7 @@ AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to sr
 
 AC_OUTPUT([
 Makefile
+version
 ])
 
 dnl ==========================================================================

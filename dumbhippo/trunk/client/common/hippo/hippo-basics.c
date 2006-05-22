@@ -406,22 +406,26 @@ hippo_parse_options(int          *argc_p,
 {
     static gboolean debug = FALSE;
     static gboolean dogfood = FALSE;
-    static gboolean config_flag = FALSE;
     static gboolean install_launch = FALSE;
     static gboolean replace_existing = FALSE;
     static gboolean quit_existing = FALSE;
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
-    static char *join_chat_id = NULL;
+    char *argv0;
     GError *error;
     GOptionContext *context;
+    /* something to consider when adding entries is that the process is a singleton 
+     * (well, singleton per server instance).
+     * So you really shouldn't add something unless it can (logically speaking) 
+     * be forwarded to an existing instance.
+     * On Linux, consider mugshot-uri-handler instead, on Windows consider a COM method instead.
+     */
     static const GOptionEntry entries[] = {
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
         { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&install_launch, "Run appropriately at the end of the install" },
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replace_existing, "Replace existing instance, if any" },
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
-        { "join-chat", '\0', 0, G_OPTION_ARG_STRING, (gpointer)&join_chat_id, "Join a chat", "CHAT_ID" },        
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
         { NULL }
@@ -433,6 +437,9 @@ hippo_parse_options(int          *argc_p,
      * we want to reroute; on Linux, the point is to suppress DEBUG level in some cases
      */
     g_log_set_default_handler(log_handler, NULL);
+
+    /* save this away before the option parser might get it */
+    argv0 = g_strdup((*argv_p)[0]);
     
     /* the argument here is a little odd, look at where it goes in --help output
      * before changing it
@@ -443,6 +450,7 @@ hippo_parse_options(int          *argc_p,
     error = NULL;
     g_option_context_parse(context, argc_p, argv_p, &error);
     if (error) {
+        g_free(argv0);
         g_printerr("%s\n", error->message);
         return FALSE;
     }
@@ -452,11 +460,6 @@ hippo_parse_options(int          *argc_p,
     if (debug)
         hippo_basic_self_test();
 
-    if (join_chat_id && !hippo_verify_guid(join_chat_id)) {
-        g_printerr("Invalid chat id '%s'\n", join_chat_id);
-        return FALSE;
-    }
-
     if (debug)
         results->instance_type = HIPPO_INSTANCE_DEBUG;
     else if (dogfood)
@@ -464,26 +467,46 @@ hippo_parse_options(int          *argc_p,
     else
         results->instance_type = HIPPO_INSTANCE_NORMAL;    
     
-    results->config_flag = config_flag;
     results->install_launch = install_launch;
     results->replace_existing = replace_existing;
     results->quit_existing = quit_existing;
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
-    results->join_chat_id = join_chat_id;
 
     if (results->verbose) {
         hippo_print_debug_level = TRUE;
         hippo_override_loudmouth_log();
     }
 
+    /* build an argv suitable for exec'ing in order to restart this 
+     * instance of the process ... used when the user chooses "restart"
+     * so --replace is added.
+     * Allocate space for all our command line options, plus argv[0], plus NULL term
+     */
+    results->restart_argv = g_new0(char*, G_N_ELEMENTS(entries) + 2);
+    results->restart_argv[0] = argv0; /* pass ownership of argv0 */
+    results->restart_argc = 1;
+    results->restart_argv[results->restart_argc] = g_strdup("--replace");
+    results->restart_argc += 1;
+    if (results->instance_type == HIPPO_INSTANCE_DEBUG) {
+        results->restart_argv[results->restart_argc] = g_strdup("--debug");
+        results->restart_argc += 1;
+    } else if (results->instance_type == HIPPO_INSTANCE_DOGFOOD) {
+        results->restart_argv[results->restart_argc] = g_strdup("--dogfood");
+        results->restart_argc += 1;
+    }
+    if (results->verbose) {
+        results->restart_argv[results->restart_argc] = g_strdup("--verbose");
+        results->restart_argc += 1;
+    }
+    
     return TRUE;
 }
 
 void
 hippo_options_free_fields(HippoOptions *options)
 {
-    g_free(options->join_chat_id);
+    g_strfreev(options->restart_argv);
 }
 
 const char*
@@ -899,6 +922,125 @@ hippo_chat_kind_as_string(HippoChatKind kind)
     return NULL;
 }
 
+/* Parse a positive integer, return false if parsing fails */
+static gboolean
+parse_positive_int(const char *str, 
+                   gsize       len,
+                   int        *result_p)
+{
+    char *end;
+    unsigned long val;
+    
+    if (len == 0)
+        return FALSE;
+    if (str[0] < '0' || str[0] > '9') // don't support white space, +, -
+        return FALSE;
+
+    end = NULL;
+    val = strtoul(str, &end, 10);
+    if (end != (str + len))
+        return FALSE;
+    if (val > G_MAXINT)
+        return FALSE;
+    if (result_p)
+        *result_p = (int)val;
+
+    return TRUE;
+}
+
+/* parse a major.minor.micro triplet. Returns false and sets
+ * major, minor, micro to 0 if parsing fails. Micro is allowed
+ * to be implicitly 0 if missing.
+ */
+static gboolean
+parse_version(const char *version,
+              int        *major_p,
+              int        *minor_p,
+              int        *micro_p)
+{
+    const char *first_dot;
+    const char *second_dot;
+    const char *end;
+    const char *minor_end;
+    int major, minor, micro;
+    
+    major = 0;
+    minor = 0;
+    micro = 0;
+    
+    end = version + strlen(version);
+    
+    first_dot = strchr(version, '.');
+    
+    if (first_dot == NULL)
+        goto failed;
+    
+    second_dot = strchr(first_dot + 1, '.');
+    if (second_dot)
+        minor_end = second_dot;
+    else
+        minor_end = end;
+
+    if (!parse_positive_int(version, first_dot - version, &major))
+        goto failed;
+
+    if (!parse_positive_int(first_dot + 1, minor_end - (first_dot + 1), &minor))
+        goto failed;
+    
+    if (second_dot) {
+        if (!parse_positive_int(second_dot + 1, end - (second_dot + 1), &micro))
+            goto failed;
+    }
+
+    if (major_p)
+        *major_p = major;
+    if (minor_p)
+        *minor_p = minor;        
+    if (micro_p)
+        *micro_p = micro;
+
+    return TRUE;
+    
+  failed:
+    if (major_p)
+        *major_p = 0;
+    if (minor_p)
+        *minor_p = 0;
+    if (micro_p)
+        *micro_p = 0;
+    return FALSE;
+}
+
+/* compare to major.minor.micro version strings. Unparseable
+ * strings are treated the same as 0.0.0. Missing micro is 
+ * treated as micro 0, missing major/minor treated as unparseable.
+ */
+int
+hippo_compare_versions(const char *version_a,
+                       const char *version_b)
+{
+    int major_a, minor_a, micro_a;
+    int major_b, minor_b, micro_b;
+
+    parse_version(version_a, &major_a, &minor_a, &micro_a);
+    parse_version(version_b, &major_b, &minor_b, &micro_b);
+
+    if (major_a < major_b)
+        return -1;
+    else if (major_a > major_b)
+        return 1;
+    else if (minor_a < minor_b)
+        return -1;
+    else if (minor_a > minor_b)
+        return 1;
+    else if (micro_a < micro_b)
+        return -1;
+    else if (micro_a > micro_b)
+        return 1;
+    else
+        return 0;
+}
+
 static const char*
 hippo_uri_valid_tests[] = { 
     /* both chat kinds */
@@ -971,7 +1113,31 @@ test_uri_parsing(void)
 }
 
 static void
+test_version_parsing(void)
+{
+#define CMP hippo_compare_versions
+    g_assert(CMP("0.0.0", "0.0.0") == 0);
+
+    g_assert(CMP("1.0.0", "1.0.0") == 0);    
+    g_assert(CMP("1.0.0", "0.0.0") > 0);
+    g_assert(CMP("0.0.0", "1.0.0") < 0);
+
+    g_assert(CMP("0.1.0", "0.1.0") == 0);
+    g_assert(CMP("0.1.0", "0.0.0") > 0);
+    g_assert(CMP("0.0.0", "0.1.0") < 0);
+
+    g_assert(CMP("0.0.1", "0.0.1") == 0);
+    g_assert(CMP("0.0.1", "0.0.0") > 0);
+    g_assert(CMP("0.0.0", "0.0.1") < 0);
+
+    g_assert(CMP("1.1.0", "1.1") == 0);
+    g_assert(CMP("1.1.1", "1.1") > 0);
+    g_assert(CMP("1.1.0", "1.1.1") < 0);
+}
+
+static void
 hippo_basic_self_test(void)
 {
     test_uri_parsing();
+    test_version_parsing();
 }
