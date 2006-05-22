@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="welcome" class="com.dumbhippo.web.DownloadPage" scope="request"/>
+<dh:bean id="welcome" class="com.dumbhippo.web.DownloadPage" scope="page"/>
 
 <head>
 	<title>Mugshot</title>
@@ -14,20 +14,27 @@
 
 <dht:body>
 	<img src="/images2/mugshot_tagline.gif"/>
-	<div class="dh-special-subtitle">Thanks for trying us out!  Here's how to start using our tools...</div>
+	<div class="dh-special-subtitle"><c:if test="${browser.linuxRequested}">A Linux user! </c:if>Thanks for trying us out!  Here's how to start using our tools...</div>
 	<table cellspacing="15px" cellpadding="0" align="center">
 	<tr valign="top">
 	<td>
 		<table cellspacing="0" cellpadding="0">
 			<tr><td><img id="dhDownloadImg" src="/images2/buzzer63x58.gif"/></td>
-			<td class="dh-download-instructions">1. <a class="dh-download-product" href="${welcome.downloadUrlWindows}">Click here to download</a>.<br/>
+			<td class="dh-download-instructions">1. <a class="dh-download-product" href="${welcome.downloadUrl}">Click here to download</a>.<br/>
 			    The software will install automatically.</td>
 			</tr>
 		</table>
 	</td>
 	<td class="dh-download-separator"><div></div></td>
 	<td class="dh-download-instructions"><center>
-	<div>2. Open iTunes or Yahoo! Music and play a song.</div>
+	<c:choose>
+		<c:when test="${browser.linuxRequested}">
+			<div>2. Open Rhythmbox and play a song.</div>		
+		</c:when>
+		<c:otherwise>
+			<div>2. Open iTunes or Yahoo! Music and play a song.</div>
+		</c:otherwise>
+	</c:choose>			
 	<div><img src="/images2/musicradar45x57.gif"/></div></center>
 	</td>
 	<td class="dh-download-separator"><div></div></td>	
@@ -40,6 +47,7 @@
 	<div class="dh-special-subtitle">Clicking that link will activate Link Swarm, and take you
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
+	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
 </dht:body>
 
 </html>

@@ -17,11 +17,34 @@ public class DownloadPage {
 	
 	private Configuration configuration;
 	
+	@Browser
+	private BrowserBean browser;
+	
 	public DownloadPage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 	}
 	
+	public String getDownloadUrl() {
+		if (browser.isLinuxRequested()) {
+			return getDownloadUrlLinux();
+		} else {
+			return getDownloadUrlWindows();
+		}
+	}
+	
 	public String getDownloadUrlWindows() {
-		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_WINDOWS);
+	}
+	
+	public String getDownloadUrlLinux() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX);
+	}
+	
+	public String getDownloadUrlLinuxTar() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
+	}
+
+	public String getDownloadUrlLinuxSrpm() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_SRPM);
 	}
 }

@@ -3,6 +3,10 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
+<%-- This is only used in the Linux case, but currently dh:bean as a side effect sets the 
+     "browser" variable in request scope, so don't try moving this into the linux-only cases below --%>
+<dh:bean id="download" class="com.dumbhippo.web.DownloadPage" scope="page"/>
+
 <head>
 	<title>Upgrade</title>
 	<link rel="stylesheet" type="text/css" href="/css2/upgrade.css"/>
@@ -14,22 +18,41 @@
 	<tr>
 	<td><img id="dhUpgradeLogo" src="/images2/muggray60x60.png"/></td>
 	<td>
-	<p>Version 1.1.46</p>
-	<ul>
-		<li>Mugshot, what's Mugshot? It's still the same old dumb hippo that you know and love</li>
-		<li>Orange isn't just a color, it's a whole new way of experiencing the world.</li>
-		<li>Trust us, we're digitally signed</li>
-		<li>Now with GObject, for smoother starts and better gas mileage.</li>
-	</ul>
+	<c:choose>
+		<c:when test="${browser.linuxRequested}">
+			<%-- LINUX RELEASE NOTES GO HERE --%>
+			<p>Version 1.1.1</p>
+			<ul>
+				<li>Initial release</li>
+			</ul>
+		</c:when>
+		<c:otherwise>
+			<%-- WINDOWS RELEASE NOTES GO HERE --%>
+			<p>Version 1.1.46</p>
+			<ul>
+				<li>We've redone the site completely - it's now called Mugshot</li>
+				<li>Numerous improvements along the way... let us know what you think</li>
+			</ul>
+		</c:otherwise>
+	</c:choose>
 	</td>
 	</tr>		
 	</table>
 	<hr align="center" noshade="true" height="1px" width="80%" class="dh-gray-hr"/><br/>
 	<div>
-	<center>
-	<input type="button" value="Install now" onclick="window.external.application.DoUpgrade(); window.close();"/> 
-	<input type="button" value="Install later" onclick="window.close();"/>		
-	</center>
+		<center>
+			<c:choose>
+				<c:when test="${browser.linuxRequested}">
+					<a href="${download.downloadUrlLinux}">Fedora Core 5 RPM</a>
+					<br/>
+					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlLinuxSrpm}">SRPM</a>
+				</c:when>
+				<c:otherwise>
+					<input type="button" value="Install now" onclick="window.external.application.DoUpgrade(); window.close();"/> 
+					<input type="button" value="Install later" onclick="window.close();"/>		
+				</c:otherwise>		
+			</c:choose>
+		</center>
 	</div>
 </dht:systemPage>	
 </html>

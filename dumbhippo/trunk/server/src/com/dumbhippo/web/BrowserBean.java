@@ -97,7 +97,7 @@ public class BrowserBean implements Serializable {
 					break;
 				}
 			}
-		}		
+		}
 
 		if (browserOverrideStr != null) {
 			browserOverrideStr = browserOverrideStr.toLowerCase();
