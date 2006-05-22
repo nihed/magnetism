@@ -164,7 +164,7 @@ public interface IdentitySpider {
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user);
 	
 	/** 
-	 * Get the contacts of a given person who have an account
+	 * Get the contacts of a given person who have an account; including the person themselves
 	 * @param user who to get contacts of
 	 * @return their friends
 	 * 

@@ -65,7 +65,7 @@
 				<dht:zoneBoxSubcolumn which="one">
 
 					<c:if test="${signin.valid}">
-						<dht:trackList name="FRIENDS' RECENT SONGS" id="dhFriendsRecentSongs" tracks="${musicPerson.friendsRecentTracks.results}" pageable="${musicPerson.friendsRecentTracks}" separator="true" albumArt="true" />
+						<dht:trackList name="FRIENDS' RECENT SONGS" id="dhFriendsRecentSongs" tracks="${musicPerson.friendsRecentTracks.results}" pageable="${musicPerson.friendsRecentTracks}" separator="true" albumArt="true" displaySinglePersonMusicPlay="true" />
 					</c:if>
 
 					<dht:trackList name="MOST PLAYED SONGS EVER" id="dhGlobalMostPlayedSongs" tracks="${musicGlobal.mostPlayedTracks.results}" pageable="${musicGlobal.mostPlayedTracks}" separator="true" />

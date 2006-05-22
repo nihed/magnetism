@@ -62,7 +62,7 @@
 				<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
 				<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 				<dht:zoneBoxSeparator/>
-				<dht:trackList name="FRIENDS' RECENT SONGS" tracks="${musicPerson.friendsRecentTracks.results}" separator="true" oneLine="true" />
+				<dht:trackList name="FRIENDS' RECENT SONGS" tracks="${musicPerson.friendsRecentTracks.results}" separator="true" oneLine="true" displaySinglePersonMusicPlay="true" />
 			</c:if>
 
 			<dht:turnOnRadar/>

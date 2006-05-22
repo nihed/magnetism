@@ -8,6 +8,7 @@
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="separator" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="displaySinglePersonMusicPlay" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty id}">
 	<c:set var="id" value=""/>
@@ -21,6 +22,10 @@
         <c:set var="oneLine" value="false"/>
 </c:if>
 
+<c:if test="${empty displaySinglePersonMusicPlay}">
+	<c:set var="displaySinglePersonMusicPlay" value="false"/>
+</c:if>
+
 <%--
   Our general rule of thumb for using this section is that if the tracks rely on circumstances not fulfilled 
   like the person having friends or having listened to something then we hide it by default.  The other
@@ -31,7 +36,7 @@
 <c:if test="${!empty tracks}">
 <dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
 	<c:forEach items="${tracks}" var="track">
-		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}"/>
+		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}" displaySinglePersonMusicPlay="${displaySinglePersonMusicPlay}" />
 	</c:forEach>
 	<c:if test="${!empty pageable}">
 		<dht:expandablePager pageable="${pageable}" anchor="${id}"/>

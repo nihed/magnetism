@@ -1892,7 +1892,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
         // now harvest all the results
 		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
-		for (TrackHistory t : futureViews.keySet()) {
+		for (TrackHistory t : tracks) {
 			TrackView v;
 			try {
 				v = futureViews.get(t).get();
@@ -2192,14 +2192,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// the moment. The way to fix this is to use native SQL ... see the handling
 		// of similar queries globally with the queries defined in TrackHistory.java
 		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
-		String where = "WHERE h.user IN " + getUserSetSQL(contacts);
 		
+		// filter out ourselves
+		Iterator<User> iterator = contacts.iterator();
+		while (iterator.hasNext()) {
+			User user = iterator.next();
+			if (user.equals(viewpoint.getViewer()))
+			    iterator.remove();
+		}
+		
+		String where = "WHERE h.user IN " + getUserSetSQL(contacts);
+				
 		Query q = em.createQuery("SELECT h FROM TrackHistory h " + where + " ORDER BY h.lastUpdated DESC");
 		q.setFirstResult(pageable.getStart());
 		q.setMaxResults(pageable.getCount());
 		List<?> results = q.getResultList();
 		
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false));
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), true));
 		
 		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h " + where);
 		Object o = q.getSingleResult();
