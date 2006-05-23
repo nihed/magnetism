@@ -12,7 +12,7 @@
 
 <head>
 	<title>Your Account</title>
-	<link rel="stylesheet" type="text/css" href="/css2/account.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/account.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
