@@ -27,13 +27,13 @@
 	<dht:contentColumn>
 		<dht:zoneBoxGroup>
 			<c:if test="${group.latestTracks.size > 0}">
-				<dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
+				<dht:zoneBoxTitle>RECENT GROUP SONGS</dht:zoneBoxTitle>
 				<c:forEach var="track" items="${group.latestTracks.list}">
 				     <dht:track track="${track}" oneLine="true" displaySinglePersonMusicPlay="true"/>
 				</c:forEach>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<dht:zoneBoxTitle a="dhGroupPosts">LINKS RECENTLY SHARED WITH <c:out value="${group.name}"/></dht:zoneBoxTitle>
+			<dht:zoneBoxTitle a="dhGroupPosts">LINKS RECENTLY SHARED WITH <c:out value="${fn:toUpperCase(group.name)}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${group.posts.resultCount > 0}">
 					<dht:postList posts="${group.posts.results}" format="full-with-photos" favesMode="add-only"/>
