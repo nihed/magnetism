@@ -285,6 +285,8 @@ form {
 
 .dh-song-image {
 	float:				left;
+	width:				75px;
+	text-align:			center;
 }
 
 .dh-song-with-art .dh-song-info {
