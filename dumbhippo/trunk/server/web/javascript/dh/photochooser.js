@@ -105,7 +105,7 @@ dh.photochooser.reloadPhoto = function(imgAncestorNodes, size) {
 	
 	if (dh.photochooser.type == "user") {
 		method = "userphoto"
-		args["groupId"] = dh.photochooser.id
+		args["userId"] = dh.photochooser.id
 	} else {
 		method = "groupphoto"
 		args["groupId"] = dh.photochooser.id

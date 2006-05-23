@@ -3,17 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="hasSaveCancelButtons" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="name" required="false" type="java.lang.String" %>
 
 <div>
-	<c:choose> 
-		<c:when test="${!empty name}">
-			<form id="${name}" name="${name}">
-		</c:when>
-		<c:otherwise>
-			<form>
-		</c:otherwise>
-	</c:choose>
 	<table class="dh-form-table" cellspacing="0" cellpadding="0">
 		<thead>
 			<tr>
@@ -29,5 +20,4 @@
 			<input type="button" value="Save Changes"/> <input type="button" value="Cancel Changes"/>
 		</div>
 	</c:if>
-	</form>
 </div>
