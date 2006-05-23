@@ -577,29 +577,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return;
 		}
 
-		// let's see if any of the new results are already in the YahooSongResult table,
-		// if they are, we just need to connect the existing YahooSongResult with this track
-		for (Iterator<YahooSongResult> i = newResults.iterator(); i.hasNext();) {
-		    YahooSongResult n = i.next();
-		    if (!n.isValid()) {
-		    	// ignore the invalid results
-		    	continue;
-		    }		    	
-			Query q = em.createQuery("SELECT song FROM YahooSongResult song WHERE song.songId = :songId");
-			q.setParameter("songId", n.getSongId());	
-			try {
-				YahooSongResult song = (YahooSongResult)q.getSingleResult();
-				logger.debug("adding song with songId {} to track {}", song.getSongId(), track);
-				track.addYahooSongResult(song);
-				i.remove();
-			} catch (EntityNotFoundException e) {	
-				continue;
-			} catch (NonUniqueResultException e) {
-				logger.warn("non-unique result based on song id {} in YahooSongResult table", n.getSongId(), e.getMessage());
-				throw new RuntimeException(e);
-			}
-		}
-
+		// first go through the old results and see if we just need to update those
 		for (YahooSongResult old : oldResults) {
 			boolean stillFound = false;
 			if (!old.isNoResultsMarker()) {
@@ -625,6 +603,31 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				em.remove(old);
 			}
 		}	
+		
+		// let's see if any of the new results are already in the YahooSongResult table,
+		// if they are, we just need to connect the existing YahooSongResult with this track,
+		// they must not have been connected earlier, because the new result was not among the
+		// old results associated with the track
+		for (Iterator<YahooSongResult> i = newResults.iterator(); i.hasNext();) {
+		    YahooSongResult n = i.next();
+		    if (!n.isValid()) {
+		    	// ignore the invalid results
+		    	continue;
+		    }		    	
+			Query q = em.createQuery("SELECT song FROM YahooSongResult song WHERE song.songId = :songId");
+			q.setParameter("songId", n.getSongId());	
+			try {
+				YahooSongResult song = (YahooSongResult)q.getSingleResult();
+				logger.debug("adding song with songId {} to track {}", song.getSongId(), track);
+				track.addYahooSongResult(song);
+				i.remove();
+			} catch (EntityNotFoundException e) {	
+				continue;
+			} catch (NonUniqueResultException e) {
+				logger.warn("non-unique result based on song id {} in YahooSongResult table", n.getSongId(), e.getMessage());
+				throw new RuntimeException(e);
+			}
+		}
 		
 		// remaining newResults weren't previously saved
 		for (YahooSongResult n : newResults) {
