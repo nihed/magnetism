@@ -29,7 +29,15 @@
 				<c:out value="${post.textAsHtml}" escapeXml="false"/>
 			</div>
 			<div class="dh-framer-sent-to">
-				Sent to <dh:entityList value="${post.recipients}" separator=", "/>
+				<c:choose>
+					<c:when test="${post.toWorld}">
+						<c:set var="recipientsPrefix" value="The World" scope="page"/>
+					</c:when>
+					<c:otherwise>
+						<c:set var="recipientsPrefix" value="" scope="page"/>					
+					</c:otherwise>
+				</c:choose>
+				Sent to <dh:entityList prefixValue="${recipientsPrefix}" value="${post.recipients}" separator=", "/>
 			</div>				
 		</div>	
 	</div>
