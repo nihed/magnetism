@@ -25,6 +25,7 @@
 		<include name="lib/commons-logging-api-1.0.4.jar"/> -->
 		<include name="lib/smack-svn-local-build-2005-09-30.jar"/>
 		<include name="lib/mysql-connector-java-3.1.12-bin.jar"/>
+		<include name="target/classes/dumbhippo-client.jar"/>
 	</fileset>
     <path id="project.classpath">
         <pathelement location="${build}"/>

@@ -9,6 +9,9 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.dumbhippo.server.TestGlueRemote;
+import com.dumbhippo.server.util.EJBUtil;
+
 /**
  * Class that gives the tests a bit more information that can't 
  * be pulled from purely black box viewing of the web pages
@@ -186,17 +189,11 @@ public class CheatSheet {
 	}
 	
 	public void setNumberOfInvitations(String userId, int invites) {
+		TestGlueRemote testGlue = EJBUtil.defaultLookup(TestGlueRemote.class);
 		try {
-			PreparedStatement statement =
-				getConnection().prepareStatement("UPDATE Account SET invitations=? "
-						+ "WHERE Account.owner_id=?");
-			statement.setInt(1, invites);
-			statement.setString(2, userId);
-			/*int rowsChanged = */statement.executeUpdate();
-			//System.out.println("Changed invitation count for " + rowsChanged + " rows");
-		} catch (SQLException e) {
-			fatalSqlException(e);
-			return; // not reached
+			testGlue.setInvitations(userId, invites);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 	
