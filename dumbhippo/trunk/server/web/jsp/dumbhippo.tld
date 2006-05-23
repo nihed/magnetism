@@ -90,6 +90,11 @@
         <bodycontent>empty</bodycontent>
         <info>A taggified list of people and groups</info>
 	    <attribute>
+           <name>prefixValue</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>        
+	    <attribute>
            <name>value</name>
            <required>true</required>
            <rtexprvalue>true</rtexprvalue>
