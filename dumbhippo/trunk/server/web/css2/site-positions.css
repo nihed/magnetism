@@ -1,6 +1,9 @@
 @CHARSET "UTF-8";
 
 body {
+	margin-top:		0px;
+	padding-top:	0px;
+	
 	/* centers the page in IE */
 	text-align:		center;
 }
@@ -18,7 +21,7 @@ form {
 
 #dhPage {
 	position:		relative;	
-	margin-top:		30px;
+	margin-top:		0px;
 	
 	/* override centering for children */
 	text-align:		left;
@@ -40,7 +43,9 @@ form {
 	position:		relative;
 	left:			0px;
 	top:			0px;
-	margin-bottom:	10px;
+	/* the image itself has about 7px of blank space already in it, so this gives total 12px */
+	margin-bottom:	5px;
+	overflow:		hidden;
 }
 
 .dh-body-with-sidebar #dhPageHeader {
@@ -48,29 +53,44 @@ form {
 }
 
 .dh-body-without-sidebar #dhPageHeader {
-	width:			500px;	
+	width:			500px;
+}
+
+.dh-main-page #dhPageHeader {
+	width:			710px;	
+}
+	
+.dh-header-short {
+	height:			65px;
+}
+
+.dh-header-tall {
+	height:			110px;	
+}
+
+#dhHeaderControls {
+	position:		absolute;
+	right:			10px;
+	top:			7px;
+}
+
+#dhHeaderControls #dhHeaderLinks {
+	margin-bottom:	4px;
+	text-align:		right;
+}
+
+#dhHeaderLinks .dh-action-link {
+	display:		inline;
+}
+
+#dhSearchBox .dh-text-input {
+	width:			140px;
 }
 
 #dhHeaderLogo {
 	position:		relative;
 	left:			0px;
 	top:			0px;
-}
-
-#dhSearchBox {
-	position:		absolute;
-	right:			0px;
-	bottom:			0px;
-}
-
-#dhHeaderLinks {
-	position:		absolute;
-	right:			0px;
-	top:			0px;
-}
-
-#dhHeaderLinks .dh-action-link {
-	display:		inline;
 }
 
 #dhWebServices {
@@ -182,10 +202,9 @@ form {
 
 #dhPageFooter {
 	clear:			both;
-	margin-top:		25px;
+	margin-top:		10px;
 	text-align:		right;
 }
-
 
 .dh-zone-box {
 	position:		relative;

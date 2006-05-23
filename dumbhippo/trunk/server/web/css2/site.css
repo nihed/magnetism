@@ -5,6 +5,12 @@ body {
 	font-family: 		Arial, sans;
 }
 
+body.dh-gray-background-page {
+	background-color:	#efefef; /* this might kick in if a browser doesn't do background-image */
+	background-image: 	url("/images2/graybgpattern.gif");
+	background-repeat:  repeat;
+}
+
 a {
 	text-decoration: 	none;
 }
@@ -18,10 +24,6 @@ img {
  */
 .dhInvisible {
 	display:			none;
-}
-
-body.dh-gray-background-page {
-	background-color:	#efefef;
 }
 
 .dh-color-web {
@@ -93,20 +95,29 @@ body.dh-gray-background-page {
 	color:				#666666;
 }
 
+
+#dhSearchBox {
+	font-size:			14px;
+	color:				white;
+	font-weight:		bold;
+}
+
 #dhSearchBox .dh-text-input { 
 	border-color:		#666666;
 	border-width:		1px;
 	font-weight:		bold;
 	padding:			2px;
-}
-
-#dhSearchBox {
-	font-size:			14px;
+	color:				black;
 }
 
 #dhHeaderLinks {
 	font-size:			12px;
 	font-weight:		bold;
+	color:				white;
+}
+
+#dhHeaderLinks a:link, #dhHeaderLinks a:visited {
+	color:				white;
 }
 
 #dhWebServices {

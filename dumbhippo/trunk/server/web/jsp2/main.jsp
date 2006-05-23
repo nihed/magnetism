@@ -40,13 +40,10 @@
 	</script>
 </head>
 <%-- can use dht:body once we don't need onload here --%>
-<body onload="init();" class="dh-gray-background-page">
+<body onload="init();" class="dh-gray-background-page dh-main-page">
 	<div id="dhPage">
 
-		<div id="dhMainLogo">
-		    <img src="/images2/mugshot_topper.gif" />
-		    <div id="dhMainLogoLinks"><a class="dh-logo-link" href="/who-are-you">Log In</a> | <a class="dh-logo-link" href="/signup">Sign Up</a></div>
-		</div>
+		<dht:header kind="main"/>
 		
 		<table id="dhMainContent" cellspacing="0" cellpadding="0">
 		<tbody>

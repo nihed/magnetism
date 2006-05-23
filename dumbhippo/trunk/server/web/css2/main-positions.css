@@ -4,23 +4,6 @@
 	width:			710px;
 }
 
-#dhPageHeader {
-	width:			710px;	
-}
-
-#dhMainLogo {
-	height:			120px;
-	width:			710px;
-	position:		relative;
-	margin-bottom:		10px;
-}
-
-#dhMainLogoLinks {
-	position:		absolute;
-	bottom:			14px;
-	right:			42px;
-}
-
 #dhMainContent {
 	table-layout:    fixed;
 }
