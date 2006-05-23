@@ -136,8 +136,6 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     if ((messageFontStyle == dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE) && (textDiv.offsetWidth - textWidth <= textSidePadding))
         textDiv.style.paddingRight = (textSidePadding - (textDiv.offsetWidth - textWidth)) + "px"       
 		
-	var messageInput = document.getElementById("dhChatMessageInput")
-		
     if (message.userId == this._selfId) {   
         if (!message.userFirst) {
             // inline content that is next to the photo is offset to the right
@@ -154,9 +152,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
             // are initially loaded, it still works when they are being typed in.
             // This was not affected by the introduced side padding, as it is being
             // taken into account.
-            message.div.style.marginLeft = this.PHOTO_WIDTH + "px"
-            
-            messageInput.appendChild(document.createTextNode("hello!! " + textDiv.offsetLeft))            
+            message.div.style.marginLeft = this.PHOTO_WIDTH + "px"         
             
             if (textDiv.offsetLeft == this.PHOTO_WIDTH + this.MESSAGES_DIV_SIDE_PADDING) {
                message.div.style.marginLeft = this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT  + "px"               
