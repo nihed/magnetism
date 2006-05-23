@@ -28,12 +28,12 @@
 
 <c:choose>
 	<c:when test="${!empty customLink && !empty photoUrl}">
-		<a href="${customLink}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/></a>
+		<a href="${customLink}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size}; border: none;"/></a>
 	</c:when>
 	<c:when test="${invited && empty photoUrl}"><%-- invited people have no person page, don't link to anything --%>
-		<dh:png src="/images2/invited60x60.gif" style="width: ${size}; height: ${size};"/>
+		<dh:png src="/images2/invited60x60.gif" style="width: ${size}; height: ${size}; border: none;"/>
 	</c:when>
 	<c:when test="${!empty photoUrl}">
-		<a href="/person?who=${user.id}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/></a>
+		<a href="/person?who=${user.id}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size}; border: none;"/></a>
 	</c:when>
 </c:choose>

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
@@ -16,7 +15,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.Viewpoint;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
@@ -97,14 +95,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			}
 		}
 	}
-	
-	public Viewpoint getViewpoint() {
-		if (getSignin().isValid()) {
-			return getUserSignin().getViewpoint();
-		}
-		return AnonymousViewpoint.getInstance();
-	}
-	
+
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null)
 			viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);

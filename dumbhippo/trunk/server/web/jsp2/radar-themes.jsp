@@ -18,30 +18,34 @@
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
 		
+		<c:if test="${nowplaying.signin.valid}">
 		<c:if test="${!empty nowplaying.currentTheme}">		
 			<dht:zoneBoxTitle>CURRENT THEME</dht:zoneBoxTitle>	
-			<dht:radarTheme theme="${nowplaying.currentTheme}" signin="${nowplaying.signin}" alreadyCurrent="true"/>		
+			<dht:radarTheme theme="${nowplaying.currentTheme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}" alreadyCurrent="true"/>		
 			<dht:zoneBoxSeparator/>		
 		</c:if>
 
-		<c:if test="${nowplaying.myThemes.size > 0}">
-			<dht:zoneBoxTitle>MY CREATIONS</dht:zoneBoxTitle>	
+		<c:if test="${nowplaying.myThemes.count > 0}">
+			<dht:zoneBoxTitle a="dhMyThemes">MY CREATIONS</dht:zoneBoxTitle>	
 			<div>
-				<c:forEach items="${nowplaying.myThemes.list}" var="theme" varStatus="status">
-					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}"/>
+				<c:forEach items="${nowplaying.myThemes.results}" var="theme" varStatus="status">
+					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>
 				</c:forEach>
 			</div>
+			<dht:expandablePager pageable="${nowplaying.myThemes}" anchor="dhMyThemes"/>			
 			<dht:zoneBoxSeparator/>			
-		</c:if>	
+		</c:if>
+		</c:if>
 		
-		<c:if test="${nowplaying.randomThemes.size > 0}">
-			<dht:zoneBoxTitle>MORE THEMES</dht:zoneBoxTitle>
+		<c:if test="${nowplaying.randomThemes.count > 0}">
+			<dht:zoneBoxTitle a="dhAllThemes">MORE THEMES</dht:zoneBoxTitle>
 			
 			<div>
-				<c:forEach items="${nowplaying.randomThemes.list}" var="theme" varStatus="status">
-					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}"/>
+				<c:forEach items="${nowplaying.randomThemes.results}" var="theme" varStatus="status">
+					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>
 				</c:forEach>		
 			</div>
+			<dht:expandablePager pageable="${nowplaying.randomThemes}" anchor="dhAllThemes"/>				
 		</c:if>		
 			
 		</dht:zoneBoxMusic>

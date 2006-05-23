@@ -316,6 +316,8 @@ public class RewriteServlet extends HttpServlet {
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
 		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
+		logger.debug("Stealth mode: " + stealthMode);
+		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
 		noSignin = getStringSet(config, "noSignin");

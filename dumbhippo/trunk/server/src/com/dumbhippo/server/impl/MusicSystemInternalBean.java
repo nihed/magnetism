@@ -65,14 +65,13 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicPlayView;
 import com.dumbhippo.server.PersonMusicView;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -2797,135 +2796,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			throw new RuntimeException("unknown theme image type '" + type + "'");
 	} 
 	
-	public NowPlayingThemesBundle getNowPlayingThemesBundle(Viewpoint viewpoint, User user) {
-		
-		// For now the viewpoint doesn't matter unless it's a "draft" theme
-		// in which case you can only see your own stuff
-		
-		NowPlayingThemesBundle bundle = new NowPlayingThemesBundle();
-		Set<NowPlayingTheme> alreadyUsed = new HashSet<NowPlayingTheme>();
-		
-		NowPlayingTheme current;
-		try {
-			current = getCurrentNowPlayingTheme(user);
-		} catch (NotFoundException e) {
-			current = null;
-		}
-		
-		if (current != null) {
-			bundle.setCurrentTheme(current);
-			alreadyUsed.add(current);
-		}
-
-		boolean viewingSelf = viewpoint.isOfUser(user);
-		
-		if (viewingSelf) {
-			// this query will include our draft themes
-			Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.creator=:creator ORDER BY creationDate DESC");
-			q.setParameter("creator", user);
-			List<?> myThemes = q.getResultList();
-			List<NowPlayingTheme> myThemesFiltered = new ArrayList<NowPlayingTheme>();
-			for (Object o : myThemes) {
-				if (!alreadyUsed.contains((NowPlayingTheme) o)) {
-					myThemesFiltered.add((NowPlayingTheme) o);
-					alreadyUsed.add((NowPlayingTheme) o);
-				}
-			}
-			bundle.setMyThemes(myThemesFiltered);
-		}
-
-		// this will return no friends if we can't see this person's contacts
-		// from our viewpoint
-		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
-
-		if (!friends.isEmpty()) {	
-			String draftClause; 
-			if (viewpoint instanceof SystemViewpoint)
-				draftClause = null;
-			else if (viewpoint instanceof UserViewpoint)
-				draftClause = "(t.draft=0 OR t.creator=:viewer)";
-			else
-				draftClause = "(t.draft=0)";
-			
-			StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t ");
-			sb.append("WHERE t.creator.id IN (");
-			for (Contact c : friends) {
-				User u = identitySpider.getUser(c);
-				if (u != null) {
-					sb.append("'");
-					sb.append(u.getId());
-					sb.append("'");
-					sb.append(",");
-				}
-			}
-			if (sb.charAt(sb.length()-1) == ',') {
-				sb.setLength(sb.length() - 1);
-			}
-			sb.append(")");
-			
-			if (draftClause != null) {
-				sb.append("AND ");
-				sb.append(draftClause);
-			}
-			
-			sb.append(" ORDER BY creationDate DESC");
-			
-			Query q = em.createQuery(sb.toString());
-			if (viewpoint instanceof UserViewpoint) {			
-				q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
-			}
-			
-			List<?> friendsThemes = q.getResultList();
-			
-			List<NowPlayingTheme> friendsThemesFiltered = new ArrayList<NowPlayingTheme>();
-			for (Object o : friendsThemes) {
-				if (!alreadyUsed.contains((NowPlayingTheme) o)) {
-					friendsThemesFiltered.add((NowPlayingTheme) o);
-					alreadyUsed.add((NowPlayingTheme) o);
-				}
-			}
-			bundle.setFriendsThemes(friendsThemesFiltered);
-		}
-				
-		/* Now pick 5 themes we don't have already, deterministically for now 
-		 * FIXME should be random in some way
-		 */
-		
-		StringBuilder sb = new StringBuilder("FROM NowPlayingTheme t WHERE t.draft=0 ");
-		
-		if (!alreadyUsed.isEmpty()) {
-			sb.append(" AND t.id NOT IN (");
-			for (NowPlayingTheme t : alreadyUsed) {
-				sb.append("'");
-				sb.append(t.getId());
-				sb.append("'");
-				sb.append(",");
-			}
-			if (sb.charAt(sb.length()-1) == ',') {
-				sb.setLength(sb.length() - 1);
-			}
-			sb.append(")");
-		}
-		sb.append(" ORDER BY creationDate DESC");
-		
-		Query q = em.createQuery(sb.toString());
-		q.setMaxResults(5);
-		List<?> randomThemes = q.getResultList();
-		
-		List<NowPlayingTheme> randomThemesFiltered = new ArrayList<NowPlayingTheme>();
-		for (Object o : randomThemes) {
-			if (!alreadyUsed.contains((NowPlayingTheme) o)) {
-				randomThemesFiltered.add((NowPlayingTheme) o);
-				alreadyUsed.add((NowPlayingTheme) o);
-			} else {
-				throw new RuntimeException("we asked for themes we didn't already have, but got some we did");
-			}
-		}
-		bundle.setRandomThemes(randomThemesFiltered);
-		
-		return bundle;
-	}
-	
 	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
 		// FIXME pick certain good ones or something
 		// FIXME EJBQL syntax is wrong, but don't have docs handy, will fix with the others
@@ -2990,5 +2860,120 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			Document document = builder.getDocument(track, track.getId());
 			writer.addDocument(document);
 		}
+	}
+
+	public NowPlayingTheme getCurrentTheme(Viewpoint viewpoint, User user) {
+		NowPlayingTheme current;
+		try {
+			current = getCurrentNowPlayingTheme(user);
+		} catch (NotFoundException e) {
+			current = null;
+		}		
+		return current;
+	}
+	
+	private String buildGetFriendsThemesQuery(Viewpoint viewpoint, User user, Set<Contact> friends, boolean forCount) {
+		String draftClause;
+		if (viewpoint instanceof SystemViewpoint)
+			draftClause = null;
+		else if (viewpoint instanceof UserViewpoint)
+			draftClause = "(t.draft=0 OR t.creator=:viewer)";
+		else
+			draftClause = "(t.draft=0)";
+
+		StringBuilder sb = new StringBuilder("SELECT ");
+		
+		if (forCount) {
+			sb.append("count(t)");
+		} else {
+			sb.append("t");
+		}
+		sb.append(" FROM NowPlayingTheme t ");
+		/*
+		 * FIXME convert to a join - this will break when a user has more than
+		 * 200 contacts or so
+		 */
+		sb.append("WHERE t.creator.id IN (");
+		for (Contact c : friends) {
+			User u = identitySpider.getUser(c);
+			if (u != null) {
+				sb.append("'");
+				sb.append(u.getId());
+				sb.append("'");
+				sb.append(",");
+			}
+		}
+		if (sb.charAt(sb.length() - 1) == ',') {
+			sb.setLength(sb.length() - 1);
+		}
+		sb.append(")");
+
+		if (draftClause != null) {
+			sb.append("AND ");
+			sb.append(draftClause);
+		}
+		sb.append(" ORDER BY creationDate DESC");
+		return sb.toString();
+	}
+
+	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
+		// this will return no friends if we can't see this person's contacts
+		// from our viewpoint
+		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
+		
+		if (friends.isEmpty()) {
+			pageable.setResults(new ArrayList<NowPlayingTheme>());
+			pageable.setTotalCount(0);
+			return;
+		}
+		
+		Query q = em.createQuery(buildGetFriendsThemesQuery(viewpoint, user, friends, false));
+		if (viewpoint instanceof UserViewpoint) {			
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
+		}
+			
+		q.setMaxResults(pageable.getCount());
+		q.setFirstResult(pageable.getStart());
+		pageable.setResults(TypeUtils.castList(NowPlayingTheme.class, q.getResultList()));
+		q = em.createQuery(buildGetFriendsThemesQuery(viewpoint, user, friends, true));
+		if (viewpoint instanceof UserViewpoint) {			
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());
+		}		
+		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());			
+	}
+
+	public void getMyThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
+		// this query will include our draft themes
+		assert(viewpoint.isOfUser(user));
+		Query q = em.createQuery(buildGetThemesQuery(viewpoint, user, false));
+		q.setParameter("creator", user);
+		q.setMaxResults(pageable.getCount());
+		q.setFirstResult(pageable.getStart());
+		pageable.setResults(TypeUtils.castList(NowPlayingTheme.class, q.getResultList()));
+		q = em.createQuery(buildGetThemesQuery(viewpoint, user, true));
+		q.setParameter("creator", user);		
+		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());		
+	}
+	
+	private String buildGetThemesQuery(Viewpoint viewpoint, User creator, boolean forCount) {
+		StringBuilder sb = new StringBuilder("SELECT ");
+		if (forCount)
+			sb.append("count(t)");
+		else
+			sb.append("t");
+		sb.append(" FROM NowPlayingTheme t WHERE t.draft=0 ");
+		if (creator != null)
+			sb.append(" AND t.creator=:creator ");
+		sb.append(" ORDER BY creationDate DESC");
+		return sb.toString();
+	}
+
+	public void getAllThemes(Viewpoint viewpoint, Pageable<NowPlayingTheme> pageable) {
+		Query q = em.createQuery(buildGetThemesQuery(viewpoint, null, false));
+		q.setMaxResults(pageable.getCount());
+		q.setFirstResult(pageable.getStart());
+		pageable.setResults(TypeUtils.castList(NowPlayingTheme.class, q.getResultList()));
+		q = em.createQuery(buildGetThemesQuery(viewpoint, null, true));
+		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());
 	}
 }

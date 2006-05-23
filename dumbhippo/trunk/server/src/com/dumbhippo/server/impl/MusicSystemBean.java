@@ -17,7 +17,6 @@ import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.NowPlayingThemesBundle;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackSearchResult;
@@ -38,14 +37,9 @@ public class MusicSystemBean implements MusicSystem {
 	@EJB
 	private MusicSystemInternal internal;
 	
-	public NowPlayingThemesBundle getNowPlayingThemesBundle(Viewpoint viewpoint, User user) {
-		return internal.getNowPlayingThemesBundle(viewpoint, user);
-	}
-	
 	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
 		return internal.getExampleNowPlayingThemes(viewpoint, maxResults);
 	}
-
 	
 	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {
 		return internal.createNewNowPlayingTheme(viewpoint, basedOn);
@@ -158,5 +152,25 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count) {
 		return internal.getTrackSearchTracks(viewpoint, searchResult, start, count);
+	}
+
+
+	public NowPlayingTheme getCurrentTheme(Viewpoint viewpoint, User user) {
+		return internal.getCurrentTheme(viewpoint, user);
+	}
+
+
+	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
+		internal.getFriendsThemes(viewpoint, user, pageable);
+	}
+
+
+	public void getMyThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
+		internal.getMyThemes(viewpoint, user, pageable);
+	}
+
+
+	public void getAllThemes(Viewpoint viewpoint, Pageable<NowPlayingTheme> pageable) {
+		internal.getAllThemes(viewpoint, pageable);
 	}
 }

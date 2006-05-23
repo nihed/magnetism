@@ -17,7 +17,10 @@ public interface MusicSystem {
 	public NowPlayingTheme getCurrentNowPlayingTheme(User user) throws NotFoundException;
 	public void setCurrentNowPlayingTheme(UserViewpoint viewpoint, User user, NowPlayingTheme theme);
 	
-	public NowPlayingThemesBundle getNowPlayingThemesBundle(Viewpoint viewpoint, User user);
+	public NowPlayingTheme getCurrentTheme(Viewpoint viewpoint, User user);
+	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable);
+	public void getMyThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable);
+	public void getAllThemes(Viewpoint viewpoint, Pageable<NowPlayingTheme> pageable);	
 	
 	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults);
 	

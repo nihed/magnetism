@@ -1,5 +1,8 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.server.AnonymousViewpoint;
+import com.dumbhippo.server.Viewpoint;
+
 /**
  * A subclass of AbstractSigninPage that allows anonymous viewers of the page.
  * To call most methods on AbstractSigninPage, it's necessary to check first
@@ -12,6 +15,13 @@ public class AbstractSigninOptionalPage extends AbstractSigninPage {
 
 	@Signin
 	private SigninBean signin;
+	
+	public Viewpoint getViewpoint() {
+		if (getSignin().isValid()) {
+			return getUserSignin().getViewpoint();
+		}
+		return AnonymousViewpoint.getInstance();
+	}	
 	
 	@Override
 	public SigninBean getSignin() {
