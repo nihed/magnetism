@@ -37,6 +37,9 @@ public class AlbumView {
 	}
 	
 	public int getSmallImageHeight() {
+		if (smallImageUrl == null)
+			return 75;
+		
 		return smallImageHeight;
 	}
 
@@ -45,6 +48,9 @@ public class AlbumView {
 	}
 
 	public String getSmallImageUrl() {
+		if (smallImageUrl == null)
+			return "/images/no_image_available75x75light.gif";
+
 		return smallImageUrl;
 	}
 
@@ -53,6 +59,9 @@ public class AlbumView {
 	}
 
 	public int getSmallImageWidth() {
+		if (smallImageUrl == null)
+			return 75;
+		
 		return smallImageWidth;
 	}
 

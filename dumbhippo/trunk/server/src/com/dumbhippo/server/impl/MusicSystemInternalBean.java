@@ -1480,10 +1480,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
 		try {			
-			// set defaults for the image
-			albumView.setSmallImageUrl(config.getProperty(HippoProperty.BASEURL) + "/images/no_image_available75x75light.gif");
-			albumView.setSmallImageWidth(75);
-			albumView.setSmallImageHeight(75);
+			// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
+			// it null so AlbumView can default to our "no image" picture. This also 
+			// means that albumView.getSmallImageUrl() never returns null
 			
 			// first see what we can get from yahoo album result
 			if (yahooAlbum != null) {
