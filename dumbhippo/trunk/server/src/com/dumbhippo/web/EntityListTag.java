@@ -17,6 +17,7 @@ public class EntityListTag extends SimpleTagSupport {
 	private boolean photos;
 	private int bodyLengthLimit;
 	private int longBodyLengthLimit;
+	private String prefixValue;
 	private String separator;
 	private boolean music;
 	private boolean twoLineBody;
@@ -25,6 +26,7 @@ public class EntityListTag extends SimpleTagSupport {
 		bodyLengthLimit = -1;
 		longBodyLengthLimit = -1;
 		twoLineBody = false;
+		prefixValue = "";
 	}
 
 	@Override
@@ -44,6 +46,11 @@ public class EntityListTag extends SimpleTagSupport {
 		Iterator it = entities.iterator();
 		
 		boolean first = true;
+		
+		if (prefixValue != null && !prefixValue.equals("")) {
+			writer.print(prefixValue);
+			first = false;
+		}
 		
 		while (it.hasNext()) {
 			Object o = it.next();
@@ -103,6 +110,10 @@ public class EntityListTag extends SimpleTagSupport {
 		this.separator = separator;
 	}
 	
+	public void setPrefixValue(String prefixValue) {
+		this.prefixValue = prefixValue;
+	}
+
 	public void setMusic(boolean music) {
 		this.music = music;
 	}
