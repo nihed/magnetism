@@ -133,7 +133,7 @@ dh.framer.init = function() {
 		// we have non-activex fallbacks sometimes. So be careful.
 		
 		// If we don't have the ActiveX controls available to chat, hide them
-    	document.getElementById("dhPostViewingList").style.visibility = "hidden"
+    	document.getElementById("dhPostSwarmInfo").style.visibility = "hidden"
     	document.getElementById("dhPostChatLog").style.visibility = "hidden"
     	document.getElementById("dhPostChatLabel").style.visibility = "hidden"
     	// there's a fallback for this at least part of the time
