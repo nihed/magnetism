@@ -133,7 +133,7 @@
 							</div>
 						</c:if>
 						<div class="dh-post-action">
-							<a href="javascript:dh.framer.goHome();" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.goHome()" target="_top">Back Home</a>
+							<a href="javascript:dh.framer.goHome();"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.goHome()">Back Home</a>
 						</div>
 						<div class="dh-post-action">
 							<a href="javascript:dh.framer.openForwardWindow();"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.openForwardWindow();">Forward to Others</a>

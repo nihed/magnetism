@@ -52,7 +52,7 @@ dh.framer.goHome = function() {
 	var embed = document.getElementById("dhEmbedObject")
     if (embed && embed.readyState && embed.readyState >= 3)
     	embed.CloseBrowserBar()
-	window.open("/", "_self")
+	window.open("/", "_top")
 }
 
 dh.framer._addMessage = function(message, before) {
