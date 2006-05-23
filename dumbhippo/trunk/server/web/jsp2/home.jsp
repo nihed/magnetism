@@ -39,7 +39,7 @@
 			</c:if>
 			<c:choose>
 				<c:when test="${links.receivedPosts.totalCount > 0}">
-				    <dht:zoneBoxTitle>SHARED WITH ME</dht:zoneBoxTitle>
+				    <dht:zoneBoxTitle>SHARED WITH YOU</dht:zoneBoxTitle>
 					<dht:postList posts="${links.receivedPosts.results}" format="simple"/>
 				</c:when>
 				<c:otherwise>
@@ -59,7 +59,7 @@
 		<dht:zoneBoxMusic more="true">
 			<c:if test="${signin.musicSharingEnabled}">
 				<dht:requireMusicPersonBean who="${signin.user.id}"/>
-				<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+				<dht:zoneBoxTitle>YOUR CURRENT SONG</dht:zoneBoxTitle>
 				<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 				<dht:zoneBoxSeparator/>
 				<dht:trackList name="FRIENDS' RECENT SONGS" tracks="${musicPerson.friendsRecentTracks.results}" separator="true" oneLine="true" displaySinglePersonMusicPlay="true" />

@@ -36,7 +36,7 @@
 					<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
 				</c:if>
 				<dht:sidebarBoxSeparator/>
-				<div><a href="/account">Edit my music bio</a></div>
+				<div><a href="/account">Edit your music bio</a></div>
 			</dht:sidebarBoxControls>
 		</dht:sidebarPerson>
 	</c:if>
@@ -46,7 +46,7 @@
 				<c:when test="${signin.valid}">
 					<c:choose>
 						<c:when test="${signin.musicSharingEnabled}">
-							<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+							<dht:zoneBoxTitle>YOUR CURRENT SONG</dht:zoneBoxTitle>
 							<dh:nowPlaying userId="${signin.user.id}" hasLabel="false"/>
 						</c:when>
 						<c:otherwise>
@@ -78,16 +78,16 @@
 					<c:when test="${signin.valid}">
 								
 						<c:if test="${!empty person.viewedPerson.musicBioAsHtml}">
-						    <dht:zoneBoxTitle>MY MUSIC BIO</dht:zoneBoxTitle>
+						    <dht:zoneBoxTitle>YOUR MUSIC BIO</dht:zoneBoxTitle>
 						        <div class="dh-bio">
 						            <c:out value="${signin.user.account.musicBio}" escapeXml="false"/>
 						        </div>
 						    <dht:zoneBoxSeparator/>
 						</c:if>
 						
-							<dht:trackList name="MY RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}" pageable="${musicPerson.recentTracks}" separator="true"/>
+							<dht:trackList name="YOUR RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}" pageable="${musicPerson.recentTracks}" separator="true"/>
 
-							<dht:trackList name="MY MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicPerson.mostPlayedTracks.results}" pageable="${musicPerson.mostPlayedTracks}" />
+							<dht:trackList name="YOUR MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicPerson.mostPlayedTracks.results}" pageable="${musicPerson.mostPlayedTracks}" />
 	
 					</c:when>
 					<c:otherwise>

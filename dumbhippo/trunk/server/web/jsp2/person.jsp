@@ -41,7 +41,7 @@
 			        <dht:musicRadarPromo separator="true" musicLink="true"/>
 			</c:if>
 			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>
-			<dht:zoneBoxTitle>CURRENTLY LISTENING TO</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>CURRENT SONG</dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
 			

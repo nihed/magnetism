@@ -41,7 +41,7 @@
 						<dht:zoneBoxSeparator/>
 					</c:if>
 
-					<dht:zoneBoxTitle a="dhReceivedPosts">SHARED WITH ME</dht:zoneBoxTitle>
+					<dht:zoneBoxTitle a="dhReceivedPosts">SHARED WITH YOU</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.receivedPosts.resultCount > 0}">
 							<dht:postList posts="${links.receivedPosts.results}" format="full" favesMode="add-only"/>
@@ -66,7 +66,7 @@
 					</c:choose>
 					<dht:zoneBoxSeparator/>
 										
-					<dht:zoneBoxTitle a="dhSentPosts">SHARED BY ME</dht:zoneBoxTitle>
+					<dht:zoneBoxTitle a="dhSentPosts">SHARED BY YOU</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${links.sentPosts.resultCount > 0}">
 							<dht:postList posts="${links.sentPosts.results}" format="full" favesMode="add-only"/>

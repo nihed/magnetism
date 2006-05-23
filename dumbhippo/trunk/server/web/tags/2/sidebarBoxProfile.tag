@@ -4,7 +4,7 @@
 
 <c:choose>
 	<c:when test="${person.self}">
-		<c:set var="title" value="MY PROFILE" scope="page"/>
+		<c:set var="title" value="YOUR PROFILE" scope="page"/>
 	</c:when>
 	<c:otherwise>
 		<c:set var="title" value="PROFILE" scope="page"/>

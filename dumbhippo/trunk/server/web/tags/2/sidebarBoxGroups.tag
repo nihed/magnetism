@@ -7,7 +7,7 @@
 	
 	<c:choose>
 		<c:when test="${person.self}">
-			<c:set var="title" value="MY GROUPS" scope="page"/>
+			<c:set var="title" value="YOUR GROUPS" scope="page"/>
 		</c:when>
 		<c:otherwise>
 			<c:set var="title" value="GROUPS" scope="page"/>

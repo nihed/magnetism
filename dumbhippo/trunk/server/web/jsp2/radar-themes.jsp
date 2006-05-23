@@ -26,7 +26,7 @@
 		</c:if>
 
 		<c:if test="${nowplaying.myThemes.count > 0}">
-			<dht:zoneBoxTitle a="dhMyThemes">MY CREATIONS</dht:zoneBoxTitle>	
+			<dht:zoneBoxTitle a="dhMyThemes">YOUR CREATIONS</dht:zoneBoxTitle>	
 			<div>
 				<c:forEach items="${nowplaying.myThemes.results}" var="theme" varStatus="status">
 					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>

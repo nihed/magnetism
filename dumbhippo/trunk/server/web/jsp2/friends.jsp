@@ -36,7 +36,7 @@
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxFriends back='true'>
-			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "MY " : "" }'/>FRIENDS</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "YOUR " : "" }'/>FRIENDS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 				<c:forEach items="${person.contacts.list}" var="person">
 					<dht:personItem who="${person}" invited="true"/>

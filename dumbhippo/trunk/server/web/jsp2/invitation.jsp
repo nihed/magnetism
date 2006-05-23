@@ -12,7 +12,7 @@
 <dh:bean id="invites" class="com.dumbhippo.web.InvitesPage" scope="page"/>
 
 <head>
-	<title>My Invitations</title>
+	<title>Your Invitations</title>
 	<link rel="stylesheet" type="text/css" href="/css2/invitation.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

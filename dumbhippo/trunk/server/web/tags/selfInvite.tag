@@ -50,7 +50,7 @@
 	<div id="dhSelfInviteForm${N}">
 		<b>Your email address:</b>
 		<input type="text" id="dhSelfInviteAddress${N}"/>
-		<input type="button" value="Invite Myself" onclick="dhSelfInvite${N}()"/>
+		<input type="button" value="Invite Yourself" onclick="dhSelfInvite${N}()"/>
 		<div>
 			<br/>
 			There's room for <c:out value="${invitesAvailable}"/> more people.

@@ -36,7 +36,7 @@
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
-			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "MY " : "" }'/>GROUPS</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "YOUR " : "" }'/>GROUPS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 				<c:forEach items="${person.groups.list}" var="group">
 					<dht:groupItem group="${group}"/>

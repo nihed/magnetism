@@ -54,7 +54,7 @@
 					</div>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhMusicBioEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="My music bio">
+				<dht:formTableRow label="Your music bio">
 				    <%--
 					<div>
 						<input type="button" value="Generate a random music bio!" onclick="dh.account.generateRandomBio();"/>
