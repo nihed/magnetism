@@ -26,6 +26,10 @@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
+		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource@@
+		dumbhippo.server.downloadurl.linux=@@clientLinuxDownload@@
+		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
+		dumbhippo.server.downloadurl.linux.srpm=@@clientLinuxDownloadSRPM@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
 		dumbhippo.server.yahoo.appid=@@yahooAppId@@
 		dumbhippo.server.ebay.devid=@@ebayDevId@@
