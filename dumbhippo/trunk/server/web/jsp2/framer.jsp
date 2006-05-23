@@ -71,7 +71,8 @@
 		var dhClosed = false
 		function dhBarClosed() {
 			var chatControl = document.getElementById("dhChatControl")
-			chatControl.Leave(false)
+			if (chatControl)
+				chatControl.Leave(false)
 			dhClosed = true
 		}
 		
@@ -124,7 +125,7 @@
 					<div id="dhPostActions">
 					   <c:if test="${!empty joinChatUri}">
 							<div class="dh-post-action" id="dhPostJoinChat">
-								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Join Chat</a>
+								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Join Chat</a> <span id="dhPostChatCount"></span>
 							</div>
 					   </c:if>		
 					   <c:if test="${!param.browserBar}">
