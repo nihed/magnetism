@@ -44,7 +44,7 @@
 			<c:choose>
 			<c:when test="${signin.user.account.invitations > 0}">
 				<dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
-				<dht:formTable name="dhInvitationForm">
+				<dht:formTable>
 					<dht:formTableRow label="Friend's email address">
 						<dht:textInput id="dhAddressEntry"/>
 					</dht:formTableRow>
