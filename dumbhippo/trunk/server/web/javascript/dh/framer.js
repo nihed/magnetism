@@ -101,7 +101,7 @@ dh.framer._addUser = function(user, before, participant) {
 	var countText;
 	
 	if (count == 0)
-		countText = "(nobody chatting)"
+		countText = "(empty)"
 	else if (count == 1)
 		countText = "(1 person)"
 	else
