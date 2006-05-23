@@ -41,4 +41,17 @@ public class ChatRoomUser implements Serializable {
 	public String getSmallPhotoUrl() {
 		return smallPhotoUrl;
 	}
+
+	@Override
+	public boolean equals(Object arg0) {
+		if (!(arg0 instanceof ChatRoomUser))
+			return false;
+		return ((ChatRoomUser) arg0).username.equals(username);
+	}
+
+	@Override
+	public int hashCode() {
+		return username.hashCode();
+	}
+	
 }

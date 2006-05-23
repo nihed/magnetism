@@ -27,10 +27,12 @@ import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
@@ -306,12 +308,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 	}
 	
-	private Post getPostFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
-		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
+	private Post getPostFromRoomName(String roomName) throws NotFoundException {
+		return postingBoard.loadRawPost(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
 	}
 	
-	private Group getGroupFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
-		return groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
+	private Group getGroupFromRoomName(String roomName) throws NotFoundException {
+		return groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
 	}
 	
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
@@ -325,14 +327,17 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				user.getVersion(), user.getNickname(), user.getPhotoUrl60());
 	}
 	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
-		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
-		
-		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
+	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {
+		Set<ChatRoomUser> allowedUsers = new HashSet<ChatRoomUser>();		
+		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
 		for (User user : members) {
 			allowedUsers.add(newChatRoomUser(user));
 		}
+		return allowedUsers;
+	}
 		
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
 		List<GroupMessage> messages = groupSystem.getGroupMessages(group);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
@@ -341,14 +346,13 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			history.add(newChatRoomMessage(m));
 		}
 		
-		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), allowedUsers, history);
+		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
 	}
 
-	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
-		List<ChatRoomUser> allowedUsers = new ArrayList<ChatRoomUser>();
-		
+	private Set<ChatRoomUser> getChatRoomRecipients(Post post) {
+		Set<ChatRoomUser> allowedUsers = new HashSet<ChatRoomUser>();
 		User poster = post.getPoster();
-		allowedUsers.add(newChatRoomUser(poster));
+		allowedUsers.add(newChatRoomUser(poster));	
 		
 		// FIXME: This isn't really right; it doesn't handle public posts and
 		// posts where people join a group that it was sent to after the post was
@@ -356,9 +360,14 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		// in ChatRoomInfo.
 		for (Resource recipient : post.getExpandedRecipients()) {
 			User user = identitySpider.getUser(recipient);
-			if (user != null && !user.equals(poster))
+			if (user != null)
 				allowedUsers.add(newChatRoomUser(user));
 		}
+		return allowedUsers;
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
+		User poster = post.getPoster();
 		
 		List<PostMessage> messages = postingBoard.getPostMessages(post);
 
@@ -375,16 +384,44 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			history.add(newChatRoomMessage(postMessage));
 		}
 		
-		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), allowedUsers, history);
+		boolean worldAccessible = true;
+		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
+			worldAccessible = false;
+		
+		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
-	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername) {
-		User initialUser = getUserFromUsername(initialUsername);
-		UserViewpoint viewpoint = new UserViewpoint(initialUser);
+	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username) {
+		User user;
+		// Note: we could add access controls here as well, requiring that the username
+		// is allowed to join the chat room.  But for now that's checked in the chat room
+		// code.
+		try {
+			user = identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		return newChatRoomUser(user);		
+	}
+	
+	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind) {
+		try {
+			if (kind == ChatRoomKind.POST)
+				return getChatRoomRecipients(getPostFromRoomName(roomName));
+			else if (kind == ChatRoomKind.GROUP)
+				return getChatRoomRecipients(getGroupFromRoomName(roomName));
+			else
+				throw new RuntimeException("Unknown chat room type " + kind);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public ChatRoomInfo getChatRoomInfo(String roomName) {
 		Post post = null;
 		Group group = null;
 		try {
-			post = getPostFromRoomName(viewpoint, roomName);
+			post = getPostFromRoomName(roomName);
 		} catch (NotFoundException e) {
 			// FIXME in principle this should happen if the initialUser can't see the post, 
 			// but right now there's no access controls in loadRawPost so it only happens
@@ -392,7 +429,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			post = null;
 		}
 		try {
-			group = getGroupFromRoomName(viewpoint, roomName);
+			group = getGroupFromRoomName(roomName);
 		} catch (NotFoundException e) {
 			group = null;
 		}
@@ -414,6 +451,23 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			return null;
 		}
 	}
+
+	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {
+		try {
+			User user = getUserFromUsername(username);
+			if (kind == ChatRoomKind.POST) {
+				Post post = getPostFromRoomName(roomName);
+				UserViewpoint viewpoint = new UserViewpoint(user);
+				return postingBoard.canViewPost(viewpoint, post);
+			} else if (kind == ChatRoomKind.GROUP) {
+				Group group = getGroupFromRoomName(roomName);
+				return groupSystem.isMember(group, user);
+			} else
+				throw new RuntimeException("Unknown chat room type " + kind);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}	
 	
 	public Map<String, String> getCurrentMusicInfo(String username) {
 		Map<String,String> musicInfo = new HashMap<String,String>();
@@ -526,4 +580,5 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		builder.closeElement();
 		return builder.toString();
 	}
+
 }

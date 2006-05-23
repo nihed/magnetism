@@ -36,6 +36,8 @@ public interface GroupSystem {
 	
 	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
+	public boolean isMember(Group group, User user);
+	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
 	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras);

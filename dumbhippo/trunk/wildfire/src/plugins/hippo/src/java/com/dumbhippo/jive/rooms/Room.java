@@ -3,9 +3,11 @@ package com.dumbhippo.jive.rooms;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jms.ObjectMessage;
 
@@ -164,7 +166,8 @@ public class Room {
 		}
 	}
 
-	private Map<String, UserInfo> allowedUsers;
+	private Set<String> recipientsCache;
+	private Map<String, UserInfo> userInfoCache;
 	private Map<JID, UserInfo> participantResources;
 	private Map<JID, UserInfo> presentResources;
 	private Map<String, UserInfo> presentUsers;
@@ -183,7 +186,7 @@ public class Room {
 		this.handler = handler; 
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
 		
-		allowedUsers = new HashMap<String, UserInfo>();
+		userInfoCache = new HashMap<String, UserInfo>();
 		participantResources = new HashMap<JID, UserInfo>();
 		presentResources = new HashMap<JID, UserInfo>();
 		presentUsers = new HashMap<String, UserInfo>();
@@ -194,24 +197,35 @@ public class Room {
 		this.kind = info.getKind();
 		this.title = info.getTitle();
 		
-		for (ChatRoomUser user : info.getAllowedUsers()) {
-			Log.debug("Allowed user: " + user.getUsername());
-			allowedUsers.put(user.getUsername(), 
-						     new UserInfo(user.getUsername(), user.getVersion(), user.getName(), user.getSmallPhotoUrl()));
-		}
-		
 		for (ChatRoomMessage message : info.getHistory()) {
-			UserInfo userInfo = allowedUsers.get(message.getFromUsername());
-			if (userInfo == null) {
-				Log.debug("Ignoring message from unknown user " + message.getFromUsername());
-				continue;
-			}
+			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
 			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp(), message.getSerial());
 			messages.add(messageInfo);
 			
 			if (message.getSerial() >= nextSerial)
 				nextSerial = message.getSerial() + 1;
 		}
+	}
+	
+	private UserInfo lookupUserInfo(String username) {
+		if (!userInfoCache.containsKey(username)) {
+			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);
+			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getVersion(), user.getName(), user.getSmallPhotoUrl()));			
+		}
+		return userInfoCache.get(username);
+	}
+		
+	private Set<String> getRecipientsCache() {
+		if (recipientsCache == null) {
+			recipientsCache = new HashSet<String>();
+		}
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
+		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
+			Log.debug("Room recipient: " + user.getUsername());
+			recipientsCache.add(user.getUsername());
+		}			
+		return recipientsCache;
 	}
 	
 	private String getServiceDomain() {
@@ -231,8 +245,7 @@ public class Room {
 
 	/**
 	 * Send a packet to everybody who either received the post initially
-	 * or is in the chatroom. (The latter is currently a subset of the 
-	 * former, but that will change in the future.) The packet is sent
+	 * or is in the chatroom. The packet is sent
 	 * only to resources that are currently logged in to the server; it
 	 * will not be queued for offline delivery.
 	 * 
@@ -241,7 +254,12 @@ public class Room {
 	 * @param packet the packet to send
 	 */ 
 	private void sendPacketToAll(Packet packet) {
-		for (String userName : allowedUsers.keySet()) {
+		Set<String> targets = new HashSet<String>();
+		targets.addAll(getRecipientsCache());
+		for (UserInfo userInfo : presentUsers.values()) {
+			targets.add(userInfo.getUsername());
+		}
+		for (String userName : targets) {
 			try {
 				SessionManager.getInstance().userBroadcast(userName, packet);
 			} catch (UnauthorizedException e) {
@@ -261,11 +279,11 @@ public class Room {
 		}
 	}
 	
-	public static Room loadFromServer(RoomHandler handler, String roomName, String username) {
+	public static Room loadFromServer(RoomHandler handler, String roomName) {
 		Log.debug("Querying server for information on chat room " + roomName);
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 		
-		ChatRoomInfo info = glue.getChatRoomInfo(roomName, username);
+		ChatRoomInfo info = glue.getChatRoomInfo(roomName);
 		if (info == null) {
 			Log.debug("  no such room");
 			return null;
@@ -376,10 +394,7 @@ public class Room {
 		// it up with the real name in the client.
 		Log.debug("Got available presence from : " + jid);
 
-		UserInfo userInfo = allowedUsers.get(username);
-		if (userInfo == null) {
-			throw new RuntimeException("User " + username + " isn't in allowedUsers");
-		}
+		UserInfo userInfo = lookupUserInfo(username);
 		
 		// Look for our userInfo tag which will distinguish whether the
 		// user wants to join as a 'visitor' or a 'participant'
@@ -529,9 +544,7 @@ public class Room {
 			return;
 		
 		String username = fromJid.getNode();
-		UserInfo userInfo = allowedUsers.get(username);
-		if (userInfo == null)
-			throw new RuntimeException("User " + username + " isn't in allowedUsers");
+		UserInfo userInfo = lookupUserInfo(username);
 		
 		Date timestamp = new Date(); // Current time
 		int serial = nextSerial++;
@@ -639,7 +652,8 @@ public class Room {
 	 * @return true if the user can join this room
 	 */
 	public boolean checkUserCanJoin(String username) {
-		return allowedUsers.containsKey(username);
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		return glue.canJoinChat(roomName, kind, username);
 	}
 
 	/**

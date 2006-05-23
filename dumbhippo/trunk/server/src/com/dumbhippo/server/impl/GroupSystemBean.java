@@ -317,7 +317,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Set<User> result = new HashSet<User>();
 		for (Resource r : resourceMembers) {
 			User user = identitySpider.getUser(r);
-			result.add(user);
+			if (user != null)
+				result.add(user);
 		}
 		
 		return result;
@@ -557,5 +558,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		} catch (NotFoundException e) {
 			return false;
 		}
+	}
+
+	public boolean isMember(Group group, User user) {
+		// TODO can optimize this later
+		return getUserMembers(SystemViewpoint.getInstance(),group).contains(user);
 	}
 }

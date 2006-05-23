@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Remote;
 
@@ -227,19 +228,29 @@ public interface MessengerGlueRemote {
 	public void onResourceConnected(String serverIdentifier, String user) throws NoSuchServerException;	
 	
 	/**
+	 * Returns the information associated with the potential user of a chat room.
+	 * 
+	 * @param roomName the name of the chat room
+	 * @param kind the kind of the chat room
+	 * @param username name of the user for whom we look up information
+	 * @return blob of information about the user
+	 */
+	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username);
+	
+	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind);
+	
+	/**
 	 * Get the information needed to manage a chatroom for a post.
 	 * 
 	 * @param roomName The GUID for the post that the chat is about,
 	 *   encoded in jabber node form. 
-	 * @param initialUsername The initial user requesting that the 
-	 *   chatroom be created. If the user doesn't have access to
-	 *   the post, null will be returned as if the post doesn't
-	 *   exist.
-	 *  @return a blob of information about the chatroom. Will
+	 * @return a blob of information about the chatroom. Will
 	 *   be null if no such post exists or the user isn't allowed
 	 *   to see it.
 	 */
-	public ChatRoomInfo getChatRoomInfo(String roomName, String initialUsername);
+	public ChatRoomInfo getChatRoomInfo(String roomName);
+	
+	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username);
 	
 	/**
 	 * Get current music info for a given user.

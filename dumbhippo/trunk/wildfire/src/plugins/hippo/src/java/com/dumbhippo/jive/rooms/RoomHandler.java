@@ -108,24 +108,21 @@ public class RoomHandler implements Component {
 	
 	private Room getRoom(String roomName, String userId) {
 		Room room = rooms.get(roomName);
-		if (room != null) {
-			if (room.checkUserCanJoin(userId)) {
-				Log.debug("  sending packet to existing room " + roomName);
-				return room;
-			} else {
-				Log.debug("  not authorized to send packet to room");
+		if (room == null) {
+			room = Room.loadFromServer(this, roomName);
+			if (room == null) {
+				Log.debug("  room doesn't seem to exist");
 				return null;
 			}
+			rooms.put(roomName, room);			
 		}
-		
-		room = Room.loadFromServer(this, roomName, userId);
-		if (room == null) {
-			Log.debug("  room doesn't seem to exist");
+		if (room.checkUserCanJoin(userId)) {
+			Log.debug("  sending packet to existing room " + roomName);
+			return room;
+		} else {
+			Log.debug("  not authorized to send packet to room");
 			return null;
 		}
-		rooms.put(roomName, room);
-		
-		return room;
 	}
 	
 	/**

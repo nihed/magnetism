@@ -16,19 +16,18 @@ import java.util.List;
 public class ChatRoomInfo implements Serializable {
 	private static final long serialVersionUID = 0L;
 	
-	private ChatRoomKind kind; 
+	private ChatRoomKind kind;
+	private boolean worldAccessible;
 	private String roomName;
 	private String title;
-	private List<ChatRoomUser> allowedUsers;
 	private List<ChatRoomMessage> history;
 	
-	public ChatRoomInfo(ChatRoomKind kind, String roomName, String postTitle, List<ChatRoomUser> allowedUsers, List<ChatRoomMessage> history) {
+	public ChatRoomInfo(ChatRoomKind kind, String roomName, String postTitle, List<ChatRoomMessage> history, boolean world) {
 		this.kind = kind;
 		this.roomName = roomName;
 		this.title = postTitle;
-		this.allowedUsers = allowedUsers; // Don't copy for efficiency, assume the caller won't
-		                                  // subsequently modify
 		this.history = history;
+		this.worldAccessible = world;
 	}
 	
 	public ChatRoomKind getKind() {
@@ -42,12 +41,12 @@ public class ChatRoomInfo implements Serializable {
 	public String getTitle() {
 		return title;
 	}
-	
-	public List<ChatRoomUser> getAllowedUsers() {
-		return Collections.unmodifiableList(allowedUsers);
-	}
 
 	public List<ChatRoomMessage> getHistory() {
 		return Collections.unmodifiableList(history);
+	}
+
+	public boolean isWorldAccessible() {
+		return this.worldAccessible;
 	}
 }

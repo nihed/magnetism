@@ -13,20 +13,19 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.TestGlueRemote;
 
 /**
- * 
- * FIXME we aren't using this anymore, I don't think.
- * 
  * @author hp
- * 
  */
 @Stateless
 public class TestGlueBean implements TestGlue, TestGlueRemote {
@@ -41,7 +40,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 
 	@EJB
 	private AccountSystem accountSystem;
-
+	
 	public TestGlueBean() {
 	}
 	 
@@ -103,5 +102,11 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 		Client client = accountSystem.authorizeNewClient(persistedAccount, name);
 		logger.debug("added client authKey = " + client.getAuthKey() + " client works = " + persistedAccount.checkClientCookie(client.getAuthKey()));
 		return client.getAuthKey();
+	}
+
+	public void setInvitations(String userId, int invites) throws ParseException, NotFoundException {
+			User user = identitySpider.lookupGuidString(User.class, userId);
+			Account acct = user.getAccount();
+			acct.setInvitations(invites);
 	}
 }
