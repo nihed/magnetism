@@ -38,16 +38,17 @@ public class SigninServlet extends AbstractServlet {
 			IOException, HttpException, HumanVisibleException {
 
 		String address = request.getParameter("address");
-		if (address != null)
+		if (address != null) {
 			address = address.trim();
-		if (address.length() == 0)
-			address = null;
+			if (address.length() == 0)
+				address = null;
+		}
 		String password = request.getParameter("password");
-		if (password != null)
+		if (password != null) {
 			password = password.trim();
-		if (password.length() == 0)
-			password = null;
-
+			if (password.length() == 0)
+				password = null;
+		}
 		String next = request.getParameter("next");
 		if (next == null)
 			next = "/";
