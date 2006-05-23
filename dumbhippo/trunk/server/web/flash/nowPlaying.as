@@ -1,4 +1,29 @@
-﻿trace("loading nowPlaying.as");
+﻿var checkVersion = function() {
+	var flashVersion:String = getVersion();
+	// the version string is bizarre, e.g. "WIN 8,0,1,0"
+	var i = flashVersion.indexOf(" ");
+	var majorStr = flashVersion.substr(i + 1, flashVersion.indexOf(","));
+	var major = parseInt(majorStr, 10);
+	if (major < 8) {
+		return false;		
+	}
+	return true;
+}
+
+if (!checkVersion()) {
+		var clip:MovieClip = createEmptyMovieClip("rootMovie", 0);
+		clip.createTextField("message", 1, 0, 0, 440, 120);
+		clip.message.text = "Flash Player 8 Required";
+		var fontFormat:TextFormat = new TextFormat();
+		fontFormat.font = "_sans";
+		fontFormat.size = 20;
+		fontFormat.color = 0x000000;
+		fontFormat.align = "center";
+		clip.message.setTextFormat(fontFormat);
+		clip.message.visible = true;
+		clip.visible = true;
+		return;
+}
 
 if (!baseUrl) {
 	// debug base url and person
@@ -176,7 +201,7 @@ button.lineTo(width, 0);
 button.lineTo(0, 0);
 button.onRelease = function() {
 	trace("released");
-	getURL(baseUrl + "/music?who=" + who, "_self");
+	getURL(baseUrl + "/person?who=" + who, "_self");
 }
 
 var fadeTime:Number = 1000;
