@@ -43,7 +43,7 @@ public class BrowserBean implements Serializable {
 			os = OS.Mac;
 		else if (userAgent.contains("Windows"))
 			os = OS.Windows;
-		
+
 		/* note that we aren't counting IE before 5.0 or not on Windows 
 		 * as IE ... it's just Unknown.
 		 * For Netscape 4 and old Mozilla I'm guessing we should do
@@ -52,7 +52,10 @@ public class BrowserBean implements Serializable {
 		 * sense. 
 		 */
 		
-		if (userAgent.contains("Gecko")) {
+		if (userAgent.contains("Konqueror") ||
+		    userAgent.contains("Safari"))
+		    browser = Browser.Khtml;
+		else if (userAgent.contains("Gecko")) {
 			browser = Browser.Gecko;
 			Pattern p = Pattern.compile("Gecko\\/([0-9]+)");
 			Matcher m = p.matcher(userAgent);
@@ -66,9 +69,6 @@ public class BrowserBean implements Serializable {
 				} catch (NumberFormatException e) {
 				}
 			}
-		} else if (userAgent.contains("Konqueror") ||
-				userAgent.contains("Safari")) {
-			browser = Browser.Khtml;
 		} else if (userAgent.contains("Opera")) {
 			browser = Browser.Opera;
 		} else if (os == OS.Windows && userAgent.contains("MSIE 5.0")) {
