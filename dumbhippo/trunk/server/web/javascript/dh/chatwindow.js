@@ -10,8 +10,9 @@ dh.chatwindow._selfId = null
 // of text messages is complete, because during the process we need to know
 // the previous text area width
 dh.chatwindow._textAreaWidth = null
-dh.chatwindow.PHOTO_WIDTH = 48
+dh.chatwindow.PHOTO_WIDTH = 60
 dh.chatwindow.FLOAT_ADJUSTMENT = 3
+dh.chatwindow.MESSAGES_DIV_SIDE_PADDING = 2
 dh.chatwindow.MESSAGES_FONT_FAMILY = "Verdana, sans"  
 dh.chatwindow._messageList = new dh.chat.MessageList(
 	function(message, before) { dh.chatwindow._addMessage(message, before) },
@@ -135,6 +136,8 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     if ((messageFontStyle == dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE) && (textDiv.offsetWidth - textWidth <= textSidePadding))
         textDiv.style.paddingRight = (textSidePadding - (textDiv.offsetWidth - textWidth)) + "px"       
 		
+	var messageInput = document.getElementById("dhChatMessageInput")
+		
     if (message.userId == this._selfId) {   
         if (!message.userFirst) {
             // inline content that is next to the photo is offset to the right
@@ -143,12 +146,19 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
             // everything line up, we first set the margin to an initial value
             // that doesn't account for this 3 pixel offset. If we actually
             // end up with the inline content positioned where we asked for,
-            // then we must be past the end of the photo, so we set the margin
+            // than we must be past the end of the photo, so we set the margin
             // again to a value that explicitly includes the 3 pixel offset.
             // We use this.FLOAT_ADJUSTMENT to store the value of this 3 pixel
             // adjustment we need to make. 
+            // TODO: for some reason this trick has stopped working when messages
+            // are initially loaded, it still works when they are being typed in.
+            // This was not affected by the introduced side padding, as it is being
+            // taken into account.
             message.div.style.marginLeft = this.PHOTO_WIDTH + "px"
-            if (textDiv.offsetLeft == this.PHOTO_WIDTH) {
+            
+            messageInput.appendChild(document.createTextNode("hello!! " + textDiv.offsetLeft))            
+            
+            if (textDiv.offsetLeft == this.PHOTO_WIDTH + this.MESSAGES_DIV_SIDE_PADDING) {
                message.div.style.marginLeft = this.PHOTO_WIDTH + this.FLOAT_ADJUSTMENT  + "px"               
             }
         }
@@ -314,9 +324,9 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
     // it means that the old music selection was stopped
     var useOldMusicInfo = ((arrangementName == "") && (artist == "") && !musicPlaying)
     if (!musicPlaying) {
-        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOff.gif)"    
+        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOff_60.gif)"    
     } else {
-        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOn.gif)"
+        userDiv.style.backgroundImage = "url(/images2/personAreaNoteOn_60.gif)"
     }
    
     if (useOldMusicInfo) {
@@ -438,7 +448,9 @@ dh.chatwindow.resizeElements = function() {
     
     messagesDiv.style.width = ((width - 30) - peopleContainer.offsetWidth) + "px"
     messagesDiv.style.height = (bottomHeight - (messageInput.offsetHeight + 40)) + "px"
-    
+    messagesDiv.style.paddingLeft = this.MESSAGES_DIV_SIDE_PADDING 
+    messagesDiv.style.paddingRight = this.MESSAGES_DIV_SIDE_PADDING 
+     
     //_resizeMessage is the callback function that we want to be called for each message
     this._messageList.foreachMessage(function(message, before) { dh.chatwindow._resizeMessage(message, before) })
     // we want to have the old text area width available for resizing, so set the
@@ -494,8 +506,8 @@ dh.chatwindow._setTextAreaWidth = function(textAreaWidth) {
 }
 
 dh.chatwindow._calculateTextAreaWidth = function(messageDivWidth) {
-    // 40 is for the scroll bar and border
-    return messageDivWidth - this.PHOTO_WIDTH*2 - 40
+    // 37 is for the scroll bar and border
+    return messageDivWidth - this.PHOTO_WIDTH*2 - 37
 }
 
 dh.chatwindow.init = function() {

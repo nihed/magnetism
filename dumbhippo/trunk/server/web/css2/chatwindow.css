@@ -79,6 +79,7 @@ body {
 .dh-chat-person-name {
    background-color: transparent;
    color:            white;
+   font-size:        18px;
 }
 
 .dh-chat-person-name-inner {

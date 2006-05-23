@@ -82,8 +82,8 @@
 
 .dh-chat-person-name {
 	position:         absolute;
-	top:              8px;
-	left:             62px;
+	top:              10px;
+	left:             74px;
 }
 
 .dh-chat-person-name-inner {
@@ -93,25 +93,24 @@
 
 .dh-chat-person-arrangement-name {
 	position:         absolute;
-	top:              25px;
-	left:             79px;
-    
+	top:              37px;
+	left:             91px; 
 }
 
 .dh-chat-person-arrangement-name-inner {
 	position:         relative;
-	width:            96%; 
+	width:            95%; 
 }
 
 .dh-chat-person-artist {
 	position:         absolute;
-	top:              38px;
-	left:             79px; 
+	top:              50px;
+	left:             91px; 
 }
 
 .dh-chat-person-artist-inner {
 	position:         relative;
-	width:            96%; 
+	width:            95%; 
 }
 
 .dh-chat-message-user-first {
