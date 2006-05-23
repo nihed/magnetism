@@ -78,6 +78,7 @@ public class TrackSearchResult {
 	 * @return a list of TrackView objects; may have less than count items when no more
 	 *        are available. 
 	 */
+	@SuppressWarnings("unused") 	
 	public List<TrackView> getTracks(MusicSystem musicSystem, Viewpoint viewpoint, int start, int count) {
 		if (this.error != null)
 			return Collections.emptyList();
