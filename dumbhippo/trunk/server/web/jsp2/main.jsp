@@ -94,15 +94,15 @@
 		</td>
 		</tr>	
 		<tr>
-		<td>
+		<td class="dh-zone-box-footer">
 			<img src="/images2/bottom_link230.gif" class="dh-bottom-image"/>
 		</td>
 		<td></td>
-		<td>
+		<td class="dh-zone-box-footer">
 			<img src="/images2/bottom_music230.gif" class="dh-bottom-image"/>
 		</td>
 		<td></td>
-		<td>
+		<td class="dh-zone-box-footer">
 			<img src="/images2/bottom_tvparty230.gif" class="dh-bottom-image"/>
 		</td>
 		</tbody>
