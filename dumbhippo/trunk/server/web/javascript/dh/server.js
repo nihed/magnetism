@@ -49,7 +49,7 @@ dh.server.getXmlPOST = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "POST", "text/xml");
 }
 
-dh.server.doREST = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc) {
+dh.server.doXMLMethod = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc) {
 	dh.server.getXmlPOST(name, params, 
 		function(type, retDoc, http) {		
 			var respElt = retDoc.documentElement

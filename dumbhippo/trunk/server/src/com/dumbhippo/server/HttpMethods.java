@@ -97,7 +97,7 @@ public interface HttpMethods {
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email) throws IOException;
 
-	@HttpContentTypes(HttpResponseData.REST)
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "address" })
 	public void doSendLoginLinkEmail(Writer out, String address) throws IOException, HumanVisibleException;
 

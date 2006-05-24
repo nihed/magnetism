@@ -11,7 +11,7 @@ public enum HttpResponseData {
 	NONE(null),
 	TEXT("text/plain"),
 	XML("text/xml"),
-	REST("text/xml");	
+	XMLMETHOD("text/xml");	
 	
 	private String mimeType;
 	

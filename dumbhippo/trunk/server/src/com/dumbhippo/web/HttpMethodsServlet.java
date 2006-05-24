@@ -69,7 +69,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		if (methodCanReturnContent) {
 			toPassIn.add(out);
 			i += 1;
-			if (replyContentType != HttpResponseData.REST) {
+			if (replyContentType != HttpResponseData.XMLMETHOD) {
 				if (!(args.length > i && HttpResponseData.class.isAssignableFrom(args[i]))) {
 					throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg " + i);
 				}
@@ -220,9 +220,9 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 				boolean requestedContentTypeSupported = false;
 				for (HttpResponseData t : contentAnnotation.value()) {				
-					if (t.equals(HttpResponseData.REST)) {
+					if (t.equals(HttpResponseData.XMLMETHOD)) {
 						requestedContentTypeSupported = true;
-						requestedContentType = HttpResponseData.REST;
+						requestedContentType = HttpResponseData.XMLMETHOD;
 						break;
 					}
 				}
@@ -243,7 +243,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 				}
 
 				Object out;
-				if (requestedContentType.equals(HttpResponseData.REST)) {
+				if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
 					out = new StringWriter();
 				} else {
 					out = response.getOutputStream();
@@ -277,7 +277,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 					
 					if (cause instanceof HumanVisibleException) {
 						HumanVisibleException visibleException = (HumanVisibleException) cause;
-						if (requestedContentType.equals(HttpResponseData.REST)) {
+						if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
 							writeRestError(response.getOutputStream(), visibleException.getMessage());
 							trappedError = true;
 						} else {
@@ -294,7 +294,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 						sess.invalidate();	
 				}
 
-				if (requestedContentType.equals(HttpResponseData.REST) && !trappedError) {
+				if (requestedContentType.equals(HttpResponseData.XMLMETHOD) && !trappedError) {
 					StringWriter restStream = (StringWriter) out;
 					writeRestSuccess(response.getOutputStream(), restStream.toString());
 				}
