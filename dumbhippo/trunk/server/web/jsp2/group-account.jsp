@@ -66,7 +66,7 @@
 						<div>
 							<form enctype="multipart/form-data" action="${posturl}" method="post">
 								<input id='dhPictureEntry' type="file" name="photo"/>
-								<input type="hidden" name="groupId" value=""/>
+								<input type="hidden" name="groupId" value="${group.viewedGroupId}"/>
 								<input type="hidden" name="reloadTo" value="/group-account?group=${group.viewedGroupId}"/>
 							</form>
 						</div>
