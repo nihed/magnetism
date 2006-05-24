@@ -531,6 +531,7 @@ HippoChatRoomWrapper::notifyUserJoin(HippoPerson *user)
 
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(HIPPO_ENTITY(user)), -1);
     HippoBSTR guid = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(user)), -1);
+    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_small_photo_url(HIPPO_ENTITY(user)), -1);
 
     CONNECTDATA data;
     ULONG fetched;
@@ -544,8 +545,8 @@ HippoChatRoomWrapper::notifyUserJoin(HippoPerson *user)
             args[0].boolVal = state == HIPPO_CHAT_STATE_PARTICIPANT ? TRUE : FALSE;
             args[1].vt = VT_BSTR;
             args[1].bstrVal = name.m_str;
-            args[2].vt = VT_INT;
-            args[2].intVal = hippo_entity_get_version(HIPPO_ENTITY(user));
+            args[2].vt = VT_BSTR;
+            args[2].bstrVal = photoUrl.m_str;            
             args[3].vt = VT_BSTR;
             args[3].bstrVal = guid.m_str;
 
@@ -680,6 +681,7 @@ HippoChatRoomWrapper::notifyMessage(HippoChatMessage *message)
 
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(HIPPO_ENTITY(user)), -1);
     HippoBSTR guid = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(user)), -1);
+    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_small_photo_url(HIPPO_ENTITY(user)), -1);
     HippoBSTR text = HippoBSTR::fromUTF8(hippo_chat_message_get_text(message), -1);
 
     CONNECTDATA data;
@@ -698,8 +700,8 @@ HippoChatRoomWrapper::notifyMessage(HippoChatMessage *message)
             args[2].bstrVal = text.m_str;
             args[3].vt = VT_BSTR;
             args[3].bstrVal = name.m_str;
-            args[4].vt = VT_INT;
-            args[4].intVal = hippo_entity_get_version(HIPPO_ENTITY(user));
+            args[4].vt = VT_BSTR;
+            args[4].bstrVal = photoUrl.m_str;
             args[5].vt = VT_BSTR;
             args[5].bstrVal = guid.m_str;
 

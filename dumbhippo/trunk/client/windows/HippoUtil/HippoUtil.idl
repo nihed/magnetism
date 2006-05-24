@@ -75,15 +75,15 @@ library HippoUtil {
     interface IHippoChatRoomEvents : IDispatch
     {
         [helpstring("User joined the chat room")]
-        [id(HIPPO_DISPID_ONUSERJOIN)] HRESULT OnUserJoin([in] BSTR userId, [in] int version, [in] BSTR name, [in] BOOL partipant);
+        [id(HIPPO_DISPID_ONUSERJOIN)] HRESULT OnUserJoin([in] BSTR userId, [in] BSTR photoUrl, [in] BSTR name, [in] BOOL partipant);
         [helpstring("User left the chat room")]
         [id(HIPPO_DISPID_ONUSERLEAVE)] HRESULT OnUserLeave([in] BSTR userId);
         [helpstring("New message in the chat room")]
-        [id(HIPPO_DISPID_ONMESSAGE)] HRESULT OnMessage([in] BSTR userId, [in] int userVersion, [in] BSTR name, [in] BSTR message, [in] double timestamp, [in] int serial);
+        [id(HIPPO_DISPID_ONMESSAGE)] HRESULT OnMessage([in] BSTR userId, [in] BSTR photoUrl, [in] BSTR name, [in] BSTR message, [in] double timestamp, [in] int serial);
         [helpstring("Reconnect to the chatroom, clear existing state")]
         [id(HIPPO_DISPID_ONRECONNECT)] HRESULT OnReconnect();
         [helpstring("User's music changed")]
-        [id(HIPPO_DISPID_ONUSERMUSICCHANGE)] HRESULT OnUserMusicChange([in] BSTR userId, [in] BSTR arrangementName, [in] BSTR artist);
+        [id(HIPPO_DISPID_ONUSERMUSICCHANGE)] HRESULT OnUserMusicChange([in] BSTR userId, [in] BSTR arrangementName, [in] BSTR artist, [in] BOOL musicPlaying);
         }
     [
         uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal

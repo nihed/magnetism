@@ -2384,10 +2384,8 @@ parse_chat_user_info(HippoConnection *connection,
     }
 
     {
-        int version_int;
         HippoChatState status;
         gboolean music_playing_bool;
-        const char *version = lm_message_node_get_attribute(info_node, "version");
         const char *name = lm_message_node_get_attribute(info_node, "name");
         const char *small_photo_url = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
         const char *role = lm_message_node_get_attribute(info_node, "role");
@@ -2396,12 +2394,11 @@ parse_chat_user_info(HippoConnection *connection,
         const char *artist = lm_message_node_get_attribute(info_node, "artist");
         const char *music_playing = lm_message_node_get_attribute(info_node, "musicPlaying");
 
-        if (!version || !name) {
-            g_warning("userInfo node without name and version");
+        if (!name) {
+            g_warning("userInfo node without name");
             return FALSE;
         }        
 
-        version_int = atoi(version);
         music_playing_bool = music_playing ? g_ascii_strcasecmp(music_playing, "TRUE") == 0 : FALSE;
         
         if (!role)
@@ -2412,7 +2409,6 @@ parse_chat_user_info(HippoConnection *connection,
         *status_p = status;
         *newly_joined_p = old_role && strcmp(old_role, "nonmember") == 0;
     
-        hippo_entity_set_version(HIPPO_ENTITY(person), version_int);
         hippo_entity_set_name(HIPPO_ENTITY(person), name);
         hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
         hippo_person_set_current_song(person, arrangement_name);
@@ -2428,7 +2424,6 @@ parse_chat_message_info(HippoConnection  *connection,
                         LmMessageNode    *parent,
                         HippoPerson      *sender,
                         const char       *text,
-                        int              *version_p,
                         const char      **name_p,
                         const char      **small_photo_url_p)
 {
@@ -2441,7 +2436,6 @@ parse_chat_message_info(HippoConnection  *connection,
     }
 
     {
-        const char *version_str = lm_message_node_get_attribute(info_node, "version");
         const char *name_str = lm_message_node_get_attribute(info_node, "name");
         const char *small_photo_url_str = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
         const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
@@ -2449,12 +2443,11 @@ parse_chat_message_info(HippoConnection  *connection,
         GTime timestamp;
         int serial;
 
-        if (!version_str || !name_str || !timestamp_str || !serial_str || !small_photo_url_str) {
+        if (!name_str || !timestamp_str || !serial_str || !small_photo_url_str) {
             g_debug("messageInfo node without all fields");
             return NULL;
         }
 
-        *version_p = atoi(version_str);
         *name_p = name_str;
         *small_photo_url_p = small_photo_url_str;
 
@@ -2474,7 +2467,6 @@ process_room_chat_message(HippoConnection *connection,
 {
     const char *text;
     LmMessageNode *body_node;
-    int version;
     const char *name;
     const char *photo_url;
     HippoChatMessage *chat_message;
@@ -2494,12 +2486,11 @@ process_room_chat_message(HippoConnection *connection,
     sender = hippo_data_cache_ensure_bare_entity(connection->cache, HIPPO_ENTITY_PERSON, user_id);
 
     chat_message = parse_chat_message_info(connection, message->node, HIPPO_PERSON(sender),
-                                           text, &version, &name, &photo_url);
+                                           text, &name, &photo_url);
     if (chat_message == NULL)
         return;
 
     /* update new info about the user */
-    hippo_entity_set_version(sender, version);
     hippo_entity_set_name(sender, name);
     hippo_entity_set_small_photo_url(sender, photo_url);
 

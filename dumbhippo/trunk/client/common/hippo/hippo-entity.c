@@ -18,7 +18,6 @@ static int signals[LAST_SIGNAL];
 static void
 hippo_entity_init(HippoEntity *entity)
 {
-    entity->version = -1;
 }
 
 static void
@@ -125,13 +124,6 @@ hippo_entity_get_small_photo_url(HippoEntity    *entity)
     return entity->small_photo_url;
 }
 
-int
-hippo_entity_get_version(HippoEntity    *entity)
-{
-    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), -1);
-    return entity->version;
-}
-
 void
 hippo_entity_set_name(HippoEntity    *entity,
                       const char     *name)
@@ -147,15 +139,4 @@ hippo_entity_set_small_photo_url(HippoEntity    *entity,
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
     hippo_entity_set_string(entity, &entity->small_photo_url, url);
-}
-
-void
-hippo_entity_set_version(HippoEntity    *entity,
-                         int             version)
-{
-    g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    if (version != entity->version) {
-        entity->version = version;
-        hippo_entity_emit_changed(entity);
-    }
 }
