@@ -29,15 +29,15 @@ public class GroupEventProcessor implements LiveEventProcessor {
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		GroupEvent event = (GroupEvent)abstractEvent;
 		LiveGroup liveGroup = state.peekLiveGroup(event.getGroupId());
-		if (liveGroup == null)
-			return;
 		if (event.getEvent() == GroupEvent.Type.MEMBERSHIP_CHANGE) {
-			groupUpdater.groupMemberCountChanged(liveGroup);
+			if (liveGroup != null)
+				groupUpdater.groupMemberCountChanged(liveGroup);
 			LiveUser liveUser = state.peekLiveUser(event.getResourceId());
 			if (liveUser != null)
 				userUpdater.handleGroupMembershipChanged(liveUser);
 		} else if (event.getEvent() == GroupEvent.Type.POST_ADDED) {
-			groupUpdater.groupPostReceived(liveGroup);
+			if (liveGroup != null)
+				groupUpdater.groupPostReceived(liveGroup);
 		}
 	}
 }
