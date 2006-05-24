@@ -41,9 +41,7 @@
                 <c:otherwise>
                     There were no matching results.
                 </c:otherwise>
-            </c:choose>    
-            <dht:zoneBoxSeparator/>
-            <dht:webServicesAttributions/>            
+            </c:choose>        
         </dht:zoneBoxArtists>
 	</dht:contentColumn>
 </dht:twoColumnPage>
