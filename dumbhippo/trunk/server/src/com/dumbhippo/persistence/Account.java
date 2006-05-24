@@ -107,9 +107,10 @@ public class Account extends Resource {
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
-		musicSharingEnabled = false;
 		musicSharingPrimed = false;
-		
+		// Do not initialize musicSharingEnabled here, keep it null intil the
+		// user sets it one way or another.
+
 		if (owner != null) {
 			this.owner = owner;
 			owner.setAccount(this);
