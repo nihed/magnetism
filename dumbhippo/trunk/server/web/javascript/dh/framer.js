@@ -17,8 +17,8 @@ dh.framer._visitorList = new dh.chat.UserList(
 	function(user) { dh.framer._removeUser(user, false) })
 
 // Add a user to the list of current users
-dh.framer.onUserJoin = function(userId, version, name, participant) {
-	var user = new dh.chat.User(userId, version, name)
+dh.framer.onUserJoin = function(userId, photoUrl, name, participant) {
+	var user = new dh.chat.User(userId, photoUrl, name)
 	if (participant) {
 		this._visitorList.userLeave(userId)
 		this._participantList.userJoin(user)
@@ -35,8 +35,8 @@ dh.framer.onUserLeave = function(userId) {
 }
 
 // Add a message to the message area
-dh.framer.onMessage = function(userId, version, name, text, timestamp, serial) {
-	var message = new dh.chat.Message(userId, version, name, text, timestamp, serial)
+dh.framer.onMessage = function(userId, photoUrl, name, text, timestamp, serial) {
+	var message = new dh.chat.Message(userId, photoUrl, name, text, timestamp, serial)
 	this._messageList.addMessage(message)
 }
 

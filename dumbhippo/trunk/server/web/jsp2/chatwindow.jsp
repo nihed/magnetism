@@ -26,14 +26,14 @@
    	dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
 	</script>
 	<dht:chatControl userId="${chatwindow.signin.userId}" chatId="${chatwindow.chatId}"/>
-	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
-		dh.chatwindow.onUserJoin(userId, version, name, participant)
+	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, photoUrl, name, participant)">
+		dh.chatwindow.onUserJoin(userId, photoUrl, name, participant)
 	</script>
 	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
 		dh.chatwindow.onUserLeave(userId)
 	</script>
-	<script for="dhChatControl" language="javascript" event="OnMessage(userId, version, name, text, timestamp, serial)">
-		dh.chatwindow.onMessage(userId, version, name, text, timestamp, serial)
+	<script for="dhChatControl" language="javascript" event="OnMessage(userId, photoUrl, name, text, timestamp, serial)">
+		dh.chatwindow.onMessage(userId, photoUrl, name, text, timestamp, serial)
 	</script>
 	<script for="dhChatControl" language="javascript" event="OnReconnect()">
 		dh.chatwindow.onReconnect()

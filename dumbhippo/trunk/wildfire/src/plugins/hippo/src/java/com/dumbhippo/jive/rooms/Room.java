@@ -46,14 +46,12 @@ public class Room {
 		private String arrangementName;
 		private String artist;
 		private boolean musicPlaying;
-		private int version;
 		private int participantCount;
 		private int presentCount;
 		
 		
-		public UserInfo(String username, int version, String name, String smallPhotoUrl) {
+		public UserInfo(String username, String name, String smallPhotoUrl) {
 			this.username = username;
-			this.version = version;
 			this.name = name;
 			this.smallPhotoUrl = smallPhotoUrl;			
 			this.arrangementName = "";
@@ -63,10 +61,6 @@ public class Room {
 		
 		public String getUsername() {
 			return username;
-		}
-		
-		public int getVersion() {
-			return version;
 		}
 		
 		public String getName() {
@@ -211,7 +205,7 @@ public class Room {
 		if (!userInfoCache.containsKey(username)) {
 			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);
-			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getVersion(), user.getName(), user.getSmallPhotoUrl()));			
+			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl()));			
 		}
 		return userInfoCache.get(username);
 	}
@@ -345,7 +339,6 @@ public class Room {
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
-		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("role", roleString(userInfo.getStatus()));
 		if (oldStatus != null) {
 			info.addAttribute("oldRole", roleString(oldStatus));
@@ -523,7 +516,6 @@ public class Room {
 		Element info = messageElement.addElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
-		info.addAttribute("version", Integer.toString(userInfo.getVersion()));
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 

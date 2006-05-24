@@ -21,17 +21,16 @@ dh.chatwindow._userList = new dh.chat.UserList(
 	function(user, before) { dh.chatwindow._addUser(user, before) },
 	function(user) { dh.chatwindow._removeUser(user) })
     
-dh.chatwindow._createHeadShot = function(userId, version) {
-    var url = "/files/headshots/" + dh.chatwindow.PHOTO_WIDTH + "/" + userId + "?v=" + version
-    return dh.util.createPngElement(url, dh.chatwindow.PHOTO_WIDTH, dh.chatwindow.PHOTO_WIDTH)
+dh.chatwindow._createHeadShot = function(photoUrl) {
+    return dh.util.createPngElement(photoUrl, dh.chatwindow.PHOTO_WIDTH, dh.chatwindow.PHOTO_WIDTH)
 }
 
 // Add a user to the list of current users
-dh.chatwindow.onUserJoin = function(userId, version, name, participant) {
+dh.chatwindow.onUserJoin = function(userId, photoUrl, name, participant) {
 	if (!participant)
 		return;
 	
-	var user = new dh.chat.User(userId, version, name)
+	var user = new dh.chat.User(userId, photoUrl, name)
 	this._userList.userJoin(user)
 }
 
@@ -40,8 +39,8 @@ dh.chatwindow.onUserLeave = function(userId) {
 }
 
 // Add a message to the message area
-dh.chatwindow.onMessage = function(userId, version, name, text, timestamp, serial) {
-	var message = new dh.chat.Message(userId, version, name, text, timestamp, serial)
+dh.chatwindow.onMessage = function(userId, photoUrl, name, text, timestamp, serial) {
+	var message = new dh.chat.Message(userId, photoUrl, name, text, timestamp, serial)
 	this._messageList.addMessage(message)
 }
 
@@ -82,7 +81,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
 	else
         message.div.className += " dh-chat-message-user-repeat"
     
-    var image = this._createHeadShot(message.userId, message.version)
+    var image = this._createHeadShot(message.photoUrl)
     image.className = "dh-chat-message-image"
     image.title = message.name
     var userUrl = "/person?who=" + message.userId
@@ -287,7 +286,7 @@ dh.chatwindow._addUser = function(user, before) {
 
     var userUrl = "/person?who=" + user.userId
     
-    var image = this._createHeadShot(user.userId, user.version)        
+    var image = this._createHeadShot(user.photoUrl)        
     image.className = "dh-chat-person-image"
     image.title = user.name
     var linkElement = dh.util.createLinkElementWithChild(userUrl, image)

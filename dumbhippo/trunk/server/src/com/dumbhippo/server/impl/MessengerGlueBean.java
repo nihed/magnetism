@@ -324,7 +324,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	private ChatRoomUser newChatRoomUser(User user) {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
-				user.getVersion(), user.getNickname(), user.getPhotoUrl60());
+				                user.getNickname(), user.getPhotoUrl60());
 	}
 	
 	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {

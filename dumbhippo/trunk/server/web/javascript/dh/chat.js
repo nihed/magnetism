@@ -3,9 +3,9 @@ dojo.provide("dh.chat")
 dh.chat.MESSAGE_FONT_STYLE = "normal" 
 dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE = "italic"  
 
-dh.chat.Message = function(userId, version, name, text, timestamp, serial) {
+dh.chat.Message = function(userId, photoUrl, name, text, timestamp, serial) {
 	this.userId = userId 
-	this.version = version
+	this.photoUrl = photoUrl
 	this.name = name
 	this.text = text
 	this.timestamp = timestamp
@@ -113,9 +113,9 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 	}
 }
 
-dh.chat.User = function(userId, version, name) {
+dh.chat.User = function(userId, photoUrl, name) {
 	this.userId = userId 
-	this.version = version
+	this.photoUrl = photoUrl
 	this.name = name
 }
 
