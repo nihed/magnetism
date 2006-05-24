@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.net.MalformedURLException;
 
 import javax.ejb.Local;
@@ -96,9 +97,9 @@ public interface HttpMethods {
 	@HttpParams( { "email" })
 	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email) throws IOException;
 
-	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpContentTypes(HttpResponseData.REST)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkEmail(String address) throws IOException, HumanVisibleException;
+	public void doSendLoginLinkEmail(Writer out, String address) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })

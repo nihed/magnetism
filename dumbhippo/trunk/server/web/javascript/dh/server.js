@@ -49,6 +49,34 @@ dh.server.getXmlPOST = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "POST", "text/xml");
 }
 
+dh.server.doREST = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc) {
+	dh.server.getXmlPOST(name, params, 
+		function(type, retDoc, http) {		
+			var respElt = retDoc.documentElement
+			var stat = respElt.getAttribute("stat")
+			if (stat == "ok") {
+				loadFunc(respElt.childNodes, http)
+			} else {
+				var code = null
+				var msg = null
+				for (var i = 0; i < respElt.childNodes.length; ++i) {
+					var kid = respElt.childNodes.item(i)
+					if (kid.nodeName == "err") {
+						code = kid.getAttribute("code")
+						msg = kid.getAttribute("msg")
+						break
+					}
+				}
+				if (!msg) {
+					code = "red"
+					msg = "Unknown problem"		
+				}
+				normalErrorFunc(code, msg, http)					
+			}
+		},
+		serverErrorFunc);
+}
+
 // a POST with no expected data back, it just does some operation
 dh.server.doPOST = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "POST", null);

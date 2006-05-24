@@ -2,6 +2,8 @@ package com.dumbhippo.web;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -15,6 +17,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
@@ -49,7 +53,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		return new String[] { ret[1], ret[2] };
 	}
 	
-	private Object[] marshalHttpRequestParams(HttpServletRequest request, OutputStream out,
+	private Object[] marshalHttpRequestParams(HttpServletRequest request, Object out,
 			HttpResponseData replyContentType, HttpParams paramsAnnotation, HttpOptions optionsAnnotation,
 			Method m) throws HttpException {
 		Class<?> args[] = m.getParameterTypes();
@@ -58,18 +62,22 @@ public class HttpMethodsServlet extends AbstractServlet {
 		
 		int i = 0;
 				
-		boolean methodCanReturnContent = args.length > i && OutputStream.class.isAssignableFrom(args[i]);
+		boolean methodCanReturnContent = args.length > i 
+						&& (OutputStream.class.isAssignableFrom(args[i])
+								|| Writer.class.isAssignableFrom(args[i]));
 		
 		if (methodCanReturnContent) {
 			toPassIn.add(out);
 			i += 1;
-			if (!(args.length > i && HttpResponseData.class.isAssignableFrom(args[i]))) {
-				throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg " + i);
+			if (replyContentType != HttpResponseData.REST) {
+				if (!(args.length > i && HttpResponseData.class.isAssignableFrom(args[i]))) {
+					throw new RuntimeException("HTTP method " + m.getName() + " must have HttpResponseData contentType as arg " + i);
+				}
+				toPassIn.add(replyContentType);
+				i += 1;
 			}
-			toPassIn.add(replyContentType);
-			i += 1;
 		} else if (replyContentType != HttpResponseData.NONE) {
-			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream as arg " + i + " to return type " + replyContentType);
+			throw new RuntimeException("HTTP method " + m.getName() + " must have OutputStream or Writer as arg " + i + " to return type " + replyContentType);
 		}
 		
 		if (args.length > i && UserViewpoint.class.isAssignableFrom(args[i])) {
@@ -122,6 +130,28 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 		
 		return toPassIn.toArray();
+	}
+
+	private void writeRestSuccess(OutputStream out, String innerXml) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("rsp", "stat", "ok");
+		xml.append(innerXml);
+		xml.closeElement();
+		out.write(StringUtils.getBytes(xml.toString()));
+	}
+	
+	private void writeRestError(OutputStream out, String code, String message) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement("rsp", "stat", "fail");
+		xml.appendTextNode("err", "", "code", code, "msg", message);
+		xml.closeElement();
+		out.write(StringUtils.getBytes(xml.toString()));
+	}	
+	
+	private void writeRestError(OutputStream out, String message) throws IOException {
+		writeRestError(out, "red", message);
 	}
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
@@ -189,10 +219,21 @@ public class HttpMethodsServlet extends AbstractServlet {
 							+ m.getReturnType().getCanonicalName());
 
 				boolean requestedContentTypeSupported = false;
-				for (HttpResponseData t : contentAnnotation.value()) {
-					if (t == requestedContentType) {
+				for (HttpResponseData t : contentAnnotation.value()) {				
+					if (t.equals(HttpResponseData.REST)) {
 						requestedContentTypeSupported = true;
+						requestedContentType = HttpResponseData.REST;
 						break;
+					}
+				}
+				if (!requestedContentTypeSupported) {
+					for (HttpResponseData t : contentAnnotation.value()) {
+						// For REST methods, we skip this check versus the
+						// default requested content type of NONE
+						if (t == requestedContentType) {
+							requestedContentTypeSupported = true;
+							break;
+						}
 					}
 				}
 
@@ -201,13 +242,19 @@ public class HttpMethodsServlet extends AbstractServlet {
 							+ requestedContentType + " valid types for method are " + contentAnnotation.value());
 				}
 
-				OutputStream out = response.getOutputStream();
+				Object out;
+				if (requestedContentType.equals(HttpResponseData.REST)) {
+					out = new StringWriter();
+				} else {
+					out = response.getOutputStream();
+				}
 				Object[] methodArgs = marshalHttpRequestParams(request, out, requestedContentType,
 						paramsAnnotation, optionsAnnotation, m);
 
 				if (requestedContentType != HttpResponseData.NONE)
 					response.setContentType(requestedContentType.getMimeType());
 
+				boolean trappedError = false;
 				try {
 					if (logger.isDebugEnabled()) {
 						String showArgs = Arrays.toString(methodArgs);
@@ -229,7 +276,13 @@ public class HttpMethodsServlet extends AbstractServlet {
 					logger.error("Exception root cause " + rootCause.getClass().getName() + " thrown by invoked method: " + rootCause.getMessage(), rootCause);
 					
 					if (cause instanceof HumanVisibleException) {
-						throw (HumanVisibleException) cause;
+						HumanVisibleException visibleException = (HumanVisibleException) cause;
+						if (requestedContentType.equals(HttpResponseData.REST)) {
+							writeRestError(response.getOutputStream(), visibleException.getMessage());
+							trappedError = true;
+						} else {
+							throw visibleException;
+						}
 					} else {
 						throw new RuntimeException(e);
 					}
@@ -241,7 +294,12 @@ public class HttpMethodsServlet extends AbstractServlet {
 						sess.invalidate();	
 				}
 
-				out.flush();
+				if (requestedContentType.equals(HttpResponseData.REST) && !trappedError) {
+					StringWriter restStream = (StringWriter) out;
+					writeRestSuccess(response.getOutputStream(), restStream.toString());
+				}
+				
+				response.getOutputStream().flush();
 
 				logger.debug("Reply for {} sent", m.getName());
 		

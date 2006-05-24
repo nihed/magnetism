@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -460,8 +461,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doSendLoginLinkEmail(String address) throws IOException,
-			HumanVisibleException {
+	public void doSendLoginLinkEmail(Writer out, String address) throws IOException, HumanVisibleException {
 		signinSystem.sendSigninLink(address);
 	}
 

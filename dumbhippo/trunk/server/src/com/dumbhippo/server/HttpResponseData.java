@@ -10,7 +10,8 @@ package com.dumbhippo.server;
 public enum HttpResponseData {
 	NONE(null),
 	TEXT("text/plain"),
-	XML("text/xml");
+	XML("text/xml"),
+	REST("text/xml");	
 	
 	private String mimeType;
 	

@@ -19,7 +19,7 @@
 		<form id="dhLoginNoPasswordForm" name="dhLoginNoPasswordForm" action="/signinpost" method="post">				
 			<table id="dhLoginNoPassword" width="100%" cellspacing="0px" cellpadding="0px">
 				<tr><td class="dh-login-type-header">Log in without password</td></tr>
-				<tr><td><div id="dhLoginSuccessful" class="dh-login-text" style="display: none;">Login link sent! Check your email or AIM.</div></td></tr>
+				<tr><td><div id="dhLoginNotification" class="dh-login-text" style="display: none;"></div></td></tr>
 				<tr><td class="dh-login-text">Email address or AIM:</td></tr>
 				<tr><td><input type="text" class="dh-text-input" name="address"/></td></tr>
 				<tr><td><input id="dhSendLinkButton" type="submit" value="Send me a sign-in link" name="sendlink"
