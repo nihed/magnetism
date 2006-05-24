@@ -10,6 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -35,6 +38,8 @@ import com.dumbhippo.persistence.VersionedEntity;
  * PersonView primarily in not being a session bean.
  */
 public class PersonView extends EntityView {
+	private final static Logger logger = GlobalSetup.getLogger(PersonView.class);
+	
 	public static final int MAX_SHORT_NAME_LENGTH = 15;
 	
 	private Contact contact;
@@ -638,7 +643,7 @@ public class PersonView extends EntityView {
 	
 	/**
 	 * This method returns the identifying Guid of the person or
-	 * resource being viewed.
+	 * resource being viewed, see toIdentifyingXml
 	 * 
 	 * @return an identifying Guid
 	 */
@@ -648,8 +653,21 @@ public class PersonView extends EntityView {
 			return user.getGuid();
 		} else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
 			return getPrimaryResource().getGuid();
-		} else {
+		} else if (fallbackIdentifyingGuid != null){
 			return fallbackIdentifyingGuid;
+		} else {
+			/* FIXME this is really not supposed to happen; it happens when 
+			 * someone's own contact has no associated resources, in which case
+			 * IdentitySpiderBean doesn't set a fallbackIdentifyingGuid
+			 * 
+			 * This avoids a crash on hashCode(), but probably has other issues
+			 * (e.g. toIdentifyingXml() still doesn't work) and so needs a better
+			 * fix of some kind ... not sure I grok it fully
+			 */
+			logger.warn("PersonView with no fallback {}", this);
+			if (contact == null)
+				throw new RuntimeException("No guid whatsoever on personview, " + this);
+			return contact.getGuid();
 		}
 	}
 
@@ -727,4 +745,6 @@ public class PersonView extends EntityView {
 	public void setViewOfSelf(boolean viewOfSelf) {
 		this.viewOfSelf = viewOfSelf;
 	}
+	
+	
 }

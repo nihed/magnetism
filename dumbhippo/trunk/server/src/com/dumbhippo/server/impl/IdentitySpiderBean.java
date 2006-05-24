@@ -377,6 +377,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					pv.setFallbackIdentifyingGuid(emailGuid);
 				else if (anyGuid != null)
 					pv.setFallbackIdentifyingGuid(anyGuid);
+				else
+					logger.warn("No fallback identifying guid for {}", contact);
 				
 				// don't disclose
 				contactResources = null;
@@ -581,6 +583,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	private Contact doCreateContact(User user, Resource resource) {
+		
+		logger.debug("Creating contact for user {} with resource {}", user, resource);
+		
 		Account account = user.getAccount();
 		Contact contact = new Contact(account);
 
