@@ -50,7 +50,7 @@ public class Post extends GuidPersistable {
 	
 	private void initMissing() {
 		if (visibility == null)
-			visibility = PostVisibility.ANONYMOUSLY_PUBLIC;
+			visibility = PostVisibility.RECIPIENTS_ONLY;
 		if (personRecipients == null)
 			personRecipients = new HashSet<Resource>();
 		if (groupRecipients == null)

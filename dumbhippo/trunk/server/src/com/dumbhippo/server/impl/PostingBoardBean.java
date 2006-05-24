@@ -298,7 +298,7 @@ public class PostingBoardBean implements PostingBoard {
 		if (title == null)
 			title = group.getName();
 			
-		PostVisibility visibility = group.getAccess() == GroupAccess.SECRET ? PostVisibility.RECIPIENTS_ONLY : PostVisibility.ANONYMOUSLY_PUBLIC;
+		PostVisibility visibility = PostVisibility.RECIPIENTS_ONLY;
 		
 		ShareGroupPostInfo postInfo = PostInfo.newInstance(PostInfoType.SHARE_GROUP, ShareGroupPostInfo.class);
 		postInfo.getTree().updateContentChild(group.getId(), NodeName.shareGroup, NodeName.groupId);
