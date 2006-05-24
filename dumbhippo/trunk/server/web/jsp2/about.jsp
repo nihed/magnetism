@@ -11,7 +11,7 @@
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/header_aboutus500.gif" fullHeader="true">
 
-	<p>Mugshot is an open project for building a live social experience around entertainment.</p>
+	<p>Mugshot is an open project to create a live social experience around entertainment.</p>
 
     <p>Mugshot makes it easy to <a href="/links-learnmore">share web pages</a> and 
     <a href="/radar-learnmore">show off your music tastes</a>.
