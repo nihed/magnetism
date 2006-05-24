@@ -3,6 +3,7 @@ dojo.require("dh.server")
 dojo.require("dh.formtable")
 dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
+dojo.require("dh.fileinput")
 dojo.require("dojo.dom")
 
 dh.groupaccount.showMessage = function(message) {
@@ -102,6 +103,9 @@ dhGroupAccountInit = function() {
 			{ "groupId" : dh.groupaccount.groupId },
 			dh.groupaccount.updateDescription);
 	}
+
+	// add some event handlers on the file input (onchange)
+	new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 	
 	dh.photochooser.init("group", dh.groupaccount.groupId)
 }
