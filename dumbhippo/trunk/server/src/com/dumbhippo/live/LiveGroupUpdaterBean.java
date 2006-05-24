@@ -47,14 +47,14 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 	public void groupPostReceived(LiveGroup liveGroup) {
 		LiveState state = LiveState.getInstance();
 		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		initializeTotalReceivedPosts(liveGroup, loadGroup(liveGroup));
+		initializeTotalReceivedPosts(newGroup, loadGroup(newGroup));
 		state.updateLiveGroup(newGroup);		
 	}
 
 	public void groupMemberCountChanged(LiveGroup liveGroup) {
 		LiveState state = LiveState.getInstance();
 		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		initializeMemberCount(liveGroup, loadGroup(liveGroup));
+		initializeMemberCount(newGroup, loadGroup(newGroup));
 		state.updateLiveGroup(newGroup);				
 	}
 }
