@@ -19,12 +19,12 @@
 	<c:choose>
 		<c:when test="${browser.gecko}">
 			<dht:sidebarBoxControls title="FIREFOX CONTROLS">
-				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Mozilla Firefox Browser">Bookmark Page</dht:actionLink>
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Mozilla Firefox Browser">Add Mugshot to Firefox!</dht:actionLink>
 			</dht:sidebarBoxControls>
 		</c:when>
 		<c:when test="${browser.khtml}">
 			<dht:sidebarBoxControls title="SAFARI CONTROLS">
-				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Safari Browser">Bookmark Page</dht:actionLink>
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Safari Browser">Add Mugshot to Safari!</dht:actionLink>
 			</dht:sidebarBoxControls>
 		</c:when>
 	</c:choose>
