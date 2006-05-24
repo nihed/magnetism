@@ -537,13 +537,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		List<YahooSongResult> newResults = ws.lookupSong(track.getArtist(), track.getAlbum(), track.getName(),
 				track.getDuration(), track.getTrackNumber());
 		
-		// Track can be detached if we are calling this from YahooSongTask's
-		// call() method which is executed in a separate thread, and thus
-		// with a new session.
-		if (!em.contains(track)) {
-			track = em.find(Track.class, track.getId()); // reattach
-		} 
-		
 		logger.debug("New Yahoo song results from web service for track {}: {}", track, newResults);
 		logger.debug("Old results: {}", oldResults);		
 		// Match new results to old results with same song id, updating the old row.
@@ -650,6 +643,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			logger.debug("Track {} missing artist album or name, can't get yahoo stuff", track);
 			return Collections.emptyList();
 		}
+		
+		// Track can be detached if we are calling this from YahooSongTask's
+		// call() method or from getTrackView() that was called asynchronously, and thus
+		// the track we get passed in belongs to a different session.
+		if (!em.contains(track)) {
+			track = em.find(Track.class, track.getId()); // attach the track to this sesssion
+		} 
 		
 		List<YahooSongResult> results = new ArrayList<YahooSongResult>();
 	    results.addAll(track.getYahooSongResults());
