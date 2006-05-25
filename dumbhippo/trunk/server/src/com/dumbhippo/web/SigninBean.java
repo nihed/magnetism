@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
@@ -44,7 +46,7 @@ public abstract class SigninBean  {
 		
 		if (result == null) {
 			Guid userGuid = null;
-			User user = null;
+			Account account = null;
 			
 			// We can't cache the User or Account objects in session scope since we won't notice if 
 			// there are changes to them. So we cache SigninBean only with request scope and put 
@@ -54,26 +56,32 @@ public abstract class SigninBean  {
 					
 			if (userGuid == null) {
 				try {
-					user = CookieAuthentication.authenticate(request);
-					userGuid = user.getGuid();
+					account = CookieAuthentication.authenticate(request);
+					userGuid = account.getOwner().getGuid();
 					request.getSession().setAttribute(USER_ID_KEY, userGuid);
-					logger.debug("storing authenticated user {} in session", user);
+					logger.debug("storing authenticated user {} in session", account.getOwner());
 				} catch (BadTastingException e) {
 					logger.warn("Cookie was malformed", e);
 					userGuid = null;
-					user = null;
 				} catch (NotLoggedInException e) {
 					logger.debug("Cookie not valid: {}", e.getMessage());
 					userGuid = null;
-					user = null;
 				}
 			} else {
-				logger.debug("loaded authenticated user ID {} from session", userGuid);
+				AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
+				try {
+					account = accountSystem.lookupAccountByOwnerId(userGuid);
+				} catch (NotFoundException e) {
+					logger.warn("Couldn't load account for stored authenticated user");
+				}
 			}
 			
-			if (userGuid != null)
-				result = new UserSigninBean(userGuid, user);
-			else
+			if (account != null) {
+				if (!account.getHasAcceptedTerms() || account.isDisabled())
+					result = new DisabledSigninBean(account);
+				else
+					result = new UserSigninBean(account);
+			} else
 				result = new AnonymousSigninBean();
 
 			logger.debug("storing SigninBean on request, valid = {}", result.isValid());
@@ -134,6 +142,8 @@ public abstract class SigninBean  {
 	}
 	
 	public abstract boolean isValid();
+	public abstract boolean getNeedsTermsOfUse();
+	
 	public abstract Viewpoint getViewpoint();
 	
 	/**

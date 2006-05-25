@@ -1,53 +1,32 @@
 dojo.provide("dh.download")
 
-dojo.require("dojo.string")
+dojo.require("dojo.render")
 dojo.require("dh.server")
 
-dh.download.nameNow = false
-
-dh.download.onNowSelected = function() {
-	dh.download.nameNow = true
-	dh.download.updateDownload()
-}
-
-dh.download.onLaterSelected = function() {
-	dh.download.nameNow = false
-	dh.download.updateDownload()
-}
-
 dh.download.updateDownload = function() {
-	var mySpaceDownload = document.getElementById("dhMySpaceDownload")
-	var mySpaceName = document.getElementById("dhMySpaceName")
+	var acceptedTerms = document.getElementById("dhAcceptTerms").checked
 
-	mySpaceName.disabled = !dh.download.nameNow
-	mySpaceDownload.disabled = dh.download.nameNow && dojo.string.trim(mySpaceName.value).length == 0
+	var className = acceptedTerms ? "dh-download-product" : "dh-download-product dh-download-product-disabled"
+	document.getElementById("dhDownloadProduct").className = className
 }
 
 dh.download.doDownload = function(url) {
-	var mySpaceName = document.getElementById("dhMySpaceName")
-	var name = dojo.string.trim(mySpaceName.value)
+	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked)
+		return
 
-	window.open(url, "_self")	
-	if (dh.download.nameNow) {
-		dh.server.doPOST("setmyspacename",
-						{ 
-							"name" : name
-						},
+	window.open(url, "_self")
+	if (dh.download.needTermsOfUse) {
+		dh.server.doPOST("acceptterms",
+						{},
 						function(type, data, http) {
 						},
 						function(type, error, http) {
-							alert("Oops! Couldn't set your myspace name, please try again later");
+							alert("Oops! Error accepting the terms of use agreement");
 						});
 	}
 }
 
 dh.download.init = function() {
-	// this node only exists if coming from myspace stuff
-	var myspaceNowNode = document.getElementById("dhMySpaceRadioNow")
-	if (myspaceNowNode) {
-		dh.download.nameNow = myspaceNowNode.checked
-		dh.download.updateDownload()
-	}
+	document.getElementById("dhAcceptTerms").checked = false
+	dh.download.updateDownload()
 }
-
-dojo.event.connect(dojo, "loaded", function () { dh.download.init() })

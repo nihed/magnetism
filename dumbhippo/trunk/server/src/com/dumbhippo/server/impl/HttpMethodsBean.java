@@ -941,4 +941,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(StringUtils.getBytes(url));
 		out.flush();
 	}
+	
+	public void doAcceptTerms(UserViewpoint viewpoint) {
+		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
+	}
 }

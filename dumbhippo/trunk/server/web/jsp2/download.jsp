@@ -10,17 +10,31 @@
 	<link rel="stylesheet" type="text/css" href="/css2/download.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
+	<script type="text/javascript">
+		dojo.require("dh.download");
+		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
+		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })
+	</script>
 </head>
 
 <dht:body>
 	<img src="/images2/mugshot_tagline.gif"/>
 	<div class="dh-special-subtitle"><c:if test="${browser.linuxRequested}">A Linux user! </c:if>Thanks for trying us out!  Here's how to start using our tools...</div>
 	<table cellspacing="15px" cellpadding="0" align="center">
+	<c:if test="${signin.needsTermsOfUse}">
+		<tr>
+		<td align="center" colspan="5">
+			<input type="checkbox" id="dhAcceptTerms" onchange="dh.download.updateDownload();">
+				I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
+			</input>
+		</td>
+		</tr>
+	</c:if>
 	<tr valign="top">
 	<td>
 		<table cellspacing="0" cellpadding="0">
 			<tr><td><img id="dhDownloadImg" src="/images2/buzzer63x58.gif"/></td>
-			<td class="dh-download-instructions">1. <a class="dh-download-product" href="${welcome.downloadUrl}">Click here to download</a>.<br/>
+			<td class="dh-download-instructions">1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a>.<br/>
 			    The software will install automatically.</td>
 			</tr>
 		</table>

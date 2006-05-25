@@ -106,7 +106,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
 		return EJBUtil.lookupGuid(em, klass, id);
 	}
-
+	
 	public <T extends GuidPersistable> Set<T> lookupGuidStrings(Class<T> klass, Set<String> ids) throws ParseException, NotFoundException {
 		Set<T> ret = new HashSet<T>();
 		for (String s : ids) {

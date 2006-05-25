@@ -11,7 +11,6 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 
-@BanFromWebTier
 @Local
 public interface AccountSystem {
 	
@@ -47,13 +46,14 @@ public interface AccountSystem {
 	public Client authorizeNewClient(Account acct, String name);
 	
 	/**
-	 * Checks whether the user can authenticate with this auth key
+	 * Checks whether the user with a specified ID can authenticate with this auth key,
+	 * and returns the Account object for user. Throws an exception on failure.
 	 * 
-	 * @param user the user
+	 * @param guid the user's guid
 	 * @param authKey their auth cookie
-	 * @return true if authenticated
+	 * @return the account object for the user
 	 */
-	public boolean checkClientCookie(User user, String authKey);
+	public Account checkClientCookie(Guid guid, String authKey) throws NotFoundException, UnauthorizedException;
 	
 	/** 
 	 * Gets the number of active accounts.
@@ -90,13 +90,14 @@ public interface AccountSystem {
 	/**
 	 * Lookup an account by the GUID of the person who owns it.
 	 * 
-	 * @param personId person's ID
-	 * @return account for this person Id, or null
+	 * @param ownerId owner's ID
+	 * @return account for this user Id; throws NotFoundException if the user doesn't exist
 	 */
-	public Account lookupAccountByPersonId(String personId);
+	public Account lookupAccountByOwnerId(Guid ownerId) throws NotFoundException;
 
 	/**
-	 * Update the last login time for the account associated with the user.
+	 * Update the last login time for the account associated with the user; throws
+	 * a RuntimeException if the user doesn't exist.
 	 * 
 	 * @param userId the guid of a user
 	 */

@@ -81,7 +81,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 		
 		if (args.length > i && UserViewpoint.class.isAssignableFrom(args[i])) {
-			UserViewpoint loggedIn = getLoggedInUser(request);
+			boolean allowDisabled = optionsAnnotation != null && optionsAnnotation.allowDisabledAccount();
+			UserViewpoint loggedIn = getLoggedInUser(request, allowDisabled);
 			toPassIn.add(loggedIn);
 			i += 1;
 		}
@@ -316,10 +317,12 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 	}
 	
-	private UserViewpoint getLoggedInUser(HttpServletRequest request) throws HttpException {
+	private UserViewpoint getLoggedInUser(HttpServletRequest request, boolean allowDisabled) throws HttpException {
 		SigninBean signin = SigninBean.getForRequest(request);
 		if (signin instanceof UserSigninBean) {
 			return ((UserSigninBean)signin).getViewpoint();
+		} else if (allowDisabled && signin instanceof DisabledSigninBean) {
+			return new UserViewpoint(((DisabledSigninBean)signin).getDisabledUser());
 		}
 
 		// we have no UI so the user is pretty much jacked at this stage; but it 

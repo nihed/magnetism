@@ -20,6 +20,9 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.UnauthorizedException;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
@@ -53,29 +56,29 @@ public class AccountSystemBean implements AccountSystem {
 		return c;
 	}
 	
-	public boolean checkClientCookie(User user, String authKey) {
-		Account account = lookupAccountByUser(user);
-		return account.checkClientCookie(authKey);
+	public Account checkClientCookie(Guid guid, String authKey) throws NotFoundException, UnauthorizedException {
+		Account account = lookupAccountByOwnerId(guid);
+		if (!account.checkClientCookie(authKey))
+			throw new UnauthorizedException("Invalid authorization cookie");
+			
+		return account;
 	}
 
 	public Account lookupAccountByUser(User user) {
-		Account ret;
-		try {
-			ret = (Account) em.createQuery("from Account a where a.owner = :person").setParameter("person", user).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			throw new RuntimeException("User has no account!", e);
+		if (!em.contains(user)) {
+			try {
+				user = EJBUtil.lookupGuid(em, User.class, user.getGuid());
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Failed to look up user", e);
+			}
 		}
-		return ret;
+		
+		return user.getAccount();
 	}
 
-	public Account lookupAccountByPersonId(String personId) {
-		Account ret;
-		try {
-			ret = (Account) em.createQuery("from Account a where a.owner.id = :id").setParameter("id", personId).getSingleResult();
-		} catch (EntityNotFoundException e) {
-			ret = null;
-		}
-		return ret;
+	public Account lookupAccountByOwnerId(Guid ownerId) throws NotFoundException {
+		User user = EJBUtil.lookupGuid(em, User.class, ownerId);
+		return user.getAccount();
 	}
 
 	public long getNumberOfActiveAccounts() {
@@ -107,7 +110,11 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public void touchLoginDate(Guid userId) {
-		Account acct = lookupAccountByPersonId(userId.toString());
-		acct.setLastLoginDate(new Date());
+		try {
+			Account acct = lookupAccountByOwnerId(userId);
+			acct.setLastLoginDate(new Date());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("User doesn't exist");
+		}
 	}
 }

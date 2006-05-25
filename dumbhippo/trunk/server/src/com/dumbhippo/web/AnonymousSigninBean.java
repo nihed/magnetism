@@ -34,6 +34,12 @@ public class AnonymousSigninBean extends SigninBean {
 	public boolean isValid() {
 		return false;
 	}
+	
+	@Override
+	public boolean getNeedsTermsOfUse() {
+		return false;
+	}
+
 
 	@Override
 	public void resetSessionObjects() {

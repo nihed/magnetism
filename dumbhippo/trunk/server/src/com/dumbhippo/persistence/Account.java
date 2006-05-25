@@ -62,6 +62,8 @@ public class Account extends Resource {
 	private boolean wasSentShareLinkTutorial;
 	private boolean hasDoneShareLinkTutorial;
 	
+	private boolean hasAcceptedTerms;
+	
 	private boolean disabled;
 	
 	// a hex-encoded SHA-1 hash of the password is stored
@@ -339,6 +341,15 @@ public class Account extends Resource {
 
 	public void setWasSentShareLinkTutorial(boolean wasSentShareLinkTutorial) {
 		this.wasSentShareLinkTutorial = wasSentShareLinkTutorial;
+	}
+
+	@Column(nullable=false)
+	public boolean getHasAcceptedTerms() {
+		return hasAcceptedTerms;
+	}
+
+	public void setHasAcceptedTerms(boolean hasAcceptedTerms) {
+		this.hasAcceptedTerms = hasAcceptedTerms;
 	}
 
 	/** 

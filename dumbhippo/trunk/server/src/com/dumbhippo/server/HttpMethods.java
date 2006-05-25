@@ -217,4 +217,9 @@ public interface HttpMethods {
 	@HttpParams( { "groupId", "size" })
 	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, String groupId, String size)
 		throws IOException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( {} )
+	@HttpOptions( allowDisabledAccount = true )
+	public void doAcceptTerms(UserViewpoint viewpoint);
 }

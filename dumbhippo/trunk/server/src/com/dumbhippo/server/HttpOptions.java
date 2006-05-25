@@ -18,5 +18,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface HttpOptions {
 	boolean invalidatesSession() default false;
+	boolean allowDisabledAccount() default false;
 	String[] optionalParams() default {};
 }

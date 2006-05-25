@@ -8,16 +8,17 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 public class CookieAuthentication {
-	
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(CookieAuthentication.class);
 	
 	@SuppressWarnings("serial")
@@ -37,7 +38,7 @@ public class CookieAuthentication {
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static User authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
+	public static Account authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
 		
@@ -73,7 +74,7 @@ public class CookieAuthentication {
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static User authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
+	public static Account authenticate(LoginCookie loginCookie) throws BadTastingException, NotLoggedInException {
 
 		if (loginCookie == null) {
 			throw new NotLoggedInException("No login cookie set");
@@ -92,23 +93,19 @@ public class CookieAuthentication {
 	 * @throws BadTastingException
 	 * @throws NotLoggedInException
 	 */
-	public static User authenticate(String userId, String authKey) throws BadTastingException, NotLoggedInException {
+	public static Account authenticate(String userId, String authKey) throws BadTastingException, NotLoggedInException {
 		// This should be one of the only classes in web tier 
 		// using account system
 		AccountSystem accountSystem = WebEJBUtil.uncheckedDefaultLookup(AccountSystem.class);
-		IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-		User user;		
 		try {
-			user = identitySpider.lookupGuidString(User.class, userId);
-			logger.debug("Loaded new user in authenticate(): {}", user);
+			Guid guid = new Guid(userId);
+			return accountSystem.checkClientCookie(guid, authKey);
 		} catch (NotFoundException e) {
-			throw new BadTastingException("Cookie had unknown person ID '" + userId + "'");
+			throw new NotLoggedInException("Cookie had unknown person ID '" + userId + "'");
 		} catch (ParseException e) {
 			throw new BadTastingException("Cookie had malformed person ID '" + userId + "'");
+		} catch (UnauthorizedException e) {
+			throw new NotLoggedInException("Cookie had invalid or expired auth key in it '" + authKey + "'");
 		}
-		if (!accountSystem.checkClientCookie(user, authKey)) {
-			throw new BadTastingException("Cookie had invalid or expired auth key in it '" + authKey + "'");
-		}
-		return user;
 	}
 }

@@ -88,16 +88,16 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		Guid guid;
 		try {
 			guid = Guid.parseJabberId(username);
+			Account account = accountSystem.lookupAccountByOwnerId(guid);
+			
+			assert account.getOwner().getId().equals(username);
+			
+			return account;
 		} catch (ParseException e) {
 			throw new JabberUserNotFoundException("corrupt username");
-		}
-		Account account = accountSystem.lookupAccountByPersonId(guid.toString());
-		if (account == null)
+		} catch (NotFoundException e) {
 			throw new JabberUserNotFoundException("username does not exist");
-		
-		assert account.getOwner().getId().equals(username);
-		
-		return account;
+		}
 	}
 	
 	private User userFromTrustedUsername(String username) {

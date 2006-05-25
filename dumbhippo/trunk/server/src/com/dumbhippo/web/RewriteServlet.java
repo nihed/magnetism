@@ -246,17 +246,31 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		}
 		
+		SigninBean signin = SigninBean.getForRequest(request);
+
 		// If this is a request to one of the pages configured as requiresLogin,
 		// and the user isn't signed in, go to /who-are-you, storing the real
 		// destination in the query string. This only works for GET, since we'd
 		// have to save the POST parameters somewhere.
 		
 		if ((isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
-				!hasSignin(request) && 
-				request.getMethod().toUpperCase().equals("GET")) { 
-			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
-			if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
-				url = url + "&wouldBePublic=true";
+				!signin.isValid() && 
+				request.getMethod().toUpperCase().equals("GET")) {
+			
+			String url;
+			if (signin instanceof DisabledSigninBean) {
+				DisabledSigninBean disabledSignin = (DisabledSigninBean)signin;
+				if (disabledSignin.getNeedsTermsOfUse())
+					url = response.encodeRedirectURL("/download");
+				else if (disabledSignin.isDisabled())
+					url = response.encodeRedirectURL("/we-miss-you?next=" + afterSlash);
+				else
+					throw new RuntimeException("DisabledSigninBean has no reason for being disabled");
+			} else {
+				url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
+				if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
+					url = url + "&wouldBePublic=true";
+				}
 			}
 			response.sendRedirect(url);
 			return;

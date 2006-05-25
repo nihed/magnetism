@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -24,13 +25,11 @@ public class UserSigninBean extends SigninBean {
 	 * user. DO NOT CALL THIS CONSTRUCTOR. Use Signin.getForRequest()
 	 * instead. 
 	 * 
-	 * @param userGuid the GUID of the user
-	 * @param user the user object, if we've already created one (may be null,
-	 *        in which case the User object will be lazily created on access)
+	 * @param user the account object
 	 */
-	UserSigninBean(Guid userGuid, User user) {
-		this.userGuid = userGuid;
-		this.user = user;
+	UserSigninBean(Account account) {
+		this.user = account.getOwner();
+		this.userGuid = user.getGuid();
 	}
 		
 	public User getUser() {
@@ -69,6 +68,11 @@ public class UserSigninBean extends SigninBean {
 		user = null;
 	}	
 
+	@Override
+	public boolean getNeedsTermsOfUse() {
+		return false; // we never create a UserSigninBean if this isn't true
+	}
+	
 	public boolean isDisabled() {
 		if (disabled == null) {
 			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
@@ -92,5 +96,6 @@ public class UserSigninBean extends SigninBean {
 			defaultSharePublic = Boolean.valueOf(identitySpider.getNotifyPublicShares(getUser()));
 		}
 		return defaultSharePublic;
-	}	
+	}
+	
 }
