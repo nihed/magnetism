@@ -2,6 +2,7 @@
 <%-- this tag is intended to be included only if invites are available --%>
 <%@ attribute name="promotion" required="true" type="java.lang.String"%>
 <%@ attribute name="invitesAvailable" required="true" type="java.lang.Integer"%>
+<%@ attribute name="summitSelfInvite" required="false" type="java.lang.Boolean" %>
 
 <%-- We need to uniquify ids across the generated output --%>
 <c:if test="${empty dhSelfInviteCount}">
@@ -48,9 +49,20 @@
 		}
 	</script>
 	<div id="dhSelfInviteForm${N}">
-		<div class="dh-special-subtitle">Enter your email address to get our fun and free stuff.<br/>
-			 Then check your email for a link to our download page.
-		</div>	
+	    <c:choose>
+	        <c:when test="${summitSelfInvite}">
+		        <div class="dh-special-subtitle">
+                    You heard, you browsed, you signed up!
+                </div>
+		    </c:when>
+		    <c:otherwise>
+		        <div class="dh-special-subtitle">
+		            Enter your email address to get our fun and free stuff.
+		            <br/>
+			        Then check your email for a link to our download page.
+		        </div>		   
+		    </c:otherwise>
+		</c:choose>    	
 		<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}"/>
 		<input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
 	</div>

@@ -29,4 +29,8 @@ public class LandingPage extends AbstractPersonPage {
 	public String getPromotion() {
 		return PromotionCode.GENERIC_LANDING_200606.getCode();
 	}
+
+	public String getSummitPromotion() {
+		return PromotionCode.SUMMIT_LANDING_200606.getCode();
+	}
 }

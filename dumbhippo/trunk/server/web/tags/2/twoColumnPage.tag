@@ -5,6 +5,7 @@
 <%@ attribute name="alwaysShowSidebar" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="neverShowSidebar" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 <%@ attribute name="logoOnly" required="false" type="java.lang.Boolean" %>
 
@@ -26,7 +27,7 @@
 			<center><div id="dhPageHeader"><dht:logo/></div></center>
 		</c:when>
 		<c:otherwise>
-			<dht:header disableHomeLink="${disableHomeLink}"/>
+			<dht:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}"/>
 		</c:otherwise>
 	</c:choose>
 	<div id="dhPageContent">

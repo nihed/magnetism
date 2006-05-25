@@ -295,6 +295,11 @@ img {
 	font-size: 10px;
 }
 
+.dh-disclaimer-own-section {
+	font-size:  16px;
+	text-align: left;
+}
+
 #dhBeaconSample {
 	border: 1px solid black;	
 }

@@ -697,6 +697,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case GENERIC_LANDING_200606:
 				character = Character.MUGSHOT;
 				break;
+			case SUMMIT_LANDING_200606:
+				character = Character.MUGSHOT;
+				break;
 			default:
 				character = null;
 				break;

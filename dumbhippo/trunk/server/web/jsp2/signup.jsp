@@ -24,7 +24,7 @@
 
 	<dht:zoneBoxSeparator/>
 
-	<p>We promise not to sell or share your info, spam or scam you, install spyware, adware, or other annoying stuff.  <a href="/privacy">See our Privacy Policy</a></p>
-
+	<dht:notevil ownSection="true"/>
+	
 </dht:systemPage>
 </html>

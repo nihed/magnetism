@@ -18,7 +18,8 @@ package com.dumbhippo.server;
  */
 public enum PromotionCode {
 	MUSIC_INVITE_PAGE_200602("music_invite_page_200602"),
-	GENERIC_LANDING_200606("generic_landing_page_200606");
+	GENERIC_LANDING_200606("generic_landing_page_200606"),
+	SUMMIT_LANDING_200606("summit_landing_page_200606");
 	
 	private String code;
 	

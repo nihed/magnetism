@@ -4,6 +4,7 @@
 
 <%@ attribute name="kind" required="false" type="java.lang.String" %>
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <c:if test="${empty kind}">
@@ -38,10 +39,16 @@
 		<div id="dhHeaderLinks">
 			<c:choose>
 				<c:when test="${signin.valid}">
-					<c:if test="${!disableHomeLink}"><a href="/">HOME</a> | </c:if><dht:actionLinkLogout/>
+					<c:if test="${!disableHomeLink}">
+					    <a href="/">HOME</a> | 
+					 </c:if>
+					<dht:actionLinkLogout/>
 				</c:when>
 				<c:otherwise>
-					<a href="/signup">Sign up</a> | <a href="/who-are-you">Log in</a>
+				    <c:if test="${!disableSignupLink}">				
+				        <a href="/signup">Sign up</a> | 
+				    </c:if>    
+				    <a href="/who-are-you">Log in</a>
 				</c:otherwise>
 			</c:choose>
 		</div>
