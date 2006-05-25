@@ -289,6 +289,19 @@ public class HttpMethodsServlet extends AbstractServlet {
 					}
 				}
 				
+				// The point of the allowDisabledUser annotations is to allow methods that
+				// take a user from the disabled state to the enabled state; once we are
+				// enabled, we need to persistant cookies, so we check that here. This
+				// is a little hacky, but simpler than creating custom servlets.
+				//
+				// Note that this won't work well with methods that have write
+				// output, since the output buffer may already have been flushed, and it
+				// will be too late to set cookies.
+				if (optionsAnnotation != null && optionsAnnotation.allowDisabledAccount()) {
+					SigninBean.updateAuthentication(request, response);
+				}
+
+				
 				if (optionsAnnotation != null && optionsAnnotation.invalidatesSession()) {
 					HttpSession sess = request.getSession(false);
 					if (sess != null)

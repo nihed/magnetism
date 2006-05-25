@@ -10,7 +10,6 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.Pair;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
@@ -187,7 +186,7 @@ public class SigninSystemBean implements SigninSystem {
 		mailer.sendMessage(message);
 	}
 
-	public Pair<Client, User> authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException {
+	public Client authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException {
 		Resource resource;
 		
 		boolean noAuthentication = configuration.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true"); 
@@ -221,8 +220,7 @@ public class SigninSystemBean implements SigninSystem {
 		}
 		
 		if (account.checkPassword(password) || noAuthentication) {
-			Client client = accountSystem.authorizeNewClient(account, clientIdentifier);
-			return new Pair<Client,User>(client, user);
+			return accountSystem.authorizeNewClient(account, clientIdentifier);
 		} else {
 			throw new HumanVisibleException("You seem to have mistyped your password; or maybe you haven't "
 					+ "set a password yet? Try sending yourself a sign-in link if you can't remember your password.");

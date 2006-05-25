@@ -233,29 +233,45 @@ public class RewriteServlet extends HttpServlet {
 		
 		String afterSlash = path.substring(1);
 		
-		boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
-		boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
-		boolean isNoSignin = noSignin.contains(afterSlash);
-		
-		// We force the page to be in one of our configuration parameters,
-		// since otherwise, its too easy to forget to update the configuration
-		// parameters, even with the warnings we output below.
-		if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
-			logger.warn("Page signin requirements not specified");
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
+		SigninBean signin = SigninBean.getForRequest(request);
+		boolean doSigninRedirect;
+
+		// we-miss-you and download are special because they convert from
+		// DisabledSigninBean to UserSigninBean
+		if (afterSlash.equals("we-miss-you")) {
+			if ((signin instanceof DisabledSigninBean) && signin.isDisabled())
+				doSigninRedirect = false;
+			else
+				doSigninRedirect = !signin.isValid();
+		} else if (afterSlash.equals("download")) {
+			if ((signin instanceof DisabledSigninBean) && signin.getNeedsTermsOfUse())
+				doSigninRedirect = false;
+			else
+				doSigninRedirect = !signin.isValid();
+		} else {
+			boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
+			boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
+			boolean isNoSignin = noSignin.contains(afterSlash);
+	
+			// We force the page to be in one of our configuration parameters,
+			// since otherwise, its too easy to forget to update the configuration
+			// parameters, even with the warnings we output below.
+			if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
+				logger.warn("Page signin requirements not specified");
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
+			
+			doSigninRedirect = (isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
+							   !signin.isValid();
 		}
 		
-		SigninBean signin = SigninBean.getForRequest(request);
-
 		// If this is a request to one of the pages configured as requiresLogin,
 		// and the user isn't signed in, go to /who-are-you, storing the real
 		// destination in the query string. This only works for GET, since we'd
 		// have to save the POST parameters somewhere.
 		
-		if ((isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
-				!signin.isValid() && 
-				request.getMethod().toUpperCase().equals("GET")) {
+		if (doSigninRedirect && request.getMethod().toUpperCase().equals("GET")) {
 			
 			String url;
 			if (signin instanceof DisabledSigninBean) {

@@ -10,12 +10,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.Pair;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
-import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.SigninSystem;
 
@@ -26,15 +21,11 @@ public class SigninServlet extends AbstractServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	private AccountSystem accountSystem;
 	private SigninSystem signinSystem;
-	private Configuration config;
 	
 	@Override
 	public void init() {
-		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		signinSystem = WebEJBUtil.defaultLookup(SigninSystem.class);
-		config = WebEJBUtil.defaultLookup(Configuration.class);		
 	}
 	
 	@Override
@@ -62,24 +53,14 @@ public class SigninServlet extends AbstractServlet {
 		if (password == null)
 			password = ""; // if you click send password but don't put one in
 		
-		Pair<Client,User> result = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
-		String host = config.getBaseUrl().getHost();
-		LoginCookie loginCookie = new LoginCookie(host, result.getSecond().getId(), result.getFirst().getAuthKey());
-		response.addCookie(loginCookie.getCookie());
+		Client client = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
+		String defaultNext = SigninBean.initializeAuthentication(request, response, client);
 		HttpSession sess = request.getSession(false);
 		if (sess != null)
 			sess.invalidate();
 		
-		if (next == null) {
-			Account account = accountSystem.lookupAccountByUser(result.getSecond());
-		
-			if (account.isDisabled())
-				next = "/we-miss-youE";
-			else if (!account.getHasAcceptedTerms())
-				next = "/download";
-			else
-				next = "/";
-		}
+		if (next == null)
+			next = defaultNext;
 
 		return redirectToNextPage(request, response, next, null);
 	}

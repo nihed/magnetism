@@ -46,6 +46,15 @@ public interface AccountSystem {
 	public Client authorizeNewClient(Account acct, String name);
 	
 	/**
+	 * Looks up a client for the user by the client ID
+	 * 
+	 * @param userId GUID of the user; this isn't actually used except for a sanity check.
+	 * @param clientId ID of the client we are looking up
+	 * @return the Client
+	 */
+	public Client getExistingClient(Guid userId, long clientId) throws NotFoundException;
+	
+	/**
 	 * Checks whether the user with a specified ID can authenticate with this auth key,
 	 * and returns the Account object for user. Throws an exception on failure.
 	 * 

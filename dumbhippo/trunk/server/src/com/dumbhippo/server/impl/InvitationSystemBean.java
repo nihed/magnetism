@@ -592,7 +592,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		//}
 	}
 	
-	public Pair<Client,User> viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
+	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
@@ -632,7 +632,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (!disable)
 			notifyInvitationViewed(invite);
 		
-		return new Pair<Client,User>(client, invite.getResultingPerson());
+		return client;
 	}
 
 	public Collection<String> getInviterNames(InvitationToken invite) {

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.LoginToken;
@@ -86,7 +85,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		}
 	}
 
-	public Pair<Client,User> signIn(LoginToken token, String clientName) throws HumanVisibleException {
+	public Client signIn(LoginToken token, String clientName) throws HumanVisibleException {
 		
 		if (token.isExpired()) {
 			logger.debug("Expired login token {}", token);
@@ -110,6 +109,6 @@ public class LoginVerifierBean implements LoginVerifier {
 		Client client = accounts.authorizeNewClient(account, clientName);
 
 		logger.debug("Signin completed for client={} user={}", client, user);
-		return new Pair<Client,User>(client, user);
+		return client;
 	}
 }

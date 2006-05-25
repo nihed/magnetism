@@ -63,6 +63,15 @@ public class AccountSystemBean implements AccountSystem {
 			
 		return account;
 	}
+	
+	public Client getExistingClient(Guid userId, long clientId) throws NotFoundException {
+		Client client = em.find(Client.class, clientId);
+		if (client == null)
+			throw new NotFoundException("Client not found");
+		if (!client.getAccount().getOwner().equals(userId))
+			throw new RuntimeException("Client doesn't match user");
+		return client;
+	}
 
 	public Account lookupAccountByUser(User user) {
 		if (!em.contains(user)) {

@@ -2,12 +2,15 @@ package com.dumbhippo.web;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -27,6 +30,7 @@ public abstract class SigninBean  {
 	private static final Logger logger = GlobalSetup.getLogger(SigninBean.class);
 	
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
+	private static final String CLIENT_ID_KEY = "dumbhippo.signedInClient";
 	private static final String SIGNIN_BEAN_KEY = "signin";
 	
 	private String server;
@@ -58,7 +62,7 @@ public abstract class SigninBean  {
 				try {
 					account = CookieAuthentication.authenticate(request);
 					userGuid = account.getOwner().getGuid();
-					request.getSession().setAttribute(USER_ID_KEY, userGuid);
+					storeGuid(request.getSession(), userGuid);
 					logger.debug("storing authenticated user {} in session", account.getOwner());
 				} catch (BadTastingException e) {
 					logger.warn("Cookie was malformed", e);
@@ -103,12 +107,69 @@ public abstract class SigninBean  {
 		
 		return ret.toString();
 	}
+	
+	public static void storeGuid(HttpSession session, Guid guid) {
+		session.setAttribute(USER_ID_KEY, guid);		
+	}
 
-	public static void setCookie(HttpServletResponse response, String personId, String authKey) {
+	/**
+	 * Store authentication information on the session and/or in a persistant client
+	 * cookie after initial authentication of a client
+	 * 
+	 * @param request request object
+	 * @param response response object
+	 * @param client Client object that the user has authenticated against
+	 * @return a string that indicates a good default location for the state of the user;
+	 *    for example, if the account is disabled, we return "/we-miss-you" where the
+	 *    user is allowed to re-enable their account
+	 */
+	public static String initializeAuthentication(HttpServletRequest request, HttpServletResponse response, Client client) {
+		Account account = client.getAccount();
+		User user = account.getOwner();
+		if (!account.isDisabled() && account.getHasAcceptedTerms()) {
+			setCookie(response, user.getGuid(), client.getAuthKey());
+		} else {
+			SigninBean.storeGuid(request.getSession(), user.getGuid());
+			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());		
+		}		
+
+		if (account.isDisabled())
+			return "/we-miss-you";
+		else if (!account.getHasAcceptedTerms())
+			return "/download";
+		else
+			return "/";
+	}
+	
+	/**
+	 * Update stored authentication information on the session and/or in client cookies
+	 * after a possible change in the enablement of an account
+	 * @param request request object
+	 * @param response response object
+	 */
+	public static void updateAuthentication(HttpServletRequest request, HttpServletResponse response) {
+		AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
+		Guid userId = (Guid)request.getSession().getAttribute(USER_ID_KEY);
+		Long clientId = (Long)request.getSession().getAttribute(CLIENT_ID_KEY);
+		if (userId != null && clientId != null) {
+			try {
+				Client client = accountSystem.getExistingClient(userId, clientId);
+				Account account = client.getAccount();
+				if (!account.isDisabled() && account.getHasAcceptedTerms())
+					setCookie(response, userId, client.getAuthKey());
+				else
+					unsetCookie(response);
+			} catch (NotFoundException e) {
+				// Client must have been deleted since we first authorized the session, do nothing
+			}
+		}
+	}
+	
+	private static void setCookie(HttpServletResponse response, Guid personId, String authKey) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
 		String host = config.getBaseUrl().getHost();
-				
-		LoginCookie loginCookie = new LoginCookie(host, personId, authKey);
+		
+		LoginCookie loginCookie = new LoginCookie(host, personId.toString(), authKey);
 		response.addCookie(loginCookie.getCookie());
 		logger.debug("Set cookie for personId = {} authKey = {}", personId, authKey);
 	}

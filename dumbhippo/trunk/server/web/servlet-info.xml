@@ -181,18 +181,20 @@
    <servlet>
       <servlet-name>RewriteServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
-      <!-- Every page (other than psa-*) must be in one of these lists; please keep them alphabetical -->
+      <!-- Every page (other than psa-*) must be in one of these lists; please keep them alphabetical
+           note that there is special-casing for download and we-miss-you in RewriteServlet, though
+           they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>comingsoon,error,flash,signup,summit,unknownlink,upgrade,who-are-you,we-miss-you</param-value>
+          <param-value>comingsoon,error,flash,signup,summit,unknownlink,upgrade,who-are-you</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,artist,bookmark,download,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,terms,tv,visit,web-services</param-value>
+          <param-value>about,artist,bookmark,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,terms,tv,visit,web-services</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,chatwindow,create-group,friends,group-account,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first</param-value>
+          <param-value>account,admin,chatwindow,create-group,download,friends,group-account,group-invitation,home,invitation,radar-theme-creator,sharelink,sharephotoset,sharephotoset-first,we-miss-you</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

@@ -158,11 +158,9 @@ public interface InvitationSystem {
 	 * @param invite the invitation
 	 * @param firstClientName name of the first client to create
 	 * @param disable true if the user wants to disable the account
-	 * @return initial client authorized to access the account and the resulting person from the invite
+	 * @return initial client authorized to access the account
 	 */
-	public Pair<Client,User> 
-	    viewInvitation(InvitationToken invite, String firstClientName, 
-	    		       boolean disable);
+	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable);
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
