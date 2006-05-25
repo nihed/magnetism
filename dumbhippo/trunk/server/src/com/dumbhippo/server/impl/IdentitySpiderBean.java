@@ -37,6 +37,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.IdentitySpider;
@@ -941,6 +942,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public void setStockPhoto(UserViewpoint viewpoint, User user, String photo) {
 		if (!viewpoint.isOfUser(user))
 			throw new RuntimeException("can only set one's own photo");
+		if (photo != null && !Validators.validateStockPhoto(photo))
+			throw new RuntimeException("invalid stock photo name");
 		if (!em.contains(user)) {
 			// this happens from PersonPhotoServlet...
 			logger.debug("user not attached in setStockPhoto()");

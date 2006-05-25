@@ -36,6 +36,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
@@ -428,8 +429,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			if (!groupSystem.canEditGroup(viewpoint, group))
 				throw new RuntimeException("Only active members can edit a group");
-			
-			// FIXMEL validate the photo
+
+			if (photo != null && !Validators.validateStockPhoto(photo))
+				throw new RuntimeException("invalid stock photo name");
 			
 			group.setStockPhoto(photo);
 		} catch (NotFoundException e) {
