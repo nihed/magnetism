@@ -13,6 +13,8 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
+<c:choose>
+<c:when test="${!person.disabled}">
 <dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
@@ -79,4 +81,12 @@
 		</dht:zoneBoxTv>
 	</dht:contentColumn>
 </dht:twoColumnPage>
+</c:when>
+<c:otherwise>
+<dht:systemPage topText="ACCOUNT DISABLED" disableJumpTo="true">
+	<p>The account for this person is currently disabled.</p>
+	<p><dht:backLink/></p>	
+</dht:systemPage>
+</c:otherwise>
+</c:choose>
 </html>
