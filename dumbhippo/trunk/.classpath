@@ -65,16 +65,13 @@
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-ejb3.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-ejb3x.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/jtds.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/mail.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/mysql.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/dist/postgres.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/servlet.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/dom4j.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jaxen.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jdic.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jetty.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jmdns.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jstl.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/shaj.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/sitemesh.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/standard.jar"/>
