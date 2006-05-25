@@ -14,7 +14,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>	
 	<dht:scriptIncludes/>
-    <script type="text/javascript" src="/javascript/dh/wantsin.js"></script>	
+    <script type="text/javascript" src="/javascript/${buildStamp}/dh/wantsin.js"></script>	
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_blank500.gif">
 	<div>
