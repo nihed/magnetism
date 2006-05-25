@@ -15,7 +15,7 @@
 		
 		<div>
 		<table cellspacing="0" cellpadding="0">
-		<tr><td><img src="/images2/buzzer63x58.gif"/></td>
+		<tr><td><img src="/images2/${buildStamp}/buzzer63x58.gif"/></td>
 		<td class="dh-links-learnmore-text"><div class="dh-links-learnmore-header">About Link Swarm</div>
 			<div>
 			Instantly share and chat about cool links with friends around
@@ -33,7 +33,7 @@
 		<table cellspacing="0" cellpadding="0">
 		<tr valign="top">
 		<td>
-			<img src="/images2/toolbarsample.gif"/>
+			<img src="/images2/${buildStamp}/toolbarsample.gif"/>
 		</td>
 		<td>
 			<p class="dh-links-learnmore-text">Once you have Link Swarm, simply click a button on your browser's toolbar
@@ -47,7 +47,7 @@
 		<div>
 			Receive updates from friends on sites that interest you.
 		</div>
-		<div><img src="/images2/bubblesample.gif"/></div>
+		<div><img src="/images2/${buildStamp}/bubblesample.gif"/></div>
 		<div class="dh-links-learnmore-section"><a style="font-size: larger;" href="/download">Click here to get Link Swarm, free!</a></div>
 		
 		<dht:zoneBoxSeparator/>

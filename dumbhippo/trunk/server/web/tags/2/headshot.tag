@@ -31,7 +31,7 @@
 		<a href="${customLink}" style="text-decoration: none;" target="_top"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size}; border: none;"/></a>
 	</c:when>
 	<c:when test="${invited && empty photoUrl}"><%-- invited people have no person page, don't link to anything --%>
-		<dh:png src="/images2/invited60x60.gif" style="width: ${size}; height: ${size}; border: none;"/>
+		<dh:png src="/images2/${buildStamp}/invited60x60.gif" style="width: ${size}; height: ${size}; border: none;"/>
 	</c:when>
 	<c:when test="${!empty photoUrl}">
 		<a href="/person?who=${user.id}" style="text-decoration: none;" target="_top"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size}; border: none;"/></a>

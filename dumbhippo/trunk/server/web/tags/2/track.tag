@@ -109,7 +109,7 @@
 					    </span>
 		                <span id="dhSongNamePlaysOpened${order}s${songOrder}" class="${songPlaysOpenedClass}">
 		                    <a href="javascript:dh.artist.closeSongPlays(${order}, ${songOrder});">
-		                    <img src="/images2/arrow_down.gif"/>
+		                    <img src="/images2/${buildStamp}/arrow_down.gif"/>
 					        <c:out value="${track.truncatedName}"/>
 					        </a>
 					    </span>

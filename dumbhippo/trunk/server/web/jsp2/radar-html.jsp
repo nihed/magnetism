@@ -15,7 +15,7 @@
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
 		
-		<div><img src="/images2/musicradartag.gif"/></div>
+		<div><img src="/images2/${buildStamp}/musicradartag.gif"/></div>
 		
 		<div>
 			If you're particular about your HTML you might want to know these details...

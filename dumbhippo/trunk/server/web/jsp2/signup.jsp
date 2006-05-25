@@ -10,7 +10,7 @@
 	<dht:scriptIncludes/>
     <script type="text/javascript" src="/javascript/dh/wantsin.js"></script>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_signup500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
 
 	<p><strong>Enter your email address, and when we are ready to open our doors we will send you an invitation link!</strong></p>
 

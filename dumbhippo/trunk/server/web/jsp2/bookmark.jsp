@@ -31,7 +31,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage topImage="/images2/header_bookmark500.gif" fullHeader="true">
+<dht:systemPage topImage="/images2/${buildStamp}/header_bookmark500.gif" fullHeader="true">
 <c:choose>
 	<c:when test="${browser.ieRequested}">
 		<dht:zoneBoxTitle>USING MUGSHOT LINK SWARM</dht:zoneBoxTitle>	
@@ -52,7 +52,7 @@
 	<table cellspacing="0" cellpadding="0">
 	<tr>
 	<td width="10px;"><div></div></td>
-	<td align="left" valign="bottom"><img src="/images2/dragthis.gif"/></td>
+	<td align="left" valign="bottom"><img src="/images2/${buildStamp}/dragthis.gif"/></td>
 	<td align="center" valign="bottom">
 	<div id="dhBookmarkLink">
 	<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);">Link Swarm</a>

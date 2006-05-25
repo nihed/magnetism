@@ -8,7 +8,7 @@
 		if (dhBeaconPosition > dhBeaconSampleCount)
 			dhBeaconPosition = 1;
 		var img = document.getElementById("dhBeaconSample")
-		img.src = "/images2/beacon_samples/beaconsample" + dhBeaconPosition + ".jpg"
+		img.src = "/images2/${buildStamp}/beacon_samples/beaconsample" + dhBeaconPosition + ".jpg"
 		window.setTimeout(function() {
 					dhBeaconSampleIterate();
 				}, 3000);	
@@ -17,4 +17,4 @@
 	dojo.event.connect(dojo, "loaded", dj_global, "dhBeaconSampleIterate");
 </script>
 
-<img id="dhBeaconSample" src="/images2/beacon_samples/beaconsample1.jpg"/>
+<img id="dhBeaconSample" src="/images2/${buildStamp}/beacon_samples/beaconsample1.jpg"/>

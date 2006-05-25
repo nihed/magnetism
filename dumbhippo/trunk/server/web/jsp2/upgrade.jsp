@@ -16,7 +16,7 @@
 <dht:systemPage topText="A new version of Mugshot is available" disableJumpTo="true">
 	<table cellspacing="0" cellpadding="0">
 	<tr>
-	<td><dh:png id="dhUpgradeLogo" src="/images2/mugicon90x80.png" style="width: 90; height: 80;"/></td>
+	<td><dh:png id="dhUpgradeLogo" src="/images2/${buildStamp}/mugicon90x80.png" style="width: 90; height: 80;"/></td>
 	<td>
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">

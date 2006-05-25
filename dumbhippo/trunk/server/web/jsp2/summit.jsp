@@ -16,7 +16,7 @@
 	</script
 </head>
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
-<dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/header_signup500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
 	
 	<dht:zoneBoxTitle>Tell Us Your E-mail to Receive an Invitation</dht:zoneBoxTitle>
 	<br/>
@@ -26,17 +26,17 @@
 	
 	<dht:zoneBoxTitle>Preview of Coming Attractions</dht:zoneBoxTitle>	
 	<div id="dhLinkSwarmTag">
-		<img src="/images2/linkswarmtag.gif"/>
+		<img src="/images2/${buildStamp}/linkswarmtag.gif"/>
 	</div>
 	<div id="dhLinkSwarmSample">
-		<img src="/images2/bubblesample.gif"/>
+		<img src="/images2/${buildStamp}/bubblesample.gif"/>
 	</div>
 	<div class="dh-special-subtitle dh-landing-explanatory">
 	    A desktop tool for Windows and Linux. Instantly get the buzz on cool sites.
 	</div>
 	<br/>
 	<div id="dhMusicRadarTag">
-		<img src="/images2/musicradartag.gif"/>
+		<img src="/images2/${buildStamp}/musicradartag.gif"/>
 	</div>
 	<dht:beaconSamples/>
 	<div class="dh-special-subtitle dh-landing-explanatory">

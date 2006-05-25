@@ -16,7 +16,7 @@
 	<dht:scriptIncludes/>
     <script type="text/javascript" src="/javascript/dh/wantsin.js"></script>	
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_blank500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_blank500.gif">
 	<div>
 		This site is currently <b>SECRET</b> and <b>EXCLUSIVE</b>.
 	</div>

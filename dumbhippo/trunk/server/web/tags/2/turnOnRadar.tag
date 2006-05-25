@@ -3,7 +3,7 @@
 
 <c:if test="${!signin.musicSharingEnabled}">
 	<table><tr>
-	<td rowSpan="2"><img src="/images2/musicradar32x44.gif" /></td>
+	<td rowSpan="2"><img src="/images2/${buildStamp}/musicradar32x44.gif" /></td>
 	<td><a style="font-weight:bold;" href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn on Music Radar</a> to share your music taste with others.</td>
 	</tr><tr>
 	<td>

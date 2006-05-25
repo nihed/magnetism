@@ -18,7 +18,7 @@
 </head>
 
 <dht:body>
-	<img src="/images2/mugshot_tagline.gif"/>
+	<img src="/images2/${buildStamp}/mugshot_tagline.gif"/>
 	<div class="dh-special-subtitle"><c:if test="${browser.linuxRequested}">A Linux user! </c:if>Thanks for trying us out!  Here's how to start using our tools...</div>
 	<table cellspacing="15px" cellpadding="0" align="center">
 	<c:if test="${signin.needsTermsOfUse}">
@@ -33,7 +33,7 @@
 	<tr valign="top">
 	<td>
 		<table cellspacing="0" cellpadding="0">
-			<tr><td><img id="dhDownloadImg" src="/images2/buzzer63x58.gif"/></td>
+			<tr><td><img id="dhDownloadImg" src="/images2/${buildStamp}/buzzer63x58.gif"/></td>
 			<td class="dh-download-instructions">1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a>.<br/>
 			    The software will install automatically.</td>
 			</tr>
@@ -49,12 +49,12 @@
 			<div>2. Open iTunes or Yahoo! Music and play a song.</div>
 		</c:otherwise>
 	</c:choose>			
-	<div><img src="/images2/musicradar45x57.gif"/></div></center>
+	<div><img src="/images2/${buildStamp}/musicradar45x57.gif"/></div></center>
 	</td>
 	<td class="dh-download-separator"><div></div></td>	
 	<td class="dh-download-instructions">
 	3. Click the link on the bubble that appears.<br/>
-	<img src="/images2/minibubble.gif"/>
+	<img src="/images2/${buildStamp}/minibubble.gif"/>
 	</td>	
 	</tr>
 	</table>

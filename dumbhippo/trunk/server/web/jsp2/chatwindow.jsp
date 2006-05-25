@@ -68,7 +68,7 @@
        <div id="dhChatMessagesNE"></div>
        <textarea id="dhChatMessageInput" cols="40" rows="4"></textarea>
        <div id="dhChatSendButtonArea"></div>
-       <img id="dhChatSendButton" src="/images2/chatSendButton.gif" onclick="dh.chatwindow.sendClicked()"></input>    
+       <img id="dhChatSendButton" src="/images2/${buildStamp}/chatSendButton.gif" onclick="dh.chatwindow.sendClicked()"></input>    
    </div>    
 </body>
 </html>

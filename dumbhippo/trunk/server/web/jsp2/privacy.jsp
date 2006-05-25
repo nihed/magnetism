@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_privacy500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_privacy500.gif" fullHeader="true">
 
 <h3>
 Mugshot Privacy Notice

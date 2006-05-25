@@ -4,6 +4,6 @@
 
 <%@ attribute name="back" required="false" type="java.lang.String" %>
 
-<dht:zoneBox zone="group" topImage="/images2/header_group500.gif" bottomImage="/images2/bottom_gray500.gif" back="${back}">
+<dht:zoneBox zone="group" topImage="/images2/${buildStamp}/header_group500.gif" bottomImage="/images2/${buildStamp}/bottom_gray500.gif" back="${back}">
 	<jsp:doBody/>
 </dht:zoneBox>

@@ -9,6 +9,6 @@
 	<c:set var="moreLink" value="/tv" scope="page"/>
 </c:if>
 
-<dht:zoneBox zone="tv" topImage="/images2/header_tvparty500.gif" bottomImage="/images2/bottom_tvparty500.gif" more="${moreLink}" disableJumpTo="${disableJumpTo}">
+<dht:zoneBox zone="tv" topImage="/images2/${buildStamp}/header_tvparty500.gif" bottomImage="/images2/${buildStamp}/bottom_tvparty500.gif" more="${moreLink}" disableJumpTo="${disableJumpTo}">
 	<jsp:doBody/>
 </dht:zoneBox>

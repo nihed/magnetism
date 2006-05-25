@@ -33,9 +33,9 @@
 		}
 		
 		var init = function() {
-			setupRollover('dhHeaderWeb', '/images2/header_linkhome2.gif');
-			setupRollover('dhHeaderMusic', '/images2/header_musichome2.gif');
-			setupRollover('dhHeaderTv', '/images2/header_tvhome2.gif');
+			setupRollover('dhHeaderWeb', '/images2/${buildStamp}/header_linkhome2.gif');
+			setupRollover('dhHeaderMusic', '/images2/${buildStamp}/header_musichome2.gif');
+			setupRollover('dhHeaderTv', '/images2/${buildStamp}/header_tvhome2.gif');
 		}
 	</script>
 </head>
@@ -49,15 +49,15 @@
 		<tbody>
 		<tr>
 		<td class="dh-zone-box-header">
-			<a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/header_linkhome.gif"/></a>
+			<a href="/links"><img id="dhHeaderWeb" class="dh-header-image" src="/images2/${buildStamp}/header_linkhome.gif"/></a>
 		</td>
 		<td class="dh-zone-box-spacer"></td>
 		<td class="dh-zone-box-header">
-			<a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/header_musichome.gif"/></a>
+			<a href="/music"><img id="dhHeaderMusic" class="dh-header-image" src="/images2/${buildStamp}/header_musichome.gif"/></a>
 		</td>
 		<td class="dh-zone-box-spacer"></td>
 		<td class="dh-zone-box-header">
-			<a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/header_tvhome.gif"/></a>
+			<a href="/tv"><img id="dhHeaderTv" class="dh-header-image" class="dh-header-image" src="/images2/${buildStamp}/header_tvhome.gif"/></a>
 		</td>
 		</tr>
 		<tr>
@@ -95,15 +95,15 @@
 		</tr>	
 		<tr>
 		<td class="dh-zone-box-footer">
-			<img src="/images2/bottom_link230.gif" class="dh-bottom-image"/>
+			<img src="/images2/${buildStamp}/bottom_link230.gif" class="dh-bottom-image"/>
 		</td>
 		<td></td>
 		<td class="dh-zone-box-footer">
-			<img src="/images2/bottom_music230.gif" class="dh-bottom-image"/>
+			<img src="/images2/${buildStamp}/bottom_music230.gif" class="dh-bottom-image"/>
 		</td>
 		<td></td>
 		<td class="dh-zone-box-footer">
-			<img src="/images2/bottom_tvparty230.gif" class="dh-bottom-image"/>
+			<img src="/images2/${buildStamp}/bottom_tvparty230.gif" class="dh-bottom-image"/>
 		</td>
 		</tbody>
 		</table>

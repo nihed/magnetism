@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_account500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_account500.gif">
 	<c:choose>
 		<c:when test="${signin.disabled}">
 			<p>

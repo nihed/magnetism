@@ -14,10 +14,10 @@
 
 <c:choose>
 	<c:when test="${open}">
-		<c:set var="image" value="/images2/arrow_down.gif" scope="page"/>
+		<c:set var="image" value="/images2/${buildStamp}/arrow_down.gif" scope="page"/>
 	</c:when>
 	<c:otherwise>
-		<c:set var="image" value="/images2/arrow_right.gif" scope="page"/>
+		<c:set var="image" value="/images2/${buildStamp}/arrow_right.gif" scope="page"/>
 	</c:otherwise>
 </c:choose>
 

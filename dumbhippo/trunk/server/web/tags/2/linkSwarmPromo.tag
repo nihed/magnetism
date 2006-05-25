@@ -4,7 +4,7 @@
 <%@ attribute name="separator" required="false" type="java.lang.Boolean" %>
 
 <table><tr>
-<td rowSpan="2"><img src="/images2/buzzer50x44.gif" /></td>
+<td rowSpan="2"><img src="/images2/${buildStamp}/buzzer50x44.gif" /></td>
 <td><strong>Link Swarm</strong> lets you share and chat about links with friends.</td>
 </tr><tr>
 <td>

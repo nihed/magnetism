@@ -5,7 +5,7 @@
 <%@ attribute name="musicLink" required="false" type="java.lang.Boolean" %>
 
 <table><tr>
-<td rowSpan="2"><img src="/images2/musicradar32x44.gif" /></td>
+<td rowSpan="2"><img src="/images2/${buildStamp}/musicradar32x44.gif" /></td>
 <td><strong>Music Radar</strong> shares your music taste with friends and on your blog.</td>
 </tr><tr>
 <td>

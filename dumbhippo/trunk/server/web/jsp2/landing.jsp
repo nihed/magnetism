@@ -17,20 +17,20 @@
 </head>
 <dht:body>
 	<div>
-		<img src="/images2/mugshot_tagline.gif"/>
+		<img src="/images2/${buildStamp}/mugshot_tagline.gif"/>
 	</div>
 	<dht:selfInvite promotion="${landing.promotion}" invitesAvailable="${landing.selfInvitations}"/>
 	<dht:notevil/>
 	<div id="dhMusicRadarTag">
-		<img src="/images2/musicradartag.gif"/>
+		<img src="/images2/${buildStamp}/musicradartag.gif"/>
 	</div>
 	<dht:beaconSamples/>
 	<div class="dh-landing-explanatory">Easy to add to a blog or MySpace.  Select a theme or create your own.</div>
 	<div id="dhLinkSwarmTag">
-		<img src="/images2/linkswarmtag.gif"/>
+		<img src="/images2/${buildStamp}/linkswarmtag.gif"/>
 	</div>
 	<div id="dhLinkSwarmSample">
-		<img src="/images2/bubblesample.gif"/>
+		<img src="/images2/${buildStamp}/bubblesample.gif"/>
 	</div>
 	<div class="dh-landing-explanatory">A desktop tool for Windows and Linux.  Instantly get the buzz on cool sites.</div>
 </dht:body>

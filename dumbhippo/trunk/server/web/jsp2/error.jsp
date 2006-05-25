@@ -18,7 +18,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_oops500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_oops500.gif">
 	<p class="dh-error-header">
 		<c:choose>
 			<c:when test='${!empty errorHtml}'>

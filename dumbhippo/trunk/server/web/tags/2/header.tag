@@ -20,15 +20,15 @@
 
 <c:choose>
 	<c:when test="${kind == 'main'}">
-		<c:set var="headerImage" value="/images2/mughdr710x110.gif" scope="page"/>
+		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x110.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-tall" scope="page"/>
 	</c:when>
 	<c:when test="${kind == 'withSidebar'}">
-		<c:set var="headerImage" value="/images2/mughdr710x65.gif" scope="page"/>
+		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x65.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-short" scope="page"/>
 	</c:when>
 	<c:otherwise>
-		<c:set var="headerImage" value="/images2/mughdr500x65.gif" scope="page"/>
+		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr500x65.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-short" scope="page"/>
 	</c:otherwise>
 </c:choose>

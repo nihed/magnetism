@@ -18,7 +18,7 @@
 				 </span>    
 			 </c:if>
 			 </a>
-			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'><img src="/images2/arrow_right.gif"/></a>
+			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'><img src="/images2/${buildStamp}/arrow_right.gif"/></a>
 		</c:when>
 		<c:otherwise>
 			<dh:pagerLinkList pageable="${pageable}" anchor="${anchor}"/>

@@ -15,7 +15,7 @@
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
 		
-		<div id="dhRadarTag"><img src="/images2/musicradartag.gif"/></div>
+		<div id="dhRadarTag"><img src="/images2/${buildStamp}/musicradartag.gif"/></div>
 	
 		<dht:beaconSamples/>
 		

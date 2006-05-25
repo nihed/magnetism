@@ -15,7 +15,7 @@
 		
 		<div>
 		<table cellspacing="0" cellpadding="0">
-		<tr><td><img src="/images2/beacon60x60.gif"/></td>
+		<tr><td><img src="/images2/${buildStamp}/beacon60x60.gif"/></td>
 		<td><div class="dh-music-learnmore-header">About Music Radar</div>
 			<div>
 				Show off your music playlist on your blog or MySpace page.  Easily

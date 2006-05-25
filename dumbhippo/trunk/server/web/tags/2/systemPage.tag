@@ -10,7 +10,7 @@
 
 <dht:twoColumnPage neverShowSidebar="true" logoOnly="${!fullHeader}" disableSignupLink="${disableSignupLink}">
 <dht:contentColumn>
-	<dht:zoneBox zone="system" topImage="${topImage}" topText="${topText}" bottomImage="/images2/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
+	<dht:zoneBox zone="system" topImage="${topImage}" topText="${topText}" bottomImage="/images2/${buildStamp}/bottom_gray500.gif" disableJumpTo="${disableJumpTo}">
 		<jsp:doBody/>
 	</dht:zoneBox>
 </dht:contentColumn>

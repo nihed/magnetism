@@ -12,7 +12,7 @@
 		dojo.require("dh.login");
 	</script>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/header_login500.gif">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_login500.gif">
 	<table cellspacing="0px" cellpadding="0px">
 		<tr valign="top">
 		<td width="240px" align="center">

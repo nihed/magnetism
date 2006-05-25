@@ -8,7 +8,7 @@
 <%@ attribute name="lockIcon" required="false" type="java.lang.Boolean" %>
 
 <div class="dh-sidebar-box ${boxClass}">
-	<dht:sidebarBoxTitle><c:if test="${lockIcon}"><dh:png src="/images2/lockicon.png" style="width: 12; height: 14;"/> </c:if><c:out value="${title}"/></dht:sidebarBoxTitle>
+	<dht:sidebarBoxTitle><c:if test="${lockIcon}"><dh:png src="/images2/${buildStamp}/lockicon.png" style="width: 12; height: 14;"/> </c:if><c:out value="${title}"/></dht:sidebarBoxTitle>
 	<jsp:doBody/>
 	<c:if test="${!empty more}">
 		<dht:moreLink more="${more}"/>

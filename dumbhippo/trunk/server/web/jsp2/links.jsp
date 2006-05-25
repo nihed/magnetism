@@ -79,10 +79,10 @@
 				</c:when>
 				<c:otherwise><%-- not signed in case --%>
 					<div id="dhLinkSwarmTag">
-						<img src="/images2/linkswarmtag.gif"/>
+						<img src="/images2/${buildStamp}/linkswarmtag.gif"/>
 					</div>
 					<div id="dhLinkSwarmSample">
-						<img src="/images2/bubblesample.gif"/>
+						<img src="/images2/${buildStamp}/bubblesample.gif"/>
 					</div>
 					<div>
 					<span class="dh-option-list">
