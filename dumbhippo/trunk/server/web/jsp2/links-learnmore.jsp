@@ -5,7 +5,7 @@
 
 <head>
         <title>About Link Swarm</title>
-        <link rel="stylesheet" type="text/css" href="/css2/links-learnmore.css"/>
+        <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links-learnmore.css"/>
 	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
 </head>

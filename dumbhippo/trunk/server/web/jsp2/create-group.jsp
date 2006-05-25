@@ -6,7 +6,7 @@
 
 <head>
 	<title>Create Group</title>
-	<link rel="stylesheet" type="text/css" href="/css2/group-account.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript" src="/javascript/dh/groupaccount.js"></script>

@@ -14,7 +14,7 @@
 
 <head>
 	<title>Oops!</title>
-	<link rel="stylesheet" type="text/css" href="/css2/error.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/error.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

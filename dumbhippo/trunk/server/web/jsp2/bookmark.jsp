@@ -27,7 +27,7 @@
 
 <head>
 	<title>Mugshot Bookmark</title>
-	<link rel="stylesheet" type="text/css" href="/css2/bookmark.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/bookmark.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

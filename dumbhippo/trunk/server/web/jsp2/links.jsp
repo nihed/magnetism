@@ -5,7 +5,7 @@
 
 <head>
 	<title>Mugshot Link Swarm</title>
-	<link rel="stylesheet" type="text/css" href="/css2/links.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

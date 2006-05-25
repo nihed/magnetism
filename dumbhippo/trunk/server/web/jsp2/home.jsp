@@ -10,7 +10,7 @@
 
 <head>
 	<title>Mugshot Home</title>
-	<link rel="stylesheet" type="text/css" href="/css2/home.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/home.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

@@ -5,7 +5,7 @@
 
 <head>
 	<title>Mugshot</title>
-	<link rel="stylesheet" type="text/css" href="/css2/main.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/main.css"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">

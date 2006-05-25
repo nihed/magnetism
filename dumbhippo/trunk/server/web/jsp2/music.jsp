@@ -10,7 +10,7 @@
 
 <head>
 	<title>Mugshot Music Radar</title>
-	<link rel="stylesheet" type="text/css" href="/css2/music.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/music.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

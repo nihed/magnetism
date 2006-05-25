@@ -5,7 +5,7 @@
 
 <head>
 	<title>Mugshot TV Party</title>
-	<link rel="stylesheet" type="text/css" href="/css2/tv.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/tv.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

@@ -13,7 +13,7 @@
 
 <head>
 	<title>Edit <c:out value="${group.name}"/></title> <%-- see also groupaccount.js --%>
-	<link rel="stylesheet" type="text/css" href="/css2/group-account.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">

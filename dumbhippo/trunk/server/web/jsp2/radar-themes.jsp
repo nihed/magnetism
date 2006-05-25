@@ -7,7 +7,7 @@
 
 <head>
         <title>Music Radar Themes</title>
-	<link rel="stylesheet" type="text/css" href="/css2/radar.css"/>        
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
 	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
         <script type="text/javascript">

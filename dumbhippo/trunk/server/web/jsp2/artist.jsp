@@ -10,9 +10,9 @@
 
 <head>
 	<title><c:out value="${musicsearch.expandedArtistView.name}"/></title>
-	<link rel="stylesheet" type="text/css" href="/css2/artist.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/artist.css"/>
 	<!--[if IE]>
-	<link rel="stylesheet" type="text/css" href="/css2/artist-iefixes.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/artist-iefixes.css">
 	<![endif]-->
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>	

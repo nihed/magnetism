@@ -8,7 +8,7 @@
 
 <head>
 	<title>Mugshot Search</title>
-	<link rel="stylesheet" type="text/css" href="/css2/search.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/search.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<dht:embedObject/>

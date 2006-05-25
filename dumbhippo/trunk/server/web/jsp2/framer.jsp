@@ -33,9 +33,9 @@
 
 <head>
 	<title><c:out value="${title}"/></title>
-	<link rel="stylesheet" type="text/css" href="/css2/framer.css">	
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer.css">	
 	<!--[if IE]>
-	<link rel="stylesheet" type="text/css" href="/css2/framer-iefixes.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
 	<dht:scriptIncludes/>
     <script type="text/javascript">

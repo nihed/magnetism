@@ -7,7 +7,7 @@
 
 <head>
 	<title>Welcome to Mugshot</title>
-	<link rel="stylesheet" type="text/css" href="/css2/landing.css"/>	
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">

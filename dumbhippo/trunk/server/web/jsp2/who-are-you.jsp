@@ -5,7 +5,7 @@
 
 <head>
 	<title>Log In</title>
-	<link rel="stylesheet" type="text/css" href="/css2/who-are-you.css">
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/who-are-you.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
