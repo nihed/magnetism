@@ -216,6 +216,12 @@ form {
 	clear:          left;
 }
 
+
+.dh-zone-box .dh-separator-invisible, dh-sidebar-box .dh-separator-invisible {
+	margin-top:		0px;
+	margin-bottom:	0px;
+}
+
 #dhContentColumn .dh-zone-box .dh-title {
 	margin-bottom:	3px;
 	word-wrap: break-word;

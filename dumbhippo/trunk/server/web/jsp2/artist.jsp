@@ -11,6 +11,9 @@
 <head>
 	<title><c:out value="${musicsearch.expandedArtistView.name}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/artist.css"/>
+	<!--[if IE]>
+	<link rel="stylesheet" type="text/css" href="/css2/artist-iefixes.css">
+	<![endif]-->
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>	
 </head>
@@ -35,8 +38,11 @@
 					</c:forEach>
 	
 	                <div class="dh-artist-more">
-					    <dht:expandablePager pageable="${musicsearch.albumsByArtist}" anchor="dhAlbumsByArtist"/>
+					    <dht:expandablePager pageable="${musicsearch.albumsByArtist}" anchor="dhAlbumsByArtist"/>					    
 					</div>
+					<%-- if we don't use something like this separator, zone background color comes --%>
+                    <%-- under the displayed album --%>
+                    <dht:zoneBoxSeparator visible="false"/>
                 </c:when>
                 <c:otherwise>
                     There were no matching results.
