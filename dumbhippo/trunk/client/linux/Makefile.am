@@ -285,7 +285,7 @@ endif
 EXTRA_DIST=								\
 	$(smallicon_DATA) $(smallericon_DATA) $(smallishicon_DATA)	\
 	$(mediumicon_DATA) $(normalicon_DATA) $(hugeicon_DATA)		\
-	$(EMBEDDED_IMAGES) version.in					\
+	$(EMBEDDED_IMAGES) version.in LICENSE				\
 	$(schema_DATA) $(desktopfiles_in_files)
 
 MAINTAINERCLEANFILES=							\
