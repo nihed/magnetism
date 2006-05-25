@@ -57,7 +57,7 @@
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Picture">
 					<div id="dhHeadshotImageContainer" class="dh-image">
-						<dht:groupshot group="${group.viewedGroup}"/>
+						<dht:groupshot group="${group.viewedGroup}" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.groupaccount.reloadPhoto);" />
 					</div>
 					<div class="dh-next-to-image">
 						<div>Upload new picture:</div>
