@@ -75,6 +75,7 @@ public class DisabledSigninBean extends SigninBean {
 		return !getAccount().getHasAcceptedTerms();
 	}
 
+	@Override
 	public boolean isDisabled() {
 		return getAccount().isDisabled();
 	}

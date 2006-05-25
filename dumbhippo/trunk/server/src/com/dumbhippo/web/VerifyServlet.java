@@ -13,14 +13,15 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LoginToken;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -127,13 +128,22 @@ public class VerifyServlet extends AbstractServlet {
 		
 		LoginVerifier verifier = WebEJBUtil.defaultLookup(LoginVerifier.class);		
 		
-		Pair<Client, Person> result;
+		Pair<Client,User> result;
 		result = verifier.signIn(token, SigninBean.computeClientIdentifier(request));
 		SigninBean.setCookie(response, result.getSecond().getId(), result.getFirst().getAuthKey());
 		
 		String next = request.getParameter("next");
-		if (next == null)
-			next = "/";
+		if (next == null) {
+			AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
+			Account account = accountSystem.lookupAccountByUser(result.getSecond());
+			
+			if (account.isDisabled())
+				next = "/we-miss-you";
+			else if (!account.getHasAcceptedTerms())
+				next = "/download";
+			else
+				next = "/";
+		}
 				
 		return redirectToNextPage(request, response, next, null);
 	}

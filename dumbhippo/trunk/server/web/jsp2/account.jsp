@@ -159,7 +159,7 @@
 					</dht:formTableRow>
 					<dht:formTableRow label="Disable account">
 						<div>
-							<input type="button" value="Disable account" onclick="javascript:dh.actions.setAccountDisabled(true);"/>
+							<input type="button" value="Disable account" onclick="javascript:dh.actions.disableAccount();"/>
 						</div>
 						<div>
 							Disabling your account means we don't show any information on your
@@ -182,7 +182,7 @@
 						</p>
 						</div>
 						<div>
-							<input type="button" value="Enable account" onclick="javascript:dh.actions.setAccountDisabled(false);"/>
+							<input type="button" value="Enable account" onclick="javascript:dh.actions.enableAccount();"/>
 						</div>
 					</dht:formTableRow>						
 					</dht:formTable>

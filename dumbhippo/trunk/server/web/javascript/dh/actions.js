@@ -71,9 +71,20 @@ dh.actions.signOut = function() {
 		  	    	 });
 }
 
-dh.actions.setAccountDisabled = function(disabled) {
+dh.actions.enableAccount = function() {
+   	dh.server.doPOST("setaccountdisabled", 
+   					 { "disabled": "false" },
+		  	    	 function(type, data, http) {
+		  	    	 	 dh.util.goToNextPage("/")
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Error enabling account");
+		  	    	 });
+}
+
+dh.actions.disableAccount = function() {
    	dh.server.doPOST("setaccountdisabled",
-   					{ "disabled" : disabled ? "true" : "false" },
+   					{ "disabled" : "true" },
 		  	    	 function(type, data, http) {
 			  	    	 document.location.reload();
 		  	    	 },

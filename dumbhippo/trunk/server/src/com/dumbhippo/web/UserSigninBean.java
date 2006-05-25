@@ -13,7 +13,6 @@ import com.dumbhippo.server.UserViewpoint;
 public class UserSigninBean extends SigninBean {
 	private static final Logger logger = GlobalSetup.getLogger(UserSigninBean.class);
 
-	private Boolean disabled; // lazily initialized
 	private Boolean musicSharingEnabled; // lazily initialized
 	private Boolean defaultSharePublic; // lazily initialized
 
@@ -70,16 +69,12 @@ public class UserSigninBean extends SigninBean {
 
 	@Override
 	public boolean getNeedsTermsOfUse() {
-		return false; // we never create a UserSigninBean if this isn't true
+		return false; // we never create a UserSigninBean for accounts that haven't accept the TOS
 	}
 	
+	@Override
 	public boolean isDisabled() {
-		if (disabled == null) {
-			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			disabled = Boolean.valueOf(identitySpider.getAccountDisabled(getUser()));
-			logger.debug("AccountPage loaded disabled = {}", disabled);
-		}
-		return disabled;
+		return false; // we never create a UserSigninBean for a disabled account
 	}
 	
 	public boolean isMusicSharingEnabled() {

@@ -123,6 +123,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "disabled" })
+	@HttpOptions( allowDisabledAccount = true )
 	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)

@@ -5,8 +5,8 @@ import javax.ejb.Local;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.LoginToken;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 
 /**
  * Methods related to logging in by having a token sent to one of your
@@ -37,6 +37,6 @@ public interface LoginVerifier {
 	 * @returns new cookie and logged-in user
 	 * @throws LoginVerifierException if no ownership claim is created
 	 */
-	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException;
+	public Pair<Client,User> signIn(LoginToken token, String clientName) throws HumanVisibleException;
 	
 }

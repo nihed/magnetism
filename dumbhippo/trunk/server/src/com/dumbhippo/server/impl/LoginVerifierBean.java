@@ -87,7 +87,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		}
 	}
 
-	public Pair<Client,Person> signIn(LoginToken token, String clientName) throws HumanVisibleException {
+	public Pair<Client,User> signIn(LoginToken token, String clientName) throws HumanVisibleException {
 		
 		if (token.isExpired()) {
 			logger.debug("Expired login token {}", token);
@@ -111,6 +111,6 @@ public class LoginVerifierBean implements LoginVerifier {
 		Client client = accounts.authorizeNewClient(account, clientName);
 
 		logger.debug("Signin completed for client={} user={}", client, user);
-		return new Pair<Client,Person>(client, user);
+		return new Pair<Client,User>(client, user);
 	}
 }

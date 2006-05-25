@@ -142,6 +142,7 @@ public abstract class SigninBean  {
 	}
 	
 	public abstract boolean isValid();
+	public abstract boolean isDisabled();
 	public abstract boolean getNeedsTermsOfUse();
 	
 	public abstract Viewpoint getViewpoint();
