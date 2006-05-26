@@ -74,32 +74,30 @@
 
 				</dht:zoneBoxSubcolumn>
 				<dht:zoneBoxSubcolumn which="two">
-				<c:choose>
-					<c:when test="${signin.valid}">
-								
-						<c:if test="${!empty person.viewedPerson.musicBioAsHtml}">
-						    <dht:zoneBoxTitle>YOUR MUSIC BIO</dht:zoneBoxTitle>
-						        <div class="dh-bio">
-						            <c:out value="${signin.user.account.musicBio}" escapeXml="false"/>
-						        </div>
-						    <dht:zoneBoxSeparator/>
-						</c:if>
-						
+					<c:choose>
+						<c:when test="${signin.valid}">
+									
+							<c:if test="${!empty person.viewedPerson.musicBioAsHtml}">
+							    <dht:zoneBoxTitle>YOUR MUSIC BIO</dht:zoneBoxTitle>
+							        <div class="dh-bio">
+							            <c:out value="${person.viewedPerson.musicBioAsHtml}" escapeXml="false"/>
+							        </div>
+							    <dht:zoneBoxSeparator/>
+							</c:if>
+							
 							<dht:trackList name="YOUR RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}" pageable="${musicPerson.recentTracks}" separator="true"/>
-
-							<dht:trackList name="YOUR MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicPerson.mostPlayedTracks.results}" pageable="${musicPerson.mostPlayedTracks}" />
 	
-					</c:when>
-					<c:otherwise>
-
-						<dht:trackList name="MOST PLAYED SONGS TODAY" id="dhMostPlayedToday" tracks="${musicGlobal.mostPlayedToday.results}" pageable="${musicGlobal.mostPlayedToday}" separator="true"/>
-
-						<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
-
-					</c:otherwise>
-				</c:choose>
-
-					
+							<dht:trackList name="YOUR MOST PLAYED SONGS" id="dhMostPlayedSongs" tracks="${musicPerson.mostPlayedTracks.results}" pageable="${musicPerson.mostPlayedTracks}" />
+		
+						</c:when>
+						<c:otherwise>
+	
+							<dht:trackList name="MOST PLAYED SONGS TODAY" id="dhMostPlayedToday" tracks="${musicGlobal.mostPlayedToday.results}" pageable="${musicGlobal.mostPlayedToday}" separator="true"/>
+	
+							<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicGlobal.recentTracks.results}" pageable="${musicGlobal.recentTracks}" separator="true"/>
+	
+						</c:otherwise>
+					</c:choose>					
 				</dht:zoneBoxSubcolumn>
 			
 			</dht:zoneBoxSubcolumns>

@@ -34,7 +34,7 @@
 --%>
 
 <c:if test="${!empty tracks}">
-<dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
+	<dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
 	<c:forEach items="${tracks}" var="track">
 		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}" displaySinglePersonMusicPlay="${displaySinglePersonMusicPlay}" />
 	</c:forEach>
@@ -45,4 +45,3 @@
 		<dht:zoneBoxSeparator/>
 	</c:if>
 </c:if>
-
