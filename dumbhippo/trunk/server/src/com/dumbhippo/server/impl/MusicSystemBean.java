@@ -130,6 +130,10 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
 	}
 
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {	
+		return internal.songSearch(viewpoint, artist, album, name);
+	}
+	
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		return internal.expandedArtistSearch(viewpoint, artist, albumsByArtist);
 	}

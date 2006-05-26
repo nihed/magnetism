@@ -2345,6 +2345,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		return ret;
 	}
+	
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {		
+		return getTrackView(getMatchingTrack(viewpoint, artist, album, name));
+	}
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
         // albumsByArtist is a pageable object that contains information on what albums the expanded

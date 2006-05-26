@@ -97,6 +97,18 @@ public interface MusicSystemInternal extends MusicSystem {
 	public ArtistView getArtistView(Track track);
 	
 	/**
+	 * Returns a track view for a matching track.
+	 * 
+	 * @param viewpoint
+	 * @param artist
+	 * @param album
+	 * @param name
+	 * @return a track view for a matching track
+	 * @throws NotFoundException
+	 */
+	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException;
+
+	/**
 	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
 	 * 
 	 * @param viewpoint

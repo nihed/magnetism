@@ -95,11 +95,9 @@ public class TrackSearchResult {
 				String album = d.get("Album");
 				String name = d.get("Name");
 
-				// TODO FIXME
-				TrackView trackView = new TrackView();
-				// TrackView trackView = musicSystem.songSearch(viewpoint, artist, album, name);
+				TrackView trackView = musicSystem.songSearch(viewpoint, artist, album, name);
 				results.add(trackView);
-			// } catch (NotFoundException e) {
+			} catch (NotFoundException e) {
 				// Ignore this item
 			} catch (IOException e) {
 				// From Hibernate, ignore this item
