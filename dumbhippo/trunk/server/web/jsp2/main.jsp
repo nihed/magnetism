@@ -83,12 +83,8 @@
 		<td id="dhZoneBoxTv" class="dh-zone-box dh-color-normal" valign="top">
 			<div class="dh-zone-box-content">
 				<div class="dh-item">
-					Coming Soon
-				</div>
-				<dht:zoneBoxSeparator/>
-				<div class="dh-item">
-					We're working on this. Let us know what you think of 
-					<a href="/tv">our mockups so far</a>.
+				<p style="color:#444444;">A work in progress, actually we're just starting on it now. But you can check out the <a href="/tv">TV Party</a> page to follow our progress and have your say if you'd like.		
+				</p>
 				</div>
 			</div>
 		</td>

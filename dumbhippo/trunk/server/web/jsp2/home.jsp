@@ -72,6 +72,12 @@
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv more="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>
+			<p>We're actively working on our TV Party section, check our <a href="http://blog.mugshot.org/">blog</a> and the <a href="/tv">TV Party</a> page for updates.  Take a look at some of these blog entries for more details.</p>
+			<ul>
+			  <li><a href="http://blog.mugshot.org/?p=124">TV Dinner... Date?</a></li>
+			  <li><a href="http://blog.mugshot.org/?p=107">Researching TV</a></li>
+			  <li><a href="http://blog.mugshot.org/?p=84">Stick your TV shows on the wall</a></li>
+			</ul>
 		</dht:zoneBoxTv>
 	</dht:contentColumn>
 </dht:twoColumnPage>

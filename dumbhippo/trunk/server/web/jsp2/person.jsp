@@ -78,6 +78,7 @@
 		</dht:zoneBoxMusic>
 		<dht:zoneBoxTv disableJumpTo="true">
 			<dht:zoneBoxTitle>COMING SOON</dht:zoneBoxTitle>
+			<p>Check the <a href="/tv">TV Party</a> page for more!</p>
 		</dht:zoneBoxTv>
 	</dht:contentColumn>
 </dht:twoColumnPage>
