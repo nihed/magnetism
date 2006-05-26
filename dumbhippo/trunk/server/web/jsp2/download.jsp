@@ -24,9 +24,14 @@
 	<c:if test="${signin.needsTermsOfUse}">
 		<tr>
 		<td align="center" colspan="5">
-			<input type="checkbox" id="dhAcceptTerms" onchange="dh.download.updateDownload();">
-				I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.
-			</input>
+			<div class="dh-accept-terms-box-normal" id="dhAcceptTermsBox">
+				<div class="dh-accept-terms-warning">
+					You must agree to the Terms of Use before downloading.
+				</div>
+				<input type="checkbox" id="dhAcceptTerms" onchange="dh.download.updateDownload();">
+					I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.
+				</input>
+			</div>
 		</td>
 		</tr>
 	</c:if>
@@ -58,7 +63,7 @@
 	</td>	
 	</tr>
 	</table>
-	<div class="dh-special-subtitle">Clicking that link will activate Link Swarm, and take you
+	<div class="dh-special-subtitle dh-download-bottom-title">Clicking that link will activate Link Swarm, and take you
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
 	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>

@@ -11,8 +11,10 @@ dh.download.updateDownload = function() {
 }
 
 dh.download.doDownload = function(url) {
-	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked)
+	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
+		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
 		return
+	}
 
 	window.open(url, "_self")
 	if (dh.download.needTermsOfUse) {

@@ -11,6 +11,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.UserViewpoint;
 
 public class UserSigninBean extends SigninBean {
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(UserSigninBean.class);
 
 	private Boolean musicSharingEnabled; // lazily initialized
