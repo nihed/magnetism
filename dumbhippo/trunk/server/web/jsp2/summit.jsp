@@ -18,7 +18,7 @@
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
 <dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
 	
-	<dht:zoneBoxTitle>Invite Yourself to Mugshot!</dht:zoneBoxTitle>
+	<dht:zoneBoxTitle>Invite Yourself for a Mugshot</dht:zoneBoxTitle>
 	
 	<div>
 		<br/>
