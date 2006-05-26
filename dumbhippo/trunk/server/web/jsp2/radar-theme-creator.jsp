@@ -47,7 +47,7 @@
 					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'true', '/radar-theme-creator?theme=${nowplaying.themeId}');">Unpublish</a>
 				</c:when>
 				<c:otherwise>
-					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'false', '/radar-theme?theme=${nowplaying.themeId}');">Publish</a>
+					<a href="javascript:dh.nowplaying.modify('${nowplaying.themeId}', 'draft', 'false', '/radar-themes');">Publish</a>
 					<a href="/radar-themes">Save Draft</a>	
 				</c:otherwise>
 			</c:choose>
@@ -152,8 +152,8 @@
 		
 		<c:if test="${!empty theme.basedOn}">
 			'<c:out value="${nowplaying.theme.name}"/>' by <c:out value="${nowplaying.theme.creator.nickname}"/> based on
-			<a href="/radar-theme?theme=${nowplaying.theme.basedOn.id}">'<c:out value="${theme.basedOn.name}"/>' by
-			<c:out value="${theme.basedOn.creator.nickname}"/></a>
+			<%-- <a href="/radar-theme?theme=${nowplaying.theme.basedOn.id}">--%>'<c:out value="${theme.basedOn.name}"/>' by
+			<c:out value="${theme.basedOn.creator.nickname}"/><%-- </a> --%>
 		</c:if>
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>

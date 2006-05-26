@@ -20,8 +20,8 @@
 	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
 	<c:if test="${!empty theme.basedOn}">
 		based on
-		<a href="/radar-theme?theme=${theme.basedOn.id}">'<c:out value="${theme.basedOn.name}"/>'
-		by <c:out value="${theme.basedOn.creator.nickname}"/></a>
+		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%>'<c:out value="${theme.basedOn.name}"/>'
+		by <c:out value="${theme.basedOn.creator.nickname}"/><%--</a>--%>
 	</c:if>
 	<br/>
 	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
