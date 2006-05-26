@@ -11,6 +11,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
@@ -523,11 +524,13 @@ public class Account extends Resource {
 	}
 	
 	/**
-	 * Get the name of the theme for the flash embed
+	 * Get the theme for the flash embed. Multiple users can be
+	 * using the same theme, hence @ManyToOne.
+	 * 
 	 * @return name of theme or null for default
 	 */
 	@JoinColumn(nullable=true)
-	@OneToOne
+	@ManyToOne
 	public NowPlayingTheme getNowPlayingTheme() {
 		return nowPlayingTheme;
 	}
