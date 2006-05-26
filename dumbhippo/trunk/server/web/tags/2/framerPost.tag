@@ -25,9 +25,9 @@
 					<jsp:body><c:out value="${post.titleAsHtml}" escapeXml="false"/></jsp:body>
 				</jsp:element>
 			</div>
-			<div class="dh-framer-description">
-				<c:out value="${post.textAsHtml}" escapeXml="false"/>
-			</div>
+			<div id="dhFramerDescription" class="dh-framer-description">
+				<c:out value="${post.textAsHtmlShort}" escapeXml="false"/>			
+			</div>	
 			<div class="dh-framer-sent-to">
 				<c:choose>
 					<c:when test="${post.toWorld}">

@@ -192,6 +192,14 @@ public class PostView {
 		return getFormatter().getTextAsHtml();		
 	}
 	
+	public String getTextAsHtmlShort() {
+		String textAsHtml = getFormatter().getTextAsHtml();
+		if (textAsHtml.length() >= 70) {
+			return textAsHtml.substring(0, 70) + "...";
+		}
+		return textAsHtml;	
+	}	
+	
 	public boolean isChatRoomActive() {
 		return true;
 	}

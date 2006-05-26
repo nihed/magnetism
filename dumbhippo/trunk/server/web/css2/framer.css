@@ -128,9 +128,10 @@ body {
 	height:		12px;
 	left: 		0px;
 	top:		0px;
-	background-image: url(/images/framerShadowTop.png);
+	background-image: url(/images2/framer/framerShadowTop.png);
 	background-color: transparent;
 	background-repeat: repeat-x;
+	z-index:	1;
 	
 	/* In IE we use activex to draw the png */
 }
@@ -196,9 +197,19 @@ a.dh-headshot:link {
 	height:					90px;
 }
 
-.dh-framer-description {
+#dhFramerDescription {
 	width:					230px;
-	padding-top:			12px;
+	height:					45px;
+	overflow:				hidden;
+}
+
+#dhFramerDescriptionPopup {
+	position:				absolute;
+	overflow:				scroll;
+	border:					1px solid black;
+	background:				#F38E1C;
+	width: 					500px;
+	height:					60px;
 }
 
 .dh-framer-sent-to {
