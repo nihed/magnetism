@@ -40,7 +40,7 @@
 					<dht:expandablePager pageable="${group.posts}" anchor="dhGroupPosts"/>
 				</c:when>
 				<c:otherwise>
-					Nothing ever shared publically with this group!
+					Nothing ever shared publicly with this group!
 				</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxGroup>

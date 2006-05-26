@@ -35,7 +35,7 @@
 <c:choose>
 	<c:when test="${browser.ieRequested}">
 		<dht:zoneBoxTitle>USING MUGSHOT LINK SWARM</dht:zoneBoxTitle>	
-		Since you're using Internet Explorer, you can <a href="/welcome">download</a> the
+		Since you're using Internet Explorer, you can <a href="/download">download</a> the
 		Link Swarm application and share links right from your Explorer toolbar.
 	</c:when>
 	<c:when test="${unsupported}">

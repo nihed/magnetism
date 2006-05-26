@@ -57,7 +57,7 @@
 				
 					<p>
 						The full Mugshot
-						experience relies on a <a href="${welcome.downloadUrlWindows}">Windows-only download</a>
+						experience relies on a <a href="/download">download</a> for Windows or Linux
 						(we're working on support for other platforms!). However, you can use the basics
 						without downloading the application. <a href="/bookmark">Go here</a> to learn how
 						to add a handy bookmark to your browser.

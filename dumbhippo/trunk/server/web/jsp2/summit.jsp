@@ -18,9 +18,12 @@
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
 <dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
 	
-	<dht:zoneBoxTitle>Tell Us Your E-mail to Receive an Invitation</dht:zoneBoxTitle>
-	<br/>
-    <dht:selfInvite promotion="${landing.summitPromotion}" invitesAvailable="${landing.selfInvitations}" summitSelfInvite="true"/>
+	<dht:zoneBoxTitle>Invite Yourself to Mugshot!</dht:zoneBoxTitle>
+	
+	<div>
+		<br/>
+	    <dht:selfInvite promotion="${landing.summitPromotion}" invitesAvailable="${landing.selfInvitations}" summitSelfInvite="true"/>
+	</div>
 	
 	<dht:zoneBoxSeparator/>
 	

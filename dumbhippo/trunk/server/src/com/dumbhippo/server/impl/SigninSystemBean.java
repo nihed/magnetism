@@ -157,10 +157,14 @@ public class SigninSystemBean implements SigninSystem {
 		"</p>\n";
 		
 
-	public void sendRepairLink(User user) throws HumanVisibleException {
+	public void sendRepairLink(User user) throws HumanVisibleException {		
 		PersonView personView = identitySpider.getPersonView(new UserViewpoint(user), user, PersonViewExtra.PRIMARY_EMAIL);
 		Resource resource = personView.getPrimaryResource();
 		if (resource == null || !(resource instanceof EmailResource))
+			return;
+		
+		// RETURN UNCONDITIONALLY FOR NOW (we don't want to send out repairs accidentally)
+		if (resource != null)
 			return;
 		
 		EmailResource emailResource = (EmailResource)resource;
