@@ -32,7 +32,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:twoColumnPage>
+<dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
