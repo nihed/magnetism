@@ -25,7 +25,7 @@ public class LinksGlobalPage extends AbstractSigninOptionalPage {
 
 	public Pageable<PostView> getHotPosts() {
 		if (hotPosts == null) {
-			hotPosts = pagePositions.createBoundedPageable("hotPosts");
+			hotPosts = pagePositions.createBoundedPageable("recentlyShared");
 			postBoard.pageHotPosts(getSignin().getViewpoint(), hotPosts);
 		}
 		return hotPosts;

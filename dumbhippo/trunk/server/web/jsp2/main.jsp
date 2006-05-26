@@ -64,7 +64,7 @@
 		<td id="dhZoneBoxWeb" class="dh-zone-box dh-color-normal" valign="top">
 			<div class="dh-zone-box-content">
 				<dht:requireLinksGlobalBean/>
-				<dht:postList posts="${linksGlobal.hotPosts.list}" format="full" separators="true" favesMode='none'/>
+				<dht:postList posts="${linksGlobal.hotPosts.results}" format="full" separators="true" favesMode='none'/>
 			</div>
 		</td>
 		<td></td>

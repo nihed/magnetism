@@ -47,7 +47,7 @@
 					<dht:zoneBoxTitle>RECENTLY SHARED</dht:zoneBoxTitle>
 					<c:choose>
 						<c:when test="${linksGlobal.hotPosts.size > 0}">
-							<dht:postList posts="${linksGlobal.hotPosts.list}" format="simple"/>
+							<dht:postList posts="${linksGlobal.hotPosts.results}" format="simple"/>
 						</c:when>
 						<c:otherwise>
 							Nobody anywhere has ever shared anything!
