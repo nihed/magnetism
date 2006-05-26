@@ -1041,9 +1041,11 @@ public class RawConnection {
          * in the input thread in frameRead(), which adds an end frame to the 
          * incoming queue. We then call close() from takeFrame().
          * In scenario 2, we close the connection on our side by calling this 
-         * directly.  In scenario 3, we call this during signOn().
+         * directly.  This can be from another thread from the bot thread e.g. the timer thread.
+         * In scenario 3, we call this during signOn().
          */
         void close() {
+        	// both of these could deadlock since we join these threads below 
         	if (Thread.currentThread() == inThread)
         		throw new IllegalStateException("close() called from input thread");
         	if (Thread.currentThread() == outThread)
@@ -1060,32 +1062,37 @@ public class RawConnection {
         		logger.error("Failed to close socket: " + e.getMessage());
         	}
 
-        	// note, threads may not be created yet if still signing on
-        	
-        	while (inThread != null) {            	
-        		// frameRead() called from the inThread 
-        		// will return an end frame to the incoming queue
-
-        		try {
-        			logger.debug("waiting to join inThread");
-        			inThread.join();
-        			inThread = null;
-        		} catch (InterruptedException e) {
-        		}
-        	}
-
-        	if (outThread != null) {
-            	logger.debug("sending outgoing end frame, to exit outThread");
-        		putFrame(new Frame());
-        	}
-
-        	while (outThread != null) {
-        		try {
-        			logger.debug("waiting to join outThread");
-        			outThread.join();
-        			outThread = null;
-        		} catch (InterruptedException e) {
-        		}
+        	// only want one thread to do the shutdown of the io threads or there's 
+        	// a race for the != null checks
+        	logger.debug("trying to get lock to join io threads");
+        	synchronized (this) {
+            	// note, threads may not be created yet if still signing on.
+	        	while (inThread != null) {            	
+	        		// frameRead() called from the inThread 
+	        		// will return an end frame to the incoming queue
+	
+	        		try {
+	        			logger.debug("waiting to join inThread");
+	        			inThread.join();
+	        			inThread = null;
+	        		} catch (InterruptedException e) {
+	        		}
+	        	}
+	
+	        	if (outThread != null) {
+	            	logger.debug("sending outgoing end frame, to exit outThread");
+	        		putFrame(new Frame());
+	        	}
+	
+	        	while (outThread != null) {
+	        		try {
+	        			logger.debug("waiting to join outThread");
+	        			outThread.join();
+	        			outThread = null;
+	        		} catch (InterruptedException e) {
+	        		}
+	        	}
+	        	logger.debug("in/out threads successfully joined");
         	}
     	}
         
