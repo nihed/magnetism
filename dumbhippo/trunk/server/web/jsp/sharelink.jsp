@@ -9,8 +9,8 @@
 	<title>Sharing a Link</title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
 	<dht:scriptIncludes/>	
-	<script type="text/javascript" src="javascript/dh/share.js"></script>
-	<script type="text/javascript" src="javascript/dh/sharelink.js"></script>
+	<script type="text/javascript" src="/javascript/${buildStamp}/dh/share.js"></script>
+	<script type="text/javascript" src="/javascript/${buildStamp}/dh/sharelink.js"></script>
 
 </head>
 <body scroll="no">
