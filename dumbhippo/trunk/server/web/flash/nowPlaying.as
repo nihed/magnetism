@@ -1,36 +1,87 @@
-﻿var checkVersion = function() {
+﻿if (!baseUrl) {
+	// debug base url and person
+	baseUrl = "http://hp.debug.dumbhippo.com:8080";
+	if (!who)
+	    who = "rQyvYBqJ9Mk7s1";
+		//who = "c4a3fc1f528070";
+}
+
+var isOldFlash = function() {
 	var flashVersion:String = getVersion();
 	// the version string is bizarre, e.g. "WIN 8,0,1,0"
+	// or "LNX 7,0,25,0"
 	var i = flashVersion.indexOf(" ");
 	var majorStr = flashVersion.substr(i + 1, flashVersion.indexOf(","));
 	var major = parseInt(majorStr, 10);
 	if (major < 8) {
-		return false;		
+		return true;		
+	} else {
+		return false;
 	}
-	return true;
 }
 
-if (!checkVersion()) {
+// Pick our favorite font; unfortunately doesn't fix 
+// the "no text in linux" problem most of the time 
+// (see https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=184028)
+var _bestFontName = null;
+var getBestFontName = function() {
+	if (!_bestFontName) {
+		var list = TextField.getFontList();
+		var found = {};
+		var preferences = ['Arial', 'Bitstream Vera Sans', 'Albany',
+						   'Verdana', 'Lucida Sans', 'Luxi Sans', 'Helvetica' ];
+
+		//trace(list);
+		
+		for (var i = 0; i < list.length; ++i) {
+			found[list[i]] = 1;
+		}
+		for (var i = 0; i < preferences.length; ++i) {
+			if (found[preferences[i]]) {
+				_bestFontName = 'Arial';
+				break;
+			}
+		}
+		if (!_bestFontName) {
+			_bestFontName = "_sans";
+		}
+		//trace("best font = " + _bestFontName);
+	}
+	return _bestFontName;
+}
+
+var beforeFlash8 = isOldFlash();
+
+trace("beforeFlash8 = " + beforeFlash8);
+trace("best font = " + getBestFontName());
+
+/*
+Haven't figured out how to trace() on Linux so we use this bad boy
+
+var displayMessage = function(str:String) {
 		var clip:MovieClip = createEmptyMovieClip("rootMovie", 0);
+
+		clip.beginFill(beforeFlash8 ? 0xff0000 : 0x0000ff, 100);
+		clip.lineTo(0, 100);
+		clip.lineTo(100, 100);
+		clip.lineTo(100, 0);
+		clip.lineTo(0, 0);
+		
 		clip.createTextField("message", 1, 0, 0, 440, 120);
-		clip.message.text = "Flash Player 8 Required";
+		clip.message.text = str;
 		var fontFormat:TextFormat = new TextFormat();
-		fontFormat.font = "_sans";
+		fontFormat.font = getBestFontName();
 		fontFormat.size = 20;
 		fontFormat.color = 0x000000;
 		fontFormat.align = "center";
 		clip.message.setTextFormat(fontFormat);
-		clip.message.visible = true;
+		clip.message._visible = true;
 		clip.visible = true;
-		return;
 }
 
-if (!baseUrl) {
-	// debug base url and person
-	baseUrl = "http://hp.debug.dumbhippo.com:8080";
-	if (!who)
-		who = "c4a3fc1f528070";
-}
+displayMessage("Flash version is " + getVersion() + " before 8: " + isBeforeFlash8);
+return;
+*/
 
 var getNodeContent = function(node:XMLNode) {
 	if (node.nodeType == 3)
@@ -77,6 +128,8 @@ var parseTextAttributes = function(node:XMLNode, theme:Object) {
 }
 
 var parseTheme = function(themeNode:XMLNode) {
+	//trace(themeNode);
+	
 	var theme:Object = {};
 	
 	// Fill in defaults, some of these things aren't even 
@@ -109,11 +162,21 @@ var parseTheme = function(themeNode:XMLNode) {
 	theme.albumFontSize = 0;
 	theme.albumColor = 0x0000FF;
 	
+	var activeImageNodeName;
+	var inactiveImageNodeName;
+	if (beforeFlash8) {
+		activeImageNodeName = "activeImageUrlFlash7";
+		inactiveImageNodeName = "inactiveImageUrlFlash7";
+	} else {
+		activeImageNodeName = "activeImageUrl";
+		inactiveImageNodeName = "inactiveImageUrl";		
+	}
+	
 	for (var i = 0; i < themeNode.childNodes.length; ++i) {
 		var node:XMLNode = themeNode.childNodes[i];
-		if (node.nodeName == "activeImageUrl") {
+		if (node.nodeName == activeImageNodeName) {
 			theme.activeImageUrl = getNodeContent(node);
-		} else if (node.nodeName == "inactiveImageUrl") {
+		} else if (node.nodeName == inactiveImageNodeName) {
 			theme.inactiveImageUrl = getNodeContent(node);
 		} else if (node.nodeName == "text") {
 			parseTextAttributes(node, theme);
@@ -250,12 +313,20 @@ var fadeOut = function(clip:MovieClip, removeAtEnd:Boolean) {
 }
 
 var crossFade = function(oldClip:MovieClip, newClip:MovieClip, removeAtEnd:Boolean) {
+	// Disabled for now; because text can't be alpha'd, it just looks 
+	// like crap anyway
+	
 	if (oldClip != null) {
-		fadeOut(oldClip, removeAtEnd);
+		oldClip._visible = false;
+		if (removeAtEnd)
+			removeMovie(oldClip);
+		//fadeOut(oldClip, removeAtEnd);
 		trace("fading out old clip " + oldClip);
 	}
 	if (newClip != null) {
-		fadeIn(newClip);
+		newClip._alpha = 100;
+		newClip._visible = true;
+		//fadeIn(newClip);
 		trace("fading in new clip " + newClip);
 	}
 }
@@ -386,7 +457,7 @@ var createRootMovie = function() {
 
 var formatText = function(clip:MovieClip, fontSize:Number, color:Number) {
 	var fontFormat:TextFormat = new TextFormat();
-	fontFormat.font = "_sans";
+	fontFormat.font = getBestFontName();
 	fontFormat.size = fontSize;
 	fontFormat.color = color;
 	clip.setTextFormat(fontFormat);
@@ -400,10 +471,12 @@ var themeClipUpdateStillPlaying = function(themeClip:MovieClip, stillPlaying:Boo
 var applyTextTheme = function(songClip:MovieClip, theme:Object, what:String) {
 	var fontSize = theme[what + "FontSize"];
 	
-	if (fontSize == 0)
-		songClip[what].visible = false;
+	// trace("font size " + fontSize + " clip " + what);
+	
+	if (fontSize < 2)
+		songClip[what]._visible = false;
 	else
-		songClip[what].visible = true;
+		songClip[what]._visible = true;
 	
 	songClip[what]._x = theme[what + "X"];
 	songClip[what]._y = theme[what + "Y"];
@@ -488,6 +561,8 @@ var setSong = function(clip:MovieClip, song:Object) {
 	}
 	
 	// may synchronously invoke the all-loaded callback
+	// albumArtUrl may be undefined, in which case we fall back
+	trace("setSong() adding album art " + song.albumArtUrl);
 	addImageToClip(songClip, songClip.albumArt, song.albumArtUrl,
 				   baseUrl + "/images/no_image_available75x75light.gif");
 }
@@ -541,10 +616,14 @@ var setTheme = function(clip:MovieClip, theme:Object) {
 		crossFade(toRemove, themeClip, true);
 	});
 	
-	if (theme.activeImageUrl) 
+	if (theme.activeImageUrl) {
+		trace("theme loading active image");
 		addImageToClip(themeClip, themeClip.activeBackground, baseUrl + theme.activeImageUrl, null);
-	if (theme.inactiveImageUrl)
+	}
+	if (theme.inactiveImageUrl) {
+		trace("theme loading inactive image");
 		addImageToClip(themeClip, themeClip.inactiveBackground, baseUrl + theme.inactiveImageUrl, null);
+	}
 }
 
 var updateCount:Number = 0;

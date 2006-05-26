@@ -87,4 +87,9 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 	protected boolean requiresTransaction() {
 		return false;
 	}
+
+	@Override
+	protected boolean getSaveJpegAlso() {
+		return true;
+	}
 }

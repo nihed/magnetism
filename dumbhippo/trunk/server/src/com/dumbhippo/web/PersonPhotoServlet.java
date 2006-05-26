@@ -54,4 +54,9 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 	protected boolean requiresTransaction() {
 		return false;
 	}
+
+	@Override
+	protected boolean getSaveJpegAlso() {
+		return false;
+	}
 }

@@ -22,18 +22,22 @@ public class PostIndexer extends Indexer<Post> {
 		builder = new DocumentBuilder<Post>(Post.class);
 	}
 	
+	@Override
 	protected String getIndexName() {
 		return "Posts";
 	}
 	
+	@Override
 	protected DocumentBuilder<Post> getBuilder() {
 		return builder; 
 	}
 	
+	@Override
 	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
 		EJBUtil.defaultLookup(PostingBoard.class).indexPosts(writer, builder, ids);
 	}
 	
+	@Override
 	protected void doIndexAll(IndexWriter writer) throws IOException {
 		EJBUtil.defaultLookup(PostingBoard.class).indexAllPosts(writer, builder);
 	}

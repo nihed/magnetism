@@ -1,11 +1,13 @@
 package com.dumbhippo.web;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -81,22 +83,63 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	protected abstract void doUpload(HttpServletRequest request, HttpServletResponse response, User user, Map<String,String> params, FileItem photo)
 	throws HttpException, IOException, ServletException, HumanVisibleException;
 	
-	protected void writePhoto(BufferedImage scaled, String fileName, boolean overwrite) throws IOException, HumanVisibleException {
+	
+	protected abstract boolean getSaveJpegAlso();
+	
+	private void doSave(BufferedImage scaled, String fileName, boolean overwrite, String format)
+		throws HumanVisibleException {
 		File saveDest = new File(saveDir, fileName);
-		if (!overwrite && saveDest.exists())
-			throw new IOException("Can't overwrite existing file");
-		if (logger.isDebugEnabled())
-			logger.debug("saving to {}", saveDest.getCanonicalPath());
 
-		// FIXME this should be JPEG, but Java appears to fuck that up
-		// on a lot of images and produce a corrupt image
-		// (someone on the internet says it's because scaling other than
-		// NEAREST_NEIGHBOR puts an alpha channel in the BufferedImage,
-		// which Java tries to save in the JPEG confusing most apps but
-		// not Java's own JPEG loader - see link on wiki)
-		if (!ImageIO.write(scaled, "png", saveDest)) {
+		// ImageIO.write returns false if it doesn't understand the format 
+		// name and throws IOException on any other error
+		try {
+			if (!overwrite && saveDest.exists())
+				throw new IOException("Can't overwrite existing file");
+
+			if (logger.isDebugEnabled())
+				logger.debug("saving to {}", saveDest.getCanonicalPath());
+			
+			if (!ImageIO.write(scaled, format, saveDest)) {
+				logger.error("Can't save to format: {} known formats {}",
+						format, Arrays.toString(ImageIO.getWriterFormatNames()));
+				throw new RuntimeException("Java runtime lacks support for saving to " + format);
+			}
+		} catch (IOException e) {
+			logger.error("Failed to save image {} {}", fileName,
+					e.getClass().getName() + ": " + e.getMessage());
 			throw new HumanVisibleException("For some reason our computer couldn't save your photo. It's our fault; trying again later might help. If not, please let us know.");
-		}		
+		}
+	}
+	
+	protected void writePhoto(BufferedImage scaled, String fileName, boolean overwrite) throws HumanVisibleException {
+		
+		doSave(scaled, fileName, overwrite, "png");
+		
+		if (getSaveJpegAlso()) {
+			// Trying to use JPEG is probably a bad idea.
+			// On many images, Java appears to produce a corrupt JPEG.
+			// 
+			// Unfortunately, we need to fall back to JPEG for flash 7.
+			// So, what the hell. We'll always prefer the PNG except 
+			// for flash 7 and maybe the JPEG will work when it's in a good
+			// mood.
+			//			
+			// (someone on the internet says it's because scaling other than
+			// NEAREST_NEIGHBOR puts an alpha channel in the BufferedImage,
+			// which Java tries to save in the JPEG confusing most apps but
+			// not Java's own JPEG loader - see link on wiki)
+			//
+			// We try stripping alpha in hopes the above theory is correct. 
+			
+			BufferedImage noAlpha =
+				new BufferedImage(scaled.getWidth(), scaled.getHeight(),
+					BufferedImage.TYPE_INT_RGB);
+			Graphics2D g = noAlpha.createGraphics();
+			g.drawImage(scaled, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
+			g.dispose();
+
+			doSave(noAlpha, fileName + ".jpg", overwrite, "jpeg");
+		}
 	}
 	
 	protected void writePhotos(Collection<BufferedImage> photos, String filename, boolean overwrite) throws IOException, HumanVisibleException {
@@ -191,7 +234,19 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		if (request.getParameter("v") != null)
 			setInfiniteExpires(response);
 		
-		sendFile(request, response, "image/png", toServe);
+		// PNGs are saved with no extension at the moment. We don't 
+		// ever save GIF and we only save JPEG as a fallback for themes
+		// displayed in Flash versions less than 8
+		String mimeType;
+		String name = toServe.getName();
+		if (name.endsWith(".gif"))
+			mimeType = "image/gif";
+		else if (name.endsWith(".jpeg"))
+			mimeType = "image/jpeg";
+		else
+			mimeType = "image/png";
+		
+		sendFile(request, response, mimeType, toServe);
 		
 		return null;
 	}

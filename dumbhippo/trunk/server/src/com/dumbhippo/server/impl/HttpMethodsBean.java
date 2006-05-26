@@ -42,6 +42,7 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
@@ -90,6 +91,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private ClaimVerifier claimVerifier;
+	
+	@EJB
+	private Configuration config;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType,
 			XmlBuilder xml) {
@@ -583,7 +587,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		xml.openElement("song");
 		if (tv != null) {
-			xml.appendTextNode("image", tv.getSmallImageUrl());
+			String image = tv.getSmallImageUrl();
+			
+			// flash embed needs an absolute url
+			if (image != null && image.startsWith("/")) {
+				String baseurl = config.getProperty(HippoProperty.BASEURL);
+				image = baseurl + image;
+			}
+			xml.appendTextNode("image", image);
 			xml.appendTextNode("title", tv.getName());
 			xml.appendTextNode("artist", tv.getArtist());
 			xml.appendTextNode("album", tv.getAlbum());
@@ -598,8 +609,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		if (themeObject != null) {
 			xml.openElement("theme");
-			xml.appendTextNode("activeImageUrl", themeObject.getActiveImageRelativeUrl());
-			xml.appendTextNode("inactiveImageUrl", themeObject.getInactiveImageRelativeUrl());
+			String activeUrl = themeObject.getActiveImageRelativeUrl();
+			xml.appendTextNode("activeImageUrl", activeUrl);
+			String inactiveUrl = themeObject.getInactiveImageRelativeUrl();
+			xml.appendTextNode("inactiveImageUrl", inactiveUrl);
+			// Append degraded-mode (no alpha, lossy) images for Flash 7 ; nobody 
+			// else should use these as they will be unreliable and suck.
+			// Flash 7 can't load GIF or PNG, only JPEG.
+			if (activeUrl != null)
+				xml.appendTextNode("activeImageUrlFlash7", activeUrl + ".jpg");
+			if (inactiveUrl != null)
+				xml.appendTextNode("inactiveImageUrlFlash7", inactiveUrl + ".jpg");			
 			xml.appendTextNode("text", null, "what", "album", "color", themeObject.getAlbumTextColor(),
 					"fontSize", Integer.toString(themeObject.getAlbumTextFontSize()),
 					"x", Integer.toString(themeObject.getAlbumTextX()),

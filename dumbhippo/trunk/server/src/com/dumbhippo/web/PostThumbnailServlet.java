@@ -66,4 +66,9 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	protected boolean requiresTransaction() {
 		return false;
 	}
+
+	@Override
+	protected boolean getSaveJpegAlso() {
+		return false;
+	}
 }

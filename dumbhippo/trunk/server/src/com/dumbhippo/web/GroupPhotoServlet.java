@@ -76,4 +76,9 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 	protected boolean requiresTransaction() {
 		return true;
 	}
+
+	@Override
+	protected boolean getSaveJpegAlso() {
+		return false;
+	}
 }
