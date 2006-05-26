@@ -148,7 +148,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public ListBean<PersonView> getInvitedMembers() {
-		if (invitedMembers == null)
+		if (invitedMembers == null && isMember())
 			invitedMembers = new ListBean<PersonView>(getMembers(MembershipStatus.INVITED));
 		return invitedMembers;
 	}

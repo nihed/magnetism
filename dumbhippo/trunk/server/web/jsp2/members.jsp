@@ -33,7 +33,7 @@
 				</c:forEach>
 			</dht:twoColumnList>
 			
-			<c:if test="${group.invitedMembers.size > 0}">
+			<c:if test="${group.member && group.invitedMembers.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>

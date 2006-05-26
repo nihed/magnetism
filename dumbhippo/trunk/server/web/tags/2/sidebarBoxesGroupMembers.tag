@@ -18,7 +18,7 @@
 	</c:choose>
 </dht:sidebarBox>
 
-<c:if test="${group.invitedMembers.size > 0}">
+<c:if test="${group.member && group.invitedMembers.size > 0}"> <%-- Allow invitees to see other invitees --%>
 	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="${group.viewedGroup.liveGroup.invitedMemberCount} INVITED MEMBERS">
 		<c:forEach items="${group.invitedMembers.list}" var="person">
 			<dht:personItem who="${person}" invited="true"/>

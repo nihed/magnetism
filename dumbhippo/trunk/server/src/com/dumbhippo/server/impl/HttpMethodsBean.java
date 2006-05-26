@@ -789,6 +789,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Contact contact;
 		
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("No such group");
+		}
+
 		if (inviteeId != null) {
 			try {
 				contact = identitySpider.lookupGuidString(Contact.class, inviteeId);
@@ -824,13 +831,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
 		}
 		
-		Group group;
-		try {
-			group = groupSystem.lookupGroupById(viewpoint, groupId);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("No such group");
-		}
-
 		GuidPersistable recipient = (GuidPersistable)contact;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
