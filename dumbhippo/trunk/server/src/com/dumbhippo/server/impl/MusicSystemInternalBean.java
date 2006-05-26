@@ -2806,7 +2806,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
 		// FIXME pick certain good ones or something
 		// FIXME EJBQL syntax is wrong, but don't have docs handy, will fix with the others
-		Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.draft=0");
+		// FIXME ascending order for now ensures our good default themes are visible, but prevents 
+		// new good themes from ever showing up - need some kind of rating system or something else dynamic
+		Query q = em.createQuery("FROM NowPlayingTheme t WHERE t.draft=0 ORDER BY t.creationDate ASC");
 		q.setMaxResults(maxResults); 
 		return TypeUtils.castList(NowPlayingTheme.class, q.getResultList());
 	}
