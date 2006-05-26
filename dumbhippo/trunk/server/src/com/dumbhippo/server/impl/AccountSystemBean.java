@@ -68,7 +68,7 @@ public class AccountSystemBean implements AccountSystem {
 		Client client = em.find(Client.class, clientId);
 		if (client == null)
 			throw new NotFoundException("Client not found");
-		if (!client.getAccount().getOwner().equals(userId))
+		if (!client.getAccount().getOwner().getGuid().equals(userId))
 			throw new RuntimeException("Client doesn't match user");
 		return client;
 	}
