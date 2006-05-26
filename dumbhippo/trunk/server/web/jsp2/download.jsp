@@ -28,7 +28,7 @@
 				<div class="dh-accept-terms-warning">
 					You must agree to the Terms of Use before downloading.
 				</div>
-				<input type="checkbox" id="dhAcceptTerms" onchange="dh.download.updateDownload();">
+				<input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
 					I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.
 				</input>
 			</div>
