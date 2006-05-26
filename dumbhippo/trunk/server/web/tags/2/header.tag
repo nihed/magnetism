@@ -20,21 +20,36 @@
 
 <c:choose>
 	<c:when test="${kind == 'main'}">
+		<c:set var="headerMap" value="header710x110" scope="page" />
 		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x110.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-tall" scope="page"/>
 	</c:when>
 	<c:when test="${kind == 'withSidebar'}">
+		<c:set var="headerMap" value="header710x65" scope="page" />
 		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x65.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-short" scope="page"/>
 	</c:when>
 	<c:otherwise>
+		<c:set var="headerMap" value="header500x65" scope="page" />
 		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr500x65.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-short" scope="page"/>
 	</c:otherwise>
 </c:choose>
 
+<map name="header710x110">
+<area shape="rect" coords="0,0,400,110" href="/" />
+</map>
+
+<map name="header710x65">
+<area shape="rect" coords="0,0,258,65" href="/" />
+</map>
+
+<map name="header500x65">
+<area shape="rect" coords="0,0,258,65" href="/" />
+</map>
+
 <div id="dhPageHeader" class="${headerHeightClass}">
-	<img id="dhPageHeaderImage" src="${headerImage}" />
+	<img id="dhPageHeaderImage" src="${headerImage}" usemap="#${headerMap}" />
 	<div id="dhHeaderControls">
 		<div id="dhHeaderLinks">
 			<c:choose>
