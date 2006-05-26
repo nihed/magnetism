@@ -12,6 +12,11 @@
 	color: 				#606060;
 }
 
+#dhContentColumn .dh-zone-box .dh-warning-note {
+	font-style:			italic;
+	font-size:			12px;
+}
+
 #dhAutoSuggest {
     display:            none;
     cursor:             pointer;

@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -46,6 +47,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
@@ -61,6 +63,7 @@ import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
@@ -208,7 +211,7 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo, boolean isTutorialPost) throws NotFoundException {
+	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, boolean isTutorialPost) throws NotFoundException {
 		url = removeFrameset(url);
 		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
@@ -225,14 +228,23 @@ public class PostingBoardBean implements PostingBoard {
 			if (r instanceof Person) {
 				Person p = (Person) r;
 				Resource bestResource = identitySpider.getBestResource(p);
-				personRecipients.add(bestResource);
-				if (inviteRecipients) {
+				boolean send = true;
+				if (inviteRecipients != InviteRecipients.DONT_INVITE) {
 					// this is smart about doing nothing if the person is already invited
 					// or already has an account (it's also very cheap if bestResource is an Account)
 					// this does not send out an e-mail to invitee, but prepares an invite
 					// to be sent out with the post, if applicable
-					invitationSystem.createInvitation(poster, null, bestResource, "", "");
+					Pair<CreateInvitationResult,InvitationToken> result = invitationSystem.createInvitation(poster, null, bestResource, "", "");
+					if (result.getFirst() == CreateInvitationResult.INVITE_WAS_NOT_CREATED && inviteRecipients == InviteRecipients.MUST_INVITE) {
+						// It probably would be better to throw an exception and propagate that
+						// back into a nice message to the user, but just avoiding sending the
+						// invitation is better than nothing.
+						logger.debug("Skipping sending share to {} because we couldn't create an invitation", r);
+						send = false;
+					}
 				}
+				if (send)
+					personRecipients.add(bestResource);
 				
 			} else if (r instanceof Group) {
 				groupRecipients.add((Group) r);
@@ -273,11 +285,11 @@ public class PostingBoardBean implements PostingBoard {
 		return post;		
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo) throws NotFoundException {
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
 		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, false);
 	}
 	
-	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 	throws NotFoundException {
 		
 		for (GuidPersistable r : recipients) {
@@ -320,7 +332,7 @@ public class PostingBoardBean implements PostingBoard {
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
-			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, false, null, true);
+			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, true);
 		} catch (NotFoundException e) {
 			logger.error("Failed to post: {}", e.getMessage());
 			throw new RuntimeException(e);

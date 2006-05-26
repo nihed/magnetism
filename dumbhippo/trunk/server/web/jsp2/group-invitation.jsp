@@ -44,27 +44,30 @@
 			<div class="dh-message" id="dhMessageDiv" style='display: ${empty param["message"] ? "none" : "block"};'>
 				<c:out value='${param["message"]}'/>
 			</div>
-			<%-- FIXME obviously this if is stupid, just made it
-			     always-true temporarily until can ask about the right fix --%>
-			<c:if test="${signin.user.account.invitations >= 0}">
-				<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
-				<dht:formTable>
-					<dht:formTableRow label="Member or email address">
-						<dht:textInput id="dhAddressEntry"/>
-			            <img id="dhAddressButton" src="/images2/${buildStamp}/dropdownarrow.gif"/>
-					</dht:formTableRow>
-					<dht:formTableRow label="Subject">
-						<dht:textInput id="dhSubjectEntry"/>
-					</dht:formTableRow>
-					<dht:formTableRow label="Message">
-						<dht:textInput id="dhMessageEntry" multiline="true"/>
-					</dht:formTableRow>
-					<tr>
-						<td></td>
-						<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.groupinvitation.send()"/></td>
-					</tr>
-				</dht:formTable>
+			<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
+			<c:if test="${signin.user.account.invitations == 0}">
+				<div class="dh-warning-note">
+					Since you currently don't have any invitations to Mugshot to give out,
+					you can only invite someone to a group if they already have a Mugshot
+					account.
+				</div>
 			</c:if>
+			<dht:formTable>
+				<dht:formTableRow label="Member or email address">
+					<dht:textInput id="dhAddressEntry"/>
+		            <img id="dhAddressButton" src="/images2/${buildStamp}/dropdownarrow.gif"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="Subject">
+					<dht:textInput id="dhSubjectEntry"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="Message">
+					<dht:textInput id="dhMessageEntry" multiline="true"/>
+				</dht:formTableRow>
+				<tr>
+					<td></td>
+					<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.groupinvitation.send()"/></td>
+				</tr>
+			</dht:formTable>
 			<c:if test="${group.invitedMembers.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>

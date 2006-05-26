@@ -96,10 +96,16 @@ public interface PostingBoard {
 	
 	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max);
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, boolean inviteRecipients, PostInfo postInfo)
+	enum InviteRecipients {
+		DONT_INVITE,         // Just send out plain emails without invitation links
+		INVITE_IF_POSSIBLE,  // Send out plain emails if sender has no invitations  
+		MUST_INVITE          // Skip sending email if sender has no invitations
+	}
+	
+	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 
-	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, boolean inviteRecipients)
+	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 		throws NotFoundException;
 	
 	public void doShareLinkTutorialPost(User recipient);

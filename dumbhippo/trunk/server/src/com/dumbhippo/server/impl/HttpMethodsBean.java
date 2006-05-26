@@ -295,7 +295,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		URL urlObject = postingBoard.parsePostURL(url);
 
 		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), visibility, title, description,
-							urlObject, recipients, false, info);
+							urlObject, recipients, PostingBoard.InviteRecipients.DONT_INVITE, info);
 		XmlBuilder xml = new XmlBuilder();
 		xml.openElement("post", "id", post.getId());
 		xml.closeElement();
@@ -316,7 +316,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				GuidPersistable.class, recipientGuids);
 
 		postingBoard.doShareGroupPost(viewpoint.getViewer(), group, null, description, recipients,
-				true);
+				PostingBoard.InviteRecipients.MUST_INVITE);
 	}
 
 	public void doRenamePerson(UserViewpoint viewpoint, String name) {
@@ -699,6 +699,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		BeanUtils.setValue(theme, key, value);
 	}
+
+	private void writeMessageReply(OutputStream out, String nodeName, String message) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendStandaloneFragmentHeader();
+		xml.openElement(nodeName);
+		xml.appendTextNode("message", message);
+		xml.closeElement();
+		out.write(xml.getBytes());
+		out.flush();
+	}
 	
 	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException {
 		if (contentType != HttpResponseData.XML)
@@ -753,13 +763,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		//logger.debug("invite self message: '{}'", note);
 		
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendStandaloneFragmentHeader();
-		xml.openElement("inviteSelfReply");
-		xml.appendTextNode("message", note);
-		xml.closeElement();
-		out.write(xml.getBytes());
-		out.flush();
+		writeMessageReply(out, "inviteSelfReply", note);
 	}
 	
 	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException
@@ -775,13 +779,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		String note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
 		
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendStandaloneFragmentHeader();
-		xml.openElement("sendEmailInvitationReply");
-		xml.appendTextNode("message", note);
-		xml.closeElement();
-		out.write(xml.getBytes());
-		out.flush();
+		writeMessageReply(out, "sendEmailInvitationReply", note);
 	}
 	
 	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException
@@ -807,6 +805,20 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Missing or invalid email address");
 
 			EmailResource resource = identitySpider.getEmail(inviteeAddress);
+
+			// If the recipient isn't yet a Mugshot member, make sure we can invite
+			// them to the system before sending out an email; the resulting email
+			// is very confusing if it is an invitation; this check is to produce
+			// a nice message back to the user; we do another check when actually
+			// sending out the invitation to prevent race conditions
+			User user = identitySpider.getUser(resource);
+			if (user == null && viewpoint.getViewer().getAccount().getInvitations() == 0) {
+				String note = "Sorry, " + inviteeAddress + " isn't a Mugshot member yet";
+				writeMessageReply(out, "sendGroupInvitationReply", note);
+			
+				return;
+			}
+
 			contact = identitySpider.createContact(viewpoint.getViewer(), resource);
 		} else {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
@@ -822,20 +834,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		GuidPersistable recipient = (GuidPersistable)contact;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
-			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, true);
+			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, PostingBoard.InviteRecipients.MUST_INVITE);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("doShareGroup unxpectedly couldn't find contact recipient");
 		}
 		
 		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
-		
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendStandaloneFragmentHeader();
-		xml.openElement("sendEmailInvitationReply");
-		xml.appendTextNode("message", contactView.getName() + " has been invited to the group " + group.getName());
-		xml.closeElement();
-		out.write(xml.getBytes());
-		out.flush();
+
+		String note = contactView.getName() + " has been invited to the group " + group.getName();
+		writeMessageReply(out, "sendGroupInvitationReply", note);
 	}
 
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
