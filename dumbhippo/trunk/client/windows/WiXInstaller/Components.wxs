@@ -48,8 +48,8 @@
                             <Registry Name="ButtonText" Value="Share Link" Type="string" />
                             <Registry Name="MenuText" Value="Share Link..." Type="string" />
                             <Registry Name="MenuStatusBar" Value="Share the current web page via Mugshot" Type="string" />
-                            <Registry Name="Icon" Value="[!hippoExplorerDll],130" Type="string" />
-                            <Registry Name="HotIcon" Value="[!hippoExplorerDll],131" Type="string" />
+                            <Registry Name="Icon" Value="[!hippoExplorerDll],132" Type="string" /> <!-- 132 == IDI_LINKSWARM -->
+                            <Registry Name="HotIcon" Value="[!hippoExplorerDll],132" Type="string" />
                             <Registry Name="CLSID" Value="{1FBA04EE-3024-11d2-8F1F-0000F87ABD16}" Type="string" />
                             <Registry Name="ClsidExtension" Value="{8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F}" Type="string" />
                         </Registry>
