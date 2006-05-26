@@ -29,6 +29,8 @@ dh.download.doDownload = function(url) {
 }
 
 dh.download.init = function() {
-	document.getElementById("dhAcceptTerms").checked = false
-	dh.download.updateDownload()
+	if (dh.download.needTermsOfUse) {
+		document.getElementById("dhAcceptTerms").checked = false
+		dh.download.updateDownload()
+	}
 }
