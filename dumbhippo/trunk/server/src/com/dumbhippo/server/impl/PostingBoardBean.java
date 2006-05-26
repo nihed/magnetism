@@ -997,7 +997,7 @@ public class PostingBoardBean implements PostingBoard {
 	static final String GET_HOT_POSTS_QUERY = 
 		"SELECT post FROM Post post WHERE ";
 
-	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max) {
+	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {
 		User viewer = null;
 		Query q;
 
@@ -1018,7 +1018,11 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (viewer != null)
 			q.setParameter("viewer", viewer);
-		return getPostViews(viewpoint, q, null, start, max);
+		
+		pageable.setResults(getPostViews(viewpoint, q, null, pageable.getStart(), pageable.getCount()));
+		
+		// Doing an exact count is expensive, our assumption is "lots and lots"
+		pageable.setTotalCount(pageable.getBound());
 	}
 	
 	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";

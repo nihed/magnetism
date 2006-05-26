@@ -94,7 +94,7 @@ public interface PostingBoard {
 	 */
 	public int getGroupPostsCount(Viewpoint viewpoint, Group group);
 	
-	public List<PostView> getHotPosts(Viewpoint viewpoint, int start, int max);
+	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable);
 	
 	enum InviteRecipients {
 		DONT_INVITE,         // Just send out plain emails without invitation links
