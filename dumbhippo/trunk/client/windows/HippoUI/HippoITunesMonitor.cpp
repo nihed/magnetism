@@ -853,23 +853,35 @@ HippoITunesMonitorImpl::getPrimingTracks()
         assert(playCounts.size() == playDates.size());
 
         // compute a "top 25" based on both frequency and recency, using some 
-        // crappy wasteful algorithm
+        // crappy wasteful algorithm. This is kind of overkilled since we 
+        // used to try to create a "combined score" of frequency plus recency;
+        // what we try to do now is just upload a few of each, with recency
+        // items sent _second_ to the server so they show up as the user's last
+        // few songs. Otherwise it's sort of confusing. But we wanted the 
+        // frequency too so we don't just get all one artist from the last-played
+        // album.
+        // For the current algorithm this code could be a lot shorter and less
+        // rube goldberg.
 
         std::map<long,int> ranks;
 
-        // from least to most played
+#define NUM_DESIRED_TRACKS 25
+
+        // from oldest to newest
         int rank = 0;
-        for (std::multimap<long,long>::iterator i = playCounts.begin(); i != playCounts.end(); ++i) {
-            // hippoDebugLogW(L"Track %ld played %ld times", i->second, i->first);
-            ranks[i->second] = rank;
+        for (std::multimap<DATE,long>::iterator i = playDates.begin(); i != playDates.end(); ++i) {
+            // hippoDebugLogW(L"Track %ld played at %g", i->second, i->first);
+            // recency gets a "rank bonus" of half the number of desired tracks, so if 
+            // we get the top 25 ranks we'll get half of them from this
+            ranks[i->second] = rank + (NUM_DESIRED_TRACKS / 2);
             ++rank;
         }
 
-        // from oldest to newest
+        // from least to most played
         rank = 0;
-        for (std::multimap<DATE,long>::iterator i = playDates.begin(); i != playDates.end(); ++i) {
-            // hippoDebugLogW(L"Track %ld played at %g", i->second, i->first);
-            ranks[i->second] += rank;
+        for (std::multimap<long,long>::iterator i = playCounts.begin(); i != playCounts.end(); ++i) {
+            // hippoDebugLogW(L"Track %ld played %ld times", i->second, i->first);
+            ranks[i->second] = rank;
             ++rank;
         }
 
@@ -901,7 +913,7 @@ HippoITunesMonitorImpl::getPrimingTracks()
 
             // hippoDebugLogW(L"Rank %d %s", i->first, info.getName().m_str);
 
-            if (tracksList->size() > 24) {
+            if (tracksList->size() >= NUM_DESIRED_TRACKS) {
                 hippoDebugLogW(L"Got enough tracks for priming, not loading any more");
                 break;
             }
