@@ -21,17 +21,17 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.1</p>
+			<p>Version 1.1.2</p>
 			<ul>
-				<li>Initial release</li>
+				<li>Better handling of multiple Firefox profiles (thanks Chris!)</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.46</p>
+			<p>Version 1.1.49</p>
 			<ul>
-				<li>We've redone the site completely - it's now called Mugshot</li>
-				<li>Numerous improvements along the way... let us know what you think</li>
+				<li>Show the right photo in the chat window</li>
+				<li>Use the right icon in the toolbar</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
