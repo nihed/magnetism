@@ -55,14 +55,6 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		this._showDefaultText();
 	}
 	
-	this._hideDefaultText = function() {
-		if (this.showingDefaultText) {
-			dojo.html.removeClass(this.elem, "dh-text-input-showing-default");
-			this.elem.value = "";
-			this.showingDefaultText = false;
-		}
-	}
-
 	this._emitValueChanged = function() {
 		var v = this.getValue();
 		dojo.debug("v = '" + v + "'");
@@ -75,6 +67,14 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		}
 	}
 	
+	this.hideDefaultText = function() {
+		if (this.showingDefaultText) {
+			dojo.html.removeClass(this.elem, "dh-text-input-showing-default");
+			this.elem.value = "";
+			this.showingDefaultText = false;
+		}
+	}
+	
 	this.setDefaultText = function(defaultText) {
 		this.defaultText = defaultText;
 		if (this.showingDefaultText)
@@ -82,7 +82,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	}
 	
 	this.setValue = function(value, noEmitChanged) {
-		this._hideDefaultText();
+		this.hideDefaultText();
 		this.elem.value = value;
 		if (noEmitChanged)
 			this.lastValue = value;
@@ -110,7 +110,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	}
 
 	this.elem.onfocus = function(ev) {
-		me._hideDefaultText();
+		me.hideDefaultText();
 	}
 	
 	this.elem.onblur = function(ev) {
@@ -119,7 +119,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this.elem.onkeydown = function(ev) {
 		// in theory never happens since we do this on focus in
-		me._hideDefaultText();
+		me.hideDefaultText();
 		var key = dh.util.getKeyCode(ev);
 		if (key == ENTER && me.elem.nodeName.toUpperCase() != 'TEXTAREA') {
 			me.activate();

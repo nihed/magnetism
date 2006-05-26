@@ -15,16 +15,29 @@
 	<script type="text/javascript">
 		dojo.require('dh.util');
 		dojo.require('dh.server');
+		dojo.require('dh.textinput');
 		
+		selfInviteAddress${N} = null;
+		
+		var dhSelfInviteInit${N} = function() {
+	        selfInviteAddressNode = document.getElementById('dhSelfInviteAddress${N}');
+	        selfInviteAddress${N} = new dh.textinput.Entry(selfInviteAddressNode, "someone@example.com", "");    
+		}
+			
 		var dhSelfInviteComplete${N} = function(message) {
 			var messageNode = document.getElementById('dhSelfInviteMessage${N}');
 			dh.util.clearNode(messageNode);
 			messageNode.appendChild(document.createTextNode(message));
 		}
+		
 		var dhSelfInvite${N} = function() {
-			var addressNode = document.getElementById('dhSelfInviteAddress${N}');
+			var addressNode = document.getElementById('dhSelfInviteAddress${N}');			
 			dh.util.hideId('dhSelfInviteForm${N}');
 			dh.util.showId('dhSelfInviteMessage${N}');
+			
+			// make sure we do not send an e-mail to the e-mail example
+			selfInviteAddress${N}.hideDefaultText();
+			
 		   	dh.server.getXmlPOST("inviteself",
 			     {
 			     	"address" : addressNode.value,
@@ -47,6 +60,8 @@
 	  	    	    dhSelfInviteComplete${N}("Something went wrong! Reload the page and try again.");
 	  	    	 });
 		}
+		
+		dojo.event.connect(dojo, "loaded", dj_global, "dhSelfInviteInit${N}");
 	</script>
 	<div id="dhSelfInviteForm${N}">
 	    <c:choose>
@@ -63,8 +78,10 @@
 		        </div>		   
 		    </c:otherwise>
 		</c:choose>    	
-		<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}"/>
-		<input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
+		
+		<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}" size="30"/>
+	    <input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
+		
 	</div>
 	<br/>
 	<div id="dhSelfInviteMessage${N}" class="dh-landing-result dhInvisible">
