@@ -26,7 +26,9 @@ import com.dumbhippo.server.HttpOptions;
 import com.dumbhippo.server.HttpParams;
 import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class HttpMethodsServlet extends AbstractServlet {
 
@@ -83,8 +85,20 @@ public class HttpMethodsServlet extends AbstractServlet {
 		if (args.length > i && UserViewpoint.class.isAssignableFrom(args[i])) {
 			boolean allowDisabled = optionsAnnotation != null && optionsAnnotation.allowDisabledAccount();
 			UserViewpoint loggedIn = getLoggedInUser(request, allowDisabled);
+			boolean adminOnly = optionsAnnotation != null && optionsAnnotation.adminOnly();
+			
+			if (adminOnly) {
+				IdentitySpider spider = EJBUtil.defaultLookup(IdentitySpider.class);
+				if (!spider.isAdministrator(loggedIn.getViewer()))
+						throw new HttpException(HttpResponseCode.FORBIDDEN, "Method requires admin authorization");				
+			}
 			toPassIn.add(loggedIn);
 			i += 1;
+		}
+		
+		if (args.length > i && HttpServletRequest.class.isAssignableFrom(args[i])) {
+			toPassIn.add(request);
+			i++;
 		}
 		
 		if (args.length != i + paramsAnnotation.value().length) {

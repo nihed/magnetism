@@ -2,8 +2,12 @@ package com.dumbhippo.server.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -14,9 +18,17 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
+
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.Parser;
+import bsh.TokenMgrError;
 
 import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
@@ -24,6 +36,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -61,6 +74,7 @@ import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -973,5 +987,119 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doAcceptTerms(UserViewpoint viewpoint) {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
+	}
+	
+	private void writeException(Writer out, StringWriter clientOut, Throwable t) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		xml.openElement("result", "type", "exception");
+		xml.appendTextNode("output", clientOut.toString());		
+		xml.appendTextNode("message", t.getMessage());
+		StringWriter buf = new StringWriter();
+		t.printStackTrace(new PrintWriter(buf));
+		xml.appendTextNode("trace", buf.toString());
+		xml.closeElement();
+		out.write(xml.toString());
+	}
+	
+	private void writeSuccess(Writer out, StringWriter clientOut, Object result) throws IOException {
+		XmlBuilder xml = new XmlBuilder();
+		xml.openElement("result", "type", "success");
+		xml.appendTextNode("retval", result != null ? result.toString() : "null", "class", result != null ? result.getClass().getCanonicalName() : "null");
+		if (result != null) {
+			xml.openElement("retvalReflection");
+			for (Method m : result.getClass().getMethods()) {
+				xml.openElement("method", "name", m.getName(), "return", m.getReturnType().getSimpleName());
+				for (Class param : m.getParameterTypes()) {
+					xml.appendTextNode("param", param.getSimpleName());
+				}
+				xml.closeElement();
+			}
+			xml.closeElement();
+		}
+		xml.appendTextNode("output", clientOut.toString());
+		xml.closeElement();
+		out.write(xml.toString());
+	}
+	
+	public class Server implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private String defaultPackage = "com.dumbhippo.server";
+		
+		public Object getLiveState() {
+			return LiveState.getInstance();
+		}
+		
+		public User getUser(String id) throws NotFoundException{
+			Guid guid;
+			try {
+				guid = new Guid(id);
+				return identitySpider.lookupGuid(User.class, guid); 				
+			} catch (ParseException e) {
+				return identitySpider.lookupUserByEmail(id);
+			}
+		}
+		
+		public Object getEJB(String name) throws ClassNotFoundException, NamingException {
+			if (!name.contains(".")) {
+				name = defaultPackage + "." + name;
+			}
+			return EJBUtil.uncheckedDynamicLookup(name);
+		}		
+	}
+	
+	private Interpreter makeInterpreter(StringWriter out) {
+		Interpreter bsh = new Interpreter();
+
+		try {
+			bsh.set("server", new Server());
+			bsh.set("out", out);
+			
+			// This makes us override private/protected etc
+			bsh.eval("setAccessibility(true);");
+		
+			// Some handy primitives
+			bsh.eval("user(str) { return server.getUser(str); };");
+			bsh.eval("guid(str) { return new com.dumbhippo.identity20.Guid(str); }");
+			
+			// Some default bindings
+			bsh.eval("identitySpider = server.getEJB(\"IdentitySpider\");");
+		} catch (EvalError e) {
+			throw new RuntimeException(e);
+		}
+		
+		return bsh;
+	}
+
+	public void doAdminShellExec(Writer out, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
+		HttpSession session = request.getSession();
+		StringWriter clientOut = new StringWriter();
+		if (parseOnly) {
+			Parser parser = new Parser(new StringReader(command));
+			try {
+				while (!parser.Line())
+					;
+				writeSuccess(out, clientOut, null);
+			} catch (bsh.ParseException e) {
+				writeException(out, clientOut, e);
+			} catch (TokenMgrError e) {
+				writeException(out, clientOut, e);
+			}
+			return;
+		}
+		
+		Interpreter bsh = (Interpreter) session.getAttribute("dumbhippo.adminshell");
+		if (bsh == null) {
+			bsh = makeInterpreter(clientOut);
+			session.setAttribute("dumbhippo.adminshell", bsh);
+		}
+
+		try {
+			Object result = bsh.eval(command);
+			bsh.set("result", result);
+			writeSuccess(out, clientOut, result);
+		} catch (EvalError e) {
+			writeException(out, clientOut, e);
+		}
 	}
 }

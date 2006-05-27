@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 
 import javax.ejb.Local;
+import javax.servlet.http.HttpServletRequest;
 
 import org.xml.sax.SAXException;
 
@@ -223,4 +224,10 @@ public interface HttpMethods {
 	@HttpParams( {} )
 	@HttpOptions( allowDisabledAccount = true )
 	public void doAcceptTerms(UserViewpoint viewpoint);
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "parseOnly", "command" } )
+	@HttpOptions( adminOnly = true )
+	public void doAdminShellExec(Writer out, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException;
+	
 }
