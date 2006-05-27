@@ -57,8 +57,7 @@ public class EJBUtil {
 	 *   doesn't exist.
 	 */
 	public static <T> T defaultLookupChecked(Class<T> clazz) throws NamingException {
-		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
-		namingContext = new InitialContext();
+
 		if (clazz == null)
 			throw new IllegalArgumentException("Class passed to nameLookup() is null");
 		
@@ -66,7 +65,13 @@ public class EJBUtil {
 		if (!clazz.isInterface())
 			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
 
-		return clazz.cast(namingContext.lookup(name));
+		return clazz.cast(uncheckedDynamicLookup(name));
+	}
+	
+	public static Object uncheckedDynamicLookup(String name) throws NamingException {
+		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
+		namingContext = new InitialContext();	
+		return namingContext.lookup(name);
 	}
 	
 	public static <T> T contextLookup(EJBContext ejbContext, Class<T> clazz) {
