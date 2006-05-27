@@ -84,5 +84,6 @@
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
 	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jstl.jar"/>
+	<classpathentry kind="lib" path="server/lib/bsh-2.0b4.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
