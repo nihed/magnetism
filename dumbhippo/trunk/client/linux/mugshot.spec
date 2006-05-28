@@ -1,6 +1,6 @@
 Name:           mugshot
 Version:        1.1.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Companion software for mugshot.org
 
 Group:          Applications/Internet
@@ -12,12 +12,13 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  glib2-devel >= 2.6
 BuildRequires:  gtk2-devel >= 2.6
-BuildRequires:  loudmouth-devel >= 1.0.3
+BuildRequires:  loudmouth-devel >= 1.0.3-3
 BuildRequires:  dbus-devel >= 0.61
 BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
 
-#Requires:
+# 1.0.3-3 has a backport from 1.0.4 to fix various segfaults
+Requires:       loudmouth >= 1.0.3-3
 
 %description
 Mugshot works with the server at mugshot.org to extend 
@@ -80,6 +81,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Sat May 27 2006 Havoc Pennington <hp@redhat.com> - 1.1.2-2
+- add requirement on patched loudmouth
+
 * Fri May 26 2006 Havoc Pennington <hp@redhat.com> - 1.1.2-1
 - 1.1.2
 
