@@ -64,24 +64,39 @@
 		dojo.event.connect(dojo, "loaded", dj_global, "dhSelfInviteInit${N}");
 	</script>
 	<div id="dhSelfInviteForm${N}">
-	    <c:choose>
-	        <c:when test="${summitSelfInvite}">
+		<c:choose>
+			<c:when test="${invitesAvailable > 0}">
+			    <c:choose>
+			        <c:when test="${summitSelfInvite}">
+				        <div class="dh-special-subtitle">
+		                    You heard, you browsed, you signed up!
+		                </div>
+				    </c:when>
+				    <c:otherwise>
+				        <div class="dh-special-subtitle">
+				            Enter your email address to get our fun and free stuff.
+				            <br/>
+					        Then check your email for a link to our download page.
+				        </div>		   
+				    </c:otherwise>
+				</c:choose>
+				    
+				<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}" size="30"/>
+			    <input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
+			</c:when>
+			<c:otherwise>
 		        <div class="dh-special-subtitle">
-                    You heard, you browsed, you signed up!
-                </div>
-		    </c:when>
-		    <c:otherwise>
-		        <div class="dh-special-subtitle">
-		            Enter your email address to get our fun and free stuff.
-		            <br/>
-			        Then check your email for a link to our download page.
-		        </div>		   
-		    </c:otherwise>
+	        		Temporarily out of invitations
+        		</div>
+        		<div class="dh-special-subtitle dh-landing-explanatory">
+        			Sorry, we've run out of invitations to Mugshot. If you enter your email address below, we'll let you know when we have more available.
+        		</div>
+				<form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn("dhWantsInEmailEntry");">
+					<input type="text" id="dhWantsInEmailEntry" name="address"/>
+					<input type="submit" value="Take a rain check"/>
+				</form>
+			</c:otherwise>
 		</c:choose>    	
-		
-		<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}" size="30"/>
-	    <input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
-		
 	</div>
 	<br/>
 	<div id="dhSelfInviteMessage${N}" class="dh-landing-result dhInvisible">

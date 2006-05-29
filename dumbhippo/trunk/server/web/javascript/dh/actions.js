@@ -225,3 +225,14 @@ dh.actions.switchPage = function (name, anchor, newPage) {
 	
 	return false
 }
+
+dh.actions.validateWantsIn = function(emailInputId) {
+	var emailInput = document.getElementById(emailInputId)
+	var address = dojo.string.trim(emailInput.value)
+
+	if (address == "" || address.indexOf("@") < 0) {
+		alert("Please enter a valid email address")
+		return false;
+	}
+	return true;
+}

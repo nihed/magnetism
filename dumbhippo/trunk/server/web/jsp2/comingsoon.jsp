@@ -14,7 +14,6 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>	
 	<dht:scriptIncludes/>
-    <script type="text/javascript" src="/javascript/${buildStamp}/dh/wantsin.js"></script>	
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_blank500.gif">
 	<div>
@@ -28,7 +27,7 @@
 	<div>
 		If you're curious, leave your email address here, and we'll let you know when we launch.
 		<br/>
-		<form method="post" action="/wantsin" onsubmit="return dh.wantsin.send();">
+		<form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn("dhWantsInEmailEntry");">
 			<input type="text" id="dhWantsInEmailEntry" name="address"/>
 			<input type="submit" value="Want In?"/>
 		</form>
