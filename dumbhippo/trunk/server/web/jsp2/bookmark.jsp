@@ -68,7 +68,7 @@
 	checked.</p>
 	<p>If you see the Bookmark Toolbar but the Mugshot Link Swarm does not appear on it,
 	choose <span class="dh-bookmark-uiref">Manage Bookmarks</span> from the <span class="dh-bookmark-uiref">Bookmarks</span> menu,
-	and move the bookmark to you <span class="dh-bookmark-uiref">Personal Toolbar</span> folder.
+	and move the bookmark to your <span class="dh-bookmark-uiref">Personal Toolbar</span> folder.
 	</p>
 	</c:otherwise>
 </c:choose>	
