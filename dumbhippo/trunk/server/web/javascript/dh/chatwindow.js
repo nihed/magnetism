@@ -14,9 +14,12 @@ dh.chatwindow.PHOTO_WIDTH = 60
 dh.chatwindow.FLOAT_ADJUSTMENT = 3
 dh.chatwindow.MESSAGES_DIV_SIDE_PADDING = 2
 dh.chatwindow.MESSAGES_FONT_FAMILY = "Verdana, sans"  
+dh.chatwindow.MAX_HISTORY_COUNT = 110
+
 dh.chatwindow._messageList = new dh.chat.MessageList(
 	function(message, before) { dh.chatwindow._addMessage(message, before) },
-	function(message) { dh.chatwindow._removeMessage(message) })
+	function(message) { dh.chatwindow._removeMessage(message) },
+	dh.chatwindow.MAX_HISTORY_COUNT)
 dh.chatwindow._userList = new dh.chat.UserList(
 	function(user, before) { dh.chatwindow._addUser(user, before) },
 	function(user) { dh.chatwindow._removeUser(user) })

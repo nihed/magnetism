@@ -39,6 +39,8 @@ import com.dumbhippo.xmppcom.XmppEventChatMessage;
 public class Room {
 	private RoomHandler handler;
 	
+	static final int MAX_HISTORY_COUNT = 100;
+	
 	private static class UserInfo {
 		private String username;
 		private String name;
@@ -370,8 +372,13 @@ public class Room {
 			}
 		}
 		
-		// And a complete history of past messages
-		for (MessageInfo messageInfo : messages) {
+		// And a a history of recent messages
+		int count = messages.size();
+		if (count > MAX_HISTORY_COUNT)
+			count = MAX_HISTORY_COUNT;
+		
+		for (int i = messages.size() - count; i < messages.size(); i++) {
+			MessageInfo messageInfo = messages.get(i);
 			Message message = makeMessage(messageInfo);
 			sendPacketToResource(message, to);
 		}
