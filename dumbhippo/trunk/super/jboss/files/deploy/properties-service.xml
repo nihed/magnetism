@@ -37,6 +37,7 @@
 		dumbhippo.server.ebay.certid=@@ebayCertId@@
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
 		dumbhippo.server.stealthmode=@@stealthMode@@
+		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
     </attribute>
   </mbean>
   

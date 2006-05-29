@@ -21,6 +21,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class LiveState {
@@ -31,8 +33,6 @@ public class LiveState {
 	
 	// How often to run time based cleanups
 	private static final long CLEANER_INTERVAL = 60 * 1000; // 1 minute
-	
-	private static final long LIVE_USER_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 	
 	// Maximum number of cleaner intervals for each user
 	private static final int MAX_USER_CACHE_AGE = 30;
@@ -618,9 +618,17 @@ public class LiveState {
 	
 	// Periodically decays the hotness of every active user
 	private class LiveUserPeriodicUpdater extends Thread {
+		int userUpdateInterval;
+		
+		public LiveUserPeriodicUpdater() {
+			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
+			String intervalString = configuration.getProperty(HippoProperty.USER_UPDATE_INTERVAL);
+			userUpdateInterval = Integer.parseInt(intervalString);
+		}
+		
 		@Override
 		public void run() {
-			long nextTime = System.currentTimeMillis() + LIVE_USER_UPDATE_INTERVAL;
+			long nextTime = System.currentTimeMillis() + userUpdateInterval * 1000;
 			
 			while (true) {
 				try {
@@ -642,7 +650,7 @@ public class LiveState {
 				} finally {
 					// this is in finally so a recurring exception doesn't busy loop so badly
 					long currentTime = System.currentTimeMillis();
-					nextTime = Math.max(currentTime, nextTime + LIVE_USER_UPDATE_INTERVAL);
+					nextTime = Math.max(currentTime, nextTime + userUpdateInterval * 1000);
 				}
 			}
 		}

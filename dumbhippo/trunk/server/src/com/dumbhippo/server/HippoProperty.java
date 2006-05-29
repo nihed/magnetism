@@ -23,7 +23,8 @@ public enum HippoProperty {
 	EBAY_CERTID("dumbhippo.server.ebay.certid", null),
 	BUILDSTAMP("dumbhippo.server.buildstamp", "0"), 
 	ENABLE_ADMIN_CONSOLE("dumbhippo.server.adminconsole.enable", "false"),
-	STEALTH_MODE("dumbhippo.server.stealthmode", "false");
+	STEALTH_MODE("dumbhippo.server.stealthmode", "false"),
+	USER_UPDATE_INTERVAL("dumbhippo.server.userupdateinterval", "300"); // 5 minutes
 	
 	private String key;
 	private String def;
