@@ -46,7 +46,7 @@
 					<dht:requireLinksGlobalBean/>
 					<dht:zoneBoxTitle>RECENTLY SHARED</dht:zoneBoxTitle>
 					<c:choose>
-						<c:when test="${linksGlobal.hotPosts.size > 0}">
+						<c:when test="${linksGlobal.hotPosts.resultCount > 0}">
 							<dht:postList posts="${linksGlobal.hotPosts.results}" format="simple"/>
 						</c:when>
 						<c:otherwise>
