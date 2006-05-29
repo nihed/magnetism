@@ -152,14 +152,14 @@ capabilities is available at: <a href="http://developer.mugshot.org">http://deve
 <h3>9. What is the relationship to existing social networking sites?</h3>
    
 <p>
-Mugshot is intended to work with existing "social networking" sites,
+Mugshot is intended to work with "social networking" sites,
 not replace them, and to add new live social experiences to them. For
 example, Mugshot currently allows users to publish their iTunes song
 history to their MySpace profile.
 </p>
 
 <p>
-Unlike most existing social networking services, Mugshot is a completely 
+Unlike most social networking services, Mugshot is a completely 
 open system -- including the server and client source code.
 </p>
 
