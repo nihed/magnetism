@@ -228,7 +228,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId", "disabled" } )
 	@HttpOptions( adminOnly = true )
-	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, String disabled);
+	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled);
 		
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "parseOnly", "command" } )

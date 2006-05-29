@@ -989,7 +989,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
 	}
 	
-	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, String disabled) {
+	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled) {
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
 			throw new RuntimeException("Only administrators can administratively disable/enable accounts");
 		}
@@ -1003,7 +1003,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("no such person", e);
 		}
 		
-		user.getAccount().setAdminDisabled(Boolean.parseBoolean(disabled));
+		user.getAccount().setAdminDisabled(disabled);
 	}
 	
 	private void writeException(Writer out, StringWriter clientOut, Throwable t) throws IOException {
