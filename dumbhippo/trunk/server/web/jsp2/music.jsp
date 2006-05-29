@@ -19,7 +19,7 @@
 		<dht:sidebarPerson who="${signin.user.id}">
 			<dht:sidebarBoxControls title="MUSIC RADAR CONTROLS">
 				<div>
-					Music embed: 
+					Music sharing: 
 					<c:choose>
 					<%-- this is duplicated so we can set the checked attribute...sigh --%>
 					<c:when test="${signin.musicSharingEnabled}">
