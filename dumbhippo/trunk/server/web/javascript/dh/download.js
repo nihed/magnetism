@@ -1,6 +1,7 @@
 dojo.provide("dh.download")
 
 dojo.require("dojo.render")
+dojo.require("dojo.html")
 dojo.require("dh.server")
 
 dh.download.updateDownload = function() {
@@ -8,9 +9,17 @@ dh.download.updateDownload = function() {
 
 	var className = acceptedTerms ? "dh-download-product" : "dh-download-product dh-download-product-disabled"
 	document.getElementById("dhDownloadProduct").className = className
+	
+	var skipNode = document.getElementById('dhSkipDownload');
+	if (acceptedTerms)
+		dojo.html.removeClass(skipNode, "dh-download-product-disabled");
+	else
+		dojo.html.addClass(skipNode, "dh-download-product-disabled");	
 }
 
 dh.download.doDownload = function(url) {
+	// be careful, right now "url" can be either the download binary or /home (for "skip download")
+
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
 		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
 		return

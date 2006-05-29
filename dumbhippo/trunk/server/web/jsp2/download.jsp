@@ -26,7 +26,7 @@
 		<td align="center" colspan="5">
 			<div class="dh-accept-terms-box-normal" id="dhAcceptTermsBox">
 				<div class="dh-accept-terms-warning">
-					You must agree to the Terms of Use before downloading.
+					You must agree to the Terms of Use before continuing.
 				</div>
 				<input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
 					I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.
@@ -39,8 +39,13 @@
 	<td>
 		<table cellspacing="0" cellpadding="0">
 			<tr><td><img id="dhDownloadImg" src="/images2/${buildStamp}/buzzer63x58.gif"/></td>
-			<td class="dh-download-instructions">1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a>.<br/>
-			    The software will install automatically.</td>
+			<td class="dh-download-instructions">
+				<c:if test="${browser.linuxRequested}">
+					<c:set var="forFedora" value=" for Fedora Core 5" scope="page"/>
+				</c:if>	
+				1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a><c:out value="${forFedora}"/>.<br/>
+			    The software will install automatically.
+			</td>
 			</tr>
 		</table>
 	</td>
@@ -67,6 +72,7 @@
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
 	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
+	<div class="dh-disclaimer"><a id="dhSkipDownload" href="javascript:dh.download.doDownload('/home')">I can't install on this computer, skip download.</a> (Not recommended.)</div>
 </dht:body>
 
 </html>
