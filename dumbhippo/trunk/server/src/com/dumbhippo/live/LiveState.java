@@ -387,6 +387,20 @@ public class LiveState {
 	public synchronized LiveXmppServer getXmppServer(String serverIdentifier) {
 		return xmppServers.get(serverIdentifier);
 	}
+
+	/**
+	 * Return the set of users present at a post.
+	 * 
+	 * @param postId GUID of post
+	 * @return set of users at that post
+	 */
+	public Set<Guid> getUserPostPresence(Guid postId) {
+		Set<Guid> presentUsers = new HashSet<Guid>();
+		for (LiveXmppServer xmpp : xmppServers.values()) {
+			presentUsers.addAll(xmpp.getUserPostPresence(postId));
+		}
+		return presentUsers;
+	}
 	
 	/**
 	 * Queue an event representing a change to the database state. The
@@ -616,6 +630,10 @@ public class LiveState {
 		}
 	}
 	
+	public void setUserUpdateInterval(int interval) {
+		liveUserUpdater.setUserUpdateInterval(interval);
+	}
+	
 	// Periodically decays the hotness of every active user
 	private class LiveUserPeriodicUpdater extends Thread {
 		int userUpdateInterval;
@@ -624,6 +642,10 @@ public class LiveState {
 			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
 			String intervalString = configuration.getProperty(HippoProperty.USER_UPDATE_INTERVAL);
 			userUpdateInterval = Integer.parseInt(intervalString);
+		}
+		
+		public synchronized void setUserUpdateInterval(int interval) {
+			userUpdateInterval = interval;
 		}
 		
 		@Override
