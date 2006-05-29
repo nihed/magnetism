@@ -33,7 +33,7 @@
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle a="dhSentPosts">DEVELOPMENT</dht:zoneBoxTitle>
 			<p>
-			Want to make sure we're doing this the right way?  Check out the <a href="http://developer.mugshot.org/TV_Party">TV Party Development</a> area to see what you can do.
+			Want to make sure we're doing this the right way?  Check out the <a href="http://developer.mugshot.org/wiki/TV_Party">TV Party Development</a> area to see what you can do.
 			</p>
 		</dht:zoneBoxTv>
 	</dht:contentColumn>
