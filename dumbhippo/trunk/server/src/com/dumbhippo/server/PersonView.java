@@ -50,6 +50,7 @@ public class PersonView extends EntityView {
 	private String fallbackName;
 	private Guid fallbackIdentifyingGuid;
 	private String bioAsHtmlCached;
+	private String musicBioAsHtmlCached;
 	private boolean viewOfSelf;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
@@ -716,7 +717,7 @@ public class PersonView extends EntityView {
 			if (bio == null)
 				return null;
 			XmlBuilder xml = new XmlBuilder();
-			xml.appendTextAsHtml(user.getAccount().getBio(), null);
+			xml.appendTextAsHtml(bio, null);
 			bioAsHtmlCached = xml.toString(); 
 		}
 		return bioAsHtmlCached;
@@ -725,17 +726,17 @@ public class PersonView extends EntityView {
 	public String getMusicBioAsHtml() {
 		// the cache is because jsp's can be expected to test this for null
 		// then use it, and we don't want to do the htmlizing twice
-		if (bioAsHtmlCached == null) {
+		if (musicBioAsHtmlCached == null) {
 			if (user == null)
 				return null;
 			String bio = user.getAccount().getMusicBio();
 			if (bio == null)
 				return null;
 			XmlBuilder xml = new XmlBuilder();
-			xml.appendTextAsHtml(user.getAccount().getMusicBio(), null);
-			bioAsHtmlCached = xml.toString(); 
+			xml.appendTextAsHtml(bio, null);
+			musicBioAsHtmlCached = xml.toString(); 
 		}
-		return bioAsHtmlCached;
+		return musicBioAsHtmlCached;
 	}
 	
 	public boolean isViewOfSelf() {
