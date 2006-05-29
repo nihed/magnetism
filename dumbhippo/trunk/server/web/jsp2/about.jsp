@@ -34,5 +34,7 @@
 	<p>Mugshot makes use of public web services from a variety of
 	commercial and non-commercial service providers. <a href="/web-services">Learn 
 	more about Mugshot's use of web services</a>.</p>
+	
+	<p>Press and analysts, see our <a href="/faq">press FAQ</a>.
 </dht:systemPage>
 </html>
