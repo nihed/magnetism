@@ -27,6 +27,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.InviterData;
 import com.dumbhippo.persistence.Resource;
@@ -35,6 +36,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -42,10 +44,13 @@ import com.dumbhippo.server.InvitationSystemRemote;
 import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -60,6 +65,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private AccountSystem accounts;
+	
+	@EJB
+	private GroupSystem groupSystem;
 	
 	@EJB
 	private IdentitySpider spider;
@@ -545,6 +553,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		User mugshot = identitySpider.getCharacter(Character.MUGSHOT);
 		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
 		
+		// TODO invitations from Mugshot character could already have their
+		// subject specified, shouldn't we use that?
 		if (isMugshotInvite) {
 			subject = "Mugshot Download";
 		} else if (subject == null || subject.trim().length() == 0) {
@@ -601,15 +611,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		Account acct = accounts.createAccountFromResource(invitationResource);
 		if (disable)
 			acct.setDisabled(true);
-		
-		// we want people coming from the "music invite" strategy to get invites for friends
-		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
-			acct.setInvitations(5);
-			// you are already implicitly wanting this if you came via the music thing;
-			// people can always turn it off
-			acct.setMusicSharingEnabled(true);
-		}
-		
+
 		Client client = null;
 		if (firstClientName != null) {
 			client = accounts.authorizeNewClient(acct, firstClientName);
@@ -619,6 +621,30 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		invite.setViewed(true);
 		invite.setResultingPerson(newUser);
+		
+		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
+			// you are already implicitly wanting this if you came via the music thing;
+			// people can always turn it off
+			acct.setMusicSharingEnabled(true);
+		} else if (invite.getPromotionCode() == PromotionCode.SUMMIT_LANDING_200606) {
+			// summit people get a few invited for friends
+			acct.setInvitations(5);			
+			// current default for enabling music sharing should apply to summit people
+			// we also want summit people to be invited to the common group
+			String groupGuidString = null;
+			try {
+			    groupGuidString = configuration.getPropertyNoDefault(HippoProperty.SUMMIT_GROUP_GUID);
+			    Group summitGroup = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), groupGuidString);
+			    // invite has a List of inviters, let's rather use the Mugshot character explicitly here,
+			    // it is important that Mugshot is already a member of a group we are inviting to,
+			    // which it already is for the summit group
+			    groupSystem.addMember(identitySpider.getCharacter(Character.MUGSHOT), summitGroup, newUser);
+			} catch (PropertyNotFoundException e) {
+				logger.error("Summit Group guid not found, exception: {}", e.getMessage());				
+		    } catch (NotFoundException e) {
+				logger.error("Summit Group not found, guid: {}, exception: {}", groupGuidString, e.getMessage());
+			}
+		}
 		
 		// needed to fix newUser.getAccount() returning null inside identitySpider?
 		em.flush();
