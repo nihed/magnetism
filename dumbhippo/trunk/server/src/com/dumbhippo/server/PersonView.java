@@ -351,7 +351,6 @@ public class PersonView extends EntityView {
 		return listOfLists;
 	}
 	
-	
 	/**
 	 * Divide an (unordered) set of PersonView into lists based on the 
 	 * type of person, then sort alphabetically with the default collator. 
@@ -375,6 +374,45 @@ public class PersonView extends EntityView {
 		list.addAll(listOfLists.get(1));
 		list.addAll(listOfLists.get(2));
 		list.addAll(listOfLists.get(3));
+		
+		return list;
+	}
+	
+	/**
+	 * This method is a quick hack to display non-users only if the
+	 * user is viewing his own contacts. If we decide to display non-users
+	 * to others, we should truncate their e-mail addresses,
+	 * but currently non-users end up being displayed as "<Unknown>"   
+	 * to others, which ain't pretty. If we do not want to display non-users
+	 * to others, we can have getContacts() of IdentitySpider return only 
+	 * the contacts the viewpoint is allowed to see.
+	 * 
+	 * Divide an (unordered) set of PersonView into lists based on the 
+	 * type of person, then sort alphabetically with the default collator. 
+	 * The types of people are: people who have accounts, people who have 
+	 * been invited, people who need invites, and people for whom their 
+	 * invited status is not set. Return the list that combines the members
+	 * of the four lists in the above order. You generally want to do this 
+	 * before displaying things to user, since iteration through Set will 
+	 * be in hash table order.
+	 * 
+	 * @param viewpoint
+	 * @param viewedUser
+	 * @param views a set of PersonView objects
+	 * @return a newly created List containing the sorted people
+	 */
+	static public List<PersonView> sortedList(Viewpoint viewpoint, User viewedUser, Set<PersonView> views) {
+		
+		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
+		
+		// combine the above lists in the list to return
+		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		list.addAll(listOfLists.get(0));
+		if (viewpoint.isOfUser(viewedUser)) {
+		    list.addAll(listOfLists.get(1));
+		    list.addAll(listOfLists.get(2));
+		    list.addAll(listOfLists.get(3));
+		}
 		
 		return list;
 	}

@@ -19,8 +19,6 @@ import com.dumbhippo.server.TrackView;
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
-	static private final int MAX_CONTACTS_SHOWN = 9;
-	
 	private User viewedUser;
 	private String viewedUserId;
 	private boolean disabled;
@@ -141,10 +139,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
-						                   PersonViewExtra.PRIMARY_AIM);
-			contacts = new ListBean<PersonView>(PersonView.sortedList(mingledContacts,
-					                                                  1, MAX_CONTACTS_SHOWN, 
-					                                                  1, 1));
+						                   PersonViewExtra.PRIMARY_AIM);		
+			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledContacts));
 			
 			totalContacts = mingledContacts.size();
 		}
