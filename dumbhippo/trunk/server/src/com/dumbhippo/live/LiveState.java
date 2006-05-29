@@ -389,20 +389,6 @@ public class LiveState {
 	}
 
 	/**
-	 * Return the set of users present at a post.
-	 * 
-	 * @param postId GUID of post
-	 * @return set of users at that post
-	 */
-	public Set<Guid> getUserPostPresence(Guid postId) {
-		Set<Guid> presentUsers = new HashSet<Guid>();
-		for (LiveXmppServer xmpp : xmppServers.values()) {
-			presentUsers.addAll(xmpp.getUserPostPresence(postId));
-		}
-		return presentUsers;
-	}
-	
-	/**
 	 * Queue an event representing a change to the database state. The
 	 * event will be processed asynchronously resulting in updates to
 	 * the live state objects and also possibly in notifications sent
