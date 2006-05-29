@@ -500,7 +500,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			return prefs;
 		}
 		
-		prefs.put("musicSharingEnabled", Boolean.toString(!account.isDisabled() && account.isMusicSharingEnabled()));
+		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()
+		// method in identitySpider to get the right default
+		prefs.put("musicSharingEnabled", Boolean.toString(!account.isDisabled() && identitySpider.getMusicSharingEnabled(account.getOwner())));
 
 		// not strictly a "pref" but this is a convenient place to send this to the client
 		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
