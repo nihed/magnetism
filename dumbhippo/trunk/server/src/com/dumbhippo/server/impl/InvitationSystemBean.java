@@ -573,7 +573,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		messageText.append(invite.getAuthURL(baseurlObject));
 		messageText.append("\n\n");
 		
-		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you other stuff again unless you ask.  Thanks!!";
+		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
 		
 		messageHtml.appendTextNode("div", noSpamDisclaimer);
 		messageText.append(noSpamDisclaimer);

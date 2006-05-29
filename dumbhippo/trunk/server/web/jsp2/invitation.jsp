@@ -22,8 +22,8 @@
 			'dhAddressEntry' : '',
 			'dhSubjectEntry' : 'Join me at Mugshot',
 			'dhMessageEntry' : 	
-	'Mugshot has cool tools for showing your iTunes playlist on MySpace, ' +
-	'and sharing and chatting about cool links with cool friends. Like you!'
+	'Mugshot makes it easy to instantly share web pages and music playlists ' +
+	'with friends and family -- or the world!'
 		}
 		dh.invitation.resendValues = {
 			'dhAddressEntry' : '',
