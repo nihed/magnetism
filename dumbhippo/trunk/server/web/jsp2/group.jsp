@@ -5,8 +5,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <dh:bean id="group" class="com.dumbhippo.web.GroupPage" scope="request"/>
-<jsp:setProperty name="group" property="viewedGroupId" param="who"/>
 <jsp:setProperty name="group" property="fromInvite" param="fromInvite"/>
+<jsp:setProperty name="group" property="viewedGroupId" param="who"/>
 
 <c:if test="${empty group.viewedGroupId}">
 	<dht:errorPage>Group not found</dht:errorPage>
