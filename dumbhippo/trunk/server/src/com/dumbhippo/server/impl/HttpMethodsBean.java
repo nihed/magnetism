@@ -989,6 +989,23 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
 	}
 	
+	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, String disabled) {
+		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
+			throw new RuntimeException("Only administrators can administratively disable/enable accounts");
+		}
+		
+		User user;
+		try {
+			user = identitySpider.lookupGuidString(User.class, userId);
+		} catch (ParseException e) {
+			throw new RuntimeException("bad guid", e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such person", e);
+		}
+		
+		user.getAccount().setAdminDisabled(Boolean.parseBoolean(disabled));
+	}
+	
 	private void writeException(Writer out, StringWriter clientOut, Throwable t) throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 		xml.openElement("result", "type", "exception");

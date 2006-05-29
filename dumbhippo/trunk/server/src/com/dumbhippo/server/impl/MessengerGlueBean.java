@@ -119,7 +119,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		assert account != null;
 		
-		return account.checkClientCookie(token, digest);
+		return !account.isAdminDisabled() && account.checkClientCookie(token, digest);
 	}
 	
 

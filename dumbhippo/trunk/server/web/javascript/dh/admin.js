@@ -24,6 +24,18 @@ dh.admin.reindexAll = function() {
 		  	    	 });
 }
 
+dh.admin.setAdminDisabled = function(userId, disabled) {
+   	dh.server.doPOST("setadmindisabled",
+				     { "userId" : userId,
+				       "disabled" : disabled },
+		  	    	 function(type, data, http) {
+		  	    	     document.location.reload()
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't " + (disabled ? "disable" : "enable") +  " user")
+		  	    	 });
+}
+
 dh.admin.shell = {}
 
 dh.admin.shell.executing = false

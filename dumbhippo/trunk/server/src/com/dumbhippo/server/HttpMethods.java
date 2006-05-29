@@ -225,6 +225,11 @@ public interface HttpMethods {
 	@HttpOptions( allowDisabledAccount = true )
 	public void doAcceptTerms(UserViewpoint viewpoint);
 	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "userId", "disabled" } )
+	@HttpOptions( adminOnly = true )
+	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, String disabled);
+		
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "parseOnly", "command" } )
 	@HttpOptions( adminOnly = true )

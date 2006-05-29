@@ -70,6 +70,7 @@ public class Account extends Resource {
 	private boolean hasAcceptedTerms;
 	
 	private boolean disabled;
+	private boolean adminDisabled;
 	
 	// a hex-encoded SHA-1 hash of the password is stored
 	private String password;
@@ -471,6 +472,15 @@ public class Account extends Resource {
 
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
+	}
+	
+	@Column(nullable=false)
+	public boolean isAdminDisabled() {
+		return adminDisabled;
+	}
+
+	public void setAdminDisabled(boolean adminDisabled) {
+		this.adminDisabled = adminDisabled;
 	}
 	
 	@Column

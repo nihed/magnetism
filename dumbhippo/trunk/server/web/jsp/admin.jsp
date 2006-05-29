@@ -109,6 +109,16 @@
 				</jsp:element>
 				</td>  		
 			<td><a href="javascript:dh.admin.sendRepairEmail('${user.user.id}')">Send repair email</a></td>
+			<td>
+				<c:choose>
+					<c:when test="${user.account.adminDisabled}">
+						<a href="javascript:dh.admin.setAdminDisabled('${user.user.id}', false)">Enable</a>
+					</c:when>
+					<c:otherwise>
+						<a href="javascript:dh.admin.setAdminDisabled('${user.user.id}', true)">Disable</a>
+					</c:otherwise>
+				</c:choose>
+			</td>
 		</tr>
   	</c:forEach>
 </table>
