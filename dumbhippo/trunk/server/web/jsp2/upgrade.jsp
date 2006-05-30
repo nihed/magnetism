@@ -29,10 +29,9 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.49</p>
+			<p>Version 1.1.50</p>
 			<ul>
-				<li>Show the right photo in the chat window</li>
-				<li>Use the right icon in the toolbar</li>
+				<li>Minor bug fixes</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
