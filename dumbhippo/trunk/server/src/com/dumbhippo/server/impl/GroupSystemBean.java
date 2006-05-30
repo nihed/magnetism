@@ -354,8 +354,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// The selection of Group is only needed for the CAN_SEE checks
 	static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
-		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group AND " +
-		"      gm.status  >= " + MembershipStatus.INVITED.ordinal();
+		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
 
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 		Query q;

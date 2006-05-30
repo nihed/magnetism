@@ -78,6 +78,7 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
+import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
@@ -124,26 +125,26 @@ public class PostingBoardBean implements PostingBoard {
 	private RecommenderSystem recommenderSystem;
 	
 	@javax.annotation.Resource
-	private EJBContext ejbContext;
+	private EJBContext ejbContext;	
 	
-	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients, boolean isTutorialPost) {
+	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients, PostType postType) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
 		
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY) {
 			for (Resource r : expandedRecipients) {
-				messageSender.sendPostNotification(r, post, isTutorialPost);
+				messageSender.sendPostNotification(r, post, postType);
 			}			
 		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
 				   post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC) {
 			for (Account acct : accountSystem.getRecentlyActiveAccounts()) {
 				if (identitySpider.getNotifyPublicShares(acct.getOwner())) {
-					messageSender.sendPostNotification(acct, post, isTutorialPost);
+					messageSender.sendPostNotification(acct, post, postType);
 				}
 			}
 			for (Resource r : expandedRecipients) {
 				if (!(r instanceof Account)) { // We covered the accounts above
-					messageSender.sendPostNotification(r, post, isTutorialPost);
+					messageSender.sendPostNotification(r, post, postType);
 				}
 			}
 		} else {
@@ -211,7 +212,7 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, boolean isTutorialPost) throws NotFoundException {
+	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
 		url = removeFrameset(url);
 		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
@@ -271,7 +272,7 @@ public class PostingBoardBean implements PostingBoard {
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
-		sendPostNotifications(post, expandedRecipients, isTutorialPost);
+		sendPostNotifications(post, expandedRecipients, postType);
 		
 		LiveState liveState = LiveState.getInstance();
 		for (Group g : groupRecipients) {
@@ -286,7 +287,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
-		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, false);
+		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, PostType.NORMAL);
 	}
 	
 	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
@@ -315,8 +316,8 @@ public class PostingBoardBean implements PostingBoard {
 		ShareGroupPostInfo postInfo = PostInfo.newInstance(PostInfoType.SHARE_GROUP, ShareGroupPostInfo.class);
 		postInfo.getTree().updateContentChild(group.getId(), NodeName.shareGroup, NodeName.groupId);
 		postInfo.makeImmutable();
-		
-		return doLinkPost(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo);			
+
+		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
 	}
 
 	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) {
@@ -332,7 +333,7 @@ public class PostingBoardBean implements PostingBoard {
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
-			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, true);
+			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, PostType.TUTORIAL);
 		} catch (NotFoundException e) {
 			logger.error("Failed to post: {}", e.getMessage());
 			throw new RuntimeException(e);
@@ -353,6 +354,14 @@ public class PostingBoardBean implements PostingBoard {
 				"Put your music online",
 				"Visit this link to learn how to put your music on your blog or MySpace page");
 	}
+	
+
+	public void doGroupInvitationPost(User recipient, Group group) {
+		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
+				configuration.getProperty(HippoProperty.BASEURL) + "/group?who=" + group.getId(),
+				"Invitation to join " + group.getName(),
+				"You've been invited to join the " + group.getName() + " group");		
+	}	
 	
 	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
 			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {

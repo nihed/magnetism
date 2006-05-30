@@ -197,10 +197,20 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				// see what feature the user was sold on originally, and share the right thing 
 				// with them accordingly
 				
+				User owner = account.getOwner();
 				if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
-					postingBoard.doNowPlayingTutorialPost(account.getOwner());
-				else
-					postingBoard.doShareLinkTutorialPost(account.getOwner());
+					postingBoard.doNowPlayingTutorialPost(owner);
+				else {
+					UserViewpoint viewpoint = new UserViewpoint(owner);
+					Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
+					if (invitedToGroups.size() == 0) {
+						postingBoard.doShareLinkTutorialPost(account.getOwner());
+					} else {
+						for (Group group : invitedToGroups) {
+							postingBoard.doGroupInvitationPost(owner, group);
+						}
+					}
+				}
 	
 				account.setWasSentShareLinkTutorial(true);
 			}

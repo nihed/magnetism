@@ -46,6 +46,7 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SystemViewpoint;
@@ -360,7 +361,7 @@ public class MessageSenderBean implements MessageSender {
 			return createMessageFor(user, Message.Type.NORMAL);
 		}
 
-		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, boolean isTutorialPost) {
+		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
 			XMPPConnection connection = getConnection();
 
 			if (connection == null || !connection.isConnected()) {
@@ -479,7 +480,7 @@ public class MessageSenderBean implements MessageSender {
 
 	private class EmailSender {
 
-		public void sendPostNotification(EmailResource recipient, Post post) {
+		public void sendPostNotification(EmailResource recipient, Post post, PostType postType) {
 			// We really want to use the viewpoint of the recipient, not the
 			// viewpoint of the sender, but the recipient doesn't have an
 			// account and thus can't have a viewpoint. Using an anonymous
@@ -498,7 +499,7 @@ public class MessageSenderBean implements MessageSender {
 			InvitationToken invitation = invitationSystem.updateValidInvitation(post.getPoster(), recipient); 
 			String recipientInviteUrl;
 			if (invitation != null) 
-				recipientInviteUrl = invitation.getAuthURL(config.getProperty(HippoProperty.BASEURL)); 
+				recipientInviteUrl = invitation.getAuthURL(baseurl); 
 			else
 				recipientInviteUrl = null;
 				
@@ -528,13 +529,12 @@ public class MessageSenderBean implements MessageSender {
 			PostView postView = new PostView(ejbContext, post, recipient);
 			
 			String url = postView.getUrl();
-
-			// TEXT: put in the link
-			
-			messageText.append(url);
-			messageText.append("\n");
-			
-			// HTML: put in the link, with redirect url stuff
+			// For group shares to non-account members, we want to actually redirect them to /download
+			// so they download the client, accept terms of use etc.  Then the initial share will
+			// be for the group.
+			if (postType == PostType.GROUP) {
+				url = baseurl + "/download"; 
+			}
 			
 			StringBuilder redirectUrl = new StringBuilder();
 			redirectUrl.append(baseurl);
@@ -547,6 +547,13 @@ public class MessageSenderBean implements MessageSender {
 				redirectUrl.append("&inviteKey=");
 				redirectUrl.append(invitation.getAuthKey());
 			}
+			
+			// TEXT
+			
+			messageText.append(redirectUrl);
+			messageText.append("\n");
+			
+			// HTML		
 			
 			String f = "<div style=\"margin:0.3em;\">\n" 
 				+ "<a style=\"font-weight:bold;font-size:150%%;\" title=\"%s\" href=\"%s\">%s</a>\n"
@@ -653,13 +660,13 @@ public class MessageSenderBean implements MessageSender {
 		this.xmppSender = new XMPPSender();
 	}
 	
-	public void sendPostNotification(Resource recipient, Post post, boolean isTutorialPost) {
+	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
 			Account account = user.getAccount();
-			xmppSender.sendPostNotification(account.getOwner(), post, null, isTutorialPost);
+			xmppSender.sendPostNotification(account.getOwner(), post, null, postType);
 		} else if (recipient instanceof EmailResource) {
-			emailSender.sendPostNotification((EmailResource)recipient, post);
+			emailSender.sendPostNotification((EmailResource)recipient, post, postType);
 		} else {
 			throw new IllegalStateException("Don't know how to send a notification to resource: " + recipient);
 		}

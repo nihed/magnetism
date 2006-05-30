@@ -107,6 +107,8 @@ public interface PostingBoard {
 
 	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 		throws NotFoundException;
+
+	public void doGroupInvitationPost(User owner, Group group);	
 	
 	public void doShareLinkTutorialPost(User recipient);
 	

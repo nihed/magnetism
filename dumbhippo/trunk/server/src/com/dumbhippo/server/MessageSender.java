@@ -10,7 +10,7 @@ import com.dumbhippo.persistence.User;
 
 @Local
 public interface MessageSender {
-	public void sendPostNotification(Resource recipient, Post post, boolean isTutorialPost);
+	public void sendPostNotification(Resource recipient, Post post, PostType postType);
 	
 	public void sendLivePostChanged(LivePost lpost);
 	
