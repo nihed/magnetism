@@ -27,10 +27,7 @@
 	<div>
 		If you're curious, leave your email address here, and we'll let you know when we launch.
 		<br/>
-		<form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn("dhWantsInEmailEntry");">
-			<input type="text" id="dhWantsInEmailEntry" name="address"/>
-			<input type="submit" value="Want In?"/>
-		</form>
+		<dht:wantsIn/>		
 	</div>
 </dht:systemPage>
 </html>

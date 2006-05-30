@@ -1,4 +1,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+
 <%-- this tag is intended to be included only if invites are available --%>
 <%@ attribute name="promotion" required="true" type="java.lang.String"%>
 <%@ attribute name="invitesAvailable" required="true" type="java.lang.Integer"%>
@@ -21,7 +23,8 @@
 		
 		var dhSelfInviteInit${N} = function() {
 	        selfInviteAddressNode = document.getElementById('dhSelfInviteAddress${N}');
-	        selfInviteAddress${N} = new dh.textinput.Entry(selfInviteAddressNode, "someone@example.com", "");    
+	        if (selfInviteAddressNode != null)
+	            selfInviteAddress${N} = new dh.textinput.Entry(selfInviteAddressNode, "someone@example.com", "");    
 		}
 			
 		var dhSelfInviteComplete${N} = function(message) {
@@ -91,10 +94,7 @@
         		<div class="dh-special-subtitle dh-landing-explanatory">
         			Sorry, we've run out of invitations to Mugshot. If you enter your email address below, we'll let you know when we have more available.
         		</div>
-				<form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn("dhWantsInEmailEntry");">
-					<input type="text" id="dhWantsInEmailEntry" name="address"/>
-					<input type="submit" value="Take a rain check"/>
-				</form>
+        		<dht:wantsIn buttonText="Take a rain check"/>
 			</c:otherwise>
 		</c:choose>    	
 	</div>
