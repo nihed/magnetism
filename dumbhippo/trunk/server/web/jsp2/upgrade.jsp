@@ -21,9 +21,10 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.2</p>
+			<p>Version 1.1.3</p>
 			<ul>
-				<li>Better handling of multiple Firefox profiles (thanks Chris!)</li>
+				<li>Require latest Loudmouth package, which fixes some crashes</li>
+				<li>Correctly get chat history and wrap chat lines</li>
 			</ul>
 		</c:when>
 		<c:otherwise>

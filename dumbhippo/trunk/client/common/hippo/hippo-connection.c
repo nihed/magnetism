@@ -2410,7 +2410,9 @@ parse_chat_user_info(HippoConnection *connection,
         *newly_joined_p = old_role && strcmp(old_role, "nonmember") == 0;
     
         hippo_entity_set_name(HIPPO_ENTITY(person), name);
-        hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
+        /* FIXME this is a temporary hack to deal with stale photos in chat */
+        if (hippo_entity_get_small_photo_url(HIPPO_ENTITY(person)) == NULL)
+            hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
         hippo_person_set_current_song(person, arrangement_name);
         hippo_person_set_current_artist(person, artist);
         hippo_person_set_music_playing(person, music_playing_bool);  
@@ -2492,7 +2494,9 @@ process_room_chat_message(HippoConnection *connection,
 
     /* update new info about the user */
     hippo_entity_set_name(sender, name);
-    hippo_entity_set_small_photo_url(sender, photo_url);
+    /* FIXME hack since chat has stale info for now */
+    if (hippo_entity_get_small_photo_url(sender) == NULL)
+        hippo_entity_set_small_photo_url(sender, photo_url);
 
     /* We can usually skip this in the case where the message was pending - but
      * it's tricky to get it exactly right. See comments in handleRoomPresence().

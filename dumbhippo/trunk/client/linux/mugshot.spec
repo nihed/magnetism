@@ -1,6 +1,6 @@
 Name:           mugshot
-Version:        1.1.2
-Release:        2%{?dist}
+Version:        1.1.3
+Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
 Group:          Applications/Internet
@@ -81,6 +81,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Mon May 29 2006 Havoc Pennington <hp@redhat.com> - 1.1.3-1
+- 1.1.3
+
 * Sat May 27 2006 Havoc Pennington <hp@redhat.com> - 1.1.2-2
 - add requirement on patched loudmouth
 

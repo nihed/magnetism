@@ -155,6 +155,7 @@ hippo_chat_window_new(HippoDataCache *cache,
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(window->chat_log_view), FALSE);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(window->chat_log_view), SPACING);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(window->chat_log_view), SPACING);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(window->chat_log_view), GTK_WRAP_WORD);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
@@ -215,6 +216,16 @@ hippo_chat_window_new(HippoDataCache *cache,
             
             g_object_unref(person);   
         }
+    }
+
+    {
+        GSList *messages;
+        
+        messages = hippo_chat_room_get_messages(window->room);
+        while (messages != NULL) {
+            on_message_added(window->room, messages->data, window);
+            messages = messages->next;
+        }        
     }
 
     g_signal_connect(window->room, "title-changed", G_CALLBACK(on_title_changed), window);
@@ -310,6 +321,7 @@ hippo_chat_window_connect_user(HippoChatWindow *window,
 
     /* a weak ref would be better, but harder */
     g_object_ref(person);
+    on_user_changed(person, window);    
     g_signal_connect(G_OBJECT(person), "changed", G_CALLBACK(on_user_changed), window);
     g_hash_table_insert(window->connected_users, person, person);
 }
@@ -470,44 +482,54 @@ find_insertion_point(HippoChatWindow *window,
     }
 }
 
-enum {
+typedef enum {
     PICTURE_ON_LEFT,
     PICTURE_ON_RIGHT
-};
+} PictureSpot;
+
+typedef struct {
+    HippoChatWindow *window;
+    GtkTextBuffer *buffer;
+    PictureSpot where;
+    int serial;
+} PictureData;
 
 static void
 on_picture_loaded_for_log(GdkPixbuf *pixbuf,
                           void      *data)
 {
-    GtkTextMark *mark;
     GtkTextBuffer *buffer;
-    int where;
-    
-    mark = GTK_TEXT_MARK(data);
-    buffer = gtk_text_mark_get_buffer(mark);
+    PictureData *pd = data;
+       
+    if (pd->buffer == NULL) {
+        buffer = NULL;
+    } else {
+        buffer = pd->buffer;
+        REMOVE_WEAK(&pd->buffer);
+    }
     
     /* pixbuf is NULL if we failed to load an image,
      * and buffer is NULL if we destroyed the chat window
      */
     if (pixbuf && buffer) {
-        GtkTextIter iter;
-        
-        where = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mark), "where"));
-        
-        gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark);
-        
-        if (where == PICTURE_ON_RIGHT) {
-            gtk_text_iter_forward_to_line_end(&iter);
-            gtk_text_buffer_insert(buffer, &iter, " ", 1);
+        GtkTextIter start, end;
+    
+        if (!find_message_bounds(pd->window, pd->serial, &start, &end)) {
+            g_warning("failed to find message bounds!");
+            return;
         }
-        gtk_text_buffer_insert_pixbuf(buffer, &iter, pixbuf);
-        if (where == PICTURE_ON_LEFT) {
-            gtk_text_buffer_insert(buffer, &iter, " ", 1);
+
+        if (pd->where == PICTURE_ON_RIGHT) {
+            gtk_text_iter_forward_to_line_end(&start);
+            gtk_text_buffer_insert(buffer, &start, " ", 1);
+        }
+        gtk_text_buffer_insert_pixbuf(buffer, &start, pixbuf);
+        if (pd->where == PICTURE_ON_LEFT) {
+            gtk_text_buffer_insert(buffer, &start, " ", 1);
         }
     }
-    if (!gtk_text_mark_get_deleted(mark))
-        gtk_text_buffer_delete_mark(buffer, mark);
-    g_object_unref(mark);
+
+    g_free(pd);
 }
 
 static void
@@ -520,10 +542,10 @@ on_message_added(HippoChatRoom         *room,
     const char *text;
     int len;
     int serial;
-    GtkTextMark *picture_mark;
     HippoPerson *sender;
     HippoPerson *self;
     GtkTextTag *tag;
+    PictureData *pd;
     
     serial = hippo_chat_message_get_serial(message);
     sender = hippo_chat_message_get_person(message);
@@ -541,15 +563,19 @@ on_message_added(HippoChatRoom         *room,
   
     find_insertion_point(window, serial, &iter);
 
-    picture_mark = gtk_text_buffer_create_mark(buffer, NULL, &iter, TRUE);
-  
+    pd = g_new0(PictureData, 1);
+    pd->window = window;
+    pd->buffer = buffer;
+    pd->serial = serial;
+    ADD_WEAK(&pd->buffer);
+
     tag = tag_for_serial(window, serial);
     if (self && self == sender) {
         g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_LEFT, NULL);
-        g_object_set_data(G_OBJECT(picture_mark), "where", GINT_TO_POINTER(PICTURE_ON_LEFT));
+        pd->where = PICTURE_ON_LEFT;
     } else {
         g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_RIGHT, NULL);
-        g_object_set_data(G_OBJECT(picture_mark), "where", GINT_TO_POINTER(PICTURE_ON_RIGHT));        
+        pd->where = PICTURE_ON_RIGHT;
     }
 
     gtk_text_buffer_insert_with_tags(buffer, &iter, text, len, tag, NULL);
@@ -559,15 +585,22 @@ on_message_added(HippoChatRoom         *room,
         gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", 1, tag, NULL);
     }
 
+    /* if we inserted at the end, scroll to it */
+    if (gtk_text_iter_is_end(&iter)) {
+        /* insert is invisible anyway so just use it */
+        gtk_text_buffer_move_mark(buffer, gtk_text_buffer_get_insert(buffer),
+                                  &iter);
+        gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(window->chat_log_view),
+                                           gtk_text_buffer_get_insert(buffer));
+    }
+
     /* insert photo last to avoid invalidating iters */
 
-    g_object_ref(picture_mark);
     hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(sender),
-                         on_picture_loaded_for_log, picture_mark);
-    /* if the load photo callback was invoked synchronously, the mark is already deleted here... 
+                         on_picture_loaded_for_log, pd);
+    /* if the load photo callback was invoked synchronously, then pd is already freed here... 
      * also our buffer iterators are invalidated
      */
-    picture_mark = NULL;
     
     /* watch this user (no-op if already watching) */
     hippo_chat_window_connect_user(window, sender);
@@ -712,9 +745,6 @@ on_picture_loaded_for_tree(GdkPixbuf *pixbuf,
 {
     TreePictureData *tpd = data;
     
-    REMOVE_WEAK(&tpd->window);
-    REMOVE_WEAK(&tpd->person);
-
     /* note pixbuf can be NULL */
 
     if (tpd->window && tpd->person) {
@@ -724,6 +754,9 @@ on_picture_loaded_for_tree(GdkPixbuf *pixbuf,
                                MEMBER_COLUMN_PHOTO, pixbuf, -1);
         }
     }
+
+    REMOVE_WEAK(&tpd->window);
+    REMOVE_WEAK(&tpd->person);
 
     g_free(tpd);
 }
