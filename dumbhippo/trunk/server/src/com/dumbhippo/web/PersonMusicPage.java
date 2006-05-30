@@ -7,6 +7,7 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
@@ -71,7 +72,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	@Override
 	public void setViewedUser(User user) {
 		super.setViewedUser(user);
-		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(user);
+		musicSharingEnabled = getIdentitySpider().getMusicSharingEnabled(user, Enabled.RAW_PREFERENCE_ONLY);
 	}
 	
 	public int getSelfInvitations() {

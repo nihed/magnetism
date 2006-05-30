@@ -3,8 +3,8 @@ package com.dumbhippo.server.impl;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
@@ -40,6 +40,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
@@ -843,15 +844,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}	
 	
-	public boolean getMusicSharingEnabled(User user) {
+	public boolean getMusicSharingEnabled(User user, Enabled enabled) {
 		// we only share your music if your account is enabled, AND music sharing is enabled.
 		// but we return only the music sharing flag here since the two settings are distinct
 		// in the UI. The pref we send to the client is a composite of the two.
 		Account account = getMaybeDetachedAccount(user);
 		Boolean musicSharingEnabled = account.isMusicSharingEnabled();
 		if (musicSharingEnabled == null)
-			return DEFAULT_ENABLE_MUSIC_SHARING;			
-		return account.isMusicSharingEnabled();
+			musicSharingEnabled = DEFAULT_ENABLE_MUSIC_SHARING;
+		
+		switch (enabled) {
+		case RAW_PREFERENCE_ONLY:
+			return musicSharingEnabled;
+		case AND_ACCOUNT_IS_ACTIVE:
+			return !(account.isDisabled() || account.isAdminDisabled()) && musicSharingEnabled;
+		}
+		throw new IllegalArgumentException("invalid value for enabled param to getMusicSharingEnabled");
 	}
 	
 	public void setMusicSharingEnabled(User user, boolean enabled) {

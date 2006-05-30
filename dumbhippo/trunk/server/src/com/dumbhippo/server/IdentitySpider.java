@@ -305,7 +305,7 @@ public interface IdentitySpider {
 	
 	public void setAccountDisabled(User user, boolean disabled);
 
-	public boolean getMusicSharingEnabled(User user);
+	public boolean getMusicSharingEnabled(User user, Enabled enabled);
 	
 	public void setMusicSharingEnabled(User user, boolean enabled);
 

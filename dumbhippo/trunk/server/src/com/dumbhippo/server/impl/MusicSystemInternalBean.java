@@ -59,6 +59,7 @@ import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.ArtistView;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -237,7 +238,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			maxResults = 1;
 		}
 
-		if (!identitySpider.getMusicSharingEnabled(user)) {
+		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return Collections.emptyList();
 		}
 		
@@ -275,7 +276,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private int countTrackHistory(Viewpoint viewpoint, User user) {
-		if (!identitySpider.getMusicSharingEnabled(user)) {
+		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return 0;
 		}
 		

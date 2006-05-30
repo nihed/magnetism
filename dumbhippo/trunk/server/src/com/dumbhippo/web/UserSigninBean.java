@@ -6,6 +6,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.UserViewpoint;
@@ -81,7 +82,7 @@ public class UserSigninBean extends SigninBean {
 	public boolean isMusicSharingEnabled() {
 		if (musicSharingEnabled == null) {
 			IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-			musicSharingEnabled = Boolean.valueOf(identitySpider.getMusicSharingEnabled(getUser()));
+			musicSharingEnabled = Boolean.valueOf(identitySpider.getMusicSharingEnabled(getUser(), Enabled.RAW_PREFERENCE_ONLY));
 		}
 		return musicSharingEnabled;
 	}
