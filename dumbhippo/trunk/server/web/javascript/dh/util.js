@@ -417,7 +417,7 @@ dh.util.getNextUrl = function(text, i) {
 		// we also use http://, https://, www, web, ftp, and ftp:// to identify urls like www.amazon, which
 		// are also accepted by the browers
 		// WARNING Firefox 1.0 can't parse this so keep it as a string, not a regex literal 
-		dh.util.urlRegex = new RegExp('/([^\s"\'<>[\]][\w._%-:/]*\.[a-z]{2,3}(\/[\w._%-:/&=?]*)?(["\'<>[\]\s]|$))|(https?:\/\/)|((www|web)\.)|(ftp\.)|(ftp:\/\/)/i');	
+		dh.util.urlRegex = new RegExp('([^\\s"\'<>[\\]][\\w._%-:/]*\\.[a-z]{2,3}(/[\\w._%-:/&=?]*)?(["\'<>[\\]\\s]|$))|(https?://)|((www|web)(\\.))|(ftp(\\.))|(ftp://)', 'i');	
 	}
     var reg = dh.util.urlRegex;
 
