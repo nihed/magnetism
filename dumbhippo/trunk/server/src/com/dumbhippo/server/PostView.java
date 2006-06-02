@@ -239,6 +239,7 @@ public class PostView {
 		builder.appendTextNode("href", post.getUrl().toString());
 		builder.appendTextNode("title", post.getTitle());
 		builder.appendTextNode("text", post.getText());
+		builder.appendTextNode("toWorld", isToWorld() ? "true" : "false");
 		builder.appendTextNode("postDate", "" + (post.getPostDate().getTime()/1000));
 		PostInfo pi = post.getPostInfo();
 		if (pi != null)
