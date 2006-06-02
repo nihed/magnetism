@@ -499,7 +499,13 @@ connection_connect_cb (GIOChannel   *source,
         gboolean failed = TRUE;
 		if (getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
             &error, &len) < 0) {
-            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "getsockopt failed code %d", WSAGetLastError());
+            int last_err = 0;
+#if defined(__WIN32__)
+            last_err = WSAGetLastError();
+#else
+            last_err = error;
+#endif
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "getsockopt failed code %d", last_err);
         } else {
             if (error != 0) {
                 g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "socket error status %d", error);
@@ -984,7 +990,7 @@ connection_send (LmConnection  *connection,
             tmp_error = NULL;
 		    status = g_io_channel_write_chars (connection->io_channel, p, remaining,
 					        &bytes_written, &tmp_error);
-            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Wrote %d bytes of %d IO status %d",
+            g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "Wrote %ld bytes of %ld IO status %d",
                    bytes_written, remaining, status);
             if (tmp_error != NULL) {
                 g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "IO error writing: '%s'",
@@ -995,7 +1001,7 @@ connection_send (LmConnection  *connection,
             if (bytes_written < remaining) {
                 p += bytes_written;
                 remaining -= bytes_written;
-                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%d bytes left to write", remaining);
+                g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%ld bytes left to write", remaining);
                 continue;
             } else {
                 break;
