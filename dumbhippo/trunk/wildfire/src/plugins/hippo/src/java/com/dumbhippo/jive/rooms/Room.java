@@ -464,7 +464,10 @@ public class Room {
 				oldStatus = RoomUserStatus.NONMEMBER;
 			
 			Presence presence = makePresenceAvailable(userInfo, oldStatus);
-			sendPacketToAll(presence);
+			// It should be sendPackageToAll, but sending join/leave to people not
+			// currently in the chat room causes significant extra server load
+			// sendPackageToAll(presence)
+			sendPacketToPresent(presence);
 		}
 		
 		// Send the list of current membmers and a complete history of past messages
@@ -508,7 +511,10 @@ public class Room {
 				presence = makePresenceUnavailable(userInfo);
 			else
 				presence = makePresenceAvailable(userInfo, RoomUserStatus.PARTICIPANT);
-			sendPacketToAll(presence);
+			// It should be sendPackageToAll, but sending join/leave to people not
+			// currently in the chat room causes significant extra server load
+			// sendPackageToAll(presence)
+			sendPacketToPresent(presence);
 		}
 	}
 	
