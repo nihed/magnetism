@@ -174,3 +174,14 @@ body {
 // so that we don't forget to use them when the text width is measured
 .dh-chat-message-text-inner {
 }
+
+.dh-disabled-table {
+   table-layout: fixed;
+   width: 100%;
+   height: 100%;
+}
+
+.dh-disabled-message {
+   font-size: 15px;
+   color:     #444444;
+}

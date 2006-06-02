@@ -522,6 +522,15 @@ dh.chatwindow.init = function() {
 	messageInput.focus()
 }
 
+dh.chatwindow.initDisabled = function() {
+	var chatControl = document.getElementById("dhChatControl")
+
+    dojo.event.connect(document.body, "onkeypress", this, "onBodyKeyPress")
+
+    dh.chatwindow.resizeElements()
+    window.onresize = function() { dh.chatwindow.resizeElements() }
+}
+
 dh.chatwindow.rescan = function() {
 	var chatControl = document.getElementById("dhChatControl")
     if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
