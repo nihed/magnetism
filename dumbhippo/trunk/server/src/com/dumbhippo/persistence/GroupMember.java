@@ -8,6 +8,9 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 /**
  * This class stores information about the membership of one person 
  * in one group
@@ -19,6 +22,7 @@ import javax.persistence.UniqueConstraint;
 	   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"group_id", "member_id"})}
 	   )
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
 public class GroupMember extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	

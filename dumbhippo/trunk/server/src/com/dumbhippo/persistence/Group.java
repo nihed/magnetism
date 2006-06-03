@@ -14,6 +14,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
 public class Group extends GuidPersistable implements VersionedEntity {
@@ -68,6 +71,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 
 	@OneToMany(mappedBy="group")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<GroupMember> getMembers() {
 		return members;
 	}

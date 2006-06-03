@@ -15,6 +15,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.lucene.Indexed;
 import org.hibernate.lucene.Unstored;
 import org.slf4j.Logger;
@@ -109,6 +111,7 @@ public class Post extends GuidPersistable {
 
 	@ManyToMany
 	@JoinTable(table=@Table(name="Post_PersonRecipient"))
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Resource> getPersonRecipients() {
 		return personRecipients;
 	}
@@ -122,6 +125,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Group> getGroupRecipients() {
 		return groupRecipients;
 	}
@@ -135,6 +139,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Resource> getResources() {
 		return resources;
 	}
@@ -174,6 +179,7 @@ public class Post extends GuidPersistable {
 
 	@ManyToMany
 	@JoinTable(table=@Table(name="Post_ExpandedRecipient"))
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Resource> getExpandedRecipients() {
 		return expandedRecipients;
 	}

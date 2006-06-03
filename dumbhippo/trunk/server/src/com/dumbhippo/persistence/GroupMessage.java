@@ -6,6 +6,9 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 /**
  * Stores an individual message associated with a group chat.
  * 
@@ -13,6 +16,7 @@ import javax.persistence.ManyToOne;
  */
 
 @Entity
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public class GroupMessage extends EmbeddedMessage {
 
 	private static final long serialVersionUID = 1L;

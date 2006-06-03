@@ -202,6 +202,7 @@ public class Account extends Resource {
 	 * @return the clients (programs/machines) used with this account
 	 */
 	@OneToMany(cascade = { CascadeType.ALL }, mappedBy="account")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	protected Set<Client> getClients() {
 		return clients;
 	}

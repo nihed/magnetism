@@ -9,12 +9,16 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 
 @Entity
 @Table(name="PersonPostData", 
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"post_id", "person_id"})}
 	      )
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	      
 public class PersonPostData extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Post post;

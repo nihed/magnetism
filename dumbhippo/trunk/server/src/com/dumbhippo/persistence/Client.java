@@ -11,6 +11,9 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.dumbhippo.identity20.RandomToken;
 
 /**
@@ -24,6 +27,7 @@ import com.dumbhippo.identity20.RandomToken;
  * 
  */
 @Entity
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public class Client extends DBUnique implements Serializable {
 
 	private static final long serialVersionUID = 0L;
