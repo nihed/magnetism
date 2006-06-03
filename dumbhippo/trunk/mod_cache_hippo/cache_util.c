@@ -168,7 +168,7 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_handle_t *h,
      */
     cc_cresp = apr_table_get(h->resp_hdrs, "Cache-Control");
     cc_ceresp = apr_table_get(h->resp_err_hdrs, "Cache-Control");
-    cc_req = apr_table_get(h->req_hdrs, "Cache-Control");
+    cc_req = apr_table_get(r->headers_in, "Cache-Control");
 
     if ((agestr = apr_table_get(h->resp_hdrs, "Age"))) {
         age_c = apr_atoi64(agestr);
