@@ -19,7 +19,6 @@ import javax.annotation.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -402,6 +401,13 @@ public class PostingBoardBean implements PostingBoard {
 		return getPersonPostData(viewpoint.getViewer(), post);
 	}	
 	
+	
+	/*
+	 * CAREFUL: These queries have to be kept in sync with the Java code in 
+	 * canViewPost() 
+	 */
+	
+	
 	// Hibernate bug: I think we should be able to write
 	// EXISTS (SELECT g FROM IN(post.groupRecipients) g WHERE [..])
 	// according to the EJB3 persistance spec, but that results in
@@ -614,9 +620,43 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	static final String GET_SPECIFIC_POST_QUERY = 
-		"SELECT post from Post post WHERE post.id = :post";
-
+	private boolean isInPersonRecipients(UserViewpoint viewpoint, Post post) {
+		Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
+		for (Resource recipient : post.getPersonRecipients()) {
+			for (AccountClaim ac : viewerClaims) {
+				if (ac.getResource().equals(recipient)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Can the given viewpoint view the given post based on groups the post
+	 * was sent to
+	 * @param viewpoint a user viewpoint
+	 * @param post a post
+	 * @return true if a receiving group is visible to viewpoint
+	 */
+	private boolean isInGroupRecipients(UserViewpoint viewpoint, Post post) {
+		Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
+		for (Group g : post.getGroupRecipients()) {
+			if (g.getAccess().ordinal() >= GroupAccess.PUBLIC.ordinal())
+				return true;
+			for (GroupMember member : g.getMembers()) {
+				if (member.getStatus().ordinal() >= MembershipStatus.INVITED.ordinal()) {
+					for (AccountClaim ac : viewerClaims) {
+						if (ac.getResource().equals(member.getMember())) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Check if a particular viewer can see a particular post.
 	 * 
@@ -627,39 +667,27 @@ public class PostingBoardBean implements PostingBoard {
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
 		User viewer = viewpoint.getViewer();
 		
-		/* This is an optimization for a common case */
+		/* Optimization for a common case */
 		if (post.getPoster().equals(viewer))
 			return true;
 		
-		/* FIXME we should probably do this by looking at the Post 
-		 * in memory, not with a query
-		 */
-		
-		/* Do the query if no optimizations apply */
-		Query q;
-		StringBuilder queryText = new StringBuilder(GET_SPECIFIC_POST_QUERY + " AND ");
-		queryText.append(CAN_VIEW);
-		//logger.debug("Full canViewPost query is: '{}'", queryText);
-		
-		q = em.createQuery(queryText.toString());
-		q.setParameter("post", post);
-		q.setParameter("viewer", viewer);
-		
-		try {
-			/*Post resultPost = (Post) */em.createQuery(queryText.toString())
-	            .setParameter("post", post)
-	            .setParameter("viewer", viewer)
-	            .getSingleResult();
-			//logger.debug("canViewPost query got one result: {}; returning true/access granted", resultPost);
+		/* public post */
+		if (post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC)
 			return true;
-		} catch (EntityNotFoundException e) {
-			//logger.debug("canViewPost query got no result; returning false/access denied");
-			return false;
-		}
+		
+		if (isInPersonRecipients(viewpoint, post))
+			return true;
+		
+		if (isInGroupRecipients(viewpoint, post))
+			return true;
+		
+		logger.debug("User {} can't view post {}", viewpoint.getViewer(), post);
+		
+		return false;
 	}
 
 	public boolean canViewPost(Viewpoint viewpoint, Post post) {
-		if (viewpoint instanceof SystemViewpoint) {
+		if (viewpoint == null || viewpoint instanceof SystemViewpoint) {
 			return true;
 		} else if (viewpoint instanceof UserViewpoint) {
 			return canViewPost((UserViewpoint) viewpoint, post);
@@ -878,10 +906,12 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
 		Post post = EJBUtil.lookupGuid(em, Post.class, guid);
-		if (canViewPost(viewpoint, post))
+		if (canViewPost(viewpoint, post)) {
 			return post;
-		else
+		} else {
+			logger.debug("Viewpoint {} can't view post {}", viewpoint, post);
 			throw new GuidNotFoundException(guid);
+		}
 	}
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
@@ -891,7 +921,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 
     public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
-    	if (viewpoint != null)
+    	if (!(viewpoint == null || viewpoint instanceof SystemViewpoint))
     		throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
     	List<PersonPostData> viewers = new ArrayList<PersonPostData>();
     	Post post;
