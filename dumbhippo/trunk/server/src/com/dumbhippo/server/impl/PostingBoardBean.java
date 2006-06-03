@@ -43,6 +43,7 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostCreatedEvent;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -503,20 +504,23 @@ public class PostingBoardBean implements PostingBoard {
 			}			
 		}
 	}
-
-	static final String VISIBLE_PERSON_RECIPIENTS_QUERY = 
-		"SELECT resource from Post post, Resource resource " +
-		"WHERE post = :post AND " +
-		"      (post.poster = :viewer OR " +
-		"       EXISTS(SELECT ac from AccountClaim ac WHERE ac.owner = :viewer AND ac.resource MEMBER OF post.personRecipients)) AND " +
-		"      resource MEMBER OF post.personRecipients";
 	
 	private List<Resource> getVisiblePersonRecipients(UserViewpoint viewpoint, Post post) {
-		@SuppressWarnings("unchecked")
-		List<Resource> results = em.createQuery(VISIBLE_PERSON_RECIPIENTS_QUERY)
-			.setParameter("post", post)
-			.setParameter("viewer", viewpoint.getViewer())
-			.getResultList();
+		List<Resource> results = new ArrayList<Resource>();
+		if (viewpoint.isOfUser(post.getPoster())) {
+			results.addAll(post.getPersonRecipients());
+		} else {
+			// you can see yourself and that's it (is this right? shouldn't you be able
+			// to see people who say they are your friend? FIXME)
+			Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
+			for (Resource recipient : post.getPersonRecipients()) {
+				for (AccountClaim ac : viewerClaims) {
+					if (ac.getResource().equals(recipient)) {
+						results.add(recipient);
+					}
+				}
+			}
+		}
 		
 		return results;
 	}
