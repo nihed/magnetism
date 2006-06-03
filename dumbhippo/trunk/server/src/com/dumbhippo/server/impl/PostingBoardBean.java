@@ -515,21 +515,23 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private List<Resource> getVisiblePersonRecipients(UserViewpoint viewpoint, Post post) {
-		List<Resource> results = new ArrayList<Resource>();
+		boolean canSeeRecipients = false;
+
 		if (viewpoint.isOfUser(post.getPoster())) {
-			results.addAll(post.getPersonRecipients());
+			canSeeRecipients = true;
 		} else {
-			// you can see yourself and that's it (is this right? shouldn't you be able
-			// to see people who say they are your friend? FIXME)
-			Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
+			// If you are a recipient, you can see the other recipients
 			for (Resource recipient : post.getPersonRecipients()) {
-				for (AccountClaim ac : viewerClaims) {
-					if (ac.getResource().equals(recipient)) {
-						results.add(recipient);
-					}
+				if (viewpoint.isOfUser(recipient.getAccountClaim().getOwner())) {
+					canSeeRecipients = true;
+					break;
 				}
 			}
 		}
+		List<Resource> results = new ArrayList<Resource>();
+		
+		if (canSeeRecipients)
+			results.addAll(post.getPersonRecipients());
 		
 		return results;
 	}
@@ -621,13 +623,9 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private boolean isInPersonRecipients(UserViewpoint viewpoint, Post post) {
-		Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
 		for (Resource recipient : post.getPersonRecipients()) {
-			for (AccountClaim ac : viewerClaims) {
-				if (ac.getResource().equals(recipient)) {
-					return true;
-				}
-			}
+			if (viewpoint.isOfUser(recipient.getAccountClaim().getOwner()))
+				return true;
 		}
 		return false;
 	}
