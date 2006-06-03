@@ -61,6 +61,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
@@ -413,104 +414,80 @@ public class PostingBoardBean implements PostingBoard {
 	// according to the EJB3 persistance spec, but that results in
 	// garbage SQL
 	
-	static final String AUTH_GROUP =
+	static private final String AUTH_GROUP =
         "g MEMBER OF post.groupRecipients AND " + 
 		" (g.access >= " + GroupAccess.PUBLIC.ordinal() + " OR " +
           "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
           "WHERE vgm.group = g AND vgm.member = ac.resource AND ac.owner = :viewer AND " +
                 "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
 	
-	// For fetching visibility of groups in post recipient lists.
-	// We optimize the handling of viewer GroupMember since we
-	// are already fetching that, and we also treat groups where
-	// we were a past member as visible. (See
-	// GroupSystemBean.CAN_SEE_POST)
-	static final String VISIBLE_GROUP_FOR_POST =
-        "g MEMBER OF post.groupRecipients AND " + 
-		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " +
-          "(vgm IS NOT NULL AND " +
-           "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
-	
-	static final String VISIBLE_GROUP_ANONYMOUS =
-        "g MEMBER OF post.groupRecipients AND " + 
-		"g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
-	
-	static final String VISIBLE_GROUP_SYSTEM =
-        "g MEMBER OF post.groupRecipients";
-	
-	static final String AUTH_GROUP_ANONYMOUS =
+	static private final String AUTH_GROUP_ANONYMOUS =
         "g MEMBER OF post.groupRecipients AND " + 
 		"g.access >= " + GroupAccess.PUBLIC.ordinal();
 	
-	static final String CAN_VIEW = 
+	static private final String CAN_VIEW = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
 			  "post.poster = :viewer OR " + 
               "EXISTS (SELECT ac FROM AccountClaim ac WHERE ac.owner = :viewer " +
               "        AND ac.resource MEMBER OF post.personRecipients) OR " +
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP + "))";
 	
-	static final String CAN_VIEW_ANONYMOUS = 
+	static private final String CAN_VIEW_ANONYMOUS = 
 		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP_ANONYMOUS + "))";
 	
-	static final String VIEWER_RECEIVED = 
+	static private final String VIEWER_RECEIVED = 
 		" EXISTS(SELECT ac FROM AccountClaim ac " +
 		"        WHERE ac.owner = :viewer " +
 		"            AND ac.resource MEMBER OF post.expandedRecipients) ";
 
-	static final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
+	static private final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 
-	// If we wanted to indicate undisclosed recipients, we would just omit
-	// the VISIBLE_GROUP_FOR_POST then compute visibility by hand on
-	// the returned groups; this is cheap since we have the GroupMember
-	// for the viewer already
-	//
-	
-	static final String GET_POST_VIEW_QUERY = 
-		"SELECT NEW com.dumbhippo.server.impl.GroupQueryResult(g,vgm) " +
-		"FROM Post post, Group g LEFT JOIN g.members vgm, AccountClaim ac " +
-		"WHERE post = :post AND vgm.member = ac.resource AND ac.owner = :viewer ";
-	
-	static final String GET_POST_VIEW_QUERY_ANONYMOUS = 
-		"SELECT g " +
-		"FROM Post post, Group g " +
-		"WHERE post = :post";
-	
 	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<Object> recipients) {
-		Query q;
-
-		if (viewpoint instanceof SystemViewpoint) {
-			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_SYSTEM);
-		} else if (viewpoint instanceof UserViewpoint) {
-			User viewer = ((UserViewpoint)viewpoint).getViewer();
-
-			q = em.createQuery(GET_POST_VIEW_QUERY + " AND " + VISIBLE_GROUP_FOR_POST);
-			q.setParameter("viewer", viewer);
-		} else {
-			q = em.createQuery(GET_POST_VIEW_QUERY_ANONYMOUS + " AND " + VISIBLE_GROUP_ANONYMOUS);
-		}
-
-		q.setParameter("post", post);
 		
-		if (viewpoint instanceof UserViewpoint) {
-			for (Object o : q.getResultList()) {
-				GroupQueryResult gr = (GroupQueryResult)o;
-				GroupMember groupMember = gr.getGroupMember();
-				PersonView inviter  = null;
-				
-				if (groupMember != null) {
-					if (groupMember.getStatus() == MembershipStatus.INVITED) {
-						Person adder = groupMember.getAdder();
-						if (adder != null)
-							inviter = identitySpider.getPersonView(viewpoint, adder);
-					}
+		if (viewpoint instanceof SystemViewpoint) {
+			for (Group g : post.getGroupRecipients()) {
+				recipients.add(new GroupView(g, null, null));
+			}
+		} else if (viewpoint instanceof AnonymousViewpoint) {
+			for (Group g : post.getGroupRecipients()) {
+				if (g.getAccess().ordinal() >= GroupAccess.PUBLIC_INVITE.ordinal()) {
+					recipients.add(new GroupView(g, null, null));
 				}
-				recipients.add(new GroupView(gr.getGroup(), groupMember, inviter));
 			}
 		} else {
-			for (Object o : q.getResultList()) {
-				recipients.add(new GroupView((Group)o, null, null));
-			}			
+			// We treat groups where we were a past member as visible. (See
+			// GroupSystemBean.CAN_SEE_POST)			
+			User viewer = ((UserViewpoint)viewpoint).getViewer();
+			for (Group g : post.getGroupRecipients()) {
+				boolean added = false;
+				
+				for (GroupMember member : g.getMembers()) {
+					AccountClaim ac = member.getMember().getAccountClaim();
+					if (ac != null &&
+						ac.getOwner().equals(viewer) &&
+						member.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal()) {
+						PersonView inviter  = null;
+						if (member.getStatus() == MembershipStatus.INVITED) {
+							Person adder = member.getAdder();
+							if (adder != null)
+								inviter = identitySpider.getPersonView(viewpoint, adder);
+						}
+						recipients.add(new GroupView(g, member, inviter));
+						added = true;
+						break;
+					}
+				}
+						
+				if (!added) {
+					// see if we can see this even if anonymous
+					// (do this second, since it will not add the inviter as above if 
+					//  we're only invited)
+					if (g.getAccess().ordinal() >= GroupAccess.PUBLIC_INVITE.ordinal()) {
+						recipients.add(new GroupView(g, null, null));
+					}
+				}
+			}
 		}
 	}
 	
@@ -522,7 +499,8 @@ public class PostingBoardBean implements PostingBoard {
 		} else {
 			// If you are a recipient, you can see the other recipients
 			for (Resource recipient : post.getPersonRecipients()) {
-				if (viewpoint.isOfUser(recipient.getAccountClaim().getOwner())) {
+				AccountClaim ac = recipient.getAccountClaim();
+				if (ac != null && viewpoint.isOfUser(ac.getOwner())) {
 					canSeeRecipients = true;
 					break;
 				}
@@ -624,7 +602,8 @@ public class PostingBoardBean implements PostingBoard {
 	
 	private boolean isInPersonRecipients(UserViewpoint viewpoint, Post post) {
 		for (Resource recipient : post.getPersonRecipients()) {
-			if (viewpoint.isOfUser(recipient.getAccountClaim().getOwner()))
+			AccountClaim ac = recipient.getAccountClaim();
+			if (ac != null && viewpoint.isOfUser(ac.getOwner()))
 				return true;
 		}
 		return false;
