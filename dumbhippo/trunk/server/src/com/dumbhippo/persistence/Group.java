@@ -77,8 +77,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 	
 	/**
-	 * Only hibernate should call this probably, use 
-	 * addMember()
+	 * Only hibernate should call this probably
 	 * @param members
 	 */
 	protected void setMembers(Set<GroupMember> members) {

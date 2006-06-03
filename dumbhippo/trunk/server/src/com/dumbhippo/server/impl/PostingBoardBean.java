@@ -386,18 +386,21 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 
-	private PersonPostData getPersonPostData(UserViewpoint viewpoint, Post post) {
-		Query q = em.createQuery("SELECT ppd FROM PersonPostData ppd " +
-				                 "WHERE ppd.post = :post AND ppd.person = :viewer");
-		q.setParameter("post", post);
-		q.setParameter("viewer", viewpoint.getViewer());
-		try {
-			return (PersonPostData) q.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
+	private PersonPostData getPersonPostData(User user, Post post) {
+		for (PersonPostData ppd : post.getPersonPostData()) {
+			Person p = ppd.getPerson();
+			if (!(p instanceof User)) // possible? FIXME decide for sure
+				continue;
+			if (user.equals((User) p)) {
+				return ppd;
+			}
 		}
+		return null;
 	}
 	
+	private PersonPostData getPersonPostData(UserViewpoint viewpoint, Post post) {
+		return getPersonPostData(viewpoint.getViewer(), post);
+	}	
 	
 	// Hibernate bug: I think we should be able to write
 	// EXISTS (SELECT g FROM IN(post.groupRecipients) g WHERE [..])
@@ -888,28 +891,53 @@ public class PostingBoardBean implements PostingBoard {
 	}
 
     public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
-    	 if (viewpoint != null)
-    		 throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
-    	 
-    	 Query q = em.createQuery("SELECT ppd FROM PersonPostData ppd " +
-    			 				  "WHERE ppd.post = :postId ORDER BY clickedDate DESC")
-		             .setParameter("postId", guid.toString());
-    	 
-    	 if (max > 0)
-    	     q.setMaxResults(max);
-    	 
-    	 @SuppressWarnings("unchecked")
-    	 List<PersonPostData> viewers = q.getResultList();
-    	 
-    	 return viewers;
+    	if (viewpoint != null)
+    		throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
+    	List<PersonPostData> viewers = new ArrayList<PersonPostData>();
+    	Post post;
+		try {
+			post = loadRawPost(viewpoint, guid);
+		} catch (NotFoundException e) {
+			// FIXME really this should throw as a checked exception probably
+			// (or, why doesn't this method just take a Post anyway?)
+			throw new RuntimeException("post not found", e);
+		}
+		for (PersonPostData ppd : post.getPersonPostData()) { 
+			viewers.add(ppd);
+			if (viewers.size() >= max)
+				break;
+		}
+		 
+		// sort descending by view date
+		Collections.sort(viewers, new Comparator<PersonPostData>() {
+
+			public int compare(PersonPostData ppd1, PersonPostData ppd2) {
+				long date1 = ppd1.getClickedDate().getTime();
+				long date2 = ppd2.getClickedDate().getTime();
+				if (date1 < date2)
+					return 1; /* descending! */
+				else if (date1 > date2)
+					return -1;
+				else
+					return 0;
+			}
+			
+		});
+		 
+		return viewers;
     }
     
-	public int getPostViewerCount(Guid guid) {	
-		Query q = em.createQuery("SELECT COUNT(ppd) FROM PersonPostData ppd WHERE ppd.post = :postId");
-		q.setParameter("postId", guid.toString());
-		Number count = (Number) q.getSingleResult();
-		return count.intValue();
-	}    
+	public int getPostViewerCount(Guid guid) {
+    	Post post;
+		try {
+			post = loadRawPost(SystemViewpoint.getInstance(), guid);
+		} catch (NotFoundException e) {
+			// FIXME really this should throw as a checked exception probably
+			// (or, why doesn't this method just take a Post anyway?)
+			throw new RuntimeException("post not found", e);
+		}
+		return post.getPersonPostData().size();
+	}
 	
 	public void postViewedBy(String postId, User clicker) {
 		logger.debug("Post {} clicked by {}", postId, clicker);
@@ -950,19 +978,18 @@ public class PostingBoardBean implements PostingBoard {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<Boolean>() {
 
 				public Boolean call() {
-					PersonPostData ppd;
+					PersonPostData ppd = getPersonPostData(user, post);
+					// needed since we are in another transaction
+					Post attachedPost = em.find(Post.class, post.getId());
 					
-					try {
-						ppd = (PersonPostData)em.createQuery("SELECT ppd FROM PersonPostData ppd " +
-							                                 "WHERE ppd.post = :post AND ppd.person = :user")
-				            .setParameter("post", post)
-				            .setParameter("user", user)
-				            .getSingleResult();
-						return false;
-					} catch (EntityNotFoundException e) {
-						ppd = new PersonPostData(user, post); 
+					if (ppd == null) {
+						ppd = new PersonPostData(user, post);
 						em.persist(ppd);
+						attachedPost.getPersonPostData().add(ppd);
+						em.persist(attachedPost);
 						return true;
+					} else {
+						return false;
 					}
 				}
 			});
