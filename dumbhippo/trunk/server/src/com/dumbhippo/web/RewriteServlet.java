@@ -34,6 +34,16 @@ public class RewriteServlet extends HttpServlet {
 	
 	static final long serialVersionUID = 1;
 	
+	static private boolean xmppEnabled = true;
+	
+	static public void setXmppEnabled(boolean enabled) {
+		xmppEnabled = enabled;
+	}
+	
+	static public boolean getXmppEnabled() {
+		return xmppEnabled;
+	}
+	
 	private boolean stealthMode;
 	private Set<String> requiresSignin;
 	private Set<String> requiresSigninStealth;
@@ -303,6 +313,16 @@ public class RewriteServlet extends HttpServlet {
 		if (!afterSlash.startsWith("psa-")) {
 			request.setAttribute("psa1", getNextPsa());
 			request.setAttribute("psa2", getNextPsa());
+		}
+		
+		if (!xmppEnabled) {
+			if (path.equals("/sharelink")) {
+				path = "/sharelink-disabled";
+				afterSlash = "sharelink-disabled";
+			} else if (path.equals("/chatwindow")) {
+				path = "/chatwindow-disabled";
+				afterSlash = "chatwindow-disabled";
+			}
 		}
 		
 		if (jsp2Pages.contains(afterSlash)) {
