@@ -65,9 +65,12 @@ import javax.persistence.UniqueConstraint;
 			"  track.type as type, " +
 			"  track.url as url, " + 
 			"  MAX(th.lastUpdated) as lastUpdated, " +
-			"  SUM(th.timesPlayed) as timesPlayed " +
+			"  COUNT(th.timesPlayed) as timesPlayed " +
 			"FROM TrackHistory th LEFT JOIN Track track on th.track_id = track.id " +
-			"GROUP by th.track_id " +
+			"WHERE track.artist IS NOT NULL AND track.name IS NOT NULL " +
+			// This is actually not valid SQL, because we select ungrouped columns
+			// but MySQL will just pick a random track, which is fine
+			"GROUP by track.artist, track.name " +
 			// probably a waste to tie-break by lastUpdated here, but fairly cheap
 			"ORDER by timesPlayed DESC, lastUpdated DESC",
 		resultSetMapping="trackHistoryAggregateMapping"
@@ -93,7 +96,10 @@ import javax.persistence.UniqueConstraint;
 				"  COUNT(th.timesPlayed) as timesPlayed " + 
 				"FROM TrackHistory th LEFT JOIN Track track on th.track_id = track.id " +
 				"WHERE th.lastUpdated > :since " +
-				"GROUP by th.track_id " +
+				"  AND track.artist IS NOT NULL AND track.name IS NOT NULL " +
+				// This is actually not valid SQL, because we select ungrouped columns
+				// but MySQL will just pick a random track, which is fine
+				"GROUP by track.artist, track.name " +
 				// probably a waste to tie-break by lastUpdated here, but fairly cheap
 				"ORDER by timesPlayed DESC, lastUpdated DESC",
 			resultSetMapping="trackHistoryAggregateMapping"
