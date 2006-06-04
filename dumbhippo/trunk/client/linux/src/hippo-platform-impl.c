@@ -226,7 +226,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
     /* FIXME */
 
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
-        return g_strdup("dogfood.dumbhippo.com:9080");
+        return g_strdup("dogfood.mugshot.org:9080");
     else if (impl->instance == HIPPO_INSTANCE_DEBUG)
         return g_strdup("fresnel.dumbhippo.com:8080");        
     else
