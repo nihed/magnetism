@@ -911,8 +911,6 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		for (PersonPostData ppd : post.getPersonPostData()) { 
 			viewers.add(ppd);
-			if (viewers.size() >= max)
-				break;
 		}
 		 
 		// sort descending by view date
@@ -930,7 +928,9 @@ public class PostingBoardBean implements PostingBoard {
 			}
 			
 		});
-		 
+
+		if (viewers.size() > max)
+			viewers.subList(max, viewers.size()).clear();
 		return viewers;
     }
     

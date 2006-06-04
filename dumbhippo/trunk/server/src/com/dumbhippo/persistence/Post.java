@@ -63,6 +63,8 @@ public class Post extends GuidPersistable {
 			resources = new HashSet<Resource>();
 		if (expandedRecipients == null)
 			expandedRecipients = new HashSet<Resource>();
+		if (personPostData == null)
+			personPostData = new HashSet<PersonPostData>();
 	}
 	
 	protected Post() {
