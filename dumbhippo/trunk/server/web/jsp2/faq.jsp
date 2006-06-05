@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_blank500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_faq500.gif" fullHeader="true">
  
     For general press inquiries, please contact 
     <a href="http://www.redhat.com/about/news/presskit/">Red Hat Media Relations</a>.

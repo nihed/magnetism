@@ -9,7 +9,7 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_blank500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_webserv500.gif" fullHeader="true">
  
     <p>
     Mugshot uses public web services from third party providers, subject to the following 
