@@ -21,7 +21,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.EJB;
-import javax.ejb.PostConstruct;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -113,21 +112,41 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	@EJB
 	private Configuration config;
 	
-	private ExecutorService threadPool;
+	private static ExecutorService threadPool;
+	private static boolean shutdown = false;
 	
-	@PostConstruct
-	public void init() {
-		threadPool = Executors.newFixedThreadPool(8, new ThreadFactory() {
-			private int nextThreadId = 0;
-			
-			public synchronized Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true);
-				t.setName("music pool " + nextThreadId);
-				nextThreadId += 1;
-				return t;
+	private static ExecutorService getThreadPool() {
+		synchronized (MusicSystemInternalBean.class) {
+			if (shutdown)
+				throw new RuntimeException("getThreadPool() called after shutdown");
+				
+			if (threadPool == null) {
+				threadPool = Executors.newFixedThreadPool(10, new ThreadFactory() {
+					private int nextThreadId = 0;
+					
+					public synchronized Thread newThread(Runnable r) {
+						Thread t = new Thread(r);
+						t.setDaemon(true);
+						t.setName("music pool " + nextThreadId);
+						nextThreadId += 1;
+						return t;
+					}
+				});
 			}
-		});
+			
+			return threadPool;
+		}
+	}
+	
+	public static void shutdown() {
+		synchronized (MusicSystemInternalBean.class) {
+			shutdown = true;
+			
+			if (threadPool != null) {
+				threadPool.shutdown();
+				threadPool = null;
+			}
+		}	
 	}
 	
 	public Track getTrack(Map<String, String> properties) {
@@ -1357,21 +1376,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public Future<List<YahooSongResult>> getYahooSongResultsAsync(Track track) {
 		FutureTask<List<YahooSongResult>> futureSong =
 			new FutureTask<List<YahooSongResult>>(new YahooSongTask(track));
-		threadPool.execute(futureSong);
+		getThreadPool().execute(futureSong);
 		return futureSong;
 	}
 
 	public Future<List<YahooSongResult>> getYahooSongResultsAsync(String albumId) {
 		FutureTask<List<YahooSongResult>> futureSong =
 			new FutureTask<List<YahooSongResult>>(new YahooSongTask(albumId));
-		threadPool.execute(futureSong);
+		getThreadPool().execute(futureSong);
 		return futureSong;
 	}	
 	
 	public Future<List<YahooSongDownloadResult>> getYahooSongDownloadResultsAsync(String songId) {
 		FutureTask<List<YahooSongDownloadResult>> futureDownload =
 			new FutureTask<List<YahooSongDownloadResult>>(new YahooSongDownloadTask(songId));
-		threadPool.execute(futureDownload);
+		getThreadPool().execute(futureDownload);
 		return futureDownload;		
 	}
 	
@@ -1379,21 +1398,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
 		FutureTask<List<YahooAlbumResult>> futureAlbums =
 			new FutureTask<List<YahooAlbumResult>>(new YahooAlbumResultsTask(artist, albumsByArtist, albumToExclude));
-		threadPool.execute(futureAlbums);
+		getThreadPool().execute(futureAlbums);
 		return futureAlbums;
 	}
 
 	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong) {
 		FutureTask<YahooAlbumResult> futureAlbum =
 			new FutureTask<YahooAlbumResult>(new YahooAlbumSearchTask(yahooSong));
-		threadPool.execute(futureAlbum);
+		getThreadPool().execute(futureAlbum);
 		return futureAlbum;
 	}
 	
 	public Future<AmazonAlbumResult> getAmazonAlbumAsync(String album, String artist) {
 		FutureTask<AmazonAlbumResult> futureAlbum =
 			new FutureTask<AmazonAlbumResult>(new AmazonAlbumSearchTask(album, artist));
-		threadPool.execute(futureAlbum);
+		getThreadPool().execute(futureAlbum);
 		return futureAlbum;		
 	}
 	
@@ -1854,7 +1873,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public Future<TrackView> getTrackViewAsync(Track track, long lastListen) {
 		FutureTask<TrackView> futureView =
 			new FutureTask<TrackView>(new GetTrackViewTask(track, lastListen));
-		threadPool.execute(futureView);
+		getThreadPool().execute(futureView);
 		return futureView;
 	}
 	
@@ -1866,7 +1885,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
 		FutureTask<AlbumView> futureView = 
 			new FutureTask<AlbumView>(new GetAlbumViewTask(futureYahooAlbum, futureAmazonAlbum));
-		threadPool.execute(futureView);
+		getThreadPool().execute(futureView);
 		return futureView;
 	}
 
@@ -2205,6 +2224,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			User user = iterator.next();
 			if (user.equals(viewpoint.getViewer()))
 			    iterator.remove();
+		}
+ 		
+		if (contacts.size() == 0) { // h.user IN () isn't legal
+			List<TrackView> empty = Collections.emptyList();
+			pageable.setResults(empty);
+			pageable.setTotalCount(0);
+			return;
 		}
 		
 		String where = "WHERE h.user IN " + getUserSetSQL(contacts);
@@ -2626,6 +2652,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
 
 			// disabled for now since we want to return anonymous recommendations too
+			// if you renable, take care of the fact that IN () isn't allowed if contacts is empty
 			if (true && false) {
 				sb.append(" AND h.user.id IN ");
 				sb.append(getUserSetSQL(contacts));

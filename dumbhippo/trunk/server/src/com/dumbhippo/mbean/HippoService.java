@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.server.impl.MusicSystemInternalBean;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -23,5 +24,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 	protected void stopService() {
 		logger.info("Stopping HippoService MBean");
 		LiveState.getInstance().shutdown();
+		MusicSystemInternalBean.shutdown();
    }
 }
