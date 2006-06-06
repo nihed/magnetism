@@ -213,7 +213,7 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.mugshot.org:21020");
     else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strdup("fresnel.dumbhippo.com:21020");
+        return g_strdup("localinstance.mugshot.org:21020");
     else
         return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
 }
@@ -228,7 +228,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.mugshot.org:9080");
     else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strdup("fresnel.dumbhippo.com:8080");        
+        return g_strdup("localinstance.mugshot.org:8080");        
     else
         return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
 }
