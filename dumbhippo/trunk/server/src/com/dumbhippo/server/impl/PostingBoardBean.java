@@ -644,6 +644,10 @@ public class PostingBoardBean implements PostingBoard {
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
 		User viewer = viewpoint.getViewer();
 		
+		if (post.getDisabled()) {
+			return false;
+		}
+		
 		/* Optimization for a common case */
 		if (post.getPoster().equals(viewer))
 			return true;
