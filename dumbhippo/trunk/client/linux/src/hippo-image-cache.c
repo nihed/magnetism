@@ -315,10 +315,9 @@ strong_ref_on_load(GdkPixbuf *pixbuf,
             g_object_unref(old_strong->pixbuf); /* old_strong->pixbuf may be set to NULL here */
         }
     }
-    
+
+    REMOVE_WEAK(&s->cache);    
     g_free(s);
-    
-    REMOVE_WEAK(&s->cache);
 }
 
 void
