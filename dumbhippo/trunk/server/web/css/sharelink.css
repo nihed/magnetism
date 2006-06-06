@@ -267,7 +267,7 @@ table, tr, td {
     height: 35px;
 }
 
-#dhShareShareButton {
+.dh-share-share-button {
   position: absolute;
   bottom: 1px;
   right: 0px;

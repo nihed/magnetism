@@ -26,6 +26,11 @@
     <tr>
     <td align="left" valign="bottom"><img src="/images2/${buildStamp}/lsorange_bl.png" class="dhShareBottomCornerImg"/></td>
     <td valign="middle" align="left"><div id="dhShareDescriptionBottomFill"><dht:createGroupDialog/></div></td>
-    <td align="right" valign="bottom"><div style="position: relative;"><img id="dhShareShareButton" src="/images2/${buildStamp}/sendbutton.gif" onclick="${onsubmit}" tabindex="3"/></div></td>
+    <td align="right" valign="bottom">
+    	<div style="position: relative;">
+    		<img id="dhShareShareButton" class="dh-share-share-button" src="/images2/${buildStamp}/sendbutton.gif" onclick="${onsubmit}" tabindex="3"/>
+			<img id="dhShareShareButtonClicked" class="dh-share-share-button" src="/images2/${buildStamp}/sendbutton2.gif" style="display: none;"/>
+		</div>
+	</td>
     </tr>
 </table> 

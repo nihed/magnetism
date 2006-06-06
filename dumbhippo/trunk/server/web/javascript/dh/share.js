@@ -427,6 +427,9 @@ dh.share.checkAndSubmit = function(doSubmit) {
 		return
 	}
 	
+	dh.share.submitButton.style.display = "none"
+	dh.share.submitButtonClicked.style.display = "inline"
+	
 	doSubmit()
 }
 
@@ -436,6 +439,8 @@ dh.share.init = function() {
 	dh.share.recipientComboBox = document.getElementById('dhShareRecipientComboBox');
 	dh.share.recipientComboBoxButton = document.getElementById('dhShareRecipientComboBoxButton');
 	dh.share.autoSuggest = new dh.autosuggest.AutoSuggest(dh.share.recipientComboBox, dh.share.recipientComboBoxButton);
+	dh.share.submitButton = document.getElementById('dhShareShareButton')
+	dh.share.submitButtonClicked = document.getElementById('dhShareShareButtonClicked')	
 	dh.share.autoSuggest.setOnSelectedFunc(dh.share.recipientSelected);
 	dh.share.autoSuggest.setGetEligibleFunc(dh.share.getEligibleRecipients);
 
