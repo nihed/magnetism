@@ -42,6 +42,7 @@ public class Post extends GuidPersistable {
 	private String text;
 	private String info;
 	private long infoDate;
+	private boolean disabled;
 	transient private PostInfo cachedPostInfo;
 	transient private boolean leaveInfoUnmodified;
 	private Set<Resource> personRecipients;
@@ -112,6 +113,15 @@ public class Post extends GuidPersistable {
 	public void setVisibility(PostVisibility visibility) {
 		this.visibility = visibility;
 	}
+	
+	@Column(nullable=false)
+	public boolean getDisabled() {
+		return disabled;
+	}
+
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
+	}	
 
 	@ManyToMany
 	@JoinTable(table=@Table(name="Post_PersonRecipient"))

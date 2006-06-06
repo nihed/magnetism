@@ -426,14 +426,14 @@ public class PostingBoardBean implements PostingBoard {
 		"g.access >= " + GroupAccess.PUBLIC.ordinal();
 	
 	static private final String CAN_VIEW = 
-		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
+		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
 			  "post.poster = :viewer OR " + 
               "EXISTS (SELECT ac FROM AccountClaim ac WHERE ac.owner = :viewer " +
               "        AND ac.resource MEMBER OF post.personRecipients) OR " +
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP + "))";
 	
 	static private final String CAN_VIEW_ANONYMOUS = 
-		" (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
+		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP_ANONYMOUS + "))";
 	
 	static private final String VIEWER_RECEIVED = 
